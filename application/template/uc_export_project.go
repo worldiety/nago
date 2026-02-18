@@ -11,15 +11,17 @@ import (
 	"archive/zip"
 	"context"
 	"fmt"
-	"go.wdy.de/nago/auth"
-	"go.wdy.de/nago/pkg/blob"
 	"io"
 	"os"
+
+	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/pkg/blob"
 )
 
 func NewExportZip(files blob.Store, repo Repository) ExportZip {
 	return func(subject auth.Subject, pid ID, dst io.Writer) (err error) {
-		if err := subject.AuditResource(repo.Name(), string(pid), PermExportZip); err != nil {
+		if err := subject.AuditResource(rebac.Namespace(repo.Name()), rebac.Instance(pid), PermExportZip); err != nil {
 			return err
 		}
 

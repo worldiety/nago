@@ -10,11 +10,13 @@ package token
 import (
 	"crypto/rand"
 	"fmt"
+	"os"
+	"sync"
+
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/std/concurrent"
-	"os"
-	"sync"
 )
 
 func NewRotate(mutex *sync.Mutex, repo Repository, algo user.HashAlgorithm, reverseHashLookup *concurrent.RWMap[Hash, ID]) Rotate {
@@ -36,7 +38,7 @@ func NewRotate(mutex *sync.Mutex, repo Repository, algo user.HashAlgorithm, reve
 		}
 
 		token := optToken.Unwrap()
-		rotationAllowed := subject.HasResourcePermission(repo.Name(), string(token.ID), PermRotate) || token.Impersonation.UnwrapOr("") == subject.ID()
+		rotationAllowed := subject.HasResourcePermission(rebac.Namespace(repo.Name()), rebac.Instance(token.ID), PermRotate) || token.Impersonation.UnwrapOr("") == subject.ID()
 		if !rotationAllowed {
 			return "", user.PermissionDeniedErr
 		}

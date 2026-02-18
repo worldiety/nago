@@ -8,13 +8,16 @@
 package uiusercircles
 
 import (
+	"os"
+	"slices"
+
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/application/usercircle"
+	"go.wdy.de/nago/pkg/xslices"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui/alert"
-	"os"
-	"slices"
 )
 
 func PageMyCircleRolesUsers(
@@ -22,6 +25,7 @@ func PageMyCircleRolesUsers(
 	pages Pages,
 	useCases usercircle.UseCases,
 	findRoleById role.FindByID,
+	rdb *rebac.DB,
 ) core.View {
 	optRole, err := findRoleById(user.SU(), role.ID(wnd.Values()["role"])) // security note: by definition, we are allowed to see
 	if err != nil {
@@ -40,7 +44,13 @@ func PageMyCircleRolesUsers(
 	}
 
 	return viewUsers(wnd, "Rolle / "+myRole.Name, useCases, func(usr user.User) bool {
-		return slices.Contains(usr.Roles, myRole.ID)
+		usrRoles, err := xslices.Collect2(user.ListRolesFrom(rdb, usr.ID))
+		if err != nil {
+			alert.ShowBannerError(wnd, err)
+			return false
+		}
+
+		return slices.Contains(usrRoles, myRole.ID)
 	}, func(users []user.User) {
 		for _, usr := range users {
 			if err := useCases.MyCircleRolesAdd(wnd.Subject(), circle.ID, usr.ID, myRole.ID); err != nil {
@@ -55,5 +65,6 @@ func PageMyCircleRolesUsers(
 				}
 			}
 		},
+		rdb,
 	)
 }

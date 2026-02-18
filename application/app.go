@@ -49,6 +49,15 @@ func (a *Application) Run() {
 		a.cfg.done()
 	}()
 
+	logger := a.cfg.defaultLogger()
+
+	if mg := a.cfg.migrations; mg != nil {
+		if err := mg.Apply(a.cfg.Context()); err != nil {
+			logger.Error("failed to apply migrations, exiting", "err", err.Error())
+			return
+		}
+	}
+
 	// apply adm commands
 	admDir := filepath.Join(a.cfg.DataDir(), "adm/once-after-cfg")
 	slog.Info("checking adm once instructions", "dir", admDir)
@@ -68,12 +77,10 @@ func (a *Application) Run() {
 	}
 
 	err := a.runServer()
-	a.cfg.done()
-
-	logger := a.cfg.defaultLogger()
 	if err != nil {
 		logger.Error("application error", "err", err)
 	}
+	a.cfg.done()
 
 	if app := a.cfg.app; app != nil {
 		app.Destroy()

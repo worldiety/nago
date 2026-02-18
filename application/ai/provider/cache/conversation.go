@@ -17,6 +17,7 @@ import (
 	"go.wdy.de/nago/application/ai/conversation"
 	"go.wdy.de/nago/application/ai/message"
 	"go.wdy.de/nago/application/ai/provider"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/xtime"
 )
@@ -60,7 +61,7 @@ func (c cacheConversation) All(subject auth.Subject) iter.Seq2[message.Message, 
 
 			msg := optMsg.Unwrap()
 
-			if conv.CreatedBy == subject.ID() || msg.CreatedBy == subject.ID() || subject.HasResourcePermission(c.parent.repoConversations.Name(), string(c.id), PermMessageFindAll) {
+			if conv.CreatedBy == subject.ID() || msg.CreatedBy == subject.ID() || subject.HasResourcePermission(rebac.Namespace(c.parent.repoConversations.Name()), rebac.Instance(c.id), PermMessageFindAll) {
 				if !yield(msg, nil) {
 					return
 				}
@@ -81,7 +82,7 @@ func (c cacheConversation) Append(subject auth.Subject, opts message.AppendOptio
 	}
 
 	conv := optConv.Unwrap()
-	if conv.CreatedBy != subject.ID() && !subject.HasResourcePermission(c.parent.repoConversations.Name(), string(c.id), PermMessageAppend) {
+	if conv.CreatedBy != subject.ID() && !subject.HasResourcePermission(rebac.Namespace(c.parent.repoConversations.Name()), rebac.Instance(c.id), PermMessageAppend) {
 		return nil, subject.Audit(PermMessageAppend)
 	}
 
@@ -134,6 +135,6 @@ func (c cacheConversation) Append(subject auth.Subject, opts message.AppendOptio
 	if brokenProvider {
 		return nil, nil
 	}
-	
+
 	return msgs, nil
 }

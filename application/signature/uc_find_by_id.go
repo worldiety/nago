@@ -9,12 +9,13 @@ package signature
 
 import (
 	"github.com/worldiety/option"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/user"
 )
 
 func NewFindByID(repo Repository, idx *inMemoryIndex) FindByID {
 	return func(subject user.Subject, id ID) (option.Opt[Signature], error) {
-		if err := subject.AuditResource(repo.Name(), string(id), PermFindByID); err != nil {
+		if err := subject.AuditResource(rebac.Namespace(repo.Name()), rebac.Instance(id), PermFindByID); err != nil {
 			return option.Opt[Signature]{}, err
 		}
 

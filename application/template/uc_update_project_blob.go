@@ -9,16 +9,18 @@ package template
 
 import (
 	"context"
-	"go.wdy.de/nago/auth"
-	"go.wdy.de/nago/pkg/blob"
 	"io"
 	"os"
 	"sync"
+
+	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/pkg/blob"
 )
 
 func NewUpdateProjectBlob(mutex *sync.Mutex, files blob.Store, repo Repository) UpdateProjectBlob {
 	return func(subject auth.Subject, pid ID, filename string, value io.Reader) error {
-		if err := subject.AuditResource(repo.Name(), string(pid), PermUpdateProjectBlob); err != nil {
+		if err := subject.AuditResource(rebac.Namespace(repo.Name()), rebac.Instance(pid), PermUpdateProjectBlob); err != nil {
 			return err
 		}
 

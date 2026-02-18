@@ -8,36 +8,43 @@
 package user
 
 import (
-	"go.wdy.de/nago/pkg/xiter"
 	"iter"
+
+	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/pkg/xiter"
+	"go.wdy.de/nago/pkg/xmaps"
 )
 
-func NewListGrantedUsers(repo GrantingIndexRepository) ListGrantedUsers {
+func NewListGrantedUsers(rdb *rebac.DB) ListGrantedUsers {
 	return func(subject AuditableUser, res Resource) iter.Seq2[ID, error] {
-		myID := NewGrantingKey(res, subject.ID())
+		//myID := NewGrantingKey(res, subject.ID())
 
 		// are we globally allowed?
-		globalAllowed := subject.HasResourcePermission(repo.Name(), string(myID), PermListGrantedUsers)
+		globalAllowed := subject.HasPermission(PermListGrantedUsers)
 
 		// are we allowed for the specified resource+user?
-		resAllowed := subject.HasResourcePermission(res.Name, res.ID, PermListGrantedUsers)
+		resAllowed := subject.HasPermission(PermListGrantedUsers)
 
 		if !globalAllowed && !resAllowed {
 			return xiter.WithError[ID](PermissionDeniedErr)
 		}
 
 		return func(yield func(ID, error) bool) {
-			for granting, err := range repo.FindAllByPrefix(GrantingKey(res.Name + "/" + res.ID)) {
+			tmp := map[ID]struct{}{}
+
+			it := rdb.Query(rebac.Select().Where().Target().Is(rebac.Namespace(res.Name), rebac.Instance(res.ID)))
+
+			// a single user may have multiple relations for a single resource, this use case is weired
+			for triple, err := range it {
 				if err != nil {
-					if !yield("", err) {
-						return
-					}
-
-					continue
+					yield("", err)
+					return
 				}
+				tmp[ID(triple.Source.Instance)] = struct{}{}
+			}
 
-				_, usr := granting.ID.Split()
-				if !yield(usr, nil) {
+			for _, id := range xmaps.SortedKeys(tmp) {
+				if !yield(id, nil) {
 					return
 				}
 			}

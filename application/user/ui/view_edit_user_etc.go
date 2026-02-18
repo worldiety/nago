@@ -17,14 +17,14 @@ import (
 	"go.wdy.de/nago/presentation/ui/alert"
 )
 
-func viewEtc(wnd core.Window, ucUsers user.UseCases, usr *core.State[user.User]) core.View {
+func viewEtc(wnd core.Window, ucUsers user.UseCases, usr *core.State[UserModel]) core.View {
 	presentedPwdChange := core.AutoState[bool](wnd)
 
 	return ui.VStack(
 		ui.Text("Die Änderungen und Aktionen werden sofort angewendet und können nicht durch 'Abbrechen' rückgängig gemacht werden."),
 		etcActionNotifyUser(wnd, func() {
 			bus := wnd.Application().EventBus()
-			user.PublishUserCreated(bus, usr.Get(), true)
+			user.PublishUserCreated(bus, usr.Get().IntoUser(), true)
 			alert.ShowBannerMessage(wnd, alert.Message{
 				Title:    "Nutzer erstellt",
 				Message:  "Ereignis für " + usr.String() + " erstellt.",
@@ -39,7 +39,7 @@ func viewEtc(wnd core.Window, ucUsers user.UseCases, usr *core.State[user.User])
 			}
 		}),
 
-		ui.If(usr.Get().Enabled(),
+		ui.If(usr.Get().IntoUser().Enabled(),
 			etcAction(
 				wnd,
 				"Nutzer deaktivieren",
@@ -61,7 +61,7 @@ func viewEtc(wnd core.Window, ucUsers user.UseCases, usr *core.State[user.User])
 			),
 		),
 
-		ui.If(!usr.Get().Enabled(),
+		ui.If(!usr.Get().IntoUser().Enabled(),
 			etcAction(
 				wnd,
 				"Nutzer aktivieren",
@@ -107,7 +107,7 @@ func viewEtc(wnd core.Window, ucUsers user.UseCases, usr *core.State[user.User])
 
 		passwordChangeOtherDialog(wnd, usr.Get().ID, ucUsers.ChangeOtherPassword, presentedPwdChange),
 
-		ui.If(!usr.Get().SSO(),
+		ui.If(!usr.Get().IntoUser().SSO(),
 			etcAction(
 				wnd,
 				"Kennwort setzen",

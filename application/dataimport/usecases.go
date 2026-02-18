@@ -35,7 +35,7 @@ func NewKey(batch SID) Key {
 	return Key(fmt.Sprintf("%s/%13d/%05d", batch, time.Now().UnixMilli(), seqNum.Add(1)))
 }
 
-// Entry represents at least a parsed In-Object which belongs to a batch. The Transformed field is optional and may
+// Entry represents at least a parsed In-Target which belongs to a batch. The Transformed field is optional and may
 // contain manually filled or edited fields which are passed to the importer. Manually means e.g. from a user or
 // from an LLM.
 type Entry struct {

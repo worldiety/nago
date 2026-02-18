@@ -8,33 +8,42 @@
 package usercircle
 
 import (
+	"sync"
+
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
-	"slices"
-	"sync"
 )
 
-func NewMyCircleRolesRemove(mutex *sync.Mutex, repo Repository, users user.UseCases) MyCircleRolesRemove {
+func NewMyCircleRolesRemove(mutex *sync.Mutex, repo Repository, users user.UseCases, rdb *rebac.DB, usrRoles user.ListRoles, usrGroups user.ListGroups) MyCircleRolesRemove {
 	return func(subject auth.Subject, circleId ID, usrId user.ID, roles ...role.ID) error {
 		mutex.Lock()
 		defer mutex.Unlock()
 
-		_, usr, err := myCircleAndUser(repo, users.FindByID, subject, circleId, usrId)
+		_, _, err := myCircleAndUser(repo, users.FindByID, usrRoles, usrGroups, subject, circleId, usrId)
 		if err != nil {
 			return err
 		}
 
-		usr.Roles = slices.DeleteFunc(usr.Roles, func(id role.ID) bool {
-			for _, rid := range roles {
-				if rid == id {
-					return true
-				}
+		for _, rid := range roles {
+			err := rdb.Delete(rebac.Triple{
+				Source: rebac.Entity{
+					Namespace: role.Namespace,
+					Instance:  rebac.Instance(rid),
+				},
+				Relation: rebac.Member,
+				Target: rebac.Entity{
+					Namespace: user.Namespace,
+					Instance:  rebac.Instance(usrId),
+				},
+			})
+
+			if err != nil {
+				return err
 			}
+		}
 
-			return false
-		})
-
-		return users.UpdateOtherRoles(user.SU(), usrId, usr.Roles)
+		return nil
 	}
 }

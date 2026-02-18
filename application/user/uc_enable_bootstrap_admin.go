@@ -9,15 +9,15 @@ package user
 
 import (
 	"fmt"
-	"go.wdy.de/nago/application/group"
-	"go.wdy.de/nago/application/license"
-	"go.wdy.de/nago/application/permission"
-	"go.wdy.de/nago/application/role"
-	"go.wdy.de/nago/pkg/data"
+	"strings"
 	"time"
+
+	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/pkg/data"
 )
 
-func NewEnableBootstrapAdmin(repo Repository, system SysUser, userByMail FindByMail) EnableBootstrapAdmin {
+func NewEnableBootstrapAdmin(repo Repository, system SysUser, userByMail FindByMail, rdb *rebac.DB) EnableBootstrapAdmin {
 	return func(aliveUntil time.Time, password Password) (ID, error) {
 		optUsr, err := userByMail(system(), "admin@localhost")
 		if err != nil {
@@ -43,91 +43,26 @@ func NewEnableBootstrapAdmin(repo Repository, system SysUser, userByMail FindByM
 
 		// we are not allowed to have domain specific permissions, only those to bootstrap other users.
 		// even admins must not see customers secret domain stuff.
-		usr.Permissions = []permission.ID{
-			PermCreate,
-			PermFindByID,
-			PermFindByMail,
-			PermFindAll,
-			PermChangeOtherPassword,
-			PermDelete,
-			PermUpdateOtherContact,
-			PermUpdateOtherRoles,
-			PermUpdateOtherPermissions,
-			PermUpdateOtherLicenses,
-			PermUpdateOtherGroups,
-			PermCountAssignedUserLicense,
-			PermRevokeAssignedUserLicense,
-			PermUpdateaccountStatus,
-			group.PermCreate,
-			group.PermFindAll,
-			group.PermDelete,
-			group.PermFindByID,
-			group.PermUpdate,
-			role.PermCreate,
-			role.PermFindByID,
-			role.PermFindAll,
-			role.PermDelete,
-			role.PermUpdate,
-			permission.PermFindAll,
-			license.PermFindAllAppLicenses,
-			license.PermFindAppLicenseByID,
-			license.PermCreateAppLicense,
-			license.PermUpdateAppLicense,
-			license.PermDeleteAppLicense,
-			license.PermFindAllUserLicenses,
-			license.PermFindUserLicenseByID,
-			license.PermCreateUserLicense,
-			license.PermUpdateUserLicense,
-			license.PermDeleteUserLicense,
+		// let us insert only nago.* permissions
+		for perm := range permission.All() {
+			if !strings.HasPrefix(string(perm.ID), "nago.") {
+				continue
+			}
 
-			// avoid import cycles, thus hard code our bootstrap permissions
-			"nago.backup.backup",
-			"nago.backup.restore",
-			"nago.billing.license.app",
-			"nago.billing.license.user",
-
-			"nago.secret.find_my_secrets",
-			"nago.secret.create",
-			"nago.secret.groups.update",
-			"nago.secret.credentials.update",
-			"nago.secret.delete",
-
-			"nago.mail.send",
-			"nago.mail.outgoing.find_by_id",
-			"nago.mail.outgoing.find_all",
-			"nago.mail.outgoing.create",
-			"nago.mail.outgoing.update",
-			"nago.mail.outgoing.delete_by_id",
-
-			"nago.template.execute",
-			"nago.template.find_all",
-			"nago.template.create",
-			"nago.template.ensure_build_in",
-
-			"nago.settings.global.load",
-			"nago.settings.global.store",
-
-			"nago.template.execute",
-			"nago.template.find_all",
-			"nago.template.find_by_id",
-			"nago.template.project.blob.load",
-			"nago.template.project.blob.update",
-			"nago.template.project.blob.delete",
-			"nago.template.project.blob.rename",
-			"nago.template.project.blob.create",
-			"nago.template.project.runcfg.add",
-			"nago.template.project.runcfg.remove",
-			"nago.template.project.export",
-			"nago.template.project.import",
-			"nago.template.create",
-			"nago.template.delete",
-			"nago.template.ensure_build_in",
-
-			// security note: we do not allow the masterkey permission by default, they are to dangerous
-			//nago.backup.masterkey.export
-			//nago.backup.masterkey.replace
-
-			"nago.data.inspector",
+			err := rdb.Put(rebac.Triple{
+				Source: rebac.Entity{
+					Namespace: Namespace,
+					Instance:  rebac.Instance(usr.ID),
+				},
+				Relation: rebac.Relation(perm.ID),
+				Target: rebac.Entity{
+					Namespace: rebac.Global,
+					Instance:  rebac.AllInstances,
+				},
+			})
+			if err != nil {
+				return "", fmt.Errorf("cannot add permission to bootstrap user: %w", err)
+			}
 		}
 
 		hType := Argon2IdMin

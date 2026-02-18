@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"iter"
 
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/blob"
 )
@@ -23,7 +24,7 @@ func NewFindInstances(instanceStore blob.Store) FindInstances {
 				Prefix: string(id) + "/",
 			}) {
 				if err != nil {
-					if !subject.HasResourcePermission(instanceStore.Name(), key, PermFindInstances) {
+					if !subject.HasResourcePermission(rebac.Namespace(instanceStore.Name()), rebac.Instance(key), PermFindInstances) {
 						continue
 					}
 				}

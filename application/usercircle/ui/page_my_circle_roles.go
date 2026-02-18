@@ -9,9 +9,12 @@ package uiusercircles
 
 import (
 	"fmt"
+
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/application/usercircle"
+	"go.wdy.de/nago/pkg/xslices"
 	"go.wdy.de/nago/presentation/core"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
@@ -19,7 +22,7 @@ import (
 	"go.wdy.de/nago/presentation/ui/list"
 )
 
-func PageMyCircleRoles(wnd core.Window, pages Pages, useCases usercircle.UseCases, findRoleById role.FindByID) core.View {
+func PageMyCircleRoles(wnd core.Window, pages Pages, useCases usercircle.UseCases, findRoleById role.FindByID, rdb *rebac.DB) core.View {
 	circle, err := loadMyCircle(wnd, useCases)
 	if err != nil {
 		return alert.BannerError(err)
@@ -42,9 +45,14 @@ func PageMyCircleRoles(wnd core.Window, pages Pages, useCases usercircle.UseCase
 	return ui.VStack(
 		ui.H1(circle.Name+" / Rollen"),
 		list.List(ui.ForEach(roles, func(t role.Role) core.View {
+			perms, err := xslices.Collect2(role.ListPermissionsFrom(rdb, t.ID))
+			if err != nil {
+				return alert.BannerError(err)
+			}
+
 			return list.Entry().
 				Headline(t.Name).
-				SupportingText(t.Description + fmt.Sprintf(" (%d Berechtigungen)", len(t.Permissions))).
+				SupportingText(t.Description + fmt.Sprintf(" (%d Berechtigungen)", len(perms))).
 				Trailing(ui.ImageIcon(heroSolid.ChevronRight))
 		})...).OnEntryClicked(func(idx int) {
 			rle := roles[idx]

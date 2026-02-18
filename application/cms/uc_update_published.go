@@ -9,13 +9,15 @@ package cms
 
 import (
 	"fmt"
-	"go.wdy.de/nago/auth"
 	"sync"
+
+	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/auth"
 )
 
 func NewUpdatePublished(mutex *sync.Mutex, repo Repository) UpdatePublished {
 	return func(subject auth.Subject, id ID, published bool) error {
-		if err := subject.AuditResource(repo.Name(), string(id), PermUpdatePublished); err != nil {
+		if err := subject.AuditResource(rebac.Namespace(repo.Name()), rebac.Instance(id), PermUpdatePublished); err != nil {
 			return err
 		}
 

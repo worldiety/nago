@@ -20,6 +20,7 @@ import (
 	"go.wdy.de/nago/application/ai/document"
 	"go.wdy.de/nago/application/ai/library"
 	"go.wdy.de/nago/application/ai/provider"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/xtime"
@@ -50,7 +51,7 @@ func (c cacheLibrary) All(subject auth.Subject) iter.Seq2[document.Document, err
 				continue
 			}
 
-			if doc.CreatedBy != subject.ID() && !subject.HasResourcePermission(c.parent.repoModels.Name(), string(doc.ID), PermDocumentFindAll) {
+			if doc.CreatedBy != subject.ID() && !subject.HasResourcePermission(rebac.Namespace(c.parent.repoModels.Name()), rebac.Instance(doc.ID), PermDocumentFindAll) {
 				continue
 			}
 
@@ -105,7 +106,7 @@ func (c cacheLibrary) All(subject auth.Subject) iter.Seq2[document.Document, err
 					continue
 				}
 
-				if doc.CreatedBy != subject.ID() && !subject.HasResourcePermission(c.parent.repoModels.Name(), string(doc.ID), PermDocumentFindAll) {
+				if doc.CreatedBy != subject.ID() && !subject.HasResourcePermission(rebac.Namespace(c.parent.repoModels.Name()), rebac.Instance(doc.ID), PermDocumentFindAll) {
 					continue
 				}
 
@@ -136,7 +137,7 @@ func (c cacheLibrary) Delete(subject auth.Subject, id document.ID) error {
 	}
 
 	lib := optDoc.Unwrap()
-	if lib.CreatedBy != subject.ID() && !subject.HasResourcePermission(c.parent.repoDocuments.Name(), string(lib.ID), PermDocumentDelete) {
+	if lib.CreatedBy != subject.ID() && !subject.HasResourcePermission(rebac.Namespace(c.parent.repoDocuments.Name()), rebac.Instance(lib.ID), PermDocumentDelete) {
 		return subject.Audit(PermDocumentDelete)
 	}
 
@@ -159,7 +160,7 @@ func (c cacheLibrary) Create(subject auth.Subject, opts document.CreateOptions) 
 
 	lib := optLib.Unwrap()
 
-	if subject.ID() != lib.CreatedBy && !subject.HasResourcePermission(c.parent.repoDocuments.Name(), string(lib.ID), PermDocumentCreate) {
+	if subject.ID() != lib.CreatedBy && !subject.HasResourcePermission(rebac.Namespace(c.parent.repoDocuments.Name()), rebac.Instance(lib.ID), PermDocumentCreate) {
 		return document.Document{}, subject.Audit(PermDocumentCreate)
 	}
 
@@ -204,7 +205,7 @@ func (c cacheLibrary) TextContentByID(subject auth.Subject, id document.ID) (opt
 	}
 
 	doc := optDoc.Unwrap()
-	if doc.CreatedBy != subject.ID() && !subject.HasResourcePermission(c.parent.repoDocuments.Name(), string(doc.ID), PermReadTextContent) {
+	if doc.CreatedBy != subject.ID() && !subject.HasResourcePermission(rebac.Namespace(c.parent.repoDocuments.Name()), rebac.Instance(doc.ID), PermReadTextContent) {
 		return option.Opt[string]{}, subject.Audit(PermReadTextContent)
 	}
 
@@ -281,7 +282,7 @@ func (c cacheLibrary) FindByID(subject auth.Subject, id document.ID) (option.Opt
 	}
 
 	doc := optDoc.Unwrap()
-	if doc.CreatedBy != subject.ID() && !subject.HasResourcePermission(c.parent.repoDocuments.Name(), string(doc.ID), PermDocumentFindAll) {
+	if doc.CreatedBy != subject.ID() && !subject.HasResourcePermission(rebac.Namespace(c.parent.repoDocuments.Name()), rebac.Instance(doc.ID), PermDocumentFindAll) {
 		return option.Opt[document.Document]{}, subject.Audit(PermDocumentFindAll)
 	}
 

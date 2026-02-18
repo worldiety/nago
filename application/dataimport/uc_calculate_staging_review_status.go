@@ -7,11 +7,14 @@
 
 package dataimport
 
-import "go.wdy.de/nago/auth"
+import (
+	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/auth"
+)
 
 func NewCalculateStagingReviewStatus(repoStage StagingRepository, repo EntryRepository) CalculateStagingReviewStatus {
 	return func(subject auth.Subject, staging SID, opts CalculateStagingReviewStatusOptions) (StagingReviewStatus, error) {
-		if err := subject.AuditResource(repoStage.Name(), string(staging), PermCalculateStagingReviewStatus); err != nil {
+		if err := subject.AuditResource(rebac.Namespace(repoStage.Name()), rebac.Instance(staging), PermCalculateStagingReviewStatus); err != nil {
 			return StagingReviewStatus{}, err
 		}
 

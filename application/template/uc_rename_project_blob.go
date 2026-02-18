@@ -11,13 +11,14 @@ import (
 	"os"
 	"sync"
 
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/blob"
 )
 
 func NewRenameProjectBlob(mutex *sync.Mutex, files blob.Store, repo Repository) RenameProjectBlob {
 	return func(subject auth.Subject, pid ID, filename string, newFilename string) error {
-		if err := subject.AuditResource(repo.Name(), string(pid), PermRenameProjectBlob); err != nil {
+		if err := subject.AuditResource(rebac.Namespace(repo.Name()), rebac.Instance(pid), PermRenameProjectBlob); err != nil {
 			return err
 		}
 

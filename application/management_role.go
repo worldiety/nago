@@ -9,6 +9,9 @@ package application
 
 import (
 	"fmt"
+	"iter"
+
+	"go.wdy.de/nago/application/migration"
 	"go.wdy.de/nago/application/rcrud"
 	"go.wdy.de/nago/application/role"
 	uirole "go.wdy.de/nago/application/role/ui"
@@ -17,7 +20,6 @@ import (
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui/form"
-	"iter"
 )
 
 // RoleManagement is a nago system(Role Management).
@@ -33,16 +35,30 @@ type RoleManagement struct {
 
 func (c *Configurator) RoleManagement() (RoleManagement, error) {
 	if c.roleManagement == nil {
-		roleStore, err := c.EntityStore("nago.iam.role")
+		roleStore, err := c.EntityStore(string(role.Namespace))
 		if err != nil {
 			return RoleManagement{}, fmt.Errorf("cannot get entity store: %w", err)
+		}
+
+		mg, err := c.Migrations()
+		if err != nil {
+			return RoleManagement{}, fmt.Errorf("cannot get migrations: %w", err)
+		}
+		rdb, err := c.RDB()
+		if err != nil {
+			return RoleManagement{}, fmt.Errorf("cannot get rdb: %w", err)
+		}
+		// implementation note: it is important to first apply all user migrations, otherwise
+		// we may risk data loss due to missing fields in current user entities
+		if err := mg.Declare(newMigrateRolePermsToReBAC(roleStore, rdb), migration.Options{Immediate: true}); err != nil {
+			return RoleManagement{}, fmt.Errorf("cannot declare migration: %w", err)
 		}
 
 		roleRepo := json.NewSloppyJSONRepository[role.Role, role.ID](roleStore)
 
 		c.roleManagement = &RoleManagement{
 			roleRepository: roleRepo,
-			UseCases:       role.NewUseCases(roleRepo, c.EventBus()),
+			UseCases:       role.NewUseCases(roleRepo, c.EventBus(), rdb),
 			Pages:          uirole.Pages{Roles: "admin/iam/role"},
 		}
 

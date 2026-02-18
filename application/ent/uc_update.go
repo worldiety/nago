@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"os"
 
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
 )
 
 func NewUpdate[T Aggregate[T, ID], ID ~string](opts Options, perms Permissions, repo data.Repository[T, ID]) Update[T, ID] {
 	return func(subject auth.Subject, entity T) error {
-		if err := subject.AuditResource(repo.Name(), string(entity.Identity()), perms.Update); err != nil {
+		if err := subject.AuditResource(rebac.Namespace(repo.Name()), rebac.Instance(entity.Identity()), perms.Update); err != nil {
 			return err
 		}
 

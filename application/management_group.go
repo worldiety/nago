@@ -33,7 +33,7 @@ type GroupManagement struct {
 
 func (c *Configurator) GroupManagement() (GroupManagement, error) {
 	if c.groupManagement == nil {
-		groupStore, err := c.EntityStore("nago.iam.group")
+		groupStore, err := c.EntityStore(string(group.Namespace))
 		if err != nil {
 			return GroupManagement{}, err
 		}

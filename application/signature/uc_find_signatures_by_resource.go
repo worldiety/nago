@@ -8,8 +8,10 @@
 package signature
 
 import (
-	"go.wdy.de/nago/application/user"
 	"iter"
+
+	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/application/user"
 )
 
 func NewFindSignaturesByResource(idx *inMemoryIndex) FindSignaturesByResource {
@@ -28,7 +30,7 @@ func NewFindSignaturesByResource(idx *inMemoryIndex) FindSignaturesByResource {
 					continue
 				}
 
-				if err := subject.AuditResource(res.Name, res.ID, PermFindSignaturesByResource); err == nil {
+				if err := subject.AuditResource(rebac.Namespace(res.Name), rebac.Instance(res.ID), PermFindSignaturesByResource); err == nil {
 					if !yield(sig, nil) {
 						return
 					}

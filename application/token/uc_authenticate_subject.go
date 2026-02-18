@@ -10,6 +10,7 @@ package token
 import (
 	"context"
 
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
@@ -25,6 +26,7 @@ func NewAuthenticateSubject(
 	subjectLookup *concurrent.RWMap[Plaintext, user.Subject],
 	anonUser user.GetAnonUser,
 	findRoleByID role.FindByID,
+	rdb *rebac.DB,
 ) AuthenticateSubject {
 	return func(plaintext Plaintext) (auth.Subject, error) {
 		subj, ok := subjectLookup.Get(plaintext)
@@ -67,7 +69,7 @@ func NewAuthenticateSubject(
 		token := optToken.Unwrap()
 
 		if token.Impersonation.IsNone() {
-			s := newSubject(ctx, findRoleByID, repo, token)
+			s := newSubject(ctx, findRoleByID, repo, token, rdb)
 			subjectLookup.Put(plaintext, s)
 			return s, nil
 		}

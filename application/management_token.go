@@ -11,6 +11,7 @@ import (
 	"fmt"
 
 	"go.wdy.de/nago/application/admin"
+	"go.wdy.de/nago/application/migration"
 	"go.wdy.de/nago/application/token"
 	uitoken "go.wdy.de/nago/application/token/ui"
 	"go.wdy.de/nago/auth"
@@ -33,7 +34,7 @@ type TokenManagement struct {
 
 func (c *Configurator) TokenManagement() (TokenManagement, error) {
 	if c.tokenManagement == nil {
-		tokenStore, err := c.EntityStore("nago.iam.token")
+		tokenStore, err := c.EntityStore(string(token.Namespace))
 		if err != nil {
 			return TokenManagement{}, fmt.Errorf("cannot get entity store: %w", err)
 		}
@@ -55,9 +56,20 @@ func (c *Configurator) TokenManagement() (TokenManagement, error) {
 			return TokenManagement{}, fmt.Errorf("cannot get role usecases: %w", err)
 		}
 
-		licenses, err := c.LicenseManagement()
+		mg, err := c.Migrations()
 		if err != nil {
-			return TokenManagement{}, fmt.Errorf("cannot get license usecases: %w", err)
+			return TokenManagement{}, fmt.Errorf("cannot get migrations: %w", err)
+		}
+
+		rdb, err := c.RDB()
+		if err != nil {
+			return TokenManagement{}, fmt.Errorf("cannot get rdb: %w", err)
+		}
+
+		// implementation note: it is important to first apply all user migrations, otherwise
+		// we may risk data loss due to missing fields in current user entities
+		if err := mg.Declare(newMigrateTokenPermsToReBAC(tokenStore, rdb), migration.Options{Immediate: true}); err != nil {
+			return TokenManagement{}, fmt.Errorf("cannot declare migration: %w", err)
 		}
 
 		uc, err := token.NewUseCases(
@@ -68,7 +80,7 @@ func (c *Configurator) TokenManagement() (TokenManagement, error) {
 			roles.UseCases.FindByID,
 			users.UseCases.FindByID,
 			users.UseCases.GetAnonUser,
-			licenses.UseCases.PerUser.FindByID,
+			rdb,
 		)
 
 		if err != nil {

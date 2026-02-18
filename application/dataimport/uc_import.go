@@ -18,6 +18,7 @@ import (
 
 	"github.com/worldiety/jsonptr"
 	"go.wdy.de/nago/application/dataimport/importer"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/std/concurrent"
@@ -25,7 +26,7 @@ import (
 
 func NewImport(mutex *sync.Mutex, entryRepo EntryRepository, stageRepo StagingRepository, imports *concurrent.RWMap[importer.ID, importer.Importer]) Import {
 	return func(subject auth.Subject, stage SID, dst importer.ID, opts ImportOptions) error {
-		if err := subject.AuditResource(stageRepo.Name(), string(stage), PermImport); err != nil {
+		if err := subject.AuditResource(rebac.Namespace(stageRepo.Name()), rebac.Instance(stage), PermImport); err != nil {
 			return err
 		}
 

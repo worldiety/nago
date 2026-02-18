@@ -8,13 +8,16 @@
 package uiusercircles
 
 import (
-	"go.wdy.de/nago/application/group"
-	"go.wdy.de/nago/application/user"
-	"go.wdy.de/nago/application/usercircle"
-	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ui/alert"
 	"os"
 	"slices"
+
+	"go.wdy.de/nago/application/group"
+	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/application/usercircle"
+	"go.wdy.de/nago/pkg/xslices"
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ui/alert"
 )
 
 func PageMyCircleGroupsUsers(
@@ -22,6 +25,8 @@ func PageMyCircleGroupsUsers(
 	pages Pages,
 	useCases usercircle.UseCases,
 	findGroupById group.FindByID,
+	usrGroups user.ListGroups,
+	rdb *rebac.DB,
 ) core.View {
 	optGroup, err := findGroupById(user.SU(), group.ID(wnd.Values()["group"])) // security note: by definition, we are allowed to see
 	if err != nil {
@@ -40,7 +45,13 @@ func PageMyCircleGroupsUsers(
 	}
 
 	return viewUsers(wnd, "Gruppe / "+myGroup.Name, useCases, func(usr user.User) bool {
-		return slices.Contains(usr.Groups, myGroup.ID)
+		uGroups, err := xslices.Collect2(usrGroups(wnd.Subject(), usr.ID))
+		if err != nil {
+			alert.ShowBannerError(wnd, err)
+			return false
+		}
+
+		return slices.Contains(uGroups, myGroup.ID)
 	}, func(users []user.User) {
 		for _, usr := range users {
 			if err := useCases.MyCircleGroupsAdd(wnd.Subject(), circle.ID, usr.ID, myGroup.ID); err != nil {
@@ -55,5 +66,6 @@ func PageMyCircleGroupsUsers(
 				}
 			}
 		},
+		rdb,
 	)
 }

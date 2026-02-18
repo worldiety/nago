@@ -11,6 +11,7 @@ import (
 	"context"
 	"iter"
 
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/xiter"
@@ -18,7 +19,7 @@ import (
 
 func NewFindInstanceEvents(events blob.Store) FindInstanceEvents {
 	return func(subject user.Subject, id Instance) iter.Seq2[EventKey, error] {
-		if err := subject.AuditResource(events.Name(), string(id), PermFindInstanceEvents); err != nil {
+		if err := subject.AuditResource(rebac.Namespace(events.Name()), rebac.Instance(id), PermFindInstanceEvents); err != nil {
 			return xiter.WithError[EventKey](err)
 		}
 

@@ -8,9 +8,11 @@
 package dataimport
 
 import (
-	"go.wdy.de/nago/application/dataimport/importer"
-	"go.wdy.de/nago/auth"
 	"iter"
+
+	"go.wdy.de/nago/application/dataimport/importer"
+	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/auth"
 )
 
 func NewFindStagingsForImporter(repo StagingRepository) FindStagingsForImporter {
@@ -29,7 +31,7 @@ func NewFindStagingsForImporter(repo StagingRepository) FindStagingsForImporter 
 					continue
 				}
 
-				if !subject.HasResourcePermission(repo.Name(), string(staging.ID), PermFindStaging) && (staging.CreatedBy != subject.ID() || staging.CreatedBy == "") {
+				if !subject.HasResourcePermission(rebac.Namespace(repo.Name()), rebac.Instance(staging.ID), PermFindStaging) && (staging.CreatedBy != subject.ID() || staging.CreatedBy == "") {
 					continue
 				}
 

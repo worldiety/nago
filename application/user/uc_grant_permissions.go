@@ -9,13 +9,14 @@ package user
 
 import (
 	"fmt"
-	"go.wdy.de/nago/application/permission"
 	"os"
-	"slices"
 	"sync"
+
+	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/application/rebac"
 )
 
-func NewGrantPermissions(mutex *sync.Mutex, repo Repository, index GrantingIndexRepository, findUserByID FindByID) GrantPermissions {
+func NewGrantPermissions(mutex *sync.Mutex, repo Repository, findUserByID FindByID, rdb *rebac.DB) GrantPermissions {
 	return func(subject AuditableUser, id GrantingKey, permissions ...permission.ID) error {
 		res, uid := id.Split()
 		if res.Name == "" {
@@ -23,10 +24,10 @@ func NewGrantPermissions(mutex *sync.Mutex, repo Repository, index GrantingIndex
 		}
 
 		// are we globally allowed?
-		globalAllowed := subject.HasResourcePermission(index.Name(), string(id), PermGrantPermissions)
+		globalAllowed := subject.HasPermission(PermGrantPermissions)
 
 		// are we allowed for the specified resource+user?
-		resAllowed := subject.HasResourcePermission(res.Name, res.ID, PermGrantPermissions)
+		resAllowed := subject.HasPermission(PermGrantPermissions)
 
 		if !globalAllowed && !resAllowed {
 			return PermissionDeniedErr
@@ -42,29 +43,9 @@ func NewGrantPermissions(mutex *sync.Mutex, repo Repository, index GrantingIndex
 			return fmt.Errorf("user not found: %w", os.ErrNotExist)
 		}
 
-		optGrant, err := index.FindByID(id)
-		if err != nil {
-			return err
-		}
-
-		slices.Sort(permissions)
-
 		// security note: we checked above with a different rule set
-		if err := setResourcePermissions(mutex, repo, uid, res, permissions...); err != nil {
+		if err := setResourcePermissions(rdb, uid, res, permissions...); err != nil {
 			return fmt.Errorf("cannot set user resource permission: %w", err)
-		}
-
-		if len(permissions) == 0 {
-			if err := index.DeleteByID(id); err != nil {
-				return fmt.Errorf("failed to delete grant from index: %w", err)
-			}
-
-			return nil
-		}
-
-		if optGrant.IsNone() {
-			// only write into index, if actually required
-			return index.Save(Granting{ID: id})
 		}
 
 		// index has already a grant, nothing to do
@@ -72,34 +53,45 @@ func NewGrantPermissions(mutex *sync.Mutex, repo Repository, index GrantingIndex
 	}
 }
 
-func setResourcePermissions(mutex *sync.Mutex, repo Repository, uid ID, resource Resource, permissions ...permission.ID) error {
+func setResourcePermissions(rdb *rebac.DB, uid ID, resource Resource, permissions ...permission.ID) error {
 
-	mutex.Lock()
-	defer mutex.Unlock()
+	// delete all possible permissions for this resource, note that unknown perms are still kept
+	for perm := range permission.All() {
+		err := rdb.Delete(rebac.Triple{
+			Source: rebac.Entity{
+				Namespace: Namespace,
+				Instance:  rebac.Instance(uid),
+			},
+			Relation: rebac.Relation(perm.ID),
+			Target: rebac.Entity{
+				Namespace: rebac.Namespace(resource.Name),
+				Instance:  rebac.Instance(resource.ID),
+			},
+		})
 
-	optUsr, err := repo.FindByID(uid)
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
-	if optUsr.IsNone() {
-		return os.ErrNotExist
+	// insert only the specified back
+	for _, pid := range permissions {
+		err := rdb.Put(rebac.Triple{
+			Source: rebac.Entity{
+				Namespace: Namespace,
+				Instance:  rebac.Instance(uid),
+			},
+			Relation: rebac.Relation(pid),
+			Target: rebac.Entity{
+				Namespace: rebac.Namespace(resource.Name),
+				Instance:  rebac.Instance(resource.ID),
+			},
+		})
+
+		if err != nil {
+			return err
+		}
 	}
 
-	usr := optUsr.Unwrap()
-	perms := usr.Resources[resource]
-	slices.Sort(perms)
-	slices.Sort(permissions)
-	if slices.Equal(permissions, perms) {
-		// nothing to write, exit early
-		return nil
-	}
-
-	perms = slices.Compact(permissions)
-	if usr.Resources == nil {
-		usr.Resources = map[Resource][]permission.ID{}
-	}
-	usr.Resources[resource] = perms
-
-	return repo.Save(usr)
+	return nil
 }

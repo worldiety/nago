@@ -14,12 +14,13 @@ import (
 	"sync"
 
 	"go.wdy.de/nago/application/ai/library"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/auth"
 )
 
 func NewAddSource(mutex *sync.Mutex, repo Repository) AddSource {
 	return func(subject auth.Subject, id library.ID, src Source) error {
-		if err := subject.AuditResource(repo.Name(), string(id), Permissions.Update); err != nil {
+		if err := subject.AuditResource(rebac.Namespace(repo.Name()), rebac.Instance(id), Permissions.Update); err != nil {
 			return err
 		}
 

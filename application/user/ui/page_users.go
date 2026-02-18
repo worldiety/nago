@@ -12,11 +12,13 @@ import (
 
 	"github.com/worldiety/i18n"
 	"github.com/worldiety/option"
+	"go.wdy.de/nago/application/consent"
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/pkg/xslices"
 	"go.wdy.de/nago/pkg/xstrings"
 	"go.wdy.de/nago/presentation/core"
 	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
@@ -36,6 +38,38 @@ var (
 	StrExportUserCSV     = i18n.MustString("nago.admin.user.export_csv", i18n.Values{language.English: "Export users as CSV", language.German: "Nutzer als CSV exportieren"})
 	StrExportUserCSVDesc = i18n.MustString("nago.admin.user.export_csv_desc", i18n.Values{language.English: "Export the selected users with their personal data to a CSV file. Please note that using this data without the users' consent could be a violation of the GDPR.", language.German: "Die ausgewählten Nutzer mit ihren persönlichen Daten in einer CSV Datei exportieren. Beachten Sie, dass die Verwendung dieser Daten ohne Zustimmung der Nutzer ein Verstoß gegen die DSGVO sein könnte."})
 )
+
+type UserModel struct {
+	ID                    user.ID
+	Email                 user.Email
+	Contact               user.Contact
+	EMailVerified         bool
+	Status                user.AccountStatus
+	RequirePasswordChange bool
+	NLSManagedUser        bool
+	VerificationCode      user.Code
+
+	// some legal/regulatory properties
+	Consents []consent.Consent `json:"consents,omitzero"`
+
+	Roles             []role.ID
+	Groups            []group.ID
+	GlobalPermissions []permission.ID
+}
+
+func (u UserModel) IntoUser() user.User {
+	return user.User{
+		ID:                    u.ID,
+		Email:                 u.Email,
+		Contact:               u.Contact,
+		EMailVerified:         u.EMailVerified,
+		Status:                u.Status,
+		RequirePasswordChange: u.RequirePasswordChange,
+		NLSManagedUser:        u.NLSManagedUser,
+		VerificationCode:      u.VerificationCode,
+		Consents:              u.Consents,
+	}
+}
 
 func PageUsers(wnd core.Window, ucUsers user.UseCases, ucGroups group.UseCases, ucRoles role.UseCases, ucPermissions permission.UseCases) core.View {
 	if err := wnd.Subject().Audit(user.PermFindAll); err != nil {
@@ -228,14 +262,51 @@ func dlgEditUser(wnd core.Window, ucUsers user.UseCases, ucGroups group.UseCases
 		return nil
 	}
 
-	transientUserClone := core.AutoState[user.User](wnd).Init(func() user.User {
+	transientUserClone := core.AutoState[UserModel](wnd).Init(func() UserModel {
 		optUsr, err := ucUsers.FindByID(wnd.Subject(), selectedUsr.Get().ID)
 		if err != nil {
 			alert.ShowBannerError(wnd, err)
-			return user.User{}
+			return UserModel{}
 		}
 
-		return optUsr.UnwrapOr(user.User{})
+		usr := optUsr.UnwrapOr(user.User{})
+
+		usrM := UserModel{
+			ID:                    usr.ID,
+			Email:                 usr.Email,
+			Contact:               usr.Contact,
+			EMailVerified:         usr.EMailVerified,
+			Status:                usr.Status,
+			RequirePasswordChange: usr.RequirePasswordChange,
+			NLSManagedUser:        usr.NLSManagedUser,
+			Consents:              usr.Consents,
+			VerificationCode:      usr.VerificationCode,
+		}
+
+		roles, err := xslices.Collect2(ucUsers.ListRoles(wnd.Subject(), selectedUsr.Get().ID))
+		if err != nil {
+			alert.ShowBannerError(wnd, err)
+			return UserModel{}
+		}
+
+		usrM.Roles = roles
+
+		groups, err := xslices.Collect2(ucUsers.ListGroups(wnd.Subject(), selectedUsr.Get().ID))
+		if err != nil {
+			alert.ShowBannerError(wnd, err)
+			return UserModel{}
+		}
+
+		usrM.Groups = groups
+
+		perms, err := xslices.Collect2(ucUsers.ListGlobalPermissions(wnd.Subject(), selectedUsr.Get().ID))
+		if err != nil {
+			alert.ShowBannerError(wnd, err)
+			return UserModel{}
+		}
+		usrM.GlobalPermissions = perms
+
+		return usrM
 	})
 
 	return alert.Dialog("Nutzer bearbeiten", ViewEditUser(wnd, ucUsers, ucGroups, ucRoles, ucPermissions, transientUserClone).Frame(ui.Frame{Height: ui.Full, Width: ui.Full}), presented, alert.Closeable(), alert.XLarge(), alert.FullHeight(), alert.Cancel(nil), alert.Save(func() (close bool) {
@@ -255,7 +326,7 @@ func dlgEditUser(wnd core.Window, ucUsers user.UseCases, ucGroups group.UseCases
 			return false
 		}
 
-		if err := ucUsers.UpdateOtherPermissions(wnd.Subject(), usr.ID, usr.Permissions); err != nil {
+		if err := ucUsers.UpdateOtherPermissions(wnd.Subject(), usr.ID, usr.GlobalPermissions); err != nil {
 			alert.ShowBannerError(wnd, err)
 			return false
 		}

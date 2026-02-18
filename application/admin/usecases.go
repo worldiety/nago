@@ -9,9 +9,7 @@ package admin
 
 import (
 	uibackup "go.wdy.de/nago/application/backup/ui"
-	uibilling "go.wdy.de/nago/application/billing/ui"
 	uigroup "go.wdy.de/nago/application/group/ui"
-	uilicense "go.wdy.de/nago/application/license/ui"
 	uimail "go.wdy.de/nago/application/mail/ui"
 	"go.wdy.de/nago/application/permission"
 	uipermission "go.wdy.de/nago/application/permission/ui"
@@ -29,13 +27,11 @@ type QueryGroups func(subject auth.Subject, filterText string) []Group
 
 type Pages struct {
 	Mail          uimail.Pages
-	Billing       uibilling.Pages
 	Session       uisession.Pages
 	UsersOverview core.NavigationPath
 	Role          uirole.Pages
 	Group         uigroup.Pages
 	Permission    uipermission.Pages
-	License       uilicense.Pages
 	Dashboard     core.NavigationPath
 	Backup        uibackup.Pages
 	Secret        uisecret.Pages

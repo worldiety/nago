@@ -12,13 +12,14 @@ import (
 	"fmt"
 	"sync"
 
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/blob"
 )
 
 func NewDelete(mutex *sync.Mutex, files blob.Store, repo Repository) Delete {
 	return func(subject auth.Subject, pid ID) error {
-		if err := subject.AuditResource(repo.Name(), string(pid), PermDelete); err != nil {
+		if err := subject.AuditResource(rebac.Namespace(repo.Name()), rebac.Instance(pid), PermDelete); err != nil {
 			return err
 		}
 

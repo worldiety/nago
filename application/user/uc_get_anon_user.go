@@ -17,19 +17,19 @@ import (
 
 	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application/group"
-	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/pkg/events"
-	"go.wdy.de/nago/pkg/xiter"
+	"go.wdy.de/nago/pkg/xslices"
 	"golang.org/x/text/language"
 )
 
-func NewGetAnonUser(ctx context.Context, loadGlobal settings.LoadGlobal, findRoleByID role.FindByID, bus events.Bus) GetAnonUser {
+func NewGetAnonUser(ctx context.Context, bus events.Bus, loadGlobal settings.LoadGlobal, findRoleByID role.FindByID, listPerms role.ListPermissions) GetAnonUser {
 	var subj atomic.Pointer[anonSubject]
 	loadSubject := func() {
-		subject := createAnonSubject(ctx, language.English, loadGlobal, findRoleByID)
+		subject := createAnonSubject(ctx, language.English, loadGlobal, findRoleByID, listPerms)
 		subj.Store(&subject)
 	}
 
@@ -54,7 +54,7 @@ func NewGetAnonUser(ctx context.Context, loadGlobal settings.LoadGlobal, findRol
 	}
 }
 
-func createAnonSubject(ctx context.Context, tag language.Tag, loadGlobal settings.LoadGlobal, findRoleByID role.FindByID) anonSubject {
+func createAnonSubject(ctx context.Context, tag language.Tag, loadGlobal settings.LoadGlobal, findRoleByID role.FindByID, listPerms role.ListPermissions) anonSubject {
 	bnd, ok := i18n.Default.MatchBundle(tag)
 	if !ok {
 		panic(fmt.Errorf("unreachable"))
@@ -62,13 +62,12 @@ func createAnonSubject(ctx context.Context, tag language.Tag, loadGlobal setting
 
 	cfg := settings.ReadGlobal[Settings](loadGlobal)
 	anon := anonSubject{
-		groupsMap:           map[group.ID]struct{}{},
-		rolesMap:            map[role.ID]struct{}{},
-		permissionsMap:      map[permission.ID]struct{}{},
-		resourcePermissions: map[Resource]map[permission.ID]struct{}{},
-		tag:                 tag,
-		bundle:              bnd,
-		ctx:                 ctx,
+		groupsMap:      map[group.ID]struct{}{},
+		rolesMap:       map[role.ID]struct{}{},
+		permissionsMap: map[permission.ID]struct{}{},
+		tag:            tag,
+		bundle:         bnd,
+		ctx:            ctx,
 	}
 
 	for _, anonGroup := range cfg.AnonGroups {
@@ -89,7 +88,13 @@ func createAnonSubject(ctx context.Context, tag language.Tag, loadGlobal setting
 		}
 
 		r := optRole.Unwrap()
-		for _, pid := range r.Permissions {
+		perms, err := xslices.Collect2(listPerms(SU(), r.ID))
+		if err != nil {
+			slog.Error("anon: perms for role cannot get loaded", "id", anonRole, "err", err.Error())
+			continue
+		}
+
+		for _, pid := range perms {
 			anon.permissionsMap[pid] = struct{}{}
 			anon.permissions = append(anon.permissions, pid)
 		}
@@ -103,16 +108,15 @@ func createAnonSubject(ctx context.Context, tag language.Tag, loadGlobal setting
 var _ Subject = anonSubject{}
 
 type anonSubject struct {
-	groupsMap           map[group.ID]struct{}
-	groups              []group.ID
-	rolesMap            map[role.ID]struct{}
-	roles               []role.ID
-	permissionsMap      map[permission.ID]struct{}
-	permissions         []permission.ID
-	resourcePermissions map[Resource]map[permission.ID]struct{}
-	bundle              *i18n.Bundle
-	tag                 language.Tag
-	ctx                 context.Context
+	groupsMap      map[group.ID]struct{}
+	groups         []group.ID
+	rolesMap       map[role.ID]struct{}
+	roles          []role.ID
+	permissionsMap map[permission.ID]struct{}
+	permissions    []permission.ID
+	bundle         *i18n.Bundle
+	tag            language.Tag
+	ctx            context.Context
 
 	// intentionally anon users never support Licenses because any amount of users share the same anon subject
 	// and a per-user license would be pointless.
@@ -140,29 +144,16 @@ func (a anonSubject) HasPermission(permission permission.ID) bool {
 	return ok
 }
 
-func (a anonSubject) Permissions() iter.Seq[permission.ID] {
-	return slices.Values(a.permissions)
-}
-
-func (a anonSubject) AuditResource(name string, id string, p permission.ID) error {
-	if !a.HasResourcePermission(name, id, p) {
+func (a anonSubject) AuditResource(resourceType rebac.Namespace, instance rebac.Instance, perm permission.ID) error {
+	if !a.HasResourcePermission(resourceType, instance, perm) {
 		return PermissionDeniedErr
 	}
 
 	return nil
 }
 
-func (a anonSubject) HasResourcePermission(name string, id string, p permission.ID) bool {
+func (a anonSubject) HasResourcePermission(resourceType rebac.Namespace, instance rebac.Instance, p permission.ID) bool {
 	if a.HasPermission(p) {
-		return true
-	}
-
-	perms, ok := a.resourcePermissions[Resource{name, id}]
-	if !ok {
-		return false
-	}
-
-	if _, ok := perms[p]; ok {
 		return true
 	}
 
@@ -209,14 +200,6 @@ func (a anonSubject) Groups() iter.Seq[group.ID] {
 func (a anonSubject) HasGroup(id group.ID) bool {
 	_, ok := a.groupsMap[id]
 	return ok
-}
-
-func (a anonSubject) HasLicense(id license.ID) bool {
-	return false // always false by definition. Never change this, it is not an error.
-}
-
-func (a anonSubject) Licenses() iter.Seq[license.ID] {
-	return xiter.Empty[license.ID]()
 }
 
 func (a anonSubject) Valid() bool {

@@ -8,14 +8,16 @@
 package cms
 
 import (
-	"go.wdy.de/nago/auth"
 	"os"
 	"sync"
+
+	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/auth"
 )
 
 func NewReplaceElement(mutex *sync.Mutex, repo Repository) ReplaceElement {
 	return func(subject auth.Subject, id ID, elem Element) error {
-		if err := subject.AuditResource(repo.Name(), string(id), PermReplaceElement); err != nil {
+		if err := subject.AuditResource(rebac.Namespace(repo.Name()), rebac.Instance(id), PermReplaceElement); err != nil {
 			return err
 		}
 

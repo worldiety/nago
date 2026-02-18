@@ -14,8 +14,8 @@ import (
 
 	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application/group"
-	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/role"
 	"golang.org/x/text/language"
 )
@@ -45,11 +45,11 @@ func (s sysUser) Bundle() *i18n.Bundle {
 	return bnd
 }
 
-func (s sysUser) HasResourcePermission(name string, id string, p permission.ID) bool {
+func (s sysUser) HasResourcePermission(resourceType rebac.Namespace, instance rebac.Instance, perm permission.ID) bool {
 	return true
 }
 
-func (s sysUser) AuditResource(name string, id string, p permission.ID) error {
+func (s sysUser) AuditResource(resourceType rebac.Namespace, instance rebac.Instance, perm permission.ID) error {
 	return nil
 }
 
@@ -105,14 +105,6 @@ func (s sysUser) Audit(permission permission.ID) error {
 
 func (s sysUser) HasPermission(permission permission.ID) bool {
 	return true
-}
-
-func (s sysUser) HasLicense(id license.ID) bool {
-	return true
-}
-
-func (s sysUser) Licenses() iter.Seq[license.ID] {
-	return func(yield func(license.ID) bool) {}
 }
 
 func (s sysUser) Valid() bool {

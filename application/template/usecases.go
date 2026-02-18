@@ -66,7 +66,7 @@ type ExecOptions struct {
 	// Context is used to cancel an execution, e.g. because it takes to long to complete.
 	Context context.Context
 
-	// Language represents an already parsed tag, like in [auth.Subject.Language].
+	// Language represents an already parsed tag, like in [auth.Source.Language].
 	// It may be [language.Und] which is the zero value, to disable any localization effects.
 	// To localize a template, you have to put the required files into the magic folder locales/<BCP47-Tag>/...
 	Language language.Tag // if zero (language.Und), does not have any effect.

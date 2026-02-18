@@ -24,6 +24,7 @@ import (
 	"go.wdy.de/nago/application/ai/library"
 	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/application/drive"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/blob"
@@ -32,7 +33,7 @@ import (
 
 func NewSynchronize(bus events.Bus, findProvider ai.FindProviderByID, repo Repository, syncRepo SyncRepository, stores blob.Stores, walkDir drive.WalkDir, openFile drive.Get, statFile drive.Stat) Synchronize {
 	return func(subject auth.Subject, lib library.ID) error {
-		if err := subject.AuditResource(repo.Name(), string(lib), PermSynchronize); err != nil {
+		if err := subject.AuditResource(rebac.Namespace(repo.Name()), rebac.Instance(lib), PermSynchronize); err != nil {
 			return err
 		}
 

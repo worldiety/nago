@@ -16,9 +16,16 @@ import (
 	"slices"
 	"strings"
 	"sync"
+
+	"go.wdy.de/nago/application/rebac"
 )
 
 var regexPermissionID = regexp.MustCompile(`^[a-z][a-z0-9_]*(\.[a-z0-9_]+)*[a-z0-9_]*$`)
+
+// The Namespace for direct permissions is entirely virtual and does not correspond to any repository
+// because it is usually determined at (const) compile time. However, there are packages like [ent] which
+// generate them at runtime, so that is not entirely true, but the mental concept still stands.
+const Namespace rebac.Namespace = "nago.perm"
 
 // ID is unique in the entire permission world. Each use case may have none or exactly one associated permission.
 // Note, that a use case may be a composite of other use cases and each will keep its permission check.

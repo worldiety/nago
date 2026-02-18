@@ -14,6 +14,7 @@ import (
 	"sync"
 
 	"github.com/worldiety/option"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
@@ -44,7 +45,7 @@ func NewMkDir(mutex *sync.Mutex, bus events.Bus, repo Repository) MkDir {
 
 		parentFile := optParentFile.Unwrap()
 
-		if !(parentFile.CanWrite(subject) || subject.HasResourcePermission(repo.Name(), string(parent), PermMkDir)) {
+		if !(parentFile.CanWrite(subject) || subject.HasResourcePermission(rebac.Namespace(repo.Name()), rebac.Instance(parent), PermMkDir)) {
 			return zero, fmt.Errorf("cannot create directory, either grant write permission to parent or PermMkDir: %w", user.PermissionDeniedErr)
 		}
 

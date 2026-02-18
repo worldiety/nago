@@ -10,10 +10,9 @@ package application
 import (
 	"fmt"
 	"iter"
-	"log/slog"
 
-	"go.wdy.de/nago/application/billing"
 	"go.wdy.de/nago/application/consent"
+	"go.wdy.de/nago/application/migration"
 	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/application/user"
 	uiuser "go.wdy.de/nago/application/user/ui"
@@ -41,17 +40,12 @@ type UserManagement struct {
 
 func (c *Configurator) UserManagement() (UserManagement, error) {
 	if c.userManagement == nil {
-		userStore, err := c.EntityStore("nago.iam.user")
+		userStore, err := c.EntityStore(string(user.Namespace))
 		if err != nil {
 			return UserManagement{}, fmt.Errorf("cannot get entity store: %w", err)
 		}
 
 		userRepo := data.NewNotifyRepository(nil, json.NewSloppyJSONRepository[user.User, user.ID](userStore))
-
-		licenseUseCases, err := c.LicenseManagement()
-		if err != nil {
-			return UserManagement{}, fmt.Errorf("cannot get license usecases: %w", err)
-		}
 
 		roleUseCases, err := c.RoleManagement()
 		if err != nil {
@@ -72,14 +66,6 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 		if err != nil {
 			return UserManagement{}, fmt.Errorf("cannot get settings usecases: %w", err)
 		}
-		_ = licenseUseCases
-
-		storeGrants, err := c.EntityStore("nago.iam.grant")
-		if err != nil {
-			return UserManagement{}, fmt.Errorf("cannot get entity store for grants: %w", err)
-		}
-
-		repoGrants := json.NewSloppyJSONRepository[user.Granting, user.GrantingKey](storeGrants)
 
 		images, err := c.ImageManagement()
 		if err != nil {
@@ -97,16 +83,33 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 			}
 		})))
 
+		mg, err := c.Migrations()
+		if err != nil {
+			return UserManagement{}, fmt.Errorf("cannot get migrations: %w", err)
+		}
+
+		rdb, err := c.RDB()
+		if err != nil {
+			return UserManagement{}, fmt.Errorf("cannot get ReBAC database: %w", err)
+		}
+
+		// implementation note: it is important to first apply all user migrations, otherwise
+		// we may risk data loss due to missing fields in current user entities
+		if err := mg.Declare(newMigrateUserPermsToReBAC(userStore, rdb), migration.Options{Immediate: true}); err != nil {
+			return UserManagement{}, fmt.Errorf("cannot declare migration: %w", err)
+		}
+
 		c.userManagement = &UserManagement{
 			UseCases: user.NewUseCases(
 				c.ctx,
 				c.EventBus(),
+				rdb,
 				sets.UseCases.LoadGlobal,
 				userRepo,
-				repoGrants,
 				roleUseCases.roleRepository,
-				licenseUseCases.UseCases.PerUser.FindByID,
+				groups.UseCases.FindAll,
 				roleUseCases.UseCases.FindByID,
+				roleUseCases.UseCases.ListPermissions,
 				images.UseCases.CreateSrcSet,
 			),
 			Pages: uiuser.Pages{
@@ -177,18 +180,6 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 		})
 
 		c.RootViewWithDecoration(c.userManagement.Pages.Users, func(wnd core.Window) core.View {
-			var ucBillingUserLicense billing.UserLicenses
-			if c.billingManagement != nil {
-				ucBillingUserLicense = c.billingManagement.UseCases.UserLicenses
-			} else {
-				ucBillingUserLicense = func(subject auth.Subject) (billing.UserLicenseStatistics, error) {
-					slog.Warn("User license billing not configured")
-					return billing.UserLicenseStatistics{}, nil
-				}
-			}
-
-			_ = ucBillingUserLicense
-			_ = permissions
 			return uiuser.PageUsers(wnd,
 				c.userManagement.UseCases,
 				groups.UseCases,

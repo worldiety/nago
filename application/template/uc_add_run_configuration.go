@@ -8,14 +8,16 @@
 package template
 
 import (
+	"sync"
+
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
-	"sync"
 )
 
 func NewAddRunConfiguration(mutex *sync.Mutex, repo Repository) AddRunConfiguration {
 	return func(subject auth.Subject, pid ID, configuration RunConfiguration) error {
-		if err := subject.AuditResource(repo.Name(), string(pid), PermAddRunConfiguration); err != nil {
+		if err := subject.AuditResource(rebac.Namespace(repo.Name()), rebac.Instance(pid), PermAddRunConfiguration); err != nil {
 			return err
 		}
 

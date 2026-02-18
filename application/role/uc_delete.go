@@ -8,12 +8,14 @@
 package role
 
 import (
-	"go.wdy.de/nago/application/permission"
-	"go.wdy.de/nago/pkg/events"
 	"sync"
+
+	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/pkg/events"
 )
 
-func NewDelete(mutex *sync.Mutex, repo Repository, bus events.Bus) Delete {
+func NewDelete(mutex *sync.Mutex, repo Repository, bus events.Bus, rdb *rebac.DB) Delete {
 	return func(subject permission.Auditable, id ID) error {
 		if err := subject.Audit(PermDelete); err != nil {
 			return err
@@ -23,6 +25,11 @@ func NewDelete(mutex *sync.Mutex, repo Repository, bus events.Bus) Delete {
 		defer mutex.Unlock()
 
 		if err := repo.DeleteByID(id); err != nil {
+			return err
+		}
+
+		// purge all entries where this role has any relation to something
+		if err := rdb.DeleteByQuery(rebac.Select().Where().Target().Is(Namespace, rebac.Instance(id))); err != nil {
 			return err
 		}
 

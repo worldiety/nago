@@ -11,17 +11,15 @@ import (
 	"context"
 	"iter"
 	"log/slog"
-	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application/group"
-	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/role"
-	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/std/tick"
 	"golang.org/x/text/language"
@@ -47,12 +45,12 @@ type Subject interface {
 	//
 	// In all other cases, the audit will fail. The name declares the namespace of in which the given id is naturally
 	// unique, e.g. the store or repository name.
-	AuditResource(name string, id string, p permission.ID) error
+	AuditResource(resourceType rebac.Namespace, instance rebac.Instance, perm permission.ID) error
 
 	// HasResourcePermission is like [HasResource] checks, but instead of using the user permissions, the associated
 	// resource table is also evaluated. A regular use case
 	// should use the [AuditResource]. However, this may be used e.g. by the UI to show or hide specific aspects.
-	HasResourcePermission(name string, id string, p permission.ID) bool
+	HasResourcePermission(resourceType rebac.Namespace, instance rebac.Instance, perm permission.ID) bool
 
 	// ID is the unique actor id within a single NAGO instance. These IDs are generated in a secure way,
 	// however, you must not expose that into the public or use it as a source of anonymization.
@@ -102,15 +100,6 @@ type Subject interface {
 	// HasGroup returns true, if the user is in the associated group.
 	HasGroup(id group.ID) bool
 
-	// HasLicense checks, if the Subject has the given license. This is usually used by the Domain and UI, to enable
-	// or disable features based on contracts and payments.
-	HasLicense(id license.ID) bool
-
-	// Licenses returns all associated and applicable licenses which are not disabled. If a license is assigned
-	// but [license.License.Enabled] is false, it is not contained. Consequently, [HasLicense] will return false.
-	// Order is undefined.
-	Licenses() iter.Seq[license.ID]
-
 	// Valid tells us, if the subject has been authenticated and potentially contains permissions.
 	// If the mail has never been verified, a user will not be valid.
 	Valid() bool
@@ -127,37 +116,25 @@ type Subject interface {
 }
 
 type viewImpl struct {
-	user              User
-	ctx               context.Context
-	mutex             sync.Mutex
-	repo              Repository
-	roleRepo          data.ReadRepository[role.Role, role.ID]
-	lastRefreshedAt   time.Time
-	refreshInterval   time.Duration
-	locale            language.Tag
-	bundle            atomic.Pointer[i18n.Bundle]
-	roles             []role.ID
-	rolesLookup       map[role.ID]struct{}
-	groups            []group.ID
-	groupsLookup      map[group.ID]struct{}
-	permissions       []permission.ID
-	permissionsLookup map[permission.ID]struct{}
-	licences          []license.ID
-	licencesLookup    map[license.ID]struct{}
+	user            User
+	ctx             context.Context
+	mutex           sync.Mutex
+	repo            Repository
+	lastRefreshedAt time.Time
+	refreshInterval time.Duration
+	locale          language.Tag
+	bundle          atomic.Pointer[i18n.Bundle]
+	rdb             *rebac.DB
 }
 
-func newViewImpl(ctx context.Context, repo Repository, roles data.ReadRepository[role.Role, role.ID], user User) *viewImpl {
+func newViewImpl(ctx context.Context, rdb *rebac.DB, repo Repository, user User) *viewImpl {
 	v := &viewImpl{
-		ctx:               ctx,
-		user:              user,
-		lastRefreshedAt:   time.Now(),
-		refreshInterval:   5 * time.Minute,
-		roleRepo:          roles, // intentionally not the use case, we don't want that each user requires to read all permissions
-		repo:              repo,
-		groupsLookup:      make(map[group.ID]struct{}),
-		permissionsLookup: make(map[permission.ID]struct{}),
-		licencesLookup:    make(map[license.ID]struct{}),
-		rolesLookup:       make(map[role.ID]struct{}),
+		ctx:             ctx,
+		user:            user,
+		lastRefreshedAt: time.Now(),
+		refreshInterval: 5 * time.Minute,
+		repo:            repo,
+		rdb:             rdb,
 	}
 
 	v.load()
@@ -227,98 +204,38 @@ func (v *viewImpl) load() {
 
 		v.locale = tag
 	}
-
-	v.groups = v.user.Groups
-	clear(v.groupsLookup)
-	for _, id := range v.groups {
-		v.groupsLookup[id] = struct{}{}
-	}
-
-	v.roles = v.user.Roles
-	clear(v.rolesLookup)
-	for _, id := range v.roles {
-		v.rolesLookup[id] = struct{}{}
-	}
-
-	v.licences = v.user.Licenses
-	clear(v.licencesLookup)
-	for _, id := range v.licences {
-		v.licencesLookup[id] = struct{}{}
-	}
-
-	clear(v.permissions)
-	v.permissions = v.permissions[:0]
-	for _, id := range v.user.Permissions {
-		v.permissionsLookup[id] = struct{}{}
-	}
-
-	for _, roleId := range v.user.Roles {
-		optRole, err := v.roleRepo.FindByID(roleId)
-		if err != nil {
-			slog.Error("referenced role in user not loadable", "user", v.user.ID, "role", roleId, "err", err.Error())
-			continue
-		}
-
-		if optRole.IsNone() {
-			slog.Error("referenced role in user is orphaned", "user", v.user.ID, "role", roleId)
-			continue
-		}
-
-		for _, pid := range optRole.Unwrap().Permissions {
-			v.permissionsLookup[pid] = struct{}{}
-		}
-	}
-
-	for id := range v.permissionsLookup {
-		v.permissions = append(v.permissions, id)
-	}
-
-	slices.Sort(v.permissions)
-
 }
 
-func (v *viewImpl) HasResourcePermission(name string, id string, p permission.ID) bool {
+func (v *viewImpl) HasResourcePermission(name rebac.Namespace, id rebac.Instance, p permission.ID) bool {
+	if !v.Valid() {
+		return false
+	}
+
 	if v.HasPermission(p) {
 		return true
 	}
 
-	v.mutex.Lock()
-	usr := v.user
-	v.mutex.Unlock()
+	ok, err := v.rdb.Contains(rebac.Triple{
+		Source: rebac.Entity{
+			Namespace: Namespace,
+			Instance:  rebac.Instance(v.ID()),
+		},
+		Relation: rebac.Relation(p),
+		Target: rebac.Entity{
+			Namespace: name,
+			Instance:  id,
+		},
+	})
 
-	if len(usr.Resources) == 0 {
+	if err != nil {
+		slog.Error("cannot check resource permission", "err", err)
 		return false
 	}
 
-	// check, if we have global rights
-	perms, ok := usr.Resources[Resource{
-		Name: name,
-		ID:   "",
-	}]
-
-	if !ok {
-		// otherwise, check if we have the exact permission
-		perms = usr.Resources[Resource{
-			Name: name,
-			ID:   id,
-		}]
-	}
-
-	if len(perms) == 0 {
-		return false
-	}
-
-	// we are allowed, if the permission is there. We do not optimize further, because we expect only
-	// a very small set of permissions per resource.
-	if slices.Contains(perms, p) {
-		return true
-	}
-
-	// nope
-	return false
+	return ok
 }
 
-func (v *viewImpl) AuditResource(name string, id string, p permission.ID) error {
+func (v *viewImpl) AuditResource(name rebac.Namespace, id rebac.Instance, p permission.ID) error {
 	if !v.HasResourcePermission(name, id, p) {
 		var permName = string(p)
 		if perm, ok := permission.Find(p); ok {
@@ -329,17 +246,6 @@ func (v *viewImpl) AuditResource(name string, id string, p permission.ID) error 
 	}
 
 	return nil
-}
-
-func (v *viewImpl) Permissions() iter.Seq[permission.ID] {
-	if !v.Valid() {
-		return func(yield func(permission.ID) bool) {}
-	}
-
-	v.mutex.Lock()
-	defer v.mutex.Unlock()
-
-	return slices.Values(v.permissions)
 }
 
 func (v *viewImpl) Audit(perm permission.ID) error {
@@ -376,10 +282,23 @@ func (v *viewImpl) HasPermission(permission permission.ID) bool {
 		return false
 	}
 
-	v.mutex.Lock()
-	defer v.mutex.Unlock()
+	ok, err := v.rdb.Contains(rebac.Triple{
+		Source: rebac.Entity{
+			Namespace: Namespace,
+			Instance:  rebac.Instance(v.ID()),
+		},
+		Relation: rebac.Relation(permission),
+		Target: rebac.Entity{
+			Namespace: rebac.Global,
+			Instance:  rebac.AllInstances,
+		},
+	})
 
-	_, ok := v.permissionsLookup[permission]
+	if err != nil {
+		slog.Error("cannot check resource permission", "err", err)
+		return false
+	}
+
 	return ok
 }
 
@@ -455,10 +374,25 @@ func (v *viewImpl) Roles() iter.Seq[role.ID] {
 		return func(yield func(role.ID) bool) {}
 	}
 
-	v.mutex.Lock()
-	defer v.mutex.Unlock()
+	return func(yield func(role.ID) bool) {
+		it := v.rdb.Query(
+			rebac.Select().
+				Where().Source().IsNamespace(role.Namespace).
+				Where().Relation().Has(rebac.Member).
+				Where().Target().Is(Namespace, rebac.Instance(v.ID())),
+		)
 
-	return slices.Values(v.roles)
+		for triple, err := range it {
+			if err != nil {
+				slog.Error("cannot iterate roles", "err", err)
+				return
+			}
+
+			if !yield(role.ID(triple.Target.Instance)) {
+				return
+			}
+		}
+	}
 }
 
 func (v *viewImpl) HasRole(id role.ID) bool {
@@ -468,10 +402,23 @@ func (v *viewImpl) HasRole(id role.ID) bool {
 		return false
 	}
 
-	v.mutex.Lock()
-	defer v.mutex.Unlock()
+	ok, err := v.rdb.Contains(rebac.Triple{
+		Source: rebac.Entity{
+			Namespace: role.Namespace,
+			Instance:  rebac.Instance(id),
+		},
+		Relation: rebac.Member,
+		Target: rebac.Entity{
+			Namespace: Namespace,
+			Instance:  rebac.Instance(v.ID()),
+		},
+	})
 
-	_, ok := v.rolesLookup[id]
+	if err != nil {
+		slog.Error("cannot check resource permission", "err", err)
+		return false
+	}
+
 	return ok
 }
 
@@ -482,10 +429,25 @@ func (v *viewImpl) Groups() iter.Seq[group.ID] {
 		return func(yield func(group.ID) bool) {}
 	}
 
-	v.mutex.Lock()
-	defer v.mutex.Unlock()
+	return func(yield func(group.ID) bool) {
+		it := v.rdb.Query(
+			rebac.Select().
+				Where().Source().IsNamespace(group.Namespace).
+				Where().Relation().Has(rebac.Member).
+				Where().Target().Is(Namespace, rebac.Instance(v.ID())),
+		)
 
-	return slices.Values(v.groups)
+		for triple, err := range it {
+			if err != nil {
+				slog.Error("cannot iterate roles", "err", err)
+				return
+			}
+
+			if !yield(group.ID(triple.Target.Instance)) {
+				return
+			}
+		}
+	}
 }
 
 func (v *viewImpl) HasGroup(id group.ID) bool {
@@ -495,38 +457,24 @@ func (v *viewImpl) HasGroup(id group.ID) bool {
 		return false
 	}
 
-	v.mutex.Lock()
-	defer v.mutex.Unlock()
+	ok, err := v.rdb.Contains(rebac.Triple{
+		Source: rebac.Entity{
+			Namespace: group.Namespace,
+			Instance:  rebac.Instance(id),
+		},
+		Relation: rebac.Member,
+		Target: rebac.Entity{
+			Namespace: Namespace,
+			Instance:  rebac.Instance(v.ID()),
+		},
+	})
 
-	_, ok := v.groupsLookup[id]
-	return ok
-}
-
-func (v *viewImpl) HasLicense(id license.ID) bool {
-	v.refresh()
-
-	if !v.Valid() {
+	if err != nil {
+		slog.Error("cannot check resource permission", "err", err)
 		return false
 	}
 
-	v.mutex.Lock()
-	defer v.mutex.Unlock()
-
-	_, ok := v.licencesLookup[id]
 	return ok
-}
-
-func (v *viewImpl) Licenses() iter.Seq[license.ID] {
-	v.refresh()
-
-	if !v.Valid() {
-		return func(yield func(license.ID) bool) {}
-	}
-
-	v.mutex.Lock()
-	defer v.mutex.Unlock()
-
-	return slices.Values(v.licences)
 }
 
 func (v *viewImpl) Valid() bool {

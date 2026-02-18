@@ -9,7 +9,6 @@ package uitoken
 
 import (
 	"go.wdy.de/nago/application/group"
-	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/token"
@@ -41,7 +40,7 @@ func PageCrud(wnd core.Window, uc token.UseCases) core.View {
 
 		rows = append(rows, ui.TableRow(
 			ui.TableCell(ui.Text(tok.Name)),
-			ui.TableCell(ui.Text(tok.Desription)),
+			ui.TableCell(ui.Text(tok.Description)),
 			ui.TableCell(ui.Text(tok.CreatedAt.Format(xtime.GermanDate))),
 			ui.TableCell(ui.Text(formatValidUntil(tok.ValidUntil))),
 			ui.TableCell(ui.HStack(
@@ -115,7 +114,6 @@ func viewAccessRightsDialog(wnd core.Window, presented *core.State[bool], token 
 			listRoles(resolved),
 			listGroups(resolved),
 			listPermissions(resolved),
-			listLicenses(resolved),
 		).Gap(ui.L16).FullWidth(),
 		presented,
 		alert.Closeable(),
@@ -147,19 +145,6 @@ func listGroups(t token.ResolvedTokenRights) core.View {
 			SupportingText(t.Description).
 			Leading(ui.ImageIcon(flowbiteOutline.UsersGroup))
 	})...).Caption(ui.Text("Gruppen")).Frame(ui.Frame{}.FullWidth())
-}
-
-func listLicenses(t token.ResolvedTokenRights) core.View {
-	if len(t.Licenses) == 0 {
-		return ui.Text("Keine Lizenzen zugewiesen")
-	}
-
-	return list.List(ui.ForEach(t.Licenses, func(t license.UserLicense) core.View {
-		return list.Entry().
-			Headline(t.Name).
-			SupportingText(t.Description).
-			Leading(ui.ImageIcon(flowbiteOutline.UsersGroup))
-	})...).Caption(ui.Text("Lizenzen")).Frame(ui.Frame{}.FullWidth())
 }
 
 func listPermissions(t token.ResolvedTokenRights) core.View {

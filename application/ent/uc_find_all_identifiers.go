@@ -3,6 +3,7 @@ package ent
 import (
 	"iter"
 
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
 )
@@ -19,7 +20,7 @@ func NewFindAllIdentifiers[T Aggregate[T, ID], ID ~string](opts Options, perms P
 					continue
 				}
 
-				if !subject.HasResourcePermission(repo.Name(), string(id), perms.FindByID) {
+				if !subject.HasResourcePermission(rebac.Namespace(repo.Name()), rebac.Instance(id), perms.FindByID) {
 					continue
 				}
 

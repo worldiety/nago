@@ -8,21 +8,24 @@
 package role
 
 import (
-	"github.com/worldiety/option"
-	"go.wdy.de/nago/application/permission"
-	"go.wdy.de/nago/pkg/data"
-	"go.wdy.de/nago/pkg/events"
 	"iter"
 	"sync"
+
+	"github.com/worldiety/option"
+	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/events"
 )
+
+const Namespace rebac.Namespace = "nago.iam.role"
 
 type ID string
 
 type Role struct {
-	ID          ID              `json:"id,omitempty" table-visible:"false"`
-	Name        string          `json:"name,omitempty"`
-	Description string          `json:"description,omitempty" label:"Beschreibung"`
-	Permissions []permission.ID `json:"permissions,omitempty" source:"nago.permissions" label:"Berechtigungen" table-visible:"false"`
+	ID          ID     `json:"id,omitempty" table-visible:"false"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty" label:"Beschreibung"`
 }
 
 func (r Role) String() string {
@@ -53,17 +56,25 @@ type Delete func(subject permission.Auditable, id ID) error
 // FindMyRoles returns only those roles, in which the subject is a member.
 type FindMyRoles func(subject permission.Auditable) iter.Seq2[Role, error]
 
+// ListPermissions returns all permissions assigned to the given role.
+type ListPermissions func(subject permission.Auditable, id ID) iter.Seq2[permission.ID, error]
+
+// UpdatePermissions replaces all permissions assigned to the given role.
+type UpdatePermissions func(subject permission.Auditable, id ID, permissions []permission.ID) error
+
 type UseCases struct {
-	FindByID    FindByID
-	FindAll     FindAll
-	Create      Create
-	Upsert      Upsert
-	Update      Update
-	Delete      Delete
-	FindMyRoles FindMyRoles
+	FindByID          FindByID
+	FindAll           FindAll
+	Create            Create
+	Upsert            Upsert
+	Update            Update
+	Delete            Delete
+	FindMyRoles       FindMyRoles
+	ListPermissions   ListPermissions
+	UpdatePermissions UpdatePermissions
 }
 
-func NewUseCases(repo Repository, bus events.Bus) UseCases {
+func NewUseCases(repo Repository, bus events.Bus, rdb *rebac.DB) UseCases {
 	// note, that we cannot refactor to use auth.Decorate the repo, due to bootstrapping and cycle problem
 	var roleMutex sync.Mutex
 	findByIdFn := NewFindByID(repo)
@@ -71,16 +82,18 @@ func NewUseCases(repo Repository, bus events.Bus) UseCases {
 	createFn := NewCreate(&roleMutex, repo, bus)
 	upsertFn := NewUpsert(&roleMutex, repo, bus)
 	updateFn := NewUpdate(&roleMutex, repo, bus)
-	deleteFn := NewDelete(&roleMutex, repo, bus)
+	deleteFn := NewDelete(&roleMutex, repo, bus, rdb)
 	findMyRolesFn := NewFindMyRoles(repo)
 
 	return UseCases{
-		FindByID:    findByIdFn,
-		FindAll:     findAllFn,
-		Create:      createFn,
-		Upsert:      upsertFn,
-		Update:      updateFn,
-		Delete:      deleteFn,
-		FindMyRoles: findMyRolesFn,
+		FindByID:          findByIdFn,
+		FindAll:           findAllFn,
+		Create:            createFn,
+		Upsert:            upsertFn,
+		Update:            updateFn,
+		Delete:            deleteFn,
+		FindMyRoles:       findMyRolesFn,
+		ListPermissions:   NewListPermissions(rdb),
+		UpdatePermissions: NewUpdatePermissions(rdb),
 	}
 }

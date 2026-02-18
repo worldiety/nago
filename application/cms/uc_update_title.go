@@ -8,15 +8,17 @@
 package cms
 
 import (
-	"go.wdy.de/nago/auth"
-	"golang.org/x/text/language"
 	"os"
 	"sync"
+
+	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/auth"
+	"golang.org/x/text/language"
 )
 
 func NewUpdateTitle(mutex *sync.Mutex, repo Repository) UpdateTitle {
 	return func(subject auth.Subject, id ID, lang language.Tag, title string) error {
-		if err := subject.AuditResource(repo.Name(), string(id), PermUpdateTitle); err != nil {
+		if err := subject.AuditResource(rebac.Namespace(repo.Name()), rebac.Instance(id), PermUpdateTitle); err != nil {
 			return err
 		}
 

@@ -99,7 +99,7 @@ func send(credentials secret.SMTP, m Mail) error {
 	data.writeHeader("From", m.From.String())
 	data.writeHeader("To", recipients(m.To).String())
 	data.writeHeader("CC", recipients(m.CC).String())
-	data.writeHeader("Subject", mime.QEncoding.Encode("UTF-8", m.Subject))
+	data.writeHeader("Source", mime.QEncoding.Encode("UTF-8", m.Subject))
 	data.writeHeader("MIME-Version", "1.0")
 	data.writeHeader("Content-Type", "multipart/mixed;  boundary=\""+boundaryMultipartMixed+"\"")
 	data.rf()

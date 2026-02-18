@@ -40,6 +40,15 @@ func NewBlobStore(name string) *BlobStore {
 	return &BlobStore{name: name, values: xmaps.NewConcurrentMap[string, []byte]()}
 }
 
+func (b *BlobStore) Count(ctx context.Context) (int64, error) {
+	var c int64
+	for range b.values.All() {
+		c++
+	}
+
+	return c, nil
+}
+
 func (b *BlobStore) List(ctx context.Context, opts blob.ListOptions) iter.Seq2[string, error] {
 	return func(yield func(string, error) bool) {
 		var keys []string
@@ -74,7 +83,7 @@ func (b *BlobStore) List(ctx context.Context, opts blob.ListOptions) iter.Seq2[s
 		if opts.Reverse {
 			slices.Reverse(keys)
 		}
-		
+
 		for _, key := range keys {
 			if !yield(key, nil) {
 				return

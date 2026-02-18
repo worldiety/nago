@@ -46,14 +46,6 @@ func PageMyCircleDashboard(wnd core.Window, pages Pages, useCases usercircle.Use
 						wnd.Navigation().ForwardTo(pages.MyCircleGroups, core.Values{"circle": string(circle.ID)})
 					}).Title("Anzeigen")),
 			),
-
-			ui.If(len(circle.Licenses) > 0,
-				cardlayout.Card("Lizenzen").
-					Body(ui.Text("Verwaltung der Per-Nutzer-Lizenzen.")).
-					Footer(ui.SecondaryButton(func() {
-						wnd.Navigation().ForwardTo(pages.MyCircleLicenses, core.Values{"circle": string(circle.ID)})
-					}).Title("Anzeigen")),
-			),
 		),
 	).Alignment(ui.Leading).FullWidth()
 }

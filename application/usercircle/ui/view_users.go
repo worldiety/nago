@@ -9,8 +9,10 @@ package uiusercircles
 
 import (
 	"fmt"
+	"slices"
+
 	"go.wdy.de/nago/application/group"
-	"go.wdy.de/nago/application/license"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/user"
 	uiuser "go.wdy.de/nago/application/user/ui"
@@ -25,10 +27,9 @@ import (
 	"go.wdy.de/nago/presentation/ui/avatar"
 	"go.wdy.de/nago/presentation/ui/list"
 	"go.wdy.de/nago/presentation/ui/picker"
-	"slices"
 )
 
-func viewUsers(wnd core.Window, subtitle string, useCases usercircle.UseCases, usrVisible func(usr user.User) bool, addUser func(users []user.User), removeUser func(users []user.User)) core.View {
+func viewUsers(wnd core.Window, subtitle string, useCases usercircle.UseCases, usrVisible func(usr user.User) bool, addUser func(users []user.User), removeUser func(users []user.User), rdb *rebac.DB) core.View {
 	// security note: this gives us a lot protection in the UI, because if the subject is not a circle admin anymore, we will exit immediately
 	circle, err := loadMyCircle(wnd, useCases)
 	if err != nil {
@@ -132,7 +133,6 @@ func viewUsers(wnd core.Window, subtitle string, useCases usercircle.UseCases, u
 
 	findRoleByID, _ := core.FromContext[role.FindByID](wnd.Context(), "")
 	findGroupByID, _ := core.FromContext[group.FindByID](wnd.Context(), "")
-	findLicenseByID, _ := core.FromContext[license.FindUserLicenseByID](wnd.Context(), "")
 
 	return ui.VStack(
 		ui.H1(circle.Name+" / "+subtitle),
@@ -161,9 +161,14 @@ func viewUsers(wnd core.Window, subtitle string, useCases usercircle.UseCases, u
 
 				usr := dlgPresentedUserUsr.Get()
 
+				usrRoles, err := xslices.Collect2(user.ListRolesFrom(rdb, usr.ID))
+				if err != nil {
+					return alert.BannerError(err)
+				}
+
 				var tmpRoles []role.Role
 				if findRoleByID != nil {
-					for _, rid := range usr.Roles {
+					for _, rid := range usrRoles {
 						r, _ := findRoleByID(user.SU(), rid)
 						if r.IsSome() {
 							tmpRoles = append(tmpRoles, r.Unwrap())
@@ -171,9 +176,14 @@ func viewUsers(wnd core.Window, subtitle string, useCases usercircle.UseCases, u
 					}
 				}
 
+				usrGroups, err := xslices.Collect2(user.ListGroupsFrom(rdb, usr.ID))
+				if err != nil {
+					return alert.BannerError(err)
+				}
+
 				var tmpGroups []group.Group
 				if findGroupByID != nil {
-					for _, rid := range usr.Groups {
+					for _, rid := range usrGroups {
 						r, _ := findGroupByID(user.SU(), rid)
 						if r.IsSome() {
 							tmpGroups = append(tmpGroups, r.Unwrap())
@@ -181,17 +191,7 @@ func viewUsers(wnd core.Window, subtitle string, useCases usercircle.UseCases, u
 					}
 				}
 
-				var tmpLicenses []license.UserLicense
-				if findLicenseByID != nil {
-					for _, rid := range usr.Licenses {
-						r, _ := findLicenseByID(user.SU(), rid)
-						if r.IsSome() {
-							tmpLicenses = append(tmpLicenses, r.Unwrap())
-						}
-					}
-				}
-
-				return alert.Dialog("Über", uiuser.ViewProfile(wnd, tmpRoles, tmpGroups, tmpLicenses, usr.Email, usr.Contact), dlgPresentedUserDetails, alert.Width(ui.L560), alert.Back(nil), alert.Closeable())
+				return alert.Dialog("Über", uiuser.ViewProfile(wnd, tmpRoles, tmpGroups, usr.Email, usr.Contact), dlgPresentedUserDetails, alert.Width(ui.L560), alert.Back(nil), alert.Closeable())
 			}),
 			ui.Lazy(func() core.View {
 				if selectedCount > 0 {

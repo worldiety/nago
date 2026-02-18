@@ -157,6 +157,15 @@ var (
 		i18n.LocalizationHint("This text is usually used on buttons and is displayed where space must be minified. So keep it as short and generic as possible."),
 	)
 
+	ActionExecute = i18n.MustString(
+		"nago.common.action.execute",
+		i18n.Values{
+			language.English: "Execute",
+			language.German:  "Ausführen",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons and is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
 	ActionClose = i18n.MustString(
 		"nago.common.action.close",
 		i18n.Values{
@@ -249,6 +258,15 @@ var (
 		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
 	)
 
+	LabelScript = i18n.MustString(
+		"nago.common.label.script",
+		i18n.Values{
+			language.English: "Script",
+			language.German:  "Script",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
 	LabelOptions = i18n.MustString(
 		"nago.common.label.options",
 		i18n.Values{
@@ -263,6 +281,24 @@ var (
 		i18n.Values{
 			language.English: "Name",
 			language.German:  "Name",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
+	LabelOverview = i18n.MustString(
+		"nago.common.label.overview",
+		i18n.Values{
+			language.English: "Overview",
+			language.German:  "Übersicht",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
+	LabelMigrations = i18n.MustString(
+		"nago.common.label.migrations",
+		i18n.Values{
+			language.English: "Migrations",
+			language.German:  "Migrationen",
 		},
 		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
 	)
@@ -321,6 +357,15 @@ var (
 		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
 	)
 
+	LabelRoles = i18n.MustString(
+		"nago.common.label.roles",
+		i18n.Values{
+			language.English: "Roles",
+			language.German:  "Rollen",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
 	LabelSender = i18n.MustString(
 		"nago.common.label.sender",
 		i18n.Values{
@@ -344,6 +389,24 @@ var (
 		i18n.Values{
 			language.English: "State",
 			language.German:  "Status",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
+	LabelInstalled = i18n.MustString(
+		"nago.common.label.installed",
+		i18n.Values{
+			language.English: "installed",
+			language.German:  "installiert",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
+	LabelPending = i18n.MustString(
+		"nago.common.label.pending",
+		i18n.Values{
+			language.English: "pending",
+			language.German:  "wartet",
 		},
 		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
 	)
@@ -470,6 +533,15 @@ var (
 		i18n.Values{
 			language.English: "Value",
 			language.German:  "Wert",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
+	LabelVersion = i18n.MustString(
+		"nago.common.label.version",
+		i18n.Values{
+			language.English: "Version",
+			language.German:  "Version",
 		},
 		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
 	)

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/worldiety/option"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/data/json"
@@ -20,7 +21,7 @@ import (
 
 func NewGetStatus(eventStore blob.Store) GetStatus {
 	return func(subject auth.Subject, id Instance) (option.Opt[Status], error) {
-		if err := subject.AuditResource(eventStore.Name(), string(id), PermGetStatus); err != nil {
+		if err := subject.AuditResource(rebac.Namespace(eventStore.Name()), rebac.Instance(id), PermGetStatus); err != nil {
 			return option.Opt[Status]{}, err
 		}
 

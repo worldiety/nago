@@ -14,13 +14,14 @@ import (
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/std/concurrent"
 )
 
-func NewViewOf(ctx context.Context, bus events.Bus, users data.NotifyRepository[User, ID], roles data.ReadRepository[role.Role, role.ID]) SubjectFromUser {
+func NewViewOf(ctx context.Context, bus events.Bus, users data.NotifyRepository[User, ID], rdb *rebac.DB) SubjectFromUser {
 	var cachedViews concurrent.RWMap[ID, *viewImpl]
 
 	users.AddDeletedObserver(func(repository data.Repository[User, ID], deleted data.Deleted[ID]) error {
@@ -72,7 +73,7 @@ func NewViewOf(ctx context.Context, bus events.Bus, users data.NotifyRepository[
 			return option.None[Subject](), nil
 		}
 
-		usr := newViewImpl(ctx, users, roles, optUsr.Unwrap())
+		usr := newViewImpl(ctx, rdb, users, optUsr.Unwrap())
 		cachedViews.Put(id, usr)
 
 		return option.Some[Subject](usr), nil

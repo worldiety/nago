@@ -9,56 +9,33 @@ package user
 
 import (
 	"go.wdy.de/nago/application/permission"
-	"slices"
-	"sync"
+	"go.wdy.de/nago/application/rebac"
 )
 
-func NewRemoveResourcePermissions(mutex *sync.Mutex, repo Repository) RemoveResourcePermissions {
+func NewRemoveResourcePermissions(rdb *rebac.DB) RemoveResourcePermissions {
 	return func(subject AuditableUser, uid ID, resource Resource, permissions ...permission.ID) error {
 		if err := subject.Audit(PermRemoveResourcePermissions); err != nil {
 			return err
 		}
 
-		mutex.Lock()
-		defer mutex.Unlock()
+		for _, id := range permissions {
+			err := rdb.Delete(rebac.Triple{
+				Source: rebac.Entity{
+					Namespace: Namespace,
+					Instance:  rebac.Instance(uid),
+				},
+				Relation: rebac.Relation(id),
+				Target: rebac.Entity{
+					Namespace: rebac.Namespace(resource.Name),
+					Instance:  rebac.Instance(resource.ID),
+				},
+			})
 
-		optUsr, err := repo.FindByID(uid)
-		if err != nil {
-			return err
-		}
-
-		if optUsr.IsNone() {
-			// that actually means that all permissions are gone
-			return nil
-		}
-
-		usr := optUsr.Unwrap()
-		perms := usr.Resources[resource]
-		changed := false
-
-		perms = slices.DeleteFunc(perms, func(id permission.ID) bool {
-			toRemove := slices.Contains(permissions, id)
-			if toRemove {
-				changed = true
+			if err != nil {
+				return err
 			}
-
-			return toRemove
-		})
-
-		if !changed {
-			// nothing to write, exit early
-			return nil
 		}
 
-		// clean up properly
-		slices.Sort(perms)
-		perms = slices.Compact(perms)
-		if usr.Resources == nil {
-			usr.Resources = map[Resource][]permission.ID{}
-		}
-		
-		usr.Resources[resource] = perms
-
-		return repo.Save(usr)
+		return nil
 	}
 }
