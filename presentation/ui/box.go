@@ -38,14 +38,15 @@ type BoxLayout struct {
 // layouts, but usually requires absolute height and width. Shadows may require
 // extra padding since clipped children cannot extend beyond the container.
 type TBox struct {
-	children           []alignedComponent
-	backgroundColor    proto.Color
-	frame              Frame
-	padding            proto.Padding
-	font               proto.Font
-	border             proto.Border
-	accessibilityLabel string
-	invisible          bool
+	children                    []alignedComponent
+	backgroundColor             proto.Color
+	frame                       Frame
+	padding                     proto.Padding
+	font                        proto.Font
+	border                      proto.Border
+	accessibilityLabel          string
+	invisible                   bool
+	disableOutsidePointerEvents bool
 }
 
 // BoxAlign creates a new Box with a single child aligned according to
@@ -203,6 +204,12 @@ func (c TBox) Visible(visible bool) DecoredView {
 	return c
 }
 
+// DisableOutsidePointerEvents controls whether pointer events are disabled outside the box's content.
+func (c TBox) DisableOutsidePointerEvents(disable bool) TBox {
+	c.disableOutsidePointerEvents = disable
+	return c
+}
+
 // AccessibilityLabel sets a label used by screen readers for accessibility.
 func (c TBox) AccessibilityLabel(label string) DecoredView {
 	c.accessibilityLabel = label
@@ -222,10 +229,11 @@ func (c TBox) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	return &proto.Box{
-		Children:        tmp,
-		Frame:           c.frame.ora(),
-		BackgroundColor: c.backgroundColor,
-		Padding:         c.padding,
-		Border:          c.border,
+		Children:                    tmp,
+		Frame:                       c.frame.ora(),
+		BackgroundColor:             c.backgroundColor,
+		Padding:                     c.padding,
+		Border:                      c.border,
+		DisableOutsidePointerEvents: proto.Bool(c.disableOutsidePointerEvents),
 	}
 }

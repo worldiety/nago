@@ -276,18 +276,22 @@ export class Box implements Writeable, Readable, Component {
 
 	public border?: Border;
 
+	public disableOutsidePointerEvents?: Bool;
+
 	constructor(
 		children: AlignedComponents | undefined = undefined,
 		frame: Frame | undefined = undefined,
 		backgroundColor: Color | undefined = undefined,
 		padding: Padding | undefined = undefined,
-		border: Border | undefined = undefined
+		border: Border | undefined = undefined,
+		disableOutsidePointerEvents: Bool | undefined = undefined
 	) {
 		this.children = children;
 		this.frame = frame;
 		this.backgroundColor = backgroundColor;
 		this.padding = padding;
 		this.border = border;
+		this.disableOutsidePointerEvents = disableOutsidePointerEvents;
 	}
 
 	read(reader: BinaryReader): void {
@@ -320,6 +324,10 @@ export class Box implements Writeable, Readable, Component {
 					this.border.read(reader);
 					break;
 				}
+				case 6: {
+					this.disableOutsidePointerEvents = readBool(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -334,6 +342,7 @@ export class Box implements Writeable, Readable, Component {
 			this.backgroundColor !== undefined,
 			this.padding !== undefined && !this.padding.isZero(),
 			this.border !== undefined && !this.border.isZero(),
+			this.disableOutsidePointerEvents !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -357,6 +366,10 @@ export class Box implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.RECORD, 5);
 			this.border!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 6);
+			writeBool(writer, this.disableOutsidePointerEvents!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -365,7 +378,8 @@ export class Box implements Writeable, Readable, Component {
 			(this.frame === undefined || this.frame.isZero()) &&
 			this.backgroundColor === undefined &&
 			(this.padding === undefined || this.padding.isZero()) &&
-			(this.border === undefined || this.border.isZero())
+			(this.border === undefined || this.border.isZero()) &&
+			this.disableOutsidePointerEvents === undefined
 		);
 	}
 
@@ -375,6 +389,7 @@ export class Box implements Writeable, Readable, Component {
 		this.backgroundColor = undefined;
 		this.padding = undefined;
 		this.border = undefined;
+		this.disableOutsidePointerEvents = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

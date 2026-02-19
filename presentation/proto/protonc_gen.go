@@ -357,20 +357,22 @@ func (CallResolved) isNagoEvent()                      {}
 //   - z-order is defined as defined children order, thus later children are put on top of others
 //   - it is undefined behavior, to define multiple children with the same alignment. So this must not be rendered.
 type Box struct {
-	Children        AlignedComponents
-	Frame           Frame
-	BackgroundColor Color
-	Padding         Padding
-	Border          Border
+	Children                    AlignedComponents
+	Frame                       Frame
+	BackgroundColor             Color
+	Padding                     Padding
+	Border                      Border
+	DisableOutsidePointerEvents Bool
 }
 
 func (v *Box) write(w *BinaryWriter) error {
-	var fields [6]bool
+	var fields [7]bool
 	fields[1] = !v.Children.IsZero()
 	fields[2] = !v.Frame.IsZero()
 	fields[3] = !v.BackgroundColor.IsZero()
 	fields[4] = !v.Padding.IsZero()
 	fields[5] = !v.Border.IsZero()
+	fields[6] = !v.DisableOutsidePointerEvents.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -421,6 +423,14 @@ func (v *Box) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[6] {
+		if err := w.writeFieldHeader(uvarint, 6); err != nil {
+			return err
+		}
+		if err := v.DisableOutsidePointerEvents.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -458,6 +468,11 @@ func (v *Box) read(r *BinaryReader) error {
 			}
 		case 5:
 			err := v.Border.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.DisableOutsidePointerEvents.read(r)
 			if err != nil {
 				return err
 			}
@@ -14513,13 +14528,14 @@ func (v *Box) reset() {
 	v.BackgroundColor.reset()
 	v.Padding.reset()
 	v.Border.reset()
+	v.DisableOutsidePointerEvents.reset()
 }
 
 func (v *Box) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Children.IsZero() && v.Frame.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.Border.IsZero()
+	return v.Children.IsZero() && v.Frame.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.Border.IsZero() && v.DisableOutsidePointerEvents.IsZero()
 }
 
 func (v *UpdateStateValueRequested) reset() {

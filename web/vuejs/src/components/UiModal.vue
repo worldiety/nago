@@ -11,7 +11,7 @@
 	<div v-if="!ui.content"></div>
 	<Teleport v-else-if="ui.modalType == ModalTypeValues.ModalTypeOverlay" to="#ora-overlay">
 		<Transition>
-			<div v-show="ui.content" class="pointer-events-auto fixed" :style="styles">
+			<div v-show="ui.content" class="pointer-events-auto fixed" :style="styles" @click.stop="sendDismissEvent">
 				<UiGeneric :ui="ui.content" class="" />
 			</div>
 		</Transition>
@@ -23,6 +23,7 @@
 			class="pointer-events-auto fixed"
 			@keydown.tab.exact="moveFocusForward"
 			@keydown.shift.tab="moveFocusBackwards"
+			@click.stop="sendDismissEvent"
 		>
 			<UiGeneric v-if="ui.content" :ui="ui.content" class="h-screen w-screen" @click.stop />
 		</div>
@@ -30,17 +31,22 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, onUnmounted, ref } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
 import { cssLengthValue } from '@/components/shared/length';
 import { onModalClose, onModalOpen } from '@/components/shared/modalManager';
-import { Modal, ModalTypeValues } from '@/shared/proto/nprotoc_gen';
+import { useServiceAdapter } from '@/composables/serviceAdapter';
+import { nextRID } from '@/eventhandling';
+import type { Modal } from '@/shared/proto/nprotoc_gen';
+import { FunctionCallRequested } from '@/shared/proto/nprotoc_gen';
+import { ModalTypeValues } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: Modal;
 	//isActiveDialog: boolean|undefined;
 }>();
 
+const serviceAdapter = useServiceAdapter();
 const dialogContainer = ref<HTMLElement | undefined>();
 let firstFocusableElement: HTMLElement | undefined;
 let lastFocusableElement: HTMLElement | undefined;
@@ -91,6 +97,12 @@ const styles = computed<string>(() => {
 	return styles.join(';');
 });
 
+function sendDismissEvent() {
+	if (!props.ui.onDismissRequest) return;
+
+	serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.onDismissRequest, nextRID()));
+}
+
 function captureFocusInDialog(): void {
 	const focusableElements =
 		dialogContainer.value?.querySelectorAll('[tabindex="0"], button:not([tabindex="-1"])') ?? [];
@@ -123,6 +135,18 @@ function moveFocusBackwards(e: KeyboardEvent): void {
 		return;
 	}
 }
+
+function onKeydown(e: KeyboardEvent) {
+	if (e.code === 'Escape') sendDismissEvent();
+}
+
+onMounted(() => {
+	addEventListener('keydown', onKeydown);
+});
+
+onUnmounted(() => {
+	removeEventListener('keydown', onKeydown);
+});
 </script>
 <style>
 .v-enter-active,
