@@ -51,6 +51,11 @@
     "11": {
       "name": "Disabled",
       "type": "Bool"
+    },
+    "12": {
+      "doc": "DoubleMode determines whether the picker shall show two months instead of one.",
+      "name": "DoubleMode",
+      "type": "Bool"
     }
   }
 }

@@ -8,13 +8,13 @@
 -->
 
 <script lang="ts" setup>
-import {computed} from 'vue';
-import {frameCSS} from '@/components/shared/frame';
+import { computed } from 'vue';
+import { frameCSS } from '@/components/shared/frame';
+import { cssLengthValue } from '@/components/shared/length';
 import type ApexCharts from 'apexcharts';
 import VueApexCharts from 'vue3-apexcharts';
-import {ChartDataPoint, ChartSeriesTypeValues, LineChart, LineChartCurveValues} from '@/shared/proto/nprotoc_gen';
-import {colorToHexValue} from '@/shared/tailwindTranslator';
-import {cssLengthValue} from "@/components/shared/length";
+import { ChartDataPoint, ChartSeriesTypeValues, LineChart, LineChartCurveValues } from '@/shared/proto/nprotoc_gen';
+import { colorToHexValue } from '@/shared/tailwindTranslator';
 
 const props = defineProps<{
 	ui: LineChart;
@@ -29,8 +29,8 @@ const options = computed<ApexCharts.ApexOptions>(() => {
 					download: props.ui.chart?.downloadable ?? false,
 				},
 			},
-			height: cssLengthValue(props.ui.chart?.frame?.height ?? "auto"),
-			width: cssLengthValue(props.ui.chart?.frame?.width ?? "auto"),
+			height: cssLengthValue(props.ui.chart?.frame?.height ?? 'auto'),
+			width: cssLengthValue(props.ui.chart?.frame?.width ?? 'auto'),
 		},
 		colors: colors.value,
 		series: series.value,
@@ -116,6 +116,12 @@ function mapSeriesType(seriesType: number | undefined) {
 
 <template>
 	<div :style="frameStyles">
-		<VueApexCharts type="line" :series="options.series" :options="options" :height="props.ui.chart?.frame?.height" :width="props.ui.chart?.frame?.width" />
+		<VueApexCharts
+			type="line"
+			:series="options.series"
+			:options="options"
+			:height="props.ui.chart?.frame?.height"
+			:width="props.ui.chart?.frame?.width"
+		/>
 	</div>
 </template>

@@ -19,7 +19,7 @@ A ScrollView can either be horizontal or vertical. By default, it is vertical.
 | `Frame(frame Frame)` | Frame sets the layout frame for the scroll view. |
 | `Padding(padding Padding)` | Padding sets the inner padding of the scroll view. |
 | `Position(position Position)` | Position sets the alignment of the content inside the scroll view. |
-| `ScrollToView(animation ScrollAnimation, scrollToView string)` |  |
+| `ScrollToView(scrollToView string, animation ScrollAnimation)` |  |
 ---
 
 ## Related

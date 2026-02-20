@@ -16,4 +16,5 @@ export default interface DatepickerDay {
 	selectedEnd: boolean;
 	withinRange: boolean;
 	selectable: boolean;
+	otherMonth: boolean;
 }
