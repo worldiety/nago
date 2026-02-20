@@ -14,7 +14,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/worldiety/option"
 	"go.wdy.de/nago/pkg/data/rquery"
 	"go.wdy.de/nago/presentation/core"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
@@ -436,7 +435,6 @@ func (c TPicker[T]) Dialog() core.View {
 
 func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
 	// TODO refactor me to use the picker.TButton
-	colors := core.Colors[ui.Colors](ctx.Window())
 	borderColor := ui.Color("")
 	backgroundColor := ui.Color("")
 	if c.disabled {
@@ -466,13 +464,12 @@ func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
 			c.pickerPresented.Set(true)
 		})
 
-		hoverBC := option.Must(colors.I1.WithChromaAndTone(16, 75))
-		inner = inner.(ui.THStack).HoveredBorder(ui.Border{}.Color(hoverBC).Width(ui.L1).Radius("0.375rem"))
+		inner = inner.(ui.THStack).HoveredBorder(ui.Border{}.Color(ui.I0).Width(ui.L1).Radius("0.375rem"))
 	}
 
 	return ui.VStack(
 		ui.IfElse(c.errorText == "",
-			ui.If(c.label != "", ui.Text(c.label).Font(ui.Font{Size: ui.L14}).Color(borderColor)),
+			ui.If(c.label != "", ui.Text(c.label).Font(ui.Font{Size: ui.L14, LineHeight: "1.25rem"}).Color(borderColor)),
 			ui.HStack(
 				ui.Image().StrokeColor(ui.SE0).Embed(heroSolid.XMark).Frame(ui.Frame{}.Size(ui.L20, ui.L20)),
 				ui.Text(c.label).Font(ui.Font{Size: ui.L16}).Color(ui.SE0),

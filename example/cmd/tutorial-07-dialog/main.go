@@ -9,11 +9,12 @@ package main
 
 import (
 	"fmt"
+	"slices"
+
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
 	. "go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
-	"slices"
 )
 
 func main() {
@@ -34,7 +35,9 @@ func main() {
 						Footer(PrimaryButton(func() {
 							isPresented.Set(false)
 						}).Title("Schließen")),
-				)),
+				).OnDismissRequest(func() {
+					isPresented.Set(false)
+				})),
 			).Append(
 				slices.Collect(func(yield func(core.View) bool) {
 					for i := range 50 {

@@ -21,6 +21,10 @@
     "5": {
       "name": "Border",
       "type": "Border"
+    },
+    "6": {
+      "name": "DisableOutsidePointerEvents",
+      "type": "Bool"
     }
   }
 }

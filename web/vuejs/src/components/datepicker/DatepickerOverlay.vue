@@ -9,96 +9,111 @@
 
 <template>
 	<div
-		v-if="datepickerExpanded"
 		ref="datepicker"
-		class="fixed top-0 left-0 bottom-0 right-0 flex justify-center items-center z-30"
+		class="datepicker"
+		:class="{ 'double-mode': doubleMode }"
 		@keydown.tab.exact="moveFocusForward"
 		@keydown.shift.tab="moveFocusBackwards"
 		@keydown.esc="$emit('close')"
 	>
-		<div class="relative bg-M1 rounded-xl shadow-lg max-w-96 p-6 z-10">
+		<div class="relative bg-M1 rounded-xl shadow-lg p-6 z-10">
 			<div class="h-[23rem]">
-				<DatepickerHeader ref="datepickerHeader" :label="label" @close="emit('close')" class="mb-4" />
+				<DatepickerHeader ref="datepickerHeader" :label="label" class="mb-4" @close="emit('close')" />
 
-				<!-- Datepicker content -->
-				<div class="flex justify-between items-center mb-4 h-8">
-					<div
-						class="flex justify-center items-center rounded-full size-8"
-						:class="lowerBoundReached ? 'opacity-50' : 'hover:bg-I0/15 cursor-pointer'"
-						:tabindex="lowerBoundReached ? '-1' : '0'"
-						@click="tryDecreaseMonth"
-						@keydown.enter="tryDecreaseMonth"
-					>
-						<ArrowRight class="rotate-180 h-4" />
-					</div>
-					<div class="flex justify-center items-center basis-2/3 gap-x-px text-lg h-full">
-						<div class="basis-1/2 shrink-0 grow-0 h-full">
-							<select
-								v-model="currentMonthIndexModel"
-								class="hover:bg-I0/15 border-0 bg-M1 text-right cursor-pointer rounded-l-md select-none w-full h-full px-2"
+				<div class="datepicker-months">
+					<!-- Datepicker content -->
+					<div v-for="i in monthsToShow" :key="`date_picker_month_${i}`" class="datepicker-content">
+						<div class="flex justify-between items-center mb-4 h-8">
+							<button
+								class="flex justify-center items-center rounded-full size-8"
+								:class="{
+									'opacity-50': lowerBoundReached && i === 1,
+									'hover:bg-I0/15 cursor-pointer': !lowerBoundReached,
+									'opacity-0 pointer-events-none': i !== 1,
+								}"
+								:tabindex="lowerBoundReached ? '-1' : '0'"
+								@click="tryDecreaseMonth"
+								@keydown.enter="tryDecreaseMonth"
 							>
-								<option
-									v-for="(monthEntry, index) of monthNames.entries()"
-									:key="index"
-									:value="monthEntry[0]"
+								<ArrowRight class="rotate-180 h-4" />
+							</button>
+							<div class="flex justify-center items-center basis-2/3 text-lg h-full">
+								<div class="basis-1/2 shrink-0 grow-0 h-full">
+									<select
+										:value="getSelectedMonth(i - 1)"
+										class="hover:bg-I0/15 border-0 bg-M1 text-right cursor-pointer rounded-l-md select-none w-full h-full pr-0.5 pt-px"
+										@change="onMonthChange($event, i - 1)"
+									>
+										<option
+											v-for="(monthEntry, index) of monthNames.entries()"
+											:key="index"
+											:value="monthEntry[0]"
+										>
+											{{ monthEntry[1] }}
+										</option>
+									</select>
+								</div>
+								<div class="basis-1/2 shrink-0 grow-0 h-full">
+									<input
+										:value="getSelectedYear(i - 1)"
+										type="number"
+										step="1"
+										:min="MIN_YEAR"
+										class="hover:bg-I0/15 border-0 bg-M1 rounded-r-md text-left w-full h-full appearance-none pl-0.5"
+										@keydown.enter="onYearChange($event, i - 1)"
+										@change="onYearChange($event, i - 1)"
+										@blur="onYearChange($event, i - 1)"
+									/>
+								</div>
+							</div>
+							<button
+								class="hover:bg-I0/15 flex justify-center items-center cursor-pointer rounded-full size-8"
+								:class="i !== monthsToShow ? 'opacity-0 pointer-events-none' : ''"
+								tabindex="0"
+								@click="increaseMonth"
+								@keydown.enter="increaseMonth"
+							>
+								<ArrowRight class="h-4" />
+							</button>
+						</div>
+
+						<div class="datepicker-grid grid grid-cols-7 gap-y-2 text-center leading-none">
+							<span>Mo</span>
+							<span>Di</span>
+							<span>Mi</span>
+							<span>Do</span>
+							<span>Fr</span>
+							<span>Sa</span>
+							<span>So</span>
+
+							<div
+								v-for="(day, index) in getDatepickerDays(i - 1)"
+								:key="index"
+								class="relative flex justify-center items-center h-full w-full"
+								:class="{
+									'within-range-day': day.withinRange,
+									'selected-start-day-container': day.selectedStart,
+									'selected-end-day-container': day.selectedEnd,
+									'other-month-day': day.otherMonth,
+								}"
+							>
+								<div
+									:ref="(el) => setLastDatepickerDayElement(el, index)"
+									class="day flex justify-center items-center"
+									:class="{
+										'hover:bg-I0/15 cursor-pointer': day.selectable,
+										'unselectable-day': !day.selectable,
+										'selected-day': day.selectedStart || day.selectedEnd,
+										'text-disabled-text':
+											!day.withinRange && day.monthIndex !== getSelectedMonth(i - 1),
+									}"
+									:tabindex="day.selectable ? '0' : '-1'"
+									@click="trySelectDate(day)"
+									@keydown.enter="trySelectDate(day)"
 								>
-									{{ monthEntry[1] }}
-								</option>
-							</select>
-						</div>
-						<div class="basis-1/2 shrink-0 grow-0 h-full">
-							<input
-								v-model="yearInputModel"
-								type="text"
-								class="hover:bg-I0/15 border-0 bg-M1 rounded-r-md text-left w-full h-full px-2"
-								@blur="trySubmitYearInput"
-							/>
-						</div>
-					</div>
-					<div
-						class="hover:bg-I0/15 flex justify-center items-center cursor-pointer rounded-full size-8"
-						tabindex="0"
-						@click="increaseMonth"
-						@keydown.enter="increaseMonth"
-					>
-						<ArrowRight class="h-4" />
-					</div>
-				</div>
-
-				<div class="datepicker-grid grid grid-cols-7 gap-y-2 text-center leading-none">
-					<span>Mo</span>
-					<span>Di</span>
-					<span>Mi</span>
-					<span>Do</span>
-					<span>Fr</span>
-					<span>Sa</span>
-					<span>So</span>
-
-					<div
-						v-for="(datepickerDay, index) in datepickerDays"
-						:key="index"
-						class="relative flex justify-center items-center h-full w-full"
-						:class="{
-							'within-range-day': datepickerDay.withinRange,
-							'selected-start-day-container': datepickerDay.selectedStart,
-							'selected-end-day-container': datepickerDay.selectedEnd,
-						}"
-					>
-						<div
-							:ref="(el) => setLastDatepickerDayElement(el, index)"
-							class="day flex justify-center items-center"
-							:class="{
-								'hover:bg-I0/15 cursor-pointer': datepickerDay.selectable,
-								'unselectable-day': !datepickerDay.selectable,
-								'selected-day': datepickerDay.selectedStart || datepickerDay.selectedEnd,
-								'text-disabled-text':
-									!datepickerDay.withinRange && datepickerDay.monthIndex !== currentMonthIndexModel,
-							}"
-							:tabindex="datepickerDay.selectable ? '0' : '-1'"
-							@click="trySelectDate(datepickerDay)"
-							@keydown.enter="trySelectDate(datepickerDay)"
-						>
-							<span class="select-none">{{ datepickerDay.dayOfMonth }}</span>
+									<span class="select-none">{{ day.dayOfMonth }}</span>
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -114,23 +129,28 @@
 				</p>
 				<button
 					v-else-if="rangeSelectionState === RangeSelectionState.COMPLETE"
-					@click="clearSelection"
 					class="flex justify-start items-center gap-x-2 text-I0 underline mt-2"
+					@click="clearSelection"
 				>
 					<undo-icon class="h-4" aria-hidden="true" /> Auswahl zurücksetzen
 				</button>
 
 				<div class="border-b border-b-disabled-background mt-3 mb-6"></div>
 
-				<!-- Confirm button when in range mode -->
-				<button
-					ref="confirmButton"
-					class="button-confirm button-primary"
-					:disabled="rangeSelectionState !== RangeSelectionState.COMPLETE"
-					@click="emit('submitSelection')"
-				>
-					{{ t('datepicker.confirm') }}
-				</button>
+				<div class="footer">
+					<div v-if="doubleMode" class="actions"></div>
+					<div class="actions">
+						<!-- Confirm button when in range mode -->
+						<button
+							ref="confirmButton"
+							class="button-confirm button-primary"
+							:disabled="rangeSelectionState === RangeSelectionState.SELECT_END"
+							@click="emit('submitSelection')"
+						>
+							{{ t('datepicker.confirm') }}
+						</button>
+					</div>
+				</div>
 			</template>
 		</div>
 
@@ -140,18 +160,21 @@
 </template>
 
 <script setup lang="ts">
-import { ComponentPublicInstance, computed, nextTick, ref, useTemplateRef, watch } from 'vue';
+import type { ComponentPublicInstance } from 'vue';
+import { watch } from 'vue';
+import { computed, ref, useTemplateRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 import ArrowRight from '@/assets/svg/arrowRightBold.svg';
 import UndoIcon from '@/assets/svg/undo.svg';
 import DatepickerHeader from '@/components/datepicker/DatepickerHeader.vue';
 import type DatepickerDay from '@/components/datepicker/datepickerDay';
 import { RangeSelectionState } from '@/components/datepicker/rangeSelectionState';
+import { weekNumber } from 'weeknumber';
 import monthNames from '@/shared/monthNames';
 
 const props = defineProps<{
-	datepickerExpanded: boolean;
 	rangeMode: boolean;
+	doubleMode?: boolean;
 	label?: string;
 	selectedStartDay: number;
 	selectedStartMonth: number;
@@ -170,36 +193,18 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+const MIN_YEAR = 1583;
 const datepickerHeader = useTemplateRef('datepickerHeader');
 const confirmButton = useTemplateRef('confirmButton');
 const datepicker = ref<HTMLElement | undefined>();
+
 const currentDate = new Date();
-const currentYear = ref<number>(currentDate.getFullYear());
-const currentMonthIndexModel = ref<number>(currentDate.getMonth());
-const yearInputModel = ref<string>('');
+const selectedMonth = ref<number>(props.selectedStartMonth - 1);
+const selectedYear = ref<number>(props.selectedStartYear);
+
 const lastDatepickerDayIndex = ref<number | null>(null);
 const lastDatepickerDayElement = ref<ComponentPublicInstance | Element | null>(null);
-const lowerBoundYear = 1583;
-
-watch(
-	() => props.datepickerExpanded,
-	(newValue) => {
-		if (newValue) {
-			nextTick(() => {
-				datepickerHeader.value?.closeButton?.focus();
-				switchToMonthWithSelectedStartDate();
-			});
-		}
-	}
-);
-
-watch(yearInputModel, (newValue) => {
-	// Only support years after introduction of the gregorian calendar
-	const updatedValue = parseInt(newValue, 10);
-	if (updatedValue > 1582) {
-		currentYear.value = updatedValue;
-	}
-});
+const monthsToShow = props.doubleMode ? 2 : 1;
 
 const selectedStartDate = computed((): Date => {
 	if (!props.selectedStartYear || !props.selectedStartMonth || !props.selectedStartDay) {
@@ -215,34 +220,40 @@ const selectedEndDate = computed((): Date => {
 	return new Date(props.selectedEndYear, props.selectedEndMonth - 1, props.selectedEndDay, 0, 0, 0, 0);
 });
 
-const datepickerDays = computed((): DatepickerDay[] => {
-	const datepickerDays: DatepickerDay[] = [];
-
-	// Add days of current month
-	datepickerDays.push(...getDaysOfCurrentMonth());
-
-	// Add filling days of previous month, if the current month's first day is not a monday
-	if (datepickerDays[0].dayOfWeek !== 1) {
-		datepickerDays.unshift(...getFillingDaysOfPreviousMonth());
-	}
-
-	// Add filling days of next month, if the current month's last day is not a sunday
-	const lastDayOfWeekCurrentMonth = datepickerDays.at(-1)?.dayOfWeek;
-	if (lastDayOfWeekCurrentMonth !== undefined && lastDayOfWeekCurrentMonth !== 7) {
-		datepickerDays.push(...getFillingDaysOfNextMonth(lastDayOfWeekCurrentMonth));
-	}
-
-	return datepickerDays;
-});
-
 const lowerBoundReached = computed((): boolean => {
-	return currentMonthIndexModel.value === 0 && currentYear.value === lowerBoundYear;
+	return selectedMonth.value === 0 && selectedYear.value === MIN_YEAR;
 });
 
-function switchToMonthWithSelectedStartDate() {
-	currentYear.value = selectedStartDate.value.getFullYear();
-	yearInputModel.value = currentYear.value.toString(10);
-	currentMonthIndexModel.value = selectedStartDate.value.getMonth();
+function getSelectedMonth(offset: number): number {
+	return (selectedMonth.value + offset) % 12;
+}
+
+function getSelectedYear(offset: number): number {
+	return selectedYear.value + (selectedMonth.value + offset > 11 ? 1 : 0);
+}
+
+function onMonthChange(e: Event, offset: number) {
+	const select = e.target as HTMLSelectElement;
+	if (!select) return;
+
+	const selectedMonthWithoutOffset = parseInt(select.value, 10) - offset;
+	if (selectedMonthWithoutOffset < 0) {
+		selectedMonth.value = selectedMonth.value + 12;
+		selectedYear.value--;
+	} else {
+		selectedMonth.value = selectedMonthWithoutOffset;
+	}
+}
+
+function onYearChange(e: Event, offset: number) {
+	const input = e.target as HTMLInputElement;
+	if (!input || !input.valueAsNumber) return;
+	console.warn(
+		offset,
+		input.valueAsNumber,
+		Math.max(MIN_YEAR, input.valueAsNumber - (selectedMonth.value - offset < 0 ? 1 : 0))
+	);
+	selectedYear.value = Math.max(MIN_YEAR, input.valueAsNumber - (selectedMonth.value - offset < 0 ? 1 : 0));
 }
 
 function setLastDatepickerDayElement(datepickerDay: ComponentPublicInstance | Element | null, index: number) {
@@ -254,129 +265,54 @@ function setLastDatepickerDayElement(datepickerDay: ComponentPublicInstance | El
 	}
 }
 
-function getDaysOfCurrentMonth(): DatepickerDay[] {
+function getDatepickerDays(offset: number): DatepickerDay[] {
 	const daysOfCurrentMonth: DatepickerDay[] = [];
 
-	const dayOfCurrentMonthDate = new Date(currentYear.value, currentMonthIndexModel.value + 1, 0, 0, 0, 0, 0);
-	const lastDayOfCurrentMonth = dayOfCurrentMonthDate.getDate();
-	for (let i = 1; i <= lastDayOfCurrentMonth; i++) {
-		const dayOfWeekDate = new Date(currentYear.value, currentMonthIndexModel.value, i, 0, 0, 0, 0);
-		const datepickerDay: DatepickerDay = {
-			dayOfWeek: dayOfWeekDate.getDay() === 0 ? 7 : dayOfWeekDate.getDay(),
-			dayOfMonth: i,
-			monthIndex: currentMonthIndexModel.value,
-			year: currentYear.value,
-			selectedStart: false,
-			selectedEnd: false,
-			withinRange: false,
-			selectable: true,
-		};
-		datepickerDay.selectedStart = isSelectedStartDay(
-			datepickerDay.dayOfMonth,
-			datepickerDay.monthIndex,
-			datepickerDay.year
-		);
+	const month = selectedMonth.value + offset;
+	const year = selectedYear.value + (month > 11 ? 1 : 0);
+	const firstDayOfSelectedMonth = new Date(year, month, 1);
+	const lastDayOfSelectedMonth = new Date(year, month + 1, 0);
+
+	const dayToShow = new Date(firstDayOfSelectedMonth);
+	while (dayToShow.getDay() !== 1) {
+		dayToShow.setDate(dayToShow.getDate() - 1);
+	}
+
+	while (dayToShow <= lastDayOfSelectedMonth || weekNumber(dayToShow) === weekNumber(lastDayOfSelectedMonth)) {
+		const dayOfWeek = dayToShow.getDay() === 0 ? 7 : dayToShow.getDay();
+		const dayOfMonth = dayToShow.getDate();
+
+		const selectedStart = isSelectedStartDay(dayOfMonth, dayToShow.getMonth(), dayToShow.getFullYear());
+
+		let selectedEnd = false;
+		let withinRange = false;
 		if (props.rangeMode) {
-			datepickerDay.selectedEnd = isSelectedEndDay(
-				datepickerDay.dayOfMonth,
-				datepickerDay.monthIndex,
-				datepickerDay.year
-			);
-			datepickerDay.withinRange = isWithinRange(
-				datepickerDay.dayOfMonth,
-				datepickerDay.monthIndex,
-				datepickerDay.year
-			);
+			selectedEnd = isSelectedEndDay(dayOfMonth, dayToShow.getMonth(), dayToShow.getFullYear());
+			withinRange = isWithinRange(dayOfMonth, dayToShow.getMonth(), dayToShow.getFullYear());
 		}
-		daysOfCurrentMonth.push(datepickerDay);
+
+		const selectable = isSelectableDay(dayOfMonth, dayToShow.getMonth(), dayToShow.getFullYear());
+
+		daysOfCurrentMonth.push({
+			dayOfWeek: dayOfWeek,
+			dayOfMonth: dayOfMonth,
+			monthIndex: dayToShow.getMonth(),
+			year: dayToShow.getFullYear(),
+			selectedStart: selectedStart,
+			selectedEnd: selectedEnd,
+			withinRange: withinRange,
+			selectable: selectable,
+			otherMonth: dayToShow.getMonth() !== month,
+		});
+
+		dayToShow.setDate(dayToShow.getDate() + 1);
 	}
 
 	return daysOfCurrentMonth;
 }
 
-function getFillingDaysOfPreviousMonth(): DatepickerDay[] {
-	const fillingDaysOfPreviousMonth: DatepickerDay[] = [];
-
-	const dayOfPreviousMonthDate = new Date(currentYear.value, currentMonthIndexModel.value, 0, 0, 0, 0, 0);
-	const lastDayOfWeekPreviousMonth = dayOfPreviousMonthDate.getDay() === 0 ? 7 : dayOfPreviousMonthDate.getDay();
-	const lastDayOfPreviousMonth = dayOfPreviousMonthDate.getDate();
-	for (let i = 0; i < lastDayOfWeekPreviousMonth; i++) {
-		dayOfPreviousMonthDate.setDate(lastDayOfPreviousMonth - i);
-		const datepickerDay: DatepickerDay = {
-			dayOfWeek: dayOfPreviousMonthDate.getDay() === 0 ? 7 : dayOfPreviousMonthDate.getDay(),
-			dayOfMonth: lastDayOfPreviousMonth - i,
-			monthIndex: dayOfPreviousMonthDate.getMonth(),
-			year: dayOfPreviousMonthDate.getFullYear(),
-			selectedStart: false,
-			selectedEnd: false,
-			withinRange: false,
-			selectable: !lowerBoundReached.value,
-		};
-		datepickerDay.selectedStart = isSelectedStartDay(
-			datepickerDay.dayOfMonth,
-			datepickerDay.monthIndex,
-			datepickerDay.year
-		);
-		if (props.rangeMode) {
-			datepickerDay.selectedEnd = isSelectedEndDay(
-				datepickerDay.dayOfMonth,
-				datepickerDay.monthIndex,
-				datepickerDay.year
-			);
-			datepickerDay.withinRange = isWithinRange(
-				datepickerDay.dayOfMonth,
-				datepickerDay.monthIndex,
-				datepickerDay.year
-			);
-		}
-		fillingDaysOfPreviousMonth.unshift(datepickerDay);
-	}
-
-	return fillingDaysOfPreviousMonth;
-}
-
-function getFillingDaysOfNextMonth(lastDayOfWeekCurrentMonth: number): DatepickerDay[] {
-	const fillingDaysOfNextMonth: DatepickerDay[] = [];
-
-	let dayOfNextMonthDate: Date;
-	if (currentMonthIndexModel.value + 1 === 12) {
-		dayOfNextMonthDate = new Date(currentYear.value + 1, 0, 1, 0, 0, 0, 0);
-	} else {
-		dayOfNextMonthDate = new Date(currentYear.value, currentMonthIndexModel.value + 1, 1, 0, 0, 0, 0);
-	}
-	for (let i = 1; i <= 7 - lastDayOfWeekCurrentMonth; i++) {
-		dayOfNextMonthDate.setDate(i);
-		const datepickerDay: DatepickerDay = {
-			dayOfWeek: dayOfNextMonthDate.getDay() === 0 ? 7 : dayOfNextMonthDate.getDay(),
-			dayOfMonth: dayOfNextMonthDate.getDate(),
-			monthIndex: dayOfNextMonthDate.getMonth(),
-			year: dayOfNextMonthDate.getFullYear(),
-			selectedStart: false,
-			selectedEnd: false,
-			withinRange: false,
-			selectable: true,
-		};
-		datepickerDay.selectedStart = isSelectedStartDay(
-			datepickerDay.dayOfMonth,
-			datepickerDay.monthIndex,
-			datepickerDay.year
-		);
-		if (props.rangeMode) {
-			datepickerDay.selectedEnd = isSelectedEndDay(
-				datepickerDay.dayOfMonth,
-				datepickerDay.monthIndex,
-				datepickerDay.year
-			);
-			datepickerDay.withinRange = isWithinRange(
-				datepickerDay.dayOfMonth,
-				datepickerDay.monthIndex,
-				datepickerDay.year
-			);
-		}
-		fillingDaysOfNextMonth.push(datepickerDay);
-	}
-
-	return fillingDaysOfNextMonth;
+function isSelectableDay(day: number, monthIndex: number, year: number): boolean {
+	return year >= MIN_YEAR;
 }
 
 function isSelectedStartDay(day: number, monthIndex: number, year: number): boolean {
@@ -406,33 +342,28 @@ function isWithinRange(day: number, monthIndex: number, year: number): boolean {
 		return false;
 	}
 
-	//console.log("check range",day,monthIndex,year)
 	const dateToCheck = new Date(year, monthIndex, day, 0, 0, 0, 0);
 	return selectedStartDate.value <= dateToCheck && dateToCheck <= selectedEndDate.value;
 }
 
 function tryDecreaseMonth(): void {
-	if (lowerBoundReached.value) {
-		return;
-	}
+	if (lowerBoundReached.value) return;
 
-	if (currentMonthIndexModel.value === 0) {
-		currentMonthIndexModel.value = 11;
-		currentYear.value -= 1;
-		yearInputModel.value = currentYear.value.toString(10);
-		return;
+	if (selectedMonth.value === 0) {
+		selectedMonth.value = 11;
+		selectedYear.value--;
+	} else {
+		selectedMonth.value--;
 	}
-	currentMonthIndexModel.value -= 1;
 }
 
 function increaseMonth(): void {
-	if (currentMonthIndexModel.value === 11) {
-		currentMonthIndexModel.value = 0;
-		currentYear.value += 1;
-		yearInputModel.value = currentYear.value.toString(10);
-		return;
+	if (selectedMonth.value === 11) {
+		selectedMonth.value = 0;
+		selectedYear.value++;
+	} else {
+		selectedMonth.value++;
 	}
-	currentMonthIndexModel.value += 1;
 }
 
 function trySelectDate(datepickerDay: DatepickerDay): void {
@@ -475,19 +406,62 @@ function clearSelection() {
 	datepickerHeader.value?.closeButton?.focus();
 }
 
-function trySubmitYearInput() {
-	// Only support years after introduction of the gregorian calendar
-	const updatedValue = parseInt(yearInputModel.value, 10);
-	if (updatedValue < lowerBoundYear) {
-		yearInputModel.value = lowerBoundYear.toString(10);
-		currentYear.value = lowerBoundYear;
-	} else {
-		currentYear.value = updatedValue;
+function showSelectedRange() {
+	for (let i = 1; i <= monthsToShow; i++) {
+		if (props.selectedStartYear === selectedYear.value && props.selectedStartMonth === selectedMonth.value + i)
+			return;
 	}
+
+	selectedMonth.value = props.selectedStartMonth - 1;
+	selectedYear.value = props.selectedStartYear;
 }
+
+watch(() => props.selectedStartYear, showSelectedRange);
+watch(() => props.selectedStartMonth, showSelectedRange);
+watch(() => props.selectedStartDay, showSelectedRange);
 </script>
 
 <style scoped>
+.datepicker {
+	@apply fixed top-0 left-0 bottom-0 right-0 flex justify-center items-center z-30;
+
+	.datepicker-months {
+		@apply grid grid-cols-1 gap-8;
+
+		.datepicker-content {
+			@apply max-w-72;
+		}
+	}
+
+	.footer {
+		@apply flex flex-wrap items-center justify-between gap-4;
+
+		.actions {
+			@apply w-full;
+
+			.button-confirm {
+				@apply w-full;
+			}
+		}
+	}
+
+	&.double-mode {
+		.datepicker-months {
+			@apply grid-cols-2;
+		}
+
+		.footer {
+			.actions {
+				@apply flex items-center justify-end gap-2 w-auto;
+
+				.button-confirm {
+					@apply w-auto;
+				}
+			}
+		}
+	}
+}
+
 .day {
 	@apply relative size-8 rounded-full z-20;
 }
@@ -551,7 +525,7 @@ function trySubmitYearInput() {
 	@apply bg-transparent;
 }
 
-.button-confirm {
-	@apply w-full;
+.other-month-day .day span {
+	@apply opacity-25;
 }
 </style>

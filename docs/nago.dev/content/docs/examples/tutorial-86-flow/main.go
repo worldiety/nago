@@ -29,5 +29,9 @@ func main() {
 
 		option.Must(cfgflow.Enable(cfg, cfgflow.Options{}))
 
+		/*cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {
+			return
+		})*/
+
 	}).Run()
 }

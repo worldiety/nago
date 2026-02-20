@@ -29,6 +29,7 @@ type TDatePicker struct {
 	endValue                xtime.Date              // selected end date (only for range)
 	inputEndValue           *core.State[xtime.Date] // external binding for end date (only for range)
 	frame                   Frame                   // layout frame for sizing and positioning
+	doubleMode              bool                    // when true, the picker shows two months instead of one
 }
 
 // SingleDatePicker creates a date picker configured for selecting a single date,
@@ -110,6 +111,12 @@ func (c TDatePicker) ErrorText(text string) TDatePicker {
 	return c
 }
 
+// DoubleMode enables double-month mode for range pickers.
+func (c TDatePicker) DoubleMode(doubleMode bool) TDatePicker {
+	c.doubleMode = doubleMode
+	return c
+}
+
 // Render builds and returns the protocol representation of the date picker.
 func (c TDatePicker) Render(ctx core.RenderContext) core.RenderNode {
 	return &proto.DatePicker{
@@ -132,5 +139,6 @@ func (c TDatePicker) Render(ctx core.RenderContext) core.RenderNode {
 		Frame:         c.frame.ora(),
 		EndInputValue: c.inputEndValue.Ptr(),
 		Invisible:     proto.Bool(c.invisible),
+		DoubleMode:    proto.Bool(c.doubleMode),
 	}
 }

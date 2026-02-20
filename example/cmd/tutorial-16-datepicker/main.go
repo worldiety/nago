@@ -9,6 +9,7 @@ package main
 
 import (
 	"fmt"
+
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/pkg/xtime"
 	"go.wdy.de/nago/presentation/core"
@@ -39,9 +40,11 @@ func main() {
 
 			return VStack(
 				alert.Dialog("Achtung", Text(fmt.Sprintf("Deine Eingabe: %v, start=%v end=%v", date, start, end)), showAlert, alert.Ok()),
-				SingleDatePicker("Geburtstag", date.Get(), date),
+				SingleDatePicker("Single date", date.Get(), date),
+				SingleDatePicker("Singel date (double month view)", date.Get(), date).DoubleMode(true),
+				RangeDatePicker("Date range", start.Get(), start, end.Get(), end),
+				RangeDatePicker("Date range (double month view)", start.Get(), start, end.Get(), end).DoubleMode(true),
 
-				RangeDatePicker("Urlaub", start.Get(), start, end.Get(), end),
 				PrimaryButton(func() {
 					showAlert.Set(true)
 				}).Title("Check"),

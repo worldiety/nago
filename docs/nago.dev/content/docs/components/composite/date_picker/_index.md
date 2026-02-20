@@ -23,6 +23,7 @@ binding the given value and optional state.
 | `AccessibilityLabel(label string)` | AccessibilityLabel sets a label used by screen readers for accessibility. |
 | `Border(border Border)` | Border sets the border styling of the date picker. |
 | `Disabled(disabled bool)` | Disabled enables or disables user interaction with the date picker. |
+| `DoubleMode(doubleMode bool)` | DoubleMode enables double-month mode for range pickers. |
 | `ErrorText(text string)` | ErrorText sets the validation or error message displayed below the picker. |
 | `Frame(frame Frame)` | Frame sets the layout frame of the date picker, including size and positioning. |
 | `Padding(padding Padding)` | Padding sets the inner spacing around the date picker content. |

@@ -61,7 +61,7 @@ func defaultButtons() core.View {
 
 		PrimaryButton(nil).
 			Title("link button").
-			URL("https://www.worldiety.de").
+			HRef("https://www.worldiety.de").
 			Target("_self"),
 	).Gap(L16).
 		Padding(Padding{}.All(L16))
