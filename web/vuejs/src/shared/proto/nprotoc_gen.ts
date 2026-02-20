@@ -2903,6 +2903,9 @@ export class DatePicker implements Writeable, Readable, Component {
 
 	public disabled?: Bool;
 
+	// DoubleMode determines whether the picker shall show two months instead of one.
+	public doubleMode?: Bool;
+
 	constructor(
 		label: Str | undefined = undefined,
 		supportingText: Str | undefined = undefined,
@@ -2914,7 +2917,8 @@ export class DatePicker implements Writeable, Readable, Component {
 		endInputValue: Ptr | undefined = undefined,
 		frame: Frame | undefined = undefined,
 		invisible: Bool | undefined = undefined,
-		disabled: Bool | undefined = undefined
+		disabled: Bool | undefined = undefined,
+		doubleMode: Bool | undefined = undefined
 	) {
 		this.label = label;
 		this.supportingText = supportingText;
@@ -2927,6 +2931,7 @@ export class DatePicker implements Writeable, Readable, Component {
 		this.frame = frame;
 		this.invisible = invisible;
 		this.disabled = disabled;
+		this.doubleMode = doubleMode;
 	}
 
 	read(reader: BinaryReader): void {
@@ -2982,6 +2987,10 @@ export class DatePicker implements Writeable, Readable, Component {
 					this.disabled = readBool(reader);
 					break;
 				}
+				case 12: {
+					this.doubleMode = readBool(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -3002,6 +3011,7 @@ export class DatePicker implements Writeable, Readable, Component {
 			this.frame !== undefined && !this.frame.isZero(),
 			this.invisible !== undefined,
 			this.disabled !== undefined,
+			this.doubleMode !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -3049,6 +3059,10 @@ export class DatePicker implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.UVARINT, 11);
 			writeBool(writer, this.disabled!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[12]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 12);
+			writeBool(writer, this.doubleMode!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -3063,7 +3077,8 @@ export class DatePicker implements Writeable, Readable, Component {
 			this.endInputValue === undefined &&
 			(this.frame === undefined || this.frame.isZero()) &&
 			this.invisible === undefined &&
-			this.disabled === undefined
+			this.disabled === undefined &&
+			this.doubleMode === undefined
 		);
 	}
 
@@ -3079,6 +3094,7 @@ export class DatePicker implements Writeable, Readable, Component {
 		this.frame = undefined;
 		this.invisible = undefined;
 		this.disabled = undefined;
+		this.doubleMode = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

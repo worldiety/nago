@@ -2720,10 +2720,12 @@ type DatePicker struct {
 	Frame         Frame
 	Invisible     Bool
 	Disabled      Bool
+	// DoubleMode determines whether the picker shall show two months instead of one.
+	DoubleMode Bool
 }
 
 func (v *DatePicker) write(w *BinaryWriter) error {
-	var fields [12]bool
+	var fields [13]bool
 	fields[1] = !v.Label.IsZero()
 	fields[2] = !v.SupportingText.IsZero()
 	fields[3] = !v.ErrorText.IsZero()
@@ -2735,6 +2737,7 @@ func (v *DatePicker) write(w *BinaryWriter) error {
 	fields[9] = !v.Frame.IsZero()
 	fields[10] = !v.Invisible.IsZero()
 	fields[11] = !v.Disabled.IsZero()
+	fields[12] = !v.DoubleMode.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -2833,6 +2836,14 @@ func (v *DatePicker) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[12] {
+		if err := w.writeFieldHeader(uvarint, 12); err != nil {
+			return err
+		}
+		if err := v.DoubleMode.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -2900,6 +2911,11 @@ func (v *DatePicker) read(r *BinaryReader) error {
 			}
 		case 11:
 			err := v.Disabled.read(r)
+			if err != nil {
+				return err
+			}
+		case 12:
+			err := v.DoubleMode.read(r)
 			if err != nil {
 				return err
 			}
@@ -15539,13 +15555,14 @@ func (v *DatePicker) reset() {
 	v.Frame.reset()
 	v.Invisible.reset()
 	v.Disabled.reset()
+	v.DoubleMode.reset()
 }
 
 func (v *DatePicker) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Style.IsZero() && v.Value.IsZero() && v.InputValue.IsZero() && v.EndValue.IsZero() && v.EndInputValue.IsZero() && v.Frame.IsZero() && v.Invisible.IsZero() && v.Disabled.IsZero()
+	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Style.IsZero() && v.Value.IsZero() && v.InputValue.IsZero() && v.EndValue.IsZero() && v.EndInputValue.IsZero() && v.Frame.IsZero() && v.Invisible.IsZero() && v.Disabled.IsZero() && v.DoubleMode.IsZero()
 }
 
 func (v *Divider) reset() {
