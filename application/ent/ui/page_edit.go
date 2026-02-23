@@ -8,6 +8,7 @@ import (
 	"go.wdy.de/nago/application/ent"
 	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
@@ -34,11 +35,11 @@ func PageUpdate[T ent.Aggregate[T, ID], ID ~string](wnd core.Window, uc ent.UseC
 
 func newDefaultUpdate[T ent.Aggregate[T, ID], ID ~string](wnd core.Window, opts PageUpdateOptions[T, ID]) func(wnd core.Window, uc ent.UseCases[T, ID], id ID) core.View {
 	return func(wnd core.Window, uc ent.UseCases[T, ID], id ID) core.View {
-		if err := wnd.Subject().AuditResource(string(opts.Prefix), string(id), opts.Perms.FindByID); err != nil {
+		if err := wnd.Subject().AuditResource(rebac.Namespace(opts.Prefix), rebac.Instance(id), opts.Perms.FindByID); err != nil {
 			return alert.BannerError(err)
 		}
 
-		canReadOnly := !wnd.Subject().HasResourcePermission(string(opts.Prefix), string(id), opts.Perms.Update)
+		canReadOnly := !wnd.Subject().HasResourcePermission(rebac.Namespace(opts.Prefix), rebac.Instance(id), opts.Perms.Update)
 
 		state := core.StateOf[T](wnd, reflect.TypeFor[T]().Name()+"-update-form").Init(func() T {
 			var zero T

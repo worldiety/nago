@@ -16,13 +16,16 @@ import (
 	"sync"
 	"time"
 
+	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/image"
+	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/pkg/data"
 	"golang.org/x/crypto/sha3"
 )
 
-func NewMergeSingleSignOnUser(mutex *sync.Mutex, repo Repository, findByMail FindByMail, loadGlobal settings.LoadGlobal, createSrcSet image.CreateSrcSet) MergeSingleSignOnUser {
+func NewMergeSingleSignOnUser(mutex *sync.Mutex, repo Repository, findByMail FindByMail, loadGlobal settings.LoadGlobal, createSrcSet image.CreateSrcSet, rdb *rebac.DB) MergeSingleSignOnUser {
 	return func(createData SingleSignOnUser, avatarBuf []byte) (ID, error) {
 		mutex.Lock()
 		defer mutex.Unlock()
@@ -71,13 +74,47 @@ func NewMergeSingleSignOnUser(mutex *sync.Mutex, repo Repository, findByMail Fin
 				},
 				CreatedAt:     time.Now(),
 				EMailVerified: true,
-				Roles:         cfg.DefaultSSORoles,
-				Groups:        cfg.DefaultGroups,
 				Status:        Enabled{},
 			}
 
 			if err := repo.Save(usr); err != nil {
 				return "", fmt.Errorf("cannot save user: %w", err)
+			}
+
+			for _, rid := range cfg.DefaultRoles {
+				err := rdb.Put(rebac.Triple{
+					Source: rebac.Entity{
+						Namespace: Namespace,
+						Instance:  rebac.Instance(usr.ID),
+					},
+					Relation: rebac.Member,
+					Target: rebac.Entity{
+						Namespace: role.Namespace,
+						Instance:  rebac.Instance(rid),
+					},
+				})
+
+				if err != nil {
+					return "", err
+				}
+			}
+
+			for _, gid := range cfg.DefaultGroups {
+				err := rdb.Put(rebac.Triple{
+					Source: rebac.Entity{
+						Namespace: Namespace,
+						Instance:  rebac.Instance(usr.ID),
+					},
+					Relation: rebac.Member,
+					Target: rebac.Entity{
+						Namespace: group.Namespace,
+						Instance:  rebac.Instance(gid),
+					},
+				})
+
+				if err != nil {
+					return "", err
+				}
 			}
 
 			// done
@@ -125,6 +162,11 @@ func NewMergeSingleSignOnUser(mutex *sync.Mutex, repo Repository, findByMail Fin
 		user.PasswordRequestCode = Code{}
 		user.PasswordHash = nil
 		user.RequirePasswordChange = false
+
+		// security note: DO NEVER merge default roles or groups. People keep requesting for that,
+		// but we must keep rejecting such a feature request because it is highly dangerous:
+		// If an existing SSO user has been removed from groups and roles explicitly, we would
+		// add them back to the default groups and roles, which would become a serious security incident.
 
 		if err := repo.Save(user); err != nil {
 			return "", fmt.Errorf("cannot save user: %w", err)

@@ -24,8 +24,13 @@ import (
 	"syscall"
 
 	"go.wdy.de/nago/application/admin"
+	"go.wdy.de/nago/application/migration"
+	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/application/role"
+	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/blob"
+	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
@@ -78,8 +83,6 @@ type Configurator struct {
 	sessionManagement      *SessionManagement
 	permissionManagement   *PermissionManagement
 	groupManagement        *GroupManagement
-	licenseManagement      *LicenseManagement
-	billingManagement      *BillingManagement
 	imageManagement        *ImageManagement
 	backupManagement       *BackupManagement
 	secretManagement       *SecretManagement
@@ -91,6 +94,8 @@ type Configurator struct {
 	contextPath            atomic.Pointer[string]
 	hasSSL                 bool
 	noFooter               []core.NavigationPath
+	migrations             *migration.Migrations
+	rdb                    *rebac.DB
 }
 
 func NewConfigurator() *Configurator {
@@ -504,10 +509,6 @@ func (c *Configurator) StandardSystems() error {
 		return err
 	}
 
-	if _, err := c.LicenseManagement(); err != nil {
-		return err
-	}
-
 	if _, err := c.MailManagement(); err != nil {
 		return err
 	}
@@ -525,4 +526,46 @@ func (c *Configurator) StandardSystems() error {
 	}
 
 	return nil
+}
+
+// Migrations return the nago migrations manager. Even though there is a separate module,
+// migrations are always available, and the module is only required if you want the admin user interface for it.
+func (c *Configurator) Migrations() (*migration.Migrations, error) {
+	if c.migrations == nil {
+		store, err := c.EntityStore("nago.migration.history")
+		if err != nil {
+			return nil, err
+		}
+
+		repo := json.NewSloppyJSONRepository[migration.Status, migration.Version](store)
+		c.migrations = migration.NewMigrations(repo)
+	}
+
+	return c.migrations, nil
+}
+
+// RDB returns the nago ReBAC (relation-based access control) database. Even though there is a separate module,
+// the rebac system is always available, and the module is only required if you want the admin user interface for it.
+// The default resolvers are
+//   - users which are members of a role resolve to the assigned role relations
+func (c *Configurator) RDB() (*rebac.DB, error) {
+	if c.rdb == nil {
+		store, err := c.EntityStore("nago.rebac")
+		if err != nil {
+			return nil, err
+		}
+
+		db, err := rebac.NewDB(store)
+		if err != nil {
+			return nil, err
+		}
+
+		// automatically resolve role relations by user memberships
+		db.AddResolver(rebac.NewSourceMemberResolver(user.Namespace, role.Namespace))
+
+		c.rdb = db
+
+	}
+
+	return c.rdb, nil
 }

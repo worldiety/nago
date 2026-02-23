@@ -62,16 +62,11 @@ func NewCreate(mutex *sync.Mutex, repo Repository, algo user.HashAlgorithm, reve
 		token := Token{
 			ID:          data.RandIdent[ID](),
 			Name:        cdata.Name,
-			Desription:  cdata.Description,
+			Description: cdata.Description,
 			Algorithm:   algo,
 			TokenHash:   hBytes,
 			CreatedAt:   time.Now(),
 			ValidUntil:  cdata.ValidUntil,
-			Groups:      cdata.Groups,
-			Roles:       cdata.Roles,
-			Permissions: cdata.Permissions,
-			Licenses:    cdata.Licenses,
-			Resources:   cdata.Resources,
 		}
 
 		optToken, err := repo.FindByID(token.ID)

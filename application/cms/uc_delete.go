@@ -8,14 +8,16 @@
 package cms
 
 import (
+	"sync"
+
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/std/concurrent"
-	"sync"
 )
 
 func NewDelete(mutex *sync.Mutex, slugs *concurrent.RWMap[Slug, ID], repo Repository) Delete {
 	return func(subject auth.Subject, id ID) error {
-		if err := subject.AuditResource(repo.Name(), string(id), PermDelete); err != nil {
+		if err := subject.AuditResource(rebac.Namespace(repo.Name()), rebac.Instance(id), PermDelete); err != nil {
 			return err
 		}
 

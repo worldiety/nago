@@ -9,15 +9,17 @@ package template
 
 import (
 	"context"
+	"io"
+
 	"github.com/worldiety/option"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/blob"
-	"io"
 )
 
 func NewLoadProjectBlob(files blob.Store, repo Repository) LoadProjectBlob {
 	return func(subject auth.Subject, pid ID, file BlobID) (option.Opt[io.ReadCloser], error) {
-		if err := subject.AuditResource(repo.Name(), string(pid), PermLoadProjectBlob); err != nil {
+		if err := subject.AuditResource(rebac.Namespace(repo.Name()), rebac.Instance(pid), PermLoadProjectBlob); err != nil {
 			return option.None[io.ReadCloser](), err
 		}
 

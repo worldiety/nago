@@ -8,15 +8,17 @@
 package template
 
 import (
-	"go.wdy.de/nago/auth"
-	"go.wdy.de/nago/pkg/blob"
 	"slices"
 	"sync"
+
+	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/pkg/blob"
 )
 
 func NewDeleteProjectBlob(mutex *sync.Mutex, files blob.Store, repo Repository) DeleteProjectBlob {
 	return func(subject auth.Subject, pid ID, filename string) error {
-		if err := subject.AuditResource(repo.Name(), string(pid), PermDeleteProjectBlob); err != nil {
+		if err := subject.AuditResource(rebac.Namespace(repo.Name()), rebac.Instance(pid), PermDeleteProjectBlob); err != nil {
 			return err
 		}
 
@@ -36,7 +38,7 @@ func NewDeleteProjectBlob(mutex *sync.Mutex, files blob.Store, repo Repository) 
 		prj.Files = slices.DeleteFunc(prj.Files, func(e File) bool {
 			return e.Filename == filename
 		})
-		
+
 		return repo.Save(prj)
 	}
 }

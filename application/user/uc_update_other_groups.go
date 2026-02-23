@@ -8,33 +8,56 @@
 package user
 
 import (
-	"fmt"
 	"go.wdy.de/nago/application/group"
-	"go.wdy.de/nago/pkg/std"
-	"sync"
+	"go.wdy.de/nago/application/rebac"
 )
 
-func NewUpdateOtherGroups(mutex *sync.Mutex, repo Repository) UpdateOtherGroups {
+func NewUpdateOtherGroups(rdb *rebac.DB, allGroups group.FindAll) UpdateOtherGroups {
 	return func(subject AuditableUser, id ID, groups []group.ID) error {
 		if err := subject.Audit(PermUpdateOtherGroups); err != nil {
 			return err
 		}
 
-		// mutex is important, otherwise we may re-create a user accidentally
-		mutex.Lock()
-		defer mutex.Unlock()
+		// first remove all existing groups to keep the correct semantics of this use case
+		for grp, err := range allGroups(SU()) {
+			if err != nil {
+				return err
+			}
 
-		optUsr, err := repo.FindByID(id)
-		if err != nil {
-			return fmt.Errorf("cannot find user by id: %w", err)
+			err := rdb.Delete(rebac.Triple{
+				Source: rebac.Entity{
+					Namespace: group.Namespace,
+					Instance:  rebac.Instance(grp.ID),
+				},
+				Relation: rebac.Member,
+				Target: rebac.Entity{
+					Namespace: Namespace,
+					Instance:  rebac.Instance(id),
+				},
+			})
+			if err != nil {
+				return err
+			}
 		}
 
-		if optUsr.IsNone() {
-			return std.NewLocalizedError("Nutzer nicht aktualisiert", "Der Nutzer ist nicht (mehr) vorhanden.")
+		// than just store new relations
+		for _, gid := range groups {
+			err := rdb.Put(rebac.Triple{
+				Source: rebac.Entity{
+					Namespace: group.Namespace,
+					Instance:  rebac.Instance(gid),
+				},
+				Relation: rebac.Member,
+				Target: rebac.Entity{
+					Namespace: Namespace,
+					Instance:  rebac.Instance(id),
+				},
+			})
+			if err != nil {
+				return err
+			}
 		}
 
-		usr := optUsr.Unwrap()
-		usr.Groups = groups
-		return repo.Save(usr)
+		return nil
 	}
 }

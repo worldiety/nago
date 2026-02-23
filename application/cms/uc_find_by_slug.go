@@ -8,10 +8,12 @@
 package cms
 
 import (
+	"os"
+
 	"github.com/worldiety/option"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/std/concurrent"
-	"os"
 )
 
 func NewFindBySlug(slugs *concurrent.RWMap[Slug, ID], repo Repository) FindBySlug {
@@ -30,7 +32,7 @@ func NewFindBySlug(slugs *concurrent.RWMap[Slug, ID], repo Repository) FindBySlu
 			return option.None[*Document](), os.ErrNotExist
 		}
 
-		if err := subject.AuditResource(repo.Name(), string(optDoc.Unwrap().ID), PermFindBySlug); err != nil {
+		if err := subject.AuditResource(rebac.Namespace(repo.Name()), rebac.Instance(optDoc.Unwrap().ID), PermFindBySlug); err != nil {
 			return option.None[*Document](), err
 		}
 

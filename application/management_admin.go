@@ -55,10 +55,6 @@ func (c *Configurator) WithAdminManagement(fn func(m *AdminManagement)) *Configu
 func (c *Configurator) AdminManagement() (AdminManagement, error) {
 	if c.adminManagement == nil {
 
-		if _, err := c.BillingManagement(); err != nil {
-			return AdminManagement{}, err
-		}
-
 		c.adminManagement = &AdminManagement{
 			Pages: uiadmin.Pages{
 				AdminCenter: "admin",
@@ -92,14 +88,6 @@ func (c *Configurator) AdminManagement() (AdminManagement, error) {
 
 				if c.groupManagement != nil {
 					pages.Group = c.groupManagement.Pages
-				}
-
-				if c.licenseManagement != nil {
-					pages.License = c.licenseManagement.Pages
-				}
-
-				if c.billingManagement != nil {
-					pages.Billing = c.billingManagement.Pages
 				}
 
 				if c.backupManagement != nil {

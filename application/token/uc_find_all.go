@@ -8,9 +8,11 @@
 package token
 
 import (
+	"iter"
+
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
-	"iter"
 )
 
 func NewFindAll(repo Repository) FindAll {
@@ -31,7 +33,7 @@ func NewFindAll(repo Repository) FindAll {
 				}
 
 				// either the subject can see all tokens or a specific one, or it is the owner of a token
-				allowedToView := subject.HasResourcePermission(repo.Name(), string(token.ID), PermFindAll) || token.Impersonation.UnwrapOr("") == subject.ID()
+				allowedToView := subject.HasResourcePermission(rebac.Namespace(repo.Name()), rebac.Instance(token.ID), PermFindAll) || token.Impersonation.UnwrapOr("") == subject.ID()
 				if allowedToView {
 					if !yield(token, nil) {
 						return

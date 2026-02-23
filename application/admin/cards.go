@@ -9,9 +9,7 @@ package admin
 
 import (
 	"go.wdy.de/nago/application/backup"
-	"go.wdy.de/nago/application/billing"
 	"go.wdy.de/nago/application/group"
-	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/application/mail"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
@@ -102,41 +100,6 @@ func DefaultGroups(pages Pages) []Group {
 			},
 		},
 	})
-
-	grps = append(grps, Group{
-		Title: "Lizenzen",
-		Entries: []Card{
-			{
-				Title:      "Nutzer-Lizenzen",
-				Text:       "Das System unterstützt verschiedene Lizenztypen. Eine Nutzer-Lizenz ist eine mengenlimitierte Lizenz und wird einzelnen Konten bis zur Obergrenze zugewiesen.",
-				Target:     pages.License.UserLicenses,
-				Permission: license.PermFindAllUserLicenses,
-			},
-			{
-				Title:      "Modul-Lizenzen",
-				Text:       "Das System unterstützt verschiedene Lizenztypen. Eine Modul bzw. Anwendungs-Lizenz ist eine statische Lizenz und gilt für die gesamte Anwendungsinstanz, sobald sie aktiv ist.",
-				Target:     pages.License.AppLicenses,
-				Permission: license.PermFindAllAppLicenses,
-			},
-		},
-	})
-
-	grps = append(grps, Group{
-		Title: "Abrechnung",
-		Entries: []Card{
-			{
-				Title:      "Lizensierte Module",
-				Text:       "Darstellung der grundsätzlich verfügbaren und tatsächlich gebuchten Anwendungs- bzw. Applikationslizenzen zum Zweck der Abrechnung.",
-				Target:     pages.Billing.AppLicenses,
-				Permission: billing.PermAppLicenses,
-			},
-			{
-				Title:      "Kontingente Nutzer-Lizenzen",
-				Text:       "Darstellung der grundsätzlich verfügbaren und tatsächlich gebuchten Nutzerlizenzen zum Zweck der Abrechnung.",
-				Target:     pages.Billing.UserLicenses,
-				Permission: billing.PermUserLicenses,
-			},
-		}})
 
 	grps = append(grps, Group{
 		Title: "System",

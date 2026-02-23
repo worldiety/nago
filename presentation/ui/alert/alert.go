@@ -109,6 +109,7 @@ func save(caption i18n.StrHnd, onSave func() (close bool)) Option {
 }
 
 // Closeable adds a close icon button ("X") to dismiss the dialog.
+// It also installs a dismiss-listener on the modal to close the dialog automatically e.g. when pressing the escape key.
 func Closeable() Option {
 	return optFunc(func(wnd core.Window, opts *alertOpts) {
 		opts.closeable = ui.TertiaryButton(func() {
@@ -175,6 +176,7 @@ func Custom(makeCustomView func(close func(closeDlg bool)) core.View) Option {
 }
 
 // Cancel adds an button that closes the dialog and triggers the given callback.
+// It also installs a dismiss-listener on the modal to close the dialog automatically e.g. when pressing the escape key.
 func Cancel(onCancel func()) Option {
 	return optFunc(func(wnd core.Window, opts *alertOpts) {
 		opts.cancelBtn = ui.SecondaryButton(func() {
@@ -267,7 +269,7 @@ func (t TDialog) Render(ctx core.RenderContext) core.RenderNode {
 		fixHeight = "calc(100dvh - 12rem)"
 	}
 
-	return ui.Modal(
+	modal := ui.Modal(
 		ui.With(ui.Dialog(ui.ScrollView(t.body).Frame(ui.Frame{Height: fixHeight}.FullWidth())).
 			Title(ui.If(t.title != "", ui.Text(t.title))), func(dialog ui.TDialog) ui.TDialog {
 			var btns []core.View
@@ -316,5 +318,14 @@ func (t TDialog) Render(ctx core.RenderContext) core.RenderNode {
 				dialog = dialog.Footer(ui.HStack(btns...).Gap(ui.L8))
 			}
 			return dialog
-		})).Render(ctx)
+		}))
+
+	if options.closeable != nil || options.cancelBtn != nil {
+		modal = modal.OnDismissRequest(func() {
+			options.state.Set(false)
+			options.state.Notify()
+		})
+	}
+
+	return modal.Render(ctx)
 }

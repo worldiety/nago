@@ -18,6 +18,7 @@ import (
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/group"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/xslices"
@@ -132,7 +133,7 @@ func (f File) CanRead(subject auth.Subject) bool {
 	}
 
 	if f.repo != nil {
-		if subject.HasResourcePermission(f.repo.Name(), string(f.ID), PermOpenFile) {
+		if subject.HasResourcePermission(rebac.Namespace(f.repo.Name()), rebac.Instance(f.ID), PermOpenFile) {
 			// file object has nago permission
 			return true
 		}
@@ -168,7 +169,7 @@ func (f File) CanDelete(subject auth.Subject) bool {
 		return true
 	}
 
-	canDelete := subject.HasResourcePermission(f.repo.Name(), string(f.ID), PermDelete)
+	canDelete := subject.HasResourcePermission(rebac.Namespace(f.repo.Name()), rebac.Instance(f.ID), PermDelete)
 	optParent, err := f.repo.FindByID(f.ID)
 	if err != nil {
 		slog.Error("cannot determine deletability", "fid", f.ID, "err", err)
@@ -194,7 +195,7 @@ func (f File) CanRename(subject auth.Subject) bool {
 		return true
 	}
 
-	if subject.HasResourcePermission(f.repo.Name(), string(f.ID), PermRename) {
+	if subject.HasResourcePermission(rebac.Namespace(f.repo.Name()), rebac.Instance(f.ID), PermRename) {
 		return true
 	}
 
@@ -226,7 +227,7 @@ func (f File) CanWrite(subject auth.Subject) bool {
 	}
 
 	if f.repo != nil {
-		if subject.HasResourcePermission(f.repo.Name(), string(f.ID), PermPut) {
+		if subject.HasResourcePermission(rebac.Namespace(f.repo.Name()), rebac.Instance(f.ID), PermPut) {
 			// file object has nago permission
 			return true
 		}

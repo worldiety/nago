@@ -16,6 +16,7 @@ import (
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/library"
 	"go.wdy.de/nago/application/ai/provider"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/xtime"
 )
@@ -75,7 +76,7 @@ func (c cacheLibraries) FindByID(subject auth.Subject, id library.ID) (option.Op
 	}
 
 	lib := optLib.Unwrap()
-	if lib.CreatedBy != subject.ID() && !subject.HasResourcePermission(c.parent.repoModels.Name(), string(lib.ID), PermLibraryFindByID) {
+	if lib.CreatedBy != subject.ID() && !subject.HasResourcePermission(rebac.Namespace(c.parent.repoModels.Name()), rebac.Instance(lib.ID), PermLibraryFindByID) {
 		return option.Opt[library.Library]{}, subject.Audit(PermLibraryFindByID)
 	}
 
@@ -108,7 +109,7 @@ func (c cacheLibraries) All(subject auth.Subject) iter.Seq2[library.Library, err
 
 			m := optConv.Unwrap()
 
-			if m.CreatedBy != subject.ID() && !subject.HasResourcePermission(c.parent.repoModels.Name(), string(m.ID), PermLibraryFindAll) {
+			if m.CreatedBy != subject.ID() && !subject.HasResourcePermission(rebac.Namespace(c.parent.repoModels.Name()), rebac.Instance(m.ID), PermLibraryFindAll) {
 				continue
 			}
 
@@ -130,7 +131,7 @@ func (c cacheLibraries) Delete(subject auth.Subject, id library.ID) error {
 	}
 
 	lib := optLib.Unwrap()
-	if lib.CreatedBy != subject.ID() && !subject.HasResourcePermission(c.parent.repoModels.Name(), string(lib.ID), PermLibraryDelete) {
+	if lib.CreatedBy != subject.ID() && !subject.HasResourcePermission(rebac.Namespace(c.parent.repoModels.Name()), rebac.Instance(lib.ID), PermLibraryDelete) {
 		return subject.Audit(PermLibraryDelete)
 	}
 
@@ -156,7 +157,7 @@ func (c cacheLibraries) Update(subject auth.Subject, id library.ID, opts library
 	}
 
 	lib := optLib.Unwrap()
-	if lib.CreatedBy != subject.ID() && !subject.HasResourcePermission(c.parent.repoModels.Name(), string(lib.ID), PermLibraryUpdate) {
+	if lib.CreatedBy != subject.ID() && !subject.HasResourcePermission(rebac.Namespace(c.parent.repoModels.Name()), rebac.Instance(lib.ID), PermLibraryUpdate) {
 		return library.Library{}, subject.Audit(PermLibraryUpdate)
 	}
 

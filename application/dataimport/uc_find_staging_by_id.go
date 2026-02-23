@@ -9,6 +9,7 @@ package dataimport
 
 import (
 	"github.com/worldiety/option"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 )
@@ -26,7 +27,7 @@ func NewFindStagingByID(repo StagingRepository) FindStagingByID {
 
 		staging := optStaging.Unwrap()
 
-		if !subject.HasResourcePermission(repo.Name(), string(staging.ID), PermFindStaging) && (staging.CreatedBy != subject.ID() || staging.CreatedBy == "") {
+		if !subject.HasResourcePermission(rebac.Namespace(repo.Name()), rebac.Instance(staging.ID), PermFindStaging) && (staging.CreatedBy != subject.ID() || staging.CreatedBy == "") {
 			return option.Opt[Staging]{}, user.PermissionDeniedError(PermFindStaging)
 		}
 

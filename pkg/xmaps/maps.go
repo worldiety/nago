@@ -16,6 +16,11 @@ import (
 	"go.wdy.de/nago/pkg/cloner"
 )
 
+type MutMap[K comparable, V any] interface {
+	Map[K, V]
+	Put(K, V)
+}
+
 // SortedKeys returns all keys in its natural sorted order. Probably there will never be something in the std lib.
 func SortedKeys[K cmp.Ordered, V any](m map[K]V) []K {
 	tmp := slices.Collect(maps.Keys(m))

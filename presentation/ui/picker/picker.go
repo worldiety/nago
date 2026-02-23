@@ -272,7 +272,8 @@ func (c TPicker[T]) ItemPickedRenderer(fn func([]T) core.View) TPicker[T] {
 	return c
 }
 
-// Deprecated: ItemRenderer can be customized to return a non-text view for the given T. This is
+// Deprecated: use ItemRenderer2
+// ItemRenderer can be customized to return a non-text view for the given T. This is
 // shown within the picker popup. If fn is nil, the default fallback rendering will be applied.
 func (c TPicker[T]) ItemRenderer(fn func(T) core.View) TPicker[T] {
 	if fn == nil {

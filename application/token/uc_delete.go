@@ -8,9 +8,11 @@
 package token
 
 import (
+	"sync"
+
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
-	"sync"
 )
 
 func NewDelete(mutex *sync.Mutex, repo Repository) Delete {
@@ -36,7 +38,7 @@ func NewDelete(mutex *sync.Mutex, repo Repository) Delete {
 		token := optToken.Unwrap()
 		uid := token.Impersonation.UnwrapOr("")
 
-		allowedToDelete := subject.HasResourcePermission(repo.Name(), string(token.ID), PermDelete) || uid == subject.ID()
+		allowedToDelete := subject.HasResourcePermission(rebac.Namespace(repo.Name()), rebac.Instance(token.ID), PermDelete) || uid == subject.ID()
 		if !allowedToDelete {
 			return user.PermissionDeniedErr
 		}

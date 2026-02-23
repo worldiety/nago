@@ -9,14 +9,16 @@ package dataimport
 
 import (
 	"fmt"
-	"go.wdy.de/nago/auth"
 	"os"
 	"sync"
+
+	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/auth"
 )
 
 func NewUpdateStagingTransformation(mutex *sync.Mutex, repo StagingRepository) UpdateStagingTransformation {
 	return func(subject auth.Subject, stage SID, transform Transformation) error {
-		if err := subject.AuditResource(repo.Name(), string(stage), PermUpdateStagingTransformation); err != nil {
+		if err := subject.AuditResource(rebac.Namespace(repo.Name()), rebac.Instance(stage), PermUpdateStagingTransformation); err != nil {
 			return err
 		}
 

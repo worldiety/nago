@@ -13,6 +13,7 @@ import (
 	"os"
 	"strings"
 
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/data"
@@ -20,7 +21,7 @@ import (
 
 func NewCreateInstance(instanceStore blob.Store) CreateInstance {
 	return func(subject user.Subject, id ID) (Instance, error) {
-		if err := subject.AuditResource(instanceStore.Name(), string(id), PermCreateInstance); err != nil {
+		if err := subject.AuditResource(rebac.Namespace(instanceStore.Name()), rebac.Instance(id), PermCreateInstance); err != nil {
 			return "", err
 		}
 

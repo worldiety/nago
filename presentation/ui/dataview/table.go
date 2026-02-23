@@ -76,6 +76,10 @@ func (t TDataView[E, ID]) renderTable(ctx core.RenderContext) core.RenderNode {
 		model = m
 	}
 
+	if model.Window == nil {
+		model.Window = wnd
+	}
+
 	var cols []ui.TTableColumn
 	if !t.hideSelection {
 		cols = append(cols, ui.TableColumn(ui.Checkbox(model.SelectSubset.Get()).InputChecked(model.SelectSubset)).Width(ui.L64))

@@ -8,6 +8,8 @@
 package cfgusercircle
 
 import (
+	"log/slog"
+
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/admin"
 	"go.wdy.de/nago/application/rcrud"
@@ -16,7 +18,6 @@ import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/presentation/core"
-	"log/slog"
 )
 
 // Management is a nago system(User Circle Management.
@@ -50,18 +51,18 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		return Management{}, err
 	}
 
-	licenses, err := cfg.LicenseManagement()
-	if err != nil {
-		return Management{}, err
-	}
-
 	entityStore, err := cfg.EntityStore("nago.usercircle.circle")
 	if err != nil {
 		return Management{}, err
 	}
 
+	rdb, err := cfg.RDB()
+	if err != nil {
+		return Management{}, err
+	}
+
 	circleRepo := json.NewSloppyJSONRepository[usercircle.Circle, usercircle.ID](entityStore)
-	useCases := usercircle.NewUseCases(circleRepo, users.UseCases, groups.UseCases.FindByID, roles.UseCases.FindByID)
+	useCases := usercircle.NewUseCases(circleRepo, users.UseCases, groups.UseCases.FindByID, roles.UseCases.FindByID, users.UseCases.ListRoles, users.UseCases.ListGroups, rdb)
 	funcs := rcrud.Funcs[usercircle.Circle, usercircle.ID]{
 		PermFindByID:   usercircle.PermFindByID,
 		PermFindAll:    usercircle.PermFindAll,
@@ -80,15 +81,13 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		circleRepo: circleRepo,
 		UseCases:   useCases,
 		Pages: uiusercircles.Pages{
-			CirclesAdmin:          "admin/user/circles",
-			MyCircle:              "admin/user/my-circle",
-			MyCircleUsers:         "admin/user/my-circle/users",
-			MyCircleRoles:         "admin/user/my-circle/roles",
-			MyCircleRolesUsers:    "admin/user/my-circle/roles/users",
-			MyCircleGroups:        "admin/user/my-circle/groups",
-			MyCircleGroupsUsers:   "admin/user/my-circle/groups/users",
-			MyCircleLicenses:      "admin/user/my-circle/licenses",
-			MyCircleLicensesUsers: "admin/user/my-circle/license/users",
+			CirclesAdmin:        "admin/user/circles",
+			MyCircle:            "admin/user/my-circle",
+			MyCircleUsers:       "admin/user/my-circle/users",
+			MyCircleRoles:       "admin/user/my-circle/roles",
+			MyCircleRolesUsers:  "admin/user/my-circle/roles/users",
+			MyCircleGroups:      "admin/user/my-circle/groups",
+			MyCircleGroupsUsers: "admin/user/my-circle/groups/users",
 		},
 	}
 
@@ -101,37 +100,21 @@ func Enable(cfg *application.Configurator) (Management, error) {
 	})
 
 	cfg.RootViewWithDecoration(management.Pages.MyCircleUsers, func(wnd core.Window) core.View {
-		return uiusercircles.PageMyCircleUsers(wnd, useCases)
+		return uiusercircles.PageMyCircleUsers(wnd, useCases, rdb)
 	})
 
 	cfg.RootViewWithDecoration(management.Pages.MyCircleRoles, func(wnd core.Window) core.View {
-		return uiusercircles.PageMyCircleRoles(wnd, management.Pages, useCases, roles.UseCases.FindByID)
+		return uiusercircles.PageMyCircleRoles(wnd, management.Pages, useCases, roles.UseCases.FindByID, rdb)
 	})
 	cfg.RootViewWithDecoration(management.Pages.MyCircleRolesUsers, func(wnd core.Window) core.View {
-		return uiusercircles.PageMyCircleRolesUsers(wnd, management.Pages, useCases, roles.UseCases.FindByID)
+		return uiusercircles.PageMyCircleRolesUsers(wnd, management.Pages, useCases, roles.UseCases.FindByID, rdb)
 	})
 	cfg.RootViewWithDecoration(management.Pages.MyCircleGroups, func(wnd core.Window) core.View {
 		return uiusercircles.PageMyCircleGroups(wnd, management.Pages, useCases, groups.UseCases.FindByID)
 	})
 
 	cfg.RootViewWithDecoration(management.Pages.MyCircleGroupsUsers, func(wnd core.Window) core.View {
-		return uiusercircles.PageMyCircleGroupsUsers(wnd, management.Pages, useCases, groups.UseCases.FindByID)
-	})
-
-	cfg.RootViewWithDecoration(management.Pages.MyCircleLicenses, func(wnd core.Window) core.View {
-		return uiusercircles.PageMyCircleLicenses(wnd, management.Pages, useCases, licenses.UseCases.PerUser.FindByID)
-	})
-
-	cfg.RootViewWithDecoration(management.Pages.MyCircleLicensesUsers, func(wnd core.Window) core.View {
-		return uiusercircles.PageMyCircleLicensesUsers(
-			wnd,
-			management.Pages,
-			useCases,
-			licenses.UseCases.PerUser.FindByID,
-			users.UseCases.AssignUserLicense,
-			users.UseCases.UnassignUserLicense,
-			users.UseCases.CountAssignedUserLicense,
-		)
+		return uiusercircles.PageMyCircleGroupsUsers(wnd, management.Pages, useCases, groups.UseCases.FindByID, users.UseCases.ListGroups, rdb)
 	})
 
 	cfg.AddAdminCenterGroup(func(subject auth.Subject) admin.Group {

@@ -9,10 +9,12 @@ package user
 
 import (
 	"fmt"
+
 	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/application/rebac"
 )
 
-func NewListGrantedPermissions(repo Repository, findUserByID FindByID) ListGrantedPermissions {
+func NewListGrantedPermissions(rdb *rebac.DB) ListGrantedPermissions {
 	return func(subject AuditableUser, id GrantingKey) ([]permission.ID, error) {
 
 		res, uid := id.Split()
@@ -21,30 +23,25 @@ func NewListGrantedPermissions(repo Repository, findUserByID FindByID) ListGrant
 		}
 
 		// are we globally allowed?
-		globalAllowed := subject.HasResourcePermission(repo.Name(), string(id), PermListGrantedPermissions)
+		globalAllowed := subject.HasPermission(PermListGrantedPermissions)
 
 		// are we allowed for the specified resource+user?
-		resAllowed := subject.HasResourcePermission(res.Name, res.ID, PermListGrantedPermissions)
+		resAllowed := subject.HasPermission(PermListGrantedPermissions)
 
 		if !globalAllowed && !resAllowed {
 			return nil, PermissionDeniedErr
 		}
 
-		// security note: our permissions have been checked above
-		optUsr, err := findUserByID(SU(), uid)
-		if err != nil {
-			return nil, err
-		}
+		var perms []permission.ID
 
-		if optUsr.IsNone() {
-			// not sure, what the best behavior is here
-			return nil, nil
-		}
+		for triple, err := range rdb.Query(rebac.Select().Where().Source().Is(Namespace, rebac.Instance(uid))) {
+			if err != nil {
+				return nil, err
+			}
 
-		usr := optUsr.Unwrap()
-		perms, ok := usr.Resources[res]
-		if !ok {
-			return nil, nil
+			if triple.Target.Namespace == rebac.Namespace(res.Name) && triple.Target.Instance == rebac.Instance(res.ID) {
+				perms = append(perms, permission.ID(triple.Relation))
+			}
 		}
 
 		return perms, nil

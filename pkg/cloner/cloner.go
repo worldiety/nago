@@ -13,7 +13,7 @@ package cloner
 //	type X[SomeType Cloner[SomeType]] ...
 //
 // See also packages xmaps and xslices which provide according clone implementations.
-type Cloner[T any] interface {
+type Cloner[T Cloner[T]] interface {
 	// Clone returns a deep copy of itself. An implementation must not return mutable memory shared with
 	// any clone.
 	Clone() T

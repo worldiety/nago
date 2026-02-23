@@ -8,6 +8,7 @@
 package uiusercircles
 
 import (
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/application/usercircle"
 	"go.wdy.de/nago/presentation/core"
@@ -20,7 +21,7 @@ type userState struct {
 	visible  bool
 }
 
-func PageMyCircleUsers(wnd core.Window, useCases usercircle.UseCases) core.View {
+func PageMyCircleUsers(wnd core.Window, useCases usercircle.UseCases, rdb *rebac.DB) core.View {
 	_, err := loadMyCircle(wnd, useCases)
 	if err != nil {
 		return alert.BannerError(err)
@@ -28,5 +29,5 @@ func PageMyCircleUsers(wnd core.Window, useCases usercircle.UseCases) core.View 
 
 	return viewUsers(wnd, "Konten", useCases, func(usr user.User) bool {
 		return true
-	}, nil, nil)
+	}, nil, nil, rdb)
 }

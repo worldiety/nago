@@ -15,6 +15,7 @@ import (
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/agent"
 	"go.wdy.de/nago/application/ai/provider"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/xtime"
 )
@@ -55,7 +56,7 @@ func (c cacheAgents) All(subject auth.Subject) iter.Seq2[agent.Agent, error] {
 
 			m := optConv.Unwrap()
 
-			if m.CreatedBy != subject.ID() && !subject.HasResourcePermission(c.parent.repoModels.Name(), string(m.ID), PermAgentFindAll) {
+			if m.CreatedBy != subject.ID() && !subject.HasResourcePermission(rebac.Namespace(c.parent.repoModels.Name()), rebac.Instance(m.ID), PermAgentFindAll) {
 				continue
 			}
 
@@ -77,7 +78,7 @@ func (c cacheAgents) Delete(subject auth.Subject, id agent.ID) error {
 	}
 
 	ag := optAg.Unwrap()
-	if ag.CreatedBy != subject.ID() && !subject.HasResourcePermission(c.parent.repoAgents.Name(), string(ag.ID), PermAgentDelete) {
+	if ag.CreatedBy != subject.ID() && !subject.HasResourcePermission(rebac.Namespace(c.parent.repoAgents.Name()), rebac.Instance(ag.ID), PermAgentDelete) {
 		return subject.Audit(PermDocumentDelete)
 	}
 
@@ -103,7 +104,7 @@ func (c cacheAgents) FindByID(subject auth.Subject, id agent.ID) (option.Opt[age
 	}
 
 	ag := optAg.Unwrap()
-	if ag.CreatedBy != subject.ID() && !subject.HasResourcePermission(c.parent.repoAgents.Name(), string(ag.ID), PermAgentFindByID) {
+	if ag.CreatedBy != subject.ID() && !subject.HasResourcePermission(rebac.Namespace(c.parent.repoAgents.Name()), rebac.Instance(ag.ID), PermAgentFindByID) {
 		return option.Opt[agent.Agent]{}, subject.Audit(PermAgentFindByID)
 	}
 

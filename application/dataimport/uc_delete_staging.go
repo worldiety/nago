@@ -8,13 +8,15 @@
 package dataimport
 
 import (
-	"go.wdy.de/nago/auth"
 	"log/slog"
+
+	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/auth"
 )
 
 func NewDeleteStaging(repoStaging StagingRepository, repoEntries EntryRepository) DeleteStaging {
 	return func(subject auth.Subject, staging SID) error {
-		if err := subject.AuditResource(repoStaging.Name(), string(staging), PermDeleteStaging); err != nil {
+		if err := subject.AuditResource(rebac.Namespace(repoStaging.Name()), rebac.Instance(staging), PermDeleteStaging); err != nil {
 			return err
 		}
 

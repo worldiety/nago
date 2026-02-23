@@ -10,12 +10,15 @@ package group
 import (
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/events"
 
 	"iter"
 	"sync"
 )
+
+const Namespace rebac.Namespace = "nago.iam.group"
 
 // ID of a Group.
 type ID string
@@ -45,7 +48,7 @@ func (r Group) String() string {
 
 type Repository = data.Repository[Group, ID]
 
-// note, that we are in a bootstrapping condition here and cannot refer to auth/user.Subject due to dep cycles, therefore we depend on the Auditable contract
+// note, that we are in a bootstrapping condition here and cannot refer to auth/user.Source due to dep cycles, therefore we depend on the Auditable contract
 
 type FindByID func(subject permission.Auditable, id ID) (option.Opt[Group], error)
 type FindAll func(subject permission.Auditable) iter.Seq2[Group, error]

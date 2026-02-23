@@ -14,7 +14,10 @@ import (
 	"sync"
 	"time"
 
+	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/events"
@@ -22,7 +25,7 @@ import (
 	"golang.org/x/text/language"
 )
 
-func NewCreate(mutex *sync.Mutex, loadGlobal settings.LoadGlobal, eventBus events.EventBus, findByMail FindByMail, repo Repository) Create {
+func NewCreate(mutex *sync.Mutex, rdb *rebac.DB, loadGlobal settings.LoadGlobal, eventBus events.EventBus, findByMail FindByMail, repo Repository) Create {
 	return func(subject permission.Auditable, model ShortRegistrationUser) (User, error) {
 		if err := subject.Audit(PermCreate); err != nil {
 			return User{}, err
@@ -115,8 +118,38 @@ func NewCreate(mutex *sync.Mutex, loadGlobal settings.LoadGlobal, eventBus event
 				}
 			}
 
-			user.Roles = append(user.Roles, userSettings.DefaultRoles...)
-			user.Groups = append(user.Groups, userSettings.DefaultGroups...)
+			for _, rid := range userSettings.DefaultRoles {
+				if err := rdb.Put(rebac.Triple{
+					Source: rebac.Entity{
+						Namespace: Namespace,
+						Instance:  rebac.Instance(user.ID),
+					},
+					Relation: rebac.Member,
+					Target: rebac.Entity{
+						Namespace: role.Namespace,
+						Instance:  rebac.Instance(rid),
+					},
+				}); err != nil {
+					return User{}, err
+				}
+			}
+
+			for _, gid := range userSettings.DefaultGroups {
+				if err := rdb.Put(rebac.Triple{
+					Source: rebac.Entity{
+						Namespace: Namespace,
+						Instance:  rebac.Instance(user.ID),
+					},
+					Relation: rebac.Member,
+					Target: rebac.Entity{
+						Namespace: group.Namespace,
+						Instance:  rebac.Instance(gid),
+					},
+				}); err != nil {
+					return User{}, err
+				}
+			}
+
 		}
 
 		// intentionally validate now, so that an attacker cannot use this method to massively

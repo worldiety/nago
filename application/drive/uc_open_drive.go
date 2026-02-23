@@ -14,6 +14,7 @@ import (
 	"sync"
 
 	"github.com/worldiety/option"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
@@ -88,7 +89,7 @@ func NewOpenDrive(mutex *sync.Mutex, repo Repository, globalRootRepo NamedRootRe
 }
 
 func openGlobalRoot(repo Repository, globalRootRepo NamedRootRepository, subject auth.Subject, opts OpenDriveOptions) (FID, error) {
-	if err := subject.AuditResource(globalRootRepo.Name(), opts.Name, PermOpenFile); err != nil {
+	if err := subject.AuditResource(rebac.Namespace(globalRootRepo.Name()), rebac.Instance(opts.Name), PermOpenFile); err != nil {
 		return "", err
 	}
 
@@ -135,7 +136,7 @@ func openGlobalRoot(repo Repository, globalRootRepo NamedRootRepository, subject
 }
 
 func openUserRoot(repo Repository, userRootRepo UserRootRepository, subject auth.Subject, opts OpenDriveOptions) (FID, error) {
-	if err := subject.AuditResource(userRootRepo.Name(), string(opts.User), PermOpenFile); err != nil {
+	if err := subject.AuditResource(rebac.Namespace(userRootRepo.Name()), rebac.Instance(opts.User), PermOpenFile); err != nil {
 		return "", err
 	}
 

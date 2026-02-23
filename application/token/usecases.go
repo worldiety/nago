@@ -16,8 +16,8 @@ import (
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/group"
-	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
@@ -25,6 +25,8 @@ import (
 	"go.wdy.de/nago/pkg/std/concurrent"
 	"go.wdy.de/nago/pkg/xtime"
 )
+
+const Namespace rebac.Namespace = "nago.iam.token"
 
 type CreationData struct {
 	Name        string
@@ -34,7 +36,6 @@ type CreationData struct {
 	Groups      []group.ID      `label:"Gruppen" source:"nago.groups"`
 	Roles       []role.ID       `label:"Rollen" source:"nago.roles"`
 	Permissions []permission.ID `label:"Berechtigungen" source:"nago.permissions"`
-	Licenses    []license.ID    `label:"Lizenzen" source:"nago.licenses.user"`
 	Resources   map[user.Resource][]permission.ID
 }
 
@@ -68,14 +69,15 @@ type FindAll func(subject auth.Subject) iter.Seq2[Token, error]
 
 type FindByID func(subject auth.Subject, id ID) (option.Opt[Token], error)
 
+// deprecated: use rebac api
 type ResolvedTokenRights struct {
 	Impersonated bool
 	Groups       []group.Group
 	Roles        []role.Role
 	Permissions  []permission.Permission
-	Licenses     []license.UserLicense
 }
 
+// deprecated: use rebac api
 type ResolveTokenRights func(subject auth.Subject, id ID) (ResolvedTokenRights, error)
 
 type Repository data.Repository[Token, ID]
@@ -97,7 +99,7 @@ func NewUseCases(
 	findRoleByID role.FindByID,
 	findUserByID user.FindByID,
 	getAnonUser user.GetAnonUser,
-	findLicenseByID license.FindUserLicenseByID,
+	rdb *rebac.DB,
 ) (UseCases, error) {
 	var mutex sync.Mutex
 
@@ -156,7 +158,7 @@ func NewUseCases(
 		Delete:              NewDelete(&mutex, repo),
 		FindAll:             NewFindAll(repo),
 		Create:              NewCreate(&mutex, repo, algo, reverseHashLookup),
-		AuthenticateSubject: NewAuthenticateSubject(ctx, repo, algo, reverseHashLookup, subjectFromUser, subjectLookup, getAnonUser, findRoleByID),
+		AuthenticateSubject: NewAuthenticateSubject(ctx, repo, algo, reverseHashLookup, subjectFromUser, subjectLookup, getAnonUser, findRoleByID, rdb),
 		Rotate:              NewRotate(&mutex, repo, algo, reverseHashLookup),
 		FindByID:            NewFindByID(repo),
 		ResolveTokenRights: NewResolveTokenRights(
@@ -164,7 +166,6 @@ func NewUseCases(
 			findGroupByID,
 			findRoleByID,
 			findUserByID,
-			findLicenseByID,
 		),
 	}, nil
 }

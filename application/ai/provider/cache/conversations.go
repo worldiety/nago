@@ -17,6 +17,7 @@ import (
 	"go.wdy.de/nago/application/ai/conversation"
 	"go.wdy.de/nago/application/ai/message"
 	"go.wdy.de/nago/application/ai/provider"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/xtime"
 )
@@ -54,7 +55,7 @@ func (c *cacheConversations) All(subject auth.Subject) iter.Seq2[conversation.Co
 
 			m := optConv.Unwrap()
 
-			if m.CreatedBy != subject.ID() && !subject.HasResourcePermission(c.parent.repoConversations.Name(), string(m.ID), PermConversationFindAll) {
+			if m.CreatedBy != subject.ID() && !subject.HasResourcePermission(rebac.Namespace(c.parent.repoConversations.Name()), rebac.Instance(m.ID), PermConversationFindAll) {
 				continue
 			}
 
@@ -84,7 +85,7 @@ func (c *cacheConversations) FindByID(subject auth.Subject, id conversation.ID) 
 	}
 
 	conv := optConv.Unwrap()
-	if conv.CreatedBy != subject.ID() && !subject.HasResourcePermission(c.parent.repoModels.Name(), string(conv.ID), PermConversationFindByID) {
+	if conv.CreatedBy != subject.ID() && !subject.HasResourcePermission(rebac.Namespace(c.parent.repoModels.Name()), rebac.Instance(conv.ID), PermConversationFindByID) {
 		return option.Opt[conversation.Conversation]{}, subject.Audit(PermConversationFindByID)
 	}
 
@@ -102,7 +103,7 @@ func (c *cacheConversations) Delete(subject auth.Subject, id conversation.ID) er
 	}
 
 	lib := optLib.Unwrap()
-	if lib.CreatedBy != subject.ID() && !subject.HasResourcePermission(c.parent.repoModels.Name(), string(lib.ID), PermConversationDelete) {
+	if lib.CreatedBy != subject.ID() && !subject.HasResourcePermission(rebac.Namespace(c.parent.repoModels.Name()), rebac.Instance(lib.ID), PermConversationDelete) {
 		return subject.Audit(PermConversationDelete)
 	}
 

@@ -19,7 +19,6 @@ import (
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/consent"
 	"go.wdy.de/nago/pkg/xslices"
-	"go.wdy.de/nago/pkg/xstrings"
 	"go.wdy.de/nago/pkg/xtime"
 	"golang.org/x/text/language"
 )
@@ -58,7 +57,6 @@ func createCSV(repo Repository, users []ID, opts ExportUsersOptions) ([]byte, er
 		"email_verified",
 		"created_at",
 		"enabled",
-		"roles",
 		"salutation",
 		"title",
 		"position",
@@ -100,7 +98,6 @@ func createCSV(repo Repository, users []ID, opts ExportUsersOptions) ([]byte, er
 			strconv.FormatBool(usr.EMailVerified),
 			usr.CreatedAt.Format(time.RFC3339),
 			strconv.FormatBool(usr.Enabled()),
-			string(xstrings.Join(usr.Roles, ",")),
 			usr.Contact.Salutation,
 			usr.Contact.Title,
 			usr.Contact.Position,

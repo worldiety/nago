@@ -12,7 +12,7 @@ import (
 	"go.wdy.de/nago/auth"
 )
 
-func NewIsMyCircleMember(repo Repository, findUserByID user.FindByID) IsMyCircleMember {
+func NewIsMyCircleMember(repo Repository, findUserByID user.FindByID, roles user.ListRoles, groups user.ListGroups) IsMyCircleMember {
 	return func(subject auth.Subject, cid ID, other user.ID) (bool, error) {
 		circle, err := myCircle(repo, subject, cid)
 		if err != nil {
@@ -29,7 +29,7 @@ func NewIsMyCircleMember(repo Repository, findUserByID user.FindByID) IsMyCircle
 		}
 
 		usr := optUsr.Unwrap()
-		return circle.isMember(usr), nil
+		return circle.isMember(roles, groups, usr), nil
 
 	}
 }

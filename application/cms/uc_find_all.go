@@ -8,8 +8,10 @@
 package cms
 
 import (
-	"go.wdy.de/nago/auth"
 	"iter"
+
+	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/auth"
 )
 
 func NewFindAll(repo Repository) FindAll {
@@ -24,7 +26,7 @@ func NewFindAll(repo Repository) FindAll {
 					continue
 				}
 
-				if !subject.HasResourcePermission(repo.Name(), string(pDoc.ID), PermFindAll) {
+				if !subject.HasResourcePermission(rebac.Namespace(repo.Name()), rebac.Instance(pDoc.ID), PermFindAll) {
 					continue
 				}
 

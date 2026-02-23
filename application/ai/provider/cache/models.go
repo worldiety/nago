@@ -16,6 +16,7 @@ import (
 
 	"go.wdy.de/nago/application/ai/model"
 	"go.wdy.de/nago/application/ai/provider"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/auth"
 )
 
@@ -77,7 +78,7 @@ func (c cacheModels) All(subject auth.Subject) iter.Seq2[model.Model, error] {
 
 			m := optMod.Unwrap()
 
-			if !subject.HasResourcePermission(c.parent.repoModels.Name(), string(m.ID), PermFindAllModel) {
+			if !subject.HasResourcePermission(rebac.Namespace(c.parent.repoModels.Name()), rebac.Instance(m.ID), PermFindAllModel) {
 				continue
 			}
 

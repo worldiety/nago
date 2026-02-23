@@ -9,14 +9,16 @@ package dataimport
 
 import (
 	"fmt"
-	"go.wdy.de/nago/application/permission"
-	"go.wdy.de/nago/auth"
 	"os"
 	"sync"
+
+	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/auth"
 )
 
 func updateEntry(mutex *sync.Mutex, repo EntryRepository, subject auth.Subject, id Key, perm permission.ID, fn func(entry Entry) (Entry, error)) error {
-	if err := subject.AuditResource(repo.Name(), string(id), perm); err != nil {
+	if err := subject.AuditResource(rebac.Namespace(repo.Name()), rebac.Instance(id), perm); err != nil {
 		return err
 	}
 

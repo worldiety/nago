@@ -8,29 +8,41 @@
 package usercircle
 
 import (
+	"sync"
+
 	"go.wdy.de/nago/application/group"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
-	"slices"
-	"sync"
 )
 
-func NewMyCircleGroupsAdd(mutex *sync.Mutex, repo Repository, users user.UseCases) MyCircleGroupsAdd {
+func NewMyCircleGroupsAdd(mutex *sync.Mutex, repo Repository, users user.UseCases, rdb *rebac.DB, usrRoles user.ListRoles, usrGroups user.ListGroups) MyCircleGroupsAdd {
 	return func(subject auth.Subject, circleId ID, usrId user.ID, groups ...group.ID) error {
 		mutex.Lock()
 		defer mutex.Unlock()
 
-		_, usr, err := myCircleAndUser(repo, users.FindByID, subject, circleId, usrId)
+		_, _, err := myCircleAndUser(repo, users.FindByID, usrRoles, usrGroups, subject, circleId, usrId)
 		if err != nil {
 			return err
 		}
 
-		for _, rid := range groups {
-			if !slices.Contains(usr.Groups, rid) {
-				usr.Groups = append(usr.Groups, rid)
+		for _, gid := range groups {
+			err := rdb.Put(rebac.Triple{
+				Source: rebac.Entity{
+					Namespace: group.Namespace,
+					Instance:  rebac.Instance(gid),
+				},
+				Relation: rebac.Member,
+				Target: rebac.Entity{
+					Namespace: user.Namespace,
+					Instance:  rebac.Instance(usrId),
+				},
+			})
+			if err != nil {
+				return err
 			}
 		}
 
-		return users.UpdateOtherGroups(user.SU(), usrId, usr.Groups)
+		return nil
 	}
 }

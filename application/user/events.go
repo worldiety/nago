@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"go.wdy.de/nago/application/consent"
-	"go.wdy.de/nago/application/license"
 	"golang.org/x/text/language"
 )
 
@@ -24,14 +23,6 @@ type Created struct {
 	NotifyUser        bool
 	VerificationCode  Code
 	CreatedAt         time.Time
-}
-
-type LicensesUpdated struct {
-	ID        ID
-	Firstname string
-	Lastname  string
-	Email     Email
-	Licenses  []license.ID
 }
 
 type MFACodeCreated struct {

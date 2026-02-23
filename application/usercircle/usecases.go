@@ -8,15 +8,17 @@
 package usercircle
 
 import (
-	"go.wdy.de/nago/application/group"
-	"go.wdy.de/nago/application/role"
-	"go.wdy.de/nago/application/user"
-	"go.wdy.de/nago/auth"
-	"go.wdy.de/nago/pkg/std"
 	"iter"
 	"os"
 	"slices"
 	"sync"
+
+	"go.wdy.de/nago/application/group"
+	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/application/role"
+	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/pkg/std"
 )
 
 // MyCircleMembers returns all those users defined in the nago IAM which are included by the circle member rules.
@@ -78,28 +80,31 @@ func NewUseCases(
 	users user.UseCases,
 	findGroupByID group.FindByID,
 	findRoleByID role.FindByID,
+	roles user.ListRoles,
+	groups user.ListGroups,
+	rdb *rebac.DB,
 ) UseCases {
 	var mutex sync.Mutex
 
 	return UseCases{
 		MyCircles:                NewMyCircles(repoCircle),
-		MyCircleMembers:          NewMyCircleMembers(repoCircle, users.FindAll),
+		MyCircleMembers:          NewMyCircleMembers(repoCircle, users.FindAll, roles, groups),
 		Create:                   NewCreate(&mutex, repoCircle),
 		Update:                   NewUpdate(&mutex, repoCircle),
 		DeleteByID:               NewDeleteByID(&mutex, repoCircle),
 		FindByID:                 NewFindByID(repoCircle),
 		FindAll:                  NewFindAll(repoCircle),
 		IsCircleAdmin:            NewIsCircleAdmin(repoCircle),
-		IsMyCircleMember:         NewIsMyCircleMember(repoCircle, users.FindByID),
-		MyCircleGroupsAdd:        NewMyCircleGroupsAdd(&mutex, repoCircle, users),
-		MyCircleGroupsRemove:     NewMyCircleGroupsRemove(&mutex, repoCircle, users),
-		MyCircleRolesRemove:      NewMyCircleRolesRemove(&mutex, repoCircle, users),
-		MyCircleRolesAdd:         NewMyCircleRolesAdd(&mutex, repoCircle, users),
+		IsMyCircleMember:         NewIsMyCircleMember(repoCircle, users.FindByID, roles, groups),
+		MyCircleGroupsAdd:        NewMyCircleGroupsAdd(&mutex, repoCircle, users, rdb, roles, groups),
+		MyCircleGroupsRemove:     NewMyCircleGroupsRemove(&mutex, repoCircle, users, rdb, roles, groups),
+		MyCircleRolesRemove:      NewMyCircleRolesRemove(&mutex, repoCircle, users, rdb, roles, groups),
+		MyCircleRolesAdd:         NewMyCircleRolesAdd(&mutex, repoCircle, users, rdb, roles, groups),
 		MyGroups:                 NewMyGroups(repoCircle, users, findGroupByID),
 		MyRoles:                  NewMyRoles(repoCircle, users, findRoleByID),
-		MyCircleUserRemove:       NewMyCircleUserRemove(&mutex, repoCircle, users),
-		MyCircleUserUpdateStatus: NewMyCircleUserUpdateStatus(&mutex, repoCircle, users),
-		MyCircleUserVerified:     NewMyCircleUserVerified(&mutex, repoCircle, users),
+		MyCircleUserRemove:       NewMyCircleUserRemove(&mutex, repoCircle, users, roles, groups),
+		MyCircleUserUpdateStatus: NewMyCircleUserUpdateStatus(&mutex, repoCircle, users, roles, groups),
+		MyCircleUserVerified:     NewMyCircleUserVerified(&mutex, repoCircle, users, roles, groups),
 	}
 }
 
@@ -124,7 +129,7 @@ func myCircle(repo Repository, subject auth.Subject, id ID) (Circle, error) {
 	return circle, nil
 }
 
-func myCircleAndUser(repo Repository, findUserByID user.FindByID, subject auth.Subject, cid ID, other user.ID) (Circle, user.User, error) {
+func myCircleAndUser(repo Repository, findUserByID user.FindByID, roles user.ListRoles, groups user.ListGroups, subject auth.Subject, cid ID, other user.ID) (Circle, user.User, error) {
 	if !subject.Valid() {
 		return Circle{}, user.User{}, user.InvalidSubjectErr
 	}
@@ -142,7 +147,7 @@ func myCircleAndUser(repo Repository, findUserByID user.FindByID, subject auth.S
 		return Circle{}, user.User{}, os.ErrNotExist
 	}
 
-	if !circle.isMember(optUsr.Unwrap()) {
+	if !circle.isMember(roles, groups, optUsr.Unwrap()) {
 		return Circle{}, user.User{}, user.PermissionDeniedErr
 	}
 

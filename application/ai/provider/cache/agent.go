@@ -11,6 +11,7 @@ import (
 	"fmt"
 
 	"go.wdy.de/nago/application/ai/agent"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/xtime"
 )
@@ -36,7 +37,7 @@ func (c cacheAgent) Update(subject auth.Subject, opts agent.UpdateOptions) (agen
 
 	ag := optAg.Unwrap()
 
-	if ag.CreatedBy != subject.ID() && !subject.HasResourcePermission(c.parent.repoAgents.Name(), string(c.id), PermAgentUpdate) {
+	if ag.CreatedBy != subject.ID() && !subject.HasResourcePermission(rebac.Namespace(c.parent.repoAgents.Name()), rebac.Instance(c.id), PermAgentUpdate) {
 		return agent.Agent{}, subject.Audit(PermAgentUpdate)
 	}
 

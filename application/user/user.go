@@ -8,21 +8,14 @@
 package user
 
 import (
-	"fmt"
-	"iter"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/worldiety/enum"
 	"go.wdy.de/nago/application/address"
 	"go.wdy.de/nago/application/consent"
-	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/image"
-	"go.wdy.de/nago/application/license"
-	"go.wdy.de/nago/application/permission"
-	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/xslices"
 	"go.wdy.de/nago/pkg/xstrings"
@@ -203,46 +196,6 @@ func (c Code) IsZero() bool {
 	return c.Value == "" && c.ValidUntil.IsZero()
 }
 
-type Resource struct {
-	// Name of the Store or Repository
-	Name string
-
-	// ID is the string version of the root aggregate or entity key used in the named Store or Repository.
-	// If ID is empty, all values from the Named Store or Repository are applicable.
-	ID string
-}
-
-func (r Resource) MarshalText() ([]byte, error) {
-	// TODO fix me: this looks awful in json and is usually totally unnecessary
-	return []byte(strconv.Quote(r.Name + "/" + r.ID)), nil
-}
-
-func (r *Resource) UnmarshalText(data []byte) error {
-	if len(data) == 0 {
-		r.Name = ""
-		r.ID = ""
-	}
-
-	str, err := strconv.Unquote(string(data))
-	if err != nil {
-		return err
-	}
-
-	tokens := strings.SplitN(str, "/", 2)
-	if len(tokens) != 2 {
-		return fmt.Errorf("invalid json format for resource: %s", str)
-	}
-
-	r.Name = tokens[0]
-	r.ID = tokens[1]
-	return nil
-}
-
-type ResourceWithPermissions struct {
-	Permissions iter.Seq[permission.ID]
-	Resource
-}
-
 type User struct {
 	ID                    ID            `json:"id"`
 	Email                 Email         `json:"email"`
@@ -261,15 +214,6 @@ type User struct {
 
 	// some legal/regulatory properties
 	Consents []consent.Consent `json:"consents,omitzero"`
-
-	// global permissions
-	Roles       []role.ID       `json:"roles,omitempty"`       // roles may also contain inherited permissions
-	Groups      []group.ID      `json:"groups,omitempty"`      // groups may also contain inherited permissions
-	Permissions []permission.ID `json:"permissions,omitempty"` // individual custom permissions
-	Licenses    []license.ID    `json:"licenses,omitempty"`
-
-	// resource based permissions
-	Resources map[Resource][]permission.ID `json:"resources,omitempty"`
 }
 
 func (u User) String() string {

@@ -8,9 +8,11 @@
 package template
 
 import (
-	"go.wdy.de/nago/auth"
 	"iter"
 	"slices"
+
+	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/auth"
 )
 
 func NewFindAll(repository Repository) FindAll {
@@ -25,7 +27,7 @@ func NewFindAll(repository Repository) FindAll {
 					}
 				}
 
-				if err := subject.AuditResource(repository.Name(), string(project.ID), PermFindAll); err != nil {
+				if err := subject.AuditResource(rebac.Namespace(repository.Name()), rebac.Instance(project.ID), PermFindAll); err != nil {
 					continue nextProject
 				}
 

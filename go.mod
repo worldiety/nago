@@ -1,6 +1,6 @@
 module go.wdy.de/nago
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/dave/jennifer v1.7.1
@@ -29,6 +29,7 @@ require (
 require (
 	github.com/expr-lang/expr v1.17.7 // indirect
 	github.com/stretchr/testify v1.11.1 // indirect
+	github.com/tidwall/btree v1.8.1 // indirect
 	golang.org/x/exp v0.0.0-20251113190631-e25ba8c21ef6 // indirect
 	golang.org/x/mod v0.30.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect

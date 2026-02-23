@@ -11,13 +11,14 @@ import (
 	"os"
 	"reflect"
 
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/std/concurrent"
 )
 
 func NewAnalyze(declarations *concurrent.RWMap[ID, *workflow]) Analyze {
 	return func(subject user.Subject, id ID) (Analyzed, error) {
-		if err := subject.AuditResource(RepositoryNameDeclaredWorkflows, string(id), PermAnalyze); err != nil {
+		if err := subject.AuditResource(RepositoryNameDeclaredWorkflows, rebac.Instance(id), PermAnalyze); err != nil {
 			return Analyzed{}, err
 		}
 

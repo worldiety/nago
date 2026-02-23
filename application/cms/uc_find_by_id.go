@@ -8,9 +8,11 @@
 package cms
 
 import (
-	"github.com/worldiety/option"
-	"go.wdy.de/nago/auth"
 	"os"
+
+	"github.com/worldiety/option"
+	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/auth"
 )
 
 func NewFindByID(repo Repository) FindByID {
@@ -24,7 +26,7 @@ func NewFindByID(repo Repository) FindByID {
 			return option.None[*Document](), os.ErrNotExist
 		}
 
-		if err := subject.AuditResource(repo.Name(), string(optDoc.Unwrap().ID), PermFindAll); err != nil {
+		if err := subject.AuditResource(rebac.Namespace(repo.Name()), rebac.Instance(optDoc.Unwrap().ID), PermFindAll); err != nil {
 			return option.None[*Document](), err
 		}
 

@@ -12,6 +12,7 @@ import (
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/pkg/xslices"
 	"go.wdy.de/nago/presentation/core"
 	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	"go.wdy.de/nago/presentation/ui"
@@ -21,7 +22,7 @@ import (
 	"go.wdy.de/nago/presentation/ui/tabs"
 )
 
-func ViewEditUser(wnd core.Window, ucUsers user.UseCases, ucGroups group.UseCases, ucRoles role.UseCases, ucPermissions permission.UseCases, usr *core.State[user.User]) ui.DecoredView {
+func ViewEditUser(wnd core.Window, ucUsers user.UseCases, ucGroups group.UseCases, ucRoles role.UseCases, ucPermissions permission.UseCases, usr *core.State[UserModel]) ui.DecoredView {
 	editContact := core.AutoState[contactViewModel](wnd).Init(func() contactViewModel {
 		return newContactViewModel(string(usr.Get().Email), usr.Get().Contact)
 	}).Observe(func(c contactViewModel) {
@@ -36,8 +37,8 @@ func ViewEditUser(wnd core.Window, ucUsers user.UseCases, ucGroups group.UseCase
 		tabs.Tabs(
 			tabs.Page("Kontakt", func() core.View {
 				return ui.VStack(
-					ui.If(usr.Get().SSO(), ui.Text(StrSSOUserCannotEditProfile.Get(wnd))),
-					ui.If(!usr.Get().SSO(), viewContact(wnd, usr, editContact)),
+					ui.If(usr.Get().IntoUser().SSO(), ui.Text(StrSSOUserCannotEditProfile.Get(wnd))),
+					ui.If(!usr.Get().IntoUser().SSO(), viewContact(wnd, usr, editContact)),
 				).FullWidth()
 			}).Icon(icons.AddressBook),
 			tabs.Page("Rollen", func() core.View {
@@ -65,7 +66,7 @@ func ViewEditUser(wnd core.Window, ucUsers user.UseCases, ucGroups group.UseCase
 	).FullWidth().Alignment(ui.Leading)
 }
 
-func viewRoles(wnd core.Window, ucUsers user.UseCases, ucRoles role.UseCases, usr *core.State[user.User]) core.View {
+func viewRoles(wnd core.Window, ucUsers user.UseCases, ucRoles role.UseCases, usr *core.State[UserModel]) core.View {
 	type viewModelRoles struct {
 		Roles []role.ID `label:"Rollen" source:"nago.roles"`
 	}
@@ -95,7 +96,12 @@ func viewRoles(wnd core.Window, ucUsers user.UseCases, ucRoles role.UseCases, us
 		}
 
 		r := optRole.Unwrap()
-		for _, pid := range r.Permissions {
+		perms, err := xslices.Collect2(ucRoles.ListPermissions(wnd.Subject(), r.ID))
+		if err != nil {
+			return alert.BannerError(err)
+		}
+
+		for _, pid := range perms {
 			if perm, ok := permission.Find(pid); ok {
 				title := wnd.Subject().Bundle().Resolve(perm.Name)
 				desc := wnd.Subject().Bundle().Resolve(perm.Description)
@@ -113,7 +119,7 @@ func viewRoles(wnd core.Window, ucUsers user.UseCases, ucRoles role.UseCases, us
 	).Append(rolesView...).FullWidth().Alignment(ui.Leading).Gap(ui.L32)
 }
 
-func viewGroups(wnd core.Window, ucGroups group.UseCases, usr *core.State[user.User]) core.View {
+func viewGroups(wnd core.Window, ucGroups group.UseCases, usr *core.State[UserModel]) core.View {
 	type viewModelGroups struct {
 		Groups []group.ID `label:"Gruppen" source:"nago.groups"`
 	}
@@ -155,28 +161,28 @@ func viewGroups(wnd core.Window, ucGroups group.UseCases, usr *core.State[user.U
 
 }
 
-func viewContact(wnd core.Window, usrState *core.State[user.User], usr *core.State[contactViewModel]) core.View {
-	return form.Auto(form.AutoOptions{Window: wnd, ViewOnly: usrState.Get().SSO()}, usr).Frame(ui.Frame{Width: ui.Full})
+func viewContact(wnd core.Window, usrState *core.State[UserModel], usr *core.State[contactViewModel]) core.View {
+	return form.Auto(form.AutoOptions{Window: wnd, ViewOnly: usrState.Get().IntoUser().SSO()}, usr).Frame(ui.Frame{Width: ui.Full})
 }
 
-func viewPermissions(wnd core.Window, usr *core.State[user.User]) core.View {
+func viewPermissions(wnd core.Window, usr *core.State[UserModel]) core.View {
 	type viewModelPerms struct {
 		Perms []permission.ID `label:"Berechtigungen" source:"nago.permissions"`
 	}
 
 	editPerms := core.AutoState[viewModelPerms](wnd).Init(func() viewModelPerms {
 		return viewModelPerms{
-			Perms: usr.Get().Permissions,
+			Perms: usr.Get().GlobalPermissions,
 		}
 	}).Observe(func(c viewModelPerms) {
 		u := usr.Get()
-		u.Permissions = c.Perms
+		u.GlobalPermissions = c.Perms
 		usr.Set(u)
 		usr.Notify()
 	})
 
 	var permsView []core.View
-	for _, id := range usr.Get().Permissions {
+	for _, id := range usr.Get().GlobalPermissions {
 		perm, ok := permission.Find(id)
 		if !ok {
 			// stale ref
@@ -202,7 +208,7 @@ func viewPermissions(wnd core.Window, usr *core.State[user.User]) core.View {
 
 }
 
-func viewConsents(wnd core.Window, ucUser user.UseCases, usr *core.State[user.User]) core.View {
+func viewConsents(wnd core.Window, ucUser user.UseCases, usr *core.State[UserModel]) core.View {
 
 	return ui.VStack(
 		ui.Text("Die Änderungen an den Zustimmungen werden sofort angewendet und können nicht durch 'Abbrechen' rückgängig gemacht werden."),

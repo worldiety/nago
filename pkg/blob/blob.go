@@ -93,7 +93,7 @@ type Store interface {
 	// these changes must not cause the iterator to return garbage (like missed or doubled entries).
 	// Note that this may become very inefficient, when used on very large datasets containing
 	// millions or even billions of entries. The order of the returned keys is sorted lexicographically from
-	// smallest to largest. Thus, the smallest key in a Store can be efficiently queries, using just a Limit of 1.
+	// smallest to largest. Thus, the smallest key in a Store can be efficiently queried, using just a Limit of 1.
 	// Implementations must support Prefix and Range filters.
 	List(ctx context.Context, opts ListOptions) iter.Seq2[string, error]
 

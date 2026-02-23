@@ -12,10 +12,19 @@ import (
 	"iter"
 	"slices"
 
+	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/data/rquery"
 	"go.wdy.de/nago/pkg/xslices"
 	"go.wdy.de/nago/presentation/core"
+	"golang.org/x/text/language"
+)
+
+var (
+	StrNoEntries          = i18n.MustString("nago.pager.no_entries", i18n.Values{language.German: "Keine Einträge", language.English: "No entries"})
+	StrXEntries           = i18n.MustQuantityString("nago.pager.x_entries", i18n.QValues{language.German: i18n.Quantities{One: "1 Eintrag", Other: "{x} Einträge"}, language.English: i18n.Quantities{One: "1 entry", Other: "{x} entries"}})
+	StrXEntriesVisibleOfY = i18n.MustQuantityString("nago.pager.x_entries_visible_of_y", i18n.QValues{language.German: i18n.Quantities{One: "Ein Eintrag sichtbar von {y} Einträgen", Other: "{x} Einträge sichtbar von {y}"}, language.English: i18n.Quantities{One: "One entry visible of {y} entries", Other: "{x} entries of {y} visible"}})
+	StrXToYEntriesOfZ     = i18n.MustVarString("nago.pager.x_to_y_entries_of_z", i18n.Values{language.German: "{from}-{to} von {total} Einträgen", language.English: "{from}-{to} of {total} entries"})
 )
 
 type ModelOptions struct {
@@ -178,20 +187,20 @@ func NewModel[E data.Aggregate[ID], ID ~string](wnd core.Window, findByID data.B
 func (m Model[E, ID]) PageString() string {
 	to := m.Page.PageIdx*m.Page.PageSize + m.Page.PageSize
 	if len(m.Selections) == 0 {
-		return "Keine Einträge"
+		return StrNoEntries.Get(m.Window)
 	}
 
 	if m.Page.PageIdx == 0 && len(m.Page.Items) < m.Page.PageSize {
 		// just a single page
 		if len(m.Page.Items) == len(m.Selections) {
-			return fmt.Sprintf("%d Einträge", len(m.Page.Items))
+			return StrXEntries.Get(m.Window, float64(len(m.Page.Items)), i18n.Int("x", len(m.Page.Items)))
 		}
 
 		// this is a single page but filtered
-		return fmt.Sprintf("%d Einträge sichtbar von %d", len(m.Page.Items), len(m.Selections))
+		return StrXEntriesVisibleOfY.Get(m.Window, float64(len(m.Page.Items)), i18n.Int("x", len(m.Page.Items)), i18n.Int("y", len(m.Selections)))
 	}
 
-	return fmt.Sprintf("%d-%d von %d Einträgen", m.Page.PageIdx*m.Page.PageSize+1, to, m.Page.Total)
+	return StrXToYEntriesOfZ.Get(m.Window, i18n.Int("from", m.Page.PageIdx*m.Page.PageSize+1), i18n.Int("to", to), i18n.Int("total", m.Page.Total))
 }
 
 // Selected allocates and returns a slice of all those ids which are currently selected. The IDs are sorted in

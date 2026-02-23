@@ -17,6 +17,7 @@ import (
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/file"
 	"go.wdy.de/nago/application/ai/provider"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/xtime"
@@ -54,7 +55,7 @@ func (c cacheFiles) All(subject auth.Subject) iter.Seq2[file.File, error] {
 
 			m := optConv.Unwrap()
 
-			if m.CreatedBy != subject.ID() && !subject.HasResourcePermission(c.parent.repoFiles.Name(), string(m.ID), PermFileFindAll) {
+			if m.CreatedBy != subject.ID() && !subject.HasResourcePermission(rebac.Namespace(c.parent.repoFiles.Name()), rebac.Instance(m.ID), PermFileFindAll) {
 				continue
 			}
 
@@ -76,7 +77,7 @@ func (c cacheFiles) FindByID(subject auth.Subject, id file.ID) (option.Opt[file.
 	}
 
 	lib := optLib.Unwrap()
-	if lib.CreatedBy != subject.ID() && !subject.HasResourcePermission(c.parent.repoFiles.Name(), string(lib.ID), PermFileFindByID) {
+	if lib.CreatedBy != subject.ID() && !subject.HasResourcePermission(rebac.Namespace(c.parent.repoFiles.Name()), rebac.Instance(lib.ID), PermFileFindByID) {
 		return option.Opt[file.File]{}, subject.Audit(PermFileFindByID)
 	}
 
@@ -94,7 +95,7 @@ func (c cacheFiles) Delete(subject auth.Subject, id file.ID) error {
 	}
 
 	lib := optLib.Unwrap()
-	if lib.CreatedBy != subject.ID() && !subject.HasResourcePermission(c.parent.repoFiles.Name(), string(lib.ID), PermFileDelete) {
+	if lib.CreatedBy != subject.ID() && !subject.HasResourcePermission(rebac.Namespace(c.parent.repoFiles.Name()), rebac.Instance(lib.ID), PermFileDelete) {
 		return subject.Audit(PermFileDelete)
 	}
 

@@ -74,7 +74,7 @@ type Window interface {
 	// parameters. This depends on the actual frontend.
 	Values() Values
 
-	// Subject is never nil. Use [auth.Subject.Audit] for permission handling.
+	// Subject is never nil. Use [auth.Source.Audit] for permission handling.
 	// You must not keep the identity instance over a long time, because
 	// it will change over time, either due to refreshing tokens or because the user is logged out.
 	Subject() auth.Subject

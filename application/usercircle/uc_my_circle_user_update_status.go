@@ -8,17 +8,18 @@
 package usercircle
 
 import (
+	"sync"
+
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
-	"sync"
 )
 
-func NewMyCircleUserUpdateStatus(mutex *sync.Mutex, repo Repository, users user.UseCases) MyCircleUserUpdateStatus {
+func NewMyCircleUserUpdateStatus(mutex *sync.Mutex, repo Repository, users user.UseCases, usrRoles user.ListRoles, usrGroups user.ListGroups) MyCircleUserUpdateStatus {
 	return func(subject auth.Subject, circleId ID, usrId user.ID, status user.AccountStatus) error {
 		mutex.Lock()
 		defer mutex.Unlock()
 
-		_, usr, err := myCircleAndUser(repo, users.FindByID, subject, circleId, usrId)
+		_, usr, err := myCircleAndUser(repo, users.FindByID, usrRoles, usrGroups, subject, circleId, usrId)
 		if err != nil {
 			return err
 		}

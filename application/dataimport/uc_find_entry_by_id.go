@@ -9,12 +9,13 @@ package dataimport
 
 import (
 	"github.com/worldiety/option"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/auth"
 )
 
 func NewFindEntryByID(repoEntry EntryRepository) FindEntryByID {
 	return func(subject auth.Subject, id Key) (option.Opt[Entry], error) {
-		if err := subject.AuditResource(repoEntry.Name(), string(id), PermFindEntryByID); err != nil {
+		if err := subject.AuditResource(rebac.Namespace(repoEntry.Name()), rebac.Instance(id), PermFindEntryByID); err != nil {
 			return option.Opt[Entry]{}, err
 		}
 

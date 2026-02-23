@@ -12,15 +12,13 @@ import (
 	"fmt"
 	"iter"
 	"log/slog"
-	"maps"
-	"slices"
 	"sync"
 	"time"
 
 	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application/group"
-	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/std/tick"
@@ -28,25 +26,16 @@ import (
 )
 
 type subject struct {
-	repo           Repository
-	token          Token
-	mutex          sync.Mutex
-	roles          map[role.ID]struct{}
-	groups         map[group.ID]struct{}
-	licenses       map[license.ID]struct{}
-	permissions    map[permission.ID]struct{}
-	allPermissions []permission.ID
-	lastLoaded     time.Time
-	findRoleByID   role.FindByID
-	ctx            context.Context
+	repo         Repository
+	token        Token
+	mutex        sync.Mutex
+	rdb          *rebac.DB
+	lastLoaded   time.Time
+	findRoleByID role.FindByID
+	ctx          context.Context
 }
 
-func (s *subject) HasResourcePermission(name string, id string, p permission.ID) bool {
-	//TODO implement me
-	panic("implement me")
-}
-
-func newSubject(ctx context.Context, findRoleByID role.FindByID, repo Repository, token Token) *subject {
+func newSubject(ctx context.Context, findRoleByID role.FindByID, repo Repository, token Token, rdb *rebac.DB) *subject {
 	if token.Impersonation.IsSome() {
 		panic(fmt.Errorf("impersonation is not allowed"))
 	}
@@ -56,10 +45,7 @@ func newSubject(ctx context.Context, findRoleByID role.FindByID, repo Repository
 		repo:         repo,
 		token:        token,
 		findRoleByID: findRoleByID,
-		roles:        make(map[role.ID]struct{}),
-		groups:       make(map[group.ID]struct{}),
-		licenses:     make(map[license.ID]struct{}),
-		permissions:  make(map[permission.ID]struct{}),
+		rdb:          rdb,
 	}
 }
 
@@ -67,60 +53,74 @@ func (s *subject) Context() context.Context {
 	return s.ctx
 }
 
-func (s *subject) Audit(permission permission.ID) error {
+func (s *subject) HasResourcePermission(name rebac.Namespace, id rebac.Instance, p permission.ID) bool {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s *subject) Audit(perm permission.ID) error {
 	if !s.Valid() {
 		return user.PermissionDeniedErr
 	}
 
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+	if !s.HasPermission(perm) {
+		var name = string(perm)
+		if p, ok := permission.Find(perm); ok {
+			name = p.Name
+		}
 
-	if _, ok := s.permissions[permission]; !ok {
-		return user.PermissionDeniedErr
+		return user.PermissionDeniedError(name)
 	}
 
 	return nil
 }
 
-func (s *subject) AuditResource(name string, id string, p permission.ID) error {
+func (s *subject) source() rebac.Entity {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	if s.token.Impersonation.IsSome() {
+		usr := s.token.Impersonation.Unwrap()
+		return rebac.Entity{Namespace: user.Namespace, Instance: rebac.Instance(usr)}
+	}
+
+	return rebac.Entity{Namespace: Namespace, Instance: rebac.Instance(s.token.ID)}
+}
+
+func (s *subject) AuditResource(name rebac.Namespace, id rebac.Instance, p permission.ID) error {
 	if !s.Valid() {
 		return user.PermissionDeniedErr
 	}
 
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	perms := s.token.Resources[user.Resource{
-		Name: name,
-		ID:   id,
-	}]
-
-	for _, perm := range perms {
-		if perm == p {
-			return nil
+	if !s.HasResourcePermission(name, id, p) {
+		var permName = string(p)
+		if perm, ok := permission.Find(p); ok {
+			permName = perm.Name
 		}
+
+		return user.PermissionDeniedError(permName)
 	}
 
-	return user.PermissionDeniedErr
+	return nil
 }
 
 func (s *subject) HasPermission(permission permission.ID) bool {
 	s.load()
 
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+	ok, err := s.rdb.Contains(rebac.Triple{
+		Source:   s.source(),
+		Relation: rebac.Relation(permission),
+		Target: rebac.Entity{
+			Namespace: rebac.Global,
+			Instance:  rebac.AllInstances,
+		},
+	})
 
-	_, ok := s.permissions[permission]
+	if err != nil {
+		slog.Error("cannot check resource permission", "err", err)
+		return false
+	}
+
 	return ok
-}
-
-func (s *subject) Permissions() iter.Seq[permission.ID] {
-	s.load()
-
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	return slices.Values(s.allPermissions)
 }
 
 func (s *subject) ID() user.ID {
@@ -151,55 +151,88 @@ func (s *subject) Avatar() string {
 
 func (s *subject) Roles() iter.Seq[role.ID] {
 	s.load()
-	return slices.Values(s.token.Roles)
+
+	return func(yield func(role.ID) bool) {
+		it := s.rdb.Query(rebac.Select().
+			Where().Source().IsNamespace(role.Namespace).
+			// instance==?
+			Where().Relation().Has(rebac.Member).
+			Where().Target().Set(s.source()),
+		)
+
+		for triple, err := range it {
+			if err != nil {
+				slog.Error("cannot iterate roles", "err", err)
+				return
+			}
+
+			if !yield(role.ID(triple.Target.Instance)) {
+				return
+			}
+		}
+	}
 }
 
 func (s *subject) HasRole(id role.ID) bool {
 	s.load()
+	ok, err := s.rdb.Contains(rebac.Triple{
+		Source: rebac.Entity{
+			Namespace: role.Namespace,
+			Instance:  rebac.Instance(id),
+		},
+		Relation: rebac.Member,
+		Target:   s.source(),
+	})
 
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+	if err != nil {
+		slog.Error("cannot check role membership", "err", err)
+		return false
+	}
 
-	_, ok := s.roles[id]
 	return ok
 }
 
 func (s *subject) Groups() iter.Seq[group.ID] {
 	s.load()
 
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+	return func(yield func(group.ID) bool) {
+		it := s.rdb.Query(rebac.Select().
+			Where().Source().IsNamespace(group.Namespace).
+			Where().Relation().Has(rebac.Member).
+			Where().Target().Set(s.source()),
+		)
 
-	return slices.Values(s.token.Groups)
+		for triple, err := range it {
+			if err != nil {
+				slog.Error("cannot iterate roles", "err", err)
+				return
+			}
+
+			if !yield(group.ID(triple.Target.Instance)) {
+				return
+			}
+		}
+	}
 }
 
 func (s *subject) HasGroup(id group.ID) bool {
 	s.load()
 
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+	ok, err := s.rdb.Contains(rebac.Triple{
+		Source: rebac.Entity{
+			Namespace: group.Namespace,
+			Instance:  rebac.Instance(id),
+		},
+		Relation: rebac.Member,
+		Target:   s.source(),
+	})
 
-	_, ok := s.groups[id]
+	if err != nil {
+		slog.Error("cannot check group membership", "err", err)
+		return false
+	}
+
 	return ok
-}
-
-func (s *subject) HasLicense(id license.ID) bool {
-	s.load()
-
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	_, ok := s.licenses[id]
-	return ok
-}
-
-func (s *subject) Licenses() iter.Seq[license.ID] {
-	s.load()
-
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	return slices.Values(s.token.Licenses)
 }
 
 func (s *subject) Valid() bool {
@@ -229,11 +262,6 @@ func (s *subject) load() {
 	}
 
 	s.lastLoaded = tick.Now(tick.Minute)
-	clear(s.roles)
-	clear(s.groups)
-	clear(s.licenses)
-	clear(s.permissions)
-	clear(s.allPermissions)
 
 	optToken, err := s.repo.FindByID(s.token.ID)
 	if err != nil {
@@ -249,39 +277,5 @@ func (s *subject) load() {
 	}
 
 	s.token = optToken.Unwrap()
-	for _, id := range s.token.Roles {
-		s.roles[id] = struct{}{}
-	}
 
-	for _, id := range s.token.Groups {
-		s.groups[id] = struct{}{}
-	}
-
-	for _, id := range s.token.Licenses {
-		s.licenses[id] = struct{}{}
-	}
-
-	for _, id := range s.token.Permissions {
-		s.permissions[id] = struct{}{}
-	}
-
-	for _, rid := range s.token.Roles {
-		optRole, err := s.findRoleByID(user.SU(), rid)
-		if err != nil {
-			slog.Error("failed to find role by id", "id", rid, "err", err.Error())
-			continue
-		}
-
-		if optRole.IsNone() {
-			// stale ref is just gone, ignore
-			continue
-		}
-
-		for _, id := range optRole.Unwrap().Permissions {
-			s.permissions[id] = struct{}{}
-		}
-	}
-
-	s.allPermissions = slices.Collect(maps.Keys(s.permissions))
-	slices.Sort(s.allPermissions)
 }

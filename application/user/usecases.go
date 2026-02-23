@@ -18,8 +18,8 @@ import (
 	"go.wdy.de/nago/application/consent"
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/image"
-	"go.wdy.de/nago/application/license"
 	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/pkg/data"
@@ -27,6 +27,8 @@ import (
 	"go.wdy.de/nago/pkg/std"
 	"golang.org/x/text/language"
 )
+
+const Namespace rebac.Namespace = "nago.iam.user"
 
 type Repository data.Repository[User, ID]
 
@@ -49,7 +51,6 @@ type UpdateOtherGroups func(subject AuditableUser, id ID, groups []group.ID) err
 
 type AddUserToGroup func(subject AuditableUser, id ID, group group.ID) error
 
-type UpdateOtherLicenses func(subject AuditableUser, id ID, licenses []license.ID) error
 type ReadMyContact func(subject AuditableUser) (Contact, error)
 
 // SubjectFromUser returns a subject view for the given user ID. This view can be leaked as long as required and
@@ -59,21 +60,6 @@ type ReadMyContact func(subject AuditableUser) (Contact, error)
 // will update the Window reference and the session persistence. It does never make a user invalid.
 type SubjectFromUser func(subject permission.Auditable, id ID) (option.Opt[Subject], error)
 type EnableBootstrapAdmin func(aliveUntil time.Time, password Password) (ID, error)
-
-// CountAssignedUserLicense counts how many licenses of the given id have been assigned.
-type CountAssignedUserLicense func(auditable permission.Auditable, id license.ID) (int, error)
-
-// RevokeAssignedUserLicense can be used to ensure a correctly assigned amount of licenses.
-// If a license is removed or the MaxUser limit is lowered, the given count of licenses can be revoked. It
-// is undefined which users get revoked. A negative amount will remove the license from all users.
-type RevokeAssignedUserLicense func(auditable permission.Auditable, id license.ID, count int) error
-
-// AssignUserLicense tries to assign the given license to the user. If there are not enough free licenses,
-// false is returned, otherwise true. If the license is already assigned, this is a no-op and true is returned.
-type AssignUserLicense func(auditable permission.Auditable, id ID, license license.ID) (bool, error)
-
-// UnassignUserLicense removes the given license from the user. If no such license is assigned, this is a no-op.
-type UnassignUserLicense func(auditable permission.Auditable, id ID, license license.ID) error
 
 // SysUser returns the always mighty build-in system user. This user never authenticates but can always
 // be used from the code side to invoke any auditable use case. Use it with caution and only if necessary.
@@ -117,34 +103,18 @@ type Consent func(subject AuditableUser, user ID, consentID consent.ID, action c
 
 type LoadSettings func(subject AuditableUser) Settings
 
-// AddResourcePermissions appends those permissions to the users' resource lookup table which have not been already
-// defined. Adding a wildcard does not automatically substitute fine-grained permissions. A wildcard takes
-// logically a higher precedence.
-type AddResourcePermissions func(subject AuditableUser, uid ID, resource Resource, permission ...permission.ID) error
+// ListGroups returns all groups which the given user is a member of according to the ReBAC system.
+// A valid user can always read its own groups.
+type ListGroups func(subject AuditableUser, uid ID) iter.Seq2[group.ID, error]
 
-// RemoveResourcePermissions removes those permissions from the users' resource lookup table which have been already
-// defined. Removing a wildcard does not automatically remove fine-grained permissions.
-type RemoveResourcePermissions func(subject AuditableUser, uid ID, resource Resource, permission ...permission.ID) error
+// ListRoles returns all roles which the given user is a member of according to the ReBAC system.
+// A valid user can always read its own roles.
+type ListRoles func(subject AuditableUser, uid ID) iter.Seq2[role.ID, error]
 
-// ListResourcePermissions returns an iterator over all defined resource permissions. Note that the
-// returned order of resources is implementation-dependent and may be even random for subsequent calls.
-// See also [ListGrantedPermissions] and [ListGrantedUsers].
-type ListResourcePermissions func(subject AuditableUser, uid ID) iter.Seq2[ResourceWithPermissions, error]
-
-// GrantPermissions sets the exact permission set for the given user. The user is removed automatically from the
-// [GrantingIndexRepository] if permissions are empty.
-type GrantPermissions func(subject AuditableUser, id GrantingKey, permissions ...permission.ID) error
-
-// ListGrantedPermissions returns the set of permissions which have been granted to the given user and resource
-// combination. It is way more efficient when iterating over all users, because the inverse index
-// [GrantingIndexRepository] is used.
-type ListGrantedPermissions func(subject AuditableUser, id GrantingKey) ([]permission.ID, error)
-
-// ListGrantedUsers returns the set of all known users who have at least a single granted permission to the
-// given resource. Note that due to eventual consistency, the returned sequence of user ids must not match
-// the actual set of available users. This is efficient, because the inverse index
-// [GrantingIndexRepository] is used.
-type ListGrantedUsers func(subject AuditableUser, res Resource) iter.Seq2[ID, error]
+// ListGlobalPermissions returns all global permissions which the given user is a member of according to the ReBAC
+// system. A global permission has the permission id as a relation and as target [rebac.Global] and [rebac.AllInstances].
+// A valid user can always read its own global permissions.
+type ListGlobalPermissions func(subject AuditableUser, uid ID) iter.Seq2[permission.ID, error]
 
 type SingleSignOnUser struct {
 	Firstname         string
@@ -191,42 +161,6 @@ func (u SingleSignOnUser) LastName() string {
 // is disabled.
 type MergeSingleSignOnUser func(user SingleSignOnUser, avatar []byte) (ID, error)
 
-// GrantingKey is a triple composite key of <repo-name>/<resource-id>/<user-id>.
-type GrantingKey string
-
-func NewGrantingKey(resource Resource, uid ID) GrantingKey {
-	return GrantingKey(resource.Name + "/" + resource.ID + "/" + string(uid)) // this is faster than str buffer or sprintf
-}
-
-func (id GrantingKey) Valid() bool {
-	// no heap
-	return strings.Count(string(id), "/") == 2
-}
-
-func (id GrantingKey) Split() (Resource, ID) {
-	// no heap
-	a := strings.Index(string(id), "/")
-	b := strings.LastIndex(string(id), "/")
-	if a == b {
-		return Resource{}, ""
-	}
-
-	return Resource{
-		Name: string(id[:a]),
-		ID:   string(id[a+1 : b]),
-	}, ID(id[b+1:])
-}
-
-type Granting struct {
-	ID GrantingKey `json:"id"`
-}
-
-func (g Granting) Identity() GrantingKey {
-	return g.ID
-}
-
-type GrantingIndexRepository data.Repository[Granting, GrantingKey]
-
 type ExportFormat int
 
 const (
@@ -248,63 +182,69 @@ type Compact struct {
 	Valid       bool
 }
 type UseCases struct {
-	Create                    Create
-	FindByID                  FindByID
-	FindByMail                FindByMail
-	FindAll                   FindAll
-	ChangeOtherPassword       ChangeOtherPassword
-	ChangeMyPassword          ChangeMyPassword
-	ChangePasswordWithCode    ChangePasswordWithCode
-	Delete                    Delete
-	UpdateMyContact           UpdateMyContact
-	UpdateOtherContact        UpdateOtherContact
-	UpdateOtherRoles          UpdateOtherRoles
-	UpdateOtherPermissions    UpdateOtherPermissions
-	UpdateOtherLicenses       UpdateOtherLicenses
-	UpdateOtherGroups         UpdateOtherGroups
-	ReadMyContact             ReadMyContact
-	SubjectFromUser           SubjectFromUser
-	EnableBootstrapAdmin      EnableBootstrapAdmin
-	SysUser                   SysUser
-	AuthenticateByPassword    AuthenticateByPassword
-	CountAssignedUserLicense  CountAssignedUserLicense
-	RevokeAssignedUserLicense RevokeAssignedUserLicense
-	ConfirmMail               ConfirmMail
-	ResetVerificationCode     ResetVerificationCode
-	RequiresPasswordChange    RequiresPasswordChange
-	ResetPasswordRequestCode  ResetPasswordRequestCode
-	DisplayName               DisplayName
-	UpdateAccountStatus       UpdateAccountStatus
-	AddUserToGroup            AddUserToGroup
-	UpdateVerification        UpdateVerification
-	UpdateVerificationByMail  UpdateVerificationByMail
-	FindAllIdentifiers        FindAllIdentifiers
-	EMailUsed                 EMailUsed
-	AssignUserLicense         AssignUserLicense
-	UnassignUserLicense       UnassignUserLicense
-	CountUsers                CountUsers
-	GetAnonUser               GetAnonUser
-	Consent                   Consent
-	AddResourcePermissions    AddResourcePermissions
+	Create                   Create
+	FindByID                 FindByID
+	FindByMail               FindByMail
+	FindAll                  FindAll
+	ChangeOtherPassword      ChangeOtherPassword
+	ChangeMyPassword         ChangeMyPassword
+	ChangePasswordWithCode   ChangePasswordWithCode
+	Delete                   Delete
+	UpdateMyContact          UpdateMyContact
+	UpdateOtherContact       UpdateOtherContact
+	UpdateOtherRoles         UpdateOtherRoles
+	UpdateOtherPermissions   UpdateOtherPermissions
+	UpdateOtherGroups        UpdateOtherGroups
+	ReadMyContact            ReadMyContact
+	SubjectFromUser          SubjectFromUser
+	EnableBootstrapAdmin     EnableBootstrapAdmin
+	SysUser                  SysUser
+	AuthenticateByPassword   AuthenticateByPassword
+	ConfirmMail              ConfirmMail
+	ResetVerificationCode    ResetVerificationCode
+	RequiresPasswordChange   RequiresPasswordChange
+	ResetPasswordRequestCode ResetPasswordRequestCode
+	DisplayName              DisplayName
+	UpdateAccountStatus      UpdateAccountStatus
+	AddUserToGroup           AddUserToGroup
+	UpdateVerification       UpdateVerification
+	UpdateVerificationByMail UpdateVerificationByMail
+	FindAllIdentifiers       FindAllIdentifiers
+	EMailUsed                EMailUsed
+	CountUsers               CountUsers
+	GetAnonUser              GetAnonUser
+	Consent                  Consent
+	ExportUsers              ExportUsers
+	MergeSingleSignOnUser    MergeSingleSignOnUser
+
+	// deprecated: use rules api
+	AddResourcePermissions AddResourcePermissions
+	// deprecated: use rules api
 	RemoveResourcePermissions RemoveResourcePermissions
-	ListResourcePermissions   ListResourcePermissions
-	GrantPermissions          GrantPermissions
-	ListGrantedPermissions    ListGrantedPermissions
-	ListGrantedUsers          ListGrantedUsers
-	ExportUsers               ExportUsers
-	MergeSingleSignOnUser     MergeSingleSignOnUser
+	// deprecated: use rules api
+	ListResourcePermissions ListResourcePermissions
+	// deprecated: use rules api
+	GrantPermissions GrantPermissions
+	// deprecated: use rules api
+	ListGrantedPermissions ListGrantedPermissions
+	// deprecated: use rules api
+	ListGrantedUsers ListGrantedUsers
+
+	ListGroups            ListGroups
+	ListRoles             ListRoles
+	ListGlobalPermissions ListGlobalPermissions
 }
 
-func NewUseCases(ctx context.Context, eventBus events.EventBus, loadGlobal settings.LoadGlobal, users data.NotifyRepository[User, ID], grantingIndexRepository GrantingIndexRepository, roles data.ReadRepository[role.Role, role.ID], findUserLicenseByID license.FindUserLicenseByID, findRoleByID role.FindByID, createSrcSet image.CreateSrcSet) UseCases {
+func NewUseCases(ctx context.Context, eventBus events.EventBus, rdb *rebac.DB, loadGlobal settings.LoadGlobal, users data.NotifyRepository[User, ID], roles data.ReadRepository[role.Role, role.ID], groups group.FindAll, findRoleByID role.FindByID, listRolePerms role.ListPermissions, createSrcSet image.CreateSrcSet) UseCases {
 	findByMailFn := NewFindByMail(users)
 	var globalLock sync.Mutex
-	createFn := NewCreate(&globalLock, loadGlobal, eventBus, findByMailFn, users)
+	createFn := NewCreate(&globalLock, rdb, loadGlobal, eventBus, findByMailFn, users)
 
 	findByIdFn := NewFindByID(users)
 	findAllFn := NewFindAll(users)
 
 	systemFn := NewSystem(ctx)
-	enableBootstrapAdminFn := NewEnableBootstrapAdmin(users, systemFn, findByMailFn)
+	enableBootstrapAdminFn := NewEnableBootstrapAdmin(users, systemFn, findByMailFn, rdb)
 
 	changeMyPasswordFn := NewChangeMyPassword(&globalLock, users)
 	changeOtherPasswordFn := NewChangeOtherPassword(&globalLock, users)
@@ -312,19 +252,15 @@ func NewUseCases(ctx context.Context, eventBus events.EventBus, loadGlobal setti
 	deleteFn := NewDelete(users)
 
 	authenticateByPasswordFn := NewAuthenticatesByPassword(findByMailFn, systemFn)
-	subjectFromUserFn := NewViewOf(ctx, eventBus, users, roles)
+	subjectFromUserFn := NewViewOf(ctx, eventBus, users, rdb)
 
 	readMyContactFn := NewReadMyContact(users)
 
 	updateMyContactFn := NewUpdateMyContact(&globalLock, eventBus, users)
 	updateOtherContactFn := NewUpdateOtherContact(&globalLock, eventBus, users)
-	updateOtherRolesFn := NewUpdateOtherRoles(&globalLock, users)
-	updateOtherPermissionsFn := NewUpdateOtherPermissions(&globalLock, users)
-	updateOtherGroupsFn := NewUpdateOtherGroups(&globalLock, users)
-	updateOtherLicenseFn := NewUpdateOtherLicenses(eventBus, &globalLock, users)
-
-	countAssignedUserLicenseFn := NewCountAssignedUserLicense(users)
-	revokeAssignedUserLicenseFn := NewRevokeAssignedUserLicense(&globalLock, users)
+	updateOtherRolesFn := NewUpdateOtherRoles(rdb)
+	updateOtherPermissionsFn := NewUpdateOtherPermissions(rdb)
+	updateOtherGroupsFn := NewUpdateOtherGroups(rdb, groups)
 
 	confirmMailFn := NewConfirmMail(&globalLock, users)
 	resetVerificationCodeFn := NewResetVerificationCode(&globalLock, users)
@@ -349,9 +285,6 @@ func NewUseCases(ctx context.Context, eventBus events.EventBus, loadGlobal setti
 		EnableBootstrapAdmin:      enableBootstrapAdminFn,
 		SysUser:                   systemFn,
 		AuthenticateByPassword:    authenticateByPasswordFn,
-		CountAssignedUserLicense:  countAssignedUserLicenseFn,
-		RevokeAssignedUserLicense: revokeAssignedUserLicenseFn,
-		UpdateOtherLicenses:       updateOtherLicenseFn,
 		ConfirmMail:               confirmMailFn,
 		ResetVerificationCode:     resetVerificationCodeFn,
 		RequiresPasswordChange:    requiresPasswordChangeFn,
@@ -359,23 +292,24 @@ func NewUseCases(ctx context.Context, eventBus events.EventBus, loadGlobal setti
 		ChangePasswordWithCode:    changePasswordWithCodeFn,
 		DisplayName:               NewDisplayName(users, time.Minute*5),
 		UpdateAccountStatus:       NewUpdateAccountStatus(&globalLock, users),
-		AddUserToGroup:            NewAddUserToGroup(&globalLock, users),
+		AddUserToGroup:            NewAddUserToGroup(rdb),
 		UpdateVerification:        NewUpdateVerification(&globalLock, users),
 		UpdateVerificationByMail:  NewUpdateVerificationByMail(&globalLock, users, findByMailFn),
 		FindAllIdentifiers:        NewFindAllIdentifiers(users),
 		EMailUsed:                 NewEMailUsed(users),
-		AssignUserLicense:         NewAssignUserLicense(&globalLock, users, countAssignedUserLicenseFn, findUserLicenseByID),
-		UnassignUserLicense:       NewUnassignUserLicense(&globalLock, users),
 		CountUsers:                NewCountUsers(users),
-		GetAnonUser:               NewGetAnonUser(ctx, loadGlobal, findRoleByID, eventBus),
+		GetAnonUser:               NewGetAnonUser(ctx, eventBus, loadGlobal, findRoleByID, listRolePerms),
 		Consent:                   NewConsent(&globalLock, eventBus, users),
-		AddResourcePermissions:    NewAddResourcePermissions(&globalLock, users),
-		RemoveResourcePermissions: NewRemoveResourcePermissions(&globalLock, users),
-		ListResourcePermissions:   NewListResourcePermissions(&globalLock, users),
-		GrantPermissions:          NewGrantPermissions(&globalLock, users, grantingIndexRepository, findByIdFn),
-		ListGrantedPermissions:    NewListGrantedPermissions(users, findByIdFn),
-		ListGrantedUsers:          NewListGrantedUsers(grantingIndexRepository),
+		AddResourcePermissions:    NewAddResourcePermissions(rdb),
+		RemoveResourcePermissions: NewRemoveResourcePermissions(rdb),
+		ListResourcePermissions:   NewListResourcePermissions(rdb),
+		GrantPermissions:          NewGrantPermissions(&globalLock, users, findByIdFn, rdb),
+		ListGrantedPermissions:    NewListGrantedPermissions(rdb),
+		ListGrantedUsers:          NewListGrantedUsers(rdb),
 		ExportUsers:               NewExportUsers(users),
-		MergeSingleSignOnUser:     NewMergeSingleSignOnUser(&globalLock, users, findByMailFn, loadGlobal, createSrcSet),
+		MergeSingleSignOnUser:     NewMergeSingleSignOnUser(&globalLock, users, findByMailFn, loadGlobal, createSrcSet, rdb),
+		ListGroups:                NewListGroups(rdb),
+		ListRoles:                 NewListRoles(rdb),
+		ListGlobalPermissions:     NewListGlobalPermissions(rdb),
 	}
 }

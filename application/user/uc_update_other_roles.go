@@ -8,33 +8,45 @@
 package user
 
 import (
-	"fmt"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/role"
-	"go.wdy.de/nago/pkg/std"
-	"sync"
 )
 
-func NewUpdateOtherRoles(mutex *sync.Mutex, repo Repository) UpdateOtherRoles {
+func NewUpdateOtherRoles(rdb *rebac.DB) UpdateOtherRoles {
 	return func(subject AuditableUser, id ID, roles []role.ID) error {
 		if err := subject.Audit(PermUpdateOtherContact); err != nil {
 			return err
 		}
 
-		// mutex is important, otherwise we may re-create a user accidentally
-		mutex.Lock()
-		defer mutex.Unlock()
+		// first remove all existing roles to keep the correct semantics of this use case
 
-		optUsr, err := repo.FindByID(id)
+		err := rdb.DeleteByQuery(rebac.Select().
+			Where().Source().IsNamespace(role.Namespace).
+			Where().Relation().Has(rebac.Member).
+			Where().Target().Is(Namespace, rebac.Instance(id)))
+
 		if err != nil {
-			return fmt.Errorf("cannot find user by id: %w", err)
+			return err
 		}
 
-		if optUsr.IsNone() {
-			return std.NewLocalizedError("Nutzer nicht aktualisiert", "Der Nutzer ist nicht (mehr) vorhanden.")
+		// than just store new relations
+		for _, rid := range roles {
+			err := rdb.Put(rebac.Triple{
+				Source: rebac.Entity{
+					Namespace: role.Namespace,
+					Instance:  rebac.Instance(rid),
+				},
+				Relation: rebac.Member,
+				Target: rebac.Entity{
+					Namespace: Namespace,
+					Instance:  rebac.Instance(id),
+				},
+			})
+			if err != nil {
+				return err
+			}
 		}
 
-		usr := optUsr.Unwrap()
-		usr.Roles = roles
-		return repo.Save(usr)
+		return nil
 	}
 }

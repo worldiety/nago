@@ -11,9 +11,6 @@ import (
 	"archive/zip"
 	"context"
 	"fmt"
-	"go.wdy.de/nago/auth"
-	"go.wdy.de/nago/pkg/blob"
-	"go.wdy.de/nago/pkg/data"
 	"io"
 	"log/slog"
 	"os"
@@ -21,11 +18,16 @@ import (
 	"slices"
 	"sync"
 	"time"
+
+	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/pkg/blob"
+	"go.wdy.de/nago/pkg/data"
 )
 
 func NewImportZip(mutex *sync.Mutex, files blob.Store, repo Repository) ImportZip {
 	return func(subject auth.Subject, pid ID, src io.Reader) (err error) {
-		if err := subject.AuditResource(repo.Name(), string(pid), PermImportZip); err != nil {
+		if err := subject.AuditResource(rebac.Namespace(repo.Name()), rebac.Instance(pid), PermImportZip); err != nil {
 			return err
 		}
 

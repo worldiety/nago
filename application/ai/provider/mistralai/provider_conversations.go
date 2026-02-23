@@ -148,7 +148,7 @@ func convInputToMistralInput(cl *Client, contents []message.Input) InputBox {
 
 			// TODO this won't work. Don't know how to connect existing file api and beta conversation input, seems not to be possible
 			/*inputs = append(inputs, MessageInputEntry{
-				Object: "entry",
+				Target: "entry",
 				Content: ChunkBox{Values: []Chunk{
 					ToolFileChunk{
 						Tool:     "document_library",

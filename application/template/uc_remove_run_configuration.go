@@ -8,14 +8,16 @@
 package template
 
 import (
-	"go.wdy.de/nago/auth"
 	"slices"
 	"sync"
+
+	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/auth"
 )
 
 func NewRemoveRunConfiguration(mutex *sync.Mutex, repo Repository) RemoveRunConfiguration {
 	return func(subject auth.Subject, pid ID, nameOrId string) error {
-		if err := subject.AuditResource(repo.Name(), string(pid), PermRemoveRunConfiguration); err != nil {
+		if err := subject.AuditResource(rebac.Namespace(repo.Name()), rebac.Instance(pid), PermRemoveRunConfiguration); err != nil {
 			return err
 		}
 
