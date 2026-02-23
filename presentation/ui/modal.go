@@ -67,6 +67,12 @@ func (c TModal) Bottom(bottom Length) TModal {
 	return c
 }
 
+// OnDismissRequest sets an event handler for the dismiss event
+func (c TModal) OnDismissRequest(fn func()) TModal {
+	c.onDismissRequest = fn
+	return c
+}
+
 // Render builds and returns the protocol representation of the modal.
 func (c TModal) Render(context core.RenderContext) core.RenderNode {
 	return &proto.Modal{

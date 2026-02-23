@@ -31,8 +31,9 @@
 		/>
 
 		<DatepickerOverlay
-			:datepicker-expanded="expanded"
+			v-if="expanded"
 			:range-mode="ui.style === DatePickerStyleValues.DatePickerDateRange"
+			:double-mode="ui.doubleMode"
 			:label="ui.label"
 			:selected-start-day="selectedStartDay"
 			:selected-start-month="selectedStartMonth"

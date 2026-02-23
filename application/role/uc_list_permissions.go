@@ -36,7 +36,7 @@ func ListPermissionsFrom(rdb *rebac.DB, rid ID) iter.Seq2[permission.ID, error] 
 		)
 
 		for triple, err := range it {
-			if !yield(permission.ID(triple.Target.Instance), err) {
+			if !yield(permission.ID(triple.Relation), err) {
 				return
 			}
 		}

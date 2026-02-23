@@ -23,9 +23,9 @@ const Namespace rebac.Namespace = "nago.iam.role"
 type ID string
 
 type Role struct {
-	ID          ID     `json:"id,omitempty" table-visible:"false"`
-	Name        string `json:"name,omitempty"`
-	Description string `json:"description,omitempty" label:"Beschreibung"`
+	ID          ID     `json:"id,omitempty" label:"nago.common.label.identifier"`
+	Name        string `json:"name,omitempty" label:"nago.common.label.name"`
+	Description string `json:"description,omitempty" label:"nago.common.label.description" lines:"3"`
 }
 
 func (r Role) String() string {

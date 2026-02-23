@@ -126,6 +126,7 @@ func (c TDialog) Render(ctx core.RenderContext) proto.Component {
 	}
 
 	dlg := BoxAlign(c.alignment, stack).
+		DisableOutsidePointerEvents(true).
 		BackgroundColor(colors.M5.WithTransparency(40)).Padding(c.modalPadding)
 
 	return dlg.Render(ctx)

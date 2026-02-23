@@ -72,13 +72,13 @@ Button. This may behave slightly different (but more correctly), due to optimiza
 | `Font(font Font)` | Font sets the font style for the button's text label. |
 | `Frame(frame Frame)` | Frame sets the layout frame of the button, including size and positioning. |
 | `FullWidth()` |  |
+| `HRef(url core.URI)` | HRef sets the URL that the button navigates to when clicked if no action is specified. If both URL and Action are set, the URL takes precedence. This avoids another render cycle if the only goal is to navigate to a different page. It also avoids issues with browser which block async browser interactions like Safari. In fact, the [core.Navigation.Open] does not work properly on Safari. See also [TButton.Target]. |
 | `ID(id string)` | ID assigns a unique identifier to the button, useful for testing or referencing. |
 | `PostIcon(svg core.SVG)` | PostIcon sets the icon displayed after the text label. |
 | `PreIcon(svg core.SVG)` | PreIcon sets the icon displayed before the text label. |
 | `Preset(preset ButtonStyle)` | Preset applies a style preset to the button, controlling its appearance and behavior. |
 | `Target(target string)` | Target sets the name of the browsing context, like _self, _blank, _ parent, _top. |
 | `Title(text string)` | Title sets the text label displayed on the button. |
-| `URL(url core.URI)` | URL sets the URL that the button navigates to when clicked if no action is specified. If both URL and Action are set, the URL takes precedence. This avoids another render cycle if the only goal is to navigate to a different page. It also avoids issues with browser which block async browser interactions like Safari. In fact, the [core.Navigation.Open] does not work properly on Safari. See also [TButton.Target]. |
 | `Visible(b bool)` | Visible controls the visibility of the button; setting false hides it. |
 ---
 

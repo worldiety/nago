@@ -285,6 +285,15 @@ var (
 		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
 	)
 
+	LabelPermission = i18n.MustString(
+		"nago.common.label.permission",
+		i18n.Values{
+			language.English: "Permission",
+			language.German:  "Berechtigung",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
 	LabelOverview = i18n.MustString(
 		"nago.common.label.overview",
 		i18n.Values{
@@ -434,6 +443,15 @@ var (
 		i18n.Values{
 			language.English: "Description",
 			language.German:  "Beschreibung",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
+	)
+
+	LabelIdentifier = i18n.MustString(
+		"nago.common.label.identifier",
+		i18n.Values{
+			language.English: "Identifier",
+			language.German:  "Bezeichner",
 		},
 		i18n.LocalizationHint("This text is usually used on buttons or pickers is displayed where space must be minified. So keep it as short and generic as possible."),
 	)

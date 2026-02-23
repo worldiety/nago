@@ -43,7 +43,8 @@
 		"vue-i18n": "^10.0.6",
 		"vue-qrcode-reader": "^5.7.2",
 		"vue-router": "^4.3.0",
-		"vue3-apexcharts": "^1.8.0"
+		"vue3-apexcharts": "^1.8.0",
+		"weeknumber": "^1.2.1"
 	},
 	"devDependencies": {
 		"@babel/cli": "^7.28.3",
