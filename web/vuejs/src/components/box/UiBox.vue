@@ -33,8 +33,11 @@ const frameStyles = computed<string>(() => {
 });
 
 const clazz = computed<string>(() => {
-	let classes = 'relative flex';
-	return classes;
+	const classes = ['relative', 'flex'];
+	if (props.ui.disableOutsidePointerEvents) {
+		classes.push('pointer-events-none');
+	}
+	return classes.join(' ');
 });
 
 function childMargin(a?: Alignment, p?: Padding): string {
@@ -95,7 +98,7 @@ function childClass(a?: Alignment): string {
 			:class="childClass(ui.alignment)"
 			:style="childMargin(ui.alignment, props.ui.padding)"
 		>
-			<ui-generic v-if="ui.component" :ui="ui.component" />
+			<ui-generic v-if="ui.component" :ui="ui.component" class="pointer-events-auto" />
 		</div>
 	</div>
 </template>

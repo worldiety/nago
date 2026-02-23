@@ -9,6 +9,7 @@ package main
 
 import (
 	"fmt"
+
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
@@ -57,7 +58,7 @@ func main() {
 					Title("Alle Personen").
 					MultiSelect(true).
 					DialogOptions(
-						alert.Height("20dvh"),
+						alert.Height("42dvh"),
 					).
 					//ErrorText("Falsch").
 					Frame(Frame{Width: L320}),

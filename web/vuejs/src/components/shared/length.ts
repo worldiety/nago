@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: Custom-License
  */
-import {Length} from '@/shared/proto/nprotoc_gen';
+import { Length } from '@/shared/proto/nprotoc_gen';
 
 export function cssLengthValue(l?: Length): string {
 	if (!l || l === '') {
@@ -24,7 +24,7 @@ export function cssLengthValue(l?: Length): string {
 		return l;
 	}
 
-	if (l == "auto") {
+	if (l == 'auto') {
 		return l;
 	}
 

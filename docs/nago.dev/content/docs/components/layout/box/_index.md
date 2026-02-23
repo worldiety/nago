@@ -26,6 +26,7 @@ the given alignment position (e.g., Top, Center, Bottom, etc.).
 | `AccessibilityLabel(label string)` | AccessibilityLabel sets a label used by screen readers for accessibility. |
 | `BackgroundColor(backgroundColor Color)` | BackgroundColor sets the background color of the box. |
 | `Border(border Border)` | Border sets the border styling of the box. |
+| `DisableOutsidePointerEvents(disable bool)` | DisableOutsidePointerEvents controls whether pointer events are disabled outside the box's content. |
 | `Font(font Font)` | Font sets the font style for text content inside the box. |
 | `Frame(fr Frame)` | Frame sets the layout frame of the box, including size and positioning. |
 | `FullWidth()` | FullWidth sets the box to span the full available width. |
