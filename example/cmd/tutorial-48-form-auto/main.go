@@ -36,9 +36,10 @@ type SomeThing struct {
 	Integer   int        `value:"42"`
 	_hline    struct{}   `label:"---"` // this is a horizontal line (hline)
 	When      xtime.Date `supportingText:"When did this happen?"`
-	Who       user.ID    `source:"nago.users"` // single select on source
-	Who2      user.ID    `source:"nago.users"` // single select on source 2
-	Others    []user.ID  `source:"nago.users"` // multi select on source
+	TimeFrame xtime.TimeFrame
+	Who       user.ID   `source:"nago.users"` // single select on source
+	Who2      user.ID   `source:"nago.users"` // single select on source 2
+	Others    []user.ID `source:"nago.users"` // multi select on source
 
 	_sectionText    struct{} `label:"This is a section in a card." section:"My Section"`
 	FavoriteColor   ui.Color `section:"My Section"`

@@ -44,26 +44,23 @@ func RenderSourceString(ctx FieldContext) core.View {
 
 	strState := core.DerivedState[[]Entity](ctx.State(), field.Name).Init(func() []Entity {
 		src := ctx.State().Get()
-		slice := reflect.ValueOf(src).FieldByName(field.Name)
-		tmp := make([]Entity, 0, slice.Len())
-
-		for _, id := range slice.Seq2() {
-			id := id.String()
-			optV, err := source.FindByID(ctx.Subject(), id)
-			if err != nil {
-				slog.Error("form.Auto failed to resolve source value by id", "id", id, "err", err.Error())
-				continue
-			}
-
-			if optV.IsNone() {
-				slog.Error("form.Auto source has no such entity", "id", id)
-				continue
-			}
-
-			tmp = append(tmp, optV.Unwrap())
+		strID := reflect.ValueOf(src).FieldByName(field.Name).String()
+		if strID == "" {
+			return nil
 		}
 
-		return tmp
+		optV, err := source.FindByID(ctx.Subject(), strID)
+		if err != nil {
+			slog.Error("form.Auto failed to resolve source value by id", "id", strID, "err", err.Error())
+			return nil
+		}
+
+		if optV.IsNone() {
+			slog.Error("form.Auto source has no such entity", "id", strID)
+			return nil
+		}
+
+		return []Entity{optV.Unwrap()}
 	})
 
 	strState.Observe(func(v []Entity) {

@@ -48,6 +48,7 @@ var (
 		RenderDuration,
 		RenderBool,
 		RenderInt,
+		RenderXTimeTimeFrame,
 	})
 )
 
@@ -122,7 +123,7 @@ func NewFieldContext[T any](wnd core.Window, opts AutoOptions, state *core.State
 	if src == nil && len(values) > 0 {
 		src = wrapStrSlice(values)
 	}
-	
+
 	var errorText string
 
 	if err, ok := errors.AsType[xerrors.ErrorWithFields](opts.Errors); ok {
