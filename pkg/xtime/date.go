@@ -30,6 +30,11 @@ type Date struct {
 	Year  int        `json:"Year,omitempty"`  // Year like 2024.
 }
 
+func DateNow() Date {
+	now := time.Now()
+	return Date{now.Day(), now.Month(), now.Year()}
+}
+
 func (d Date) String() string {
 	return fmt.Sprintf("%d.%d.%d", d.Year, d.Month, d.Day)
 }

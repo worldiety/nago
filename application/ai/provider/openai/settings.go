@@ -25,9 +25,9 @@ var (
 )
 
 type Settings struct {
-	Name  string `value:"nago.ai.openai.settings_title"`
-	Token string `style:"secret"`
-	_     string `credentialName:"nago.ai.openai.settings_name" credentialDescription:"nago.ai.openai.settings_desc" credentialLogo:"https://openai.com/favicon.svg"`
+	Name  string   `value:"nago.ai.openai.settings_title"`
+	Token string   `style:"secret"`
+	_     struct{} `credentialName:"nago.ai.openai.settings_name" credentialDescription:"nago.ai.openai.settings_desc" credentialLogo:"https://openai.com/favicon.svg"`
 }
 
 func (Settings) Credentials() bool {

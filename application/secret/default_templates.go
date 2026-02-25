@@ -12,9 +12,9 @@ type SMTP struct {
 	Host          string
 	Port          int `value:"587"`
 	Username      string
-	Password      string `style:"secret"`
-	SenderAddress string `value:"" label:"Absenderadresse" supportingText:"Wenn leer, wird der Username verwendet, ansonsten hat diese Absenderadresse Vorrang."`
-	_             string `credentialName:"SMTP Postausgangsserver" credentialDescription:"Ein Postausgangsserver wird benötigt, um E-Mails zu verschicken." credentialLogo:"https://www.thunderbird.net/media/img/thunderbird/favicon-196.png"`
+	Password      string   `style:"secret"`
+	SenderAddress string   `value:"" label:"Absenderadresse" supportingText:"Wenn leer, wird der Username verwendet, ansonsten hat diese Absenderadresse Vorrang."`
+	_             struct{} `credentialName:"SMTP Postausgangsserver" credentialDescription:"Ein Postausgangsserver wird benötigt, um E-Mails zu verschicken." credentialLogo:"https://www.thunderbird.net/media/img/thunderbird/favicon-196.png"`
 }
 
 func (SMTP) Credentials() bool {

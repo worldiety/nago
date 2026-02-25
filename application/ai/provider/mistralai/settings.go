@@ -27,12 +27,12 @@ var (
 )
 
 type Settings struct {
-	Name        string `value:"nago.ai.mistralai.settings_title"`
-	Description string `label:"nago.common.label.description" lines:"3"`
-	Token       string `style:"secret"`
-	RPS         int    `label:"nago.ai.mistralai.settings_rps" supportingText:"nago.ai.mistralai.settings_rps_desc" json:"rps"`
-	Debug       bool   `json:"debug"`
-	_           string `credentialName:"nago.ai.mistralai.settings_name" credentialDescription:"nago.ai.mistralai.settings_desc" credentialLogo:"https://mistral.ai/favicon.ico?favicon.95e802d0.ico"`
+	Name        string   `value:"nago.ai.mistralai.settings_title"`
+	Description string   `label:"nago.common.label.description" lines:"3"`
+	Token       string   `style:"secret"`
+	RPS         int      `label:"nago.ai.mistralai.settings_rps" supportingText:"nago.ai.mistralai.settings_rps_desc" json:"rps"`
+	Debug       bool     `json:"debug"`
+	_           struct{} `credentialName:"nago.ai.mistralai.settings_name" credentialDescription:"nago.ai.mistralai.settings_desc" credentialLogo:"https://mistral.ai/favicon.ico?favicon.95e802d0.ico"`
 }
 
 func (Settings) Credentials() bool {

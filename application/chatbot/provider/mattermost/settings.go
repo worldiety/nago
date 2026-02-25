@@ -21,11 +21,11 @@ var (
 )
 
 type Settings struct {
-	Name  string `value:"nago.chatbot.mattermost.settings_title" json:"name"`
-	URL   string `json:"url"`
-	Token string `json:"token"`
-	RPS   int    `json:"rps"`
-	_     string `credentialName:"nago.chatbot.mattermost.settings_name" credentialDescription:"nago.chatbot.mattermost.settings_desc" credentialLogo:"https://mattermost.worldiety.net/static/images/favicon/favicon-default-32x32.png"`
+	Name  string   `value:"nago.chatbot.mattermost.settings_title" json:"name"`
+	URL   string   `json:"url"`
+	Token string   `json:"token"`
+	RPS   int      `json:"rps"`
+	_     struct{} `credentialName:"nago.chatbot.mattermost.settings_name" credentialDescription:"nago.chatbot.mattermost.settings_desc" credentialLogo:"https://mattermost.worldiety.net/static/images/favicon/favicon-default-32x32.png"`
 }
 
 var _ = enum.Variant[secret.Credentials, Settings](enum.Rename[Settings]("nago.chatbot.mattermost.settings"))

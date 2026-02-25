@@ -9,42 +9,39 @@ package form
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
-	"log/slog"
+	"iter"
 	"reflect"
-	"strconv"
-	"strings"
-	"time"
 
-	"go.wdy.de/nago/application/image"
 	"go.wdy.de/nago/pkg/std"
+	"go.wdy.de/nago/pkg/xerrors"
 	"go.wdy.de/nago/pkg/xslices"
-	"go.wdy.de/nago/pkg/xtime"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
-	"go.wdy.de/nago/presentation/ui/avatar"
 	"go.wdy.de/nago/presentation/ui/cardlayout"
-	"go.wdy.de/nago/presentation/ui/colorpicker"
-	"go.wdy.de/nago/presentation/ui/picker"
-	"go.wdy.de/nago/presentation/ui/timepicker"
 )
 
 type AutoOptions struct {
 	SectionPadding std.Option[ui.Padding]
 	ViewOnly       bool
 	IgnoreFields   []string
+
 	// Specific Window to use, if nil uses the default window at render time.
 	Window core.Window
+
 	// Context is used to resolve the data sources. If Context is nil, the Window context is used to resolve the sources.
 	Context context.Context
+
 	// Errors can be either a map[string]string or a struct {Field string} to resolve error messages for
 	// specific fields. In both cases, the key respective the Field names must match the original introspected
 	// field names of the model. See also [ErrorWithFields]. Any other error will be appended as alert.BannerError.
 	// See also [xerrors.WithFields] to create compatible wrapper error.
-	Errors any
+	Errors error
+
+	// Renderers can be used to customize the rendering of specific field types. If empty, all default renderers are
+	// used from [Renderers].
+	Renderers iter.Seq[Renderer]
 }
 
 func (o AutoOptions) context() context.Context {
@@ -80,7 +77,7 @@ type TAuto[T any] struct {
 // is only needed for your convenience and to satisfy any concrete state type. Internally, everything gets evaluated
 // as [any]. T maybe also be an interface, thus ensure, that the state contains not a nil interface.
 //
-// The current implementation only supports:
+// The current default implementation only supports:
 //   - string fields
 //   - integer fields (literally)
 //   - string slices
@@ -101,6 +98,8 @@ type TAuto[T any] struct {
 //   - value:"string literal"|"bool literal"|"number literal" only applicable for fields with the according underlying
 //     type. Defaults to the zero value of the underlying type.
 //   - dialogOptions:"large|larger|xlarge|xxlarge" is only supported for source picker.
+//
+// The actual support may vary and depends on [AutoOptions.Renderers].
 func Auto[T any](opts AutoOptions, state *core.State[T]) TAuto[T] {
 	return TAuto[T]{
 		opts:        opts,
@@ -171,620 +170,28 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 		return ui.VStack(alert.Banner("implementation error", "no type information available for [form.Auto]")).Render(ctx)
 	}
 
-	fieldErrValues := strFieldValues(t.opts.Errors)
 	var err error
-	if e, ok := t.opts.Errors.(error); ok && len(fieldErrValues) == 0 {
-		err = e
+	if _, ok := errors.AsType[xerrors.ErrorWithFields](t.opts.Errors); !ok {
+		err = t.opts.Errors
 	}
 
 	var rootViews xslices.Builder[core.View]
 	structType := reflect.TypeOf(value)
+	rIt := t.opts.Renderers
+	if rIt == nil {
+		rIt = Renderers
+	}
+
 	for _, group := range LocalizeGroups(ctx.Window().Bundle(), GroupsOf(structType, t.opts.IgnoreFields...)) {
 		var fieldsBuilder xslices.Builder[core.View]
+	NextField:
 		for _, field := range group.Fields {
-			/*fieldTableVisible := true
-			if flag, ok := field.Tag.Lookup("table-visible"); ok && flag == "false" {
-				fieldTableVisible = false
-			}*/
-
-			disabled := false
-			if flag, ok := field.Tag.Lookup("disabled"); ok && flag == "true" {
-				disabled = true
-			}
-
-			if t.opts.ViewOnly {
-				disabled = true
-			}
-
-			label := field.Name
-			if name, ok := field.Tag.Lookup("label"); ok {
-				label = name
-			}
-
-			if label == "---" {
-				fieldsBuilder.Append(ui.HLine())
-				continue
-			}
-
-			label = ctx.Window().Bundle().Resolve(label) // try to translate
-			supportingText := ctx.Window().Bundle().Resolve(field.Tag.Get("supportingText"))
-
-			if strings.HasPrefix(field.Name, "_") && label != "_" {
-				fieldsBuilder.Append(ui.Text(label).FullWidth().TextAlignment(ui.TextAlignStart))
-				continue
-			} else if label == "_" {
-				continue
-			}
-
-			id := field.Tag.Get("id")
-
-			var values []string
-			if array, ok := field.Tag.Lookup("values"); ok {
-				err := json.Unmarshal([]byte(array), &values)
-				if err != nil {
-					slog.Error("cannot parse values from struct field", "type", structType.String(), "field", field.Name, "literal", array, "err", err)
-				}
-			}
-
-			switch field.Type.Kind() {
-			case reflect.Slice:
-				switch field.Type.Elem().Kind() {
-				case reflect.String:
-					source, ok := field.Tag.Lookup("source")
-					if ok {
-						if t.opts.Window == nil {
-							slog.Error("form.Auto requires AutoOptions.Window but is nil")
-						}
-
-						listAll, ok := core.FromContext[UseCaseListAny](t.opts.context(), source)
-						if !ok {
-							slog.Error("can not find list by system service", "source", source)
-							continue
-						}
-
-						values, err := xslices.Collect2(listAll(t.opts.Window.Subject()))
-						if err != nil {
-							slog.Error("can not collect list", "source", source, "err", err)
-						}
-
-						strState := core.DerivedState[[]AnyEntity](t.state, field.Name).Init(func() []AnyEntity {
-							src := t.state.Get()
-							slice := reflect.ValueOf(src).FieldByName(field.Name)
-							tmp := make([]AnyEntity, 0, slice.Len())
-							for _, id := range slice.Seq2() {
-								id := id.String()
-
-								for _, v := range values {
-									if v.id == id {
-										tmp = append(tmp, v)
-										break
-									}
-								}
-							}
-
-							return tmp
-						})
-
-						strState.Observe(func(v []AnyEntity) {
-							slice := reflect.MakeSlice(field.Type, 0, len(v))
-							for _, strVal := range v {
-								newValue := reflect.New(field.Type.Elem()).Elem()
-								newValue.SetString(strVal.id)
-								slice = reflect.Append(slice, newValue)
-							}
-
-							dst := t.state.Get()
-							dst = setFieldValue(dst, field.Name, slice.Interface()).(T)
-							t.state.Set(dst)
-							t.state.Notify()
-						})
-
-						dlgOpts := getDialogOptions(field)
-
-						fieldsBuilder.Append(picker.Picker[AnyEntity](label, values, strState).
-							Title(label).
-							MultiSelect(true).
-							ErrorText(fieldErrValues[field.Name]).
-							Disabled(disabled).
-							DialogOptions(dlgOpts...).
-							SupportingText(supportingText).
-							Frame(ui.Frame{}.FullWidth()))
-
-					} else {
-						// just show a multi line textfield
-						var lines int
-						if str, ok := field.Tag.Lookup("lines"); ok {
-							lines, _ = strconv.Atoi(str)
-						}
-
-						if lines == 0 {
-							lines = 5
-						}
-
-						requiresInit := false
-						strState := core.DerivedState[string](t.state, field.Name).Init(func() string {
-							src := t.state.Get()
-							slice := reflect.ValueOf(src).FieldByName(field.Name)
-							tmp := make([]string, 0, slice.Len())
-							for i := 0; i < slice.Len(); i++ {
-								tmp = append(tmp, slice.Index(i).String())
-							}
-
-							str := strings.Join(tmp, "\n")
-
-							if val := field.Tag.Get("value"); val != "" && str == "" {
-								requiresInit = true
-								return ctx.Window().Bundle().Resolve(val)
-							}
-
-							return str
-						})
-
-						strState.Observe(func(newValue string) {
-							v := strings.Split(newValue, "\n")
-							slice := reflect.MakeSlice(field.Type, 0, len(v))
-							for _, strVal := range v {
-								newValue := reflect.New(field.Type.Elem()).Elem()
-								newValue.SetString(strVal)
-								slice = reflect.Append(slice, newValue)
-							}
-
-							dst := t.state.Get()
-							dst = setFieldValue(dst, field.Name, slice.Interface()).(T)
-							t.state.Set(dst)
-							t.state.Notify()
-						})
-
-						if requiresInit {
-							strState.Notify()
-						}
-
-						fieldsBuilder.Append(ui.TextField(label, strState.Get()).
-							InputValue(strState).
-							ID(id).
-							SupportingText(supportingText).
-							Lines(lines).
-							ErrorText(fieldErrValues[field.Name]).
-							Disabled(disabled).
-							Frame(ui.Frame{}.FullWidth()),
-						)
-					}
-
-				}
-			case reflect.Bool:
-				requiresInit := false
-				boolState := core.DerivedState[bool](t.state, field.Name).Init(func() bool {
-					src := t.state.Get()
-					v := reflect.ValueOf(src).FieldByName(field.Name).Bool()
-					if val := field.Tag.Get("value"); val != "" && v == false {
-						p, err := strconv.ParseBool(val)
-						if err == nil {
-							requiresInit = true
-							return p
-						}
-					}
-
-					return v
-				})
-
-				boolState.Observe(func(newValue bool) {
-					dst := t.state.Get()
-					dst = setFieldValue(dst, field.Name, newValue).(T)
-					t.state.Set(dst)
-					t.state.Notify()
-				})
-
-				if requiresInit {
-					boolState.Notify()
-				}
-
-				fieldsBuilder.Append(ui.CheckboxField(label, boolState.Get()).
-					Disabled(disabled).
-					ID(id).
-					ErrorText(fieldErrValues[field.Name]).
-					InputValue(boolState).
-					SupportingText(supportingText).
-					Frame(ui.Frame{}.FullWidth()),
-				)
-			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-				switch field.Type {
-				case reflect.TypeFor[time.Duration]():
-					var displayFormat timepicker.PickerFormat
-					switch field.Tag.Get("style") {
-					case "decomposed":
-						displayFormat = timepicker.DecomposedFormat
-					case "clock":
-						displayFormat = timepicker.ClockFormat
-					}
-
-					requiresInit := false
-					intState := core.DerivedState[time.Duration](t.state, field.Name).Init(func() time.Duration {
-						src := t.state.Get()
-						v := reflect.ValueOf(src).FieldByName(field.Name).Int()
-						if val := field.Tag.Get("value"); val != "" && v == 0 {
-							p, err := strconv.ParseInt(val, 10, 64)
-							if err == nil {
-								requiresInit = true
-								return time.Duration(p)
-							}
-						}
-
-						return time.Duration(v)
-					})
-
-					intState.Observe(func(newValue time.Duration) {
-						dst := t.state.Get()
-						dst = setFieldValue(dst, field.Name, newValue).(T)
-						t.state.Set(dst)
-						t.state.Notify()
-					})
-
-					if requiresInit {
-						intState.Notify()
-					}
-
-					showDays := true
-					if v, ok := field.Tag.Lookup("days"); ok {
-						showDays, _ = strconv.ParseBool(v)
-					}
-
-					showHours := true
-					if v, ok := field.Tag.Lookup("hours"); ok {
-						showHours, _ = strconv.ParseBool(v)
-					}
-
-					showMinutes := true
-					if v, ok := field.Tag.Lookup("minutes"); ok {
-						showMinutes, _ = strconv.ParseBool(v)
-					}
-
-					showSeconds := true
-					if v, ok := field.Tag.Lookup("seconds"); ok {
-						showSeconds, _ = strconv.ParseBool(v)
-					}
-
-					fieldsBuilder.Append(timepicker.Picker(label, intState).
-						Format(displayFormat).
-						Days(showDays).
-						Hours(showHours).
-						Minutes(showMinutes).
-						Seconds(showSeconds).
-						Disabled(disabled).
-						ErrorText(fieldErrValues[field.Name]).
-						SupportingText(supportingText).
-						Frame(ui.Frame{}.FullWidth()),
-					)
-				default:
-					requiresInit := false
-					intState := core.DerivedState[int64](t.state, field.Name).Init(func() int64 {
-						src := t.state.Get()
-						v := reflect.ValueOf(src).FieldByName(field.Name).Int()
-						if val := field.Tag.Get("value"); val != "" && v == 0 {
-							p, err := strconv.ParseInt(val, 10, 64)
-							if err == nil {
-								requiresInit = true
-								return p
-							}
-						}
-
-						return v
-					})
-
-					intState.Observe(func(newValue int64) {
-						dst := t.state.Get()
-						dst = setFieldValue(dst, field.Name, newValue).(T)
-						t.state.Set(dst)
-						t.state.Notify()
-					})
-
-					if requiresInit {
-						intState.Notify()
-					}
-
-					fieldsBuilder.Append(ui.IntField(label, intState.Get(), intState).
-						Disabled(disabled).
-						SupportingText(supportingText).
-						ErrorText(fieldErrValues[field.Name]).
-						Frame(ui.Frame{}.FullWidth()),
-					)
-				}
-			case reflect.Float32, reflect.Float64:
-				requiresInit := false
-				floatState := core.DerivedState[float64](t.state, field.Name).Init(func() float64 {
-					src := t.state.Get()
-					v := reflect.ValueOf(src).FieldByName(field.Name).Float()
-					if val := field.Tag.Get("value"); val != "" && v == 0 {
-						p, err := strconv.ParseFloat(val, 64)
-						if err == nil {
-							requiresInit = true
-							return p
-						}
-					}
-
-					return v
-				})
-
-				floatState.Observe(func(newValue float64) {
-					dst := t.state.Get()
-					dst = setFieldValue(dst, field.Name, newValue).(T)
-					t.state.Set(dst)
-					t.state.Notify()
-				})
-
-				if requiresInit {
-					floatState.Notify()
-				}
-
-				fieldsBuilder.Append(ui.FloatField(label, floatState.Get(), floatState).
-					Disabled(disabled).
-					SupportingText(supportingText).
-					ErrorText(fieldErrValues[field.Name]).
-					Frame(ui.Frame{}.FullWidth()),
-				)
-			case reflect.Struct:
-				switch field.Type {
-				case reflect.TypeFor[xtime.Date]():
-
-					dateState := core.DerivedState[xtime.Date](t.state, field.Name).Init(func() xtime.Date {
-						src := t.state.Get()
-						v := reflect.ValueOf(src).FieldByName(field.Name).Interface()
-
-						return v.(xtime.Date)
-					})
-
-					dateState.Observe(func(newValue xtime.Date) {
-						dst := t.state.Get()
-						dst = setFieldValue(dst, field.Name, newValue).(T)
-						t.state.Set(dst)
-						t.state.Notify()
-					})
-
-					fieldsBuilder.Append(ui.SingleDatePicker(label, dateState.Get(), dateState).
-						Disabled(disabled).
-						SupportingText(supportingText).
-						ErrorText(fieldErrValues[field.Name]).
-						Frame(ui.Frame{}.FullWidth()),
-					)
-
-				default:
-					// TODO implement generic recursive struct rendering
-					// TODO also accept pointers
-					// TODO also accept slices of structs
-				}
-			case reflect.String:
-				switch field.Type {
-				case reflect.TypeFor[ui.Color]():
-					requiresInit := false
-					colorState := core.DerivedState[ui.Color](t.state, field.Name).Init(func() ui.Color {
-						src := t.state.Get()
-						str := reflect.ValueOf(src).FieldByName(field.Name).String()
-						if val := field.Tag.Get("value"); val != "" && str == "" {
-							requiresInit = true
-							return ui.Color(val)
-						}
-
-						return ui.Color(str)
-					})
-
-					colorState.Observe(func(newValue ui.Color) {
-						dst := t.state.Get()
-						dst = setFieldValue(dst, field.Name, newValue).(T)
-						t.state.Set(dst)
-						t.state.Notify()
-					})
-
-					if requiresInit {
-						colorState.Notify()
-					}
-
-					fieldsBuilder.Append(colorpicker.PalettePicker(label, colorpicker.DefaultPalette).
-						State(colorState).
-						Value(colorState.Get()).
-						ErrorText(fieldErrValues[field.Name]))
-
-				case reflect.TypeFor[image.ID]():
-
-					if t.opts.Window == nil {
-						fieldsBuilder.Append(ui.Text("image.ID not rendered: no window available"))
-						continue
-					}
-
-					requiresInit := false
-					imageState := core.DerivedState[image.ID](t.state, field.Name).Init(func() image.ID {
-						src := t.state.Get()
-						str := reflect.ValueOf(src).FieldByName(field.Name).String()
-						if val := field.Tag.Get("value"); val != "" && str == "" {
-							requiresInit = true
-							return image.ID(val)
-						}
-
-						return image.ID(str)
-					})
-
-					imageState.Observe(func(newValue image.ID) {
-						dst := t.state.Get()
-						dst = setFieldValue(dst, field.Name, newValue).(T)
-						t.state.Set(dst)
-						t.state.Notify()
-					})
-
-					if requiresInit {
-						imageState.Notify()
-					}
-
-					if label != "" {
-						fieldsBuilder.Append(ui.Text(label).TextAlignment(ui.TextAlignStart).FullWidth())
-					}
-
-					switch field.Tag.Get("style") {
-					case "avatar":
-						fieldsBuilder.Append(AvatarPicker(t.opts.Window, nil, field.Name, imageState.Get(), imageState, fmt.Sprintf("%v", t.state.Get()), avatar.Circle).Enabled(!t.opts.ViewOnly))
-					case "icon":
-						fieldsBuilder.Append(AvatarPicker(t.opts.Window, nil, field.Name, imageState.Get(), imageState, fmt.Sprintf("%v", t.state.Get()), avatar.Rounded).Enabled(!t.opts.ViewOnly))
-					default:
-						fieldsBuilder.Append(SingleImagePicker(t.opts.Window, nil, nil, nil, field.Name, imageState.Get(), imageState))
-					}
-
-				default:
-					var lines int
-					if str, ok := field.Tag.Lookup("lines"); ok {
-						lines, _ = strconv.Atoi(str)
-					}
-
-					switch field.Tag.Get("style") {
-					case "secret":
-						requiresInit := false
-						secretState := core.DerivedState[string](t.state, field.Name).Init(func() string {
-							src := t.state.Get()
-							str := reflect.ValueOf(src).FieldByName(field.Name).String()
-							if val := field.Tag.Get("value"); val != "" && str == "" {
-								requiresInit = true
-								return val
-							}
-
-							return str
-						})
-
-						secretState.Observe(func(newValue string) {
-							dst := t.state.Get()
-							dst = setFieldValue(dst, field.Name, newValue).(T)
-							t.state.Set(dst)
-							t.state.Notify()
-						})
-
-						if requiresInit {
-							secretState.Notify()
-						}
-
-						fieldsBuilder.Append(ui.PasswordField(label, secretState.Get()).
-							InputValue(secretState).
-							ID(id).
-							SupportingText(supportingText).
-							Disabled(disabled).
-							ErrorText(fieldErrValues[field.Name]).
-							Frame(ui.Frame{}.FullWidth()),
-						)
-
-					default:
-
-						source, ok := field.Tag.Lookup("source")
-						if ok {
-							if t.opts.Window == nil {
-								panic(fmt.Errorf("form.Auto requires AutoOptions.Window but is nil"))
-							}
-
-							listAll, ok := core.FromContext[UseCaseListAny](t.opts.context(), source)
-							if !ok {
-								slog.Error("can not find list by system service", "source", source)
-								continue
-							}
-
-							values, err := xslices.Collect2(listAll(t.opts.Window.Subject()))
-							if err != nil {
-								slog.Error("can not collect list", "source", source, "err", err)
-							}
-
-							strState := core.DerivedState[[]AnyEntity](t.state, field.Name).Init(func() []AnyEntity {
-								src := t.state.Get()
-								str := reflect.ValueOf(src).FieldByName(field.Name)
-								tmp := make([]AnyEntity, 0, 1)
-								for _, v := range values {
-									if v.id == str.String() {
-										tmp = append(tmp, v)
-										break
-									}
-								}
-
-								return tmp
-							})
-
-							strState.Observe(func(v []AnyEntity) {
-								var strValue string
-								if len(v) > 0 {
-									strValue = v[0].id
-								}
-								dst := t.state.Get()
-								dst = setFieldValue(dst, field.Name, strValue).(T)
-								t.state.Set(dst)
-								t.state.Notify()
-							})
-
-							dlgOpts := getDialogOptions(field)
-
-							fieldsBuilder.Append(picker.Picker[AnyEntity](label, values, strState).
-								Title(label).
-								MultiSelect(false).
-								ErrorText(fieldErrValues[field.Name]).
-								Disabled(disabled).
-								DialogOptions(dlgOpts...).
-								SupportingText(supportingText).
-								Frame(ui.Frame{}.FullWidth()))
-
-						} else {
-
-							requiresInit := false
-							strState := core.DerivedState[string](t.state, field.Name).Init(func() string {
-								src := t.state.Get()
-								str := reflect.ValueOf(src).FieldByName(field.Name).String()
-								if val := field.Tag.Get("value"); val != "" && str == "" {
-									requiresInit = true
-									return ctx.Window().Bundle().Resolve(val)
-								}
-
-								return str
-							})
-
-							strState.Observe(func(newValue string) {
-								dst := t.state.Get()
-								dst = setFieldValue(dst, field.Name, newValue).(T)
-								t.state.Set(dst)
-								t.state.Notify()
-							})
-
-							if requiresInit {
-								strState.Notify()
-							}
-
-							if len(values) > 0 {
-								multiStrState := core.DerivedState[[]string](strState, "multi").Init(func() []string {
-									if strState.Get() == "" {
-										return []string{}
-									}
-									return []string{strState.Get()}
-								})
-
-								multiStrState.Observe(func(newValue []string) {
-									if len(newValue) == 0 {
-										strState.Set("")
-									} else {
-										strState.Set(newValue[0])
-									}
-
-									strState.Notify()
-								})
-
-								fieldsBuilder.Append(
-									picker.Picker[string](label, values, multiStrState).
-										SupportingText(id).
-										ErrorText(fieldErrValues[field.Name]).
-										Disabled(disabled).
-										MultiSelect(false).
-										Frame(ui.Frame{}.FullWidth()),
-								)
-							} else {
-								fieldsBuilder.Append(ui.TextField(label, strState.Get()).
-									InputValue(strState).
-									ID(id).
-									SupportingText(supportingText).
-									ErrorText(fieldErrValues[field.Name]).
-									Lines(lines).
-									Disabled(disabled).
-									Frame(ui.Frame{}.FullWidth()),
-								)
-							}
-
-						}
-					}
+			fctx := NewFieldContext[T](ctx.Window(), t.opts, t.state, field)
+
+			for renderer := range rIt {
+				if v := renderer(fctx); v != nil {
+					fieldsBuilder.Append(v)
+					continue NextField
 				}
 			}
 		}
@@ -808,37 +215,6 @@ func (t TAuto[T]) Render(ctx core.RenderContext) core.RenderNode {
 	return ui.VStack(rootViews.Collect()...).Gap(ui.L16).FullWidth().Render(ctx)
 }
 
-func setFieldValue(dst any, fieldName string, val any) any {
-	vDst := reflect.ValueOf(dst)
-
-	for vDst.Kind() == reflect.Ptr || vDst.Kind() == reflect.Interface {
-		vDst = vDst.Elem()
-	}
-
-	cpy := reflect.New(vDst.Type()).Elem()
-	cpy.Set(vDst)
-
-	switch t := val.(type) {
-	case string:
-		cpy.FieldByName(fieldName).SetString(t)
-	case int:
-		cpy.FieldByName(fieldName).SetInt(int64(t))
-	case int64:
-		cpy.FieldByName(fieldName).SetInt(t)
-	case float64:
-		cpy.FieldByName(fieldName).SetFloat(t)
-	case time.Duration:
-		cpy.FieldByName(fieldName).SetInt(int64(t))
-	case bool:
-		cpy.FieldByName(fieldName).SetBool(t)
-	default:
-		//slog.Error("cannot set field value for [form.Auto]", "type", reflect.TypeOf(t))
-		cpy.FieldByName(fieldName).Set(reflect.ValueOf(t))
-	}
-
-	return cpy.Interface()
-}
-
 func getDialogOptions(field reflect.StructField) []alert.Option {
 	var dlgOpts []alert.Option
 	if dlgWidth := field.Tag.Get("dialogOptions"); dlgWidth != "" {
@@ -855,48 +231,4 @@ func getDialogOptions(field reflect.StructField) []alert.Option {
 	}
 
 	return dlgOpts
-}
-
-type ErrorWithFields interface {
-	error
-	// UnwrapFields may return a struct{FieldA string, FieldB string} or a map[string]string to address
-	// individual error messages for a specific field. It may also return nil, if the problem is not
-	// related to a specific field.
-	UnwrapFields() any
-}
-
-// strFieldValues returns v if it is a map itself or the fields from the struct. In all other cases returns nil.
-func strFieldValues(v any) map[string]string {
-	if v == nil {
-		return nil
-	}
-
-	if m, ok := v.(map[string]string); ok {
-		return m
-	}
-
-	if v, ok := v.(error); ok {
-		var err ErrorWithFields
-		if errors.As(v, &err) {
-			return strFieldValues(err.UnwrapFields())
-		}
-	}
-
-	rType := reflect.TypeOf(v)
-	if rType.Kind() != reflect.Struct {
-		return nil
-	}
-
-	res := map[string]string{}
-	rVal := reflect.ValueOf(v)
-	for i := 0; i < rType.NumField(); i++ {
-		fVal := rVal.Field(i)
-		if fVal.Kind() != reflect.String {
-			continue
-		}
-
-		res[rType.Field(i).Name] = fVal.String()
-	}
-
-	return res
 }

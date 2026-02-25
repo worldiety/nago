@@ -19,6 +19,28 @@ import (
 	"go.wdy.de/nago/pkg/xiter"
 )
 
+// Entity is a more simple version of AnyEntity and cannot mutate any identity.
+type Entity struct {
+	ID    string
+	Value any
+}
+
+func (e Entity) Identity() string {
+	return e.ID
+}
+
+func (e Entity) Unwrap() any {
+	return e.Value
+}
+
+func (e Entity) String() string {
+	if stringer, ok := e.Value.(fmt.Stringer); ok {
+		return stringer.String()
+	}
+
+	return fmt.Sprintf("%v", e.Value)
+}
+
 // AnyEntity is a wrapper (Entity).
 // It provides a type-erased representation of an aggregate entity
 // with a string identity and a stored aggregate of any type.
@@ -85,9 +107,11 @@ func AnySeq2Of[E Aggregate[E, ID], ID ~string](it iter.Seq2[E, error]) iter.Seq2
 	}, it)
 }
 
+// Deprecated: use [Source] and [NewSource] instead.
 // UseCaseListAny is a function type returning a sequence of AnyEntity for a subject.
 type UseCaseListAny = ent.FindAll[AnyEntity, string]
 
+// Deprecated: use [Source] and [NewSource] instead.
 // AnyUseCaseList converts a typed use case list function into a UseCaseListAny
 // that produces type-erased AnyEntity results.
 func AnyUseCaseList[E Aggregate[E, ID], ID ~string](list func(subject auth.Subject) iter.Seq2[E, error]) UseCaseListAny {
@@ -96,6 +120,7 @@ func AnyUseCaseList[E Aggregate[E, ID], ID ~string](list func(subject auth.Subje
 	}
 }
 
+// Deprecated: use [Source] and [NewSource] instead.
 // AnyUseCaseListReadOnly converts a typed use case list function into a UseCaseListAny
 // that produces type-erased AnyEntity results.
 func AnyUseCaseListReadOnly[E data.Aggregate[ID], ID ~string](list func(subject auth.Subject) iter.Seq2[E, error]) UseCaseListAny {
