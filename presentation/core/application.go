@@ -22,6 +22,7 @@ import (
 	"go.wdy.de/nago/application/session"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/blob/crypto"
+	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/std/concurrent"
 	"go.wdy.de/nago/presentation/proto"
@@ -68,6 +69,7 @@ type Application struct {
 	logoutSession session.Logout
 	fonts         atomic.Pointer[Fonts]
 	debug         bool
+	instance      string
 }
 
 func NewApplication(
@@ -102,9 +104,18 @@ func NewApplication(
 		bus:           bus,
 		getAnonUser:   getAnonUser,
 		logoutSession: logoutSession,
+		instance:      data.RandIdent[string](),
 	}
 
 	return a
+}
+
+// Instance returns a random identifier for the application instance which is created on application startup
+// and is different for each created instance. It can be used by any client to detect if the service has been
+// restarted, which may also indicate that the protocol may have been changed and any frontend
+// JavaScript may need a reload.
+func (a *Application) Instance() string {
+	return a.instance
 }
 
 // Context of the application.

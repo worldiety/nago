@@ -14,7 +14,7 @@ Also note, that the concrete type is inspected at runtime and not the given temp
 is only needed for your convenience and to satisfy any concrete state type. Internally, everything gets evaluated
 as [any]. T maybe also be an interface, thus ensure, that the state contains not a nil interface.
 
-The current implementation only supports:
+The current default implementation only supports:
   - string fields
   - integer fields (literally)
   - string slices
@@ -35,6 +35,8 @@ Supported field tags:
   - value:"string literal"|"bool literal"|"number literal" only applicable for fields with the according underlying
     type. Defaults to the zero value of the underlying type.
   - dialogOptions:"large|larger|xlarge|xxlarge" is only supported for source picker.
+
+The actual support may vary and depends on [AutoOptions.Renderers].
 
 ---
 ## Methods

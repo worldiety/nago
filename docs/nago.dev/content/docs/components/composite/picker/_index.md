@@ -58,7 +58,7 @@ func main() {
 | `Frame(frame ui.Frame)` |  |
 | `FullWidth()` |  |
 | `ItemPickedRenderer(fn func([]T) core.View)` | ItemPickedRenderer can be customized to return a non-text view for the given T. This is shown within the selected window for the currently selected items. |
-| `ItemRenderer(fn func(T) core.View)` | Deprecated: ItemRenderer can be customized to return a non-text view for the given T. This is shown within the picker popup. If fn is nil, the default fallback rendering will be applied. |
+| `ItemRenderer(fn func(T) core.View)` | Deprecated: use ItemRenderer2 ItemRenderer can be customized to return a non-text view for the given T. This is shown within the picker popup. If fn is nil, the default fallback rendering will be applied. |
 | `ItemRenderer2(fn func(wnd core.Windowitem Tstate *core.State[bool]) core.View)` | ItemRenderer2 can be customized to return a non-text view for the given T. This is shown within the picker popup. If fn is nil, the default fallback rendering will be applied. |
 | `MultiSelect(mv bool)` | MultiSelect is by default false. |
 | `Padding(padding ui.Padding)` |  |

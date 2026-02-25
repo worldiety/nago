@@ -37,6 +37,10 @@
     "9": {
       "name": "Fonts",
       "type": "Fonts"
+    },
+    "10": {
+      "name": "Instance",
+      "type": "Str"
     }
   }
 }

@@ -13,7 +13,7 @@
 <title>Card Layout – Nago Docs</title>
   <meta name="description" content="It organizes child views into a grid-like layout, typically using multiple columns. The number of columns can be defined globally or customized per window size class to enable responsive design.
 Constructors Layout Layout creates a new TCardLayout with the given child views. Nil children are automatically skipped. By default, the layout uses 3 columns.
-Methods Method Description Columns(columns int, class core.WindowSizeClass) Columns sets a custom number of columns for a specific WindowSizeClass. This allows the layout to adapt responsively to different screen sizes. Frame(frame ui.Frame) Frame sets the frame (size and positioning) for the card layout. Padding(padding ui.Padding) Padding sets the inner spacing for the card layout. This allows customizing the distance between the layout border and its content. " /><link rel="canonical" href="/docs/components/layout/card_layout/" itemprop="url" />
+Methods Method Description Columns(class core.WindowSizeClass, columns int) Columns sets a custom number of columns for a specific WindowSizeClass. This allows the layout to adapt responsively to different screen sizes. Frame(frame ui.Frame) Frame sets the frame (size and positioning) for the card layout. Padding(padding ui.Padding) Padding sets the inner spacing for the card layout. This allows customizing the distance between the layout border and its content. " /><link rel="canonical" href="/docs/components/layout/card_layout/" itemprop="url" />
 
 <meta property="og:title" content="Card Layout" />
 <meta property="og:description" content="Documentation for Nago" />
@@ -23,13 +23,13 @@ Methods Method Description Columns(columns int, class core.WindowSizeClass) Colu
   <meta itemprop="name" content="Card Layout">
   <meta itemprop="description" content="It organizes child views into a grid-like layout, typically using multiple columns. The number of columns can be defined globally or customized per window size class to enable responsive design.
 Constructors Layout Layout creates a new TCardLayout with the given child views. Nil children are automatically skipped. By default, the layout uses 3 columns.
-Methods Method Description Columns(columns int, class core.WindowSizeClass) Columns sets a custom number of columns for a specific WindowSizeClass. This allows the layout to adapt responsively to different screen sizes. Frame(frame ui.Frame) Frame sets the frame (size and positioning) for the card layout. Padding(padding ui.Padding) Padding sets the inner spacing for the card layout. This allows customizing the distance between the layout border and its content.">
+Methods Method Description Columns(class core.WindowSizeClass, columns int) Columns sets a custom number of columns for a specific WindowSizeClass. This allows the layout to adapt responsively to different screen sizes. Frame(frame ui.Frame) Frame sets the frame (size and positioning) for the card layout. Padding(padding ui.Padding) Padding sets the inner spacing for the card layout. This allows customizing the distance between the layout border and its content.">
   <meta itemprop="wordCount" content="119">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Card Layout">
   <meta name="twitter:description" content="It organizes child views into a grid-like layout, typically using multiple columns. The number of columns can be defined globally or customized per window size class to enable responsive design.
 Constructors Layout Layout creates a new TCardLayout with the given child views. Nil children are automatically skipped. By default, the layout uses 3 columns.
-Methods Method Description Columns(columns int, class core.WindowSizeClass) Columns sets a custom number of columns for a specific WindowSizeClass. This allows the layout to adapt responsively to different screen sizes. Frame(frame ui.Frame) Frame sets the frame (size and positioning) for the card layout. Padding(padding ui.Padding) Padding sets the inner spacing for the card layout. This allows customizing the distance between the layout border and its content.">
+Methods Method Description Columns(class core.WindowSizeClass, columns int) Columns sets a custom number of columns for a specific WindowSizeClass. This allows the layout to adapt responsively to different screen sizes. Frame(frame ui.Frame) Frame sets the frame (size and positioning) for the card layout. Padding(padding ui.Padding) Padding sets the inner spacing for the card layout. This allows customizing the distance between the layout border and its content.">
 
     <link rel="preload" href="/css/compiled/main.min.be56ec629fdfe7569502c7dfe214689a2336e822326f4e4254eeceaf964fed38.css" as="style" integrity="sha256-vlbsYp/f51aVAsff4hRomiM26CIyb05CVO7Or5ZP7Tg=" />
     <link href="/css/compiled/main.min.be56ec629fdfe7569502c7dfe214689a2336e822326f4e4254eeceaf964fed38.css" rel="stylesheet" integrity="sha256-vlbsYp/f51aVAsff4hRomiM26CIyb05CVO7Or5ZP7Tg=" />
@@ -816,6 +816,14 @@ Methods Method Description Columns(columns int, class core.WindowSizeClass) Colu
     href="/docs/components/layout/text_layout/"
     
   >Text Layout
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/layout/twocolumn/"
+    
+  >TwoColumn
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -2413,6 +2421,14 @@ Methods Method Description Columns(columns int, class core.WindowSizeClass) Colu
             </li><li class="hx-flex hx-flex-col "><a
     class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
       hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/layout/twocolumn/"
+    
+  >TwoColumn
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
     href="/docs/components/layout/vstack/"
     
   >VStack
@@ -3458,7 +3474,7 @@ Nil children are automatically skipped. By default, the layout uses 3 columns.</
   </thead>
   <tbody>
       <tr>
-          <td><code>Columns(columns int, class core.WindowSizeClass)</code></td>
+          <td><code>Columns(class core.WindowSizeClass, columns int)</code></td>
           <td>Columns sets a custom number of columns for a specific WindowSizeClass. This allows the layout to adapt responsively to different screen sizes.</td>
       </tr>
       <tr>
