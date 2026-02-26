@@ -22,7 +22,7 @@ Constructors Picker Picker takes the given slice and state to represent the sele
   <meta itemprop="name" content="Picker">
   <meta itemprop="description" content="It displays a list of values and lets users choose one or multiple items, with optional “Select all” and quick-filtering support. Rendering of both the selected summary and the selectable rows is customizable via callbacks. The picker can bind to external selection state or manage its own, and it can be presented in a dialog with configurable options.
 Constructors Picker Picker takes the given slice and state to represent the selection. Internally, it uses deep equals, to determine the unique set of selected elements and coordinate that with the UI state.">
-  <meta itemprop="wordCount" content="352">
+  <meta itemprop="wordCount" content="355">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Picker">
   <meta name="twitter:description" content="It displays a list of values and lets users choose one or multiple items, with optional “Select all” and quick-filtering support. Rendering of both the selected summary and the selectable rows is customizable via callbacks. The picker can bind to external selection state or manage its own, and it can be presented in a dialog with configurable options.
@@ -813,6 +813,14 @@ Constructors Picker Picker takes the given slice and state to represent the sele
     href="/docs/components/layout/text_layout/"
     
   >Text Layout
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/layout/twocolumn/"
+    
+  >TwoColumn
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -2410,6 +2418,14 @@ Constructors Picker Picker takes the given slice and state to represent the sele
             </li><li class="hx-flex hx-flex-col "><a
     class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
       hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/layout/twocolumn/"
+    
+  >TwoColumn
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
     href="/docs/components/layout/vstack/"
     
   >VStack
@@ -3530,12 +3546,16 @@ the unique set of selected elements and coordinate that with the UI state.</p>
           <td></td>
       </tr>
       <tr>
+          <td><code>FullWidth()</code></td>
+          <td></td>
+      </tr>
+      <tr>
           <td><code>ItemPickedRenderer(fn func([]T) core.View)</code></td>
           <td>ItemPickedRenderer can be customized to return a non-text view for the given T. This is shown within the selected window for the currently selected items.</td>
       </tr>
       <tr>
           <td><code>ItemRenderer(fn func(T) core.View)</code></td>
-          <td>Deprecated: ItemRenderer can be customized to return a non-text view for the given T. This is shown within the picker popup. If fn is nil, the default fallback rendering will be applied.</td>
+          <td>Deprecated: use ItemRenderer2 ItemRenderer can be customized to return a non-text view for the given T. This is shown within the picker popup. If fn is nil, the default fallback rendering will be applied.</td>
       </tr>
       <tr>
           <td><code>ItemRenderer2(fn func(wnd core.Windowitem Tstate *core.State[bool]) core.View)</code></td>

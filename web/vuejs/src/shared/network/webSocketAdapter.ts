@@ -19,6 +19,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 	private retryTimeout: number | null = null;
 	private retries: number = 0;
 	private lastEventSendAt: number;
+	private instanceVersion: string = '';
 
 	constructor() {
 		this.lastEventSendAt = new Date().getTime();
@@ -32,10 +33,15 @@ export default class WebSocketAdapter implements ServiceAdapter {
 	}
 
 	async initialize(): Promise<void> {
+		let httpProto = 'http';
 		let proto = 'ws';
 		if (this.isSecure) {
 			proto = 'wss';
+			httpProto = 'https';
 		}
+
+		const instanceEndpoint = `${httpProto}://${window.location.hostname}:${window.location.port}/api/nago/v1/instance`;
+
 		let webSocketURL = `${proto}://${window.location.hostname}:${window.location.port}/wire?_sid=${this.scopeId}`;
 		const queryString = window.location.search.substring(1);
 		if (queryString) {
@@ -72,6 +78,23 @@ export default class WebSocketAdapter implements ServiceAdapter {
 			};
 
 			this.webSocket.onopen = () => {
+				// check if our server instance changed
+				fetch(instanceEndpoint)
+					.then((response) => response.json())
+					.then((data: { id: string }) => {
+						if (this.instanceVersion === '') {
+							this.instanceVersion = data.id;
+						} else if (this.instanceVersion !== data.id) {
+							console.log('Server instance changed, reloading page...');
+							window.location.reload();
+						}
+					})
+					.catch((err) => {
+						console.error('Failed to fetch instance version:', err);
+					});
+
+				// continue
+
 				ConnectionHandler.connectionChanged({ connected: true });
 				this.retries = 0;
 

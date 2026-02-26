@@ -32,7 +32,7 @@ reflection from the given type. It does not require or understand entities and i
 Also note, that the concrete type is inspected at runtime and not the given template T, which
 is only needed for your convenience and to satisfy any concrete state type. Internally, everything gets evaluated
 as [any]. T maybe also be an interface, thus ensure, that the state contains not a nil interface.&lt;/p&gt;
-&lt;p&gt;The current implementation only supports:&lt;/p&gt;
+&lt;p&gt;The current default implementation only supports:&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;string fields&lt;/li&gt;
 &lt;li&gt;integer fields (literally)&lt;/li&gt;
@@ -55,6 +55,7 @@ for string types and to 5 for []string types.&lt;/li&gt;
 type. Defaults to the zero value of the underlying type.&lt;/li&gt;
 &lt;li&gt;dialogOptions:&amp;ldquo;large|larger|xlarge|xxlarge&amp;rdquo; is only supported for source picker.&lt;/li&gt;
 &lt;/ul&gt;
+&lt;p&gt;The actual support may vary and depends on [AutoOptions.Renderers].&lt;/p&gt;
 &lt;hr&gt;
 &lt;h2&gt;Methods&lt;span class=&#34;hx-absolute -hx-mt-20&#34; id=&#34;methods&#34;&gt;&lt;/span&gt;
     &lt;a href=&#34;#methods&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
@@ -510,6 +511,10 @@ binding the given value and optional state.&lt;/p&gt;
       &lt;tr&gt;
           &lt;td&gt;&lt;code&gt;Disabled(disabled bool)&lt;/code&gt;&lt;/td&gt;
           &lt;td&gt;Disabled enables or disables user interaction with the date picker.&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;DoubleMode(doubleMode bool)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;DoubleMode enables double-month mode for range pickers.&lt;/td&gt;
       &lt;/tr&gt;
       &lt;tr&gt;
           &lt;td&gt;&lt;code&gt;ErrorText(text string)&lt;/code&gt;&lt;/td&gt;
@@ -1320,12 +1325,16 @@ the unique set of selected elements and coordinate that with the UI state.&lt;/p
           &lt;td&gt;&lt;/td&gt;
       &lt;/tr&gt;
       &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;FullWidth()&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
           &lt;td&gt;&lt;code&gt;ItemPickedRenderer(fn func([]T) core.View)&lt;/code&gt;&lt;/td&gt;
           &lt;td&gt;ItemPickedRenderer can be customized to return a non-text view for the given T. This is shown within the selected window for the currently selected items.&lt;/td&gt;
       &lt;/tr&gt;
       &lt;tr&gt;
           &lt;td&gt;&lt;code&gt;ItemRenderer(fn func(T) core.View)&lt;/code&gt;&lt;/td&gt;
-          &lt;td&gt;Deprecated: ItemRenderer can be customized to return a non-text view for the given T. This is shown within the picker popup. If fn is nil, the default fallback rendering will be applied.&lt;/td&gt;
+          &lt;td&gt;Deprecated: use ItemRenderer2 ItemRenderer can be customized to return a non-text view for the given T. This is shown within the picker popup. If fn is nil, the default fallback rendering will be applied.&lt;/td&gt;
       &lt;/tr&gt;
       &lt;tr&gt;
           &lt;td&gt;&lt;code&gt;ItemRenderer2(fn func(wnd core.Windowitem Tstate *core.State[bool]) core.View)&lt;/code&gt;&lt;/td&gt;

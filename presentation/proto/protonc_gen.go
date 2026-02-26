@@ -2233,10 +2233,11 @@ type ScopeConfigurationChanged struct {
 	Themes             Themes
 	RID                RID
 	Fonts              Fonts
+	Instance           Str
 }
 
 func (v *ScopeConfigurationChanged) write(w *BinaryWriter) error {
-	var fields [10]bool
+	var fields [11]bool
 	fields[1] = !v.ApplicationID.IsZero()
 	fields[2] = !v.ApplicationName.IsZero()
 	fields[3] = !v.ApplicationVersion.IsZero()
@@ -2246,6 +2247,7 @@ func (v *ScopeConfigurationChanged) write(w *BinaryWriter) error {
 	fields[7] = !v.Themes.IsZero()
 	fields[8] = !v.RID.IsZero()
 	fields[9] = !v.Fonts.IsZero()
+	fields[10] = !v.Instance.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -2328,6 +2330,14 @@ func (v *ScopeConfigurationChanged) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[10] {
+		if err := w.writeFieldHeader(byteSlice, 10); err != nil {
+			return err
+		}
+		if err := v.Instance.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -2385,6 +2395,11 @@ func (v *ScopeConfigurationChanged) read(r *BinaryReader) error {
 			}
 		case 9:
 			err := v.Fonts.read(r)
+			if err != nil {
+				return err
+			}
+		case 10:
+			err := v.Instance.read(r)
 			if err != nil {
 				return err
 			}
@@ -15209,13 +15224,14 @@ func (v *ScopeConfigurationChanged) reset() {
 	v.Themes.reset()
 	v.RID.reset()
 	v.Fonts.reset()
+	v.Instance.reset()
 }
 
 func (v *ScopeConfigurationChanged) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.ApplicationID.IsZero() && v.ApplicationName.IsZero() && v.ApplicationVersion.IsZero() && v.AvailableLocales.IsZero() && v.AppIcon.IsZero() && v.ActiveLocale.IsZero() && v.Themes.IsZero() && v.RID.IsZero() && v.Fonts.IsZero()
+	return v.ApplicationID.IsZero() && v.ApplicationName.IsZero() && v.ApplicationVersion.IsZero() && v.AvailableLocales.IsZero() && v.AppIcon.IsZero() && v.ActiveLocale.IsZero() && v.Themes.IsZero() && v.RID.IsZero() && v.Fonts.IsZero() && v.Instance.IsZero()
 }
 
 // Locales is just a bunch of locales.

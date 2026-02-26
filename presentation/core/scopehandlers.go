@@ -364,6 +364,7 @@ func (s *Scope) handleConfigurationRequested(evt *proto.ScopeConfigurationChange
 		Themes:             themes,
 		RID:                evt.RID,
 		Fonts:              fonts,
+		Instance:           proto.Str(s.app.Instance()),
 	})
 }
 

@@ -24,7 +24,7 @@ SingleDatePicker SingleDatePicker creates a date picker configured for selecting
   <meta itemprop="description" content="It allows users to select either a single date or a date range, depending on its style. The component supports external state bindings, validation messages, and layout configuration.
 Constructors RangeDatePicker RangeDatePicker creates a date picker configured for selecting a date range, binding start and end values to their respective states.
 SingleDatePicker SingleDatePicker creates a date picker configured for selecting a single date, binding the given value and optional state.">
-  <meta itemprop="wordCount" content="195">
+  <meta itemprop="wordCount" content="204">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Date Picker">
   <meta name="twitter:description" content="It allows users to select either a single date or a date range, depending on its style. The component supports external state bindings, validation messages, and layout configuration.
@@ -822,6 +822,14 @@ SingleDatePicker SingleDatePicker creates a date picker configured for selecting
     href="/docs/components/layout/text_layout/"
     
   >Text Layout
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/layout/twocolumn/"
+    
+  >TwoColumn
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -2419,6 +2427,14 @@ SingleDatePicker SingleDatePicker creates a date picker configured for selecting
             </li><li class="hx-flex hx-flex-col "><a
     class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
       hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/layout/twocolumn/"
+    
+  >TwoColumn
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
     href="/docs/components/layout/vstack/"
     
   >VStack
@@ -3485,6 +3501,10 @@ binding the given value and optional state.</p>
       <tr>
           <td><code>Disabled(disabled bool)</code></td>
           <td>Disabled enables or disables user interaction with the date picker.</td>
+      </tr>
+      <tr>
+          <td><code>DoubleMode(doubleMode bool)</code></td>
+          <td>DoubleMode enables double-month mode for range pickers.</td>
       </tr>
       <tr>
           <td><code>ErrorText(text string)</code></td>

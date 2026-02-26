@@ -170,6 +170,7 @@ func (c *Configurator) newHandler() http.Handler {
 		app2.AddDestructor(destructor)
 	}
 	r := chi.NewRouter()
+
 	app2.SetOnSendFiles(func(scope *core.Scope, options core.ExportFilesOptions) error {
 		if len(options.Files) == 0 {
 			return fmt.Errorf("no files to send")
@@ -224,6 +225,19 @@ func (c *Configurator) newHandler() http.Handler {
 	r.Use(
 		c.loggerMiddleware,
 	)
+
+	r.Mount("/api/nago/v1/instance", http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		type instanceResponse struct {
+			ID string `json:"id"`
+		}
+
+		v := instanceResponse{ID: app2.Instance()}
+		if err := json.NewEncoder(writer).Encode(v); err != nil {
+			slog.Error("cannot encode instance response", "err", err.Error())
+			return
+		}
+
+	}))
 
 	if len(c.fsys) > 0 {
 		c.defaultLogger().Info("serving fsys assets")

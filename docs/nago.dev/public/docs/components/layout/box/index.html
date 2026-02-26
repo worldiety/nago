@@ -22,7 +22,7 @@ Constructors Box Box is a container, in which the given children will be layout 
   <meta itemprop="name" content="Box">
   <meta itemprop="description" content="It lays out its children according to BoxLayout rules. By definition, the container clips its children. This makes it suitable for overlapping layouts, but usually requires absolute height and width. Shadows may require extra padding since clipped children cannot extend beyond the container.
 Constructors Box Box is a container, in which the given children will be layout to the according BoxLayout rules. Note, that per definition the container clips its children. Thus, if working with shadows, you need to apply additional padding. Important: this container requires usually absolute height and width attributes and cannot work properly using wrap content semantics, because it intentionally allows overlapping.">
-  <meta itemprop="wordCount" content="245">
+  <meta itemprop="wordCount" content="258">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Box">
   <meta name="twitter:description" content="It lays out its children according to BoxLayout rules. By definition, the container clips its children. This makes it suitable for overlapping layouts, but usually requires absolute height and width. Shadows may require extra padding since clipped children cannot extend beyond the container.
@@ -819,6 +819,14 @@ Constructors Box Box is a container, in which the given children will be layout 
     href="/docs/components/layout/text_layout/"
     
   >Text Layout
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/layout/twocolumn/"
+    
+  >TwoColumn
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -2416,6 +2424,14 @@ Constructors Box Box is a container, in which the given children will be layout 
             </li><li class="hx-flex hx-flex-col "><a
     class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
       hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/layout/twocolumn/"
+    
+  >TwoColumn
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
     href="/docs/components/layout/vstack/"
     
   >VStack
@@ -3485,6 +3501,10 @@ the given alignment position (e.g., Top, Center, Bottom, etc.).</p>
       <tr>
           <td><code>Border(border Border)</code></td>
           <td>Border sets the border styling of the box.</td>
+      </tr>
+      <tr>
+          <td><code>DisableOutsidePointerEvents(disable bool)</code></td>
+          <td>DisableOutsidePointerEvents controls whether pointer events are disabled outside the box&rsquo;s content.</td>
       </tr>
       <tr>
           <td><code>Font(font Font)</code></td>
