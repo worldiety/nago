@@ -176,12 +176,8 @@ const props = defineProps<{
 	rangeMode: boolean;
 	doubleMode?: boolean;
 	label?: string;
-	selectedStartDay: number;
-	selectedStartMonth: number;
-	selectedStartYear: number;
-	selectedEndDay: number;
-	selectedEndMonth: number;
-	selectedEndYear: number;
+	selectedStartDate?: Date;
+	selectedEndDate?: Date;
 	rangeSelectionState: RangeSelectionState;
 }>();
 
@@ -198,27 +194,12 @@ const datepickerHeader = useTemplateRef('datepickerHeader');
 const confirmButton = useTemplateRef('confirmButton');
 const datepicker = ref<HTMLElement | undefined>();
 
-const currentDate = new Date();
-const selectedMonth = ref<number>(props.selectedStartMonth - 1);
-const selectedYear = ref<number>(props.selectedStartYear);
+const selectedMonth = ref<number>(props.selectedStartDate ? props.selectedStartDate.getMonth() : new Date().getMonth());
+const selectedYear = ref<number>(props.selectedStartDate ? props.selectedStartDate.getFullYear() : new Date().getFullYear());
 
 const lastDatepickerDayIndex = ref<number | null>(null);
 const lastDatepickerDayElement = ref<ComponentPublicInstance | Element | null>(null);
 const monthsToShow = props.doubleMode ? 2 : 1;
-
-const selectedStartDate = computed((): Date => {
-	if (!props.selectedStartYear || !props.selectedStartMonth || !props.selectedStartDay) {
-		return new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 0, 0, 0, 0);
-	}
-	return new Date(props.selectedStartYear, props.selectedStartMonth - 1, props.selectedStartDay, 0, 0, 0, 0);
-});
-
-const selectedEndDate = computed((): Date => {
-	if (!props.selectedEndYear || !props.selectedEndMonth || !props.selectedEndDay) {
-		return new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 0, 0, 0, 0);
-	}
-	return new Date(props.selectedEndYear, props.selectedEndMonth - 1, props.selectedEndDay, 0, 0, 0, 0);
-});
 
 const lowerBoundReached = computed((): boolean => {
 	return selectedMonth.value === 0 && selectedYear.value === MIN_YEAR;
@@ -317,33 +298,34 @@ function isSelectableDay(day: number, monthIndex: number, year: number): boolean
 
 function isSelectedStartDay(day: number, monthIndex: number, year: number): boolean {
 	return (
-		day === props.selectedStartDay &&
-		monthIndex === props.selectedStartMonth - 1 &&
-		year === props.selectedStartYear
+		!!props.selectedStartDate &&
+		day === props.selectedStartDate.getDate() &&
+		monthIndex === props.selectedStartDate.getMonth() &&
+		year === props.selectedStartDate.getFullYear()
 	);
 }
 
 function isSelectedEndDay(day: number, monthIndex: number, year: number): boolean {
 	return (
+		!!props.selectedEndDate &&
 		props.rangeSelectionState !== RangeSelectionState.SELECT_END &&
-		day === props.selectedEndDay &&
-		monthIndex === props.selectedEndMonth - 1 &&
-		year === props.selectedEndYear
+		day === props.selectedEndDate.getDate() &&
+		monthIndex === props.selectedEndDate.getMonth() &&
+		year === props.selectedEndDate.getFullYear()
 	);
 }
 
 function isWithinRange(day: number, monthIndex: number, year: number): boolean {
 	if (
-		props.rangeSelectionState === RangeSelectionState.SELECT_END ||
-		!props.selectedStartYear ||
-		!props.selectedStartMonth ||
-		!props.selectedStartDay
+		!props.selectedStartDate ||
+		!props.selectedEndDate ||
+		props.rangeSelectionState === RangeSelectionState.SELECT_END
 	) {
 		return false;
 	}
 
 	const dateToCheck = new Date(year, monthIndex, day, 0, 0, 0, 0);
-	return selectedStartDate.value <= dateToCheck && dateToCheck <= selectedEndDate.value;
+	return props.selectedStartDate <= dateToCheck && dateToCheck <= props.selectedEndDate;
 }
 
 function tryDecreaseMonth(): void {
@@ -407,18 +389,18 @@ function clearSelection() {
 }
 
 function showSelectedRange() {
-	for (let i = 1; i <= monthsToShow; i++) {
-		if (props.selectedStartYear === selectedYear.value && props.selectedStartMonth === selectedMonth.value + i)
+	if (!props.selectedStartDate) return;
+
+	for (let i = 0; i < monthsToShow; i++) {
+		if (props.selectedStartDate.getFullYear() === selectedYear.value && props.selectedStartDate.getMonth() === selectedMonth.value + i)
 			return;
 	}
 
-	selectedMonth.value = props.selectedStartMonth - 1;
-	selectedYear.value = props.selectedStartYear;
+	selectedMonth.value = props.selectedStartDate.getMonth();
+	selectedYear.value = props.selectedStartDate.getFullYear();
 }
 
-watch(() => props.selectedStartYear, showSelectedRange);
-watch(() => props.selectedStartMonth, showSelectedRange);
-watch(() => props.selectedStartDay, showSelectedRange);
+watch(() => props.selectedStartDate, showSelectedRange);
 </script>
 
 <style scoped>

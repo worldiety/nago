@@ -119,12 +119,8 @@ import InputWrapper from '@/components/shared/InputWrapper.vue';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
 import { isNumber } from '@tiptap/vue-3';
-import {
-	DateData,
-	DatePickerStyleValues,
-	UpdateStateValueRequested,
-	UpdateStateValues2Requested,
-} from '@/shared/proto/nprotoc_gen';
+import type { DateData, DatePickerStyleValues } from '@/shared/proto/nprotoc_gen';
+import { UpdateStateValueRequested, UpdateStateValues2Requested } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	// value containing the selected start date
@@ -135,12 +131,8 @@ const props = defineProps<{
 	disabled?: boolean;
 	datepickerStyle?: DatePickerStyleValues;
 	datepickerExpanded: boolean;
-	selectedStartYear: number;
-	selectedStartMonth: number;
-	selectedStartDay: number;
-	selectedEndYear: number;
-	selectedEndMonth: number;
-	selectedEndDay: number;
+	selectedStartDate?: Date;
+	selectedEndDate?: Date;
 	rangeMode: boolean;
 	// needed by Nago to submit updated dates
 	inputValue?: number;
@@ -154,54 +146,12 @@ defineEmits<{
 
 const serviceAdapter = useServiceAdapter();
 const datepickerInputContainer = useTemplateRef('datepickerInputContainer');
-const editableStartYear = ref<number>(props.selectedStartYear);
-const editableStartMonth = ref<string>(formatDateComponent(props.selectedStartMonth));
-const editableStartDay = ref<string>(formatDateComponent(props.selectedStartDay));
-const editableEndYear = ref<number>(props.selectedEndYear);
-const editableEndMonth = ref<string>(formatDateComponent(props.selectedEndMonth));
-const editableEndDay = ref<string>(formatDateComponent(props.selectedEndDay));
-
-watch(
-	() => props.selectedStartYear,
-	(newValue) => {
-		editableStartYear.value = newValue;
-	}
-);
-
-watch(
-	() => props.selectedEndYear,
-	(newValue) => {
-		editableEndYear.value = newValue;
-	}
-);
-
-watch(
-	() => props.selectedStartMonth,
-	(newValue) => {
-		editableStartMonth.value = formatDateComponent(newValue);
-	}
-);
-
-watch(
-	() => props.selectedEndMonth,
-	(newValue) => {
-		editableEndMonth.value = formatDateComponent(newValue);
-	}
-);
-
-watch(
-	() => props.selectedStartDay,
-	(newValue) => {
-		editableStartDay.value = formatDateComponent(newValue);
-	}
-);
-
-watch(
-	() => props.selectedEndDay,
-	(newValue) => {
-		editableEndDay.value = formatDateComponent(newValue);
-	}
-);
+const editableStartYear = ref<number>(0);
+const editableStartMonth = ref<string>(formatDateComponent(1));
+const editableStartDay = ref<string>(formatDateComponent(1));
+const editableEndYear = ref<number>(0);
+const editableEndMonth = ref<string>(formatDateComponent(1));
+const editableEndDay = ref<string>(formatDateComponent(1));
 
 const totalDaysForEditableStartMonth = computed((): number => {
 	const editableStartMonthDate = new Date(
@@ -230,16 +180,7 @@ const dateSelected = computed((): boolean => {
 		return false;
 	}
 
-	const startDate = new Date();
-	startDate.setFullYear(props.selectedStartYear, props.selectedStartMonth - 1, props.selectedStartDay);
-	if (!props.selectedStartYear || !props.selectedStartMonth || !props.selectedStartDay) {
-		return false;
-	}
-	if (!props.rangeMode) {
-		return true;
-	}
-
-	return !!(props.selectedEndYear && props.selectedEndMonth && props.selectedEndDay);
+	return !!props.selectedStartDate && (!props.rangeMode || !!props.selectedEndDate);
 });
 
 const datepickerCalendarAriaLabel = computed((): string => {
@@ -330,7 +271,7 @@ function startYearChanged(event: FocusEvent) {
 		// only support years after introduction of the gregorian calendar
 		// also we have to set the value to 0 here first, otherwise the reset to the previous value will not work
 		editableStartYear.value = 0;
-		editableStartYear.value = props.selectedStartYear;
+		editableStartYear.value = props.selectedStartDate?.getFullYear() || new Date().getFullYear();
 		return;
 	}
 	editableStartYear.value = updatedValue;
@@ -353,7 +294,7 @@ function endYearChanged(event: FocusEvent) {
 		// only support years after introduction of the gregorian calendar
 		// also we have to set the value to 0 here first, otherwise the reset to the previous value will not work
 		editableEndYear.value = 0;
-		editableEndYear.value = props.selectedEndYear;
+		editableEndYear.value = props.selectedEndDate?.getFullYear() || new Date().getFullYear();
 		return;
 	}
 	editableEndYear.value = updatedValue;
@@ -475,4 +416,44 @@ function submitSelection() {
 		);
 	}
 }
+
+function setInitialStartDate() {
+	const now = new Date();
+	now.setHours(0, 0, 0, 0);
+
+	if (props.selectedStartDate) {
+		editableStartYear.value = props.selectedStartDate.getFullYear();
+		editableStartMonth.value = formatDateComponent(props.selectedStartDate.getMonth() + 1);
+		editableStartDay.value = formatDateComponent(props.selectedStartDate.getDate());
+	} else {
+		editableStartYear.value = now.getFullYear();
+		editableStartMonth.value = formatDateComponent(now.getMonth() + 1);
+		editableStartDay.value = formatDateComponent(now.getDate());
+	}
+}
+
+function setInitialEndDate() {
+	const now = new Date();
+	now.setHours(0, 0, 0, 0);
+
+	if (props.selectedEndDate) {
+		editableEndYear.value = props.selectedEndDate.getFullYear();
+		editableEndMonth.value = formatDateComponent(props.selectedEndDate.getMonth() + 1);
+		editableEndDay.value = formatDateComponent(props.selectedEndDate.getDate());
+	} else {
+		editableEndYear.value = now.getFullYear();
+		editableEndMonth.value = formatDateComponent(now.getMonth() + 1);
+		editableEndDay.value = formatDateComponent(now.getDate());
+	}
+}
+
+function init() {
+	setInitialStartDate();
+	setInitialEndDate();
+
+	watch(() => props.selectedStartDate, setInitialStartDate);
+	watch(() => props.selectedEndDate, setInitialEndDate);
+}
+
+init();
 </script>
