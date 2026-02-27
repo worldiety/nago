@@ -27,13 +27,14 @@ import (
 const debug = true
 
 type DB struct {
-	store     blob.Store
-	forward   *btree.BTreeG[fixedBinaryTriple]
-	backward  *btree.BTreeG[fixedBinaryTriple]
-	strTable  *strTable
-	mutex     sync.RWMutex
-	resolvers []Resolver
-	resources concurrent.RWMap[Namespace, Resources]
+	store       blob.Store
+	forward     *btree.BTreeG[fixedBinaryTriple]
+	backward    *btree.BTreeG[fixedBinaryTriple]
+	strTable    *strTable
+	mutex       sync.RWMutex
+	resolvers   []Resolver
+	resources   concurrent.RWMap[Namespace, Resources]
+	staticRules map[bNamespace][]bStaticRelationRule // unclear, if and which performance optimizations we need. Currently, we expect a single digit number of rules.
 }
 
 // NewDB creates a new RBAC database backed by the given blob store.
@@ -49,6 +50,8 @@ func NewDB(store blob.Store) (*DB, error) {
 			return bytes.Compare(a[:], b[:]) < 0
 		}),
 		store: store,
+
+		staticRules: make(map[bNamespace][]bStaticRelationRule),
 	}
 
 	slog.Info("loading ReBAC database from blob store...")
@@ -276,7 +279,7 @@ func (db *DB) Delete(tuple Triple) error {
 		return nil
 	}
 
-	if err := db.store.Delete(context.Background(), db.encode(tuple)); err != nil {
+	if err := db.store.Delete(context.Background(), encode(tuple)); err != nil {
 		return err
 	}
 
@@ -322,13 +325,21 @@ func prefixSlice(p fixedBinaryTriple) []byte {
 func (db *DB) Put(tuple Triple) error {
 	b := db.intoBinary(tuple)
 
+	if !db.HasStaticRelationRule(StaticRelationRule{
+		Source:   tuple.Source.Namespace,
+		Relation: tuple.Relation,
+		Target:   tuple.Target.Namespace,
+	}) {
+		return fmt.Errorf("cannot insert triple: no such rule: %s:%s:%s", tuple.Source.Namespace, tuple.Relation, tuple.Target.Namespace)
+	}
+
 	// do not issue blind inserts which may accumulate in current persistent storage
 	_, has := db.forward.Get(b.Binary())
 	if has {
 		return nil
 	}
 
-	encoded := db.encode(tuple)
+	encoded := encode(tuple)
 
 	if err := blob.Put(db.store, encoded, nil); err != nil {
 		return err
@@ -350,12 +361,21 @@ func (db *DB) PutAll(it iter.Seq2[Triple, error]) error {
 		}
 
 		b := db.intoBinary(tuple)
+
+		if !db.HasStaticRelationRule(StaticRelationRule{
+			Source:   tuple.Source.Namespace,
+			Relation: tuple.Relation,
+			Target:   tuple.Target.Namespace,
+		}) {
+			return fmt.Errorf("cannot insert triple: no such rule: %s:%s:%s", tuple.Source.Namespace, tuple.Relation, tuple.Target.Namespace)
+		}
+
 		_, has := db.forward.Get(b.Binary())
 		if has {
 			continue
 		}
 
-		encoded := db.encode(tuple)
+		encoded := encode(tuple)
 
 		if err := blob.Put(db.store, encoded, nil); err != nil {
 			return err
@@ -462,7 +482,7 @@ func (db *DB) fromBinary(b binaryTriple) Triple {
 // Note that : is allowed in all strings, but the nago framework itself does not use it and we
 // expect it to be very uncommon in our identifiers. So there is a fast path, which checks
 // if escaping is required, otherwise all strings are just concated together in a pre-allocated string builder.
-func (db *DB) encode(tuple Triple) string {
+func encode(tuple Triple) string {
 	srcNs := string(tuple.Source.Namespace)
 	srcInst := string(tuple.Source.Instance)
 	rel := string(tuple.Relation)
@@ -605,6 +625,70 @@ func (db *DB) AllResources() iter.Seq[Resources] {
 		for _, r := range tmp {
 			if !yield(r) {
 				return
+			}
+		}
+	}
+}
+
+func (db *DB) intobStaticRelationRule(rule StaticRelationRule) bStaticRelationRule {
+	return bStaticRelationRule{
+		Source:   bNamespace(db.strTable.Intern(string(rule.Source))),
+		Relation: bRelation(db.strTable.Intern(string(rule.Relation))),
+		Target:   bNamespace(db.strTable.Intern(string(rule.Target))),
+	}
+}
+
+// RegisterStaticRelationRule appends the given static relation rule.
+func (db *DB) RegisterStaticRelationRule(rule StaticRelationRule) {
+	db.mutex.Lock()
+	defer db.mutex.Unlock()
+
+	bRule := db.intobStaticRelationRule(rule)
+	tmp := db.staticRules[bRule.Source]
+	tmp = append(tmp, bRule)
+	db.staticRules[bRule.Source] = tmp
+}
+
+// HasStaticRelationRule returns true if the exact rule has been registered or if no rules have been registered
+// at all.
+func (db *DB) HasStaticRelationRule(rule StaticRelationRule) bool {
+	db.mutex.RLock()
+	defer db.mutex.RUnlock()
+
+	return db.hasStaticRelationRule(rule)
+}
+
+func (db *DB) hasStaticRelationRule(rule StaticRelationRule) bool {
+	if len(db.staticRules) == 0 {
+		return true
+	}
+
+	bRule := db.intobStaticRelationRule(rule)
+	rules, ok := db.staticRules[bRule.Source]
+	if !ok {
+		return false
+	}
+
+	for _, rule := range rules {
+		if rule == bRule {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (db *DB) AllStaticRelationRules() iter.Seq[StaticRelationRule] {
+	return func(yield func(StaticRelationRule) bool) {
+		for _, rules := range db.staticRules {
+			for _, rule := range rules {
+				if !yield(StaticRelationRule{
+					Source:   Namespace(db.strTable.String(uint32(rule.Source))),
+					Relation: Relation(db.strTable.String(uint32(rule.Relation))),
+					Target:   Namespace(db.strTable.String(uint32(rule.Target))),
+				}) {
+					return
+				}
 			}
 		}
 	}

@@ -16,7 +16,7 @@ import (
 
 type TargetKind int
 
-func (k TargetKind) queryKey(id string) string {
+func (k TargetKind) QueryKey(id string) string {
 	switch k {
 	case KindSidebar:
 		return id + "_nav_sidebar"
@@ -73,7 +73,7 @@ func (c TListItem) DeleteTarget(kind TargetKind) TListItem {
 
 func (c TListItem) Render(ctx core.RenderContext) core.RenderNode {
 	wnd := ctx.Window()
-	key := c.kind.queryKey(c.idPrefix)
+	key := c.kind.QueryKey(c.idPrefix)
 	selected := string(c.target) == wnd.Values()[key]
 
 	var bgColor ui.Color
@@ -83,7 +83,7 @@ func (c TListItem) Render(ctx core.RenderContext) core.RenderNode {
 
 	values := wnd.Values().Put(key, string(c.target))
 	if c.deletes != 0 {
-		values = values.Delete(c.deletes.queryKey(c.idPrefix))
+		values = values.Delete(c.deletes.QueryKey(c.idPrefix))
 	}
 
 	return ui.HStack(c.content).

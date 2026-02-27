@@ -43,15 +43,15 @@ type Factory interface {
 }
 
 func NavigateContent(wnd core.Window, id string, view ViewID) {
-	wnd.Navigation().ForwardTo(wnd.Path(), wnd.Values().Put(KindContent.queryKey(id), string(view)))
+	wnd.Navigation().ForwardTo(wnd.Path(), wnd.Values().Put(KindContent.QueryKey(id), string(view)))
 }
 
 func NavigateDetail(wnd core.Window, id string, view ViewID) {
-	wnd.Navigation().ForwardTo(wnd.Path(), wnd.Values().Put(KindDetail.queryKey(id), string(view)))
+	wnd.Navigation().ForwardTo(wnd.Path(), wnd.Values().Put(KindDetail.QueryKey(id), string(view)))
 }
 
 func NavigateSidebar(wnd core.Window, id string, view ViewID) {
-	wnd.Navigation().ForwardTo(wnd.Path(), wnd.Values().Put(KindSidebar.queryKey(id), string(view)))
+	wnd.Navigation().ForwardTo(wnd.Path(), wnd.Values().Put(KindSidebar.QueryKey(id), string(view)))
 }
 
 // TTwoColumn is a layout component (TwoColumn).
@@ -119,8 +119,8 @@ func (c TTwoColumn) BackgroundColorDetail(bg ui.Color) TTwoColumn {
 
 func (c TTwoColumn) Render(ctx core.RenderContext) core.RenderNode {
 	wnd := ctx.Window()
-	detailKey := KindDetail.queryKey(c.id)
-	contentId := wnd.Values()[KindContent.queryKey(c.id)]
+	detailKey := KindDetail.QueryKey(c.id)
+	contentId := wnd.Values()[KindContent.QueryKey(c.id)]
 	detailId := wnd.Values()[detailKey]
 
 	var contentView core.View

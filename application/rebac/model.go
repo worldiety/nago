@@ -11,6 +11,7 @@ import (
 	"context"
 	"fmt"
 	"iter"
+	"strings"
 
 	"github.com/worldiety/i18n"
 	"github.com/worldiety/option"
@@ -88,24 +89,94 @@ type NamespaceInfo struct {
 //   - some/absolute?ar.b&trary=string}
 type Instance string
 
+type InfoID string
+
+func NewInfoID(ns Namespace, inst Instance) InfoID {
+	srcNs := string(ns)
+	srcInst := string(inst)
+
+	// fast path: no escaping required
+	if strings.IndexByte(srcNs, ':') == -1 &&
+		strings.IndexByte(srcInst, ':') == -1 {
+		var sb strings.Builder
+		sb.Grow(len(srcNs) + len(srcInst) + 4)
+		sb.WriteString(srcNs)
+		sb.WriteByte(':')
+		sb.WriteString(srcInst)
+		return InfoID(sb.String())
+	}
+
+	// slow path: escape : as ::
+	escape := func(s string) string {
+		return strings.ReplaceAll(s, ":", "::")
+	}
+
+	var sb strings.Builder
+	sb.Grow(len(srcNs) + len(srcInst) + 4) // worst case: all colons doubled
+	sb.WriteString(escape(srcNs))
+	sb.WriteByte(':')
+	sb.WriteString(escape(srcInst))
+	return InfoID(sb.String())
+}
+
+func (id InfoID) Parse() (Namespace, Instance, error) {
+	s := string(id)
+	var ns strings.Builder
+	var inst strings.Builder
+	found := false
+
+	for i := 0; i < len(s); i++ {
+		if s[i] == ':' {
+			if i+1 < len(s) && s[i+1] == ':' {
+				// escaped colon
+				if found {
+					inst.WriteByte(':')
+				} else {
+					ns.WriteByte(':')
+				}
+				i++ // skip next ':'
+			} else {
+				// separator
+				if found {
+					return "", "", fmt.Errorf("unexpected second separator in InfoID %q", s)
+				}
+				found = true
+			}
+		} else {
+			if found {
+				inst.WriteByte(s[i])
+			} else {
+				ns.WriteByte(s[i])
+			}
+		}
+	}
+
+	if !found {
+		return "", "", fmt.Errorf("missing separator in InfoID %q", s)
+	}
+
+	return Namespace(ns.String()), Instance(inst.String()), nil
+}
+
 // InstanceInfo represents a human-readable resource instance that can be managed and accessed within the platform.
 // This is a generalized summary of a domain-specific instance.
 // The UI allows the translation of @123 string reference notation of the i18n package.
 type InstanceInfo struct {
+	Namespace   Namespace
 	ID          Instance
 	Name        string
 	Description string
 }
 
-func (i InstanceInfo) Identity() Instance {
-	return i.ID
+func (i InstanceInfo) Identity() InfoID {
+	return NewInfoID(i.Namespace, i.ID)
 }
 
-// Resources allow the inspection and traversal of a namespace and which relations make sense.
+// Resources allow the inspection and traversal of a namespace.
 // This must always follow the semantics of the actual domain and according use-cases and should not
 // be another abstraction on top of a repository (besides CRUD). For example, event-sourcing-based subdomains
 // have a huge number of events in various repositories, but the actual aggregates and permissions
-// cardinalities are totally different.
+// cardinalities are totally different. See also [StaticRelationRule].
 type Resources interface {
 	// Identity returns the namespace which is represented by this provider.
 	Identity() Namespace
@@ -114,13 +185,27 @@ type Resources interface {
 	Info(bundler i18n.Bundler) NamespaceInfo
 
 	// All returns all instances within the namespace.
-	All(ctx context.Context) iter.Seq2[Instance, error]
+	All(ctx context.Context) iter.Seq2[InfoID, error]
 
 	// FindByID returns information about the instance with the given id.
-	FindByID(ctx context.Context, id Instance) (option.Opt[InstanceInfo], error)
+	FindByID(ctx context.Context, id InfoID) (option.Opt[InstanceInfo], error)
+}
 
-	// Relations describe all relations that are applicable for the given instance of the namespace.
-	// The returned triple sequence must be in stable order for later calls. See also [AllInstances] for
-	// the meaning of wildcard and don't-care expressions.
-	Relations(ctx context.Context, id Instance) iter.Seq[Triple]
+// A StaticRelationRule defines an allowed relation pattern between two namespaces. For example, it is allowed that
+// groups can have members but no other relations are allowed. Then a new use case arrives and allows that
+// a group has a new relation which allows to delete entities from the pet resources. The new use case
+// can register a static relation rule to allow this (e.g. nago.iam.group:delete-pet:my.pets). This allows to
+// insert the according Triple (e.g. nago.iam.group:123:delete-pet:my.pets:*).
+type StaticRelationRule struct {
+	Source   Namespace
+	Relation Relation
+	Target   Namespace
+}
+
+// bStaticRelationRule is the binary representation of a StaticRelationRule which is optimized for cache
+// locality and comparision performance. Micro benchmarks have shown that this trick has a huge performance gain.
+type bStaticRelationRule struct {
+	Source   bNamespace
+	Relation bRelation
+	Target   bNamespace
 }

@@ -58,6 +58,9 @@ type Model[E data.Aggregate[ID], ID ~string] struct {
 
 	// UnselectAll removes the entire selection, independent of any active subset.
 	UnselectAll func()
+
+	// SelectAll set the entire selection, independent of any active subset.
+	SelectAll func()
 }
 
 // NewModel creates a new model which provides a bunch of reasonable defaults, like quick filter, paging and selection.
@@ -85,7 +88,7 @@ func NewModel[E data.Aggregate[ID], ID ~string](wnd core.Window, findByID data.B
 	}
 
 	filterOpts := data.FilterOptions[E, ID]{}
-	allEntityIdentsInSubset := core.AutoState[*tableHolder](wnd).Init(func() *tableHolder {
+	allEntityIdentsInSubset := core.StateOf[*tableHolder](wnd, opts.StatePrefix+"-allEntityIdentsInSubset").Init(func() *tableHolder {
 		return &tableHolder{}
 	})
 	allEntityIdentsInSubset.Get().idents = allEntityIdentsInSubset.Get().idents[:0]
@@ -121,7 +124,7 @@ func NewModel[E data.Aggregate[ID], ID ~string](wnd core.Window, findByID data.B
 	model.Page = page
 
 	var recalcSelectedAll func()
-	allTableSelected := core.AutoState[bool](wnd).Observe(func(newValue bool) {
+	allTableSelected := core.StateOf[bool](wnd, opts.StatePrefix+"-checkbox-all").Observe(func(newValue bool) {
 		for _, ident := range allEntityIdentsInSubset.Get().idents {
 			core.StateOf[bool](wnd, opts.StatePrefix+"-checkbox-"+string(ident)).Set(newValue)
 		}
@@ -180,6 +183,18 @@ func NewModel[E data.Aggregate[ID], ID ~string](wnd core.Window, findByID data.B
 			break
 		}
 	}
+
+	model.SelectAll = func() {
+		for _, c := range checkboxStates {
+			c.Set(true)
+		}
+
+		for _, c := range checkboxStates {
+			c.Notify()
+			break
+		}
+	}
+
 	return model, nil
 }
 

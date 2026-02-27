@@ -114,11 +114,11 @@ func (c TThreeColumn) AlignmentSidebar(alignment ui.Alignment) TThreeColumn {
 
 func (c TThreeColumn) Render(ctx core.RenderContext) core.RenderNode {
 	wnd := ctx.Window()
-	detailKey := KindDetail.queryKey(c.id)
-	contentKey := KindContent.queryKey(c.id)
-	contentId := wnd.Values()[KindContent.queryKey(c.id)]
+	detailKey := KindDetail.QueryKey(c.id)
+	contentKey := KindContent.QueryKey(c.id)
+	contentId := wnd.Values()[KindContent.QueryKey(c.id)]
 	detailId := wnd.Values()[detailKey]
-	sidebarID := wnd.Values()[KindSidebar.queryKey(c.id)]
+	sidebarID := wnd.Values()[KindSidebar.QueryKey(c.id)]
 
 	var sidebarView core.View
 	if sidebarID != "" {

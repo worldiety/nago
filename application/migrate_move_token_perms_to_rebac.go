@@ -65,13 +65,13 @@ func (m migrateTokenPermsToReBAC) Migrate(ctx context.Context) error {
 		for _, id := range usr.Roles {
 			err := m.rdb.Put(rebac.Triple{
 				Source: rebac.Entity{
-					Namespace: token.Namespace,
-					Instance:  rebac.Instance(uid),
+					Namespace: role.Namespace,
+					Instance:  rebac.Instance(id),
 				},
 				Relation: rebac.Member,
 				Target: rebac.Entity{
-					Namespace: role.Namespace,
-					Instance:  rebac.Instance(id),
+					Namespace: token.Namespace,
+					Instance:  rebac.Instance(uid),
 				},
 			})
 			if err != nil {
@@ -83,13 +83,13 @@ func (m migrateTokenPermsToReBAC) Migrate(ctx context.Context) error {
 		for _, id := range usr.Groups {
 			err := m.rdb.Put(rebac.Triple{
 				Source: rebac.Entity{
-					Namespace: token.Namespace,
-					Instance:  rebac.Instance(uid),
+					Namespace: group.Namespace,
+					Instance:  rebac.Instance(id),
 				},
 				Relation: rebac.Member,
 				Target: rebac.Entity{
-					Namespace: group.Namespace,
-					Instance:  rebac.Instance(id),
+					Namespace: token.Namespace,
+					Instance:  rebac.Instance(uid),
 				},
 			})
 			if err != nil {

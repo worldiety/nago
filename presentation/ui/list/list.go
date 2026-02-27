@@ -110,15 +110,20 @@ type TList struct {
 	colorBody      ui.Color
 	colorCaption   ui.Color
 	colorFooter    ui.Color
+	colorHighlight ui.Color
+	colorHover     ui.Color
+	onHighlighted  func(idx int) bool
 }
 
 // List creates a new TList with the given entries as rows.
 func List(entries ...core.View) TList {
 	return TList{
-		rows:         entries,
-		colorFooter:  ui.ColorCardFooter,
-		colorBody:    ui.ColorCardBody,
-		colorCaption: ui.ColorCardTop,
+		rows:           entries,
+		colorFooter:    ui.ColorCardFooter,
+		colorBody:      ui.ColorCardBody,
+		colorCaption:   ui.ColorCardTop,
+		colorHover:     ui.ColorCardFooter,
+		colorHighlight: ui.M2,
 	}
 }
 
@@ -129,6 +134,16 @@ func (c TList) ColorBody(color ui.Color) TList {
 
 func (c TList) ColorCaption(color ui.Color) TList {
 	c.colorCaption = color
+	return c
+}
+
+func (c TList) ColorHighlight(color ui.Color) TList {
+	c.colorHighlight = color
+	return c
+}
+
+func (c TList) ColorHover(color ui.Color) TList {
+	c.colorHover = color
 	return c
 }
 
@@ -167,6 +182,11 @@ func (c TList) OnEntryClicked(fn func(idx int)) TList {
 	return c
 }
 
+func (c TList) OnHighlighted(fn func(idx int) bool) TList {
+	c.onHighlighted = fn
+	return c
+}
+
 func (c TList) With(fn func(c TList) TList) TList {
 	return fn(c)
 }
@@ -185,11 +205,17 @@ func (c TList) Render(ctx core.RenderContext) core.RenderNode {
 			continue
 		}
 
-		hstack := ui.HStack(row).HoveredBackgroundColor(ui.ColorCardFooter)
+		hstack := ui.HStack(row).HoveredBackgroundColor(c.colorHover)
 		if c.onClickedEntry != nil {
 			hstack = hstack.Action(func() {
 				c.onClickedEntry(idx)
 			})
+		}
+
+		if fn := c.onHighlighted; fn != nil {
+			if fn(idx) {
+				hstack = hstack.BackgroundColor(c.colorHover)
+			}
 		}
 
 		rows = append(rows, hstack.Padding(ui.Padding{}.Vertical(ui.L8).Horizontal(ui.L16)).Frame(ui.Frame{}.FullWidth()))

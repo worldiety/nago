@@ -13,6 +13,8 @@ import (
 
 	"go.wdy.de/nago/application/group"
 	uigroup "go.wdy.de/nago/application/group/ui"
+	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/presentation/core"
@@ -39,6 +41,17 @@ func (c *Configurator) GroupManagement() (GroupManagement, error) {
 		}
 
 		groupRepo := json.NewSloppyJSONRepository[group.Group, group.ID](groupStore)
+
+		rdb, err := c.RDB()
+		if err != nil {
+			return GroupManagement{}, err
+		}
+
+		rdb.RegisterStaticRelationRule(rebac.StaticRelationRule{
+			Source:   group.Namespace,
+			Relation: rebac.Member,
+			Target:   user.Namespace,
+		})
 
 		c.groupManagement = &GroupManagement{
 			UseCases: group.NewUseCases(c.EventBus(), groupRepo),

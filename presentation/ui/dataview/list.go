@@ -12,23 +12,24 @@ import (
 
 	"github.com/worldiety/i18n"
 	"github.com/worldiety/option"
-	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/presentation/core"
 	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	"go.wdy.de/nago/presentation/ui"
-	"go.wdy.de/nago/presentation/ui/accordion"
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/list"
 	"go.wdy.de/nago/presentation/ui/pager"
 )
 
-type ListOptions struct {
-	Title        FieldID // TitleField identifier (or zero-based index). If empty, the first field is used.
-	Description  FieldID // Description field identifier (or zero-based index). If empty, the second field is used.
-	Hints        map[FieldID]FormatHint
-	ColorBody    option.Opt[ui.Color]
-	ColorCaption option.Opt[ui.Color]
-	ColorFooter  option.Opt[ui.Color]
+type ListOptions[ID ~string] struct {
+	Title          FieldID // TitleField identifier (or zero-based index). If empty, the first field is used.
+	Description    FieldID // Description field identifier (or zero-based index). If empty, the second field is used.
+	Hints          map[FieldID]FormatHint
+	ColorBody      option.Opt[ui.Color]
+	ColorCaption   option.Opt[ui.Color]
+	ColorFooter    option.Opt[ui.Color]
+	ColorHover     option.Opt[ui.Color]
+	ColorHighlight option.Opt[ui.Color]
+	Highlight      map[ID]bool // highlight items by ID
 }
 
 func (t TDataView[E, ID]) renderList(ctx core.RenderContext) core.RenderNode {
@@ -166,7 +167,11 @@ func (t TDataView[E, ID]) renderList(ctx core.RenderContext) core.RenderNode {
 						Trailing(trailingView)
 
 				})...,
-			).Caption(t.listActionBar(wnd, model)).
+			).OnHighlighted(func(idx int) bool {
+				item := model.Page.Items[idx]
+				return t.listOptions.Highlight[item.Identity()]
+			}).
+				Caption(t.listActionBar(wnd, model)).
 				Footer(
 					// page footer
 					ui.HStack(
@@ -184,6 +189,14 @@ func (t TDataView[E, ID]) renderList(ctx core.RenderContext) core.RenderNode {
 					}
 					if t.listOptions.ColorFooter.IsSome() {
 						c = c.ColorFooter(t.listOptions.ColorFooter.Unwrap())
+					}
+
+					if t.listOptions.ColorHover.IsSome() {
+						c = c.ColorHover(t.listOptions.ColorHover.Unwrap())
+					}
+
+					if t.listOptions.ColorHighlight.IsSome() {
+						c = c.ColorHighlight(t.listOptions.ColorHighlight.Unwrap())
 					}
 
 					if t.action != nil {
@@ -205,99 +218,103 @@ func (t TDataView[E, ID]) listActionBar(wnd core.Window, model pager.Model[E, ID
 	dlgSpec := core.StateOf[ConfirmDialog[ID]](wnd, model.SelectSubset.ID()+"-dlgConfirm")
 	confirmPresented := core.DerivedState[bool](dlgSpec, "confirm-presented")
 
-	var items []ui.TMenuItem
-	for _, selectOption := range t.selectOptions {
-		if selectOption.Visible != nil && !selectOption.Visible(selected) {
-			continue
-		}
+	var groups []ui.TMenuGroup
+	if t.createMenuGroup != nil {
+		groups = append(groups, *t.createMenuGroup)
+	}
 
-		items = append(items, ui.MenuItem(func() {
-			if selectOption.ConfirmDialog == nil {
-				if err := selectOption.Action(selected); err != nil {
-					alert.ShowBannerError(wnd, err)
+	var items []ui.TMenuItem
+
+	if len(selected) > 0 && !t.hideSelection {
+		for _, selectOption := range t.selectOptions {
+			if selectOption.Visible != nil && !selectOption.Visible(selected) {
+				continue
+			}
+
+			items = append(items, ui.MenuItem(func() {
+				if selectOption.ConfirmDialog == nil {
+					if err := selectOption.Action(selected); err != nil {
+						alert.ShowBannerError(wnd, err)
+						return
+					}
+
 					return
 				}
 
-				return
-			}
+				spec := selectOption.ConfirmDialog(selected)
+				spec.action = selectOption.Action
+				dlgSpec.Set(spec)
+				confirmPresented.Set(true)
 
-			spec := selectOption.ConfirmDialog(selected)
-			spec.action = selectOption.Action
-			dlgSpec.Set(spec)
-			confirmPresented.Set(true)
+			}, ui.HStack(ui.ImageIcon(selectOption.Icon), ui.Text(selectOption.Name).TextAlignment(ui.TextAlignStart)).Gap(ui.L8).Alignment(ui.Leading).FullWidth()))
+		}
 
-		}, ui.HStack(ui.ImageIcon(selectOption.Icon), ui.Text(selectOption.Name).TextAlignment(ui.TextAlignStart)).Gap(ui.L8).Alignment(ui.Leading).FullWidth()))
 	}
 
-	filterToggle := core.StateOf[bool](wnd, model.SelectSubset.ID()+"-filterToggle")
+	if len(items) > 0 {
+		groups = append(groups, ui.MenuGroup(items...))
+	}
+
+	var selItems []ui.TMenuItem
+	if !t.hideSelection {
+		if model.SelectionCount != model.Page.Total {
+			selItems = append(selItems, ui.MenuItem(func() {
+				model.SelectAll()
+			}, ui.Text(StrXSelectAll.Get(wnd))))
+		}
+	}
+
+	if !t.hideSelection && len(selected) > 0 {
+		selItems = append(selItems, ui.MenuItem(func() {
+			model.UnselectAll()
+		}, ui.Text(StrXDeselect.Get(wnd, i18n.Int("num", model.SelectionCount)))))
+	}
+
+	if len(selItems) > 0 {
+		groups = append(groups, ui.MenuGroup(selItems...))
+	}
 
 	sortByField := core.StateOf[FieldID](wnd, t.modelOptions.StatePrefix+"-sortByField")
 	sortReverse := core.StateOf[bool](wnd, t.modelOptions.StatePrefix+"-sortReverse")
+	var sortItems []ui.TMenuItem
 
-	return ui.VStack(
+	for _, f := range t.data.Fields {
+		if f.Comparator == nil {
+			continue
+		}
 
-		ui.HStack(
-			t.confirmDialog(wnd, confirmPresented, dlgSpec, selected),
+		ico := icons.ArrowUpDown
+		if f.ID == sortByField.Get() {
+			if sortReverse.Get() {
+				ico = icons.ArrowDown
+			} else {
+				ico = icons.ArrowUp
+			}
+		}
 
-			ui.IfFunc(len(t.selectOptions) > 0 && !t.hideSelection, func() core.View {
-				return ui.Menu(
-					ui.SecondaryButton(nil).Enabled(len(selected) > 0).PreIcon(icons.Grid),
-					ui.MenuGroup(items...),
-				)
-			}),
-			ui.If((len(t.selectOptions) > 0 && !t.hideSelection || t.showSearchbar) && t.newAction != nil, ui.VLineWithColor(ui.ColorInputBorder).Frame(ui.Frame{Height: ui.L40})),
-			t.newAction,
-		).
-			FullWidth().
-			Gap(ui.L8).
-			Alignment(ui.Trailing).
-			Padding(ui.Padding{Bottom: ui.L16}),
+		sortItems = append(sortItems, ui.MenuItem(func() {
+			if sortByField.Get() != f.ID {
+				sortByField.Set(f.ID)
+				sortReverse.Set(false)
+			} else {
+				sortReverse.Set(!sortReverse.Get())
+			}
 
-		ui.HLine().Padding(ui.Padding{}.Vertical(ui.L8)),
+		}, ui.HStack(ui.ImageIcon(ico), ui.Text(f.Name))))
 
-		accordion.Accordion(
-			ui.HStack(
-				ui.ImageIcon(icons.Filter),
-				ui.Text(rstring.LabelFilter.Get(wnd)),
-			),
-			ui.VStack(
-				ui.If(t.showSearchbar, ui.TextField("", model.Query.Get()).InputValue(model.Query).Style(ui.TextFieldReduced).Leading(ui.ImageIcon(icons.Search)).FullWidth()),
-				ui.HStack(
-					ui.TertiaryButton(func() {
-						model.UnselectAll()
-					}).Title(StrXSelected.Get(wnd, i18n.Int("num", model.SelectionCount))).PostIcon(icons.Close).Visible(model.SelectionCount > 0),
-				).Alignment(ui.Leading).FullWidth(),
+	}
 
-				ui.HStack(
-					ui.ForEach(t.data.Fields, func(f Field[E]) core.View {
-						if f.Comparator == nil {
-							return nil
-						}
+	if len(sortItems) > 0 {
+		groups = append(groups, ui.MenuGroup(sortItems...))
+	}
 
-						ico := icons.ArrowUpDown
-						if f.ID == sortByField.Get() {
-							if sortReverse.Get() {
-								ico = icons.ArrowDown
-							} else {
-								ico = icons.ArrowUp
-							}
-						}
+	return ui.HStack(
+		t.confirmDialog(wnd, confirmPresented, dlgSpec, selected),
+		ui.If(t.showSearchbar, ui.TextField("", model.Query.Get()).InputValue(model.Query).Style(ui.TextFieldReduced).Leading(ui.ImageIcon(icons.Search)).FullWidth()),
+		ui.If(len(groups) > 0, ui.Menu(
+			ui.TertiaryButton(nil).PreIcon(icons.DotsVertical),
+			groups...,
+		)),
+	).FullWidth()
 
-						return ui.SecondaryButton(func() {
-							if sortByField.Get() != f.ID {
-								sortByField.Set(f.ID)
-								sortReverse.Set(false)
-							} else {
-								sortReverse.Set(!sortReverse.Get())
-							}
-						}).Title(f.Name).PreIcon(ico)
-					})...,
-				).Wrap(true).Gap(ui.L8).FullWidth(),
-			).FullWidth().Gap(ui.L8),
-
-			filterToggle,
-		).FullWidth(),
-
-		ui.HLine().Padding(ui.Padding{}.Vertical(ui.L8)),
-	).FullWidth().Gap(ui.L8)
 }

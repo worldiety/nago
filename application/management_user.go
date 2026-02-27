@@ -13,6 +13,8 @@ import (
 
 	"go.wdy.de/nago/application/consent"
 	"go.wdy.de/nago/application/migration"
+	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/application/user"
 	uiuser "go.wdy.de/nago/application/user/ui"
@@ -91,6 +93,23 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 		rdb, err := c.RDB()
 		if err != nil {
 			return UserManagement{}, fmt.Errorf("cannot get ReBAC database: %w", err)
+		}
+
+		// we have permissions which are generated and registered any time later at runtime, which must be generally allowed to be assigned
+		permission.OnPermissionRegistered(func(permission permission.Permission) {
+			rdb.RegisterStaticRelationRule(rebac.StaticRelationRule{
+				Source:   user.Namespace,
+				Relation: rebac.Relation(permission.ID),
+				Target:   rebac.Global,
+			})
+		})
+
+		for perm := range permission.All() {
+			rdb.RegisterStaticRelationRule(rebac.StaticRelationRule{
+				Source:   user.Namespace,
+				Relation: rebac.Relation(perm.ID),
+				Target:   rebac.Global,
+			})
 		}
 
 		// implementation note: it is important to first apply all user migrations, otherwise

@@ -21,7 +21,9 @@ import (
 )
 
 var (
-	StrXSelected = i18n.MustVarString("nago.dataview.x_selected", i18n.Values{language.English: "{num} selected", language.German: "{num} ausgewählt"})
+	StrXSelected  = i18n.MustVarString("nago.dataview.x_selected", i18n.Values{language.English: "{num} selected", language.German: "{num} ausgewählt"})
+	StrXDeselect  = i18n.MustVarString("nago.dataview.x_deselect", i18n.Values{language.English: "deselect {num}", language.German: "{num} abwählen"})
+	StrXSelectAll = i18n.MustString("nago.dataview.select_all", i18n.Values{language.English: "Select all", language.German: "Alle auswählen"})
 )
 
 type TableOptions struct {

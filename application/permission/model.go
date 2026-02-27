@@ -16,8 +16,10 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/pkg/std/concurrent"
 )
 
 var regexPermissionID = regexp.MustCompile(`^[a-z][a-z0-9_]*(\.[a-z0-9_]+)*[a-z0-9_]*$`)
@@ -80,6 +82,8 @@ type permissionContext struct {
 }
 
 var globalPermissions = map[ID]permissionContext{}
+var globalRegisterCallbacks = concurrent.RWMap[int32, func(permission Permission)]{}
+var lastGrcHnd = atomic.Int32{}
 var mutex sync.RWMutex
 
 // Declare is like [Make] but with 3 parameters. See also [Make] and [Register].
@@ -120,6 +124,16 @@ func Register[UseCase any](permission Permission) ID {
 	return register[UseCase](permission, 3)
 }
 
+// OnPermissionRegistered is a callback called synchronously whenever a permission is registered.
+func OnPermissionRegistered(callback func(permission Permission)) (close func()) {
+	id := lastGrcHnd.Add(1)
+	globalRegisterCallbacks.Put(id, callback)
+
+	return func() {
+		globalRegisterCallbacks.Delete(id)
+	}
+}
+
 func register[UseCase any](permission Permission, skip int) ID {
 	t := reflect.TypeFor[UseCase]()
 	if t.Kind() != reflect.Func {
@@ -152,6 +166,10 @@ func register[UseCase any](permission Permission, skip int) ID {
 	globalPermissions[permission.ID] = permissionContext{
 		Permission:      permission,
 		debugDeclaredAt: src.String(),
+	}
+
+	for _, callback := range globalRegisterCallbacks.All() {
+		callback(permission)
 	}
 
 	return permission.ID

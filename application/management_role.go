@@ -12,8 +12,11 @@ import (
 	"iter"
 
 	"go.wdy.de/nago/application/migration"
+	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/role"
 	uirole "go.wdy.de/nago/application/role/ui"
+	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/presentation/core"
@@ -46,6 +49,30 @@ func (c *Configurator) RoleManagement() (RoleManagement, error) {
 		if err != nil {
 			return RoleManagement{}, fmt.Errorf("cannot get rdb: %w", err)
 		}
+
+		// we have permissions which are generated and registered any time later at runtime, which must be generally allowed to be assigned
+		permission.OnPermissionRegistered(func(permission permission.Permission) {
+			rdb.RegisterStaticRelationRule(rebac.StaticRelationRule{
+				Source:   role.Namespace,
+				Relation: rebac.Relation(permission.ID),
+				Target:   rebac.Global,
+			})
+		})
+
+		for perm := range permission.All() {
+			rdb.RegisterStaticRelationRule(rebac.StaticRelationRule{
+				Source:   role.Namespace,
+				Relation: rebac.Relation(perm.ID),
+				Target:   rebac.Global,
+			})
+		}
+
+		rdb.RegisterStaticRelationRule(rebac.StaticRelationRule{
+			Source:   role.Namespace,
+			Relation: rebac.Member,
+			Target:   user.Namespace,
+		})
+
 		// implementation note: it is important to first apply all user migrations, otherwise
 		// we may risk data loss due to missing fields in current user entities
 		if err := mg.Declare(newMigrateRolePermsToReBAC(roleStore, rdb), migration.Options{Immediate: true}); err != nil {

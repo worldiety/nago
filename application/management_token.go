@@ -12,6 +12,8 @@ import (
 
 	"go.wdy.de/nago/application/admin"
 	"go.wdy.de/nago/application/migration"
+	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/token"
 	uitoken "go.wdy.de/nago/application/token/ui"
 	"go.wdy.de/nago/auth"
@@ -64,6 +66,23 @@ func (c *Configurator) TokenManagement() (TokenManagement, error) {
 		rdb, err := c.RDB()
 		if err != nil {
 			return TokenManagement{}, fmt.Errorf("cannot get rdb: %w", err)
+		}
+
+		// we have permissions which are generated and registered any time later at runtime, which must be generally allowed to be assigned
+		permission.OnPermissionRegistered(func(permission permission.Permission) {
+			rdb.RegisterStaticRelationRule(rebac.StaticRelationRule{
+				Source:   token.Namespace,
+				Relation: rebac.Relation(permission.ID),
+				Target:   rebac.Global,
+			})
+		})
+
+		for perm := range permission.All() {
+			rdb.RegisterStaticRelationRule(rebac.StaticRelationRule{
+				Source:   token.Namespace,
+				Relation: rebac.Relation(perm.ID),
+				Target:   rebac.Global,
+			})
 		}
 
 		// implementation note: it is important to first apply all user migrations, otherwise

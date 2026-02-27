@@ -84,6 +84,7 @@ type Data[E data.Aggregate[ID], ID ~string] struct {
 	FindAll  iter.Seq2[ID, error]
 	FindByID data.ByIDFinder[E, ID]
 	Fields   []Field[E]
+	ID       string
 }
 
 type FieldContext struct {
@@ -144,7 +145,8 @@ type TDataView[E data.Aggregate[ID], ID ~string] struct {
 	style           Style
 	cardOptions     CardOptions
 	tableOptions    TableOptions
-	listOptions     ListOptions
+	listOptions     ListOptions[ID]
+	createMenuGroup *ui.TMenuGroup
 }
 
 type Idx string
@@ -195,6 +197,8 @@ func FromData[E data.Aggregate[ID], ID ~string](wnd core.Window, data Data[E, ID
 		data: data,
 		wnd:  wnd,
 	}
+
+	t.modelOptions.StatePrefix = data.ID
 
 	initView(&t)
 	return t
@@ -264,16 +268,18 @@ func (t TDataView[E, ID]) CreateOptions(actions ...CreateOption) TDataView[E, ID
 		}
 	}
 
+	t.createMenuGroup = new(ui.MenuGroup(items...))
 	return t.CreateActionView(
 		ui.Menu(
 			ui.PrimaryButton(nil).PreIcon(icons.Plus).Title(rstring.ActionNew.Get(t.wnd)),
-			ui.MenuGroup(items...),
+			*t.createMenuGroup,
 		),
 	)
 }
 
 // CreateActionView inserts the given view to idiomatic position for creating new elements.
 // See also [TDataView.CreateAction] or [TDataView.CreateOptions] for factories to bootstrap common situations.
+// Note that this is ignored when used in with style [List]. Use CreateOptions instead.
 func (t TDataView[E, ID]) CreateActionView(view core.View) TDataView[E, ID] {
 	t.newAction = view
 	return t
@@ -296,7 +302,7 @@ func (t TDataView[E, ID]) CardOptions(cardOptions CardOptions) TDataView[E, ID] 
 	return t
 }
 
-func (t TDataView[E, ID]) ListOptions(listOptions ListOptions) TDataView[E, ID] {
+func (t TDataView[E, ID]) ListOptions(listOptions ListOptions[ID]) TDataView[E, ID] {
 	t.listOptions = listOptions
 	return t
 }

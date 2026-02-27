@@ -47,17 +47,26 @@ func (r Resources) Info(bundler i18n.Bundler) rebac.NamespaceInfo {
 	}
 }
 
-func (r Resources) All(ctx context.Context) iter.Seq2[rebac.Instance, error] {
-	return func(yield func(rebac.Instance, error) bool) {
+func (r Resources) All(ctx context.Context) iter.Seq2[rebac.InfoID, error] {
+	return func(yield func(rebac.InfoID, error) bool) {
 		for id, err := range r.findAll(SU()) {
-			if !yield(rebac.Instance(id), err) {
+			if !yield(rebac.NewInfoID(Namespace, rebac.Instance(id)), err) {
 				return
 			}
 		}
 	}
 }
 
-func (r Resources) FindByID(ctx context.Context, id rebac.Instance) (option.Opt[rebac.InstanceInfo], error) {
+func (r Resources) FindByID(ctx context.Context, iid rebac.InfoID) (option.Opt[rebac.InstanceInfo], error) {
+	ns, id, err := iid.Parse()
+	if err != nil {
+		return option.None[rebac.InstanceInfo](), err
+	}
+
+	if ns != Namespace {
+		return option.None[rebac.InstanceInfo](), nil
+	}
+
 	optUsr, err := r.findByID(SU(), ID(id))
 	if err != nil {
 		return option.None[rebac.InstanceInfo](), err
@@ -69,22 +78,9 @@ func (r Resources) FindByID(ctx context.Context, id rebac.Instance) (option.Opt[
 
 	usr := optUsr.Unwrap()
 	return option.Some(rebac.InstanceInfo{
+		Namespace:   Namespace,
 		ID:          id,
 		Name:        usr.String(),
-		Description: xstrings.Join2(",", usr.Contact.CompanyName, usr.Contact.City),
+		Description: xstrings.Join2(", ", usr.Contact.CompanyName, usr.Contact.City),
 	}), nil
-}
-
-func (r Resources) Relations(ctx context.Context, id rebac.Instance) iter.Seq[rebac.Triple] {
-	return func(yield func(rebac.Triple) bool) {
-		for _, permission := range Permissions {
-			if !yield(rebac.Triple{
-				Source:   rebac.Entity{Namespace: Namespace, Instance: id},
-				Relation: rebac.Relation(permission),
-				Target:   rebac.Entity{Namespace: rebac.Global, Instance: rebac.AllInstances},
-			}) {
-				return
-			}
-		}
-	}
 }
