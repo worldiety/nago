@@ -99,6 +99,10 @@
     "24": {
       "name": "LabelFor",
       "type": "Str"
+    },
+    "25": {
+      "name": "WordBreak",
+      "type": "Str"
     }
   }
 }

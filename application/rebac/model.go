@@ -12,10 +12,14 @@ import (
 	"fmt"
 	"iter"
 
+	"github.com/worldiety/i18n"
 	"github.com/worldiety/option"
 )
 
 const Global Namespace = "global"
+
+// AllInstances is different from the empty string literal which marks a don't-care case. Do not confuse it with
+// this star expression which is literally stored and processed and carries the meaning of a wildcard.
 const AllInstances Instance = "*"
 
 type Entity struct {
@@ -39,13 +43,17 @@ type Triple struct {
 	Target   Entity
 }
 
+func (t Triple) Identity() string {
+	return t.String()
+}
+
 func (t Triple) size() int {
 	return len(t.Target.Namespace) + len(t.Target.Instance) +
 		len(t.Relation) + len(t.Source.Namespace) + len(t.Source.Instance) + 4
 }
 
 func (t Triple) String() string {
-	return fmt.Sprintf("%s %s %s", t.Source, t.Relation, t.Target)
+	return fmt.Sprintf("%s:%s:%s", t.Source, t.Relation, t.Target)
 }
 
 // Namespace is the resource type identifier. Normally this
@@ -89,13 +97,21 @@ type InstanceInfo struct {
 	Description string
 }
 
+func (i InstanceInfo) Identity() Instance {
+	return i.ID
+}
+
 // Resources allow the inspection and traversal of a namespace and which relations make sense.
+// This must always follow the semantics of the actual domain and according use-cases and should not
+// be another abstraction on top of a repository (besides CRUD). For example, event-sourcing-based subdomains
+// have a huge number of events in various repositories, but the actual aggregates and permissions
+// cardinalities are totally different.
 type Resources interface {
 	// Identity returns the namespace which is represented by this provider.
 	Identity() Namespace
 
 	// Info returns information about the namespace.
-	Info() NamespaceInfo
+	Info(bundler i18n.Bundler) NamespaceInfo
 
 	// All returns all instances within the namespace.
 	All(ctx context.Context) iter.Seq2[Instance, error]
@@ -103,12 +119,8 @@ type Resources interface {
 	// FindByID returns information about the instance with the given id.
 	FindByID(ctx context.Context, id Instance) (option.Opt[InstanceInfo], error)
 
-	// Relations describe all relations that are applicable for any instance of the namespace.
-	Relations(ctx context.Context) iter.Seq[ObjectRelation]
-}
-
-// ObjectRelation describes a relation between a subject and an object based on the distinct namespace of the object.
-type ObjectRelation struct {
-	Relation        Relation
-	TargetNamespace Namespace
+	// Relations describe all relations that are applicable for the given instance of the namespace.
+	// The returned triple sequence must be in stable order for later calls. See also [AllInstances] for
+	// the meaning of wildcard and don't-care expressions.
+	Relations(ctx context.Context, id Instance) iter.Seq[Triple]
 }

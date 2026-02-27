@@ -122,6 +122,8 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 			},
 		}
 
+		rdb.RegisterResources(c.userManagement.UseCases.Resources)
+
 		c.RootViewWithDecoration(c.userManagement.Pages.MyProfile, func(wnd core.Window) core.View {
 			return uiuser.ProfilePage(
 				wnd,

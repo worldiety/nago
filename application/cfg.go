@@ -26,8 +26,6 @@ import (
 	"go.wdy.de/nago/application/admin"
 	"go.wdy.de/nago/application/migration"
 	"go.wdy.de/nago/application/rebac"
-	"go.wdy.de/nago/application/role"
-	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/data/json"
@@ -153,10 +151,10 @@ func (c *Configurator) determineSecureCookie() bool {
 		if ok, _ := strconv.ParseBool(strV); ok {
 			slog.Info("must return insecure cookie")
 			return false
-		} else {
-			slog.Info("must return a secure cookie")
-			return true
 		}
+
+		slog.Info("must return a secure cookie")
+		return true
 	}
 
 	return !c.debug
@@ -262,6 +260,9 @@ func (c *Configurator) OnDestroy(f func()) {
 	c.destructors = append(c.destructors, f)
 }
 
+// NoFooter appends the given paths to the internal no footer path list. This is useful to omit the footer
+// for technical pages, which are only available after authentication and accepting all legal details and
+// to save space and improve readability
 func (c *Configurator) NoFooter(p ...core.NavigationPath) *Configurator {
 	c.noFooter = append(c.noFooter, p...)
 	return c
@@ -542,30 +543,4 @@ func (c *Configurator) Migrations() (*migration.Migrations, error) {
 	}
 
 	return c.migrations, nil
-}
-
-// RDB returns the nago ReBAC (relation-based access control) database. Even though there is a separate module,
-// the rebac system is always available, and the module is only required if you want the admin user interface for it.
-// The default resolvers are
-//   - users which are members of a role resolve to the assigned role relations
-func (c *Configurator) RDB() (*rebac.DB, error) {
-	if c.rdb == nil {
-		store, err := c.EntityStore("nago.rebac")
-		if err != nil {
-			return nil, err
-		}
-
-		db, err := rebac.NewDB(store)
-		if err != nil {
-			return nil, err
-		}
-
-		// automatically resolve role relations by user memberships
-		db.AddResolver(rebac.NewSourceMemberResolver(user.Namespace, role.Namespace))
-
-		c.rdb = db
-
-	}
-
-	return c.rdb, nil
 }

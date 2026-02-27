@@ -41,6 +41,7 @@ const (
 	Auto Style = iota
 	Table
 	Card
+	List
 )
 
 type ConfirmDialog[ID any] struct {
@@ -143,6 +144,7 @@ type TDataView[E data.Aggregate[ID], ID ~string] struct {
 	style           Style
 	cardOptions     CardOptions
 	tableOptions    TableOptions
+	listOptions     ListOptions
 }
 
 type Idx string
@@ -246,7 +248,7 @@ func (t TDataView[E, ID]) CreateOptions(actions ...CreateOption) TDataView[E, ID
 	if len(actions) == 0 {
 		return t
 	}
-	
+
 	var items []ui.TMenuItem
 	for _, action := range actions {
 		if action.Visible == nil || action.Visible() {
@@ -294,6 +296,11 @@ func (t TDataView[E, ID]) CardOptions(cardOptions CardOptions) TDataView[E, ID] 
 	return t
 }
 
+func (t TDataView[E, ID]) ListOptions(listOptions ListOptions) TDataView[E, ID] {
+	t.listOptions = listOptions
+	return t
+}
+
 func (t TDataView[E, ID]) TableOptions(tableOptions TableOptions) TDataView[E, ID] {
 	t.tableOptions = tableOptions
 	return t
@@ -335,6 +342,8 @@ func (t TDataView[E, ID]) Render(ctx core.RenderContext) core.RenderNode {
 	switch style {
 	case Card:
 		return t.renderCards(ctx)
+	case List:
+		return t.renderList(ctx)
 	default:
 		return t.renderTable(ctx)
 	}

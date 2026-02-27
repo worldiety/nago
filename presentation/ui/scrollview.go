@@ -113,3 +113,8 @@ func (c TScrollView) Render(ctx core.RenderContext) core.RenderNode {
 		ScrollAnimation: proto.ScrollAnimation(c.scrollAnimation),
 	}
 }
+
+func (c TScrollView) FullWidth() TScrollView {
+	c.frame.Width = Full
+	return c
+}

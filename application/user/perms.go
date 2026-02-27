@@ -41,3 +41,25 @@ var (
 
 	PermConsent = permission.Declare[Consent]("nago.user.consent_other", "Zustimmungen anderer Nutzer setzen", "Träger dieser Berechtigung können die Datenschutz, Nutzungsbedingungen oder sonstige Erlaubnisse in deren Namen zustimmen.")
 )
+
+var Permissions = []permission.ID{
+	PermCreate,
+	PermFindByID,
+	PermFindByMail,
+	PermFindAll,
+	PermChangeOtherPassword,
+	PermDelete,
+	PermUpdateOtherContact,
+	PermUpdateOtherRoles,
+	PermUpdateOtherPermissions,
+	PermUpdateOtherGroups,
+	PermUpdateaccountStatus,
+	PermExportUsers,
+	PermAddResourcePermissions,
+	PermRemoveResourcePermissions,
+	PermListResourcePermissions,
+	PermGrantPermissions,
+	PermListGrantedUsers,
+	PermListGrantedPermissions,
+	PermConsent,
+}

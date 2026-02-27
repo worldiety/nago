@@ -8,7 +8,12 @@
 package rebac
 
 type Query struct {
-	triple Triple
+	triple          Triple
+	groupByRelation bool
+}
+
+func (q Query) hasGroupBy() bool {
+	return q.groupByRelation
 }
 
 func Select() Query {
@@ -19,6 +24,11 @@ func (q Query) Where() QWhere {
 	return QWhere{
 		q: q,
 	}
+}
+
+func (q Query) GroupByRelation() Query {
+	q.groupByRelation = true
+	return q
 }
 
 type QRelation struct {

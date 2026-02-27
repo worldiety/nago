@@ -16,7 +16,8 @@ import (
 // Represents a single row or list item with optional headline,
 // supporting text/view, leading & trailing views, and an action handler.
 type TEntry struct {
-	headline       string    // main title text
+	headline       string // main title text
+	headlineView   core.View
 	supportingText string    // optional supporting text
 	supportingView core.View // optional supporting view
 	leading        core.View // optional leading icon/view
@@ -45,6 +46,11 @@ func (c TEntry) SupportingText(s string) TEntry {
 // SupportingView sets an optional supporting view below the headline.
 func (c TEntry) SupportingView(view core.View) TEntry {
 	c.supportingView = view
+	return c
+}
+
+func (c TEntry) HeadlineView(view core.View) TEntry {
+	c.headlineView = view
 	return c
 }
 
@@ -81,6 +87,7 @@ func (c TEntry) Render(ctx core.RenderContext) core.RenderNode {
 		ui.VStack(
 			ui.If(c.headline != "", ui.Text(c.headline).Font(ui.SubTitle)),
 			ui.If(c.supportingText != "", ui.Text(c.supportingText)),
+			c.headlineView,
 			c.supportingView,
 		).Alignment(ui.Leading),
 		ui.Spacer(),
@@ -100,11 +107,34 @@ type TList struct {
 	frame          ui.Frame      // layout frame (width/height)
 	footer         core.View     // optional footer below the list
 	onClickedEntry func(idx int) // handler for row clicks
+	colorBody      ui.Color
+	colorCaption   ui.Color
+	colorFooter    ui.Color
 }
 
 // List creates a new TList with the given entries as rows.
 func List(entries ...core.View) TList {
-	return TList{rows: entries}
+	return TList{
+		rows:         entries,
+		colorFooter:  ui.ColorCardFooter,
+		colorBody:    ui.ColorCardBody,
+		colorCaption: ui.ColorCardTop,
+	}
+}
+
+func (c TList) ColorBody(color ui.Color) TList {
+	c.colorBody = color
+	return c
+}
+
+func (c TList) ColorCaption(color ui.Color) TList {
+	c.colorCaption = color
+	return c
+}
+
+func (c TList) ColorFooter(color ui.Color) TList {
+	c.colorFooter = color
+	return c
 }
 
 // Caption sets an optional caption view above the list.
@@ -137,13 +167,17 @@ func (c TList) OnEntryClicked(fn func(idx int)) TList {
 	return c
 }
 
+func (c TList) With(fn func(c TList) TList) TList {
+	return fn(c)
+}
+
 // Render builds the visual representation of the list.
 // It renders an optional caption, the list rows (with separators and
 // optional click handling), and an optional footer inside a styled card.
 func (c TList) Render(ctx core.RenderContext) core.RenderNode {
 	rows := make([]core.View, 0, len(c.rows)*2+3)
 	if c.caption != nil {
-		rows = append(rows, ui.HStack(c.caption).Alignment(ui.Leading).FullWidth().BackgroundColor(ui.ColorCardTop).Padding(ui.Padding{}.Vertical(ui.L8).Horizontal(ui.L16)))
+		rows = append(rows, ui.HStack(c.caption).Alignment(ui.Leading).FullWidth().BackgroundColor(c.colorCaption).Padding(ui.Padding{}.Vertical(ui.L8).Horizontal(ui.L16)))
 	}
 
 	for idx, row := range c.rows {
@@ -165,11 +199,15 @@ func (c TList) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	if c.footer != nil {
-		rows = append(rows, ui.HStack(c.footer).Alignment(ui.Leading).FullWidth().BackgroundColor(ui.ColorCardFooter).Padding(ui.Padding{}.Vertical(ui.L16).Horizontal(ui.L16)))
+		if c.colorFooter == "" && c.colorBody == "" {
+			// UX note: if everything is uncolored, introduce an hline for visual separation with footer, otherwise the footer cannot be distinguished
+			rows = append(rows, ui.HStack(ui.HLine().Padding(ui.Padding{})).FullWidth().Padding(ui.Padding{}.Horizontal(ui.L16)))
+		}
+		rows = append(rows, ui.HStack(c.footer).Alignment(ui.Leading).FullWidth().BackgroundColor(c.colorFooter).Padding(ui.Padding{}.Vertical(ui.L16).Horizontal(ui.L16)))
 	}
 
 	return ui.VStack(rows...).
-		BackgroundColor(ui.ColorCardBody).
+		BackgroundColor(c.colorBody).
 		Border(ui.Border{}.Radius(ui.L16)).
 		Frame(c.frame).
 		Render(ctx)

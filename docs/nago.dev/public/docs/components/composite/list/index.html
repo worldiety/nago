@@ -13,7 +13,7 @@
 <title>List – Nago Docs</title>
   <meta name="description" content="It displays a vertical collection of rows, optionally with a caption and footer. A click handler can be attached to individual entries.
 Constructors List List creates a new TList with the given entries as rows.
-Methods Method Description Caption(s core.View) Caption sets an optional caption view above the list. Footer(s core.View) Footer sets an optional footer view below the list. Frame(frame ui.Frame) Frame sets the layout frame of the list. FullWidth() FullWidth expands the list to use the full available width. OnEntryClicked(fn func(idx int)) OnEntryClicked sets a callback for when a row is clicked. " /><link rel="canonical" href="/docs/components/composite/list/" itemprop="url" />
+Methods Method Description Caption(s core.View) Caption sets an optional caption view above the list. ColorBody(color ui.Color) ColorCaption(color ui.Color) ColorFooter(color ui.Color) Footer(s core.View) Footer sets an optional footer view below the list. Frame(frame ui.Frame) Frame sets the layout frame of the list. FullWidth() FullWidth expands the list to use the full available width. OnEntryClicked(fn func(idx int)) OnEntryClicked sets a callback for when a row is clicked. With(fn func(c TList) TList) " /><link rel="canonical" href="/docs/components/composite/list/" itemprop="url" />
 
 <meta property="og:title" content="List" />
 <meta property="og:description" content="Documentation for Nago" />
@@ -23,13 +23,13 @@ Methods Method Description Caption(s core.View) Caption sets an optional caption
   <meta itemprop="name" content="List">
   <meta itemprop="description" content="It displays a vertical collection of rows, optionally with a caption and footer. A click handler can be attached to individual entries.
 Constructors List List creates a new TList with the given entries as rows.
-Methods Method Description Caption(s core.View) Caption sets an optional caption view above the list. Footer(s core.View) Footer sets an optional footer view below the list. Frame(frame ui.Frame) Frame sets the layout frame of the list. FullWidth() FullWidth expands the list to use the full available width. OnEntryClicked(fn func(idx int)) OnEntryClicked sets a callback for when a row is clicked.">
-  <meta itemprop="wordCount" content="94">
+Methods Method Description Caption(s core.View) Caption sets an optional caption view above the list. ColorBody(color ui.Color) ColorCaption(color ui.Color) ColorFooter(color ui.Color) Footer(s core.View) Footer sets an optional footer view below the list. Frame(frame ui.Frame) Frame sets the layout frame of the list. FullWidth() FullWidth expands the list to use the full available width. OnEntryClicked(fn func(idx int)) OnEntryClicked sets a callback for when a row is clicked. With(fn func(c TList) TList)">
+  <meta itemprop="wordCount" content="104">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="List">
   <meta name="twitter:description" content="It displays a vertical collection of rows, optionally with a caption and footer. A click handler can be attached to individual entries.
 Constructors List List creates a new TList with the given entries as rows.
-Methods Method Description Caption(s core.View) Caption sets an optional caption view above the list. Footer(s core.View) Footer sets an optional footer view below the list. Frame(frame ui.Frame) Frame sets the layout frame of the list. FullWidth() FullWidth expands the list to use the full available width. OnEntryClicked(fn func(idx int)) OnEntryClicked sets a callback for when a row is clicked.">
+Methods Method Description Caption(s core.View) Caption sets an optional caption view above the list. ColorBody(color ui.Color) ColorCaption(color ui.Color) ColorFooter(color ui.Color) Footer(s core.View) Footer sets an optional footer view below the list. Frame(frame ui.Frame) Frame sets the layout frame of the list. FullWidth() FullWidth expands the list to use the full available width. OnEntryClicked(fn func(idx int)) OnEntryClicked sets a callback for when a row is clicked. With(fn func(c TList) TList)">
 
     <link rel="preload" href="/css/compiled/main.min.be56ec629fdfe7569502c7dfe214689a2336e822326f4e4254eeceaf964fed38.css" as="style" integrity="sha256-vlbsYp/f51aVAsff4hRomiM26CIyb05CVO7Or5ZP7Tg=" />
     <link href="/css/compiled/main.min.be56ec629fdfe7569502c7dfe214689a2336e822326f4e4254eeceaf964fed38.css" rel="stylesheet" integrity="sha256-vlbsYp/f51aVAsff4hRomiM26CIyb05CVO7Or5ZP7Tg=" />
@@ -3475,6 +3475,18 @@ Methods Method Description Caption(s core.View) Caption sets an optional caption
           <td>Caption sets an optional caption view above the list.</td>
       </tr>
       <tr>
+          <td><code>ColorBody(color ui.Color)</code></td>
+          <td></td>
+      </tr>
+      <tr>
+          <td><code>ColorCaption(color ui.Color)</code></td>
+          <td></td>
+      </tr>
+      <tr>
+          <td><code>ColorFooter(color ui.Color)</code></td>
+          <td></td>
+      </tr>
+      <tr>
           <td><code>Footer(s core.View)</code></td>
           <td>Footer sets an optional footer view below the list.</td>
       </tr>
@@ -3489,6 +3501,10 @@ Methods Method Description Caption(s core.View) Caption sets an optional caption
       <tr>
           <td><code>OnEntryClicked(fn func(idx int))</code></td>
           <td>OnEntryClicked sets a callback for when a row is clicked.</td>
+      </tr>
+      <tr>
+          <td><code>With(fn func(c TList) TList)</code></td>
+          <td></td>
       </tr>
   </tbody>
 </table>

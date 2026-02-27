@@ -17,20 +17,25 @@ import (
 
 // TThreeColumn is a layout component (TwoColumn).
 type TThreeColumn struct {
-	nav            Factory
-	frame          ui.Frame
-	id             string
-	defaultContent ViewID
-	defaultDetail  ViewID
-	defaultSidebar ViewID
-	bgContent      ui.Color
-	bgDetail       ui.Color
-	bgSidebar      ui.Color
-	contentWidth   ui.Length
-	sidebarWidth   ui.Length
-	detailWidth    ui.Length
+	nav              Factory
+	frame            ui.Frame
+	id               string
+	defaultContent   ViewID
+	defaultDetail    ViewID
+	defaultSidebar   ViewID
+	bgContent        ui.Color
+	bgDetail         ui.Color
+	bgSidebar        ui.Color
+	contentWidth     ui.Length
+	sidebarWidth     ui.Length
+	detailWidth      ui.Length
+	alignmentContent ui.Alignment
+	alignmentSidebar ui.Alignment
+	alignmentDetail  ui.Alignment
 }
 
+// ThreeColumn creates a three-column layout with the given navigation factory. The order is from left to
+// right: sidebar, content, detail.
 func ThreeColumn(nav Factory) TThreeColumn {
 	return TThreeColumn{
 		nav:          nav,
@@ -89,6 +94,21 @@ func (c TThreeColumn) BackgroundColorDetail(bg ui.Color) TThreeColumn {
 
 func (c TThreeColumn) BackgroundColorSidebar(bg ui.Color) TThreeColumn {
 	c.bgSidebar = bg
+	return c
+}
+
+func (c TThreeColumn) AlignmentContent(alignment ui.Alignment) TThreeColumn {
+	c.alignmentContent = alignment
+	return c
+}
+
+func (c TThreeColumn) AlignmentDetail(alignment ui.Alignment) TThreeColumn {
+	c.alignmentDetail = alignment
+	return c
+}
+
+func (c TThreeColumn) AlignmentSidebar(alignment ui.Alignment) TThreeColumn {
+	c.alignmentSidebar = alignment
 	return c
 }
 
@@ -219,11 +239,11 @@ func (c TThreeColumn) Render(ctx core.RenderContext) core.RenderNode {
 
 	// enough space for all
 	return ui.Grid(
-		ui.GridCell(sidebarView).BackgroundColor(c.bgSidebar),
+		ui.GridCell(sidebarView).BackgroundColor(c.bgSidebar).Alignment(c.alignmentSidebar),
 		ui.GridCell(ui.Text("").Underline(true)).BackgroundColor(ui.ColorIconsMuted),
-		ui.GridCell(contentView).BackgroundColor(c.bgContent),
+		ui.GridCell(contentView).BackgroundColor(c.bgContent).Alignment(c.alignmentContent),
 		ui.GridCell(ui.Text("").Underline(true)).BackgroundColor(ui.ColorIconsMuted),
-		ui.GridCell(detailView).BackgroundColor(c.bgDetail),
+		ui.GridCell(detailView).BackgroundColor(c.bgDetail).Alignment(c.alignmentDetail),
 	).Columns(5).
 		Gap(ui.L8).
 		Widths(c.sidebarWidth, "1px", c.contentWidth, "1px", c.detailWidth).

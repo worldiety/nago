@@ -20,6 +20,15 @@ const LinkTargetNewWindowOrTab = "_blank"
 
 type TextAlignment uint
 
+type WordBreak byte
+
+const (
+	WordBreakInherit WordBreak = iota
+	WordBreakNormal
+	WordBreakBreakAll
+	WordBreakKeepAll
+)
+
 type Hyphens byte
 
 const (
@@ -67,6 +76,7 @@ type TText struct {
 	resolve            bool
 	hyphens            Hyphens
 	labelFor           string
+	wordBreak          WordBreak
 }
 
 // MailTo creates a mailto: link text component.
@@ -130,6 +140,11 @@ func (c TText) Underline(b bool) TText {
 // Padding sets a top, right, bottom and left spacing.
 func (c TText) Padding(padding Padding) DecoredView {
 	c.padding = padding.ora()
+	return c
+}
+
+func (c TText) WordBreak(wordBreak WordBreak) TText {
+	c.wordBreak = wordBreak
 	return c
 }
 
@@ -259,6 +274,17 @@ func (c TText) Render(ctx core.RenderContext) core.RenderNode {
 		hyphens = "none"
 	}
 
+	var wordBreak proto.Str
+	switch c.wordBreak {
+	case WordBreakBreakAll:
+		wordBreak = "break-all"
+	case WordBreakKeepAll:
+		wordBreak = "keep-all"
+	case WordBreakNormal:
+		wordBreak = "normal"
+
+	}
+
 	return &proto.TextView{
 		Value:              proto.Str(value),
 		Color:              c.color,
@@ -283,5 +309,6 @@ func (c TText) Render(ctx core.RenderContext) core.RenderNode {
 		Underline:              proto.Bool(c.underline),
 		Hyphens:                proto.Str(hyphens),
 		LabelFor:               proto.Str(c.labelFor),
+		WordBreak:              wordBreak,
 	}
 }

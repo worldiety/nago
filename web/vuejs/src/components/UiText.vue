@@ -76,6 +76,10 @@ const styles = computed<string>(() => {
 		styles.push('text-decoration: underline');
 	}
 
+	if (props.ui.wordBreak){
+		styles.push(`word-break: ${props.ui.wordBreak}`);
+	}
+
 	return styles.join(';');
 });
 

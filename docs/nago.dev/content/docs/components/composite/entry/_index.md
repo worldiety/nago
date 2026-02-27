@@ -17,6 +17,7 @@ Entry creates a new full-width entry with default frame.
 | `Action(fn func())` | Action sets a click/tap action handler. |
 | `Frame(frame ui.Frame)` | Frame sets the layout frame for the entry. |
 | `Headline(s string)` | Headline sets the main title text of the entry. |
+| `HeadlineView(view core.View)` |  |
 | `Leading(v core.View)` | Leading sets an optional leading view (e.g. icon/avatar). |
 | `SupportingText(s string)` | SupportingText sets an optional supporting text below the headline. |
 | `SupportingView(view core.View)` | SupportingView sets an optional supporting view below the headline. |

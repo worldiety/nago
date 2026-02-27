@@ -7530,10 +7530,11 @@ type TextView struct {
 	Underline              Bool
 	Hyphens                Str
 	LabelFor               Str
+	WordBreak              Str
 }
 
 func (v *TextView) write(w *BinaryWriter) error {
-	var fields [25]bool
+	var fields [26]bool
 	fields[1] = !v.Value.IsZero()
 	fields[2] = !v.Color.IsZero()
 	fields[3] = !v.BackgroundColor.IsZero()
@@ -7558,6 +7559,7 @@ func (v *TextView) write(w *BinaryWriter) error {
 	fields[22] = !v.Underline.IsZero()
 	fields[23] = !v.Hyphens.IsZero()
 	fields[24] = !v.LabelFor.IsZero()
+	fields[25] = !v.WordBreak.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -7760,6 +7762,14 @@ func (v *TextView) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[25] {
+		if err := w.writeFieldHeader(byteSlice, 25); err != nil {
+			return err
+		}
+		if err := v.WordBreak.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -7892,6 +7902,11 @@ func (v *TextView) read(r *BinaryReader) error {
 			}
 		case 24:
 			err := v.LabelFor.read(r)
+			if err != nil {
+				return err
+			}
+		case 25:
+			err := v.WordBreak.read(r)
 			if err != nil {
 				return err
 			}
@@ -16583,13 +16598,14 @@ func (v *TextView) reset() {
 	v.Underline.reset()
 	v.Hyphens.reset()
 	v.LabelFor.reset()
+	v.WordBreak.reset()
 }
 
 func (v *TextView) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Value.IsZero() && v.Color.IsZero() && v.BackgroundColor.IsZero() && v.OnClick.IsZero() && v.OnHoverStart.IsZero() && v.OnHoverEnd.IsZero() && v.Border.IsZero() && v.Padding.IsZero() && v.Frame.IsZero() && v.AccessibilityLabel.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.TextAlignment.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.LineBreak.IsZero() && v.Invisible.IsZero() && v.Underline.IsZero() && v.Hyphens.IsZero() && v.LabelFor.IsZero()
+	return v.Value.IsZero() && v.Color.IsZero() && v.BackgroundColor.IsZero() && v.OnClick.IsZero() && v.OnHoverStart.IsZero() && v.OnHoverEnd.IsZero() && v.Border.IsZero() && v.Padding.IsZero() && v.Frame.IsZero() && v.AccessibilityLabel.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.TextAlignment.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.LineBreak.IsZero() && v.Invisible.IsZero() && v.Underline.IsZero() && v.Hyphens.IsZero() && v.LabelFor.IsZero() && v.WordBreak.IsZero()
 }
 
 func (v *TextField) reset() {

@@ -18,6 +18,7 @@ import (
 	cfginspector "go.wdy.de/nago/application/inspector/cfg"
 	"go.wdy.de/nago/application/migration"
 	cfgmigration "go.wdy.de/nago/application/migration/cfg"
+	cfgrebac "go.wdy.de/nago/application/rebac/cfg"
 	"go.wdy.de/nago/web/vuejs"
 )
 
@@ -32,7 +33,8 @@ func main() {
 		option.Must(cfginspector.Enable(cfg))
 		modMig := option.Must(cfgmigration.Enable(cfg)) // see, we have a migration system
 
-		_, _ = cfg.RDB() //see, we have a rebac system, this is the database
+		_, _ = cfg.RDB()                  // see, we have a rebac system, this is the database and it is always available ...
+		option.Must(cfgrebac.Enable(cfg)) // ... but at least the UI for it is optional
 
 		option.Must(cfgflow.Enable(cfg, cfgflow.Options{}))
 

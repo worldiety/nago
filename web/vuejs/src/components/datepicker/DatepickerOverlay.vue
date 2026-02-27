@@ -195,7 +195,9 @@ const confirmButton = useTemplateRef('confirmButton');
 const datepicker = ref<HTMLElement | undefined>();
 
 const selectedMonth = ref<number>(props.selectedStartDate ? props.selectedStartDate.getMonth() : new Date().getMonth());
-const selectedYear = ref<number>(props.selectedStartDate ? props.selectedStartDate.getFullYear() : new Date().getFullYear());
+const selectedYear = ref<number>(
+	props.selectedStartDate ? props.selectedStartDate.getFullYear() : new Date().getFullYear()
+);
 
 const lastDatepickerDayIndex = ref<number | null>(null);
 const lastDatepickerDayElement = ref<ComponentPublicInstance | Element | null>(null);
@@ -392,7 +394,10 @@ function showSelectedRange() {
 	if (!props.selectedStartDate) return;
 
 	for (let i = 0; i < monthsToShow; i++) {
-		if (props.selectedStartDate.getFullYear() === selectedYear.value && props.selectedStartDate.getMonth() === selectedMonth.value + i)
+		if (
+			props.selectedStartDate.getFullYear() === selectedYear.value &&
+			props.selectedStartDate.getMonth() === selectedMonth.value + i
+		)
 			return;
 	}
 

@@ -108,3 +108,15 @@ func (c *RWMap[K, V]) Len() int {
 func (c *RWMap[K, V]) Clone() *RWMap[K, V] {
 	return &RWMap[K, V]{m: maps.Clone(c.m)}
 }
+
+func (c *RWMap[K, V]) Values() iter.Seq[V] {
+	return func(yield func(V) bool) {
+		c.mutex.RLock()
+		defer c.mutex.RUnlock()
+		for _, v := range c.m {
+			if !yield(v) {
+				return
+			}
+		}
+	}
+}

@@ -419,7 +419,7 @@ SVG embedding, object fit, custom colors, borders, padding, and accessibility. T
           &lt;td&gt;AccessibilityLabel sets a label for screen readers. See also &lt;a href=&#34;https://www.w3.org/WAI/tutorials/images/decision-tree/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;https://www.w3.org/WAI/tutorials/images/decision-tree/&lt;/a&gt;.&lt;/td&gt;
       &lt;/tr&gt;
       &lt;tr&gt;
-          &lt;td&gt;&lt;code&gt;Adaptive(dark image.ID, light image.ID)&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;&lt;code&gt;Adaptive(light image.ID, dark image.ID)&lt;/code&gt;&lt;/td&gt;
           &lt;td&gt;Adaptive sets the image to use different sources for light and dark themes. It generates URIs for both light and dark variants with fixed dimensions (512x512) and no fitting, then applies them to the image.&lt;/td&gt;
       &lt;/tr&gt;
       &lt;tr&gt;

@@ -7916,6 +7916,8 @@ export class TextView implements Writeable, Readable, Component {
 
 	public labelFor?: Str;
 
+	public wordBreak?: Str;
+
 	constructor(
 		value: Str | undefined = undefined,
 		color: Color | undefined = undefined,
@@ -7940,7 +7942,8 @@ export class TextView implements Writeable, Readable, Component {
 		invisible: Bool | undefined = undefined,
 		underline: Bool | undefined = undefined,
 		hyphens: Str | undefined = undefined,
-		labelFor: Str | undefined = undefined
+		labelFor: Str | undefined = undefined,
+		wordBreak: Str | undefined = undefined
 	) {
 		this.value = value;
 		this.color = color;
@@ -7966,6 +7969,7 @@ export class TextView implements Writeable, Readable, Component {
 		this.underline = underline;
 		this.hyphens = hyphens;
 		this.labelFor = labelFor;
+		this.wordBreak = wordBreak;
 	}
 
 	read(reader: BinaryReader): void {
@@ -8077,6 +8081,10 @@ export class TextView implements Writeable, Readable, Component {
 					this.labelFor = readString(reader);
 					break;
 				}
+				case 25: {
+					this.wordBreak = readString(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -8110,6 +8118,7 @@ export class TextView implements Writeable, Readable, Component {
 			this.underline !== undefined,
 			this.hyphens !== undefined,
 			this.labelFor !== undefined,
+			this.wordBreak !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -8209,6 +8218,10 @@ export class TextView implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 24);
 			writeString(writer, this.labelFor!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[25]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 25);
+			writeString(writer, this.wordBreak!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -8236,7 +8249,8 @@ export class TextView implements Writeable, Readable, Component {
 			this.invisible === undefined &&
 			this.underline === undefined &&
 			this.hyphens === undefined &&
-			this.labelFor === undefined
+			this.labelFor === undefined &&
+			this.wordBreak === undefined
 		);
 	}
 
@@ -8265,6 +8279,7 @@ export class TextView implements Writeable, Readable, Component {
 		this.underline = undefined;
 		this.hyphens = undefined;
 		this.labelFor = undefined;
+		this.wordBreak = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

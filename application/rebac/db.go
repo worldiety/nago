@@ -13,12 +13,14 @@ import (
 	"fmt"
 	"iter"
 	"log/slog"
+	"slices"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/tidwall/btree"
 	"go.wdy.de/nago/pkg/blob"
+	"go.wdy.de/nago/pkg/std/concurrent"
 	"go.wdy.de/nago/pkg/xslices"
 )
 
@@ -31,6 +33,7 @@ type DB struct {
 	strTable  *strTable
 	mutex     sync.RWMutex
 	resolvers []Resolver
+	resources concurrent.RWMap[Namespace, Resources]
 }
 
 // NewDB creates a new RBAC database backed by the given blob store.
@@ -184,6 +187,11 @@ func (db *DB) Query(query Query) iter.Seq2[Triple, error] {
 			debugStart = time.Now()
 		}
 
+		var groupByRelation map[bRelation]struct{}
+		if query.groupByRelation {
+			groupByRelation = make(map[bRelation]struct{})
+		}
+
 		const next = true
 		tree.Ascend(prefixPivot, func(item fixedBinaryTriple) bool {
 			if debug {
@@ -221,12 +229,34 @@ func (db *DB) Query(query Query) iter.Seq2[Triple, error] {
 				return next
 			}
 
-			triple := db.fromBinary(it)
-			return yield(triple, nil)
+			if query.groupByRelation {
+
+			}
+
+			if !query.hasGroupBy() {
+				triple := db.fromBinary(it)
+				return yield(triple, nil)
+			}
+
+			if query.groupByRelation {
+				groupByRelation[it.Relation] = struct{}{}
+			}
+
+			return true // group by must iterate over all to collect
 		})
 
 		if debug {
 			slog.Info("rebac db query done", "visited", debugVisited, "duration", time.Since(debugStart).String())
+		}
+
+		if query.groupByRelation {
+			for relation := range groupByRelation {
+				if !yield(db.fromBinary(binaryTriple{
+					Relation: relation,
+				}), nil) {
+					return
+				}
+			}
 		}
 	}
 }
@@ -539,4 +569,43 @@ func (db *DB) decode(key string) (Triple, error) {
 			Instance:  Instance(fields[4]),
 		},
 	}, nil
+}
+
+func (db *DB) RegisterResources(res Resources) bool {
+	db.mutex.Lock()
+	defer db.mutex.Unlock()
+
+	if _, ok := db.resources.Get(res.Identity()); ok {
+		return false
+	}
+
+	if res.Identity() == "" {
+		return false
+	}
+
+	db.resources.Put(res.Identity(), res)
+	return true
+}
+
+func (db *DB) UnregisterResources(res Namespace) {
+	db.resources.Delete(res)
+}
+
+func (db *DB) LookupResources(res Namespace) (Resources, bool) {
+	return db.resources.Get(res)
+}
+
+func (db *DB) AllResources() iter.Seq[Resources] {
+	tmp := slices.Collect(db.resources.Values())
+	slices.SortFunc(tmp, func(a, b Resources) int {
+		return strings.Compare(string(a.Identity()), string(b.Identity()))
+	})
+
+	return func(yield func(Resources) bool) {
+		for _, r := range tmp {
+			if !yield(r) {
+				return
+			}
+		}
+	}
 }

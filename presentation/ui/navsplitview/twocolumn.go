@@ -32,6 +32,12 @@ func (n NavFnLinks) Create(id ViewID) core.View {
 	return nil
 }
 
+type NavFn func(id ViewID) core.View
+
+func (f NavFn) Create(id ViewID) core.View {
+	return f(id)
+}
+
 type Factory interface {
 	Create(id ViewID) core.View
 }
