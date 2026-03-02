@@ -1,0 +1,57 @@
+{
+  "doc": "Select represents a user interface element which lets the user select one option from a list.",
+  "kind": "Record",
+  "id": 181,
+  "fields": {
+    "1": {
+      "name": "Label",
+      "type": "Str"
+    },
+    "2": {
+      "name": "SupportingText",
+      "type": "Str"
+    },
+    "3": {
+      "doc": "ErrorText is shown instead of SupportingText, even if they are (today) independent",
+      "name": "ErrorText",
+      "type": "Str"
+    },
+    "4": {
+      "doc": "Value contains the value of the selected option.",
+      "name": "Value",
+      "type": "Str"
+    },
+    "5": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "6": {
+      "doc": "InputValue is a binding to a state, into which the frontend the selected option's value will be set. This is the pointer a State.",
+      "name": "InputValue",
+      "type": "Ptr"
+    },
+    "7": {
+      "doc": "Style to apply. Use TextFieldReduced in forms where many textfields cause too much visual noise and you need to reduce it. By default, the TextFieldOutlined is applied.",
+      "name": "Style",
+      "type": "TextFieldStyle"
+    },
+    "8": {
+      "doc": "Leading shows the given component usually at the left (or right if RTL). This can be used for additional symbols like a magnifying glass for searching.",
+      "name": "Leading",
+      "type": "Component"
+    },
+    "9": {
+      "name": "Disabled",
+      "type": "Bool"
+    },
+    "10": {
+      "doc": "Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.",
+      "name": "Id",
+      "type": "Str"
+    },
+    "11": {
+      "name": "Options",
+      "type": "SelectOptions"
+    }
+  }
+}

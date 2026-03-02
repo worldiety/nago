@@ -14125,6 +14125,348 @@ export enum BorderStyleValues {
 	StyleDashed = 2,
 }
 
+// SelectOption represents a selectable option, e.g. used in a native select element.
+export class SelectOption implements Writeable, Readable {
+	public value?: Str;
+
+	public disabled?: Bool;
+
+	public label?: Str;
+
+	constructor(
+		value: Str | undefined = undefined,
+		disabled: Bool | undefined = undefined,
+		label: Str | undefined = undefined
+	) {
+		this.value = value;
+		this.disabled = disabled;
+		this.label = label;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.value = readString(reader);
+					break;
+				}
+				case 2: {
+					this.disabled = readBool(reader);
+					break;
+				}
+				case 3: {
+					this.label = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.value !== undefined, this.disabled !== undefined, this.label !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.value!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 2);
+			writeBool(writer, this.disabled!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			writeString(writer, this.label!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.value === undefined && this.disabled === undefined && this.label === undefined;
+	}
+
+	reset(): void {
+		this.value = undefined;
+		this.disabled = undefined;
+		this.label = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 179);
+		return;
+	}
+}
+
+// SelectOptions is an array of select options.
+export class SelectOptions implements Writeable, Readable {
+	public value: SelectOption[];
+
+	constructor(value: SelectOption[] = []) {
+		this.value = value;
+	}
+
+	isZero(): boolean {
+		return !this.value || this.value.length === 0;
+	}
+
+	reset(): void {
+		this.value = [];
+	}
+
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value.length); // Write the length of the array
+		for (const c of this.value) {
+			c.writeTypeHeader(writer); // Write the type header for each component)
+			c.write(writer); // Write the component data
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
+		}
+	}
+
+	read(reader: BinaryReader): void {
+		const count = reader.readUvarint(); // Read the length of the array
+		const values: SelectOption[] = [];
+
+		for (let i = 0; i < count; i++) {
+			const obj = unmarshal(reader); // Read and unmarshal each component
+			values.push(obj as any as SelectOption); // Cast and add to the array
+		}
+
+		this.value = values;
+	}
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 180);
+		return;
+	}
+}
+
+// Select represents a user interface element which lets the user select one option from a list.
+export class Select implements Writeable, Readable, Component {
+	public label?: Str;
+
+	public supportingText?: Str;
+
+	// ErrorText is shown instead of SupportingText, even if they are (today) independent
+	public errorText?: Str;
+
+	// Value contains the value of the selected option.
+	public value?: Str;
+
+	public frame?: Frame;
+
+	// InputValue is a binding to a state, into which the frontend the selected option's value will be set. This is the pointer a State.
+	public inputValue?: Ptr;
+
+	// Style to apply. Use TextFieldReduced in forms where many textfields cause too much visual noise and you need to reduce it. By default, the TextFieldOutlined is applied.
+	public style?: TextFieldStyle;
+
+	// Leading shows the given component usually at the left (or right if RTL). This can be used for additional symbols like a magnifying glass for searching.
+	public leading?: Component;
+
+	public disabled?: Bool;
+
+	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
+	public id?: Str;
+
+	public options?: SelectOptions;
+
+	constructor(
+		label: Str | undefined = undefined,
+		supportingText: Str | undefined = undefined,
+		errorText: Str | undefined = undefined,
+		value: Str | undefined = undefined,
+		frame: Frame | undefined = undefined,
+		inputValue: Ptr | undefined = undefined,
+		style: TextFieldStyle | undefined = undefined,
+		leading: Component | undefined = undefined,
+		disabled: Bool | undefined = undefined,
+		id: Str | undefined = undefined,
+		options: SelectOptions | undefined = undefined
+	) {
+		this.label = label;
+		this.supportingText = supportingText;
+		this.errorText = errorText;
+		this.value = value;
+		this.frame = frame;
+		this.inputValue = inputValue;
+		this.style = style;
+		this.leading = leading;
+		this.disabled = disabled;
+		this.id = id;
+		this.options = options;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.label = readString(reader);
+					break;
+				}
+				case 2: {
+					this.supportingText = readString(reader);
+					break;
+				}
+				case 3: {
+					this.errorText = readString(reader);
+					break;
+				}
+				case 4: {
+					this.value = readString(reader);
+					break;
+				}
+				case 5: {
+					this.frame = new Frame();
+					this.frame.read(reader);
+					break;
+				}
+				case 6: {
+					this.inputValue = readInt(reader);
+					break;
+				}
+				case 7: {
+					this.style = readInt(reader);
+					break;
+				}
+				case 8: {
+					// decode polymorphic field as 1 element array
+					const len = reader.readUvarint();
+					if (len != 1) {
+						throw new Error(`unexpected length: ` + len);
+					}
+					this.leading = unmarshal(reader) as Component;
+					break;
+				}
+				case 9: {
+					this.disabled = readBool(reader);
+					break;
+				}
+				case 10: {
+					this.id = readString(reader);
+					break;
+				}
+				case 11: {
+					this.options = new SelectOptions();
+					this.options.read(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.label !== undefined,
+			this.supportingText !== undefined,
+			this.errorText !== undefined,
+			this.value !== undefined,
+			this.frame !== undefined && !this.frame.isZero(),
+			this.inputValue !== undefined,
+			this.style !== undefined,
+			this.leading !== undefined && !this.leading.isZero(),
+			this.disabled !== undefined,
+			this.id !== undefined,
+			this.options !== undefined && !this.options.isZero(),
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.label!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.supportingText!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			writeString(writer, this.errorText!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
+			writeString(writer, this.value!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.RECORD, 5);
+			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 6);
+			writeInt(writer, this.inputValue!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 7);
+			writeInt(writer, this.style!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[8]) {
+			// encode polymorphic enum as 1 element slice
+			writer.writeFieldHeader(Shapes.ARRAY, 8);
+			writer.writeByte(1);
+			this.leading.writeTypeHeader(writer);
+			this.leading!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[9]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 9);
+			writeBool(writer, this.disabled!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[10]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 10);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[11]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 11);
+			this.options!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.label === undefined &&
+			this.supportingText === undefined &&
+			this.errorText === undefined &&
+			this.value === undefined &&
+			(this.frame === undefined || this.frame.isZero()) &&
+			this.inputValue === undefined &&
+			this.style === undefined &&
+			(this.leading === undefined || this.leading.isZero()) &&
+			this.disabled === undefined &&
+			this.id === undefined &&
+			(this.options === undefined || this.options.isZero())
+		);
+	}
+
+	reset(): void {
+		this.label = undefined;
+		this.supportingText = undefined;
+		this.errorText = undefined;
+		this.value = undefined;
+		this.frame = undefined;
+		this.inputValue = undefined;
+		this.style = undefined;
+		this.leading = undefined;
+		this.disabled = undefined;
+		this.id = undefined;
+		this.options = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 181);
+		return;
+	}
+	isComponent(): void {}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -14932,6 +15274,21 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 178: {
 			const v = readInt(src) as BorderStyle;
+			return v;
+		}
+		case 179: {
+			const v = new SelectOption();
+			v.read(src);
+			return v;
+		}
+		case 180: {
+			const v = new SelectOptions();
+			v.read(src);
+			return v;
+		}
+		case 181: {
+			const v = new Select();
+			v.read(src);
 			return v;
 		}
 	}

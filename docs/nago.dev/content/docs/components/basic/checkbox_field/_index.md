@@ -28,6 +28,7 @@ A CheckboxField aggregates a checkbox together with form field typical labels, h
 | `SupportingText(text string)` | SupportingText sets helper or secondary text shown below the label. |
 | `Visible(visible bool)` | Visible controls the visibility of the checkbox field; setting false hides it. |
 | `WithFrame(fn func(Frame) Frame)` | WithFrame applies a transformation function to the field's frame and returns the updated component. |
+| `checkedLabel(checked bool, label string)` | checkedLabel is a helper function, which renders a standardized passive checkbox element. This is required because the style of a disabled checkbox does not show the actual checked state and the current frontend implementation captures all events independent if it actually should do so. We also don't have a proper spec for this situation, thus lets pretend something more reasonable.  At least this fixes interactive issues when used in TMenuItem. |
 ---
 
 ## Related

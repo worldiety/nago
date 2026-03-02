@@ -313,6 +313,7 @@ func (LineChart) isComponent()      {}
 func (Video) isComponent()          {}
 func (PieChart) isComponent()       {}
 func (DnDArea) isComponent()        {}
+func (Select) isComponent()         {}
 
 // NagoEvent is the union type of all allowed NAGO protocol events. Everything which goes through a NAGO channel must be an Event at the root level.
 type NagoEvent interface {
@@ -13523,6 +13524,310 @@ func (v *BorderStyle) IsZero() bool {
 	return *v == 0
 }
 
+// SelectOption represents a selectable option, e.g. used in a native select element.
+type SelectOption struct {
+	Value    Str
+	Disabled Bool
+	Label    Str
+}
+
+func (v *SelectOption) write(w *BinaryWriter) error {
+	var fields [4]bool
+	fields[1] = !v.Value.IsZero()
+	fields[2] = !v.Disabled.IsZero()
+	fields[3] = !v.Label.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Value.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.Disabled.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.Label.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *SelectOption) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Value.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Disabled.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Label.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// Select represents a user interface element which lets the user select one option from a list.
+type Select struct {
+	Label          Str
+	SupportingText Str
+	// ErrorText is shown instead of SupportingText, even if they are (today) independent
+	ErrorText Str
+	// Value contains the value of the selected option.
+	Value Str
+	Frame Frame
+	// InputValue is a binding to a state, into which the frontend the selected option's value will be set. This is the pointer a State.
+	InputValue Ptr
+	// Style to apply. Use TextFieldReduced in forms where many textfields cause too much visual noise and you need to reduce it. By default, the TextFieldOutlined is applied.
+	Style TextFieldStyle
+	// Leading shows the given component usually at the left (or right if RTL). This can be used for additional symbols like a magnifying glass for searching.
+	Leading  Component
+	Disabled Bool
+	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
+	Id      Str
+	Options SelectOptions
+}
+
+func (v *Select) write(w *BinaryWriter) error {
+	var fields [12]bool
+	fields[1] = !v.Label.IsZero()
+	fields[2] = !v.SupportingText.IsZero()
+	fields[3] = !v.ErrorText.IsZero()
+	fields[4] = !v.Value.IsZero()
+	fields[5] = !v.Frame.IsZero()
+	fields[6] = !v.InputValue.IsZero()
+	fields[7] = !v.Style.IsZero()
+	fields[8] = v.Leading != nil && !v.Leading.IsZero()
+	fields[9] = !v.Disabled.IsZero()
+	fields[10] = !v.Id.IsZero()
+	fields[11] = !v.Options.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Label.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.SupportingText.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.ErrorText.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.Value.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(record, 5); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(uvarint, 6); err != nil {
+			return err
+		}
+		if err := v.InputValue.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(uvarint, 7); err != nil {
+			return err
+		}
+		if err := v.Style.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 8); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.Leading.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.Leading.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[9] {
+		if err := w.writeFieldHeader(uvarint, 9); err != nil {
+			return err
+		}
+		if err := v.Disabled.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[10] {
+		if err := w.writeFieldHeader(byteSlice, 10); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[11] {
+		if err := w.writeFieldHeader(array, 11); err != nil {
+			return err
+		}
+		if err := v.Options.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Select) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Label.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.SupportingText.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.ErrorText.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Value.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.InputValue.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.Style.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.Leading = obj.(Component)
+		case 9:
+			err := v.Disabled.read(r)
+			if err != nil {
+				return err
+			}
+		case 10:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 11:
+			err := v.Options.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -14558,6 +14863,24 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 178:
 		var v BorderStyle
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 179:
+		var v SelectOption
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 180:
+		var v SelectOptions
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 181:
+		var v Select
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -17718,6 +18041,85 @@ func (v *Background) IsZero() bool {
 	return v.Image.IsZero() && v.PositionX.IsZero() && v.PositionY.IsZero() && v.Repeat.IsZero() && v.Size.IsZero()
 }
 
+func (v *SelectOption) reset() {
+	v.Value.reset()
+	v.Disabled.reset()
+	v.Label.reset()
+}
+
+func (v *SelectOption) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Value.IsZero() && v.Disabled.IsZero() && v.Label.IsZero()
+}
+
+// SelectOptions is an array of select options.
+type SelectOptions []SelectOption
+
+func (v *SelectOptions) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *SelectOptions) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	slice := make([]SelectOption, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = *obj.(*SelectOption)
+	}
+
+	*v = slice
+	return nil
+}
+
+func (v *SelectOptions) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
+}
+
+func (v *SelectOptions) reset() {
+	*v = nil
+}
+
+func (v *Select) reset() {
+	v.Label.reset()
+	v.SupportingText.reset()
+	v.ErrorText.reset()
+	v.Value.reset()
+	v.Frame.reset()
+	v.InputValue.reset()
+	v.Style.reset()
+	v.Leading = nil
+	v.Disabled.reset()
+	v.Id.reset()
+	v.Options.reset()
+}
+
+func (v *Select) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.Leading.IsZero() && v.Disabled.IsZero() && v.Id.IsZero() && v.Options.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -18896,6 +19298,27 @@ func (v *Background) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *BorderStyle) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(uvarint, 178); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *SelectOption) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 179); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *SelectOptions) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 180); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Select) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 181); err != nil {
 		return err
 	}
 	return nil
