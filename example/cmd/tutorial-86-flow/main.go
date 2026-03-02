@@ -14,6 +14,7 @@ import (
 	"go.wdy.de/nago/application"
 	cfgflow "go.wdy.de/nago/application/flow/cfg"
 	cfginspector "go.wdy.de/nago/application/inspector/cfg"
+	cfgmigration "go.wdy.de/nago/application/migration/cfg"
 	"go.wdy.de/nago/web/vuejs"
 )
 
@@ -22,6 +23,7 @@ func main() {
 		cfg.SetApplicationID("de.worldiety.tutorial_86")
 		cfg.Serve(vuejs.Dist())
 
+		option.Must(cfgmigration.Enable(cfg))
 		option.MustZero(cfg.StandardSystems())
 		option.Must(option.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), "%6UbRsCuM8N$auy"))
 		cfg.SetDecorator(cfg.NewScaffold().Decorator())

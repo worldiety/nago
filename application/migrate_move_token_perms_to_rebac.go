@@ -46,6 +46,9 @@ func (m migrateTokenPermsToReBAC) Migrate(ctx context.Context) error {
 		Resources   map[legacyUserResource][]permission.ID `json:"resources,omitempty" json:"resources,omitempty"`
 	}
 
+	m.rdb.ValidateStaticRules(false)
+	defer m.rdb.ValidateStaticRules(true)
+
 	for uid, err := range m.tokenStore.List(ctx, blob.ListOptions{}) {
 		if err != nil {
 			return err

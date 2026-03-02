@@ -16,6 +16,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/tidwall/btree"
@@ -27,14 +28,15 @@ import (
 const debug = true
 
 type DB struct {
-	store       blob.Store
-	forward     *btree.BTreeG[fixedBinaryTriple]
-	backward    *btree.BTreeG[fixedBinaryTriple]
-	strTable    *strTable
-	mutex       sync.RWMutex
-	resolvers   []Resolver
-	resources   concurrent.RWMap[Namespace, Resources]
-	staticRules map[bNamespace][]bStaticRelationRule // unclear, if and which performance optimizations we need. Currently, we expect a single digit number of rules.
+	store               blob.Store
+	forward             *btree.BTreeG[fixedBinaryTriple]
+	backward            *btree.BTreeG[fixedBinaryTriple]
+	strTable            *strTable
+	mutex               sync.RWMutex
+	resolvers           []Resolver
+	resources           concurrent.RWMap[Namespace, Resources]
+	staticRules         map[bNamespace][]bStaticRelationRule // unclear, if and which performance optimizations we need. Currently, we expect a single digit number of rules.
+	validateStaticRules atomic.Bool
 }
 
 // NewDB creates a new RBAC database backed by the given blob store.
@@ -53,6 +55,8 @@ func NewDB(store blob.Store) (*DB, error) {
 
 		staticRules: make(map[bNamespace][]bStaticRelationRule),
 	}
+
+	db.validateStaticRules.Store(true)
 
 	slog.Info("loading ReBAC database from blob store...")
 	count := 0
@@ -325,7 +329,7 @@ func prefixSlice(p fixedBinaryTriple) []byte {
 func (db *DB) Put(tuple Triple) error {
 	b := db.intoBinary(tuple)
 
-	if !db.HasStaticRelationRule(StaticRelationRule{
+	if !db.HasStaticRule(StaticRule{
 		Source:   tuple.Source.Namespace,
 		Relation: tuple.Relation,
 		Target:   tuple.Target.Namespace,
@@ -362,7 +366,7 @@ func (db *DB) PutAll(it iter.Seq2[Triple, error]) error {
 
 		b := db.intoBinary(tuple)
 
-		if !db.HasStaticRelationRule(StaticRelationRule{
+		if !db.HasStaticRule(StaticRule{
 			Source:   tuple.Source.Namespace,
 			Relation: tuple.Relation,
 			Target:   tuple.Target.Namespace,
@@ -630,7 +634,7 @@ func (db *DB) AllResources() iter.Seq[Resources] {
 	}
 }
 
-func (db *DB) intobStaticRelationRule(rule StaticRelationRule) bStaticRelationRule {
+func (db *DB) intobStaticRelationRule(rule StaticRule) bStaticRelationRule {
 	return bStaticRelationRule{
 		Source:   bNamespace(db.strTable.Intern(string(rule.Source))),
 		Relation: bRelation(db.strTable.Intern(string(rule.Relation))),
@@ -639,7 +643,7 @@ func (db *DB) intobStaticRelationRule(rule StaticRelationRule) bStaticRelationRu
 }
 
 // RegisterStaticRelationRule appends the given static relation rule.
-func (db *DB) RegisterStaticRelationRule(rule StaticRelationRule) {
+func (db *DB) RegisterStaticRelationRule(rule StaticRule) {
 	db.mutex.Lock()
 	defer db.mutex.Unlock()
 
@@ -649,16 +653,20 @@ func (db *DB) RegisterStaticRelationRule(rule StaticRelationRule) {
 	db.staticRules[bRule.Source] = tmp
 }
 
-// HasStaticRelationRule returns true if the exact rule has been registered or if no rules have been registered
+// HasStaticRule returns true if the exact rule has been registered or if no rules have been registered
 // at all.
-func (db *DB) HasStaticRelationRule(rule StaticRelationRule) bool {
+func (db *DB) HasStaticRule(rule StaticRule) bool {
+	if !db.validateStaticRules.Load() {
+		return true
+	}
+
 	db.mutex.RLock()
 	defer db.mutex.RUnlock()
 
-	return db.hasStaticRelationRule(rule)
+	return db.hasStaticRule(rule)
 }
 
-func (db *DB) hasStaticRelationRule(rule StaticRelationRule) bool {
+func (db *DB) hasStaticRule(rule StaticRule) bool {
 	if len(db.staticRules) == 0 {
 		return true
 	}
@@ -678,11 +686,11 @@ func (db *DB) hasStaticRelationRule(rule StaticRelationRule) bool {
 	return false
 }
 
-func (db *DB) AllStaticRelationRules() iter.Seq[StaticRelationRule] {
-	return func(yield func(StaticRelationRule) bool) {
+func (db *DB) AllStaticRules() iter.Seq[StaticRule] {
+	return func(yield func(StaticRule) bool) {
 		for _, rules := range db.staticRules {
 			for _, rule := range rules {
-				if !yield(StaticRelationRule{
+				if !yield(StaticRule{
 					Source:   Namespace(db.strTable.String(uint32(rule.Source))),
 					Relation: Relation(db.strTable.String(uint32(rule.Relation))),
 					Target:   Namespace(db.strTable.String(uint32(rule.Target))),
@@ -692,4 +700,9 @@ func (db *DB) AllStaticRelationRules() iter.Seq[StaticRelationRule] {
 			}
 		}
 	}
+}
+
+// ValidateStaticRules enables or disables the validation of static rules. By default, validation is enabled.
+func (db *DB) ValidateStaticRules(enabled bool) {
+	db.validateStaticRules.Store(enabled)
 }

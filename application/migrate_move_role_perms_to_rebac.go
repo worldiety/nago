@@ -39,6 +39,9 @@ func (m migrateRolePermsToReBAC) Migrate(ctx context.Context) error {
 		Permissions []permission.ID `json:"permissions,omitempty"`
 	}
 
+	m.rdb.ValidateStaticRules(false)
+	defer m.rdb.ValidateStaticRules(true)
+
 	for rid, err := range m.roleStore.List(ctx, blob.ListOptions{}) {
 		if err != nil {
 			return err

@@ -176,7 +176,7 @@ func (i InstanceInfo) Identity() InfoID {
 // This must always follow the semantics of the actual domain and according use-cases and should not
 // be another abstraction on top of a repository (besides CRUD). For example, event-sourcing-based subdomains
 // have a huge number of events in various repositories, but the actual aggregates and permissions
-// cardinalities are totally different. See also [StaticRelationRule].
+// cardinalities are totally different. See also [StaticRule].
 type Resources interface {
 	// Identity returns the namespace which is represented by this provider.
 	Identity() Namespace
@@ -191,18 +191,18 @@ type Resources interface {
 	FindByID(ctx context.Context, id InfoID) (option.Opt[InstanceInfo], error)
 }
 
-// A StaticRelationRule defines an allowed relation pattern between two namespaces. For example, it is allowed that
+// A StaticRule defines an allowed relation pattern between two namespaces. For example, it is allowed that
 // groups can have members but no other relations are allowed. Then a new use case arrives and allows that
 // a group has a new relation which allows to delete entities from the pet resources. The new use case
 // can register a static relation rule to allow this (e.g. nago.iam.group:delete-pet:my.pets). This allows to
 // insert the according Triple (e.g. nago.iam.group:123:delete-pet:my.pets:*).
-type StaticRelationRule struct {
+type StaticRule struct {
 	Source   Namespace
 	Relation Relation
 	Target   Namespace
 }
 
-// bStaticRelationRule is the binary representation of a StaticRelationRule which is optimized for cache
+// bStaticRelationRule is the binary representation of a StaticRule which is optimized for cache
 // locality and comparision performance. Micro benchmarks have shown that this trick has a huge performance gain.
 type bStaticRelationRule struct {
 	Source   bNamespace

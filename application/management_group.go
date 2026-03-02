@@ -47,7 +47,7 @@ func (c *Configurator) GroupManagement() (GroupManagement, error) {
 			return GroupManagement{}, err
 		}
 
-		rdb.RegisterStaticRelationRule(rebac.StaticRelationRule{
+		rdb.RegisterStaticRelationRule(rebac.StaticRule{
 			Source:   group.Namespace,
 			Relation: rebac.Member,
 			Target:   user.Namespace,

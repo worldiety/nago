@@ -52,7 +52,7 @@ func (c *Configurator) RoleManagement() (RoleManagement, error) {
 
 		// we have permissions which are generated and registered any time later at runtime, which must be generally allowed to be assigned
 		permission.OnPermissionRegistered(func(permission permission.Permission) {
-			rdb.RegisterStaticRelationRule(rebac.StaticRelationRule{
+			rdb.RegisterStaticRelationRule(rebac.StaticRule{
 				Source:   role.Namespace,
 				Relation: rebac.Relation(permission.ID),
 				Target:   rebac.Global,
@@ -60,14 +60,14 @@ func (c *Configurator) RoleManagement() (RoleManagement, error) {
 		})
 
 		for perm := range permission.All() {
-			rdb.RegisterStaticRelationRule(rebac.StaticRelationRule{
+			rdb.RegisterStaticRelationRule(rebac.StaticRule{
 				Source:   role.Namespace,
 				Relation: rebac.Relation(perm.ID),
 				Target:   rebac.Global,
 			})
 		}
 
-		rdb.RegisterStaticRelationRule(rebac.StaticRelationRule{
+		rdb.RegisterStaticRelationRule(rebac.StaticRule{
 			Source:   role.Namespace,
 			Relation: rebac.Member,
 			Target:   user.Namespace,
