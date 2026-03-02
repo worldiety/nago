@@ -35,6 +35,7 @@ import {
 	RichTextEditor,
 	Scaffold,
 	ScrollView,
+	Select,
 	Spacer,
 	Table,
 	TextField,
@@ -71,6 +72,7 @@ const LazyUiRichText = defineAsyncComponent(() => import('@/components/richtexte
 const LazyUiRichTextEditor = defineAsyncComponent(() => import('@/components/richtexteditor/UiRichTextEditor.vue'));
 const LazyUiScaffold = defineAsyncComponent(() => import('@/components/scaffold/UiScaffold.vue'));
 const LazyUiScrollView = defineAsyncComponent(() => import('@/components/scrollview/UiScrollView.vue'));
+const LazyUiSelect = defineAsyncComponent(() => import('@/components/UiSelect.vue'));
 const LazyUiSpacer = defineAsyncComponent(() => import('@/components/spacer/UiSpacer.vue'));
 const LazyUiTable = defineAsyncComponent(() => import('@/components/table/UiTable.vue'));
 const LazyUiTextLayout = defineAsyncComponent(() => import('@/components/textlayout/UiTextLayout.vue'));
@@ -228,6 +230,10 @@ export function vueComponentFor(ngc: NagoComponent): Component {
 
 	if (ngc instanceof DnDArea) {
 		return LazyUiDnDArea;
+	}
+
+	if (ngc instanceof Select) {
+		return LazyUiSelect;
 	}
 
 	// keep this as the default fallback

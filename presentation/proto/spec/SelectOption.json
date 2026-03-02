@@ -1,0 +1,19 @@
+{
+  "doc": "SelectOption represents a selectable option, e.g. used in a native select element.",
+  "kind": "Record",
+  "id": 179,
+  "fields": {
+    "1": {
+      "name": "Value",
+      "type": "Str"
+    },
+    "2": {
+      "name": "Disabled",
+      "type": "Bool"
+    },
+    "3": {
+      "name": "Label",
+      "type": "Str"
+    }
+  }
+}
