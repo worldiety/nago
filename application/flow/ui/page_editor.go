@@ -134,19 +134,19 @@ func PageEditor(wnd core.Window, opts PageEditorOptions) core.View {
 							ui.MenuItem(func() {
 								formEditorFlagShowInspectorState.Set(!formEditorFlagShowInspectorState.Get())
 								formEditorFlagTestState.Set(false)
-							}, ui.HStack(ui.Checkbox(formEditorFlagShowInspectorState.Get()), ui.Text("Show Inspector")),
+							}, ui.HStack(ui.CheckboxField("Show Inspector", formEditorFlagShowInspectorState.Get())),
 							),
 
 							ui.MenuItem(func() {
 								formEditorFlagInsertModeState.Set(!formEditorFlagInsertModeState.Get())
 								formEditorFlagTestState.Set(false)
-							}, ui.HStack(ui.Checkbox(formEditorFlagInsertModeState.Get()), ui.Text("Insert mode")),
+							}, ui.HStack(ui.CheckboxField("Insert mode", formEditorFlagInsertModeState.Get())),
 							),
 							ui.MenuItem(func() {
 								formEditorFlagInsertModeState.Set(false)
 								formEditorFlagShowInspectorState.Set(false)
 								formEditorFlagTestState.Set(!formEditorFlagTestState.Get())
-							}, ui.HStack(ui.Checkbox(formEditorFlagTestState.Get()), ui.Text("Test mode")),
+							}, ui.HStack(ui.CheckboxField("Test mode", formEditorFlagTestState.Get())),
 							),
 						),
 					),
@@ -226,4 +226,13 @@ func renderSelected(wnd core.Window, opts PageEditorOptions, ws *flow.Workspace,
 		return ui.Text(fmt.Sprintf("%T", selected))
 	}
 
+}
+
+func fakeCheckbox(checked bool, label string) core.View {
+	box := ui.HStack()
+	if checked {
+		box = box.Append(ui.ImageIcon(icons.Check))
+	}
+
+	return ui.HStack(box.Border(ui.Border{}.Color(ui.ColorInputBorder)), ui.Text("Show Inspector")).Gap(ui.L2)
 }

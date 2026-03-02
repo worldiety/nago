@@ -121,6 +121,10 @@ func (c TCheckboxField) Render(context core.RenderContext) core.RenderNode {
 		c.id = c.inputValue.ID()
 	}
 
+	if c.inputValue == nil {
+		return c.checkedLabel(c.value, c.label).Render(context)
+	}
+
 	return VStack(
 		HStack(
 			Checkbox(c.value).
@@ -139,4 +143,32 @@ func (c TCheckboxField) Render(context core.RenderContext) core.RenderNode {
 		Visible(!c.invisible).
 		Padding(c.padding).
 		Frame(c.frame).Render(context)
+}
+
+var checkMark = []byte(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+	<path
+		fill="currentColor"
+		d="M23.146,5.4,20.354,2.6a.5.5,0,0,0-.708,0L7.854,14.4a.5.5,0,0,1-.708,0L4.354,11.6a.5.5,0,0,0-.708,0L.854,14.4a.5.5,0,0,0,0,.707L7.146,21.4a.5.5,0,0,0,.708,0L23.146,6.1A.5.5,0,0,0,23.146,5.4Z"/>
+</svg>
+`)
+
+// checkedLabel is a helper function, which renders a standardized passive checkbox element. This is
+// required because the style of a disabled checkbox does not show the actual checked state and the current frontend
+// implementation captures all events independent if it actually should do so. We also don't have a proper spec
+// for this situation, thus lets pretend something more reasonable.
+//
+// At least this fixes interactive issues when used in TMenuItem.
+func (c TCheckboxField) checkedLabel(checked bool, label string) core.View {
+	box := HStack().ID(c.id)
+	if checked {
+		box = box.Append(ImageIcon(checkMark).Frame(Frame{Width: L8, Height: L8}))
+	}
+
+	return HStack(
+		Space(L2),
+		box.
+			Frame(Frame{Width: L16, Height: L16}).
+			Padding(Padding{}.All(L2)).
+			Border(Border{}.Radius(L2).Width(L1).Color(ColorInputBorder)), Text(label)).Gap(L8)
+
 }
