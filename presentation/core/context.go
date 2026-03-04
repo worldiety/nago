@@ -9,8 +9,10 @@ package core
 
 import (
 	"context"
-	"go.wdy.de/nago/pkg/std/concurrent"
+	"fmt"
 	"reflect"
+
+	"go.wdy.de/nago/pkg/std/concurrent"
 )
 
 type syskey string
@@ -64,6 +66,7 @@ func FromContext[T any](ctx context.Context, name string) (T, bool) {
 		}
 	}
 
+	fmt.Println(reflect.TypeFor[T]())
 	v, ok := mCtx.byType.Get(reflect.TypeFor[T]())
 	if !ok {
 		var zero T

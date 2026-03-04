@@ -20,7 +20,7 @@ import (
 	"golang.org/x/text/language"
 )
 
-func NewSystem(ctx context.Context) SysUser {
+func NewSystem(ctx func() context.Context) SysUser {
 	return func() Subject {
 		return sysUser{ctx}
 	}
@@ -33,11 +33,11 @@ func SU() Subject {
 }
 
 type sysUser struct {
-	ctx context.Context
+	ctx func() context.Context
 }
 
 func (s sysUser) Context() context.Context {
-	return s.ctx
+	return s.ctx()
 }
 
 func (s sysUser) Bundle() *i18n.Bundle {

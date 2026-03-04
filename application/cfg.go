@@ -45,7 +45,8 @@ type BlobStorageFactory interface {
 type Configurator struct {
 	stores                     *LocalStores
 	storesMutex                sync.Mutex
-	ctx                        context.Context
+	origCtx                    context.Context
+	mutCtx                     atomic.Pointer[context.Context] // we are in the configuration phase and chaining the contexts over complicates things
 	done                       context.CancelFunc
 	logger                     *slog.Logger
 	debug                      bool
@@ -69,7 +70,7 @@ type Configurator struct {
 	fps                        int
 
 	systemServices         []core.CtxOption
-	systemServicesModified bool
+	systemServicesModified atomic.Bool
 	mailManagement         *MailManagement
 	mailManagementMutator  func(*MailManagement)
 	userManagement         *UserManagement
@@ -115,6 +116,9 @@ func NewConfigurator() *Configurator {
 		buildInfo = fmt.Sprintf("%s %s", runtime.GOOS, runtime.GOARCH)
 	}
 
+	// the following line initializes the mutable, shared, singleton context value lookup to avoid o(n) context lookup regression
+	ctx = core.WithContext(ctx, core.ContextValue("_nago", true))
+
 	cfg := &Configurator{
 		colorSets: map[core.ColorScheme]map[core.NamespaceName]core.ColorSet{
 			core.Dark:  {},
@@ -123,7 +127,7 @@ func NewConfigurator() *Configurator {
 		applicationSemanticVersion: "0.0.0",
 
 		fps:                10,
-		ctx:                ctx,
+		origCtx:            ctx,
 		done:               done,
 		factories:          map[proto.RootViewID]func(wnd core.Window) core.View{},
 		applicationName:    filepath.Base(os.Args[0]),
@@ -247,7 +251,7 @@ func (c *Configurator) LoadConfigFromEnv() {
 
 func (c *Configurator) AddContextValue(opts ...core.CtxOption) *Configurator {
 	c.systemServices = append(c.systemServices, opts...)
-	c.systemServicesModified = true
+	c.systemServicesModified.Store(true)
 	return c
 }
 
@@ -476,12 +480,12 @@ func (c *Configurator) getScheme() string {
 
 // Context returns the applications default context enriched with currently configured context values.
 func (c *Configurator) Context() context.Context {
-	if c.systemServicesModified {
-		c.ctx = core.WithContext(c.ctx, c.systemServices...)
-		c.systemServicesModified = false
+	if c.systemServicesModified.Load() {
+		c.mutCtx.Store(new(core.WithContext(c.origCtx, c.systemServices...)))
+		c.systemServicesModified.Store(false)
 	}
 
-	return c.ctx
+	return *c.mutCtx.Load()
 }
 
 // Debug sets the debug flag.

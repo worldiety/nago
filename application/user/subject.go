@@ -146,6 +146,7 @@ func newViewImpl(ctx context.Context, rdb *rebac.DB, repo Repository, user User)
 }
 
 func (v *viewImpl) Context() context.Context {
+	//return v.ctx
 	return *v.ctxWithBundle.Load()
 }
 

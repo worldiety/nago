@@ -124,7 +124,7 @@ func (c *Configurator) newHandler() http.Handler {
 	getAnonUser := std.Must(c.UserManagement()).UseCases.GetAnonUser // user management is also not optional anymore
 
 	app2 := core.NewApplication(
-		c.ctx,
+		c.Context(),
 		tmpDir,
 		factories,
 		c.onWindowCreatedObservers,
