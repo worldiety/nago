@@ -7,6 +7,10 @@
  * SPDX-License-Identifier: Custom-License
  */
 
-*:focus-visible {
+*:focus-visible:not(.custom-focus) {
 	@apply outline-none outline-I0 outline-offset-4;
+}
+
+.custom-focus {
+	@apply outline-none;
 }

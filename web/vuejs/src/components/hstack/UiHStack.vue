@@ -8,7 +8,7 @@
 -->
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue';
+import { computed, onUnmounted, watch } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
 import { backgroundCSS } from '@/components/shared/background';
 import { borderCSS } from '@/components/shared/border';
@@ -19,13 +19,15 @@ import { cssLengthValue } from '@/components/shared/length';
 import { paddingCSS } from '@/components/shared/padding';
 import { positionCSS } from '@/components/shared/position';
 import { transformationCSS } from '@/components/shared/transformation';
+import { randomStr } from '@/components/shared/util';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
+import { CssStyles } from '@/shared/cssStyles';
+import type { HStack } from '@/shared/proto/nprotoc_gen';
 import {
 	AlignmentValues,
 	AnimationValues,
 	FunctionCallRequested,
-	HStack,
 	Img,
 	StylePresetValues,
 } from '@/shared/proto/nprotoc_gen';
@@ -34,129 +36,23 @@ const props = defineProps<{
 	ui: HStack;
 }>();
 
-const hover = ref(false);
-const pressed = ref(false);
-const focused = ref(false);
-const focusable = ref(false);
-const focusVisible = ref(false);
+const id = props.ui.id || randomStr(16);
+const cssStyles = new CssStyles(id);
 const serviceAdapter = useServiceAdapter();
 
-function onClick(event: Event) {
-	if (props.ui.action) {
-		event.stopPropagation();
-		serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.action, nextRID()));
-	}
-}
+const focusable = computed<boolean>(
+	() => !!props.ui.action || !!props.ui.focusedBorder || !!props.ui.focusedBackgroundColor
+);
 
-function onKeydown(event: KeyboardEvent) {
-	if (props.ui.action) {
-		event.stopPropagation();
-		if (event.code === 'Enter' || event.code === 'Space') {
-			serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.action, nextRID()));
-		}
-	}
-}
-
-function checkFocusVisible(event: Event) {
-	const element = event.target as HTMLElement;
-	focusVisible.value = element.matches(':focus-visible');
-}
-
-// copy-paste me into UiText, UiVStack and UiHStack (or refactor me into some kind of generics-getter-setter-nightmare).
-function commonStyles(): string[] {
-	let styles = frameCSS(props.ui.frame);
-	styles.push(...positionCSS(props.ui.position));
-	styles.push(...transformationCSS(props.ui.transformation));
-	styles.push(...backgroundCSS(props.ui.background));
-
-	// background handling
-	if (props.ui.pressedBackgroundColor && pressed.value) {
-		styles.push(`background-color: ${colorValue(props.ui.pressedBackgroundColor)}`);
-	} else {
-		if (props.ui.hoveredBackgroundColor) {
-			if (hover.value) {
-				styles.push(`background-color: ${colorValue(props.ui.hoveredBackgroundColor)}`);
-			} else {
-				styles.push(`background-color: ${colorValue(props.ui.backgroundColor)}`);
-			}
-		} else {
-			styles.push(`background-color: ${colorValue(props.ui.backgroundColor)}`);
-		}
-	}
-
-	if (props.ui.opacity) {
-		styles.push(`opacity: ${100 - props.ui.opacity}%`);
-	}
-
-	if (props.ui.action) {
-		focusable.value = true;
-	}
-
-	if (props.ui.focusedBackgroundColor) {
-		focusable.value = true;
-		if (focused.value && !pressed.value) {
-			styles.push(`background-color: ${colorValue(props.ui.focusedBackgroundColor)}`);
-		}
-	}
-
-	// border handling
-	if (props.ui.pressedBorder && pressed.value) {
-		styles.push(...borderCSS(props.ui.pressedBorder));
-	} else {
-		if (props.ui.hoveredBorder) {
-			if (hover.value) {
-				styles.push(...borderCSS(props.ui.hoveredBorder));
-			} else {
-				styles.push(...borderCSS(props.ui.border));
-			}
-		} else {
-			styles.push(...borderCSS(props.ui.border));
-		}
-	}
-
-	if (props.ui.focusedBorder) {
-		focusable.value = true;
-		if (focused.value && !pressed.value) {
-			styles.push(...borderCSS(props.ui.focusedBorder));
-		}
-	}
-
-	// other stuff
-	styles.push(...paddingCSS(props.ui.padding));
-	styles.push(...fontCSS(props.ui.font));
-
-	if (focusVisible.value) {
-		styles.push('outline: 2px solid black'); // always apply solid and never auto. Auto will create random broken effects on firefox and chrome
-	}
-
-	if (props.ui.textColor) {
-		styles.push(`color: ${colorValue(props.ui.textColor)}`);
-	}
-
-	return styles;
-}
-
-const frameStyles = computed<string>(() => {
-	let styles = commonStyles();
-
-	if (props.ui.gap) {
-		styles.push(`column-gap:${cssLengthValue(props.ui.gap)}`);
-	}
-
-	if (props.ui.wrap && props.ui.gap) {
-		styles.push(`row-gap:${cssLengthValue(props.ui.gap)}`);
-	}
-
-	return styles.join(';');
-});
-
-const clazz = computed<string>(() => {
-	let classes = ['inline-flex'];
-	if (!props.ui.noClip) {
-		classes.push('overflow-clip');
-	} else {
-		classes.push('overflow-visible');
-	}
+const classes = computed<string>(() => {
+	const classes = ['inline-flex'];
+	if (!props.ui.noClip) classes.push('overflow-clip');
+	else classes.push('overflow-visible');
+	if (props.ui.action) classes.push('cursor-pointer');
+	if (props.ui.wrap) classes.push('flex-wrap');
+	if (activeStyles.value.length) classes.push('custom-active');
+	if (focusStyles.value.length) classes.push('custom-focus');
+	if (hoverStyles.value.length) classes.push('custom-hover');
 
 	switch (props.ui.animation) {
 		case AnimationValues.AnimateBounce:
@@ -212,14 +108,6 @@ const clazz = computed<string>(() => {
 			break;
 	}
 
-	if (props.ui.action) {
-		classes.push('cursor-pointer');
-	}
-
-	if (props.ui.wrap) {
-		classes.push('flex-wrap');
-	}
-
 	switch (props.ui.stylePreset) {
 		case StylePresetValues.StyleButtonPrimary:
 			classes.push('button-primary');
@@ -241,61 +129,111 @@ const clazz = computed<string>(() => {
 
 	return classes.join(' ');
 });
+
+const activeStyles = computed<string[]>(() => {
+	const styles: string[] = [];
+	if (props.ui.pressedBorder) styles.push(...borderCSS(props.ui.pressedBorder));
+	if (props.ui.pressedBackgroundColor)
+		styles.push(`background-color: ${colorValue(props.ui.pressedBackgroundColor)}`);
+	return styles;
+});
+
+const defaultStyles = computed<string[]>(() => {
+	const styles = frameCSS(props.ui.frame);
+	styles.push(...borderCSS(props.ui.border));
+	styles.push(...positionCSS(props.ui.position));
+	styles.push(...transformationCSS(props.ui.transformation));
+	styles.push(...backgroundCSS(props.ui.background));
+	styles.push(`background-color: ${colorValue(props.ui.backgroundColor)}`);
+	styles.push(...paddingCSS(props.ui.padding));
+	styles.push(...fontCSS(props.ui.font));
+
+	if (props.ui.opacity) styles.push(`opacity: ${100 - props.ui.opacity}%`);
+	if (props.ui.gap) styles.push(`column-gap:${cssLengthValue(props.ui.gap)}`);
+	if (props.ui.wrap && props.ui.gap) styles.push(`row-gap:${cssLengthValue(props.ui.gap)}`);
+
+	return styles;
+});
+
+const focusStyles = computed<string[]>(() => {
+	const styles: string[] = [];
+	if (props.ui.focusedBorder) styles.push(...borderCSS(props.ui.focusedBorder));
+	if (props.ui.focusedBackgroundColor)
+		styles.push(`background-color: ${colorValue(props.ui.focusedBackgroundColor)}`);
+	return styles;
+});
+
+const hoverStyles = computed<string[]>(() => {
+	const styles: string[] = [];
+	if (props.ui.hoveredBorder) styles.push(...borderCSS(props.ui.hoveredBorder));
+	if (props.ui.hoveredBackgroundColor)
+		styles.push(`background-color: ${colorValue(props.ui.hoveredBackgroundColor)}`);
+	return styles;
+});
+
+function onClick() {
+	if (!props.ui.action) return;
+	serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.action, nextRID()));
+}
+
+function onKeydownEnterOrSpace() {
+	if (!props.ui.action) return;
+	serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.action, nextRID()));
+}
+
+function loadStyles() {
+	cssStyles.setStyles(defaultStyles.value, hoverStyles.value, focusStyles.value, activeStyles.value);
+}
+
+function init() {
+	loadStyles();
+	watch(props.ui, loadStyles, { deep: true });
+}
+
+init();
+onUnmounted(() => cssStyles.remove());
 </script>
 
 <template>
 	<!-- hstack -->
 	<div
-		:id="ui.id"
 		v-if="
 			!props.ui.url &&
 			(props.ui.stylePreset === StylePresetValues.StyleNone || props.ui.stylePreset === undefined) &&
 			!props.ui.invisible
 		"
-		:class="clazz"
-		:style="frameStyles"
-		@mouseover="hover = true"
-		@mouseleave="hover = false"
-		@mousedown="pressed = true"
-		@mouseup="pressed = false"
-		@mouseout="pressed = false"
-		@focusin="focused = true"
+		:id="id"
+		:class="classes"
 		:title="props.ui.accessibilityLabel"
-		@focusout="
-			focused = false;
-			focusVisible = false;
-		"
 		:tabindex="focusable ? 0 : -1"
-		@click="onClick"
-		@keydown="onKeydown"
-		@focus="checkFocusVisible"
+		@click.stop="onClick"
+		@keydown.enter.stop="onKeydownEnterOrSpace"
+		@keydown.space.stop="onKeydownEnterOrSpace"
 	>
 		<ui-generic v-for="ui in props.ui.children?.value" :ui="ui" />
 	</div>
 
 	<button
-		:id="ui.id"
-		:tabindex="focusable ? 0 : -1"
-		:disabled="props.ui.disabled"
 		v-else-if="
 			!props.ui.url &&
 			props.ui.stylePreset !== StylePresetValues.StyleNone &&
 			props.ui.stylePreset !== undefined &&
 			(props.ui.invisible === undefined || !props.ui.invisible)
 		"
-		:class="clazz"
-		:style="frameStyles"
-		@click="onClick"
+		:id="id"
+		:tabindex="focusable ? 0 : -1"
+		:disabled="props.ui.disabled"
+		:class="classes"
 		:title="props.ui.accessibilityLabel"
+		@click.stop="onClick"
 	>
 		<ui-generic v-for="ui in props.ui.children?.value" :ui="ui" />
 	</button>
 
 	<a
 		v-else-if="props.ui.url"
-		:id="ui.id"
-		:class="clazz"
-		:style="frameStyles"
+		:id="id"
+		:class="classes"
 		:href="props.ui.url"
 		:target="props.ui.target"
 		:title="props.ui.accessibilityLabel"

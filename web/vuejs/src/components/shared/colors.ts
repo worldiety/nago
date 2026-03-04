@@ -44,20 +44,27 @@ export function colorValue(color?: Color): string {
 		return '';
 	}
 
-	if (color.startsWith('#')) {
-		return color;
-	}
-
 	let opacity = 100;
 	if (color.includes('/')) {
 		opacity = opacityValue(color);
 		color = color.split('/')[0];
+
+		if (color.startsWith('#') || color.startsWith('rgb')) {
+			return `color-mix(in srgb, ${color} ${opacity}%, rgba(255, 255, 255, 0))`;
+		}
+
+		return `color-mix(in srgb, var(--${color}) ${opacity}%, rgba(255, 255, 255, 0))`;
 	}
 
-	return `color-mix(in srgb, var(--${color}) ${opacity}%, rgba(255, 255, 255, 0))`;
+	return color;
 }
 
 function opacityValue(color?: Color): number {
+	if (color?.includes('/')) {
+		const split = color?.split('/').pop();
+		return split ? (parseInt(split) / 255) * 100 : 0;
+	}
+
 	if (color?.startsWith('#')) {
 		let split = '';
 		if (color?.length === 5) split = color.substring(4);
@@ -68,11 +75,6 @@ function opacityValue(color?: Color): number {
 		}
 
 		return 100;
-	}
-
-	if (color?.includes('/')) {
-		const split = color?.split('/').pop();
-		return split ? (parseInt(split) / 255) * 100 : 0;
 	}
 
 	return 0;

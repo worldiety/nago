@@ -102,8 +102,8 @@ func customButton(fillColor Color, hstack THStack) DecoredView {
 	return hstack.
 		HoveredBackgroundColor(fillColor.WithTransparency(25)).
 		PressedBackgroundColor(fillColor.WithTransparency(35)).
-		PressedBorder(Border{}.Circle().Color("#00000000").Width(L2)).
-		FocusedBorder(Border{}.Circle().Color("#ffffff").Width(L2)).
+		PressedBorder(Border{}.Circle().Color("#ff0000").Width(L2)).
+		FocusedBorder(Border{}.Circle().Color("#0000ff").Width(L2)).
 		Gap(L4).
 		BackgroundColor(fillColor).
 		Frame(Frame{Height: "2.375rem"}).
