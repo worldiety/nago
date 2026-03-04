@@ -571,7 +571,7 @@ func (c *Configurator) newHandler() http.Handler {
 		}
 
 		if err := channel.Loop(); err != nil {
-			slog.Error("websocket channel loop failed", slog.Any("err", err), "id", scopeID)
+			//slog.Error("websocket channel loop failed", slog.Any("err", err), "id", scopeID)
 			scope.Connect(nil) // we cannot use that anymore, so clean it up
 			return
 		}

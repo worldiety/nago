@@ -380,7 +380,7 @@ func (s *Scope) handleComponentDestructionRequested(evt *proto.RootViewDestructi
 
 func (s *Scope) destroyView() {
 	if s.allocatedRootView.IsNone() {
-		slog.Error("no root view to destroy, ignoring")
+		//slog.Error("no root view to destroy, ignoring")
 		return
 	}
 

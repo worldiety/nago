@@ -69,6 +69,7 @@ type Configurator struct {
 	appIconUri                 proto.URI
 	fps                        int
 
+	mutex                  sync.Mutex
 	systemServices         []core.CtxOption
 	systemServicesModified atomic.Bool
 	mailManagement         *MailManagement
@@ -250,6 +251,9 @@ func (c *Configurator) LoadConfigFromEnv() {
 }
 
 func (c *Configurator) AddContextValue(opts ...core.CtxOption) *Configurator {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
 	c.systemServices = append(c.systemServices, opts...)
 	c.systemServicesModified.Store(true)
 	return c
@@ -481,6 +485,9 @@ func (c *Configurator) getScheme() string {
 // Context returns the applications default context enriched with currently configured context values.
 func (c *Configurator) Context() context.Context {
 	if c.systemServicesModified.Load() {
+		c.mutex.Lock()
+		defer c.mutex.Unlock()
+
 		c.mutCtx.Store(new(core.WithContext(c.origCtx, c.systemServices...)))
 		c.systemServicesModified.Store(false)
 	}

@@ -246,7 +246,7 @@ func (s *Scope) Connect(c Channel) {
 		c = NopChannel{}
 	}
 
-	slog.Info("scope connected to channel", slog.String("scopeId", string(s.id)), slog.String("channel", fmt.Sprintf("%T", c)))
+	//slog.Info("scope connected to channel", slog.String("scopeId", string(s.id)), slog.String("channel", fmt.Sprintf("%T", c)))
 
 	if destructor := s.chanDestructor.Value(); destructor != nil {
 		destructor()
