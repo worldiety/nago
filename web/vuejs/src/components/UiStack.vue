@@ -8,7 +8,7 @@
 -->
 
 <script lang="ts" setup>
-import { computed, onUnmounted, watch } from 'vue';
+import { computed } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
 import { backgroundCSS } from '@/components/shared/background';
 import { borderCSS } from '@/components/shared/border';
@@ -22,7 +22,7 @@ import { transformationCSS } from '@/components/shared/transformation';
 import { randomStr } from '@/components/shared/util';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
-import { CssStyles } from '@/shared/cssStyles';
+import { CssClasses } from '@/shared/cssClasses';
 import { HStack, VStack } from '@/shared/proto/nprotoc_gen';
 import {
 	AlignmentValues,
@@ -37,7 +37,6 @@ const props = defineProps<{
 }>();
 
 const id = props.ui.id || randomStr(16);
-const cssStyles = new CssStyles(id);
 const serviceAdapter = useServiceAdapter();
 
 const focusable = computed<boolean>(
@@ -51,9 +50,19 @@ const classes = computed<string>(() => {
 	else classes.push('overflow-visible');
 	if (props.ui.action) classes.push('cursor-pointer');
 	if (props.ui instanceof HStack && props.ui.wrap) classes.push('flex-wrap');
-	if (activeStyles.value.length) classes.push('custom-active');
-	if (focusStyles.value.length) classes.push('custom-focus');
-	if (hoverStyles.value.length) classes.push('custom-hover');
+	classes.push(defaultClass.value);
+	if (activeClass.value) {
+		classes.push(activeClass.value);
+		classes.push('custom-active');
+	}
+	if (focusClass.value) {
+		classes.push(focusClass.value);
+		classes.push('custom-focus');
+	}
+	if (hoverClass.value) {
+		classes.push(hoverClass.value);
+		classes.push('custom-hover');
+	}
 	classes.push(...getAlignmentClasses());
 	classes.push(...getPresetClasses());
 
@@ -63,15 +72,17 @@ const classes = computed<string>(() => {
 	return classes.join(' ');
 });
 
-const activeStyles = computed<string[]>(() => {
+const activeClass = computed<string | undefined>(() => {
 	const styles: string[] = [];
 	if (props.ui.pressedBorder) styles.push(...borderCSS(props.ui.pressedBorder));
 	if (props.ui.pressedBackgroundColor)
 		styles.push(`background-color: ${colorValue(props.ui.pressedBackgroundColor)}`);
-	return styles;
+
+	if (!styles.length) return;
+	return CssClasses.getOrCreate(styles, 'active');
 });
 
-const defaultStyles = computed<string[]>(() => {
+const defaultClass = computed<string>(() => {
 	const styles = frameCSS(props.ui.frame);
 	styles.push(...borderCSS(props.ui.border));
 	styles.push(...positionCSS(props.ui.position));
@@ -86,23 +97,27 @@ const defaultStyles = computed<string[]>(() => {
 	if ((!(props.ui instanceof HStack) || props.ui.wrap) && props.ui.gap)
 		styles.push(`row-gap:${cssLengthValue(props.ui.gap)}`);
 
-	return styles;
+	return CssClasses.getOrCreate(styles);
 });
 
-const focusStyles = computed<string[]>(() => {
+const focusClass = computed<string | undefined>(() => {
 	const styles: string[] = [];
 	if (props.ui.focusedBorder) styles.push(...borderCSS(props.ui.focusedBorder));
 	if (props.ui.focusedBackgroundColor)
 		styles.push(`background-color: ${colorValue(props.ui.focusedBackgroundColor)}`);
-	return styles;
+
+	if (!styles.length) return;
+	return CssClasses.getOrCreate(styles, 'focus');
 });
 
-const hoverStyles = computed<string[]>(() => {
+const hoverClass = computed<string | undefined>(() => {
 	const styles: string[] = [];
 	if (props.ui.hoveredBorder) styles.push(...borderCSS(props.ui.hoveredBorder));
 	if (props.ui.hoveredBackgroundColor)
 		styles.push(`background-color: ${colorValue(props.ui.hoveredBackgroundColor)}`);
-	return styles;
+
+	if (!styles.length) return;
+	return CssClasses.getOrCreate(styles, 'hover');
 });
 
 function getAlignmentClasses(): string[] {
@@ -207,22 +222,9 @@ function onKeydownEnterOrSpace() {
 	if (!props.ui.action) return;
 	serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.action, nextRID()));
 }
-
-function loadStyles() {
-	cssStyles.setStyles(defaultStyles.value, hoverStyles.value, focusStyles.value, activeStyles.value);
-}
-
-function init() {
-	loadStyles();
-	watch(props.ui, loadStyles, { deep: true });
-}
-
-init();
-onUnmounted(() => cssStyles.remove());
 </script>
 
 <template>
-	<!-- hstack -->
 	<div
 		v-if="
 			!(props.ui instanceof HStack && props.ui.url) &&
