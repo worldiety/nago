@@ -117,7 +117,7 @@ type Subject interface {
 
 type viewImpl struct {
 	user            User
-	ctx             context.Context
+	ctx             func() context.Context
 	ctxWithBundle   atomic.Pointer[context.Context]
 	mutex           sync.Mutex
 	repo            Repository
@@ -128,7 +128,7 @@ type viewImpl struct {
 	rdb             *rebac.DB
 }
 
-func newViewImpl(ctx context.Context, rdb *rebac.DB, repo Repository, user User) *viewImpl {
+func newViewImpl(ctx func() context.Context, rdb *rebac.DB, repo Repository, user User) *viewImpl {
 	v := &viewImpl{
 		ctx:             ctx,
 		user:            user,
@@ -138,7 +138,7 @@ func newViewImpl(ctx context.Context, rdb *rebac.DB, repo Repository, user User)
 		rdb:             rdb,
 	}
 
-	v.ctxWithBundle.Store(&v.ctx)
+	v.ctxWithBundle.Store(new(v.ctx()))
 
 	v.load()
 
@@ -146,7 +146,6 @@ func newViewImpl(ctx context.Context, rdb *rebac.DB, repo Repository, user User)
 }
 
 func (v *viewImpl) Context() context.Context {
-	//return v.ctx
 	return *v.ctxWithBundle.Load()
 }
 
@@ -286,7 +285,7 @@ func (v *viewImpl) HasPermission(permission permission.ID) bool {
 		return false
 	}
 
-	ok, err := v.rdb.Contains(rebac.Triple{
+	ok, err := v.rdb.Resolve(rebac.Triple{
 		Source: rebac.Entity{
 			Namespace: Namespace,
 			Instance:  rebac.Instance(v.ID()),
@@ -507,7 +506,7 @@ func (v *viewImpl) Bundle() *i18n.Bundle {
 
 func (v *viewImpl) SetBundle(b *i18n.Bundle) {
 	v.bundle.Store(b)
-	v.ctxWithBundle.Store(new(i18n.WithBundle(v.ctx, b)))
+	v.ctxWithBundle.Store(new(i18n.WithBundle(v.ctx(), b)))
 }
 
 // WithContext wraps the subject, delegates all calls but returns the given context instead.

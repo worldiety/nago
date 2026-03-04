@@ -9,9 +9,11 @@ package application
 
 import (
 	"fmt"
+
 	"go.wdy.de/nago/application/image"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/data/json"
+	"go.wdy.de/nago/presentation/core"
 )
 
 // ImageManagement is a nago system(Image Management).
@@ -88,6 +90,9 @@ func (c *Configurator) ImageManagement() (ImageManagement, error) {
 			blobs:    imageBlobs,
 			UseCases: image.NewUseCases(imageSrcSetRepo, imageBlobs),
 		}
+
+		c.AddContextValue(core.ContextValue("nago.image.srcset.load", c.imageManagement.UseCases.LoadSrcSet))
+		c.AddContextValue(core.ContextValue("nago.image.srcset.create", c.imageManagement.UseCases.CreateSrcSet))
 	}
 
 	return *c.imageManagement, nil

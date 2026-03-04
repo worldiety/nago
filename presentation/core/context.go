@@ -9,7 +9,6 @@ package core
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 
 	"go.wdy.de/nago/pkg/std/concurrent"
@@ -66,7 +65,6 @@ func FromContext[T any](ctx context.Context, name string) (T, bool) {
 		}
 	}
 
-	fmt.Println(reflect.TypeFor[T]())
 	v, ok := mCtx.byType.Get(reflect.TypeFor[T]())
 	if !ok {
 		var zero T

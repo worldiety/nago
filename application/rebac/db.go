@@ -25,7 +25,7 @@ import (
 	"go.wdy.de/nago/pkg/xslices"
 )
 
-const debug = true
+const debug = false
 
 type DB struct {
 	store               blob.Store

@@ -73,7 +73,7 @@ func NewViewOf(ctx func() context.Context, bus events.Bus, users data.NotifyRepo
 			return option.None[Subject](), nil
 		}
 
-		usr := newViewImpl(ctx(), rdb, users, optUsr.Unwrap())
+		usr := newViewImpl(ctx, rdb, users, optUsr.Unwrap())
 		cachedViews.Put(id, usr)
 
 		return option.Some[Subject](usr), nil
