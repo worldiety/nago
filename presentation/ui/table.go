@@ -21,8 +21,8 @@ type TTableColumn struct {
 	colSpan                int             // number of columns to span
 	width                  proto.Length    // column width
 	alignment              proto.Alignment // content alignment
-	backgroundColor        proto.Color     // background color for cells
-	hoveredBackgroundColor proto.Color     // background color on hover
+	backgroundColor        Color           // background color for cells
+	hoveredBackgroundColor Color           // background color on hover
 	padding                proto.Padding   // padding inside the column cell
 	border                 proto.Border    // border around the cell
 	action                 func()          // optional cell-specific action
@@ -44,7 +44,7 @@ func (c TTableColumn) Action(action func()) TTableColumn {
 
 // HoveredBackgroundColor sets the background color when the column cell is hovered.
 func (c TTableColumn) HoveredBackgroundColor(backgroundColor Color) TTableColumn {
-	c.hoveredBackgroundColor = backgroundColor.ora()
+	c.hoveredBackgroundColor = backgroundColor
 	return c
 }
 
@@ -62,7 +62,7 @@ func (c TTableColumn) Alignment(alignment Alignment) TTableColumn {
 
 // BackgroundColor sets the background color for the column cell.
 func (c TTableColumn) BackgroundColor(backgroundColor Color) TTableColumn {
-	c.backgroundColor = backgroundColor.ora()
+	c.backgroundColor = backgroundColor
 	return c
 }
 
@@ -94,8 +94,8 @@ type TTableCell struct {
 	colSpan                int
 	rowSpan                int
 	alignment              proto.Alignment
-	backgroundColor        proto.Color
-	hoveredBackgroundColor proto.Color
+	backgroundColor        Color
+	hoveredBackgroundColor Color
 	padding                proto.Padding
 	border                 proto.Border
 	action                 func()
@@ -132,13 +132,13 @@ func (c TTableCell) Alignment(alignment Alignment) TTableCell {
 
 // BackgroundColor sets the background color of the cell.
 func (c TTableCell) BackgroundColor(backgroundColor Color) TTableCell {
-	c.backgroundColor = backgroundColor.ora()
+	c.backgroundColor = backgroundColor
 	return c
 }
 
 // HoveredBackgroundColor sets the background color when the cell is hovered.
 func (c TTableCell) HoveredBackgroundColor(backgroundColor Color) TTableCell {
-	c.hoveredBackgroundColor = backgroundColor.ora()
+	c.hoveredBackgroundColor = backgroundColor
 	return c
 }
 
@@ -161,8 +161,8 @@ func (c TTableCell) Border(border Border) TTableCell {
 type TTableRow struct {
 	cells                  []TTableCell
 	height                 proto.Length
-	backgroundColor        proto.Color
-	hoveredBackgroundColor proto.Color
+	backgroundColor        Color
+	hoveredBackgroundColor Color
 	action                 func()
 }
 
@@ -185,13 +185,13 @@ func (r TTableRow) Height(height Length) TTableRow {
 
 // BackgroundColor sets the background color of the row.
 func (r TTableRow) BackgroundColor(backgroundColor Color) TTableRow {
-	r.backgroundColor = backgroundColor.ora()
+	r.backgroundColor = backgroundColor
 	return r
 }
 
 // HoveredBackgroundColor sets the background color when the row is hovered.
 func (c TTableRow) HoveredBackgroundColor(backgroundColor Color) TTableRow {
-	c.hoveredBackgroundColor = backgroundColor.ora()
+	c.hoveredBackgroundColor = backgroundColor
 	return c
 }
 
@@ -203,26 +203,26 @@ type TTable struct {
 	rows                []TTableRow
 	frame               proto.Frame
 	border              proto.Border
-	backgroundColor     proto.Color
+	backgroundColor     Color
 	defaultCellPaddings proto.Padding
-	rowDividerColor     proto.Color
-	headerDividerColor  proto.Color
+	rowDividerColor     Color
+	headerDividerColor  Color
 }
 
 // Table creates a new table with the specified columns and default styling.
 func Table(columns ...TTableColumn) TTable {
 	return TTable{
 		columns:             columns,
-		backgroundColor:     M2.ora(),
+		backgroundColor:     M2,
 		defaultCellPaddings: Padding{}.Horizontal(L24).Vertical(L16).ora(),
-		rowDividerColor:     M5.ora(),
+		rowDividerColor:     M5,
 		border:              Border{}.Radius(L20).ora(),
 	}
 }
 
 // BackgroundColor sets the background color of the table.
 func (c TTable) BackgroundColor(backgroundColor Color) TTable {
-	c.backgroundColor = backgroundColor.ora()
+	c.backgroundColor = backgroundColor
 	return c
 }
 
@@ -240,13 +240,13 @@ func (c TTable) Frame(frame Frame) TTable {
 
 // RowDividerColor sets the divider color between rows.
 func (c TTable) RowDividerColor(color Color) TTable {
-	c.rowDividerColor = color.ora()
+	c.rowDividerColor = color
 	return c
 }
 
 // HeaderDividerColor sets the divider color between header and body.
 func (c TTable) HeaderDividerColor(color Color) TTable {
-	c.headerDividerColor = color.ora()
+	c.headerDividerColor = color
 	return c
 }
 
@@ -273,11 +273,11 @@ func (c TTable) Render(ctx core.RenderContext) core.RenderNode {
 			ColSpan:                    proto.Uint(column.colSpan),
 			Width:                      column.width,
 			Alignment:                  column.alignment,
-			CellBackgroundColor:        column.backgroundColor,
+			CellBackgroundColor:        proto.Color(column.backgroundColor),
 			CellAction:                 ctx.MountCallback(column.action),
 			CellPadding:                column.padding,
 			CellBorder:                 column.border,
-			CellHoveredBackgroundColor: column.hoveredBackgroundColor,
+			CellHoveredBackgroundColor: proto.Color(column.hoveredBackgroundColor),
 		})
 	}
 
@@ -290,18 +290,18 @@ func (c TTable) Render(ctx core.RenderContext) core.RenderNode {
 				RowSpan:                proto.Uint(cell.rowSpan),
 				ColSpan:                proto.Uint(cell.colSpan),
 				Alignment:              cell.alignment,
-				BackgroundColor:        cell.backgroundColor,
+				BackgroundColor:        proto.Color(cell.backgroundColor),
 				Border:                 cell.border,
 				Action:                 ctx.MountCallback(cell.action),
-				HoveredBackgroundColor: cell.hoveredBackgroundColor,
+				HoveredBackgroundColor: proto.Color(cell.hoveredBackgroundColor),
 			})
 		}
 
 		rows = append(rows, proto.TableRow{
 			Cells:                  cells,
 			Height:                 row.height,
-			BackgroundColor:        row.backgroundColor,
-			HoveredBackgroundColor: row.hoveredBackgroundColor,
+			BackgroundColor:        proto.Color(row.backgroundColor),
+			HoveredBackgroundColor: proto.Color(row.hoveredBackgroundColor),
 			Action:                 ctx.MountCallback(row.action),
 		})
 	}
@@ -311,9 +311,9 @@ func (c TTable) Render(ctx core.RenderContext) core.RenderNode {
 		Rows:               rows,
 		Frame:              c.frame,
 		Border:             c.border,
-		BackgroundColor:    c.backgroundColor,
+		BackgroundColor:    proto.Color(c.backgroundColor),
 		DefaultCellPadding: c.defaultCellPaddings,
-		RowDividerColor:    c.rowDividerColor,
-		HeaderDividerColor: c.headerDividerColor,
+		RowDividerColor:    proto.Color(c.rowDividerColor),
+		HeaderDividerColor: proto.Color(c.headerDividerColor),
 	}
 }

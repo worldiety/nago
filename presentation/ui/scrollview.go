@@ -107,7 +107,7 @@ func (c TScrollView) Render(ctx core.RenderContext) core.RenderNode {
 		Frame:           c.frame.ora(),
 		Position:        c.position.ora(),
 		Border:          c.border.ora(),
-		BackgroundColor: c.backgroundColor.ora(),
+		BackgroundColor: proto.Color(c.backgroundColor),
 		Padding:         c.padding.ora(),
 		ScrollIntoView:  proto.Str(c.scrollToView),
 		ScrollAnimation: proto.ScrollAnimation(c.scrollAnimation),

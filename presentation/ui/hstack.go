@@ -24,10 +24,10 @@ import (
 type THStack struct {
 	children               []core.View
 	alignment              proto.Alignment
-	backgroundColor        proto.Color
-	hoveredBackgroundColor proto.Color
-	pressedBackgroundColor proto.Color
-	focusedBackgroundColor proto.Color
+	backgroundColor        Color
+	hoveredBackgroundColor Color
+	pressedBackgroundColor Color
+	focusedBackgroundColor Color
 	frame                  Frame
 	gap                    proto.Length
 	padding                proto.Padding
@@ -126,28 +126,28 @@ func (c THStack) Wrap(wrap bool) THStack {
 
 // BackgroundColor sets the background color of the horizontal stack.
 func (c THStack) BackgroundColor(backgroundColor Color) THStack {
-	c.backgroundColor = backgroundColor.ora()
+	c.backgroundColor = backgroundColor
 	return c
 }
 
 // HoveredBackgroundColor sets the background color of the stack
 // when the user hovers over it.
 func (c THStack) HoveredBackgroundColor(backgroundColor Color) THStack {
-	c.hoveredBackgroundColor = backgroundColor.ora()
+	c.hoveredBackgroundColor = backgroundColor
 	return c
 }
 
 // PressedBackgroundColor sets the background color of the stack
 // when it is pressed or clicked.
 func (c THStack) PressedBackgroundColor(backgroundColor Color) THStack {
-	c.pressedBackgroundColor = backgroundColor.ora()
+	c.pressedBackgroundColor = backgroundColor
 	return c
 }
 
 // FocusedBackgroundColor sets the background color of the stack
 // when it is focused (e.g., via keyboard navigation).
 func (c THStack) FocusedBackgroundColor(backgroundColor Color) THStack {
-	c.focusedBackgroundColor = proto.Color(backgroundColor)
+	c.focusedBackgroundColor = backgroundColor
 	return c
 }
 
@@ -279,16 +279,16 @@ func (c THStack) Render(ctx core.RenderContext) core.RenderNode {
 		Gap:                c.gap,
 		Frame:              c.frame.ora(),
 		Alignment:          c.alignment,
-		BackgroundColor:    c.backgroundColor,
+		BackgroundColor:    proto.Color(c.backgroundColor),
 		Padding:            c.padding,
 		Border:             c.border,
 		AccessibilityLabel: proto.Str(c.accessibilityLabel),
 		Invisible:          proto.Bool(c.invisible),
 		Font:               c.font,
 
-		HoveredBackgroundColor: c.hoveredBackgroundColor,
-		PressedBackgroundColor: c.pressedBackgroundColor,
-		FocusedBackgroundColor: c.focusedBackgroundColor,
+		HoveredBackgroundColor: proto.Color(c.hoveredBackgroundColor),
+		PressedBackgroundColor: proto.Color(c.pressedBackgroundColor),
+		FocusedBackgroundColor: proto.Color(c.focusedBackgroundColor),
 		HoveredBorder:          c.hoveredBorder,
 		FocusedBorder:          c.focusedBorder,
 		PressedBorder:          c.pressedBorder,

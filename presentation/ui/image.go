@@ -49,8 +49,8 @@ type TImage struct {
 	frame              Frame         // layout frame for size and positioning
 	padding            proto.Padding // inner spacing around the image
 	svg                proto.SVG     // embedded SVG content
-	fillColor          proto.Color   // fill color for SVGs
-	strokeColor        proto.Color   // stroke color for SVGs
+	fillColor          Color         // fill color for SVGs
+	strokeColor        Color         // stroke color for SVGs
 	objectFit          ObjectFit     // how the image should scale within its frame
 	light, dark        []byte        // optional inline binary image data for light/dark mode
 }
@@ -111,14 +111,14 @@ func (c TImage) Adaptive(light, dark image.ID) TImage {
 // FillColor set the internal fill color value and is only applicable for embedded SVG images, which use fill=currentColor.
 // Otherwise, a broken or no effect will be seen.
 func (c TImage) FillColor(color Color) TImage {
-	c.fillColor = color.ora()
+	c.fillColor = color
 	return c
 }
 
 // StrokeColor set the internal stroke color value and is only applicable for embedded SVG images, which use fill=strokeColor.
 // Otherwise, a broken or no effect will be seen.
 func (c TImage) StrokeColor(color Color) TImage {
-	c.strokeColor = color.ora()
+	c.strokeColor = color
 	return c
 }
 
@@ -248,8 +248,8 @@ func (c TImage) Render(ctx core.RenderContext) core.RenderNode {
 		Frame:              c.frame.ora(),
 		Padding:            c.padding,
 		SVG:                svgData,
-		FillColor:          c.fillColor,
-		StrokeColor:        c.strokeColor,
+		FillColor:          proto.Color(c.fillColor),
+		StrokeColor:        proto.Color(c.strokeColor),
 		ObjectFit:          proto.ObjectFit(c.objectFit),
 	}
 }

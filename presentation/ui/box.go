@@ -39,7 +39,7 @@ type BoxLayout struct {
 // extra padding since clipped children cannot extend beyond the container.
 type TBox struct {
 	children                    []alignedComponent
-	backgroundColor             proto.Color
+	backgroundColor             Color
 	frame                       Frame
 	padding                     proto.Padding
 	font                        proto.Font
@@ -163,7 +163,7 @@ func (c TBox) Padding(p Padding) DecoredView {
 
 // BackgroundColor sets the background color of the box.
 func (c TBox) BackgroundColor(backgroundColor Color) DecoredView {
-	c.backgroundColor = backgroundColor.ora()
+	c.backgroundColor = backgroundColor
 	return c
 }
 
@@ -231,7 +231,7 @@ func (c TBox) Render(ctx core.RenderContext) core.RenderNode {
 	return &proto.Box{
 		Children:                    tmp,
 		Frame:                       c.frame.ora(),
-		BackgroundColor:             c.backgroundColor,
+		BackgroundColor:             proto.Color(c.backgroundColor),
 		Padding:                     c.padding,
 		Border:                      c.border,
 		DisableOutsidePointerEvents: proto.Bool(c.disableOutsidePointerEvents),

@@ -12,7 +12,6 @@ import (
 	"go.wdy.de/nago/presentation/proto"
 )
 
-
 // TSpace is a layout component (Space).
 // It represents a fixed-size spacer used to add consistent spacing
 // between UI elements in both vertical and horizontal layouts.
@@ -31,12 +30,11 @@ func (t TSpace) Render(ctx core.RenderContext) core.RenderNode {
 	return VStack().Frame(Frame{MinWidth: t.size, MaxWidth: t.size, MinHeight: t.size, MaxHeight: t.size}).Render(ctx)
 }
 
-
 // TSpacer is a layout component (Spacer).
 // Unlike TSpace, Spacer grows and shrinks dynamically to fill
 // available space inside VStack or HStack containers.
 type TSpacer struct {
-	backgroundColor proto.Color  // optional background color
+	backgroundColor Color        // optional background color
 	frame           proto.Frame  // optional frame constraints
 	border          proto.Border // optional border styling
 }
@@ -48,7 +46,7 @@ func Spacer() TSpacer {
 
 // BackgroundColor sets the background color of the spacer.
 func (c TSpacer) BackgroundColor(backgroundColor Color) TSpacer {
-	c.backgroundColor = backgroundColor.ora()
+	c.backgroundColor = backgroundColor
 	return c
 }
 
@@ -68,7 +66,7 @@ func (c TSpacer) Border(border Border) {
 func (c TSpacer) Render(ctx core.RenderContext) core.RenderNode {
 	return &proto.Spacer{
 		Frame:           c.frame,
-		BackgroundColor: c.backgroundColor,
+		BackgroundColor: proto.Color(c.backgroundColor),
 		Border:          c.border,
 	}
 }

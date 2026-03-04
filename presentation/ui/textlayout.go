@@ -19,7 +19,7 @@ import (
 type TTextLayout struct {
 	children        []core.View         // child views (typically text nodes)
 	alignment       proto.TextAlignment // text alignment for the block
-	backgroundColor proto.Color         // optional background fill
+	backgroundColor Color               // optional background fill
 	frame           Frame               // layout constraints (size, min/max)
 	gap             proto.Length        // spacing between children
 	padding         proto.Padding       // inner spacing around children
@@ -103,7 +103,7 @@ func (c TTextLayout) Padding(padding Padding) DecoredView {
 
 // BackgroundColor sets the background color of the layout.
 func (c TTextLayout) BackgroundColor(backgroundColor Color) DecoredView {
-	c.backgroundColor = backgroundColor.ora()
+	c.backgroundColor = backgroundColor
 	return c
 }
 
@@ -114,7 +114,7 @@ func (c TTextLayout) Render(ctx core.RenderContext) core.RenderNode {
 		Children:           renderComponents(ctx, c.children),
 		Frame:              c.frame.ora(),
 		TextAlignment:      c.alignment,
-		BackgroundColor:    c.backgroundColor,
+		BackgroundColor:    proto.Color(c.backgroundColor),
 		Padding:            c.padding,
 		AccessibilityLabel: proto.Str(c.accessibilityLabel),
 		Invisible:          proto.Bool(c.invisible),

@@ -39,7 +39,7 @@ func (b Background) AppendURI(uri core.URI) Background {
 func (b Background) AppendLinearGradient(colors ...Color) Background {
 	var tmp strings.Builder
 	for i, color := range colors {
-		if color.isAbsolute() {
+		if color.IsAbsolute() {
 			tmp.WriteString(string(color))
 		} else {
 			tmp.WriteString("var(--")
