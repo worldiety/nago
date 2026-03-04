@@ -145,7 +145,15 @@ func (s *State[T]) parse(v string) error {
 		s.Set(any(v).(T))
 
 	default:
-		return fmt.Errorf("cannot parse string value '%s' into %T", v, s.value)
+		switch reflect.TypeOf(s.value).Kind() {
+		case reflect.String:
+			val := reflect.New(reflect.TypeOf(s.value)).Elem()
+			val.SetString(v)
+			s.Set(val.Interface().(T))
+		default:
+			return fmt.Errorf("cannot parse string value '%s' into %T", v, s.value)
+		}
+
 	}
 
 	s.Notify()
@@ -226,9 +234,22 @@ func (s *State[T]) Set(v T) {
 	s.value = v
 }
 
-// Update sets and notifies the state. See also [State.Set] and [State.Notify].
+// Update sets and notifies the state. See also [State.Set] and [State.Notify]. However, it does not trigger
+// if the deep equals check returns false.
 func (s *State[T]) Update(v T) {
-	s.Set(v)
+	s.mutex.Lock()
+
+	s.valid = true // always make valid, otherwise setting e.g. a nil value to a pointer type will never become valid
+
+	if reflect.DeepEqual(s.value, v) {
+		s.mutex.Unlock()
+		return
+	}
+
+	s.value = v
+	s.mutex.Unlock()
+
+	s.Invalidate()
 	s.Notify()
 }
 
