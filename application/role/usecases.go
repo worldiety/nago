@@ -11,11 +11,18 @@ import (
 	"iter"
 	"sync"
 
+	"github.com/worldiety/i18n"
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/events"
+	"golang.org/x/text/language"
+)
+
+var (
+	StrResName = i18n.MustString("nago.role.resources.name", i18n.Values{language.German: "Rollen", language.English: "Roles"})
+	StrResDesc = i18n.MustString("nago.role.resources.desc", i18n.Values{language.German: "Rollen und assoziierte Berechtigungen.", language.English: "Roles and associated permissions."})
 )
 
 const Namespace rebac.Namespace = "nago.iam.role"
@@ -72,6 +79,7 @@ type UseCases struct {
 	FindMyRoles       FindMyRoles
 	ListPermissions   ListPermissions
 	UpdatePermissions UpdatePermissions
+	Resources         rebac.Resources
 }
 
 func NewUseCases(repo Repository, bus events.Bus, rdb *rebac.DB) UseCases {
@@ -95,5 +103,6 @@ func NewUseCases(repo Repository, bus events.Bus, rdb *rebac.DB) UseCases {
 		FindMyRoles:       findMyRolesFn,
 		ListPermissions:   NewListPermissions(rdb),
 		UpdatePermissions: NewUpdatePermissions(rdb),
+		Resources:         rebac.NewRepositoryResources(StrResName, StrResDesc, repo),
 	}
 }

@@ -60,6 +60,10 @@ func Enable(cfg *application.Configurator) (Module, error) {
 				continue
 			}
 
+			if v, ok := resources.(interface{ Visible() bool }); ok && !v.Visible() {
+				continue
+			}
+
 			grp.Entries = append(grp.Entries, admin.Card{
 				Title:        resources.Info(subject).Name,
 				Text:         resources.Info(subject).Description,
@@ -72,7 +76,7 @@ func Enable(cfg *application.Configurator) (Module, error) {
 	})
 
 	cfg.NoFooter(mod.Pages.Editor)
-	
+
 	cfg.RootViewWithDecoration(mod.Pages.Editor, func(wnd core.Window) core.View {
 		return uirebac.PageEditor(wnd, uc)
 	})

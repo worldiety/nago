@@ -9,17 +9,27 @@ package picker
 
 import (
 	"fmt"
+	"iter"
+	"log/slog"
 	"reflect"
 	"regexp"
 	"slices"
 	"strings"
 
+	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/data/rquery"
 	"go.wdy.de/nago/presentation/core"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
 )
+
+type Data[E data.Aggregate[ID], ID ~string] struct {
+	FindAll  iter.Seq2[ID, error]
+	FindByID data.ByIDFinder[E, ID]
+	Stringer func(E) string
+	ID       string
+}
 
 // TPicker is a composite component (Picker).
 // It displays a list of values and lets users choose one or multiple items,
@@ -29,7 +39,7 @@ import (
 // can be presented in a dialog with configurable options.
 type TPicker[T any] struct {
 	renderPicked         func(TPicker[T], []T) core.View // renders the "picked" summary view from current selections
-	renderToSelect2      func(wnd core.Window, item T, state *core.State[bool]) core.View
+	renderToSelect2      func(wnd core.Window, self TPicker[T], item T, state *core.State[bool]) core.View
 	stringer             func(T) string      // returns a textual representation (used e.g. for quick search/filter)
 	label                string              // primary label shown with the control
 	supportingText       string              // secondary/helper text shown under the label
@@ -50,6 +60,34 @@ type TPicker[T any] struct {
 	detailView           core.View           // optional detail pane shown alongside the list
 	invisible            bool                // when true, the control is not rendered
 	dlgOptions           []alert.Option      // dialog options used when presenting the picker
+}
+
+// FromData is similar to the dataview package. However, the picker is used in the dataview package itself
+// and therefore we cannot depend on it without an import cycle. The current implementation does not yet
+// benefit from the potential performance improvements and instead wrap the legacy api which will switch in the
+// future.
+func FromData[E data.Aggregate[ID], ID ~string](label string, selectedState *core.State[[]E], data Data[E, ID]) TPicker[E] {
+	var tmp []E
+	for id, err := range data.FindAll {
+		if err != nil {
+			slog.Error("failed to find all items", "err", err.Error())
+			continue
+		}
+
+		optE, err := data.FindByID(id)
+		if err != nil {
+			slog.Error("failed to find by id", "err", err.Error())
+			continue
+		}
+
+		if optE.IsNone() {
+			continue
+		}
+
+		tmp = append(tmp, optE.Unwrap())
+	}
+
+	return Picker[E](label, tmp, selectedState).Stringer(data.Stringer)
 }
 
 // Picker takes the given slice and state to represent the selection. Internally, it uses deep equals, to determine
@@ -80,7 +118,7 @@ func Picker[T any](label string, values []T, selectedState *core.State[[]T]) TPi
 		case 0:
 			return ui.Text("nichts gewählt").Color(textColor)
 		case 1:
-			return ui.Text(cleanMarkdown(fmt.Sprintf("%v", t[0]))).Color(textColor)
+			return ui.Text(p.stringer(t[0])).Color(textColor)
 		default:
 			return ui.Text(fmt.Sprintf("%d gewählt", len(t))).Color(textColor)
 		}
@@ -135,6 +173,11 @@ func Picker[T any](label string, values []T, selectedState *core.State[[]T]) TPi
 		c.selectAllCheckbox.Set(count == len(c.values))
 	}
 
+	return c
+}
+
+func (c TPicker[T]) Stringer(stringer func(T) string) TPicker[T] {
+	c.stringer = stringer
 	return c
 }
 
@@ -288,10 +331,17 @@ func (c TPicker[T]) ItemRenderer(fn func(T) core.View) TPicker[T] {
 // ItemRenderer2 can be customized to return a non-text view for the given T. This is
 // shown within the picker popup. If fn is nil, the default fallback rendering will be applied.
 func (c TPicker[T]) ItemRenderer2(fn func(wnd core.Window, item T, state *core.State[bool]) core.View) TPicker[T] {
-	c.renderToSelect2 = fn
 	if fn == nil {
-		c.renderToSelect2 = func(wnd core.Window, item T, state *core.State[bool]) core.View {
-			text := cleanMarkdown(fmt.Sprintf("%v", item))
+		c.renderToSelect2 = nil
+	} else {
+		c.renderToSelect2 = func(wnd core.Window, self TPicker[T], item T, state *core.State[bool]) core.View {
+			return fn(wnd, item, state)
+		}
+	}
+
+	if fn == nil {
+		c.renderToSelect2 = func(wnd core.Window, self TPicker[T], item T, state *core.State[bool]) core.View {
+			text := cleanMarkdown(self.stringer(item))
 			resolve := strings.HasPrefix(text, "@")
 
 			return ui.HStack(ui.Text(text).Resolve(resolve).LabelFor(state.ID())).Padding(ui.Padding{}.Vertical(ui.L16))
@@ -369,13 +419,13 @@ func (c TPicker[T]) pickerTable(wnd core.Window) (table core.View, quickFilter c
 				if c.multiselect.Get() {
 					yield(ui.TableRow(
 						ui.TableCell(ui.Checkbox(state.Get()).InputChecked(state).ID(state.ID())),
-						ui.TableCell(c.renderToSelect2(wnd, c.values[i], state)).Alignment(ui.Leading),
+						ui.TableCell(c.renderToSelect2(wnd, c, c.values[i], state)).Alignment(ui.Leading),
 					),
 					)
 				} else {
 					yield(ui.TableRow(
 						ui.TableCell(ui.RadioButton(state.Get()).InputChecked(state).ID(state.ID())),
-						ui.TableCell(c.renderToSelect2(wnd, c.values[i], state)).Alignment(ui.Leading),
+						ui.TableCell(c.renderToSelect2(wnd, c, c.values[i], state)).Alignment(ui.Leading),
 					),
 					)
 				}

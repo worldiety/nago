@@ -70,7 +70,7 @@ func (c *Configurator) TokenManagement() (TokenManagement, error) {
 
 		// we have permissions which are generated and registered any time later at runtime, which must be generally allowed to be assigned
 		permission.OnPermissionRegistered(func(permission permission.Permission) {
-			rdb.RegisterStaticRelationRule(rebac.StaticRule{
+			rdb.RegisterStaticRule(rebac.StaticRule{
 				Source:   token.Namespace,
 				Relation: rebac.Relation(permission.ID),
 				Target:   rebac.Global,
@@ -78,7 +78,7 @@ func (c *Configurator) TokenManagement() (TokenManagement, error) {
 		})
 
 		for perm := range permission.All() {
-			rdb.RegisterStaticRelationRule(rebac.StaticRule{
+			rdb.RegisterStaticRule(rebac.StaticRule{
 				Source:   token.Namespace,
 				Relation: rebac.Relation(perm.ID),
 				Target:   rebac.Global,
@@ -105,6 +105,8 @@ func (c *Configurator) TokenManagement() (TokenManagement, error) {
 		if err != nil {
 			return TokenManagement{}, fmt.Errorf("cannot get token usecases: %w", err)
 		}
+
+		rdb.RegisterResources(uc.Resources)
 
 		c.tokenManagement = &TokenManagement{
 			UseCases: uc,

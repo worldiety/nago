@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/worldiety/i18n"
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/permission"
@@ -24,9 +25,15 @@ import (
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/std/concurrent"
 	"go.wdy.de/nago/pkg/xtime"
+	"golang.org/x/text/language"
 )
 
 const Namespace rebac.Namespace = "nago.iam.token"
+
+var (
+	StrResName = i18n.MustString("nago.token.resources.name", i18n.Values{language.German: "Token", language.English: "Token"})
+	StrResDesc = i18n.MustString("nago.token.resources.desc", i18n.Values{language.German: "Token und assoziierte Berechtigungen.", language.English: "Token and associated permissions."})
+)
 
 type CreationData struct {
 	Name        string
@@ -89,6 +96,7 @@ type UseCases struct {
 	Rotate              Rotate
 	ResolveTokenRights  ResolveTokenRights
 	FindByID            FindByID
+	Resources           rebac.Resources
 }
 
 func NewUseCases(
@@ -167,5 +175,6 @@ func NewUseCases(
 			findRoleByID,
 			findUserByID,
 		),
+		Resources: rebac.NewRepositoryResources(StrResName, StrResDesc, repo),
 	}, nil
 }

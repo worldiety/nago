@@ -315,6 +315,6 @@ func NewUseCases(ctx context.Context, eventBus events.EventBus, rdb *rebac.DB, l
 		ListGroups:                NewListGroups(rdb),
 		ListRoles:                 NewListRoles(rdb),
 		ListGlobalPermissions:     NewListGlobalPermissions(rdb),
-		Resources:                 NewResources(findAllIdentsFn, findByIdFn),
+		Resources:                 rebac.NewRepositoryResources(StrResUsers, StrResDesc, users),
 	}
 }

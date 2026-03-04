@@ -52,7 +52,7 @@ func (c *Configurator) RoleManagement() (RoleManagement, error) {
 
 		// we have permissions which are generated and registered any time later at runtime, which must be generally allowed to be assigned
 		permission.OnPermissionRegistered(func(permission permission.Permission) {
-			rdb.RegisterStaticRelationRule(rebac.StaticRule{
+			rdb.RegisterStaticRule(rebac.StaticRule{
 				Source:   role.Namespace,
 				Relation: rebac.Relation(permission.ID),
 				Target:   rebac.Global,
@@ -60,14 +60,14 @@ func (c *Configurator) RoleManagement() (RoleManagement, error) {
 		})
 
 		for perm := range permission.All() {
-			rdb.RegisterStaticRelationRule(rebac.StaticRule{
+			rdb.RegisterStaticRule(rebac.StaticRule{
 				Source:   role.Namespace,
 				Relation: rebac.Relation(perm.ID),
 				Target:   rebac.Global,
 			})
 		}
 
-		rdb.RegisterStaticRelationRule(rebac.StaticRule{
+		rdb.RegisterStaticRule(rebac.StaticRule{
 			Source:   role.Namespace,
 			Relation: rebac.Member,
 			Target:   user.Namespace,
@@ -89,6 +89,8 @@ func (c *Configurator) RoleManagement() (RoleManagement, error) {
 				Role:  "admin/iam/roles/role",
 			},
 		}
+
+		rdb.RegisterResources(c.roleManagement.UseCases.Resources)
 
 		c.RootView(c.roleManagement.Pages.Roles, c.DecorateRootView(func(wnd core.Window) core.View {
 			return uirole.PageRoles(wnd, c.roleManagement.Pages, c.roleManagement.UseCases)

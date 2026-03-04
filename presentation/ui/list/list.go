@@ -225,7 +225,7 @@ func (c TList) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	if c.footer != nil {
-		if c.colorFooter == "" && c.colorBody == "" {
+		if c.colorFooter == "" && c.colorBody == "" && len(c.rows) > 0 {
 			// UX note: if everything is uncolored, introduce an hline for visual separation with footer, otherwise the footer cannot be distinguished
 			rows = append(rows, ui.HStack(ui.HLine().Padding(ui.Padding{})).FullWidth().Padding(ui.Padding{}.Horizontal(ui.L16)))
 		}
