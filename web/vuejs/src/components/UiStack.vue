@@ -23,7 +23,7 @@ import { randomStr } from '@/components/shared/util';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
 import { CssStyles } from '@/shared/cssStyles';
-import type { HStack } from '@/shared/proto/nprotoc_gen';
+import { HStack, VStack } from '@/shared/proto/nprotoc_gen';
 import {
 	AlignmentValues,
 	AnimationValues,
@@ -33,7 +33,7 @@ import {
 } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
-	ui: HStack;
+	ui: HStack | VStack;
 }>();
 
 const id = props.ui.id || randomStr(16);
@@ -46,86 +46,19 @@ const focusable = computed<boolean>(
 
 const classes = computed<string>(() => {
 	const classes = ['inline-flex'];
+	if (props.ui instanceof VStack) classes.push('flex-col');
 	if (!props.ui.noClip) classes.push('overflow-clip');
 	else classes.push('overflow-visible');
 	if (props.ui.action) classes.push('cursor-pointer');
-	if (props.ui.wrap) classes.push('flex-wrap');
+	if (props.ui instanceof HStack && props.ui.wrap) classes.push('flex-wrap');
 	if (activeStyles.value.length) classes.push('custom-active');
 	if (focusStyles.value.length) classes.push('custom-focus');
 	if (hoverStyles.value.length) classes.push('custom-hover');
+	classes.push(...getAlignmentClasses());
+	classes.push(...getPresetClasses());
 
-	switch (props.ui.animation) {
-		case AnimationValues.AnimateBounce:
-			classes.push('animate-bounce');
-			break;
-		case AnimationValues.AnimatePing:
-			classes.push('animate-ping');
-			break;
-		case AnimationValues.AnimatePulse:
-			classes.push('animate-pulse');
-			break;
-		case AnimationValues.AnimateSpin:
-			classes.push('animate-spin');
-			break;
-		case AnimationValues.AnimateTransition:
-			classes.push('transition-all');
-			break;
-	}
-
-	switch (props.ui.alignment) {
-		case AlignmentValues.Stretch:
-			classes.push('items-stretch');
-			break;
-		case AlignmentValues.Leading:
-			classes.push('justify-start', 'items-center');
-			break;
-		case AlignmentValues.Trailing:
-			classes.push('justify-end', 'items-center');
-			break;
-		case AlignmentValues.Center:
-			classes.push('justify-center', 'items-center');
-			break;
-		case AlignmentValues.TopLeading:
-			classes.push('justify-start', 'items-start');
-			break;
-		case AlignmentValues.BottomLeading:
-			classes.push('justify-start', 'items-end');
-			break;
-		case AlignmentValues.TopTrailing:
-			classes.push('justify-end', 'items-start');
-			break;
-		case AlignmentValues.Top:
-			classes.push('justify-center', 'items-start');
-			break;
-		case AlignmentValues.BottomTrailing:
-			classes.push('justify-end', 'items-end');
-			break;
-		case AlignmentValues.Bottom:
-			classes.push('justify-center', 'items-end');
-			break;
-		default:
-			classes.push('justify-center', 'items-center');
-			break;
-	}
-
-	switch (props.ui.stylePreset) {
-		case StylePresetValues.StyleButtonPrimary:
-			classes.push('button-primary');
-			break;
-		case StylePresetValues.StyleButtonSecondary:
-			classes.push('button-secondary');
-			break;
-		case StylePresetValues.StyleButtonTertiary:
-			classes.push('button-tertiary');
-			break;
-	}
-
-	// preset special round icon mode in buttons
-	if (props.ui.stylePreset) {
-		if (props.ui.children?.value.length == 1 && props.ui.children.value[0] instanceof Img) {
-			classes.push('!p-0', '!w-10');
-		}
-	}
+	const animationClass = getAnimationClass();
+	if (animationClass) classes.push(animationClass);
 
 	return classes.join(' ');
 });
@@ -150,7 +83,8 @@ const defaultStyles = computed<string[]>(() => {
 
 	if (props.ui.opacity) styles.push(`opacity: ${100 - props.ui.opacity}%`);
 	if (props.ui.gap) styles.push(`column-gap:${cssLengthValue(props.ui.gap)}`);
-	if (props.ui.wrap && props.ui.gap) styles.push(`row-gap:${cssLengthValue(props.ui.gap)}`);
+	if ((!(props.ui instanceof HStack) || props.ui.wrap) && props.ui.gap)
+		styles.push(`row-gap:${cssLengthValue(props.ui.gap)}`);
 
 	return styles;
 });
@@ -170,6 +104,99 @@ const hoverStyles = computed<string[]>(() => {
 		styles.push(`background-color: ${colorValue(props.ui.hoveredBackgroundColor)}`);
 	return styles;
 });
+
+function getAlignmentClasses(): string[] {
+	if (props.ui instanceof HStack) {
+		switch (props.ui.alignment) {
+			case AlignmentValues.Stretch:
+				return ['items-stretch'];
+			case AlignmentValues.Leading:
+				return ['justify-start', 'items-center'];
+			case AlignmentValues.Trailing:
+				return ['justify-end', 'items-center'];
+			case AlignmentValues.Center:
+				return ['justify-center', 'items-center'];
+			case AlignmentValues.TopLeading:
+				return ['justify-start', 'items-start'];
+			case AlignmentValues.BottomLeading:
+				return ['justify-start', 'items-end'];
+			case AlignmentValues.TopTrailing:
+				return ['justify-end', 'items-start'];
+			case AlignmentValues.Top:
+				return ['justify-center', 'items-start'];
+			case AlignmentValues.BottomTrailing:
+				return ['justify-end', 'items-end'];
+			case AlignmentValues.Bottom:
+				return ['justify-center', 'items-end'];
+			default:
+				return ['justify-center', 'items-center'];
+		}
+	} else {
+		switch (props.ui.alignment) {
+			case AlignmentValues.Stretch:
+				return ['items-stretch'];
+			case AlignmentValues.Leading:
+				return ['justify-center', 'items-start'];
+			case AlignmentValues.Trailing:
+				return ['justify-center', 'items-end'];
+			case AlignmentValues.Center:
+				return ['justify-center', 'items-center'];
+			case AlignmentValues.TopLeading:
+				return ['justify-start', 'items-start'];
+			case AlignmentValues.BottomLeading:
+				return ['justify-end', 'items-start'];
+			case AlignmentValues.TopTrailing:
+				return ['justify-start', 'items-end'];
+			case AlignmentValues.Top:
+				return ['justify-start', 'items-center'];
+			case AlignmentValues.BottomTrailing:
+				return ['justify-end', 'items-end'];
+			case AlignmentValues.Bottom:
+				return ['justify-end', 'items-center'];
+			default:
+				return ['justify-center', 'items-center'];
+		}
+	}
+}
+
+function getAnimationClass(): string | undefined {
+	switch (props.ui.animation) {
+		case AnimationValues.AnimateBounce:
+			return 'animate-bounce';
+		case AnimationValues.AnimatePing:
+			return 'animate-ping';
+		case AnimationValues.AnimatePulse:
+			return 'animate-pulse';
+		case AnimationValues.AnimateSpin:
+			return 'animate-spin';
+		case AnimationValues.AnimateTransition:
+			return 'transition-all';
+	}
+}
+
+function getPresetClasses(): string[] {
+	const presetClasses: string[] = [];
+
+	switch (props.ui.stylePreset) {
+		case StylePresetValues.StyleButtonPrimary:
+			presetClasses.push('button-primary');
+			break;
+		case StylePresetValues.StyleButtonSecondary:
+			presetClasses.push('button-secondary');
+			break;
+		case StylePresetValues.StyleButtonTertiary:
+			presetClasses.push('button-tertiary');
+			break;
+	}
+
+	if (props.ui.stylePreset) {
+		if (props.ui.children?.value.length == 1 && props.ui.children.value[0] instanceof Img) {
+			presetClasses.push('!p-0', '!w-10');
+		}
+	}
+
+	return presetClasses;
+}
 
 function onClick() {
 	if (!props.ui.action) return;
@@ -198,7 +225,7 @@ onUnmounted(() => cssStyles.remove());
 	<!-- hstack -->
 	<div
 		v-if="
-			!props.ui.url &&
+			!(props.ui instanceof HStack && props.ui.url) &&
 			(props.ui.stylePreset === StylePresetValues.StyleNone || props.ui.stylePreset === undefined) &&
 			!props.ui.invisible
 		"
@@ -215,7 +242,7 @@ onUnmounted(() => cssStyles.remove());
 
 	<button
 		v-else-if="
-			!props.ui.url &&
+			!(props.ui instanceof HStack && props.ui.url) &&
 			props.ui.stylePreset !== StylePresetValues.StyleNone &&
 			props.ui.stylePreset !== undefined &&
 			(props.ui.invisible === undefined || !props.ui.invisible)
@@ -231,7 +258,7 @@ onUnmounted(() => cssStyles.remove());
 	</button>
 
 	<a
-		v-else-if="props.ui.url"
+		v-else-if="props.ui instanceof HStack && props.ui.url"
 		:id="id"
 		:class="classes"
 		:href="props.ui.url"
