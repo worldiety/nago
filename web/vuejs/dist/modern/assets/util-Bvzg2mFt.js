@@ -1,0 +1,1 @@
+function a(r){return r?"true":"false"}function e(r){const t="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";let o="";for(let n=0;n<r;n++)o+=t.charAt(Math.floor(Math.random()*t.length));return o}export{a as b,e as r};
