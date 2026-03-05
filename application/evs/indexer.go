@@ -66,10 +66,12 @@ func (k idxKey[Primary]) Parse() (Primary, SeqKey, error) {
 
 type StoreIndex[Primary ~string, Evt any] struct {
 	*data.CompositeIndex[Primary, SeqKey]
-	reader func(Envelope[Evt]) (Primary, error)
+	reader PrimaryReader[Primary, Evt]
 	info   IndexerInfo
 }
 
+// PrimaryReader extracts the primary keys from the given event to which this event must be replayed.
+// A single event may get replayed into different aggregate roots.
 type PrimaryReader[Primary ~string, Evt any] func(Envelope[Evt]) (Primary, error)
 
 // NewStoreIndex returns a new implementation for a store indexer based on a simple primary reader function.

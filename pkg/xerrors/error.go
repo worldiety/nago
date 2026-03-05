@@ -38,6 +38,8 @@ func (e ErrorWithFields) Error() string {
 	return e.Message
 }
 
+type Errors = FieldBuilder
+
 // FieldBuilder is a helper to build a validation error map of fields.
 type FieldBuilder struct {
 	mutex  sync.Mutex
@@ -60,6 +62,13 @@ func (b *FieldBuilder) Add(field, msg string) {
 	} else {
 		b.fields[field] = msg
 	}
+}
+
+func (b *FieldBuilder) Has() bool {
+	b.mutex.Lock()
+	defer b.mutex.Unlock()
+
+	return len(b.fields) > 0
 }
 
 // Error returns the accumulated validation errors as error or nil if nothing has been added.

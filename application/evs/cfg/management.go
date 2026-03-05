@@ -191,6 +191,50 @@ func Enable[Evt any](cfg *application.Configurator, prefix permission.ID, entity
 	return mod, nil
 }
 
+// NewHandler enables a new event sourcing module instance but just returns
+// the according handler instance. This is a convenience method for all domain implementations which just
+// need the handler as foundation.
+func NewHandler[Aggregate evs.Cloner[Aggregate], SuperEvt evs.Evt[Aggregate], Primary ~string](cfg *application.Configurator, prefix permission.ID, entityName string, primaryReader evs.PrimaryReader[Primary, SuperEvt], events []SuperEvt) (*evs.Handler[Aggregate, SuperEvt, Primary], error) {
+	if !prefix.Valid() {
+		return nil, fmt.Errorf("prefix is not valid")
+	}
+
+	evsSchemas := map[evs.Discriminator]reflect.Type{}
+	for _, ev := range events {
+		if other, ok := evsSchemas[ev.Discriminator()]; ok {
+			return nil, fmt.Errorf("duplicate event discriminator: %s defined by both %v and %T", ev.Discriminator(), other, ev)
+		}
+
+		evsSchemas[ev.Discriminator()] = reflect.TypeOf(ev)
+	}
+
+	var replayByWorkspace evs.ReplayWithIndex[Primary, SuperEvt]
+	var idxByWorkspace *evs.StoreIndex[Primary, SuperEvt]
+	modEvs, err := Enable[SuperEvt](cfg, prefix, entityName, Options[SuperEvt]{Schema: evsSchemas}.WithOptions(
+		Index[Primary, SuperEvt](primaryReader, func(ctx IndexContext[Primary, SuperEvt]) error {
+			replayByWorkspace = ctx.Replay
+			idxByWorkspace = ctx.Index
+			return nil
+		}),
+	))
+
+	if err != nil {
+		return nil, err
+	}
+
+	workspaceHandler := evs.NewHandler[Aggregate](
+		modEvs.UseCases,
+		replayByWorkspace,
+		idxByWorkspace,
+	)
+
+	for _, event := range events {
+		workspaceHandler.RegisterEvents(event)
+	}
+
+	return workspaceHandler, nil
+}
+
 func configureMod[Evt any](cfg *application.Configurator, perms evs.Permissions, uc evs.UseCases[Evt], opts Options[Evt]) Module[Evt] {
 	if opts.DecorateUseCases != nil {
 		uc = opts.DecorateUseCases(uc)
