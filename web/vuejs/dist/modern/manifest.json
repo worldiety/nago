@@ -3,19 +3,19 @@
     "file": "assets/InputWrapper-BJ4mjGcc.css",
     "src": "_InputWrapper-BJ4mjGcc.css"
   },
-  "_InputWrapper.vue_vue_type_style_index_0_lang-BTvTaMm8.js": {
-    "file": "assets/InputWrapper.vue_vue_type_style_index_0_lang-BTvTaMm8.js",
+  "_InputWrapper.vue_vue_type_style_index_0_lang-la0RAGaA.js": {
+    "file": "assets/InputWrapper.vue_vue_type_style_index_0_lang-la0RAGaA.js",
     "name": "InputWrapper.vue_vue_type_style_index_0_lang",
     "imports": [
       "src/main.ts",
-      "_closeBold-DaJGLIIq.js"
+      "_closeBold-BW__yHrS.js"
     ],
     "css": [
       "assets/InputWrapper-BJ4mjGcc.css"
     ]
   },
-  "_border-DGz4LEph.js": {
-    "file": "assets/border-DGz4LEph.js",
+  "_border-u0jB2OJ6.js": {
+    "file": "assets/border-u0jB2OJ6.js",
     "name": "border",
     "imports": [
       "_colors-DcTvpEK9.js",
@@ -23,8 +23,8 @@
       "src/main.ts"
     ]
   },
-  "_closeBold-DaJGLIIq.js": {
-    "file": "assets/closeBold-DaJGLIIq.js",
+  "_closeBold-BW__yHrS.js": {
+    "file": "assets/closeBold-BW__yHrS.js",
     "name": "closeBold",
     "imports": [
       "src/main.ts"
@@ -34,8 +34,8 @@
     "file": "assets/colors-DcTvpEK9.js",
     "name": "colors"
   },
-  "_font-v8Rcbxei.js": {
-    "file": "assets/font-v8Rcbxei.js",
+  "_font-D0UasGDK.js": {
+    "file": "assets/font-D0UasGDK.js",
     "name": "font",
     "imports": [
       "src/main.ts"
@@ -70,8 +70,8 @@
       "_length-AdkHSc9u.js"
     ]
   },
-  "_position-hF07Imvr.js": {
-    "file": "assets/position-hF07Imvr.js",
+  "_position-CMjNsVXt.js": {
+    "file": "assets/position-CMjNsVXt.js",
     "name": "position",
     "imports": [
       "_length-AdkHSc9u.js",
@@ -86,8 +86,8 @@
     "file": "assets/util-Bvzg2mFt.js",
     "name": "util"
   },
-  "_vue3-apexcharts-BzgFXLqW.js": {
-    "file": "assets/vue3-apexcharts-BzgFXLqW.js",
+  "_vue3-apexcharts-B_ehzlwn.js": {
+    "file": "assets/vue3-apexcharts-B_ehzlwn.js",
     "name": "vue3-apexcharts",
     "imports": [
       "src/main.ts"
@@ -550,7 +550,7 @@
     "src": "src/assets/fonts/inter/InterVariable.woff2"
   },
   "src/components/UiCheckbox.vue": {
-    "file": "assets/UiCheckbox-DEZnyA6Z.js",
+    "file": "assets/UiCheckbox-CWhcFtrv.js",
     "name": "UiCheckbox",
     "src": "src/components/UiCheckbox.vue",
     "isDynamicEntry": true,
@@ -563,12 +563,12 @@
     ]
   },
   "src/components/UiDivider.vue": {
-    "file": "assets/UiDivider-DqoAQIlu.js",
+    "file": "assets/UiDivider-DXOUDKeW.js",
     "name": "UiDivider",
     "src": "src/components/UiDivider.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_border-DGz4LEph.js",
+      "_border-u0jB2OJ6.js",
       "_frame-32SrAqKr.js",
       "_padding-BeX9fzT9.js",
       "src/main.ts",
@@ -577,7 +577,7 @@
     ]
   },
   "src/components/UiGrid.vue": {
-    "file": "assets/UiGrid-BOAlWeWW.js",
+    "file": "assets/UiGrid-DdUIG1Zp.js",
     "name": "UiGrid",
     "src": "src/components/UiGrid.vue",
     "isDynamicEntry": true,
@@ -585,19 +585,19 @@
       "src/main.ts",
       "_colors-DcTvpEK9.js",
       "_padding-BeX9fzT9.js",
-      "_border-DGz4LEph.js",
-      "_font-v8Rcbxei.js",
+      "_border-u0jB2OJ6.js",
+      "_font-D0UasGDK.js",
       "_frame-32SrAqKr.js",
       "_length-AdkHSc9u.js"
     ]
   },
   "src/components/UiImage.vue": {
-    "file": "assets/UiImage-ChpOWM5X.js",
+    "file": "assets/UiImage-B3zJu3nb.js",
     "name": "UiImage",
     "src": "src/components/UiImage.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_border-DGz4LEph.js",
+      "_border-u0jB2OJ6.js",
       "_colors-DcTvpEK9.js",
       "_frame-32SrAqKr.js",
       "_padding-BeX9fzT9.js",
@@ -606,7 +606,7 @@
     ]
   },
   "src/components/UiModal.vue": {
-    "file": "assets/UiModal-Xb03HEFO.js",
+    "file": "assets/UiModal-DyEVE-Wn.js",
     "name": "UiModal",
     "src": "src/components/UiModal.vue",
     "isDynamicEntry": true,
@@ -619,20 +619,20 @@
     ]
   },
   "src/components/UiPasswordField.vue": {
-    "file": "assets/UiPasswordField-ymtRUUOm.js",
+    "file": "assets/UiPasswordField-DBhe-Kbi.js",
     "name": "UiPasswordField",
     "src": "src/components/UiPasswordField.vue",
     "isDynamicEntry": true,
     "imports": [
       "src/main.ts",
-      "_InputWrapper.vue_vue_type_style_index_0_lang-BTvTaMm8.js",
+      "_InputWrapper.vue_vue_type_style_index_0_lang-la0RAGaA.js",
       "_frame-32SrAqKr.js",
-      "_closeBold-DaJGLIIq.js",
+      "_closeBold-BW__yHrS.js",
       "_length-AdkHSc9u.js"
     ]
   },
   "src/components/UiQrCode.vue": {
-    "file": "assets/UiQrCode-DJY1H5l6.js",
+    "file": "assets/UiQrCode-BdZ7eSA-.js",
     "name": "UiQrCode",
     "src": "src/components/UiQrCode.vue",
     "isDynamicEntry": true,
@@ -643,7 +643,7 @@
     ]
   },
   "src/components/UiQrCodeReader.vue": {
-    "file": "assets/UiQrCodeReader-CURxUIr9.js",
+    "file": "assets/UiQrCodeReader-DVxEhe0W.js",
     "name": "UiQrCodeReader",
     "src": "src/components/UiQrCodeReader.vue",
     "isDynamicEntry": true,
@@ -656,7 +656,7 @@
     ]
   },
   "src/components/UiRadioButton.vue": {
-    "file": "assets/UiRadioButton-oPoOJf5c.js",
+    "file": "assets/UiRadioButton-Bre3imaC.js",
     "name": "UiRadioButton",
     "src": "src/components/UiRadioButton.vue",
     "isDynamicEntry": true,
@@ -669,44 +669,44 @@
     ]
   },
   "src/components/UiSelect.vue": {
-    "file": "assets/UiSelect-BX8IK0k8.js",
+    "file": "assets/UiSelect-Dvz3w8xf.js",
     "name": "UiSelect",
     "src": "src/components/UiSelect.vue",
     "isDynamicEntry": true,
     "imports": [
       "src/main.ts",
-      "_InputWrapper.vue_vue_type_style_index_0_lang-BTvTaMm8.js",
+      "_InputWrapper.vue_vue_type_style_index_0_lang-la0RAGaA.js",
       "_frame-32SrAqKr.js",
-      "_closeBold-DaJGLIIq.js",
+      "_closeBold-BW__yHrS.js",
       "_length-AdkHSc9u.js"
     ]
   },
   "src/components/UiStack.vue": {
-    "file": "assets/UiStack-DHz1It8l.js",
+    "file": "assets/UiStack-s8AjMtTZ.js",
     "name": "UiStack",
     "src": "src/components/UiStack.vue",
     "isDynamicEntry": true,
     "imports": [
       "src/main.ts",
-      "_border-DGz4LEph.js",
+      "_border-u0jB2OJ6.js",
       "_colors-DcTvpEK9.js",
-      "_font-v8Rcbxei.js",
+      "_font-D0UasGDK.js",
       "_frame-32SrAqKr.js",
       "_length-AdkHSc9u.js",
       "_padding-BeX9fzT9.js",
-      "_position-hF07Imvr.js",
+      "_position-CMjNsVXt.js",
       "_util-Bvzg2mFt.js"
     ]
   },
   "src/components/UiText.vue": {
-    "file": "assets/UiText-DsdUBxTJ.js",
+    "file": "assets/UiText-D1k3WvVr.js",
     "name": "UiText",
     "src": "src/components/UiText.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_border-DGz4LEph.js",
+      "_border-u0jB2OJ6.js",
       "_colors-DcTvpEK9.js",
-      "_font-v8Rcbxei.js",
+      "_font-D0UasGDK.js",
       "_frame-32SrAqKr.js",
       "_padding-BeX9fzT9.js",
       "src/main.ts",
@@ -714,20 +714,20 @@
     ]
   },
   "src/components/UiTextField.vue": {
-    "file": "assets/UiTextField-Cqfs2mIO.js",
+    "file": "assets/UiTextField-CL2DpU8h.js",
     "name": "UiTextField",
     "src": "src/components/UiTextField.vue",
     "isDynamicEntry": true,
     "imports": [
       "src/main.ts",
-      "_InputWrapper.vue_vue_type_style_index_0_lang-BTvTaMm8.js",
+      "_InputWrapper.vue_vue_type_style_index_0_lang-la0RAGaA.js",
       "_frame-32SrAqKr.js",
-      "_closeBold-DaJGLIIq.js",
+      "_closeBold-BW__yHrS.js",
       "_length-AdkHSc9u.js"
     ]
   },
   "src/components/UiToggle.vue": {
-    "file": "assets/UiToggle-DXffKqx3.js",
+    "file": "assets/UiToggle-sbyRkvsY.js",
     "name": "UiToggle",
     "src": "src/components/UiToggle.vue",
     "isDynamicEntry": true,
@@ -740,7 +740,7 @@
     ]
   },
   "src/components/UiUnknownType.vue": {
-    "file": "assets/UiUnknownType-Xd7VRV22.js",
+    "file": "assets/UiUnknownType-DcUI_1kv.js",
     "name": "UiUnknownType",
     "src": "src/components/UiUnknownType.vue",
     "isDynamicEntry": true,
@@ -749,7 +749,7 @@
     ]
   },
   "src/components/UiWebView.vue": {
-    "file": "assets/UiWebView-D2hC1W_F.js",
+    "file": "assets/UiWebView-B3fNrYKt.js",
     "name": "UiWebView",
     "src": "src/components/UiWebView.vue",
     "isDynamicEntry": true,
@@ -760,7 +760,7 @@
     ]
   },
   "src/components/UiWindowTitle.vue": {
-    "file": "assets/UiWindowTitle-w-ODBBn5.js",
+    "file": "assets/UiWindowTitle-C6wpX3RY.js",
     "name": "UiWindowTitle",
     "src": "src/components/UiWindowTitle.vue",
     "isDynamicEntry": true,
@@ -769,13 +769,13 @@
     ]
   },
   "src/components/box/UiBox.vue": {
-    "file": "assets/UiBox-Dsu3hQu0.js",
+    "file": "assets/UiBox-HK61nbkm.js",
     "name": "UiBox",
     "src": "src/components/box/UiBox.vue",
     "isDynamicEntry": true,
     "imports": [
       "src/main.ts",
-      "_border-DGz4LEph.js",
+      "_border-u0jB2OJ6.js",
       "_frame-32SrAqKr.js",
       "_length-AdkHSc9u.js",
       "_padding-BeX9fzT9.js",
@@ -783,46 +783,46 @@
     ]
   },
   "src/components/charts/UiBarChart.vue": {
-    "file": "assets/UiBarChart-CPEDVDub.js",
+    "file": "assets/UiBarChart-CbSnrQiG.js",
     "name": "UiBarChart",
     "src": "src/components/charts/UiBarChart.vue",
     "isDynamicEntry": true,
     "imports": [
       "_frame-32SrAqKr.js",
-      "_vue3-apexcharts-BzgFXLqW.js",
+      "_vue3-apexcharts-B_ehzlwn.js",
       "_tailwindTranslator-BJthR7pY.js",
       "src/main.ts",
       "_length-AdkHSc9u.js"
     ]
   },
   "src/components/charts/UiLineChart.vue": {
-    "file": "assets/UiLineChart-CQDtuHIX.js",
+    "file": "assets/UiLineChart-Cs_LcYK3.js",
     "name": "UiLineChart",
     "src": "src/components/charts/UiLineChart.vue",
     "isDynamicEntry": true,
     "imports": [
       "_frame-32SrAqKr.js",
       "_length-AdkHSc9u.js",
-      "_vue3-apexcharts-BzgFXLqW.js",
+      "_vue3-apexcharts-B_ehzlwn.js",
       "src/main.ts",
       "_tailwindTranslator-BJthR7pY.js"
     ]
   },
   "src/components/charts/UiPieChart.vue": {
-    "file": "assets/UiPieChart-ej25I5Wn.js",
+    "file": "assets/UiPieChart-1_nPBibt.js",
     "name": "UiPieChart",
     "src": "src/components/charts/UiPieChart.vue",
     "isDynamicEntry": true,
     "imports": [
       "_frame-32SrAqKr.js",
-      "_vue3-apexcharts-BzgFXLqW.js",
+      "_vue3-apexcharts-B_ehzlwn.js",
       "_tailwindTranslator-BJthR7pY.js",
       "src/main.ts",
       "_length-AdkHSc9u.js"
     ]
   },
   "src/components/codeeditor/UiCodeEditor.vue": {
-    "file": "assets/UiCodeEditor-kT3p__QB.js",
+    "file": "assets/UiCodeEditor-CpQsJ3LC.js",
     "name": "UiCodeEditor",
     "src": "src/components/codeeditor/UiCodeEditor.vue",
     "isDynamicEntry": true,
@@ -834,7 +834,7 @@
     ]
   },
   "src/components/countdown/UiCountDown.vue": {
-    "file": "assets/UiCountDown-BTpnc6pa.js",
+    "file": "assets/UiCountDown-D5MOyATu.js",
     "name": "UiCountDown",
     "src": "src/components/countdown/UiCountDown.vue",
     "isDynamicEntry": true,
@@ -846,15 +846,15 @@
     ]
   },
   "src/components/datepicker/UiDatepicker.vue": {
-    "file": "assets/UiDatepicker-C0qjhm_b.js",
+    "file": "assets/UiDatepicker-BtilvgXp.js",
     "name": "UiDatepicker",
     "src": "src/components/datepicker/UiDatepicker.vue",
     "isDynamicEntry": true,
     "imports": [
       "src/main.ts",
-      "_InputWrapper.vue_vue_type_style_index_0_lang-BTvTaMm8.js",
+      "_InputWrapper.vue_vue_type_style_index_0_lang-la0RAGaA.js",
       "_index-BHdQZMYO.js",
-      "_closeBold-DaJGLIIq.js",
+      "_closeBold-BW__yHrS.js",
       "_frame-32SrAqKr.js",
       "_index-Vcq4gwWv.js",
       "_length-AdkHSc9u.js"
@@ -864,7 +864,7 @@
     ]
   },
   "src/components/dnd/UiDnDArea.vue": {
-    "file": "assets/UiDnDArea-woj-4PSD.js",
+    "file": "assets/UiDnDArea-NbuPmGjp.js",
     "name": "UiDnDArea",
     "src": "src/components/dnd/UiDnDArea.vue",
     "isDynamicEntry": true,
@@ -875,7 +875,7 @@
     ]
   },
   "src/components/form/UiForm.vue": {
-    "file": "assets/UiForm-DSgGtKPR.js",
+    "file": "assets/UiForm-B8xgnKnv.js",
     "name": "UiForm",
     "src": "src/components/form/UiForm.vue",
     "isDynamicEntry": true,
@@ -886,22 +886,22 @@
     ]
   },
   "src/components/hovergroup/UiHoverGroup.vue": {
-    "file": "assets/UiHoverGroup-D2_gQJOW.js",
+    "file": "assets/UiHoverGroup-YlBLnoWT.js",
     "name": "UiHoverGroup",
     "src": "src/components/hovergroup/UiHoverGroup.vue",
     "isDynamicEntry": true,
     "imports": [
       "src/main.ts",
-      "_border-DGz4LEph.js",
+      "_border-u0jB2OJ6.js",
       "_colors-DcTvpEK9.js",
       "_frame-32SrAqKr.js",
       "_padding-BeX9fzT9.js",
-      "_position-hF07Imvr.js",
+      "_position-CMjNsVXt.js",
       "_length-AdkHSc9u.js"
     ]
   },
   "src/components/menu/UiMenu.vue": {
-    "file": "assets/UiMenu-vNeIUe6t.js",
+    "file": "assets/UiMenu-CjfhRDBy.js",
     "name": "UiMenu",
     "src": "src/components/menu/UiMenu.vue",
     "isDynamicEntry": true,
@@ -912,7 +912,7 @@
     ]
   },
   "src/components/richtexteditor/UiRichText.vue": {
-    "file": "assets/UiRichText-BZjzCRKq.js",
+    "file": "assets/UiRichText-CvT3If1_.js",
     "name": "UiRichText",
     "src": "src/components/richtexteditor/UiRichText.vue",
     "isDynamicEntry": true,
@@ -923,7 +923,7 @@
     ]
   },
   "src/components/richtexteditor/UiRichTextEditor.vue": {
-    "file": "assets/UiRichTextEditor-BYkxy-Xj.js",
+    "file": "assets/UiRichTextEditor-ysUyZoQu.js",
     "name": "UiRichTextEditor",
     "src": "src/components/richtexteditor/UiRichTextEditor.vue",
     "isDynamicEntry": true,
@@ -936,40 +936,40 @@
     ]
   },
   "src/components/scaffold/UiScaffold.vue": {
-    "file": "assets/UiScaffold-D3JcoGSp.js",
+    "file": "assets/UiScaffold-L1vlRBYw.js",
     "name": "UiScaffold",
     "src": "src/components/scaffold/UiScaffold.vue",
     "isDynamicEntry": true,
     "imports": [
       "src/main.ts",
-      "_closeBold-DaJGLIIq.js"
+      "_closeBold-BW__yHrS.js"
     ],
     "css": [
       "assets/UiScaffold-BOpX1Cb_.css"
     ]
   },
   "src/components/scrollview/UiScrollView.vue": {
-    "file": "assets/UiScrollView-ChR86XaW.js",
+    "file": "assets/UiScrollView-D_8vTyKZ.js",
     "name": "UiScrollView",
     "src": "src/components/scrollview/UiScrollView.vue",
     "isDynamicEntry": true,
     "imports": [
       "src/main.ts",
-      "_border-DGz4LEph.js",
+      "_border-u0jB2OJ6.js",
       "_colors-DcTvpEK9.js",
       "_frame-32SrAqKr.js",
       "_padding-BeX9fzT9.js",
-      "_position-hF07Imvr.js",
+      "_position-CMjNsVXt.js",
       "_length-AdkHSc9u.js"
     ]
   },
   "src/components/spacer/UiSpacer.vue": {
-    "file": "assets/UiSpacer-4cUMXzMO.js",
+    "file": "assets/UiSpacer-DEjXSuOH.js",
     "name": "UiSpacer",
     "src": "src/components/spacer/UiSpacer.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_border-DGz4LEph.js",
+      "_border-u0jB2OJ6.js",
       "_colors-DcTvpEK9.js",
       "_frame-32SrAqKr.js",
       "src/main.ts",
@@ -977,13 +977,13 @@
     ]
   },
   "src/components/table/UiTable.vue": {
-    "file": "assets/UiTable-zXmF9U_w.js",
+    "file": "assets/UiTable-CSMMssPu.js",
     "name": "UiTable",
     "src": "src/components/table/UiTable.vue",
     "isDynamicEntry": true,
     "imports": [
       "src/main.ts",
-      "_border-DGz4LEph.js",
+      "_border-u0jB2OJ6.js",
       "_colors-DcTvpEK9.js",
       "_frame-32SrAqKr.js",
       "_length-AdkHSc9u.js",
@@ -991,14 +991,14 @@
     ]
   },
   "src/components/textlayout/UiTextLayout.vue": {
-    "file": "assets/UiTextLayout-CUsF2Je1.js",
+    "file": "assets/UiTextLayout-CavRcQg2.js",
     "name": "UiTextLayout",
     "src": "src/components/textlayout/UiTextLayout.vue",
     "isDynamicEntry": true,
     "imports": [
       "src/main.ts",
-      "_border-DGz4LEph.js",
-      "_font-v8Rcbxei.js",
+      "_border-u0jB2OJ6.js",
+      "_font-D0UasGDK.js",
       "_frame-32SrAqKr.js",
       "_padding-BeX9fzT9.js",
       "_colors-DcTvpEK9.js",
@@ -1006,7 +1006,7 @@
     ]
   },
   "src/components/video/UiVideo.vue": {
-    "file": "assets/UiVideo-DMvOevE4.js",
+    "file": "assets/UiVideo-D2MEIbzu.js",
     "name": "UiVideo",
     "src": "src/components/video/UiVideo.vue",
     "isDynamicEntry": true,
@@ -1017,7 +1017,7 @@
     ]
   },
   "src/main.ts": {
-    "file": "assets/main-BowQF4l6.js",
+    "file": "assets/main-DKSYZnld.js",
     "name": "main",
     "src": "src/main.ts",
     "isEntry": true,
