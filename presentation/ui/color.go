@@ -40,6 +40,9 @@ func (c Color) WithTransparency(a int8) Color {
 
 			return Color(fmt.Sprintf("%s%02x", string(co), ai))
 		}
+		if len(c) == 7 {
+			return Color(fmt.Sprintf("%s%02x", string(c), ai))
+		}
 	}
 
 	return Color(fmt.Sprintf("%s/%d", string(c), ai))
