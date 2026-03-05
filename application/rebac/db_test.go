@@ -9,6 +9,7 @@ package rebac_test
 
 import (
 	"fmt"
+	"reflect"
 	"runtime"
 	"testing"
 	"time"
@@ -266,4 +267,64 @@ func TestDB2_Resolve(t *testing.T) {
 		t.Fatal("expected 1 role but found", len(roles))
 	}
 
+}
+
+func TestDecodeKey(t *testing.T) {
+	type args struct {
+		key string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    rebac.Triple
+		wantErr bool
+	}{
+		{
+			name: "simple",
+			args: args{
+				key: "a:b:c:d:e",
+			},
+			want: rebac.Triple{
+				Source: rebac.Entity{
+					Namespace: "a",
+					Instance:  "b",
+				},
+				Relation: "c",
+				Target: rebac.Entity{
+					Namespace: "d",
+					Instance:  "e",
+				},
+			},
+		},
+		{
+			name: "escape",
+			args: args{
+				key: "nago.iam.role:admin::123:member:nago.iam.user:59cc6fb84bc39db0ec97cf5776658c7c",
+			},
+			want: rebac.Triple{
+				Source: rebac.Entity{
+					Namespace: "nago.iam.role",
+					Instance:  "admin:123",
+				},
+				Relation: "member",
+				Target: rebac.Entity{
+					Namespace: "nago.iam.user",
+					Instance:  "59cc6fb84bc39db0ec97cf5776658c7c",
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := rebac.DecodeKey(tt.args.key)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("DecodeKey() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("DecodeKey() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }

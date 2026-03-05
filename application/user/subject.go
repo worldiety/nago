@@ -391,7 +391,7 @@ func (v *viewImpl) Roles() iter.Seq[role.ID] {
 				return
 			}
 
-			if !yield(role.ID(triple.Target.Instance)) {
+			if !yield(role.ID(triple.Source.Instance)) {
 				return
 			}
 		}

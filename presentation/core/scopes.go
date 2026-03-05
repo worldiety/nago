@@ -8,7 +8,6 @@
 package core
 
 import (
-	"log/slog"
 	"sync/atomic"
 	"time"
 
@@ -71,7 +70,7 @@ func (s *Scopes) Put(scope *Scope) {
 func (s *Scopes) tick(now time.Time) {
 	s.scopes.Each(func(key proto.ScopeID, scope *Scope) bool {
 		if now.After(scope.EOL()) {
-			slog.Info("scope is end of life and now destroyed", slog.String("id", string(scope.id)))
+			//slog.Info("scope is end of life and now destroyed", slog.String("id", string(scope.id)))
 			s.scopes.Delete(scope.id)
 			scope.Destroy()
 		}

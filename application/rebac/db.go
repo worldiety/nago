@@ -65,7 +65,7 @@ func NewDB(store blob.Store) (*DB, error) {
 			return nil, err
 		}
 
-		triple, err := db.decode(key)
+		triple, err := DecodeKey(key)
 		if err != nil {
 			return nil, err
 		}
@@ -532,10 +532,10 @@ func encode(tuple Triple) string {
 	return sb.String()
 }
 
-// decode takes a string key and decodes it back into a Triple.
+// DecodeKey takes a string key and decodes it back into a Triple.
 // It uses a fast path when the key contains exactly 5 parts separated by single colons.
 // If the key contains escaped colons (::), it uses a slow path to unescape them.
-func (db *DB) decode(key string) (Triple, error) {
+func DecodeKey(key string) (Triple, error) {
 	// fast path: try simple split first
 	parts := strings.Split(key, ":")
 	if len(parts) == 5 {
@@ -553,33 +553,16 @@ func (db *DB) decode(key string) (Triple, error) {
 	}
 
 	// slow path: handle escaped colons (::)
-	// when we split "a::b:c" by ":", we get ["a", "", "b", "c"]
-	// we need to merge adjacent empty strings back to ":"
-	var fields []string
-	var current strings.Builder
-
-	for i := 0; i < len(parts); i++ {
-		if parts[i] == "" && i+1 < len(parts) && parts[i+1] == "" {
-			// found ::, which means an escaped :
-			current.WriteByte(':')
-			i++ // skip the next empty part
-		} else if parts[i] == "" && current.Len() > 0 {
-			// single :, this is a field separator
-			fields = append(fields, current.String())
-			current.Reset()
-		} else if parts[i] == "" {
-			// single : at field boundary
-			fields = append(fields, current.String())
-			current.Reset()
-		} else {
-			current.WriteString(parts[i])
-		}
+	// Replace :: with a placeholder, split on :, then restore : in each field.
+	const placeholder = "\x00"
+	unescaped := strings.ReplaceAll(key, "::", placeholder)
+	fields := strings.Split(unescaped, ":")
+	for i, f := range fields {
+		fields[i] = strings.ReplaceAll(f, placeholder, ":")
 	}
-	// don't forget the last field
-	fields = append(fields, current.String())
 
 	if len(fields) != 5 {
-		return Triple{}, fmt.Errorf("invalid triple key: expected 5 fields, got %d", len(fields))
+		return Triple{}, fmt.Errorf("invalid triple key: expected 5 fields, got %d: %s", len(fields), key)
 	}
 
 	return Triple{
