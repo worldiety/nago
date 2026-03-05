@@ -14,7 +14,7 @@
 	@apply inline-flex items-center justify-center px-5 py-2.5;
 	@apply rounded-lg;
 	@apply text-center text-sm font-medium;
-	@apply focus-visible:outline-none focus-visible:outline-black focus-visible:outline-offset-2 focus-visible:ring-white focus-visible:ring-2;
+	@apply focus-visible:outline-none focus-visible:outline-I0 focus-visible:outline-offset-4;
 }
 
 .button-primary {
