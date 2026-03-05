@@ -1,5 +1,1 @@
-<<<<<<<< HEAD:web/vuejs/dist/modern/assets/UiUnknownType-DiOpSRh2.js
 import{d as s,c as o,o as n,G as c}from"./main-Ch-SiXZj.js";const i={key:0},p={key:1},u=s({__name:"UiUnknownType",props:{ui:{}},setup(t){const e=t;return(r,a)=>e.ui?(n(),o("div",i,"[Protocol type has not been implemented: '"+c(e.ui.constructor.name)+"']",1)):(n(),o("div",p,"ui component is null"))}});export{u as default};
-========
-import{d as s,c as o,o as n,G as c}from"./main-P1NBiuNM.js";const i={key:0},p={key:1},u=s({__name:"UiUnknownType",props:{ui:{}},setup(t){const e=t;return(r,a)=>e.ui?(n(),o("div",i,"[Protocol type has not been implemented: '"+c(e.ui.constructor.name)+"']",1)):(n(),o("div",p,"ui component is null"))}});export{u as default};
->>>>>>>> origin/main:web/vuejs/dist/modern/assets/UiUnknownType-CJj0slMX.js

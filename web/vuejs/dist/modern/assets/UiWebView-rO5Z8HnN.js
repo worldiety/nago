@@ -1,5 +1,1 @@
-<<<<<<<< HEAD:web/vuejs/dist/modern/assets/UiWebView-rO5Z8HnN.js
 import{f as s}from"./frame-32SrAqKr.js";import{d as l,g as i,c,o as a,h as n}from"./main-Ch-SiXZj.js";import"./length-AdkHSc9u.js";const u=["title","allow","referrerpolicy","srcdoc","src"],_=l({__name:"UiWebView",props:{ui:{}},setup(r){const e=r,t=i(()=>s(e.ui.frame).join(";"));return(o,m)=>(a(),c("iframe",{title:e.ui.title,allow:e.ui.allow,referrerpolicy:e.ui.referrerPolicy,style:n(t.value),srcdoc:e.ui.raw,src:e.ui.uRI},null,12,u))}});export{_ as default};
-========
-import{f as s}from"./frame-32SrAqKr.js";import{d as l,g as i,c,o as a,h as n}from"./main-P1NBiuNM.js";import"./length-AdkHSc9u.js";const u=["title","allow","referrerpolicy","srcdoc","src"],_=l({__name:"UiWebView",props:{ui:{}},setup(r){const e=r,t=i(()=>s(e.ui.frame).join(";"));return(o,m)=>(a(),c("iframe",{title:e.ui.title,allow:e.ui.allow,referrerpolicy:e.ui.referrerPolicy,style:n(t.value),srcdoc:e.ui.raw,src:e.ui.uRI},null,12,u))}});export{_ as default};
->>>>>>>> origin/main:web/vuejs/dist/modern/assets/UiWebView-Bs32wP_V.js
