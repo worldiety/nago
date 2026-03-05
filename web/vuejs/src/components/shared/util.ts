@@ -13,3 +13,12 @@
 export function bool2Str(b: boolean): string {
 	return b ? 'true' : 'false';
 }
+
+export function randomStr(len: number): string {
+	const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+	let result = '';
+	for (let i = 0; i < len; i++) {
+		result += chars.charAt(Math.floor(Math.random() * chars.length));
+	}
+	return result;
+}

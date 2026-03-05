@@ -8,6 +8,7 @@
  */
 import type { Component } from 'vue';
 import { defineAsyncComponent } from 'vue';
+import type { Component as NagoComponent } from '@/shared/proto/nprotoc_gen';
 import {
 	BarChart,
 	Box,
@@ -25,7 +26,6 @@ import {
 	LineChart,
 	Menu,
 	Modal,
-	Component as NagoComponent,
 	PasswordField,
 	PieChart,
 	QrCode,
@@ -66,7 +66,7 @@ const LazyUiCountDown = defineAsyncComponent(() => import('@/components/countdow
 const LazyUiDatepicker = defineAsyncComponent(() => import('@/components/datepicker/UiDatepicker.vue'));
 const LazyUiForm = defineAsyncComponent(() => import('@/components/form/UiForm.vue'));
 const LazyUiHoverGroup = defineAsyncComponent(() => import('@/components/hovergroup/UiHoverGroup.vue'));
-const LazyUiHStack = defineAsyncComponent(() => import('@/components/hstack/UiHStack.vue'));
+const LazyUiStack = defineAsyncComponent(() => import('@/components/UiStack.vue'));
 const LazyUiMenu = defineAsyncComponent(() => import('@/components/menu/UiMenu.vue'));
 const LazyUiRichText = defineAsyncComponent(() => import('@/components/richtexteditor/UiRichText.vue'));
 const LazyUiRichTextEditor = defineAsyncComponent(() => import('@/components/richtexteditor/UiRichTextEditor.vue'));
@@ -76,7 +76,6 @@ const LazyUiSelect = defineAsyncComponent(() => import('@/components/UiSelect.vu
 const LazyUiSpacer = defineAsyncComponent(() => import('@/components/spacer/UiSpacer.vue'));
 const LazyUiTable = defineAsyncComponent(() => import('@/components/table/UiTable.vue'));
 const LazyUiTextLayout = defineAsyncComponent(() => import('@/components/textlayout/UiTextLayout.vue'));
-const LazyUiVStack = defineAsyncComponent(() => import('@/components/vstack/UiVStack.vue'));
 const LazyUiCodeEditor = defineAsyncComponent(() => import('@/components/codeeditor/UiCodeEditor.vue'));
 const LazyUiQrCode = defineAsyncComponent(() => import('@/components/UiQrCode.vue'));
 const LazyUiQrCodeReader = defineAsyncComponent(() => import('@/components/UiQrCodeReader.vue'));
@@ -96,12 +95,8 @@ export function vueComponentFor(ngc: NagoComponent): Component {
 		return LazyUiText;
 	}
 
-	if (ngc instanceof VStack) {
-		return LazyUiVStack;
-	}
-
-	if (ngc instanceof HStack) {
-		return LazyUiHStack;
+	if (ngc instanceof HStack || ngc instanceof VStack) {
+		return LazyUiStack;
 	}
 
 	if (ngc instanceof Img) {
