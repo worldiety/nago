@@ -19,7 +19,7 @@ import (
 
 func main() {
 	application.Configure(func(cfg *application.Configurator) {
-		cfg.SetApplicationID("de.worldiety.tutorial")
+		cfg.SetApplicationID("de.worldiety.tutorial_90")
 		cfg.Serve(vuejs.Dist())
 
 		buttons := make([]string, 0)
