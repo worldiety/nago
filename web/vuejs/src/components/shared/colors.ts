@@ -52,11 +52,9 @@ export function colorValue(color?: Color): string {
 		if (color.startsWith('#') || color.startsWith('rgb')) {
 			return `color-mix(in srgb, ${color} ${opacity}%, rgba(255, 255, 255, 0))`;
 		}
-
-		return `color-mix(in srgb, var(--${color}) ${opacity}%, rgba(255, 255, 255, 0))`;
 	}
 
-	return color;
+	return `color-mix(in srgb, var(--${color}) ${opacity}%, rgba(255, 255, 255, 0))`;
 }
 
 function opacityValue(color?: Color): number {

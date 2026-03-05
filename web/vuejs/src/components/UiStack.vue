@@ -92,6 +92,7 @@ const defaultClass = computed<string>(() => {
 	styles.push(...paddingCSS(props.ui.padding));
 	styles.push(...fontCSS(props.ui.font));
 
+	if (props.ui.textColor) styles.push(`color: ${colorValue(props.ui.textColor)}`);
 	if (props.ui.opacity) styles.push(`opacity: ${100 - props.ui.opacity}%`);
 	if (props.ui.gap) styles.push(`column-gap:${cssLengthValue(props.ui.gap)}`);
 	if ((!(props.ui instanceof HStack) || props.ui.wrap) && props.ui.gap)
