@@ -136,6 +136,11 @@ func (c *Configurator) newHandler() http.Handler {
 		sessionMgmt.UseCases.Logout,
 	)
 	app2.SetDebug(c.debug)
+	app2.AddDestructor(func() {
+		if err := c.stores.Close(); err != nil {
+			slog.Error("cannot close stores", "err", err.Error())
+		}
+	})
 
 	app2.SetContext(core.WithContext(app2.Context(),
 		core.ContextValue("", option.Must(c.ImageManagement()).UseCases.CreateSrcSet),

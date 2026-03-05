@@ -96,6 +96,7 @@ type Configurator struct {
 	noFooter               []core.NavigationPath
 	migrations             *migration.Migrations
 	rdb                    *rebac.DB
+	oneShot                bool
 }
 
 func NewConfigurator() *Configurator {
@@ -554,4 +555,11 @@ func (c *Configurator) Migrations() (*migration.Migrations, error) {
 	}
 
 	return c.migrations, nil
+}
+
+// OneShot is by default false and starts the nago web server if the application has been
+// configured and run. To disable the web server call this and the Run-cycle exits immediately
+// by destroying the entire application.
+func (c *Configurator) OneShot() {
+	c.oneShot = true
 }

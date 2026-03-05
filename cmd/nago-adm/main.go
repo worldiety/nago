@@ -10,13 +10,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log/slog"
+	"os"
+	"time"
+
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
-	"log/slog"
-	"os"
-	"time"
 )
 
 func main() {
@@ -43,6 +44,8 @@ func main() {
 //	nago-adm -app=de.worldiety.tutorial -cmd=admin-reset -lifetime=0m -pwd=<my super secret>
 func adminReset(dir string, appId string, pwd string, lifetime time.Duration) {
 	application.Configure(func(cfg *application.Configurator) {
+		cfg.OneShot()
+
 		if dir != "" {
 			cfg.SetDataDir(dir)
 		}
@@ -53,5 +56,5 @@ func adminReset(dir string, appId string, pwd string, lifetime time.Duration) {
 		}
 		uid := std.Must(users.UseCases.EnableBootstrapAdmin(time.Now().Add(lifetime), user.Password(pwd)))
 		slog.Info("password for admin account has been updated", "uid", uid, "login", "admin@localhost", "lifetime", lifetime)
-	})
+	}).Run()
 }

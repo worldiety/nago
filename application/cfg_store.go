@@ -8,7 +8,9 @@
 package application
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"iter"
 	"os"
 	"path/filepath"
@@ -279,6 +281,32 @@ func (s *LocalStores) SetContentTypes(name string, types []blob.ContentType) err
 func (s *LocalStores) Delete(name string) error {
 	// tdb cannot delete and there are other races with the fs stores while store is opened
 	return fmt.Errorf("deletion of stores is not yet implemented")
+}
+
+// Close triggers and removes all open stores. Afterwards no new store can be opened.
+func (s *LocalStores) Close() error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	var errs []error
+	for name, entry := range s.stores.All() {
+		// actually, currently this will never be the case, however in the future it may happen
+		if closer, ok := entry.store.(io.Closer); ok {
+			if err := closer.Close(); err != nil {
+				errs = append(errs, fmt.Errorf("cannot close store '%s': %w", name, err))
+			}
+		}
+	}
+	s.stores.Clear()
+
+	if s.db != nil {
+		if err := s.db.Close(); err != nil {
+			errs = append(errs, fmt.Errorf("cannot close root tdb store: %w", err))
+		}
+		s.db = nil
+	}
+
+	return errors.Join(errs...)
 }
 
 // note that we allowed uppercase letters in the past and thus we must still allow them, but that was a bad oversight.

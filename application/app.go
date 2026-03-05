@@ -76,10 +76,15 @@ func (a *Application) Run() {
 		}
 	}
 
-	err := a.runServer()
-	if err != nil {
-		logger.Error("application error", "err", err)
+	if !a.cfg.oneShot {
+		err := a.runServer()
+		if err != nil {
+			logger.Error("application error", "err", err)
+		}
+	} else {
+		slog.Info("one shot mode enabled, exiting")
 	}
+
 	a.cfg.done()
 
 	if app := a.cfg.app; app != nil {
