@@ -214,14 +214,20 @@ function getPresetClasses(): string[] {
 	return presetClasses;
 }
 
-function onClick() {
-	if (!props.ui.action) return;
-	serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.action, nextRID()));
+function onClick(event: MouseEvent) {
+	if (props.ui.action) {
+		event.stopPropagation();
+		serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.action, nextRID()));
+	}
 }
 
-function onKeydownEnterOrSpace() {
-	if (!props.ui.action) return;
-	serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.action, nextRID()));
+function onKeydown(event: KeyboardEvent) {
+	if (props.ui.action) {
+		event.stopPropagation();
+		if (event.code === 'Enter' || event.code === 'Space') {
+			serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.action, nextRID()));
+		}
+	}
 }
 </script>
 
@@ -236,9 +242,8 @@ function onKeydownEnterOrSpace() {
 		:class="classes"
 		:title="props.ui.accessibilityLabel"
 		:tabindex="focusable ? 0 : -1"
-		@click.stop="onClick"
-		@keydown.enter.stop="onKeydownEnterOrSpace"
-		@keydown.space.stop="onKeydownEnterOrSpace"
+		@click="onClick"
+		@keydown="onKeydown"
 	>
 		<ui-generic v-for="ui in props.ui.children?.value" :ui="ui" />
 	</div>
@@ -255,7 +260,7 @@ function onKeydownEnterOrSpace() {
 		:disabled="props.ui.disabled"
 		:class="classes"
 		:title="props.ui.accessibilityLabel"
-		@click.stop="onClick"
+		@click="onClick"
 	>
 		<ui-generic v-for="ui in props.ui.children?.value" :ui="ui" />
 	</button>
