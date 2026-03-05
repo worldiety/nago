@@ -43,6 +43,31 @@ func (a *Application) Stop() {
 	a.cfg.done()
 }
 
+func (a *Application) Close() error {
+	if a == nil || a.cfg == nil {
+		return nil
+	}
+
+	a.cfg.done()
+
+	if app := a.cfg.app; app != nil {
+		app.Destroy()
+		a.cfg.app = nil
+	}
+
+	a.cfg.storesMutex.Lock()
+	defer a.cfg.storesMutex.Unlock()
+
+	stores := a.cfg.stores
+	a.cfg.stores = nil
+
+	if stores != nil {
+		return stores.Close()
+	}
+
+	return nil
+}
+
 func (a *Application) Run() {
 
 	defer func() {

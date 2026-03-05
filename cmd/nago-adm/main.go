@@ -42,7 +42,7 @@ func main() {
 //
 //	nago-adm -app=de.worldiety.tutorial -cmd=admin-reset -lifetime=0m -pwd=<my super secret>
 func adminReset(dir string, appId string, pwd string, lifetime time.Duration) {
-	application.Configure(func(cfg *application.Configurator) {
+	app := application.Configure(func(cfg *application.Configurator) {
 		if dir != "" {
 			cfg.SetDataDir(dir)
 		}
@@ -54,4 +54,7 @@ func adminReset(dir string, appId string, pwd string, lifetime time.Duration) {
 		uid := std.Must(users.UseCases.EnableBootstrapAdmin(time.Now().Add(lifetime), user.Password(pwd)))
 		slog.Info("password for admin account has been updated", "uid", uid, "login", "admin@localhost", "lifetime", lifetime)
 	})
+	if err := app.Close(); err != nil {
+		panic(err)
+	}
 }

@@ -8,7 +8,9 @@
 package application
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"iter"
 	"os"
 	"path/filepath"
@@ -133,6 +135,30 @@ func NewLocalStores(rootDir string) (*LocalStores, error) {
 		tdbRootDir:        tdbRoot,
 		blobBucketRootDir: blobBucketRootDir,
 	}, nil
+}
+
+func (s *LocalStores) Close() error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	var errs []error
+	for name, entry := range s.stores.All() {
+		if closer, ok := entry.store.(io.Closer); ok {
+			if err := closer.Close(); err != nil {
+				errs = append(errs, fmt.Errorf("cannot close store '%s': %w", name, err))
+			}
+		}
+	}
+	s.stores.Clear()
+
+	if s.db != nil {
+		if err := s.db.Close(); err != nil {
+			errs = append(errs, fmt.Errorf("cannot close root tdb store: %w", err))
+		}
+		s.db = nil
+	}
+
+	return errors.Join(errs...)
 }
 
 func (s *LocalStores) All() iter.Seq2[string, error] {
