@@ -362,7 +362,7 @@ func (s *scopeWindow) Subject() auth.Subject {
 }
 
 func (s *scopeWindow) Context() context.Context {
-	return s.parent.ctx
+	return s.Subject().Context()
 }
 
 func (s *scopeWindow) Authenticate() {

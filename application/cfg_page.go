@@ -124,7 +124,7 @@ func (c *Configurator) newHandler() http.Handler {
 	getAnonUser := std.Must(c.UserManagement()).UseCases.GetAnonUser // user management is also not optional anymore
 
 	app2 := core.NewApplication(
-		c.ctx,
+		c.Context(),
 		tmpDir,
 		factories,
 		c.onWindowCreatedObservers,
@@ -571,7 +571,7 @@ func (c *Configurator) newHandler() http.Handler {
 		}
 
 		if err := channel.Loop(); err != nil {
-			slog.Error("websocket channel loop failed", slog.Any("err", err), "id", scopeID)
+			//slog.Error("websocket channel loop failed", slog.Any("err", err), "id", scopeID)
 			scope.Connect(nil) // we cannot use that anymore, so clean it up
 			return
 		}

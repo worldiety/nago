@@ -8,17 +8,24 @@
 package group
 
 import (
+	"github.com/worldiety/i18n"
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/events"
+	"golang.org/x/text/language"
 
 	"iter"
 	"sync"
 )
 
 const Namespace rebac.Namespace = "nago.iam.group"
+
+var (
+	StrResName = i18n.MustString("nago.group.resources.name", i18n.Values{language.German: "Gruppen", language.English: "Groups"})
+	StrResDesc = i18n.MustString("nago.group.resources.desc", i18n.Values{language.German: "Gruppen und Mitgliedschaften.", language.English: "Groups and memberships."})
+)
 
 // ID of a Group.
 type ID string
@@ -71,6 +78,7 @@ type UseCases struct {
 	Update       Update
 	Delete       Delete
 	FindMyGroups FindMyGroups
+	Resources    rebac.Resources
 }
 
 func NewUseCases(bus events.Bus, repo Repository) UseCases {
@@ -92,5 +100,6 @@ func NewUseCases(bus events.Bus, repo Repository) UseCases {
 		Update:       updateFn,
 		Delete:       deleteFn,
 		FindMyGroups: findMyGroupsFn,
+		Resources:    rebac.NewRepositoryResources(StrResName, StrResDesc, repo),
 	}
 }

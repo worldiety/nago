@@ -111,7 +111,7 @@ func (c TGridCell) render(ctx core.RenderContext) proto.GridCell {
 		RowSpan:         proto.Uint(c.rowSpan),
 		Padding:         c.padding,
 		Alignment:       c.alignment.ora(),
-		BackgroundColor: c.backgroundColor.ora(),
+		BackgroundColor: proto.Color(c.backgroundColor),
 	}
 }
 
@@ -122,7 +122,7 @@ func (c TGridCell) render(ctx core.RenderContext) proto.GridCell {
 // (e.g., overlapping cells), row/column boundaries must be explicitly defined.
 type TGrid struct {
 	cells              []TGridCell    // collection of grid cells
-	backgroundColor    proto.Color    // background color of the grid
+	backgroundColor    Color          // background color of the grid
 	frame              Frame          // layout frame for size and positioning
 	rows               int            // number of rows in the grid
 	rowHeights         []proto.Length // optional row heights
@@ -205,7 +205,7 @@ func (c TGrid) Widths(colWidths ...Length) TGrid {
 
 // BackgroundColor sets the background color of the grid.
 func (c TGrid) BackgroundColor(backgroundColor Color) DecoredView {
-	c.backgroundColor = backgroundColor.ora()
+	c.backgroundColor = backgroundColor
 	return c
 }
 
@@ -312,7 +312,7 @@ func (c TGrid) Render(ctx core.RenderContext) core.RenderNode {
 		RowGap:             c.rowGap,
 		ColGap:             c.colGap,
 		Frame:              c.frame.ora(),
-		BackgroundColor:    c.backgroundColor,
+		BackgroundColor:    proto.Color(c.backgroundColor),
 		Padding:            c.padding,
 		Border:             c.border,
 		AccessibilityLabel: proto.Str(c.accessibilityLabel),

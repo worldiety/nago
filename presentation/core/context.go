@@ -9,8 +9,9 @@ package core
 
 import (
 	"context"
-	"go.wdy.de/nago/pkg/std/concurrent"
 	"reflect"
+
+	"go.wdy.de/nago/pkg/std/concurrent"
 )
 
 type syskey string

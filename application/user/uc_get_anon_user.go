@@ -26,10 +26,10 @@ import (
 	"golang.org/x/text/language"
 )
 
-func NewGetAnonUser(ctx context.Context, bus events.Bus, loadGlobal settings.LoadGlobal, findRoleByID role.FindByID, listPerms role.ListPermissions) GetAnonUser {
+func NewGetAnonUser(ctx func() context.Context, bus events.Bus, loadGlobal settings.LoadGlobal, findRoleByID role.FindByID, listPerms role.ListPermissions) GetAnonUser {
 	var subj atomic.Pointer[anonSubject]
 	loadSubject := func() {
-		subject := createAnonSubject(ctx, language.English, loadGlobal, findRoleByID, listPerms)
+		subject := createAnonSubject(ctx(), language.English, loadGlobal, findRoleByID, listPerms)
 		subj.Store(&subject)
 	}
 

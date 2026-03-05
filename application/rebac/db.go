@@ -25,7 +25,7 @@ import (
 	"go.wdy.de/nago/pkg/xslices"
 )
 
-const debug = true
+const debug = false
 
 type DB struct {
 	store               blob.Store
@@ -619,6 +619,7 @@ func (db *DB) LookupResources(res Namespace) (Resources, bool) {
 	return db.resources.Get(res)
 }
 
+// AllResources returns an iterator over all registered resources. The iterator is sorted by identity.
 func (db *DB) AllResources() iter.Seq[Resources] {
 	tmp := slices.Collect(db.resources.Values())
 	slices.SortFunc(tmp, func(a, b Resources) int {
@@ -642,8 +643,8 @@ func (db *DB) intobStaticRelationRule(rule StaticRule) bStaticRelationRule {
 	}
 }
 
-// RegisterStaticRelationRule appends the given static relation rule.
-func (db *DB) RegisterStaticRelationRule(rule StaticRule) {
+// RegisterStaticRule appends the given static relation rule.
+func (db *DB) RegisterStaticRule(rule StaticRule) {
 	db.mutex.Lock()
 	defer db.mutex.Unlock()
 

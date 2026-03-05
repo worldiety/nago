@@ -8,6 +8,7 @@
 package internal
 
 import (
+	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
 	"go.wdy.de/nago/presentation/ui"
 )
@@ -21,4 +22,14 @@ func FrameToOra(f ui.Frame) proto.Frame {
 		Width:     proto.Length(f.Width),
 		Height:    proto.Length(f.Height),
 	}
+}
+
+// Render renders a single view into a proto.Component.
+// Returns nil if the view itself is nil.
+func Render(ctx core.RenderContext, c core.View) proto.Component {
+	if c == nil {
+		return nil
+	}
+
+	return c.Render(ctx)
 }

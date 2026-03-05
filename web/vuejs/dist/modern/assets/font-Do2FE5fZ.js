@@ -1,1 +1,5 @@
+<<<<<<<< HEAD:web/vuejs/dist/modern/assets/font-Do2FE5fZ.js
 import{ag as s}from"./main-Ch-SiXZj.js";function a(e){const i=[];if(!e)return i;switch(e.style){case s.Normal:i.push("font-style: normal");break;case s.Italic:i.push("font-style: italic");break}return e.weight&&i.push(`font-weight: ${e.weight}`),e.name&&i.push(`font-family: ${e.name}`),e.size&&i.push(`font-size: ${e.size}`),e.lineHeight&&i.push(`line-height: ${e.lineHeight}`),i}export{a as f};
+========
+import{ae as s}from"./main-P1NBiuNM.js";function a(e){const i=[];if(!e)return i;switch(e.style){case s.Normal:i.push("font-style: normal");break;case s.Italic:i.push("font-style: italic");break}return e.weight&&i.push(`font-weight: ${e.weight}`),e.name&&i.push(`font-family: ${e.name}`),e.size&&i.push(`font-size: ${e.size}`),e.lineHeight&&i.push(`line-height: ${e.lineHeight}`),i}export{a as f};
+>>>>>>>> origin/main:web/vuejs/dist/modern/assets/font-B-QbNAaE.js

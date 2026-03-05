@@ -76,7 +76,7 @@ func (c THoverGroup) Render(ctx core.RenderContext) core.RenderNode {
 		Frame:           c.frame.ora(),
 		Position:        c.position.ora(),
 		Border:          c.border.ora(),
-		BackgroundColor: c.backgroundColor.ora(),
+		BackgroundColor: proto.Color(c.backgroundColor),
 		Padding:         c.padding.ora(),
 	}
 }

@@ -31,6 +31,11 @@ func (q Query) GroupByRelation() Query {
 	return q
 }
 
+// AsTriple returns the nearest triple which represents the current query state.
+func (q Query) AsTriple() Triple {
+	return q.triple
+}
+
 type QRelation struct {
 	q Query
 }

@@ -52,15 +52,15 @@ const (
 // text alignment, and interaction callbacks.
 // It can be used for labels, inline text, or as an interactive element (e.g. links).
 type TText struct {
-	content                string      // the text content
-	color                  proto.Color // text color
-	backgroundColor        proto.Color // background color
-	hoveredBackgroundColor proto.Color // background color when hovered
-	pressedBackgroundColor proto.Color // background color when pressed
-	focusedBackgroundColor proto.Color // background color when focused
-	font                   proto.Font  // font styling (size, weight, etc.)
-	invisible              bool        // whether the text is hidden
-	onClick                func()      // optional legacy click handler
+	content                string     // the text content
+	color                  Color      // text color
+	backgroundColor        Color      // background color
+	hoveredBackgroundColor Color      // background color when hovered
+	pressedBackgroundColor Color      // background color when pressed
+	focusedBackgroundColor Color      // background color when focused
+	font                   proto.Font // font styling (size, weight, etc.)
+	invisible              bool       // whether the text is hidden
+	onClick                func()     // optional legacy click handler
 
 	padding            proto.Padding // padding around the text
 	frame              Frame         // layout frame (size, width, height, etc.)
@@ -236,13 +236,13 @@ func (c TText) Font(font Font) TText {
 
 // Color sets the Color of the font.
 func (c TText) Color(color Color) TText {
-	c.color = color.ora()
+	c.color = color
 	return c
 }
 
 // BackgroundColor sets the color of the background.
 func (c TText) BackgroundColor(backgroundColor Color) DecoredView {
-	c.backgroundColor = backgroundColor.ora()
+	c.backgroundColor = backgroundColor
 	return c
 }
 
@@ -287,8 +287,8 @@ func (c TText) Render(ctx core.RenderContext) core.RenderNode {
 
 	return &proto.TextView{
 		Value:              proto.Str(value),
-		Color:              c.color,
-		BackgroundColor:    c.backgroundColor,
+		Color:              proto.Color(c.color),
+		BackgroundColor:    proto.Color(c.backgroundColor),
 		Font:               c.font,
 		OnClick:            ctx.MountCallback(c.onClick),
 		Invisible:          proto.Bool(c.invisible),
@@ -297,9 +297,9 @@ func (c TText) Render(ctx core.RenderContext) core.RenderNode {
 		Frame:              c.frame.ora(),
 		AccessibilityLabel: proto.Str(c.accessibilityLabel),
 
-		HoveredBackgroundColor: c.hoveredBackgroundColor,
-		PressedBackgroundColor: c.pressedBackgroundColor,
-		FocusedBackgroundColor: c.focusedBackgroundColor,
+		HoveredBackgroundColor: proto.Color(c.hoveredBackgroundColor),
+		PressedBackgroundColor: proto.Color(c.pressedBackgroundColor),
+		FocusedBackgroundColor: proto.Color(c.focusedBackgroundColor),
 		HoveredBorder:          c.hoveredBorder,
 		FocusedBorder:          c.focusedBorder,
 		PressedBorder:          c.pressedBorder,

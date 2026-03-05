@@ -21,7 +21,7 @@ import (
 	"go.wdy.de/nago/pkg/std/concurrent"
 )
 
-func NewViewOf(ctx context.Context, bus events.Bus, users data.NotifyRepository[User, ID], rdb *rebac.DB) SubjectFromUser {
+func NewViewOf(ctx func() context.Context, bus events.Bus, users data.NotifyRepository[User, ID], rdb *rebac.DB) SubjectFromUser {
 	var cachedViews concurrent.RWMap[ID, *viewImpl]
 
 	users.AddDeletedObserver(func(repository data.Repository[User, ID], deleted data.Deleted[ID]) error {

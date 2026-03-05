@@ -237,7 +237,7 @@ type UseCases struct {
 	Resources rebac.Resources
 }
 
-func NewUseCases(ctx context.Context, eventBus events.EventBus, rdb *rebac.DB, loadGlobal settings.LoadGlobal, users data.NotifyRepository[User, ID], roles data.ReadRepository[role.Role, role.ID], groups group.FindAll, findRoleByID role.FindByID, listRolePerms role.ListPermissions, createSrcSet image.CreateSrcSet) UseCases {
+func NewUseCases(ctx func() context.Context, eventBus events.EventBus, rdb *rebac.DB, loadGlobal settings.LoadGlobal, users data.NotifyRepository[User, ID], roles data.ReadRepository[role.Role, role.ID], groups group.FindAll, findRoleByID role.FindByID, listRolePerms role.ListPermissions, createSrcSet image.CreateSrcSet) UseCases {
 	findByMailFn := NewFindByMail(users)
 	var globalLock sync.Mutex
 	createFn := NewCreate(&globalLock, rdb, loadGlobal, eventBus, findByMailFn, users)
@@ -315,6 +315,6 @@ func NewUseCases(ctx context.Context, eventBus events.EventBus, rdb *rebac.DB, l
 		ListGroups:                NewListGroups(rdb),
 		ListRoles:                 NewListRoles(rdb),
 		ListGlobalPermissions:     NewListGlobalPermissions(rdb),
-		Resources:                 NewResources(findAllIdentsFn, findByIdFn),
+		Resources:                 rebac.NewRepositoryResources(StrResUsers, StrResDesc, users),
 	}
 }

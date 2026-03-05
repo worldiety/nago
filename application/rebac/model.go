@@ -17,7 +17,13 @@ import (
 	"github.com/worldiety/option"
 )
 
+// Global is a bootstrapping Namespace used to assign global relations without a specific target.
+// Such global relations are usually conventional nago use case permissions. The historic origin
+// can be found in the early modeling of global permissions which have been assigned directly to a user or role.
 const Global Namespace = "global"
+
+// Relations is a bootstrapping Namespace that denotes all publicly known relations.
+const Relations Namespace = "relations"
 
 // AllInstances is different from the empty string literal which marks a don't-care case. Do not confuse it with
 // this star expression which is literally stored and processed and carries the meaning of a wildcard.
@@ -159,8 +165,7 @@ func (id InfoID) Parse() (Namespace, Instance, error) {
 }
 
 // InstanceInfo represents a human-readable resource instance that can be managed and accessed within the platform.
-// This is a generalized summary of a domain-specific instance.
-// The UI allows the translation of @123 string reference notation of the i18n package.
+// This is a generalized summary of a domain-specific instance. The text representations should be already translated.
 type InstanceInfo struct {
 	Namespace   Namespace
 	ID          Instance
@@ -188,7 +193,7 @@ type Resources interface {
 	All(ctx context.Context) iter.Seq2[InfoID, error]
 
 	// FindByID returns information about the instance with the given id.
-	FindByID(ctx context.Context, id InfoID) (option.Opt[InstanceInfo], error)
+	FindByID(ctx context.Context, iid InfoID) (option.Opt[InstanceInfo], error)
 }
 
 // A StaticRule defines an allowed relation pattern between two namespaces. For example, it is allowed that

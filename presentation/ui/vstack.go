@@ -20,11 +20,11 @@ import (
 type TVStack struct {
 	children               []core.View
 	alignment              proto.Alignment
-	backgroundColor        proto.Color
-	textColor              proto.Color
-	hoveredBackgroundColor proto.Color
-	pressedBackgroundColor proto.Color
-	focusedBackgroundColor proto.Color
+	backgroundColor        Color
+	textColor              Color
+	hoveredBackgroundColor Color
+	pressedBackgroundColor Color
+	focusedBackgroundColor Color
 	frame                  Frame
 	gap                    proto.Length
 	padding                proto.Padding
@@ -84,7 +84,7 @@ func (c TVStack) StylePreset(preset StylePreset) TVStack {
 
 // TextColor sets the default text color for the VStack.
 func (c TVStack) TextColor(textColor Color) TVStack {
-	c.textColor = textColor.ora()
+	c.textColor = textColor
 	return c
 }
 
@@ -97,24 +97,24 @@ func (c TVStack) Opacity(opacity float64) TVStack {
 
 // BackgroundColor sets the background color.
 func (c TVStack) BackgroundColor(backgroundColor Color) TVStack {
-	c.backgroundColor = backgroundColor.ora()
+	c.backgroundColor = backgroundColor
 	return c
 }
 
 // HoveredBackgroundColor sets the background color when hovered.
 func (c TVStack) HoveredBackgroundColor(backgroundColor Color) TVStack {
-	c.hoveredBackgroundColor = backgroundColor.ora()
+	c.hoveredBackgroundColor = backgroundColor
 	return c
 }
 
 // PressedBackgroundColor sets the background color when pressed.
 func (c TVStack) PressedBackgroundColor(backgroundColor Color) TVStack {
-	c.pressedBackgroundColor = backgroundColor.ora()
+	c.pressedBackgroundColor = backgroundColor
 	return c
 }
 
 // FocusedBackgroundColor sets the background color when focused.
-func (c TVStack) FocusedBackgroundColor(backgroundColor proto.Color) TVStack {
+func (c TVStack) FocusedBackgroundColor(backgroundColor Color) TVStack {
 	c.focusedBackgroundColor = backgroundColor
 	return c
 }
@@ -240,7 +240,7 @@ func (c TVStack) Render(ctx core.RenderContext) core.RenderNode {
 		Children:           renderComponents(ctx, c.children),
 		Frame:              c.frame.ora(),
 		Alignment:          c.alignment,
-		BackgroundColor:    c.backgroundColor,
+		BackgroundColor:    proto.Color(c.backgroundColor),
 		Gap:                c.gap,
 		Padding:            c.padding,
 		Border:             c.border,
@@ -248,13 +248,13 @@ func (c TVStack) Render(ctx core.RenderContext) core.RenderNode {
 		Invisible:          proto.Bool(c.invisible),
 		Font:               c.font,
 		StylePreset:        c.stylePreset,
-		TextColor:          c.textColor,
+		TextColor:          proto.Color(c.textColor),
 		Animation:          proto.Animation(c.animation),
 		Transformation:     c.transformation.ora(),
 
-		HoveredBackgroundColor: c.hoveredBackgroundColor,
-		PressedBackgroundColor: c.pressedBackgroundColor,
-		FocusedBackgroundColor: c.focusedBackgroundColor,
+		HoveredBackgroundColor: proto.Color(c.hoveredBackgroundColor),
+		PressedBackgroundColor: proto.Color(c.pressedBackgroundColor),
+		FocusedBackgroundColor: proto.Color(c.focusedBackgroundColor),
 		HoveredBorder:          c.hoveredBorder,
 		FocusedBorder:          c.focusedBorder,
 		PressedBorder:          c.pressedBorder,

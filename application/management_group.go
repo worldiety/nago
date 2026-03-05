@@ -47,7 +47,7 @@ func (c *Configurator) GroupManagement() (GroupManagement, error) {
 			return GroupManagement{}, err
 		}
 
-		rdb.RegisterStaticRelationRule(rebac.StaticRule{
+		rdb.RegisterStaticRule(rebac.StaticRule{
 			Source:   group.Namespace,
 			Relation: rebac.Member,
 			Target:   user.Namespace,
@@ -59,6 +59,8 @@ func (c *Configurator) GroupManagement() (GroupManagement, error) {
 				Groups: "admin/groups",
 			},
 		}
+
+		rdb.RegisterResources(c.groupManagement.UseCases.Resources)
 
 		if _, err := c.groupManagement.UseCases.Upsert(c.SysUser(), group.Group{
 			ID:          group.System,

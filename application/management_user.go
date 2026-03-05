@@ -97,7 +97,7 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 
 		// we have permissions which are generated and registered any time later at runtime, which must be generally allowed to be assigned
 		permission.OnPermissionRegistered(func(permission permission.Permission) {
-			rdb.RegisterStaticRelationRule(rebac.StaticRule{
+			rdb.RegisterStaticRule(rebac.StaticRule{
 				Source:   user.Namespace,
 				Relation: rebac.Relation(permission.ID),
 				Target:   rebac.Global,
@@ -105,7 +105,7 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 		})
 
 		for perm := range permission.All() {
-			rdb.RegisterStaticRelationRule(rebac.StaticRule{
+			rdb.RegisterStaticRule(rebac.StaticRule{
 				Source:   user.Namespace,
 				Relation: rebac.Relation(perm.ID),
 				Target:   rebac.Global,
@@ -120,7 +120,7 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 
 		c.userManagement = &UserManagement{
 			UseCases: user.NewUseCases(
-				c.ctx,
+				c.Context,
 				c.EventBus(),
 				rdb,
 				sets.UseCases.LoadGlobal,
@@ -228,7 +228,7 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 
 func (c *Configurator) SysUser() auth.Subject {
 	if c.userManagement == nil || c.userManagement.UseCases.SysUser == nil {
-		return user.NewSystem(c.Context())()
+		return user.NewSystem(c.Context)()
 	}
 
 	return c.userManagement.UseCases.SysUser()
