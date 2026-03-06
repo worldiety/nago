@@ -42,6 +42,7 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/core/http/gorilla"
 	"go.wdy.de/nago/presentation/proto"
+	"go.wdy.de/nago/presentation/ui/alert"
 )
 
 // RootView registers a factory to create a [core.View] within a [core.Scope].
@@ -126,6 +127,13 @@ func nameAndMime(options core.ExportFilesOptions) (name, mimetype string) {
 }
 
 func (c *Configurator) newHandler() http.Handler {
+	if _, ok := c.factories["_"]; !ok {
+		c.RootView("_", func(wnd core.Window) core.View {
+			return c.DecorateRootView(func(wnd core.Window) core.View {
+				return alert.NotFound()
+			})(wnd)
+		})
+	}
 
 	factories := map[proto.RootViewID]core.ComponentFactory{}
 	for id, f := range c.factories {

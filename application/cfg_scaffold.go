@@ -321,21 +321,8 @@ func (b *ScaffoldBuilder) name() string {
 	return b.cfg.applicationName
 }
 
-func (b *ScaffoldBuilder) registerLegalViews() {
-	// 404 not found case
-	b.cfg.RootView("_", func(wnd core.Window) core.View {
-		// we introduce another indirection, so that we can use the iamSettings AFTER this builder completed
-		return b.cfg.DecorateRootView(func(wnd core.Window) core.View {
-			return alert.NotFound()
-		})(wnd)
-	})
-
-}
-
 // Decorator is a builder terminal and returns a decorator-like function.
 func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core.View {
-	b.registerLegalViews()
-
 	return func(wnd core.Window, view core.View) core.View {
 		themeCfg := core.GlobalSettings[theme.Settings](wnd)
 
