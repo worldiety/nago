@@ -222,6 +222,69 @@ var (
 )
 
 var (
+	LabelMonday = i18n.MustString(
+		"nago.common.label.monday",
+		i18n.Values{
+			language.English: "Monday",
+			language.German:  "Montag",
+		},
+	)
+	LabelTuesday = i18n.MustString(
+		"nago.common.label.tuesday",
+		i18n.Values{
+			language.English: "Tuesday",
+			language.German:  "Dienstag",
+		},
+	)
+
+	LabelWednesday = i18n.MustString(
+		"nago.common.label.wednesday",
+		i18n.Values{
+			language.English: "Wednesday",
+			language.German:  "Mittwoch",
+		},
+	)
+
+	LabelThursday = i18n.MustString(
+		"nago.common.label.thursday",
+		i18n.Values{
+			language.English: "Thursday",
+			language.German:  "Donnerstag",
+		},
+	)
+
+	LabelFriday = i18n.MustString(
+		"nago.common.label.friday",
+		i18n.Values{
+			language.English: "Friday",
+			language.German:  "Freitag",
+		},
+	)
+
+	LabelSaturday = i18n.MustString(
+		"nago.common.label.saturday",
+		i18n.Values{
+			language.English: "Saturday",
+			language.German:  "Samstag",
+		},
+	)
+
+	LabelSunday = i18n.MustString(
+		"nago.common.label.sunday",
+		i18n.Values{
+			language.English: "Sunday",
+			language.German:  "Sonntag",
+		},
+	)
+
+	LabelWeek = i18n.MustString(
+		"nago.common.label.week",
+		i18n.Values{
+			language.English: "Week",
+			language.German:  "Woche",
+		},
+	)
+
 	LabelLanguage = i18n.MustString(
 		"nago.common.label.language",
 		i18n.Values{

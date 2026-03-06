@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/worldiety/i18n"
+	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/presentation/ui"
 )
 
@@ -20,6 +22,13 @@ type Column struct {
 	Label string
 }
 
+type viewPortStyle int
+
+const (
+	vpYear viewPortStyle = iota
+	vpMonth
+)
+
 // ViewPort defines the visible time range of the calendar, including start/end,
 // displayed columns, lane width, and a label for the lane.
 type ViewPort struct {
@@ -27,7 +36,8 @@ type ViewPort struct {
 	To        time.Time
 	Columns   []Column
 	LaneWidth Percent
-	LaneLabel string
+	LaneLabel func(bnd i18n.Bundler) string
+	style     viewPortStyle
 }
 
 // Year creates a ViewPort for a given year, spanning from January to December
@@ -40,7 +50,44 @@ func Year(year int) ViewPort {
 			{Label: "Januar"}, {Label: "Februar"}, {Label: "März"}, {Label: "April"}, {Label: "Mai"}, {Label: "Juni"}, {Label: "Juli"}, {Label: "August"}, {Label: "September"}, {Label: "October"}, {Label: "November"}, {Label: "Dezember"},
 		},
 		LaneWidth: 16,
-		LaneLabel: strconv.Itoa(year),
+		LaneLabel: func(bnd i18n.Bundler) string {
+			return strconv.Itoa(year)
+		},
+		style: vpYear,
+	}
+}
+
+func Day(year int, month time.Month, day int) ViewPort {
+	from := time.Date(year, month, day, 0, 0, 0, 0, time.Local)
+	return ViewPort{
+		From: from,
+		To:   time.Date(year, month, day, 24, 0, 0, -1, time.Local),
+		Columns: []Column{
+			{Label: "Day"},
+		},
+		LaneWidth: 16,
+		LaneLabel: func(bnd i18n.Bundler) string {
+			var dayLabel string
+			switch from.Weekday() {
+			case time.Sunday:
+				dayLabel = rstring.LabelSunday.Get(bnd)
+			case time.Monday:
+				dayLabel = rstring.LabelMonday.Get(bnd)
+			case time.Tuesday:
+				dayLabel = rstring.LabelTuesday.Get(bnd)
+			case time.Wednesday:
+				dayLabel = rstring.LabelWednesday.Get(bnd)
+			case time.Thursday:
+				dayLabel = rstring.LabelThursday.Get(bnd)
+			case time.Friday:
+				dayLabel = rstring.LabelFriday.Get(bnd)
+			case time.Saturday:
+				dayLabel = rstring.LabelSaturday.Get(bnd)
+			}
+
+			return dayLabel + ", " + strconv.Itoa(day) + "." + strconv.Itoa(int(month))
+		},
+		style: vpMonth,
 	}
 }
 

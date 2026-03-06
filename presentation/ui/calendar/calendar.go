@@ -75,6 +75,11 @@ func (c TCalendar) Colors(colors Colors) TCalendar {
 	return c
 }
 
+func (c TCalendar) FullWidth() TCalendar {
+	c.frame = c.frame.FullWidth()
+	return c
+}
+
 // Render renders the calendar component based on the selected style and configuration.
 func (c TCalendar) Render(ctx core.RenderContext) core.RenderNode {
 	switch c.style {

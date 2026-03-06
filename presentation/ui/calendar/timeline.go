@@ -127,7 +127,7 @@ func renderTimelineYear(c TCalendar, ctx core.RenderContext) core.RenderNode {
 				slices.Collect(func(yield func(core.View) bool) {
 
 					// header
-					yield(ui.Text(c.vp.LaneLabel).BackgroundColor(c.colors.Header).Frame(ui.Frame{Width: widthLane}).Padding(ui.Padding{}.All(ui.L16)))
+					yield(ui.Text(c.vp.LaneLabel(ctx.Window())).BackgroundColor(c.colors.Header).Frame(ui.Frame{Width: widthLane}).Padding(ui.Padding{}.All(ui.L16)))
 					for _, col := range c.vp.Columns {
 						yield(ui.Text(col.Label).BackgroundColor(c.colors.Header).Frame(ui.Frame{Width: widthMonth}).Padding(ui.Padding{}.Vertical(ui.L16)))
 					}
