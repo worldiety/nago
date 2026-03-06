@@ -166,7 +166,7 @@ func (s *subject) Roles() iter.Seq[role.ID] {
 				return
 			}
 
-			if !yield(role.ID(triple.Target.Instance)) {
+			if !yield(role.ID(triple.Source.Instance)) {
 				return
 			}
 		}
@@ -208,7 +208,7 @@ func (s *subject) Groups() iter.Seq[group.ID] {
 				return
 			}
 
-			if !yield(group.ID(triple.Target.Instance)) {
+			if !yield(group.ID(triple.Source.Instance)) {
 				return
 			}
 		}

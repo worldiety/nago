@@ -446,7 +446,7 @@ func (v *viewImpl) Groups() iter.Seq[group.ID] {
 				return
 			}
 
-			if !yield(group.ID(triple.Target.Instance)) {
+			if !yield(group.ID(triple.Source.Instance)) {
 				return
 			}
 		}
