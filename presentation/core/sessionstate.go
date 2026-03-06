@@ -75,7 +75,15 @@ func (s *TransientState[T]) isTransient() {}
 // will be kept until the Scope is destroyed. Thus, be very careful not to leak too long and too much.
 // Only put stuff here, which is lightweight and must survive different root views.
 func TransientStateOf[T any](wnd Window, id string) *TransientState[T] {
-	w := wnd.(*scopeWindow)
+	w, ok := wnd.(*scopeWindow)
+	if !ok {
+		slog.Warn("TransientStateOf: invalid window type", "wnd", fmt.Errorf("%T", wnd))
+		return &TransientState[T]{
+			id:         id,
+			valid:      false,
+			generation: 0,
+		}
+	}
 	w.mutex.Lock()
 	defer w.mutex.Unlock()
 

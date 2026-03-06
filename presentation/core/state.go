@@ -317,6 +317,12 @@ func (s *State[T]) Init(fn func() T) *State[T] {
 }
 
 func (s *State[T]) AsyncInit(fn func() T) *State[T] {
+	if _, ok := s.wnd.(*scopeWindow); !ok {
+		slog.Warn("AsyncInit: window does not support async initialization", "wnd", fmt.Errorf("%T", s.wnd))
+		s.Init(fn)
+		return s
+	}
+
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	if s.valid {
@@ -358,7 +364,17 @@ func (s *State[T]) AsyncInit(fn func() T) *State[T] {
 //}
 
 func StateOf[T any](wnd Window, id string) *State[T] {
-	w := wnd.(*scopeWindow)
+	w, ok := wnd.(*scopeWindow)
+	if !ok {
+		slog.Warn("StateOf: invalid window type", "wnd", fmt.Errorf("%T", wnd))
+		return &State[T]{
+			wnd:        wnd,
+			id:         id,
+			ptr:        0,
+			valid:      false,
+			generation: 0,
+		}
+	}
 
 	if id == "" {
 		panic("empty id is not allowed, consider using AutoState instead")

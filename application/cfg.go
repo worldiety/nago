@@ -30,6 +30,7 @@ import (
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/pkg/events"
+	"go.wdy.de/nago/pkg/sitemap"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
 )
@@ -49,7 +50,7 @@ type Configurator struct {
 	mutCtx                     atomic.Pointer[context.Context] // we are in the configuration phase and chaining the contexts over complicates things
 	done                       context.CancelFunc
 	logger                     *slog.Logger
-	debug                      bool
+	debug                      atomic.Bool
 	fsys                       []fs.FS
 	host                       string
 	port                       int
@@ -97,6 +98,8 @@ type Configurator struct {
 	migrations             *migration.Migrations
 	rdb                    *rebac.DB
 	oneShot                bool
+
+	sitemap *sitemap.Sitemap
 }
 
 func NewConfigurator() *Configurator {
@@ -134,9 +137,10 @@ func NewConfigurator() *Configurator {
 		factories:          map[proto.RootViewID]func(wnd core.Window) core.View{},
 		applicationName:    filepath.Base(os.Args[0]),
 		applicationVersion: buildInfo,
-		debug:              strings.Contains(strings.ToLower(runtime.GOOS), "windows") || strings.Contains(strings.ToLower(runtime.GOOS), "darwin"),
 		eventBus:           events.NewEventBus(),
 	}
+
+	cfg.debug.Store(strings.Contains(strings.ToLower(runtime.GOOS), "windows") || strings.Contains(strings.ToLower(runtime.GOOS), "darwin"))
 
 	cfg.hasSSL = cfg.determineSecureCookie()
 
@@ -152,7 +156,7 @@ func printEnv() {
 }
 
 func (c *Configurator) determineSecureCookie() bool {
-	slog.Info("secure cookie", "NO_SSL", os.Getenv("NO_SSL"), "NAGO_COOKIES_INSECURE", os.Getenv("NAGO_COOKIES_INSECURE"), "debug", c.debug)
+	slog.Info("secure cookie", "NO_SSL", os.Getenv("NO_SSL"), "NAGO_COOKIES_INSECURE", os.Getenv("NAGO_COOKIES_INSECURE"), "debug", c.debug.Load())
 	if strV, ok := os.LookupEnv("NO_SSL"); ok {
 		if ok, _ := strconv.ParseBool(strV); ok {
 			slog.Info("must return insecure cookie")
@@ -163,7 +167,7 @@ func (c *Configurator) determineSecureCookie() bool {
 		return true
 	}
 
-	return !c.debug
+	return !c.IsDebug()
 }
 
 func (c *Configurator) secureCookie() bool {
@@ -498,8 +502,12 @@ func (c *Configurator) Context() context.Context {
 
 // Debug sets the debug flag.
 func (c *Configurator) Debug(isDebug bool) *Configurator {
-	c.debug = isDebug
+	c.debug.Store(isDebug)
 	return c
+}
+
+func (c *Configurator) IsDebug() bool {
+	return c.debug.Load()
 }
 
 func (c *Configurator) EventBus() events.EventBus {

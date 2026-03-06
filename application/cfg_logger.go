@@ -8,10 +8,11 @@
 package application
 
 import (
-	"go.wdy.de/nago/logging"
 	"log/slog"
 	"net/http"
 	"os"
+
+	"go.wdy.de/nago/logging"
 )
 
 // Logger returns the applications default logger and initializes also the globals slog default once.
@@ -21,7 +22,7 @@ func (c *Configurator) Logger() *slog.Logger {
 		return c.logger
 	}
 
-	if c.debug {
+	if c.IsDebug() {
 		c.logger = slog.New(slog.NewTextHandler(os.Stdout, nil))
 	} else {
 		c.logger = slog.New(slog.NewJSONHandler(os.Stdout, nil)).With(slog.String("app", string(c.ApplicationID())))

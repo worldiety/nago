@@ -8,6 +8,8 @@
 package core
 
 import (
+	"fmt"
+	"log/slog"
 	"strconv"
 
 	"go.wdy.de/nago/presentation/proto"
@@ -27,7 +29,11 @@ import (
 // an application developer should always prefer the correctly typed wrappers which may be scattered across the
 // types of this package where they make sense.
 func AsyncCall(wnd Window, args proto.CallArgs, fn func(ret proto.CallRet)) (cancel func()) {
-	w := wnd.(*scopeWindow)
+	w, ok := wnd.(*scopeWindow)
+	if !ok {
+		slog.Error("AsyncCall: invalid window type", "wnd", fmt.Errorf("%T", wnd))
+		return func() {}
+	}
 	ptr := proto.Ptr(w.lastAsyncInvokePtr.Add(1))
 	if fn != nil {
 		w.asyncCallbacks.Put(ptr, fn)

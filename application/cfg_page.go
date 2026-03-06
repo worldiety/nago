@@ -12,15 +12,18 @@ import (
 	"bytes"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"io"
 	"io/fs"
 	"log"
 	"log/slog"
+	"maps"
 	"mime"
 	"net/http"
 	"path/filepath"
 	"runtime/debug"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -51,6 +54,9 @@ import (
 // You cannot use path variables. Instead, use [core.Values] to transport a state from one ViewRoot
 // (or window) to another.
 func (c *Configurator) RootView(viewRootID core.NavigationPath, factory func(wnd core.Window) core.View) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
 	id := proto.RootViewID(viewRootID)
 	if !id.Valid() {
 		panic(fmt.Errorf("invalid component factory id: %v", id))
@@ -67,9 +73,31 @@ func (c *Configurator) RootViewWithDecoration(viewRootID core.NavigationPath, fa
 	c.RootView(viewRootID, c.DecorateRootView(factory))
 }
 
+// RootViews returns the list of registered root views.
+func (c *Configurator) RootViews() map[proto.RootViewID]func(wnd core.Window) core.View {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	return maps.Clone(c.factories)
+}
+
+// Serve registers the given filesystem to be served by the application.
+// See also [Configurator.Filesystems].
 func (c *Configurator) Serve(fsys fs.FS) *Configurator {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
 	c.fsys = append(c.fsys, fsys)
 	return c
+}
+
+// Filesystems returns the list of file systems that are served by the application at the point of calling.
+// See also [Configurator.Serve].
+func (c *Configurator) Filesystems() []fs.FS {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	return slices.Clone(c.fsys)
 }
 
 func nameAndMime(options core.ExportFilesOptions) (name, mimetype string) {
@@ -135,7 +163,7 @@ func (c *Configurator) newHandler() http.Handler {
 		getAnonUser,
 		sessionMgmt.UseCases.Logout,
 	)
-	app2.SetDebug(c.debug)
+	app2.SetDebug(c.IsDebug())
 	app2.AddDestructor(func() {
 		if err := c.stores.Close(); err != nil {
 			slog.Error("cannot close stores", "err", err.Error())
@@ -213,7 +241,7 @@ func (c *Configurator) newHandler() http.Handler {
 		return uri, nil
 	})
 
-	if c.debug {
+	if c.IsDebug() {
 		r.Use(
 			cors.Handler(cors.Options{
 				AllowedOrigins:   []string{"http://*"},
@@ -513,6 +541,28 @@ func (c *Configurator) newHandler() http.Handler {
 
 	images := option.Must(c.ImageManagement())
 	r.Mount(httpimage.Endpoint, httpimage.NewHandler(images.UseCases.LoadBestFit))
+
+	if c.sitemap != nil {
+		r.Mount("/sitemap.xml", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/xml; charset=utf-8")
+
+			buf, err := xml.MarshalIndent(c.sitemap, "", "  ")
+			if err != nil {
+				slog.Error("failed to marshal sitemap", "err", err)
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				return
+			}
+
+			if _, err := w.Write([]byte(xml.Header)); err != nil {
+				slog.Error("failed to write sitemap xml header", "err", err)
+				return
+			}
+
+			if _, err := w.Write(buf); err != nil {
+				slog.Error("failed to write sitemap body", "err", err)
+			}
+		}))
+	}
 
 	r.Mount("/wire", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if c.contextPath.Load() == nil {
