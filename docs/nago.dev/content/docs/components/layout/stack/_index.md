@@ -55,6 +55,7 @@ you need to apply additional padding.
 | `TextColor(textColor Color)` | TextColor sets the color of text content inside the stack. |
 | `Transformation(transformation Transformation)` |  |
 | `Visible(visible bool)` | Visible controls the visibility of the stack; setting false hides it. |
+| `With(fn func(stack TStack) TStack)` | With applies a transformation function to the stack itself and returns the result. Useful for chaining configuration in a functional style. |
 | `WithFrame(fn func(Frame) Frame)` | WithFrame applies a transformation function to the stack's frame and returns the updated component. |
 | `WithPadding(padding Padding)` |  |
 | `Wrap(wrap bool)` | Wrap tries to reproduce the flex-box wrap behavior. This means, that if the HStack has a limited width, it must create multiple rows to place its children. Note, that the text layout behavior is unspecified (it may layout without word-wrap or use some sensible defaults). Each row and each element may have its own custom size, so this must not use a grid-like layouting. |
