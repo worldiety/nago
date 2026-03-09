@@ -159,6 +159,7 @@ func (c TGrid) Rows(rows int) TGrid {
 }
 
 // Heights are optional row heights from top to bottom.
+// The given values will be used as given. If there are less heights than rows given, no values will be added.
 func (c TGrid) Heights(rowHeights ...Length) TGrid {
 	c.rowHeights = make([]proto.Length, 0, len(rowHeights))
 	for _, height := range rowHeights {
