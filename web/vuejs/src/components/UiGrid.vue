@@ -58,11 +58,6 @@ const style = computed<string>(() => {
 				tmp += ' ';
 			}
 
-			const restRowCount = props.ui.rows - props.ui.rowHeights.value.length;
-			if (restRowCount > 0) {
-				tmp += `repeat(${restRowCount}, 1fr)`;
-			}
-
 			styles.push(tmp);
 		}
 	}
