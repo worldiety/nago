@@ -6,8 +6,12 @@ title: Select
 It allows users to select one option of a given set of options,.
 
 ## Constructors
-### Select
-Select represents a user interface element which lets the user select one option from a list.
+### Dropdown
+Dropdown represents a user interface element which lets the user select one option from a list.
+
+### FromSlice
+FromSlice mimics the default signature of the [picker.Picker] factory so that TDropdown can be used as a drop-in
+replacement for single selection.
 
 ---
 ## Methods
@@ -15,18 +19,14 @@ Select represents a user interface element which lets the user select one option
 |--------| ------------|
 | `Disabled(disabled bool)` | Disabled enables or disables user interaction with the select. |
 | `ErrorText(text string)` | ErrorText sets the error text displayed below the select. |
-| `Frame(frame Frame)` | Frame sets the layout frame of the field (size, width, height, etc.). |
+| `Frame(frame ui.Frame)` | Frame sets the layout frame of the field (size, width, height, etc.). |
 | `ID(id string)` | ID assigns a unique identifier to the select, useful for testing or referencing. |
-| `InputValue(input *core.State[string])` | InputValue binds the select to an external value state, allowing it to be controlled from outside the component. |
+| `InputValue(input *core.State[ID])` | InputValue binds the select to an external value state, allowing it to be controlled from outside the component. |
 | `Label(label string)` | Label sets the label displayed above or inside the select. |
 | `Leading(v core.View)` | Leading sets a leading view for the select. This view is displayed at the start of the select, e.g., an icon. |
-| `Options(options []SelectOption)` | Options sets the list of options available for selection. |
-| `Style(s TextFieldStyle)` | Style sets the visual style of the select. |
+| `Options(options []Option[ID])` | Options sets the list of options available for selection. |
+| `Style(s ui.TextFieldStyle)` | Style sets the visual style of the select. |
 | `SupportingText(text string)` | SupportingText sets the supporting text displayed below the select. |
-| `Trailing(v core.View)` | Trailing sets a trailing view for the select. This view is displayed at the end of the select, e.g., a clear button or icon. |
-| `Value(value string)` | Value sets the initial value of the select. |
+| `Value(value ID)` | Value sets the initial value of the select. |
 ---
-
-## Related
-- [Frame](../../layout/frame/)
 

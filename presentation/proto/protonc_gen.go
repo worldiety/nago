@@ -283,7 +283,6 @@ func (DatePicker) isComponent()     {}
 func (Checkbox) isComponent()       {}
 func (Divider) isComponent()        {}
 func (Grid) isComponent()           {}
-func (HStack) isComponent()         {}
 func (Img) isComponent()            {}
 func (Modal) isComponent()          {}
 func (WindowTitle) isComponent()    {}
@@ -292,12 +291,12 @@ func (Radiobutton) isComponent()    {}
 func (ScrollView) isComponent()     {}
 func (Scaffold) isComponent()       {}
 func (Spacer) isComponent()         {}
+func (Stack) isComponent()          {}
 func (TextView) isComponent()       {}
 func (TextField) isComponent()      {}
 func (TextLayout) isComponent()     {}
 func (Table) isComponent()          {}
 func (Toggle) isComponent()         {}
-func (VStack) isComponent()         {}
 func (WebView) isComponent()        {}
 func (Menu) isComponent()           {}
 func (Form) isComponent()           {}
@@ -3657,500 +3656,6 @@ func (v *GridCell) read(r *BinaryReader) error {
 	return nil
 }
 
-// An HStack aligns children elements in a horizontal row.
-//   - the intrinsic component dimensions are the sum of all sizes of the contained children
-//   - the parent can define a custom width and height
-//   - if the container is larger than the contained views, it must center vertical or horizontal
-//   - the inner gap between components should be around 2dp (this decides the backend)
-type HStack struct {
-	Children Components
-	Gap      Length
-	Frame    Frame
-	// Zero value of Alignment is Center (=c) must be applied.
-	Alignment       Alignment
-	BackgroundColor Color
-	Padding         Padding
-	// see also https://www.w3.org/WAI/tutorials/images/decision-tree/
-	AccessibilityLabel     Str
-	Border                 Border
-	Font                   Font
-	Action                 Ptr
-	HoveredBackgroundColor Color
-	PressedBackgroundColor Color
-	FocusedBackgroundColor Color
-	HoveredBorder          Border
-	PressedBorder          Border
-	FocusedBorder          Border
-	Wrap                   Bool
-	StylePreset            StylePreset
-	Position               Position
-	Disabled               Bool
-	Invisible              Bool
-	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
-	Id             Str
-	TextColor      Color
-	NoClip         Bool
-	Animation      Animation
-	Transformation Transformation
-	// Opacity is an integer between [0..100]% which represents the alpha channel. 1 means fully transparent and 0 means fully visible.
-	Opacity    Uint
-	Background *Background
-	Url        URI
-	Target     Str
-}
-
-func (v *HStack) write(w *BinaryWriter) error {
-	var fields [31]bool
-	fields[1] = !v.Children.IsZero()
-	fields[2] = !v.Gap.IsZero()
-	fields[3] = !v.Frame.IsZero()
-	fields[4] = !v.Alignment.IsZero()
-	fields[5] = !v.BackgroundColor.IsZero()
-	fields[6] = !v.Padding.IsZero()
-	fields[7] = !v.AccessibilityLabel.IsZero()
-	fields[8] = !v.Border.IsZero()
-	fields[9] = !v.Font.IsZero()
-	fields[10] = !v.Action.IsZero()
-	fields[11] = !v.HoveredBackgroundColor.IsZero()
-	fields[12] = !v.PressedBackgroundColor.IsZero()
-	fields[13] = !v.FocusedBackgroundColor.IsZero()
-	fields[14] = !v.HoveredBorder.IsZero()
-	fields[15] = !v.PressedBorder.IsZero()
-	fields[16] = !v.FocusedBorder.IsZero()
-	fields[17] = !v.Wrap.IsZero()
-	fields[18] = !v.StylePreset.IsZero()
-	fields[19] = !v.Position.IsZero()
-	fields[20] = !v.Disabled.IsZero()
-	fields[21] = !v.Invisible.IsZero()
-	fields[22] = !v.Id.IsZero()
-	fields[23] = !v.TextColor.IsZero()
-	fields[24] = !v.NoClip.IsZero()
-	fields[25] = !v.Animation.IsZero()
-	fields[26] = !v.Transformation.IsZero()
-	fields[27] = !v.Opacity.IsZero()
-	fields[28] = !v.Background.IsZero()
-	fields[29] = !v.Url.IsZero()
-	fields[30] = !v.Target.IsZero()
-
-	fieldCount := byte(0)
-	for _, present := range fields {
-		if present {
-			fieldCount++
-		}
-	}
-	if err := w.writeByte(fieldCount); err != nil {
-		return err
-	}
-	if fields[1] {
-		if err := w.writeFieldHeader(array, 1); err != nil {
-			return err
-		}
-		if err := v.Children.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[2] {
-		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
-			return err
-		}
-		if err := v.Gap.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[3] {
-		if err := w.writeFieldHeader(record, 3); err != nil {
-			return err
-		}
-		if err := v.Frame.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[4] {
-		if err := w.writeFieldHeader(uvarint, 4); err != nil {
-			return err
-		}
-		if err := v.Alignment.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[5] {
-		if err := w.writeFieldHeader(byteSlice, 5); err != nil {
-			return err
-		}
-		if err := v.BackgroundColor.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[6] {
-		if err := w.writeFieldHeader(record, 6); err != nil {
-			return err
-		}
-		if err := v.Padding.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[7] {
-		if err := w.writeFieldHeader(byteSlice, 7); err != nil {
-			return err
-		}
-		if err := v.AccessibilityLabel.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[8] {
-		if err := w.writeFieldHeader(record, 8); err != nil {
-			return err
-		}
-		if err := v.Border.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[9] {
-		if err := w.writeFieldHeader(record, 9); err != nil {
-			return err
-		}
-		if err := v.Font.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[10] {
-		if err := w.writeFieldHeader(uvarint, 10); err != nil {
-			return err
-		}
-		if err := v.Action.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[11] {
-		if err := w.writeFieldHeader(byteSlice, 11); err != nil {
-			return err
-		}
-		if err := v.HoveredBackgroundColor.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[12] {
-		if err := w.writeFieldHeader(byteSlice, 12); err != nil {
-			return err
-		}
-		if err := v.PressedBackgroundColor.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[13] {
-		if err := w.writeFieldHeader(byteSlice, 13); err != nil {
-			return err
-		}
-		if err := v.FocusedBackgroundColor.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[14] {
-		if err := w.writeFieldHeader(record, 14); err != nil {
-			return err
-		}
-		if err := v.HoveredBorder.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[15] {
-		if err := w.writeFieldHeader(record, 15); err != nil {
-			return err
-		}
-		if err := v.PressedBorder.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[16] {
-		if err := w.writeFieldHeader(record, 16); err != nil {
-			return err
-		}
-		if err := v.FocusedBorder.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[17] {
-		if err := w.writeFieldHeader(uvarint, 17); err != nil {
-			return err
-		}
-		if err := v.Wrap.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[18] {
-		if err := w.writeFieldHeader(uvarint, 18); err != nil {
-			return err
-		}
-		if err := v.StylePreset.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[19] {
-		if err := w.writeFieldHeader(record, 19); err != nil {
-			return err
-		}
-		if err := v.Position.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[20] {
-		if err := w.writeFieldHeader(uvarint, 20); err != nil {
-			return err
-		}
-		if err := v.Disabled.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[21] {
-		if err := w.writeFieldHeader(uvarint, 21); err != nil {
-			return err
-		}
-		if err := v.Invisible.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[22] {
-		if err := w.writeFieldHeader(byteSlice, 22); err != nil {
-			return err
-		}
-		if err := v.Id.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[23] {
-		if err := w.writeFieldHeader(byteSlice, 23); err != nil {
-			return err
-		}
-		if err := v.TextColor.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[24] {
-		if err := w.writeFieldHeader(uvarint, 24); err != nil {
-			return err
-		}
-		if err := v.NoClip.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[25] {
-		if err := w.writeFieldHeader(uvarint, 25); err != nil {
-			return err
-		}
-		if err := v.Animation.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[26] {
-		if err := w.writeFieldHeader(record, 26); err != nil {
-			return err
-		}
-		if err := v.Transformation.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[27] {
-		if err := w.writeFieldHeader(uvarint, 27); err != nil {
-			return err
-		}
-		if err := v.Opacity.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[28] {
-		if err := w.writeFieldHeader(record, 28); err != nil {
-			return err
-		}
-		if err := v.Background.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[29] {
-		if err := w.writeFieldHeader(byteSlice, 29); err != nil {
-			return err
-		}
-		if err := v.Url.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[30] {
-		if err := w.writeFieldHeader(byteSlice, 30); err != nil {
-			return err
-		}
-		if err := v.Target.write(w); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (v *HStack) read(r *BinaryReader) error {
-	v.reset()
-	fieldCount, err := r.readByte()
-	if err != nil {
-		return err
-	}
-	for range fieldCount {
-		fh, err := r.readFieldHeader()
-		if err != nil {
-			return err
-		}
-		switch fh.fieldId {
-		case 1:
-			err := v.Children.read(r)
-			if err != nil {
-				return err
-			}
-		case 2:
-			err := v.Gap.read(r)
-			if err != nil {
-				return err
-			}
-		case 3:
-			err := v.Frame.read(r)
-			if err != nil {
-				return err
-			}
-		case 4:
-			err := v.Alignment.read(r)
-			if err != nil {
-				return err
-			}
-		case 5:
-			err := v.BackgroundColor.read(r)
-			if err != nil {
-				return err
-			}
-		case 6:
-			err := v.Padding.read(r)
-			if err != nil {
-				return err
-			}
-		case 7:
-			err := v.AccessibilityLabel.read(r)
-			if err != nil {
-				return err
-			}
-		case 8:
-			err := v.Border.read(r)
-			if err != nil {
-				return err
-			}
-		case 9:
-			err := v.Font.read(r)
-			if err != nil {
-				return err
-			}
-		case 10:
-			err := v.Action.read(r)
-			if err != nil {
-				return err
-			}
-		case 11:
-			err := v.HoveredBackgroundColor.read(r)
-			if err != nil {
-				return err
-			}
-		case 12:
-			err := v.PressedBackgroundColor.read(r)
-			if err != nil {
-				return err
-			}
-		case 13:
-			err := v.FocusedBackgroundColor.read(r)
-			if err != nil {
-				return err
-			}
-		case 14:
-			err := v.HoveredBorder.read(r)
-			if err != nil {
-				return err
-			}
-		case 15:
-			err := v.PressedBorder.read(r)
-			if err != nil {
-				return err
-			}
-		case 16:
-			err := v.FocusedBorder.read(r)
-			if err != nil {
-				return err
-			}
-		case 17:
-			err := v.Wrap.read(r)
-			if err != nil {
-				return err
-			}
-		case 18:
-			err := v.StylePreset.read(r)
-			if err != nil {
-				return err
-			}
-		case 19:
-			err := v.Position.read(r)
-			if err != nil {
-				return err
-			}
-		case 20:
-			err := v.Disabled.read(r)
-			if err != nil {
-				return err
-			}
-		case 21:
-			err := v.Invisible.read(r)
-			if err != nil {
-				return err
-			}
-		case 22:
-			err := v.Id.read(r)
-			if err != nil {
-				return err
-			}
-		case 23:
-			err := v.TextColor.read(r)
-			if err != nil {
-				return err
-			}
-		case 24:
-			err := v.NoClip.read(r)
-			if err != nil {
-				return err
-			}
-		case 25:
-			err := v.Animation.read(r)
-			if err != nil {
-				return err
-			}
-		case 26:
-			err := v.Transformation.read(r)
-			if err != nil {
-				return err
-			}
-		case 27:
-			err := v.Opacity.read(r)
-			if err != nil {
-				return err
-			}
-		case 28:
-			err := v.Background.read(r)
-			if err != nil {
-				return err
-			}
-		case 29:
-			err := v.Url.read(r)
-			if err != nil {
-				return err
-			}
-		case 30:
-			err := v.Target.read(r)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
 // StylePreset allows to apply a build-in style to this component. This reduces over-the-wire boilerplate and
 // also defines a stereotype, so that the applied component behavior may be indeed a bit different, because
 // a native component may be used, e.g. for a native button. The order of appliance is first the preset and
@@ -6686,7 +6191,7 @@ func (v *SessionAssigned) read(r *BinaryReader) error {
 	return nil
 }
 
-// Spacer grows or shrinks within a HStack or VStack. In other layouts, the behavior is unspecified.
+// Spacer grows or shrinks within a Stack. In other layouts, the behavior is unspecified.
 type Spacer struct {
 	Frame           Frame
 	Border          Border
@@ -8665,455 +8170,6 @@ func (v *TextLayout) read(r *BinaryReader) error {
 			}
 		case 10:
 			err := v.Invisible.read(r)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-// An VStack aligns children elements in a vertical column.
-//   - the intrinsic component dimensions are the sum of all sizes of the contained children
-//   - the parent can define a custom width and height
-//   - if the container is larger than the contained views, it must center vertical or horizontal
-//   - the inner gap between components should be around 2dp
-type VStack struct {
-	Children Components
-	Gap      Length
-	Frame    Frame
-	// Zero value of Alignment is Center (=c) must be applied.
-	Alignment       Alignment
-	BackgroundColor Color
-	Padding         Padding
-	// see also https://www.w3.org/WAI/tutorials/images/decision-tree/
-	AccessibilityLabel     Str
-	Border                 Border
-	Font                   Font
-	Action                 Ptr
-	HoveredBackgroundColor Color
-	PressedBackgroundColor Color
-	FocusedBackgroundColor Color
-	HoveredBorder          Border
-	PressedBorder          Border
-	FocusedBorder          Border
-	StylePreset            StylePreset
-	Position               Position
-	Disabled               Bool
-	Invisible              Bool
-	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
-	Id             Str
-	TextColor      Color
-	NoClip         Bool
-	Animation      Animation
-	Transformation Transformation
-	// Opacity is an integer between [0..100]% which represents the alpha channel. 1 means fully transparent and 0 means fully visible.
-	Opacity    Uint
-	Background *Background
-}
-
-func (v *VStack) write(w *BinaryWriter) error {
-	var fields [28]bool
-	fields[1] = !v.Children.IsZero()
-	fields[2] = !v.Gap.IsZero()
-	fields[3] = !v.Frame.IsZero()
-	fields[4] = !v.Alignment.IsZero()
-	fields[5] = !v.BackgroundColor.IsZero()
-	fields[6] = !v.Padding.IsZero()
-	fields[7] = !v.AccessibilityLabel.IsZero()
-	fields[8] = !v.Border.IsZero()
-	fields[9] = !v.Font.IsZero()
-	fields[10] = !v.Action.IsZero()
-	fields[11] = !v.HoveredBackgroundColor.IsZero()
-	fields[12] = !v.PressedBackgroundColor.IsZero()
-	fields[13] = !v.FocusedBackgroundColor.IsZero()
-	fields[14] = !v.HoveredBorder.IsZero()
-	fields[15] = !v.PressedBorder.IsZero()
-	fields[16] = !v.FocusedBorder.IsZero()
-	fields[17] = !v.StylePreset.IsZero()
-	fields[18] = !v.Position.IsZero()
-	fields[19] = !v.Disabled.IsZero()
-	fields[20] = !v.Invisible.IsZero()
-	fields[21] = !v.Id.IsZero()
-	fields[22] = !v.TextColor.IsZero()
-	fields[23] = !v.NoClip.IsZero()
-	fields[24] = !v.Animation.IsZero()
-	fields[25] = !v.Transformation.IsZero()
-	fields[26] = !v.Opacity.IsZero()
-	fields[27] = !v.Background.IsZero()
-
-	fieldCount := byte(0)
-	for _, present := range fields {
-		if present {
-			fieldCount++
-		}
-	}
-	if err := w.writeByte(fieldCount); err != nil {
-		return err
-	}
-	if fields[1] {
-		if err := w.writeFieldHeader(array, 1); err != nil {
-			return err
-		}
-		if err := v.Children.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[2] {
-		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
-			return err
-		}
-		if err := v.Gap.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[3] {
-		if err := w.writeFieldHeader(record, 3); err != nil {
-			return err
-		}
-		if err := v.Frame.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[4] {
-		if err := w.writeFieldHeader(uvarint, 4); err != nil {
-			return err
-		}
-		if err := v.Alignment.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[5] {
-		if err := w.writeFieldHeader(byteSlice, 5); err != nil {
-			return err
-		}
-		if err := v.BackgroundColor.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[6] {
-		if err := w.writeFieldHeader(record, 6); err != nil {
-			return err
-		}
-		if err := v.Padding.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[7] {
-		if err := w.writeFieldHeader(byteSlice, 7); err != nil {
-			return err
-		}
-		if err := v.AccessibilityLabel.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[8] {
-		if err := w.writeFieldHeader(record, 8); err != nil {
-			return err
-		}
-		if err := v.Border.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[9] {
-		if err := w.writeFieldHeader(record, 9); err != nil {
-			return err
-		}
-		if err := v.Font.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[10] {
-		if err := w.writeFieldHeader(uvarint, 10); err != nil {
-			return err
-		}
-		if err := v.Action.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[11] {
-		if err := w.writeFieldHeader(byteSlice, 11); err != nil {
-			return err
-		}
-		if err := v.HoveredBackgroundColor.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[12] {
-		if err := w.writeFieldHeader(byteSlice, 12); err != nil {
-			return err
-		}
-		if err := v.PressedBackgroundColor.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[13] {
-		if err := w.writeFieldHeader(byteSlice, 13); err != nil {
-			return err
-		}
-		if err := v.FocusedBackgroundColor.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[14] {
-		if err := w.writeFieldHeader(record, 14); err != nil {
-			return err
-		}
-		if err := v.HoveredBorder.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[15] {
-		if err := w.writeFieldHeader(record, 15); err != nil {
-			return err
-		}
-		if err := v.PressedBorder.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[16] {
-		if err := w.writeFieldHeader(record, 16); err != nil {
-			return err
-		}
-		if err := v.FocusedBorder.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[17] {
-		if err := w.writeFieldHeader(uvarint, 17); err != nil {
-			return err
-		}
-		if err := v.StylePreset.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[18] {
-		if err := w.writeFieldHeader(record, 18); err != nil {
-			return err
-		}
-		if err := v.Position.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[19] {
-		if err := w.writeFieldHeader(uvarint, 19); err != nil {
-			return err
-		}
-		if err := v.Disabled.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[20] {
-		if err := w.writeFieldHeader(uvarint, 20); err != nil {
-			return err
-		}
-		if err := v.Invisible.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[21] {
-		if err := w.writeFieldHeader(byteSlice, 21); err != nil {
-			return err
-		}
-		if err := v.Id.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[22] {
-		if err := w.writeFieldHeader(byteSlice, 22); err != nil {
-			return err
-		}
-		if err := v.TextColor.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[23] {
-		if err := w.writeFieldHeader(uvarint, 23); err != nil {
-			return err
-		}
-		if err := v.NoClip.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[24] {
-		if err := w.writeFieldHeader(uvarint, 24); err != nil {
-			return err
-		}
-		if err := v.Animation.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[25] {
-		if err := w.writeFieldHeader(record, 25); err != nil {
-			return err
-		}
-		if err := v.Transformation.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[26] {
-		if err := w.writeFieldHeader(uvarint, 26); err != nil {
-			return err
-		}
-		if err := v.Opacity.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[27] {
-		if err := w.writeFieldHeader(record, 27); err != nil {
-			return err
-		}
-		if err := v.Background.write(w); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (v *VStack) read(r *BinaryReader) error {
-	v.reset()
-	fieldCount, err := r.readByte()
-	if err != nil {
-		return err
-	}
-	for range fieldCount {
-		fh, err := r.readFieldHeader()
-		if err != nil {
-			return err
-		}
-		switch fh.fieldId {
-		case 1:
-			err := v.Children.read(r)
-			if err != nil {
-				return err
-			}
-		case 2:
-			err := v.Gap.read(r)
-			if err != nil {
-				return err
-			}
-		case 3:
-			err := v.Frame.read(r)
-			if err != nil {
-				return err
-			}
-		case 4:
-			err := v.Alignment.read(r)
-			if err != nil {
-				return err
-			}
-		case 5:
-			err := v.BackgroundColor.read(r)
-			if err != nil {
-				return err
-			}
-		case 6:
-			err := v.Padding.read(r)
-			if err != nil {
-				return err
-			}
-		case 7:
-			err := v.AccessibilityLabel.read(r)
-			if err != nil {
-				return err
-			}
-		case 8:
-			err := v.Border.read(r)
-			if err != nil {
-				return err
-			}
-		case 9:
-			err := v.Font.read(r)
-			if err != nil {
-				return err
-			}
-		case 10:
-			err := v.Action.read(r)
-			if err != nil {
-				return err
-			}
-		case 11:
-			err := v.HoveredBackgroundColor.read(r)
-			if err != nil {
-				return err
-			}
-		case 12:
-			err := v.PressedBackgroundColor.read(r)
-			if err != nil {
-				return err
-			}
-		case 13:
-			err := v.FocusedBackgroundColor.read(r)
-			if err != nil {
-				return err
-			}
-		case 14:
-			err := v.HoveredBorder.read(r)
-			if err != nil {
-				return err
-			}
-		case 15:
-			err := v.PressedBorder.read(r)
-			if err != nil {
-				return err
-			}
-		case 16:
-			err := v.FocusedBorder.read(r)
-			if err != nil {
-				return err
-			}
-		case 17:
-			err := v.StylePreset.read(r)
-			if err != nil {
-				return err
-			}
-		case 18:
-			err := v.Position.read(r)
-			if err != nil {
-				return err
-			}
-		case 19:
-			err := v.Disabled.read(r)
-			if err != nil {
-				return err
-			}
-		case 20:
-			err := v.Invisible.read(r)
-			if err != nil {
-				return err
-			}
-		case 21:
-			err := v.Id.read(r)
-			if err != nil {
-				return err
-			}
-		case 22:
-			err := v.TextColor.read(r)
-			if err != nil {
-				return err
-			}
-		case 23:
-			err := v.NoClip.read(r)
-			if err != nil {
-				return err
-			}
-		case 24:
-			err := v.Animation.read(r)
-			if err != nil {
-				return err
-			}
-		case 25:
-			err := v.Transformation.read(r)
-			if err != nil {
-				return err
-			}
-		case 26:
-			err := v.Opacity.read(r)
-			if err != nil {
-				return err
-			}
-		case 27:
-			err := v.Background.read(r)
 			if err != nil {
 				return err
 			}
@@ -13828,6 +12884,592 @@ func (v *Select) read(r *BinaryReader) error {
 	return nil
 }
 
+type Orientation uint64
+
+const (
+	Horizontal Orientation = 1
+	Vertical   Orientation = 2
+)
+
+func (v *Orientation) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *Orientation) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = Orientation(tmp)
+	return nil
+}
+
+func (v *Orientation) reset() {
+	*v = Orientation(0)
+}
+func (v *Orientation) IsZero() bool {
+	return *v == 0
+}
+
+type ColorStates struct {
+	Hover   Color
+	Focus   Color
+	Pressed Color
+}
+
+func (v *ColorStates) write(w *BinaryWriter) error {
+	var fields [4]bool
+	fields[1] = !v.Hover.IsZero()
+	fields[2] = !v.Focus.IsZero()
+	fields[3] = !v.Pressed.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Hover.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Focus.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.Pressed.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *ColorStates) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Hover.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Focus.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Pressed.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// A Stack aligns children elements in a row or column (depending on the orientation attribute).
+//   - the intrinsic component dimensions are the sum of all sizes of the contained children
+//   - the parent can define a custom width and height
+//   - if the container is larger than the contained views, it must center vertical or horizontal
+//   - the inner gap between components should be around 2dp (this decides the backend)
+type Stack struct {
+	Children Components
+	Gap      Length
+	Frame    Frame
+	// Zero value of Alignment is Center (=c) must be applied.
+	Alignment       Alignment
+	BackgroundColor Color
+	Padding         Padding
+	// see also https://www.w3.org/WAI/tutorials/images/decision-tree/
+	AccessibilityLabel    Str
+	Border                Border
+	Font                  Font
+	Action                Ptr
+	BackgroundColorStates ColorStates
+	HoveredBorder         Border
+	PressedBorder         Border
+	FocusedBorder         Border
+	Wrap                  Bool
+	StylePreset           StylePreset
+	Position              Position
+	Disabled              Bool
+	Invisible             Bool
+	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
+	Id             Str
+	TextColor      Color
+	NoClip         Bool
+	Animation      Animation
+	Transformation Transformation
+	// Opacity is an integer between [0..100]% which represents the alpha channel. 1 means fully transparent and 0 means fully visible.
+	Opacity     Uint
+	Background  *Background
+	Url         URI
+	Target      Str
+	Orientation Orientation
+}
+
+func (v *Stack) write(w *BinaryWriter) error {
+	var fields [30]bool
+	fields[1] = !v.Children.IsZero()
+	fields[2] = !v.Gap.IsZero()
+	fields[3] = !v.Frame.IsZero()
+	fields[4] = !v.Alignment.IsZero()
+	fields[5] = !v.BackgroundColor.IsZero()
+	fields[6] = !v.Padding.IsZero()
+	fields[7] = !v.AccessibilityLabel.IsZero()
+	fields[8] = !v.Border.IsZero()
+	fields[9] = !v.Font.IsZero()
+	fields[10] = !v.Action.IsZero()
+	fields[11] = !v.BackgroundColorStates.IsZero()
+	fields[12] = !v.HoveredBorder.IsZero()
+	fields[13] = !v.PressedBorder.IsZero()
+	fields[14] = !v.FocusedBorder.IsZero()
+	fields[15] = !v.Wrap.IsZero()
+	fields[16] = !v.StylePreset.IsZero()
+	fields[17] = !v.Position.IsZero()
+	fields[18] = !v.Disabled.IsZero()
+	fields[19] = !v.Invisible.IsZero()
+	fields[20] = !v.Id.IsZero()
+	fields[21] = !v.TextColor.IsZero()
+	fields[22] = !v.NoClip.IsZero()
+	fields[23] = !v.Animation.IsZero()
+	fields[24] = !v.Transformation.IsZero()
+	fields[25] = !v.Opacity.IsZero()
+	fields[26] = !v.Background.IsZero()
+	fields[27] = !v.Url.IsZero()
+	fields[28] = !v.Target.IsZero()
+	fields[29] = !v.Orientation.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(array, 1); err != nil {
+			return err
+		}
+		if err := v.Children.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Gap.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(record, 3); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(uvarint, 4); err != nil {
+			return err
+		}
+		if err := v.Alignment.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(byteSlice, 5); err != nil {
+			return err
+		}
+		if err := v.BackgroundColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(record, 6); err != nil {
+			return err
+		}
+		if err := v.Padding.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(byteSlice, 7); err != nil {
+			return err
+		}
+		if err := v.AccessibilityLabel.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		if err := w.writeFieldHeader(record, 8); err != nil {
+			return err
+		}
+		if err := v.Border.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[9] {
+		if err := w.writeFieldHeader(record, 9); err != nil {
+			return err
+		}
+		if err := v.Font.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[10] {
+		if err := w.writeFieldHeader(uvarint, 10); err != nil {
+			return err
+		}
+		if err := v.Action.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[11] {
+		if err := w.writeFieldHeader(record, 11); err != nil {
+			return err
+		}
+		if err := v.BackgroundColorStates.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[12] {
+		if err := w.writeFieldHeader(record, 12); err != nil {
+			return err
+		}
+		if err := v.HoveredBorder.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[13] {
+		if err := w.writeFieldHeader(record, 13); err != nil {
+			return err
+		}
+		if err := v.PressedBorder.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[14] {
+		if err := w.writeFieldHeader(record, 14); err != nil {
+			return err
+		}
+		if err := v.FocusedBorder.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[15] {
+		if err := w.writeFieldHeader(uvarint, 15); err != nil {
+			return err
+		}
+		if err := v.Wrap.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[16] {
+		if err := w.writeFieldHeader(uvarint, 16); err != nil {
+			return err
+		}
+		if err := v.StylePreset.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[17] {
+		if err := w.writeFieldHeader(record, 17); err != nil {
+			return err
+		}
+		if err := v.Position.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[18] {
+		if err := w.writeFieldHeader(uvarint, 18); err != nil {
+			return err
+		}
+		if err := v.Disabled.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[19] {
+		if err := w.writeFieldHeader(uvarint, 19); err != nil {
+			return err
+		}
+		if err := v.Invisible.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[20] {
+		if err := w.writeFieldHeader(byteSlice, 20); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[21] {
+		if err := w.writeFieldHeader(byteSlice, 21); err != nil {
+			return err
+		}
+		if err := v.TextColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[22] {
+		if err := w.writeFieldHeader(uvarint, 22); err != nil {
+			return err
+		}
+		if err := v.NoClip.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[23] {
+		if err := w.writeFieldHeader(uvarint, 23); err != nil {
+			return err
+		}
+		if err := v.Animation.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[24] {
+		if err := w.writeFieldHeader(record, 24); err != nil {
+			return err
+		}
+		if err := v.Transformation.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[25] {
+		if err := w.writeFieldHeader(uvarint, 25); err != nil {
+			return err
+		}
+		if err := v.Opacity.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[26] {
+		if err := w.writeFieldHeader(record, 26); err != nil {
+			return err
+		}
+		if err := v.Background.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[27] {
+		if err := w.writeFieldHeader(byteSlice, 27); err != nil {
+			return err
+		}
+		if err := v.Url.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[28] {
+		if err := w.writeFieldHeader(byteSlice, 28); err != nil {
+			return err
+		}
+		if err := v.Target.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[29] {
+		if err := w.writeFieldHeader(uvarint, 29); err != nil {
+			return err
+		}
+		if err := v.Orientation.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Stack) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Children.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Gap.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Alignment.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.BackgroundColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.Padding.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.AccessibilityLabel.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.Border.read(r)
+			if err != nil {
+				return err
+			}
+		case 9:
+			err := v.Font.read(r)
+			if err != nil {
+				return err
+			}
+		case 10:
+			err := v.Action.read(r)
+			if err != nil {
+				return err
+			}
+		case 11:
+			err := v.BackgroundColorStates.read(r)
+			if err != nil {
+				return err
+			}
+		case 12:
+			err := v.HoveredBorder.read(r)
+			if err != nil {
+				return err
+			}
+		case 13:
+			err := v.PressedBorder.read(r)
+			if err != nil {
+				return err
+			}
+		case 14:
+			err := v.FocusedBorder.read(r)
+			if err != nil {
+				return err
+			}
+		case 15:
+			err := v.Wrap.read(r)
+			if err != nil {
+				return err
+			}
+		case 16:
+			err := v.StylePreset.read(r)
+			if err != nil {
+				return err
+			}
+		case 17:
+			err := v.Position.read(r)
+			if err != nil {
+				return err
+			}
+		case 18:
+			err := v.Disabled.read(r)
+			if err != nil {
+				return err
+			}
+		case 19:
+			err := v.Invisible.read(r)
+			if err != nil {
+				return err
+			}
+		case 20:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 21:
+			err := v.TextColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 22:
+			err := v.NoClip.read(r)
+			if err != nil {
+				return err
+			}
+		case 23:
+			err := v.Animation.read(r)
+			if err != nil {
+				return err
+			}
+		case 24:
+			err := v.Transformation.read(r)
+			if err != nil {
+				return err
+			}
+		case 25:
+			err := v.Opacity.read(r)
+			if err != nil {
+				return err
+			}
+		case 26:
+			err := v.Background.read(r)
+			if err != nil {
+				return err
+			}
+		case 27:
+			err := v.Url.read(r)
+			if err != nil {
+				return err
+			}
+		case 28:
+			err := v.Target.read(r)
+			if err != nil {
+				return err
+			}
+		case 29:
+			err := v.Orientation.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -14195,12 +13837,6 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 			return nil, err
 		}
 		return &v, nil
-	case 58:
-		var v HStack
-		if err := v.read(src); err != nil {
-			return nil, err
-		}
-		return &v, nil
 	case 59:
 		var v StylePreset
 		if err := v.read(src); err != nil {
@@ -14491,12 +14127,6 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 108:
 		var v TextLayout
-		if err := v.read(src); err != nil {
-			return nil, err
-		}
-		return &v, nil
-	case 109:
-		var v VStack
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -14881,6 +14511,24 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 181:
 		var v Select
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 182:
+		var v Orientation
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 183:
+		var v ColorStates
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 184:
+		var v Stack
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -16081,46 +15729,6 @@ func (v *GridCell) IsZero() bool {
 	return v.Body.IsZero() && v.ColStart.IsZero() && v.ColEnd.IsZero() && v.RowStart.IsZero() && v.RowEnd.IsZero() && v.ColSpan.IsZero() && v.RowSpan.IsZero() && v.Padding.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero()
 }
 
-func (v *HStack) reset() {
-	v.Children.reset()
-	v.Gap.reset()
-	v.Frame.reset()
-	v.Alignment.reset()
-	v.BackgroundColor.reset()
-	v.Padding.reset()
-	v.AccessibilityLabel.reset()
-	v.Border.reset()
-	v.Font.reset()
-	v.Action.reset()
-	v.HoveredBackgroundColor.reset()
-	v.PressedBackgroundColor.reset()
-	v.FocusedBackgroundColor.reset()
-	v.HoveredBorder.reset()
-	v.PressedBorder.reset()
-	v.FocusedBorder.reset()
-	v.Wrap.reset()
-	v.StylePreset.reset()
-	v.Position.reset()
-	v.Disabled.reset()
-	v.Invisible.reset()
-	v.Id.reset()
-	v.TextColor.reset()
-	v.NoClip.reset()
-	v.Animation.reset()
-	v.Transformation.reset()
-	v.Opacity.reset()
-	v.Background.reset()
-	v.Url.reset()
-	v.Target.reset()
-}
-
-func (v *HStack) IsZero() bool {
-	if v == nil {
-		return true
-	}
-	return v.Children.IsZero() && v.Gap.IsZero() && v.Frame.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.Wrap.IsZero() && v.StylePreset.IsZero() && v.Position.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero() && v.TextColor.IsZero() && v.NoClip.IsZero() && v.Animation.IsZero() && v.Transformation.IsZero() && v.Opacity.IsZero() && v.Background.IsZero() && v.Url.IsZero() && v.Target.IsZero()
-}
-
 func (v *Position) reset() {
 	v.Kind.reset()
 	v.Left.reset()
@@ -16997,43 +16605,6 @@ func (v *TextLayout) IsZero() bool {
 		return true
 	}
 	return v.Children.IsZero() && v.Border.IsZero() && v.Frame.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.TextAlignment.IsZero() && v.Invisible.IsZero()
-}
-
-func (v *VStack) reset() {
-	v.Children.reset()
-	v.Gap.reset()
-	v.Frame.reset()
-	v.Alignment.reset()
-	v.BackgroundColor.reset()
-	v.Padding.reset()
-	v.AccessibilityLabel.reset()
-	v.Border.reset()
-	v.Font.reset()
-	v.Action.reset()
-	v.HoveredBackgroundColor.reset()
-	v.PressedBackgroundColor.reset()
-	v.FocusedBackgroundColor.reset()
-	v.HoveredBorder.reset()
-	v.PressedBorder.reset()
-	v.FocusedBorder.reset()
-	v.StylePreset.reset()
-	v.Position.reset()
-	v.Disabled.reset()
-	v.Invisible.reset()
-	v.Id.reset()
-	v.TextColor.reset()
-	v.NoClip.reset()
-	v.Animation.reset()
-	v.Transformation.reset()
-	v.Opacity.reset()
-	v.Background.reset()
-}
-
-func (v *VStack) IsZero() bool {
-	if v == nil {
-		return true
-	}
-	return v.Children.IsZero() && v.Gap.IsZero() && v.Frame.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.StylePreset.IsZero() && v.Position.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero() && v.TextColor.IsZero() && v.NoClip.IsZero() && v.Animation.IsZero() && v.Transformation.IsZero() && v.Opacity.IsZero() && v.Background.IsZero()
 }
 
 func (v *WebView) reset() {
@@ -18120,6 +17691,58 @@ func (v *Select) IsZero() bool {
 	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.Leading.IsZero() && v.Disabled.IsZero() && v.Id.IsZero() && v.Options.IsZero()
 }
 
+func (v *ColorStates) reset() {
+	v.Hover.reset()
+	v.Focus.reset()
+	v.Pressed.reset()
+}
+
+func (v *ColorStates) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Hover.IsZero() && v.Focus.IsZero() && v.Pressed.IsZero()
+}
+
+func (v *Stack) reset() {
+	v.Children.reset()
+	v.Gap.reset()
+	v.Frame.reset()
+	v.Alignment.reset()
+	v.BackgroundColor.reset()
+	v.Padding.reset()
+	v.AccessibilityLabel.reset()
+	v.Border.reset()
+	v.Font.reset()
+	v.Action.reset()
+	v.BackgroundColorStates.reset()
+	v.HoveredBorder.reset()
+	v.PressedBorder.reset()
+	v.FocusedBorder.reset()
+	v.Wrap.reset()
+	v.StylePreset.reset()
+	v.Position.reset()
+	v.Disabled.reset()
+	v.Invisible.reset()
+	v.Id.reset()
+	v.TextColor.reset()
+	v.NoClip.reset()
+	v.Animation.reset()
+	v.Transformation.reset()
+	v.Opacity.reset()
+	v.Background.reset()
+	v.Url.reset()
+	v.Target.reset()
+	v.Orientation.reset()
+}
+
+func (v *Stack) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Children.IsZero() && v.Gap.IsZero() && v.Frame.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.BackgroundColorStates.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.Wrap.IsZero() && v.StylePreset.IsZero() && v.Position.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero() && v.TextColor.IsZero() && v.NoClip.IsZero() && v.Animation.IsZero() && v.Transformation.IsZero() && v.Opacity.IsZero() && v.Background.IsZero() && v.Url.IsZero() && v.Target.IsZero() && v.Orientation.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -18519,13 +18142,6 @@ func (v *GridCell) writeTypeHeader(w *BinaryWriter) error {
 	return nil
 }
 
-func (v *HStack) writeTypeHeader(w *BinaryWriter) error {
-	if err := w.writeTypeHeader(record, 58); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (v *StylePreset) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(uvarint, 59); err != nil {
 		return err
@@ -18864,13 +18480,6 @@ func (v *Toggle) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *TextLayout) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 108); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (v *VStack) writeTypeHeader(w *BinaryWriter) error {
-	if err := w.writeTypeHeader(record, 109); err != nil {
 		return err
 	}
 	return nil
@@ -19319,6 +18928,27 @@ func (v *SelectOptions) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *Select) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 181); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Orientation) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 182); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *ColorStates) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 183); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Stack) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 184); err != nil {
 		return err
 	}
 	return nil

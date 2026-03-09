@@ -1,0 +1,12 @@
+{
+  "kind": "Uint",
+  "id": 182,
+  "const": {
+    "1": {
+      "name": "Horizontal"
+    },
+    "2": {
+      "name": "Vertical"
+    }
+  }
+}

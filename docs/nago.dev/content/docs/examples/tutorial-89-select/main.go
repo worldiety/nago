@@ -12,13 +12,19 @@ import (
 
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
-	. "go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/dropdown"
 	"go.wdy.de/nago/web/vuejs"
 )
 
+type ID string
 type Person struct {
-	ID                string
+	ID                ID
 	Vorname, Nachname string
+}
+
+func (p Person) Identity() ID {
+	return p.ID
 }
 
 func (p Person) String() string {
@@ -29,23 +35,23 @@ var names = []string{"Baba", "Noah", "Ethan", "Olivia", "Isabella", "Jacob", "Av
 
 func main() {
 	application.Configure(func(cfg *application.Configurator) {
-		cfg.SetApplicationID("de.worldiety.tutorial")
+		cfg.SetApplicationID("de.worldiety.tutorial_89")
 		cfg.Serve(vuejs.Dist())
 
 		var persons []Person
 		for i, first := range names {
 			for j, second := range names {
 				persons = append(persons, Person{
-					ID:       fmt.Sprintf("%d-%d-%s-%s", i, j, first, second),
+					ID:       ID(fmt.Sprintf("%d-%d-%s-%s", i, j, first, second)),
 					Vorname:  first,
 					Nachname: second,
 				})
 			}
 		}
 
-		selectOptions := make([]SelectOption, 0, len(persons))
+		selectOptions := make([]dropdown.Option[ID], 0, len(persons))
 		for i, person := range persons {
-			selectOptions = append(selectOptions, SelectOption{
+			selectOptions = append(selectOptions, dropdown.Option[ID]{
 				Label:    person.String(),
 				Value:    person.ID,
 				Disabled: i%10 == 0,
@@ -53,19 +59,42 @@ func main() {
 		}
 
 		cfg.RootView(".", func(wnd core.Window) core.View {
-			enabled := core.AutoState[bool](wnd)
-			personState := core.AutoState[string](wnd)
-			personState.Observe(func(newValue string) {
-				fmt.Println("VALUE CHANGED: " + personState.Get())
+			personState := core.AutoState[ID](wnd).Init(func() ID {
+				return persons[4].ID
+			})
+			personState.Observe(func(newValue ID) {
+				fmt.Println("Select value changed: " + personState.Get())
 			})
 
-			return VStack(
-				Select(selectOptions).Label("Person auswählen").InputValue(personState),
-				PrimaryButton(func() {
+			return ui.VStack(
+				dropdown.Dropdown("Person auswählen", selectOptions, personState.Get()).InputValue(personState),
+				ui.PrimaryButton(func() {
 					fmt.Println(personState)
-				}).Title("print selected").Enabled(enabled.Get()),
+				}).Title("print selected").Enabled(len(personState.Get()) > 0),
+				ui.SecondaryButton(func() {
+					wnd.Navigation().ForwardTo("picker-drop-in", nil)
+				}).Title("show picker-drop-in api"),
 			).
-				Frame(Frame{}.MatchScreen())
+				Gap(ui.L16).
+				Frame(ui.Frame{}.MatchScreen())
+		})
+
+		cfg.RootView("picker-drop-in", func(wnd core.Window) core.View {
+			personState := core.AutoState[[]Person](wnd).Init(func() []Person {
+				return []Person{persons[4]}
+			})
+			personState.Observe(func(newValue []Person) {
+				fmt.Println("Select value changed: ", personState.Get())
+			})
+
+			return ui.VStack(
+				dropdown.FromSlice("Person auswählen", persons, personState),
+				ui.PrimaryButton(func() {
+					fmt.Println(personState)
+				}).Title("print selected").Enabled(len(personState.Get()) > 0),
+			).
+				Gap(ui.L16).
+				Frame(ui.Frame{}.MatchScreen())
 		})
 	}).Run()
 }

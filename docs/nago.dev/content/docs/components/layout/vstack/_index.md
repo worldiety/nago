@@ -34,7 +34,7 @@ you need to apply additional padding.
 | `Background(bg Background)` |  |
 | `BackgroundColor(backgroundColor Color)` | BackgroundColor sets the background color. |
 | `Border(border Border)` | Border sets the default border styling. |
-| `FocusedBackgroundColor(backgroundColor proto.Color)` | FocusedBackgroundColor sets the background color when focused. |
+| `FocusedBackgroundColor(backgroundColor Color)` | FocusedBackgroundColor sets the background color when focused. |
 | `FocusedBorder(border Border)` | FocusedBorder sets the border styling when focused. |
 | `Font(font Font)` | Font sets the default font for text children. |
 | `Frame(f Frame)` | Frame sets the layout frame of the VStack. |

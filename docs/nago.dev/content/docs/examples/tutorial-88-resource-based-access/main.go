@@ -19,6 +19,9 @@ import (
 	"go.wdy.de/nago/application/migration"
 	cfgmigration "go.wdy.de/nago/application/migration/cfg"
 	cfgrebac "go.wdy.de/nago/application/rebac/cfg"
+	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
 )
 
@@ -40,9 +43,14 @@ func main() {
 
 		option.MustZero(modMig.Migrations.Declare(MyTestMigration{}, migration.Options{}))
 
-		/*cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {
-			return
-		})*/
+		cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {
+			dsp, ok := core.FromContext[user.DisplayName](wnd.Context(), "")
+			if !ok {
+				return ui.Text("no display name service")
+			}
+
+			return ui.Text("hello world " + dsp(wnd.Subject().ID()).Displayname)
+		})
 
 	}).Run()
 }
