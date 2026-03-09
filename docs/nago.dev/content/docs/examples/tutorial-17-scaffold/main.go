@@ -10,6 +10,7 @@ package main
 import (
 	_ "embed"
 	"fmt"
+
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
 	icons2 "go.wdy.de/nago/presentation/icons/flowbite/outline"
@@ -92,6 +93,17 @@ func main() {
 							TextAlignment(TextAlignCenter),
 					).FullWidth(),
 				)
+		})
+
+		cfg.SetDecorator(cfg.NewScaffold().
+			MenuEntry().Title("hello world").Public().
+			Decorator(),
+		)
+
+		cfg.RootView("test", func(wnd core.Window) core.View {
+			return cfg.NewScaffold().MenuEntry().Title("test").Public().Decorator()(
+				wnd, VStack(Text("test dynamic scaffold page")),
+			)
 		})
 	}).Run()
 }

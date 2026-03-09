@@ -17,7 +17,9 @@ Calendar creates a new TCalendar initialized with the current year, a yearly tim
 | `Append(events ...)` | Append adds one or more events to the existing calendar events. |
 | `Colors(colors Colors)` | Colors customizes the color scheme used for rendering the calendar and its events. |
 | `Frame(frame ui.Frame)` | Frame defines the layout frame (size, width, height) for the calendar component. |
+| `FullWidth()` |  |
 | `Style(style Style)` | Style sets the display style (e.g., timeline view) for the calendar. |
 | `ViewPort(vp ViewPort)` | ViewPort sets the visible time range (e.g., year, month) of the calendar. |
+| `mapStartTimeCluster(events []Event, vp ViewPort)` |  |
 ---
 
