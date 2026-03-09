@@ -122,7 +122,8 @@ func NewScope(ctx context.Context, app *Application, tempRootDir string, id prot
 			Type:    proto.ErrorOccurredT,
 			Message: fmt.Sprintf("panic in event loop: %v", p),
 		})*/
-		node := &proto.VStack{
+		node := &proto.Stack{
+			Orientation: proto.Vertical,
 			Children: []proto.Component{
 				&proto.TextView{Value: "panic during event loop, check server-side logs"},
 			},
@@ -402,7 +403,8 @@ func (s *Scope) render(requestId proto.RID, scopeWnd *scopeWindow) *proto.RootVi
 				} else {
 					slog.Error(fmt.Sprintf("%v", r), slog.String("panic", string(debug.Stack())))
 				}
-				rn = &proto.VStack{
+				rn = &proto.Stack{
+					Orientation: proto.Vertical,
 					Children: []proto.Component{
 						&proto.TextView{Value: "panic during rendering, check server-side logs"},
 					},

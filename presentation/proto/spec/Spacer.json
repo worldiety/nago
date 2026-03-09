@@ -1,5 +1,5 @@
 {
-  "doc": "Spacer grows or shrinks within a HStack or VStack. In other layouts, the behavior is unspecified.",
+  "doc": "Spacer grows or shrinks within a Stack. In other layouts, the behavior is unspecified.",
   "kind": "Record",
   "id": 95,
   "fields": {

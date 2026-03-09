@@ -98,7 +98,7 @@ func btnTitle(text string, color Color) TText {
 // customButton applies default styling and interactive states to a button.
 // It sets hover, pressed, and focused effects, as well as padding, background
 // color, and a circular border to ensure consistent sizing.
-func customButton(fillColor Color, hstack THStack) DecoredView {
+func customButton(fillColor Color, hstack TStack) DecoredView {
 	return hstack.
 		HoveredBackgroundColor(fillColor.WithTransparency(25)).
 		PressedBackgroundColor(fillColor.WithTransparency(35)).
