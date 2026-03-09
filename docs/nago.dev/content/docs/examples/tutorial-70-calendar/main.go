@@ -135,8 +135,68 @@ func main() {
 				).ViewPort(calendar.Year(2025)).
 					Frame(ui.Frame{}.FullWidth()).
 					Style(calendar.StartTimeSequence),
-			).FullWidth()
+
+				//
+				calStartTimeSeqTimeExample(),
+			).FullWidth().Gap(ui.L16)
 
 		})
 	}).Run()
+}
+
+func calStartTimeSeqTimeExample() core.View {
+	return calendar.Calendar(
+		calendar.Event{
+			From: calendar.Instant{
+				At: time.Date(2026, 7, 11, 12, 0, 0, 0, time.Local),
+			},
+			To: calendar.Instant{
+				At: time.Date(2026, 7, 11, 13, 0, 0, 0, time.Local),
+			},
+			Label:     "Mittag",
+			Organiser: "Torben",
+			Location:  "WZO",
+			Lane: calendar.Lane{
+				Label: "Torben",
+			},
+			Category: calendar.Category{
+				Label: "Kategorie 2",
+				Color: "#ff0000",
+			},
+		},
+		calendar.Event{
+			From: calendar.Instant{
+				At: time.Date(2026, 7, 11, 12, 0, 0, 0, time.Local),
+			},
+			To: calendar.Instant{
+				At: time.Date(2026, 7, 11, 12, 30, 0, 0, time.Local),
+			},
+			Label:     "Mittag",
+			Organiser: "Olaf",
+			Location:  "WZO",
+			Lane: calendar.Lane{
+				Label: "Torben",
+			},
+			Category: calendar.Category{
+				Label: "Kategorie 2",
+				Color: "#ff0000",
+			},
+		},
+
+		calendar.Event{
+			From: calendar.Instant{
+				At: time.Date(2026, 7, 11, 13, 0, 0, 0, time.Local),
+			},
+			To: calendar.Instant{
+				At: time.Date(2026, 7, 11, 14, 30, 0, 0, time.Local),
+			},
+			Label: "Mittagschläfchen",
+			Category: calendar.Category{
+				Label: "Kategorie 2",
+				Color: "#ffff00",
+			},
+		},
+	).ViewPort(calendar.Day(2026, 7, 11)).
+		FullWidth().
+		Style(calendar.StartTimeSequence)
 }

@@ -1,6 +1,5 @@
 import { randomStr } from '@/components/shared/util';
 
-
 type PseudoClass = 'hover' | 'focus' | 'active';
 
 export class CssClasses {
@@ -31,11 +30,7 @@ export class CssClasses {
 		return this.createCssClass(mapKey, styles, pseudoClass);
 	}
 
-	private static createCssClass(
-		mapKey: string,
-		styles: string[],
-		pseudoClass?: PseudoClass
-	): string {
+	private static createCssClass(mapKey: string, styles: string[], pseudoClass?: PseudoClass): string {
 		this.init();
 		const stylesStr = styles.join(';\n');
 		const className = randomStr(12);
