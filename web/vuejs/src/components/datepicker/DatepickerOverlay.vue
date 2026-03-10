@@ -231,11 +231,6 @@ function onMonthChange(e: Event, offset: number) {
 function onYearChange(e: Event, offset: number) {
 	const input = e.target as HTMLInputElement;
 	if (!input || !input.valueAsNumber) return;
-	console.warn(
-		offset,
-		input.valueAsNumber,
-		Math.max(MIN_YEAR, input.valueAsNumber - (selectedMonth.value - offset < 0 ? 1 : 0))
-	);
 	selectedYear.value = Math.max(MIN_YEAR, input.valueAsNumber - (selectedMonth.value - offset < 0 ? 1 : 0));
 }
 
