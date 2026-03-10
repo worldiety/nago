@@ -93,6 +93,8 @@ func (c *Configurator) ImageManagement() (ImageManagement, error) {
 
 		c.AddContextValue(core.ContextValue("nago.image.srcset.load", c.imageManagement.UseCases.LoadSrcSet))
 		c.AddContextValue(core.ContextValue("nago.image.srcset.create", c.imageManagement.UseCases.CreateSrcSet))
+		c.AddContextValue(core.ContextValue("nago.image.srcset.load_best_fit", c.imageManagement.UseCases.LoadBestFit))
+
 	}
 
 	return *c.imageManagement, nil

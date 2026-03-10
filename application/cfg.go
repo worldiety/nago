@@ -518,6 +518,10 @@ func (c *Configurator) EventBus() events.EventBus {
 // StandardSystems enables the admin center all stuff like user, session, mail, self service etc. systems.
 // If you want to customize that, just don't call this and instead configure use each individual system for itself.
 func (c *Configurator) StandardSystems() error {
+	if _, err := c.ImageManagement(); err != nil {
+		return err
+	}
+
 	if _, err := c.AdminManagement(); err != nil {
 		return err
 	}

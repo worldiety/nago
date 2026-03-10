@@ -126,14 +126,6 @@ func (a *Application) Context() context.Context {
 	return a.ctx
 }
 
-// SetContext updates the current context.
-func (a *Application) SetContext(ctx context.Context) {
-	a.mutex.Lock()
-	defer a.mutex.Unlock()
-
-	a.ctx = ctx
-}
-
 func (a *Application) MasterKey() crypto.EncryptionKey {
 	return a.masterKey
 }

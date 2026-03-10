@@ -178,16 +178,6 @@ func (c *Configurator) newHandler() http.Handler {
 		}
 	})
 
-	app2.SetContext(core.WithContext(app2.Context(),
-		core.ContextValue("", option.Must(c.ImageManagement()).UseCases.CreateSrcSet),
-		core.ContextValue("", option.Must(c.ImageManagement()).UseCases.LoadBestFit),
-		core.ContextValue("", option.Must(c.ImageManagement()).UseCases.LoadSrcSet),
-	))
-
-	app2.SetContext(core.WithContext(app2.Context(),
-		c.systemServices...,
-	))
-
 	c.app = app2
 	app2.SetID(c.applicationID)
 	for scheme, m := range c.colorSets {
