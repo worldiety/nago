@@ -40,6 +40,27 @@ const props = defineProps<{
 const id = props.ui.id || randomStr(16);
 const serviceAdapter = useServiceAdapter();
 
+const isDiv = computed<boolean>(() => {
+	return (
+		!(props.ui.orientation === OrientationValues.Horizontal && props.ui.url) &&
+		(props.ui.stylePreset === StylePresetValues.StyleNone || props.ui.stylePreset === undefined) &&
+		!props.ui.invisible
+	);
+});
+
+const isButton = computed<boolean>(() => {
+	return (
+		!(props.ui.orientation === OrientationValues.Horizontal && props.ui.url) &&
+		props.ui.stylePreset !== StylePresetValues.StyleNone &&
+		props.ui.stylePreset !== undefined &&
+		(props.ui.invisible === undefined || !props.ui.invisible)
+	);
+});
+
+const isA = computed<boolean>(() => {
+	return props.ui.orientation === OrientationValues.Horizontal && !!props.ui.url;
+});
+
 const focusable = computed<boolean>(
 	() => !!props.ui.action || !!props.ui.focusedBorder || !!props.ui.backgroundColorStates?.focus
 );
@@ -47,7 +68,7 @@ const focusable = computed<boolean>(
 const classes = computed<string>(() => {
 	const classes = ['inline-flex'];
 	if (props.ui.orientation === OrientationValues.Vertical) classes.push('flex-col');
-	if (!props.ui.noClip) classes.push('overflow-clip');
+	if (!props.ui.noClip && !isButton.value && !isA.value) classes.push('overflow-clip');
 	else classes.push('overflow-visible');
 	if (props.ui.action) classes.push('cursor-pointer');
 	if (props.ui.orientation === OrientationValues.Horizontal && props.ui.wrap) classes.push('flex-wrap');
@@ -234,11 +255,7 @@ function onKeydown(event: KeyboardEvent) {
 
 <template>
 	<div
-		v-if="
-			!(props.ui.orientation === OrientationValues.Horizontal && props.ui.url) &&
-			(props.ui.stylePreset === StylePresetValues.StyleNone || props.ui.stylePreset === undefined) &&
-			!props.ui.invisible
-		"
+		v-if="isDiv"
 		:id="id"
 		:class="classes"
 		:title="props.ui.accessibilityLabel"
@@ -250,12 +267,7 @@ function onKeydown(event: KeyboardEvent) {
 	</div>
 
 	<button
-		v-else-if="
-			!(props.ui.orientation === OrientationValues.Horizontal && props.ui.url) &&
-			props.ui.stylePreset !== StylePresetValues.StyleNone &&
-			props.ui.stylePreset !== undefined &&
-			(props.ui.invisible === undefined || !props.ui.invisible)
-		"
+		v-else-if="isButton"
 		:id="id"
 		:tabindex="focusable ? 0 : -1"
 		:disabled="props.ui.disabled"
@@ -267,7 +279,7 @@ function onKeydown(event: KeyboardEvent) {
 	</button>
 
 	<a
-		v-else-if="props.ui.orientation === OrientationValues.Horizontal && props.ui.url"
+		v-else-if="isA"
 		:id="id"
 		:class="classes"
 		:href="props.ui.url"

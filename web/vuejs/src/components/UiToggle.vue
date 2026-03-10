@@ -52,6 +52,7 @@ function onClick() {
 		:tabindex="props.ui.disabled ? '-1' : '0'"
 		@click="onClick"
 		@keydown.enter="onClick"
+		@keydown.space="onClick"
 	>
 		<div class="toggle-switch" :class="{ 'toggle-switch-checked': checked }"></div>
 	</div>
@@ -63,11 +64,11 @@ function onClick() {
 }
 
 .toggle-switch::after {
-	@apply absolute start-[6px] top-1 h-4 w-4 rounded-full border bg-transparent transition-transform content-[''];
+	@apply absolute start-[6px] top-1 h-4 w-4 rounded-full bg-transparent border duration-100 transition-transform content-[''];
 }
 
 .toggle-switch.toggle-switch-checked {
-	@apply after:translate-x-[105%] after:border-M8 after:border-M8 bg-I1;
+	@apply after:translate-x-[105%] after:border-M8 bg-I1;
 }
 
 .toggle-switch-container {
@@ -86,12 +87,12 @@ function onClick() {
 	@apply outline-I0;
 }
 
-.toggle-switch-container:hover .toggle-switch::after {
-	@apply border-I0;
-}
-
 .toggle-switch-container:focus-visible {
-	@apply outline-none outline-2 outline-offset-2 outline-black ring-white ring-2;
+	@apply outline-none;
+
+	.toggle-switch {
+		@apply outline-I0;
+	}
 }
 
 .toggle-switch-container.toggle-switch-container-disabled:hover {
@@ -108,6 +109,10 @@ function onClick() {
 
 .toggle-switch-container.toggle-switch-container-disabled .toggle-switch::after {
 	@apply bg-transparent border-ST0;
+}
+
+.toggle-switch-container .toggle-switch.toggle-switch-checked::after {
+	@apply bg-current;
 }
 
 .toggle-switch-container.toggle-switch-container-disabled .toggle-switch.toggle-switch-checked::after {
