@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: Custom-License
  */
 
-*:focus-visible:not(.custom-focus, .button-primary, .button-secondary, .button-tertiary, input[type=text], .toggle-switch-container) {
+*:focus-visible:not(.custom-focus, .button-primary, .button-secondary, .button-tertiary, input[type=text], .toggle-switch, .toggle-switch-container) {
 	@apply outline-none outline-I0 -outline-offset-2 rounded-lg;
 
 	:not(input, textarea) {
