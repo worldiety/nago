@@ -1,0 +1,127 @@
+{
+  "kind": "Record",
+  "id": 184,
+  "fields": {
+    "1": {
+      "name": "Children",
+      "type": "Components"
+    },
+    "2": {
+      "name": "Gap",
+      "type": "Length"
+    },
+    "3": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "4": {
+      "doc": "Zero value of Alignment is Center (=c) must be applied.",
+      "name": "Alignment",
+      "type": "Alignment"
+    },
+    "5": {
+      "name": "BackgroundColor",
+      "type": "Color"
+    },
+    "6": {
+      "name": "Padding",
+      "type": "Padding"
+    },
+    "7": {
+      "doc": "see also https://www.w3.org/WAI/tutorials/images/decision-tree/",
+      "name": "AccessibilityLabel",
+      "type": "Str"
+    },
+    "8": {
+      "name": "Border",
+      "type": "Border"
+    },
+    "9": {
+      "name": "Font",
+      "type": "Font"
+    },
+    "10": {
+      "name": "Action",
+      "type": "Ptr"
+    },
+    "11": {
+      "name": "BackgroundColorStates",
+      "type": "ColorStates"
+    },
+    "12": {
+      "name": "HoveredBorder",
+      "type": "Border"
+    },
+    "13": {
+      "name": "PressedBorder",
+      "type": "Border"
+    },
+    "14": {
+      "name": "FocusedBorder",
+      "type": "Border"
+    },
+    "15": {
+      "name": "Wrap",
+      "type": "Bool"
+    },
+    "16": {
+      "name": "StylePreset",
+      "type": "StylePreset"
+    },
+    "17": {
+      "name": "Position",
+      "type": "Position"
+    },
+    "18": {
+      "name": "Disabled",
+      "type": "Bool"
+    },
+    "19": {
+      "name": "Invisible",
+      "type": "Bool"
+    },
+    "20": {
+      "doc": "Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.",
+      "name": "Id",
+      "type": "Str"
+    },
+    "21": {
+      "name": "TextColor",
+      "type": "Color"
+    },
+    "22": {
+      "name": "NoClip",
+      "type": "Bool"
+    },
+    "23": {
+      "name": "Animation",
+      "type": "Animation"
+    },
+    "24": {
+      "name": "Transformation",
+      "type": "Transformation"
+    },
+    "25": {
+      "doc": "Opacity is an integer between [0..100]% which represents the alpha channel. 1 means fully transparent and 0 means fully visible.",
+      "name": "Opacity",
+      "type": "Uint"
+    },
+    "26": {
+      "name": "Background",
+      "type": "Background",
+      "pointer": true
+    },
+    "27": {
+      "name": "Url",
+      "type": "URI"
+    },
+    "28": {
+      "name": "Target",
+      "type": "Str"
+    },
+    "29": {
+      "name": "Orientation",
+      "type": "Orientation"
+    }
+  }
+}

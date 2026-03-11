@@ -9,6 +9,12 @@ selected summary and the selectable rows is customizable via callbacks. The pick
 can be presented in a dialog with configurable options.
 
 ## Constructors
+### FromData
+FromData is similar to the dataview package. However, the picker is used in the dataview package itself
+and therefore we cannot depend on it without an import cycle. The current implementation does not yet
+benefit from the potential performance improvements and instead wrap the legacy api which will switch in the
+future.
+
 ### Picker
 Picker takes the given slice and state to represent the selection. Internally, it uses deep equals, to determine
 the unique set of selected elements and coordinate that with the UI state.
@@ -64,6 +70,7 @@ func main() {
 | `Padding(padding ui.Padding)` |  |
 | `QuickFilterSupported(flag bool)` | QuickFilterSupported sets the quick-filter-support and if true and values contains more than 10 items, the quick filter is shown. Default is true. |
 | `SelectAllSupported(flag bool)` | SelectAllSupported sets the select-all-support and if true and multiSelect is enabled, a checkbox to select all is shown. Default is true. |
+| `Stringer(stringer func(T) string)` |  |
 | `SupportingText(text string)` |  |
 | `Title(title string)` |  |
 | `Visible(visible bool)` |  |

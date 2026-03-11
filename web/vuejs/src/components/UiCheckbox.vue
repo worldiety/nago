@@ -56,7 +56,6 @@ function checkboxSelected(): void {
 		v-if="!ui.invisible"
 		class="input-checkbox rounded-full w-fit"
 		:class="{ 'input-checkbox-disabled': ui.disabled }"
-		:tabindex="ui.disabled ? '-1' : '0'"
 		@click="checkboxSelectedClick"
 		@keydown.enter="checkboxSelected"
 	>
@@ -66,7 +65,6 @@ function checkboxSelected(): void {
 				:checked="checked"
 				type="checkbox"
 				class="pointer-events-none"
-				tabindex="-1"
 				:disabled="ui.disabled"
 			/>
 		</div>
@@ -74,6 +72,10 @@ function checkboxSelected(): void {
 </template>
 
 <style scoped>
+.input-checkbox input {
+	@apply relative rounded;
+}
+
 .input-checkbox:hover {
 	@apply bg-I0 bg-opacity-25;
 }
@@ -94,7 +96,7 @@ function checkboxSelected(): void {
 	@apply outline-none ring-0;
 }
 
-.input-checkbox:hover input:not(:checked) {
+.input-checkbox:hover input {
 	@apply border-I0;
 }
 

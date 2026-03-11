@@ -17,17 +17,17 @@ import (
 // The dialog can be aligned, styled with padding and frames, and may support or disable
 // box-based layouts for its content.
 type TDialog struct {
-	uri              core.URI     // unique identifier for the dialog instance
-	dlg              proto.VStack // internal protocol structure for layout
-	preBody          core.View    // optional view rendered before the body
-	body             core.View    // main content of the dialog
-	footer           core.View    // optional footer content (e.g., buttons)
-	title            core.View    // optional title displayed at the top
-	titleX           core.View    // optional title element aligned differently (e.g., actions)
-	alignment        Alignment    // alignment of the dialog content
-	modalPadding     Padding      // padding around dialog content
-	frame            Frame        // layout frame for sizing and positioning
-	disableBoxLayout bool         // when true, disables box layout handling
+	uri              core.URI    // unique identifier for the dialog instance
+	dlg              proto.Stack // internal protocol structure for layout
+	preBody          core.View   // optional view rendered before the body
+	body             core.View   // main content of the dialog
+	footer           core.View   // optional footer content (e.g., buttons)
+	title            core.View   // optional title displayed at the top
+	titleX           core.View   // optional title element aligned differently (e.g., actions)
+	alignment        Alignment   // alignment of the dialog content
+	modalPadding     Padding     // padding around dialog content
+	frame            Frame       // layout frame for sizing and positioning
+	disableBoxLayout bool        // when true, disables box layout handling
 }
 
 // Dialog creates a new dialog with the given body content and default frame settings.

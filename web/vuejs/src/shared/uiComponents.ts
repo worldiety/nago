@@ -20,7 +20,6 @@ import {
 	DnDArea,
 	Form,
 	Grid,
-	HStack,
 	HoverGroup,
 	Img,
 	LineChart,
@@ -37,12 +36,12 @@ import {
 	ScrollView,
 	Select,
 	Spacer,
+	Stack,
 	Table,
 	TextField,
 	TextLayout,
 	TextView,
 	Toggle,
-	VStack,
 	Video,
 	WebView,
 	WindowTitle,
@@ -95,7 +94,7 @@ export function vueComponentFor(ngc: NagoComponent): Component {
 		return LazyUiText;
 	}
 
-	if (ngc instanceof HStack || ngc instanceof VStack) {
+	if (ngc instanceof Stack) {
 		return LazyUiStack;
 	}
 

@@ -23,33 +23,55 @@ import { randomStr } from '@/components/shared/util';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
 import { CssClasses } from '@/shared/cssClasses';
-import { HStack, VStack } from '@/shared/proto/nprotoc_gen';
+import type { Stack } from '@/shared/proto/nprotoc_gen';
 import {
 	AlignmentValues,
 	AnimationValues,
 	FunctionCallRequested,
 	Img,
+	OrientationValues,
 	StylePresetValues,
 } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
-	ui: HStack | VStack;
+	ui: Stack;
 }>();
 
 const id = props.ui.id || randomStr(16);
 const serviceAdapter = useServiceAdapter();
 
+const isDiv = computed<boolean>(() => {
+	return (
+		!(props.ui.orientation === OrientationValues.Horizontal && props.ui.url) &&
+		(props.ui.stylePreset === StylePresetValues.StyleNone || props.ui.stylePreset === undefined) &&
+		!props.ui.invisible
+	);
+});
+
+const isButton = computed<boolean>(() => {
+	return (
+		!(props.ui.orientation === OrientationValues.Horizontal && props.ui.url) &&
+		props.ui.stylePreset !== StylePresetValues.StyleNone &&
+		props.ui.stylePreset !== undefined &&
+		(props.ui.invisible === undefined || !props.ui.invisible)
+	);
+});
+
+const isA = computed<boolean>(() => {
+	return props.ui.orientation === OrientationValues.Horizontal && !!props.ui.url;
+});
+
 const focusable = computed<boolean>(
-	() => !!props.ui.action || !!props.ui.focusedBorder || !!props.ui.focusedBackgroundColor
+	() => !!props.ui.action || !!props.ui.focusedBorder || !!props.ui.backgroundColorStates?.focus
 );
 
 const classes = computed<string>(() => {
 	const classes = ['inline-flex'];
-	if (props.ui instanceof VStack) classes.push('flex-col');
-	if (!props.ui.noClip) classes.push('overflow-clip');
+	if (props.ui.orientation === OrientationValues.Vertical) classes.push('flex-col');
+	if (!props.ui.noClip && !isButton.value && !isA.value) classes.push('overflow-clip');
 	else classes.push('overflow-visible');
 	if (props.ui.action) classes.push('cursor-pointer');
-	if (props.ui instanceof HStack && props.ui.wrap) classes.push('flex-wrap');
+	if (props.ui.orientation === OrientationValues.Horizontal && props.ui.wrap) classes.push('flex-wrap');
 	classes.push(defaultClass.value);
 	if (activeClass.value) {
 		classes.push(activeClass.value);
@@ -75,8 +97,8 @@ const classes = computed<string>(() => {
 const activeClass = computed<string | undefined>(() => {
 	const styles: string[] = [];
 	if (props.ui.pressedBorder) styles.push(...borderCSS(props.ui.pressedBorder));
-	if (props.ui.pressedBackgroundColor)
-		styles.push(`background-color: ${colorValue(props.ui.pressedBackgroundColor)}`);
+	if (props.ui.backgroundColorStates?.pressed)
+		styles.push(`background-color: ${colorValue(props.ui.backgroundColorStates.pressed)}`);
 
 	if (!styles.length) return;
 	return CssClasses.getOrCreate(styles, 'active');
@@ -95,7 +117,7 @@ const defaultClass = computed<string>(() => {
 	if (props.ui.textColor) styles.push(`color: ${colorValue(props.ui.textColor)}`);
 	if (props.ui.opacity) styles.push(`opacity: ${100 - props.ui.opacity}%`);
 	if (props.ui.gap) styles.push(`column-gap:${cssLengthValue(props.ui.gap)}`);
-	if ((!(props.ui instanceof HStack) || props.ui.wrap) && props.ui.gap)
+	if ((props.ui.orientation !== OrientationValues.Horizontal || props.ui.wrap) && props.ui.gap)
 		styles.push(`row-gap:${cssLengthValue(props.ui.gap)}`);
 
 	return CssClasses.getOrCreate(styles);
@@ -104,8 +126,8 @@ const defaultClass = computed<string>(() => {
 const focusClass = computed<string | undefined>(() => {
 	const styles: string[] = [];
 	if (props.ui.focusedBorder) styles.push(...borderCSS(props.ui.focusedBorder));
-	if (props.ui.focusedBackgroundColor)
-		styles.push(`background-color: ${colorValue(props.ui.focusedBackgroundColor)}`);
+	if (props.ui.backgroundColorStates?.focus)
+		styles.push(`background-color: ${colorValue(props.ui.backgroundColorStates.focus)}`);
 
 	if (!styles.length) return;
 	return CssClasses.getOrCreate(styles, 'focus');
@@ -114,15 +136,15 @@ const focusClass = computed<string | undefined>(() => {
 const hoverClass = computed<string | undefined>(() => {
 	const styles: string[] = [];
 	if (props.ui.hoveredBorder) styles.push(...borderCSS(props.ui.hoveredBorder));
-	if (props.ui.hoveredBackgroundColor)
-		styles.push(`background-color: ${colorValue(props.ui.hoveredBackgroundColor)}`);
+	if (props.ui.backgroundColorStates?.hover)
+		styles.push(`background-color: ${colorValue(props.ui.backgroundColorStates.hover)}`);
 
 	if (!styles.length) return;
 	return CssClasses.getOrCreate(styles, 'hover');
 });
 
 function getAlignmentClasses(): string[] {
-	if (props.ui instanceof HStack) {
+	if (props.ui.orientation === OrientationValues.Horizontal) {
 		switch (props.ui.alignment) {
 			case AlignmentValues.Stretch:
 				return ['items-stretch'];
@@ -233,11 +255,7 @@ function onKeydown(event: KeyboardEvent) {
 
 <template>
 	<div
-		v-if="
-			!(props.ui instanceof HStack && props.ui.url) &&
-			(props.ui.stylePreset === StylePresetValues.StyleNone || props.ui.stylePreset === undefined) &&
-			!props.ui.invisible
-		"
+		v-if="isDiv"
 		:id="id"
 		:class="classes"
 		:title="props.ui.accessibilityLabel"
@@ -249,12 +267,7 @@ function onKeydown(event: KeyboardEvent) {
 	</div>
 
 	<button
-		v-else-if="
-			!(props.ui instanceof HStack && props.ui.url) &&
-			props.ui.stylePreset !== StylePresetValues.StyleNone &&
-			props.ui.stylePreset !== undefined &&
-			(props.ui.invisible === undefined || !props.ui.invisible)
-		"
+		v-else-if="isButton"
 		:id="id"
 		:tabindex="focusable ? 0 : -1"
 		:disabled="props.ui.disabled"
@@ -266,7 +279,7 @@ function onKeydown(event: KeyboardEvent) {
 	</button>
 
 	<a
-		v-else-if="props.ui instanceof HStack && props.ui.url"
+		v-else-if="isA"
 		:id="id"
 		:class="classes"
 		:href="props.ui.url"

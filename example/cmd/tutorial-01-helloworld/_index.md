@@ -20,5 +20,4 @@ More static content.
 ## See also
 - [Frame](../../components/layout/frame)
 - [Text](../../components/basic/text)
-- [VStack](../../components/layout/vstack)
 

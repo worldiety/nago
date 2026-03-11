@@ -138,6 +138,7 @@ func (c TPalettePicker) Render(ctx core.RenderContext) core.RenderNode {
 		}
 		c.pickerPresented.Set(true)
 	}).HoveredBorder(ui.Border{}.Color(borderColor).Width(ui.L1).Radius("0.375rem")).
+		FocusedBorder(ui.Border{}.Color(ui.I0).Width(ui.L1)).
 		Gap(ui.L8).
 		BackgroundColor(backgroundColor).
 		Frame(ui.Frame{}.FullWidth()).

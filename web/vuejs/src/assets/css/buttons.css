@@ -20,8 +20,6 @@
 .button-primary {
 	@apply text-PBT;
 	@apply rounded-full h-10 w-fit px-5 bg-I0;
-	@apply hover:brightness-105;
-	@apply active:brightness-150;
 	@apply disabled:text-ST0 disabled:bg-SI0;
 	@apply disabled:pointer-events-none;
 }
@@ -30,13 +28,38 @@
 	@apply text-ST0;
 }
 
+.button-primary:hover:not(.custom-hover) {
+	@apply hover:brightness-105;
+}
+
+.button-primary:focus:not(.custom-focus),
+.button-primary:focus-visible:not(.custom-focus) {
+	@apply -outline-offset-4 outline-current rounded-full;
+	animation: button-focus-outline 100ms ease-out;
+}
+
+.button-primary:active:not(.custom-active) {
+	@apply active:brightness-150;
+}
+
 .button-secondary {
-	@apply rounded-full h-10 w-fit px-5 border border-I0;
-	@apply hover:bg-I0 hover:bg-opacity-25;
-	@apply active:bg-opacity-35;
-	@apply focus-visible:border-transparent;
+	@apply rounded-full h-10 w-fit px-5 border border-I0 outline-I0;
 	@apply disabled:border-SI0 disabled:bg-transparent darkmode:disabled:border-SI0;
 	@apply darkmode:border-I0;
+}
+
+.button-secondary:hover:not(.custom-hover) {
+	@apply hover:bg-I0 hover:bg-opacity-25;
+}
+
+.button-secondary:focus:not(.custom-focus),
+.button-secondary:focus-visible:not(.custom-focus) {
+	@apply -outline-offset-4 outline-I0 outline-1 rounded-full;
+	animation: button-focus-outline 100ms ease-out;
+}
+
+.button-secondary:active:not(.custom-active) {
+	@apply active:bg-opacity-35;
 }
 
 .button-secondary *,
@@ -52,8 +75,29 @@
 }
 
 .button-tertiary {
-	@apply rounded-full h-10 w-fit px-5;
-	@apply hover:bg-I0 hover:bg-opacity-25;
-	@apply active:bg-I0 active:bg-opacity-35;
+	@apply rounded-full h-10 w-fit px-5 outline-I0;
 	@apply disabled:bg-transparent;
+}
+
+.button-tertiary:hover:not(.custom-hover) {
+	@apply hover:bg-I0 hover:bg-opacity-25;
+}
+
+.button-tertiary:focus:not(.custom-focus),
+.button-tertiary:focus-visible:not(.custom-focus) {
+	@apply -outline-offset-4 outline-1 rounded-full;
+	animation: button-focus-outline 100ms ease-out;
+}
+
+.button-tertiary:active:not(.custom-active) {
+	@apply active:bg-I0 active:bg-opacity-35;
+}
+
+@keyframes button-focus-outline {
+	0% {
+		@apply -outline-offset-2 outline-transparent;
+	}
+	100% {
+		@apply -outline-offset-4;
+	}
 }

@@ -47,7 +47,6 @@ function radioButtonClicked(): void {
 		v-if="!ui.invisible"
 		class="input-radio rounded-full w-fit"
 		:class="{ 'input-radio-disabled': ui.disabled }"
-		:tabindex="ui.disabled ? '-1' : '0'"
 		@click="radioButtonClicked"
 		@keydown.enter="radioButtonClicked"
 	>

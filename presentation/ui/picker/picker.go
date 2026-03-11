@@ -503,6 +503,7 @@ func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
 	).
 		Gap(ui.L8).
 		BackgroundColor(backgroundColor).
+		FocusedBorder(ui.Border{}.Color(ui.I0).Width(ui.L1)).
 		Frame(ui.Frame{}.FullWidth()).
 		Border(ui.Border{}.Color(borderColor).Width(ui.L1).Radius("0.375rem")).
 		Padding(ui.Padding{}.All(ui.L8))

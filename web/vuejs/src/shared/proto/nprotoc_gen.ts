@@ -3897,516 +3897,6 @@ export class GridCell implements Writeable, Readable {
 	}
 }
 
-// An HStack aligns children elements in a horizontal row.
-//  - the intrinsic component dimensions are the sum of all sizes of the contained children
-//  - the parent can define a custom width and height
-//  - if the container is larger than the contained views, it must center vertical or horizontal
-//  - the inner gap between components should be around 2dp (this decides the backend)
-export class HStack implements Writeable, Readable, Component {
-	public children?: Components;
-
-	public gap?: Length;
-
-	public frame?: Frame;
-
-	// Zero value of Alignment is Center (=c) must be applied.
-	public alignment?: Alignment;
-
-	public backgroundColor?: Color;
-
-	public padding?: Padding;
-
-	// see also https://www.w3.org/WAI/tutorials/images/decision-tree/
-	public accessibilityLabel?: Str;
-
-	public border?: Border;
-
-	public font?: Font;
-
-	public action?: Ptr;
-
-	public hoveredBackgroundColor?: Color;
-
-	public pressedBackgroundColor?: Color;
-
-	public focusedBackgroundColor?: Color;
-
-	public hoveredBorder?: Border;
-
-	public pressedBorder?: Border;
-
-	public focusedBorder?: Border;
-
-	public wrap?: Bool;
-
-	public stylePreset?: StylePreset;
-
-	public position?: Position;
-
-	public disabled?: Bool;
-
-	public invisible?: Bool;
-
-	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
-	public id?: Str;
-
-	public textColor?: Color;
-
-	public noClip?: Bool;
-
-	public animation?: Animation;
-
-	public transformation?: Transformation;
-
-	// Opacity is an integer between [0..100]% which represents the alpha channel. 1 means fully transparent and 0 means fully visible.
-	public opacity?: Uint;
-
-	public background?: Background;
-
-	public url?: URI;
-
-	public target?: Str;
-
-	constructor(
-		children: Components | undefined = undefined,
-		gap: Length | undefined = undefined,
-		frame: Frame | undefined = undefined,
-		alignment: Alignment | undefined = undefined,
-		backgroundColor: Color | undefined = undefined,
-		padding: Padding | undefined = undefined,
-		accessibilityLabel: Str | undefined = undefined,
-		border: Border | undefined = undefined,
-		font: Font | undefined = undefined,
-		action: Ptr | undefined = undefined,
-		hoveredBackgroundColor: Color | undefined = undefined,
-		pressedBackgroundColor: Color | undefined = undefined,
-		focusedBackgroundColor: Color | undefined = undefined,
-		hoveredBorder: Border | undefined = undefined,
-		pressedBorder: Border | undefined = undefined,
-		focusedBorder: Border | undefined = undefined,
-		wrap: Bool | undefined = undefined,
-		stylePreset: StylePreset | undefined = undefined,
-		position: Position | undefined = undefined,
-		disabled: Bool | undefined = undefined,
-		invisible: Bool | undefined = undefined,
-		id: Str | undefined = undefined,
-		textColor: Color | undefined = undefined,
-		noClip: Bool | undefined = undefined,
-		animation: Animation | undefined = undefined,
-		transformation: Transformation | undefined = undefined,
-		opacity: Uint | undefined = undefined,
-		background: Background | undefined = undefined,
-		url: URI | undefined = undefined,
-		target: Str | undefined = undefined
-	) {
-		this.children = children;
-		this.gap = gap;
-		this.frame = frame;
-		this.alignment = alignment;
-		this.backgroundColor = backgroundColor;
-		this.padding = padding;
-		this.accessibilityLabel = accessibilityLabel;
-		this.border = border;
-		this.font = font;
-		this.action = action;
-		this.hoveredBackgroundColor = hoveredBackgroundColor;
-		this.pressedBackgroundColor = pressedBackgroundColor;
-		this.focusedBackgroundColor = focusedBackgroundColor;
-		this.hoveredBorder = hoveredBorder;
-		this.pressedBorder = pressedBorder;
-		this.focusedBorder = focusedBorder;
-		this.wrap = wrap;
-		this.stylePreset = stylePreset;
-		this.position = position;
-		this.disabled = disabled;
-		this.invisible = invisible;
-		this.id = id;
-		this.textColor = textColor;
-		this.noClip = noClip;
-		this.animation = animation;
-		this.transformation = transformation;
-		this.opacity = opacity;
-		this.background = background;
-		this.url = url;
-		this.target = target;
-	}
-
-	read(reader: BinaryReader): void {
-		this.reset();
-		const fieldCount = reader.readByte();
-		for (let i = 0; i < fieldCount; i++) {
-			const fieldHeader = reader.readFieldHeader();
-			switch (fieldHeader.fieldId) {
-				case 1: {
-					this.children = new Components();
-					this.children.read(reader);
-					break;
-				}
-				case 2: {
-					this.gap = readString(reader);
-					break;
-				}
-				case 3: {
-					this.frame = new Frame();
-					this.frame.read(reader);
-					break;
-				}
-				case 4: {
-					this.alignment = readInt(reader);
-					break;
-				}
-				case 5: {
-					this.backgroundColor = readString(reader);
-					break;
-				}
-				case 6: {
-					this.padding = new Padding();
-					this.padding.read(reader);
-					break;
-				}
-				case 7: {
-					this.accessibilityLabel = readString(reader);
-					break;
-				}
-				case 8: {
-					this.border = new Border();
-					this.border.read(reader);
-					break;
-				}
-				case 9: {
-					this.font = new Font();
-					this.font.read(reader);
-					break;
-				}
-				case 10: {
-					this.action = readInt(reader);
-					break;
-				}
-				case 11: {
-					this.hoveredBackgroundColor = readString(reader);
-					break;
-				}
-				case 12: {
-					this.pressedBackgroundColor = readString(reader);
-					break;
-				}
-				case 13: {
-					this.focusedBackgroundColor = readString(reader);
-					break;
-				}
-				case 14: {
-					this.hoveredBorder = new Border();
-					this.hoveredBorder.read(reader);
-					break;
-				}
-				case 15: {
-					this.pressedBorder = new Border();
-					this.pressedBorder.read(reader);
-					break;
-				}
-				case 16: {
-					this.focusedBorder = new Border();
-					this.focusedBorder.read(reader);
-					break;
-				}
-				case 17: {
-					this.wrap = readBool(reader);
-					break;
-				}
-				case 18: {
-					this.stylePreset = readInt(reader);
-					break;
-				}
-				case 19: {
-					this.position = new Position();
-					this.position.read(reader);
-					break;
-				}
-				case 20: {
-					this.disabled = readBool(reader);
-					break;
-				}
-				case 21: {
-					this.invisible = readBool(reader);
-					break;
-				}
-				case 22: {
-					this.id = readString(reader);
-					break;
-				}
-				case 23: {
-					this.textColor = readString(reader);
-					break;
-				}
-				case 24: {
-					this.noClip = readBool(reader);
-					break;
-				}
-				case 25: {
-					this.animation = readInt(reader);
-					break;
-				}
-				case 26: {
-					this.transformation = new Transformation();
-					this.transformation.read(reader);
-					break;
-				}
-				case 27: {
-					this.opacity = readInt(reader);
-					break;
-				}
-				case 28: {
-					this.background = new Background();
-					this.background.read(reader);
-					break;
-				}
-				case 29: {
-					this.url = readString(reader);
-					break;
-				}
-				case 30: {
-					this.target = readString(reader);
-					break;
-				}
-				default:
-					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
-			}
-		}
-	}
-
-	write(writer: BinaryWriter): void {
-		const fields = [
-			false,
-			this.children !== undefined && !this.children.isZero(),
-			this.gap !== undefined,
-			this.frame !== undefined && !this.frame.isZero(),
-			this.alignment !== undefined,
-			this.backgroundColor !== undefined,
-			this.padding !== undefined && !this.padding.isZero(),
-			this.accessibilityLabel !== undefined,
-			this.border !== undefined && !this.border.isZero(),
-			this.font !== undefined && !this.font.isZero(),
-			this.action !== undefined,
-			this.hoveredBackgroundColor !== undefined,
-			this.pressedBackgroundColor !== undefined,
-			this.focusedBackgroundColor !== undefined,
-			this.hoveredBorder !== undefined && !this.hoveredBorder.isZero(),
-			this.pressedBorder !== undefined && !this.pressedBorder.isZero(),
-			this.focusedBorder !== undefined && !this.focusedBorder.isZero(),
-			this.wrap !== undefined,
-			this.stylePreset !== undefined,
-			this.position !== undefined && !this.position.isZero(),
-			this.disabled !== undefined,
-			this.invisible !== undefined,
-			this.id !== undefined,
-			this.textColor !== undefined,
-			this.noClip !== undefined,
-			this.animation !== undefined,
-			this.transformation !== undefined && !this.transformation.isZero(),
-			this.opacity !== undefined,
-			this.background !== undefined && !this.background.isZero(),
-			this.url !== undefined,
-			this.target !== undefined,
-		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
-		writer.writeByte(fieldCount);
-		if (fields[1]) {
-			writer.writeFieldHeader(Shapes.ARRAY, 1);
-			this.children!.write(writer); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[2]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
-			writeString(writer, this.gap!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[3]) {
-			writer.writeFieldHeader(Shapes.RECORD, 3);
-			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[4]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 4);
-			writeInt(writer, this.alignment!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[5]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
-			writeString(writer, this.backgroundColor!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[6]) {
-			writer.writeFieldHeader(Shapes.RECORD, 6);
-			this.padding!.write(writer); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[7]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 7);
-			writeString(writer, this.accessibilityLabel!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[8]) {
-			writer.writeFieldHeader(Shapes.RECORD, 8);
-			this.border!.write(writer); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[9]) {
-			writer.writeFieldHeader(Shapes.RECORD, 9);
-			this.font!.write(writer); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[10]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 10);
-			writeInt(writer, this.action!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[11]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 11);
-			writeString(writer, this.hoveredBackgroundColor!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[12]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 12);
-			writeString(writer, this.pressedBackgroundColor!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[13]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 13);
-			writeString(writer, this.focusedBackgroundColor!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[14]) {
-			writer.writeFieldHeader(Shapes.RECORD, 14);
-			this.hoveredBorder!.write(writer); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[15]) {
-			writer.writeFieldHeader(Shapes.RECORD, 15);
-			this.pressedBorder!.write(writer); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[16]) {
-			writer.writeFieldHeader(Shapes.RECORD, 16);
-			this.focusedBorder!.write(writer); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[17]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 17);
-			writeBool(writer, this.wrap!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[18]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 18);
-			writeInt(writer, this.stylePreset!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[19]) {
-			writer.writeFieldHeader(Shapes.RECORD, 19);
-			this.position!.write(writer); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[20]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 20);
-			writeBool(writer, this.disabled!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[21]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 21);
-			writeBool(writer, this.invisible!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[22]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 22);
-			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[23]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 23);
-			writeString(writer, this.textColor!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[24]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 24);
-			writeBool(writer, this.noClip!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[25]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 25);
-			writeInt(writer, this.animation!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[26]) {
-			writer.writeFieldHeader(Shapes.RECORD, 26);
-			this.transformation!.write(writer); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[27]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 27);
-			writeInt(writer, this.opacity!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[28]) {
-			writer.writeFieldHeader(Shapes.RECORD, 28);
-			this.background!.write(writer); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[29]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 29);
-			writeString(writer, this.url!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[30]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 30);
-			writeString(writer, this.target!); // typescript linters cannot see, that we already checked this properly above
-		}
-	}
-
-	isZero(): boolean {
-		return (
-			(this.children === undefined || this.children.isZero()) &&
-			this.gap === undefined &&
-			(this.frame === undefined || this.frame.isZero()) &&
-			this.alignment === undefined &&
-			this.backgroundColor === undefined &&
-			(this.padding === undefined || this.padding.isZero()) &&
-			this.accessibilityLabel === undefined &&
-			(this.border === undefined || this.border.isZero()) &&
-			(this.font === undefined || this.font.isZero()) &&
-			this.action === undefined &&
-			this.hoveredBackgroundColor === undefined &&
-			this.pressedBackgroundColor === undefined &&
-			this.focusedBackgroundColor === undefined &&
-			(this.hoveredBorder === undefined || this.hoveredBorder.isZero()) &&
-			(this.pressedBorder === undefined || this.pressedBorder.isZero()) &&
-			(this.focusedBorder === undefined || this.focusedBorder.isZero()) &&
-			this.wrap === undefined &&
-			this.stylePreset === undefined &&
-			(this.position === undefined || this.position.isZero()) &&
-			this.disabled === undefined &&
-			this.invisible === undefined &&
-			this.id === undefined &&
-			this.textColor === undefined &&
-			this.noClip === undefined &&
-			this.animation === undefined &&
-			(this.transformation === undefined || this.transformation.isZero()) &&
-			this.opacity === undefined &&
-			(this.background === undefined || this.background.isZero()) &&
-			this.url === undefined &&
-			this.target === undefined
-		);
-	}
-
-	reset(): void {
-		this.children = undefined;
-		this.gap = undefined;
-		this.frame = undefined;
-		this.alignment = undefined;
-		this.backgroundColor = undefined;
-		this.padding = undefined;
-		this.accessibilityLabel = undefined;
-		this.border = undefined;
-		this.font = undefined;
-		this.action = undefined;
-		this.hoveredBackgroundColor = undefined;
-		this.pressedBackgroundColor = undefined;
-		this.focusedBackgroundColor = undefined;
-		this.hoveredBorder = undefined;
-		this.pressedBorder = undefined;
-		this.focusedBorder = undefined;
-		this.wrap = undefined;
-		this.stylePreset = undefined;
-		this.position = undefined;
-		this.disabled = undefined;
-		this.invisible = undefined;
-		this.id = undefined;
-		this.textColor = undefined;
-		this.noClip = undefined;
-		this.animation = undefined;
-		this.transformation = undefined;
-		this.opacity = undefined;
-		this.background = undefined;
-		this.url = undefined;
-		this.target = undefined;
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.RECORD, 58);
-		return;
-	}
-	isComponent(): void {}
-}
-
 // StylePreset allows to apply a build-in style to this component. This reduces over-the-wire boilerplate and
 // also defines a stereotype, so that the applied component behavior may be indeed a bit different, because
 // a native component may be used, e.g. for a native button. The order of appliance is first the preset and
@@ -6902,7 +6392,7 @@ export class SessionAssigned implements Writeable, Readable, NagoEvent {
 	isNagoEvent(): void {}
 }
 
-// Spacer grows or shrinks within a HStack or VStack. In other layouts, the behavior is unspecified.
+// Spacer grows or shrinks within a Stack. In other layouts, the behavior is unspecified.
 export class Spacer implements Writeable, Readable, Component {
 	public frame?: Frame;
 
@@ -9031,471 +8521,6 @@ export class TextLayout implements Writeable, Readable, Component {
 
 	writeTypeHeader(dst: BinaryWriter): void {
 		dst.writeTypeHeader(Shapes.RECORD, 108);
-		return;
-	}
-	isComponent(): void {}
-}
-
-// An VStack aligns children elements in a vertical column.
-//  - the intrinsic component dimensions are the sum of all sizes of the contained children
-//  - the parent can define a custom width and height
-//  - if the container is larger than the contained views, it must center vertical or horizontal
-//  - the inner gap between components should be around 2dp
-export class VStack implements Writeable, Readable, Component {
-	public children?: Components;
-
-	public gap?: Length;
-
-	public frame?: Frame;
-
-	// Zero value of Alignment is Center (=c) must be applied.
-	public alignment?: Alignment;
-
-	public backgroundColor?: Color;
-
-	public padding?: Padding;
-
-	// see also https://www.w3.org/WAI/tutorials/images/decision-tree/
-	public accessibilityLabel?: Str;
-
-	public border?: Border;
-
-	public font?: Font;
-
-	public action?: Ptr;
-
-	public hoveredBackgroundColor?: Color;
-
-	public pressedBackgroundColor?: Color;
-
-	public focusedBackgroundColor?: Color;
-
-	public hoveredBorder?: Border;
-
-	public pressedBorder?: Border;
-
-	public focusedBorder?: Border;
-
-	public stylePreset?: StylePreset;
-
-	public position?: Position;
-
-	public disabled?: Bool;
-
-	public invisible?: Bool;
-
-	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
-	public id?: Str;
-
-	public textColor?: Color;
-
-	public noClip?: Bool;
-
-	public animation?: Animation;
-
-	public transformation?: Transformation;
-
-	// Opacity is an integer between [0..100]% which represents the alpha channel. 1 means fully transparent and 0 means fully visible.
-	public opacity?: Uint;
-
-	public background?: Background;
-
-	constructor(
-		children: Components | undefined = undefined,
-		gap: Length | undefined = undefined,
-		frame: Frame | undefined = undefined,
-		alignment: Alignment | undefined = undefined,
-		backgroundColor: Color | undefined = undefined,
-		padding: Padding | undefined = undefined,
-		accessibilityLabel: Str | undefined = undefined,
-		border: Border | undefined = undefined,
-		font: Font | undefined = undefined,
-		action: Ptr | undefined = undefined,
-		hoveredBackgroundColor: Color | undefined = undefined,
-		pressedBackgroundColor: Color | undefined = undefined,
-		focusedBackgroundColor: Color | undefined = undefined,
-		hoveredBorder: Border | undefined = undefined,
-		pressedBorder: Border | undefined = undefined,
-		focusedBorder: Border | undefined = undefined,
-		stylePreset: StylePreset | undefined = undefined,
-		position: Position | undefined = undefined,
-		disabled: Bool | undefined = undefined,
-		invisible: Bool | undefined = undefined,
-		id: Str | undefined = undefined,
-		textColor: Color | undefined = undefined,
-		noClip: Bool | undefined = undefined,
-		animation: Animation | undefined = undefined,
-		transformation: Transformation | undefined = undefined,
-		opacity: Uint | undefined = undefined,
-		background: Background | undefined = undefined
-	) {
-		this.children = children;
-		this.gap = gap;
-		this.frame = frame;
-		this.alignment = alignment;
-		this.backgroundColor = backgroundColor;
-		this.padding = padding;
-		this.accessibilityLabel = accessibilityLabel;
-		this.border = border;
-		this.font = font;
-		this.action = action;
-		this.hoveredBackgroundColor = hoveredBackgroundColor;
-		this.pressedBackgroundColor = pressedBackgroundColor;
-		this.focusedBackgroundColor = focusedBackgroundColor;
-		this.hoveredBorder = hoveredBorder;
-		this.pressedBorder = pressedBorder;
-		this.focusedBorder = focusedBorder;
-		this.stylePreset = stylePreset;
-		this.position = position;
-		this.disabled = disabled;
-		this.invisible = invisible;
-		this.id = id;
-		this.textColor = textColor;
-		this.noClip = noClip;
-		this.animation = animation;
-		this.transformation = transformation;
-		this.opacity = opacity;
-		this.background = background;
-	}
-
-	read(reader: BinaryReader): void {
-		this.reset();
-		const fieldCount = reader.readByte();
-		for (let i = 0; i < fieldCount; i++) {
-			const fieldHeader = reader.readFieldHeader();
-			switch (fieldHeader.fieldId) {
-				case 1: {
-					this.children = new Components();
-					this.children.read(reader);
-					break;
-				}
-				case 2: {
-					this.gap = readString(reader);
-					break;
-				}
-				case 3: {
-					this.frame = new Frame();
-					this.frame.read(reader);
-					break;
-				}
-				case 4: {
-					this.alignment = readInt(reader);
-					break;
-				}
-				case 5: {
-					this.backgroundColor = readString(reader);
-					break;
-				}
-				case 6: {
-					this.padding = new Padding();
-					this.padding.read(reader);
-					break;
-				}
-				case 7: {
-					this.accessibilityLabel = readString(reader);
-					break;
-				}
-				case 8: {
-					this.border = new Border();
-					this.border.read(reader);
-					break;
-				}
-				case 9: {
-					this.font = new Font();
-					this.font.read(reader);
-					break;
-				}
-				case 10: {
-					this.action = readInt(reader);
-					break;
-				}
-				case 11: {
-					this.hoveredBackgroundColor = readString(reader);
-					break;
-				}
-				case 12: {
-					this.pressedBackgroundColor = readString(reader);
-					break;
-				}
-				case 13: {
-					this.focusedBackgroundColor = readString(reader);
-					break;
-				}
-				case 14: {
-					this.hoveredBorder = new Border();
-					this.hoveredBorder.read(reader);
-					break;
-				}
-				case 15: {
-					this.pressedBorder = new Border();
-					this.pressedBorder.read(reader);
-					break;
-				}
-				case 16: {
-					this.focusedBorder = new Border();
-					this.focusedBorder.read(reader);
-					break;
-				}
-				case 17: {
-					this.stylePreset = readInt(reader);
-					break;
-				}
-				case 18: {
-					this.position = new Position();
-					this.position.read(reader);
-					break;
-				}
-				case 19: {
-					this.disabled = readBool(reader);
-					break;
-				}
-				case 20: {
-					this.invisible = readBool(reader);
-					break;
-				}
-				case 21: {
-					this.id = readString(reader);
-					break;
-				}
-				case 22: {
-					this.textColor = readString(reader);
-					break;
-				}
-				case 23: {
-					this.noClip = readBool(reader);
-					break;
-				}
-				case 24: {
-					this.animation = readInt(reader);
-					break;
-				}
-				case 25: {
-					this.transformation = new Transformation();
-					this.transformation.read(reader);
-					break;
-				}
-				case 26: {
-					this.opacity = readInt(reader);
-					break;
-				}
-				case 27: {
-					this.background = new Background();
-					this.background.read(reader);
-					break;
-				}
-				default:
-					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
-			}
-		}
-	}
-
-	write(writer: BinaryWriter): void {
-		const fields = [
-			false,
-			this.children !== undefined && !this.children.isZero(),
-			this.gap !== undefined,
-			this.frame !== undefined && !this.frame.isZero(),
-			this.alignment !== undefined,
-			this.backgroundColor !== undefined,
-			this.padding !== undefined && !this.padding.isZero(),
-			this.accessibilityLabel !== undefined,
-			this.border !== undefined && !this.border.isZero(),
-			this.font !== undefined && !this.font.isZero(),
-			this.action !== undefined,
-			this.hoveredBackgroundColor !== undefined,
-			this.pressedBackgroundColor !== undefined,
-			this.focusedBackgroundColor !== undefined,
-			this.hoveredBorder !== undefined && !this.hoveredBorder.isZero(),
-			this.pressedBorder !== undefined && !this.pressedBorder.isZero(),
-			this.focusedBorder !== undefined && !this.focusedBorder.isZero(),
-			this.stylePreset !== undefined,
-			this.position !== undefined && !this.position.isZero(),
-			this.disabled !== undefined,
-			this.invisible !== undefined,
-			this.id !== undefined,
-			this.textColor !== undefined,
-			this.noClip !== undefined,
-			this.animation !== undefined,
-			this.transformation !== undefined && !this.transformation.isZero(),
-			this.opacity !== undefined,
-			this.background !== undefined && !this.background.isZero(),
-		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
-		writer.writeByte(fieldCount);
-		if (fields[1]) {
-			writer.writeFieldHeader(Shapes.ARRAY, 1);
-			this.children!.write(writer); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[2]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
-			writeString(writer, this.gap!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[3]) {
-			writer.writeFieldHeader(Shapes.RECORD, 3);
-			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[4]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 4);
-			writeInt(writer, this.alignment!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[5]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
-			writeString(writer, this.backgroundColor!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[6]) {
-			writer.writeFieldHeader(Shapes.RECORD, 6);
-			this.padding!.write(writer); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[7]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 7);
-			writeString(writer, this.accessibilityLabel!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[8]) {
-			writer.writeFieldHeader(Shapes.RECORD, 8);
-			this.border!.write(writer); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[9]) {
-			writer.writeFieldHeader(Shapes.RECORD, 9);
-			this.font!.write(writer); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[10]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 10);
-			writeInt(writer, this.action!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[11]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 11);
-			writeString(writer, this.hoveredBackgroundColor!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[12]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 12);
-			writeString(writer, this.pressedBackgroundColor!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[13]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 13);
-			writeString(writer, this.focusedBackgroundColor!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[14]) {
-			writer.writeFieldHeader(Shapes.RECORD, 14);
-			this.hoveredBorder!.write(writer); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[15]) {
-			writer.writeFieldHeader(Shapes.RECORD, 15);
-			this.pressedBorder!.write(writer); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[16]) {
-			writer.writeFieldHeader(Shapes.RECORD, 16);
-			this.focusedBorder!.write(writer); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[17]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 17);
-			writeInt(writer, this.stylePreset!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[18]) {
-			writer.writeFieldHeader(Shapes.RECORD, 18);
-			this.position!.write(writer); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[19]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 19);
-			writeBool(writer, this.disabled!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[20]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 20);
-			writeBool(writer, this.invisible!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[21]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 21);
-			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[22]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 22);
-			writeString(writer, this.textColor!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[23]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 23);
-			writeBool(writer, this.noClip!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[24]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 24);
-			writeInt(writer, this.animation!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[25]) {
-			writer.writeFieldHeader(Shapes.RECORD, 25);
-			this.transformation!.write(writer); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[26]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 26);
-			writeInt(writer, this.opacity!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[27]) {
-			writer.writeFieldHeader(Shapes.RECORD, 27);
-			this.background!.write(writer); // typescript linters cannot see, that we already checked this properly above
-		}
-	}
-
-	isZero(): boolean {
-		return (
-			(this.children === undefined || this.children.isZero()) &&
-			this.gap === undefined &&
-			(this.frame === undefined || this.frame.isZero()) &&
-			this.alignment === undefined &&
-			this.backgroundColor === undefined &&
-			(this.padding === undefined || this.padding.isZero()) &&
-			this.accessibilityLabel === undefined &&
-			(this.border === undefined || this.border.isZero()) &&
-			(this.font === undefined || this.font.isZero()) &&
-			this.action === undefined &&
-			this.hoveredBackgroundColor === undefined &&
-			this.pressedBackgroundColor === undefined &&
-			this.focusedBackgroundColor === undefined &&
-			(this.hoveredBorder === undefined || this.hoveredBorder.isZero()) &&
-			(this.pressedBorder === undefined || this.pressedBorder.isZero()) &&
-			(this.focusedBorder === undefined || this.focusedBorder.isZero()) &&
-			this.stylePreset === undefined &&
-			(this.position === undefined || this.position.isZero()) &&
-			this.disabled === undefined &&
-			this.invisible === undefined &&
-			this.id === undefined &&
-			this.textColor === undefined &&
-			this.noClip === undefined &&
-			this.animation === undefined &&
-			(this.transformation === undefined || this.transformation.isZero()) &&
-			this.opacity === undefined &&
-			(this.background === undefined || this.background.isZero())
-		);
-	}
-
-	reset(): void {
-		this.children = undefined;
-		this.gap = undefined;
-		this.frame = undefined;
-		this.alignment = undefined;
-		this.backgroundColor = undefined;
-		this.padding = undefined;
-		this.accessibilityLabel = undefined;
-		this.border = undefined;
-		this.font = undefined;
-		this.action = undefined;
-		this.hoveredBackgroundColor = undefined;
-		this.pressedBackgroundColor = undefined;
-		this.focusedBackgroundColor = undefined;
-		this.hoveredBorder = undefined;
-		this.pressedBorder = undefined;
-		this.focusedBorder = undefined;
-		this.stylePreset = undefined;
-		this.position = undefined;
-		this.disabled = undefined;
-		this.invisible = undefined;
-		this.id = undefined;
-		this.textColor = undefined;
-		this.noClip = undefined;
-		this.animation = undefined;
-		this.transformation = undefined;
-		this.opacity = undefined;
-		this.background = undefined;
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.RECORD, 109);
 		return;
 	}
 	isComponent(): void {}
@@ -14467,6 +13492,588 @@ export class Select implements Writeable, Readable, Component {
 	isComponent(): void {}
 }
 
+export type Orientation = number;
+function writeTypeHeaderOrientation(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 182);
+	return;
+}
+// companion enum containing all defined constants for Orientation
+export enum OrientationValues {
+	Horizontal = 1,
+	Vertical = 2,
+}
+
+export class ColorStates implements Writeable, Readable {
+	public hover?: Color;
+
+	public focus?: Color;
+
+	public pressed?: Color;
+
+	constructor(
+		hover: Color | undefined = undefined,
+		focus: Color | undefined = undefined,
+		pressed: Color | undefined = undefined
+	) {
+		this.hover = hover;
+		this.focus = focus;
+		this.pressed = pressed;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.hover = readString(reader);
+					break;
+				}
+				case 2: {
+					this.focus = readString(reader);
+					break;
+				}
+				case 3: {
+					this.pressed = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.hover !== undefined, this.focus !== undefined, this.pressed !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.hover!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.focus!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			writeString(writer, this.pressed!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.hover === undefined && this.focus === undefined && this.pressed === undefined;
+	}
+
+	reset(): void {
+		this.hover = undefined;
+		this.focus = undefined;
+		this.pressed = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 183);
+		return;
+	}
+}
+
+// A Stack aligns children elements in a row or column (depending on the orientation attribute).
+//  - the intrinsic component dimensions are the sum of all sizes of the contained children
+//  - the parent can define a custom width and height
+//  - if the container is larger than the contained views, it must center vertical or horizontal
+//  - the inner gap between components should be around 2dp (this decides the backend)
+export class Stack implements Writeable, Readable, Component {
+	public children?: Components;
+
+	public gap?: Length;
+
+	public frame?: Frame;
+
+	// Zero value of Alignment is Center (=c) must be applied.
+	public alignment?: Alignment;
+
+	public backgroundColor?: Color;
+
+	public padding?: Padding;
+
+	// see also https://www.w3.org/WAI/tutorials/images/decision-tree/
+	public accessibilityLabel?: Str;
+
+	public border?: Border;
+
+	public font?: Font;
+
+	public action?: Ptr;
+
+	public backgroundColorStates?: ColorStates;
+
+	public hoveredBorder?: Border;
+
+	public pressedBorder?: Border;
+
+	public focusedBorder?: Border;
+
+	public wrap?: Bool;
+
+	public stylePreset?: StylePreset;
+
+	public position?: Position;
+
+	public disabled?: Bool;
+
+	public invisible?: Bool;
+
+	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
+	public id?: Str;
+
+	public textColor?: Color;
+
+	public noClip?: Bool;
+
+	public animation?: Animation;
+
+	public transformation?: Transformation;
+
+	// Opacity is an integer between [0..100]% which represents the alpha channel. 1 means fully transparent and 0 means fully visible.
+	public opacity?: Uint;
+
+	public background?: Background;
+
+	public url?: URI;
+
+	public target?: Str;
+
+	public orientation?: Orientation;
+
+	constructor(
+		children: Components | undefined = undefined,
+		gap: Length | undefined = undefined,
+		frame: Frame | undefined = undefined,
+		alignment: Alignment | undefined = undefined,
+		backgroundColor: Color | undefined = undefined,
+		padding: Padding | undefined = undefined,
+		accessibilityLabel: Str | undefined = undefined,
+		border: Border | undefined = undefined,
+		font: Font | undefined = undefined,
+		action: Ptr | undefined = undefined,
+		backgroundColorStates: ColorStates | undefined = undefined,
+		hoveredBorder: Border | undefined = undefined,
+		pressedBorder: Border | undefined = undefined,
+		focusedBorder: Border | undefined = undefined,
+		wrap: Bool | undefined = undefined,
+		stylePreset: StylePreset | undefined = undefined,
+		position: Position | undefined = undefined,
+		disabled: Bool | undefined = undefined,
+		invisible: Bool | undefined = undefined,
+		id: Str | undefined = undefined,
+		textColor: Color | undefined = undefined,
+		noClip: Bool | undefined = undefined,
+		animation: Animation | undefined = undefined,
+		transformation: Transformation | undefined = undefined,
+		opacity: Uint | undefined = undefined,
+		background: Background | undefined = undefined,
+		url: URI | undefined = undefined,
+		target: Str | undefined = undefined,
+		orientation: Orientation | undefined = undefined
+	) {
+		this.children = children;
+		this.gap = gap;
+		this.frame = frame;
+		this.alignment = alignment;
+		this.backgroundColor = backgroundColor;
+		this.padding = padding;
+		this.accessibilityLabel = accessibilityLabel;
+		this.border = border;
+		this.font = font;
+		this.action = action;
+		this.backgroundColorStates = backgroundColorStates;
+		this.hoveredBorder = hoveredBorder;
+		this.pressedBorder = pressedBorder;
+		this.focusedBorder = focusedBorder;
+		this.wrap = wrap;
+		this.stylePreset = stylePreset;
+		this.position = position;
+		this.disabled = disabled;
+		this.invisible = invisible;
+		this.id = id;
+		this.textColor = textColor;
+		this.noClip = noClip;
+		this.animation = animation;
+		this.transformation = transformation;
+		this.opacity = opacity;
+		this.background = background;
+		this.url = url;
+		this.target = target;
+		this.orientation = orientation;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.children = new Components();
+					this.children.read(reader);
+					break;
+				}
+				case 2: {
+					this.gap = readString(reader);
+					break;
+				}
+				case 3: {
+					this.frame = new Frame();
+					this.frame.read(reader);
+					break;
+				}
+				case 4: {
+					this.alignment = readInt(reader);
+					break;
+				}
+				case 5: {
+					this.backgroundColor = readString(reader);
+					break;
+				}
+				case 6: {
+					this.padding = new Padding();
+					this.padding.read(reader);
+					break;
+				}
+				case 7: {
+					this.accessibilityLabel = readString(reader);
+					break;
+				}
+				case 8: {
+					this.border = new Border();
+					this.border.read(reader);
+					break;
+				}
+				case 9: {
+					this.font = new Font();
+					this.font.read(reader);
+					break;
+				}
+				case 10: {
+					this.action = readInt(reader);
+					break;
+				}
+				case 11: {
+					this.backgroundColorStates = new ColorStates();
+					this.backgroundColorStates.read(reader);
+					break;
+				}
+				case 12: {
+					this.hoveredBorder = new Border();
+					this.hoveredBorder.read(reader);
+					break;
+				}
+				case 13: {
+					this.pressedBorder = new Border();
+					this.pressedBorder.read(reader);
+					break;
+				}
+				case 14: {
+					this.focusedBorder = new Border();
+					this.focusedBorder.read(reader);
+					break;
+				}
+				case 15: {
+					this.wrap = readBool(reader);
+					break;
+				}
+				case 16: {
+					this.stylePreset = readInt(reader);
+					break;
+				}
+				case 17: {
+					this.position = new Position();
+					this.position.read(reader);
+					break;
+				}
+				case 18: {
+					this.disabled = readBool(reader);
+					break;
+				}
+				case 19: {
+					this.invisible = readBool(reader);
+					break;
+				}
+				case 20: {
+					this.id = readString(reader);
+					break;
+				}
+				case 21: {
+					this.textColor = readString(reader);
+					break;
+				}
+				case 22: {
+					this.noClip = readBool(reader);
+					break;
+				}
+				case 23: {
+					this.animation = readInt(reader);
+					break;
+				}
+				case 24: {
+					this.transformation = new Transformation();
+					this.transformation.read(reader);
+					break;
+				}
+				case 25: {
+					this.opacity = readInt(reader);
+					break;
+				}
+				case 26: {
+					this.background = new Background();
+					this.background.read(reader);
+					break;
+				}
+				case 27: {
+					this.url = readString(reader);
+					break;
+				}
+				case 28: {
+					this.target = readString(reader);
+					break;
+				}
+				case 29: {
+					this.orientation = readInt(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.children !== undefined && !this.children.isZero(),
+			this.gap !== undefined,
+			this.frame !== undefined && !this.frame.isZero(),
+			this.alignment !== undefined,
+			this.backgroundColor !== undefined,
+			this.padding !== undefined && !this.padding.isZero(),
+			this.accessibilityLabel !== undefined,
+			this.border !== undefined && !this.border.isZero(),
+			this.font !== undefined && !this.font.isZero(),
+			this.action !== undefined,
+			this.backgroundColorStates !== undefined && !this.backgroundColorStates.isZero(),
+			this.hoveredBorder !== undefined && !this.hoveredBorder.isZero(),
+			this.pressedBorder !== undefined && !this.pressedBorder.isZero(),
+			this.focusedBorder !== undefined && !this.focusedBorder.isZero(),
+			this.wrap !== undefined,
+			this.stylePreset !== undefined,
+			this.position !== undefined && !this.position.isZero(),
+			this.disabled !== undefined,
+			this.invisible !== undefined,
+			this.id !== undefined,
+			this.textColor !== undefined,
+			this.noClip !== undefined,
+			this.animation !== undefined,
+			this.transformation !== undefined && !this.transformation.isZero(),
+			this.opacity !== undefined,
+			this.background !== undefined && !this.background.isZero(),
+			this.url !== undefined,
+			this.target !== undefined,
+			this.orientation !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 1);
+			this.children!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.gap!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.RECORD, 3);
+			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 4);
+			writeInt(writer, this.alignment!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
+			writeString(writer, this.backgroundColor!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.RECORD, 6);
+			this.padding!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 7);
+			writeString(writer, this.accessibilityLabel!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.RECORD, 8);
+			this.border!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[9]) {
+			writer.writeFieldHeader(Shapes.RECORD, 9);
+			this.font!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[10]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 10);
+			writeInt(writer, this.action!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[11]) {
+			writer.writeFieldHeader(Shapes.RECORD, 11);
+			this.backgroundColorStates!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[12]) {
+			writer.writeFieldHeader(Shapes.RECORD, 12);
+			this.hoveredBorder!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[13]) {
+			writer.writeFieldHeader(Shapes.RECORD, 13);
+			this.pressedBorder!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[14]) {
+			writer.writeFieldHeader(Shapes.RECORD, 14);
+			this.focusedBorder!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[15]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 15);
+			writeBool(writer, this.wrap!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[16]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 16);
+			writeInt(writer, this.stylePreset!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[17]) {
+			writer.writeFieldHeader(Shapes.RECORD, 17);
+			this.position!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[18]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 18);
+			writeBool(writer, this.disabled!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[19]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 19);
+			writeBool(writer, this.invisible!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[20]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 20);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[21]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 21);
+			writeString(writer, this.textColor!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[22]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 22);
+			writeBool(writer, this.noClip!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[23]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 23);
+			writeInt(writer, this.animation!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[24]) {
+			writer.writeFieldHeader(Shapes.RECORD, 24);
+			this.transformation!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[25]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 25);
+			writeInt(writer, this.opacity!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[26]) {
+			writer.writeFieldHeader(Shapes.RECORD, 26);
+			this.background!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[27]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 27);
+			writeString(writer, this.url!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[28]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 28);
+			writeString(writer, this.target!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[29]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 29);
+			writeInt(writer, this.orientation!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			(this.children === undefined || this.children.isZero()) &&
+			this.gap === undefined &&
+			(this.frame === undefined || this.frame.isZero()) &&
+			this.alignment === undefined &&
+			this.backgroundColor === undefined &&
+			(this.padding === undefined || this.padding.isZero()) &&
+			this.accessibilityLabel === undefined &&
+			(this.border === undefined || this.border.isZero()) &&
+			(this.font === undefined || this.font.isZero()) &&
+			this.action === undefined &&
+			(this.backgroundColorStates === undefined || this.backgroundColorStates.isZero()) &&
+			(this.hoveredBorder === undefined || this.hoveredBorder.isZero()) &&
+			(this.pressedBorder === undefined || this.pressedBorder.isZero()) &&
+			(this.focusedBorder === undefined || this.focusedBorder.isZero()) &&
+			this.wrap === undefined &&
+			this.stylePreset === undefined &&
+			(this.position === undefined || this.position.isZero()) &&
+			this.disabled === undefined &&
+			this.invisible === undefined &&
+			this.id === undefined &&
+			this.textColor === undefined &&
+			this.noClip === undefined &&
+			this.animation === undefined &&
+			(this.transformation === undefined || this.transformation.isZero()) &&
+			this.opacity === undefined &&
+			(this.background === undefined || this.background.isZero()) &&
+			this.url === undefined &&
+			this.target === undefined &&
+			this.orientation === undefined
+		);
+	}
+
+	reset(): void {
+		this.children = undefined;
+		this.gap = undefined;
+		this.frame = undefined;
+		this.alignment = undefined;
+		this.backgroundColor = undefined;
+		this.padding = undefined;
+		this.accessibilityLabel = undefined;
+		this.border = undefined;
+		this.font = undefined;
+		this.action = undefined;
+		this.backgroundColorStates = undefined;
+		this.hoveredBorder = undefined;
+		this.pressedBorder = undefined;
+		this.focusedBorder = undefined;
+		this.wrap = undefined;
+		this.stylePreset = undefined;
+		this.position = undefined;
+		this.disabled = undefined;
+		this.invisible = undefined;
+		this.id = undefined;
+		this.textColor = undefined;
+		this.noClip = undefined;
+		this.animation = undefined;
+		this.transformation = undefined;
+		this.opacity = undefined;
+		this.background = undefined;
+		this.url = undefined;
+		this.target = undefined;
+		this.orientation = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 184);
+		return;
+	}
+	isComponent(): void {}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -14740,11 +14347,6 @@ export function unmarshal(src: BinaryReader): any {
 			v.read(src);
 			return v;
 		}
-		case 58: {
-			const v = new HStack();
-			v.read(src);
-			return v;
-		}
 		case 59: {
 			const v = readInt(src) as StylePreset;
 			return v;
@@ -14975,11 +14577,6 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 108: {
 			const v = new TextLayout();
-			v.read(src);
-			return v;
-		}
-		case 109: {
-			const v = new VStack();
 			v.read(src);
 			return v;
 		}
@@ -15288,6 +14885,20 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 181: {
 			const v = new Select();
+			v.read(src);
+			return v;
+		}
+		case 182: {
+			const v = readInt(src) as Orientation;
+			return v;
+		}
+		case 183: {
+			const v = new ColorStates();
+			v.read(src);
+			return v;
+		}
+		case 184: {
+			const v = new Stack();
 			v.read(src);
 			return v;
 		}
