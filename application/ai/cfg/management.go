@@ -28,7 +28,6 @@ import (
 	uiai "go.wdy.de/nago/application/ai/ui"
 	cfgdrive "go.wdy.de/nago/application/drive/cfg"
 	"go.wdy.de/nago/application/localization/rstring"
-	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/presentation/core"
@@ -244,7 +243,7 @@ func Enable(cfg *application.Configurator) (Management, error) {
 			Permission: ai.PermClearCache,
 		})
 
-		for provider, err := range ucAI.FindAllProvider(user.SU()) {
+		for provider, err := range ucAI.FindAllProvider(subject) {
 			if err != nil {
 				slog.Error("failed to find provider", "err", err.Error())
 				continue
