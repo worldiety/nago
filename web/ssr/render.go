@@ -25,10 +25,8 @@ func RenderComponent(c proto.Component) dom.FlowContent {
 
 	switch v := c.(type) {
 	// ── layout ────────────────────────────────────────────────────────────────
-	case *proto.VStack:
-		return renderVStack(v)
-	case *proto.HStack:
-		return renderHStack(v)
+	case *proto.Stack:
+		return renderStack(v)
 	case *proto.Box:
 		return renderBox(v)
 	case *proto.Spacer:
@@ -103,71 +101,35 @@ func renderChildren(parent *dom.Div, children proto.Components) {
 	}
 }
 
-// ── VStack ────────────────────────────────────────────────────────────────────
+// ── Stack (vereint ehemals VStack und HStack) ─────────────────────────────────
+// Orientation == proto.Vertical  → flex-direction:column
+// Orientation == proto.Horizontal oder 0 (Auto-Fallback) → flex-direction:row
 
-func renderVStack(v *proto.VStack) dom.FlowContent {
+func renderStack(v *proto.Stack) dom.FlowContent {
 	if bool(v.Invisible) {
 		return nil
 	}
 
-	d := dom.NewDiv()
+	horizontal := v.Orientation != proto.Vertical // 0 (Auto) und Horizontal → row
 
-	styles := []string{
-		"display:flex",
-		"flex-direction:column",
+	display := "flex"
+	if horizontal {
+		display = "inline-flex"
+	}
+	flexDir := "flex-direction:column"
+	if horizontal {
+		flexDir = "flex-direction:row"
 	}
 
-	if v.Gap != "" {
-		styles = append(styles, "gap:"+LengthCSS(v.Gap))
-	}
+	styles := []string{"display:" + display, flexDir}
 
-	// alignment: main axis = justify-content (vertical), cross axis = align-items (horizontal)
-	styles = append(styles,
-		"justify-content:"+AlignmentMainAxisCSS(v.Alignment),
-		"align-items:"+AlignmentCrossAxisCSS(v.Alignment),
-	)
-
-	if v.BackgroundColor != "" {
-		styles = append(styles, "background-color:"+string(v.BackgroundColor))
-	}
-	if v.TextColor != "" {
-		styles = append(styles, "color:"+string(v.TextColor))
-	}
-
-	styles = append(styles, FrameCSS(v.Frame)...)
-	styles = append(styles, PaddingCSS(v.Padding)...)
-	styles = append(styles, BorderCSS(v.Border)...)
-
-	if v.Id != "" {
-		d.SetAttr("id", string(v.Id))
-	}
-
-	d.SetAttr("style", JoinCSS(styles))
-
-	renderChildren(d, v.Children)
-	return d
-}
-
-// ── HStack ────────────────────────────────────────────────────────────────────
-
-func renderHStack(v *proto.HStack) dom.FlowContent {
-	if bool(v.Invisible) {
-		return nil
-	}
-
-	styles := []string{
-		"display:inline-flex",
-		"flex-direction:row",
-	}
-
-	if bool(v.Wrap) {
+	if horizontal && bool(v.Wrap) {
 		styles = append(styles, "flex-wrap:wrap")
 	}
 	if v.Gap != "" {
 		styles = append(styles, "gap:"+LengthCSS(v.Gap))
 	}
 
-	// For HStack: main axis = justify-content (horizontal), cross axis = align-items (vertical).
 	styles = append(styles,
 		"justify-content:"+AlignmentMainAxisCSS(v.Alignment),
 		"align-items:"+AlignmentCrossAxisCSS(v.Alignment),
@@ -184,8 +146,7 @@ func renderHStack(v *proto.HStack) dom.FlowContent {
 	styles = append(styles, PaddingCSS(v.Padding)...)
 	styles = append(styles, BorderCSS(v.Border)...)
 
-	// ── Case 1: HStack with URL → <a href target> ─────────────────────────────
-	// Mirrors: v-else-if="props.ui instanceof HStack && props.ui.url"
+	// ── Case 1: URL gesetzt (nur bei horizontal sinnvoll) → <a> ──────────────
 	if v.Url != "" {
 		a := dom.NewA()
 		a.SetAttr("href", string(v.Url))
@@ -203,8 +164,7 @@ func renderHStack(v *proto.HStack) dom.FlowContent {
 		return a
 	}
 
-	// ── Case 2: stylePreset set → <button> ───────────────────────────────────
-	// Mirrors: v-else-if stylePreset !== StyleNone && stylePreset !== undefined
+	// ── Case 2: StylePreset gesetzt → <button> ────────────────────────────────
 	if v.StylePreset != proto.StyleNone {
 		btn := dom.NewButton()
 		if v.Id != "" {

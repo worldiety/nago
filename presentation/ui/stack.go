@@ -27,10 +27,8 @@ const (
 
 const StackLayoutFlex = StackLayoutWrap
 
-// deprecated: use [TStack]
 type THStack = TStack
 
-// deprecated: use [TStack]
 type TVStack = TStack
 
 // TStack is a layout component(Stack).

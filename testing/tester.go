@@ -10,15 +10,16 @@ package testing
 import (
 	"bytes"
 	"fmt"
+	"log"
+	"net/url"
+	"reflect"
+	"time"
+
 	"github.com/gorilla/websocket"
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/proto"
-	"log"
-	"net/url"
-	"reflect"
-	"time"
 )
 
 type FindsCountMatcher struct {
@@ -119,28 +120,11 @@ func findByType(view proto.Component, typeToFind proto.Component, amount int) (b
 	}
 
 	switch view.(type) {
-	case *proto.HStack:
-		var hStack = view.(*proto.HStack)
+	case *proto.Stack:
+		var stack = view.(*proto.Stack)
 		var amounts = 0
 		var founds = false
-		for _, c := range hStack.Children {
-			var found, am = findByType(c, typeToFind, amount)
-			if !founds && found {
-				founds = true
-			}
-			if found {
-				amounts += am
-			}
-		}
-		if founds {
-			return true, amounts
-		}
-		break
-	case *proto.VStack:
-		var vStack = view.(*proto.VStack)
-		var amounts = 0
-		var founds = false
-		for _, c := range vStack.Children {
+		for _, c := range stack.Children {
 			var found, am = findByType(c, typeToFind, amount)
 			if !founds && found {
 				founds = true
@@ -164,9 +148,9 @@ func (t *Tester) findText(view proto.Component, text proto.Str) bool {
 	case *proto.DatePicker:
 	case *proto.Divider:
 	case *proto.Grid:
-	case *proto.HStack:
-		var hStack = view.(*proto.HStack)
-		for _, c := range hStack.Children {
+	case *proto.Stack:
+		var stack = view.(*proto.Stack)
+		for _, c := range stack.Children {
 			var found = t.findText(c, text)
 			if found {
 				return true
@@ -189,15 +173,6 @@ func (t *Tester) findText(view proto.Component, text proto.Str) bool {
 			return true
 		}
 	case *proto.Toggle:
-	case *proto.VStack:
-		var vStack = view.(*proto.VStack)
-		for _, c := range vStack.Children {
-			var found = t.findText(c, text)
-			if found {
-				return true
-			}
-		}
-		break
 	case *proto.WebView:
 	case *proto.WindowTitle:
 	}
