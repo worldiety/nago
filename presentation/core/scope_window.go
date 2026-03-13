@@ -29,6 +29,8 @@ var _ Window = (*scopeWindow)(nil)
 
 const maxAutoPtr = 10_000
 
+var globalListenerPtr atomic.Int64
+
 type declaredBufferKey struct {
 	ptr *byte
 	len int
@@ -108,6 +110,7 @@ func (s *scopeWindow) reset() {
 	//clear(s.states)
 	clear(s.filesReceiver)
 	clear(s.callbacks)
+	// TODO why are we not clearing the s.asyncCallbacks here?
 
 	// todo: not sure if this is the "correct" behavior but otherwise we only get leaks until the browser tab is closed
 	for _, f := range s.destroyObservers {
@@ -401,4 +404,33 @@ func (s *scopeWindow) PostDelayed(fn func(), delay time.Duration) {
 
 func (s *scopeWindow) RequestFocus(id string) {
 	AsyncCall(s, &proto.CallRequestFocus{ID: proto.Str(id)}, nil)
+}
+
+func (s *scopeWindow) AddInputListener(elemID string, fn func(evt InputEvent)) (close func()) {
+	hnd := globalListenerPtr.Add(1)
+	AsyncCall(
+		s,
+		&proto.RegisterInputEventListener{
+			Id:     proto.Str(elemID),
+			Handle: proto.Uint(hnd),
+		},
+		func(ret proto.CallRet) {
+			if evt, ok := ret.(*proto.InputEvent); ok {
+				fn(InputEvent{
+					Type: InputEventType(evt.Type),
+					X:    float64(evt.X),
+					Y:    float64(evt.Y),
+					Code: string(evt.Code),
+				})
+			}
+		},
+	)
+
+	closer := func() {
+		AsyncCall(s, &proto.UnregisterInputEventListener{Handle: proto.Uint(hnd)}, nil)
+		s.asyncCallbacks.Delete(proto.Ptr(hnd))
+	}
+
+	s.AddDestroyObserver(closer)
+	return closer
 }

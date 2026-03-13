@@ -1,0 +1,15 @@
+{
+  "kind": "Record",
+  "id": 190,
+  "fields": {
+    "1": {
+      "doc": "Id is the unique ID of the canvas.",
+      "name": "Id",
+      "type": "Str"
+    },
+    "2": {
+      "name": "Handle",
+      "type": "Uint"
+    }
+  }
+}

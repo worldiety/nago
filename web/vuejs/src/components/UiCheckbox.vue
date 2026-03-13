@@ -60,13 +60,7 @@ function checkboxSelected(): void {
 		@keydown.enter="checkboxSelected"
 	>
 		<div class="p-2.5">
-			<input
-				:id="ui.id"
-				:checked="checked"
-				type="checkbox"
-				class="pointer-events-none"
-				:disabled="ui.disabled"
-			/>
+			<input :id="ui.id" :checked="checked" type="checkbox" class="pointer-events-none" :disabled="ui.disabled" />
 		</div>
 	</div>
 </template>

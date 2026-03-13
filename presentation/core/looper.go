@@ -100,7 +100,7 @@ func (l *EventLoop) SetOnPanicHandler(f func(p any)) {
 func (l *EventLoop) Post(f func()) bool {
 	// this is inprecise, because we may end up with neither this message nor an ever executed func
 	if l.destroyed.Load() {
-		debug.PrintStack()
+		//		debug.PrintStack()
 		//slog.Error("someone posted to a destroyed EventLoop")
 		return false
 	}

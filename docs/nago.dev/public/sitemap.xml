@@ -64,6 +64,8 @@
   </url><url>
     <loc>/docs/examples/tutorial-26-buildin-iam/readme/</loc>
   </url><url>
+    <loc>/docs/examples/tutorial-92-raw-html/html/</loc>
+  </url><url>
     <loc>/docs/systems/admin_management/</loc>
   </url><url>
     <loc>/docs/components/layout/alignment/</loc>
@@ -225,6 +227,8 @@
     <loc>/docs/components/layout/scroll_view/</loc>
   </url><url>
     <loc>/docs/systems/secret_management/</loc>
+  </url><url>
+    <loc>/docs/components/basic/select/</loc>
   </url><url>
     <loc>/docs/systems/session_management/</loc>
   </url><url>

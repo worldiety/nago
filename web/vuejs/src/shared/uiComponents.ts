@@ -8,7 +8,7 @@
  */
 import type { Component } from 'vue';
 import { defineAsyncComponent } from 'vue';
-import type { Component as NagoComponent } from '@/shared/proto/nprotoc_gen';
+import { Canvas, Component as NagoComponent } from '@/shared/proto/nprotoc_gen';
 import {
 	BarChart,
 	Box,
@@ -83,7 +83,7 @@ const LazyUiLineChart = defineAsyncComponent(() => import('@/components/charts/U
 const LazyUiVideo = defineAsyncComponent(() => import('@/components/video/UiVideo.vue'));
 const LazyUiPieChart = defineAsyncComponent(() => import('@/components/charts/UiPieChart.vue'));
 const LazyUiDnDArea = defineAsyncComponent(() => import('@/components/dnd/UiDnDArea.vue'));
-
+const LazyUiCanvas = defineAsyncComponent(() => import('@/components/canvas/UiCanvas.vue'));
 /**
  * vueComponentFor returns an associated vue component for the given nago protocol component.
  * If new components are introduced, this method must be updated by hand, to type-switch and associate
@@ -228,6 +228,10 @@ export function vueComponentFor(ngc: NagoComponent): Component {
 
 	if (ngc instanceof Select) {
 		return LazyUiSelect;
+	}
+
+	if (ngc instanceof Canvas) {
+		return LazyUiCanvas;
 	}
 
 	// keep this as the default fallback

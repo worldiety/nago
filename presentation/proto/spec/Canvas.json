@@ -1,0 +1,14 @@
+{
+  "kind": "Record",
+  "id": 185,
+  "fields": {
+    "1": {
+      "name": "Id",
+      "type": "Str"
+    },
+    "2": {
+      "name": "Frame",
+      "type": "Frame"
+    }
+  }
+}

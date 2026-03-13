@@ -1,0 +1,27 @@
+{
+  "kind": "Record",
+  "id": 221,
+  "fields": {
+    "1": {
+      "doc": "Handle identifies the registered listener.",
+      "name": "Handle",
+      "type": "Uint"
+    },
+    "2": {
+      "name": "Type",
+      "type": "InputEventType"
+    },
+    "3": {
+      "name": "X",
+      "type": "Float"
+    },
+    "4": {
+      "name": "Y",
+      "type": "Float"
+    },
+    "5": {
+      "name": "Code",
+      "type": "Str"
+    }
+  }
+}

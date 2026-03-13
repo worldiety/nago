@@ -1,0 +1,16 @@
+{
+  "kind": "Record",
+  "id": 208,
+  "fields": {
+    "1": {
+      "doc": "Id is the unique ID of the canvas.",
+      "name": "Id",
+      "type": "Str"
+    },
+    "2": {
+      "doc": "Angle is the angle of rotation in radians. To rotate in degree use d * Math.PI / 180",
+      "name": "Angle",
+      "type": "Float"
+    }
+  }
+}

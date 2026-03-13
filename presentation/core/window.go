@@ -16,6 +16,7 @@ import (
 	"go.wdy.de/nago/application/session"
 	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/presentation/proto"
 	"golang.org/x/text/language"
 )
 
@@ -153,6 +154,27 @@ type Window interface {
 	// RequestFocus requires a specific element to acquire the users focus, e.g. by placing a cursor into a component
 	// and show OSD keyboard.
 	RequestFocus(id string)
+
+	// AddInputListener registers a listener for any known input events.
+	AddInputListener(elemID string, fn func(evt InputEvent)) (close func())
+}
+
+type InputEventType uint64
+
+const (
+	InputEventPointerUp     = InputEventType(proto.InputEventPointerUp)
+	InputEventPointerDown   = InputEventType(proto.InputEventPointerDown)
+	InputEventPointerMove   = InputEventType(proto.InputEventPointerMove)
+	InputEventPointerCancel = InputEventType(proto.InputEventPointerCancel)
+	InputEventKeyDown       = InputEventType(proto.InputEventKeyDown)
+	InputEventKeyUp         = InputEventType(proto.InputEventKeyUp)
+)
+
+type InputEvent struct {
+	Type InputEventType
+	X    float64
+	Y    float64
+	Code string
 }
 
 // Colors returns a type safe value based ColorSet instance.

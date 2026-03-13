@@ -120,7 +120,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 		let buffer = writer.getBuffer();
 		//console.log('nprotoc buffer', buffer);
 		const endTime = new Date().getTime();
-		console.log(`nprotoc marshal time ${endTime - startTime} ms. type =`, evt.constructor.name);
+		//console.log(`nprotoc marshal time ${endTime - startTime} ms. type =`, evt.constructor.name);
 		this.webSocket?.send(buffer);
 		this.lastEventSendAt = new Date().getTime();
 	}
@@ -164,10 +164,10 @@ export default class WebSocketAdapter implements ServiceAdapter {
 		//console.log('WS received', responseRaw);
 		let msg = unmarshal(new BinaryReader(new Uint8Array(responseRaw))); // TODO i don't know what i'm doing here, does it copy?
 		endTime = new Date().getTime();
-		console.log(
-			`nprotoc response after ${responseTime}ms, unmarshal time ${endTime - startTime}ms, total ${responseTime + endTime - startTime}ms, type =`,
-			msg.constructor.name
-		);
+		//console.log(
+		//`nprotoc response after ${responseTime}ms, unmarshal time ${endTime - startTime}ms, total ${responseTime + endTime - startTime}ms, type =`,
+		//msg.constructor.name
+		//);
 		ConnectionHandler.publishEvent(msg as NagoEvent);
 	}
 }

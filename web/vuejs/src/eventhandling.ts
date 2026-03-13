@@ -17,6 +17,8 @@ import {
 	ColorSchemeValues,
 	FileImportRequested,
 	Fonts,
+	InputEvent,
+	InputEventTypeValues,
 	Locale,
 	MediaDevice,
 	MediaDeviceKindValues,
@@ -25,6 +27,7 @@ import {
 	OpenHttpFlow,
 	OpenHttpLink,
 	RID,
+	RegisterInputEventListener,
 	RetMediaDevicesEnumerate,
 	RetMediaDevicesPermissionsError,
 	RootViewAllocationRequested,
@@ -36,6 +39,7 @@ import {
 	SendMultipleRequested,
 	ThemeRequested,
 	URI,
+	UnregisterInputEventListener,
 	WindowInfo,
 	WindowInfoChanged,
 	WindowSizeClass,
@@ -527,6 +531,118 @@ export async function callRequested(chan: Channel, evt: CallRequested) {
 		await callRequestFocus(chan, evt, evt.call);
 		return;
 	}
+
+	if (evt.call instanceof RegisterInputEventListener) {
+		await registerInputEvents(chan, evt, evt.call);
+		return;
+	}
+
+	if (evt.call instanceof UnregisterInputEventListener) {
+		await unregisterInputEvents(chan, evt, evt.call);
+		return;
+	}
+}
+
+const registeredInputListeners = new Map<
+	number,
+	{
+		callPtr: number;
+		elem: Element;
+		listeners: Array<{ domEvent: string; fn: EventListener }>;
+	}
+>();
+
+function waitForElement(id: string, timeoutMs = 3000): Promise<Element | null> {
+	const existing = document.getElementById(id);
+	if (existing) return Promise.resolve(existing);
+
+	return new Promise((resolve) => {
+		const observer = new MutationObserver(() => {
+			const elem = document.getElementById(id);
+			if (elem) {
+				observer.disconnect();
+				clearTimeout(timer);
+				resolve(elem);
+			}
+		});
+
+		const timer = window.setTimeout(() => {
+			observer.disconnect();
+			console.warn('waitForElement: timeout waiting for', id);
+			resolve(null);
+		}, timeoutMs);
+
+		observer.observe(document.body, { childList: true, subtree: true });
+	});
+}
+
+async function registerInputEvents(chan: Channel, evt: CallRequested, args: RegisterInputEventListener) {
+	if (!args.id || args.handle === undefined) return;
+
+	const elem = await waitForElement(args.id);
+	if (!elem) {
+		console.log('registerInputEvents: element not found', args.id);
+		return;
+	}
+
+	const callPtr = evt.callPtr!;
+	const handle = args.handle;
+	const listeners: Array<{ domEvent: string; fn: EventListener }> = [];
+
+	// Hilfsfunktion: InputEvent ans Backend senden
+	const send = (type: InputEventTypeValues, x: number, y: number, code: string) => {
+		chan.sendEvent(new CallResolved(callPtr, new InputEvent(handle, type, x, y, code), nextRID()));
+	};
+
+	elem.addEventListener('invalidated', (evt1) => {
+		send(InputEventTypeValues.InputEventInvalidate, 0, 0, '');
+	});
+
+	const pointerMappings: [string, InputEventTypeValues][] = [
+		['pointerdown', InputEventTypeValues.InputEventPointerDown],
+		['pointerup', InputEventTypeValues.InputEventPointerUp],
+		['pointermove', InputEventTypeValues.InputEventPointerMove],
+		['pointercancel', InputEventTypeValues.InputEventPointerCancel],
+	];
+
+	for (const [domEvent, evtType] of pointerMappings) {
+		const fn: EventListener = (e) => {
+			const pe = e as PointerEvent;
+			const rect = elem.getBoundingClientRect();
+			send(evtType, pe.clientX - rect.left, pe.clientY - rect.top, '');
+		};
+		elem.addEventListener(domEvent, fn);
+		listeners.push({ domEvent, fn });
+	}
+
+	const keyMappings: [string, InputEventTypeValues][] = [
+		['keydown', InputEventTypeValues.InputEventKeyDown],
+		['keyup', InputEventTypeValues.InputEventKeyUp],
+	];
+
+	for (const [domEvent, evtType] of keyMappings) {
+		const fn: EventListener = (e) => {
+			const ke = e as KeyboardEvent;
+			send(evtType, 0, 0, ke.code); // z.B. "KeyA", "ArrowLeft", "Enter"
+		};
+		elem.addEventListener(domEvent, fn);
+		listeners.push({ domEvent, fn });
+	}
+
+	registeredInputListeners.set(handle, { callPtr, elem, listeners });
+}
+
+async function unregisterInputEvents(chan: Channel, evt: CallRequested, args: UnregisterInputEventListener) {
+	if (args.handle === undefined) return;
+
+	const reg = registeredInputListeners.get(args.handle);
+	if (!reg) return;
+
+	for (const { domEvent, fn } of reg.listeners) {
+		reg.elem.removeEventListener(domEvent, fn);
+	}
+
+	registeredInputListeners.delete(args.handle);
 }
 
 async function callRequestFocus(chan: Channel, evt: CallRequested, args: CallRequestFocus) {

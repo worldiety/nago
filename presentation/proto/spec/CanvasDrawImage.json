@@ -1,0 +1,47 @@
+{
+  "kind": "Record",
+  "id": 195,
+  "fields": {
+    "1": {
+      "doc": "Id is the unique ID of the canvas.",
+      "name": "Id",
+      "type": "Str"
+    },
+    "2": {
+      "name": "Hnd",
+      "type": "Uint"
+    },
+    "3": {
+      "name": "Dx",
+      "type": "Float"
+    },
+    "4": {
+      "name": "Dy",
+      "type": "Float"
+    },
+    "5": {
+      "name": "Dw",
+      "type": "Float"
+    },
+    "6": {
+      "name": "Dh",
+      "type": "Float"
+    },
+    "7": {
+      "name": "Sx",
+      "type": "Float"
+    },
+    "8": {
+      "name": "Sy",
+      "type": "Float"
+    },
+    "9": {
+      "name": "Sw",
+      "type": "Float"
+    },
+    "10": {
+      "name": "Sh",
+      "type": "Float"
+    }
+  }
+}

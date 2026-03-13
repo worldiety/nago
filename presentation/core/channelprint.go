@@ -57,7 +57,7 @@ func (n *PrintChannel) Subscribe(f func(msg []byte) error) (destroy func()) {
 }
 
 func (n *PrintChannel) Publish(msg []byte) error {
-	slog.Info("publishing message", slog.String("msg", string(msg)))
+	//slog.Info("publishing message", slog.String("msg", string(msg)))
 
 	n.mutex.Lock()
 	// defensive copy to avoid deadlocks

@@ -1,0 +1,27 @@
+{
+  "kind": "Uint",
+  "id": 220,
+  "const": {
+    "1": {
+      "name": "InputEventPointerUp"
+    },
+    "2": {
+      "name": "InputEventPointerDown"
+    },
+    "3": {
+      "name": "InputEventPointerMove"
+    },
+    "4": {
+      "name": "InputEventPointerCancel"
+    },
+    "5": {
+      "name": "InputEventKeyDown"
+    },
+    "6": {
+      "name": "InputEventKeyUp"
+    },
+    "7": {
+      "name": "InputEventInvalidate"
+    }
+  }
+}

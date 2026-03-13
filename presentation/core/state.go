@@ -491,6 +491,20 @@ func OnAppear(wnd Window, id string, fn func(ctx context.Context)) {
 	})
 }
 
+// OnFrame tries to run a fixed frame counter with the given fps target within the lifecycle of the window.
+// The given function callback is posted to the main looper which may introduce additional jitter.
+func OnFrame(wnd Window, id string, fps int, fn func(ctx context.Context)) {
+	OnAppear(wnd, id, func(ctx context.Context) {
+
+		for ctx.Err() == nil {
+			time.Sleep(time.Second / time.Duration(fps))
+			wnd.Post(func() {
+				fn(ctx)
+			})
+		}
+	})
+}
+
 // OnDisappear is executed, once the identified state goes out of scope. Otherwise, the rules of [OnAsyncAppear]
 // are applied.
 func OnDisappear(wnd Window, id string, fn func(ctx context.Context)) {

@@ -250,8 +250,47 @@ type CallArgs interface {
 	Readable
 }
 
-func (CallMediaDevicesEnumerate) isCallArgs() {}
-func (CallRequestFocus) isCallArgs()          {}
+func (CallMediaDevicesEnumerate) isCallArgs()    {}
+func (CallRequestFocus) isCallArgs()             {}
+func (RegisterInputEventListener) isCallArgs()   {}
+func (UnregisterInputEventListener) isCallArgs() {}
+func (CanvasArc) isCallArgs()                    {}
+func (CanvasArcTo) isCallArgs()                  {}
+func (CanvasBeginPath) isCallArgs()              {}
+func (CanvasBezierCurveTo) isCallArgs()          {}
+func (CanvasCallList) isCallArgs()               {}
+func (CanvasClear) isCallArgs()                  {}
+func (CanvasClearRect) isCallArgs()              {}
+func (CanvasClip) isCallArgs()                   {}
+func (CanvasClosePath) isCallArgs()              {}
+func (CanvasDrawImage) isCallArgs()              {}
+func (CanvasEndList) isCallArgs()                {}
+func (CanvasFill) isCallArgs()                   {}
+func (CanvasFillRect) isCallArgs()               {}
+func (CanvasFillStyle) isCallArgs()              {}
+func (CanvasFillText) isCallArgs()               {}
+func (CanvasFont) isCallArgs()                   {}
+func (CanvasLineTo) isCallArgs()                 {}
+func (CanvasMoveTo) isCallArgs()                 {}
+func (CanvasNewList) isCallArgs()                {}
+func (CanvasQuadraticCurveTo) isCallArgs()       {}
+func (CanvasRect) isCallArgs()                   {}
+func (CanvasRestore) isCallArgs()                {}
+func (CanvasRotate) isCallArgs()                 {}
+func (CanvasSave) isCallArgs()                   {}
+func (CanvasScale) isCallArgs()                  {}
+func (CanvasSetTransform) isCallArgs()           {}
+func (CanvasStrokeRect) isCallArgs()             {}
+func (CanvasStrokeStyle) isCallArgs()            {}
+func (CanvasStrokeText) isCallArgs()             {}
+func (CanvasTextAlign) isCallArgs()              {}
+func (CanvasTextBaseline) isCallArgs()           {}
+func (CanvasTranslate) isCallArgs()              {}
+func (CanvasLoadImage) isCallArgs()              {}
+func (CanvasMiterLimit) isCallArgs()             {}
+func (CanvasLineCap) isCallArgs()                {}
+func (CanvasLineJoin) isCallArgs()               {}
+func (CanvasLineWidth) isCallArgs()              {}
 
 // CallRet is the sum type of all declared type safe async method invocations results. See also [CallArgs] for the async invocation calls.
 type CallRet interface {
@@ -267,6 +306,7 @@ func (RetVoid) isCallRet()                         {}
 func (RetError) isCallRet()                        {}
 func (RetMediaDevicesEnumerate) isCallRet()        {}
 func (RetMediaDevicesPermissionsError) isCallRet() {}
+func (InputEvent) isCallRet()                      {}
 
 // Component is the building primitive for any widget, behavior or ui element in NAGO.
 type Component interface {
@@ -313,6 +353,7 @@ func (Video) isComponent()          {}
 func (PieChart) isComponent()       {}
 func (DnDArea) isComponent()        {}
 func (Select) isComponent()         {}
+func (Canvas) isComponent()         {}
 
 // NagoEvent is the union type of all allowed NAGO protocol events. Everything which goes through a NAGO channel must be an Event at the root level.
 type NagoEvent interface {
@@ -13470,6 +13511,3453 @@ func (v *Stack) read(r *BinaryReader) error {
 	return nil
 }
 
+type Canvas struct {
+	Id    Str
+	Frame Frame
+}
+
+func (v *Canvas) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.Frame.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(record, 2); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Canvas) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasArc struct {
+	// Id is the unique ID of the canvas.
+	Id Str
+	X  Float
+	Y  Float
+	R  Float
+	// Start is the angle in radians.
+	Start Float
+	// End is the angle in radians.
+	End           Float
+	AntiClockwise Bool
+}
+
+func (v *CanvasArc) write(w *BinaryWriter) error {
+	var fields [8]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.X.IsZero()
+	fields[3] = !v.Y.IsZero()
+	fields[4] = !v.R.IsZero()
+	fields[5] = !v.Start.IsZero()
+	fields[6] = !v.End.IsZero()
+	fields[7] = !v.AntiClockwise.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(f64, 2); err != nil {
+			return err
+		}
+		if err := v.X.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(f64, 3); err != nil {
+			return err
+		}
+		if err := v.Y.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(f64, 4); err != nil {
+			return err
+		}
+		if err := v.R.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(f64, 5); err != nil {
+			return err
+		}
+		if err := v.Start.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(f64, 6); err != nil {
+			return err
+		}
+		if err := v.End.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(uvarint, 7); err != nil {
+			return err
+		}
+		if err := v.AntiClockwise.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasArc) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.X.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Y.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.R.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Start.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.End.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.AntiClockwise.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasArcTo struct {
+	// Id is the unique ID of the canvas.
+	Id Str
+	X1 Float
+	Y1 Float
+	X2 Float
+	Y2 Float
+	// Radius is the arc radius in radians.
+	Radius Float
+}
+
+func (v *CanvasArcTo) write(w *BinaryWriter) error {
+	var fields [7]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.X1.IsZero()
+	fields[3] = !v.Y1.IsZero()
+	fields[4] = !v.X2.IsZero()
+	fields[5] = !v.Y2.IsZero()
+	fields[6] = !v.Radius.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(f64, 2); err != nil {
+			return err
+		}
+		if err := v.X1.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(f64, 3); err != nil {
+			return err
+		}
+		if err := v.Y1.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(f64, 4); err != nil {
+			return err
+		}
+		if err := v.X2.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(f64, 5); err != nil {
+			return err
+		}
+		if err := v.Y2.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(f64, 6); err != nil {
+			return err
+		}
+		if err := v.Radius.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasArcTo) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.X1.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Y1.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.X2.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Y2.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.Radius.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasBeginPath struct {
+	// Id is the unique ID of the canvas.
+	Id Str
+}
+
+func (v *CanvasBeginPath) write(w *BinaryWriter) error {
+	var fields [2]bool
+	fields[1] = !v.Id.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasBeginPath) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasBezierCurveTo struct {
+	// Id is the unique ID of the canvas.
+	Id   Str
+	Cp1x Float
+	Cp1y Float
+	Cp2x Float
+	Cp2y Float
+	X    Float
+	Y    Float
+}
+
+func (v *CanvasBezierCurveTo) write(w *BinaryWriter) error {
+	var fields [8]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.Cp1x.IsZero()
+	fields[3] = !v.Cp1y.IsZero()
+	fields[4] = !v.Cp2x.IsZero()
+	fields[5] = !v.Cp2y.IsZero()
+	fields[6] = !v.X.IsZero()
+	fields[7] = !v.Y.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(f64, 2); err != nil {
+			return err
+		}
+		if err := v.Cp1x.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(f64, 3); err != nil {
+			return err
+		}
+		if err := v.Cp1y.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(f64, 4); err != nil {
+			return err
+		}
+		if err := v.Cp2x.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(f64, 5); err != nil {
+			return err
+		}
+		if err := v.Cp2y.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(f64, 6); err != nil {
+			return err
+		}
+		if err := v.X.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(f64, 7); err != nil {
+			return err
+		}
+		if err := v.Y.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasBezierCurveTo) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Cp1x.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Cp1y.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Cp2x.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Cp2y.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.X.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.Y.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasCallList struct {
+	// Id is the unique ID of the canvas.
+	Id     Str
+	Handle Uint
+}
+
+func (v *CanvasCallList) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.Handle.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.Handle.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasCallList) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Handle.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasClear struct {
+	// Id is the unique ID of the canvas.
+	Id Str
+}
+
+func (v *CanvasClear) write(w *BinaryWriter) error {
+	var fields [2]bool
+	fields[1] = !v.Id.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasClear) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasClearRect struct {
+	// Id is the unique ID of the canvas.
+	Id Str
+	X  Float
+	Y  Float
+	W  Float
+	H  Float
+}
+
+func (v *CanvasClearRect) write(w *BinaryWriter) error {
+	var fields [6]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.X.IsZero()
+	fields[3] = !v.Y.IsZero()
+	fields[4] = !v.W.IsZero()
+	fields[5] = !v.H.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(f64, 2); err != nil {
+			return err
+		}
+		if err := v.X.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(f64, 3); err != nil {
+			return err
+		}
+		if err := v.Y.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(f64, 4); err != nil {
+			return err
+		}
+		if err := v.W.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(f64, 5); err != nil {
+			return err
+		}
+		if err := v.H.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasClearRect) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.X.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Y.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.W.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.H.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasClip struct {
+	// Id is the unique ID of the canvas.
+	Id Str
+}
+
+func (v *CanvasClip) write(w *BinaryWriter) error {
+	var fields [2]bool
+	fields[1] = !v.Id.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasClip) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasClosePath struct {
+	// Id is the unique ID of the canvas.
+	Id Str
+}
+
+func (v *CanvasClosePath) write(w *BinaryWriter) error {
+	var fields [2]bool
+	fields[1] = !v.Id.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasClosePath) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasDrawImage struct {
+	// Id is the unique ID of the canvas.
+	Id  Str
+	Hnd Uint
+	Dx  Float
+	Dy  Float
+	Dw  Float
+	Dh  Float
+	Sx  Float
+	Sy  Float
+	Sw  Float
+	Sh  Float
+}
+
+func (v *CanvasDrawImage) write(w *BinaryWriter) error {
+	var fields [11]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.Hnd.IsZero()
+	fields[3] = !v.Dx.IsZero()
+	fields[4] = !v.Dy.IsZero()
+	fields[5] = !v.Dw.IsZero()
+	fields[6] = !v.Dh.IsZero()
+	fields[7] = !v.Sx.IsZero()
+	fields[8] = !v.Sy.IsZero()
+	fields[9] = !v.Sw.IsZero()
+	fields[10] = !v.Sh.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.Hnd.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(f64, 3); err != nil {
+			return err
+		}
+		if err := v.Dx.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(f64, 4); err != nil {
+			return err
+		}
+		if err := v.Dy.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(f64, 5); err != nil {
+			return err
+		}
+		if err := v.Dw.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(f64, 6); err != nil {
+			return err
+		}
+		if err := v.Dh.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(f64, 7); err != nil {
+			return err
+		}
+		if err := v.Sx.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		if err := w.writeFieldHeader(f64, 8); err != nil {
+			return err
+		}
+		if err := v.Sy.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[9] {
+		if err := w.writeFieldHeader(f64, 9); err != nil {
+			return err
+		}
+		if err := v.Sw.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[10] {
+		if err := w.writeFieldHeader(f64, 10); err != nil {
+			return err
+		}
+		if err := v.Sh.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasDrawImage) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Hnd.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Dx.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Dy.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Dw.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.Dh.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.Sx.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.Sy.read(r)
+			if err != nil {
+				return err
+			}
+		case 9:
+			err := v.Sw.read(r)
+			if err != nil {
+				return err
+			}
+		case 10:
+			err := v.Sh.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasEndList struct {
+	// Id is the unique ID of the canvas.
+	Id Str
+}
+
+func (v *CanvasEndList) write(w *BinaryWriter) error {
+	var fields [2]bool
+	fields[1] = !v.Id.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasEndList) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasFill struct {
+	// Id is the unique ID of the canvas.
+	Id Str
+}
+
+func (v *CanvasFill) write(w *BinaryWriter) error {
+	var fields [2]bool
+	fields[1] = !v.Id.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasFill) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasFillRect struct {
+	// Id is the unique ID of the canvas.
+	Id Str
+	X  Float
+	Y  Float
+	W  Float
+	H  Float
+}
+
+func (v *CanvasFillRect) write(w *BinaryWriter) error {
+	var fields [6]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.X.IsZero()
+	fields[3] = !v.Y.IsZero()
+	fields[4] = !v.W.IsZero()
+	fields[5] = !v.H.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(f64, 2); err != nil {
+			return err
+		}
+		if err := v.X.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(f64, 3); err != nil {
+			return err
+		}
+		if err := v.Y.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(f64, 4); err != nil {
+			return err
+		}
+		if err := v.W.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(f64, 5); err != nil {
+			return err
+		}
+		if err := v.H.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasFillRect) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.X.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Y.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.W.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.H.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasFillStyle struct {
+	// Id is the unique ID of the canvas.
+	Id    Str
+	Style Str
+}
+
+func (v *CanvasFillStyle) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.Style.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Style.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasFillStyle) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Style.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasFillText struct {
+	// Id is the unique ID of the canvas.
+	Id       Str
+	Text     Str
+	X        Float
+	Y        Float
+	MaxWidth Float
+}
+
+func (v *CanvasFillText) write(w *BinaryWriter) error {
+	var fields [6]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.Text.IsZero()
+	fields[3] = !v.X.IsZero()
+	fields[4] = !v.Y.IsZero()
+	fields[5] = !v.MaxWidth.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Text.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(f64, 3); err != nil {
+			return err
+		}
+		if err := v.X.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(f64, 4); err != nil {
+			return err
+		}
+		if err := v.Y.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(f64, 5); err != nil {
+			return err
+		}
+		if err := v.MaxWidth.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasFillText) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Text.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.X.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Y.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.MaxWidth.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasFont struct {
+	// Id is the unique ID of the canvas.
+	Id   Str
+	Font Str
+}
+
+func (v *CanvasFont) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.Font.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Font.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasFont) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Font.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasLineTo struct {
+	// Id is the unique ID of the canvas.
+	Id Str
+	X  Float
+	Y  Float
+}
+
+func (v *CanvasLineTo) write(w *BinaryWriter) error {
+	var fields [4]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.X.IsZero()
+	fields[3] = !v.Y.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(f64, 2); err != nil {
+			return err
+		}
+		if err := v.X.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(f64, 3); err != nil {
+			return err
+		}
+		if err := v.Y.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasLineTo) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.X.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Y.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasMoveTo struct {
+	// Id is the unique ID of the canvas.
+	Id Str
+	X  Float
+	Y  Float
+}
+
+func (v *CanvasMoveTo) write(w *BinaryWriter) error {
+	var fields [4]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.X.IsZero()
+	fields[3] = !v.Y.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(f64, 2); err != nil {
+			return err
+		}
+		if err := v.X.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(f64, 3); err != nil {
+			return err
+		}
+		if err := v.Y.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasMoveTo) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.X.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Y.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasNewList struct {
+	// Id is the unique ID of the canvas.
+	Id     Str
+	Handle Uint
+}
+
+func (v *CanvasNewList) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.Handle.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.Handle.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasNewList) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Handle.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasQuadraticCurveTo struct {
+	// Id is the unique ID of the canvas.
+	Id  Str
+	Cpx Float
+	Cpy Float
+	X   Float
+	Y   Float
+}
+
+func (v *CanvasQuadraticCurveTo) write(w *BinaryWriter) error {
+	var fields [6]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.Cpx.IsZero()
+	fields[3] = !v.Cpy.IsZero()
+	fields[4] = !v.X.IsZero()
+	fields[5] = !v.Y.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(f64, 2); err != nil {
+			return err
+		}
+		if err := v.Cpx.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(f64, 3); err != nil {
+			return err
+		}
+		if err := v.Cpy.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(f64, 4); err != nil {
+			return err
+		}
+		if err := v.X.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(f64, 5); err != nil {
+			return err
+		}
+		if err := v.Y.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasQuadraticCurveTo) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Cpx.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Cpy.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.X.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Y.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasRect struct {
+	// Id is the unique ID of the canvas.
+	Id Str
+	X  Float
+	Y  Float
+	W  Float
+	H  Float
+}
+
+func (v *CanvasRect) write(w *BinaryWriter) error {
+	var fields [6]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.X.IsZero()
+	fields[3] = !v.Y.IsZero()
+	fields[4] = !v.W.IsZero()
+	fields[5] = !v.H.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(f64, 2); err != nil {
+			return err
+		}
+		if err := v.X.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(f64, 3); err != nil {
+			return err
+		}
+		if err := v.Y.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(f64, 4); err != nil {
+			return err
+		}
+		if err := v.W.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(f64, 5); err != nil {
+			return err
+		}
+		if err := v.H.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasRect) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.X.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Y.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.W.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.H.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasRestore struct {
+	// Id is the unique ID of the canvas.
+	Id Str
+}
+
+func (v *CanvasRestore) write(w *BinaryWriter) error {
+	var fields [2]bool
+	fields[1] = !v.Id.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasRestore) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasRotate struct {
+	// Id is the unique ID of the canvas.
+	Id Str
+	// Angle is the angle of rotation in radians. To rotate in degree use d * Math.PI / 180
+	Angle Float
+}
+
+func (v *CanvasRotate) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.Angle.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(f64, 2); err != nil {
+			return err
+		}
+		if err := v.Angle.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasRotate) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Angle.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasSave struct {
+	// Id is the unique ID of the canvas.
+	Id Str
+}
+
+func (v *CanvasSave) write(w *BinaryWriter) error {
+	var fields [2]bool
+	fields[1] = !v.Id.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasSave) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasScale struct {
+	// Id is the unique ID of the canvas.
+	Id Str
+	X  Float
+	Y  Float
+}
+
+func (v *CanvasScale) write(w *BinaryWriter) error {
+	var fields [4]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.X.IsZero()
+	fields[3] = !v.Y.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(f64, 2); err != nil {
+			return err
+		}
+		if err := v.X.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(f64, 3); err != nil {
+			return err
+		}
+		if err := v.Y.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasScale) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.X.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Y.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasSetTransform struct {
+	// Id is the unique ID of the canvas.
+	Id Str
+	A  Float
+	B  Float
+	C  Float
+	D  Float
+	E  Float
+	F  Float
+}
+
+func (v *CanvasSetTransform) write(w *BinaryWriter) error {
+	var fields [8]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.A.IsZero()
+	fields[3] = !v.B.IsZero()
+	fields[4] = !v.C.IsZero()
+	fields[5] = !v.D.IsZero()
+	fields[6] = !v.E.IsZero()
+	fields[7] = !v.F.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(f64, 2); err != nil {
+			return err
+		}
+		if err := v.A.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(f64, 3); err != nil {
+			return err
+		}
+		if err := v.B.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(f64, 4); err != nil {
+			return err
+		}
+		if err := v.C.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(f64, 5); err != nil {
+			return err
+		}
+		if err := v.D.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(f64, 6); err != nil {
+			return err
+		}
+		if err := v.E.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(f64, 7); err != nil {
+			return err
+		}
+		if err := v.F.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasSetTransform) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.A.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.B.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.C.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.D.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.E.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.F.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasStrokeRect struct {
+	// Id is the unique ID of the canvas.
+	Id Str
+	X  Float
+	Y  Float
+	W  Float
+	H  Float
+}
+
+func (v *CanvasStrokeRect) write(w *BinaryWriter) error {
+	var fields [6]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.X.IsZero()
+	fields[3] = !v.Y.IsZero()
+	fields[4] = !v.W.IsZero()
+	fields[5] = !v.H.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(f64, 2); err != nil {
+			return err
+		}
+		if err := v.X.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(f64, 3); err != nil {
+			return err
+		}
+		if err := v.Y.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(f64, 4); err != nil {
+			return err
+		}
+		if err := v.W.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(f64, 5); err != nil {
+			return err
+		}
+		if err := v.H.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasStrokeRect) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.X.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Y.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.W.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.H.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasStrokeStyle struct {
+	// Id is the unique ID of the canvas.
+	Id    Str
+	Style Str
+}
+
+func (v *CanvasStrokeStyle) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.Style.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Style.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasStrokeStyle) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Style.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasStrokeText struct {
+	// Id is the unique ID of the canvas.
+	Id       Str
+	Text     Str
+	X        Float
+	Y        Float
+	MaxWidth Float
+}
+
+func (v *CanvasStrokeText) write(w *BinaryWriter) error {
+	var fields [6]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.Text.IsZero()
+	fields[3] = !v.X.IsZero()
+	fields[4] = !v.Y.IsZero()
+	fields[5] = !v.MaxWidth.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Text.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(f64, 3); err != nil {
+			return err
+		}
+		if err := v.X.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(f64, 4); err != nil {
+			return err
+		}
+		if err := v.Y.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(f64, 5); err != nil {
+			return err
+		}
+		if err := v.MaxWidth.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasStrokeText) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Text.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.X.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Y.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.MaxWidth.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasTextAlign struct {
+	// Id is the unique ID of the canvas.
+	Id        Str
+	TextAlign Str
+}
+
+func (v *CanvasTextAlign) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.TextAlign.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.TextAlign.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasTextAlign) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.TextAlign.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasTextBaseline struct {
+	// Id is the unique ID of the canvas.
+	Id       Str
+	Baseline Str
+}
+
+func (v *CanvasTextBaseline) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.Baseline.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Baseline.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasTextBaseline) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Baseline.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasTranslate struct {
+	// Id is the unique ID of the canvas.
+	Id Str
+	X  Float
+	Y  Float
+}
+
+func (v *CanvasTranslate) write(w *BinaryWriter) error {
+	var fields [4]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.X.IsZero()
+	fields[3] = !v.Y.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(f64, 2); err != nil {
+			return err
+		}
+		if err := v.X.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(f64, 3); err != nil {
+			return err
+		}
+		if err := v.Y.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasTranslate) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.X.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Y.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type RegisterInputEventListener struct {
+	// Id is the unique ID of the the element to listen to.
+	Id Str
+	// A Handle which identifies the registered listener.
+	Handle Uint
+}
+
+func (v *RegisterInputEventListener) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.Handle.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.Handle.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *RegisterInputEventListener) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Handle.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type UnregisterInputEventListener struct {
+	// A Handle which identifies the registered listener.
+	Handle Uint
+}
+
+func (v *UnregisterInputEventListener) write(w *BinaryWriter) error {
+	var fields [2]bool
+	fields[1] = !v.Handle.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(uvarint, 1); err != nil {
+			return err
+		}
+		if err := v.Handle.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *UnregisterInputEventListener) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Handle.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type InputEventType uint64
+
+const (
+	InputEventPointerUp     InputEventType = 1
+	InputEventPointerDown   InputEventType = 2
+	InputEventPointerMove   InputEventType = 3
+	InputEventPointerCancel InputEventType = 4
+	InputEventKeyDown       InputEventType = 5
+	InputEventKeyUp         InputEventType = 6
+	InputEventInvalidate    InputEventType = 7
+)
+
+func (v *InputEventType) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *InputEventType) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = InputEventType(tmp)
+	return nil
+}
+
+func (v *InputEventType) reset() {
+	*v = InputEventType(0)
+}
+func (v *InputEventType) IsZero() bool {
+	return *v == 0
+}
+
+type InputEvent struct {
+	// Handle identifies the registered listener.
+	Handle Uint
+	Type   InputEventType
+	X      Float
+	Y      Float
+	Code   Str
+}
+
+func (v *InputEvent) write(w *BinaryWriter) error {
+	var fields [6]bool
+	fields[1] = !v.Handle.IsZero()
+	fields[2] = !v.Type.IsZero()
+	fields[3] = !v.X.IsZero()
+	fields[4] = !v.Y.IsZero()
+	fields[5] = !v.Code.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(uvarint, 1); err != nil {
+			return err
+		}
+		if err := v.Handle.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.Type.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(f64, 3); err != nil {
+			return err
+		}
+		if err := v.X.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(f64, 4); err != nil {
+			return err
+		}
+		if err := v.Y.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(byteSlice, 5); err != nil {
+			return err
+		}
+		if err := v.Code.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *InputEvent) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Handle.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Type.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.X.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Y.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Code.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasLoadImage struct {
+	// Id is the unique ID of the canvas.
+	Id  Str
+	Hnd Uint
+	Url Str
+}
+
+func (v *CanvasLoadImage) write(w *BinaryWriter) error {
+	var fields [4]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.Hnd.IsZero()
+	fields[3] = !v.Url.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.Hnd.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.Url.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasLoadImage) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Hnd.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Url.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasLineWidth struct {
+	// Id is the unique ID of the canvas.
+	Id    Str
+	Width Float
+}
+
+func (v *CanvasLineWidth) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.Width.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(f64, 2); err != nil {
+			return err
+		}
+		if err := v.Width.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasLineWidth) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Width.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasLineCap struct {
+	// Id is the unique ID of the canvas.
+	Id  Str
+	Cap Str
+}
+
+func (v *CanvasLineCap) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.Cap.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Cap.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasLineCap) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Cap.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasLineJoin struct {
+	// Id is the unique ID of the canvas.
+	Id   Str
+	Join Str
+}
+
+func (v *CanvasLineJoin) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.Join.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Join.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasLineJoin) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Join.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasMiterLimit struct {
+	// Id is the unique ID of the canvas.
+	Id    Str
+	Limit Float
+}
+
+func (v *CanvasMiterLimit) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.Limit.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(f64, 2); err != nil {
+			return err
+		}
+		if err := v.Limit.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasMiterLimit) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Limit.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -14529,6 +18017,258 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 184:
 		var v Stack
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 185:
+		var v Canvas
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 186:
+		var v CanvasArc
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 187:
+		var v CanvasArcTo
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 188:
+		var v CanvasBeginPath
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 189:
+		var v CanvasBezierCurveTo
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 190:
+		var v CanvasCallList
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 191:
+		var v CanvasClear
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 192:
+		var v CanvasClearRect
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 193:
+		var v CanvasClip
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 194:
+		var v CanvasClosePath
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 195:
+		var v CanvasDrawImage
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 196:
+		var v CanvasEndList
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 197:
+		var v CanvasFill
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 198:
+		var v CanvasFillRect
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 199:
+		var v CanvasFillStyle
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 200:
+		var v CanvasFillText
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 201:
+		var v CanvasFont
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 202:
+		var v CanvasLineTo
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 203:
+		var v CanvasMoveTo
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 204:
+		var v CanvasNewList
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 205:
+		var v CanvasQuadraticCurveTo
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 206:
+		var v CanvasRect
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 207:
+		var v CanvasRestore
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 208:
+		var v CanvasRotate
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 209:
+		var v CanvasSave
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 210:
+		var v CanvasScale
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 211:
+		var v CanvasSetTransform
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 212:
+		var v CanvasStrokeRect
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 213:
+		var v CanvasStrokeStyle
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 214:
+		var v CanvasStrokeText
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 215:
+		var v CanvasTextAlign
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 216:
+		var v CanvasTextBaseline
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 217:
+		var v CanvasTranslate
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 218:
+		var v RegisterInputEventListener
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 219:
+		var v UnregisterInputEventListener
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 220:
+		var v InputEventType
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 221:
+		var v InputEvent
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 222:
+		var v CanvasLoadImage
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 223:
+		var v CanvasLineWidth
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 224:
+		var v CanvasLineCap
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 225:
+		var v CanvasLineJoin
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 226:
+		var v CanvasMiterLimit
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -17743,6 +21483,545 @@ func (v *Stack) IsZero() bool {
 	return v.Children.IsZero() && v.Gap.IsZero() && v.Frame.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.BackgroundColorStates.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.Wrap.IsZero() && v.StylePreset.IsZero() && v.Position.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero() && v.TextColor.IsZero() && v.NoClip.IsZero() && v.Animation.IsZero() && v.Transformation.IsZero() && v.Opacity.IsZero() && v.Background.IsZero() && v.Url.IsZero() && v.Target.IsZero() && v.Orientation.IsZero()
 }
 
+func (v *Canvas) reset() {
+	v.Id.reset()
+	v.Frame.reset()
+}
+
+func (v *Canvas) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.Frame.IsZero()
+}
+
+func (v *CanvasArc) reset() {
+	v.Id.reset()
+	v.X.reset()
+	v.Y.reset()
+	v.R.reset()
+	v.Start.reset()
+	v.End.reset()
+	v.AntiClockwise.reset()
+}
+
+func (v *CanvasArc) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.X.IsZero() && v.Y.IsZero() && v.R.IsZero() && v.Start.IsZero() && v.End.IsZero() && v.AntiClockwise.IsZero()
+}
+
+func (v *CanvasArcTo) reset() {
+	v.Id.reset()
+	v.X1.reset()
+	v.Y1.reset()
+	v.X2.reset()
+	v.Y2.reset()
+	v.Radius.reset()
+}
+
+func (v *CanvasArcTo) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.X1.IsZero() && v.Y1.IsZero() && v.X2.IsZero() && v.Y2.IsZero() && v.Radius.IsZero()
+}
+
+func (v *CanvasBeginPath) reset() {
+	v.Id.reset()
+}
+
+func (v *CanvasBeginPath) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero()
+}
+
+func (v *CanvasBezierCurveTo) reset() {
+	v.Id.reset()
+	v.Cp1x.reset()
+	v.Cp1y.reset()
+	v.Cp2x.reset()
+	v.Cp2y.reset()
+	v.X.reset()
+	v.Y.reset()
+}
+
+func (v *CanvasBezierCurveTo) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.Cp1x.IsZero() && v.Cp1y.IsZero() && v.Cp2x.IsZero() && v.Cp2y.IsZero() && v.X.IsZero() && v.Y.IsZero()
+}
+
+func (v *CanvasCallList) reset() {
+	v.Id.reset()
+	v.Handle.reset()
+}
+
+func (v *CanvasCallList) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.Handle.IsZero()
+}
+
+func (v *CanvasClear) reset() {
+	v.Id.reset()
+}
+
+func (v *CanvasClear) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero()
+}
+
+func (v *CanvasClearRect) reset() {
+	v.Id.reset()
+	v.X.reset()
+	v.Y.reset()
+	v.W.reset()
+	v.H.reset()
+}
+
+func (v *CanvasClearRect) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.X.IsZero() && v.Y.IsZero() && v.W.IsZero() && v.H.IsZero()
+}
+
+func (v *CanvasClip) reset() {
+	v.Id.reset()
+}
+
+func (v *CanvasClip) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero()
+}
+
+func (v *CanvasClosePath) reset() {
+	v.Id.reset()
+}
+
+func (v *CanvasClosePath) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero()
+}
+
+func (v *CanvasDrawImage) reset() {
+	v.Id.reset()
+	v.Hnd.reset()
+	v.Dx.reset()
+	v.Dy.reset()
+	v.Dw.reset()
+	v.Dh.reset()
+	v.Sx.reset()
+	v.Sy.reset()
+	v.Sw.reset()
+	v.Sh.reset()
+}
+
+func (v *CanvasDrawImage) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.Hnd.IsZero() && v.Dx.IsZero() && v.Dy.IsZero() && v.Dw.IsZero() && v.Dh.IsZero() && v.Sx.IsZero() && v.Sy.IsZero() && v.Sw.IsZero() && v.Sh.IsZero()
+}
+
+func (v *CanvasEndList) reset() {
+	v.Id.reset()
+}
+
+func (v *CanvasEndList) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero()
+}
+
+func (v *CanvasFill) reset() {
+	v.Id.reset()
+}
+
+func (v *CanvasFill) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero()
+}
+
+func (v *CanvasFillRect) reset() {
+	v.Id.reset()
+	v.X.reset()
+	v.Y.reset()
+	v.W.reset()
+	v.H.reset()
+}
+
+func (v *CanvasFillRect) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.X.IsZero() && v.Y.IsZero() && v.W.IsZero() && v.H.IsZero()
+}
+
+func (v *CanvasFillStyle) reset() {
+	v.Id.reset()
+	v.Style.reset()
+}
+
+func (v *CanvasFillStyle) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.Style.IsZero()
+}
+
+func (v *CanvasFillText) reset() {
+	v.Id.reset()
+	v.Text.reset()
+	v.X.reset()
+	v.Y.reset()
+	v.MaxWidth.reset()
+}
+
+func (v *CanvasFillText) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.Text.IsZero() && v.X.IsZero() && v.Y.IsZero() && v.MaxWidth.IsZero()
+}
+
+func (v *CanvasFont) reset() {
+	v.Id.reset()
+	v.Font.reset()
+}
+
+func (v *CanvasFont) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.Font.IsZero()
+}
+
+func (v *CanvasLineTo) reset() {
+	v.Id.reset()
+	v.X.reset()
+	v.Y.reset()
+}
+
+func (v *CanvasLineTo) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.X.IsZero() && v.Y.IsZero()
+}
+
+func (v *CanvasMoveTo) reset() {
+	v.Id.reset()
+	v.X.reset()
+	v.Y.reset()
+}
+
+func (v *CanvasMoveTo) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.X.IsZero() && v.Y.IsZero()
+}
+
+func (v *CanvasNewList) reset() {
+	v.Id.reset()
+	v.Handle.reset()
+}
+
+func (v *CanvasNewList) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.Handle.IsZero()
+}
+
+func (v *CanvasQuadraticCurveTo) reset() {
+	v.Id.reset()
+	v.Cpx.reset()
+	v.Cpy.reset()
+	v.X.reset()
+	v.Y.reset()
+}
+
+func (v *CanvasQuadraticCurveTo) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.Cpx.IsZero() && v.Cpy.IsZero() && v.X.IsZero() && v.Y.IsZero()
+}
+
+func (v *CanvasRect) reset() {
+	v.Id.reset()
+	v.X.reset()
+	v.Y.reset()
+	v.W.reset()
+	v.H.reset()
+}
+
+func (v *CanvasRect) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.X.IsZero() && v.Y.IsZero() && v.W.IsZero() && v.H.IsZero()
+}
+
+func (v *CanvasRestore) reset() {
+	v.Id.reset()
+}
+
+func (v *CanvasRestore) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero()
+}
+
+func (v *CanvasRotate) reset() {
+	v.Id.reset()
+	v.Angle.reset()
+}
+
+func (v *CanvasRotate) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.Angle.IsZero()
+}
+
+func (v *CanvasSave) reset() {
+	v.Id.reset()
+}
+
+func (v *CanvasSave) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero()
+}
+
+func (v *CanvasScale) reset() {
+	v.Id.reset()
+	v.X.reset()
+	v.Y.reset()
+}
+
+func (v *CanvasScale) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.X.IsZero() && v.Y.IsZero()
+}
+
+func (v *CanvasSetTransform) reset() {
+	v.Id.reset()
+	v.A.reset()
+	v.B.reset()
+	v.C.reset()
+	v.D.reset()
+	v.E.reset()
+	v.F.reset()
+}
+
+func (v *CanvasSetTransform) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.A.IsZero() && v.B.IsZero() && v.C.IsZero() && v.D.IsZero() && v.E.IsZero() && v.F.IsZero()
+}
+
+func (v *CanvasStrokeRect) reset() {
+	v.Id.reset()
+	v.X.reset()
+	v.Y.reset()
+	v.W.reset()
+	v.H.reset()
+}
+
+func (v *CanvasStrokeRect) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.X.IsZero() && v.Y.IsZero() && v.W.IsZero() && v.H.IsZero()
+}
+
+func (v *CanvasStrokeStyle) reset() {
+	v.Id.reset()
+	v.Style.reset()
+}
+
+func (v *CanvasStrokeStyle) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.Style.IsZero()
+}
+
+func (v *CanvasStrokeText) reset() {
+	v.Id.reset()
+	v.Text.reset()
+	v.X.reset()
+	v.Y.reset()
+	v.MaxWidth.reset()
+}
+
+func (v *CanvasStrokeText) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.Text.IsZero() && v.X.IsZero() && v.Y.IsZero() && v.MaxWidth.IsZero()
+}
+
+func (v *CanvasTextAlign) reset() {
+	v.Id.reset()
+	v.TextAlign.reset()
+}
+
+func (v *CanvasTextAlign) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.TextAlign.IsZero()
+}
+
+func (v *CanvasTextBaseline) reset() {
+	v.Id.reset()
+	v.Baseline.reset()
+}
+
+func (v *CanvasTextBaseline) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.Baseline.IsZero()
+}
+
+func (v *CanvasTranslate) reset() {
+	v.Id.reset()
+	v.X.reset()
+	v.Y.reset()
+}
+
+func (v *CanvasTranslate) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.X.IsZero() && v.Y.IsZero()
+}
+
+func (v *RegisterInputEventListener) reset() {
+	v.Id.reset()
+	v.Handle.reset()
+}
+
+func (v *RegisterInputEventListener) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.Handle.IsZero()
+}
+
+func (v *UnregisterInputEventListener) reset() {
+	v.Handle.reset()
+}
+
+func (v *UnregisterInputEventListener) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Handle.IsZero()
+}
+
+func (v *InputEvent) reset() {
+	v.Handle.reset()
+	v.Type.reset()
+	v.X.reset()
+	v.Y.reset()
+	v.Code.reset()
+}
+
+func (v *InputEvent) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Handle.IsZero() && v.Type.IsZero() && v.X.IsZero() && v.Y.IsZero() && v.Code.IsZero()
+}
+
+func (v *CanvasLoadImage) reset() {
+	v.Id.reset()
+	v.Hnd.reset()
+	v.Url.reset()
+}
+
+func (v *CanvasLoadImage) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.Hnd.IsZero() && v.Url.IsZero()
+}
+
+func (v *CanvasLineWidth) reset() {
+	v.Id.reset()
+	v.Width.reset()
+}
+
+func (v *CanvasLineWidth) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.Width.IsZero()
+}
+
+func (v *CanvasLineCap) reset() {
+	v.Id.reset()
+	v.Cap.reset()
+}
+
+func (v *CanvasLineCap) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.Cap.IsZero()
+}
+
+func (v *CanvasLineJoin) reset() {
+	v.Id.reset()
+	v.Join.reset()
+}
+
+func (v *CanvasLineJoin) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.Join.IsZero()
+}
+
+func (v *CanvasMiterLimit) reset() {
+	v.Id.reset()
+	v.Limit.reset()
+}
+
+func (v *CanvasMiterLimit) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.Limit.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -18949,6 +23228,300 @@ func (v *ColorStates) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *Stack) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 184); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Canvas) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 185); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasArc) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 186); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasArcTo) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 187); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasBeginPath) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 188); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasBezierCurveTo) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 189); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasCallList) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 190); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasClear) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 191); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasClearRect) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 192); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasClip) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 193); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasClosePath) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 194); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasDrawImage) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 195); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasEndList) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 196); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasFill) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 197); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasFillRect) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 198); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasFillStyle) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 199); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasFillText) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 200); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasFont) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 201); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasLineTo) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 202); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasMoveTo) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 203); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasNewList) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 204); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasQuadraticCurveTo) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 205); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasRect) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 206); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasRestore) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 207); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasRotate) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 208); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasSave) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 209); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasScale) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 210); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasSetTransform) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 211); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasStrokeRect) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 212); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasStrokeStyle) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 213); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasStrokeText) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 214); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasTextAlign) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 215); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasTextBaseline) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 216); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasTranslate) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 217); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *RegisterInputEventListener) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 218); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *UnregisterInputEventListener) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 219); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *InputEventType) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 220); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *InputEvent) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 221); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasLoadImage) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 222); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasLineWidth) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 223); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasLineCap) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 224); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasLineJoin) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 225); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasMiterLimit) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 226); err != nil {
 		return err
 	}
 	return nil

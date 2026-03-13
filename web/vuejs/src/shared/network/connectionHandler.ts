@@ -25,6 +25,20 @@ export default class ConnectionHandler {
 		this.eventListeners.push(callback);
 	}
 
+	public static removeEventListener(callback: (evt: NagoEvent) => void): void {
+		const index = this.eventListeners.indexOf(callback);
+		if (index !== -1) {
+			this.eventListeners.splice(index, 1);
+		}
+	}
+
+	public static removeConnectionChangeListener(callback: (connectionState: ConnectionState) => void): void {
+		const index = this.changeListeners.indexOf(callback);
+		if (index !== -1) {
+			this.changeListeners.splice(index, 1);
+		}
+	}
+
 	public static publishEvent(evt: NagoEvent): void {
 		this.eventListeners.forEach((callback) => callback(evt));
 	}

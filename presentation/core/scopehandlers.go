@@ -82,6 +82,7 @@ func (s *Scope) handleCallResolved(evt *proto.CallResolved) {
 		return
 	}
 
+	// TODO why are we not clearing the asyncCallbacks here?
 	fn(evt.Ret)
 }
 

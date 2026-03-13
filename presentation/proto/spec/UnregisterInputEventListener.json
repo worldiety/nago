@@ -1,0 +1,11 @@
+{
+  "kind": "Record",
+  "id": 219,
+  "fields": {
+    "1": {
+      "doc": "A Handle which identifies the registered listener.",
+      "name": "Handle",
+      "type": "Uint"
+    }
+  }
+}

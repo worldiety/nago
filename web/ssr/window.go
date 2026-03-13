@@ -60,6 +60,12 @@ type ssrWindow struct {
 	application *core.Application
 }
 
+func (w *ssrWindow) AddInputListener(elemID string, fn func(evt core.InputEvent)) (close func()) {
+	return func() {
+
+	}
+}
+
 // NewWindow creates a new SSR window with the given locale and anonymous subject.
 func NewWindow(locale language.Tag, getAnonUser user.GetAnonUser, path core.NavigationPath) core.Window {
 	bundle, ok := i18n.Default.MatchBundle(locale)

@@ -14074,6 +14074,3375 @@ export class Stack implements Writeable, Readable, Component {
 	isComponent(): void {}
 }
 
+export class Canvas implements Writeable, Readable, Component {
+	public id?: Str;
+
+	public frame?: Frame;
+
+	constructor(id: Str | undefined = undefined, frame: Frame | undefined = undefined) {
+		this.id = id;
+		this.frame = frame;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.frame = new Frame();
+					this.frame.read(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined, this.frame !== undefined && !this.frame.isZero()];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.RECORD, 2);
+			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined && (this.frame === undefined || this.frame.isZero());
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.frame = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 185);
+		return;
+	}
+	isComponent(): void {}
+}
+
+export class CanvasArc implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public x?: Float;
+
+	public y?: Float;
+
+	public r?: Float;
+
+	// Start is the angle in radians.
+	public start?: Float;
+
+	// End is the angle in radians.
+	public end?: Float;
+
+	public antiClockwise?: Bool;
+
+	constructor(
+		id: Str | undefined = undefined,
+		x: Float | undefined = undefined,
+		y: Float | undefined = undefined,
+		r: Float | undefined = undefined,
+		start: Float | undefined = undefined,
+		end: Float | undefined = undefined,
+		antiClockwise: Bool | undefined = undefined
+	) {
+		this.id = id;
+		this.x = x;
+		this.y = y;
+		this.r = r;
+		this.start = start;
+		this.end = end;
+		this.antiClockwise = antiClockwise;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.x = readFloat(reader);
+					break;
+				}
+				case 3: {
+					this.y = readFloat(reader);
+					break;
+				}
+				case 4: {
+					this.r = readFloat(reader);
+					break;
+				}
+				case 5: {
+					this.start = readFloat(reader);
+					break;
+				}
+				case 6: {
+					this.end = readFloat(reader);
+					break;
+				}
+				case 7: {
+					this.antiClockwise = readBool(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.id !== undefined,
+			this.x !== undefined,
+			this.y !== undefined,
+			this.r !== undefined,
+			this.start !== undefined,
+			this.end !== undefined,
+			this.antiClockwise !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.F64, 2);
+			writeFloat(writer, this.x!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.F64, 3);
+			writeFloat(writer, this.y!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.F64, 4);
+			writeFloat(writer, this.r!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.F64, 5);
+			writeFloat(writer, this.start!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.F64, 6);
+			writeFloat(writer, this.end!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 7);
+			writeBool(writer, this.antiClockwise!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.id === undefined &&
+			this.x === undefined &&
+			this.y === undefined &&
+			this.r === undefined &&
+			this.start === undefined &&
+			this.end === undefined &&
+			this.antiClockwise === undefined
+		);
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.x = undefined;
+		this.y = undefined;
+		this.r = undefined;
+		this.start = undefined;
+		this.end = undefined;
+		this.antiClockwise = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 186);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasArcTo implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public x1?: Float;
+
+	public y1?: Float;
+
+	public x2?: Float;
+
+	public y2?: Float;
+
+	// Radius is the arc radius in radians.
+	public radius?: Float;
+
+	constructor(
+		id: Str | undefined = undefined,
+		x1: Float | undefined = undefined,
+		y1: Float | undefined = undefined,
+		x2: Float | undefined = undefined,
+		y2: Float | undefined = undefined,
+		radius: Float | undefined = undefined
+	) {
+		this.id = id;
+		this.x1 = x1;
+		this.y1 = y1;
+		this.x2 = x2;
+		this.y2 = y2;
+		this.radius = radius;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.x1 = readFloat(reader);
+					break;
+				}
+				case 3: {
+					this.y1 = readFloat(reader);
+					break;
+				}
+				case 4: {
+					this.x2 = readFloat(reader);
+					break;
+				}
+				case 5: {
+					this.y2 = readFloat(reader);
+					break;
+				}
+				case 6: {
+					this.radius = readFloat(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.id !== undefined,
+			this.x1 !== undefined,
+			this.y1 !== undefined,
+			this.x2 !== undefined,
+			this.y2 !== undefined,
+			this.radius !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.F64, 2);
+			writeFloat(writer, this.x1!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.F64, 3);
+			writeFloat(writer, this.y1!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.F64, 4);
+			writeFloat(writer, this.x2!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.F64, 5);
+			writeFloat(writer, this.y2!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.F64, 6);
+			writeFloat(writer, this.radius!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.id === undefined &&
+			this.x1 === undefined &&
+			this.y1 === undefined &&
+			this.x2 === undefined &&
+			this.y2 === undefined &&
+			this.radius === undefined
+		);
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.x1 = undefined;
+		this.y1 = undefined;
+		this.x2 = undefined;
+		this.y2 = undefined;
+		this.radius = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 187);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasBeginPath implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	constructor(id: Str | undefined = undefined) {
+		this.id = id;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 188);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasBezierCurveTo implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public cp1x?: Float;
+
+	public cp1y?: Float;
+
+	public cp2x?: Float;
+
+	public cp2y?: Float;
+
+	public x?: Float;
+
+	public y?: Float;
+
+	constructor(
+		id: Str | undefined = undefined,
+		cp1x: Float | undefined = undefined,
+		cp1y: Float | undefined = undefined,
+		cp2x: Float | undefined = undefined,
+		cp2y: Float | undefined = undefined,
+		x: Float | undefined = undefined,
+		y: Float | undefined = undefined
+	) {
+		this.id = id;
+		this.cp1x = cp1x;
+		this.cp1y = cp1y;
+		this.cp2x = cp2x;
+		this.cp2y = cp2y;
+		this.x = x;
+		this.y = y;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.cp1x = readFloat(reader);
+					break;
+				}
+				case 3: {
+					this.cp1y = readFloat(reader);
+					break;
+				}
+				case 4: {
+					this.cp2x = readFloat(reader);
+					break;
+				}
+				case 5: {
+					this.cp2y = readFloat(reader);
+					break;
+				}
+				case 6: {
+					this.x = readFloat(reader);
+					break;
+				}
+				case 7: {
+					this.y = readFloat(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.id !== undefined,
+			this.cp1x !== undefined,
+			this.cp1y !== undefined,
+			this.cp2x !== undefined,
+			this.cp2y !== undefined,
+			this.x !== undefined,
+			this.y !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.F64, 2);
+			writeFloat(writer, this.cp1x!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.F64, 3);
+			writeFloat(writer, this.cp1y!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.F64, 4);
+			writeFloat(writer, this.cp2x!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.F64, 5);
+			writeFloat(writer, this.cp2y!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.F64, 6);
+			writeFloat(writer, this.x!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.F64, 7);
+			writeFloat(writer, this.y!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.id === undefined &&
+			this.cp1x === undefined &&
+			this.cp1y === undefined &&
+			this.cp2x === undefined &&
+			this.cp2y === undefined &&
+			this.x === undefined &&
+			this.y === undefined
+		);
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.cp1x = undefined;
+		this.cp1y = undefined;
+		this.cp2x = undefined;
+		this.cp2y = undefined;
+		this.x = undefined;
+		this.y = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 189);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasCallList implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public handle?: Uint;
+
+	constructor(id: Str | undefined = undefined, handle: Uint | undefined = undefined) {
+		this.id = id;
+		this.handle = handle;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.handle = readInt(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined, this.handle !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 2);
+			writeInt(writer, this.handle!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined && this.handle === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.handle = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 190);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasClear implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	constructor(id: Str | undefined = undefined) {
+		this.id = id;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 191);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasClearRect implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public x?: Float;
+
+	public y?: Float;
+
+	public w?: Float;
+
+	public h?: Float;
+
+	constructor(
+		id: Str | undefined = undefined,
+		x: Float | undefined = undefined,
+		y: Float | undefined = undefined,
+		w: Float | undefined = undefined,
+		h: Float | undefined = undefined
+	) {
+		this.id = id;
+		this.x = x;
+		this.y = y;
+		this.w = w;
+		this.h = h;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.x = readFloat(reader);
+					break;
+				}
+				case 3: {
+					this.y = readFloat(reader);
+					break;
+				}
+				case 4: {
+					this.w = readFloat(reader);
+					break;
+				}
+				case 5: {
+					this.h = readFloat(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.id !== undefined,
+			this.x !== undefined,
+			this.y !== undefined,
+			this.w !== undefined,
+			this.h !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.F64, 2);
+			writeFloat(writer, this.x!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.F64, 3);
+			writeFloat(writer, this.y!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.F64, 4);
+			writeFloat(writer, this.w!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.F64, 5);
+			writeFloat(writer, this.h!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.id === undefined &&
+			this.x === undefined &&
+			this.y === undefined &&
+			this.w === undefined &&
+			this.h === undefined
+		);
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.x = undefined;
+		this.y = undefined;
+		this.w = undefined;
+		this.h = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 192);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasClip implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	constructor(id: Str | undefined = undefined) {
+		this.id = id;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 193);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasClosePath implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	constructor(id: Str | undefined = undefined) {
+		this.id = id;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 194);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasDrawImage implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public hnd?: Uint;
+
+	public dx?: Float;
+
+	public dy?: Float;
+
+	public dw?: Float;
+
+	public dh?: Float;
+
+	public sx?: Float;
+
+	public sy?: Float;
+
+	public sw?: Float;
+
+	public sh?: Float;
+
+	constructor(
+		id: Str | undefined = undefined,
+		hnd: Uint | undefined = undefined,
+		dx: Float | undefined = undefined,
+		dy: Float | undefined = undefined,
+		dw: Float | undefined = undefined,
+		dh: Float | undefined = undefined,
+		sx: Float | undefined = undefined,
+		sy: Float | undefined = undefined,
+		sw: Float | undefined = undefined,
+		sh: Float | undefined = undefined
+	) {
+		this.id = id;
+		this.hnd = hnd;
+		this.dx = dx;
+		this.dy = dy;
+		this.dw = dw;
+		this.dh = dh;
+		this.sx = sx;
+		this.sy = sy;
+		this.sw = sw;
+		this.sh = sh;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.hnd = readInt(reader);
+					break;
+				}
+				case 3: {
+					this.dx = readFloat(reader);
+					break;
+				}
+				case 4: {
+					this.dy = readFloat(reader);
+					break;
+				}
+				case 5: {
+					this.dw = readFloat(reader);
+					break;
+				}
+				case 6: {
+					this.dh = readFloat(reader);
+					break;
+				}
+				case 7: {
+					this.sx = readFloat(reader);
+					break;
+				}
+				case 8: {
+					this.sy = readFloat(reader);
+					break;
+				}
+				case 9: {
+					this.sw = readFloat(reader);
+					break;
+				}
+				case 10: {
+					this.sh = readFloat(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.id !== undefined,
+			this.hnd !== undefined,
+			this.dx !== undefined,
+			this.dy !== undefined,
+			this.dw !== undefined,
+			this.dh !== undefined,
+			this.sx !== undefined,
+			this.sy !== undefined,
+			this.sw !== undefined,
+			this.sh !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 2);
+			writeInt(writer, this.hnd!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.F64, 3);
+			writeFloat(writer, this.dx!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.F64, 4);
+			writeFloat(writer, this.dy!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.F64, 5);
+			writeFloat(writer, this.dw!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.F64, 6);
+			writeFloat(writer, this.dh!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.F64, 7);
+			writeFloat(writer, this.sx!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.F64, 8);
+			writeFloat(writer, this.sy!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[9]) {
+			writer.writeFieldHeader(Shapes.F64, 9);
+			writeFloat(writer, this.sw!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[10]) {
+			writer.writeFieldHeader(Shapes.F64, 10);
+			writeFloat(writer, this.sh!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.id === undefined &&
+			this.hnd === undefined &&
+			this.dx === undefined &&
+			this.dy === undefined &&
+			this.dw === undefined &&
+			this.dh === undefined &&
+			this.sx === undefined &&
+			this.sy === undefined &&
+			this.sw === undefined &&
+			this.sh === undefined
+		);
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.hnd = undefined;
+		this.dx = undefined;
+		this.dy = undefined;
+		this.dw = undefined;
+		this.dh = undefined;
+		this.sx = undefined;
+		this.sy = undefined;
+		this.sw = undefined;
+		this.sh = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 195);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasEndList implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	constructor(id: Str | undefined = undefined) {
+		this.id = id;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 196);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasFill implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	constructor(id: Str | undefined = undefined) {
+		this.id = id;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 197);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasFillRect implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public x?: Float;
+
+	public y?: Float;
+
+	public w?: Float;
+
+	public h?: Float;
+
+	constructor(
+		id: Str | undefined = undefined,
+		x: Float | undefined = undefined,
+		y: Float | undefined = undefined,
+		w: Float | undefined = undefined,
+		h: Float | undefined = undefined
+	) {
+		this.id = id;
+		this.x = x;
+		this.y = y;
+		this.w = w;
+		this.h = h;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.x = readFloat(reader);
+					break;
+				}
+				case 3: {
+					this.y = readFloat(reader);
+					break;
+				}
+				case 4: {
+					this.w = readFloat(reader);
+					break;
+				}
+				case 5: {
+					this.h = readFloat(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.id !== undefined,
+			this.x !== undefined,
+			this.y !== undefined,
+			this.w !== undefined,
+			this.h !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.F64, 2);
+			writeFloat(writer, this.x!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.F64, 3);
+			writeFloat(writer, this.y!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.F64, 4);
+			writeFloat(writer, this.w!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.F64, 5);
+			writeFloat(writer, this.h!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.id === undefined &&
+			this.x === undefined &&
+			this.y === undefined &&
+			this.w === undefined &&
+			this.h === undefined
+		);
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.x = undefined;
+		this.y = undefined;
+		this.w = undefined;
+		this.h = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 198);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasFillStyle implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public style?: Str;
+
+	constructor(id: Str | undefined = undefined, style: Str | undefined = undefined) {
+		this.id = id;
+		this.style = style;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.style = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined, this.style !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.style!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined && this.style === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.style = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 199);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasFillText implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public text?: Str;
+
+	public x?: Float;
+
+	public y?: Float;
+
+	public maxWidth?: Float;
+
+	constructor(
+		id: Str | undefined = undefined,
+		text: Str | undefined = undefined,
+		x: Float | undefined = undefined,
+		y: Float | undefined = undefined,
+		maxWidth: Float | undefined = undefined
+	) {
+		this.id = id;
+		this.text = text;
+		this.x = x;
+		this.y = y;
+		this.maxWidth = maxWidth;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.text = readString(reader);
+					break;
+				}
+				case 3: {
+					this.x = readFloat(reader);
+					break;
+				}
+				case 4: {
+					this.y = readFloat(reader);
+					break;
+				}
+				case 5: {
+					this.maxWidth = readFloat(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.id !== undefined,
+			this.text !== undefined,
+			this.x !== undefined,
+			this.y !== undefined,
+			this.maxWidth !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.text!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.F64, 3);
+			writeFloat(writer, this.x!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.F64, 4);
+			writeFloat(writer, this.y!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.F64, 5);
+			writeFloat(writer, this.maxWidth!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.id === undefined &&
+			this.text === undefined &&
+			this.x === undefined &&
+			this.y === undefined &&
+			this.maxWidth === undefined
+		);
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.text = undefined;
+		this.x = undefined;
+		this.y = undefined;
+		this.maxWidth = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 200);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasFont implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public font?: Str;
+
+	constructor(id: Str | undefined = undefined, font: Str | undefined = undefined) {
+		this.id = id;
+		this.font = font;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.font = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined, this.font !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.font!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined && this.font === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.font = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 201);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasLineTo implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public x?: Float;
+
+	public y?: Float;
+
+	constructor(id: Str | undefined = undefined, x: Float | undefined = undefined, y: Float | undefined = undefined) {
+		this.id = id;
+		this.x = x;
+		this.y = y;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.x = readFloat(reader);
+					break;
+				}
+				case 3: {
+					this.y = readFloat(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined, this.x !== undefined, this.y !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.F64, 2);
+			writeFloat(writer, this.x!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.F64, 3);
+			writeFloat(writer, this.y!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined && this.x === undefined && this.y === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.x = undefined;
+		this.y = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 202);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasMoveTo implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public x?: Float;
+
+	public y?: Float;
+
+	constructor(id: Str | undefined = undefined, x: Float | undefined = undefined, y: Float | undefined = undefined) {
+		this.id = id;
+		this.x = x;
+		this.y = y;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.x = readFloat(reader);
+					break;
+				}
+				case 3: {
+					this.y = readFloat(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined, this.x !== undefined, this.y !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.F64, 2);
+			writeFloat(writer, this.x!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.F64, 3);
+			writeFloat(writer, this.y!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined && this.x === undefined && this.y === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.x = undefined;
+		this.y = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 203);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasNewList implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public handle?: Uint;
+
+	constructor(id: Str | undefined = undefined, handle: Uint | undefined = undefined) {
+		this.id = id;
+		this.handle = handle;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.handle = readInt(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined, this.handle !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 2);
+			writeInt(writer, this.handle!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined && this.handle === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.handle = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 204);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasQuadraticCurveTo implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public cpx?: Float;
+
+	public cpy?: Float;
+
+	public x?: Float;
+
+	public y?: Float;
+
+	constructor(
+		id: Str | undefined = undefined,
+		cpx: Float | undefined = undefined,
+		cpy: Float | undefined = undefined,
+		x: Float | undefined = undefined,
+		y: Float | undefined = undefined
+	) {
+		this.id = id;
+		this.cpx = cpx;
+		this.cpy = cpy;
+		this.x = x;
+		this.y = y;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.cpx = readFloat(reader);
+					break;
+				}
+				case 3: {
+					this.cpy = readFloat(reader);
+					break;
+				}
+				case 4: {
+					this.x = readFloat(reader);
+					break;
+				}
+				case 5: {
+					this.y = readFloat(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.id !== undefined,
+			this.cpx !== undefined,
+			this.cpy !== undefined,
+			this.x !== undefined,
+			this.y !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.F64, 2);
+			writeFloat(writer, this.cpx!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.F64, 3);
+			writeFloat(writer, this.cpy!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.F64, 4);
+			writeFloat(writer, this.x!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.F64, 5);
+			writeFloat(writer, this.y!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.id === undefined &&
+			this.cpx === undefined &&
+			this.cpy === undefined &&
+			this.x === undefined &&
+			this.y === undefined
+		);
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.cpx = undefined;
+		this.cpy = undefined;
+		this.x = undefined;
+		this.y = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 205);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasRect implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public x?: Float;
+
+	public y?: Float;
+
+	public w?: Float;
+
+	public h?: Float;
+
+	constructor(
+		id: Str | undefined = undefined,
+		x: Float | undefined = undefined,
+		y: Float | undefined = undefined,
+		w: Float | undefined = undefined,
+		h: Float | undefined = undefined
+	) {
+		this.id = id;
+		this.x = x;
+		this.y = y;
+		this.w = w;
+		this.h = h;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.x = readFloat(reader);
+					break;
+				}
+				case 3: {
+					this.y = readFloat(reader);
+					break;
+				}
+				case 4: {
+					this.w = readFloat(reader);
+					break;
+				}
+				case 5: {
+					this.h = readFloat(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.id !== undefined,
+			this.x !== undefined,
+			this.y !== undefined,
+			this.w !== undefined,
+			this.h !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.F64, 2);
+			writeFloat(writer, this.x!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.F64, 3);
+			writeFloat(writer, this.y!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.F64, 4);
+			writeFloat(writer, this.w!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.F64, 5);
+			writeFloat(writer, this.h!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.id === undefined &&
+			this.x === undefined &&
+			this.y === undefined &&
+			this.w === undefined &&
+			this.h === undefined
+		);
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.x = undefined;
+		this.y = undefined;
+		this.w = undefined;
+		this.h = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 206);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasRestore implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	constructor(id: Str | undefined = undefined) {
+		this.id = id;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 207);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasRotate implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	// Angle is the angle of rotation in radians. To rotate in degree use d * Math.PI / 180
+	public angle?: Float;
+
+	constructor(id: Str | undefined = undefined, angle: Float | undefined = undefined) {
+		this.id = id;
+		this.angle = angle;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.angle = readFloat(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined, this.angle !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.F64, 2);
+			writeFloat(writer, this.angle!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined && this.angle === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.angle = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 208);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasSave implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	constructor(id: Str | undefined = undefined) {
+		this.id = id;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 209);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasScale implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public x?: Float;
+
+	public y?: Float;
+
+	constructor(id: Str | undefined = undefined, x: Float | undefined = undefined, y: Float | undefined = undefined) {
+		this.id = id;
+		this.x = x;
+		this.y = y;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.x = readFloat(reader);
+					break;
+				}
+				case 3: {
+					this.y = readFloat(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined, this.x !== undefined, this.y !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.F64, 2);
+			writeFloat(writer, this.x!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.F64, 3);
+			writeFloat(writer, this.y!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined && this.x === undefined && this.y === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.x = undefined;
+		this.y = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 210);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasSetTransform implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public a?: Float;
+
+	public b?: Float;
+
+	public c?: Float;
+
+	public d?: Float;
+
+	public e?: Float;
+
+	public f?: Float;
+
+	constructor(
+		id: Str | undefined = undefined,
+		a: Float | undefined = undefined,
+		b: Float | undefined = undefined,
+		c: Float | undefined = undefined,
+		d: Float | undefined = undefined,
+		e: Float | undefined = undefined,
+		f: Float | undefined = undefined
+	) {
+		this.id = id;
+		this.a = a;
+		this.b = b;
+		this.c = c;
+		this.d = d;
+		this.e = e;
+		this.f = f;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.a = readFloat(reader);
+					break;
+				}
+				case 3: {
+					this.b = readFloat(reader);
+					break;
+				}
+				case 4: {
+					this.c = readFloat(reader);
+					break;
+				}
+				case 5: {
+					this.d = readFloat(reader);
+					break;
+				}
+				case 6: {
+					this.e = readFloat(reader);
+					break;
+				}
+				case 7: {
+					this.f = readFloat(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.id !== undefined,
+			this.a !== undefined,
+			this.b !== undefined,
+			this.c !== undefined,
+			this.d !== undefined,
+			this.e !== undefined,
+			this.f !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.F64, 2);
+			writeFloat(writer, this.a!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.F64, 3);
+			writeFloat(writer, this.b!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.F64, 4);
+			writeFloat(writer, this.c!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.F64, 5);
+			writeFloat(writer, this.d!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.F64, 6);
+			writeFloat(writer, this.e!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.F64, 7);
+			writeFloat(writer, this.f!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.id === undefined &&
+			this.a === undefined &&
+			this.b === undefined &&
+			this.c === undefined &&
+			this.d === undefined &&
+			this.e === undefined &&
+			this.f === undefined
+		);
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.a = undefined;
+		this.b = undefined;
+		this.c = undefined;
+		this.d = undefined;
+		this.e = undefined;
+		this.f = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 211);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasStrokeRect implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public x?: Float;
+
+	public y?: Float;
+
+	public w?: Float;
+
+	public h?: Float;
+
+	constructor(
+		id: Str | undefined = undefined,
+		x: Float | undefined = undefined,
+		y: Float | undefined = undefined,
+		w: Float | undefined = undefined,
+		h: Float | undefined = undefined
+	) {
+		this.id = id;
+		this.x = x;
+		this.y = y;
+		this.w = w;
+		this.h = h;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.x = readFloat(reader);
+					break;
+				}
+				case 3: {
+					this.y = readFloat(reader);
+					break;
+				}
+				case 4: {
+					this.w = readFloat(reader);
+					break;
+				}
+				case 5: {
+					this.h = readFloat(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.id !== undefined,
+			this.x !== undefined,
+			this.y !== undefined,
+			this.w !== undefined,
+			this.h !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.F64, 2);
+			writeFloat(writer, this.x!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.F64, 3);
+			writeFloat(writer, this.y!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.F64, 4);
+			writeFloat(writer, this.w!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.F64, 5);
+			writeFloat(writer, this.h!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.id === undefined &&
+			this.x === undefined &&
+			this.y === undefined &&
+			this.w === undefined &&
+			this.h === undefined
+		);
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.x = undefined;
+		this.y = undefined;
+		this.w = undefined;
+		this.h = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 212);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasStrokeStyle implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public style?: Str;
+
+	constructor(id: Str | undefined = undefined, style: Str | undefined = undefined) {
+		this.id = id;
+		this.style = style;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.style = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined, this.style !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.style!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined && this.style === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.style = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 213);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasStrokeText implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public text?: Str;
+
+	public x?: Float;
+
+	public y?: Float;
+
+	public maxWidth?: Float;
+
+	constructor(
+		id: Str | undefined = undefined,
+		text: Str | undefined = undefined,
+		x: Float | undefined = undefined,
+		y: Float | undefined = undefined,
+		maxWidth: Float | undefined = undefined
+	) {
+		this.id = id;
+		this.text = text;
+		this.x = x;
+		this.y = y;
+		this.maxWidth = maxWidth;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.text = readString(reader);
+					break;
+				}
+				case 3: {
+					this.x = readFloat(reader);
+					break;
+				}
+				case 4: {
+					this.y = readFloat(reader);
+					break;
+				}
+				case 5: {
+					this.maxWidth = readFloat(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.id !== undefined,
+			this.text !== undefined,
+			this.x !== undefined,
+			this.y !== undefined,
+			this.maxWidth !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.text!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.F64, 3);
+			writeFloat(writer, this.x!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.F64, 4);
+			writeFloat(writer, this.y!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.F64, 5);
+			writeFloat(writer, this.maxWidth!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.id === undefined &&
+			this.text === undefined &&
+			this.x === undefined &&
+			this.y === undefined &&
+			this.maxWidth === undefined
+		);
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.text = undefined;
+		this.x = undefined;
+		this.y = undefined;
+		this.maxWidth = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 214);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasTextAlign implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public textAlign?: Str;
+
+	constructor(id: Str | undefined = undefined, textAlign: Str | undefined = undefined) {
+		this.id = id;
+		this.textAlign = textAlign;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.textAlign = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined, this.textAlign !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.textAlign!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined && this.textAlign === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.textAlign = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 215);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasTextBaseline implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public baseline?: Str;
+
+	constructor(id: Str | undefined = undefined, baseline: Str | undefined = undefined) {
+		this.id = id;
+		this.baseline = baseline;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.baseline = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined, this.baseline !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.baseline!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined && this.baseline === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.baseline = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 216);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasTranslate implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public x?: Float;
+
+	public y?: Float;
+
+	constructor(id: Str | undefined = undefined, x: Float | undefined = undefined, y: Float | undefined = undefined) {
+		this.id = id;
+		this.x = x;
+		this.y = y;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.x = readFloat(reader);
+					break;
+				}
+				case 3: {
+					this.y = readFloat(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined, this.x !== undefined, this.y !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.F64, 2);
+			writeFloat(writer, this.x!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.F64, 3);
+			writeFloat(writer, this.y!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined && this.x === undefined && this.y === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.x = undefined;
+		this.y = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 217);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class RegisterInputEventListener implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the the element to listen to.
+	public id?: Str;
+
+	// A Handle which identifies the registered listener.
+	public handle?: Uint;
+
+	constructor(id: Str | undefined = undefined, handle: Uint | undefined = undefined) {
+		this.id = id;
+		this.handle = handle;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.handle = readInt(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined, this.handle !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 2);
+			writeInt(writer, this.handle!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined && this.handle === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.handle = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 218);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class UnregisterInputEventListener implements Writeable, Readable, CallArgs {
+	// A Handle which identifies the registered listener.
+	public handle?: Uint;
+
+	constructor(handle: Uint | undefined = undefined) {
+		this.handle = handle;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.handle = readInt(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.handle !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 1);
+			writeInt(writer, this.handle!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.handle === undefined;
+	}
+
+	reset(): void {
+		this.handle = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 219);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export type InputEventType = number;
+function writeTypeHeaderInputEventType(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 220);
+	return;
+}
+// companion enum containing all defined constants for InputEventType
+export enum InputEventTypeValues {
+	InputEventPointerUp = 1,
+	InputEventPointerDown = 2,
+	InputEventPointerMove = 3,
+	InputEventPointerCancel = 4,
+	InputEventKeyDown = 5,
+	InputEventKeyUp = 6,
+	InputEventInvalidate = 7,
+}
+
+export class InputEvent implements Writeable, Readable, CallRet {
+	// Handle identifies the registered listener.
+	public handle?: Uint;
+
+	public type?: InputEventType;
+
+	public x?: Float;
+
+	public y?: Float;
+
+	public code?: Str;
+
+	constructor(
+		handle: Uint | undefined = undefined,
+		type: InputEventType | undefined = undefined,
+		x: Float | undefined = undefined,
+		y: Float | undefined = undefined,
+		code: Str | undefined = undefined
+	) {
+		this.handle = handle;
+		this.type = type;
+		this.x = x;
+		this.y = y;
+		this.code = code;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.handle = readInt(reader);
+					break;
+				}
+				case 2: {
+					this.type = readInt(reader);
+					break;
+				}
+				case 3: {
+					this.x = readFloat(reader);
+					break;
+				}
+				case 4: {
+					this.y = readFloat(reader);
+					break;
+				}
+				case 5: {
+					this.code = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.handle !== undefined,
+			this.type !== undefined,
+			this.x !== undefined,
+			this.y !== undefined,
+			this.code !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 1);
+			writeInt(writer, this.handle!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 2);
+			writeInt(writer, this.type!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.F64, 3);
+			writeFloat(writer, this.x!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.F64, 4);
+			writeFloat(writer, this.y!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
+			writeString(writer, this.code!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.handle === undefined &&
+			this.type === undefined &&
+			this.x === undefined &&
+			this.y === undefined &&
+			this.code === undefined
+		);
+	}
+
+	reset(): void {
+		this.handle = undefined;
+		this.type = undefined;
+		this.x = undefined;
+		this.y = undefined;
+		this.code = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 221);
+		return;
+	}
+	isCallRet(): void {}
+}
+
+export class CanvasLoadImage implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public hnd?: Uint;
+
+	public url?: Str;
+
+	constructor(id: Str | undefined = undefined, hnd: Uint | undefined = undefined, url: Str | undefined = undefined) {
+		this.id = id;
+		this.hnd = hnd;
+		this.url = url;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.hnd = readInt(reader);
+					break;
+				}
+				case 3: {
+					this.url = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined, this.hnd !== undefined, this.url !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 2);
+			writeInt(writer, this.hnd!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			writeString(writer, this.url!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined && this.hnd === undefined && this.url === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.hnd = undefined;
+		this.url = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 222);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasLineWidth implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public width?: Float;
+
+	constructor(id: Str | undefined = undefined, width: Float | undefined = undefined) {
+		this.id = id;
+		this.width = width;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.width = readFloat(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined, this.width !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.F64, 2);
+			writeFloat(writer, this.width!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined && this.width === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.width = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 223);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasLineCap implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public cap?: Str;
+
+	constructor(id: Str | undefined = undefined, cap: Str | undefined = undefined) {
+		this.id = id;
+		this.cap = cap;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.cap = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined, this.cap !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.cap!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined && this.cap === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.cap = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 224);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasLineJoin implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public join?: Str;
+
+	constructor(id: Str | undefined = undefined, join: Str | undefined = undefined) {
+		this.id = id;
+		this.join = join;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.join = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined, this.join !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.join!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined && this.join === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.join = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 225);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasMiterLimit implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public limit?: Float;
+
+	constructor(id: Str | undefined = undefined, limit: Float | undefined = undefined) {
+		this.id = id;
+		this.limit = limit;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.limit = readFloat(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined, this.limit !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.F64, 2);
+			writeFloat(writer, this.limit!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined && this.limit === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.limit = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 226);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -14899,6 +18268,215 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 184: {
 			const v = new Stack();
+			v.read(src);
+			return v;
+		}
+		case 185: {
+			const v = new Canvas();
+			v.read(src);
+			return v;
+		}
+		case 186: {
+			const v = new CanvasArc();
+			v.read(src);
+			return v;
+		}
+		case 187: {
+			const v = new CanvasArcTo();
+			v.read(src);
+			return v;
+		}
+		case 188: {
+			const v = new CanvasBeginPath();
+			v.read(src);
+			return v;
+		}
+		case 189: {
+			const v = new CanvasBezierCurveTo();
+			v.read(src);
+			return v;
+		}
+		case 190: {
+			const v = new CanvasCallList();
+			v.read(src);
+			return v;
+		}
+		case 191: {
+			const v = new CanvasClear();
+			v.read(src);
+			return v;
+		}
+		case 192: {
+			const v = new CanvasClearRect();
+			v.read(src);
+			return v;
+		}
+		case 193: {
+			const v = new CanvasClip();
+			v.read(src);
+			return v;
+		}
+		case 194: {
+			const v = new CanvasClosePath();
+			v.read(src);
+			return v;
+		}
+		case 195: {
+			const v = new CanvasDrawImage();
+			v.read(src);
+			return v;
+		}
+		case 196: {
+			const v = new CanvasEndList();
+			v.read(src);
+			return v;
+		}
+		case 197: {
+			const v = new CanvasFill();
+			v.read(src);
+			return v;
+		}
+		case 198: {
+			const v = new CanvasFillRect();
+			v.read(src);
+			return v;
+		}
+		case 199: {
+			const v = new CanvasFillStyle();
+			v.read(src);
+			return v;
+		}
+		case 200: {
+			const v = new CanvasFillText();
+			v.read(src);
+			return v;
+		}
+		case 201: {
+			const v = new CanvasFont();
+			v.read(src);
+			return v;
+		}
+		case 202: {
+			const v = new CanvasLineTo();
+			v.read(src);
+			return v;
+		}
+		case 203: {
+			const v = new CanvasMoveTo();
+			v.read(src);
+			return v;
+		}
+		case 204: {
+			const v = new CanvasNewList();
+			v.read(src);
+			return v;
+		}
+		case 205: {
+			const v = new CanvasQuadraticCurveTo();
+			v.read(src);
+			return v;
+		}
+		case 206: {
+			const v = new CanvasRect();
+			v.read(src);
+			return v;
+		}
+		case 207: {
+			const v = new CanvasRestore();
+			v.read(src);
+			return v;
+		}
+		case 208: {
+			const v = new CanvasRotate();
+			v.read(src);
+			return v;
+		}
+		case 209: {
+			const v = new CanvasSave();
+			v.read(src);
+			return v;
+		}
+		case 210: {
+			const v = new CanvasScale();
+			v.read(src);
+			return v;
+		}
+		case 211: {
+			const v = new CanvasSetTransform();
+			v.read(src);
+			return v;
+		}
+		case 212: {
+			const v = new CanvasStrokeRect();
+			v.read(src);
+			return v;
+		}
+		case 213: {
+			const v = new CanvasStrokeStyle();
+			v.read(src);
+			return v;
+		}
+		case 214: {
+			const v = new CanvasStrokeText();
+			v.read(src);
+			return v;
+		}
+		case 215: {
+			const v = new CanvasTextAlign();
+			v.read(src);
+			return v;
+		}
+		case 216: {
+			const v = new CanvasTextBaseline();
+			v.read(src);
+			return v;
+		}
+		case 217: {
+			const v = new CanvasTranslate();
+			v.read(src);
+			return v;
+		}
+		case 218: {
+			const v = new RegisterInputEventListener();
+			v.read(src);
+			return v;
+		}
+		case 219: {
+			const v = new UnregisterInputEventListener();
+			v.read(src);
+			return v;
+		}
+		case 220: {
+			const v = readInt(src) as InputEventType;
+			return v;
+		}
+		case 221: {
+			const v = new InputEvent();
+			v.read(src);
+			return v;
+		}
+		case 222: {
+			const v = new CanvasLoadImage();
+			v.read(src);
+			return v;
+		}
+		case 223: {
+			const v = new CanvasLineWidth();
+			v.read(src);
+			return v;
+		}
+		case 224: {
+			const v = new CanvasLineCap();
+			v.read(src);
+			return v;
+		}
+		case 225: {
+			const v = new CanvasLineJoin();
+			v.read(src);
+			return v;
+		}
+		case 226: {
+			const v = new CanvasMiterLimit();
 			v.read(src);
 			return v;
 		}

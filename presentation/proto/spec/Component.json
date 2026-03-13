@@ -36,6 +36,7 @@
     "Video",
     "PieChart",
     "DnDArea",
-    "Select"
+    "Select",
+    "Canvas"
   ]
 }

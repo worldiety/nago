@@ -5,6 +5,7 @@
     "RetVoid",
     "RetError",
     "RetMediaDevicesEnumerate",
-    "RetMediaDevicesPermissionsError"
+    "RetMediaDevicesPermissionsError",
+    "InputEvent"
   ]
 }

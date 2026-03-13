@@ -1,0 +1,16 @@
+{
+  "kind": "Record",
+  "id": 218,
+  "fields": {
+    "1": {
+      "doc": "Id is the unique ID of the the element to listen to.",
+      "name": "Id",
+      "type": "Str"
+    },
+    "2": {
+      "doc": "A Handle which identifies the registered listener.",
+      "name": "Handle",
+      "type": "Uint"
+    }
+  }
+}
