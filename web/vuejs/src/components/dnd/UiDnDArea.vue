@@ -8,14 +8,15 @@
 -->
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
-import { useDnDState } from '@/components/dnd/useDnDState';
+import { useDndStore } from '@/components/dnd/useDndStore';
 import { frameCSS } from '@/components/shared/frame';
-import { bool2Str } from '@/components/shared/util';
+import { randomStr } from '@/components/shared/util';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
-import { DnDArea, UpdateStateValueRequested } from '@/shared/proto/nprotoc_gen';
+import type { DnDArea } from '@/shared/proto/nprotoc_gen';
+import { UpdateStateValueRequested } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: DnDArea;
@@ -25,69 +26,65 @@ const emit = defineEmits<{
 	(e: 'drop-success', id: string): void;
 }>();
 
-const isOver = ref(false);
-const canDrop = ref(false);
-const isDragging = ref(false);
-
+const id = props.ui.id || randomStr(16);
 const serviceAdapter = useServiceAdapter();
+const store = useDndStore();
 
-const { currentDragId, startDrag, endDrag } = useDnDState();
+const isOver = ref(false);
+const isDropArea = ref(!!props.ui.dnD?.canDrop);
+const canDrop = ref(false);
 
 const styles = computed<string>(() => {
-	let styles = frameCSS(props.ui.frame);
-
+	const styles = frameCSS(props.ui.frame);
 	return styles.join(';');
 });
 
 function onDragStart(event: DragEvent) {
-	if (!event.dataTransfer) {
-		return;
-	}
+	if (!event.dataTransfer) return;
 
-	isDragging.value = true;
+	store.startDrag(id);
+	event.dataTransfer.setData('application/x-drag-id', id);
+	event.dataTransfer.effectAllowed = 'all';
+}
 
-	if (props.ui.id) {
-		startDrag(props.ui.id);
-		event.dataTransfer.setData('application/x-drag-id', props.ui.id);
-	}
+function onDragEnd(event: DragEvent) {
+	if (!event.dataTransfer) return;
 
-	event.dataTransfer.effectAllowed = 'move';
-	event.dataTransfer.dropEffect = canDrop.value ? 'move' : 'none';
+	store.endDrag();
 }
 
 function onDragOver(event: DragEvent) {
 	isOver.value = true;
-	// const dragId = event.dataTransfer?.getData('application/x-drag-id');
-	const dragId = currentDragId.value;
-	if (props.ui.dnD?.droppableIDs) {
-		canDrop.value = !!dragId && props.ui.dnD?.droppableIDs.value.includes(dragId);
-	} else {
-		canDrop.value = true;
-	}
+	event.dataTransfer!.dropEffect = canDrop.value ? 'copy' : 'none';
+}
 
-	if (canDrop.value) {
-		event.dataTransfer!.dropEffect = 'move';
-	} else {
-		event.dataTransfer!.dropEffect = 'none';
-	}
+function onDragEnter(event: DragEvent) {
+	// delay by a tick to allow 'drag leave' events to complete first
+	nextTick(() => {
+		if (!isDropArea.value || !event.dataTransfer) return;
 
-	document.body.style.cursor = canDrop.value ? 'grab' : 'not-allowed';
+		const dragId = store.currentDragId;
+		if (props.ui.dnD?.canDrop && props.ui.dnD?.droppableIDs) {
+			canDrop.value = !!dragId && props.ui.dnD?.droppableIDs.value.includes(dragId);
+			store.enteredDropArea(canDrop.value);
+		} else {
+			canDrop.value = !!props.ui.dnD?.canDrop;
+			store.enteredDropArea(canDrop.value);
+		}
+	});
 }
 
 function onDragLeave() {
+	if (!isDropArea.value) return;
 	isOver.value = false;
 	canDrop.value = false;
-	isDragging.value = false;
-	document.body.style.cursor = 'default';
+	store.leftDropArea();
 }
 
-function onDrop(event: DragEvent) {
-	//const dragId = event.dataTransfer?.getData('application/x-drag-id');
-	const dragId = currentDragId.value;
+function onDrop() {
+	const dragId = store.currentDragId;
 	isOver.value = false;
 	canDrop.value = false;
-	isDragging.value = false;
-	document.body.style.cursor = 'default';
 	if (props.ui.dnD?.droppableIDs) {
 		if (dragId && props.ui.dnD?.droppableIDs?.value.includes(dragId)) {
 			emit('drop-success', dragId);
@@ -98,29 +95,36 @@ function onDrop(event: DragEvent) {
 		serviceAdapter.sendEvent(new UpdateStateValueRequested(props.ui.droppedId, 0, nextRID(), dragId));
 	}
 
-	endDrag();
+	store.endDrag();
 }
 </script>
 
 <template>
 	<!-- dnd area -->
 	<div
-		@dragover.prevent="onDragOver"
-		@drop.prevent="onDrop"
-		@dragleave="onDragLeave"
+		:id="id"
+		:class="{
+			'outline outline-1 -outline-offset-1': isDropArea && isOver,
+			'outline-green-500 bg-green-50': isDropArea && isOver && canDrop,
+			'outline-red-600 bg-red-50': isDropArea && isOver && !canDrop,
+		}"
 		:style="styles"
 		:draggable="ui.dnD?.canDrag"
+		@dragover.prevent="onDragOver"
+		@drop.prevent="onDrop"
 		@dragstart="onDragStart"
-		:id="props.ui.id"
-		:class="{
-			'border border-green-500 bg-green-50 cursor-move': isOver && canDrop,
-			'border border-red-400 bg-red-50 border cursor-not-allowed': isOver && !canDrop,
-		}"
+		@dragend="onDragEnd"
+		@dragenter="onDragEnter"
+		@dragleave="onDragLeave"
 	>
 		<!--		<div v-if="isOver && !canDrop" class="absolute text-red-500 text-sm mt-2">
 			❌ Nicht erlaubt
 		</div>-->
 
-		<ui-generic v-for="ui in props.ui.children?.value" :ui="ui" />
+		<ui-generic
+			v-for="ui in props.ui.children?.value"
+			:ui="ui"
+			:class="store.dragging ? '!pointer-events-none' : ''"
+		/>
 	</div>
 </template>
