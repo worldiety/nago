@@ -318,6 +318,7 @@ type Component interface {
 	Readable
 }
 
+func (Accordion) isComponent()      {}
 func (Box) isComponent()            {}
 func (DatePicker) isComponent()     {}
 func (Checkbox) isComponent()       {}
@@ -16958,6 +16959,149 @@ func (v *CanvasMiterLimit) read(r *BinaryReader) error {
 	return nil
 }
 
+type Accordion struct {
+	Header  Component
+	Content Component
+	Frame   Frame
+	// InputValue is where updated value of the open states are written.
+	InputValue Ptr
+	Value      Bool
+}
+
+func (v *Accordion) write(w *BinaryWriter) error {
+	var fields [6]bool
+	fields[1] = v.Header != nil && !v.Header.IsZero()
+	fields[2] = v.Content != nil && !v.Content.IsZero()
+	fields[3] = !v.Frame.IsZero()
+	fields[4] = !v.InputValue.IsZero()
+	fields[5] = !v.Value.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 1); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.Header.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.Header.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 2); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.Content.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.Content.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(record, 3); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(uvarint, 4); err != nil {
+			return err
+		}
+		if err := v.InputValue.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(uvarint, 5); err != nil {
+			return err
+		}
+		if err := v.Value.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Accordion) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.Header = obj.(Component)
+		case 2:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.Content = obj.(Component)
+		case 3:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.InputValue.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Value.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -18269,6 +18413,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 226:
 		var v CanvasMiterLimit
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 227:
+		var v Accordion
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -22022,6 +22172,21 @@ func (v *CanvasMiterLimit) IsZero() bool {
 	return v.Id.IsZero() && v.Limit.IsZero()
 }
 
+func (v *Accordion) reset() {
+	v.Header = nil
+	v.Content = nil
+	v.Frame.reset()
+	v.InputValue.reset()
+	v.Value.reset()
+}
+
+func (v *Accordion) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Header.IsZero() && v.Content.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Value.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -23522,6 +23687,13 @@ func (v *CanvasLineJoin) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *CanvasMiterLimit) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 226); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Accordion) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 227); err != nil {
 		return err
 	}
 	return nil

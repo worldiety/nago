@@ -10,6 +10,7 @@ import type { Component } from 'vue';
 import { defineAsyncComponent } from 'vue';
 import { Canvas, Component as NagoComponent } from '@/shared/proto/nprotoc_gen';
 import {
+	Accordion,
 	BarChart,
 	Box,
 	Checkbox,
@@ -47,6 +48,7 @@ import {
 	WindowTitle,
 } from '@/shared/proto/nprotoc_gen';
 
+const LazyUiAccordion = defineAsyncComponent(() => import('@/components/UiAccordion.vue'));
 const LazyUiCheckbox = defineAsyncComponent(() => import('@/components/UiCheckbox.vue'));
 const LazyUiDivider = defineAsyncComponent(() => import('@/components/UiDivider.vue'));
 const LazyUiGrid = defineAsyncComponent(() => import('@/components/UiGrid.vue'));
@@ -90,6 +92,10 @@ const LazyUiCanvas = defineAsyncComponent(() => import('@/components/canvas/UiCa
  * the template component properly.
  */
 export function vueComponentFor(ngc: NagoComponent): Component {
+	if (ngc instanceof Accordion) {
+		return LazyUiAccordion;
+	}
+
 	if (ngc instanceof TextView) {
 		return LazyUiText;
 	}

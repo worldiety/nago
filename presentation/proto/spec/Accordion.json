@@ -1,0 +1,27 @@
+{
+  "kind": "Record",
+  "id": 227,
+  "fields": {
+    "1": {
+      "name": "Header",
+      "type": "Component"
+    },
+    "2": {
+      "name": "Content",
+      "type": "Component"
+    },
+    "3": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "4": {
+      "doc": "InputValue is where updated value of the open states are written.",
+      "name": "InputValue",
+      "type": "Ptr"
+    },
+    "5": {
+      "name": "Value",
+      "type": "Bool"
+    }
+  }
+}

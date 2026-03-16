@@ -17443,6 +17443,139 @@ export class CanvasMiterLimit implements Writeable, Readable, CallArgs {
 	isCallArgs(): void {}
 }
 
+export class Accordion implements Writeable, Readable, Component {
+	public header?: Component;
+
+	public content?: Component;
+
+	public frame?: Frame;
+
+	// InputValue is where updated value of the open states are written.
+	public inputValue?: Ptr;
+
+	public value?: Bool;
+
+	constructor(
+		header: Component | undefined = undefined,
+		content: Component | undefined = undefined,
+		frame: Frame | undefined = undefined,
+		inputValue: Ptr | undefined = undefined,
+		value: Bool | undefined = undefined
+	) {
+		this.header = header;
+		this.content = content;
+		this.frame = frame;
+		this.inputValue = inputValue;
+		this.value = value;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					// decode polymorphic field as 1 element array
+					const len = reader.readUvarint();
+					if (len != 1) {
+						throw new Error(`unexpected length: ` + len);
+					}
+					this.header = unmarshal(reader) as Component;
+					break;
+				}
+				case 2: {
+					// decode polymorphic field as 1 element array
+					const len = reader.readUvarint();
+					if (len != 1) {
+						throw new Error(`unexpected length: ` + len);
+					}
+					this.content = unmarshal(reader) as Component;
+					break;
+				}
+				case 3: {
+					this.frame = new Frame();
+					this.frame.read(reader);
+					break;
+				}
+				case 4: {
+					this.inputValue = readInt(reader);
+					break;
+				}
+				case 5: {
+					this.value = readBool(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.header !== undefined && !this.header.isZero(),
+			this.content !== undefined && !this.content.isZero(),
+			this.frame !== undefined && !this.frame.isZero(),
+			this.inputValue !== undefined,
+			this.value !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			// encode polymorphic enum as 1 element slice
+			writer.writeFieldHeader(Shapes.ARRAY, 1);
+			writer.writeByte(1);
+			this.header.writeTypeHeader(writer);
+			this.header!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			// encode polymorphic enum as 1 element slice
+			writer.writeFieldHeader(Shapes.ARRAY, 2);
+			writer.writeByte(1);
+			this.content.writeTypeHeader(writer);
+			this.content!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.RECORD, 3);
+			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 4);
+			writeInt(writer, this.inputValue!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 5);
+			writeBool(writer, this.value!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			(this.header === undefined || this.header.isZero()) &&
+			(this.content === undefined || this.content.isZero()) &&
+			(this.frame === undefined || this.frame.isZero()) &&
+			this.inputValue === undefined &&
+			this.value === undefined
+		);
+	}
+
+	reset(): void {
+		this.header = undefined;
+		this.content = undefined;
+		this.frame = undefined;
+		this.inputValue = undefined;
+		this.value = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 227);
+		return;
+	}
+	isComponent(): void {}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -18477,6 +18610,11 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 226: {
 			const v = new CanvasMiterLimit();
+			v.read(src);
+			return v;
+		}
+		case 227: {
+			const v = new Accordion();
 			v.read(src);
 			return v;
 		}
