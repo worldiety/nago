@@ -55,7 +55,7 @@ function toggle() {
 		@apply bg-I0/50;
 
 		&:before {
-			@apply left-full -translate-x-full -ml-0.5 bg-current;
+			@apply left-[1.625rem] bg-current;
 		}
 	}
 
