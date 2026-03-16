@@ -86,7 +86,7 @@ onUnmounted(() => {
 			<div class="body" :style="`height: ${bodyHeight}px;`" :inert="!ui.value">
 				<UiGeneric :ui="ui.content" />
 			</div>
-			<div ref="bodyDummy" class="body-dummy" inert>
+			<div ref="bodyDummy" class="body-dummy" inert aria-hidden="true">
 				<UiGeneric :ui="ui.content" />
 			</div>
 		</div>

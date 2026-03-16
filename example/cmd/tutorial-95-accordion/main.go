@@ -23,7 +23,7 @@ var accordionContent string
 
 func main() {
 	application.Configure(func(cfg *application.Configurator) {
-		cfg.SetApplicationID("de.worldiety.tutorial_93")
+		cfg.SetApplicationID("de.worldiety.tutorial_95")
 		cfg.Serve(vuejs.Dist())
 
 		count := 8
