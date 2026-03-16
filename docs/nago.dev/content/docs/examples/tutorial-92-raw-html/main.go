@@ -16,7 +16,7 @@ import (
 	"go.wdy.de/nago/web/vuejs"
 )
 
-//go:embed html.html
+//go:embed html.gohtml
 var html string
 
 func main() {
