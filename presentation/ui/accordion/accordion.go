@@ -9,53 +9,61 @@ package accordion
 
 import (
 	"go.wdy.de/nago/presentation/core"
-	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
+	"go.wdy.de/nago/presentation/proto"
 	"go.wdy.de/nago/presentation/ui"
 )
 
 type TAccordion struct {
-	header core.View
-	body   core.View
-	frame  ui.Frame
-	open   *core.State[bool]
+	header     core.View
+	body       core.View
+	frame      ui.Frame
+	value      bool
+	inputValue *core.State[bool]
 }
 
+// Accordion initializes a new TAccordion element
+// The function takes a header view, body view and open state
 func Accordion(header, body core.View, open *core.State[bool]) TAccordion {
 	return TAccordion{
-		header: header,
-		body:   body,
-		open:   open,
+		header:     header,
+		body:       body,
+		value:      open.Get(),
+		inputValue: open,
 	}
 }
 
+// Frame sets the accordions frame to control the accordions bounds
 func (t TAccordion) Frame(frame ui.Frame) TAccordion {
 	t.frame = frame
 	return t
 }
 
+// InputValue binds the accordion to an external boolean state,
+// allowing it to be controlled from outside the component.
+func (t TAccordion) InputValue(input *core.State[bool]) TAccordion {
+	t.inputValue = input
+	return t
+}
+
+// FullWidth sets the accordion's frame to full width
 func (t TAccordion) FullWidth() TAccordion {
 	t.frame.Width = ui.Full
 	return t
 }
 
 func (t TAccordion) Render(ctx core.RenderContext) core.RenderNode {
-	// TODO we should create this as proto primitive to avoid render-roundtrips and allow better SEO support, e.g. also with SSR
-
-	ico := icons.ChevronDown
-	var tf ui.Transformation
-	if t.open.Get() {
-		//	ico = icons.ChevronUp
-		tf.RotateZ = 180
+	return &proto.Accordion{
+		Header:  t.header.Render(ctx),
+		Content: t.body.Render(ctx),
+		Frame: proto.Frame{
+			MinWidth:  proto.Length(t.frame.MinWidth),
+			MaxWidth:  proto.Length(t.frame.MaxWidth),
+			MinHeight: proto.Length(t.frame.MinHeight),
+			MaxHeight: proto.Length(t.frame.MaxHeight),
+			Width:     proto.Length(t.frame.Width),
+			Height:    proto.Length(t.frame.Height),
+		},
+		InputValue: t.inputValue.Ptr(),
+		Value:      proto.Bool(t.value),
 	}
-
-	return ui.VStack(
-		ui.HStack(
-			t.header,
-			ui.Spacer(),
-			ui.VStack(ui.ImageIcon(ico)).Animation(ui.AnimateTransition).Transformation(tf),
-		).Action(func() {
-			t.open.Set(!t.open.Get())
-		}).FullWidth(),
-		ui.If(t.open.Get(), t.body),
-	).Frame(t.frame).Render(ctx)
 }

@@ -28,6 +28,10 @@ a:focus-visible:not(.custom-focus) {
 	animation: outline-focus-outside 100ms ease-out;
 }
 
+a:hover:not(.custom-hover) {
+	@apply decoration-I0;
+}
+
 .custom-focus {
 	@apply outline-none;
 }
