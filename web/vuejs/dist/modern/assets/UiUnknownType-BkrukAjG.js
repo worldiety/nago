@@ -1,1 +1,0 @@
-import{d as s,b as o,f as n,G as i}from"./main-DtnXNBrU.js";const c={key:0},p={key:1},u=s({__name:"UiUnknownType",props:{ui:{}},setup(t){const e=t;return(r,a)=>e.ui?(n(),o("div",c,"[Protocol type has not been implemented: '"+i(e.ui.constructor.name)+"']",1)):(n(),o("div",p,"ui component is null"))}});export{u as default};
