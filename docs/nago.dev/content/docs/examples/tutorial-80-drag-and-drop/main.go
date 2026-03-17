@@ -62,7 +62,7 @@ func main() {
 					Droppable("a", "c").
 					CanDrop(true).
 					InputValue(dropped),
-			).Frame(ui.Frame{}.Large())
+			).Padding(ui.Padding{}.All(ui.L16)).Frame(ui.Frame{}.Large())
 		})
 	}).Run()
 }

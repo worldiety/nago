@@ -18,7 +18,7 @@ import (
 	"go.wdy.de/nago/web/vuejs"
 )
 
-//go:embed accordion-content.html
+//go:embed accordion-content.gohtml
 var accordionContent string
 
 func main() {
