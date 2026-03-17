@@ -1,7 +1,6 @@
 import { ref } from 'vue';
 import { defineStore } from 'pinia';
 
-
 export const useDndStore = defineStore('dnd', () => {
 	const dragging = ref(false);
 	const forbidden = ref(false);
