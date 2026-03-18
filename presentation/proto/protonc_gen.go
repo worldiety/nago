@@ -319,42 +319,44 @@ type Component interface {
 }
 
 func (Accordion) isComponent()      {}
+func (BarChart) isComponent()       {}
 func (Box) isComponent()            {}
-func (DatePicker) isComponent()     {}
+func (Canvas) isComponent()         {}
 func (Checkbox) isComponent()       {}
-func (Divider) isComponent()        {}
-func (Grid) isComponent()           {}
-func (Img) isComponent()            {}
-func (Modal) isComponent()          {}
-func (WindowTitle) isComponent()    {}
-func (PasswordField) isComponent()  {}
-func (Radiobutton) isComponent()    {}
-func (ScrollView) isComponent()     {}
-func (Scaffold) isComponent()       {}
-func (Spacer) isComponent()         {}
-func (Stack) isComponent()          {}
-func (TextView) isComponent()       {}
-func (TextField) isComponent()      {}
-func (TextLayout) isComponent()     {}
-func (Table) isComponent()          {}
-func (Toggle) isComponent()         {}
-func (WebView) isComponent()        {}
-func (Menu) isComponent()           {}
-func (Form) isComponent()           {}
-func (CountDown) isComponent()      {}
 func (CodeEditor) isComponent()     {}
-func (RichTextEditor) isComponent() {}
-func (RichText) isComponent()       {}
+func (CountDown) isComponent()      {}
+func (DatePicker) isComponent()     {}
+func (Divider) isComponent()        {}
+func (DnDArea) isComponent()        {}
+func (Form) isComponent()           {}
+func (Grid) isComponent()           {}
 func (HoverGroup) isComponent()     {}
+func (Img) isComponent()            {}
+func (LineChart) isComponent()      {}
+func (Menu) isComponent()           {}
+func (Modal) isComponent()          {}
+func (PasswordField) isComponent()  {}
+func (PieChart) isComponent()       {}
 func (QrCode) isComponent()         {}
 func (QrCodeReader) isComponent()   {}
-func (BarChart) isComponent()       {}
-func (LineChart) isComponent()      {}
-func (Video) isComponent()          {}
-func (PieChart) isComponent()       {}
-func (DnDArea) isComponent()        {}
+func (Radiobutton) isComponent()    {}
+func (RichText) isComponent()       {}
+func (RichTextEditor) isComponent() {}
+func (Scaffold) isComponent()       {}
+func (ScrollView) isComponent()     {}
 func (Select) isComponent()         {}
-func (Canvas) isComponent()         {}
+func (Spacer) isComponent()         {}
+func (Stack) isComponent()          {}
+func (Switcher) isComponent()       {}
+func (SwitcherPage) isComponent()   {}
+func (Table) isComponent()          {}
+func (TextField) isComponent()      {}
+func (TextLayout) isComponent()     {}
+func (TextView) isComponent()       {}
+func (Toggle) isComponent()         {}
+func (Video) isComponent()          {}
+func (WebView) isComponent()        {}
+func (WindowTitle) isComponent()    {}
 
 // NagoEvent is the union type of all allowed NAGO protocol events. Everything which goes through a NAGO channel must be an Event at the root level.
 type NagoEvent interface {
@@ -17102,6 +17104,289 @@ func (v *Accordion) read(r *BinaryReader) error {
 	return nil
 }
 
+type SwitcherPage struct {
+	Id      Str
+	Title   Str
+	Toggle  Component
+	Content Component
+	Img     URI
+}
+
+func (v *SwitcherPage) write(w *BinaryWriter) error {
+	var fields [6]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.Title.IsZero()
+	fields[3] = v.Toggle != nil && !v.Toggle.IsZero()
+	fields[4] = v.Content != nil && !v.Content.IsZero()
+	fields[5] = !v.Img.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Title.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 3); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.Toggle.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.Toggle.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 4); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.Content.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.Content.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(byteSlice, 5); err != nil {
+			return err
+		}
+		if err := v.Img.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *SwitcherPage) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Title.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.Toggle = obj.(Component)
+		case 4:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.Content = obj.(Component)
+		case 5:
+			err := v.Img.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type Switcher struct {
+	Id          Str
+	Pages       SwitcherPages
+	Orientation Orientation
+	Frame       Frame
+	// InputValue is where updated values of the current switcher page are written.
+	InputValue    Ptr
+	Value         Str
+	DynamicHeight Bool
+}
+
+func (v *Switcher) write(w *BinaryWriter) error {
+	var fields [8]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.Pages.IsZero()
+	fields[3] = !v.Orientation.IsZero()
+	fields[4] = !v.Frame.IsZero()
+	fields[5] = !v.InputValue.IsZero()
+	fields[6] = !v.Value.IsZero()
+	fields[7] = !v.DynamicHeight.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(array, 2); err != nil {
+			return err
+		}
+		if err := v.Pages.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(uvarint, 3); err != nil {
+			return err
+		}
+		if err := v.Orientation.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(record, 4); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(uvarint, 5); err != nil {
+			return err
+		}
+		if err := v.InputValue.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(byteSlice, 6); err != nil {
+			return err
+		}
+		if err := v.Value.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(uvarint, 7); err != nil {
+			return err
+		}
+		if err := v.DynamicHeight.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Switcher) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Pages.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Orientation.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.InputValue.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.Value.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.DynamicHeight.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -18419,6 +18704,24 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 227:
 		var v Accordion
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 228:
+		var v SwitcherPage
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 229:
+		var v SwitcherPages
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 230:
+		var v Switcher
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -22187,6 +22490,82 @@ func (v *Accordion) IsZero() bool {
 	return v.Header.IsZero() && v.Content.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Value.IsZero()
 }
 
+func (v *SwitcherPage) reset() {
+	v.Id.reset()
+	v.Title.reset()
+	v.Toggle = nil
+	v.Content = nil
+	v.Img.reset()
+}
+
+func (v *SwitcherPage) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.Title.IsZero() && v.Toggle.IsZero() && v.Content.IsZero() && v.Img.IsZero()
+}
+
+type SwitcherPages []SwitcherPage
+
+func (v *SwitcherPages) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *SwitcherPages) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	slice := make([]SwitcherPage, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = *obj.(*SwitcherPage)
+	}
+
+	*v = slice
+	return nil
+}
+
+func (v *SwitcherPages) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
+}
+
+func (v *SwitcherPages) reset() {
+	*v = nil
+}
+
+func (v *Switcher) reset() {
+	v.Id.reset()
+	v.Pages.reset()
+	v.Orientation.reset()
+	v.Frame.reset()
+	v.InputValue.reset()
+	v.Value.reset()
+	v.DynamicHeight.reset()
+}
+
+func (v *Switcher) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.Pages.IsZero() && v.Orientation.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Value.IsZero() && v.DynamicHeight.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -23694,6 +24073,27 @@ func (v *CanvasMiterLimit) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *Accordion) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 227); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *SwitcherPage) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 228); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *SwitcherPages) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 229); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Switcher) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 230); err != nil {
 		return err
 	}
 	return nil

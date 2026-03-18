@@ -6,15 +6,13 @@
  *
  * SPDX-License-Identifier: Custom-License
  */
-
 import plugin from "tailwindcss/plugin";
 
+
 export default {
-	content: [
-		"./src/**/*.{html,vue}",
-	],
+	content: ['./src/**/*.{html,vue}'],
 	plugins: [
-		plugin(function ({addVariant}) {
+		plugin(function ({ addVariant }) {
 			addVariant('darkmode', '.darkmode &');
 			addVariant('contrast', '.contrast &');
 			addVariant('protanopia', '.protanopia &');
@@ -22,15 +20,14 @@ export default {
 			addVariant('tritanopia', '.tritanopia &');
 		}),
 		require('@tailwindcss/typography'),
-
 	],
 
 	theme: {
 		extend: {
 			screens: {
-				'xs': '400px',
+				xs: '400px',
 			},
-	/*		typography: (theme) => ({
+			/*		typography: (theme) => ({
 				DEFAULT: {
 					css: {
 						'h1, h2, h3': {
@@ -42,19 +39,19 @@ export default {
 					},
 				},
 			}),*/
-			colors: ({colors}) => {
+			colors: ({ colors }) => {
 				const customColors = {
 					// generic colors
 					// TODO: Remove legacy non-generic colors
-//					'disabled': {
-//						'text': '#848484',
-//						'background': '#E2E2E2',
-//					},
-//					'placeholder-text': '#848484',
-//					'error': '#FF543E',
-//					'success': '#54FF3E',
-//					'darkmode-gray': '#374151',
-//					'ora-dropdown-background': '#2B2B2B',
+					//					'disabled': {
+					//						'text': '#848484',
+					//						'background': '#E2E2E2',
+					//					},
+					//					'placeholder-text': '#848484',
+					//					'error': '#FF543E',
+					//					'success': '#54FF3E',
+					//					'darkmode-gray': '#374151',
+					//					'ora-dropdown-background': '#2B2B2B',
 				};
 				// const colorSteps = [10, 12, 14, 17, 22, 30, 60, 70, 83, 87, 90, 92, 94, 96, 98];
 				// colorSteps.forEach((step) => {
@@ -112,7 +109,7 @@ export default {
 				'2lg': '0.625rem',
 			},
 			padding: {
-				'1.75': '0.4375rem'
+				1.75: '0.4375rem',
 			},
 			animation: {
 				'spin-slow': 'spin 2s linear infinite',
@@ -132,5 +129,5 @@ export default {
 		// {pattern: /col-end-(1|2|3|4|5|6|7|8|9|10|11|12)/},
 		// {pattern: /row-start-(1|2|3|4|5|6|7|8|9|10|11|12)/},
 		// {pattern: /row-end-(1|2|3|4|5|6|7|8|9|10|11|12)/},
-	]
-}
+	],
+};

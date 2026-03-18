@@ -17576,6 +17576,328 @@ export class Accordion implements Writeable, Readable, Component {
 	isComponent(): void {}
 }
 
+export class SwitcherPage implements Writeable, Readable, Component {
+	public id?: Str;
+
+	public title?: Str;
+
+	public toggle?: Component;
+
+	public content?: Component;
+
+	public img?: URI;
+
+	constructor(
+		id: Str | undefined = undefined,
+		title: Str | undefined = undefined,
+		toggle: Component | undefined = undefined,
+		content: Component | undefined = undefined,
+		img: URI | undefined = undefined
+	) {
+		this.id = id;
+		this.title = title;
+		this.toggle = toggle;
+		this.content = content;
+		this.img = img;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.title = readString(reader);
+					break;
+				}
+				case 3: {
+					// decode polymorphic field as 1 element array
+					const len = reader.readUvarint();
+					if (len != 1) {
+						throw new Error(`unexpected length: ` + len);
+					}
+					this.toggle = unmarshal(reader) as Component;
+					break;
+				}
+				case 4: {
+					// decode polymorphic field as 1 element array
+					const len = reader.readUvarint();
+					if (len != 1) {
+						throw new Error(`unexpected length: ` + len);
+					}
+					this.content = unmarshal(reader) as Component;
+					break;
+				}
+				case 5: {
+					this.img = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.id !== undefined,
+			this.title !== undefined,
+			this.toggle !== undefined && !this.toggle.isZero(),
+			this.content !== undefined && !this.content.isZero(),
+			this.img !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.title!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			// encode polymorphic enum as 1 element slice
+			writer.writeFieldHeader(Shapes.ARRAY, 3);
+			writer.writeByte(1);
+			this.toggle.writeTypeHeader(writer);
+			this.toggle!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			// encode polymorphic enum as 1 element slice
+			writer.writeFieldHeader(Shapes.ARRAY, 4);
+			writer.writeByte(1);
+			this.content.writeTypeHeader(writer);
+			this.content!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
+			writeString(writer, this.img!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.id === undefined &&
+			this.title === undefined &&
+			(this.toggle === undefined || this.toggle.isZero()) &&
+			(this.content === undefined || this.content.isZero()) &&
+			this.img === undefined
+		);
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.title = undefined;
+		this.toggle = undefined;
+		this.content = undefined;
+		this.img = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 228);
+		return;
+	}
+	isComponent(): void {}
+}
+
+export class SwitcherPages implements Writeable, Readable {
+	public value: SwitcherPage[];
+
+	constructor(value: SwitcherPage[] = []) {
+		this.value = value;
+	}
+
+	isZero(): boolean {
+		return !this.value || this.value.length === 0;
+	}
+
+	reset(): void {
+		this.value = [];
+	}
+
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value.length); // Write the length of the array
+		for (const c of this.value) {
+			c.writeTypeHeader(writer); // Write the type header for each component)
+			c.write(writer); // Write the component data
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
+		}
+	}
+
+	read(reader: BinaryReader): void {
+		const count = reader.readUvarint(); // Read the length of the array
+		const values: SwitcherPage[] = [];
+
+		for (let i = 0; i < count; i++) {
+			const obj = unmarshal(reader); // Read and unmarshal each component
+			values.push(obj as any as SwitcherPage); // Cast and add to the array
+		}
+
+		this.value = values;
+	}
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 229);
+		return;
+	}
+}
+
+export class Switcher implements Writeable, Readable, Component {
+	public id?: Str;
+
+	public pages?: SwitcherPages;
+
+	public orientation?: Orientation;
+
+	public frame?: Frame;
+
+	// InputValue is where updated values of the current switcher page are written.
+	public inputValue?: Ptr;
+
+	public value?: Str;
+
+	public dynamicHeight?: Bool;
+
+	constructor(
+		id: Str | undefined = undefined,
+		pages: SwitcherPages | undefined = undefined,
+		orientation: Orientation | undefined = undefined,
+		frame: Frame | undefined = undefined,
+		inputValue: Ptr | undefined = undefined,
+		value: Str | undefined = undefined,
+		dynamicHeight: Bool | undefined = undefined
+	) {
+		this.id = id;
+		this.pages = pages;
+		this.orientation = orientation;
+		this.frame = frame;
+		this.inputValue = inputValue;
+		this.value = value;
+		this.dynamicHeight = dynamicHeight;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.pages = new SwitcherPages();
+					this.pages.read(reader);
+					break;
+				}
+				case 3: {
+					this.orientation = readInt(reader);
+					break;
+				}
+				case 4: {
+					this.frame = new Frame();
+					this.frame.read(reader);
+					break;
+				}
+				case 5: {
+					this.inputValue = readInt(reader);
+					break;
+				}
+				case 6: {
+					this.value = readString(reader);
+					break;
+				}
+				case 7: {
+					this.dynamicHeight = readBool(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.id !== undefined,
+			this.pages !== undefined && !this.pages.isZero(),
+			this.orientation !== undefined,
+			this.frame !== undefined && !this.frame.isZero(),
+			this.inputValue !== undefined,
+			this.value !== undefined,
+			this.dynamicHeight !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 2);
+			this.pages!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 3);
+			writeInt(writer, this.orientation!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.RECORD, 4);
+			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 5);
+			writeInt(writer, this.inputValue!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 6);
+			writeString(writer, this.value!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 7);
+			writeBool(writer, this.dynamicHeight!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.id === undefined &&
+			(this.pages === undefined || this.pages.isZero()) &&
+			this.orientation === undefined &&
+			(this.frame === undefined || this.frame.isZero()) &&
+			this.inputValue === undefined &&
+			this.value === undefined &&
+			this.dynamicHeight === undefined
+		);
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.pages = undefined;
+		this.orientation = undefined;
+		this.frame = undefined;
+		this.inputValue = undefined;
+		this.value = undefined;
+		this.dynamicHeight = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 230);
+		return;
+	}
+	isComponent(): void {}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -18615,6 +18937,21 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 227: {
 			const v = new Accordion();
+			v.read(src);
+			return v;
+		}
+		case 228: {
+			const v = new SwitcherPage();
+			v.read(src);
+			return v;
+		}
+		case 229: {
+			const v = new SwitcherPages();
+			v.read(src);
+			return v;
+		}
+		case 230: {
+			const v = new Switcher();
 			v.read(src);
 			return v;
 		}
