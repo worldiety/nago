@@ -1,0 +1,26 @@
+{
+  "kind": "Record",
+  "id": 228,
+  "fields": {
+    "1": {
+      "name": "Id",
+      "type": "Str"
+    },
+    "2": {
+      "name": "Title",
+      "type": "Str"
+    },
+    "3": {
+      "name": "Toggle",
+      "type": "Component"
+    },
+    "4": {
+      "name": "Content",
+      "type": "Component"
+    },
+    "5": {
+      "name": "Img",
+      "type": "URI"
+    }
+  }
+}

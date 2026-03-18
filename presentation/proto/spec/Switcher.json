@@ -1,0 +1,35 @@
+{
+  "kind": "Record",
+  "id": 230,
+  "fields": {
+    "1": {
+      "name": "Id",
+      "type": "Str"
+    },
+    "2": {
+      "name": "Pages",
+      "type": "SwitcherPages"
+    },
+    "3": {
+      "name": "Orientation",
+      "type": "Orientation"
+    },
+    "4": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "5": {
+      "doc": "InputValue is where updated values of the current switcher page are written.",
+      "name": "InputValue",
+      "type": "Ptr"
+    },
+    "6": {
+      "name": "Value",
+      "type": "Str"
+    },
+    "7": {
+      "name": "DynamicHeight",
+      "type": "Bool"
+    }
+  }
+}
