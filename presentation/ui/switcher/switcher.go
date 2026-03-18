@@ -23,8 +23,9 @@ const (
 	SwitcherLayoutHorizontal
 )
 
-// TSwitcher is a layout component(Stack).
-// It is responsive and can switch between [HStack] and [VStack] during rendering.
+// TSwitcher is a content component.
+// You can add multiple content pages to it, that you can switch between.
+// It is responsive and can switch between horizontal and vertical orientation.
 type TSwitcher struct {
 	pages            []TSwitcherPage
 	id               string
