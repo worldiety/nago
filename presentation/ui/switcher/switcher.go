@@ -215,7 +215,7 @@ func (c TSwitcher) Render(ctx core.RenderContext) core.RenderNode {
 			Width:     proto.Length(c.frame.Width),
 			Height:    proto.Length(c.frame.Height),
 		},
-		DynamicHeight: proto.Bool(c.dynamicHeight),
+		DynamicHeight: proto.Bool(c.dynamicHeight) || orientation == proto.Vertical,
 		Orientation:   orientation,
 		Value:         proto.Str(c.value),
 		InputValue:    c.inputValue.Ptr(),
