@@ -449,11 +449,7 @@ onMounted(() => {
 		>
 			<div class="relative flex flex-col">
 				<!-- Leading view -->
-				<div
-					v-if="props.ui.leading"
-					ref="leadingElement"
-					class="additional-left pointer-events-none"
-				>
+				<div v-if="props.ui.leading" ref="leadingElement" class="additional-left pointer-events-none">
 					<UiGeneric :ui="props.ui.leading" />
 				</div>
 
@@ -490,11 +486,7 @@ onMounted(() => {
 				/>
 
 				<!-- Trailing view -->
-				<div
-					v-if="props.ui.trailing"
-					ref="trailingElement"
-					class="additional-right pointer-events-none"
-				>
+				<div v-if="props.ui.trailing" ref="trailingElement" class="additional-right pointer-events-none">
 					<UiGeneric :ui="props.ui.trailing" />
 				</div>
 
