@@ -8,12 +8,13 @@
 -->
 
 <script lang="ts" setup>
-import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import CloseIcon from '@/assets/svg/close.svg';
 import UiGeneric from '@/components/UiGeneric.vue';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import { frameCSS } from '@/components/shared/frame';
 import { inputWrapperStyleFrom } from '@/components/shared/inputWrapperStyle';
+import { randomStr } from '@/components/shared/util';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
 import type { TextField } from '@/shared/proto/nprotoc_gen';
@@ -28,10 +29,17 @@ const props = defineProps<{
 	ui: TextField;
 }>();
 
+const id = props.ui.id || randomStr(16);
+
 const serviceAdapter = useServiceAdapter();
-const leadingElement = useTemplateRef('leadingElement');
-const trailingElement = useTemplateRef('trailingElement');
-const clearButton = useTemplateRef('clearButton');
+
+const leadingElement = ref<HTMLDivElement>();
+const trailingElement = ref<HTMLDivElement>();
+const clearButton = ref<HTMLButtonElement>();
+const leadingWidth = ref(0);
+const trailingWidth = ref(0);
+const clearButtonWidth = ref(0);
+
 const showZero = !!props.ui.showZero;
 const step = props.ui.step || 0;
 const inputValue = ref<string>(props.ui.value ? formatValue(props.ui.value) : '');
@@ -44,14 +52,6 @@ const frameStyles = computed<string>(() => {
 	const styles = frameCSS(props.ui.frame);
 
 	return styles.join(';');
-});
-
-const id = computed<string>(() => {
-	if (props.ui.id) {
-		return props.ui.id;
-	}
-
-	return 'tf-' + props.ui.inputValue;
 });
 
 const inputMode = computed<'numeric' | 'decimal' | 'email' | 'tel' | 'url' | 'search' | 'text' | 'none' | undefined>(
@@ -206,58 +206,20 @@ const inputStyle = computed<string>(() => {
 		return styles.join(';');
 	}
 
-	const leadingElementWidth = leadingElement.value?.offsetWidth;
-	const paddingLeft = leadingElementWidth ? `${leadingElementWidth}px` : 'auto';
-
-	let paddingRight: string;
-	const trailingElementWidth = trailingElement.value?.offsetWidth;
-	if (trailingElementWidth !== undefined) {
-		paddingRight = `${trailingElementWidth}px`;
-	} else {
-		const clearButtonElementWidth = clearButton.value?.offsetWidth;
-		paddingRight = clearButtonElementWidth ? `${clearButtonElementWidth}px` : 'auto';
-	}
+	const paddingLeft = leadingWidth.value ? `calc(${leadingWidth.value}px + 0.5rem)` : 'auto';
+	const paddingRight = trailingWidth.value
+		? `calc(${trailingWidth.value}px + 0.5rem)`
+		: clearButtonWidth.value
+			? `calc(${clearButtonWidth.value}px + 0.5rem)`
+			: 'auto';
+	styles.push('padding-left:' + paddingLeft, 'padding-right:' + paddingRight);
 
 	if (props.ui.lines) {
 		styles.push(`height: ${textareaHeight.value}`);
 	}
 
-	styles.push('padding-left:' + paddingLeft, 'padding-right:' + paddingRight);
 	return styles.join(';');
 });
-
-/**
- * Validates the input value and submits it, if it is valid.
- * The '-' sign and the empty string are treated as 0.
- * If the input value is invalid, the value gets reset to the last known valid value.
- */
-watch(inputValue, (newValue, oldValue) => {
-	if (newValue == oldValue) {
-		return;
-	}
-	const formattedValue = formatValue(newValue);
-	if (inputValue.value != formattedValue) {
-		inputValue.value = formattedValue;
-	}
-});
-
-watch(
-	() => props.ui.value,
-	(newValue) => {
-		if (document.getElementById(id.value) !== document.activeElement) {
-			inputValue.value = formatValue(newValue || '');
-		}
-	}
-);
-
-watch(
-	() => props.ui,
-	(newValue) => {
-		if (document.getElementById(id.value) !== document.activeElement) {
-			inputValue.value = formatValue(newValue.value || '');
-		}
-	}
-);
 
 function handleKeydownEnter(event: KeyboardEvent) {
 	event.stopPropagation();
@@ -385,7 +347,7 @@ function isLanguageGerman() {
 function onInputFocus() {
 	if (!isNumerical()) return;
 
-	const input = document.getElementById(id.value) as HTMLInputElement;
+	const input = document.getElementById(id) as HTMLInputElement;
 	if (input) input.select();
 }
 
@@ -419,8 +381,58 @@ function debouncedInput() {
 	}, debounceTime);
 }
 
-onMounted(resizeTextarea);
+function calcAdditionalElementsWidths() {
+	leadingWidth.value = leadingElement.value?.getBoundingClientRect().width || 0;
+	trailingWidth.value = trailingElement.value?.getBoundingClientRect().width || 0;
+	clearButtonWidth.value = clearButton.value?.getBoundingClientRect().width || 0;
+}
+
+function observeAdditionalElements() {
+	const observer = new ResizeObserver(calcAdditionalElementsWidths);
+	if (leadingElement.value) observer.observe(leadingElement.value);
+	if (trailingElement.value) observer.observe(trailingElement.value);
+	if (clearButton.value) observer.observe(clearButton.value);
+}
+
+/**
+ * Validates the input value and submits it, if it is valid.
+ * The '-' sign and the empty string are treated as 0.
+ * If the input value is invalid, the value gets reset to the last known valid value.
+ */
+watch(inputValue, (newValue, oldValue) => {
+	if (newValue == oldValue) {
+		return;
+	}
+	const formattedValue = formatValue(newValue);
+	if (inputValue.value != formattedValue) {
+		inputValue.value = formattedValue;
+	}
+});
+
+watch(
+	() => props.ui.value,
+	(newValue) => {
+		if (document.getElementById(id) !== document.activeElement) {
+			inputValue.value = formatValue(newValue || '');
+		}
+	}
+);
+
+watch(
+	() => props.ui,
+	(newValue) => {
+		if (document.getElementById(id) !== document.activeElement) {
+			inputValue.value = formatValue(newValue.value || '');
+		}
+	}
+);
+
 watch(inputValue, () => nextTick(resizeTextarea));
+onMounted(() => {
+	resizeTextarea();
+	calcAdditionalElementsWidths();
+	observeAdditionalElements();
+});
 
 // TODO check :id="idPrefix + props.ui.id.toString()"
 </script>
@@ -433,13 +445,14 @@ watch(inputValue, () => nextTick(resizeTextarea));
 			:error="props.ui.errorText"
 			:help="props.ui.supportingText"
 			:disabled="props.ui.disabled"
+			:input-id="id"
 		>
-			<div class="relative">
+			<div class="relative flex flex-col">
 				<!-- Leading view -->
 				<div
 					v-if="props.ui.leading"
 					ref="leadingElement"
-					class="absolute inset-y-0 left-0 pl-2 pr-1 flex items-center pointer-events-none"
+					class="additional-left pointer-events-none"
 				>
 					<UiGeneric :ui="props.ui.leading" />
 				</div>
@@ -480,13 +493,13 @@ watch(inputValue, () => nextTick(resizeTextarea));
 				<div
 					v-if="props.ui.trailing"
 					ref="trailingElement"
-					class="absolute inset-y-0 right-0 pr-2 pl-1 flex items-center pointer-events-none"
+					class="additional-right pointer-events-none"
 				>
 					<UiGeneric :ui="props.ui.trailing" />
 				</div>
 
 				<!-- Clear button -->
-				<div
+				<button
 					v-else-if="
 						inputValue &&
 						!props.ui.disabled &&
@@ -494,11 +507,31 @@ watch(inputValue, () => nextTick(resizeTextarea));
 						props.ui.style != TextFieldStyleValues.TextFieldBasic
 					"
 					ref="clearButton"
-					class="absolute inset-y-0 right-0 pr-2 pl-1 flex items-center"
+					class="button-tertiary square small additional-right clear-button"
+					@click="clearInputValue"
 				>
-					<CloseIcon class="w-4" tabindex="-1" @click="clearInputValue" @keydown.enter="clearInputValue" />
-				</div>
+					<CloseIcon class="size-3" />
+				</button>
 			</div>
 		</InputWrapper>
 	</div>
 </template>
+
+<style scoped>
+.additional-left,
+.additional-right {
+	@apply absolute top-1/2 -translate-y-1/2;
+}
+
+.additional-left {
+	@apply left-1.5;
+}
+
+.additional-right {
+	@apply right-1.5;
+}
+
+.clear-button {
+	@apply size-8 p-1;
+}
+</style>

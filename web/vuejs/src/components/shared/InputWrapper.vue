@@ -8,7 +8,7 @@
 -->
 
 <template>
-	<div class="flex flex-col-reverse">
+	<div class="input-wrapper">
 		<!-- Input -->
 		<div class="peer relative">
 			<div class="peer input-field-wrapper" :class="inputFieldWrapperClasses">
@@ -17,12 +17,12 @@
 		</div>
 
 		<!-- Label with optional hint -->
-		<div class="flex justify-between items-end text-sm">
-			<div v-if="label" class="flex justify-start items-center gap-x-1 pb-1" :class="labelClass">
+		<div class="label-container">
+			<label v-if="label" :for="inputId" :class="labelClass">
 				<LockIcon v-if="disabled" class="h-4" />
 				<ErrorIcon v-else-if="error" class="h-2.5" />
 				<span>{{ label }}</span>
-			</div>
+			</label>
 			<div v-if="!disabled && (error || hint)" class="font-normal">
 				<span v-if="error" class="text-error">{{ t('inputWrapper.error') }}</span>
 				<span v-else-if="hint" class="text-disabled-text">{{ hint }}</span>
@@ -46,6 +46,7 @@ import { InputWrapperStyle } from '@/components/shared/inputWrapperStyle';
 
 const props = defineProps<{
 	wrapperStyle?: InputWrapperStyle;
+	inputId?: string;
 	label?: string;
 	error?: string;
 	hint?: string;
@@ -92,70 +93,114 @@ const inputFieldWrapperClasses = computed((): string | null => {
 </script>
 
 <style>
-.input-field-wrapper .input-field {
-	@apply relative bg-transparent border-M8 text-M8 w-full py-2;
-}
+.input-wrapper {
+	@apply flex flex-col-reverse;
 
-.input-field-wrapper textarea.input-field {
-	@apply resize-none max-h-80;
-}
+	.label-container {
+		@apply flex justify-between items-end text-sm -mb-px;
 
-.input-field-wrapper.input-field-wrapper-detailed .input-field {
-	@apply border rounded-md px-3;
-}
+		label {
+			@apply flex justify-start items-center gap-x-1 pb-1;
+		}
+	}
 
-.input-field-wrapper.input-field-wrapper-reduced .input-field,
-.input-field-wrapper.input-field-wrapper-basic .input-field {
-	@apply border-b;
-}
+	.input-field-wrapper {
+		@apply pb-px;
 
-.input-field-wrapper.input-field-wrapper-basic .input-field {
-	@apply border-transparent;
-}
+		textarea.input-field {
+			@apply resize-none max-h-80;
+		}
 
-.input-field-wrapper.input-field-wrapper-error .input-field {
-	@apply border-SE0;
+		.input-field {
+			@apply relative bg-transparent w-full py-2;
+		}
+
+		&.input-field-wrapper-detailed {
+			.input-field {
+				@apply border-none outline outline-1 -outline-offset-1 rounded-md px-3;
+				@apply focus:outline-2 focus:-outline-offset-2 focus:outline-I0;
+			}
+		}
+
+		&.input-field-wrapper-basic,
+		&.input-field-wrapper-reduced {
+			.input-field {
+				outline: none !important;
+				@apply border-b border-transparent;
+				@apply focus:border-b-2 focus:-mb-px focus:border-I0;
+			}
+		}
+
+		&.input-field-wrapper-reduced {
+			.input-field {
+				@apply border-b-current;
+				@apply focus:border-b-2 focus:-mb-px;
+			}
+		}
+
+		&:not(.input-field-wrapper-no-hover, .input-field-wrapper-disabled) {
+			.input-field {
+				@apply hover:border-I0 hover:outline-I0;
+			}
+		}
+
+		&.input-field-wrapper-disabled {
+			@apply text-ST0;
+
+			.input-field {
+				@apply border-ST0 outline-ST0;
+			}
+		}
+
+		&.input-field-wrapper-error {
+			@apply text-SE0;
+
+			.input-field {
+				@apply border-SE0 outline-SE0;
+			}
+		}
+	}
+
+	&:focus-within {
+		.label-container {
+			label {
+				text-shadow: 0.5px 0 0 currentColor;
+			}
+		}
+	}
 }
 
 .text-error {
 	@apply text-SE0;
 }
 
-.input-field-wrapper input::placeholder {
-	@apply text-ST0;
-}
+.old-stuff {
+	.input-field-wrapper input::placeholder {
+		@apply text-ST0;
+	}
 
-.input-field-wrapper:not(.input-field-wrapper-no-hover):hover .input-field,
-.input-field-wrapper .input-field:focus {
-	@apply border-I0 border-opacity-75 text-M8;
-}
+	.input-field-wrapper:not(.input-field-wrapper-detailed) .input-field:focus {
+		@apply outline-none ring-0;
+	}
 
-.input-field-wrapper .input-field:focus {
-	@apply border-I0 border-opacity-75 text-M8;
-}
+	.input-field-wrapper.input-field-wrapper-detailed .input-field:focus {
+	}
 
-.input-field-wrapper .input-field:focus {
-	@apply border-I0 border-opacity-75 text-M8;
-}
+	.input-field-wrapper.input-field-wrapper-disabled .input-field {
+		@apply border-b-ST0 text-ST0;
+	}
 
-.input-field-wrapper .input-field:focus {
-	@apply outline-none ring-0;
-}
+	.input-field-wrapper.input-field-wrapper-detailed.input-field-wrapper-disabled .input-field,
+	.input-field-wrapper.input-field-wrapper-detailed.input-field-wrapper-disabled .input-field::placeholder {
+		@apply border-ST0;
+	}
 
-.input-field-wrapper.input-field-wrapper-disabled .input-field {
-	@apply border-b-ST0 text-ST0;
-}
+	.input-field-wrapper {
+		@apply text-M8;
+	}
 
-.input-field-wrapper.input-field-wrapper-detailed.input-field-wrapper-disabled .input-field,
-.input-field-wrapper.input-field-wrapper-detailed.input-field-wrapper-disabled .input-field::placeholder {
-	@apply border-ST0;
-}
-
-.input-field-wrapper {
-	@apply text-M8;
-}
-
-.input-field-wrapper.input-field-wrapper-disabled {
-	@apply text-ST0 pointer-events-none;
+	.input-field-wrapper.input-field-wrapper-disabled {
+		@apply text-ST0 pointer-events-none;
+	}
 }
 </style>

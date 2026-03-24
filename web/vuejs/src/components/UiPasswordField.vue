@@ -112,27 +112,47 @@ function toggleRevealed(): void {
 			<div class="relative hover:text-primary focus-within:text-primary">
 				<input
 					:id="ui.id"
-					@keydown.enter="handleKeydownEnter"
-					:autocomplete="props.ui.disableAutocomplete ? 'off' : 'on'"
 					ref="passwordInput"
 					v-model="inputValue"
+					:autocomplete="props.ui.disableAutocomplete ? 'off' : 'on'"
 					class="input-field !pr-10"
 					:disabled="props.ui.disabled"
 					:type="props.ui.revealed ? 'text' : 'password'"
+					@keydown.enter="handleKeydownEnter"
 					@focusout="submitInputValue(true)"
 					@input="submitInputValue(false)"
 				/>
-				<div class="absolute top-0 bottom-0 right-4 flex items-center h-full">
-					<div
-						:tabindex="props.ui.disabled ? '-1' : '0'"
+				<div class="additional-right">
+					<button
+						class="button-tertiary square small reveal-button"
+						:disabled="ui.disabled"
 						@click="toggleRevealed"
 						@keydown.enter="toggleRevealed"
 					>
-						<RevealIcon v-if="!props.ui.disabled" class="w-6" />
+						<RevealIcon v-if="!props.ui.revealed" class="w-6" />
 						<HideIcon v-else class="w-6" />
-					</div>
+					</button>
 				</div>
 			</div>
 		</InputWrapper>
 	</div>
 </template>
+
+<style scoped>
+.additional-left,
+.additional-right {
+	@apply absolute top-1/2 -translate-y-1/2;
+}
+
+.additional-left {
+	@apply left-1.5;
+}
+
+.additional-right {
+	@apply right-1.5;
+}
+
+.reveal-button {
+	@apply size-8 p-1;
+}
+</style>
