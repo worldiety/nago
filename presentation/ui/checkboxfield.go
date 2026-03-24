@@ -8,6 +8,9 @@
 package ui
 
 import (
+	"fmt"
+	"math/rand"
+
 	"go.wdy.de/nago/presentation/core"
 )
 
@@ -116,28 +119,35 @@ func (c TCheckboxField) ID(id string) TCheckboxField {
 
 // Render builds and returns the UI representation of the checkbox field.
 func (c TCheckboxField) Render(context core.RenderContext) core.RenderNode {
-	id := c.id
-	if id == "" && c.inputValue != nil {
-		c.id = c.inputValue.ID()
+	if c.id == "" && c.inputValue != nil {
+		c.id = fmt.Sprintf("cb%d", rand.Intn(999999999999)) // random id fallback
 	}
 
 	if c.inputValue == nil {
 		return c.checkedLabel(c.value, c.label).Render(context)
 	}
 
-	return VStack(
-		HStack(
-			Checkbox(c.value).
-				ID(c.id).
-				Disabled(c.disabled).
-				InputChecked(c.inputValue),
-			Text(c.label).LabelFor(c.id),
-		),
-		IfElse(c.errorText == "",
-			Text(c.supportingText).Font(Font{Size: "0.75rem"}).Color(ST0),
-			Text(c.errorText).Font(Font{Size: "0.75rem"}).Color(SE0),
-		),
+	labelFor := c.id
+	opacity := 1.0
+	if c.disabled {
+		labelFor = ""
+		opacity = 0.6
+	}
+
+	return HStack(
+		Checkbox(c.value).
+			ID(c.id).
+			Disabled(c.disabled).
+			InputValue(c.inputValue),
+		VStack(
+			Text(c.label).LabelFor(labelFor),
+			IfElse(c.errorText == "",
+				Text(c.supportingText).Font(Font{Size: "0.75rem"}).Color(ST0).LabelFor(labelFor),
+				Text(c.errorText).Font(Font{Size: "0.75rem"}).Color(SE0).LabelFor(labelFor),
+			),
+		).Alignment(Leading).Opacity(opacity),
 	).Alignment(Leading).
+		Gap(L4).
 		AccessibilityLabel(c.accessibilityLabel).
 		Border(c.border).
 		Visible(!c.invisible).

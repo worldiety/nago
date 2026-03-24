@@ -12,6 +12,8 @@
 		.button-primary,
 		.button-secondary,
 		.button-tertiary,
+		.input-checkbox input,
+		.input-radio input,
 		input[type='text'],
 		.toggle-switch,
 		.toggle-switch-container

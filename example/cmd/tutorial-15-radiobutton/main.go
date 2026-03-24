@@ -9,6 +9,7 @@ package main
 
 import (
 	"fmt"
+
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
 	. "go.wdy.de/nago/presentation/ui"
@@ -22,7 +23,7 @@ func main() {
 		cfg.Serve(vuejs.Dist())
 
 		cfg.RootView(".", func(wnd core.Window) core.View {
-			stateGroup := AutoRadioStateGroup(wnd, "my-state-group", 3)
+			stateGroup := AutoRadioStateGroup(wnd, "my-state-group", 5)
 			if stateGroup.SelectedIndex() == -1 {
 				stateGroup.SetSelectedIndex(1)
 			}
@@ -31,15 +32,8 @@ func main() {
 			return VStack(
 				alert.Dialog("Achtung", Text(fmt.Sprintf("Deine Eingabe: %v", stateGroup.SelectedIndex())), showAlert, alert.Ok()),
 				VStack(Each2(stateGroup.All(), func(idx int, checked *core.State[bool]) core.View {
-					return HStack(
-						RadioButton(checked.Get()).
-							InputChecked(checked),
-						Text(fmt.Sprintf("Option %d", idx)).
-							Action(func() {
-								stateGroup.SetSelectedIndex(idx)
-							}),
-					)
-				})...),
+					return RadioButtonField(fmt.Sprintf("Option %d", idx), &stateGroup, idx).Disabled(idx == 0)
+				})...).Gap(L2),
 
 				PrimaryButton(func() {
 					showAlert.Set(true)
