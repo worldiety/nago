@@ -84,7 +84,9 @@ onUnmounted(() => {
 				</span>
 			</button>
 			<div class="body" :style="`height: ${bodyHeight}px;`" :inert="!ui.value">
-				<UiGeneric :ui="ui.content" />
+				<div class="body-inner">
+					<UiGeneric :ui="ui.content" />
+				</div>
 			</div>
 			<div ref="bodyDummy" class="body-dummy" inert aria-hidden="true">
 				<UiGeneric :ui="ui.content" />
@@ -117,7 +119,11 @@ onUnmounted(() => {
 		}
 
 		.body {
-			@apply w-full overflow-hidden duration-300 opacity-0 pt-2 px-2 -ml-2 -mt-2;
+			@apply w-full overflow-hidden duration-300 opacity-0 pt-2 px-2 -ml-2 -mt-2 pointer-events-none;
+
+			.body-inner {
+				@apply w-full pointer-events-auto;
+			}
 		}
 
 		.body-dummy {
