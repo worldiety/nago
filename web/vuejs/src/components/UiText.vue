@@ -16,16 +16,13 @@ import { frameCSS } from '@/components/shared/frame';
 import { paddingCSS } from '@/components/shared/padding';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
-import { FunctionCallRequested, TextAlignmentValues, TextView } from '@/shared/proto/nprotoc_gen';
+import type { TextView } from '@/shared/proto/nprotoc_gen';
+import { FunctionCallRequested, TextAlignmentValues } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: TextView;
 }>();
 
-const hover = ref(false);
-const pressed = ref(false);
-const focused = ref(false);
-const focusable = ref(false);
 const serviceAdapter = useServiceAdapter();
 
 function onClick() {
@@ -35,7 +32,7 @@ function onClick() {
 }
 
 const styles = computed<string>(() => {
-	let styles = frameCSS(props.ui.frame);
+	const styles = frameCSS(props.ui.frame);
 	if (props.ui.color) {
 		styles.push(`color: ${colorValue(props.ui.color)}`);
 	}
@@ -99,6 +96,7 @@ const textValue = computed<string>(() => {
 
 	<label
 		v-else-if="!ui.invisible"
+		class="cursor-pointer"
 		:style="styles"
 		:title="props.ui.accessibilityLabel"
 		:for="ui.labelFor"

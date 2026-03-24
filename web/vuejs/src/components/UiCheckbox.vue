@@ -12,7 +12,8 @@ import { ref, watch } from 'vue';
 import { bool2Str } from '@/components/shared/util';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
-import { Checkbox, Ptr, Str, UpdateStateValueRequested } from '@/shared/proto/nprotoc_gen';
+import type { Checkbox } from '@/shared/proto/nprotoc_gen';
+import { UpdateStateValueRequested } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: Checkbox;
@@ -54,47 +55,82 @@ function checkboxSelected(): void {
 <template>
 	<div
 		v-if="!ui.invisible"
-		class="input-checkbox rounded-full w-fit"
+		class="input-checkbox"
 		:class="{ 'input-checkbox-disabled': ui.disabled }"
 		@click="checkboxSelectedClick"
 		@keydown.enter="checkboxSelected"
 	>
-		<div class="p-2.5">
-			<input :id="ui.id" :checked="checked" type="checkbox" class="pointer-events-none" :disabled="ui.disabled" />
-		</div>
+		<input :id="ui.id" :checked="checked" type="checkbox" :disabled="ui.disabled" />
 	</div>
 </template>
 
 <style scoped>
-.input-checkbox input {
-	@apply relative rounded;
-}
+.input-checkbox {
+	@apply relative cursor-pointer p-2.5 text-[0];
 
-.input-checkbox:hover {
-	@apply bg-I0 bg-opacity-25;
-}
+	input {
+		@apply appearance-none cursor-pointer overflow-hidden;
+		@apply relative size-4 rounded-[0.175rem] outline outline-1 -outline-offset-1 outline-current;
 
-.input-checkbox:active {
-	@apply bg-opacity-35;
-}
+		&:checked {
+			&:before {
+				content: '';
+				@apply block absolute size-full top-0 left-0 bg-I0;
+			}
 
-.input-checkbox:focus-visible {
-	@apply outline-none outline-black outline-offset-2 ring-white ring-2;
-}
+			&:after {
+				content: '';
+				font-size: 1rem;
+				@apply block absolute size-3 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2;
+				filter: invert(1);
+				box-shadow: inset 1em 1em currentColor;
+				clip-path: polygon(21% 49%, 10% 62%, 45% 90%, 90% 32%, 75% 19%, 42% 65%);
+			}
+		}
+	}
 
-.input-checkbox.input-checkbox-disabled:hover {
-	@apply bg-transparent;
-}
+	&:before {
+		content: '';
+		@apply block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-full rounded-full bg-I0 bg-opacity-0 scale-75 duration-100;
+	}
 
-.input-checkbox.input-checkbox-disabled:focus-visible {
-	@apply outline-none ring-0;
-}
+	&.input-checkbox-disabled {
+		@apply cursor-default saturate-50 opacity-60;
 
-.input-checkbox:hover input {
-	@apply border-I0;
-}
+		input {
+			@apply cursor-default;
+		}
+	}
 
-.input-checkbox.input-checkbox-disabled:hover input:not(:checked) {
-	@apply border-ST0;
+	&:not(.input-checkbox-disabled) {
+		&:hover,
+		&:focus-within {
+			input {
+				@apply outline-I0;
+			}
+
+			&:before {
+				@apply scale-100;
+			}
+		}
+
+		&:hover {
+			&:before {
+				@apply bg-opacity-20;
+			}
+		}
+
+		&:focus-within {
+			&:before {
+				@apply bg-opacity-30;
+			}
+		}
+
+		&:active {
+			&:before {
+				@apply bg-opacity-40;
+			}
+		}
+	}
 }
 </style>

@@ -9,14 +9,15 @@ package main
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
 	heroOutline "go.wdy.de/nago/presentation/icons/hero/outline"
 	. "go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/web/vuejs"
-	"strings"
-	"time"
 )
 
 func main() {
@@ -38,11 +39,31 @@ func main() {
 			return VStack(
 				VStack(
 					alert.Dialog("Achtung", Text(fmt.Sprintf("Deine Eingabe: %v\nsecret: %v\n int-field: %v\n float-field: %v", firstname, secret, myIntState, myFloatState)), showAlert, alert.Ok()),
+
+					// ================================================================ //
+
 					TextField("hello world", firstname.Get()).
 						InputValue(firstname).
 						Leading(ImageIcon(heroOutline.UserCircle)).
 						Trailing(ImageIcon(heroOutline.UserCircle)).
 						FullWidth(),
+
+					TextField("hello world", firstname.Get()).
+						InputValue(firstname).
+						Leading(ImageIcon(heroOutline.UserCircle)).
+						Trailing(ImageIcon(heroOutline.UserCircle)).
+						ErrorText("this is an error").
+						FullWidth(),
+
+					TextField("hello world", firstname.Get()).
+						InputValue(firstname).
+						Leading(ImageIcon(heroOutline.UserCircle)).
+						Trailing(ImageIcon(heroOutline.UserCircle)).
+						Disabled(true).
+						FullWidth(),
+
+					// ================================================================ //
+
 					// you can re-use the state, but be careful of the effects
 					TextField("just numbers", numsOf(firstname.Get())).
 						InputValue(firstname).
@@ -50,10 +71,40 @@ func main() {
 						Style(TextFieldReduced).
 						FullWidth(),
 
+					TextField("just numbers", numsOf(firstname.Get())).
+						InputValue(firstname).
+						KeyboardType(KeyboardInteger).
+						Style(TextFieldReduced).
+						ErrorText("this is an error").
+						FullWidth(),
+
+					TextField("just numbers", numsOf(firstname.Get())).
+						InputValue(firstname).
+						KeyboardType(KeyboardInteger).
+						Style(TextFieldReduced).
+						Disabled(true).
+						FullWidth(),
+
+					// ================================================================ //
+
 					TextField("basic text field", basicInput.Get()).
 						InputValue(basicInput).
 						Style(TextFieldBasic).
 						FullWidth(),
+
+					TextField("basic text field", basicInput.Get()).
+						InputValue(basicInput).
+						Style(TextFieldBasic).
+						ErrorText("this is an error").
+						FullWidth(),
+
+					TextField("basic text field", basicInput.Get()).
+						InputValue(basicInput).
+						Style(TextFieldBasic).
+						Disabled(true).
+						FullWidth(),
+
+					// ================================================================ //
 
 					// learn task: take your time to understand what
 					// the difference between value and input value is
@@ -61,6 +112,8 @@ func main() {
 					FloatField("float-field", 42.5, myFloatState).FullWidth(),
 
 					TextField("text area", "hello\nworld").Lines(3).FullWidth(),
+					TextField("text area", "hello\nworld").Lines(3).Disabled(true).FullWidth(),
+					TextField("text area", "hello\nworld").Lines(3).ErrorText("this is an error").FullWidth(),
 					PrimaryButton(func() {
 						showAlert.Set(true)
 					}).Title("Check"),
@@ -68,6 +121,7 @@ func main() {
 					PasswordField("your secret", secret.Get()).InputValue(secret).FullWidth(),
 				).
 					Gap(L16).
+					Padding(Padding{}.Vertical(L32)).
 					Frame(Frame{MaxWidth: L880}),
 			).
 				Frame(Frame{}.MatchScreen())

@@ -15,6 +15,14 @@
 	@apply rounded-lg;
 	@apply text-center text-sm font-medium;
 	@apply focus-visible:outline-none focus-visible:outline-I0 focus-visible:outline-offset-4;
+
+	&.square {
+		@apply p-2.5 aspect-square;
+	}
+
+	&.small {
+		@apply p-1.5;
+	}
 }
 
 .button-primary {
@@ -62,9 +70,7 @@
 	@apply active:bg-opacity-35;
 }
 
-.button-secondary *,
-.button-tertiary:hover *,
-.button-tertiary:active * {
+.button-secondary * {
 	@apply text-M8;
 }
 
@@ -80,7 +86,7 @@
 }
 
 .button-tertiary:hover:not(.custom-hover) {
-	@apply hover:bg-I0 hover:bg-opacity-25;
+	@apply text-I0 bg-I0 hover:bg-opacity-20;
 }
 
 .button-tertiary:focus:not(.custom-focus),

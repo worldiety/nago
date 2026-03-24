@@ -45,43 +45,73 @@ function radioButtonClicked(): void {
 <template>
 	<div
 		v-if="!ui.invisible"
-		class="input-radio rounded-full w-fit"
+		class="input-radio"
 		:class="{ 'input-radio-disabled': ui.disabled }"
 		@click="radioButtonClicked"
 		@keydown.enter="radioButtonClicked"
 	>
-		<div class="p-2.5">
-			<input :id="ui.id" :checked="checked" type="radio" class="pointer-events-none" :disabled="ui.disabled" />
-		</div>
+		<input :id="ui.id" :checked="checked" type="radio" :disabled="ui.disabled" />
 	</div>
 </template>
 
 <style scoped>
-.input-radio:hover {
-	@apply bg-I0 bg-opacity-25;
-}
+.input-radio {
+	@apply relative cursor-pointer p-2.5 text-[0];
 
-.input-radio:active {
-	@apply bg-opacity-35;
-}
+	input {
+		@apply appearance-none cursor-pointer overflow-hidden;
+		@apply relative size-4 rounded-full outline outline-1 -outline-offset-1 outline-current;
 
-.input-radio:focus-visible {
-	@apply outline-none outline-black outline-offset-2 ring-white ring-2;
-}
+		&:checked {
+			&:before {
+				content: '';
+				@apply block absolute size-3 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-I0 rounded-full;
+			}
+		}
+	}
 
-.input-radio.input-radio-disabled:hover {
-	@apply bg-transparent;
-}
+	&:before {
+		content: '';
+		@apply block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-full rounded-full bg-I0 bg-opacity-0 scale-75 duration-100;
+	}
 
-.input-radio.input-radio-disabled:focus-visible {
-	@apply outline-none ring-0;
-}
+	&.input-radio-disabled {
+		@apply cursor-default saturate-50 opacity-60;
 
-.input-radio:hover input:not(:disabled) {
-	@apply border-I0;
-}
+		input {
+			@apply cursor-default;
+		}
+	}
 
-.input-radio.input-radio-disabled:hover input:checked {
-	@apply border-ST0;
+	&:not(.input-radio-disabled) {
+		&:hover,
+		&:focus-within {
+			input {
+				@apply outline-I0;
+			}
+
+			&:before {
+				@apply scale-100;
+			}
+		}
+
+		&:hover {
+			&:before {
+				@apply bg-opacity-20;
+			}
+		}
+
+		&:focus-within {
+			&:before {
+				@apply bg-opacity-30;
+			}
+		}
+
+		&:active {
+			&:before {
+				@apply bg-opacity-40;
+			}
+		}
+	}
 }
 </style>

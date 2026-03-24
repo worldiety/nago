@@ -95,11 +95,13 @@ onUnmounted(() => {
 
 <style scoped>
 .accordion-container {
+	@apply text-M8;
+
 	.accordion {
-		@apply relative w-full;
+		@apply relative w-full border-b border-M5;
 
 		.header {
-			@apply w-full flex items-center py-1;
+			@apply w-full flex items-center py-3;
 
 			.header-content {
 				@apply grow text-left;
@@ -109,17 +111,17 @@ onUnmounted(() => {
 				@apply px-4;
 
 				svg {
-					@apply size-4 duration-100;
+					@apply size-3 duration-300;
 				}
 			}
 		}
 
 		.body {
-			@apply w-full overflow-hidden duration-100;
+			@apply w-full overflow-hidden duration-300 opacity-0 pt-2 px-2 -ml-2 -mt-2;
 		}
 
 		.body-dummy {
-			@apply absolute left-0 w-full opacity-0 pointer-events-none;
+			@apply absolute left-0 w-full opacity-0 pointer-events-none p-2;
 		}
 	}
 
@@ -131,6 +133,10 @@ onUnmounted(() => {
 						@apply -scale-y-100;
 					}
 				}
+			}
+
+			.body {
+				@apply pb-2 opacity-100;
 			}
 		}
 	}
