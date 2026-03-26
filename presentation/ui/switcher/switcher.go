@@ -35,6 +35,7 @@ type TSwitcher struct {
 	dynamicHeight    bool
 	value            string
 	inputValue       *core.State[string]
+	imageObjectFit   ui.ObjectFit
 }
 
 // Switcher is a responsive variant which decides between HSwitcher and VSwitcher.
@@ -165,6 +166,11 @@ func (c TSwitcher) Layout(layout SwitcherLayout) TSwitcher {
 	return c
 }
 
+func (c TSwitcher) ImageObjectFit(objectFit ui.ObjectFit) TSwitcher {
+	c.imageObjectFit = objectFit
+	return c
+}
+
 func (c TSwitcher) Render(ctx core.RenderContext) core.RenderNode {
 	wnd := ctx.Window()
 
@@ -205,8 +211,9 @@ func (c TSwitcher) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	return &proto.Switcher{
-		Id:    proto.Str(c.id),
-		Pages: pages,
+		Id:          proto.Str(c.id),
+		Pages:       pages,
+		Orientation: orientation,
 		Frame: proto.Frame{
 			MinWidth:  proto.Length(c.frame.MinWidth),
 			MaxWidth:  proto.Length(c.frame.MaxWidth),
@@ -215,9 +222,9 @@ func (c TSwitcher) Render(ctx core.RenderContext) core.RenderNode {
 			Width:     proto.Length(c.frame.Width),
 			Height:    proto.Length(c.frame.Height),
 		},
-		DynamicHeight: proto.Bool(c.dynamicHeight) || orientation == proto.Vertical,
-		Orientation:   orientation,
-		Value:         proto.Str(c.value),
-		InputValue:    c.inputValue.Ptr(),
+		InputValue:     c.inputValue.Ptr(),
+		Value:          proto.Str(c.value),
+		DynamicHeight:  proto.Bool(c.dynamicHeight) || orientation == proto.Vertical,
+		ImageObjectFit: proto.ObjectFit(c.imageObjectFit),
 	}
 }

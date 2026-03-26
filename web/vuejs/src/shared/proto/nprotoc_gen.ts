@@ -17766,6 +17766,8 @@ export class Switcher implements Writeable, Readable, Component {
 
 	public dynamicHeight?: Bool;
 
+	public imageObjectFit?: ObjectFit;
+
 	constructor(
 		id: Str | undefined = undefined,
 		pages: SwitcherPages | undefined = undefined,
@@ -17773,7 +17775,8 @@ export class Switcher implements Writeable, Readable, Component {
 		frame: Frame | undefined = undefined,
 		inputValue: Ptr | undefined = undefined,
 		value: Str | undefined = undefined,
-		dynamicHeight: Bool | undefined = undefined
+		dynamicHeight: Bool | undefined = undefined,
+		imageObjectFit: ObjectFit | undefined = undefined
 	) {
 		this.id = id;
 		this.pages = pages;
@@ -17782,6 +17785,7 @@ export class Switcher implements Writeable, Readable, Component {
 		this.inputValue = inputValue;
 		this.value = value;
 		this.dynamicHeight = dynamicHeight;
+		this.imageObjectFit = imageObjectFit;
 	}
 
 	read(reader: BinaryReader): void {
@@ -17820,6 +17824,10 @@ export class Switcher implements Writeable, Readable, Component {
 					this.dynamicHeight = readBool(reader);
 					break;
 				}
+				case 8: {
+					this.imageObjectFit = readInt(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -17836,6 +17844,7 @@ export class Switcher implements Writeable, Readable, Component {
 			this.inputValue !== undefined,
 			this.value !== undefined,
 			this.dynamicHeight !== undefined,
+			this.imageObjectFit !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -17867,6 +17876,10 @@ export class Switcher implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.UVARINT, 7);
 			writeBool(writer, this.dynamicHeight!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 8);
+			writeInt(writer, this.imageObjectFit!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -17877,7 +17890,8 @@ export class Switcher implements Writeable, Readable, Component {
 			(this.frame === undefined || this.frame.isZero()) &&
 			this.inputValue === undefined &&
 			this.value === undefined &&
-			this.dynamicHeight === undefined
+			this.dynamicHeight === undefined &&
+			this.imageObjectFit === undefined
 		);
 	}
 
@@ -17889,6 +17903,7 @@ export class Switcher implements Writeable, Readable, Component {
 		this.inputValue = undefined;
 		this.value = undefined;
 		this.dynamicHeight = undefined;
+		this.imageObjectFit = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

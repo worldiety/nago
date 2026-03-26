@@ -79,7 +79,7 @@ const LazyUiScrollView = defineAsyncComponent(() => import('@/components/scrollv
 const LazyUiSelect = defineAsyncComponent(() => import('@/components/UiSelect.vue'));
 const LazyUiSpacer = defineAsyncComponent(() => import('@/components/spacer/UiSpacer.vue'));
 const LazyUiStack = defineAsyncComponent(() => import('@/components/UiStack.vue'));
-const LazyUiSwitcher = defineAsyncComponent(() => import('@/components/UiSwitcher.vue'));
+const LazyUiSwitcher = defineAsyncComponent(() => import('@/components/switcher/UiSwitcher.vue'));
 const LazyUiTable = defineAsyncComponent(() => import('@/components/table/UiTable.vue'));
 const LazyUiText = defineAsyncComponent(() => import('@/components/UiText.vue'));
 const LazyUiTextField = defineAsyncComponent(() => import('@/components/UiTextField.vue'));

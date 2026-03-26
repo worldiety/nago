@@ -30,6 +30,10 @@
     "7": {
       "name": "DynamicHeight",
       "type": "Bool"
+    },
+    "8": {
+      "name": "ImageObjectFit",
+      "type": "ObjectFit"
     }
   }
 }

@@ -17252,13 +17252,14 @@ type Switcher struct {
 	Orientation Orientation
 	Frame       Frame
 	// InputValue is where updated values of the current switcher page are written.
-	InputValue    Ptr
-	Value         Str
-	DynamicHeight Bool
+	InputValue     Ptr
+	Value          Str
+	DynamicHeight  Bool
+	ImageObjectFit ObjectFit
 }
 
 func (v *Switcher) write(w *BinaryWriter) error {
-	var fields [8]bool
+	var fields [9]bool
 	fields[1] = !v.Id.IsZero()
 	fields[2] = !v.Pages.IsZero()
 	fields[3] = !v.Orientation.IsZero()
@@ -17266,6 +17267,7 @@ func (v *Switcher) write(w *BinaryWriter) error {
 	fields[5] = !v.InputValue.IsZero()
 	fields[6] = !v.Value.IsZero()
 	fields[7] = !v.DynamicHeight.IsZero()
+	fields[8] = !v.ImageObjectFit.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -17332,6 +17334,14 @@ func (v *Switcher) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[8] {
+		if err := w.writeFieldHeader(uvarint, 8); err != nil {
+			return err
+		}
+		if err := v.ImageObjectFit.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -17379,6 +17389,11 @@ func (v *Switcher) read(r *BinaryReader) error {
 			}
 		case 7:
 			err := v.DynamicHeight.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.ImageObjectFit.read(r)
 			if err != nil {
 				return err
 			}
@@ -22557,13 +22572,14 @@ func (v *Switcher) reset() {
 	v.InputValue.reset()
 	v.Value.reset()
 	v.DynamicHeight.reset()
+	v.ImageObjectFit.reset()
 }
 
 func (v *Switcher) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Id.IsZero() && v.Pages.IsZero() && v.Orientation.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Value.IsZero() && v.DynamicHeight.IsZero()
+	return v.Id.IsZero() && v.Pages.IsZero() && v.Orientation.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Value.IsZero() && v.DynamicHeight.IsZero() && v.ImageObjectFit.IsZero()
 }
 
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
