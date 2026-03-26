@@ -36,7 +36,7 @@ func main() {
 							Button(ButtonStylePrimary, func() {}).Title("Dummy Button").FullWidth(),
 						).FullWidth().Padding(Padding{Top: L8}),
 					).Alignment(BottomLeading),
-				).Img("https://picsum.photos/600/600"),
+				).Img("https://picsum.photos/300/600"),
 				SwitcherPage(
 					"switcher_page_2",
 					"Switcher Seite 2",
@@ -48,7 +48,7 @@ func main() {
 							Button(ButtonStylePrimary, func() {}).Title("Dummy Button").FullWidth(),
 						).FullWidth().Padding(Padding{Top: L8}),
 					).Alignment(BottomLeading),
-				).Img("https://picsum.photos/400/500"),
+				).Img("https://picsum.photos/1200/900"),
 				SwitcherPage(
 					"switcher_page_3",
 					"Switcher Seite 3",
@@ -67,6 +67,10 @@ func main() {
 				VStack(
 					Text("Switcher").Font(HeadlineMedium),
 					Switcher(pages, core.AutoState[string](wnd)).Frame(Frame{MaxWidth: "1000px"}).FullWidth().ContentNoPadding(),
+				).FullWidth(),
+				VStack(
+					Text("Switcher mit Object-Fit").Font(HeadlineMedium),
+					Switcher(pages, core.AutoState[string](wnd)).ImageObjectFit(FitCover).Frame(Frame{MaxWidth: "1000px"}).FullWidth().ContentNoPadding(),
 				).FullWidth(),
 				VStack(
 					Text("Switcher mit variabler Höhe").Font(HeadlineMedium),
