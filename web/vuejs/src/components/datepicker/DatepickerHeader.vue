@@ -12,18 +12,17 @@
 	<div>
 		<div class="flex justify-between items-center gap-x-2">
 			<p class="truncate">{{ label ?? '' }}</p>
-			<div
+			<button
 				ref="closeButton"
-				class="flex justify-center items-center cursor-pointer rounded-full size-8 shrink-0 grow-0"
+				class="button-tertiary square size-auto -mr-2.5 !p-2.5 text-ST0 focus:text-I0 hover:opacity-90"
 				tabindex="0"
 				aria-label="Dialog schließen"
 				@click="$emit('close')"
 				@keydown.enter="$emit('close')"
 			>
-				<Close class="h-4" aria-hidden="true" />
-			</div>
+				<Close class="h-3.5" aria-hidden="true" />
+			</button>
 		</div>
-		<div class="border-b border-b-primary mt-2"></div>
 	</div>
 </template>
 

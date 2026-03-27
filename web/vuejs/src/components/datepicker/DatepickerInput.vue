@@ -4,43 +4,45 @@
 			<div ref="datepickerInputContainer">
 				<!-- Editable start date parts -->
 				<template v-if="dateSelected">
-					<select
-						:value="editableStartDay"
-						@input="startDayChanged"
-						@blur="trySubmitSelection"
-						class="cursor-pointer bg-transparent"
+					<input
+						v-model="editableStartDay"
+						type="number"
+						step="1"
+						min="1"
+						:max="totalDaysForEditableStartMonth"
+						class="input-day"
 						:aria-label="rangeMode ? 'Startdatum Tag auswählen' : 'Datum Tag auswählen'"
+						onfocus="this.select()"
+						@input="onInputInput"
+						@blur="onInputBlur"
 						@click.stop
-					>
-						<option
-							v-for="option in totalDaysForEditableStartMonth"
-							:value="formatDateComponent(option)"
-							:key="option"
-						>
-							{{ formatDateComponent(option) }}
-						</option>
-					</select>
-					<span aria-hidden="true">.</span>
-					<select
-						:value="editableStartMonth"
-						@input="startMonthChanged"
-						@blur="trySubmitSelection"
-						class="cursor-pointer bg-transparent"
-						:aria-label="rangeMode ? 'Startdatum Monat auswählen' : 'Datum Monat auswählen'"
-						@click.stop
-					>
-						<option v-for="option in 12" :value="formatDateComponent(option)" :key="option">
-							{{ formatDateComponent(option) }}
-						</option>
-					</select>
+					/>
 					<span aria-hidden="true">.</span>
 					<input
-						:value="editableStartYear"
-						type="text"
-						inputmode="numeric"
-						class="bg-transparent w-12"
+						v-model="editableStartMonth"
+						type="number"
+						step="1"
+						min="1"
+						max="12"
+						class="input-month"
+						:aria-label="rangeMode ? 'Startdatum Monat auswählen' : 'Datum Monat auswählen'"
+						onfocus="this.select()"
+						@input="onInputInput"
+						@blur="onInputBlur"
+						@click.stop
+					/>
+					<span aria-hidden="true">.</span>
+					<input
+						v-model="editableStartYear"
+						type="number"
+						step="1"
+						:min="minYear || 0"
+						max="9999"
+						class="input-year"
 						:aria-label="rangeMode ? 'Startdatum Jahr eingeben' : 'Datum Jahr eingeben'"
-						@blur="startYearChanged"
+						onfocus="this.select()"
+						@input="onInputInput"
+						@blur="onInputBlur"
 						@click.stop
 					/>
 				</template>
@@ -48,43 +50,45 @@
 				<!-- Editable end date parts-->
 				<template v-if="dateSelected && rangeMode">
 					<span class="mr-2">-</span>
-					<select
-						:value="editableEndDay"
-						@input="endDayChanged"
-						@blur="trySubmitSelection"
-						class="cursor-pointer bg-transparent"
+					<input
+						v-model="editableEndDay"
+						type="number"
+						step="1"
+						min="1"
+						:max="totalDaysForEditableEndMonth"
+						class="input-day"
 						aria-label="Enddatum Tag auswählen"
+						onfocus="this.select()"
+						@input="onInputInput"
+						@blur="onInputBlur"
 						@click.stop
-					>
-						<option
-							v-for="option in totalDaysForEditableEndMonth"
-							:value="formatDateComponent(option)"
-							:key="option"
-						>
-							{{ formatDateComponent(option) }}
-						</option>
-					</select>
-					<span aria-hidden="true">.</span>
-					<select
-						:value="editableEndMonth"
-						@input="endMonthChanged"
-						@blur="trySubmitSelection"
-						class="cursor-pointer bg-transparent"
-						aria-label="Enddatum Monat auswählen"
-						@click.stop
-					>
-						<option v-for="option in 12" :value="formatDateComponent(option)" :key="option">
-							{{ formatDateComponent(option) }}
-						</option>
-					</select>
+					/>
 					<span aria-hidden="true">.</span>
 					<input
-						:value="editableEndYear"
-						type="text"
-						inputmode="numeric"
-						class="bg-transparent w-12"
+						v-model="editableEndMonth"
+						type="number"
+						step="1"
+						min="1"
+						max="12"
+						class="input-month"
+						aria-label="Enddatum Monat auswählen"
+						onfocus="this.select()"
+						@input="onInputInput"
+						@blur="onInputBlur"
+						@click.stop
+					/>
+					<span aria-hidden="true">.</span>
+					<input
+						v-model="editableEndYear"
+						type="number"
+						step="1"
+						:min="minYear || 0"
+						max="9999"
+						class="input-year"
 						aria-label="Enddatum Jahr eingeben"
-						@blur="endYearChanged"
+						onfocus="this.select()"
+						@input="onInputInput"
+						@blur="onInputBlur"
 						@click.stop
 					/>
 				</template>
@@ -96,29 +100,26 @@
 			</p>
 
 			<!-- Clickable calendar icon -->
-			<div class="absolute top-0 bottom-0 right-4 flex items-center h-full">
-				<div
-					class="cursor-pointer hover:text-I0"
-					tabindex="0"
-					@click="$emit('showDatepicker')"
-					@keydown.enter="$emit('showDatepicker')"
-					role="button"
-					:aria-label="datepickerCalendarAriaLabel"
-				>
-					<Calendar class="w-4" aria-hidden="true" />
-				</div>
-			</div>
+			<button
+				class="button-tertiary square small additional-right overlay-button"
+				tabindex="0"
+				role="button"
+				:aria-label="datepickerCalendarAriaLabel"
+				@click="$emit('showDatepicker')"
+				@keydown.enter="$emit('showDatepicker')"
+			>
+				<Calendar class="w-4" aria-hidden="true" />
+			</button>
 		</div>
 	</InputWrapper>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, useTemplateRef, watch } from 'vue';
+import { computed, nextTick, onMounted, onUpdated, ref, useTemplateRef, watch } from 'vue';
 import Calendar from '@/assets/svg/calendar.svg';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
-import { isNumber } from '@tiptap/vue-3';
 import type { DateData, DatePickerStyleValues } from '@/shared/proto/nprotoc_gen';
 import { UpdateStateValueRequested, UpdateStateValues2Requested } from '@/shared/proto/nprotoc_gen';
 
@@ -138,6 +139,7 @@ const props = defineProps<{
 	inputValue?: number;
 	// needed by Nago to submit updated dates
 	endInputValue?: number;
+	minYear?: number;
 }>();
 
 defineEmits<{
@@ -147,27 +149,19 @@ defineEmits<{
 const serviceAdapter = useServiceAdapter();
 const datepickerInputContainer = useTemplateRef('datepickerInputContainer');
 const editableStartYear = ref<number>(0);
-const editableStartMonth = ref<string>(formatDateComponent(1));
-const editableStartDay = ref<string>(formatDateComponent(1));
+const editableStartMonth = ref<number>(1);
+const editableStartDay = ref<number>(1);
 const editableEndYear = ref<number>(0);
-const editableEndMonth = ref<string>(formatDateComponent(1));
-const editableEndDay = ref<string>(formatDateComponent(1));
+const editableEndMonth = ref<number>(1);
+const editableEndDay = ref<number>(1);
 
 const totalDaysForEditableStartMonth = computed((): number => {
-	const editableStartMonthDate = new Date(
-		editableStartYear.value,
-		parseInt(editableStartMonth.value, 10),
-		0,
-		0,
-		0,
-		0,
-		0
-	);
+	const editableStartMonthDate = new Date(editableStartYear.value, editableStartMonth.value, 0, 0, 0, 0, 0);
 	return editableStartMonthDate.getDate();
 });
 
 const totalDaysForEditableEndMonth = computed((): number => {
-	const editableEndMonthDate = new Date(editableEndYear.value, parseInt(editableEndMonth.value, 10), 0, 0, 0, 0, 0);
+	const editableEndMonthDate = new Date(editableEndYear.value, editableEndMonth.value, 0, 0, 0, 0, 0);
 	return editableEndMonthDate.getDate();
 });
 
@@ -193,8 +187,8 @@ const datepickerCalendarAriaLabel = computed((): string => {
 const screenreaderDateFormatted = computed((): string => {
 	const editableStartDate = new Date(
 		editableStartYear.value,
-		parseInt(editableStartMonth.value, 10) - 1,
-		parseInt(editableStartDay.value, 10),
+		editableStartMonth.value - 1,
+		editableStartDay.value,
 		0,
 		0,
 		0,
@@ -206,8 +200,8 @@ const screenreaderDateFormatted = computed((): string => {
 
 	const editableEndDate = new Date(
 		editableEndYear.value,
-		parseInt(editableEndMonth.value, 10) - 1,
-		parseInt(editableEndDay.value, 10),
+		editableEndMonth.value - 1,
+		editableEndDay.value,
 		0,
 		0,
 		0,
@@ -216,110 +210,6 @@ const screenreaderDateFormatted = computed((): string => {
 	return `Ausgewählter Zeitraum: ${editableStartDate.toLocaleDateString()} bis ${editableEndDate.toLocaleDateString()}`;
 });
 
-function formatDateComponent(dateComponentRaw: number | string): string {
-	if (isNumber(dateComponentRaw)) {
-		dateComponentRaw = dateComponentRaw.toString(10);
-	}
-	if (dateComponentRaw.length === 1) {
-		return `0${dateComponentRaw}`;
-	}
-	return dateComponentRaw;
-}
-
-function startDayChanged(event: Event) {
-	if (!event.target) {
-		return;
-	}
-	editableStartDay.value = (event.target as HTMLInputElement).value;
-}
-
-function endDayChanged(event: Event) {
-	if (!event.target) {
-		return;
-	}
-	editableEndDay.value = (event.target as HTMLInputElement).value;
-}
-
-function startMonthChanged(event: Event) {
-	if (!event.target) {
-		return;
-	}
-	editableStartMonth.value = (event.target as HTMLInputElement).value;
-
-	adjustEditableStartDay();
-}
-
-function endMonthChanged(event: Event) {
-	if (!event.target) {
-		return;
-	}
-	editableEndMonth.value = (event.target as HTMLInputElement).value;
-
-	adjustEditableEndDay();
-}
-
-function startYearChanged(event: FocusEvent) {
-	if (!event.target) {
-		return;
-	}
-	const newValue = (event.target as HTMLInputElement).value;
-	if (!/^[0-9]+$/.test(newValue)) {
-		return;
-	}
-	const updatedValue = parseInt(newValue, 10);
-	if (updatedValue <= 1582) {
-		// only support years after introduction of the gregorian calendar
-		// also we have to set the value to 0 here first, otherwise the reset to the previous value will not work
-		editableStartYear.value = 0;
-		editableStartYear.value = props.selectedStartDate?.getFullYear() || new Date().getFullYear();
-		return;
-	}
-	editableStartYear.value = updatedValue;
-
-	adjustEditableStartDay();
-
-	trySubmitSelection(event);
-}
-
-function endYearChanged(event: FocusEvent) {
-	if (!event.target) {
-		return;
-	}
-	const newValue = (event.target as HTMLInputElement).value;
-	if (!/^[0-9]+$/.test(newValue)) {
-		return;
-	}
-	const updatedValue = parseInt(newValue, 10);
-	if (updatedValue <= 1582) {
-		// only support years after introduction of the gregorian calendar
-		// also we have to set the value to 0 here first, otherwise the reset to the previous value will not work
-		editableEndYear.value = 0;
-		editableEndYear.value = props.selectedEndDate?.getFullYear() || new Date().getFullYear();
-		return;
-	}
-	editableEndYear.value = updatedValue;
-
-	adjustEditableEndDay();
-
-	trySubmitSelection(event);
-}
-
-function adjustEditableStartDay() {
-	if (parseInt(editableStartDay.value, 10) > totalDaysForEditableStartMonth.value) {
-		// current start day is greater than the amount of days in the current month
-		// so we have to adjust the start day to this amount
-		editableStartDay.value = formatDateComponent(totalDaysForEditableStartMonth.value);
-	}
-}
-
-function adjustEditableEndDay() {
-	if (parseInt(editableEndDay.value, 10) > totalDaysForEditableEndMonth.value) {
-		// current end day is greater than the amount of days in the current month
-		// so we have to adjust the end day to this amount
-		editableEndDay.value = formatDateComponent(totalDaysForEditableEndMonth.value);
-	}
-}
-
 function isEditableEndDateBeforeEditableStartDate() {
 	if (!props.rangeMode) {
 		return false;
@@ -327,22 +217,14 @@ function isEditableEndDateBeforeEditableStartDate() {
 
 	const editableStartDate = new Date(
 		editableStartYear.value,
-		parseInt(editableStartMonth.value, 10),
-		parseInt(editableStartDay.value, 10),
+		editableStartMonth.value,
+		editableStartDay.value,
 		0,
 		0,
 		0,
 		0
 	);
-	const editableEndDate = new Date(
-		editableEndYear.value,
-		parseInt(editableEndMonth.value, 10),
-		parseInt(editableEndDay.value, 10),
-		0,
-		0,
-		0,
-		0
-	);
+	const editableEndDate = new Date(editableEndYear.value, editableEndMonth.value, editableEndDay.value, 0, 0, 0, 0);
 	return editableEndDate < editableStartDate;
 }
 
@@ -358,6 +240,51 @@ function swapEditableDates() {
 	editableEndDay.value = tempStartDay;
 	editableEndMonth.value = tempStartMonth;
 	editableEndYear.value = tempStartYear;
+}
+
+function onInputInput(event: Event) {
+	const input = event.target as HTMLInputElement;
+	if (!input) return;
+
+	fixInputRange(input);
+	fixAllInputDecimals();
+}
+
+function onInputBlur(event: FocusEvent) {
+	const input = event.target as HTMLInputElement;
+	if (!input) return;
+
+	fixInputDecimals(input);
+	trySubmitSelection(event);
+}
+
+function fixInputRange(input: HTMLInputElement) {
+	const min = input.min;
+	if (min && input.valueAsNumber < parseInt(min)) {
+		input.value = min;
+	}
+
+	const max = input.max;
+	if (max && input.valueAsNumber > parseInt(max)) {
+		input.value = max;
+	}
+}
+
+function fixInputDecimals(input: HTMLInputElement) {
+	if (input.classList.contains('input-day') || input.classList.contains('input-month')) {
+		if (isNaN(input.valueAsNumber)) input.valueAsNumber = 1;
+		const value = input.value;
+		if (value.length === 1) {
+			input.value = `0${value}`;
+		}
+	}
+	if (input.classList.contains('input.year')) {
+		if (isNaN(input.valueAsNumber)) input.valueAsNumber = new Date().getFullYear();
+		const value = input.value;
+		while (value.length < 4) {
+			input.value = `0${value}`;
+		}
+	}
 }
 
 function trySubmitSelection(event: FocusEvent) {
@@ -377,10 +304,10 @@ function submitSelection() {
 		swapEditableDates();
 	}
 
-	const updatedStartDay = parseInt(editableStartDay.value, 10);
-	const updatedStartMonth = parseInt(editableStartMonth.value, 10);
-	const updatedEndDay = parseInt(editableEndDay.value, 10);
-	const updatedEndMonth = parseInt(editableEndMonth.value, 10);
+	const updatedStartDay = editableStartDay.value;
+	const updatedStartMonth = editableStartMonth.value;
+	const updatedEndDay = editableEndDay.value;
+	const updatedEndMonth = editableEndMonth.value;
 
 	if (props.rangeMode) {
 		serviceAdapter.sendEvent(
@@ -423,12 +350,12 @@ function setInitialStartDate() {
 
 	if (props.selectedStartDate) {
 		editableStartYear.value = props.selectedStartDate.getFullYear();
-		editableStartMonth.value = formatDateComponent(props.selectedStartDate.getMonth() + 1);
-		editableStartDay.value = formatDateComponent(props.selectedStartDate.getDate());
+		editableStartMonth.value = props.selectedStartDate.getMonth() + 1;
+		editableStartDay.value = props.selectedStartDate.getDate();
 	} else {
 		editableStartYear.value = now.getFullYear();
-		editableStartMonth.value = formatDateComponent(now.getMonth() + 1);
-		editableStartDay.value = formatDateComponent(now.getDate());
+		editableStartMonth.value = now.getMonth() + 1;
+		editableStartDay.value = now.getDate();
 	}
 }
 
@@ -438,13 +365,23 @@ function setInitialEndDate() {
 
 	if (props.selectedEndDate) {
 		editableEndYear.value = props.selectedEndDate.getFullYear();
-		editableEndMonth.value = formatDateComponent(props.selectedEndDate.getMonth() + 1);
-		editableEndDay.value = formatDateComponent(props.selectedEndDate.getDate());
+		editableEndMonth.value = props.selectedEndDate.getMonth() + 1;
+		editableEndDay.value = props.selectedEndDate.getDate();
 	} else {
 		editableEndYear.value = now.getFullYear();
-		editableEndMonth.value = formatDateComponent(now.getMonth() + 1);
-		editableEndDay.value = formatDateComponent(now.getDate());
+		editableEndMonth.value = now.getMonth() + 1;
+		editableEndDay.value = now.getDate();
 	}
+}
+
+function fixAllInputDecimals() {
+	if (!datepickerInputContainer.value) return;
+	const inputs = datepickerInputContainer.value.querySelectorAll('input');
+	inputs.forEach((input) => {
+		if (document.activeElement !== input) {
+			fixInputDecimals(input as HTMLInputElement);
+		}
+	});
 }
 
 function init() {
@@ -456,4 +393,23 @@ function init() {
 }
 
 init();
+onMounted(fixAllInputDecimals);
+onUpdated(fixAllInputDecimals);
+watch(dateSelected, () => nextTick(fixAllInputDecimals));
 </script>
+<style scoped>
+.input-day,
+.input-month,
+.input-year {
+	@apply appearance-none bg-transparent text-center;
+	@apply focus:outline-offset-2;
+}
+
+.additional-right {
+	@apply absolute top-1/2 right-1.5 -translate-y-1/2;
+}
+
+.overlay-button {
+	@apply size-8 p-1;
+}
+</style>

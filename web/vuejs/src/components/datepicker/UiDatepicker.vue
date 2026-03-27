@@ -23,6 +23,7 @@
 			:range-mode="ui.style === DatePickerStyleValues.DatePickerDateRange"
 			:input-value="ui.inputValue"
 			:end-input-value="ui.endInputValue"
+			:min-year="MIN_YEAR"
 			@show-datepicker="showDatepicker"
 		/>
 
@@ -34,6 +35,7 @@
 			:selected-start-date="selectedStartDate"
 			:selected-end-date="selectedEndDate"
 			:range-selection-state="rangeSelectionState"
+			:min-year="MIN_YEAR"
 			@close="closeDatepicker"
 			@select="selectDate"
 			@submit-selection="submitSelection"
@@ -61,6 +63,8 @@ import {
 const props = defineProps<{
 	ui: DatePicker;
 }>();
+
+const MIN_YEAR = 1583;
 
 const serviceAdapter = useServiceAdapter();
 const expanded = ref<boolean>(false);
