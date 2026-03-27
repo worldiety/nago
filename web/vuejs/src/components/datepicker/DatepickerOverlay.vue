@@ -11,14 +11,16 @@
 	<div
 		ref="datepicker"
 		class="datepicker"
-		:class="{ 'double-mode': doubleMode }"
+		:class="{ 'double-mode': doubleMode, 'range-mode': rangeMode }"
 		@keydown.tab.exact="moveFocusForward"
 		@keydown.shift.tab="moveFocusBackwards"
 		@keydown.esc="$emit('close')"
 	>
 		<div class="relative bg-M1 rounded-xl shadow-lg p-6 z-10">
-			<div class="h-[23rem]">
-				<DatepickerHeader ref="datepickerHeader" :label="label" class="mb-4" @close="emit('close')" />
+			<div class="h-[22.75rem]">
+				<DatepickerHeader ref="datepickerHeader" :label="headerText" @close="emit('close')" />
+
+				<hr class="border-I0"/>
 
 				<div class="datepicker-months">
 					<!-- Datepicker content -->
@@ -37,11 +39,16 @@
 							>
 								<ArrowRight class="rotate-180 h-4" />
 							</button>
-							<div class="flex justify-center items-center basis-2/3 text-lg h-full">
-								<div class="basis-1/2 shrink-0 grow-0 h-full">
+							<div class="flex justify-center items-center text-lg h-full">
+								<label
+									class="relative hover:bg-I0/15 border-0 bg-M1 rounded-l-md select-none h-full focus-within flex items-center px-1"
+								>
+									<span class="pt-px">
+										{{ getSelectedMonthName(i - 1) }}
+									</span>
 									<select
 										:value="getSelectedMonth(i - 1)"
-										class="hover:bg-I0/15 border-0 bg-M1 text-right cursor-pointer rounded-l-md select-none w-full h-full pr-0.5 pt-px"
+										class="absolute top-0 left-0 size-full opacity-0 overflow-hidden cursor-pointer"
 										@change="onMonthChange($event, i - 1)"
 									>
 										<option
@@ -52,19 +59,17 @@
 											{{ monthEntry[1] }}
 										</option>
 									</select>
-								</div>
-								<div class="basis-1/2 shrink-0 grow-0 h-full">
-									<input
-										:value="getSelectedYear(i - 1)"
-										type="number"
-										step="1"
-										:min="MIN_YEAR"
-										class="hover:bg-I0/15 border-0 bg-M1 rounded-r-md text-left w-full h-full appearance-none pl-0.5"
-										@keydown.enter="onYearChange($event, i - 1)"
-										@change="onYearChange($event, i - 1)"
-										@blur="onYearChange($event, i - 1)"
-									/>
-								</div>
+								</label>
+								<input
+									:value="getSelectedYear(i - 1)"
+									type="number"
+									step="1"
+									:min="minYear || 0"
+									class="hover:bg-I0/15 border-0 bg-M1 rounded-r-md w-14 h-full appearance-none text-center"
+									@keydown.enter="onYearChange($event, i - 1)"
+									@change="onYearChange($event, i - 1)"
+									@blur="onYearChange($event, i - 1)"
+								/>
 							</div>
 							<button
 								class="hover:bg-I0/15 flex justify-center items-center cursor-pointer rounded-full size-8"
@@ -120,36 +125,29 @@
 			</div>
 
 			<template v-if="rangeMode">
-				<!-- Hint texts and clear button when in range mode -->
-				<p v-if="rangeSelectionState === RangeSelectionState.SELECT_START" class="mt-2">
-					Bitte wählen Sie einen Startzeitpunkt aus
-				</p>
-				<p v-else-if="rangeSelectionState === RangeSelectionState.SELECT_END" class="mt-2">
-					Bitte wählen Sie einen Endzeitpunkt aus
-				</p>
-				<button
-					v-else-if="rangeSelectionState === RangeSelectionState.COMPLETE"
-					class="flex justify-start items-center gap-x-2 text-I0 underline mt-2"
-					@click="clearSelection"
-				>
-					<undo-icon class="h-4" aria-hidden="true" /> Auswahl zurücksetzen
-				</button>
-
-				<div class="border-b border-b-disabled-background mt-3 mb-6"></div>
+				<hr class="border-ST0"/>
 
 				<div class="footer">
-					<div v-if="doubleMode" class="actions"></div>
-					<div class="actions">
-						<!-- Confirm button when in range mode -->
-						<button
-							ref="confirmButton"
-							class="button-confirm button-primary"
-							:disabled="rangeSelectionState === RangeSelectionState.SELECT_END"
-							@click="emit('submitSelection')"
-						>
-							{{ t('datepicker.confirm') }}
-						</button>
-					</div>
+					<!-- Reset button when in range mode -->
+					<button
+						v-if="rangeMode"
+						class="button-tertiary"
+						:class="{ 'w-full': !doubleMode }"
+						:disabled="rangeSelectionState !== RangeSelectionState.COMPLETE"
+						@click="clearSelection"
+					>
+						<undo-icon class="h-4" aria-hidden="true" /> Auswahl zurücksetzen
+					</button>
+
+					<!-- Confirm button when in range mode -->
+					<button
+						ref="confirmButton"
+						class="button-confirm button-primary"
+						:disabled="rangeSelectionState === RangeSelectionState.SELECT_END"
+						@click="emit('submitSelection')"
+					>
+						{{ t('datepicker.confirm') }}
+					</button>
 				</div>
 			</template>
 		</div>
@@ -161,8 +159,7 @@
 
 <script setup lang="ts">
 import type { ComponentPublicInstance } from 'vue';
-import { watch } from 'vue';
-import { computed, ref, useTemplateRef } from 'vue';
+import { computed, ref, useTemplateRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import ArrowRight from '@/assets/svg/arrowRightBold.svg';
 import UndoIcon from '@/assets/svg/undo.svg';
@@ -179,6 +176,7 @@ const props = defineProps<{
 	selectedStartDate?: Date;
 	selectedEndDate?: Date;
 	rangeSelectionState: RangeSelectionState;
+	minYear?: number;
 }>();
 
 const emit = defineEmits<{
@@ -189,7 +187,6 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
-const MIN_YEAR = 1583;
 const datepickerHeader = useTemplateRef('datepickerHeader');
 const confirmButton = useTemplateRef('confirmButton');
 const datepicker = ref<HTMLElement | undefined>();
@@ -203,9 +200,27 @@ const lastDatepickerDayIndex = ref<number | null>(null);
 const lastDatepickerDayElement = ref<ComponentPublicInstance | Element | null>(null);
 const monthsToShow = props.doubleMode ? 2 : 1;
 
-const lowerBoundReached = computed((): boolean => {
-	return selectedMonth.value === 0 && selectedYear.value === MIN_YEAR;
+const headerText = computed<string | undefined>(() => {
+	if (!props.rangeMode) return props.label;
+
+	switch (props.rangeSelectionState) {
+		case RangeSelectionState.SELECT_START:
+			return 'Bitte Start auswählen';
+		case RangeSelectionState.SELECT_END:
+			return 'Bitte Ende auswählen';
+		default:
+			return props.label;
+	}
 });
+
+const lowerBoundReached = computed((): boolean => {
+	return selectedMonth.value === 0 && selectedYear.value === (props.minYear || 0);
+});
+
+function getSelectedMonthName(offset: number): string {
+	const monthIndex = getSelectedMonth(offset);
+	return monthNames.get(monthIndex) || '';
+}
 
 function getSelectedMonth(offset: number): number {
 	return (selectedMonth.value + offset) % 12;
@@ -221,7 +236,7 @@ function onMonthChange(e: Event, offset: number) {
 
 	const selectedMonthWithoutOffset = parseInt(select.value, 10) - offset;
 	if (selectedMonthWithoutOffset < 0) {
-		selectedMonth.value = selectedMonth.value + 12;
+		selectedMonth.value = selectedMonthWithoutOffset + 12;
 		selectedYear.value--;
 	} else {
 		selectedMonth.value = selectedMonthWithoutOffset;
@@ -231,7 +246,10 @@ function onMonthChange(e: Event, offset: number) {
 function onYearChange(e: Event, offset: number) {
 	const input = e.target as HTMLInputElement;
 	if (!input || !input.valueAsNumber) return;
-	selectedYear.value = Math.max(MIN_YEAR, input.valueAsNumber - (selectedMonth.value - offset < 0 ? 1 : 0));
+	selectedYear.value = Math.max(
+		props.minYear || 0,
+		input.valueAsNumber - (selectedMonth.value + offset > 11 ? 1 : 0)
+	);
 }
 
 function setLastDatepickerDayElement(datepickerDay: ComponentPublicInstance | Element | null, index: number) {
@@ -246,7 +264,7 @@ function setLastDatepickerDayElement(datepickerDay: ComponentPublicInstance | El
 function getDatepickerDays(offset: number): DatepickerDay[] {
 	const daysOfCurrentMonth: DatepickerDay[] = [];
 
-	const month = selectedMonth.value + offset;
+	const month = (selectedMonth.value + offset) % 12;
 	const year = selectedYear.value + (month > 11 ? 1 : 0);
 	const firstDayOfSelectedMonth = new Date(year, month, 1);
 	const lastDayOfSelectedMonth = new Date(year, month + 1, 0);
@@ -290,7 +308,7 @@ function getDatepickerDays(offset: number): DatepickerDay[] {
 }
 
 function isSelectableDay(day: number, monthIndex: number, year: number): boolean {
-	return year >= MIN_YEAR;
+	return year >= (props.minYear || 0);
 }
 
 function isSelectedStartDay(day: number, monthIndex: number, year: number): boolean {
@@ -407,6 +425,10 @@ watch(() => props.selectedStartDate, showSelectedRange);
 .datepicker {
 	@apply fixed top-0 left-0 bottom-0 right-0 flex justify-center items-center z-30;
 
+	hr {
+		@apply my-3;
+	}
+
 	.datepicker-months {
 		@apply grid grid-cols-1 gap-8;
 
@@ -416,14 +438,10 @@ watch(() => props.selectedStartDate, showSelectedRange);
 	}
 
 	.footer {
-		@apply flex flex-wrap items-center justify-between gap-4;
+		@apply flex flex-col items-center justify-between w-full gap-2;
 
-		.actions {
+		.button-confirm {
 			@apply w-full;
-
-			.button-confirm {
-				@apply w-full;
-			}
 		}
 	}
 
@@ -433,13 +451,17 @@ watch(() => props.selectedStartDate, showSelectedRange);
 		}
 
 		.footer {
-			.actions {
-				@apply flex items-center justify-end gap-2 w-auto;
+			@apply flex-row items-center justify-end gap-2;
 
-				.button-confirm {
-					@apply w-auto;
-				}
+			.button-confirm {
+				@apply w-auto;
 			}
+		}
+	}
+
+	&.range-mode {
+		.footer {
+			@apply justify-between;
 		}
 	}
 }
@@ -502,7 +524,7 @@ watch(() => props.selectedStartDate, showSelectedRange);
 
 /* Selected start day container in last grid row */
 .datepicker-grid > .within-range-day:nth-of-type(7n).selected-start-day-container,
-/* Selected end day container in first grid row */
+	/* Selected end day container in first grid row */
 .datepicker-grid > .within-range-day:nth-of-type(7n - 6).selected-end-day-container {
 	@apply bg-transparent;
 }

@@ -11,10 +11,11 @@
 .button-secondary,
 .button-tertiary,
 .button-destructive {
-	@apply inline-flex items-center justify-center px-5 py-2.5;
+	@apply inline-flex items-center justify-center px-5 py-2.5 gap-2;
 	@apply rounded-lg;
 	@apply text-center text-sm font-medium;
 	@apply focus-visible:outline-none focus-visible:outline-I0 focus-visible:outline-offset-4;
+	@apply disabled:pointer-events-none;
 
 	&.square {
 		@apply p-2.5 aspect-square;
@@ -29,7 +30,6 @@
 	@apply text-PBT;
 	@apply rounded-full h-10 w-fit px-5 bg-I0;
 	@apply disabled:text-ST0 disabled:bg-SI0;
-	@apply disabled:pointer-events-none;
 }
 
 .button-primary:disabled * {
@@ -51,8 +51,8 @@
 }
 
 .button-secondary {
-	@apply rounded-full h-10 w-fit px-5 border border-I0 outline-I0;
-	@apply disabled:border-SI0 disabled:bg-transparent darkmode:disabled:border-SI0;
+	@apply rounded-full h-10 w-fit px-5 border border-I0 outline-I0 duration-100;
+	@apply disabled:border-ST0 disabled:bg-transparent darkmode:disabled:border-ST0;
 	@apply darkmode:border-I0;
 }
 
@@ -62,8 +62,7 @@
 
 .button-secondary:focus:not(.custom-focus),
 .button-secondary:focus-visible:not(.custom-focus) {
-	@apply -outline-offset-4 outline-I0 outline-1 rounded-full;
-	animation: button-focus-outline 100ms ease-out;
+	@apply -outline-offset-2 outline-I0 outline-2 bg-I0/25 rounded-full;
 }
 
 .button-secondary:active:not(.custom-active) {
@@ -81,8 +80,8 @@
 }
 
 .button-tertiary {
-	@apply rounded-full h-10 w-fit px-5 outline-I0;
-	@apply disabled:bg-transparent;
+	@apply rounded-full h-10 w-fit px-5 outline-I0 duration-100;
+	@apply disabled:bg-transparent disabled:text-ST0;
 }
 
 .button-tertiary:hover:not(.custom-hover) {
@@ -91,8 +90,7 @@
 
 .button-tertiary:focus:not(.custom-focus),
 .button-tertiary:focus-visible:not(.custom-focus) {
-	@apply -outline-offset-4 outline-1 rounded-full;
-	animation: button-focus-outline 100ms ease-out;
+	@apply bg-I0/25 outline-2 -outline-offset-2 rounded-full;
 }
 
 .button-tertiary:active:not(.custom-active) {
