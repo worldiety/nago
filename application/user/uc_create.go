@@ -121,13 +121,13 @@ func NewCreate(mutex *sync.Mutex, rdb *rebac.DB, loadGlobal settings.LoadGlobal,
 			for _, rid := range userSettings.DefaultRoles {
 				if err := rdb.Put(rebac.Triple{
 					Source: rebac.Entity{
-						Namespace: Namespace,
-						Instance:  rebac.Instance(user.ID),
+						Namespace: role.Namespace,
+						Instance:  rebac.Instance(rid),
 					},
 					Relation: rebac.Member,
 					Target: rebac.Entity{
-						Namespace: role.Namespace,
-						Instance:  rebac.Instance(rid),
+						Namespace: Namespace,
+						Instance:  rebac.Instance(user.ID),
 					},
 				}); err != nil {
 					return User{}, err
@@ -137,13 +137,13 @@ func NewCreate(mutex *sync.Mutex, rdb *rebac.DB, loadGlobal settings.LoadGlobal,
 			for _, gid := range userSettings.DefaultGroups {
 				if err := rdb.Put(rebac.Triple{
 					Source: rebac.Entity{
-						Namespace: Namespace,
-						Instance:  rebac.Instance(user.ID),
+						Namespace: group.Namespace,
+						Instance:  rebac.Instance(gid),
 					},
 					Relation: rebac.Member,
 					Target: rebac.Entity{
-						Namespace: group.Namespace,
-						Instance:  rebac.Instance(gid),
+						Namespace: Namespace,
+						Instance:  rebac.Instance(user.ID),
 					},
 				}); err != nil {
 					return User{}, err

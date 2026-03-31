@@ -84,13 +84,13 @@ func NewMergeSingleSignOnUser(mutex *sync.Mutex, repo Repository, findByMail Fin
 			for _, rid := range cfg.DefaultRoles {
 				err := rdb.Put(rebac.Triple{
 					Source: rebac.Entity{
-						Namespace: Namespace,
-						Instance:  rebac.Instance(usr.ID),
+						Namespace: role.Namespace,
+						Instance:  rebac.Instance(rid),
 					},
 					Relation: rebac.Member,
 					Target: rebac.Entity{
-						Namespace: role.Namespace,
-						Instance:  rebac.Instance(rid),
+						Namespace: Namespace,
+						Instance:  rebac.Instance(usr.ID),
 					},
 				})
 
@@ -102,13 +102,13 @@ func NewMergeSingleSignOnUser(mutex *sync.Mutex, repo Repository, findByMail Fin
 			for _, gid := range cfg.DefaultGroups {
 				err := rdb.Put(rebac.Triple{
 					Source: rebac.Entity{
-						Namespace: Namespace,
-						Instance:  rebac.Instance(usr.ID),
+						Namespace: group.Namespace,
+						Instance:  rebac.Instance(gid),
 					},
 					Relation: rebac.Member,
 					Target: rebac.Entity{
-						Namespace: group.Namespace,
-						Instance:  rebac.Instance(gid),
+						Namespace: Namespace,
+						Instance:  rebac.Instance(usr.ID),
 					},
 				})
 
