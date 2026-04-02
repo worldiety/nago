@@ -188,12 +188,6 @@ func auto(showDays, showHours, showMinutes, showSeconds bool) bool {
 // ones based on the actual duration values.
 func fmtDurationTime(showDays, showHours, showMinutes, showSeconds bool, d time.Duration) string {
 	days, hours, minutes, seconds := FromDuration(d)
-	if auto(showDays, showHours, showMinutes, showSeconds) {
-		showDays = days != 0
-		showHours = hours != 0
-		showMinutes = minutes != 0
-		showSeconds = seconds != 0
-	}
 
 	if auto(showDays, showHours, showMinutes, showSeconds) {
 		showHours = true
@@ -225,13 +219,6 @@ func fmtDurationTime(showDays, showHours, showMinutes, showSeconds bool, d time.
 // by the flags or inferred from the duration.
 func fmtClockTime(showDays, showHours, showMinutes, showSeconds bool, d time.Duration) string {
 	days, hours, minutes, seconds := FromDuration(d)
-
-	if auto(showDays, showHours, showMinutes, showSeconds) {
-		showDays = days != 0
-		showHours = hours != 0
-		showMinutes = minutes != 0
-		showSeconds = seconds != 0
-	}
 
 	if auto(showDays, showHours, showMinutes, showSeconds) {
 		showHours = true
@@ -396,13 +383,6 @@ func (c TPicker) round(d time.Duration) time.Duration {
 // the current duration.
 func (c TPicker) renderPicker() core.View {
 	days, hours, minutes, seconds := FromDuration(c.currentSelectedState.Get())
-
-	if auto(c.showDays, c.showHours, c.showMinutes, c.showSeconds) {
-		c.showDays = days != 0
-		c.showHours = hours != 0
-		c.showMinutes = minutes != 0
-		c.showSeconds = seconds != 0
-	}
 
 	if auto(c.showDays, c.showHours, c.showMinutes, c.showSeconds) {
 		c.showHours = true
