@@ -10,7 +10,7 @@
 						step="1"
 						min="1"
 						:max="totalDaysForEditableStartMonth"
-						class="input-day"
+						class="input-day arrows-none"
 						:aria-label="rangeMode ? 'Startdatum Tag auswählen' : 'Datum Tag auswählen'"
 						onfocus="this.select()"
 						@input="onInputInput"
@@ -24,7 +24,7 @@
 						step="1"
 						min="1"
 						max="12"
-						class="input-month"
+						class="input-month arrows-none"
 						:aria-label="rangeMode ? 'Startdatum Monat auswählen' : 'Datum Monat auswählen'"
 						onfocus="this.select()"
 						@input="onInputInput"
@@ -38,7 +38,7 @@
 						step="1"
 						:min="minYear || 0"
 						max="9999"
-						class="input-year"
+						class="input-year arrows-none"
 						:aria-label="rangeMode ? 'Startdatum Jahr eingeben' : 'Datum Jahr eingeben'"
 						onfocus="this.select()"
 						@input="onInputInput"
@@ -49,14 +49,14 @@
 
 				<!-- Editable end date parts-->
 				<template v-if="dateSelected && rangeMode">
-					<span class="mr-2">-</span>
+					<span class="mx-0.5">-</span>
 					<input
 						v-model="editableEndDay"
 						type="number"
 						step="1"
 						min="1"
 						:max="totalDaysForEditableEndMonth"
-						class="input-day"
+						class="input-day arrows-none"
 						aria-label="Enddatum Tag auswählen"
 						onfocus="this.select()"
 						@input="onInputInput"
@@ -70,7 +70,7 @@
 						step="1"
 						min="1"
 						max="12"
-						class="input-month"
+						class="input-month arrows-none"
 						aria-label="Enddatum Monat auswählen"
 						onfocus="this.select()"
 						@input="onInputInput"
@@ -84,7 +84,7 @@
 						step="1"
 						:min="minYear || 0"
 						max="9999"
-						class="input-year"
+						class="input-year arrows-none"
 						aria-label="Enddatum Jahr eingeben"
 						onfocus="this.select()"
 						@input="onInputInput"
@@ -403,6 +403,15 @@ watch(dateSelected, () => nextTick(fixAllInputDecimals));
 .input-year {
 	@apply appearance-none bg-transparent text-center;
 	@apply focus:outline-offset-2;
+
+	&.input-day,
+	&.input-month {
+		@apply w-6;
+	}
+
+	&.input-year {
+		@apply w-12;
+	}
 }
 
 .additional-right {

@@ -33,6 +33,7 @@ function toggle() {
 
 <template>
 	<input
+		:id="ui.id"
 		class="toggle-switch"
 		type="checkbox"
 		:checked="!!props.ui.value"
@@ -43,19 +44,19 @@ function toggle() {
 
 <style scoped>
 .toggle-switch {
-	@apply relative inline-block appearance-none rounded-full outline outline-1 outline-offset-0 w-12 h-6 duration-100 cursor-pointer;
+	@apply relative inline-block appearance-none rounded-full outline outline-1 -outline-offset-1 w-12 h-6 duration-100 cursor-pointer;
 	@apply focus:outline-I0 focus-visible:outline-I0 focus:outline-2 focus:-outline-offset-2;
 
 	&:before {
 		content: '';
-		@apply block size-5 absolute top-0.5 left-0.5 rounded-full border border-current duration-100 origin-center;
+		@apply block size-[1.125rem] absolute top-[0.1875rem] left-[0.1875rem] rounded-full border border-current duration-100 origin-center;
 	}
 
 	&:checked {
 		@apply bg-I0/50;
 
 		&:before {
-			@apply left-[1.625rem] bg-current;
+			@apply left-[1.6875rem] bg-current;
 		}
 	}
 

@@ -19,6 +19,10 @@
     "4": {
       "name": "Invisible",
       "type": "Bool"
+    },
+    "5": {
+      "name": "Id",
+      "type": "Str"
     }
   }
 }

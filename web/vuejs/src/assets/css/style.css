@@ -26,5 +26,16 @@ body ::before {
 }
 
 body {
-	background: var(--M1);
+	@apply bg-M1;
+}
+
+.arrows-none::-webkit-inner-spin-button,
+.arrows-none::-webkit-outer-spin-button {
+	-webkit-appearance: none !important;
+	appearance: none !important;
+	margin: 0;
+}
+
+.arrows-none {
+	-moz-appearance: textfield !important;
 }
