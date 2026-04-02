@@ -43,7 +43,7 @@
 								<label
 									class="relative hover:bg-I0/15 border-0 bg-M1 rounded-l-md select-none h-full focus-within flex items-center px-1"
 								>
-									<span class="pt-px">
+									<span class="">
 										{{ getSelectedMonthName(i - 1) }}
 									</span>
 									<select
@@ -65,7 +65,7 @@
 									type="number"
 									step="1"
 									:min="minYear || 0"
-									class="hover:bg-I0/15 border-0 bg-M1 rounded-r-md w-14 h-full appearance-none text-center"
+									class="hover:bg-I0/15 border-0 bg-M1 rounded-r-md w-14 h-full arrows-none text-center"
 									@keydown.enter="onYearChange($event, i - 1)"
 									@change="onYearChange($event, i - 1)"
 									@blur="onYearChange($event, i - 1)"
