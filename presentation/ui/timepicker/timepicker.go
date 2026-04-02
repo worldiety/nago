@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/worldiety/option"
+	"go.wdy.de/nago/application/color"
 	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/presentation/core"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
@@ -490,6 +491,12 @@ func (c TPicker) Render(ctx core.RenderContext) core.RenderNode {
 	durationText := Format(c.showDays, c.showHours, c.showMinutes, c.showSeconds, c.format, c.currentSelectedState.Get())
 
 	colors := core.Colors[ui.Colors](ctx.Window())
+
+	textColor := color.Color("")
+	if c.disabled {
+		textColor = ui.ST0
+	}
+
 	inner := ui.HStack(
 		alert.Dialog(c.title, c.renderPicker(), c.pickerPresented, alert.Cancel(func() {
 			c.currentSelectedState.Set(c.targetSelectedState.Get())
@@ -501,30 +508,41 @@ func (c TPicker) Render(ctx core.RenderContext) core.RenderNode {
 				close(true)
 			}).Title(rstring.ActionApply.Get(wnd))
 		})),
-		ui.Text(durationText),
+		ui.Text(durationText).Color(textColor),
 		ui.Spacer(),
 		ui.Image().Embed(heroSolid.ChevronRight).Frame(ui.Frame{}.Size(ui.L16, ui.L16)),
-	).Action(func() {
-		if c.disabled {
-			return
-		}
-		c.pickerPresented.Set(true)
-	}).HoveredBorder(ui.Border{}.Color(option.Must(colors.I1.WithChromaAndTone(16, 50))).Width(ui.L1).Radius("0.375rem")).
-		FocusedBorder(ui.Border{}.Color(ui.I0).Width(ui.L1)).
-		Gap(ui.L8).
-		Frame(ui.Frame{}.FullWidth()).
-		Border(ui.Border{}.Color(ui.M8).Width(ui.L1).Radius("0.375rem")).
-		Padding(ui.Padding{}.All(ui.L8))
+	)
+
+	var innerView ui.DecoredView
+	if !c.disabled {
+		innerView = inner.Action(func() {
+			if c.disabled {
+				return
+			}
+			c.pickerPresented.Set(true)
+		}).HoveredBorder(ui.Border{}.Color(option.Must(colors.I1.WithChromaAndTone(16, 50))).Width(ui.L1).Radius("0.375rem")).
+			FocusedBorder(ui.Border{}.Color(ui.I0).Width(ui.L1)).
+			Gap(ui.L8).
+			Frame(ui.Frame{}.FullWidth()).
+			Border(ui.Border{}.Color(ui.M8).Width(ui.L1).Radius("0.375rem")).
+			Padding(ui.Padding{}.All(ui.L8))
+	} else {
+		innerView = inner.
+			Gap(ui.L8).
+			Frame(ui.Frame{}.FullWidth()).
+			Border(ui.Border{}.Color(ui.ST0).Width(ui.L1).Radius("0.375rem")).
+			Padding(ui.Padding{}.All(ui.L8))
+	}
 
 	return ui.VStack(
 		ui.IfElse(c.errorText == "",
-			ui.If(c.label != "", ui.Text(c.label).Font(ui.Font{Size: ui.L14})),
+			ui.If(c.label != "", ui.Text(c.label).Font(ui.Font{Size: ui.L14}).Color(textColor)),
 			ui.HStack(
 				ui.Image().StrokeColor(ui.SE0).Embed(heroSolid.XMark).Frame(ui.Frame{}.Size(ui.L20, ui.L20)),
 				ui.Text(c.label).Font(ui.Font{Size: ui.L16}).Color(ui.SE0),
 			),
 		),
-		inner,
+		innerView,
 		ui.IfElse(c.errorText == "",
 			ui.Text(c.supportingText).Font(ui.Font{Size: "0.75rem"}).Color(ui.ST0),
 			ui.Text(c.errorText).Font(ui.Font{Size: "0.75rem"}).Color(ui.SE0),
