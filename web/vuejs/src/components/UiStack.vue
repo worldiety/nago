@@ -227,6 +227,8 @@ function getPresetClasses(): string[] {
 			break;
 	}
 
+	if (props.ui.disabled) presetClasses.push('disabled');
+
 	if (props.ui.stylePreset) {
 		if (props.ui.children?.value.length == 1 && props.ui.children.value[0] instanceof Img) {
 			presetClasses.push('!p-0', '!w-10');
@@ -285,6 +287,7 @@ function onKeydown(event: KeyboardEvent) {
 		:href="props.ui.url"
 		:target="props.ui.target"
 		:title="props.ui.accessibilityLabel"
+		:tabindex="ui.disabled ? -1 : 0"
 	>
 		<ui-generic v-for="ui in props.ui.children?.value" :ui="ui" />
 	</a>
