@@ -15,6 +15,7 @@ functions. In contrast to that, use a checkbox for form things without an immedi
 | Method | Description |
 |--------| ------------|
 | `Disabled(disabled bool)` | Disabled enables or disables interaction with the toggle. |
+| `ID(id string)` | ID sets the ID of the toggle |
 | `InputChecked(input *core.State[bool])` | InputChecked binds the toggle to an external boolean state for two-way data binding. |
 | `Visible(v bool)` | Visible controls the visibility of the toggle; false hides it from the UI. |
 ---

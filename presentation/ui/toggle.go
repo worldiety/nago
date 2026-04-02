@@ -16,6 +16,7 @@ import (
 // This component represents a switch-like control (on/off) without a label.
 // It is intended for immediate activation or deactivation of features.
 type TToggle struct {
+	id         string
 	value      bool              // current toggle state (true = on, false = off)
 	inputValue *core.State[bool] // optional bound state for two-way binding
 	disabled   bool              // disables interaction when true
@@ -29,6 +30,12 @@ func Toggle(checked bool) TToggle {
 		value: checked,
 	}
 
+	return c
+}
+
+// ID sets the ID of the toggle
+func (c TToggle) ID(id string) TToggle {
+	c.id = id
 	return c
 }
 
@@ -55,9 +62,10 @@ func (c TToggle) Visible(v bool) TToggle {
 func (c TToggle) Render(ctx core.RenderContext) core.RenderNode {
 	// TODO toggle has a screwed intrinsic padding/offset into top
 	return &proto.Toggle{
-		Value:      proto.Bool(c.value),
 		InputValue: c.inputValue.Ptr(),
+		Value:      proto.Bool(c.value),
 		Disabled:   proto.Bool(c.disabled),
 		Invisible:  proto.Bool(c.invisible),
+		Id:         proto.Str(c.id),
 	}
 }

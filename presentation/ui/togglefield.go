@@ -8,6 +8,9 @@
 package ui
 
 import (
+	"fmt"
+	"math/rand"
+
 	"go.wdy.de/nago/presentation/core"
 )
 
@@ -15,6 +18,7 @@ import (
 // This component combines a toggle with form-related elements such as
 // a label, supporting text, and error messages.
 type TToggleField struct {
+	id              string
 	label           string            // label displayed next to the toggle
 	value           bool              // initial toggle state (true = on, false = off)
 	inputValue      *core.State[bool] // optional bound state for two-way binding
@@ -34,6 +38,12 @@ func ToggleField(label string, value bool) TToggleField {
 		label: label,
 		value: value,
 	}
+}
+
+// ID sets the ID of the toggle field
+func (c TToggleField) ID(id string) TToggleField {
+	c.id = id
+	return c
 }
 
 // Padding sets the inner padding of the toggle field.
@@ -90,23 +100,39 @@ func (c TToggleField) ErrorText(text string) TToggleField {
 	return c
 }
 
+// Disabled sets the disabled state of the toggle field
+func (c TToggleField) Disabled(disabled bool) TToggleField {
+	c.disabled = disabled
+	return c
+}
+
 // Render builds and returns the visual representation of the toggle field.
 func (c TToggleField) Render(context core.RenderContext) core.RenderNode {
-	return VStack(
-		HStack(
-			Toggle(c.value).
-				Disabled(c.disabled).
-				InputChecked(c.inputValue),
-			Text(c.label).
-				Padding(Padding{Bottom: L8}), // TODO remove we, as soon as toggle is fixed
-		).Gap(L8).
-			Padding(Padding{}.All(L8)),
+	if c.id == "" && c.inputValue != nil {
+		c.id = fmt.Sprintf("cb%d", rand.Intn(999999999999)) // random id fallback
+	}
 
-		IfElse(c.errorText == "",
-			Text(c.supportingText).Font(Font{Size: "0.75rem"}).Color(ST0),
-			Text(c.errorText).Font(Font{Size: "0.75rem"}).Color(SE0),
-		),
+	labelFor := c.id
+	opacity := 1.0
+	if c.disabled {
+		labelFor = ""
+		opacity = 0.6
+	}
+
+	return HStack(
+		Toggle(c.value).
+			ID(c.id).
+			Disabled(c.disabled).
+			InputChecked(c.inputValue),
+		VStack(
+			Text(c.label).LabelFor(labelFor),
+			IfElse(c.errorText == "",
+				Text(c.supportingText).Font(Font{Size: "0.75rem"}).Color(ST0).LabelFor(labelFor),
+				Text(c.errorText).Font(Font{Size: "0.75rem"}).Color(SE0).LabelFor(labelFor),
+			),
+		).Alignment(Leading).Opacity(opacity),
 	).Alignment(Leading).
+		Gap(L8).
 		Border(c.border).
 		Visible(!c.invisible).
 		Padding(c.padding).

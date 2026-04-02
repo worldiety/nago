@@ -20,7 +20,7 @@
 			<div class="h-[22.75rem]">
 				<DatepickerHeader ref="datepickerHeader" :label="headerText" @close="emit('close')" />
 
-				<hr class="border-I0"/>
+				<hr class="border-I0" />
 
 				<div class="datepicker-months">
 					<!-- Datepicker content -->
@@ -125,7 +125,7 @@
 			</div>
 
 			<template v-if="rangeMode">
-				<hr class="border-ST0"/>
+				<hr class="border-ST0" />
 
 				<div class="footer">
 					<!-- Reset button when in range mode -->

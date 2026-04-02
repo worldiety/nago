@@ -16,8 +16,10 @@ A ToggleField aggregates a toggle together with form field typical labels, hints
 |--------| ------------|
 | `AccessibilityLabel(label string)` | AccessibilityLabel sets the accessibility label for screen readers. |
 | `Border(border Border)` | Border sets the border styling of the toggle field. |
+| `Disabled(disabled bool)` | Disabled sets the disabled state of the toggle field |
 | `ErrorText(text string)` | ErrorText sets the error message displayed when validation fails. |
 | `Frame(frame Frame)` | Frame sets the layout frame of the toggle field. |
+| `ID(id string)` | ID sets the ID of the toggle field |
 | `InputValue(inputValue *core.State[bool])` | InputValue binds the toggle field to a reactive state for two-way binding. |
 | `Padding(padding Padding)` | Padding sets the inner padding of the toggle field. |
 | `SupportingText(text string)` | SupportingText sets optional supporting text displayed below the field. |

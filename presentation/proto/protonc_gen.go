@@ -7944,14 +7944,16 @@ type Toggle struct {
 	Value      Bool
 	Disabled   Bool
 	Invisible  Bool
+	Id         Str
 }
 
 func (v *Toggle) write(w *BinaryWriter) error {
-	var fields [5]bool
+	var fields [6]bool
 	fields[1] = !v.InputValue.IsZero()
 	fields[2] = !v.Value.IsZero()
 	fields[3] = !v.Disabled.IsZero()
 	fields[4] = !v.Invisible.IsZero()
+	fields[5] = !v.Id.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -7994,6 +7996,14 @@ func (v *Toggle) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[5] {
+		if err := w.writeFieldHeader(byteSlice, 5); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -8026,6 +8036,11 @@ func (v *Toggle) read(r *BinaryReader) error {
 			}
 		case 4:
 			err := v.Invisible.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Id.read(r)
 			if err != nil {
 				return err
 			}
@@ -20786,13 +20801,14 @@ func (v *Toggle) reset() {
 	v.Value.reset()
 	v.Disabled.reset()
 	v.Invisible.reset()
+	v.Id.reset()
 }
 
 func (v *Toggle) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.InputValue.IsZero() && v.Value.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero()
+	return v.InputValue.IsZero() && v.Value.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero()
 }
 
 func (v *TextLayout) reset() {

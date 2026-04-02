@@ -17,7 +17,8 @@
 		input[type='text'],
 		.toggle-switch,
 		.toggle-switch-container
-	), .focus-within:focus-within {
+	),
+.focus-within:focus-within {
 	@apply outline-none outline-I0 -outline-offset-2 rounded-lg;
 
 	:not(input, textarea) {
