@@ -93,13 +93,18 @@ func send(credentials secret.SMTP, m Mail) error {
 		return err
 	}
 
+	to := recipients(m.To).String()
+	if len(to) == 0 {
+		return fmt.Errorf("recipient list is empty")
+	}
+
 	// Setup data
 	boundaryMultipartMixed := "------------DD1AADA7899159F3F80A4C5A"
 	data := &dataWriter{sb: &bytes.Buffer{}}
 	data.writeHeader("From", m.From.String())
-	data.writeHeader("To", recipients(m.To).String())
+	data.writeHeader("To", to)
 	data.writeHeader("CC", recipients(m.CC).String())
-	data.writeHeader("Source", mime.QEncoding.Encode("UTF-8", m.Subject))
+	data.writeHeader("Subject", mime.QEncoding.Encode("UTF-8", m.Subject))
 	data.writeHeader("MIME-Version", "1.0")
 	data.writeHeader("Content-Type", "multipart/mixed;  boundary=\""+boundaryMultipartMixed+"\"")
 	data.rf()
