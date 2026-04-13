@@ -1,0 +1,1 @@
+import{d as s,b as o,f as n,a0 as i}from"./main-C_wP21UV.js";const c={key:0},a={key:1},u=s({__name:"UiUnknownType",props:{ui:{}},setup(t){const e=t;return(p,r)=>e.ui?(n(),o("div",c,"[Protocol type has not been implemented: '"+i(e.ui.constructor.name)+"']",1)):(n(),o("div",a,"ui component is null"))}});export{u as default};
