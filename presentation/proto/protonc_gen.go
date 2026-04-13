@@ -11671,10 +11671,11 @@ type Chart struct {
 	NoDataMessage Str
 	XAxisTitle    Str
 	YAxisTitle    Str
+	LabelRounding RoundingType
 }
 
 func (v *Chart) write(w *BinaryWriter) error {
-	var fields [8]bool
+	var fields [9]bool
 	fields[1] = !v.Labels.IsZero()
 	fields[2] = !v.Colors.IsZero()
 	fields[3] = !v.Frame.IsZero()
@@ -11682,6 +11683,7 @@ func (v *Chart) write(w *BinaryWriter) error {
 	fields[5] = !v.NoDataMessage.IsZero()
 	fields[6] = !v.XAxisTitle.IsZero()
 	fields[7] = !v.YAxisTitle.IsZero()
+	fields[8] = !v.LabelRounding.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -11748,6 +11750,14 @@ func (v *Chart) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[8] {
+		if err := w.writeFieldHeader(uvarint, 8); err != nil {
+			return err
+		}
+		if err := v.LabelRounding.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -11795,6 +11805,11 @@ func (v *Chart) read(r *BinaryReader) error {
 			}
 		case 7:
 			err := v.YAxisTitle.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.LabelRounding.read(r)
 			if err != nil {
 				return err
 			}
@@ -12210,18 +12225,20 @@ func (v *CallRequestFocus) read(r *BinaryReader) error {
 }
 
 type PieChart struct {
-	Chart          Chart
-	Series         ChartSeriesArray
-	ShowAsDonut    Bool
-	ShowDataLabels Bool
+	Chart              Chart
+	Series             ChartSeriesArray
+	ShowAsDonut        Bool
+	ShowDataLabels     Bool
+	ShowAbsoluteValues Bool
 }
 
 func (v *PieChart) write(w *BinaryWriter) error {
-	var fields [5]bool
+	var fields [6]bool
 	fields[1] = !v.Chart.IsZero()
 	fields[2] = !v.Series.IsZero()
 	fields[3] = !v.ShowAsDonut.IsZero()
 	fields[4] = !v.ShowDataLabels.IsZero()
+	fields[5] = !v.ShowAbsoluteValues.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -12264,6 +12281,14 @@ func (v *PieChart) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[5] {
+		if err := w.writeFieldHeader(uvarint, 5); err != nil {
+			return err
+		}
+		if err := v.ShowAbsoluteValues.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -12296,6 +12321,11 @@ func (v *PieChart) read(r *BinaryReader) error {
 			}
 		case 4:
 			err := v.ShowDataLabels.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.ShowAbsoluteValues.read(r)
 			if err != nil {
 				return err
 			}
@@ -17417,6 +17447,34 @@ func (v *Switcher) read(r *BinaryReader) error {
 	return nil
 }
 
+type RoundingType uint64
+
+const (
+	Round   RoundingType = 1
+	Floor   RoundingType = 2
+	Ceiling RoundingType = 3
+)
+
+func (v *RoundingType) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *RoundingType) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = RoundingType(tmp)
+	return nil
+}
+
+func (v *RoundingType) reset() {
+	*v = RoundingType(0)
+}
+func (v *RoundingType) IsZero() bool {
+	return *v == 0
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -18752,6 +18810,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 230:
 		var v Switcher
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 231:
+		var v RoundingType
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -21688,13 +21752,14 @@ func (v *Chart) reset() {
 	v.NoDataMessage.reset()
 	v.XAxisTitle.reset()
 	v.YAxisTitle.reset()
+	v.LabelRounding.reset()
 }
 
 func (v *Chart) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Labels.IsZero() && v.Colors.IsZero() && v.Frame.IsZero() && v.Downloadable.IsZero() && v.NoDataMessage.IsZero() && v.XAxisTitle.IsZero() && v.YAxisTitle.IsZero()
+	return v.Labels.IsZero() && v.Colors.IsZero() && v.Frame.IsZero() && v.Downloadable.IsZero() && v.NoDataMessage.IsZero() && v.XAxisTitle.IsZero() && v.YAxisTitle.IsZero() && v.LabelRounding.IsZero()
 }
 
 // Line height for text elements
@@ -21784,13 +21849,14 @@ func (v *PieChart) reset() {
 	v.Series.reset()
 	v.ShowAsDonut.reset()
 	v.ShowDataLabels.reset()
+	v.ShowAbsoluteValues.reset()
 }
 
 func (v *PieChart) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Chart.IsZero() && v.Series.IsZero() && v.ShowAsDonut.IsZero() && v.ShowDataLabels.IsZero()
+	return v.Chart.IsZero() && v.Series.IsZero() && v.ShowAsDonut.IsZero() && v.ShowDataLabels.IsZero() && v.ShowAbsoluteValues.IsZero()
 }
 
 func (v *DnD) reset() {
@@ -24126,6 +24192,13 @@ func (v *SwitcherPages) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *Switcher) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 230); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *RoundingType) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 231); err != nil {
 		return err
 	}
 	return nil

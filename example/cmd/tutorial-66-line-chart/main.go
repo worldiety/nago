@@ -8,6 +8,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/pkg/std"
@@ -17,7 +19,6 @@ import (
 	"go.wdy.de/nago/presentation/ui/chart"
 	"go.wdy.de/nago/presentation/ui/linechart"
 	"go.wdy.de/nago/web/vuejs"
-	"time"
 )
 
 func main() {
@@ -45,7 +46,7 @@ func main() {
 					},
 					{
 						X: "2010",
-						Y: 300,
+						Y: 300.45,
 					},
 					{
 						X: "2011",
@@ -153,11 +154,12 @@ func main() {
 			}
 
 			chart1 := chart.Chart{
-				Colors:       colorPalette,
-				Frame:        ui.Frame{}.Size(ui.L320, ui.L200),
-				Downloadable: false,
-				XAxisTitle:   "x-axis title",
-				YAxisTitle:   "y-axis title",
+				Colors:        colorPalette,
+				Frame:         ui.Frame{}.Size(ui.L320, ui.L200),
+				Downloadable:  false,
+				XAxisTitle:    "x-axis title",
+				YAxisTitle:    "y-axis title",
+				LabelRounding: chart.RoundingRound,
 			}
 			chart2 := chart.Chart{
 				Colors: colorPalette2,

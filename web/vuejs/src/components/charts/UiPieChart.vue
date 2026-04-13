@@ -9,15 +9,19 @@
 
 <script lang="ts" setup>
 import { computed } from 'vue';
+import { Chart } from '@/components/charts/chart';
 import { frameCSS } from '@/components/shared/frame';
 import type ApexCharts from 'apexcharts';
 import VueApexCharts from 'vue3-apexcharts';
-import { PieChart } from '@/shared/proto/nprotoc_gen';
+import type { PieChart } from '@/shared/proto/nprotoc_gen';
 import { colorToHexValue } from '@/shared/tailwindTranslator';
+import { ThemeKey, useThemeManager } from '@/shared/themeManager';
 
 const props = defineProps<{
 	ui: PieChart;
 }>();
+
+const themeManager = useThemeManager();
 
 const chartType = computed<string>(() => {
 	return props.ui.showAsDonut ? 'donut' : 'pie';
@@ -25,11 +29,15 @@ const chartType = computed<string>(() => {
 const options = computed<ApexCharts.ApexOptions>(() => {
 	return {
 		chart: {
+			foreColor: 'currentColor',
 			toolbar: {
 				tools: {
 					download: props.ui.chart?.downloadable ?? false,
 				},
 			},
+		},
+		tooltip: {
+			theme: themeManager.getActiveThemeKey() === ThemeKey.DARK ? 'dark' : 'light',
 		},
 		colors: colors.value,
 		series: series.value,
@@ -38,8 +46,14 @@ const options = computed<ApexCharts.ApexOptions>(() => {
 		},
 		labels: props.ui.chart?.labels?.value ?? labelsFromData.value ?? [],
 		dataLabels: {
-			formatter(val: string | number | number[]): string | number | (string | number)[] {
-				return props.ui.showDataLabels ? val.toString() : '';
+			formatter(val: string | number | number[], { seriesIndex, w }): string | number | (string | number)[] {
+				if (props.ui.showAbsoluteValues) {
+					if (typeof val !== 'number') return w.config.series[seriesIndex];
+					val = w.config.series[seriesIndex];
+				}
+
+				const formatter = Chart.DataLabelFormatter(props.ui.chart);
+				return props.ui.showDataLabels ? formatter(val) : '';
 			},
 		},
 	};

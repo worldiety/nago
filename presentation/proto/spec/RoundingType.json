@@ -1,0 +1,15 @@
+{
+  "kind": "Uint",
+  "id": 231,
+  "const": {
+    "1": {
+      "name": "Round"
+    },
+    "2": {
+      "name": "Floor"
+    },
+    "3": {
+      "name": "Ceiling"
+    }
+  }
+}

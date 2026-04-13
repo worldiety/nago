@@ -9,26 +9,34 @@
 
 <script lang="ts" setup>
 import { computed } from 'vue';
+import { Chart } from '@/components/charts/chart';
 import { frameCSS } from '@/components/shared/frame';
 import type ApexCharts from 'apexcharts';
 import VueApexCharts from 'vue3-apexcharts';
-import { BarChart, BarChartMarker, ChartDataPoint } from '@/shared/proto/nprotoc_gen';
+import type { BarChart, BarChartMarker, ChartDataPoint } from '@/shared/proto/nprotoc_gen';
 import { colorToHexValue } from '@/shared/tailwindTranslator';
+import { ThemeKey, useThemeManager } from '@/shared/themeManager';
 
 const props = defineProps<{
 	ui: BarChart;
 }>();
+
+const themeManager = useThemeManager();
 
 const options = computed<ApexCharts.ApexOptions>(() => {
 	return {
 		chart: {
 			type: 'bar',
 			stacked: props.ui.stacked ?? false,
+			foreColor: 'currentColor',
 			toolbar: {
 				tools: {
 					download: props.ui.chart?.downloadable ?? false,
 				},
 			},
+		},
+		tooltip: {
+			theme: themeManager.getActiveThemeKey() === ThemeKey.DARK ? 'dark' : 'light',
 		},
 		plotOptions: {
 			bar: {
@@ -51,6 +59,9 @@ const options = computed<ApexCharts.ApexOptions>(() => {
 			},
 		},
 		labels: props.ui.chart?.labels?.value ?? [],
+		dataLabels: {
+			formatter: Chart.DataLabelFormatter(props.ui.chart),
+		},
 	};
 });
 const colors = computed<string[]>(() => {
