@@ -12205,6 +12205,8 @@ export class Chart implements Writeable, Readable {
 
 	public yAxisTitle?: Str;
 
+	public labelRounding?: RoundingType;
+
 	constructor(
 		labels: Strings | undefined = undefined,
 		colors: Colors | undefined = undefined,
@@ -12212,7 +12214,8 @@ export class Chart implements Writeable, Readable {
 		downloadable: Bool | undefined = undefined,
 		noDataMessage: Str | undefined = undefined,
 		xAxisTitle: Str | undefined = undefined,
-		yAxisTitle: Str | undefined = undefined
+		yAxisTitle: Str | undefined = undefined,
+		labelRounding: RoundingType | undefined = undefined
 	) {
 		this.labels = labels;
 		this.colors = colors;
@@ -12221,6 +12224,7 @@ export class Chart implements Writeable, Readable {
 		this.noDataMessage = noDataMessage;
 		this.xAxisTitle = xAxisTitle;
 		this.yAxisTitle = yAxisTitle;
+		this.labelRounding = labelRounding;
 	}
 
 	read(reader: BinaryReader): void {
@@ -12260,6 +12264,10 @@ export class Chart implements Writeable, Readable {
 					this.yAxisTitle = readString(reader);
 					break;
 				}
+				case 8: {
+					this.labelRounding = readInt(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -12276,6 +12284,7 @@ export class Chart implements Writeable, Readable {
 			this.noDataMessage !== undefined,
 			this.xAxisTitle !== undefined,
 			this.yAxisTitle !== undefined,
+			this.labelRounding !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -12307,6 +12316,10 @@ export class Chart implements Writeable, Readable {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 7);
 			writeString(writer, this.yAxisTitle!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 8);
+			writeInt(writer, this.labelRounding!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -12317,7 +12330,8 @@ export class Chart implements Writeable, Readable {
 			this.downloadable === undefined &&
 			this.noDataMessage === undefined &&
 			this.xAxisTitle === undefined &&
-			this.yAxisTitle === undefined
+			this.yAxisTitle === undefined &&
+			this.labelRounding === undefined
 		);
 	}
 
@@ -12329,6 +12343,7 @@ export class Chart implements Writeable, Readable {
 		this.noDataMessage = undefined;
 		this.xAxisTitle = undefined;
 		this.yAxisTitle = undefined;
+		this.labelRounding = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -12735,16 +12750,20 @@ export class PieChart implements Writeable, Readable, Component {
 
 	public showDataLabels?: Bool;
 
+	public showAbsoluteValues?: Bool;
+
 	constructor(
 		chart: Chart | undefined = undefined,
 		series: ChartSeriesArray | undefined = undefined,
 		showAsDonut: Bool | undefined = undefined,
-		showDataLabels: Bool | undefined = undefined
+		showDataLabels: Bool | undefined = undefined,
+		showAbsoluteValues: Bool | undefined = undefined
 	) {
 		this.chart = chart;
 		this.series = series;
 		this.showAsDonut = showAsDonut;
 		this.showDataLabels = showDataLabels;
+		this.showAbsoluteValues = showAbsoluteValues;
 	}
 
 	read(reader: BinaryReader): void {
@@ -12771,6 +12790,10 @@ export class PieChart implements Writeable, Readable, Component {
 					this.showDataLabels = readBool(reader);
 					break;
 				}
+				case 5: {
+					this.showAbsoluteValues = readBool(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -12784,6 +12807,7 @@ export class PieChart implements Writeable, Readable, Component {
 			this.series !== undefined && !this.series.isZero(),
 			this.showAsDonut !== undefined,
 			this.showDataLabels !== undefined,
+			this.showAbsoluteValues !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -12803,6 +12827,10 @@ export class PieChart implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.UVARINT, 4);
 			writeBool(writer, this.showDataLabels!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 5);
+			writeBool(writer, this.showAbsoluteValues!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -12810,7 +12838,8 @@ export class PieChart implements Writeable, Readable, Component {
 			(this.chart === undefined || this.chart.isZero()) &&
 			(this.series === undefined || this.series.isZero()) &&
 			this.showAsDonut === undefined &&
-			this.showDataLabels === undefined
+			this.showDataLabels === undefined &&
+			this.showAbsoluteValues === undefined
 		);
 	}
 
@@ -12819,6 +12848,7 @@ export class PieChart implements Writeable, Readable, Component {
 		this.series = undefined;
 		this.showAsDonut = undefined;
 		this.showDataLabels = undefined;
+		this.showAbsoluteValues = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -17928,6 +17958,18 @@ export class Switcher implements Writeable, Readable, Component {
 	isComponent(): void {}
 }
 
+export type RoundingType = number;
+function writeTypeHeaderRoundingType(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 231);
+	return;
+}
+// companion enum containing all defined constants for RoundingType
+export enum RoundingTypeValues {
+	Round = 1,
+	Floor = 2,
+	Ceiling = 3,
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -18983,6 +19025,10 @@ export function unmarshal(src: BinaryReader): any {
 		case 230: {
 			const v = new Switcher();
 			v.read(src);
+			return v;
+		}
+		case 231: {
+			const v = readInt(src) as RoundingType;
 			return v;
 		}
 	}

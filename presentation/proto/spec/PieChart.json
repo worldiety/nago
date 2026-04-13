@@ -17,6 +17,10 @@
     "4": {
       "name": "ShowDataLabels",
       "type": "Bool"
+    },
+    "5": {
+      "name": "ShowAbsoluteValues",
+      "type": "Bool"
     }
   }
 }

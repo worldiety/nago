@@ -38,7 +38,7 @@ func main() {
 				DataPoints: []chart.DataPoint{
 					{
 						X: "Verfügbar",
-						Y: 95,
+						Y: 95.45,
 					},
 					{
 						X: "Nicht verfügbar",

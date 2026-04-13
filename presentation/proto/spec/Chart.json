@@ -32,6 +32,10 @@
     "7": {
       "name": "YAxisTitle",
       "type": "Str"
+    },
+    "8": {
+      "name": "LabelRounding",
+      "type": "RoundingType"
     }
   }
 }

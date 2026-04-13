@@ -12,6 +12,15 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 )
 
+type RoundingType int
+
+const (
+	RoundingNone RoundingType = iota
+	RoundingRound
+	RoundingFloor
+	RoundingCeiling
+)
+
 // Chart defines common chart metadata such as labels, colors, frame, and axis titles,
 // including options like download availability and a fallback message when no data exists.
 type Chart struct {
@@ -22,6 +31,7 @@ type Chart struct {
 	NoDataMessage string
 	XAxisTitle    string
 	YAxisTitle    string
+	LabelRounding RoundingType
 }
 
 // Ora converts Chart into its proto.Chart representation, mapping labels, colors,
@@ -44,6 +54,7 @@ func (c Chart) Ora() proto.Chart {
 		NoDataMessage: proto.Str(c.NoDataMessage),
 		XAxisTitle:    proto.Str(c.XAxisTitle),
 		YAxisTitle:    proto.Str(c.YAxisTitle),
+		LabelRounding: proto.RoundingType(c.LabelRounding),
 	}
 }
 

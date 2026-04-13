@@ -9,21 +9,27 @@
 
 <script lang="ts" setup>
 import { computed } from 'vue';
+import { Chart } from '@/components/charts/chart';
 import { frameCSS } from '@/components/shared/frame';
 import { cssLengthValue } from '@/components/shared/length';
 import type ApexCharts from 'apexcharts';
 import VueApexCharts from 'vue3-apexcharts';
-import { ChartDataPoint, ChartSeriesTypeValues, LineChart, LineChartCurveValues } from '@/shared/proto/nprotoc_gen';
+import type { ChartDataPoint, LineChart } from '@/shared/proto/nprotoc_gen';
+import { ChartSeriesTypeValues, LineChartCurveValues } from '@/shared/proto/nprotoc_gen';
 import { colorToHexValue } from '@/shared/tailwindTranslator';
+import { ThemeKey, useThemeManager } from '@/shared/themeManager';
 
 const props = defineProps<{
 	ui: LineChart;
 }>();
 
+const themeManager = useThemeManager();
+
 const options = computed<ApexCharts.ApexOptions>(() => {
 	return {
 		chart: {
 			type: 'line',
+			foreColor: 'currentColor',
 			toolbar: {
 				tools: {
 					download: props.ui.chart?.downloadable ?? false,
@@ -31,6 +37,9 @@ const options = computed<ApexCharts.ApexOptions>(() => {
 			},
 			height: cssLengthValue(props.ui.chart?.frame?.height ?? 'auto'),
 			width: cssLengthValue(props.ui.chart?.frame?.width ?? 'auto'),
+		},
+		tooltip: {
+			theme: themeManager.getActiveThemeKey() === ThemeKey.DARK ? 'dark' : 'light',
 		},
 		colors: colors.value,
 		series: series.value,
@@ -55,6 +64,9 @@ const options = computed<ApexCharts.ApexOptions>(() => {
 			size: props.ui.markers?.size,
 			strokeColors: props.ui.markers?.borderColor ? colorToHexValue(props.ui.markers?.borderColor) : '#fff',
 			showNullDataPoints: props.ui.markers?.showNullDataPoints,
+		},
+		dataLabels: {
+			formatter: Chart.DataLabelFormatter(props.ui.chart),
 		},
 	};
 });
@@ -116,12 +128,6 @@ function mapSeriesType(seriesType: number | undefined) {
 
 <template>
 	<div :style="frameStyles">
-		<VueApexCharts
-			type="line"
-			:series="options.series"
-			:options="options"
-			:height="props.ui.chart?.frame?.height"
-			:width="props.ui.chart?.frame?.width"
-		/>
+		<VueApexCharts type="line" :series="options.series" :options="options" />
 	</div>
 </template>

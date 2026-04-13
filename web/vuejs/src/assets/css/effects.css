@@ -26,12 +26,7 @@
 	}
 }
 
-a:focus-visible:not(
-.custom-focus,
-.button-primary,
-.button-secondary,
-.button-tertiary
-) {
+a:focus-visible:not(.custom-focus, .button-primary, .button-secondary, .button-tertiary) {
 	@apply outline-offset-4 rounded-full;
 	animation: outline-focus-outside 100ms ease-out;
 }

@@ -14,10 +14,11 @@ import (
 )
 
 type TPieChart struct {
-	chart          chart.Chart
-	series         []chart.Series
-	showAsDonut    bool
-	showDataLabels bool
+	chart              chart.Chart
+	series             []chart.Series
+	showAsDonut        bool
+	showDataLabels     bool
+	showAbsoluteValues bool
 }
 
 func PieChart(chart chart.Chart) TPieChart {
@@ -47,6 +48,11 @@ func (c TPieChart) ShowDataLabels(showDataLabels bool) TPieChart {
 	return c
 }
 
+func (c TPieChart) ShowAbsoluteValues(showAbsoluteValues bool) TPieChart {
+	c.showAbsoluteValues = showAbsoluteValues
+	return c
+}
+
 func (c TPieChart) Render(ctx core.RenderContext) core.RenderNode {
 	protoSeries := make([]proto.ChartSeries, len(c.series))
 
@@ -55,9 +61,10 @@ func (c TPieChart) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	return &proto.PieChart{
-		Chart:          c.chart.Ora(),
-		Series:         protoSeries,
-		ShowAsDonut:    proto.Bool(c.showAsDonut),
-		ShowDataLabels: proto.Bool(c.showDataLabels),
+		Chart:              c.chart.Ora(),
+		Series:             protoSeries,
+		ShowAsDonut:        proto.Bool(c.showAsDonut),
+		ShowDataLabels:     proto.Bool(c.showDataLabels),
+		ShowAbsoluteValues: proto.Bool(c.showAbsoluteValues),
 	}
 }
