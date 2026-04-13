@@ -10,13 +10,14 @@ package scheduler
 import (
 	"context"
 	"fmt"
-	"go.wdy.de/nago/logging"
 	"log/slog"
 	"runtime/debug"
 	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"go.wdy.de/nago/logging"
 )
 
 type LogEntry struct {
@@ -173,7 +174,11 @@ func (s *Scheduler) Launch() {
 						Add(time.Duration(settings.CronHour) * time.Hour).
 						Add(time.Duration(settings.CronMinute) * time.Minute)
 
-					if nextPlannedAt.Before(now) {
+					if settings.PauseTime > 0 {
+						for !nextPlannedAt.After(now) {
+							nextPlannedAt = nextPlannedAt.Add(settings.PauseTime)
+						}
+					} else if nextPlannedAt.Before(now) {
 						nextPlannedAt = nextPlannedAt.Add(24 * time.Hour)
 					}
 
@@ -202,7 +207,7 @@ func (s *Scheduler) Launch() {
 							slog.Error("service looper cron failed to run", "id", s.opts.ID, "err", err.Error())
 							s.logError(err)
 						}
-						
+
 					}
 
 					continue
