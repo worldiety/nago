@@ -33,9 +33,13 @@ func renderStartTimeSequence(c TCalendar, ctx core.RenderContext) core.RenderNod
 		ui.VStack(
 			// card body
 			ui.ForEach(c.mapStartTimeCluster(c.vp, c.events), func(t cluster) core.View {
+				tWidth := ui.Full
+				isLarge := ctx.Window().Info().SizeClass >= core.SizeClassLarge
+				if isLarge {
+					tWidth = ui.L200
+				}
 
-				// cluster with common start label
-				return ui.HStack(
+				views := []core.View{
 					// header
 					ui.HStack(
 						ui.ImageIcon(icons.Clock),
@@ -44,7 +48,7 @@ func renderStartTimeSequence(c TCalendar, ctx core.RenderContext) core.RenderNod
 						Gap(ui.L4).
 						Padding(ui.Padding{}.All(ui.L16)).
 						Border(ui.Border{}.Radius(ui.L8)).
-						Frame(ui.Frame{Width: ui.L200}),
+						Frame(ui.Frame{Width: tWidth}),
 
 					// events
 					ui.VStack(
@@ -58,6 +62,18 @@ func renderStartTimeSequence(c TCalendar, ctx core.RenderContext) core.RenderNod
 					).Alignment(ui.Stretch).
 						Gap(ui.L4).
 						FullWidth(),
+				}
+
+				// cluster with common start label
+				if ctx.Window().Info().SizeClass >= core.SizeClassLarge {
+					return ui.HStack(
+						views...,
+					).FullWidth().
+						Gap(ui.L16).
+						Alignment(ui.Stretch)
+				}
+				return ui.VStack(
+					views...,
 				).FullWidth().
 					Gap(ui.L16).
 					Alignment(ui.Stretch)
