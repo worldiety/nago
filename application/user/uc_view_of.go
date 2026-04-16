@@ -57,7 +57,7 @@ func NewViewOf(ctx func() context.Context, bus events.Bus, users data.NotifyRepo
 		cachedViews.Clear()
 	})
 
-	return func(subject permission.Auditable, id ID) (option.Opt[Subject], error) {
+	return func(_ permission.Auditable, id ID) (option.Opt[Subject], error) {
 		// TODO not sure what permissions we need, this is only system anyway
 
 		if usr, ok := cachedViews.Get(id); ok {

@@ -9,6 +9,7 @@ package inspector
 
 import (
 	"context"
+
 	"go.wdy.de/nago/application/backup"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/blob"
@@ -20,6 +21,22 @@ type Store struct {
 	Stereotype backup.Stereotype
 	Error      error
 }
+
+func (s Store) Identity() string {
+	return s.Name
+}
+
+type Entry struct {
+	Store      Store
+	Key        string
+	SearchData string
+	Size       int64
+}
+
+func (s Entry) Identity() string {
+	return s.Key
+}
+
 type FindAll func(subject auth.Subject) ([]Store, error)
 
 type PageResult struct {

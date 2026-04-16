@@ -203,6 +203,21 @@ func (db *DB) Set(bucket, key string, value []byte) error {
 	return nil
 }
 
+// Stat returns the Value metadata for the given key without reading the payload.
+// The returned Value carries the exact byte length via Len().
+func (db *DB) Stat(bucket, key string) (Value, bool) {
+	db.btreeSnapshotLock.RLock()
+	defer db.btreeSnapshotLock.RUnlock()
+
+	tree, ok := db.buckets.Load(bucket)
+	if !ok {
+		return Value{}, false
+	}
+
+	entry, ok := tree.Get(IndexEntry{key: key})
+	return entry.val, ok
+}
+
 func (db *DB) Exists(bucket, key string) bool {
 	// lock on our trees, but read-only.
 	db.btreeSnapshotLock.RLock()

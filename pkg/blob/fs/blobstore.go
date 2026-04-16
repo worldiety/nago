@@ -248,6 +248,40 @@ func (b *BlobStore) NewReader(ctx context.Context, key string) (std.Option[io.Re
 	return std.Some[io.ReadCloser](f), nil
 }
 
+func (b *BlobStore) Stat(ctx context.Context, key string) (std.Option[blob.Info], error) {
+	b.dirLock.RLock()
+	defer b.dirLock.RUnlock()
+
+	inodeBufOpt := b.db.Get(b.bucketNamePaths, key)
+	if inodeBufOpt.IsNone() {
+		return std.None[blob.Info](), nil
+	}
+
+	reader := inodeBufOpt.Unwrap()
+	dec := json.NewDecoder(reader)
+	defer reader.Close()
+
+	var ind inode
+	if err := dec.Decode(&ind); err != nil {
+		return std.None[blob.Info](), fmt.Errorf("cannot parse inode meta data: %w", err)
+	}
+
+	fi, err := os.Stat(b.filepath(ind.Sha512))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return std.None[blob.Info](), nil
+		}
+
+		return std.None[blob.Info](), err
+	}
+
+	return std.Some(blob.Info{
+		Size:    fi.Size(),
+		ModTime: fi.ModTime(),
+		Sys:     fi.Sys(),
+	}), nil
+}
+
 // NewWriter first freely writes into a temporary file and afterward will only block as short as possible
 // to update any metadata to avoid our dreaded deadlocks. The commit happens when closing the writer.
 func (b *BlobStore) NewWriter(ctx context.Context, key string) (io.WriteCloser, error) {

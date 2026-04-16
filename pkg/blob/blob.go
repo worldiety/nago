@@ -150,6 +150,38 @@ func Write(store Writer, key string, src io.Reader) (written int64, err error) {
 	return n, err
 }
 
+func Stat(ctx context.Context, store Reader, key string) (option.Opt[Info], error) {
+	if r, ok := store.(StatReader); ok {
+		return r.Stat(ctx, key)
+	}
+
+	// Fallback: open the reader only to confirm existence, then close immediately
+	// without reading any bytes to avoid allocations.
+	optR, err := store.NewReader(ctx, key)
+	if err != nil {
+		return option.None[Info](), err
+	}
+
+	if optR.IsNone() {
+		return option.None[Info](), nil
+	}
+
+	r := optR.Unwrap()
+
+	// io.Discard implements io.ReaderFrom and drains via an internal sync.Pool buffer,
+	// so no persistent heap allocations occur. The returned n is the exact byte count.
+	n, err := io.Copy(io.Discard, r)
+	if closeErr := r.Close(); err == nil {
+		err = closeErr
+	}
+
+	if err != nil {
+		return option.None[Info](), err
+	}
+
+	return option.Some(Info{Size: n}), nil
+}
+
 // Put is a shorthand function to write small values using a slice into the store. Do not use for large blobs.
 func Put(store Writer, key string, value []byte) (err error) {
 	if len(value) == 0 {

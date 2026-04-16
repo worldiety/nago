@@ -8,13 +8,15 @@
 package cfginspector
 
 import (
+	"log/slog"
+
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/admin"
 	"go.wdy.de/nago/application/inspector"
+	"go.wdy.de/nago/application/inspector/rest"
 	"go.wdy.de/nago/application/inspector/ui"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/presentation/core"
-	"log/slog"
 )
 
 // Management is a Nago system(Inspector Management).
@@ -44,6 +46,8 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		},
 	}
 
+	cfg.NoFooter(management.Pages.PageDataInspector)
+
 	cfg.RootViewWithDecoration(management.Pages.PageDataInspector, func(wnd core.Window) core.View {
 		return uiinspector.PageInspector(wnd, management.UseCases)
 	})
@@ -59,6 +63,22 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		return group
 	})
 	cfg.AddContextValue(core.ContextValue("nago.inspector", management))
+
+	if err := cfg.HandleFuncSubject(rest.PathDownloadAsJSONArray, rest.NewDownloadAsJSONArray(stores)); err != nil {
+		return Management{}, err
+	}
+
+	if err := cfg.HandleFuncSubject(rest.PathDownloadAsJSONObject, rest.NewDownloadAsJSONObject(stores)); err != nil {
+		return Management{}, err
+	}
+
+	if err := cfg.HandleFuncSubject(rest.PathDownloadAsZip, rest.NewDownloadAsZip(stores)); err != nil {
+		return Management{}, err
+	}
+
+	if err := cfg.HandleFuncSubject(rest.PathDownloadAsRaw, rest.NewDownloadAsRaw(stores)); err != nil {
+		return Management{}, err
+	}
 
 	slog.Info("installed inspector management")
 

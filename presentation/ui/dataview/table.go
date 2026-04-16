@@ -182,6 +182,7 @@ func (t TDataView[E, ID]) tableActionBar(wnd core.Window, model pager.Model[E, I
 
 	var items []ui.TMenuItem
 	for _, selectOption := range t.selectOptions {
+
 		if selectOption.Visible != nil && !selectOption.Visible(selected) {
 			continue
 		}
@@ -213,8 +214,12 @@ func (t TDataView[E, ID]) tableActionBar(wnd core.Window, model pager.Model[E, I
 		}).Title(StrXSelected.Get(wnd, i18n.Int("num", model.SelectionCount))).PostIcon(icons.Close).Visible(model.SelectionCount > 0),
 
 		ui.IfFunc(len(t.selectOptions) > 0 && !t.hideSelection, func() core.View {
+			if len(selected) == 0 {
+				return ui.SecondaryButton(nil).Enabled(false).Title(rstring.LabelOptions.Get(wnd)).PreIcon(icons.Grid)
+			}
+
 			return ui.Menu(
-				ui.SecondaryButton(nil).Enabled(len(selected) > 0).Title(rstring.LabelOptions.Get(wnd)).PreIcon(icons.Grid),
+				ui.SecondaryButton(nil).Title(rstring.LabelOptions.Get(wnd)).PreIcon(icons.Grid),
 				ui.MenuGroup(items...),
 			)
 		}),

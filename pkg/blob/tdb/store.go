@@ -86,6 +86,15 @@ func (b *BlobStore) NewReader(ctx context.Context, key string) (std.Option[io.Re
 	return b.db.Get(b.bucket, key), nil
 }
 
+func (b *BlobStore) Stat(ctx context.Context, key string) (std.Option[blob.Info], error) {
+	val, ok := b.db.Stat(b.bucket, key)
+	if !ok {
+		return std.None[blob.Info](), nil
+	}
+
+	return std.Some(blob.Info{Size: int64(val.Len())}), nil
+}
+
 func (b *BlobStore) NewWriter(ctx context.Context, key string) (io.WriteCloser, error) {
 	return &writeCloser{
 		parent: b,
