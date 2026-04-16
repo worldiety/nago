@@ -182,7 +182,7 @@ func (c TStepper) renderFull(ctx core.RenderContext) core.RenderNode {
 					line,
 				).Frame(ui.Frame{Width: cellWidth}), // we need the explicit size here, because CSS cannot calculate the width of "nothing"
 				ui.Text(step.headline),
-				ui.Text(step.supportingText).Font(ui.Small),
+				ui.Text(step.supportingText).Font(ui.BodySmall),
 			).Alignment(ui.TopLeading),
 		))
 	}
