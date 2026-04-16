@@ -105,8 +105,6 @@ const inputFieldWrapperClasses = computed((): string | null => {
 	}
 
 	.input-field-wrapper {
-		@apply pb-px;
-
 		textarea.input-field {
 			@apply resize-none max-h-80;
 		}
