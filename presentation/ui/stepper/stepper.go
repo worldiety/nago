@@ -82,6 +82,24 @@ func (c TStepper) Style(style Style) TStepper {
 	return c
 }
 
+// ColorCurrent sets the color for the currently active step.
+func (c TStepper) ColorCurrent(color ui.Color) TStepper {
+	c.colorCurrent = color
+	return c
+}
+
+// ColorDone sets the color for completed steps.
+func (c TStepper) ColorDone(color ui.Color) TStepper {
+	c.colorDone = color
+	return c
+}
+
+// ColorFuture sets the color for upcoming steps.
+func (c TStepper) ColorFuture(color ui.Color) TStepper {
+	c.colorFuture = color
+	return c
+}
+
 func (c TStepper) Render(ctx core.RenderContext) core.RenderNode {
 	switch c.style {
 	case Simple:

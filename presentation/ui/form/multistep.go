@@ -18,11 +18,14 @@ import (
 // tracking the active step index, available steps, and a completion button.
 // It can also apply custom logic to determine if a step can be shown.
 type TMultiSteps struct {
-	activeIndex *core.State[int]
-	buttonDone  core.View
-	steps       []TStep
-	canShow     func(currentIdx int, wantedIndex int) bool
-	frame       ui.Frame
+	activeIndex  *core.State[int]
+	buttonDone   core.View
+	steps        []TStep
+	canShow      func(currentIdx int, wantedIndex int) bool
+	frame        ui.Frame
+	colorCurrent ui.Color
+	colorDone    ui.Color
+	colorFuture  ui.Color
 }
 
 // MultiSteps creates a new TMultiSteps with the provided steps.
@@ -51,6 +54,24 @@ func (c TMultiSteps) CanShow(fn func(currentIdx int, wantedIndex int) bool) TMul
 // Frame sets the layout frame of the multi-steps component.
 func (c TMultiSteps) Frame(frame ui.Frame) TMultiSteps {
 	c.frame = frame
+	return c
+}
+
+// ColorCurrent sets the color for the currently active step indicator.
+func (c TMultiSteps) ColorCurrent(color ui.Color) TMultiSteps {
+	c.colorCurrent = color
+	return c
+}
+
+// ColorDone sets the color for completed step indicators.
+func (c TMultiSteps) ColorDone(color ui.Color) TMultiSteps {
+	c.colorDone = color
+	return c
+}
+
+// ColorFuture sets the color for upcoming step indicators.
+func (c TMultiSteps) ColorFuture(color ui.Color) TMultiSteps {
+	c.colorFuture = color
 	return c
 }
 
@@ -102,11 +123,22 @@ func (c TMultiSteps) Render(ctx core.RenderContext) core.RenderNode {
 		buttons = append(buttons, c.buttonDone)
 	}
 
+	s := stepper.Stepper(ui.ForEach(c.steps, func(t TStep) stepper.TStep {
+		return stepper.Step().Headline(t.headline).SupportingText(t.supportingText)
+	})...).Index(c.activeIndex.Get())
+	if c.colorCurrent != "" {
+		s = s.ColorCurrent(c.colorCurrent)
+	}
+	if c.colorDone != "" {
+		s = s.ColorDone(c.colorDone)
+	}
+	if c.colorFuture != "" {
+		s = s.ColorFuture(c.colorFuture)
+	}
+
 	return ui.VStack(
 		ui.HStack(
-			stepper.Stepper(ui.ForEach(c.steps, func(t TStep) stepper.TStep {
-				return stepper.Step().Headline(t.headline).SupportingText(t.supportingText)
-			})...).Index(c.activeIndex.Get()),
+			s,
 		).FullWidth(),
 		ui.VStack().Frame(ui.Frame{Height: ui.L8}), // this is just a separator
 		body,
