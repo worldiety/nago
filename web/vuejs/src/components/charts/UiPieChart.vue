@@ -8,9 +8,10 @@
 -->
 
 <script lang="ts" setup>
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Chart } from '@/components/charts/chart';
 import { frameCSS } from '@/components/shared/frame';
+import { randomStr } from '@/components/shared/util';
 import type ApexCharts from 'apexcharts';
 import VueApexCharts from 'vue3-apexcharts';
 import type { PieChart } from '@/shared/proto/nprotoc_gen';
@@ -23,9 +24,14 @@ const props = defineProps<{
 
 const themeManager = useThemeManager();
 
+const id = randomStr(16);
+const refreshCount = ref(0);
+const refreshKey = computed<string>(() => `${id}_${refreshCount.value}`);
+
 const chartType = computed<string>(() => {
 	return props.ui.showAsDonut ? 'donut' : 'pie';
 });
+
 const options = computed<ApexCharts.ApexOptions>(() => {
 	return {
 		chart: {
@@ -40,7 +46,6 @@ const options = computed<ApexCharts.ApexOptions>(() => {
 			theme: themeManager.getActiveThemeKey() === ThemeKey.DARK ? 'dark' : 'light',
 		},
 		colors: colors.value,
-		series: series.value,
 		noData: {
 			text: props.ui.chart?.noDataMessage,
 		},
@@ -98,10 +103,16 @@ const frameStyles = computed<string>(() => {
 
 	return styles.join(';');
 });
+
+function refreshChart() {
+	refreshCount.value++;
+}
+
+watch(() => props.ui, refreshChart, { deep: true });
 </script>
 
 <template>
 	<div :style="frameStyles">
-		<VueApexCharts :type="chartType" :series="options.series" :options="options" />
+		<VueApexCharts :key="refreshKey" :type="chartType" :series="series" :options="options" />
 	</div>
 </template>
