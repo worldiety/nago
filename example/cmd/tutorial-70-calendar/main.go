@@ -15,6 +15,8 @@ import (
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
 	flowbiteOutline "go.wdy.de/nago/presentation/icons/flowbite/outline"
+	flowbiteSolid "go.wdy.de/nago/presentation/icons/flowbite/solid"
+	heroOutline "go.wdy.de/nago/presentation/icons/hero/outline"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/calendar"
 	"go.wdy.de/nago/web/vuejs"
@@ -80,9 +82,17 @@ func main() {
 						Lane: calendar.Lane{
 							Label: "Torben",
 						},
+						Organiser: "Olaf",
+						Location:  "WZO",
 						Category: calendar.Category{
 							Label: "Kategorie 2",
 							Color: "#ffff00",
+						},
+						AttendeeState: &calendar.Chip{
+							Label:     "Eingetragen",
+							Icon:      flowbiteSolid.BadgeCheck,
+							BgColor:   "#2BCA73",
+							TextColor: ui.M8,
 						},
 					},
 
@@ -100,6 +110,12 @@ func main() {
 						Category: calendar.Category{
 							Label: "Kategorie 2",
 							Color: "#ff0000",
+						},
+						AttendeeState: &calendar.Chip{
+							Label:     "Wartelistenplatz: 5",
+							Icon:      flowbiteSolid.ClipboardList,
+							BgColor:   "#FBC83E",
+							TextColor: ui.M8,
 						},
 					},
 
@@ -131,8 +147,17 @@ func main() {
 						Lane: calendar.Lane{
 							Label: "Olaf",
 						},
+						Chips: []calendar.Chip{
+							{
+								Label:     "20 | 50",
+								Icon:      flowbiteSolid.Users,
+								BgColor:   "#3A3257",
+								TextColor: ui.M9,
+							},
+						},
 					},
-				).ViewPort(calendar.Year(2025)).
+				).
+					ViewPort(calendar.Year(2025)).
 					Frame(ui.Frame{}.FullWidth()).
 					Style(calendar.StartTimeSequence),
 
@@ -162,6 +187,20 @@ func calStartTimeSeqTimeExample() core.View {
 			Category: calendar.Category{
 				Label: "Kategorie 2",
 				Color: "#ff0000",
+			},
+			Chips: []calendar.Chip{
+				{
+					Label:     "Warteliste",
+					Icon:      flowbiteSolid.ClipboardList,
+					BgColor:   "#3A3257",
+					TextColor: ui.M9,
+				},
+				{
+					Label:     "Ausgebucht",
+					Icon:      heroOutline.XMark,
+					BgColor:   "#FE543E",
+					TextColor: ui.M8,
+				},
 			},
 		},
 		calendar.Event{
@@ -194,6 +233,20 @@ func calStartTimeSeqTimeExample() core.View {
 			Category: calendar.Category{
 				Label: "Kategorie 2",
 				Color: "#ffff00",
+			},
+			Chips: []calendar.Chip{
+				{
+					Label:     "20",
+					Icon:      flowbiteSolid.Users,
+					BgColor:   "#3A3257",
+					TextColor: ui.M9,
+				},
+			},
+			AttendeeState: &calendar.Chip{
+				Label:     "Eingetragen",
+				Icon:      flowbiteSolid.BadgeCheck,
+				BgColor:   "#4FEE62",
+				TextColor: ui.M8,
 			},
 		},
 	).ViewPort(calendar.Day(2026, 7, 11)).

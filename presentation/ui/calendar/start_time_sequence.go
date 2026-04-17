@@ -57,7 +57,7 @@ func renderStartTimeSequence(c TCalendar, ctx core.RenderContext) core.RenderNod
 								return evt.Render(c.style)
 							}
 
-							return startTimeSeqPill(c, evt, t.TimeStyle())
+							return startTimeSeqPill(c, evt, t.TimeStyle(), isLarge)
 						})...,
 					).Alignment(ui.Stretch).
 						Gap(ui.L4).
@@ -117,7 +117,7 @@ const (
 	pillTimeNone
 )
 
-func startTimeSeqPill(c TCalendar, evt Event, timeHint seqPillTimeHint) core.View {
+func startTimeSeqPill(c TCalendar, evt Event, timeHint seqPillTimeHint, isLarge bool) core.View {
 	colors := c.colors
 
 	isTimePoint := evt.To.At.Equal(evt.From.At)
@@ -148,11 +148,25 @@ func startTimeSeqPill(c TCalendar, evt Event, timeHint seqPillTimeHint) core.Vie
 		}
 	}
 
+	titleRow := []core.View{ui.Text(evt.Label).Font(ui.BodyLarge)}
+	if isLarge && len(evt.Chips) > 0 {
+		titleRow = append(titleRow,
+			ui.Spacer(),
+			ui.HStack(
+				chipViews(evt)...,
+			).
+				Alignment(ui.Trailing).
+				Gap(ui.L12),
+		)
+	}
+
 	return ui.HStack(
 		// category color
 		ui.HStack().BackgroundColor(evt.Category.Color).Frame(ui.Frame{MinWidth: ui.L12}).AccessibilityLabel(evt.Category.Label),
 		ui.VStack(
-			ui.Text(evt.Label).Font(ui.BodyLarge),
+			ui.HStack(
+				titleRow...,
+			).Alignment(ui.Leading).FullWidth(),
 			ui.If(timeStr != "",
 				ui.HStack(
 					ui.ImageIcon(icons.Clock),
@@ -167,6 +181,24 @@ func startTimeSeqPill(c TCalendar, evt Event, timeHint seqPillTimeHint) core.Vie
 				ui.ImageIcon(icons.MapPinAlt),
 				ui.Text(evt.Location),
 			).Gap(ui.L4)),
+			ui.Lazy(func() core.View {
+				if isLarge {
+					if evt.AttendeeState != nil {
+						return ui.HStack(
+							chipView(*evt.AttendeeState),
+						).Alignment(ui.Leading).FullWidth()
+					}
+					return nil
+				}
+				if evt.AttendeeState != nil {
+					return ui.HStack(
+						chipView(*evt.AttendeeState),
+					).Alignment(ui.Leading).FullWidth()
+				}
+				return ui.HStack(
+					chipViews(evt)...,
+				).Alignment(ui.Leading).Gap(ui.L12)
+			}),
 		).
 			BackgroundColor(colors.EventBackground).
 			Alignment(ui.Leading).
@@ -182,7 +214,26 @@ func startTimeSeqPill(c TCalendar, evt Event, timeHint seqPillTimeHint) core.Vie
 			}).Padding(ui.Padding{}.All(ui.L8)),
 	).
 		Gap(ui.L2).
+		FullWidth().
 		Alignment(ui.Stretch).
-		Border(ui.Border{}.Radius(ui.L8)).
-		Frame(ui.Frame{MinHeight: ui.L40, Width: ui.Full, Height: ui.Full})
+		Border(ui.Border{}.Radius(ui.L8))
+}
+
+func chipViews(evt Event) []core.View {
+	return ui.ForEach[Chip, core.View](evt.Chips, func(chip Chip) core.View {
+		return chipView(chip)
+	})
+}
+
+func chipView(chip Chip) core.View {
+	return ui.HStack(
+		ui.ImageIcon(chip.Icon).FillColor(chip.TextColor).StrokeColor(chip.TextColor).Frame(ui.Frame{}.Size(ui.L20, ui.L20)),
+		ui.Text(chip.Label).Font(ui.Font{Size: ui.L12}).Color(chip.TextColor),
+	).
+		Alignment(ui.Leading).
+		BackgroundColor(chip.BgColor).
+		Gap(ui.L4).
+		FullWidth().
+		Border(ui.Border{}.Radius(ui.L4)).
+		Padding(ui.Padding{}.All(ui.L4))
 }
