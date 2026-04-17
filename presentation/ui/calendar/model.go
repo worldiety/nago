@@ -41,25 +41,27 @@ type Lane struct {
 
 // Event represents a calendar entry or scheduled activity with metadata.
 type Event struct {
-	From          Instant // From is inclusive and Offset is e.g. the travel time by bus
-	To            Instant // To is inclusive and Offset is e.g. the travel time by train
-	Label         string  // Title of the event
-	Action        func()  // Action if clicked on the event
-	Category      Category
-	Lane          Lane
-	Chips         []Chip
-	AttendeeState *Chip // The attendee is either neither registered nor on the waiting list, or is in one of the two states.
-	Organiser     string
-	Location      string
-	Render        func(Style) core.View // custom render func, may be nil to render the default way
+	From      Instant // From is inclusive and Offset is e.g. the travel time by bus
+	To        Instant // To is inclusive and Offset is e.g. the travel time by train
+	Label     string  // Title of the event
+	Action    func()  // Action if clicked on the event
+	Category  Category
+	Lane      Lane
+	Chips     []Chip
+	Organiser string
+	Location  string
+	Render    func(Style) core.View // custom render func, may be nil to render the default way
 }
 
 // Chip can be used to display additional event information,
 // such as the current number of participants or whether
 // sign-up for the waiting list is available.
+// Currently supported alignments are TopTrailing and BottomLeading.
 type Chip struct {
 	Label     string // Text within the chip
 	Icon      core.SVG
 	BgColor   color.Color
 	TextColor color.Color
+	Alignment ui.Alignment
+	FullWidth bool
 }

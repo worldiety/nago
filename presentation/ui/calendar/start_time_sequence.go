@@ -153,7 +153,8 @@ func startTimeSeqPill(c TCalendar, evt Event, timeHint seqPillTimeHint, isLarge 
 		titleRow = append(titleRow,
 			ui.Spacer(),
 			ui.HStack(
-				chipViews(evt)...,
+				// show small chips in the label row only
+				chipViews(evt, ui.TopTrailing, false)...,
 			).
 				Alignment(ui.Trailing).
 				Gap(ui.L12),
@@ -181,24 +182,14 @@ func startTimeSeqPill(c TCalendar, evt Event, timeHint seqPillTimeHint, isLarge 
 				ui.ImageIcon(icons.MapPinAlt),
 				ui.Text(evt.Location),
 			).Gap(ui.L4)),
-			ui.Lazy(func() core.View {
-				if isLarge {
-					if evt.AttendeeState != nil {
-						return ui.HStack(
-							chipView(*evt.AttendeeState),
-						).Alignment(ui.Leading).FullWidth()
-					}
-					return nil
-				}
-				if evt.AttendeeState != nil {
-					return ui.HStack(
-						chipView(*evt.AttendeeState),
-					).Alignment(ui.Leading).FullWidth()
-				}
-				return ui.HStack(
-					chipViews(evt)...,
-				).Alignment(ui.Leading).Gap(ui.L12)
-			}),
+			// show bottom leading chips which are not full width
+			ui.If(len(evt.Chips) > 0, ui.HStack(
+				chipViews(evt, ui.BottomLeading, false)...,
+			).Gap(ui.L12)),
+			// show bottom leading chips which are full width
+			ui.If(len(evt.Chips) > 0, ui.HStack(
+				chipViews(evt, ui.BottomLeading, true)...,
+			).Gap(ui.L12).FullWidth()),
 		).
 			BackgroundColor(colors.EventBackground).
 			Alignment(ui.Leading).
@@ -219,8 +210,15 @@ func startTimeSeqPill(c TCalendar, evt Event, timeHint seqPillTimeHint, isLarge 
 		Border(ui.Border{}.Radius(ui.L8))
 }
 
-func chipViews(evt Event) []core.View {
-	return ui.ForEach[Chip, core.View](evt.Chips, func(chip Chip) core.View {
+func chipViews(evt Event, alignment ui.Alignment, fullWidth bool) []core.View {
+	var chips []Chip
+	for _, chip := range evt.Chips {
+		// filter by alignment and full width
+		if fullWidth == chip.FullWidth && chip.Alignment == alignment {
+			chips = append(chips, chip)
+		}
+	}
+	return ui.ForEach[Chip, core.View](chips, func(chip Chip) core.View {
 		return chipView(chip)
 	})
 }

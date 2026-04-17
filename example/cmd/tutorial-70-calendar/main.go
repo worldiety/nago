@@ -32,6 +32,13 @@ func main() {
 		cfg.SetDecorator(cfg.NewScaffold().Decorator())
 
 		cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {
+
+			isLarge := wnd.Info().SizeClass >= core.SizeClassLarge
+			chipAlignment := ui.TopTrailing
+			if !isLarge {
+				chipAlignment = ui.BottomLeading
+			}
+
 			return ui.VStack(
 				ui.Text("hello world"),
 				calendar.Calendar(
@@ -88,11 +95,15 @@ func main() {
 							Label: "Kategorie 2",
 							Color: "#ffff00",
 						},
-						AttendeeState: &calendar.Chip{
-							Label:     "Eingetragen",
-							Icon:      flowbiteSolid.BadgeCheck,
-							BgColor:   "#2BCA73",
-							TextColor: ui.M8,
+						Chips: []calendar.Chip{
+							{
+								Label:     "Eingetragen",
+								Icon:      flowbiteSolid.BadgeCheck,
+								BgColor:   "#2BCA73",
+								TextColor: ui.M8,
+								Alignment: ui.BottomLeading,
+								FullWidth: true,
+							},
 						},
 					},
 
@@ -111,11 +122,15 @@ func main() {
 							Label: "Kategorie 2",
 							Color: "#ff0000",
 						},
-						AttendeeState: &calendar.Chip{
-							Label:     "Wartelistenplatz: 5",
-							Icon:      flowbiteSolid.ClipboardList,
-							BgColor:   "#FBC83E",
-							TextColor: ui.M8,
+						Chips: []calendar.Chip{
+							{
+								Label:     "Wartelistenplatz: 5",
+								Icon:      flowbiteSolid.ClipboardList,
+								BgColor:   "#FBC83E",
+								TextColor: ui.M8,
+								Alignment: ui.BottomLeading,
+								FullWidth: true,
+							},
 						},
 					},
 
@@ -153,6 +168,7 @@ func main() {
 								Icon:      flowbiteSolid.Users,
 								BgColor:   "#3A3257",
 								TextColor: ui.M9,
+								Alignment: chipAlignment,
 							},
 						},
 					},
@@ -162,14 +178,15 @@ func main() {
 					Style(calendar.StartTimeSequence),
 
 				//
-				calStartTimeSeqTimeExample(),
+				calStartTimeSeqTimeExample(chipAlignment),
 			).FullWidth().Gap(ui.L16)
 
 		})
 	}).Run()
 }
 
-func calStartTimeSeqTimeExample() core.View {
+func calStartTimeSeqTimeExample(chipAlignment ui.Alignment) core.View {
+
 	return calendar.Calendar(
 		calendar.Event{
 			From: calendar.Instant{
@@ -194,12 +211,14 @@ func calStartTimeSeqTimeExample() core.View {
 					Icon:      flowbiteSolid.ClipboardList,
 					BgColor:   "#3A3257",
 					TextColor: ui.M9,
+					Alignment: chipAlignment,
 				},
 				{
 					Label:     "Ausgebucht",
 					Icon:      heroOutline.XMark,
 					BgColor:   "#FE543E",
 					TextColor: ui.M8,
+					Alignment: chipAlignment,
 				},
 			},
 		},
@@ -240,13 +259,16 @@ func calStartTimeSeqTimeExample() core.View {
 					Icon:      flowbiteSolid.Users,
 					BgColor:   "#3A3257",
 					TextColor: ui.M9,
+					Alignment: chipAlignment,
 				},
-			},
-			AttendeeState: &calendar.Chip{
-				Label:     "Eingetragen",
-				Icon:      flowbiteSolid.BadgeCheck,
-				BgColor:   "#4FEE62",
-				TextColor: ui.M8,
+				{
+					Label:     "Eingetragen",
+					Icon:      flowbiteSolid.BadgeCheck,
+					BgColor:   "#2BCA73",
+					TextColor: ui.M8,
+					Alignment: ui.BottomLeading,
+					FullWidth: true,
+				},
 			},
 		},
 	).ViewPort(calendar.Day(2026, 7, 11)).
