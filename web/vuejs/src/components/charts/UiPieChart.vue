@@ -113,6 +113,6 @@ watch(() => props.ui, refreshChart, { deep: true });
 
 <template>
 	<div :style="frameStyles">
-		<VueApexCharts :key="refreshKey" :type="chartType" :series="series" :options="options" />
+		<VueApexCharts :key="refreshKey" :type="chartType" :series="series" :options="options" height="100%" />
 	</div>
 </template>

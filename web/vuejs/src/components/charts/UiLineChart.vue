@@ -42,7 +42,6 @@ const options = computed<ApexCharts.ApexOptions>(() => {
 			theme: themeManager.getActiveThemeKey() === ThemeKey.DARK ? 'dark' : 'light',
 		},
 		colors: colors.value,
-		series: series.value,
 		noData: {
 			text: props.ui.chart?.noDataMessage,
 		},
@@ -128,6 +127,6 @@ function mapSeriesType(seriesType: number | undefined) {
 
 <template>
 	<div :style="frameStyles">
-		<VueApexCharts type="line" :series="options.series" :options="options" />
+		<VueApexCharts type="line" :series="series" :options="options" height="100%" />
 	</div>
 </template>
