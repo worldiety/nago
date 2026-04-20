@@ -40,6 +40,7 @@ So, consider the following situations:
 | `KeydownEnter(fn func())` | KeydownEnter sets a callback function to be triggered when the Enter key is pressed. |
 | `Label(label string)` | Label sets the field label. |
 | `Lines(lines int)` | Lines are by default at 0 and enforces a single line text field. Otherwise, a text area is created. This is also true, if lines 1 to differentiate between subtile behavior of single line text fields and single line text areas, which may take even more lines, because e.g. a web browser allows to change that on demand. |
+| `Name(name string)` | Name defines the name of the input |
 | `Padding(padding Padding)` | Padding sets the padding around the field. |
 | `Style(s TextFieldStyle)` | Style sets the wanted style. If empty, [proto.TextFieldOutlined] is applied. |
 | `SupportingText(text string)` | SupportingText sets helper text displayed below the field. |

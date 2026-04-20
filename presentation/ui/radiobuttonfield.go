@@ -23,6 +23,7 @@ type TRadioButtonField struct {
 	label      string
 	stateGroup *RadioStateGroup
 	index      int
+	name       string
 }
 
 // RadioButtonField combines a RadioButton with a label
@@ -76,6 +77,12 @@ func (c TRadioButtonField) Visible(v bool) TRadioButtonField {
 	return c
 }
 
+// Name assigns a name to the checkbox field, useful for autocomplete
+func (c TRadioButtonField) Name(name string) TRadioButtonField {
+	c.name = name
+	return c
+}
+
 // Render builds and returns the protocol representation of the radio button.
 func (c TRadioButtonField) Render(ctx core.RenderContext) core.RenderNode {
 	action := func() {
@@ -89,7 +96,7 @@ func (c TRadioButtonField) Render(ctx core.RenderContext) core.RenderNode {
 
 	return HStack(
 		RadioButton(c.value).
-			InputChecked(c.inputValue).Disabled(c.disabled).ID(c.id).Visible(!c.invisible),
+			InputChecked(c.inputValue).Disabled(c.disabled).ID(c.id).Visible(!c.invisible).Name(c.name),
 		HStack(
 			Text(c.label).Action(action),
 		).Opacity(opacity),

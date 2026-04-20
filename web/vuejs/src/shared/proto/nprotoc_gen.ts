@@ -1378,18 +1378,22 @@ export class Checkbox implements Writeable, Readable, Component {
 	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
 	public id?: Str;
 
+	public name?: Str;
+
 	constructor(
 		inputValue: Ptr | undefined = undefined,
 		value: Bool | undefined = undefined,
 		disabled: Bool | undefined = undefined,
 		invisible: Bool | undefined = undefined,
-		id: Str | undefined = undefined
+		id: Str | undefined = undefined,
+		name: Str | undefined = undefined
 	) {
 		this.inputValue = inputValue;
 		this.value = value;
 		this.disabled = disabled;
 		this.invisible = invisible;
 		this.id = id;
+		this.name = name;
 	}
 
 	read(reader: BinaryReader): void {
@@ -1418,6 +1422,10 @@ export class Checkbox implements Writeable, Readable, Component {
 					this.id = readString(reader);
 					break;
 				}
+				case 6: {
+					this.name = readString(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -1432,6 +1440,7 @@ export class Checkbox implements Writeable, Readable, Component {
 			this.disabled !== undefined,
 			this.invisible !== undefined,
 			this.id !== undefined,
+			this.name !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -1455,6 +1464,10 @@ export class Checkbox implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
 			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 6);
+			writeString(writer, this.name!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -1463,7 +1476,8 @@ export class Checkbox implements Writeable, Readable, Component {
 			this.value === undefined &&
 			this.disabled === undefined &&
 			this.invisible === undefined &&
-			this.id === undefined
+			this.id === undefined &&
+			this.name === undefined
 		);
 	}
 
@@ -1473,6 +1487,7 @@ export class Checkbox implements Writeable, Readable, Component {
 		this.disabled = undefined;
 		this.invisible = undefined;
 		this.id = undefined;
+		this.name = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -5067,6 +5082,8 @@ export class PasswordField implements Writeable, Readable, Component {
 
 	public keydownEnter?: Ptr;
 
+	public autocomplete?: Str;
+
 	constructor(
 		label: Str | undefined = undefined,
 		supportingText: Str | undefined = undefined,
@@ -5083,7 +5100,8 @@ export class PasswordField implements Writeable, Readable, Component {
 		invisible: Bool | undefined = undefined,
 		revealed: Bool | undefined = undefined,
 		id: Str | undefined = undefined,
-		keydownEnter: Ptr | undefined = undefined
+		keydownEnter: Ptr | undefined = undefined,
+		autocomplete: Str | undefined = undefined
 	) {
 		this.label = label;
 		this.supportingText = supportingText;
@@ -5101,6 +5119,7 @@ export class PasswordField implements Writeable, Readable, Component {
 		this.revealed = revealed;
 		this.id = id;
 		this.keydownEnter = keydownEnter;
+		this.autocomplete = autocomplete;
 	}
 
 	read(reader: BinaryReader): void {
@@ -5174,6 +5193,10 @@ export class PasswordField implements Writeable, Readable, Component {
 					this.keydownEnter = readInt(reader);
 					break;
 				}
+				case 17: {
+					this.autocomplete = readString(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -5199,6 +5222,7 @@ export class PasswordField implements Writeable, Readable, Component {
 			this.revealed !== undefined,
 			this.id !== undefined,
 			this.keydownEnter !== undefined,
+			this.autocomplete !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -5266,6 +5290,10 @@ export class PasswordField implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.UVARINT, 16);
 			writeInt(writer, this.keydownEnter!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[17]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 17);
+			writeString(writer, this.autocomplete!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -5285,7 +5313,8 @@ export class PasswordField implements Writeable, Readable, Component {
 			this.invisible === undefined &&
 			this.revealed === undefined &&
 			this.id === undefined &&
-			this.keydownEnter === undefined
+			this.keydownEnter === undefined &&
+			this.autocomplete === undefined
 		);
 	}
 
@@ -5306,6 +5335,7 @@ export class PasswordField implements Writeable, Readable, Component {
 		this.revealed = undefined;
 		this.id = undefined;
 		this.keydownEnter = undefined;
+		this.autocomplete = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -5366,18 +5396,22 @@ export class Radiobutton implements Writeable, Readable, Component {
 	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
 	public id?: Str;
 
+	public name?: Str;
+
 	constructor(
 		inputValue: Ptr | undefined = undefined,
 		value: Bool | undefined = undefined,
 		disabled: Bool | undefined = undefined,
 		invisible: Bool | undefined = undefined,
-		id: Str | undefined = undefined
+		id: Str | undefined = undefined,
+		name: Str | undefined = undefined
 	) {
 		this.inputValue = inputValue;
 		this.value = value;
 		this.disabled = disabled;
 		this.invisible = invisible;
 		this.id = id;
+		this.name = name;
 	}
 
 	read(reader: BinaryReader): void {
@@ -5406,6 +5440,10 @@ export class Radiobutton implements Writeable, Readable, Component {
 					this.id = readString(reader);
 					break;
 				}
+				case 6: {
+					this.name = readString(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -5420,6 +5458,7 @@ export class Radiobutton implements Writeable, Readable, Component {
 			this.disabled !== undefined,
 			this.invisible !== undefined,
 			this.id !== undefined,
+			this.name !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -5443,6 +5482,10 @@ export class Radiobutton implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
 			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 6);
+			writeString(writer, this.name!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -5451,7 +5494,8 @@ export class Radiobutton implements Writeable, Readable, Component {
 			this.value === undefined &&
 			this.disabled === undefined &&
 			this.invisible === undefined &&
-			this.id === undefined
+			this.id === undefined &&
+			this.name === undefined
 		);
 	}
 
@@ -5461,6 +5505,7 @@ export class Radiobutton implements Writeable, Readable, Component {
 		this.disabled = undefined;
 		this.invisible = undefined;
 		this.id = undefined;
+		this.name = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -7857,6 +7902,8 @@ export class TextField implements Writeable, Readable, Component {
 	// Min defines the min value of a number field.
 	public min?: Float;
 
+	public autocomplete?: Str;
+
 	constructor(
 		label: Str | undefined = undefined,
 		supportingText: Str | undefined = undefined,
@@ -7881,7 +7928,8 @@ export class TextField implements Writeable, Readable, Component {
 		showZero: Bool | undefined = undefined,
 		step: Uint | undefined = undefined,
 		max: Float | undefined = undefined,
-		min: Float | undefined = undefined
+		min: Float | undefined = undefined,
+		autocomplete: Str | undefined = undefined
 	) {
 		this.label = label;
 		this.supportingText = supportingText;
@@ -7907,6 +7955,7 @@ export class TextField implements Writeable, Readable, Component {
 		this.step = step;
 		this.max = max;
 		this.min = min;
+		this.autocomplete = autocomplete;
 	}
 
 	read(reader: BinaryReader): void {
@@ -8023,6 +8072,10 @@ export class TextField implements Writeable, Readable, Component {
 					this.min = readFloat(reader);
 					break;
 				}
+				case 25: {
+					this.autocomplete = readString(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -8056,6 +8109,7 @@ export class TextField implements Writeable, Readable, Component {
 			this.step !== undefined,
 			this.max !== undefined,
 			this.min !== undefined,
+			this.autocomplete !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -8161,6 +8215,10 @@ export class TextField implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.F64, 24);
 			writeFloat(writer, this.min!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[25]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 25);
+			writeString(writer, this.autocomplete!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -8188,7 +8246,8 @@ export class TextField implements Writeable, Readable, Component {
 			this.showZero === undefined &&
 			this.step === undefined &&
 			this.max === undefined &&
-			this.min === undefined
+			this.min === undefined &&
+			this.autocomplete === undefined
 		);
 	}
 
@@ -8217,6 +8276,7 @@ export class TextField implements Writeable, Readable, Component {
 		this.step = undefined;
 		this.max = undefined;
 		this.min = undefined;
+		this.autocomplete = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -13345,6 +13405,8 @@ export class Select implements Writeable, Readable, Component {
 
 	public options?: SelectOptions;
 
+	public autocomplete?: Str;
+
 	constructor(
 		label: Str | undefined = undefined,
 		supportingText: Str | undefined = undefined,
@@ -13356,7 +13418,8 @@ export class Select implements Writeable, Readable, Component {
 		leading: Component | undefined = undefined,
 		disabled: Bool | undefined = undefined,
 		id: Str | undefined = undefined,
-		options: SelectOptions | undefined = undefined
+		options: SelectOptions | undefined = undefined,
+		autocomplete: Str | undefined = undefined
 	) {
 		this.label = label;
 		this.supportingText = supportingText;
@@ -13369,6 +13432,7 @@ export class Select implements Writeable, Readable, Component {
 		this.disabled = disabled;
 		this.id = id;
 		this.options = options;
+		this.autocomplete = autocomplete;
 	}
 
 	read(reader: BinaryReader): void {
@@ -13428,6 +13492,10 @@ export class Select implements Writeable, Readable, Component {
 					this.options.read(reader);
 					break;
 				}
+				case 12: {
+					this.autocomplete = readString(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -13448,6 +13516,7 @@ export class Select implements Writeable, Readable, Component {
 			this.disabled !== undefined,
 			this.id !== undefined,
 			this.options !== undefined && !this.options.isZero(),
+			this.autocomplete !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -13498,6 +13567,10 @@ export class Select implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.ARRAY, 11);
 			this.options!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[12]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 12);
+			writeString(writer, this.autocomplete!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -13512,7 +13585,8 @@ export class Select implements Writeable, Readable, Component {
 			(this.leading === undefined || this.leading.isZero()) &&
 			this.disabled === undefined &&
 			this.id === undefined &&
-			(this.options === undefined || this.options.isZero())
+			(this.options === undefined || this.options.isZero()) &&
+			this.autocomplete === undefined
 		);
 	}
 
@@ -13528,6 +13602,7 @@ export class Select implements Writeable, Readable, Component {
 		this.disabled = undefined;
 		this.id = undefined;
 		this.options = undefined;
+		this.autocomplete = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

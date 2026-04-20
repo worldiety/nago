@@ -42,6 +42,7 @@ type TDropdown[ID ~string] struct {
 	style          ui.TextFieldStyle // visual style of the field (outlined, filled, etc.)
 	frame          ui.Frame          // layout constraints
 	id             string            // unique identifier for the select
+	autocomplete   string            // autocomplete tags of the select
 }
 
 // Dropdown represents a user interface element which lets the user select one option from a list.
@@ -176,6 +177,12 @@ func (c TDropdown[ID]) ID(id string) TDropdown[ID] {
 	return c
 }
 
+// Autocomplete defines the autocomplete tags of the input
+func (c TDropdown[ID]) Autocomplete(tags string) TDropdown[ID] {
+	c.autocomplete = tags
+	return c
+}
+
 // Render builds and returns the protocol representation of the select.
 func (c TDropdown[ID]) Render(ctx core.RenderContext) core.RenderNode {
 	options := make([]proto.SelectOption, 0, len(c.options))
@@ -199,5 +206,6 @@ func (c TDropdown[ID]) Render(ctx core.RenderContext) core.RenderNode {
 		Disabled:       proto.Bool(c.disabled),
 		Id:             proto.Str(c.id),
 		Options:        options,
+		Autocomplete:   proto.Str(c.autocomplete),
 	}
 }

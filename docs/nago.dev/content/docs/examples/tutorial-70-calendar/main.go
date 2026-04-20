@@ -15,6 +15,8 @@ import (
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
 	flowbiteOutline "go.wdy.de/nago/presentation/icons/flowbite/outline"
+	flowbiteSolid "go.wdy.de/nago/presentation/icons/flowbite/solid"
+	heroOutline "go.wdy.de/nago/presentation/icons/hero/outline"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/calendar"
 	"go.wdy.de/nago/web/vuejs"
@@ -30,6 +32,13 @@ func main() {
 		cfg.SetDecorator(cfg.NewScaffold().Decorator())
 
 		cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {
+
+			isLarge := wnd.Info().SizeClass >= core.SizeClassLarge
+			chipAlignment := ui.TopTrailing
+			if !isLarge {
+				chipAlignment = ui.BottomLeading
+			}
+
 			return ui.VStack(
 				ui.Text("hello world"),
 				calendar.Calendar(
@@ -80,9 +89,21 @@ func main() {
 						Lane: calendar.Lane{
 							Label: "Torben",
 						},
+						Organiser: "Olaf",
+						Location:  "WZO",
 						Category: calendar.Category{
 							Label: "Kategorie 2",
 							Color: "#ffff00",
+						},
+						Chips: []calendar.Chip{
+							{
+								Label:     "Eingetragen",
+								Icon:      flowbiteSolid.BadgeCheck,
+								BgColor:   "#2BCA73",
+								TextColor: ui.M8,
+								Alignment: ui.BottomLeading,
+								FullWidth: true,
+							},
 						},
 					},
 
@@ -100,6 +121,16 @@ func main() {
 						Category: calendar.Category{
 							Label: "Kategorie 2",
 							Color: "#ff0000",
+						},
+						Chips: []calendar.Chip{
+							{
+								Label:     "Wartelistenplatz: 5",
+								Icon:      flowbiteSolid.ClipboardList,
+								BgColor:   "#FBC83E",
+								TextColor: ui.M8,
+								Alignment: ui.BottomLeading,
+								FullWidth: true,
+							},
 						},
 					},
 
@@ -131,20 +162,31 @@ func main() {
 						Lane: calendar.Lane{
 							Label: "Olaf",
 						},
+						Chips: []calendar.Chip{
+							{
+								Label:     "20 | 50",
+								Icon:      flowbiteSolid.Users,
+								BgColor:   "#3A3257",
+								TextColor: ui.M9,
+								Alignment: chipAlignment,
+							},
+						},
 					},
-				).ViewPort(calendar.Year(2025)).
+				).
+					ViewPort(calendar.Year(2025)).
 					Frame(ui.Frame{}.FullWidth()).
 					Style(calendar.StartTimeSequence),
 
 				//
-				calStartTimeSeqTimeExample(),
+				calStartTimeSeqTimeExample(chipAlignment),
 			).FullWidth().Gap(ui.L16)
 
 		})
 	}).Run()
 }
 
-func calStartTimeSeqTimeExample() core.View {
+func calStartTimeSeqTimeExample(chipAlignment ui.Alignment) core.View {
+
 	return calendar.Calendar(
 		calendar.Event{
 			From: calendar.Instant{
@@ -162,6 +204,22 @@ func calStartTimeSeqTimeExample() core.View {
 			Category: calendar.Category{
 				Label: "Kategorie 2",
 				Color: "#ff0000",
+			},
+			Chips: []calendar.Chip{
+				{
+					Label:     "Warteliste",
+					Icon:      flowbiteSolid.ClipboardList,
+					BgColor:   "#3A3257",
+					TextColor: ui.M9,
+					Alignment: chipAlignment,
+				},
+				{
+					Label:     "Ausgebucht",
+					Icon:      heroOutline.XMark,
+					BgColor:   "#FE543E",
+					TextColor: ui.M8,
+					Alignment: chipAlignment,
+				},
 			},
 		},
 		calendar.Event{
@@ -194,6 +252,23 @@ func calStartTimeSeqTimeExample() core.View {
 			Category: calendar.Category{
 				Label: "Kategorie 2",
 				Color: "#ffff00",
+			},
+			Chips: []calendar.Chip{
+				{
+					Label:     "20",
+					Icon:      flowbiteSolid.Users,
+					BgColor:   "#3A3257",
+					TextColor: ui.M9,
+					Alignment: chipAlignment,
+				},
+				{
+					Label:     "Eingetragen",
+					Icon:      flowbiteSolid.BadgeCheck,
+					BgColor:   "#2BCA73",
+					TextColor: ui.M8,
+					Alignment: ui.BottomLeading,
+					FullWidth: true,
+				},
 			},
 		},
 	).ViewPort(calendar.Day(2026, 7, 11)).

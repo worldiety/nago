@@ -112,6 +112,10 @@
       "doc": "Min defines the min value of a number field.",
       "name": "Min",
       "type": "Float"
+    },
+    "25": {
+      "name": "Autocomplete",
+      "type": "Str"
     }
   }
 }

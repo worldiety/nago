@@ -53,13 +53,14 @@ func main() {
 			}
 
 			chart1 := chart.Chart{
-				Colors:       colorPalette,
-				Frame:        ui.Frame{}.Size(ui.L320, ui.L200),
-				Downloadable: false,
+				Colors:        colorPalette,
+				Frame:         ui.Frame{}.Size(ui.L320, ui.L200),
+				Downloadable:  false,
+				LabelRounding: chart.RoundingRound,
 			}
 			return ui.VStack(
 				ui.Text("pie chart demo"),
-				piechart.PieChart(chart1).Series(pieChartSeries),
+				piechart.PieChart(chart1).Series(pieChartSeries).ShowAbsoluteValues(true),
 				piechart.PieChart(chart1).Series(pieChartSeries).ShowAsDonut(true).ShowDataLabels(false),
 			)
 		})

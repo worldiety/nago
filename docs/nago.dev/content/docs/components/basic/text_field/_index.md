@@ -48,6 +48,7 @@ By default, it is single-line and uncontrolled until InputValue is set.
 | `Lines(lines int)` | Lines are by default at 0 and enforces a single line text field. Otherwise, a text area is created. This is also true, if lines 1 to differentiate between subtile behavior of single line text fields and single line text areas, which may take even more lines, because e.g. a web browser allows to change that on demand. |
 | `Max(max float64)` | Max defines the max value of number fields |
 | `Min(min float64)` | Min defines the min value of number fields |
+| `Name(name string)` | Name defines the name of the input |
 | `Padding(padding Padding)` | Padding is a placeholder implementation. |
 | `ShowZero(showZero bool)` | ShowZero defines wheter the '0' character should be displayed for empty/zero values in number fields. |
 | `Step(step int)` | Step defines the step size to increase/decrease number values stepwise |
