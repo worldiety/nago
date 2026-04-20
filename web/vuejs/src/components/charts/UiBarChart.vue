@@ -44,7 +44,6 @@ const options = computed<ApexCharts.ApexOptions>(() => {
 			},
 		},
 		colors: colors.value,
-		series: series.value,
 		noData: {
 			text: props.ui.chart?.noDataMessage,
 		},
@@ -111,6 +110,6 @@ function mapMarkerToGoal(marker: BarChartMarker) {
 
 <template>
 	<div :style="frameStyles">
-		<VueApexCharts type="bar" :series="options.series" :options="options" />
+		<VueApexCharts type="bar" :series="series" :options="options" height="100%" />
 	</div>
 </template>
