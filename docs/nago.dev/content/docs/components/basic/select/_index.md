@@ -17,6 +17,7 @@ replacement for single selection.
 ## Methods
 | Method | Description |
 |--------| ------------|
+| `Autocomplete(tags string)` | Autocomplete defines the autocomplete tags of the input |
 | `Disabled(disabled bool)` | Disabled enables or disables user interaction with the select. |
 | `ErrorText(text string)` | ErrorText sets the error text displayed below the select. |
 | `Frame(frame ui.Frame)` | Frame sets the layout frame of the field (size, width, height, etc.). |
@@ -24,7 +25,6 @@ replacement for single selection.
 | `InputValue(input *core.State[ID])` | InputValue binds the select to an external value state, allowing it to be controlled from outside the component. |
 | `Label(label string)` | Label sets the label displayed above or inside the select. |
 | `Leading(v core.View)` | Leading sets a leading view for the select. This view is displayed at the start of the select, e.g., an icon. |
-| `Name(name string)` | Name defines the name of the input |
 | `Options(options []Option[ID])` | Options sets the list of options available for selection. |
 | `Style(s ui.TextFieldStyle)` | Style sets the visual style of the select. |
 | `SupportingText(text string)` | SupportingText sets the supporting text displayed below the select. |

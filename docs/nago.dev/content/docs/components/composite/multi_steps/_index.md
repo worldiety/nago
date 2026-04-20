@@ -21,5 +21,6 @@ MultiSteps creates a new TMultiSteps with the provided steps.
 | `ColorFuture(color ui.Color)` | ColorFuture sets the color for upcoming step indicators. |
 | `Frame(frame ui.Frame)` | Frame sets the layout frame of the multi-steps component. |
 | `InputValue(idx *core.State[int])` | InputValue binds the active step index state to the multi-steps component. |
+| `Style(style stepper.Style)` | Style sets the display style of the stepper (Auto, Simple or Full). |
 ---
 
