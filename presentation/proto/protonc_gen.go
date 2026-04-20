@@ -1433,16 +1433,18 @@ type Checkbox struct {
 	Disabled   Bool
 	Invisible  Bool
 	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
-	Id Str
+	Id   Str
+	Name Str
 }
 
 func (v *Checkbox) write(w *BinaryWriter) error {
-	var fields [6]bool
+	var fields [7]bool
 	fields[1] = !v.InputValue.IsZero()
 	fields[2] = !v.Value.IsZero()
 	fields[3] = !v.Disabled.IsZero()
 	fields[4] = !v.Invisible.IsZero()
 	fields[5] = !v.Id.IsZero()
+	fields[6] = !v.Name.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -1493,6 +1495,14 @@ func (v *Checkbox) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[6] {
+		if err := w.writeFieldHeader(byteSlice, 6); err != nil {
+			return err
+		}
+		if err := v.Name.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -1530,6 +1540,11 @@ func (v *Checkbox) read(r *BinaryReader) error {
 			}
 		case 5:
 			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.Name.read(r)
 			if err != nil {
 				return err
 			}
@@ -4888,10 +4903,11 @@ type PasswordField struct {
 	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
 	Id           Str
 	KeydownEnter Ptr
+	Autocomplete Str
 }
 
 func (v *PasswordField) write(w *BinaryWriter) error {
-	var fields [17]bool
+	var fields [18]bool
 	fields[1] = !v.Label.IsZero()
 	fields[2] = !v.SupportingText.IsZero()
 	fields[3] = !v.ErrorText.IsZero()
@@ -4908,6 +4924,7 @@ func (v *PasswordField) write(w *BinaryWriter) error {
 	fields[14] = !v.Revealed.IsZero()
 	fields[15] = !v.Id.IsZero()
 	fields[16] = !v.KeydownEnter.IsZero()
+	fields[17] = !v.Autocomplete.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -5046,6 +5063,14 @@ func (v *PasswordField) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[17] {
+		if err := w.writeFieldHeader(byteSlice, 17); err != nil {
+			return err
+		}
+		if err := v.Autocomplete.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -5141,6 +5166,11 @@ func (v *PasswordField) read(r *BinaryReader) error {
 			if err != nil {
 				return err
 			}
+		case 17:
+			err := v.Autocomplete.read(r)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -5222,16 +5252,18 @@ type Radiobutton struct {
 	Disabled  Bool
 	Invisible Bool
 	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
-	Id Str
+	Id   Str
+	Name Str
 }
 
 func (v *Radiobutton) write(w *BinaryWriter) error {
-	var fields [6]bool
+	var fields [7]bool
 	fields[1] = !v.InputValue.IsZero()
 	fields[2] = !v.Value.IsZero()
 	fields[3] = !v.Disabled.IsZero()
 	fields[4] = !v.Invisible.IsZero()
 	fields[5] = !v.Id.IsZero()
+	fields[6] = !v.Name.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -5282,6 +5314,14 @@ func (v *Radiobutton) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[6] {
+		if err := w.writeFieldHeader(byteSlice, 6); err != nil {
+			return err
+		}
+		if err := v.Name.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -5319,6 +5359,11 @@ func (v *Radiobutton) read(r *BinaryReader) error {
 			}
 		case 5:
 			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.Name.read(r)
 			if err != nil {
 				return err
 			}
@@ -7534,11 +7579,12 @@ type TextField struct {
 	// Max defines the max value of a number field.
 	Max Float
 	// Min defines the min value of a number field.
-	Min Float
+	Min          Float
+	Autocomplete Str
 }
 
 func (v *TextField) write(w *BinaryWriter) error {
-	var fields [25]bool
+	var fields [26]bool
 	fields[1] = !v.Label.IsZero()
 	fields[2] = !v.SupportingText.IsZero()
 	fields[3] = !v.ErrorText.IsZero()
@@ -7563,6 +7609,7 @@ func (v *TextField) write(w *BinaryWriter) error {
 	fields[22] = !v.Step.IsZero()
 	fields[23] = !v.Max.IsZero()
 	fields[24] = !v.Min.IsZero()
+	fields[25] = !v.Autocomplete.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -7779,6 +7826,14 @@ func (v *TextField) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[25] {
+		if err := w.writeFieldHeader(byteSlice, 25); err != nil {
+			return err
+		}
+		if err := v.Autocomplete.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -7929,6 +7984,11 @@ func (v *TextField) read(r *BinaryReader) error {
 			}
 		case 24:
 			err := v.Min.read(r)
+			if err != nil {
+				return err
+			}
+		case 25:
+			err := v.Autocomplete.read(r)
 			if err != nil {
 				return err
 			}
@@ -12767,12 +12827,13 @@ type Select struct {
 	Leading  Component
 	Disabled Bool
 	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
-	Id      Str
-	Options SelectOptions
+	Id           Str
+	Options      SelectOptions
+	Autocomplete Str
 }
 
 func (v *Select) write(w *BinaryWriter) error {
-	var fields [12]bool
+	var fields [13]bool
 	fields[1] = !v.Label.IsZero()
 	fields[2] = !v.SupportingText.IsZero()
 	fields[3] = !v.ErrorText.IsZero()
@@ -12784,6 +12845,7 @@ func (v *Select) write(w *BinaryWriter) error {
 	fields[9] = !v.Disabled.IsZero()
 	fields[10] = !v.Id.IsZero()
 	fields[11] = !v.Options.IsZero()
+	fields[12] = !v.Autocomplete.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -12889,6 +12951,14 @@ func (v *Select) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[12] {
+		if err := w.writeFieldHeader(byteSlice, 12); err != nil {
+			return err
+		}
+		if err := v.Autocomplete.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -12965,6 +13035,11 @@ func (v *Select) read(r *BinaryReader) error {
 			}
 		case 11:
 			err := v.Options.read(r)
+			if err != nil {
+				return err
+			}
+		case 12:
+			err := v.Autocomplete.read(r)
 			if err != nil {
 				return err
 			}
@@ -19119,13 +19194,14 @@ func (v *Checkbox) reset() {
 	v.Disabled.reset()
 	v.Invisible.reset()
 	v.Id.reset()
+	v.Name.reset()
 }
 
 func (v *Checkbox) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.InputValue.IsZero() && v.Value.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero()
+	return v.InputValue.IsZero() && v.Value.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero() && v.Name.IsZero()
 }
 
 // Bool represents just a user defined boolean value. This is how nprotoc works.
@@ -20299,13 +20375,14 @@ func (v *PasswordField) reset() {
 	v.Revealed.reset()
 	v.Id.reset()
 	v.KeydownEnter.reset()
+	v.Autocomplete.reset()
 }
 
 func (v *PasswordField) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero() && v.KeydownEnter.IsZero()
+	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero() && v.KeydownEnter.IsZero() && v.Autocomplete.IsZero()
 }
 
 func (v *Ping) reset() {
@@ -20324,13 +20401,14 @@ func (v *Radiobutton) reset() {
 	v.Disabled.reset()
 	v.Invisible.reset()
 	v.Id.reset()
+	v.Name.reset()
 }
 
 func (v *Radiobutton) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.InputValue.IsZero() && v.Value.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero()
+	return v.InputValue.IsZero() && v.Value.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero() && v.Name.IsZero()
 }
 
 type ScaffoldMenuEntries []ScaffoldMenuEntry
@@ -20851,13 +20929,14 @@ func (v *TextField) reset() {
 	v.Step.reset()
 	v.Max.reset()
 	v.Min.reset()
+	v.Autocomplete.reset()
 }
 
 func (v *TextField) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.Leading.IsZero() && v.Trailing.IsZero() && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.KeyboardOptions.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero() && v.KeydownEnter.IsZero() && v.TextAlignment.IsZero() && v.ShowZero.IsZero() && v.Step.IsZero() && v.Max.IsZero() && v.Min.IsZero()
+	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.Leading.IsZero() && v.Trailing.IsZero() && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.KeyboardOptions.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero() && v.KeydownEnter.IsZero() && v.TextAlignment.IsZero() && v.ShowZero.IsZero() && v.Step.IsZero() && v.Max.IsZero() && v.Min.IsZero() && v.Autocomplete.IsZero()
 }
 
 func (v *Toggle) reset() {
@@ -21972,13 +22051,14 @@ func (v *Select) reset() {
 	v.Disabled.reset()
 	v.Id.reset()
 	v.Options.reset()
+	v.Autocomplete.reset()
 }
 
 func (v *Select) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.Leading.IsZero() && v.Disabled.IsZero() && v.Id.IsZero() && v.Options.IsZero()
+	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.Leading.IsZero() && v.Disabled.IsZero() && v.Id.IsZero() && v.Options.IsZero() && v.Autocomplete.IsZero()
 }
 
 func (v *ColorStates) reset() {

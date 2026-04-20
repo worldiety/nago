@@ -33,6 +33,7 @@ type TCheckboxField struct {
 	keyboardOptions    TKeyboardOptions
 	accessibilityLabel string
 	id                 string
+	name               string
 }
 
 // A CheckboxField aggregates a checkbox together with form field typical labels, hints and error texts.
@@ -117,6 +118,12 @@ func (c TCheckboxField) ID(id string) TCheckboxField {
 	return c
 }
 
+// Name assigns a name to the checkbox field, useful for autocomplete
+func (c TCheckboxField) Name(name string) TCheckboxField {
+	c.name = name
+	return c
+}
+
 // Render builds and returns the UI representation of the checkbox field.
 func (c TCheckboxField) Render(context core.RenderContext) core.RenderNode {
 	if c.id == "" && c.inputValue != nil {
@@ -138,7 +145,8 @@ func (c TCheckboxField) Render(context core.RenderContext) core.RenderNode {
 		Checkbox(c.value).
 			ID(c.id).
 			Disabled(c.disabled).
-			InputValue(c.inputValue),
+			InputValue(c.inputValue).
+			Name(c.name),
 		VStack(
 			Text(c.label).LabelFor(labelFor),
 			IfElse(c.errorText == "",

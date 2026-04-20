@@ -93,6 +93,7 @@ watch(selectedValue, () => {
 				<select
 					:id="id"
 					v-model="selectedValue"
+					:autocomplete="ui.autocomplete"
 					class="input-field !pr-8 cursor-pointer"
 					:style="inputStyle"
 					:disabled="props.ui.disabled"

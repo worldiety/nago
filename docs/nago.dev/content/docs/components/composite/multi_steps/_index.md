@@ -16,6 +16,9 @@ MultiSteps creates a new TMultiSteps with the provided steps.
 |--------| ------------|
 | `ButtonDone(view core.View)` | ButtonDone sets the view to display when the steps are completed. |
 | `CanShow(fn func(currentIdx intwantedIndex int) bool)` | CanShow sets a predicate to control whether a given step can be shown. |
+| `ColorCurrent(color ui.Color)` | ColorCurrent sets the color for the currently active step indicator. |
+| `ColorDone(color ui.Color)` | ColorDone sets the color for completed step indicators. |
+| `ColorFuture(color ui.Color)` | ColorFuture sets the color for upcoming step indicators. |
 | `Frame(frame ui.Frame)` | Frame sets the layout frame of the multi-steps component. |
 | `InputValue(idx *core.State[int])` | InputValue binds the active step index state to the multi-steps component. |
 ---

@@ -50,7 +50,7 @@ function radioButtonClicked(): void {
 		@click="radioButtonClicked"
 		@keydown.enter="radioButtonClicked"
 	>
-		<input :id="ui.id" :checked="checked" type="radio" :disabled="ui.disabled" />
+		<input :id="ui.id" :name="ui.name" :checked="checked" type="radio" :disabled="ui.disabled" />
 	</div>
 </template>
 

@@ -25,11 +25,7 @@
 		</div>
 
 		<!-- Menu background -->
-		<div
-			v-if="menuOpen"
-			class="fixed top-0 left-0 w-screen h-screen"
-			@click="menuOpen = false"
-		></div>
+		<div v-if="menuOpen" class="fixed top-0 left-0 w-screen h-screen" @click="menuOpen = false"></div>
 
 		<!-- Menu -->
 		<Transition name="slide">

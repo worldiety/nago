@@ -65,6 +65,7 @@ type TTextField struct {
 	step            int     // step size to increase/decrease number values
 	maxValue        float64 // max value for number fields
 	minValue        float64 // min value for number fields
+	autocomplete    string  // autocomplete tags of the input
 }
 
 // Padding is a placeholder implementation.
@@ -333,6 +334,12 @@ func (c TTextField) Min(min float64) TTextField {
 	return c
 }
 
+// Autocomplete defines the autocomplete tags of the input
+func (c TTextField) Autocomplete(tags string) TTextField {
+	c.autocomplete = tags
+	return c
+}
+
 // Render builds and returns the protocol representation of the text field.
 func (c TTextField) Render(ctx core.RenderContext) core.RenderNode {
 
@@ -359,5 +366,6 @@ func (c TTextField) Render(ctx core.RenderContext) core.RenderNode {
 		Step:            proto.Uint(c.step),
 		Max:             proto.Float(c.maxValue),
 		Min:             proto.Float(c.minValue),
+		Autocomplete:    proto.Str(c.autocomplete),
 	}
 }

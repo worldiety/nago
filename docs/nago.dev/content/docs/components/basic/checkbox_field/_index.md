@@ -24,6 +24,7 @@ A CheckboxField aggregates a checkbox together with form field typical labels, h
 | `Frame(frame Frame)` | Frame sets the layout frame of the checkbox field, including size and positioning. |
 | `ID(id string)` | ID assigns a unique identifier to the checkbox field, useful for testing or referencing. |
 | `InputValue(inputValue *core.State[bool])` | InputValue binds the checkbox field to an external boolean state. |
+| `Name(name string)` | Name assigns a name to the checkbox field, useful for autocomplete |
 | `Padding(padding Padding)` | Padding sets the inner spacing around the checkbox field. |
 | `SupportingText(text string)` | SupportingText sets helper or secondary text shown below the label. |
 | `Visible(visible bool)` | Visible controls the visibility of the checkbox field; setting false hides it. |

@@ -52,6 +52,10 @@
     "11": {
       "name": "Options",
       "type": "SelectOptions"
+    },
+    "12": {
+      "name": "Autocomplete",
+      "type": "Str"
     }
   }
 }

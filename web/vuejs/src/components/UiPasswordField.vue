@@ -114,7 +114,7 @@ function toggleRevealed(): void {
 					:id="ui.id"
 					ref="passwordInput"
 					v-model="inputValue"
-					:autocomplete="props.ui.disableAutocomplete ? 'off' : 'on'"
+					:autocomplete="props.ui.disableAutocomplete ? 'off' : ui.autocomplete"
 					class="input-field !pr-10"
 					:disabled="props.ui.disabled"
 					:type="props.ui.revealed ? 'text' : 'password'"

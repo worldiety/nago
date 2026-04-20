@@ -35,6 +35,7 @@ type TPasswordField struct {
 	lines               int                  // number of lines (0 = single-line text field, >0 = text area)
 	id                  string               // unique identifier
 	keydownEnter        func()               // callback for Enter key press
+	autocomplete        string               // autocomplete tags of the input
 }
 
 // PasswordField represents a secret entered by the user.
@@ -165,6 +166,12 @@ func (c TPasswordField) KeydownEnter(fn func()) TPasswordField {
 	return c
 }
 
+// Autocomplete defines the autocomplete tags of the input
+func (c TPasswordField) Autocomplete(tags string) TPasswordField {
+	c.autocomplete = tags
+	return c
+}
+
 // FullWidth expands the field to take up the full available width.
 func (c TPasswordField) FullWidth() TPasswordField {
 	c.frame = c.frame.FullWidth()
@@ -190,5 +197,6 @@ func (c TPasswordField) Render(ctx core.RenderContext) core.RenderNode {
 		DisableAutocomplete: proto.Bool(c.disableAutocomplete),
 		Id:                  proto.Str(c.id),
 		KeydownEnter:        ctx.MountCallback(c.keydownEnter),
+		Autocomplete:        proto.Str(c.autocomplete),
 	}
 }
