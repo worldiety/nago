@@ -1,0 +1,14 @@
+{
+  "kind": "Record",
+  "id": 232,
+  "fields": {
+    "1": {
+      "name": "Url",
+      "type": "URI"
+    },
+    "2": {
+      "name": "Target",
+      "type": "Str"
+    }
+  }
+}

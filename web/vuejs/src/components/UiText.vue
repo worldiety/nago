@@ -90,18 +90,37 @@ const textValue = computed<string>(() => {
 </script>
 
 <template>
-	<span v-if="!ui.invisible && !ui.labelFor" :style="styles" :title="props.ui.accessibilityLabel" @click="onClick">
-		{{ textValue }}<br v-if="!ui.invisible && ui.lineBreak" />
-	</span>
+	<template v-if="!ui.invisible">
+		<a
+			v-if="ui.link && ui.link.url"
+			:href="ui.link.url"
+			:target="ui.link.target"
+			:style="styles"
+			:title="props.ui.accessibilityLabel"
+			@click="onClick"
+		>
+			{{ textValue }}<br v-if="!ui.invisible && ui.lineBreak" />
+		</a>
 
-	<label
-		v-else-if="!ui.invisible"
-		class="cursor-pointer"
-		:style="styles"
-		:title="props.ui.accessibilityLabel"
-		:for="ui.labelFor"
-		@click="onClick"
-	>
-		{{ textValue }}<br v-if="!ui.invisible && ui.lineBreak" />
-	</label>
+		<span v-else-if="!ui.labelFor" :style="styles" :title="props.ui.accessibilityLabel" @click="onClick">
+			{{ textValue }}<br v-if="!ui.invisible && ui.lineBreak" />
+		</span>
+
+		<label
+			v-else
+			class="cursor-pointer"
+			:style="styles"
+			:title="props.ui.accessibilityLabel"
+			:for="ui.labelFor"
+			@click="onClick"
+		>
+			{{ textValue }}<br v-if="!ui.invisible && ui.lineBreak" />
+		</label>
+	</template>
 </template>
+
+<style scoped>
+a {
+	@apply text-I0 underline decoration-I0;
+}
+</style>

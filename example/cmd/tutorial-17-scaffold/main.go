@@ -91,7 +91,7 @@ func main() {
 						Text("Ein Text"),
 						Link(wnd, "worldiety GmbH", "https://www.worldiety.de/", "_blank").
 							TextAlignment(TextAlignCenter),
-					).FullWidth(),
+					).FullWidth().NoClip(true),
 				)
 		})
 

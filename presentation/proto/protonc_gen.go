@@ -7126,10 +7126,11 @@ type TextView struct {
 	Hyphens                Str
 	LabelFor               Str
 	WordBreak              Str
+	Link                   Link
 }
 
 func (v *TextView) write(w *BinaryWriter) error {
-	var fields [26]bool
+	var fields [27]bool
 	fields[1] = !v.Value.IsZero()
 	fields[2] = !v.Color.IsZero()
 	fields[3] = !v.BackgroundColor.IsZero()
@@ -7155,6 +7156,7 @@ func (v *TextView) write(w *BinaryWriter) error {
 	fields[23] = !v.Hyphens.IsZero()
 	fields[24] = !v.LabelFor.IsZero()
 	fields[25] = !v.WordBreak.IsZero()
+	fields[26] = !v.Link.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -7365,6 +7367,14 @@ func (v *TextView) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[26] {
+		if err := w.writeFieldHeader(record, 26); err != nil {
+			return err
+		}
+		if err := v.Link.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -7502,6 +7512,11 @@ func (v *TextView) read(r *BinaryReader) error {
 			}
 		case 25:
 			err := v.WordBreak.read(r)
+			if err != nil {
+				return err
+			}
+		case 26:
+			err := v.Link.read(r)
 			if err != nil {
 				return err
 			}
@@ -17550,6 +17565,71 @@ func (v *RoundingType) IsZero() bool {
 	return *v == 0
 }
 
+type Link struct {
+	Url    URI
+	Target Str
+}
+
+func (v *Link) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Url.IsZero()
+	fields[2] = !v.Target.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Url.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Target.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Link) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Url.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Target.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -18891,6 +18971,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 231:
 		var v RoundingType
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 232:
+		var v Link
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -20895,13 +20981,14 @@ func (v *TextView) reset() {
 	v.Hyphens.reset()
 	v.LabelFor.reset()
 	v.WordBreak.reset()
+	v.Link.reset()
 }
 
 func (v *TextView) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Value.IsZero() && v.Color.IsZero() && v.BackgroundColor.IsZero() && v.OnClick.IsZero() && v.OnHoverStart.IsZero() && v.OnHoverEnd.IsZero() && v.Border.IsZero() && v.Padding.IsZero() && v.Frame.IsZero() && v.AccessibilityLabel.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.TextAlignment.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.LineBreak.IsZero() && v.Invisible.IsZero() && v.Underline.IsZero() && v.Hyphens.IsZero() && v.LabelFor.IsZero() && v.WordBreak.IsZero()
+	return v.Value.IsZero() && v.Color.IsZero() && v.BackgroundColor.IsZero() && v.OnClick.IsZero() && v.OnHoverStart.IsZero() && v.OnHoverEnd.IsZero() && v.Border.IsZero() && v.Padding.IsZero() && v.Frame.IsZero() && v.AccessibilityLabel.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.TextAlignment.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.LineBreak.IsZero() && v.Invisible.IsZero() && v.Underline.IsZero() && v.Hyphens.IsZero() && v.LabelFor.IsZero() && v.WordBreak.IsZero() && v.Link.IsZero()
 }
 
 func (v *TextField) reset() {
@@ -22744,6 +22831,18 @@ func (v *Switcher) IsZero() bool {
 	return v.Id.IsZero() && v.Pages.IsZero() && v.Orientation.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Value.IsZero() && v.DynamicHeight.IsZero() && v.ImageObjectFit.IsZero()
 }
 
+func (v *Link) reset() {
+	v.Url.reset()
+	v.Target.reset()
+}
+
+func (v *Link) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Url.IsZero() && v.Target.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -24279,6 +24378,13 @@ func (v *Switcher) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *RoundingType) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(uvarint, 231); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Link) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 232); err != nil {
 		return err
 	}
 	return nil

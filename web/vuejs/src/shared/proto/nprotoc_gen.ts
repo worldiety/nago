@@ -7453,6 +7453,8 @@ export class TextView implements Writeable, Readable, Component {
 
 	public wordBreak?: Str;
 
+	public link?: Link;
+
 	constructor(
 		value: Str | undefined = undefined,
 		color: Color | undefined = undefined,
@@ -7478,7 +7480,8 @@ export class TextView implements Writeable, Readable, Component {
 		underline: Bool | undefined = undefined,
 		hyphens: Str | undefined = undefined,
 		labelFor: Str | undefined = undefined,
-		wordBreak: Str | undefined = undefined
+		wordBreak: Str | undefined = undefined,
+		link: Link | undefined = undefined
 	) {
 		this.value = value;
 		this.color = color;
@@ -7505,6 +7508,7 @@ export class TextView implements Writeable, Readable, Component {
 		this.hyphens = hyphens;
 		this.labelFor = labelFor;
 		this.wordBreak = wordBreak;
+		this.link = link;
 	}
 
 	read(reader: BinaryReader): void {
@@ -7620,6 +7624,11 @@ export class TextView implements Writeable, Readable, Component {
 					this.wordBreak = readString(reader);
 					break;
 				}
+				case 26: {
+					this.link = new Link();
+					this.link.read(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -7654,6 +7663,7 @@ export class TextView implements Writeable, Readable, Component {
 			this.hyphens !== undefined,
 			this.labelFor !== undefined,
 			this.wordBreak !== undefined,
+			this.link !== undefined && !this.link.isZero(),
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -7757,6 +7767,10 @@ export class TextView implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 25);
 			writeString(writer, this.wordBreak!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[26]) {
+			writer.writeFieldHeader(Shapes.RECORD, 26);
+			this.link!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -7785,7 +7799,8 @@ export class TextView implements Writeable, Readable, Component {
 			this.underline === undefined &&
 			this.hyphens === undefined &&
 			this.labelFor === undefined &&
-			this.wordBreak === undefined
+			this.wordBreak === undefined &&
+			(this.link === undefined || this.link.isZero())
 		);
 	}
 
@@ -7815,6 +7830,7 @@ export class TextView implements Writeable, Readable, Component {
 		this.hyphens = undefined;
 		this.labelFor = undefined;
 		this.wordBreak = undefined;
+		this.link = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -18045,6 +18061,65 @@ export enum RoundingTypeValues {
 	Ceiling = 3,
 }
 
+export class Link implements Writeable, Readable {
+	public url?: URI;
+
+	public target?: Str;
+
+	constructor(url: URI | undefined = undefined, target: Str | undefined = undefined) {
+		this.url = url;
+		this.target = target;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.url = readString(reader);
+					break;
+				}
+				case 2: {
+					this.target = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.url !== undefined, this.target !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.url!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.target!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.url === undefined && this.target === undefined;
+	}
+
+	reset(): void {
+		this.url = undefined;
+		this.target = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 232);
+		return;
+	}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -19104,6 +19179,11 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 231: {
 			const v = readInt(src) as RoundingType;
+			return v;
+		}
+		case 232: {
+			const v = new Link();
+			v.read(src);
 			return v;
 		}
 	}

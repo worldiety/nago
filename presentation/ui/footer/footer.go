@@ -144,7 +144,7 @@ func (t TFooter) Render(ctx core.RenderContext) core.RenderNode {
 					return ui.VStack(tmp...).Gap(ui.L16).Alignment(ui.Leading).FullWidth()
 				}
 
-				return ui.HStack(tmp...).Gap(ui.L16)
+				return ui.HStack(tmp...).Gap(ui.L16).NoClip(true)
 			}),
 		).TextColor(t.textColor).
 			Gap(ui.L24).

@@ -8,7 +8,7 @@
 package ui
 
 import (
-	"log/slog"
+	"fmt"
 	"net/url"
 	"strings"
 
@@ -77,6 +77,8 @@ type TText struct {
 	hyphens            Hyphens
 	labelFor           string
 	wordBreak          WordBreak
+	url                string
+	target             string
 }
 
 // MailTo creates a mailto: link text component.
@@ -93,38 +95,35 @@ func LinkWithAction(text string, action func()) TText {
 
 // Link performs a best guess based on the given href. If the href starts with http or https
 // the window will perform an Open call. Otherwise, a local forward navigation is applied.
-func Link(wnd core.Window, text string, href string, target string) TText {
-	return LinkWithAction(text, func() {
-		if wnd == nil {
-			slog.Error("cannot execute link action: window is nil")
-			return
+func Link(_ core.Window, text string, href string, target string) TText {
+	var linkHref, linkTarget string
+
+	if strings.HasPrefix(href, "http://") || strings.HasPrefix(href, "https://") || strings.HasPrefix(href, "mailto:") || strings.HasPrefix(href, "tel:") {
+		linkHref = href
+		linkTarget = target
+	} else {
+		u, err := url.Parse(href)
+		if err != nil {
+			return Text(text)
 		}
 
-		if strings.HasPrefix(href, "http://") || strings.HasPrefix(href, "https://") || strings.HasPrefix(href, "mailto:") || strings.HasPrefix(href, "tel:") {
-			core.HTTPOpen(wnd.Navigation(), core.URI(href), target)
-		} else {
-			u, err := url.Parse(href)
-			if err != nil {
-				slog.Error("Failed to parse href link URL", "err", err.Error(), "href", href)
-				wnd.Navigation().ForwardToTarget(core.NavigationPath(href), target, nil)
-				return
-			}
+		linkHref = u.Path
+		linkTarget = target
 
-			q := u.Query()
-			if len(q) > 0 {
-				tmp := core.Values{}
-				for k, v := range q {
-					if len(v) > 0 {
-						tmp[k] = v[0]
-					}
+		q := u.Query()
+		if len(q) > 0 {
+			tmp := make([]string, 0)
+			for k, v := range q {
+				if len(v) > 0 {
+					tmp = append(tmp, fmt.Sprintf("%s=%s", k, v[0]))
 				}
-				wnd.Navigation().ForwardToTarget(core.NavigationPath(u.Path), target, tmp)
-			} else {
-				wnd.Navigation().ForwardToTarget(core.NavigationPath(u.Path), target, nil)
 			}
 
+			linkHref = fmt.Sprintf("%s?%s", linkTarget, strings.Join(tmp, "&"))
 		}
-	})
+	}
+
+	return Text(text).Link(linkHref, linkTarget)
 }
 
 func Text(content string) TText {
@@ -257,6 +256,12 @@ func (c TText) LabelFor(id string) DecoredView {
 	return c
 }
 
+func (c TText) Link(url, target string) TText {
+	c.url = url
+	c.target = target
+	return c
+}
+
 func (c TText) Render(ctx core.RenderContext) core.RenderNode {
 
 	value := c.content
@@ -310,5 +315,9 @@ func (c TText) Render(ctx core.RenderContext) core.RenderNode {
 		Hyphens:                proto.Str(hyphens),
 		LabelFor:               proto.Str(c.labelFor),
 		WordBreak:              wordBreak,
+		Link: proto.Link{
+			Url:    proto.URI(c.url),
+			Target: proto.Str(c.target),
+		},
 	}
 }

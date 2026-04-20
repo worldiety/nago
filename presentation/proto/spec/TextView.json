@@ -103,6 +103,10 @@
     "25": {
       "name": "WordBreak",
       "type": "Str"
+    },
+    "26": {
+      "name": "Link",
+      "type": "Link"
     }
   }
 }
