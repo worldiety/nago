@@ -34,18 +34,14 @@ const frameStyles = computed<string>(() => {
 watch(
 	() => props.ui.value,
 	(newValue) => {
-		if (newValue) {
-			inputValue.value = newValue;
-		} else {
-			inputValue.value = '';
-		}
+		inputValue.value = newValue || '';
 	}
 );
 
 watch(
 	() => props.ui,
 	(newValue) => {
-		inputValue.value = newValue.value ? newValue.value : '';
+		inputValue.value = newValue.value || '';
 	}
 );
 
