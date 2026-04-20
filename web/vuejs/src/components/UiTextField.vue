@@ -412,9 +412,7 @@ watch(inputValue, (newValue, oldValue) => {
 watch(
 	() => props.ui.value,
 	(newValue) => {
-		if (document.getElementById(id) !== document.activeElement) {
-			inputValue.value = formatValue(newValue || '');
-		}
+		inputValue.value = formatValue(newValue || '');
 	}
 );
 
