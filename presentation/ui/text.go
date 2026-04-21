@@ -115,7 +115,7 @@ func Link(_ core.Window, text string, href string, target string) TText {
 			tmp := make([]string, 0)
 			for k, v := range q {
 				if len(v) > 0 {
-					tmp = append(tmp, fmt.Sprintf("%s=%s", k, v[0]))
+					tmp = append(tmp, fmt.Sprintf("%s=%s", k, url.QueryEscape(v[0])))
 				}
 			}
 
