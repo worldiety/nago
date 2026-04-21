@@ -14,7 +14,7 @@
 	@apply inline-flex items-center justify-center px-5 py-2.5 gap-2;
 	@apply rounded-lg;
 	@apply text-center text-sm font-medium;
-	@apply focus-visible:outline-none focus-visible:outline-I0 focus-visible:outline-offset-4;
+	@apply focus-visible:outline-none focus-visible:outline-I0 focus-visible:-outline-offset-2;
 
 	&.disabled,
 	&:disabled {
@@ -51,7 +51,6 @@
 .button-primary:focus:not(.custom-focus),
 .button-primary:focus-visible:not(.custom-focus) {
 	@apply -outline-offset-4 outline-current rounded-full;
-	animation: button-focus-outline 100ms ease-out;
 }
 
 .button-primary:active:not(.custom-active) {
@@ -59,7 +58,7 @@
 }
 
 .button-secondary {
-	@apply rounded-full h-10 w-fit px-5 border border-I0 outline-I0 duration-100;
+	@apply rounded-full h-10 w-fit px-5 border border-I0 outline-I0;
 	@apply darkmode:border-I0;
 
 	&.disabled,
@@ -90,7 +89,7 @@
 }
 
 .button-tertiary {
-	@apply rounded-full h-10 w-fit px-5 outline-I0 duration-100;
+	@apply rounded-full h-10 w-fit px-5 outline-I0;
 
 	&.disabled,
 	&:disabled {

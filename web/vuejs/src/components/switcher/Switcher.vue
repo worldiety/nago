@@ -187,8 +187,7 @@ addEventListener('resize', onWindowResize);
 			@apply relative flex flex-col gap-2 bg-M4 p-2 rounded-2xl;
 
 			.toggle {
-				@apply relative flex items-center justify-center size-16 rounded-xl z-10 duration-100;
-				@apply focus:outline-offset-2 focus-visible:outline-offset-2;
+				@apply relative flex items-center justify-center size-16 rounded-xl z-10 duration-100 outline-offset-2 outline-I0;
 
 				& > * {
 					@apply duration-100;

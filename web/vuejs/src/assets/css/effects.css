@@ -7,28 +7,41 @@
  * SPDX-License-Identifier: Custom-License
  */
 
-*:focus-visible:not(
-		.custom-focus,
-		.button-primary,
-		.button-secondary,
-		.button-tertiary,
-		.input-checkbox input,
-		.input-radio input,
-		input[type='text'],
-		.toggle-switch,
-		.toggle-switch-container
-	),
+* {
+	outline: none;
+	@apply outline-0;
+}
+
+input,
+button,
+select,
+textarea,
+object,
+[tabindex]:not([tabindex='-1']) {
+	@apply outline-2 -outline-offset-2;
+
+	&:focus-visible:not(
+	.custom-focus,
+	.button-primary,
+	.button-secondary,
+	.button-tertiary,
+	.input-checkbox input,
+	.input-radio input,
+	input[type='text'],
+	.toggle-switch,
+	.toggle-switch-container
+) {
+		@apply outline outline-2 outline-I0 rounded-lg;
+	}
+
+}
+
 .focus-within:focus-within {
 	@apply outline-none outline-I0 -outline-offset-2 rounded-lg;
-
-	:not(input, textarea) {
-		animation: outline-focus 100ms ease-out;
-	}
 }
 
 a:focus-visible:not(.custom-focus, .button-primary, .button-secondary, .button-tertiary) {
-	@apply outline-offset-4 rounded-full;
-	animation: outline-focus-outside 100ms ease-out;
+	@apply outline outline-2 outline-I0 outline-offset-4 rounded-full;
 }
 
 a:hover:not(.custom-hover) {
@@ -37,22 +50,4 @@ a:hover:not(.custom-hover) {
 
 .custom-focus {
 	@apply outline-none;
-}
-
-@keyframes outline-focus {
-	0% {
-		@apply outline-offset-[-5px] outline-transparent;
-	}
-	100% {
-		@apply -outline-offset-2 outline-I0;
-	}
-}
-
-@keyframes outline-focus-outside {
-	0% {
-		@apply outline-offset-0 outline-transparent;
-	}
-	100% {
-		@apply outline-offset-4 outline-I0;
-	}
 }
