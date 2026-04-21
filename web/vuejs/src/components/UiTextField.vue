@@ -38,7 +38,6 @@ const trailingElement = ref<HTMLDivElement>();
 const clearButton = ref<HTMLButtonElement>();
 const leadingWidth = ref(0);
 const trailingWidth = ref(0);
-const clearButtonWidth = ref(0);
 
 const showZero = !!props.ui.showZero;
 const step = props.ui.step || 0;
@@ -74,6 +73,15 @@ const inputMode = computed<'numeric' | 'decimal' | 'email' | 'tel' | 'url' | 'se
 		return 'text';
 	}
 );
+
+const clearButtonVisible = computed<boolean>(() => {
+	return (
+		!!inputValue.value &&
+		!props.ui.disabled &&
+		!props.ui.lines &&
+		props.ui.style != TextFieldStyleValues.TextFieldBasic
+	);
+});
 
 function parseFloat(input: string) {
 	if (input === '') {
@@ -209,8 +217,8 @@ const inputStyle = computed<string>(() => {
 	const paddingLeft = leadingWidth.value ? `calc(${leadingWidth.value}px + 0.5rem)` : 'auto';
 	const paddingRight = trailingWidth.value
 		? `calc(${trailingWidth.value}px + 0.5rem)`
-		: clearButtonWidth.value
-			? `calc(${clearButtonWidth.value}px + 0.5rem)`
+		: clearButtonVisible.value
+			? '2.5rem'
 			: 'auto';
 	styles.push('padding-left:' + paddingLeft, 'padding-right:' + paddingRight);
 
@@ -384,7 +392,6 @@ function debouncedInput() {
 function calcAdditionalElementsWidths() {
 	leadingWidth.value = leadingElement.value?.getBoundingClientRect().width || 0;
 	trailingWidth.value = trailingElement.value?.getBoundingClientRect().width || 0;
-	clearButtonWidth.value = clearButton.value?.getBoundingClientRect().width || 0;
 }
 
 function observeAdditionalElements() {
@@ -492,12 +499,7 @@ onMounted(() => {
 
 				<!-- Clear button -->
 				<button
-					v-else-if="
-						inputValue &&
-						!props.ui.disabled &&
-						!props.ui.lines &&
-						props.ui.style != TextFieldStyleValues.TextFieldBasic
-					"
+					v-else-if="clearButtonVisible"
 					ref="clearButton"
 					class="button-tertiary square small additional-right clear-button"
 					@click="clearInputValue"
