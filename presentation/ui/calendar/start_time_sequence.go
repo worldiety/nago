@@ -225,7 +225,7 @@ func chipViews(evt Event, alignment ui.Alignment, fullWidth bool) []core.View {
 
 func chipView(chip Chip) core.View {
 	return ui.HStack(
-		ui.ImageIcon(chip.Icon).FillColor(chip.TextColor).StrokeColor(chip.TextColor).Frame(ui.Frame{}.Size(ui.L20, ui.L20)),
+		ui.ImageIcon(chip.Icon).FillColor(chip.FillColor).StrokeColor(chip.StrokeColor).Frame(ui.Frame{}.Size(ui.L20, ui.L20)),
 		ui.Text(chip.Label).Font(ui.Font{Size: ui.L12}).Color(chip.TextColor),
 	).
 		Alignment(ui.Leading).
