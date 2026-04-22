@@ -58,10 +58,12 @@ type Event struct {
 // sign-up for the waiting list is available.
 // Currently supported alignments are TopTrailing and BottomLeading.
 type Chip struct {
-	Label     string // Text within the chip
-	Icon      core.SVG
-	BgColor   color.Color
-	TextColor color.Color
-	Alignment ui.Alignment
-	FullWidth bool
+	Label       string // Text within the chip
+	Icon        core.SVG
+	FillColor   color.Color // If set, the icon is filled with this color
+	StrokeColor color.Color // If set, the icon stroke is drawn with this color
+	BgColor     color.Color
+	TextColor   color.Color
+	Alignment   ui.Alignment
+	FullWidth   bool
 }

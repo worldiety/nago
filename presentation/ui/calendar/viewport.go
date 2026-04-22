@@ -85,7 +85,7 @@ func Day(year int, month time.Month, day int) ViewPort {
 				dayLabel = rstring.LabelSaturday.Get(bnd)
 			}
 
-			return dayLabel + ", " + strconv.Itoa(day) + "." + strconv.Itoa(int(month))
+			return dayLabel + ", " + strconv.Itoa(day) + "." + strconv.Itoa(int(month)) + "." + strconv.Itoa(year)
 		},
 		style: vpMonth,
 	}
