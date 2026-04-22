@@ -86,7 +86,7 @@ const frameStyles = computed<string>(() => {
 
 function mapDataPointsToData(dataPoint: ChartDataPoint, seriesIndex: number, dataPointIndex: number) {
 	const markers = props.ui.markers?.value.filter(
-		(marker) => marker.seriesIndex === seriesIndex && marker.dataPointIndex === dataPointIndex
+		(marker) => (marker.seriesIndex ?? 0) === seriesIndex && (marker.dataPointIndex ?? 0) === dataPointIndex
 	);
 
 	return {
