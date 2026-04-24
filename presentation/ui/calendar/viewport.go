@@ -38,6 +38,7 @@ type ViewPort struct {
 	LaneWidth Percent
 	LaneLabel func(bnd i18n.Bundler) string
 	style     viewPortStyle
+	TimeStyle SeqPillTimeHint
 }
 
 // Year creates a ViewPort for a given year, spanning from January to December
@@ -53,7 +54,8 @@ func Year(year int) ViewPort {
 		LaneLabel: func(bnd i18n.Bundler) string {
 			return strconv.Itoa(year)
 		},
-		style: vpYear,
+		style:     vpYear,
+		TimeStyle: PillTimeYYYYMMDD,
 	}
 }
 
@@ -87,7 +89,8 @@ func Day(year int, month time.Month, day int) ViewPort {
 
 			return dayLabel + ", " + strconv.Itoa(day) + "." + strconv.Itoa(int(month)) + "." + strconv.Itoa(year)
 		},
-		style: vpMonth,
+		style:     vpMonth,
+		TimeStyle: PillTimeHHMM,
 	}
 }
 

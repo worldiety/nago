@@ -8,17 +8,20 @@
 package calendar
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/pkg/xtime"
 	"go.wdy.de/nago/presentation/core"
 	icons "go.wdy.de/nago/presentation/icons/flowbite/solid"
 	"go.wdy.de/nago/presentation/ui"
+	"golang.org/x/text/language"
 )
 
 type cluster interface {
 	String(bnd i18n.Bundler) string
 	Events() []Event
-	TimeStyle() seqPillTimeHint
 }
 
 func renderStartTimeSequence(c TCalendar, ctx core.RenderContext) core.RenderNode {
@@ -57,7 +60,7 @@ func renderStartTimeSequence(c TCalendar, ctx core.RenderContext) core.RenderNod
 								return evt.Render(c.style)
 							}
 
-							return startTimeSeqPill(c, evt, t.TimeStyle(), isLarge)
+							return startTimeSeqPill(c, evt, c.vp.TimeStyle, isLarge, ctx.Window())
 						})...,
 					).Alignment(ui.Stretch).
 						Gap(ui.L4).
@@ -109,24 +112,31 @@ func (c TCalendar) mapStartTimeCluster(vp ViewPort, events []Event) []cluster {
 
 }
 
-type seqPillTimeHint int
+type SeqPillTimeHint int
 
 const (
-	pillTimeYYYYMMDD seqPillTimeHint = iota
-	pillTimeHHMM
-	pillTimeNone
+	PillTimeYYYYMMDD SeqPillTimeHint = iota
+	PillTimeHHMM
+	PillTimeNone
 )
 
-func startTimeSeqPill(c TCalendar, evt Event, timeHint seqPillTimeHint, isLarge bool) core.View {
+func startTimeSeqPill(
+	c TCalendar,
+	evt Event,
+	timeHint SeqPillTimeHint,
+	isLarge bool,
+	wnd core.Window,
+) core.View {
+
 	colors := c.colors
 
 	isTimePoint := evt.To.At.Equal(evt.From.At)
 
 	var timeStr string
-	if timeHint != pillTimeNone {
+	if timeHint != PillTimeNone {
 
 		if isTimePoint {
-			if timeHint == pillTimeHHMM {
+			if timeHint == PillTimeHHMM {
 				timeStr = evt.From.At.Format("15:04")
 			} else {
 				if evt.To.At.Hour() == 0 && evt.To.At.Minute() == 0 && evt.From.At.Hour() == 0 && evt.To.At.Minute() == 0 {
@@ -136,7 +146,7 @@ func startTimeSeqPill(c TCalendar, evt Event, timeHint seqPillTimeHint, isLarge 
 				}
 			}
 		} else {
-			if timeHint == pillTimeHHMM {
+			if timeHint == PillTimeHHMM {
 				timeStr = evt.From.At.Format("15:04") + " - " + evt.To.At.Format("15:04")
 			} else {
 				if evt.To.At.Hour() == 0 && evt.To.At.Minute() == 0 && evt.From.At.Hour() == 0 && evt.To.At.Minute() == 0 {
@@ -165,44 +175,63 @@ func startTimeSeqPill(c TCalendar, evt Event, timeHint seqPillTimeHint, isLarge 
 		// category color
 		ui.HStack().BackgroundColor(evt.Category.Color).Frame(ui.Frame{MinWidth: ui.L12}).AccessibilityLabel(evt.Category.Label),
 		ui.VStack(
-			ui.HStack(
-				titleRow...,
-			).Alignment(ui.Leading).FullWidth(),
-			ui.If(timeStr != "",
-				ui.HStack(
-					ui.ImageIcon(icons.Clock),
-					ui.Text(timeStr),
-				).Gap(ui.L4),
+			// Departure
+			ui.IfFunc(evt.From.Offset.Duration > 0,
+				func() core.View {
+					return offSetView(evt.From.At, evt.From.Offset.Duration, evt.From.Offset.Icon, true, evt.From.Offset.Label)
+				},
 			),
-			ui.If(evt.Organiser != "", ui.HStack(
-				ui.ImageIcon(icons.User),
-				ui.Text(evt.Organiser),
-			).Gap(ui.L4)),
-			ui.If(evt.Location != "", ui.HStack(
-				ui.ImageIcon(icons.MapPinAlt),
-				ui.Text(evt.Location),
-			).Gap(ui.L4)),
-			// show bottom leading chips which are not full width
-			ui.If(len(evt.Chips) > 0, ui.HStack(
-				chipViews(evt, ui.BottomLeading, false)...,
-			).Gap(ui.L12)),
-			// show bottom leading chips which are full width
-			ui.If(len(evt.Chips) > 0, ui.HStack(
-				chipViews(evt, ui.BottomLeading, true)...,
-			).Gap(ui.L12).FullWidth()),
-		).
-			BackgroundColor(colors.EventBackground).
-			Alignment(ui.Leading).
-			Gap(ui.L4).
-			TextColor(colors.EventText).
-			FullWidth().
-			With(func(stack ui.TVStack) ui.TVStack {
-				if evt.Action != nil {
-					stack = stack.HoveredBackgroundColor(colors.EventHoverBackground).Action(evt.Action)
-				}
+			ui.VStack(
+				ui.IfFunc(evt.IsCancelled,
+					func() core.View {
+						return cancelledView(wnd)
+					},
+				),
+				ui.HStack(
+					titleRow...,
+				).Alignment(ui.Leading).FullWidth(),
+				ui.If(timeStr != "",
+					ui.HStack(
+						ui.ImageIcon(icons.Clock),
+						ui.Text(timeStr),
+					).Gap(ui.L4),
+				),
+				ui.If(evt.Organiser != "", ui.HStack(
+					ui.ImageIcon(icons.User),
+					ui.Text(evt.Organiser),
+				).Gap(ui.L4)),
+				ui.If(evt.Location != "", ui.HStack(
+					ui.ImageIcon(icons.MapPinAlt),
+					ui.Text(evt.Location),
+				).Gap(ui.L4)),
+				// show bottom leading chips which are not full width
+				ui.If(len(evt.Chips) > 0, ui.HStack(
+					chipViews(evt, ui.BottomLeading, false)...,
+				).Gap(ui.L12)),
+				// show bottom leading chips which are full width
+				ui.If(len(evt.Chips) > 0, ui.HStack(
+					chipViews(evt, ui.BottomLeading, true)...,
+				).Gap(ui.L12).FullWidth()),
+			).
+				BackgroundColor(colors.EventBackground).
+				Alignment(ui.Leading).
+				Gap(ui.L4).
+				TextColor(colors.EventText).
+				FullWidth().
+				With(func(stack ui.TVStack) ui.TVStack {
+					if evt.Action != nil {
+						stack = stack.HoveredBackgroundColor(colors.EventHoverBackground).Action(evt.Action)
+					}
 
-				return stack
-			}).Padding(ui.Padding{}.All(ui.L8)),
+					return stack
+				}).Padding(ui.Padding{}.All(ui.L8)),
+			// Return
+			ui.IfFunc(evt.To.Offset.Duration > 0,
+				func() core.View {
+					return offSetView(evt.To.At, evt.To.Offset.Duration, evt.To.Offset.Icon, false, evt.To.Offset.Label)
+				},
+			),
+		).FullWidth(),
 	).
 		Gap(ui.L2).
 		FullWidth().
@@ -235,3 +264,53 @@ func chipView(chip Chip) core.View {
 		Border(ui.Border{}.Radius(ui.L4)).
 		Padding(ui.Padding{}.All(ui.L4))
 }
+
+func offSetView(
+	at time.Time,
+	offset time.Duration,
+	icon core.SVG,
+	negate bool,
+	label string,
+) core.View {
+
+	b := ui.Border{BottomRightRadius: ui.L4}
+	if negate {
+		offset = -offset
+		b = ui.Border{TopRightRadius: ui.L4}
+	}
+	resultTime := at.Add(offset)
+	if resultTime.Day() != at.Day() || resultTime.Month() != at.Month() || resultTime.Year() != at.Year() {
+		label += fmt.Sprintf(" %02d.%02d.%d,", resultTime.Day(), resultTime.Month(), resultTime.Year())
+	}
+	label += fmt.Sprintf(" %02d:%02d", resultTime.Hour(), resultTime.Minute())
+	return ui.HStack(
+		ui.ImageIcon(icon).
+			Frame(ui.Frame{}.Size(ui.L20, ui.L20)),
+		ui.Text(label),
+	).Alignment(ui.Leading).
+		Gap(ui.L8).
+		BackgroundColor(ui.M5).
+		Padding(ui.Padding{}.All(ui.L4)).
+		Border(b).
+		Frame(ui.Frame{}.FullWidth())
+}
+
+func cancelledView(wnd core.Window) core.View {
+	return ui.HStack(
+		ui.Text(LabelCancelled.Get(wnd)).
+			Font(ui.Font{Size: ui.L20, Weight: ui.DisplayAndLabelFontWeight}).
+			TextAlignment(ui.TextAlignCenter).
+			Color(ui.M8),
+	).BackgroundColor(ui.M4).
+		Padding(ui.Padding{}.All(ui.L4)).
+		Border(ui.Border{}.Radius(ui.L4)).
+		Frame(ui.Frame{}.FullWidth())
+}
+
+var LabelCancelled = i18n.MustString(
+	"nago.calendar.event.cancelled",
+	i18n.Values{
+		language.English: "EVENT CANCELLED",
+		language.German:  "EVENT STORNIERT",
+	},
+)
