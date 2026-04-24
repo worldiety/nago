@@ -17,7 +17,6 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	flowbiteOutline "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	flowbiteSolid "go.wdy.de/nago/presentation/icons/flowbite/solid"
-	icons "go.wdy.de/nago/presentation/icons/hero/outline"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/calendar"
 	"go.wdy.de/nago/web/vuejs"
@@ -62,6 +61,7 @@ func main() {
 							Label: "Kategorie 2",
 							Color: "#ff0000",
 						},
+						IsCancelled: true,
 					},
 
 					calendar.Event{
@@ -141,7 +141,7 @@ func main() {
 
 					calendar.Event{
 						From: calendar.Instant{
-							At: time.Date(2025, 2, 1, 0, 0, 0, 0, time.Local),
+							At: time.Date(2025, 2, 1, 15, 30, 0, 0, time.Local),
 							Offset: calendar.Offset{
 								Label:    "Anfahrt",
 								Icon:     flowbiteOutline.Bell,
@@ -149,7 +149,7 @@ func main() {
 							},
 						},
 						To: calendar.Instant{
-							At: time.Date(2025, 8, 31, 0, 0, 0, 0, time.Local),
+							At: time.Date(2025, 8, 31, 12, 25, 0, 0, time.Local),
 							Offset: calendar.Offset{
 								Label:    "Abfahrt",
 								Icon:     flowbiteOutline.BellActive,
@@ -197,9 +197,19 @@ func calStartTimeSeqTimeExample(chipAlignment ui.Alignment, txtColor color.Color
 		calendar.Event{
 			From: calendar.Instant{
 				At: time.Date(2026, 7, 11, 12, 0, 0, 0, time.Local),
+				Offset: calendar.Offset{
+					Duration: 1 * time.Hour,
+					Icon:     flowbiteOutline.Cart,
+					Label:    "Test",
+				},
 			},
 			To: calendar.Instant{
 				At: time.Date(2026, 7, 11, 13, 0, 0, 0, time.Local),
+				Offset: calendar.Offset{
+					Duration: 165 * time.Minute,
+					Icon:     flowbiteOutline.Cart,
+					Label:    "Rückkehr",
+				},
 			},
 			Label:     "Mittag",
 			Organiser: "Torben",
@@ -222,7 +232,7 @@ func calStartTimeSeqTimeExample(chipAlignment ui.Alignment, txtColor color.Color
 				},
 				{
 					Label:       "Ausgebucht",
-					Icon:        icons.XMark,
+					Icon:        flowbiteOutline.Ban,
 					StrokeColor: txtColor,
 					BgColor:     "#FE543E",
 					TextColor:   txtColor,

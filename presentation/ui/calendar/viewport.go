@@ -32,12 +32,20 @@ const (
 // ViewPort defines the visible time range of the calendar, including start/end,
 // displayed columns, lane width, and a label for the lane.
 type ViewPort struct {
-	From      time.Time
-	To        time.Time
-	Columns   []Column
-	LaneWidth Percent
-	LaneLabel func(bnd i18n.Bundler) string
-	style     viewPortStyle
+	From          time.Time
+	To            time.Time
+	Columns       []Column
+	LaneWidth     Percent
+	LaneLabel     func(bnd i18n.Bundler) string
+	viewportStyle viewPortStyle
+	timeStyle     SeqPillTimeHint
+}
+
+// SetTimeStyle sets the timeStyle of
+// i to the given SeqPillTimeHint
+func (i ViewPort) SetTimeStyle(style SeqPillTimeHint) ViewPort {
+	i.timeStyle = style
+	return i
 }
 
 // Year creates a ViewPort for a given year, spanning from January to December
@@ -53,7 +61,8 @@ func Year(year int) ViewPort {
 		LaneLabel: func(bnd i18n.Bundler) string {
 			return strconv.Itoa(year)
 		},
-		style: vpYear,
+		viewportStyle: vpYear,
+		timeStyle:     PillTimeYYYYMMDD,
 	}
 }
 
@@ -87,7 +96,8 @@ func Day(year int, month time.Month, day int) ViewPort {
 
 			return dayLabel + ", " + strconv.Itoa(day) + "." + strconv.Itoa(int(month)) + "." + strconv.Itoa(year)
 		},
-		style: vpMonth,
+		viewportStyle: vpMonth,
+		timeStyle:     PillTimeHHMM,
 	}
 }
 
