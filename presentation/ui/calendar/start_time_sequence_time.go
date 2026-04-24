@@ -31,10 +31,6 @@ func (s startTimeClusterTime) Events() []Event {
 	return s.events
 }
 
-func (s startTimeClusterTime) TimeStyle() seqPillTimeHint {
-	return pillTimeNone
-}
-
 type isoCalTime struct {
 	year   int
 	week   int
