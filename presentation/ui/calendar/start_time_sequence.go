@@ -60,7 +60,7 @@ func renderStartTimeSequence(c TCalendar, ctx core.RenderContext) core.RenderNod
 								return evt.Render(c.style)
 							}
 
-							return startTimeSeqPill(c, evt, c.vp.timeStyle, isLarge, ctx.Window())
+							return startTimeSeqPill(c, evt, c.vp.TimeStyle, isLarge, ctx.Window())
 						})...,
 					).Alignment(ui.Stretch).
 						Gap(ui.L4).
@@ -93,7 +93,7 @@ func renderStartTimeSequence(c TCalendar, ctx core.RenderContext) core.RenderNod
 }
 
 func (c TCalendar) mapStartTimeCluster(vp ViewPort, events []Event) []cluster {
-	switch vp.viewportStyle {
+	switch vp.style {
 	case vpYear:
 		var tmp []cluster
 		for _, week := range mapStartTimeClusterCalWeeks(c.vp, c.events) {
