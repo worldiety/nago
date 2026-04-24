@@ -118,8 +118,8 @@ export default {
 </script>
 
 <template>
-	<div v-if="editor" class="relative">
-		<div class="control-group">
+	<div v-if="editor" class="flex flex-col max-h-[80dvh]">
+		<div class="control-group shrink-0" style="background-color: var(--M1); color: var(--M8)">
 			<div class="gap-1 flex flex-wrap">
 				<button
 					@click="editor.chain().focus().toggleBold().run()"
@@ -532,61 +532,50 @@ export default {
 					<span class="text-sm">Überschrift 3</span>
 				</button>
 			</div>
-		</div>
 
-		<!-- Link-Overlay -->
-		<div
-			v-if="linkOverlay.visible"
-			class="absolute left-0 top-full z-20 mt-1 w-80 rounded border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-600 dark:bg-gray-800"
-		>
-			<p class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Link einfügen</p>
-			<input
-				ref="linkInput"
-				v-model="linkOverlay.url"
-				type="url"
-				placeholder="https://..."
-				class="mb-2 w-full rounded border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-				@keydown.enter.prevent="applyLink"
-				@keydown.esc="closeLinkOverlay"
-			/>
-			<label class="mb-3 flex cursor-pointer items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+			<!-- Link-Eingabezeile (inline in der Toolbar) -->
+			<div v-if="linkOverlay.visible" class="flex flex-wrap items-center gap-2 pt-1 pb-1">
 				<input
-					v-model="linkOverlay.openInNewTab"
-					type="checkbox"
-					class="rounded"
+					ref="linkInput"
+					v-model="linkOverlay.url"
+					type="url"
+					placeholder="https://..."
+					class="min-w-48 flex-1 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2"
+					style="border: 1px solid var(--M3); background-color: var(--M2); color: var(--M8)"
+					@keydown.enter.prevent="applyLink"
+					@keydown.esc="closeLinkOverlay"
 				/>
-				In neuem Tab öffnen
-			</label>
-			<div class="flex gap-2">
+				<label class="flex cursor-pointer items-center gap-1 text-sm" style="color: var(--M5)">
+					<input
+						v-model="linkOverlay.openInNewTab"
+						type="checkbox"
+						class="rounded"
+					/>
+					Neuer Tab
+				</label>
 				<button
 					@click="applyLink"
-					class="flex-1 rounded bg-blue-500 px-3 py-1 text-sm font-medium text-white hover:bg-blue-600"
+					class="rounded px-3 py-1 text-sm font-medium bg-I0 text-PBT"
 				>
 					Übernehmen
 				</button>
 				<button
 					@click="removeLink"
 					:disabled="!editor.isActive('link')"
-					class="flex-1 rounded border border-gray-300 px-3 py-1 text-sm font-medium text-gray-600 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-600 dark:text-gray-400"
+					class="rounded px-3 py-1 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40"
+					style="border: 1px solid var(--M3); color: var(--M8)"
 				>
-					Link entfernen
+					Entfernen
 				</button>
 				<button
 					@click="closeLinkOverlay"
-					class="rounded border border-gray-300 px-2 py-1 text-sm text-gray-500 hover:bg-gray-100 dark:border-gray-600"
+					class="rounded px-2 py-1 text-sm"
+					style="border: 1px solid var(--M3); color: var(--M5)"
 					title="Abbrechen"
-				>
-					✕
-				</button>
+				>✕</button>
 			</div>
 		</div>
-		<!-- Backdrop zum Schließen -->
-		<div
-			v-if="linkOverlay.visible"
-			class="fixed inset-0 z-10"
-			@click="closeLinkOverlay"
-		/>
 
-		<editor-content :editor="editor" class="prose-custom" />
+		<editor-content :editor="editor" class="prose-custom min-h-0 flex-1 overflow-y-auto" />
 	</div>
 </template>
