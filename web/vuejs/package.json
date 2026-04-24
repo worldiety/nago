@@ -26,6 +26,7 @@
 		"@headlessui/vue": "^1.7.23",
 		"@popperjs/core": "^2.11.8",
 		"@tiptap/extension-color": "^2.11.7",
+		"@tiptap/extension-link": "^2.27.2",
 		"@tiptap/extension-list-item": "^2.11.7",
 		"@tiptap/extension-text-style": "^2.11.7",
 		"@tiptap/extension-underline": "^2.11.7",

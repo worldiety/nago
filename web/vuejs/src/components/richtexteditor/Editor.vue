@@ -1,5 +1,6 @@
 <script>
 import { Color } from '@tiptap/extension-color';
+import Link from '@tiptap/extension-link';
 import ListItem from '@tiptap/extension-list-item';
 import TextStyle from '@tiptap/extension-text-style';
 import { Underline } from '@tiptap/extension-underline';
@@ -23,6 +24,11 @@ export default {
 	data() {
 		return {
 			editor: null,
+			linkOverlay: {
+				visible: false,
+				url: '',
+				openInNewTab: false,
+			},
 		};
 	},
 
@@ -49,6 +55,12 @@ export default {
 				TextStyle.configure({ types: [ListItem.name] }),
 				StarterKit,
 				Underline,
+				Link.configure({
+					openOnClick: false,
+					autolink: true,
+					linkOnPaste: true,
+					defaultProtocol: 'https',
+				}),
 			],
 			content: this.modelValue,
 			onUpdate: () => {
@@ -67,11 +79,46 @@ export default {
 	beforeUnmount() {
 		this.editor.destroy();
 	},
+
+	methods: {
+		openLinkOverlay() {
+			const attrs = this.editor.getAttributes('link');
+			this.linkOverlay.url = attrs.href ?? '';
+			this.linkOverlay.openInNewTab = attrs.target === '_blank';
+			this.linkOverlay.visible = true;
+			this.$nextTick(() => {
+				this.$refs.linkInput?.focus();
+			});
+		},
+		applyLink() {
+			const url = this.linkOverlay.url.trim();
+			if (!url) {
+				this.editor.chain().focus().extendMarkRange('link').unsetLink().run();
+			} else {
+				const target = this.linkOverlay.openInNewTab ? '_blank' : '_self';
+				const rel = this.linkOverlay.openInNewTab ? 'noopener noreferrer' : undefined;
+				this.editor
+					.chain()
+					.focus()
+					.extendMarkRange('link')
+					.setLink({ href: url, target, rel })
+					.run();
+			}
+			this.closeLinkOverlay();
+		},
+		removeLink() {
+			this.editor.chain().focus().extendMarkRange('link').unsetLink().run();
+			this.closeLinkOverlay();
+		},
+		closeLinkOverlay() {
+			this.linkOverlay.visible = false;
+		},
+	},
 };
 </script>
 
 <template>
-	<div v-if="editor" class="">
+	<div v-if="editor" class="relative">
 		<div class="control-group">
 			<div class="gap-1 flex flex-wrap">
 				<button
@@ -286,7 +333,8 @@ export default {
 						/>
 					</svg>
 				</button>
-				<button title="horizontal line" @click="editor.chain().focus().setHorizontalRule().run()">
+				<button
+					title="horizontal line" @click="editor.chain().focus().setHorizontalRule().run()">
 					<svg
 						class="w-6 h-6"
 						aria-hidden="true"
@@ -301,6 +349,30 @@ export default {
 							stroke="currentColor"
 							stroke-linecap="round"
 							d="M6 9.5h12m-12-2h12m-12-2h12m-12 13h12m-12-2h12m-12-2h12"
+						/>
+					</svg>
+				</button>
+
+				<button
+					title="Link einfügen"
+					@click="openLinkOverlay"
+					:class="{ 'bg-I0 rounded-sm': editor.isActive('link') }"
+				>
+					<svg
+						class="w-6 h-6"
+						aria-hidden="true"
+						xmlns="http://www.w3.org/2000/svg"
+						width="24"
+						height="24"
+						fill="none"
+						viewBox="0 0 24 24"
+					>
+						<path
+							stroke="currentColor"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M13.213 9.787a3.391 3.391 0 0 0-4.795 0l-3.425 3.426a3.39 3.39 0 0 0 4.795 4.794l.321-.304m-.321-4.49a3.39 3.39 0 0 0 4.795 0l3.424-3.426a3.39 3.39 0 0 0-4.794-4.795l-1.028.961"
 						/>
 					</svg>
 				</button>
@@ -461,6 +533,59 @@ export default {
 				</button>
 			</div>
 		</div>
+
+		<!-- Link-Overlay -->
+		<div
+			v-if="linkOverlay.visible"
+			class="absolute left-0 top-full z-20 mt-1 w-80 rounded border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-600 dark:bg-gray-800"
+		>
+			<p class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Link einfügen</p>
+			<input
+				ref="linkInput"
+				v-model="linkOverlay.url"
+				type="url"
+				placeholder="https://..."
+				class="mb-2 w-full rounded border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+				@keydown.enter.prevent="applyLink"
+				@keydown.esc="closeLinkOverlay"
+			/>
+			<label class="mb-3 flex cursor-pointer items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+				<input
+					v-model="linkOverlay.openInNewTab"
+					type="checkbox"
+					class="rounded"
+				/>
+				In neuem Tab öffnen
+			</label>
+			<div class="flex gap-2">
+				<button
+					@click="applyLink"
+					class="flex-1 rounded bg-blue-500 px-3 py-1 text-sm font-medium text-white hover:bg-blue-600"
+				>
+					Übernehmen
+				</button>
+				<button
+					@click="removeLink"
+					:disabled="!editor.isActive('link')"
+					class="flex-1 rounded border border-gray-300 px-3 py-1 text-sm font-medium text-gray-600 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-600 dark:text-gray-400"
+				>
+					Link entfernen
+				</button>
+				<button
+					@click="closeLinkOverlay"
+					class="rounded border border-gray-300 px-2 py-1 text-sm text-gray-500 hover:bg-gray-100 dark:border-gray-600"
+					title="Abbrechen"
+				>
+					✕
+				</button>
+			</div>
+		</div>
+		<!-- Backdrop zum Schließen -->
+		<div
+			v-if="linkOverlay.visible"
+			class="fixed inset-0 z-10"
+			@click="closeLinkOverlay"
+		/>
 
 		<editor-content :editor="editor" class="prose-custom" />
 	</div>
