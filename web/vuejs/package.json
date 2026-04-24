@@ -34,6 +34,7 @@
 		"@tiptap/vue-3": "^2.11.7",
 		"apexcharts": "^4.7.0",
 		"codemirror": "^6.0.1",
+		"crawler-user-agents": "^1.44.0",
 		"pinia": "^3.0.1",
 		"qrcode": "^1.5.4",
 		"sanitize-html": "^2.15.0",
