@@ -39,7 +39,7 @@ func GroupsFor[T any]() []Group {
 // GroupsOf returns field groups for the given struct type.
 // It groups fields by their "section" tag, skipping fields when:
 // - tag `visible:"false"` is set
-// - the field is unexported and does not start with "_" (private)
+// - the field is unexported, unless it starts with "_" and has a label tag
 // - the field name appears in ignoreFields
 func GroupsOf(p reflect.Type, ignoreFields ...string) []Group {
 	var res []Group
@@ -58,7 +58,11 @@ func GroupsOf(p reflect.Type, ignoreFields ...string) []Group {
 			continue
 		}
 
-		if !strings.HasPrefix(field.Name, "_") && !field.IsExported() {
+		if strings.HasPrefix(field.Name, "_") {
+			if _, ok := field.Tag.Lookup("label"); !ok {
+				continue
+			}
+		} else if !field.IsExported() {
 			continue
 		}
 
