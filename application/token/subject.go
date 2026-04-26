@@ -54,8 +54,29 @@ func (s *subject) Context() context.Context {
 }
 
 func (s *subject) HasResourcePermission(name rebac.Namespace, id rebac.Instance, p permission.ID) bool {
-	//TODO implement me
-	panic("implement me")
+	if !s.Valid() {
+		return false
+	}
+
+	if s.HasPermission(p) {
+		return true
+	}
+
+	ok, err := s.rdb.Contains(rebac.Triple{
+		Source:   s.source(),
+		Relation: rebac.Relation(p),
+		Target: rebac.Entity{
+			Namespace: name,
+			Instance:  id,
+		},
+	})
+
+	if err != nil {
+		slog.Error("cannot check resource permission", "err", err)
+		return false
+	}
+
+	return ok
 }
 
 func (s *subject) Audit(perm permission.ID) error {
@@ -106,7 +127,7 @@ func (s *subject) AuditResource(name rebac.Namespace, id rebac.Instance, p permi
 func (s *subject) HasPermission(permission permission.ID) bool {
 	s.load()
 
-	ok, err := s.rdb.Contains(rebac.Triple{
+	ok, err := s.rdb.Resolve(rebac.Triple{
 		Source:   s.source(),
 		Relation: rebac.Relation(permission),
 		Target: rebac.Entity{

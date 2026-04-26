@@ -165,7 +165,7 @@ func NewUseCases(
 	return UseCases{
 		Delete:              NewDelete(&mutex, repo),
 		FindAll:             NewFindAll(repo),
-		Create:              NewCreate(&mutex, repo, algo, reverseHashLookup),
+		Create:              NewCreate(&mutex, repo, algo, reverseHashLookup, rdb),
 		AuthenticateSubject: NewAuthenticateSubject(ctx, repo, algo, reverseHashLookup, subjectFromUser, subjectLookup, getAnonUser, findRoleByID, rdb),
 		Rotate:              NewRotate(&mutex, repo, algo, reverseHashLookup),
 		FindByID:            NewFindByID(repo),
