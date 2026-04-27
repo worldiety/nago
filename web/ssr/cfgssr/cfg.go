@@ -26,6 +26,12 @@ import (
 	"golang.org/x/text/language"
 )
 
+// ssrPage holds the result of a single SSR render pass.
+type ssrPage struct {
+	Body  []byte // the rendered <div id="app">…</div> HTML
+	Title string // the window title extracted during rendering (may be empty)
+}
+
 // Enable integrates a server side render step into the delivered dynamic javascript stub. The primary
 // goal is not essentially a 1:1 hydration stub but at least provide enough content for proper SEO indexing.
 func Enable(cfg *application.Configurator, root core.NavigationPath) {
@@ -67,8 +73,11 @@ func Enable(cfg *application.Configurator, root core.NavigationPath) {
 	getAnonUserFn := std.Must(cfg.UserManagement()).UseCases.GetAnonUser
 
 	cfg.HandleMethod(http.MethodGet, path, func(writer http.ResponseWriter, request *http.Request) {
-		html := renderHydrationHTML(cfg, root, getAnonUserFn, request)
-		buf := bytes.Replace(idxBuf, placeholder, html, 1)
+		page := renderHydrationHTML(cfg, root, getAnonUserFn, request)
+		buf := bytes.Replace(idxBuf, placeholder, page.Body, 1)
+		if page.Title != "" {
+			buf = bytes.Replace(buf, []byte(`<title>Nago</title>`), []byte(`<title>`+page.Title+`</title>`), 1)
+		}
 		writer.Header().Set("Content-Type", "text/html; charset=utf-8")
 		writer.Write(buf)
 	})
@@ -78,8 +87,10 @@ func Enable(cfg *application.Configurator, root core.NavigationPath) {
 // renderHydrationHTML performs a single SSR render pass for the given root view.
 // It parses the Accept-Language header, builds a minimal ssrWindow, calls the
 // registered factory, renders the proto tree to DOM nodes and returns the result
-// as a <div id="app">…</div> byte slice.
-func renderHydrationHTML(cfg *application.Configurator, root core.NavigationPath, getAnonUser user.GetAnonUser, r *http.Request) []byte {
+// as an ssrPage containing the <div id="app">…</div> HTML and the window title.
+func renderHydrationHTML(cfg *application.Configurator, root core.NavigationPath, getAnonUser user.GetAnonUser, r *http.Request) ssrPage {
+	emptyPage := ssrPage{Body: []byte(`<div id="app"></div>`)}
+
 	// 1. Parse locale from Accept-Language header.
 	locale := language.English
 	if al := r.Header.Get("Accept-Language"); al != "" {
@@ -93,7 +104,7 @@ func renderHydrationHTML(cfg *application.Configurator, root core.NavigationPath
 	factory, ok := cfg.RootViews()[id]
 	if !ok {
 		slog.Error("SSR hydration: factory not found", "root", root)
-		return []byte(`<div id="app"></div>`)
+		return emptyPage
 	}
 
 	// 3. Build a minimal SSR window + render context.
@@ -119,10 +130,16 @@ func renderHydrationHTML(cfg *application.Configurator, root core.NavigationPath
 	}()
 
 	if tree == nil {
-		return []byte(`<div id="app"></div>`)
+		return emptyPage
 	}
 
-	// 5. Convert proto tree → DOM nodes → HTML string.
+	// 5. Extract the window title set during rendering.
+	var title string
+	if tw, ok := wnd.(interface{ Title() string }); ok {
+		title = tw.Title()
+	}
+
+	// 6. Convert proto tree → DOM nodes → HTML string.
 	node := ssr.RenderComponent(tree)
 
 	wrapper := dom.NewDiv()
@@ -134,8 +151,11 @@ func renderHydrationHTML(cfg *application.Configurator, root core.NavigationPath
 	htmlStr, err := dom.RenderToString(wrapper)
 	if err != nil {
 		slog.Error("SSR hydration: failed to render DOM to string", "err", err)
-		return []byte(`<div id="app"></div>`)
+		return emptyPage
 	}
 
-	return []byte(htmlStr)
+	return ssrPage{
+		Body:  []byte(htmlStr),
+		Title: title,
+	}
 }

@@ -26,7 +26,13 @@ func WindowTitle(title string) TWindowTitle {
 
 // Render builds the protocol representation of the window title.
 // It sets the title value that will be displayed in the browser or application.
+// If the window supports SetTitle (e.g. during SSR), the title is also stored
+// on the window so it can be injected into the HTML <title> element.
 func (c TWindowTitle) Render(ctx core.RenderContext) core.RenderNode {
+	if setter, ok := ctx.Window().(interface{ SetTitle(string) }); ok {
+		setter.SetTitle(c.title)
+	}
+
 	return &proto.WindowTitle{
 		Value: proto.Str(c.title),
 	}

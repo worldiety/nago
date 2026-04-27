@@ -58,7 +58,14 @@ type ssrWindow struct {
 	subject     user.Subject
 	path        core.NavigationPath
 	application *core.Application
+	title       string
 }
+
+// SetTitle stores the window title during SSR rendering.
+func (w *ssrWindow) SetTitle(title string) { w.title = title }
+
+// Title returns the last title set via SetTitle.
+func (w *ssrWindow) Title() string { return w.title }
 
 func (w *ssrWindow) AddInputListener(elemID string, fn func(evt core.InputEvent)) (close func()) {
 	return func() {
