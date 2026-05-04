@@ -1,0 +1,48 @@
+{
+  "doc": "FlowChartEdge connects two nodes in a flow chart.",
+  "kind": "Record",
+  "id": 240,
+  "fields": {
+    "1": {
+      "name": "Id",
+      "type": "Str"
+    },
+    "2": {
+      "name": "SourceNodeId",
+      "type": "Str"
+    },
+    "3": {
+      "name": "TargetNodeId",
+      "type": "Str"
+    },
+    "4": {
+      "name": "Label",
+      "type": "Str"
+    },
+    "5": {
+      "name": "Style",
+      "type": "FlowChartEdgeStyle"
+    },
+    "6": {
+      "name": "Color",
+      "type": "Color"
+    },
+    "7": {
+      "name": "Width",
+      "type": "Float"
+    },
+    "8": {
+      "name": "Animated",
+      "type": "Bool"
+    },
+    "9": {
+      "name": "MarkerStart",
+      "type": "FlowChartEdgeMarker"
+    },
+    "10": {
+      "name": "MarkerEnd",
+      "type": "FlowChartEdgeMarker"
+    }
+  }
+}
+

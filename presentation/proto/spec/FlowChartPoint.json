@@ -1,0 +1,16 @@
+{
+  "doc": "FlowChartPoint describes a node position in the flowchart canvas coordinate system.",
+  "kind": "Record",
+  "id": 234,
+  "fields": {
+	"1": {
+	  "name": "X",
+	  "type": "Float"
+	},
+	"2": {
+	  "name": "Y",
+	  "type": "Float"
+	}
+  }
+}
+

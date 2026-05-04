@@ -97,12 +97,7 @@ export default {
 			} else {
 				const target = this.linkOverlay.openInNewTab ? '_blank' : '_self';
 				const rel = this.linkOverlay.openInNewTab ? 'noopener noreferrer' : undefined;
-				this.editor
-					.chain()
-					.focus()
-					.extendMarkRange('link')
-					.setLink({ href: url, target, rel })
-					.run();
+				this.editor.chain().focus().extendMarkRange('link').setLink({ href: url, target, rel }).run();
 			}
 			this.closeLinkOverlay();
 		},
@@ -333,8 +328,7 @@ export default {
 						/>
 					</svg>
 				</button>
-				<button
-					title="horizontal line" @click="editor.chain().focus().setHorizontalRule().run()">
+				<button title="horizontal line" @click="editor.chain().focus().setHorizontalRule().run()">
 					<svg
 						class="w-6 h-6"
 						aria-hidden="true"
@@ -546,17 +540,10 @@ export default {
 					@keydown.esc="closeLinkOverlay"
 				/>
 				<label class="flex cursor-pointer items-center gap-1 text-sm" style="color: var(--M5)">
-					<input
-						v-model="linkOverlay.openInNewTab"
-						type="checkbox"
-						class="rounded"
-					/>
+					<input v-model="linkOverlay.openInNewTab" type="checkbox" class="rounded" />
 					Neuer Tab
 				</label>
-				<button
-					@click="applyLink"
-					class="rounded px-3 py-1 text-sm font-medium bg-I0 text-PBT"
-				>
+				<button @click="applyLink" class="rounded px-3 py-1 text-sm font-medium bg-I0 text-PBT">
 					Übernehmen
 				</button>
 				<button
@@ -572,7 +559,9 @@ export default {
 					class="rounded px-2 py-1 text-sm"
 					style="border: 1px solid var(--M3); color: var(--M5)"
 					title="Abbrechen"
-				>✕</button>
+				>
+					✕
+				</button>
 			</div>
 		</div>
 

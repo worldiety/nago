@@ -14,6 +14,7 @@
 @import 'progress.css';
 @import 'container.css';
 @import 'scrollbars.css';
+@import 'vueflow.css';
 
 body {
 	@apply h-full;

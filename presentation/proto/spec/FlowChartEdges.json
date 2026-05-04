@@ -1,0 +1,7 @@
+{
+  "doc": "FlowChartEdges is the list of all edges in a flow chart.",
+  "kind": "Array",
+  "id": 241,
+  "type": "FlowChartEdge"
+}
+

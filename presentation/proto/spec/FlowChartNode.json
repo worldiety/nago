@@ -1,0 +1,32 @@
+{
+  "doc": "FlowChartNode represents a single positioned node in a flow chart.",
+  "kind": "Record",
+  "id": 236,
+  "fields": {
+    "1": {
+      "name": "Id",
+      "type": "Str"
+    },
+    "2": {
+      "name": "Type",
+      "type": "FlowChartNodeType"
+    },
+    "3": {
+      "name": "Position",
+      "type": "FlowChartPoint"
+    },
+    "4": {
+      "name": "Label",
+      "type": "Str"
+    },
+    "5": {
+      "name": "BackgroundColor",
+      "type": "Color"
+    },
+    "6": {
+      "name": "Border",
+      "type": "Border"
+    }
+  }
+}
+

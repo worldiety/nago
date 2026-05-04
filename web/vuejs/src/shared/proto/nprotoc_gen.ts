@@ -18120,6 +18120,919 @@ export class Link implements Writeable, Readable {
 	}
 }
 
+// FlowChart represents a node-edge diagram for modeling flows, states and transitions.
+export class FlowChart implements Writeable, Readable, Component {
+	public inputValue?: Ptr;
+
+	public value?: FlowChartModel;
+
+	public frame?: Frame;
+
+	public backgroundColor?: Color;
+
+	public nodesDraggable?: Bool;
+
+	public nodesConnectable?: Bool;
+
+	public edgesEditable?: Bool;
+
+	public elementsSelectable?: Bool;
+
+	public orientation?: Orientation;
+
+	public customContents?: FlowChartCustomContents;
+
+	public minZoom?: Float;
+
+	public maxZoom?: Float;
+
+	constructor(
+		inputValue: Ptr | undefined = undefined,
+		value: FlowChartModel | undefined = undefined,
+		frame: Frame | undefined = undefined,
+		backgroundColor: Color | undefined = undefined,
+		nodesDraggable: Bool | undefined = undefined,
+		nodesConnectable: Bool | undefined = undefined,
+		edgesEditable: Bool | undefined = undefined,
+		elementsSelectable: Bool | undefined = undefined,
+		orientation: Orientation | undefined = undefined,
+		customContents: FlowChartCustomContents | undefined = undefined,
+		minZoom: Float | undefined = undefined,
+		maxZoom: Float | undefined = undefined
+	) {
+		this.inputValue = inputValue;
+		this.value = value;
+		this.frame = frame;
+		this.backgroundColor = backgroundColor;
+		this.nodesDraggable = nodesDraggable;
+		this.nodesConnectable = nodesConnectable;
+		this.edgesEditable = edgesEditable;
+		this.elementsSelectable = elementsSelectable;
+		this.orientation = orientation;
+		this.customContents = customContents;
+		this.minZoom = minZoom;
+		this.maxZoom = maxZoom;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.inputValue = readInt(reader);
+					break;
+				}
+				case 2: {
+					this.value = new FlowChartModel();
+					this.value.read(reader);
+					break;
+				}
+				case 3: {
+					this.frame = new Frame();
+					this.frame.read(reader);
+					break;
+				}
+				case 4: {
+					this.backgroundColor = readString(reader);
+					break;
+				}
+				case 5: {
+					this.nodesDraggable = readBool(reader);
+					break;
+				}
+				case 6: {
+					this.nodesConnectable = readBool(reader);
+					break;
+				}
+				case 7: {
+					this.edgesEditable = readBool(reader);
+					break;
+				}
+				case 8: {
+					this.elementsSelectable = readBool(reader);
+					break;
+				}
+				case 9: {
+					this.orientation = readInt(reader);
+					break;
+				}
+				case 10: {
+					this.customContents = new FlowChartCustomContents();
+					this.customContents.read(reader);
+					break;
+				}
+				case 11: {
+					this.minZoom = readFloat(reader);
+					break;
+				}
+				case 12: {
+					this.maxZoom = readFloat(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.inputValue !== undefined,
+			this.value !== undefined && !this.value.isZero(),
+			this.frame !== undefined && !this.frame.isZero(),
+			this.backgroundColor !== undefined,
+			this.nodesDraggable !== undefined,
+			this.nodesConnectable !== undefined,
+			this.edgesEditable !== undefined,
+			this.elementsSelectable !== undefined,
+			this.orientation !== undefined,
+			this.customContents !== undefined && !this.customContents.isZero(),
+			this.minZoom !== undefined,
+			this.maxZoom !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 1);
+			writeInt(writer, this.inputValue!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.RECORD, 2);
+			this.value!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.RECORD, 3);
+			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
+			writeString(writer, this.backgroundColor!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 5);
+			writeBool(writer, this.nodesDraggable!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 6);
+			writeBool(writer, this.nodesConnectable!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 7);
+			writeBool(writer, this.edgesEditable!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 8);
+			writeBool(writer, this.elementsSelectable!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[9]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 9);
+			writeInt(writer, this.orientation!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[10]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 10);
+			this.customContents!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[11]) {
+			writer.writeFieldHeader(Shapes.F64, 11);
+			writeFloat(writer, this.minZoom!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[12]) {
+			writer.writeFieldHeader(Shapes.F64, 12);
+			writeFloat(writer, this.maxZoom!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.inputValue === undefined &&
+			(this.value === undefined || this.value.isZero()) &&
+			(this.frame === undefined || this.frame.isZero()) &&
+			this.backgroundColor === undefined &&
+			this.nodesDraggable === undefined &&
+			this.nodesConnectable === undefined &&
+			this.edgesEditable === undefined &&
+			this.elementsSelectable === undefined &&
+			this.orientation === undefined &&
+			(this.customContents === undefined || this.customContents.isZero()) &&
+			this.minZoom === undefined &&
+			this.maxZoom === undefined
+		);
+	}
+
+	reset(): void {
+		this.inputValue = undefined;
+		this.value = undefined;
+		this.frame = undefined;
+		this.backgroundColor = undefined;
+		this.nodesDraggable = undefined;
+		this.nodesConnectable = undefined;
+		this.edgesEditable = undefined;
+		this.elementsSelectable = undefined;
+		this.orientation = undefined;
+		this.customContents = undefined;
+		this.minZoom = undefined;
+		this.maxZoom = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 233);
+		return;
+	}
+	isComponent(): void {}
+}
+
+// FlowChartPoint describes a node position in the flowchart canvas coordinate system.
+export class FlowChartPoint implements Writeable, Readable {
+	public x?: Float;
+
+	public y?: Float;
+
+	constructor(x: Float | undefined = undefined, y: Float | undefined = undefined) {
+		this.x = x;
+		this.y = y;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.x = readFloat(reader);
+					break;
+				}
+				case 2: {
+					this.y = readFloat(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.x !== undefined, this.y !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.F64, 1);
+			writeFloat(writer, this.x!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.F64, 2);
+			writeFloat(writer, this.y!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.x === undefined && this.y === undefined;
+	}
+
+	reset(): void {
+		this.x = undefined;
+		this.y = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 234);
+		return;
+	}
+}
+
+// FlowChartNodeType describes the semantic role and default visualization of a flow chart node.
+export type FlowChartNodeType = number;
+function writeTypeHeaderFlowChartNodeType(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 235);
+	return;
+}
+// companion enum containing all defined constants for FlowChartNodeType
+export enum FlowChartNodeTypeValues {
+	FlowChartNodeTypeDefault = 0,
+	FlowChartNodeTypeStart = 1,
+	FlowChartNodeTypeEnd = 2,
+}
+
+// FlowChartNode represents a single positioned node in a flow chart.
+export class FlowChartNode implements Writeable, Readable {
+	public id?: Str;
+
+	public type?: FlowChartNodeType;
+
+	public position?: FlowChartPoint;
+
+	public label?: Str;
+
+	public backgroundColor?: Color;
+
+	public border?: Border;
+
+	constructor(
+		id: Str | undefined = undefined,
+		type: FlowChartNodeType | undefined = undefined,
+		position: FlowChartPoint | undefined = undefined,
+		label: Str | undefined = undefined,
+		backgroundColor: Color | undefined = undefined,
+		border: Border | undefined = undefined
+	) {
+		this.id = id;
+		this.type = type;
+		this.position = position;
+		this.label = label;
+		this.backgroundColor = backgroundColor;
+		this.border = border;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.type = readInt(reader);
+					break;
+				}
+				case 3: {
+					this.position = new FlowChartPoint();
+					this.position.read(reader);
+					break;
+				}
+				case 4: {
+					this.label = readString(reader);
+					break;
+				}
+				case 5: {
+					this.backgroundColor = readString(reader);
+					break;
+				}
+				case 6: {
+					this.border = new Border();
+					this.border.read(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.id !== undefined,
+			this.type !== undefined,
+			this.position !== undefined && !this.position.isZero(),
+			this.label !== undefined,
+			this.backgroundColor !== undefined,
+			this.border !== undefined && !this.border.isZero(),
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 2);
+			writeInt(writer, this.type!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.RECORD, 3);
+			this.position!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
+			writeString(writer, this.label!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
+			writeString(writer, this.backgroundColor!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.RECORD, 6);
+			this.border!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.id === undefined &&
+			this.type === undefined &&
+			(this.position === undefined || this.position.isZero()) &&
+			this.label === undefined &&
+			this.backgroundColor === undefined &&
+			(this.border === undefined || this.border.isZero())
+		);
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.type = undefined;
+		this.position = undefined;
+		this.label = undefined;
+		this.backgroundColor = undefined;
+		this.border = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 236);
+		return;
+	}
+}
+
+// FlowChartNodes is the list of all nodes in a flow chart.
+export class FlowChartNodes implements Writeable, Readable {
+	public value: FlowChartNode[];
+
+	constructor(value: FlowChartNode[] = []) {
+		this.value = value;
+	}
+
+	isZero(): boolean {
+		return !this.value || this.value.length === 0;
+	}
+
+	reset(): void {
+		this.value = [];
+	}
+
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value.length); // Write the length of the array
+		for (const c of this.value) {
+			c.writeTypeHeader(writer); // Write the type header for each component)
+			c.write(writer); // Write the component data
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
+		}
+	}
+
+	read(reader: BinaryReader): void {
+		const count = reader.readUvarint(); // Read the length of the array
+		const values: FlowChartNode[] = [];
+
+		for (let i = 0; i < count; i++) {
+			const obj = unmarshal(reader); // Read and unmarshal each component
+			values.push(obj as any as FlowChartNode); // Cast and add to the array
+		}
+
+		this.value = values;
+	}
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 237);
+		return;
+	}
+}
+
+// FlowChartEdgeStyle describes the stroke style of an edge.
+export type FlowChartEdgeStyle = number;
+function writeTypeHeaderFlowChartEdgeStyle(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 238);
+	return;
+}
+// companion enum containing all defined constants for FlowChartEdgeStyle
+export enum FlowChartEdgeStyleValues {
+	FlowChartEdgeStyleSolid = 0,
+	FlowChartEdgeStyleDashed = 1,
+	FlowChartEdgeStyleDotted = 2,
+}
+
+// FlowChartEdgeMarker defines the decoration rendered at the start or end of an edge.
+export type FlowChartEdgeMarker = number;
+function writeTypeHeaderFlowChartEdgeMarker(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 239);
+	return;
+}
+// companion enum containing all defined constants for FlowChartEdgeMarker
+export enum FlowChartEdgeMarkerValues {
+	FlowChartEdgeMarkerNone = 0,
+	FlowChartEdgeMarkerArrow = 1,
+	FlowChartEdgeMarkerArrowClosed = 2,
+	FlowChartEdgeMarkerCircle = 3,
+	FlowChartEdgeMarkerDiamond = 4,
+}
+
+// FlowChartEdge connects two nodes in a flow chart.
+export class FlowChartEdge implements Writeable, Readable {
+	public id?: Str;
+
+	public sourceNodeId?: Str;
+
+	public targetNodeId?: Str;
+
+	public label?: Str;
+
+	public style?: FlowChartEdgeStyle;
+
+	public color?: Color;
+
+	public width?: Float;
+
+	public animated?: Bool;
+
+	public markerStart?: FlowChartEdgeMarker;
+
+	public markerEnd?: FlowChartEdgeMarker;
+
+	constructor(
+		id: Str | undefined = undefined,
+		sourceNodeId: Str | undefined = undefined,
+		targetNodeId: Str | undefined = undefined,
+		label: Str | undefined = undefined,
+		style: FlowChartEdgeStyle | undefined = undefined,
+		color: Color | undefined = undefined,
+		width: Float | undefined = undefined,
+		animated: Bool | undefined = undefined,
+		markerStart: FlowChartEdgeMarker | undefined = undefined,
+		markerEnd: FlowChartEdgeMarker | undefined = undefined
+	) {
+		this.id = id;
+		this.sourceNodeId = sourceNodeId;
+		this.targetNodeId = targetNodeId;
+		this.label = label;
+		this.style = style;
+		this.color = color;
+		this.width = width;
+		this.animated = animated;
+		this.markerStart = markerStart;
+		this.markerEnd = markerEnd;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.sourceNodeId = readString(reader);
+					break;
+				}
+				case 3: {
+					this.targetNodeId = readString(reader);
+					break;
+				}
+				case 4: {
+					this.label = readString(reader);
+					break;
+				}
+				case 5: {
+					this.style = readInt(reader);
+					break;
+				}
+				case 6: {
+					this.color = readString(reader);
+					break;
+				}
+				case 7: {
+					this.width = readFloat(reader);
+					break;
+				}
+				case 8: {
+					this.animated = readBool(reader);
+					break;
+				}
+				case 9: {
+					this.markerStart = readInt(reader);
+					break;
+				}
+				case 10: {
+					this.markerEnd = readInt(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.id !== undefined,
+			this.sourceNodeId !== undefined,
+			this.targetNodeId !== undefined,
+			this.label !== undefined,
+			this.style !== undefined,
+			this.color !== undefined,
+			this.width !== undefined,
+			this.animated !== undefined,
+			this.markerStart !== undefined,
+			this.markerEnd !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.sourceNodeId!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			writeString(writer, this.targetNodeId!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
+			writeString(writer, this.label!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 5);
+			writeInt(writer, this.style!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 6);
+			writeString(writer, this.color!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.F64, 7);
+			writeFloat(writer, this.width!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 8);
+			writeBool(writer, this.animated!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[9]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 9);
+			writeInt(writer, this.markerStart!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[10]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 10);
+			writeInt(writer, this.markerEnd!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.id === undefined &&
+			this.sourceNodeId === undefined &&
+			this.targetNodeId === undefined &&
+			this.label === undefined &&
+			this.style === undefined &&
+			this.color === undefined &&
+			this.width === undefined &&
+			this.animated === undefined &&
+			this.markerStart === undefined &&
+			this.markerEnd === undefined
+		);
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.sourceNodeId = undefined;
+		this.targetNodeId = undefined;
+		this.label = undefined;
+		this.style = undefined;
+		this.color = undefined;
+		this.width = undefined;
+		this.animated = undefined;
+		this.markerStart = undefined;
+		this.markerEnd = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 240);
+		return;
+	}
+}
+
+// FlowChartEdges is the list of all edges in a flow chart.
+export class FlowChartEdges implements Writeable, Readable {
+	public value: FlowChartEdge[];
+
+	constructor(value: FlowChartEdge[] = []) {
+		this.value = value;
+	}
+
+	isZero(): boolean {
+		return !this.value || this.value.length === 0;
+	}
+
+	reset(): void {
+		this.value = [];
+	}
+
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value.length); // Write the length of the array
+		for (const c of this.value) {
+			c.writeTypeHeader(writer); // Write the type header for each component)
+			c.write(writer); // Write the component data
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
+		}
+	}
+
+	read(reader: BinaryReader): void {
+		const count = reader.readUvarint(); // Read the length of the array
+		const values: FlowChartEdge[] = [];
+
+		for (let i = 0; i < count; i++) {
+			const obj = unmarshal(reader); // Read and unmarshal each component
+			values.push(obj as any as FlowChartEdge); // Cast and add to the array
+		}
+
+		this.value = values;
+	}
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 241);
+		return;
+	}
+}
+
+// FlowChartModel represents a node-edge data model for flow charts.
+export class FlowChartModel implements Writeable, Readable {
+	public nodes?: FlowChartNodes;
+
+	public edges?: FlowChartEdges;
+
+	constructor(nodes: FlowChartNodes | undefined = undefined, edges: FlowChartEdges | undefined = undefined) {
+		this.nodes = nodes;
+		this.edges = edges;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.nodes = new FlowChartNodes();
+					this.nodes.read(reader);
+					break;
+				}
+				case 2: {
+					this.edges = new FlowChartEdges();
+					this.edges.read(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.nodes !== undefined && !this.nodes.isZero(),
+			this.edges !== undefined && !this.edges.isZero(),
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 1);
+			this.nodes!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 2);
+			this.edges!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (this.nodes === undefined || this.nodes.isZero()) && (this.edges === undefined || this.edges.isZero());
+	}
+
+	reset(): void {
+		this.nodes = undefined;
+		this.edges = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 242);
+		return;
+	}
+}
+
+// FlowChartCustomContent represents the custom content of a node.
+export class FlowChartCustomContent implements Writeable, Readable {
+	public nodeId?: Str;
+
+	public content?: Component;
+
+	constructor(nodeId: Str | undefined = undefined, content: Component | undefined = undefined) {
+		this.nodeId = nodeId;
+		this.content = content;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.nodeId = readString(reader);
+					break;
+				}
+				case 2: {
+					// decode polymorphic field as 1 element array
+					const len = reader.readUvarint();
+					if (len != 1) {
+						throw new Error(`unexpected length: ` + len);
+					}
+					this.content = unmarshal(reader) as Component;
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.nodeId !== undefined, this.content !== undefined && !this.content.isZero()];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.nodeId!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			// encode polymorphic enum as 1 element slice
+			writer.writeFieldHeader(Shapes.ARRAY, 2);
+			writer.writeByte(1);
+			this.content.writeTypeHeader(writer);
+			this.content!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.nodeId === undefined && (this.content === undefined || this.content.isZero());
+	}
+
+	reset(): void {
+		this.nodeId = undefined;
+		this.content = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 243);
+		return;
+	}
+}
+
+// FlowChartCustomContents is the list of all custom contents in a flow chart.
+export class FlowChartCustomContents implements Writeable, Readable {
+	public value: FlowChartCustomContent[];
+
+	constructor(value: FlowChartCustomContent[] = []) {
+		this.value = value;
+	}
+
+	isZero(): boolean {
+		return !this.value || this.value.length === 0;
+	}
+
+	reset(): void {
+		this.value = [];
+	}
+
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value.length); // Write the length of the array
+		for (const c of this.value) {
+			c.writeTypeHeader(writer); // Write the type header for each component)
+			c.write(writer); // Write the component data
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
+		}
+	}
+
+	read(reader: BinaryReader): void {
+		const count = reader.readUvarint(); // Read the length of the array
+		const values: FlowChartCustomContent[] = [];
+
+		for (let i = 0; i < count; i++) {
+			const obj = unmarshal(reader); // Read and unmarshal each component
+			values.push(obj as any as FlowChartCustomContent); // Cast and add to the array
+		}
+
+		this.value = values;
+	}
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 244);
+		return;
+	}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -19183,6 +20096,63 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 232: {
 			const v = new Link();
+			v.read(src);
+			return v;
+		}
+		case 233: {
+			const v = new FlowChart();
+			v.read(src);
+			return v;
+		}
+		case 234: {
+			const v = new FlowChartPoint();
+			v.read(src);
+			return v;
+		}
+		case 235: {
+			const v = readInt(src) as FlowChartNodeType;
+			return v;
+		}
+		case 236: {
+			const v = new FlowChartNode();
+			v.read(src);
+			return v;
+		}
+		case 237: {
+			const v = new FlowChartNodes();
+			v.read(src);
+			return v;
+		}
+		case 238: {
+			const v = readInt(src) as FlowChartEdgeStyle;
+			return v;
+		}
+		case 239: {
+			const v = readInt(src) as FlowChartEdgeMarker;
+			return v;
+		}
+		case 240: {
+			const v = new FlowChartEdge();
+			v.read(src);
+			return v;
+		}
+		case 241: {
+			const v = new FlowChartEdges();
+			v.read(src);
+			return v;
+		}
+		case 242: {
+			const v = new FlowChartModel();
+			v.read(src);
+			return v;
+		}
+		case 243: {
+			const v = new FlowChartCustomContent();
+			v.read(src);
+			return v;
+		}
+		case 244: {
+			const v = new FlowChartCustomContents();
 			v.read(src);
 			return v;
 		}

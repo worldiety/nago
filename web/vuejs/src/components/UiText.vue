@@ -8,7 +8,7 @@
 -->
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { borderCSS } from '@/components/shared/border';
 import { colorValue } from '@/components/shared/colors';
 import { fontCSS } from '@/components/shared/font';

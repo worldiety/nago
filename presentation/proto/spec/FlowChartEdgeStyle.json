@@ -1,0 +1,18 @@
+{
+  "doc": "FlowChartEdgeStyle describes the stroke style of an edge.",
+  "kind": "Uint",
+  "id": 238,
+  "const": {
+    "0": {
+      "name": "FlowChartEdgeStyleSolid"
+    },
+    "1": {
+      "name": "FlowChartEdgeStyleDashed"
+    },
+    "2": {
+      "name": "FlowChartEdgeStyleDotted"
+    }
+  }
+}
+
+

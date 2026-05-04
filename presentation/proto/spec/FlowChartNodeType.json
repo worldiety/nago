@@ -1,0 +1,18 @@
+{
+  "doc": "FlowChartNodeType describes the semantic role and default visualization of a flow chart node.",
+  "kind": "Uint",
+  "id": 235,
+  "const": {
+    "0": {
+      "name": "FlowChartNodeTypeDefault"
+    },
+    "1": {
+      "name": "FlowChartNodeTypeStart"
+    },
+    "2": {
+      "name": "FlowChartNodeTypeEnd"
+    }
+  }
+}
+
+
