@@ -1,0 +1,24 @@
+{
+  "doc": "FlowChartEdgeMarker defines the decoration rendered at the start or end of an edge.",
+  "kind": "Uint",
+  "id": 239,
+  "const": {
+    "0": {
+      "name": "FlowChartEdgeMarkerNone"
+    },
+    "1": {
+      "name": "FlowChartEdgeMarkerArrow"
+    },
+    "2": {
+      "name": "FlowChartEdgeMarkerArrowClosed"
+    },
+    "3": {
+      "name": "FlowChartEdgeMarkerCircle"
+    },
+    "4": {
+      "name": "FlowChartEdgeMarkerDiamond"
+    }
+  }
+}
+
+

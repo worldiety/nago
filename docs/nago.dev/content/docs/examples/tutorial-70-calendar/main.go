@@ -13,10 +13,10 @@ import (
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application"
+	"go.wdy.de/nago/application/color"
 	"go.wdy.de/nago/presentation/core"
 	flowbiteOutline "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	flowbiteSolid "go.wdy.de/nago/presentation/icons/flowbite/solid"
-	heroOutline "go.wdy.de/nago/presentation/icons/hero/outline"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/calendar"
 	"go.wdy.de/nago/web/vuejs"
@@ -39,6 +39,8 @@ func main() {
 				chipAlignment = ui.BottomLeading
 			}
 
+			txtColor := ui.M8
+
 			return ui.VStack(
 				ui.Text("hello world"),
 				calendar.Calendar(
@@ -59,6 +61,7 @@ func main() {
 							Label: "Kategorie 2",
 							Color: "#ff0000",
 						},
+						IsCancelled: true,
 					},
 
 					calendar.Event{
@@ -97,12 +100,13 @@ func main() {
 						},
 						Chips: []calendar.Chip{
 							{
-								Label:     "Eingetragen",
-								Icon:      flowbiteSolid.BadgeCheck,
-								BgColor:   "#2BCA73",
-								TextColor: ui.M8,
-								Alignment: ui.BottomLeading,
-								FullWidth: true,
+								Label:       "Eingetragen",
+								Icon:        flowbiteSolid.BadgeCheck,
+								StrokeColor: ui.M8,
+								BgColor:     "#2BCA73",
+								TextColor:   txtColor,
+								Alignment:   ui.BottomLeading,
+								FullWidth:   true,
 							},
 						},
 					},
@@ -126,8 +130,9 @@ func main() {
 							{
 								Label:     "Wartelistenplatz: 5",
 								Icon:      flowbiteSolid.ClipboardList,
+								FillColor: ui.M8,
 								BgColor:   "#FBC83E",
-								TextColor: ui.M8,
+								TextColor: txtColor,
 								Alignment: ui.BottomLeading,
 								FullWidth: true,
 							},
@@ -136,7 +141,7 @@ func main() {
 
 					calendar.Event{
 						From: calendar.Instant{
-							At: time.Date(2025, 2, 1, 0, 0, 0, 0, time.Local),
+							At: time.Date(2025, 2, 1, 15, 30, 0, 0, time.Local),
 							Offset: calendar.Offset{
 								Label:    "Anfahrt",
 								Icon:     flowbiteOutline.Bell,
@@ -144,7 +149,7 @@ func main() {
 							},
 						},
 						To: calendar.Instant{
-							At: time.Date(2025, 8, 31, 0, 0, 0, 0, time.Local),
+							At: time.Date(2025, 8, 31, 12, 25, 0, 0, time.Local),
 							Offset: calendar.Offset{
 								Label:    "Abfahrt",
 								Icon:     flowbiteOutline.BellActive,
@@ -166,8 +171,9 @@ func main() {
 							{
 								Label:     "20 | 50",
 								Icon:      flowbiteSolid.Users,
-								BgColor:   "#3A3257",
-								TextColor: ui.M9,
+								FillColor: txtColor,
+								BgColor:   ui.M1,
+								TextColor: txtColor,
 								Alignment: chipAlignment,
 							},
 						},
@@ -178,22 +184,32 @@ func main() {
 					Style(calendar.StartTimeSequence),
 
 				//
-				calStartTimeSeqTimeExample(chipAlignment),
+				calStartTimeSeqTimeExample(chipAlignment, txtColor),
 			).FullWidth().Gap(ui.L16)
 
 		})
 	}).Run()
 }
 
-func calStartTimeSeqTimeExample(chipAlignment ui.Alignment) core.View {
+func calStartTimeSeqTimeExample(chipAlignment ui.Alignment, txtColor color.Color) core.View {
 
 	return calendar.Calendar(
 		calendar.Event{
 			From: calendar.Instant{
 				At: time.Date(2026, 7, 11, 12, 0, 0, 0, time.Local),
+				Offset: calendar.Offset{
+					Duration: 1 * time.Hour,
+					Icon:     flowbiteOutline.Cart,
+					Label:    "Test",
+				},
 			},
 			To: calendar.Instant{
 				At: time.Date(2026, 7, 11, 13, 0, 0, 0, time.Local),
+				Offset: calendar.Offset{
+					Duration: 165 * time.Minute,
+					Icon:     flowbiteOutline.Cart,
+					Label:    "Rückkehr",
+				},
 			},
 			Label:     "Mittag",
 			Organiser: "Torben",
@@ -209,16 +225,18 @@ func calStartTimeSeqTimeExample(chipAlignment ui.Alignment) core.View {
 				{
 					Label:     "Warteliste",
 					Icon:      flowbiteSolid.ClipboardList,
-					BgColor:   "#3A3257",
-					TextColor: ui.M9,
+					FillColor: txtColor,
+					BgColor:   ui.M1,
+					TextColor: txtColor,
 					Alignment: chipAlignment,
 				},
 				{
-					Label:     "Ausgebucht",
-					Icon:      heroOutline.XMark,
-					BgColor:   "#FE543E",
-					TextColor: ui.M8,
-					Alignment: chipAlignment,
+					Label:       "Ausgebucht",
+					Icon:        flowbiteOutline.Ban,
+					StrokeColor: txtColor,
+					BgColor:     "#FE543E",
+					TextColor:   txtColor,
+					Alignment:   chipAlignment,
 				},
 			},
 		},
@@ -257,15 +275,17 @@ func calStartTimeSeqTimeExample(chipAlignment ui.Alignment) core.View {
 				{
 					Label:     "20",
 					Icon:      flowbiteSolid.Users,
-					BgColor:   "#3A3257",
-					TextColor: ui.M9,
+					FillColor: txtColor,
+					BgColor:   ui.M1,
+					TextColor: txtColor,
 					Alignment: chipAlignment,
 				},
 				{
 					Label:     "Eingetragen",
 					Icon:      flowbiteSolid.BadgeCheck,
+					FillColor: txtColor,
 					BgColor:   "#2BCA73",
-					TextColor: ui.M8,
+					TextColor: txtColor,
 					Alignment: ui.BottomLeading,
 					FullWidth: true,
 				},

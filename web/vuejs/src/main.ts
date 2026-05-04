@@ -10,13 +10,13 @@ import { createApp } from 'vue';
 import App from '@/App.vue';
 import { UploadRepository } from '@/api/upload/uploadRepository';
 import i18n from '@/i18n';
+import crawlerUserAgents from 'crawler-user-agents';
 import { createPinia } from 'pinia';
 import { serviceAdapterKey, themeManagerKey, uploadRepositoryKey } from '@/shared/injectionKeys';
 import WebSocketAdapter from '@/shared/network/webSocketAdapter';
 import ThemeManager from '@/shared/themeManager';
 import '@/assets/css/style.css';
 import '@/assets/css/tailwind.css';
-import crawlerUserAgents from 'crawler-user-agents';
 
 const isCrawler = crawlerUserAgents.some((cua) => {
 	const regex = new RegExp(cua.pattern, 'i');

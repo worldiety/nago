@@ -21,19 +21,18 @@ object,
 	@apply outline-2 -outline-offset-2;
 
 	&:focus-visible:not(
-	.custom-focus,
-	.button-primary,
-	.button-secondary,
-	.button-tertiary,
-	.input-checkbox input,
-	.input-radio input,
-	input[type='text'],
-	.toggle-switch,
-	.toggle-switch-container
-) {
+			.custom-focus,
+			.button-primary,
+			.button-secondary,
+			.button-tertiary,
+			.input-checkbox input,
+			.input-radio input,
+			input[type='text'],
+			.toggle-switch,
+			.toggle-switch-container
+		) {
 		@apply outline outline-2 outline-I0 rounded-lg;
 	}
-
 }
 
 .focus-within:focus-within {

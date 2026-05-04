@@ -328,6 +328,7 @@ func (CountDown) isComponent()      {}
 func (DatePicker) isComponent()     {}
 func (Divider) isComponent()        {}
 func (DnDArea) isComponent()        {}
+func (FlowChart) isComponent()      {}
 func (Form) isComponent()           {}
 func (Grid) isComponent()           {}
 func (HoverGroup) isComponent()     {}
@@ -17630,6 +17631,837 @@ func (v *Link) read(r *BinaryReader) error {
 	return nil
 }
 
+// FlowChart represents a node-edge diagram for modeling flows, states and transitions.
+type FlowChart struct {
+	InputValue         Ptr
+	Value              FlowChartModel
+	Frame              Frame
+	BackgroundColor    Color
+	NodesDraggable     Bool
+	NodesConnectable   Bool
+	EdgesEditable      Bool
+	ElementsSelectable Bool
+	Orientation        Orientation
+	CustomContents     FlowChartCustomContents
+	MinZoom            Float
+	MaxZoom            Float
+}
+
+func (v *FlowChart) write(w *BinaryWriter) error {
+	var fields [13]bool
+	fields[1] = !v.InputValue.IsZero()
+	fields[2] = !v.Value.IsZero()
+	fields[3] = !v.Frame.IsZero()
+	fields[4] = !v.BackgroundColor.IsZero()
+	fields[5] = !v.NodesDraggable.IsZero()
+	fields[6] = !v.NodesConnectable.IsZero()
+	fields[7] = !v.EdgesEditable.IsZero()
+	fields[8] = !v.ElementsSelectable.IsZero()
+	fields[9] = !v.Orientation.IsZero()
+	fields[10] = !v.CustomContents.IsZero()
+	fields[11] = !v.MinZoom.IsZero()
+	fields[12] = !v.MaxZoom.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(uvarint, 1); err != nil {
+			return err
+		}
+		if err := v.InputValue.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(record, 2); err != nil {
+			return err
+		}
+		if err := v.Value.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(record, 3); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.BackgroundColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(uvarint, 5); err != nil {
+			return err
+		}
+		if err := v.NodesDraggable.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(uvarint, 6); err != nil {
+			return err
+		}
+		if err := v.NodesConnectable.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(uvarint, 7); err != nil {
+			return err
+		}
+		if err := v.EdgesEditable.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		if err := w.writeFieldHeader(uvarint, 8); err != nil {
+			return err
+		}
+		if err := v.ElementsSelectable.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[9] {
+		if err := w.writeFieldHeader(uvarint, 9); err != nil {
+			return err
+		}
+		if err := v.Orientation.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[10] {
+		if err := w.writeFieldHeader(array, 10); err != nil {
+			return err
+		}
+		if err := v.CustomContents.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[11] {
+		if err := w.writeFieldHeader(f64, 11); err != nil {
+			return err
+		}
+		if err := v.MinZoom.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[12] {
+		if err := w.writeFieldHeader(f64, 12); err != nil {
+			return err
+		}
+		if err := v.MaxZoom.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *FlowChart) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.InputValue.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Value.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.BackgroundColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.NodesDraggable.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.NodesConnectable.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.EdgesEditable.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.ElementsSelectable.read(r)
+			if err != nil {
+				return err
+			}
+		case 9:
+			err := v.Orientation.read(r)
+			if err != nil {
+				return err
+			}
+		case 10:
+			err := v.CustomContents.read(r)
+			if err != nil {
+				return err
+			}
+		case 11:
+			err := v.MinZoom.read(r)
+			if err != nil {
+				return err
+			}
+		case 12:
+			err := v.MaxZoom.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// FlowChartPoint describes a node position in the flowchart canvas coordinate system.
+type FlowChartPoint struct {
+	X Float
+	Y Float
+}
+
+func (v *FlowChartPoint) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.X.IsZero()
+	fields[2] = !v.Y.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(f64, 1); err != nil {
+			return err
+		}
+		if err := v.X.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(f64, 2); err != nil {
+			return err
+		}
+		if err := v.Y.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *FlowChartPoint) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.X.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Y.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// FlowChartNodeType describes the semantic role and default visualization of a flow chart node.
+type FlowChartNodeType uint64
+
+const (
+	FlowChartNodeTypeDefault FlowChartNodeType = 0
+	FlowChartNodeTypeStart   FlowChartNodeType = 1
+	FlowChartNodeTypeEnd     FlowChartNodeType = 2
+)
+
+func (v *FlowChartNodeType) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *FlowChartNodeType) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = FlowChartNodeType(tmp)
+	return nil
+}
+
+func (v *FlowChartNodeType) reset() {
+	*v = FlowChartNodeType(0)
+}
+func (v *FlowChartNodeType) IsZero() bool {
+	return *v == 0
+}
+
+// FlowChartNode represents a single positioned node in a flow chart.
+type FlowChartNode struct {
+	Id              Str
+	Type            FlowChartNodeType
+	Position        FlowChartPoint
+	Label           Str
+	BackgroundColor Color
+	Border          Border
+}
+
+func (v *FlowChartNode) write(w *BinaryWriter) error {
+	var fields [7]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.Type.IsZero()
+	fields[3] = !v.Position.IsZero()
+	fields[4] = !v.Label.IsZero()
+	fields[5] = !v.BackgroundColor.IsZero()
+	fields[6] = !v.Border.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.Type.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(record, 3); err != nil {
+			return err
+		}
+		if err := v.Position.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.Label.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(byteSlice, 5); err != nil {
+			return err
+		}
+		if err := v.BackgroundColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(record, 6); err != nil {
+			return err
+		}
+		if err := v.Border.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *FlowChartNode) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Type.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Position.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Label.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.BackgroundColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.Border.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// FlowChartEdgeStyle describes the stroke style of an edge.
+type FlowChartEdgeStyle uint64
+
+const (
+	FlowChartEdgeStyleSolid  FlowChartEdgeStyle = 0
+	FlowChartEdgeStyleDashed FlowChartEdgeStyle = 1
+	FlowChartEdgeStyleDotted FlowChartEdgeStyle = 2
+)
+
+func (v *FlowChartEdgeStyle) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *FlowChartEdgeStyle) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = FlowChartEdgeStyle(tmp)
+	return nil
+}
+
+func (v *FlowChartEdgeStyle) reset() {
+	*v = FlowChartEdgeStyle(0)
+}
+func (v *FlowChartEdgeStyle) IsZero() bool {
+	return *v == 0
+}
+
+// FlowChartEdgeMarker defines the decoration rendered at the start or end of an edge.
+type FlowChartEdgeMarker uint64
+
+const (
+	FlowChartEdgeMarkerNone        FlowChartEdgeMarker = 0
+	FlowChartEdgeMarkerArrow       FlowChartEdgeMarker = 1
+	FlowChartEdgeMarkerArrowClosed FlowChartEdgeMarker = 2
+	FlowChartEdgeMarkerCircle      FlowChartEdgeMarker = 3
+	FlowChartEdgeMarkerDiamond     FlowChartEdgeMarker = 4
+)
+
+func (v *FlowChartEdgeMarker) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *FlowChartEdgeMarker) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = FlowChartEdgeMarker(tmp)
+	return nil
+}
+
+func (v *FlowChartEdgeMarker) reset() {
+	*v = FlowChartEdgeMarker(0)
+}
+func (v *FlowChartEdgeMarker) IsZero() bool {
+	return *v == 0
+}
+
+// FlowChartEdge connects two nodes in a flow chart.
+type FlowChartEdge struct {
+	Id           Str
+	SourceNodeId Str
+	TargetNodeId Str
+	Label        Str
+	Style        FlowChartEdgeStyle
+	Color        Color
+	Width        Float
+	Animated     Bool
+	MarkerStart  FlowChartEdgeMarker
+	MarkerEnd    FlowChartEdgeMarker
+}
+
+func (v *FlowChartEdge) write(w *BinaryWriter) error {
+	var fields [11]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.SourceNodeId.IsZero()
+	fields[3] = !v.TargetNodeId.IsZero()
+	fields[4] = !v.Label.IsZero()
+	fields[5] = !v.Style.IsZero()
+	fields[6] = !v.Color.IsZero()
+	fields[7] = !v.Width.IsZero()
+	fields[8] = !v.Animated.IsZero()
+	fields[9] = !v.MarkerStart.IsZero()
+	fields[10] = !v.MarkerEnd.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.SourceNodeId.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.TargetNodeId.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.Label.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(uvarint, 5); err != nil {
+			return err
+		}
+		if err := v.Style.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(byteSlice, 6); err != nil {
+			return err
+		}
+		if err := v.Color.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(f64, 7); err != nil {
+			return err
+		}
+		if err := v.Width.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		if err := w.writeFieldHeader(uvarint, 8); err != nil {
+			return err
+		}
+		if err := v.Animated.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[9] {
+		if err := w.writeFieldHeader(uvarint, 9); err != nil {
+			return err
+		}
+		if err := v.MarkerStart.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[10] {
+		if err := w.writeFieldHeader(uvarint, 10); err != nil {
+			return err
+		}
+		if err := v.MarkerEnd.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *FlowChartEdge) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.SourceNodeId.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.TargetNodeId.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Label.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Style.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.Color.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.Width.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.Animated.read(r)
+			if err != nil {
+				return err
+			}
+		case 9:
+			err := v.MarkerStart.read(r)
+			if err != nil {
+				return err
+			}
+		case 10:
+			err := v.MarkerEnd.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// FlowChartModel represents a node-edge data model for flow charts.
+type FlowChartModel struct {
+	Nodes FlowChartNodes
+	Edges FlowChartEdges
+}
+
+func (v *FlowChartModel) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Nodes.IsZero()
+	fields[2] = !v.Edges.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(array, 1); err != nil {
+			return err
+		}
+		if err := v.Nodes.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(array, 2); err != nil {
+			return err
+		}
+		if err := v.Edges.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *FlowChartModel) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Nodes.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Edges.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// FlowChartCustomContent represents the custom content of a node.
+type FlowChartCustomContent struct {
+	NodeId  Str
+	Content Component
+}
+
+func (v *FlowChartCustomContent) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.NodeId.IsZero()
+	fields[2] = v.Content != nil && !v.Content.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.NodeId.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 2); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.Content.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.Content.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *FlowChartCustomContent) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.NodeId.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.Content = obj.(Component)
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -18977,6 +19809,78 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 232:
 		var v Link
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 233:
+		var v FlowChart
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 234:
+		var v FlowChartPoint
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 235:
+		var v FlowChartNodeType
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 236:
+		var v FlowChartNode
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 237:
+		var v FlowChartNodes
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 238:
+		var v FlowChartEdgeStyle
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 239:
+		var v FlowChartEdgeMarker
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 240:
+		var v FlowChartEdge
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 241:
+		var v FlowChartEdges
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 242:
+		var v FlowChartModel
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 243:
+		var v FlowChartCustomContent
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 244:
+		var v FlowChartCustomContents
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -22843,6 +23747,235 @@ func (v *Link) IsZero() bool {
 	return v.Url.IsZero() && v.Target.IsZero()
 }
 
+func (v *FlowChart) reset() {
+	v.InputValue.reset()
+	v.Value.reset()
+	v.Frame.reset()
+	v.BackgroundColor.reset()
+	v.NodesDraggable.reset()
+	v.NodesConnectable.reset()
+	v.EdgesEditable.reset()
+	v.ElementsSelectable.reset()
+	v.Orientation.reset()
+	v.CustomContents.reset()
+	v.MinZoom.reset()
+	v.MaxZoom.reset()
+}
+
+func (v *FlowChart) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.InputValue.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.BackgroundColor.IsZero() && v.NodesDraggable.IsZero() && v.NodesConnectable.IsZero() && v.EdgesEditable.IsZero() && v.ElementsSelectable.IsZero() && v.Orientation.IsZero() && v.CustomContents.IsZero() && v.MinZoom.IsZero() && v.MaxZoom.IsZero()
+}
+
+func (v *FlowChartPoint) reset() {
+	v.X.reset()
+	v.Y.reset()
+}
+
+func (v *FlowChartPoint) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.X.IsZero() && v.Y.IsZero()
+}
+
+func (v *FlowChartNode) reset() {
+	v.Id.reset()
+	v.Type.reset()
+	v.Position.reset()
+	v.Label.reset()
+	v.BackgroundColor.reset()
+	v.Border.reset()
+}
+
+func (v *FlowChartNode) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.Type.IsZero() && v.Position.IsZero() && v.Label.IsZero() && v.BackgroundColor.IsZero() && v.Border.IsZero()
+}
+
+// FlowChartNodes is the list of all nodes in a flow chart.
+type FlowChartNodes []FlowChartNode
+
+func (v *FlowChartNodes) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *FlowChartNodes) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	slice := make([]FlowChartNode, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = *obj.(*FlowChartNode)
+	}
+
+	*v = slice
+	return nil
+}
+
+func (v *FlowChartNodes) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
+}
+
+func (v *FlowChartNodes) reset() {
+	*v = nil
+}
+
+func (v *FlowChartEdge) reset() {
+	v.Id.reset()
+	v.SourceNodeId.reset()
+	v.TargetNodeId.reset()
+	v.Label.reset()
+	v.Style.reset()
+	v.Color.reset()
+	v.Width.reset()
+	v.Animated.reset()
+	v.MarkerStart.reset()
+	v.MarkerEnd.reset()
+}
+
+func (v *FlowChartEdge) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.SourceNodeId.IsZero() && v.TargetNodeId.IsZero() && v.Label.IsZero() && v.Style.IsZero() && v.Color.IsZero() && v.Width.IsZero() && v.Animated.IsZero() && v.MarkerStart.IsZero() && v.MarkerEnd.IsZero()
+}
+
+// FlowChartEdges is the list of all edges in a flow chart.
+type FlowChartEdges []FlowChartEdge
+
+func (v *FlowChartEdges) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *FlowChartEdges) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	slice := make([]FlowChartEdge, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = *obj.(*FlowChartEdge)
+	}
+
+	*v = slice
+	return nil
+}
+
+func (v *FlowChartEdges) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
+}
+
+func (v *FlowChartEdges) reset() {
+	*v = nil
+}
+
+func (v *FlowChartModel) reset() {
+	v.Nodes.reset()
+	v.Edges.reset()
+}
+
+func (v *FlowChartModel) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Nodes.IsZero() && v.Edges.IsZero()
+}
+
+func (v *FlowChartCustomContent) reset() {
+	v.NodeId.reset()
+	v.Content = nil
+}
+
+func (v *FlowChartCustomContent) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.NodeId.IsZero() && v.Content.IsZero()
+}
+
+// FlowChartCustomContents is the list of all custom contents in a flow chart.
+type FlowChartCustomContents []FlowChartCustomContent
+
+func (v *FlowChartCustomContents) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *FlowChartCustomContents) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	slice := make([]FlowChartCustomContent, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = *obj.(*FlowChartCustomContent)
+	}
+
+	*v = slice
+	return nil
+}
+
+func (v *FlowChartCustomContents) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
+}
+
+func (v *FlowChartCustomContents) reset() {
+	*v = nil
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -24385,6 +25518,90 @@ func (v *RoundingType) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *Link) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 232); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *FlowChart) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 233); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *FlowChartPoint) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 234); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *FlowChartNodeType) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 235); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *FlowChartNode) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 236); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *FlowChartNodes) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 237); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *FlowChartEdgeStyle) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 238); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *FlowChartEdgeMarker) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 239); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *FlowChartEdge) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 240); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *FlowChartEdges) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 241); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *FlowChartModel) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 242); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *FlowChartCustomContent) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 243); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *FlowChartCustomContents) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 244); err != nil {
 		return err
 	}
 	return nil

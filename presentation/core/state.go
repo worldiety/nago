@@ -150,6 +150,13 @@ func (s *State[T]) parse(v string) error {
 			val := reflect.New(reflect.TypeOf(s.value)).Elem()
 			val.SetString(v)
 			s.Set(val.Interface().(T))
+		case reflect.Struct:
+			var obj T
+			err := json.Unmarshal([]byte(v), &obj)
+			if err != nil {
+				return err
+			}
+			s.Set(obj)
 		default:
 			return fmt.Errorf("cannot parse string value '%s' into %T", v, s.value)
 		}

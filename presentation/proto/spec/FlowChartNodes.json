@@ -1,0 +1,7 @@
+{
+  "doc": "FlowChartNodes is the list of all nodes in a flow chart.",
+  "kind": "Array",
+  "id": 237,
+  "type": "FlowChartNode"
+}
+

@@ -20,6 +20,7 @@ import {
 	DatePicker,
 	Divider,
 	DnDArea,
+	FlowChart,
 	Form,
 	Grid,
 	HoverGroup,
@@ -60,6 +61,7 @@ const LazyUiCountDown = defineAsyncComponent(() => import('@/components/countdow
 const LazyUiDatepicker = defineAsyncComponent(() => import('@/components/datepicker/UiDatepicker.vue'));
 const LazyUiDivider = defineAsyncComponent(() => import('@/components/UiDivider.vue'));
 const LazyUiDnDArea = defineAsyncComponent(() => import('@/components/dnd/UiDnDArea.vue'));
+const LazyUiFlowChart = defineAsyncComponent(() => import('../components/flowchart/UiFlowChart.vue'));
 const LazyUiForm = defineAsyncComponent(() => import('@/components/form/UiForm.vue'));
 const LazyUiGrid = defineAsyncComponent(() => import('@/components/UiGrid.vue'));
 const LazyUiHoverGroup = defineAsyncComponent(() => import('@/components/hovergroup/UiHoverGroup.vue'));
@@ -133,6 +135,10 @@ export function vueComponentFor(ngc: NagoComponent): Component {
 
 	if (ngc instanceof DnDArea) {
 		return LazyUiDnDArea;
+	}
+
+	if (ngc instanceof FlowChart) {
+		return LazyUiFlowChart;
 	}
 
 	if (ngc instanceof Form) {

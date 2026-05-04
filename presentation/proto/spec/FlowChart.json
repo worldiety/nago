@@ -1,0 +1,56 @@
+{
+  "doc": "FlowChart represents a node-edge diagram for modeling flows, states and transitions.",
+  "kind": "Record",
+  "id": 233,
+  "fields": {
+    "1": {
+      "name": "InputValue",
+      "type": "Ptr"
+    },
+    "2": {
+      "name": "Value",
+      "type": "FlowChartModel"
+    },
+    "3": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "4": {
+      "name": "BackgroundColor",
+      "type": "Color"
+    },
+    "5": {
+      "name": "NodesDraggable",
+      "type": "Bool"
+    },
+    "6": {
+      "name": "NodesConnectable",
+      "type": "Bool"
+    },
+    "7": {
+      "name": "EdgesEditable",
+      "type": "Bool"
+    },
+    "8": {
+      "name": "ElementsSelectable",
+      "type": "Bool"
+    },
+    "9": {
+      "name": "Orientation",
+      "type": "Orientation"
+    },
+    "10": {
+      "name": "CustomContents",
+      "type": "FlowChartCustomContents"
+    },
+    "11": {
+      "name": "MinZoom",
+      "type": "Float"
+    },
+    "12": {
+      "name": "MaxZoom",
+      "type": "Float"
+    }
+  }
+}
+

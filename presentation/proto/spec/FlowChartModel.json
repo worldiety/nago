@@ -1,0 +1,16 @@
+{
+  "doc": "FlowChartModel represents a node-edge data model for flow charts.",
+  "kind": "Record",
+  "id": 242,
+  "fields": {
+    "1": {
+      "name": "Nodes",
+      "type": "FlowChartNodes"
+    },
+    "2": {
+      "name": "Edges",
+      "type": "FlowChartEdges"
+    }
+  }
+}
+

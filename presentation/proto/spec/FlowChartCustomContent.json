@@ -1,0 +1,16 @@
+{
+  "doc": "FlowChartCustomContent represents the custom content of a node.",
+  "kind": "Record",
+  "id": 243,
+  "fields": {
+    "1": {
+      "name": "NodeId",
+      "type": "Str"
+    },
+    "2": {
+      "name": "Content",
+      "type": "Component"
+    }
+  }
+}
+

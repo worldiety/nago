@@ -32,6 +32,7 @@ func main() {
 
 		cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {
 			return ui.VStack(
+				ui.WindowTitle("SSR hydration example"),
 				list.List(
 					ui.ForEach(buttons, func(b string) core.View {
 						return list.Entry().Headline(b)
@@ -45,6 +46,7 @@ func main() {
 				return "Torben"
 			})
 			return ui.VStack(
+				ui.WindowTitle("SSR hydration example"),
 				ui.TextField("firstname", strState.Get()).InputValue(strState),
 				ui.Text("hello text"),
 				ui.PrimaryButton(func() {}).Title("primary").HRef("https://www.worldiety.de"),
