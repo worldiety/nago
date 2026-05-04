@@ -40,7 +40,6 @@
 <script lang="ts" setup>
 import { computed, ref, watch } from 'vue';
 import FlowChartCustomNode from '@/components/flowchart/FlowChartCustomNode.vue';
-import { borderCSS } from '@/components/shared/border';
 import { colorValue } from '@/components/shared/colors';
 import { frameCSS } from '@/components/shared/frame';
 import { randomStr } from '@/components/shared/util';
