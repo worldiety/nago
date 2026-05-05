@@ -67,7 +67,7 @@ func (w *ssrWindow) SetTitle(title string) { w.title = title }
 // Title returns the last title set via SetTitle.
 func (w *ssrWindow) Title() string { return w.title }
 
-func (w *ssrWindow) AddInputListener(elemID string, fn func(evt core.InputEvent)) (close func()) {
+func (w *ssrWindow) AddInputListener(elemID string, fn func(evt core.InputEvent), _ ...core.DestroyObserverOption) (close func()) {
 	return func() {
 
 	}
@@ -109,7 +109,9 @@ func (w *ssrWindow) ImportFiles(_ core.ImportFilesOptions) {}
 func (w *ssrWindow) SetColorScheme(_ core.ColorScheme)     {}
 func (w *ssrWindow) Application() *core.Application        { return w.application }
 func (w *ssrWindow) Path() core.NavigationPath             { return w.path }
-func (w *ssrWindow) AddDestroyObserver(_ func()) func()    { return func() {} }
+func (w *ssrWindow) AddDestroyObserver(_ func(), _ ...core.DestroyObserverOption) func() {
+	return func() {}
+}
 func (w *ssrWindow) Clipboard() core.Clipboard             { return ssrClipboard{} }
 func (w *ssrWindow) Logout() error                         { return nil }
 func (w *ssrWindow) MediaDevices() core.MediaDevices       { return core.MediaDevices{} }

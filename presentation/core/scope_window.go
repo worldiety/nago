@@ -48,6 +48,7 @@ type scopeWindow struct {
 	states               map[proto.Ptr]Property
 	statesById           map[string]Property
 	filesReceiver        map[proto.Ptr]FilesReceiver
+	resetObservers       map[int]func()
 	destroyObservers     map[int]func()
 	importFilesReceivers map[string]ImportFilesOptions
 	exportFilesReceivers map[string]ExportFilesOptions
@@ -110,13 +111,13 @@ func (s *scopeWindow) reset() {
 	//clear(s.states)
 	clear(s.filesReceiver)
 	clear(s.callbacks)
-	// TODO why are we not clearing the s.asyncCallbacks here?
 
-	// todo: not sure if this is the "correct" behavior but otherwise we only get leaks until the browser tab is closed
-	for _, f := range s.destroyObservers {
+	// note that we are not clearing the async callbacks here to survive any render cycle.
+	// see also the core.DestroyObserverOption to distinguish between reset and destroy life cycle states.
+	for _, f := range s.resetObservers {
 		f()
 	}
-	clear(s.destroyObservers)
+	clear(s.resetObservers)
 
 	for _, property := range s.states {
 		property.clearObservers()
@@ -179,15 +180,33 @@ func (s *scopeWindow) Path() NavigationPath {
 	return NavigationPath(s.factory)
 }
 
-func (s *scopeWindow) AddDestroyObserver(fn func()) (removeObserver func()) {
-	if s.destroyObservers == nil {
-		s.destroyObservers = make(map[int]func())
+func (s *scopeWindow) AddDestroyObserver(fn func(), opts ...DestroyObserverOption) (removeObserver func()) {
+	target := DestroyOnReset
+	if len(opts) > 0 {
+		target = opts[0]
 	}
+
+	var observers map[int]func()
+	switch target {
+	case DestroyOnReset:
+		if s.resetObservers == nil {
+			s.resetObservers = make(map[int]func())
+		}
+
+		observers = s.resetObservers
+	case DestroyOnClose:
+		if s.destroyObservers == nil {
+			s.destroyObservers = make(map[int]func())
+		}
+
+		observers = s.destroyObservers
+	}
+
 	s.hnd++
 	myHnd := s.hnd
-	s.destroyObservers[myHnd] = fn
+	observers[myHnd] = fn
 	return func() {
-		delete(s.destroyObservers, myHnd)
+		delete(observers, myHnd)
 	}
 }
 
@@ -208,6 +227,11 @@ func (s *scopeWindow) destroy() {
 		property.clearObservers()
 		property.destroy()
 	}
+
+	for _, f := range s.resetObservers {
+		f()
+	}
+	clear(s.resetObservers)
 
 	for _, f := range s.destroyObservers {
 		f()
@@ -406,7 +430,7 @@ func (s *scopeWindow) RequestFocus(id string) {
 	AsyncCall(s, &proto.CallRequestFocus{ID: proto.Str(id)}, nil)
 }
 
-func (s *scopeWindow) AddInputListener(elemID string, fn func(evt InputEvent)) (close func()) {
+func (s *scopeWindow) AddInputListener(elemID string, fn func(evt InputEvent), opts ...DestroyObserverOption) (close func()) {
 	hnd := globalListenerPtr.Add(1)
 	AsyncCall(
 		s,
@@ -431,6 +455,6 @@ func (s *scopeWindow) AddInputListener(elemID string, fn func(evt InputEvent)) (
 		s.asyncCallbacks.Delete(proto.Ptr(hnd))
 	}
 
-	s.AddDestroyObserver(closer)
+	s.AddDestroyObserver(closer, opts...)
 	return closer
 }

@@ -62,6 +62,19 @@ func ExportFileBytes(name string, buf []byte) ExportFilesOptions {
 	}
 }
 
+type DestroyObserverOption int
+
+const (
+	// DestroyOnReset means that the observer is called
+	// on window resets which also happens on each redraw of the same view without
+	// actually destroying the window or scope.
+	DestroyOnReset DestroyObserverOption = iota + 1
+
+	// DestroyOnClose means that the observer is called only on actual window closes or scope destructions.
+	// A normal redraw cycle of the same view will not trigger this observer.
+	DestroyOnClose
+)
+
 // A Window owns the lifecycle of a component and is part of a Scope.
 // Ora does not define (yet) what a window is.
 // However, obviously every component lives inside a window of the frontend and navigation is related to that.
@@ -125,8 +138,9 @@ type Window interface {
 	// Path returns the current active navigation path.
 	Path() NavigationPath
 
-	// AddDestroyObserver registers an observer which is called, before the root component of the window is destroyed.
-	AddDestroyObserver(fn func()) (removeObserver func())
+	// AddDestroyObserver registers an observer which is called in end-of-life situations of the window.
+	// The default behavior is
+	AddDestroyObserver(fn func(), opts ...DestroyObserverOption) (removeObserver func())
 
 	// Clipboard gives access to the frontend clipboard.
 	Clipboard() Clipboard
@@ -156,7 +170,7 @@ type Window interface {
 	RequestFocus(id string)
 
 	// AddInputListener registers a listener for any known input events.
-	AddInputListener(elemID string, fn func(evt InputEvent)) (close func())
+	AddInputListener(elemID string, fn func(evt InputEvent), opts ...DestroyObserverOption) (close func())
 }
 
 type InputEventType uint64
