@@ -12,7 +12,7 @@
 <link fetchpriority="low" href="/site.webmanifest" rel="manifest" />
 <title>Tutorial 12 – Nago Docs</title>
   <meta name="description" content="Write some static content.
-Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO Low-Code Platform. // Licensed under the terms specified in the LICENSE file. // // SPDX-License-Identifier: Custom-License package main import ( &#34;fmt&#34; &#34;go.wdy.de/nago/application&#34; &#34;go.wdy.de/nago/presentation/core&#34; heroOutline &#34;go.wdy.de/nago/presentation/icons/hero/outline&#34; . &#34;go.wdy.de/nago/presentation/ui&#34; &#34;go.wdy.de/nago/presentation/ui/alert&#34; &#34;go.wdy.de/nago/web/vuejs&#34; &#34;strings&#34; &#34;time&#34; ) func main() { application.Configure(func(cfg *application.Configurator) { cfg.SetApplicationID(&#34;de.worldiety.tutorial&#34;) cfg.Serve(vuejs.Dist()) cfg.RootView(&#34;.&#34;, func(wnd core.Window) core.View { firstname := core.AutoState[string](wnd) basicInput := core.AutoState[string](wnd) secret := core.AutoState[string](wnd) showAlert := core.AutoState[bool](wnd) myIntState := core.AutoState[int64](wnd) myFloatState := core.AutoState[float64](wnd) // add artificial latency time.Sleep(time.Millisecond * 500) return VStack( VStack( alert.Dialog(&#34;Achtung&#34;, Text(fmt.Sprintf(&#34;Deine Eingabe: %v\nsecret: %v\n int-field: %v\n float-field: %v&#34;, firstname, secret, myIntState, myFloatState)), showAlert, alert.Ok()), TextField(&#34;hello world&#34;, firstname.Get()). InputValue(firstname). Leading(ImageIcon(heroOutline.UserCircle)). Trailing(ImageIcon(heroOutline.UserCircle)). FullWidth(), // you can re-use the state, but be careful of the effects TextField(&#34;just numbers&#34;, numsOf(firstname.Get())). InputValue(firstname). KeyboardType(KeyboardInteger). Style(TextFieldReduced). FullWidth(), TextField(&#34;basic text field&#34;, basicInput.Get()). InputValue(basicInput). Style(TextFieldBasic). FullWidth(), // learn task: take your time to understand what // the difference between value and input value is IntField(&#34;int-field&#34;, 42, myIntState).FullWidth(), FloatField(&#34;float-field&#34;, 42.5, myFloatState).FullWidth(), TextField(&#34;text area&#34;, &#34;hello\nworld&#34;).Lines(3).FullWidth(), PrimaryButton(func() { showAlert.Set(true) }).Title(&#34;Check&#34;), PasswordField(&#34;your secret&#34;, secret.Get()).InputValue(secret).FullWidth(), ). Gap(L16). Frame(Frame{MaxWidth: L880}), ). Frame(Frame{}.MatchScreen()) }) }).Run() } func numsOf(s string) string { var sb strings.Builder for _, r := range s { if r &gt;= &#39;0&#39; &amp;&amp; r &lt;= &#39;9&#39; { sb.WriteRune(r) } } return sb.String() } Info More static content." /><link rel="canonical" href="/docs/examples/tutorial-12-textfield/" itemprop="url" />
+Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO Low-Code Platform. // Licensed under the terms specified in the LICENSE file. // // SPDX-License-Identifier: Custom-License package main import ( &#34;fmt&#34; &#34;strings&#34; &#34;time&#34; &#34;go.wdy.de/nago/application&#34; &#34;go.wdy.de/nago/presentation/core&#34; heroOutline &#34;go.wdy.de/nago/presentation/icons/hero/outline&#34; . &#34;go.wdy.de/nago/presentation/ui&#34; &#34;go.wdy.de/nago/presentation/ui/alert&#34; &#34;go.wdy.de/nago/web/vuejs&#34; ) func main() { application.Configure(func(cfg *application.Configurator) { cfg.SetApplicationID(&#34;de.worldiety.tutorial&#34;) cfg.Serve(vuejs.Dist()) cfg.RootView(&#34;.&#34;, func(wnd core.Window) core.View { firstname := core.AutoState[string](wnd) basicInput := core.AutoState[string](wnd) secret := core.AutoState[string](wnd) showAlert := core.AutoState[bool](wnd) myIntState := core.AutoState[int64](wnd) myFloatState := core.AutoState[float64](wnd) // add artificial latency time.Sleep(time.Millisecond * 500) return VStack( VStack( alert.Dialog(&#34;Achtung&#34;, Text(fmt.Sprintf(&#34;Deine Eingabe: %v\nsecret: %v\n int-field: %v\n float-field: %v&#34;, firstname, secret, myIntState, myFloatState)), showAlert, alert.Ok()), // ================================================================ // TextField(&#34;hello world&#34;, firstname.Get()). InputValue(firstname). Leading(ImageIcon(heroOutline.UserCircle)). Trailing(ImageIcon(heroOutline.UserCircle)). FullWidth(), TextField(&#34;hello world&#34;, firstname.Get()). InputValue(firstname). Leading(ImageIcon(heroOutline.UserCircle)). Trailing(ImageIcon(heroOutline.UserCircle)). ErrorText(&#34;this is an error&#34;). FullWidth(), TextField(&#34;hello world&#34;, firstname.Get()). InputValue(firstname). Leading(ImageIcon(heroOutline.UserCircle)). Trailing(ImageIcon(heroOutline.UserCircle)). Disabled(true). FullWidth(), // ================================================================ // // you can re-use the state, but be careful of the effects TextField(&#34;just numbers&#34;, numsOf(firstname.Get())). InputValue(firstname). KeyboardType(KeyboardInteger). Style(TextFieldReduced). FullWidth(), TextField(&#34;just numbers&#34;, numsOf(firstname.Get())). InputValue(firstname). KeyboardType(KeyboardInteger). Style(TextFieldReduced). ErrorText(&#34;this is an error&#34;). FullWidth(), TextField(&#34;just numbers&#34;, numsOf(firstname.Get())). InputValue(firstname). KeyboardType(KeyboardInteger). Style(TextFieldReduced). Disabled(true). FullWidth(), // ================================================================ // TextField(&#34;basic text field&#34;, basicInput.Get()). InputValue(basicInput). Style(TextFieldBasic). FullWidth(), TextField(&#34;basic text field&#34;, basicInput.Get()). InputValue(basicInput). Style(TextFieldBasic). ErrorText(&#34;this is an error&#34;). FullWidth(), TextField(&#34;basic text field&#34;, basicInput.Get()). InputValue(basicInput). Style(TextFieldBasic). Disabled(true). FullWidth(), // ================================================================ // // learn task: take your time to understand what // the difference between value and input value is IntField(&#34;int-field&#34;, 42, myIntState).FullWidth(), FloatField(&#34;float-field&#34;, 42.5, myFloatState).FullWidth(), TextField(&#34;text area&#34;, &#34;hello\nworld&#34;).Lines(3).FullWidth(), TextField(&#34;text area&#34;, &#34;hello\nworld&#34;).Lines(3).Disabled(true).FullWidth(), TextField(&#34;text area&#34;, &#34;hello\nworld&#34;).Lines(3).ErrorText(&#34;this is an error&#34;).FullWidth(), PrimaryButton(func() { showAlert.Set(true) }).Title(&#34;Check&#34;), PasswordField(&#34;your secret&#34;, secret.Get()).InputValue(secret).FullWidth(), ). Gap(L16). Padding(Padding{}.Vertical(L32)). Frame(Frame{MaxWidth: L880}), ). Frame(Frame{}.MatchScreen()) }) }).Run() } func numsOf(s string) string { var sb strings.Builder for _, r := range s { if r &gt;= &#39;0&#39; &amp;&amp; r &lt;= &#39;9&#39; { sb.WriteRune(r) } } return sb.String() } Info More static content." /><link rel="canonical" href="/docs/examples/tutorial-12-textfield/" itemprop="url" />
 
 <meta property="og:title" content="Tutorial 12" />
 <meta property="og:description" content="Documentation for Nago" />
@@ -21,15 +21,15 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
 
   <meta itemprop="name" content="Tutorial 12">
   <meta itemprop="description" content="Write some static content.
-Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO Low-Code Platform. // Licensed under the terms specified in the LICENSE file. // // SPDX-License-Identifier: Custom-License package main import ( &#34;fmt&#34; &#34;go.wdy.de/nago/application&#34; &#34;go.wdy.de/nago/presentation/core&#34; heroOutline &#34;go.wdy.de/nago/presentation/icons/hero/outline&#34; . &#34;go.wdy.de/nago/presentation/ui&#34; &#34;go.wdy.de/nago/presentation/ui/alert&#34; &#34;go.wdy.de/nago/web/vuejs&#34; &#34;strings&#34; &#34;time&#34; ) func main() { application.Configure(func(cfg *application.Configurator) { cfg.SetApplicationID(&#34;de.worldiety.tutorial&#34;) cfg.Serve(vuejs.Dist()) cfg.RootView(&#34;.&#34;, func(wnd core.Window) core.View { firstname := core.AutoState[string](wnd) basicInput := core.AutoState[string](wnd) secret := core.AutoState[string](wnd) showAlert := core.AutoState[bool](wnd) myIntState := core.AutoState[int64](wnd) myFloatState := core.AutoState[float64](wnd) // add artificial latency time.Sleep(time.Millisecond * 500) return VStack( VStack( alert.Dialog(&#34;Achtung&#34;, Text(fmt.Sprintf(&#34;Deine Eingabe: %v\nsecret: %v\n int-field: %v\n float-field: %v&#34;, firstname, secret, myIntState, myFloatState)), showAlert, alert.Ok()), TextField(&#34;hello world&#34;, firstname.Get()). InputValue(firstname). Leading(ImageIcon(heroOutline.UserCircle)). Trailing(ImageIcon(heroOutline.UserCircle)). FullWidth(), // you can re-use the state, but be careful of the effects TextField(&#34;just numbers&#34;, numsOf(firstname.Get())). InputValue(firstname). KeyboardType(KeyboardInteger). Style(TextFieldReduced). FullWidth(), TextField(&#34;basic text field&#34;, basicInput.Get()). InputValue(basicInput). Style(TextFieldBasic). FullWidth(), // learn task: take your time to understand what // the difference between value and input value is IntField(&#34;int-field&#34;, 42, myIntState).FullWidth(), FloatField(&#34;float-field&#34;, 42.5, myFloatState).FullWidth(), TextField(&#34;text area&#34;, &#34;hello\nworld&#34;).Lines(3).FullWidth(), PrimaryButton(func() { showAlert.Set(true) }).Title(&#34;Check&#34;), PasswordField(&#34;your secret&#34;, secret.Get()).InputValue(secret).FullWidth(), ). Gap(L16). Frame(Frame{MaxWidth: L880}), ). Frame(Frame{}.MatchScreen()) }) }).Run() } func numsOf(s string) string { var sb strings.Builder for _, r := range s { if r &gt;= &#39;0&#39; &amp;&amp; r &lt;= &#39;9&#39; { sb.WriteRune(r) } } return sb.String() } Info More static content.">
-  <meta itemprop="wordCount" content="219">
+Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO Low-Code Platform. // Licensed under the terms specified in the LICENSE file. // // SPDX-License-Identifier: Custom-License package main import ( &#34;fmt&#34; &#34;strings&#34; &#34;time&#34; &#34;go.wdy.de/nago/application&#34; &#34;go.wdy.de/nago/presentation/core&#34; heroOutline &#34;go.wdy.de/nago/presentation/icons/hero/outline&#34; . &#34;go.wdy.de/nago/presentation/ui&#34; &#34;go.wdy.de/nago/presentation/ui/alert&#34; &#34;go.wdy.de/nago/web/vuejs&#34; ) func main() { application.Configure(func(cfg *application.Configurator) { cfg.SetApplicationID(&#34;de.worldiety.tutorial&#34;) cfg.Serve(vuejs.Dist()) cfg.RootView(&#34;.&#34;, func(wnd core.Window) core.View { firstname := core.AutoState[string](wnd) basicInput := core.AutoState[string](wnd) secret := core.AutoState[string](wnd) showAlert := core.AutoState[bool](wnd) myIntState := core.AutoState[int64](wnd) myFloatState := core.AutoState[float64](wnd) // add artificial latency time.Sleep(time.Millisecond * 500) return VStack( VStack( alert.Dialog(&#34;Achtung&#34;, Text(fmt.Sprintf(&#34;Deine Eingabe: %v\nsecret: %v\n int-field: %v\n float-field: %v&#34;, firstname, secret, myIntState, myFloatState)), showAlert, alert.Ok()), // ================================================================ // TextField(&#34;hello world&#34;, firstname.Get()). InputValue(firstname). Leading(ImageIcon(heroOutline.UserCircle)). Trailing(ImageIcon(heroOutline.UserCircle)). FullWidth(), TextField(&#34;hello world&#34;, firstname.Get()). InputValue(firstname). Leading(ImageIcon(heroOutline.UserCircle)). Trailing(ImageIcon(heroOutline.UserCircle)). ErrorText(&#34;this is an error&#34;). FullWidth(), TextField(&#34;hello world&#34;, firstname.Get()). InputValue(firstname). Leading(ImageIcon(heroOutline.UserCircle)). Trailing(ImageIcon(heroOutline.UserCircle)). Disabled(true). FullWidth(), // ================================================================ // // you can re-use the state, but be careful of the effects TextField(&#34;just numbers&#34;, numsOf(firstname.Get())). InputValue(firstname). KeyboardType(KeyboardInteger). Style(TextFieldReduced). FullWidth(), TextField(&#34;just numbers&#34;, numsOf(firstname.Get())). InputValue(firstname). KeyboardType(KeyboardInteger). Style(TextFieldReduced). ErrorText(&#34;this is an error&#34;). FullWidth(), TextField(&#34;just numbers&#34;, numsOf(firstname.Get())). InputValue(firstname). KeyboardType(KeyboardInteger). Style(TextFieldReduced). Disabled(true). FullWidth(), // ================================================================ // TextField(&#34;basic text field&#34;, basicInput.Get()). InputValue(basicInput). Style(TextFieldBasic). FullWidth(), TextField(&#34;basic text field&#34;, basicInput.Get()). InputValue(basicInput). Style(TextFieldBasic). ErrorText(&#34;this is an error&#34;). FullWidth(), TextField(&#34;basic text field&#34;, basicInput.Get()). InputValue(basicInput). Style(TextFieldBasic). Disabled(true). FullWidth(), // ================================================================ // // learn task: take your time to understand what // the difference between value and input value is IntField(&#34;int-field&#34;, 42, myIntState).FullWidth(), FloatField(&#34;float-field&#34;, 42.5, myFloatState).FullWidth(), TextField(&#34;text area&#34;, &#34;hello\nworld&#34;).Lines(3).FullWidth(), TextField(&#34;text area&#34;, &#34;hello\nworld&#34;).Lines(3).Disabled(true).FullWidth(), TextField(&#34;text area&#34;, &#34;hello\nworld&#34;).Lines(3).ErrorText(&#34;this is an error&#34;).FullWidth(), PrimaryButton(func() { showAlert.Set(true) }).Title(&#34;Check&#34;), PasswordField(&#34;your secret&#34;, secret.Get()).InputValue(secret).FullWidth(), ). Gap(L16). Padding(Padding{}.Vertical(L32)). Frame(Frame{MaxWidth: L880}), ). Frame(Frame{}.MatchScreen()) }) }).Run() } func numsOf(s string) string { var sb strings.Builder for _, r := range s { if r &gt;= &#39;0&#39; &amp;&amp; r &lt;= &#39;9&#39; { sb.WriteRune(r) } } return sb.String() } Info More static content.">
+  <meta itemprop="wordCount" content="298">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Tutorial 12">
   <meta name="twitter:description" content="Write some static content.
-Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO Low-Code Platform. // Licensed under the terms specified in the LICENSE file. // // SPDX-License-Identifier: Custom-License package main import ( &#34;fmt&#34; &#34;go.wdy.de/nago/application&#34; &#34;go.wdy.de/nago/presentation/core&#34; heroOutline &#34;go.wdy.de/nago/presentation/icons/hero/outline&#34; . &#34;go.wdy.de/nago/presentation/ui&#34; &#34;go.wdy.de/nago/presentation/ui/alert&#34; &#34;go.wdy.de/nago/web/vuejs&#34; &#34;strings&#34; &#34;time&#34; ) func main() { application.Configure(func(cfg *application.Configurator) { cfg.SetApplicationID(&#34;de.worldiety.tutorial&#34;) cfg.Serve(vuejs.Dist()) cfg.RootView(&#34;.&#34;, func(wnd core.Window) core.View { firstname := core.AutoState[string](wnd) basicInput := core.AutoState[string](wnd) secret := core.AutoState[string](wnd) showAlert := core.AutoState[bool](wnd) myIntState := core.AutoState[int64](wnd) myFloatState := core.AutoState[float64](wnd) // add artificial latency time.Sleep(time.Millisecond * 500) return VStack( VStack( alert.Dialog(&#34;Achtung&#34;, Text(fmt.Sprintf(&#34;Deine Eingabe: %v\nsecret: %v\n int-field: %v\n float-field: %v&#34;, firstname, secret, myIntState, myFloatState)), showAlert, alert.Ok()), TextField(&#34;hello world&#34;, firstname.Get()). InputValue(firstname). Leading(ImageIcon(heroOutline.UserCircle)). Trailing(ImageIcon(heroOutline.UserCircle)). FullWidth(), // you can re-use the state, but be careful of the effects TextField(&#34;just numbers&#34;, numsOf(firstname.Get())). InputValue(firstname). KeyboardType(KeyboardInteger). Style(TextFieldReduced). FullWidth(), TextField(&#34;basic text field&#34;, basicInput.Get()). InputValue(basicInput). Style(TextFieldBasic). FullWidth(), // learn task: take your time to understand what // the difference between value and input value is IntField(&#34;int-field&#34;, 42, myIntState).FullWidth(), FloatField(&#34;float-field&#34;, 42.5, myFloatState).FullWidth(), TextField(&#34;text area&#34;, &#34;hello\nworld&#34;).Lines(3).FullWidth(), PrimaryButton(func() { showAlert.Set(true) }).Title(&#34;Check&#34;), PasswordField(&#34;your secret&#34;, secret.Get()).InputValue(secret).FullWidth(), ). Gap(L16). Frame(Frame{MaxWidth: L880}), ). Frame(Frame{}.MatchScreen()) }) }).Run() } func numsOf(s string) string { var sb strings.Builder for _, r := range s { if r &gt;= &#39;0&#39; &amp;&amp; r &lt;= &#39;9&#39; { sb.WriteRune(r) } } return sb.String() } Info More static content.">
+Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO Low-Code Platform. // Licensed under the terms specified in the LICENSE file. // // SPDX-License-Identifier: Custom-License package main import ( &#34;fmt&#34; &#34;strings&#34; &#34;time&#34; &#34;go.wdy.de/nago/application&#34; &#34;go.wdy.de/nago/presentation/core&#34; heroOutline &#34;go.wdy.de/nago/presentation/icons/hero/outline&#34; . &#34;go.wdy.de/nago/presentation/ui&#34; &#34;go.wdy.de/nago/presentation/ui/alert&#34; &#34;go.wdy.de/nago/web/vuejs&#34; ) func main() { application.Configure(func(cfg *application.Configurator) { cfg.SetApplicationID(&#34;de.worldiety.tutorial&#34;) cfg.Serve(vuejs.Dist()) cfg.RootView(&#34;.&#34;, func(wnd core.Window) core.View { firstname := core.AutoState[string](wnd) basicInput := core.AutoState[string](wnd) secret := core.AutoState[string](wnd) showAlert := core.AutoState[bool](wnd) myIntState := core.AutoState[int64](wnd) myFloatState := core.AutoState[float64](wnd) // add artificial latency time.Sleep(time.Millisecond * 500) return VStack( VStack( alert.Dialog(&#34;Achtung&#34;, Text(fmt.Sprintf(&#34;Deine Eingabe: %v\nsecret: %v\n int-field: %v\n float-field: %v&#34;, firstname, secret, myIntState, myFloatState)), showAlert, alert.Ok()), // ================================================================ // TextField(&#34;hello world&#34;, firstname.Get()). InputValue(firstname). Leading(ImageIcon(heroOutline.UserCircle)). Trailing(ImageIcon(heroOutline.UserCircle)). FullWidth(), TextField(&#34;hello world&#34;, firstname.Get()). InputValue(firstname). Leading(ImageIcon(heroOutline.UserCircle)). Trailing(ImageIcon(heroOutline.UserCircle)). ErrorText(&#34;this is an error&#34;). FullWidth(), TextField(&#34;hello world&#34;, firstname.Get()). InputValue(firstname). Leading(ImageIcon(heroOutline.UserCircle)). Trailing(ImageIcon(heroOutline.UserCircle)). Disabled(true). FullWidth(), // ================================================================ // // you can re-use the state, but be careful of the effects TextField(&#34;just numbers&#34;, numsOf(firstname.Get())). InputValue(firstname). KeyboardType(KeyboardInteger). Style(TextFieldReduced). FullWidth(), TextField(&#34;just numbers&#34;, numsOf(firstname.Get())). InputValue(firstname). KeyboardType(KeyboardInteger). Style(TextFieldReduced). ErrorText(&#34;this is an error&#34;). FullWidth(), TextField(&#34;just numbers&#34;, numsOf(firstname.Get())). InputValue(firstname). KeyboardType(KeyboardInteger). Style(TextFieldReduced). Disabled(true). FullWidth(), // ================================================================ // TextField(&#34;basic text field&#34;, basicInput.Get()). InputValue(basicInput). Style(TextFieldBasic). FullWidth(), TextField(&#34;basic text field&#34;, basicInput.Get()). InputValue(basicInput). Style(TextFieldBasic). ErrorText(&#34;this is an error&#34;). FullWidth(), TextField(&#34;basic text field&#34;, basicInput.Get()). InputValue(basicInput). Style(TextFieldBasic). Disabled(true). FullWidth(), // ================================================================ // // learn task: take your time to understand what // the difference between value and input value is IntField(&#34;int-field&#34;, 42, myIntState).FullWidth(), FloatField(&#34;float-field&#34;, 42.5, myFloatState).FullWidth(), TextField(&#34;text area&#34;, &#34;hello\nworld&#34;).Lines(3).FullWidth(), TextField(&#34;text area&#34;, &#34;hello\nworld&#34;).Lines(3).Disabled(true).FullWidth(), TextField(&#34;text area&#34;, &#34;hello\nworld&#34;).Lines(3).ErrorText(&#34;this is an error&#34;).FullWidth(), PrimaryButton(func() { showAlert.Set(true) }).Title(&#34;Check&#34;), PasswordField(&#34;your secret&#34;, secret.Get()).InputValue(secret).FullWidth(), ). Gap(L16). Padding(Padding{}.Vertical(L32)). Frame(Frame{MaxWidth: L880}), ). Frame(Frame{}.MatchScreen()) }) }).Run() } func numsOf(s string) string { var sb strings.Builder for _, r := range s { if r &gt;= &#39;0&#39; &amp;&amp; r &lt;= &#39;9&#39; { sb.WriteRune(r) } } return sb.String() } Info More static content.">
 
-    <link rel="preload" href="/css/compiled/main.min.be56ec629fdfe7569502c7dfe214689a2336e822326f4e4254eeceaf964fed38.css" as="style" integrity="sha256-vlbsYp/f51aVAsff4hRomiM26CIyb05CVO7Or5ZP7Tg=" />
-    <link href="/css/compiled/main.min.be56ec629fdfe7569502c7dfe214689a2336e822326f4e4254eeceaf964fed38.css" rel="stylesheet" integrity="sha256-vlbsYp/f51aVAsff4hRomiM26CIyb05CVO7Or5ZP7Tg=" />
+    <link rel="preload" href="/css/compiled/main.min.1f14ad4d8d41422c2b73b71a44bd0b378ca37d617e22a781396c54e1b4e28575.css" as="style" integrity="sha256-HxStTY1BQiwrc7caRL0LN4yjfWF&#43;IqeBOWxU4bTihXU=" />
+    <link href="/css/compiled/main.min.1f14ad4d8d41422c2b73b71a44bd0b378ca37d617e22a781396c54e1b4e28575.css" rel="stylesheet" integrity="sha256-HxStTY1BQiwrc7caRL0LN4yjfWF&#43;IqeBOWxU4bTihXU=" />
 
 
 
@@ -349,9 +349,25 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
             </li><li class="hx-flex hx-flex-col "><a
     class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
       hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/basic/radiobutton_field/"
+    
+  >RadioButton Field
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
     href="/docs/components/basic/rich_text/"
     
   >Rich Text
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/basic/select/"
+    
+  >Select
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -475,6 +491,14 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
     href="/docs/components/composite/entry/"
     
   >Entry
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/composite/flow_chart/"
+    
+  >Flow Chart
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -766,6 +790,14 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
     href="/docs/components/layout/stack/"
     
   >Stack
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/layout/switcher/"
+    
+  >Switcher
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -1970,9 +2002,25 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
             </li><li class="hx-flex hx-flex-col "><a
     class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
       hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/basic/radiobutton_field/"
+    
+  >RadioButton Field
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
     href="/docs/components/basic/rich_text/"
     
   >Rich Text
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/basic/select/"
+    
+  >Select
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -2096,6 +2144,14 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
     href="/docs/components/composite/entry/"
     
   >Entry
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/composite/flow_chart/"
+    
+  >Flow Chart
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -2387,6 +2443,14 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
     href="/docs/components/layout/stack/"
     
   >Stack
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/layout/switcher/"
+    
+  >Switcher
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -3476,14 +3540,15 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> (
 </span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;fmt&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;strings&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;time&#34;</span>
+</span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;go.wdy.de/nago/application&#34;</span>
 </span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;go.wdy.de/nago/presentation/core&#34;</span>
 </span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">heroOutline</span> <span style="color:#e6db74">&#34;go.wdy.de/nago/presentation/icons/hero/outline&#34;</span>
 </span></span><span style="display:flex;"><span>	. <span style="color:#e6db74">&#34;go.wdy.de/nago/presentation/ui&#34;</span>
 </span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;go.wdy.de/nago/presentation/ui/alert&#34;</span>
 </span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;go.wdy.de/nago/web/vuejs&#34;</span>
-</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;strings&#34;</span>
-</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;time&#34;</span>
 </span></span><span style="display:flex;"><span>)
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
@@ -3505,11 +3570,31 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
 </span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">VStack</span>(
 </span></span><span style="display:flex;"><span>				<span style="color:#a6e22e">VStack</span>(
 </span></span><span style="display:flex;"><span>					<span style="color:#a6e22e">alert</span>.<span style="color:#a6e22e">Dialog</span>(<span style="color:#e6db74">&#34;Achtung&#34;</span>, <span style="color:#a6e22e">Text</span>(<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Sprintf</span>(<span style="color:#e6db74">&#34;Deine Eingabe: %v\nsecret: %v\n int-field: %v\n float-field: %v&#34;</span>, <span style="color:#a6e22e">firstname</span>, <span style="color:#a6e22e">secret</span>, <span style="color:#a6e22e">myIntState</span>, <span style="color:#a6e22e">myFloatState</span>)), <span style="color:#a6e22e">showAlert</span>, <span style="color:#a6e22e">alert</span>.<span style="color:#a6e22e">Ok</span>()),
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>					<span style="color:#75715e">// ================================================================ //</span>
+</span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>					<span style="color:#a6e22e">TextField</span>(<span style="color:#e6db74">&#34;hello world&#34;</span>, <span style="color:#a6e22e">firstname</span>.<span style="color:#a6e22e">Get</span>()).
 </span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">InputValue</span>(<span style="color:#a6e22e">firstname</span>).
 </span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">Leading</span>(<span style="color:#a6e22e">ImageIcon</span>(<span style="color:#a6e22e">heroOutline</span>.<span style="color:#a6e22e">UserCircle</span>)).
 </span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">Trailing</span>(<span style="color:#a6e22e">ImageIcon</span>(<span style="color:#a6e22e">heroOutline</span>.<span style="color:#a6e22e">UserCircle</span>)).
 </span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">FullWidth</span>(),
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>					<span style="color:#a6e22e">TextField</span>(<span style="color:#e6db74">&#34;hello world&#34;</span>, <span style="color:#a6e22e">firstname</span>.<span style="color:#a6e22e">Get</span>()).
+</span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">InputValue</span>(<span style="color:#a6e22e">firstname</span>).
+</span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">Leading</span>(<span style="color:#a6e22e">ImageIcon</span>(<span style="color:#a6e22e">heroOutline</span>.<span style="color:#a6e22e">UserCircle</span>)).
+</span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">Trailing</span>(<span style="color:#a6e22e">ImageIcon</span>(<span style="color:#a6e22e">heroOutline</span>.<span style="color:#a6e22e">UserCircle</span>)).
+</span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">ErrorText</span>(<span style="color:#e6db74">&#34;this is an error&#34;</span>).
+</span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">FullWidth</span>(),
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>					<span style="color:#a6e22e">TextField</span>(<span style="color:#e6db74">&#34;hello world&#34;</span>, <span style="color:#a6e22e">firstname</span>.<span style="color:#a6e22e">Get</span>()).
+</span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">InputValue</span>(<span style="color:#a6e22e">firstname</span>).
+</span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">Leading</span>(<span style="color:#a6e22e">ImageIcon</span>(<span style="color:#a6e22e">heroOutline</span>.<span style="color:#a6e22e">UserCircle</span>)).
+</span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">Trailing</span>(<span style="color:#a6e22e">ImageIcon</span>(<span style="color:#a6e22e">heroOutline</span>.<span style="color:#a6e22e">UserCircle</span>)).
+</span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">Disabled</span>(<span style="color:#66d9ef">true</span>).
+</span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">FullWidth</span>(),
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>					<span style="color:#75715e">// ================================================================ //</span>
+</span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>					<span style="color:#75715e">// you can re-use the state, but be careful of the effects</span>
 </span></span><span style="display:flex;"><span>					<span style="color:#a6e22e">TextField</span>(<span style="color:#e6db74">&#34;just numbers&#34;</span>, <span style="color:#a6e22e">numsOf</span>(<span style="color:#a6e22e">firstname</span>.<span style="color:#a6e22e">Get</span>())).
 </span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">InputValue</span>(<span style="color:#a6e22e">firstname</span>).
@@ -3517,10 +3602,40 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
 </span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">Style</span>(<span style="color:#a6e22e">TextFieldReduced</span>).
 </span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">FullWidth</span>(),
 </span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>					<span style="color:#a6e22e">TextField</span>(<span style="color:#e6db74">&#34;just numbers&#34;</span>, <span style="color:#a6e22e">numsOf</span>(<span style="color:#a6e22e">firstname</span>.<span style="color:#a6e22e">Get</span>())).
+</span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">InputValue</span>(<span style="color:#a6e22e">firstname</span>).
+</span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">KeyboardType</span>(<span style="color:#a6e22e">KeyboardInteger</span>).
+</span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">Style</span>(<span style="color:#a6e22e">TextFieldReduced</span>).
+</span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">ErrorText</span>(<span style="color:#e6db74">&#34;this is an error&#34;</span>).
+</span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">FullWidth</span>(),
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>					<span style="color:#a6e22e">TextField</span>(<span style="color:#e6db74">&#34;just numbers&#34;</span>, <span style="color:#a6e22e">numsOf</span>(<span style="color:#a6e22e">firstname</span>.<span style="color:#a6e22e">Get</span>())).
+</span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">InputValue</span>(<span style="color:#a6e22e">firstname</span>).
+</span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">KeyboardType</span>(<span style="color:#a6e22e">KeyboardInteger</span>).
+</span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">Style</span>(<span style="color:#a6e22e">TextFieldReduced</span>).
+</span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">Disabled</span>(<span style="color:#66d9ef">true</span>).
+</span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">FullWidth</span>(),
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>					<span style="color:#75715e">// ================================================================ //</span>
+</span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>					<span style="color:#a6e22e">TextField</span>(<span style="color:#e6db74">&#34;basic text field&#34;</span>, <span style="color:#a6e22e">basicInput</span>.<span style="color:#a6e22e">Get</span>()).
 </span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">InputValue</span>(<span style="color:#a6e22e">basicInput</span>).
 </span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">Style</span>(<span style="color:#a6e22e">TextFieldBasic</span>).
 </span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">FullWidth</span>(),
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>					<span style="color:#a6e22e">TextField</span>(<span style="color:#e6db74">&#34;basic text field&#34;</span>, <span style="color:#a6e22e">basicInput</span>.<span style="color:#a6e22e">Get</span>()).
+</span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">InputValue</span>(<span style="color:#a6e22e">basicInput</span>).
+</span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">Style</span>(<span style="color:#a6e22e">TextFieldBasic</span>).
+</span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">ErrorText</span>(<span style="color:#e6db74">&#34;this is an error&#34;</span>).
+</span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">FullWidth</span>(),
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>					<span style="color:#a6e22e">TextField</span>(<span style="color:#e6db74">&#34;basic text field&#34;</span>, <span style="color:#a6e22e">basicInput</span>.<span style="color:#a6e22e">Get</span>()).
+</span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">InputValue</span>(<span style="color:#a6e22e">basicInput</span>).
+</span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">Style</span>(<span style="color:#a6e22e">TextFieldBasic</span>).
+</span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">Disabled</span>(<span style="color:#66d9ef">true</span>).
+</span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">FullWidth</span>(),
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>					<span style="color:#75715e">// ================================================================ //</span>
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>					<span style="color:#75715e">// learn task: take your time to understand what</span>
 </span></span><span style="display:flex;"><span>					<span style="color:#75715e">// the difference between value and input value is</span>
@@ -3528,6 +3643,8 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
 </span></span><span style="display:flex;"><span>					<span style="color:#a6e22e">FloatField</span>(<span style="color:#e6db74">&#34;float-field&#34;</span>, <span style="color:#ae81ff">42.5</span>, <span style="color:#a6e22e">myFloatState</span>).<span style="color:#a6e22e">FullWidth</span>(),
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>					<span style="color:#a6e22e">TextField</span>(<span style="color:#e6db74">&#34;text area&#34;</span>, <span style="color:#e6db74">&#34;hello\nworld&#34;</span>).<span style="color:#a6e22e">Lines</span>(<span style="color:#ae81ff">3</span>).<span style="color:#a6e22e">FullWidth</span>(),
+</span></span><span style="display:flex;"><span>					<span style="color:#a6e22e">TextField</span>(<span style="color:#e6db74">&#34;text area&#34;</span>, <span style="color:#e6db74">&#34;hello\nworld&#34;</span>).<span style="color:#a6e22e">Lines</span>(<span style="color:#ae81ff">3</span>).<span style="color:#a6e22e">Disabled</span>(<span style="color:#66d9ef">true</span>).<span style="color:#a6e22e">FullWidth</span>(),
+</span></span><span style="display:flex;"><span>					<span style="color:#a6e22e">TextField</span>(<span style="color:#e6db74">&#34;text area&#34;</span>, <span style="color:#e6db74">&#34;hello\nworld&#34;</span>).<span style="color:#a6e22e">Lines</span>(<span style="color:#ae81ff">3</span>).<span style="color:#a6e22e">ErrorText</span>(<span style="color:#e6db74">&#34;this is an error&#34;</span>).<span style="color:#a6e22e">FullWidth</span>(),
 </span></span><span style="display:flex;"><span>					<span style="color:#a6e22e">PrimaryButton</span>(<span style="color:#66d9ef">func</span>() {
 </span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">showAlert</span>.<span style="color:#a6e22e">Set</span>(<span style="color:#66d9ef">true</span>)
 </span></span><span style="display:flex;"><span>					}).<span style="color:#a6e22e">Title</span>(<span style="color:#e6db74">&#34;Check&#34;</span>),
@@ -3535,6 +3652,7 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
 </span></span><span style="display:flex;"><span>					<span style="color:#a6e22e">PasswordField</span>(<span style="color:#e6db74">&#34;your secret&#34;</span>, <span style="color:#a6e22e">secret</span>.<span style="color:#a6e22e">Get</span>()).<span style="color:#a6e22e">InputValue</span>(<span style="color:#a6e22e">secret</span>).<span style="color:#a6e22e">FullWidth</span>(),
 </span></span><span style="display:flex;"><span>				).
 </span></span><span style="display:flex;"><span>					<span style="color:#a6e22e">Gap</span>(<span style="color:#a6e22e">L16</span>).
+</span></span><span style="display:flex;"><span>					<span style="color:#a6e22e">Padding</span>(<span style="color:#a6e22e">Padding</span>{}.<span style="color:#a6e22e">Vertical</span>(<span style="color:#a6e22e">L32</span>)).
 </span></span><span style="display:flex;"><span>					<span style="color:#a6e22e">Frame</span>(<span style="color:#a6e22e">Frame</span>{<span style="color:#a6e22e">MaxWidth</span>: <span style="color:#a6e22e">L880</span>}),
 </span></span><span style="display:flex;"><span>			).
 </span></span><span style="display:flex;"><span>				<span style="color:#a6e22e">Frame</span>(<span style="color:#a6e22e">Frame</span>{}.<span style="color:#a6e22e">MatchScreen</span>())
@@ -3587,6 +3705,6 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
     
     <script defer src="/js/main.min.0942239592f0795dc7213dd1057fd229d7edc19c0ef1a285396eb292d9ca9842.js" integrity="sha256-CUIjlZLweV3HIT3RBX/SKdftwZwO8aKFOW6yktnKmEI="></script>
 <script defer src="/lib/flexsearch/flexsearch.bundle.min.0425860527cc9968f9f049421c7a56b39327d475e2e3a8f550416be3a9134327.js" integrity="sha256-BCWGBSfMmWj58ElCHHpWs5Mn1HXi46j1UEFr46kTQyc="></script>
-    <script defer src="/en.search.min.7918d81999396a56d9ff1b7a986d6474e66bd5acdbbe01e8bac129f5ef345a88.js" integrity="sha256-eRjYGZk5albZ/xt6mG1kdOZr1azbvgHousEp9e80Wog="></script>
+    <script defer src="/en.search.min.d732c9667971d981d901527e7c07dbef5354996050dbcc8df3cda1dab33abbef.js" integrity="sha256-1zLJZnlx2YHZAVJ&#43;fAfb71NUmWBQ28yN882h2rM6u&#43;8="></script>
   </body>
 </html>

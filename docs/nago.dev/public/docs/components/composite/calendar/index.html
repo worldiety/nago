@@ -13,7 +13,7 @@
 <title>Calendar – Nago Docs</title>
   <meta name="description" content="This component displays calendar data in different styles (e. g. , monthly or weekly view) and supports rendering events within a defined viewport. It allows customization of frame, style, and colors to adapt to different use cases.
 Constructors Calendar Calendar creates a new TCalendar initialized with the current year, a yearly timeline style, and default colors.
-Methods Method Description Append(events ...) Append adds one or more events to the existing calendar events. Colors(colors Colors) Colors customizes the color scheme used for rendering the calendar and its events. Frame(frame ui.Frame) Frame defines the layout frame (size, width, height) for the calendar component. Style(style Style) Style sets the display style (e.g., timeline view) for the calendar. ViewPort(vp ViewPort) ViewPort sets the visible time range (e.g., year, month) of the calendar. " /><link rel="canonical" href="/docs/components/composite/calendar/" itemprop="url" />
+Methods Method Description Append(events ...) Append adds one or more events to the existing calendar events. Colors(colors Colors) Colors customizes the color scheme used for rendering the calendar and its events. Frame(frame ui.Frame) Frame defines the layout frame (size, width, height) for the calendar component. FullWidth() Style(style Style) Style sets the display style (e.g., timeline view) for the calendar. ViewPort(vp ViewPort) ViewPort sets the visible time range (e.g., year, month) of the calendar. mapStartTimeCluster(events []Event, vp ViewPort) " /><link rel="canonical" href="/docs/components/composite/calendar/" itemprop="url" />
 
 <meta property="og:title" content="Calendar" />
 <meta property="og:description" content="Documentation for Nago" />
@@ -23,16 +23,16 @@ Methods Method Description Append(events ...) Append adds one or more events to 
   <meta itemprop="name" content="Calendar">
   <meta itemprop="description" content="This component displays calendar data in different styles (e. g. , monthly or weekly view) and supports rendering events within a defined viewport. It allows customization of frame, style, and colors to adapt to different use cases.
 Constructors Calendar Calendar creates a new TCalendar initialized with the current year, a yearly timeline style, and default colors.
-Methods Method Description Append(events ...) Append adds one or more events to the existing calendar events. Colors(colors Colors) Colors customizes the color scheme used for rendering the calendar and its events. Frame(frame ui.Frame) Frame defines the layout frame (size, width, height) for the calendar component. Style(style Style) Style sets the display style (e.g., timeline view) for the calendar. ViewPort(vp ViewPort) ViewPort sets the visible time range (e.g., year, month) of the calendar.">
-  <meta itemprop="wordCount" content="128">
+Methods Method Description Append(events ...) Append adds one or more events to the existing calendar events. Colors(colors Colors) Colors customizes the color scheme used for rendering the calendar and its events. Frame(frame ui.Frame) Frame defines the layout frame (size, width, height) for the calendar component. FullWidth() Style(style Style) Style sets the display style (e.g., timeline view) for the calendar. ViewPort(vp ViewPort) ViewPort sets the visible time range (e.g., year, month) of the calendar. mapStartTimeCluster(events []Event, vp ViewPort)">
+  <meta itemprop="wordCount" content="133">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Calendar">
   <meta name="twitter:description" content="This component displays calendar data in different styles (e. g. , monthly or weekly view) and supports rendering events within a defined viewport. It allows customization of frame, style, and colors to adapt to different use cases.
 Constructors Calendar Calendar creates a new TCalendar initialized with the current year, a yearly timeline style, and default colors.
-Methods Method Description Append(events ...) Append adds one or more events to the existing calendar events. Colors(colors Colors) Colors customizes the color scheme used for rendering the calendar and its events. Frame(frame ui.Frame) Frame defines the layout frame (size, width, height) for the calendar component. Style(style Style) Style sets the display style (e.g., timeline view) for the calendar. ViewPort(vp ViewPort) ViewPort sets the visible time range (e.g., year, month) of the calendar.">
+Methods Method Description Append(events ...) Append adds one or more events to the existing calendar events. Colors(colors Colors) Colors customizes the color scheme used for rendering the calendar and its events. Frame(frame ui.Frame) Frame defines the layout frame (size, width, height) for the calendar component. FullWidth() Style(style Style) Style sets the display style (e.g., timeline view) for the calendar. ViewPort(vp ViewPort) ViewPort sets the visible time range (e.g., year, month) of the calendar. mapStartTimeCluster(events []Event, vp ViewPort)">
 
-    <link rel="preload" href="/css/compiled/main.min.be56ec629fdfe7569502c7dfe214689a2336e822326f4e4254eeceaf964fed38.css" as="style" integrity="sha256-vlbsYp/f51aVAsff4hRomiM26CIyb05CVO7Or5ZP7Tg=" />
-    <link href="/css/compiled/main.min.be56ec629fdfe7569502c7dfe214689a2336e822326f4e4254eeceaf964fed38.css" rel="stylesheet" integrity="sha256-vlbsYp/f51aVAsff4hRomiM26CIyb05CVO7Or5ZP7Tg=" />
+    <link rel="preload" href="/css/compiled/main.min.1f14ad4d8d41422c2b73b71a44bd0b378ca37d617e22a781396c54e1b4e28575.css" as="style" integrity="sha256-HxStTY1BQiwrc7caRL0LN4yjfWF&#43;IqeBOWxU4bTihXU=" />
+    <link href="/css/compiled/main.min.1f14ad4d8d41422c2b73b71a44bd0b378ca37d617e22a781396c54e1b4e28575.css" rel="stylesheet" integrity="sha256-HxStTY1BQiwrc7caRL0LN4yjfWF&#43;IqeBOWxU4bTihXU=" />
 
 
 
@@ -352,9 +352,25 @@ Methods Method Description Append(events ...) Append adds one or more events to 
             </li><li class="hx-flex hx-flex-col "><a
     class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
       hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/basic/radiobutton_field/"
+    
+  >RadioButton Field
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
     href="/docs/components/basic/rich_text/"
     
   >Rich Text
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/basic/select/"
+    
+  >Select
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -493,6 +509,14 @@ Methods Method Description Append(events ...) Append adds one or more events to 
     href="/docs/components/composite/entry/"
     
   >Entry
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/composite/flow_chart/"
+    
+  >Flow Chart
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -784,6 +808,14 @@ Methods Method Description Append(events ...) Append adds one or more events to 
     href="/docs/components/layout/stack/"
     
   >Stack
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/layout/switcher/"
+    
+  >Switcher
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -1967,9 +1999,25 @@ Methods Method Description Append(events ...) Append adds one or more events to 
             </li><li class="hx-flex hx-flex-col "><a
     class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
       hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/basic/radiobutton_field/"
+    
+  >RadioButton Field
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
     href="/docs/components/basic/rich_text/"
     
   >Rich Text
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/basic/select/"
+    
+  >Select
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -2093,6 +2141,14 @@ Methods Method Description Append(events ...) Append adds one or more events to 
     href="/docs/components/composite/entry/"
     
   >Entry
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/composite/flow_chart/"
+    
+  >Flow Chart
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -2384,6 +2440,14 @@ Methods Method Description Append(events ...) Append adds one or more events to 
     href="/docs/components/layout/stack/"
     
   >Stack
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/layout/switcher/"
+    
+  >Switcher
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -3484,12 +3548,20 @@ and supports rendering events within a defined viewport. It allows customization
           <td>Frame defines the layout frame (size, width, height) for the calendar component.</td>
       </tr>
       <tr>
+          <td><code>FullWidth()</code></td>
+          <td></td>
+      </tr>
+      <tr>
           <td><code>Style(style Style)</code></td>
           <td>Style sets the display style (e.g., timeline view) for the calendar.</td>
       </tr>
       <tr>
           <td><code>ViewPort(vp ViewPort)</code></td>
           <td>ViewPort sets the visible time range (e.g., year, month) of the calendar.</td>
+      </tr>
+      <tr>
+          <td><code>mapStartTimeCluster(events []Event, vp ViewPort)</code></td>
+          <td></td>
       </tr>
   </tbody>
 </table>
@@ -3513,6 +3585,6 @@ and supports rendering events within a defined viewport. It allows customization
     
     <script defer src="/js/main.min.0942239592f0795dc7213dd1057fd229d7edc19c0ef1a285396eb292d9ca9842.js" integrity="sha256-CUIjlZLweV3HIT3RBX/SKdftwZwO8aKFOW6yktnKmEI="></script>
 <script defer src="/lib/flexsearch/flexsearch.bundle.min.0425860527cc9968f9f049421c7a56b39327d475e2e3a8f550416be3a9134327.js" integrity="sha256-BCWGBSfMmWj58ElCHHpWs5Mn1HXi46j1UEFr46kTQyc="></script>
-    <script defer src="/en.search.min.7918d81999396a56d9ff1b7a986d6474e66bd5acdbbe01e8bac129f5ef345a88.js" integrity="sha256-eRjYGZk5albZ/xt6mG1kdOZr1azbvgHousEp9e80Wog="></script>
+    <script defer src="/en.search.min.d732c9667971d981d901527e7c07dbef5354996050dbcc8df3cda1dab33abbef.js" integrity="sha256-1zLJZnlx2YHZAVJ&#43;fAfb71NUmWBQ28yN882h2rM6u&#43;8="></script>
   </body>
 </html>

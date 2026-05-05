@@ -28,8 +28,8 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
   <meta name="twitter:description" content="Write some static content.
 Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO Low-Code Platform. // Licensed under the terms specified in the LICENSE file. // // SPDX-License-Identifier: Custom-License package main import ( &#34;go.wdy.de/nago/application&#34; &#34;go.wdy.de/nago/pkg/data&#34; &#34;go.wdy.de/nago/pkg/std&#34; &#34;go.wdy.de/nago/pkg/xtime&#34; &#34;go.wdy.de/nago/presentation/core&#34; &#34;go.wdy.de/nago/presentation/ui&#34; &#34;go.wdy.de/nago/presentation/ui/crud&#34; &#34;go.wdy.de/nago/web/vuejs&#34; ) type HelferID string type Helfer struct { ID HelferID Name string } func (h Helfer) Identity() HelferID { return h.ID } type EventID string type Event struct { ID EventID Name string Note1, Note2, Note3 string GeplanteHelfer []HelferID Abfahrt std.Option[Abfahrt] RadioVariant string } type Abfahrt struct { Zeit xtime.Date AbfahrtOrt AddressID } type AddressID string func (e Event) Identity() EventID { return e.ID } type Events data.Repository[Event, EventID] type Helfers data.Repository[Helfer, HelferID] func main() { application.Configure(func(cfg *application.Configurator) { cfg.SetApplicationID(&#34;de.worldiety.tutorial&#34;) cfg.Serve(vuejs.Dist()) events := application.SloppyRepository[Event, EventID](cfg) helfers := application.SloppyRepository[Helfer, HelferID](cfg) /*	go func() { for range 1000 { events.Save(Event{ID: data.RandIdent[EventID]()}) time.Sleep(100 * time.Millisecond) helfers.Save(Helfer{ID: data.RandIdent[HelferID]()}) } }() go func() { for range 500 { events.Save(Event{ID: data.RandIdent[EventID]()}) time.Sleep(10 * time.Millisecond) helfers.Save(Helfer{ID: data.RandIdent[HelferID]()}) } os.Exit(-1) }()*/ cfg.RootView(&#34;.&#34;, func(wnd core.Window) core.View { bnd := crud.NewBinding[Event](wnd) bnd.Add( crud.Text(crud.TextOptions{Label: &#34;Name&#34;}, crud.Ptr(func(entity *Event) *string { return &amp;entity.Name })).WithValidation(func(evt Event) (errorText string, infrastructureError error) { if evt.Name == &#34;&#34; { return &#34;Darf nicht leer sein&#34;, nil } return &#34;&#34;, nil }).WithSupportingText(&#34;Gib Deinen Namen an&#34;), ) // assemble complex and nested section with rows var noteSectionFields []crud.Field[Event] noteSectionFields = append(noteSectionFields, crud.Text(crud.TextOptions{Label: &#34;Note1&#34;}, crud.Ptr(func(entity *Event) *string { return &amp;entity.Note1 })).WithValidation(func(event Event) (errorText string, infrastructureError error) { if event.Note1 == &#34;&#34; { return &#34;Notiz 1 muss ausgefüllt sein&#34;, nil } return &#34;&#34;, nil }), crud.Text(crud.TextOptions{Label: &#34;Note2&#34;}, crud.Ptr(func(entity *Event) *string { return &amp;entity.Note2 })).WithValidation(func(event Event) (errorText string, infrastructureError error) { if event.Note2 == &#34;&#34; { return &#34;Notiz 2 muss ausgefüllt sein&#34;, nil } return &#34;&#34;, nil }), crud.Text(crud.TextOptions{Label: &#34;Note3&#34;}, crud.Ptr(func(entity *Event) *string { return &amp;entity.Note3 })), crud.PickOne(crud.PickOneOptions[string]{Label: &#34;Radio Gaga&#34;, Values: []string{&#34;Gaga&#34;, &#34;Gugu&#34;}, Style: crud.PickOneStyleWithRadioButton}, crud.PropertyFuncs( func(e *Event) std.Option[string] { if e.RadioVariant == &#34;&#34; { return std.None[string]() } return std.Some(e.RadioVariant) }, func(dst *Event, v std.Option[string]) { dst.RadioVariant = v.UnwrapOr(&#34;&#34;) }, )), ) noteSectionFields = append(noteSectionFields, crud.Row( crud.FormColumn(crud.Text(crud.TextOptions{Label: &#34;Note1&#34;}, crud.Ptr(func(entity *Event) *string { return &amp;entity.Note1 })), 0.33), crud.FormColumn(crud.Text(crud.TextOptions{Label: &#34;Note3&#34;}, crud.Ptr(func(entity *Event) *string { return &amp;entity.Note3 })), 0.66), )...) noteSectionFields = append(noteSectionFields, crud.HLine[Event]()) noteSectionFields = append(noteSectionFields, crud.OptionalFields( crud.OptionalFieldsOptions{ Label: &#34;Optionale Felder&#34;, Enabled: false, }, crud.Row( crud.FormColumn(crud.Text(crud.TextOptions{Label: &#34;Note1&#34;}, crud.Ptr(func(entity *Event) *string { return &amp;entity.Note1 })), 0.33), crud.FormColumn(crud.Text(crud.TextOptions{Label: &#34;Note3&#34;}, crud.Ptr(func(entity *Event) *string { return &amp;entity.Note3 })), 0.66), )..., )...) bnd.Add(crud.Section(&#34;Notizen&#34;, noteSectionFields..., )...) // without section bnd.Add(crud.Row( crud.FormColumn(crud.Text(crud.TextOptions{Label: &#34;Note1&#34;}, crud.Ptr(func(entity *Event) *string { return &amp;entity.Note1 })), 0.33), crud.FormColumn(crud.Text(crud.TextOptions{Label: &#34;Note3&#34;}, crud.Ptr(func(entity *Event) *string { return &amp;entity.Note3 })), 0.66), )...) // foreign key helper helferBnd := crud.NewBinding[Helfer](wnd).Add( crud.Text(crud.TextOptions{Label: &#34;Vorname&#34;}, crud.Ptr(func(model *Helfer) *string { return &amp;model.Name })), ) bnd.Add( crud.Section[Event](&#34;&#34;, crud.OneToManyTable[Event, Helfer, HelferID]( crud.OneToManyTableOptions[Helfer, HelferID]{ Label: &#34;Helfer&#34;, ForeignEntities: helfers.All(), ForeignBinding: helferBnd, ForeignZero: Helfer{}, ForeignCreate: func(helfer Helfer) (errorText string, infrastructureError error) { helfer.ID = data.RandIdent[HelferID]() err := helfers.Save(helfer) return &#34;&#34;, err }, ForeignPickerRenderer: func(helfer Helfer) core.View { return ui.Text(helfer.Name) }, }, crud.Ptr( func(model *Event) *[]HelferID { return &amp;model.GeplanteHelfer }, ), ))..., ) return ui.VStack( crud.View[Event, EventID]( crud.Options[Event, EventID](bnd). Actions( crud.ButtonCreate[Event](bnd, Event{ID: &#34;do not randomize here&#34;}, func(evt Event) (errorText string, infrastructureError error) { if !bnd.Validates(evt) { return &#34;irgendein validation fehler, gugg hin&#34;, nil } evt.ID = data.RandIdent[EventID]() // create a unique ID here return &#34;&#34;, events.Save(evt) }), ). FindAll(events.All()). Title(&#34;Events&#34;), ), ).Padding(ui.Padding{}.All(ui.L16)).Frame(ui.Frame{}.FullWidth()) }) }).Run() } Info More static content.">
 
-    <link rel="preload" href="/css/compiled/main.min.be56ec629fdfe7569502c7dfe214689a2336e822326f4e4254eeceaf964fed38.css" as="style" integrity="sha256-vlbsYp/f51aVAsff4hRomiM26CIyb05CVO7Or5ZP7Tg=" />
-    <link href="/css/compiled/main.min.be56ec629fdfe7569502c7dfe214689a2336e822326f4e4254eeceaf964fed38.css" rel="stylesheet" integrity="sha256-vlbsYp/f51aVAsff4hRomiM26CIyb05CVO7Or5ZP7Tg=" />
+    <link rel="preload" href="/css/compiled/main.min.1f14ad4d8d41422c2b73b71a44bd0b378ca37d617e22a781396c54e1b4e28575.css" as="style" integrity="sha256-HxStTY1BQiwrc7caRL0LN4yjfWF&#43;IqeBOWxU4bTihXU=" />
+    <link href="/css/compiled/main.min.1f14ad4d8d41422c2b73b71a44bd0b378ca37d617e22a781396c54e1b4e28575.css" rel="stylesheet" integrity="sha256-HxStTY1BQiwrc7caRL0LN4yjfWF&#43;IqeBOWxU4bTihXU=" />
 
 
 
@@ -349,9 +349,25 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
             </li><li class="hx-flex hx-flex-col "><a
     class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
       hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/basic/radiobutton_field/"
+    
+  >RadioButton Field
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
     href="/docs/components/basic/rich_text/"
     
   >Rich Text
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/basic/select/"
+    
+  >Select
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -475,6 +491,14 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
     href="/docs/components/composite/entry/"
     
   >Entry
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/composite/flow_chart/"
+    
+  >Flow Chart
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -766,6 +790,14 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
     href="/docs/components/layout/stack/"
     
   >Stack
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/layout/switcher/"
+    
+  >Switcher
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -1964,9 +1996,25 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
             </li><li class="hx-flex hx-flex-col "><a
     class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
       hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/basic/radiobutton_field/"
+    
+  >RadioButton Field
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
     href="/docs/components/basic/rich_text/"
     
   >Rich Text
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/basic/select/"
+    
+  >Select
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -2090,6 +2138,14 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
     href="/docs/components/composite/entry/"
     
   >Entry
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/composite/flow_chart/"
+    
+  >Flow Chart
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -2381,6 +2437,14 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
     href="/docs/components/layout/stack/"
     
   >Stack
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/layout/switcher/"
+    
+  >Switcher
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -3715,6 +3779,6 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
     
     <script defer src="/js/main.min.0942239592f0795dc7213dd1057fd229d7edc19c0ef1a285396eb292d9ca9842.js" integrity="sha256-CUIjlZLweV3HIT3RBX/SKdftwZwO8aKFOW6yktnKmEI="></script>
 <script defer src="/lib/flexsearch/flexsearch.bundle.min.0425860527cc9968f9f049421c7a56b39327d475e2e3a8f550416be3a9134327.js" integrity="sha256-BCWGBSfMmWj58ElCHHpWs5Mn1HXi46j1UEFr46kTQyc="></script>
-    <script defer src="/en.search.min.7918d81999396a56d9ff1b7a986d6474e66bd5acdbbe01e8bac129f5ef345a88.js" integrity="sha256-eRjYGZk5albZ/xt6mG1kdOZr1azbvgHousEp9e80Wog="></script>
+    <script defer src="/en.search.min.d732c9667971d981d901527e7c07dbef5354996050dbcc8df3cda1dab33abbef.js" integrity="sha256-1zLJZnlx2YHZAVJ&#43;fAfb71NUmWBQ28yN882h2rM6u&#43;8="></script>
   </body>
 </html>

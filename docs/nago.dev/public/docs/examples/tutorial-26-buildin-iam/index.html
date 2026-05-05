@@ -28,8 +28,8 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
   <meta name="twitter:description" content="Write some static content.
 Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO Low-Code Platform. // Licensed under the terms specified in the LICENSE file. // // SPDX-License-Identifier: Custom-License // #[go.permission.generateTable] package main import ( &#34;fmt&#34; &#34;github.com/worldiety/option&#34; &#34;go.wdy.de/nago/application&#34; &#34;go.wdy.de/nago/application/consent&#34; &#34;go.wdy.de/nago/application/permission&#34; &#34;go.wdy.de/nago/application/settings&#34; &#34;go.wdy.de/nago/application/user&#34; cfgusercircle &#34;go.wdy.de/nago/application/usercircle/cfg&#34; &#34;go.wdy.de/nago/auth&#34; &#34;go.wdy.de/nago/pkg/std&#34; &#34;go.wdy.de/nago/pkg/xreflect&#34; &#34;go.wdy.de/nago/presentation/core&#34; &#34;go.wdy.de/nago/presentation/ui&#34; &#34;go.wdy.de/nago/web/vuejs&#34; &#34;time&#34; ) var myPermission = permission.Declare[SayHello](&#34;de.worldiety.tutorial.say_hello&#34;, &#34;Jeden Grüßen&#34;, &#34;Diese Erlaubnis muss dem Nutzer zugewiesen werden.&#34;) // SayHello greets everyone who has been authenticated. type SayHello func(auth auth.Subject) string func NewSayHello() SayHello { return func(auth auth.Subject) string { if err := auth.Audit(myPermission); err != nil { return fmt.Sprintf(&#34;invalid: %v&#34;, err) } return &#34;hello &#34; &#43; auth.Name() } } func main() { application.Configure(func(cfg *application.Configurator) { cfg.SetApplicationID(&#34;de.worldiety.tutorial&#34;) cfg.Serve(vuejs.Dist()) cfg.SetName(&#34;Tutorial&#34;) std.Must(cfg.Authentication()) cfg.SetDecorator(cfg.NewScaffold().Decorator()) option.MustZero(cfg.StandardSystems()) option.Must(cfgusercircle.Enable(cfg)) std.Must(std.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), &#34;%6UbRsCuM8N$auy&#34;)) configureGDPRConsents(cfg) sayHello := NewSayHello() // remember to update your user.Settings to use the matching regex like ^(Kaufmann|Informatiker)$ xreflect.SetFieldTagFor[user.Settings](&#34;ProfessionalGroup&#34;, &#34;supportingText&#34;, &#34;Die Berufsgruppe muss Kaufmann oder Informatiker sein.&#34;) xreflect.SetFieldTagFor[user.Settings](&#34;MobilePhone&#34;, &#34;supportingText&#34;, &#34;Wir benötigen die Telefonnummer, um Ihnen Buchungsbestätigungen zu schicken.&#34;) cfg.RootViewWithDecoration(&#34;.&#34;, func(wnd core.Window) core.View { return ui.VStack( //uiuser.PasswordStrengthView(wnd, user.PasswordStrengthIndicator{}), ui.Text(fmt.Sprintf(&#34;%s&#34;, sayHello(wnd.Subject()))), ).Gap(ui.L16).Frame(ui.Frame{}.MatchScreen()) }) }).Run() } func configureGDPRConsents(cfg *application.Configurator) { usrSettings := settings.ReadGlobal[user.Settings](std.Must(cfg.SettingsManagement()).UseCases.LoadGlobal) // do not append, just clear it usrSettings.Consents = []user.ConsentOption{ { ID: consent.DataProtectionProvision, Register: user.ConsentText{Label: &#34;Ja, ich habe die [Datenschutzbestimmungen](/page/datenschutz) gelesen und akzeptiert.&#34;}, Required: true, }, { ID: consent.Newsletter, Register: user.ConsentText{ Label: &#34;Ja, ich melde mich zum Newsletter an. Eine Abbestellung ist jederzeit möglich.&#34;, SupportingText: &#34;Ein Widerspruch ist jederzeit in den Einstellungen Ihres Benutzerkontos/über Abmeldelink in den E-Mails möglich, ohne dass weitere (Übermittlungs-)Kosten als die nach den Basistarifen entstehen.&#34;, }, Profile: user.ConsentText{ Label: &#34;Newsletter&#34;, SupportingText: &#34;Regelmäßig Email Updates erhalten&#34;, }, }, { ID: consent.GeneralTermsAndConditions, Register: user.ConsentText{Label: &#34;Ja, ich habe die [Geschäftsbedingungen](/page/agb) gelesen und akzeptiert.&#34;}, Required: true, }, { ID: consent.TermsOfUse, Register: user.ConsentText{ Label: &#34;Ja, ich habe die [Nutzungsbedingungen](/page/nutzungsbedingungen) gelesen und akzeptiert.&#34;, }, Required: true, }, { ID: consent.MinAge, Register: user.ConsentText{ Label: &#34;Ja, ich bestätige, dass ich mindestens 16 Jahre alt bin.&#34;, }, Required: true, }, { ID: consent.SMS, Register: user.ConsentText{ Label: &#34;Ja, ich melde mich zum SMS Versand an, um kurzfristige Benachrichtigungen zu erhalten. Eine Abbestellung ist jederzeit möglich.&#34;, SupportingText: &#34;Ein Widerspruch ist jederzeit in den Einstellungen Ihres Benutzerkontos möglich.&#34;, }, Profile: user.ConsentText{ Label: &#34;SMS Versand&#34;, SupportingText: &#34;kurzfristige Updates zu Veranstaltungen erhalten.&#34;, }, Required: false, }, { ID: &#34;my.custom.consent&#34;, Register: user.ConsentText{ Label: &#34;Accept something completely different.&#34;, }, Profile: user.ConsentText{ Label: &#34;Accept something completely different.&#34;, }, Required: false, }, } // apply settings option.MustZero(option.Must(cfg.SettingsManagement()).UseCases.StoreGlobal(user.SU(), usrSettings)) } Info More static content.">
 
-    <link rel="preload" href="/css/compiled/main.min.be56ec629fdfe7569502c7dfe214689a2336e822326f4e4254eeceaf964fed38.css" as="style" integrity="sha256-vlbsYp/f51aVAsff4hRomiM26CIyb05CVO7Or5ZP7Tg=" />
-    <link href="/css/compiled/main.min.be56ec629fdfe7569502c7dfe214689a2336e822326f4e4254eeceaf964fed38.css" rel="stylesheet" integrity="sha256-vlbsYp/f51aVAsff4hRomiM26CIyb05CVO7Or5ZP7Tg=" />
+    <link rel="preload" href="/css/compiled/main.min.1f14ad4d8d41422c2b73b71a44bd0b378ca37d617e22a781396c54e1b4e28575.css" as="style" integrity="sha256-HxStTY1BQiwrc7caRL0LN4yjfWF&#43;IqeBOWxU4bTihXU=" />
+    <link href="/css/compiled/main.min.1f14ad4d8d41422c2b73b71a44bd0b378ca37d617e22a781396c54e1b4e28575.css" rel="stylesheet" integrity="sha256-HxStTY1BQiwrc7caRL0LN4yjfWF&#43;IqeBOWxU4bTihXU=" />
 
 
 
@@ -349,9 +349,25 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
             </li><li class="hx-flex hx-flex-col "><a
     class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
       hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/basic/radiobutton_field/"
+    
+  >RadioButton Field
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
     href="/docs/components/basic/rich_text/"
     
   >Rich Text
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/basic/select/"
+    
+  >Select
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -475,6 +491,14 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
     href="/docs/components/composite/entry/"
     
   >Entry
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/composite/flow_chart/"
+    
+  >Flow Chart
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -766,6 +790,14 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
     href="/docs/components/layout/stack/"
     
   >Stack
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/layout/switcher/"
+    
+  >Switcher
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -1970,9 +2002,25 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
             </li><li class="hx-flex hx-flex-col "><a
     class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
       hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/basic/radiobutton_field/"
+    
+  >RadioButton Field
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
     href="/docs/components/basic/rich_text/"
     
   >Rich Text
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/basic/select/"
+    
+  >Select
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -2096,6 +2144,14 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
     href="/docs/components/composite/entry/"
     
   >Entry
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/composite/flow_chart/"
+    
+  >Flow Chart
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -2387,6 +2443,14 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
     href="/docs/components/layout/stack/"
     
   >Stack
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/layout/switcher/"
+    
+  >Switcher
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -3642,6 +3706,6 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
     
     <script defer src="/js/main.min.0942239592f0795dc7213dd1057fd229d7edc19c0ef1a285396eb292d9ca9842.js" integrity="sha256-CUIjlZLweV3HIT3RBX/SKdftwZwO8aKFOW6yktnKmEI="></script>
 <script defer src="/lib/flexsearch/flexsearch.bundle.min.0425860527cc9968f9f049421c7a56b39327d475e2e3a8f550416be3a9134327.js" integrity="sha256-BCWGBSfMmWj58ElCHHpWs5Mn1HXi46j1UEFr46kTQyc="></script>
-    <script defer src="/en.search.min.7918d81999396a56d9ff1b7a986d6474e66bd5acdbbe01e8bac129f5ef345a88.js" integrity="sha256-eRjYGZk5albZ/xt6mG1kdOZr1azbvgHousEp9e80Wog="></script>
+    <script defer src="/en.search.min.d732c9667971d981d901527e7c07dbef5354996050dbcc8df3cda1dab33abbef.js" integrity="sha256-1zLJZnlx2YHZAVJ&#43;fAfb71NUmWBQ28yN882h2rM6u&#43;8="></script>
   </body>
 </html>

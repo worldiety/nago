@@ -12,7 +12,7 @@
 <link fetchpriority="low" href="/site.webmanifest" rel="manifest" />
 <title>Tutorial 17 – Nago Docs</title>
   <meta name="description" content="Write some static content.
-Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO Low-Code Platform. // Licensed under the terms specified in the LICENSE file. // // SPDX-License-Identifier: Custom-License package main import ( _ &#34;embed&#34; &#34;fmt&#34; &#34;go.wdy.de/nago/application&#34; &#34;go.wdy.de/nago/presentation/core&#34; icons2 &#34;go.wdy.de/nago/presentation/icons/flowbite/outline&#34; icons &#34;go.wdy.de/nago/presentation/icons/hero/solid&#34; . &#34;go.wdy.de/nago/presentation/ui&#34; &#34;go.wdy.de/nago/presentation/ui/footer&#34; &#34;go.wdy.de/nago/web/vuejs&#34; ) //go:embed ORA_logo.svg var appIcon application.StaticBytes func main() { application.Configure(func(cfg *application.Configurator) { cfg.SetApplicationID(&#34;de.worldiety.tutorial&#34;) cfg.Serve(vuejs.Dist()) // update the global app icon cfg.AppIcon(cfg.Resource(appIcon)) cfg.RootView(&#34;.&#34;, func(wnd core.Window) core.View { return Scaffold(ScaffoldAlignmentLeading). Body(VStack( // this only causes the side effect of setting the current page title WindowTitle(&#34;Scaffold Example&#34;), Text(&#34;Page body&#34;), )). Footer(footer.Footer(). Logo(Image().Embed(appIcon)). Impress(&#34;https://www.worldiety.de/impressum&#34;). PrivacyPolicy(&#34;https://www.worldiety.de/datenschutz&#34;). GeneralTermsAndConditions(&#34;https://www.worldiety.de/loesungen/software-entwicklung&#34;). ProviderName(&#34;© worldiety GmbH&#34;), ). Logo(Image().Embed(appIcon).Frame(Frame{}.Size(Auto, L64))). Breakpoint(1000). Menu( ScaffoldMenuEntry{ Title: &#34;Without icon&#34;, Action: func() { fmt.Println(&#34;clicked &#39;Without icon&#39;&#34;) }, }, ScaffoldMenuEntry{ Icon: Image().Embed(icons.User).Frame(Frame{}.Size(L20, L20)), Title: &#34;With icon&#34;, MarkAsActiveAt: &#34;.&#34;, }, ScaffoldMenuEntry{ Icon: Image().Embed(icons.ChatBubbleLeft).Frame(Frame{}.Size(L20, L20)), Title: &#34;With icon and long title&#34;, MarkAsActiveAt: &#34;.&#34;, }, ScaffoldMenuEntry{ Icon: Image().Embed(icons.QuestionMarkCircle).Frame(Frame{}.Size(L20, L20)), Title: &#34;With sub menu&#34;, MarkAsActiveAt: &#34;.&#34;, Menu: []ScaffoldMenuEntry{ { Title: &#34;sub a&#34;, }, { Title: &#34;sub b&#34;, }, }, }, ScaffoldMenuEntry{ Icon: Image().Embed(icons.Window).Frame(Frame{}.Size(L20, L20)), IconActive: Image().Embed(icons2.Grid).Frame(Frame{}.Size(L20, L20)), Title: &#34;With active icon&#34;, MarkAsActiveAt: &#34;.&#34;, }, ForwardScaffoldMenuEntry(wnd, icons.User, &#34;Forward entry&#34;, &#34;/&#34;), ). BottomView( VStack( Text(&#34;Ein Text&#34;), Link(wnd, &#34;worldiety GmbH&#34;, &#34;https://www.worldiety.de/&#34;, &#34;_blank&#34;). TextAlignment(TextAlignCenter), ).FullWidth(), ) }) }).Run() } Info More static content." /><link rel="canonical" href="/docs/examples/tutorial-17-scaffold/" itemprop="url" />
+Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO Low-Code Platform. // Licensed under the terms specified in the LICENSE file. // // SPDX-License-Identifier: Custom-License package main import ( _ &#34;embed&#34; &#34;fmt&#34; &#34;go.wdy.de/nago/application&#34; &#34;go.wdy.de/nago/presentation/core&#34; icons2 &#34;go.wdy.de/nago/presentation/icons/flowbite/outline&#34; icons &#34;go.wdy.de/nago/presentation/icons/hero/solid&#34; . &#34;go.wdy.de/nago/presentation/ui&#34; &#34;go.wdy.de/nago/presentation/ui/footer&#34; &#34;go.wdy.de/nago/web/vuejs&#34; ) //go:embed ORA_logo.svg var appIcon application.StaticBytes func main() { application.Configure(func(cfg *application.Configurator) { cfg.SetApplicationID(&#34;de.worldiety.tutorial&#34;) cfg.Serve(vuejs.Dist()) // update the global app icon cfg.AppIcon(cfg.Resource(appIcon)) cfg.RootView(&#34;.&#34;, func(wnd core.Window) core.View { return Scaffold(ScaffoldAlignmentLeading). Body(VStack( // this only causes the side effect of setting the current page title WindowTitle(&#34;Scaffold Example&#34;), Text(&#34;Page body&#34;), )). Footer(footer.Footer(). Logo(Image().Embed(appIcon)). Impress(&#34;https://www.worldiety.de/impressum&#34;). PrivacyPolicy(&#34;https://www.worldiety.de/datenschutz&#34;). GeneralTermsAndConditions(&#34;https://www.worldiety.de/loesungen/software-entwicklung&#34;). ProviderName(&#34;© worldiety GmbH&#34;), ). Logo(Image().Embed(appIcon).Frame(Frame{}.Size(Auto, L64))). Breakpoint(1000). Menu( ScaffoldMenuEntry{ Title: &#34;Without icon&#34;, Action: func() { fmt.Println(&#34;clicked &#39;Without icon&#39;&#34;) }, }, ScaffoldMenuEntry{ Icon: Image().Embed(icons.User).Frame(Frame{}.Size(L20, L20)), Title: &#34;With icon&#34;, MarkAsActiveAt: &#34;.&#34;, }, ScaffoldMenuEntry{ Icon: Image().Embed(icons.ChatBubbleLeft).Frame(Frame{}.Size(L20, L20)), Title: &#34;With icon and long title&#34;, MarkAsActiveAt: &#34;.&#34;, }, ScaffoldMenuEntry{ Icon: Image().Embed(icons.QuestionMarkCircle).Frame(Frame{}.Size(L20, L20)), Title: &#34;With sub menu&#34;, MarkAsActiveAt: &#34;.&#34;, Menu: []ScaffoldMenuEntry{ { Title: &#34;sub a&#34;, }, { Title: &#34;sub b&#34;, }, }, }, ScaffoldMenuEntry{ Icon: Image().Embed(icons.Window).Frame(Frame{}.Size(L20, L20)), IconActive: Image().Embed(icons2.Grid).Frame(Frame{}.Size(L20, L20)), Title: &#34;With active icon&#34;, MarkAsActiveAt: &#34;.&#34;, }, ForwardScaffoldMenuEntry(wnd, icons.User, &#34;Forward entry&#34;, &#34;/&#34;), ). BottomView( VStack( Text(&#34;Ein Text&#34;), Link(wnd, &#34;worldiety GmbH&#34;, &#34;https://www.worldiety.de/&#34;, &#34;_blank&#34;). TextAlignment(TextAlignCenter), ).FullWidth().NoClip(true), ) }) cfg.SetDecorator(cfg.NewScaffold(). MenuEntry().Title(&#34;hello world&#34;).Public(). Decorator(), ) cfg.RootView(&#34;test&#34;, func(wnd core.Window) core.View { return cfg.NewScaffold().MenuEntry().Title(&#34;test&#34;).Public().Decorator()( wnd, VStack(Text(&#34;test dynamic scaffold page&#34;)), ) }) }).Run() } Info More static content." /><link rel="canonical" href="/docs/examples/tutorial-17-scaffold/" itemprop="url" />
 
 <meta property="og:title" content="Tutorial 17" />
 <meta property="og:description" content="Documentation for Nago" />
@@ -21,15 +21,15 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
 
   <meta itemprop="name" content="Tutorial 17">
   <meta itemprop="description" content="Write some static content.
-Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO Low-Code Platform. // Licensed under the terms specified in the LICENSE file. // // SPDX-License-Identifier: Custom-License package main import ( _ &#34;embed&#34; &#34;fmt&#34; &#34;go.wdy.de/nago/application&#34; &#34;go.wdy.de/nago/presentation/core&#34; icons2 &#34;go.wdy.de/nago/presentation/icons/flowbite/outline&#34; icons &#34;go.wdy.de/nago/presentation/icons/hero/solid&#34; . &#34;go.wdy.de/nago/presentation/ui&#34; &#34;go.wdy.de/nago/presentation/ui/footer&#34; &#34;go.wdy.de/nago/web/vuejs&#34; ) //go:embed ORA_logo.svg var appIcon application.StaticBytes func main() { application.Configure(func(cfg *application.Configurator) { cfg.SetApplicationID(&#34;de.worldiety.tutorial&#34;) cfg.Serve(vuejs.Dist()) // update the global app icon cfg.AppIcon(cfg.Resource(appIcon)) cfg.RootView(&#34;.&#34;, func(wnd core.Window) core.View { return Scaffold(ScaffoldAlignmentLeading). Body(VStack( // this only causes the side effect of setting the current page title WindowTitle(&#34;Scaffold Example&#34;), Text(&#34;Page body&#34;), )). Footer(footer.Footer(). Logo(Image().Embed(appIcon)). Impress(&#34;https://www.worldiety.de/impressum&#34;). PrivacyPolicy(&#34;https://www.worldiety.de/datenschutz&#34;). GeneralTermsAndConditions(&#34;https://www.worldiety.de/loesungen/software-entwicklung&#34;). ProviderName(&#34;© worldiety GmbH&#34;), ). Logo(Image().Embed(appIcon).Frame(Frame{}.Size(Auto, L64))). Breakpoint(1000). Menu( ScaffoldMenuEntry{ Title: &#34;Without icon&#34;, Action: func() { fmt.Println(&#34;clicked &#39;Without icon&#39;&#34;) }, }, ScaffoldMenuEntry{ Icon: Image().Embed(icons.User).Frame(Frame{}.Size(L20, L20)), Title: &#34;With icon&#34;, MarkAsActiveAt: &#34;.&#34;, }, ScaffoldMenuEntry{ Icon: Image().Embed(icons.ChatBubbleLeft).Frame(Frame{}.Size(L20, L20)), Title: &#34;With icon and long title&#34;, MarkAsActiveAt: &#34;.&#34;, }, ScaffoldMenuEntry{ Icon: Image().Embed(icons.QuestionMarkCircle).Frame(Frame{}.Size(L20, L20)), Title: &#34;With sub menu&#34;, MarkAsActiveAt: &#34;.&#34;, Menu: []ScaffoldMenuEntry{ { Title: &#34;sub a&#34;, }, { Title: &#34;sub b&#34;, }, }, }, ScaffoldMenuEntry{ Icon: Image().Embed(icons.Window).Frame(Frame{}.Size(L20, L20)), IconActive: Image().Embed(icons2.Grid).Frame(Frame{}.Size(L20, L20)), Title: &#34;With active icon&#34;, MarkAsActiveAt: &#34;.&#34;, }, ForwardScaffoldMenuEntry(wnd, icons.User, &#34;Forward entry&#34;, &#34;/&#34;), ). BottomView( VStack( Text(&#34;Ein Text&#34;), Link(wnd, &#34;worldiety GmbH&#34;, &#34;https://www.worldiety.de/&#34;, &#34;_blank&#34;). TextAlignment(TextAlignCenter), ).FullWidth(), ) }) }).Run() } Info More static content.">
-  <meta itemprop="wordCount" content="212">
+Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO Low-Code Platform. // Licensed under the terms specified in the LICENSE file. // // SPDX-License-Identifier: Custom-License package main import ( _ &#34;embed&#34; &#34;fmt&#34; &#34;go.wdy.de/nago/application&#34; &#34;go.wdy.de/nago/presentation/core&#34; icons2 &#34;go.wdy.de/nago/presentation/icons/flowbite/outline&#34; icons &#34;go.wdy.de/nago/presentation/icons/hero/solid&#34; . &#34;go.wdy.de/nago/presentation/ui&#34; &#34;go.wdy.de/nago/presentation/ui/footer&#34; &#34;go.wdy.de/nago/web/vuejs&#34; ) //go:embed ORA_logo.svg var appIcon application.StaticBytes func main() { application.Configure(func(cfg *application.Configurator) { cfg.SetApplicationID(&#34;de.worldiety.tutorial&#34;) cfg.Serve(vuejs.Dist()) // update the global app icon cfg.AppIcon(cfg.Resource(appIcon)) cfg.RootView(&#34;.&#34;, func(wnd core.Window) core.View { return Scaffold(ScaffoldAlignmentLeading). Body(VStack( // this only causes the side effect of setting the current page title WindowTitle(&#34;Scaffold Example&#34;), Text(&#34;Page body&#34;), )). Footer(footer.Footer(). Logo(Image().Embed(appIcon)). Impress(&#34;https://www.worldiety.de/impressum&#34;). PrivacyPolicy(&#34;https://www.worldiety.de/datenschutz&#34;). GeneralTermsAndConditions(&#34;https://www.worldiety.de/loesungen/software-entwicklung&#34;). ProviderName(&#34;© worldiety GmbH&#34;), ). Logo(Image().Embed(appIcon).Frame(Frame{}.Size(Auto, L64))). Breakpoint(1000). Menu( ScaffoldMenuEntry{ Title: &#34;Without icon&#34;, Action: func() { fmt.Println(&#34;clicked &#39;Without icon&#39;&#34;) }, }, ScaffoldMenuEntry{ Icon: Image().Embed(icons.User).Frame(Frame{}.Size(L20, L20)), Title: &#34;With icon&#34;, MarkAsActiveAt: &#34;.&#34;, }, ScaffoldMenuEntry{ Icon: Image().Embed(icons.ChatBubbleLeft).Frame(Frame{}.Size(L20, L20)), Title: &#34;With icon and long title&#34;, MarkAsActiveAt: &#34;.&#34;, }, ScaffoldMenuEntry{ Icon: Image().Embed(icons.QuestionMarkCircle).Frame(Frame{}.Size(L20, L20)), Title: &#34;With sub menu&#34;, MarkAsActiveAt: &#34;.&#34;, Menu: []ScaffoldMenuEntry{ { Title: &#34;sub a&#34;, }, { Title: &#34;sub b&#34;, }, }, }, ScaffoldMenuEntry{ Icon: Image().Embed(icons.Window).Frame(Frame{}.Size(L20, L20)), IconActive: Image().Embed(icons2.Grid).Frame(Frame{}.Size(L20, L20)), Title: &#34;With active icon&#34;, MarkAsActiveAt: &#34;.&#34;, }, ForwardScaffoldMenuEntry(wnd, icons.User, &#34;Forward entry&#34;, &#34;/&#34;), ). BottomView( VStack( Text(&#34;Ein Text&#34;), Link(wnd, &#34;worldiety GmbH&#34;, &#34;https://www.worldiety.de/&#34;, &#34;_blank&#34;). TextAlignment(TextAlignCenter), ).FullWidth().NoClip(true), ) }) cfg.SetDecorator(cfg.NewScaffold(). MenuEntry().Title(&#34;hello world&#34;).Public(). Decorator(), ) cfg.RootView(&#34;test&#34;, func(wnd core.Window) core.View { return cfg.NewScaffold().MenuEntry().Title(&#34;test&#34;).Public().Decorator()( wnd, VStack(Text(&#34;test dynamic scaffold page&#34;)), ) }) }).Run() } Info More static content.">
+  <meta itemprop="wordCount" content="231">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Tutorial 17">
   <meta name="twitter:description" content="Write some static content.
-Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO Low-Code Platform. // Licensed under the terms specified in the LICENSE file. // // SPDX-License-Identifier: Custom-License package main import ( _ &#34;embed&#34; &#34;fmt&#34; &#34;go.wdy.de/nago/application&#34; &#34;go.wdy.de/nago/presentation/core&#34; icons2 &#34;go.wdy.de/nago/presentation/icons/flowbite/outline&#34; icons &#34;go.wdy.de/nago/presentation/icons/hero/solid&#34; . &#34;go.wdy.de/nago/presentation/ui&#34; &#34;go.wdy.de/nago/presentation/ui/footer&#34; &#34;go.wdy.de/nago/web/vuejs&#34; ) //go:embed ORA_logo.svg var appIcon application.StaticBytes func main() { application.Configure(func(cfg *application.Configurator) { cfg.SetApplicationID(&#34;de.worldiety.tutorial&#34;) cfg.Serve(vuejs.Dist()) // update the global app icon cfg.AppIcon(cfg.Resource(appIcon)) cfg.RootView(&#34;.&#34;, func(wnd core.Window) core.View { return Scaffold(ScaffoldAlignmentLeading). Body(VStack( // this only causes the side effect of setting the current page title WindowTitle(&#34;Scaffold Example&#34;), Text(&#34;Page body&#34;), )). Footer(footer.Footer(). Logo(Image().Embed(appIcon)). Impress(&#34;https://www.worldiety.de/impressum&#34;). PrivacyPolicy(&#34;https://www.worldiety.de/datenschutz&#34;). GeneralTermsAndConditions(&#34;https://www.worldiety.de/loesungen/software-entwicklung&#34;). ProviderName(&#34;© worldiety GmbH&#34;), ). Logo(Image().Embed(appIcon).Frame(Frame{}.Size(Auto, L64))). Breakpoint(1000). Menu( ScaffoldMenuEntry{ Title: &#34;Without icon&#34;, Action: func() { fmt.Println(&#34;clicked &#39;Without icon&#39;&#34;) }, }, ScaffoldMenuEntry{ Icon: Image().Embed(icons.User).Frame(Frame{}.Size(L20, L20)), Title: &#34;With icon&#34;, MarkAsActiveAt: &#34;.&#34;, }, ScaffoldMenuEntry{ Icon: Image().Embed(icons.ChatBubbleLeft).Frame(Frame{}.Size(L20, L20)), Title: &#34;With icon and long title&#34;, MarkAsActiveAt: &#34;.&#34;, }, ScaffoldMenuEntry{ Icon: Image().Embed(icons.QuestionMarkCircle).Frame(Frame{}.Size(L20, L20)), Title: &#34;With sub menu&#34;, MarkAsActiveAt: &#34;.&#34;, Menu: []ScaffoldMenuEntry{ { Title: &#34;sub a&#34;, }, { Title: &#34;sub b&#34;, }, }, }, ScaffoldMenuEntry{ Icon: Image().Embed(icons.Window).Frame(Frame{}.Size(L20, L20)), IconActive: Image().Embed(icons2.Grid).Frame(Frame{}.Size(L20, L20)), Title: &#34;With active icon&#34;, MarkAsActiveAt: &#34;.&#34;, }, ForwardScaffoldMenuEntry(wnd, icons.User, &#34;Forward entry&#34;, &#34;/&#34;), ). BottomView( VStack( Text(&#34;Ein Text&#34;), Link(wnd, &#34;worldiety GmbH&#34;, &#34;https://www.worldiety.de/&#34;, &#34;_blank&#34;). TextAlignment(TextAlignCenter), ).FullWidth(), ) }) }).Run() } Info More static content.">
+Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO Low-Code Platform. // Licensed under the terms specified in the LICENSE file. // // SPDX-License-Identifier: Custom-License package main import ( _ &#34;embed&#34; &#34;fmt&#34; &#34;go.wdy.de/nago/application&#34; &#34;go.wdy.de/nago/presentation/core&#34; icons2 &#34;go.wdy.de/nago/presentation/icons/flowbite/outline&#34; icons &#34;go.wdy.de/nago/presentation/icons/hero/solid&#34; . &#34;go.wdy.de/nago/presentation/ui&#34; &#34;go.wdy.de/nago/presentation/ui/footer&#34; &#34;go.wdy.de/nago/web/vuejs&#34; ) //go:embed ORA_logo.svg var appIcon application.StaticBytes func main() { application.Configure(func(cfg *application.Configurator) { cfg.SetApplicationID(&#34;de.worldiety.tutorial&#34;) cfg.Serve(vuejs.Dist()) // update the global app icon cfg.AppIcon(cfg.Resource(appIcon)) cfg.RootView(&#34;.&#34;, func(wnd core.Window) core.View { return Scaffold(ScaffoldAlignmentLeading). Body(VStack( // this only causes the side effect of setting the current page title WindowTitle(&#34;Scaffold Example&#34;), Text(&#34;Page body&#34;), )). Footer(footer.Footer(). Logo(Image().Embed(appIcon)). Impress(&#34;https://www.worldiety.de/impressum&#34;). PrivacyPolicy(&#34;https://www.worldiety.de/datenschutz&#34;). GeneralTermsAndConditions(&#34;https://www.worldiety.de/loesungen/software-entwicklung&#34;). ProviderName(&#34;© worldiety GmbH&#34;), ). Logo(Image().Embed(appIcon).Frame(Frame{}.Size(Auto, L64))). Breakpoint(1000). Menu( ScaffoldMenuEntry{ Title: &#34;Without icon&#34;, Action: func() { fmt.Println(&#34;clicked &#39;Without icon&#39;&#34;) }, }, ScaffoldMenuEntry{ Icon: Image().Embed(icons.User).Frame(Frame{}.Size(L20, L20)), Title: &#34;With icon&#34;, MarkAsActiveAt: &#34;.&#34;, }, ScaffoldMenuEntry{ Icon: Image().Embed(icons.ChatBubbleLeft).Frame(Frame{}.Size(L20, L20)), Title: &#34;With icon and long title&#34;, MarkAsActiveAt: &#34;.&#34;, }, ScaffoldMenuEntry{ Icon: Image().Embed(icons.QuestionMarkCircle).Frame(Frame{}.Size(L20, L20)), Title: &#34;With sub menu&#34;, MarkAsActiveAt: &#34;.&#34;, Menu: []ScaffoldMenuEntry{ { Title: &#34;sub a&#34;, }, { Title: &#34;sub b&#34;, }, }, }, ScaffoldMenuEntry{ Icon: Image().Embed(icons.Window).Frame(Frame{}.Size(L20, L20)), IconActive: Image().Embed(icons2.Grid).Frame(Frame{}.Size(L20, L20)), Title: &#34;With active icon&#34;, MarkAsActiveAt: &#34;.&#34;, }, ForwardScaffoldMenuEntry(wnd, icons.User, &#34;Forward entry&#34;, &#34;/&#34;), ). BottomView( VStack( Text(&#34;Ein Text&#34;), Link(wnd, &#34;worldiety GmbH&#34;, &#34;https://www.worldiety.de/&#34;, &#34;_blank&#34;). TextAlignment(TextAlignCenter), ).FullWidth().NoClip(true), ) }) cfg.SetDecorator(cfg.NewScaffold(). MenuEntry().Title(&#34;hello world&#34;).Public(). Decorator(), ) cfg.RootView(&#34;test&#34;, func(wnd core.Window) core.View { return cfg.NewScaffold().MenuEntry().Title(&#34;test&#34;).Public().Decorator()( wnd, VStack(Text(&#34;test dynamic scaffold page&#34;)), ) }) }).Run() } Info More static content.">
 
-    <link rel="preload" href="/css/compiled/main.min.be56ec629fdfe7569502c7dfe214689a2336e822326f4e4254eeceaf964fed38.css" as="style" integrity="sha256-vlbsYp/f51aVAsff4hRomiM26CIyb05CVO7Or5ZP7Tg=" />
-    <link href="/css/compiled/main.min.be56ec629fdfe7569502c7dfe214689a2336e822326f4e4254eeceaf964fed38.css" rel="stylesheet" integrity="sha256-vlbsYp/f51aVAsff4hRomiM26CIyb05CVO7Or5ZP7Tg=" />
+    <link rel="preload" href="/css/compiled/main.min.1f14ad4d8d41422c2b73b71a44bd0b378ca37d617e22a781396c54e1b4e28575.css" as="style" integrity="sha256-HxStTY1BQiwrc7caRL0LN4yjfWF&#43;IqeBOWxU4bTihXU=" />
+    <link href="/css/compiled/main.min.1f14ad4d8d41422c2b73b71a44bd0b378ca37d617e22a781396c54e1b4e28575.css" rel="stylesheet" integrity="sha256-HxStTY1BQiwrc7caRL0LN4yjfWF&#43;IqeBOWxU4bTihXU=" />
 
 
 
@@ -349,9 +349,25 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
             </li><li class="hx-flex hx-flex-col "><a
     class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
       hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/basic/radiobutton_field/"
+    
+  >RadioButton Field
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
     href="/docs/components/basic/rich_text/"
     
   >Rich Text
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/basic/select/"
+    
+  >Select
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -475,6 +491,14 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
     href="/docs/components/composite/entry/"
     
   >Entry
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/composite/flow_chart/"
+    
+  >Flow Chart
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -766,6 +790,14 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
     href="/docs/components/layout/stack/"
     
   >Stack
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/layout/switcher/"
+    
+  >Switcher
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -1970,9 +2002,25 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
             </li><li class="hx-flex hx-flex-col "><a
     class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
       hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/basic/radiobutton_field/"
+    
+  >RadioButton Field
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
     href="/docs/components/basic/rich_text/"
     
   >Rich Text
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/basic/select/"
+    
+  >Select
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -2096,6 +2144,14 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
     href="/docs/components/composite/entry/"
     
   >Entry
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/composite/flow_chart/"
+    
+  >Flow Chart
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -2387,6 +2443,14 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
     href="/docs/components/layout/stack/"
     
   >Stack
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/layout/switcher/"
+    
+  >Switcher
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -3477,6 +3541,7 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
 </span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> (
 </span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">_</span> <span style="color:#e6db74">&#34;embed&#34;</span>
 </span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;fmt&#34;</span>
+</span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;go.wdy.de/nago/application&#34;</span>
 </span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;go.wdy.de/nago/presentation/core&#34;</span>
 </span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">icons2</span> <span style="color:#e6db74">&#34;go.wdy.de/nago/presentation/icons/flowbite/outline&#34;</span>
@@ -3557,8 +3622,19 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
 </span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">Text</span>(<span style="color:#e6db74">&#34;Ein Text&#34;</span>),
 </span></span><span style="display:flex;"><span>						<span style="color:#a6e22e">Link</span>(<span style="color:#a6e22e">wnd</span>, <span style="color:#e6db74">&#34;worldiety GmbH&#34;</span>, <span style="color:#e6db74">&#34;https://www.worldiety.de/&#34;</span>, <span style="color:#e6db74">&#34;_blank&#34;</span>).
 </span></span><span style="display:flex;"><span>							<span style="color:#a6e22e">TextAlignment</span>(<span style="color:#a6e22e">TextAlignCenter</span>),
-</span></span><span style="display:flex;"><span>					).<span style="color:#a6e22e">FullWidth</span>(),
+</span></span><span style="display:flex;"><span>					).<span style="color:#a6e22e">FullWidth</span>().<span style="color:#a6e22e">NoClip</span>(<span style="color:#66d9ef">true</span>),
 </span></span><span style="display:flex;"><span>				)
+</span></span><span style="display:flex;"><span>		})
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">cfg</span>.<span style="color:#a6e22e">SetDecorator</span>(<span style="color:#a6e22e">cfg</span>.<span style="color:#a6e22e">NewScaffold</span>().
+</span></span><span style="display:flex;"><span>			<span style="color:#a6e22e">MenuEntry</span>().<span style="color:#a6e22e">Title</span>(<span style="color:#e6db74">&#34;hello world&#34;</span>).<span style="color:#a6e22e">Public</span>().
+</span></span><span style="display:flex;"><span>			<span style="color:#a6e22e">Decorator</span>(),
+</span></span><span style="display:flex;"><span>		)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">cfg</span>.<span style="color:#a6e22e">RootView</span>(<span style="color:#e6db74">&#34;test&#34;</span>, <span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">wnd</span> <span style="color:#a6e22e">core</span>.<span style="color:#a6e22e">Window</span>) <span style="color:#a6e22e">core</span>.<span style="color:#a6e22e">View</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">cfg</span>.<span style="color:#a6e22e">NewScaffold</span>().<span style="color:#a6e22e">MenuEntry</span>().<span style="color:#a6e22e">Title</span>(<span style="color:#e6db74">&#34;test&#34;</span>).<span style="color:#a6e22e">Public</span>().<span style="color:#a6e22e">Decorator</span>()(
+</span></span><span style="display:flex;"><span>				<span style="color:#a6e22e">wnd</span>, <span style="color:#a6e22e">VStack</span>(<span style="color:#a6e22e">Text</span>(<span style="color:#e6db74">&#34;test dynamic scaffold page&#34;</span>)),
+</span></span><span style="display:flex;"><span>			)
 </span></span><span style="display:flex;"><span>		})
 </span></span><span style="display:flex;"><span>	}).<span style="color:#a6e22e">Run</span>()
 </span></span><span style="display:flex;"><span>}
@@ -3597,6 +3673,6 @@ Example // Copyright (c) 2025 worldiety GmbH // // This file is part of the NAGO
     
     <script defer src="/js/main.min.0942239592f0795dc7213dd1057fd229d7edc19c0ef1a285396eb292d9ca9842.js" integrity="sha256-CUIjlZLweV3HIT3RBX/SKdftwZwO8aKFOW6yktnKmEI="></script>
 <script defer src="/lib/flexsearch/flexsearch.bundle.min.0425860527cc9968f9f049421c7a56b39327d475e2e3a8f550416be3a9134327.js" integrity="sha256-BCWGBSfMmWj58ElCHHpWs5Mn1HXi46j1UEFr46kTQyc="></script>
-    <script defer src="/en.search.min.7918d81999396a56d9ff1b7a986d6474e66bd5acdbbe01e8bac129f5ef345a88.js" integrity="sha256-eRjYGZk5albZ/xt6mG1kdOZr1azbvgHousEp9e80Wog="></script>
+    <script defer src="/en.search.min.d732c9667971d981d901527e7c07dbef5354996050dbcc8df3cda1dab33abbef.js" integrity="sha256-1zLJZnlx2YHZAVJ&#43;fAfb71NUmWBQ28yN882h2rM6u&#43;8="></script>
   </body>
 </html>

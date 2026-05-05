@@ -42,19 +42,29 @@ func defaultButtons() core.View {
 			fmt.Println("clicked the real primary")
 		}).Title("primary button"),
 
-		PrimaryButton(nil).
+		PrimaryButton(func() {
+			fmt.Println("clicked the real primary with pre icon")
+		}).
 			Title("primary with pre icon").
 			PreIcon(icons.SpeakerWave),
 
-		PrimaryButton(nil).
+		PrimaryButton(func() {
+			fmt.Println("clicked the real primary with post icon")
+		}).
 			Title("primary with post icon").
 			PostIcon(icons.SpeakerWave),
 
-		PrimaryButton(nil).
+		PrimaryButton(func() {
+			fmt.Println("clicked the real primary with only icon")
+		}).
 			PreIcon(icons.SpeakerWave),
 
-		SecondaryButton(nil).Title("secondary button"),
-		TertiaryButton(nil).Title("tertiary button"),
+		SecondaryButton(func() {
+			fmt.Println("clicked the real secondary")
+		}).Title("secondary button"),
+		TertiaryButton(func() {
+			fmt.Println("clicked the real tertiary")
+		}).Title("tertiary button"),
 		PasswordField("Test", "Test"),
 		PasswordField("Test", "Test"),
 		Toggle(false),

@@ -603,6 +603,9 @@ async function registerInputEvents(chan: Channel, evt: CallRequested, args: Regi
 		['pointerup', InputEventTypeValues.InputEventPointerUp],
 		['pointermove', InputEventTypeValues.InputEventPointerMove],
 		['pointercancel', InputEventTypeValues.InputEventPointerCancel],
+		['pointerleave', InputEventTypeValues.InputEventPointerLeave],
+		['pointerout', InputEventTypeValues.InputEventPointerOut],
+		['pointerover', InputEventTypeValues.InputEventPointerOver],
 	];
 
 	for (const [domEvent, evtType] of pointerMappings) {
@@ -613,6 +616,50 @@ async function registerInputEvents(chan: Channel, evt: CallRequested, args: Regi
 		};
 		elem.addEventListener(domEvent, fn);
 		listeners.push({ domEvent, fn });
+	}
+
+	const mouseMappings: [string, InputEventTypeValues][] = [
+		['mousedown', InputEventTypeValues.InputEventMouseDown],
+		['mouseup', InputEventTypeValues.InputEventMouseUp],
+		['mousemove', InputEventTypeValues.InputEventMouseMove],
+		['mouseenter', InputEventTypeValues.InputEventMouseEnter],
+		['mouseleave', InputEventTypeValues.InputEventMouseLeave],
+		['mouseover', InputEventTypeValues.InputEventMouseOver],
+		['mouseout', InputEventTypeValues.InputEventMouseOut],
+	];
+
+	for (const [domEvent, evtType] of mouseMappings) {
+		const fn: EventListener = (e) => {
+			const me = e as MouseEvent;
+			const rect = elem.getBoundingClientRect();
+			send(evtType, me.clientX - rect.left, me.clientY - rect.top, '');
+		};
+		elem.addEventListener(domEvent, fn);
+		listeners.push({ domEvent, fn });
+	}
+
+	{
+		const fn: EventListener = (e) => {
+			const we = e as WheelEvent;
+			const rect = elem.getBoundingClientRect();
+			// X/Y carry the wheel delta; client position is conveyed via Code as not strictly needed here.
+			send(
+				InputEventTypeValues.InputEventMouseWheel,
+				we.deltaX,
+				we.deltaY,
+				''
+			);
+		};
+		elem.addEventListener('wheel', fn);
+		listeners.push({ domEvent: 'wheel', fn });
+	}
+
+	{
+		const fn: EventListener = () => {
+			send(InputEventTypeValues.InputEventBlur, 0, 0, '');
+		};
+		elem.addEventListener('blur', fn);
+		listeners.push({ domEvent: 'blur', fn });
 	}
 
 	const keyMappings: [string, InputEventTypeValues][] = [

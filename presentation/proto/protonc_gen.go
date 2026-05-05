@@ -291,6 +291,10 @@ func (CanvasMiterLimit) isCallArgs()             {}
 func (CanvasLineCap) isCallArgs()                {}
 func (CanvasLineJoin) isCallArgs()               {}
 func (CanvasLineWidth) isCallArgs()              {}
+func (CanvasShadowOffsetX) isCallArgs()          {}
+func (CanvasShadowOffsetY) isCallArgs()          {}
+func (CanvasShadowColor) isCallArgs()            {}
+func (CanvasShadowBlur) isCallArgs()             {}
 
 // CallRet is the sum type of all declared type safe async method invocations results. See also [CallArgs] for the async invocation calls.
 type CallRet interface {
@@ -16613,12 +16617,24 @@ type InputEventType uint64
 
 const (
 	InputEventPointerUp     InputEventType = 1
+	InputEventMouseLeave    InputEventType = 10
+	InputEventMouseOut      InputEventType = 11
+	InputEventMouseMove     InputEventType = 12
+	InputEventMouseOver     InputEventType = 13
+	InputEventMouseUp       InputEventType = 14
+	InputEventMouseWheel    InputEventType = 15
+	InputEventPointerLeave  InputEventType = 16
+	InputEventPointerOut    InputEventType = 17
+	InputEventPointerOver   InputEventType = 18
+	InputEventBlur          InputEventType = 19
 	InputEventPointerDown   InputEventType = 2
 	InputEventPointerMove   InputEventType = 3
 	InputEventPointerCancel InputEventType = 4
 	InputEventKeyDown       InputEventType = 5
 	InputEventKeyUp         InputEventType = 6
 	InputEventInvalidate    InputEventType = 7
+	InputEventMouseDown     InputEventType = 8
+	InputEventMouseEnter    InputEventType = 9
 )
 
 func (v *InputEventType) write(r *BinaryWriter) error {
@@ -18462,6 +18478,270 @@ func (v *FlowChartCustomContent) read(r *BinaryReader) error {
 	return nil
 }
 
+type CanvasShadowOffsetX struct {
+	// Id is the unique ID of the canvas.
+	Id      Str
+	OffsetX Float
+}
+
+func (v *CanvasShadowOffsetX) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.OffsetX.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(f64, 2); err != nil {
+			return err
+		}
+		if err := v.OffsetX.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasShadowOffsetX) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.OffsetX.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasShadowOffsetY struct {
+	// Id is the unique ID of the canvas.
+	Id      Str
+	OffsetY Float
+}
+
+func (v *CanvasShadowOffsetY) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.OffsetY.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(f64, 2); err != nil {
+			return err
+		}
+		if err := v.OffsetY.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasShadowOffsetY) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.OffsetY.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasShadowColor struct {
+	// Id is the unique ID of the canvas.
+	Id    Str
+	Color Str
+}
+
+func (v *CanvasShadowColor) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.Color.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Color.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasShadowColor) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Color.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type CanvasShadowBlur struct {
+	// Id is the unique ID of the canvas.
+	Id   Str
+	Blur Float
+}
+
+func (v *CanvasShadowBlur) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.Blur.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(f64, 2); err != nil {
+			return err
+		}
+		if err := v.Blur.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasShadowBlur) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Blur.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -19881,6 +20161,30 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 244:
 		var v FlowChartCustomContents
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 245:
+		var v CanvasShadowOffsetX
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 246:
+		var v CanvasShadowOffsetY
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 247:
+		var v CanvasShadowColor
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 248:
+		var v CanvasShadowBlur
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -23976,6 +24280,54 @@ func (v *FlowChartCustomContents) reset() {
 	*v = nil
 }
 
+func (v *CanvasShadowOffsetX) reset() {
+	v.Id.reset()
+	v.OffsetX.reset()
+}
+
+func (v *CanvasShadowOffsetX) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.OffsetX.IsZero()
+}
+
+func (v *CanvasShadowOffsetY) reset() {
+	v.Id.reset()
+	v.OffsetY.reset()
+}
+
+func (v *CanvasShadowOffsetY) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.OffsetY.IsZero()
+}
+
+func (v *CanvasShadowColor) reset() {
+	v.Id.reset()
+	v.Color.reset()
+}
+
+func (v *CanvasShadowColor) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.Color.IsZero()
+}
+
+func (v *CanvasShadowBlur) reset() {
+	v.Id.reset()
+	v.Blur.reset()
+}
+
+func (v *CanvasShadowBlur) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.Blur.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -25602,6 +25954,34 @@ func (v *FlowChartCustomContent) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *FlowChartCustomContents) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(array, 244); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasShadowOffsetX) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 245); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasShadowOffsetY) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 246); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasShadowColor) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 247); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasShadowBlur) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 248); err != nil {
 		return err
 	}
 	return nil

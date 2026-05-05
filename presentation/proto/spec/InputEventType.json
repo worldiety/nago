@@ -22,6 +22,42 @@
     },
     "7": {
       "name": "InputEventInvalidate"
+    },
+    "8": {
+      "name": "InputEventMouseDown"
+    },
+    "9": {
+      "name": "InputEventMouseEnter"
+    },
+    "10": {
+      "name": "InputEventMouseLeave"
+    },
+    "11": {
+      "name": "InputEventMouseOut"
+    },
+    "12": {
+      "name": "InputEventMouseMove"
+    },
+    "13": {
+      "name": "InputEventMouseOver"
+    },
+    "14": {
+      "name": "InputEventMouseUp"
+    },
+    "15": {
+      "name": "InputEventMouseWheel"
+    },
+    "16": {
+      "name": "InputEventPointerLeave"
+    },
+    "17": {
+      "name": "InputEventPointerOut"
+    },
+    "18": {
+      "name": "InputEventPointerOver"
+    },
+    "19": {
+      "name": "InputEventBlur"
     }
   }
 }

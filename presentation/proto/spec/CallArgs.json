@@ -42,6 +42,10 @@
     "CanvasMiterLimit",
     "CanvasLineCap",
     "CanvasLineJoin",
-    "CanvasLineWidth"
+    "CanvasLineWidth",
+    "CanvasShadowOffsetX",
+    "CanvasShadowOffsetY",
+    "CanvasShadowColor",
+    "CanvasShadowBlur"
   ]
 }

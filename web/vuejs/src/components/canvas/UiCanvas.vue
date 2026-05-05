@@ -35,6 +35,10 @@ import {
 	CanvasLoadImage,
 	CanvasMoveTo,
 	CanvasNewList,
+	CanvasShadowBlur,
+	CanvasShadowColor,
+	CanvasShadowOffsetX,
+	CanvasShadowOffsetY,
 	type NagoEvent,
 } from '@/shared/proto/nprotoc_gen';
 
@@ -122,7 +126,6 @@ onMounted(() => {
 				}
 			}
 
-
 			if (activeListHnd !== 0) {
 				activeList.push(invoke);
 			} else {
@@ -164,6 +167,29 @@ function apply(ctx: CanvasRenderingContext2D, invoke: CallRequested, depth: numb
 		if (invoke.call.font) {
 			ctx.font = invoke.call.font;
 		}
+		return;
+	}
+
+	// --- Shadow ---
+	if (invoke.call instanceof CanvasShadowOffsetX) {
+		ctx.shadowOffsetX = or0(invoke.call!.offsetX);
+		return;
+	}
+
+	if (invoke.call instanceof CanvasShadowOffsetY) {
+		ctx.shadowOffsetY = or0(invoke.call!.offsetY);
+		return;
+	}
+
+	if (invoke.call instanceof CanvasShadowColor) {
+		if (invoke.call!.color) {
+			ctx.shadowColor = invoke.call!.color;
+		}
+		return;
+	}
+
+	if (invoke.call instanceof CanvasShadowBlur) {
+		ctx.shadowBlur = or0(invoke.call!.blur);
 		return;
 	}
 

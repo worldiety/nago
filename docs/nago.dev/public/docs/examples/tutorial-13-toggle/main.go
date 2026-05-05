@@ -9,6 +9,7 @@ package main
 
 import (
 	"fmt"
+
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
 	. "go.wdy.de/nago/presentation/ui"
@@ -27,7 +28,9 @@ func main() {
 
 			return VStack(
 				alert.Dialog("Achtung", Text(fmt.Sprintf("Deine Eingabe: %v", checked)), showAlert, alert.Ok()),
-				Toggle(checked.Get()).InputChecked(checked),
+				HStack(
+					Toggle(checked.Get()).InputChecked(checked),
+				),
 				PrimaryButton(func() {
 					showAlert.Set(true)
 				}).Title("Check"),

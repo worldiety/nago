@@ -28,21 +28,26 @@ func main() {
 
 			return VStack(
 				alert.Dialog("Achtung", Text(fmt.Sprintf("Deine Eingabe: %v", checked)), showAlert, alert.Ok()),
-				CheckboxField("Field", checked.Get()).InputValue(checked).SupportingText("i'm a field with supporting text"),
 
-				Checkbox(checked.Get()).InputChecked(checked),
+				CheckboxField("Field", checked.Get()).Disabled(true).InputValue(checked).SupportingText("i'm a field with supporting text"),
+				CheckboxField("Field", checked.Get()).Disabled(false).InputValue(checked).SupportingText("i'm a field with supporting text"),
+
+				Checkbox(checked.Get()).InputValue(checked),
+
 				HStack(
-					Checkbox(checked.Get()).InputChecked(checked),
+					Checkbox(checked.Get()).InputValue(checked),
 					Text("check right").Action(func() {
 						checked.Set(!checked.Get())
 					}),
-				),
+				).Gap(L4),
+
 				HStack(
 					Text("check left").Action(func() {
 						checked.Set(!checked.Get())
 					}),
-					Checkbox(checked.Get()).InputChecked(checked),
-				).Gap(L16),
+					Checkbox(checked.Get()).InputValue(checked),
+				).Gap(L4),
+
 				PrimaryButton(func() {
 					showAlert.Set(true)
 				}).Title("Check"),

@@ -402,3 +402,34 @@ func (c TContext2D) MiterLimit(limit float64) TContext2D {
 	core.AsyncCall(c.wnd, &proto.CanvasMiterLimit{Id: proto.Str(c.id), Limit: proto.Float(limit)}, nil)
 	return c
 }
+
+// ShadowOffsetX sets the horizontal distance the shadow will be offset.
+func (c TContext2D) ShadowOffsetX(offsetX float64) TContext2D {
+	core.AsyncCall(c.wnd, &proto.CanvasShadowOffsetX{Id: proto.Str(c.id), OffsetX: proto.Float(offsetX)}, nil)
+	return c
+}
+
+// ShadowOffsetY sets the vertical distance the shadow will be offset.
+func (c TContext2D) ShadowOffsetY(offsetY float64) TContext2D {
+	core.AsyncCall(c.wnd, &proto.CanvasShadowOffsetY{Id: proto.Str(c.id), OffsetY: proto.Float(offsetY)}, nil)
+	return c
+}
+
+// ShadowColorValue sets the shadow color from an absolute color value.
+func (c TContext2D) ShadowColorValue(clr color.Color) TContext2D {
+	return c.ShadowColor(string(clr))
+}
+
+// ShadowColor sets the color of shadows. The default is fully-transparent black.
+func (c TContext2D) ShadowColor(clr string) TContext2D {
+	core.AsyncCall(c.wnd, &proto.CanvasShadowColor{Id: proto.Str(c.id), Color: proto.Str(clr)}, nil)
+	return c
+}
+
+// ShadowBlur specifies the level of the blurring effect; this value doesn't correspond to a number of pixels
+// and is not affected by the current transformation matrix. The default value is 0.
+func (c TContext2D) ShadowBlur(blur float64) TContext2D {
+	core.AsyncCall(c.wnd, &proto.CanvasShadowBlur{Id: proto.Str(c.id), Blur: proto.Float(blur)}, nil)
+	return c
+}
+

@@ -53,13 +53,23 @@ func main() {
 }
 
 func redraw(ctx canvas.TContext2D, evt core.InputEvent) {
-
 	ctx.NewList(1)
-	ctx.ClearRect(0, 0, 1000, 1000)
+	ctx.ShadowOffsetX(10)
+	ctx.ShadowOffsetY(10)
+	ctx.ShadowColor("#0000ff")
+	ctx.ShadowBlur(5)
+
 	ctx.FillColor("#ff0000")
 	ctx.FillRect(evt.X, evt.Y, 100, 100)
 	ctx.DrawImage(1, evt.X, evt.Y)
 	ctx.EndList()
 
+	// check nested list calls
+	ctx.NewList(2)
+	ctx.ClearRect(0, 0, 1000, 1000)
 	ctx.CallList(1)
+	ctx.EndList()
+
+	// actually call the list to render outside of any list
+	ctx.CallList(2)
 }

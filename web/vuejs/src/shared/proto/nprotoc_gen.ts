@@ -17138,12 +17138,24 @@ function writeTypeHeaderInputEventType(dst: BinaryWriter): void {
 // companion enum containing all defined constants for InputEventType
 export enum InputEventTypeValues {
 	InputEventPointerUp = 1,
+	InputEventMouseLeave = 10,
+	InputEventMouseOut = 11,
+	InputEventMouseMove = 12,
+	InputEventMouseOver = 13,
+	InputEventMouseUp = 14,
+	InputEventMouseWheel = 15,
+	InputEventPointerLeave = 16,
+	InputEventPointerOut = 17,
+	InputEventPointerOver = 18,
+	InputEventBlur = 19,
 	InputEventPointerDown = 2,
 	InputEventPointerMove = 3,
 	InputEventPointerCancel = 4,
 	InputEventKeyDown = 5,
 	InputEventKeyUp = 6,
 	InputEventInvalidate = 7,
+	InputEventMouseDown = 8,
+	InputEventMouseEnter = 9,
 }
 
 export class InputEvent implements Writeable, Readable, CallRet {
@@ -19033,6 +19045,250 @@ export class FlowChartCustomContents implements Writeable, Readable {
 	}
 }
 
+export class CanvasShadowOffsetX implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public offsetX?: Float;
+
+	constructor(id: Str | undefined = undefined, offsetX: Float | undefined = undefined) {
+		this.id = id;
+		this.offsetX = offsetX;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.offsetX = readFloat(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined, this.offsetX !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.F64, 2);
+			writeFloat(writer, this.offsetX!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined && this.offsetX === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.offsetX = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 245);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasShadowOffsetY implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public offsetY?: Float;
+
+	constructor(id: Str | undefined = undefined, offsetY: Float | undefined = undefined) {
+		this.id = id;
+		this.offsetY = offsetY;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.offsetY = readFloat(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined, this.offsetY !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.F64, 2);
+			writeFloat(writer, this.offsetY!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined && this.offsetY === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.offsetY = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 246);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasShadowColor implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public color?: Str;
+
+	constructor(id: Str | undefined = undefined, color: Str | undefined = undefined) {
+		this.id = id;
+		this.color = color;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.color = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined, this.color !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.color!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined && this.color === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.color = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 247);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+export class CanvasShadowBlur implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	public blur?: Float;
+
+	constructor(id: Str | undefined = undefined, blur: Float | undefined = undefined) {
+		this.id = id;
+		this.blur = blur;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.blur = readFloat(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined, this.blur !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.F64, 2);
+			writeFloat(writer, this.blur!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined && this.blur === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.blur = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 248);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -20153,6 +20409,26 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 244: {
 			const v = new FlowChartCustomContents();
+			v.read(src);
+			return v;
+		}
+		case 245: {
+			const v = new CanvasShadowOffsetX();
+			v.read(src);
+			return v;
+		}
+		case 246: {
+			const v = new CanvasShadowOffsetY();
+			v.read(src);
+			return v;
+		}
+		case 247: {
+			const v = new CanvasShadowColor();
+			v.read(src);
+			return v;
+		}
+		case 248: {
+			const v = new CanvasShadowBlur();
 			v.read(src);
 			return v;
 		}

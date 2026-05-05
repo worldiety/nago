@@ -12,7 +12,7 @@
 <link fetchpriority="low" href="/site.webmanifest" rel="manifest" />
 <title>Stepper – Nago Docs</title>
   <meta name="description" content="It visually represents a sequence of steps in a process, highlighting completed, current, and upcoming steps with distinct colors and styles. Each step can display a label, and the layout adapts between simple or full-sized step representations.
-Constructors Stepper Methods Method Description FullCircleSize(length ui.Length) FullCircleSize sets the diameter of the step circles in full layout mode. FullStepWidth(length ui.Length) FullStepWidth sets the width allocated to each step in full layout mode. Index(idx int) StepText(pattern string) StepText sets a different localized and parameterized (simple) step text, like “Schritt %d von %d”. An empty string will omit the step text entirely. Style(style Style) renderFull(ctx core.RenderContext) renderSimple(ctx core.RenderContext) " /><link rel="canonical" href="/docs/components/composite/stepper/" itemprop="url" />
+Constructors Stepper Methods Method Description ColorCurrent(color ui.Color) ColorCurrent sets the color for the currently active step. ColorDone(color ui.Color) ColorDone sets the color for completed steps. ColorFuture(color ui.Color) ColorFuture sets the color for upcoming steps. FullCircleSize(length ui.Length) FullCircleSize sets the diameter of the step circles in full layout mode. FullStepWidth(length ui.Length) FullStepWidth sets the width allocated to each step in full layout mode. Index(idx int) StepText(pattern string) StepText sets a different localized and parameterized (simple) step text, like “Schritt %d von %d”. An empty string will omit the step text entirely. Style(style Style) renderFull(ctx core.RenderContext) renderSimple(ctx core.RenderContext) " /><link rel="canonical" href="/docs/components/composite/stepper/" itemprop="url" />
 
 <meta property="og:title" content="Stepper" />
 <meta property="og:description" content="Documentation for Nago" />
@@ -21,15 +21,15 @@ Constructors Stepper Methods Method Description FullCircleSize(length ui.Length)
 
   <meta itemprop="name" content="Stepper">
   <meta itemprop="description" content="It visually represents a sequence of steps in a process, highlighting completed, current, and upcoming steps with distinct colors and styles. Each step can display a label, and the layout adapts between simple or full-sized step representations.
-Constructors Stepper Methods Method Description FullCircleSize(length ui.Length) FullCircleSize sets the diameter of the step circles in full layout mode. FullStepWidth(length ui.Length) FullStepWidth sets the width allocated to each step in full layout mode. Index(idx int) StepText(pattern string) StepText sets a different localized and parameterized (simple) step text, like “Schritt %d von %d”. An empty string will omit the step text entirely. Style(style Style) renderFull(ctx core.RenderContext) renderSimple(ctx core.RenderContext)">
-  <meta itemprop="wordCount" content="104">
+Constructors Stepper Methods Method Description ColorCurrent(color ui.Color) ColorCurrent sets the color for the currently active step. ColorDone(color ui.Color) ColorDone sets the color for completed steps. ColorFuture(color ui.Color) ColorFuture sets the color for upcoming steps. FullCircleSize(length ui.Length) FullCircleSize sets the diameter of the step circles in full layout mode. FullStepWidth(length ui.Length) FullStepWidth sets the width allocated to each step in full layout mode. Index(idx int) StepText(pattern string) StepText sets a different localized and parameterized (simple) step text, like “Schritt %d von %d”. An empty string will omit the step text entirely. Style(style Style) renderFull(ctx core.RenderContext) renderSimple(ctx core.RenderContext)">
+  <meta itemprop="wordCount" content="133">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Stepper">
   <meta name="twitter:description" content="It visually represents a sequence of steps in a process, highlighting completed, current, and upcoming steps with distinct colors and styles. Each step can display a label, and the layout adapts between simple or full-sized step representations.
-Constructors Stepper Methods Method Description FullCircleSize(length ui.Length) FullCircleSize sets the diameter of the step circles in full layout mode. FullStepWidth(length ui.Length) FullStepWidth sets the width allocated to each step in full layout mode. Index(idx int) StepText(pattern string) StepText sets a different localized and parameterized (simple) step text, like “Schritt %d von %d”. An empty string will omit the step text entirely. Style(style Style) renderFull(ctx core.RenderContext) renderSimple(ctx core.RenderContext)">
+Constructors Stepper Methods Method Description ColorCurrent(color ui.Color) ColorCurrent sets the color for the currently active step. ColorDone(color ui.Color) ColorDone sets the color for completed steps. ColorFuture(color ui.Color) ColorFuture sets the color for upcoming steps. FullCircleSize(length ui.Length) FullCircleSize sets the diameter of the step circles in full layout mode. FullStepWidth(length ui.Length) FullStepWidth sets the width allocated to each step in full layout mode. Index(idx int) StepText(pattern string) StepText sets a different localized and parameterized (simple) step text, like “Schritt %d von %d”. An empty string will omit the step text entirely. Style(style Style) renderFull(ctx core.RenderContext) renderSimple(ctx core.RenderContext)">
 
-    <link rel="preload" href="/css/compiled/main.min.be56ec629fdfe7569502c7dfe214689a2336e822326f4e4254eeceaf964fed38.css" as="style" integrity="sha256-vlbsYp/f51aVAsff4hRomiM26CIyb05CVO7Or5ZP7Tg=" />
-    <link href="/css/compiled/main.min.be56ec629fdfe7569502c7dfe214689a2336e822326f4e4254eeceaf964fed38.css" rel="stylesheet" integrity="sha256-vlbsYp/f51aVAsff4hRomiM26CIyb05CVO7Or5ZP7Tg=" />
+    <link rel="preload" href="/css/compiled/main.min.1f14ad4d8d41422c2b73b71a44bd0b378ca37d617e22a781396c54e1b4e28575.css" as="style" integrity="sha256-HxStTY1BQiwrc7caRL0LN4yjfWF&#43;IqeBOWxU4bTihXU=" />
+    <link href="/css/compiled/main.min.1f14ad4d8d41422c2b73b71a44bd0b378ca37d617e22a781396c54e1b4e28575.css" rel="stylesheet" integrity="sha256-HxStTY1BQiwrc7caRL0LN4yjfWF&#43;IqeBOWxU4bTihXU=" />
 
 
 
@@ -349,9 +349,25 @@ Constructors Stepper Methods Method Description FullCircleSize(length ui.Length)
             </li><li class="hx-flex hx-flex-col "><a
     class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
       hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/basic/radiobutton_field/"
+    
+  >RadioButton Field
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
     href="/docs/components/basic/rich_text/"
     
   >Rich Text
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/basic/select/"
+    
+  >Select
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -475,6 +491,14 @@ Constructors Stepper Methods Method Description FullCircleSize(length ui.Length)
     href="/docs/components/composite/entry/"
     
   >Entry
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/composite/flow_chart/"
+    
+  >Flow Chart
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -781,6 +805,14 @@ Constructors Stepper Methods Method Description FullCircleSize(length ui.Length)
     href="/docs/components/layout/stack/"
     
   >Stack
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/layout/switcher/"
+    
+  >Switcher
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -1964,9 +1996,25 @@ Constructors Stepper Methods Method Description FullCircleSize(length ui.Length)
             </li><li class="hx-flex hx-flex-col "><a
     class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
       hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/basic/radiobutton_field/"
+    
+  >RadioButton Field
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
     href="/docs/components/basic/rich_text/"
     
   >Rich Text
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/basic/select/"
+    
+  >Select
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -2090,6 +2138,14 @@ Constructors Stepper Methods Method Description FullCircleSize(length ui.Length)
     href="/docs/components/composite/entry/"
     
   >Entry
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/composite/flow_chart/"
+    
+  >Flow Chart
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -2381,6 +2437,14 @@ Constructors Stepper Methods Method Description FullCircleSize(length ui.Length)
     href="/docs/components/layout/stack/"
     
   >Stack
+    </a>
+              
+            </li><li class="hx-flex hx-flex-col "><a
+    class="hx-flex hx-items-center hx-justify-between hx-gap-2 hx-cursor-pointer hx-rounded hx-px-2 hx-py-1.5 hx-text-sm hx-transition-colors [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] [word-break:break-word]
+      hx-text-gray-500 hover:hx-bg-gray-100 hover:hx-text-gray-900 contrast-more:hx-border contrast-more:hx-border-transparent contrast-more:hx-text-gray-900 contrast-more:hover:hx-border-gray-900 dark:hx-text-neutral-400 dark:hover:hx-bg-primary-100/5 dark:hover:hx-text-gray-50 contrast-more:dark:hx-text-gray-50 contrast-more:dark:hover:hx-border-gray-50"
+    href="/docs/components/layout/switcher/"
+    
+  >Switcher
     </a>
               
             </li><li class="hx-flex hx-flex-col "><a
@@ -3469,6 +3533,18 @@ or full-sized step representations.</p>
   </thead>
   <tbody>
       <tr>
+          <td><code>ColorCurrent(color ui.Color)</code></td>
+          <td>ColorCurrent sets the color for the currently active step.</td>
+      </tr>
+      <tr>
+          <td><code>ColorDone(color ui.Color)</code></td>
+          <td>ColorDone sets the color for completed steps.</td>
+      </tr>
+      <tr>
+          <td><code>ColorFuture(color ui.Color)</code></td>
+          <td>ColorFuture sets the color for upcoming steps.</td>
+      </tr>
+      <tr>
           <td><code>FullCircleSize(length ui.Length)</code></td>
           <td>FullCircleSize sets the diameter of the step circles in full layout mode.</td>
       </tr>
@@ -3518,6 +3594,6 @@ or full-sized step representations.</p>
     
     <script defer src="/js/main.min.0942239592f0795dc7213dd1057fd229d7edc19c0ef1a285396eb292d9ca9842.js" integrity="sha256-CUIjlZLweV3HIT3RBX/SKdftwZwO8aKFOW6yktnKmEI="></script>
 <script defer src="/lib/flexsearch/flexsearch.bundle.min.0425860527cc9968f9f049421c7a56b39327d475e2e3a8f550416be3a9134327.js" integrity="sha256-BCWGBSfMmWj58ElCHHpWs5Mn1HXi46j1UEFr46kTQyc="></script>
-    <script defer src="/en.search.min.7918d81999396a56d9ff1b7a986d6474e66bd5acdbbe01e8bac129f5ef345a88.js" integrity="sha256-eRjYGZk5albZ/xt6mG1kdOZr1azbvgHousEp9e80Wog="></script>
+    <script defer src="/en.search.min.d732c9667971d981d901527e7c07dbef5354996050dbcc8df3cda1dab33abbef.js" integrity="sha256-1zLJZnlx2YHZAVJ&#43;fAfb71NUmWBQ28yN882h2rM6u&#43;8="></script>
   </body>
 </html>
