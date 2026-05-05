@@ -122,16 +122,6 @@ onMounted(() => {
 				}
 			}
 
-			if (invoke.call instanceof CanvasCallList) {
-				let list = displayLists.get(invoke.call.handle!);
-				if (list == undefined) {
-					console.log('display is undefined', invoke.call.handle);
-					return;
-				}
-
-				list.forEach((call) => apply(ctx, call));
-				return;
-			}
 
 			if (activeListHnd !== 0) {
 				activeList.push(invoke);
@@ -144,7 +134,24 @@ onMounted(() => {
 	ConnectionHandler.addEventListener(eventCallback);
 });
 
-function apply(ctx: CanvasRenderingContext2D, invoke: CallRequested) {
+const MAX_CALL_DEPTH = 16;
+
+function apply(ctx: CanvasRenderingContext2D, invoke: CallRequested, depth: number = 0) {
+	// --- Rekursiver CallList-Aufruf ---
+	if (invoke.call instanceof CanvasCallList) {
+		if (depth >= MAX_CALL_DEPTH) {
+			console.warn('CanvasCallList: max recursion depth reached', depth);
+			return;
+		}
+		let list = displayLists.get(invoke.call.handle!);
+		if (list == undefined) {
+			console.log('display is undefined', invoke.call.handle);
+			return;
+		}
+		list.forEach((call) => apply(ctx, call, depth + 1));
+		return;
+	}
+
 	// --- Stil & Schrift ---
 	if (invoke.call instanceof CanvasFillStyle) {
 		if (invoke.call.style) {

@@ -24,6 +24,10 @@ func Canvas(id string) TCanvas {
 	return TCanvas{id: id}
 }
 
+// Frame sets the layout constraints for the canvas, e.g. width and height. Note, that canvas
+// may behave differently when used with relative sizes. For example, the web-based implementation
+// will cause a stretch behavior applied to the default sizes (300x150), thus it is better to always set
+// an explicit size.
 func (c TCanvas) Frame(frame ui.Frame) TCanvas {
 	c.frame = frame
 	return c
