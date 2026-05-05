@@ -156,6 +156,10 @@ func NewUseCases[Evt any](perms Permissions, eventStore blob.Store, timeStore bl
 	var typeRegistry concurrent.RWMap[reflect.Type, Discriminator]
 	var invTypeRegistry concurrent.RWMap[Discriminator, reflect.Type]
 
+	if opts.Mutex == nil {
+		opts.Mutex = &sync.Mutex{}
+	}
+
 	loadFn := NewLoad[Evt](perms, eventStore, &invTypeRegistry)
 	deleteFn := NewDelete(perms, opts.Mutex, loadFn, eventStore, timeStore, opts)
 
