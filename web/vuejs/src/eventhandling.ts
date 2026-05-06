@@ -579,6 +579,20 @@ function waitForElement(id: string, timeoutMs = 3000): Promise<Element | null> {
 async function registerInputEvents(chan: Channel, evt: CallRequested, args: RegisterInputEventListener) {
 	if (!args.id || args.handle === undefined) return;
 
+	// Build the set of requested input event types. If no types are requested,
+	// we do not register anything to optimize event handling performance and
+	// avoid unnecessary DOM event registrations and round-trips.
+	const requested = new Set<InputEventTypeValues>();
+	if (args.types && args.types.value) {
+		for (const t of args.types.value) {
+			requested.add(t);
+		}
+	}
+	if (requested.size === 0) {
+		console.log('registerInputEvents: no event types requested, skipping registration', args.id);
+		return;
+	}
+
 	const elem = await waitForElement(args.id);
 	if (!elem) {
 		console.log('registerInputEvents: element not found', args.id);
@@ -589,14 +603,58 @@ async function registerInputEvents(chan: Channel, evt: CallRequested, args: Regi
 	const handle = args.handle;
 	const listeners: Array<{ domEvent: string; fn: EventListener }> = [];
 
+	// Per-listener deduplication state for move events. The browser delivers sub-pixel
+	// coordinates which leads to a flood of redundant events. We round to integer pixels
+	// per move event type and only forward when the rounded position actually changes.
+	// Each registered listener (handle) keeps its own state, so concurrently registered
+	// listeners do not interfere with each other.
+	const lastMovePoints = new Map<InputEventTypeValues, { x: number; y: number }>();
+
+	// Throttle state per move event type. Even after pixel-rounding, fast browsers/hardware
+	// can still produce more events than the backend reasonably needs. We rate-limit move
+	// events to at most one per SEND_INTERVAL milliseconds. We deliberately use a cheap
+	// leading-edge throttle (no setTimeout, no trailing flush), because move events arrive
+	// in huge bursts and any per-event scheduling cost would dominate.
+	const SEND_INTERVAL = 16; // milliseconds (~60 Hz)
+	const lastSentAt = new Map<InputEventTypeValues, number>();
+
 	// Hilfsfunktion: InputEvent ans Backend senden
 	const send = (type: InputEventTypeValues, x: number, y: number, code: string) => {
 		chan.sendEvent(new CallResolved(callPtr, new InputEvent(handle, type, x, y, code), nextRID()));
 	};
 
-	elem.addEventListener('invalidated', (evt1) => {
-		send(InputEventTypeValues.InputEventInvalidate, 0, 0, '');
-	});
+	// sendMove rounds the given coordinates to integer pixels, deduplicates per type and
+	// applies a cheap leading-edge throttle of SEND_INTERVAL ms per type, so that fast
+	// input devices cannot flood the channel.
+	const sendMove = (type: InputEventTypeValues, x: number, y: number) => {
+		const rx = Math.round(x);
+		const ry = Math.round(y);
+
+		// dedup: skip if the rounded pixel position did not change
+		const last = lastMovePoints.get(type);
+		if (last && last.x === rx && last.y === ry) {
+			return;
+		}
+
+		// leading-edge throttle: only forward at most once per SEND_INTERVAL
+		const now = performance.now();
+		const lastTs = lastSentAt.get(type) ?? 0;
+		if (now - lastTs < SEND_INTERVAL) {
+			return;
+		}
+		lastSentAt.set(type, now);
+
+		lastMovePoints.set(type, { x: rx, y: ry });
+		send(type, rx, ry, '');
+	};
+
+	if (requested.has(InputEventTypeValues.InputEventInvalidate)) {
+		const fn: EventListener = () => {
+			send(InputEventTypeValues.InputEventInvalidate, 0, 0, '');
+		};
+		elem.addEventListener('invalidated', fn);
+		listeners.push({ domEvent: 'invalidated', fn });
+	}
 
 	const pointerMappings: [string, InputEventTypeValues][] = [
 		['pointerdown', InputEventTypeValues.InputEventPointerDown],
@@ -609,10 +667,18 @@ async function registerInputEvents(chan: Channel, evt: CallRequested, args: Regi
 	];
 
 	for (const [domEvent, evtType] of pointerMappings) {
+		if (!requested.has(evtType)) continue;
+		const isMove = evtType === InputEventTypeValues.InputEventPointerMove;
 		const fn: EventListener = (e) => {
 			const pe = e as PointerEvent;
 			const rect = elem.getBoundingClientRect();
-			send(evtType, pe.clientX - rect.left, pe.clientY - rect.top, '');
+			const x = pe.clientX - rect.left;
+			const y = pe.clientY - rect.top;
+			if (isMove) {
+				sendMove(evtType, x, y);
+			} else {
+				send(evtType, x, y, '');
+			}
 		};
 		elem.addEventListener(domEvent, fn);
 		listeners.push({ domEvent, fn });
@@ -629,32 +695,34 @@ async function registerInputEvents(chan: Channel, evt: CallRequested, args: Regi
 	];
 
 	for (const [domEvent, evtType] of mouseMappings) {
+		if (!requested.has(evtType)) continue;
+		const isMove = evtType === InputEventTypeValues.InputEventMouseMove;
 		const fn: EventListener = (e) => {
 			const me = e as MouseEvent;
 			const rect = elem.getBoundingClientRect();
-			send(evtType, me.clientX - rect.left, me.clientY - rect.top, '');
+			const x = me.clientX - rect.left;
+			const y = me.clientY - rect.top;
+			if (isMove) {
+				sendMove(evtType, x, y);
+			} else {
+				send(evtType, x, y, '');
+			}
 		};
 		elem.addEventListener(domEvent, fn);
 		listeners.push({ domEvent, fn });
 	}
 
-	{
+	if (requested.has(InputEventTypeValues.InputEventMouseWheel)) {
 		const fn: EventListener = (e) => {
 			const we = e as WheelEvent;
-			const rect = elem.getBoundingClientRect();
 			// X/Y carry the wheel delta; client position is conveyed via Code as not strictly needed here.
-			send(
-				InputEventTypeValues.InputEventMouseWheel,
-				we.deltaX,
-				we.deltaY,
-				''
-			);
+			send(InputEventTypeValues.InputEventMouseWheel, we.deltaX, we.deltaY, '');
 		};
 		elem.addEventListener('wheel', fn);
 		listeners.push({ domEvent: 'wheel', fn });
 	}
 
-	{
+	if (requested.has(InputEventTypeValues.InputEventBlur)) {
 		const fn: EventListener = () => {
 			send(InputEventTypeValues.InputEventBlur, 0, 0, '');
 		};
@@ -668,6 +736,7 @@ async function registerInputEvents(chan: Channel, evt: CallRequested, args: Regi
 	];
 
 	for (const [domEvent, evtType] of keyMappings) {
+		if (!requested.has(evtType)) continue;
 		const fn: EventListener = (e) => {
 			const ke = e as KeyboardEvent;
 			send(evtType, 0, 0, ke.code); // z.B. "KeyA", "ArrowLeft", "Enter"

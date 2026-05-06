@@ -430,13 +430,36 @@ func (s *scopeWindow) RequestFocus(id string) {
 	AsyncCall(s, &proto.CallRequestFocus{ID: proto.Str(id)}, nil)
 }
 
-func (s *scopeWindow) AddInputListener(elemID string, fn func(evt InputEvent), opts ...DestroyObserverOption) (close func()) {
+func (s *scopeWindow) AddInputListener(elemID string, fn func(evt InputEvent), opts ...InputListenerOption) (close func()) {
+	if len(opts) == 0 {
+		opts = []InputListenerOption{
+			InputEventPointerDown,
+			InputEventPointerUp,
+			InputEventPointerMove,
+			InputEventPointerCancel,
+			InputEventKeyDown,
+			InputEventKeyUp,
+		}
+	}
 	hnd := globalListenerPtr.Add(1)
+	protoTypes := make(proto.InputEventTypes, 0, len(opts))
+	destroyOpt := DestroyOnReset
+	for _, t := range opts {
+		if t, ok := t.(InputEventType); ok {
+			protoTypes = append(protoTypes, proto.InputEventType(t))
+		}
+
+		if t, ok := t.(DestroyObserverOption); ok {
+			destroyOpt = t
+		}
+	}
+
 	AsyncCall(
 		s,
 		&proto.RegisterInputEventListener{
 			Id:     proto.Str(elemID),
 			Handle: proto.Uint(hnd),
+			Types:  protoTypes,
 		},
 		func(ret proto.CallRet) {
 			if evt, ok := ret.(*proto.InputEvent); ok {
@@ -455,6 +478,6 @@ func (s *scopeWindow) AddInputListener(elemID string, fn func(evt InputEvent), o
 		s.asyncCallbacks.Delete(proto.Ptr(hnd))
 	}
 
-	s.AddDestroyObserver(closer, opts...)
+	s.AddDestroyObserver(closer, destroyOpt)
 	return closer
 }

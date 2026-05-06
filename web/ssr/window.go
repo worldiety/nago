@@ -67,7 +67,7 @@ func (w *ssrWindow) SetTitle(title string) { w.title = title }
 // Title returns the last title set via SetTitle.
 func (w *ssrWindow) Title() string { return w.title }
 
-func (w *ssrWindow) AddInputListener(elemID string, fn func(evt core.InputEvent), _ ...core.DestroyObserverOption) (close func()) {
+func (w *ssrWindow) AddInputListener(elemID string, fn func(evt core.InputEvent), _ ...core.InputListenerOption) (close func()) {
 	return func() {
 
 	}

@@ -21,6 +21,7 @@
       "name": "InputEventKeyUp"
     },
     "7": {
+      "doc": "InputEventInvalidate is a special event type which can be used to trigger an invalidate of the presentation. The current vuejs implementation triggers this for canvas image loads",
       "name": "InputEventInvalidate"
     },
     "8": {

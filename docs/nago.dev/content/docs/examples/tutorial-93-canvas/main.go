@@ -10,6 +10,7 @@ package main
 import (
 	"context"
 	_ "embed"
+	"fmt"
 
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
@@ -35,10 +36,19 @@ func main() {
 			canvasCtx := canvas.Context2D(wnd, myCanvas)
 			var evt core.InputEvent
 			wnd.AddInputListener(myCanvas, func(e core.InputEvent) {
+				fmt.Println(e)
 				evt = e
 				canvasCtx.LoadImage(1, mortyUrl)
 				redraw(canvasCtx, evt)
-			})
+			},
+				core.InputEventInvalidate,
+				core.InputEventPointerDown,
+				core.InputEventPointerMove,
+				core.InputEventPointerUp,
+
+				// destroy option, reset is default
+				core.DestroyOnReset,
+			)
 
 			core.OnFrame(wnd, myCanvas, fps, func(ctx context.Context) {
 				//redraw(canvasCtx, evt)

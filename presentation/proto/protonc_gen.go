@@ -16500,12 +16500,15 @@ type RegisterInputEventListener struct {
 	Id Str
 	// A Handle which identifies the registered listener.
 	Handle Uint
+	// Types is the set of InputEventType values to register. If empty, no listener is registered.
+	Types InputEventTypes
 }
 
 func (v *RegisterInputEventListener) write(w *BinaryWriter) error {
-	var fields [3]bool
+	var fields [4]bool
 	fields[1] = !v.Id.IsZero()
 	fields[2] = !v.Handle.IsZero()
+	fields[3] = !v.Types.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -16532,6 +16535,14 @@ func (v *RegisterInputEventListener) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[3] {
+		if err := w.writeFieldHeader(array, 3); err != nil {
+			return err
+		}
+		if err := v.Types.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -16554,6 +16565,11 @@ func (v *RegisterInputEventListener) read(r *BinaryReader) error {
 			}
 		case 2:
 			err := v.Handle.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Types.read(r)
 			if err != nil {
 				return err
 			}
@@ -16632,9 +16648,10 @@ const (
 	InputEventPointerCancel InputEventType = 4
 	InputEventKeyDown       InputEventType = 5
 	InputEventKeyUp         InputEventType = 6
-	InputEventInvalidate    InputEventType = 7
-	InputEventMouseDown     InputEventType = 8
-	InputEventMouseEnter    InputEventType = 9
+	// InputEventInvalidate is a special event type which can be used to trigger an invalidate of the presentation. The current vuejs implementation triggers this for canvas image loads
+	InputEventInvalidate InputEventType = 7
+	InputEventMouseDown  InputEventType = 8
+	InputEventMouseEnter InputEventType = 9
 )
 
 func (v *InputEventType) write(r *BinaryWriter) error {
@@ -20185,6 +20202,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 248:
 		var v CanvasShadowBlur
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 249:
+		var v InputEventTypes
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -23851,13 +23874,14 @@ func (v *CanvasTranslate) IsZero() bool {
 func (v *RegisterInputEventListener) reset() {
 	v.Id.reset()
 	v.Handle.reset()
+	v.Types.reset()
 }
 
 func (v *RegisterInputEventListener) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Id.IsZero() && v.Handle.IsZero()
+	return v.Id.IsZero() && v.Handle.IsZero() && v.Types.IsZero()
 }
 
 func (v *UnregisterInputEventListener) reset() {
@@ -24326,6 +24350,51 @@ func (v *CanvasShadowBlur) IsZero() bool {
 		return true
 	}
 	return v.Id.IsZero() && v.Blur.IsZero()
+}
+
+// InputEventTypes is an array of InputEventType values, used to selectively register only those input events that are required, in order to optimize event handling performance.
+type InputEventTypes []InputEventType
+
+func (v *InputEventTypes) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *InputEventTypes) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	slice := make([]InputEventType, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = *obj.(*InputEventType)
+	}
+
+	*v = slice
+	return nil
+}
+
+func (v *InputEventTypes) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
+}
+
+func (v *InputEventTypes) reset() {
+	*v = nil
 }
 
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
@@ -25982,6 +26051,13 @@ func (v *CanvasShadowColor) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *CanvasShadowBlur) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 248); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *InputEventTypes) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 249); err != nil {
 		return err
 	}
 	return nil

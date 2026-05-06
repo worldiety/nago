@@ -1,0 +1,7 @@
+{
+  "doc": "InputEventTypes is an array of InputEventType values, used to selectively register only those input events that are required, in order to optimize event handling performance.",
+  "kind": "Array",
+  "id": 249,
+  "type": "InputEventType"
+}
+

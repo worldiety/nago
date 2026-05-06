@@ -17026,9 +17026,17 @@ export class RegisterInputEventListener implements Writeable, Readable, CallArgs
 	// A Handle which identifies the registered listener.
 	public handle?: Uint;
 
-	constructor(id: Str | undefined = undefined, handle: Uint | undefined = undefined) {
+	// Types is the set of InputEventType values to register. If empty, no listener is registered.
+	public types?: InputEventTypes;
+
+	constructor(
+		id: Str | undefined = undefined,
+		handle: Uint | undefined = undefined,
+		types: InputEventTypes | undefined = undefined
+	) {
 		this.id = id;
 		this.handle = handle;
+		this.types = types;
 	}
 
 	read(reader: BinaryReader): void {
@@ -17045,6 +17053,11 @@ export class RegisterInputEventListener implements Writeable, Readable, CallArgs
 					this.handle = readInt(reader);
 					break;
 				}
+				case 3: {
+					this.types = new InputEventTypes();
+					this.types.read(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -17052,7 +17065,12 @@ export class RegisterInputEventListener implements Writeable, Readable, CallArgs
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, this.id !== undefined, this.handle !== undefined];
+		const fields = [
+			false,
+			this.id !== undefined,
+			this.handle !== undefined,
+			this.types !== undefined && !this.types.isZero(),
+		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
@@ -17063,15 +17081,20 @@ export class RegisterInputEventListener implements Writeable, Readable, CallArgs
 			writer.writeFieldHeader(Shapes.UVARINT, 2);
 			writeInt(writer, this.handle!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 3);
+			this.types!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
-		return this.id === undefined && this.handle === undefined;
+		return this.id === undefined && this.handle === undefined && (this.types === undefined || this.types.isZero());
 	}
 
 	reset(): void {
 		this.id = undefined;
 		this.handle = undefined;
+		this.types = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -17153,6 +17176,7 @@ export enum InputEventTypeValues {
 	InputEventPointerCancel = 4,
 	InputEventKeyDown = 5,
 	InputEventKeyUp = 6,
+	// InputEventInvalidate is a special event type which can be used to trigger an invalidate of the presentation. The current vuejs implementation triggers this for canvas image loads
 	InputEventInvalidate = 7,
 	InputEventMouseDown = 8,
 	InputEventMouseEnter = 9,
@@ -19289,6 +19313,50 @@ export class CanvasShadowBlur implements Writeable, Readable, CallArgs {
 	isCallArgs(): void {}
 }
 
+// InputEventTypes is an array of InputEventType values, used to selectively register only those input events that are required, in order to optimize event handling performance.
+export class InputEventTypes implements Writeable, Readable {
+	public value: InputEventType[];
+
+	constructor(value: InputEventType[] = []) {
+		this.value = value;
+	}
+
+	isZero(): boolean {
+		return !this.value || this.value.length === 0;
+	}
+
+	reset(): void {
+		this.value = [];
+	}
+
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value.length); // Write the length of the array
+		for (const c of this.value) {
+			writeTypeHeaderInputEventType(writer);
+			writeInt(writer, c);
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
+		}
+	}
+
+	read(reader: BinaryReader): void {
+		const count = reader.readUvarint(); // Read the length of the array
+		const values: InputEventType[] = [];
+
+		for (let i = 0; i < count; i++) {
+			const obj = unmarshal(reader); // Read and unmarshal each component
+			values.push(obj as any as InputEventType); // Cast and add to the array
+		}
+
+		this.value = values;
+	}
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 249);
+		return;
+	}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -20429,6 +20497,11 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 248: {
 			const v = new CanvasShadowBlur();
+			v.read(src);
+			return v;
+		}
+		case 249: {
+			const v = new InputEventTypes();
 			v.read(src);
 			return v;
 		}

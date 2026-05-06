@@ -11,6 +11,11 @@
       "doc": "A Handle which identifies the registered listener.",
       "name": "Handle",
       "type": "Uint"
+    },
+    "3": {
+      "doc": "Types is the set of InputEventType values to register. If empty, no listener is registered.",
+      "name": "Types",
+      "type": "InputEventTypes"
     }
   }
 }

@@ -291,6 +291,13 @@ func (s *Scope) handleMessage(buf []byte) error {
 			return
 		}
 
+		// the client can create logical races by sending multiple messages right after each other, which
+		// may cause the first render to succeed but get skipped by the client because it waits already
+		// for the second render, which never comes because the first render already
+		// marked all states as clean and the second does not
+		// mutate any state. To avoid this, the backend MUST mutate a state to ensure that at least one render gets
+		// through. If we skip this optimization, any client message would cause a rendering, which is
+		// not desirable either, especially for high-performance canvas operations.
 		if s.dirty || s.hasDirtyStates() {
 			s.forceRender(rid)
 			s.dirty = false
@@ -344,6 +351,7 @@ func (s *Scope) EOL() time.Time {
 func (s *Scope) forceRender(reqId proto.RID) {
 	if s.allocatedRootView.IsNone() {
 		s.Publish(&proto.ErrorRootViewAllocationRequired{RID: reqId})
+		return
 	}
 
 	alloc := s.allocatedRootView.Unwrap()

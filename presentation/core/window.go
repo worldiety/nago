@@ -64,6 +64,8 @@ func ExportFileBytes(name string, buf []byte) ExportFilesOptions {
 
 type DestroyObserverOption int
 
+func (DestroyObserverOption) inputListenerOption() {}
+
 const (
 	// DestroyOnReset means that the observer is called
 	// on window resets which also happens on each redraw of the same view without
@@ -74,6 +76,10 @@ const (
 	// A normal redraw cycle of the same view will not trigger this observer.
 	DestroyOnClose
 )
+
+type InputListenerOption interface {
+	inputListenerOption()
+}
 
 // A Window owns the lifecycle of a component and is part of a Scope.
 // Ora does not define (yet) what a window is.
@@ -169,11 +175,27 @@ type Window interface {
 	// and show OSD keyboard.
 	RequestFocus(id string)
 
-	// AddInputListener registers a listener for any known input events.
-	AddInputListener(elemID string, fn func(evt InputEvent), opts ...DestroyObserverOption) (close func())
+	// AddInputListener registers a listener for the given set of input events on the element with the given id.
+	// Only events whose type is contained in the types slice will be delivered. Passing an empty types slice
+	// will not register any listener at all on the frontend, which is useful to optimize event handling
+	// performance by avoiding unnecessary DOM event registrations and round-trips.
+	// The default DestroyOption is DestroyOnReset, which means that the listener is automatically removed on
+	// window resets, which also happens on each redraw of the same view without actually
+	// destroying the window or scope. If you want to keep the listener alive across resets
+	// and only remove it on actual window closes or scope destructions, use DestroyOnClose.
+	//
+	// If opts is empty, the listener will automatically register the following events:
+	// 				core.InputEventInvalidate,
+	//				core.InputEventPointerDown,
+	//				core.InputEventPointerMove,
+	//				core.InputEventPointerUp,
+	//				core.InputEventPointerCancel,
+	AddInputListener(elemID string, fn func(evt InputEvent), opts ...InputListenerOption) (close func())
 }
 
 type InputEventType uint64
+
+func (InputEventType) inputListenerOption() {}
 
 const (
 	InputEventPointerUp     = InputEventType(proto.InputEventPointerUp)

@@ -75,7 +75,13 @@ func main() {
 				w: 160, h: 160,
 			}
 
-			wnd.AddInputListener(myCanvas, func(e core.InputEvent) {
+			wnd.AddInputListener(myCanvas, []core.InputEventType{
+				core.InputEventInvalidate,
+				core.InputEventPointerDown,
+				core.InputEventPointerMove,
+				core.InputEventPointerUp,
+				core.InputEventPointerCancel,
+			}, func(e core.InputEvent) {
 				// InputEventInvalidate und andere → Initialbild zeichnen
 				canvasCtx.LoadImage(1, mortyUrl)
 

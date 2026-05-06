@@ -145,7 +145,13 @@ func main() {
 
 					redraw(canvasCtx, state)
 				}
-			})
+			},
+				core.InputEventInvalidate,
+				core.InputEventPointerDown,
+				core.InputEventPointerMove,
+				core.InputEventPointerUp,
+				core.InputEventPointerCancel,
+			)
 
 			return ui.VStack(
 				ui.Text("Morty-Canvas-Editor").Font(ui.Font{Size: "1.2rem", Weight: ui.HeadlineAndTitleFontWeight}),
