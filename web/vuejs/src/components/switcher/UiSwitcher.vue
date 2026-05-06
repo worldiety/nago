@@ -23,5 +23,5 @@ const id = randomStr(16);
 const refreshKey = ref(0);
 const key = computed<string>(() => `${id}_r${refreshKey.value}`);
 
-addEventListener('resize', () => refreshKey.value++);
+// addEventListener('resize', () => refreshKey.value++);
 </script>

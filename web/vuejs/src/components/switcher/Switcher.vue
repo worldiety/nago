@@ -7,10 +7,10 @@
  SPDX-License-Identifier: Custom-License
 -->
 <template>
-	<div v-if="ui.pages?.value.length" :id="id" ref="switcher" class="switcher" :class="classes">
-		<div class="toggles-container">
+	<div v-if="ui.pages?.value.length" :id="id" class="switcher" :class="classes">
+		<div ref="togglesContainer" class="toggles-container">
 			<div class="toggles">
-				<template v-for="page in ui.pages.value" :key="`switcher_toggle_${id}_${page.id}`">
+				<template v-for="page in pages" :key="`switcher_toggle_${id}_${page.id}`">
 					<button
 						v-if="page.toggle"
 						:ref="
@@ -30,28 +30,21 @@
 			</div>
 		</div>
 		<div class="content-container">
-			<div class="content" :style="`height: ${contentHeight}px; transition-duration: ${transitionDuration}ms;`">
-				<template v-for="page in ui.pages.value" :key="`switcher_page_${id}_${page.id}`">
-					<SwitcherPage
-						v-if="page.content && page.id"
-						:page-id="page.id"
-						:active-id="ui.value"
-						:emit-height="!ui.dynamicHeight || page.id === ui.value"
-						:transition-duration="transitionDuration"
-						:img="page.img"
-						:img-object-fit="ui.imageObjectFit"
-						:vertical="ui.orientation === OrientationValues.Vertical"
-						:fixed-height="
-							!ui.dynamicHeight && ui.orientation !== OrientationValues.Vertical
-								? contentHeight
-								: undefined
-						"
-						@update:height="onUpdateHeight(page.id, $event)"
-						@image-loaded="onImageLoad"
-					>
-						<UiGeneric :ui="page.content" />
-					</SwitcherPage>
-				</template>
+			<div class="content" :style="`height: ${switcherHeight}px; transition-duration: ${transitionDuration}ms;`">
+				<SwitcherPage
+					v-for="page in pages"
+					:key="`switcher_page_${id}_${page.id}`"
+					ref="switcherPages"
+					:page-id="page.id as string"
+					:active-id="ui.value"
+					:transition-duration="transitionDuration"
+					:img="page.img"
+					:img-object-fit="ui.imageObjectFit"
+					:vertical="ui.orientation === OrientationValues.Vertical"
+					@image-loaded="onImageLoad"
+				>
+					<UiGeneric :ui="page.content as Component" />
+				</SwitcherPage>
 			</div>
 		</div>
 	</div>
@@ -65,7 +58,7 @@ import SwitcherPage from '@/components/switcher/SwitcherPage.vue';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
 import { CssClasses } from '@/shared/cssClasses';
-import type { Switcher } from '@/shared/proto/nprotoc_gen';
+import type { Component, SwitcherPage as NagoSwitcherPage, Switcher } from '@/shared/proto/nprotoc_gen';
 import { OrientationValues, UpdateStateValueRequested } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
@@ -77,34 +70,20 @@ const TRANSITION_DURATION = 400;
 const id = props.ui.id || randomStr(16);
 const serviceAdapter = useServiceAdapter();
 
-const switcher = ref<HTMLDivElement>();
+const togglesContainer = ref<HTMLDivElement>();
 const activeToggle = ref<HTMLButtonElement>();
+const switcherPages = ref<InstanceType<typeof SwitcherPage>[]>([]);
 
-const initializing = ref(true);
 const resizing = ref(false);
 const resizingTimeout = ref();
-const previousId = ref<string>();
 const activeId = ref(props.ui.value);
-const nextId = ref<string>();
-const contentHeights = ref<Map<string, number>>(new Map());
 const activeToggleBgStyles = ref('');
 const loadedImages = ref<string[]>([]);
+const switcherHeight = ref(0);
 
-const transitionDuration = computed<number>(() =>
-	initializing.value || resizing.value || !allImagesLoaded.value ? 0 : TRANSITION_DURATION
-);
+const pages = computed<NagoSwitcherPage[]>(() => props.ui.pages?.value.filter((p) => !!p.content && !!p.id) ?? []);
 
-const contentHeight = computed<number>(() => {
-	if (props.ui.dynamicHeight) {
-		return contentHeights.value.get(props.ui.value || '') || 0;
-	}
-
-	let maxHeight = 0;
-	contentHeights.value.forEach((height) => {
-		if (height > maxHeight) maxHeight = height;
-	});
-	return maxHeight;
-});
+const transitionDuration = computed<number>(() => (resizing.value || !allImagesLoaded.value ? 0 : TRANSITION_DURATION));
 
 const allImagesLoaded = computed<boolean>(() => {
 	const uniqueImages: string[] = [];
@@ -123,14 +102,9 @@ const classes = computed<string[]>(() => {
 	return classes;
 });
 
-function onUpdateHeight(pageId: string, height: number) {
-	contentHeights.value.set(pageId, height);
-}
-
 function onImageLoad(img: string) {
-	setTimeout(() => {
-		if (!loadedImages.value.includes(img)) loadedImages.value.push(img);
-	}, 50); // TODO: Find better way to handle dimension changes by loaded images
+	if (!loadedImages.value.includes(img)) loadedImages.value.push(img);
+	calcSwitcherHeight();
 }
 
 function toggle(value: string) {
@@ -146,30 +120,48 @@ function calcActiveToggleStyles() {
 }
 
 function onValueChange() {
-	previousId.value = activeId.value;
-	activeId.value = undefined;
-	nextId.value = props.ui.value;
+	activeId.value = props.ui.value;
+	calcSwitcherHeight();
 	calcActiveToggleStyles();
-
-	setTimeout(() => {
-		previousId.value = undefined;
-		activeId.value = props.ui.value;
-		nextId.value = undefined;
-	}, transitionDuration.value / 2);
 }
 
 function onWindowResize() {
 	if (resizingTimeout.value) clearTimeout(resizingTimeout.value);
 	resizing.value = true;
 	resizingTimeout.value = setTimeout(() => (resizing.value = false), 50);
+	calcSwitcherHeight();
 	calcActiveToggleStyles();
 }
 
+function calcSwitcherHeight() {
+	if (props.ui.dynamicHeight) {
+		switcherHeight.value = calcMaxHeight(activeId.value);
+	} else {
+		switcherHeight.value = calcMaxHeight();
+	}
+}
+
+function calcMaxHeight(pageId?: string, minHeight = 0): number {
+	const minHeightIncToggles = Math.max(minHeight, togglesContainer.value?.getBoundingClientRect().height || 0);
+
+	if (pageId) {
+		const activePage = switcherPages.value.find((p) => p.$props.pageId === activeId.value);
+		return activePage?.calcPageHeight(minHeightIncToggles) || 0;
+	}
+
+	let maxHeight = 0;
+	switcherPages.value.forEach((p) => {
+		const height = p.calcPageHeight(minHeightIncToggles);
+		if (height > maxHeight) maxHeight = height;
+	});
+
+	if (!minHeight) return calcMaxHeight(undefined, maxHeight);
+	return maxHeight;
+}
+
 onMounted(() => {
+	calcSwitcherHeight();
 	calcActiveToggleStyles();
-	setTimeout(() => {
-		initializing.value = false;
-	}, 50); // TODO: Find better way to determine completed initial rendering
 });
 
 watch(() => props.ui.value, onValueChange);

@@ -28,7 +28,7 @@
 	</div>
 </template>
 <script lang="ts" setup>
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import { ObjectFitValues } from '@/shared/proto/nprotoc_gen';
 
 interface Props {
@@ -38,21 +38,18 @@ interface Props {
 	img?: string;
 	imgObjectFit?: number;
 	vertical?: boolean;
-	emitHeight: boolean;
-	fixedHeight?: number;
 }
 
 interface Emits {
-	(e: 'update:height', height: number): void;
 	(e: 'imageLoaded', url: string): void;
 }
 
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
+defineExpose({ calcPageHeight });
 
 const page = ref<HTMLDivElement>();
 const dummy = ref<HTMLDivElement>();
-const imageWidth = ref('auto');
 const imageError = ref(false);
 
 const fullImage = computed<boolean>(
@@ -61,6 +58,7 @@ const fullImage = computed<boolean>(
 		props.imgObjectFit === ObjectFitValues.None ||
 		props.imgObjectFit === ObjectFitValues.Auto
 );
+const imageWidth = ref(fullImage.value ? '0' : 'auto');
 
 const isActive = computed<boolean>(() => props.activeId === props.pageId);
 
@@ -76,10 +74,9 @@ const pageClasses = computed<string[]>(() => {
 	return classes;
 });
 
-function calcPageHeight() {
-	if (!dummy.value || !props.emitHeight) return;
+function calcPageHeight(minHeight = 0): number {
+	if (!dummy.value) return minHeight;
 
-	const minHeight = getMinHeight();
 	const pageWidth = dummy.value.getBoundingClientRect().width;
 	const pageContentInner = dummy.value.querySelector('.page-content-inner');
 	let height = pageContentInner?.getBoundingClientRect().height || 0;
@@ -87,7 +84,7 @@ function calcPageHeight() {
 	if (!props.vertical && props.img && !imageError.value && fullImage.value) {
 		const imgContainer = dummy.value.querySelector('.image-container') as HTMLDivElement;
 		const img = dummy.value.querySelector('img.image') as HTMLImageElement;
-		if (!imgContainer || !img) return;
+		if (!imgContainer || !img || !img.complete) return minHeight;
 
 		imgContainer.style.width = '0';
 		for (let i = 0; i <= pageWidth; i++) {
@@ -95,18 +92,13 @@ function calcPageHeight() {
 			const contentInnerHeight = pageContentInner?.getBoundingClientRect().height || 0;
 			const containerHeight = imgContainer.getBoundingClientRect().height;
 			const imgHeight = img.getBoundingClientRect().height;
-			const matchesFixedHeight = !props.fixedHeight || imgHeight >= props.fixedHeight;
-			if (
-				matchesFixedHeight &&
-				imgHeight >= containerHeight &&
-				contentInnerHeight <= containerHeight &&
-				containerHeight >= minHeight
-			) {
-				imageWidth.value = `${i}px`;
-				imgContainer.style.width = '';
-				height = containerHeight;
 
-				return emitUpdateHeight(height);
+			if (imgHeight >= containerHeight && contentInnerHeight <= containerHeight && containerHeight >= minHeight) {
+				imageWidth.value = `${i}px`;
+				height = containerHeight;
+				imgContainer.style.width = '';
+
+				return height;
 			}
 		}
 
@@ -119,7 +111,7 @@ function calcPageHeight() {
 		imgContainer.style.width = '';
 		height = Math.max(minHeight, contentInnerHeight, containerHeight, imgHeight);
 
-		return emitUpdateHeight(height);
+		return height;
 	}
 
 	if (props.vertical) {
@@ -127,51 +119,17 @@ function calcPageHeight() {
 		height += image?.getBoundingClientRect().height || 0;
 	}
 
-	emitUpdateHeight(height);
-}
-
-function emitUpdateHeight(height: number) {
-	const minHeight = getMinHeight();
-	emit('update:height', minHeight);
-	nextTick(() => emit('update:height', Math.max(minHeight, height)));
-}
-
-function getMinHeight(): number {
-	if (!page.value) return 0;
-
-	let parent = page.value.parentElement;
-	while (parent) {
-		if (parent.classList.contains('switcher')) {
-			const toggles = parent.querySelector('.toggles-container');
-			return toggles?.getBoundingClientRect().height || 0;
-		}
-		parent = parent.parentElement;
-	}
-
-	return 0;
+	return height;
 }
 
 function onImageLoad() {
-	calcPageHeight();
 	emit('imageLoaded', props.img!);
 }
 
 function onImageError() {
 	imageError.value = true;
-	calcPageHeight();
 	emit('imageLoaded', props.img!);
 }
-
-function observePageSize() {
-	if (!page.value) return;
-
-	const inner = page.value.querySelector('.page-content-inner') as HTMLDivElement;
-	const observer = new ResizeObserver(() => calcPageHeight());
-	observer.observe(inner);
-}
-
-onMounted(observePageSize);
-watch(() => props.activeId, calcPageHeight);
 </script>
 <style scoped>
 .page {
