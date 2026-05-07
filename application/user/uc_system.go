@@ -29,7 +29,7 @@ func NewSystem(ctx func() context.Context) SysUser {
 // SU returns a static super user or system user. Note, that this is not necessarily the
 // same as the use case instantiated SysUser. The System user has always english as its language and bundle.
 func SU() Subject {
-	return sysUser{}
+	return sysUser{ctx: context.Background}
 }
 
 type sysUser struct {
