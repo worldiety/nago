@@ -233,7 +233,7 @@ func lastAction(state *core.State[flowchart.FlowChartActionData]) core.View {
 			Left:   ui.L0,
 			Bottom: ui.L0,
 		}).
-		BackgroundColor(ui.ColorText.WithTransparency(90)).
+		BackgroundColor(ui.ColorBackground.WithTransparency(10)).
 		Font(ui.MonoSmall).
 		Padding(ui.Padding{}.All(ui.L8))
 }
