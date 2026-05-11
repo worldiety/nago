@@ -63,11 +63,21 @@ func (c CustomContent) render(ctx core.RenderContext) proto.FlowChartCustomConte
 	}
 }
 
+type FlowChartActionData struct {
+	Node          Node
+	Edge          Edge
+	ViewX         float64
+	ViewY         float64
+	SelectedNodes []string
+	SelectedEdges []string
+}
+
 // TFlowChart is a composite component (Flow Chart).
 // It renders a node-edge diagram defined by a [Model].
 type TFlowChart struct {
 	model              Model
 	inputValue         *core.State[Model]
+	actionValue        *core.State[FlowChartActionData]
 	frame              ui.Frame
 	backgroundColor    ui.Color
 	nodesDraggable     bool
@@ -98,6 +108,11 @@ func (c TFlowChart) Model(model Model) TFlowChart {
 // proto support for an InputValue pointer on proto.FlowChart.
 func (c TFlowChart) InputValue(input *core.State[Model]) TFlowChart {
 	c.inputValue = input
+	return c
+}
+
+func (c TFlowChart) ActionValue(state *core.State[FlowChartActionData]) TFlowChart {
+	c.actionValue = state
 	return c
 }
 
@@ -170,7 +185,8 @@ func (c TFlowChart) Render(ctx core.RenderContext) core.RenderNode {
 	m := c.model
 
 	res := proto.FlowChart{
-		InputValue: c.inputValue.Ptr(),
+		InputValue:  c.inputValue.Ptr(),
+		ActionValue: c.actionValue.Ptr(),
 		Value: proto.FlowChartModel{
 			Nodes: make(proto.FlowChartNodes, 0),
 			Edges: make(proto.FlowChartEdges, 0),
@@ -210,29 +226,5 @@ func frameToOra(frame ui.Frame) proto.Frame {
 		MaxHeight: proto.Length(frame.MaxHeight),
 		Width:     proto.Length(frame.Width),
 		Height:    proto.Length(frame.Height),
-	}
-}
-
-func borderToOra(border ui.Border) proto.Border {
-	return proto.Border{
-		TopLeftRadius:     proto.Length(border.TopLeftRadius),
-		TopRightRadius:    proto.Length(border.TopRightRadius),
-		BottomLeftRadius:  proto.Length(border.BottomLeftRadius),
-		BottomRightRadius: proto.Length(border.BottomRightRadius),
-		LeftWidth:         proto.Length(border.LeftWidth),
-		TopWidth:          proto.Length(border.TopWidth),
-		RightWidth:        proto.Length(border.RightWidth),
-		BottomWidth:       proto.Length(border.BottomWidth),
-		LeftColor:         proto.Color(border.LeftColor),
-		TopColor:          proto.Color(border.TopColor),
-		RightColor:        proto.Color(border.RightColor),
-		BottomColor:       proto.Color(border.BottomColor),
-		BoxShadow: proto.Shadow{
-			X:      proto.Length(border.BoxShadow.X),
-			Y:      proto.Length(border.BoxShadow.Y),
-			Radius: proto.Length(border.BoxShadow.Radius),
-			Color:  proto.Color(border.BoxShadow.Color),
-		},
-		BorderStyle: proto.BorderStyle(border.BorderStyle),
 	}
 }

@@ -20,11 +20,8 @@ func (s EdgeStyle) ora() proto.FlowChartEdgeStyle {
 type EdgeMarker uint64
 
 const (
-	EdgeMarkerNone        EdgeMarker = EdgeMarker(proto.FlowChartEdgeMarkerNone)
-	EdgeMarkerArrow       EdgeMarker = EdgeMarker(proto.FlowChartEdgeMarkerArrow)
-	EdgeMarkerArrowClosed EdgeMarker = EdgeMarker(proto.FlowChartEdgeMarkerArrowClosed)
-	EdgeMarkerCircle      EdgeMarker = EdgeMarker(proto.FlowChartEdgeMarkerCircle)
-	EdgeMarkerDiamond     EdgeMarker = EdgeMarker(proto.FlowChartEdgeMarkerDiamond)
+	EdgeMarkerNone  EdgeMarker = EdgeMarker(proto.FlowChartEdgeMarkerNone)
+	EdgeMarkerArrow EdgeMarker = EdgeMarker(proto.FlowChartEdgeMarkerArrow)
 )
 
 func (m EdgeMarker) ora() proto.FlowChartEdgeMarker {

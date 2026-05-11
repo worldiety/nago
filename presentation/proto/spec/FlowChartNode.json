@@ -20,12 +20,8 @@
       "type": "Str"
     },
     "5": {
-      "name": "BackgroundColor",
-      "type": "Color"
-    },
-    "6": {
-      "name": "Border",
-      "type": "Border"
+      "name": "Style",
+      "type": "FlowChartNodeStyle"
     }
   }
 }

@@ -13,6 +13,7 @@ FlowChart creates a new flowchart component for the given model.
 ## Methods
 | Method | Description |
 |--------| ------------|
+| `ActionValue(state *core.State[FlowChartAction])` |  |
 | `AppendCustomContent(content CustomContent)` |  |
 | `BackgroundColor(color ui.Color)` |  |
 | `CustomContents(contents []CustomContent)` |  |

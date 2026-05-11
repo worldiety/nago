@@ -17678,10 +17678,11 @@ type FlowChart struct {
 	CustomContents     FlowChartCustomContents
 	MinZoom            Float
 	MaxZoom            Float
+	ActionValue        Ptr
 }
 
 func (v *FlowChart) write(w *BinaryWriter) error {
-	var fields [13]bool
+	var fields [14]bool
 	fields[1] = !v.InputValue.IsZero()
 	fields[2] = !v.Value.IsZero()
 	fields[3] = !v.Frame.IsZero()
@@ -17694,6 +17695,7 @@ func (v *FlowChart) write(w *BinaryWriter) error {
 	fields[10] = !v.CustomContents.IsZero()
 	fields[11] = !v.MinZoom.IsZero()
 	fields[12] = !v.MaxZoom.IsZero()
+	fields[13] = !v.ActionValue.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -17800,6 +17802,14 @@ func (v *FlowChart) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[13] {
+		if err := w.writeFieldHeader(uvarint, 13); err != nil {
+			return err
+		}
+		if err := v.ActionValue.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -17872,6 +17882,11 @@ func (v *FlowChart) read(r *BinaryReader) error {
 			}
 		case 12:
 			err := v.MaxZoom.read(r)
+			if err != nil {
+				return err
+			}
+		case 13:
+			err := v.ActionValue.read(r)
 			if err != nil {
 				return err
 			}
@@ -17977,22 +17992,20 @@ func (v *FlowChartNodeType) IsZero() bool {
 
 // FlowChartNode represents a single positioned node in a flow chart.
 type FlowChartNode struct {
-	Id              Str
-	Type            FlowChartNodeType
-	Position        FlowChartPoint
-	Label           Str
-	BackgroundColor Color
-	Border          Border
+	Id       Str
+	Type     FlowChartNodeType
+	Position FlowChartPoint
+	Label    Str
+	Style    FlowChartNodeStyle
 }
 
 func (v *FlowChartNode) write(w *BinaryWriter) error {
-	var fields [7]bool
+	var fields [6]bool
 	fields[1] = !v.Id.IsZero()
 	fields[2] = !v.Type.IsZero()
 	fields[3] = !v.Position.IsZero()
 	fields[4] = !v.Label.IsZero()
-	fields[5] = !v.BackgroundColor.IsZero()
-	fields[6] = !v.Border.IsZero()
+	fields[5] = !v.Style.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -18036,18 +18049,10 @@ func (v *FlowChartNode) write(w *BinaryWriter) error {
 		}
 	}
 	if fields[5] {
-		if err := w.writeFieldHeader(byteSlice, 5); err != nil {
+		if err := w.writeFieldHeader(uvarint, 5); err != nil {
 			return err
 		}
-		if err := v.BackgroundColor.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[6] {
-		if err := w.writeFieldHeader(record, 6); err != nil {
-			return err
-		}
-		if err := v.Border.write(w); err != nil {
+		if err := v.Style.write(w); err != nil {
 			return err
 		}
 	}
@@ -18087,12 +18092,7 @@ func (v *FlowChartNode) read(r *BinaryReader) error {
 				return err
 			}
 		case 5:
-			err := v.BackgroundColor.read(r)
-			if err != nil {
-				return err
-			}
-		case 6:
-			err := v.Border.read(r)
+			err := v.Style.read(r)
 			if err != nil {
 				return err
 			}
@@ -18134,11 +18134,8 @@ func (v *FlowChartEdgeStyle) IsZero() bool {
 type FlowChartEdgeMarker uint64
 
 const (
-	FlowChartEdgeMarkerNone        FlowChartEdgeMarker = 0
-	FlowChartEdgeMarkerArrow       FlowChartEdgeMarker = 1
-	FlowChartEdgeMarkerArrowClosed FlowChartEdgeMarker = 2
-	FlowChartEdgeMarkerCircle      FlowChartEdgeMarker = 3
-	FlowChartEdgeMarkerDiamond     FlowChartEdgeMarker = 4
+	FlowChartEdgeMarkerNone  FlowChartEdgeMarker = 0
+	FlowChartEdgeMarkerArrow FlowChartEdgeMarker = 1
 )
 
 func (v *FlowChartEdgeMarker) write(r *BinaryWriter) error {
@@ -18751,6 +18748,160 @@ func (v *CanvasShadowBlur) read(r *BinaryReader) error {
 			}
 		case 2:
 			err := v.Blur.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// FlowChartNodeStyle describes the predefined style of a node.
+type FlowChartNodeStyle uint64
+
+const (
+	FlowChartNodeStyleDefault FlowChartNodeStyle = 0
+	FlowChartNodeStyleNone    FlowChartNodeStyle = 1
+)
+
+func (v *FlowChartNodeStyle) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *FlowChartNodeStyle) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = FlowChartNodeStyle(tmp)
+	return nil
+}
+
+func (v *FlowChartNodeStyle) reset() {
+	*v = FlowChartNodeStyle(0)
+}
+func (v *FlowChartNodeStyle) IsZero() bool {
+	return *v == 0
+}
+
+// FlowChartAction represents a set of data about the last interaction (click) with the chart.
+type FlowChartActionData struct {
+	Node          FlowChartNode
+	Edge          FlowChartEdge
+	ViewX         Float
+	ViewY         Float
+	SelectedNodes Strings
+	SelectedEdges Strings
+}
+
+func (v *FlowChartActionData) write(w *BinaryWriter) error {
+	var fields [7]bool
+	fields[1] = !v.Node.IsZero()
+	fields[2] = !v.Edge.IsZero()
+	fields[3] = !v.ViewX.IsZero()
+	fields[4] = !v.ViewY.IsZero()
+	fields[5] = !v.SelectedNodes.IsZero()
+	fields[6] = !v.SelectedEdges.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(record, 1); err != nil {
+			return err
+		}
+		if err := v.Node.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(record, 2); err != nil {
+			return err
+		}
+		if err := v.Edge.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(f64, 3); err != nil {
+			return err
+		}
+		if err := v.ViewX.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(f64, 4); err != nil {
+			return err
+		}
+		if err := v.ViewY.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(array, 5); err != nil {
+			return err
+		}
+		if err := v.SelectedNodes.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(array, 6); err != nil {
+			return err
+		}
+		if err := v.SelectedEdges.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *FlowChartActionData) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Node.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Edge.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.ViewX.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.ViewY.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.SelectedNodes.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.SelectedEdges.read(r)
 			if err != nil {
 				return err
 			}
@@ -20208,6 +20359,18 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 249:
 		var v InputEventTypes
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 250:
+		var v FlowChartNodeStyle
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 251:
+		var v FlowChartActionData
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -24088,13 +24251,14 @@ func (v *FlowChart) reset() {
 	v.CustomContents.reset()
 	v.MinZoom.reset()
 	v.MaxZoom.reset()
+	v.ActionValue.reset()
 }
 
 func (v *FlowChart) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.InputValue.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.BackgroundColor.IsZero() && v.NodesDraggable.IsZero() && v.NodesConnectable.IsZero() && v.EdgesEditable.IsZero() && v.ElementsSelectable.IsZero() && v.Orientation.IsZero() && v.CustomContents.IsZero() && v.MinZoom.IsZero() && v.MaxZoom.IsZero()
+	return v.InputValue.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.BackgroundColor.IsZero() && v.NodesDraggable.IsZero() && v.NodesConnectable.IsZero() && v.EdgesEditable.IsZero() && v.ElementsSelectable.IsZero() && v.Orientation.IsZero() && v.CustomContents.IsZero() && v.MinZoom.IsZero() && v.MaxZoom.IsZero() && v.ActionValue.IsZero()
 }
 
 func (v *FlowChartPoint) reset() {
@@ -24114,15 +24278,14 @@ func (v *FlowChartNode) reset() {
 	v.Type.reset()
 	v.Position.reset()
 	v.Label.reset()
-	v.BackgroundColor.reset()
-	v.Border.reset()
+	v.Style.reset()
 }
 
 func (v *FlowChartNode) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Id.IsZero() && v.Type.IsZero() && v.Position.IsZero() && v.Label.IsZero() && v.BackgroundColor.IsZero() && v.Border.IsZero()
+	return v.Id.IsZero() && v.Type.IsZero() && v.Position.IsZero() && v.Label.IsZero() && v.Style.IsZero()
 }
 
 // FlowChartNodes is the list of all nodes in a flow chart.
@@ -24395,6 +24558,22 @@ func (v *InputEventTypes) IsZero() bool {
 
 func (v *InputEventTypes) reset() {
 	*v = nil
+}
+
+func (v *FlowChartActionData) reset() {
+	v.Node.reset()
+	v.Edge.reset()
+	v.ViewX.reset()
+	v.ViewY.reset()
+	v.SelectedNodes.reset()
+	v.SelectedEdges.reset()
+}
+
+func (v *FlowChartActionData) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Node.IsZero() && v.Edge.IsZero() && v.ViewX.IsZero() && v.ViewY.IsZero() && v.SelectedNodes.IsZero() && v.SelectedEdges.IsZero()
 }
 
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
@@ -26058,6 +26237,20 @@ func (v *CanvasShadowBlur) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *InputEventTypes) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(array, 249); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *FlowChartNodeStyle) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 250); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *FlowChartActionData) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 251); err != nil {
 		return err
 	}
 	return nil

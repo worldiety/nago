@@ -8,7 +8,13 @@
 -->
 
 <template>
-	<div class="custom-node" :style="styles">
+	<div
+		class="custom-node"
+		:class="{
+			'style-default': !node.style || node.style === FlowChartNodeStyleValues.FlowChartNodeStyleDefault,
+			'style-none': node.style === FlowChartNodeStyleValues.FlowChartNodeStyleNone,
+		}"
+	>
 		<Handle
 			v-if="!node.type || node.type === FlowChartNodeTypeValues.FlowChartNodeTypeEnd"
 			type="target"
@@ -26,10 +32,13 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
-import { borderCSS } from '@/components/shared/border';
-import { colorValue } from '@/components/shared/colors';
-import { Handle, Position, type Styles } from '@vue-flow/core';
-import type { Component, FlowChartCustomContents, FlowChartNode } from '@/shared/proto/nprotoc_gen';
+import { Handle, Position } from '@vue-flow/core';
+import {
+	Component,
+	FlowChartCustomContents,
+	FlowChartNode,
+	FlowChartNodeStyleValues,
+} from '@/shared/proto/nprotoc_gen';
 import { FlowChartNodeTypeValues } from '@/shared/proto/nprotoc_gen';
 import { OrientationValues } from '@/shared/proto/nprotoc_gen';
 
@@ -44,37 +53,4 @@ const props = defineProps<Props>();
 const customContent = computed<Component | undefined>(() => {
 	return props.customContents?.value.find((c) => c.nodeId === props.node.id)?.content;
 });
-
-const styles = computed<Styles>(() => {
-	const style: Styles = {};
-
-	if (props.node.backgroundColor) {
-		style.backgroundColor = colorValue(props.node.backgroundColor);
-	}
-
-	Object.assign(style, cssDeclarationsToStyle(borderCSS(props.node.border)));
-
-	return style;
-});
-
-function cssDeclarationsToStyle(declarations: string[]): Styles {
-	const style: Record<string, string> = {};
-
-	for (const declaration of declarations) {
-		const separatorIndex = declaration.indexOf(':');
-		if (separatorIndex < 0) {
-			continue;
-		}
-
-		const property = declaration.slice(0, separatorIndex).trim();
-		const value = declaration.slice(separatorIndex + 1).trim();
-		if (!property || !value) {
-			continue;
-		}
-
-		style[property] = value;
-	}
-
-	return style as Styles;
-}
 </script>

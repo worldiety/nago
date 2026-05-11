@@ -6,19 +6,26 @@ title: TwoColumn
 
 
 ## Constructors
-### TwoColumn
+### ThreeColumn
+ThreeColumn creates a three-column layout with the given navigation factory. The order is from left to
+right: sidebar, content, detail.
 
 ---
 ## Methods
 | Method | Description |
 |--------| ------------|
+| `AlignmentContent(alignment ui.Alignment)` |  |
+| `AlignmentDetail(alignment ui.Alignment)` |  |
+| `AlignmentSidebar(alignment ui.Alignment)` |  |
 | `BackgroundColorContent(bg ui.Color)` |  |
 | `BackgroundColorDetail(bg ui.Color)` |  |
-| `Default(content ViewID, detail ViewID)` |  |
+| `BackgroundColorSidebar(bg ui.Color)` |  |
+| `Default(content ViewID, detail ViewID, sidebar ViewID)` |  |
 | `Frame(frame ui.Frame)` |  |
 | `FullWidth()` |  |
 | `ID(id string)` |  |
 | `WidthContent(width ui.Length)` | WidthContent sets the width of the content column. |
 | `WidthDetail(width ui.Length)` |  |
+| `WidthSidebar(width ui.Length)` |  |
 ---
 
