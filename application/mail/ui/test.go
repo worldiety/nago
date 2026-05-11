@@ -10,6 +10,9 @@ package uimail
 import (
 	"bytes"
 	"encoding/json"
+	"io"
+	mail2 "net/mail"
+
 	mail3 "go.wdy.de/nago/application/mail"
 	"go.wdy.de/nago/application/template"
 	"go.wdy.de/nago/pkg/std"
@@ -18,8 +21,6 @@ import (
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/cardlayout"
 	"golang.org/x/text/language"
-	"io"
-	mail2 "net/mail"
 )
 
 func SendTestMailPage(wnd core.Window, send mail3.SendMail, exec template.Execute) core.View {
@@ -30,11 +31,11 @@ func SendTestMailPage(wnd core.Window, send mail3.SendMail, exec template.Execut
 		return "Dies ist eine Testnachricht von einem NAGO Server."
 	})
 	mailRec := core.AutoState[string](wnd).Init(func() string {
-		return "admin@worldiety.de"
+		return wnd.Subject().Email()
 	})
 
 	tplMailRec := core.AutoState[string](wnd).Init(func() string {
-		return "admin@worldiety.de"
+		return wnd.Subject().Email()
 	})
 
 	tplMailSubject := core.AutoState[string](wnd).Init(func() string {
