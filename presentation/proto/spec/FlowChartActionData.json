@@ -1,0 +1,32 @@
+{
+  "doc": "FlowChartAction represents a set of data about the last interaction (click) with the chart.",
+  "kind": "Record",
+  "id": 251,
+  "fields": {
+    "1": {
+      "name": "Node",
+      "type": "FlowChartNode"
+    },
+    "2": {
+      "name": "Edge",
+      "type": "FlowChartEdge"
+    },
+    "3": {
+      "name": "ViewX",
+      "type": "Float"
+    },
+    "4": {
+      "name": "ViewY",
+      "type": "Float"
+    },
+    "5": {
+      "name": "SelectedNodes",
+      "type": "Strings"
+    },
+    "6": {
+      "name": "SelectedEdges",
+      "type": "Strings"
+    }
+  }
+}
+

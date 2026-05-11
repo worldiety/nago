@@ -10,6 +10,7 @@
 <template>
 	<div class="ui-flow-chart" :style="frameStyles">
 		<VueFlow
+			ref="flowChart"
 			class="ui-flow-chart__canvas"
 			:class="{ dark: themeManager.getActiveThemeKey() === ThemeKey.DARK }"
 			:nodes="nodes"
@@ -26,6 +27,9 @@
 			@nodes-change="onNodesUpdate"
 			@edges-change="onEdgesUpdate"
 			@connect="onNodesConnect"
+			@node-click="onNodeClick"
+			@edge-click="onEdgeClick"
+			@pane-click="onPaneClick"
 		>
 			<template #node-custom="node">
 				<FlowChartCustomNode
@@ -45,7 +49,7 @@ import { frameCSS } from '@/components/shared/frame';
 import { randomStr } from '@/components/shared/util';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
-import type { Connection, EdgeChange, NodeChange, Styles } from '@vue-flow/core';
+import type { Connection, EdgeChange, EdgeMouseEvent, NodeChange, NodeMouseEvent, Styles } from '@vue-flow/core';
 import { type Edge, type EdgeMarkerType, MarkerType, type Node, Position, VueFlow } from '@vue-flow/core';
 import type { FlowChart, FlowChartNode } from '@/shared/proto/nprotoc_gen';
 import { FlowChartModel } from '@/shared/proto/nprotoc_gen';
@@ -69,6 +73,8 @@ const props = defineProps<{
 const themeManager = useThemeManager();
 const serviceAdapter = useServiceAdapter();
 let debounceTimer: number = 0;
+
+const flowChart = ref<InstanceType<typeof VueFlow>>();
 
 const frameStyles = computed<string>(() => {
 	const styles = frameCSS(props.ui.frame);
@@ -137,6 +143,7 @@ function setEdges() {
 
 		return {
 			id: edge.id?.trim() || `${source}-${target}-${randomStr(8)}`,
+			data: edge,
 			source: source as string,
 			target: target as string,
 			label: edge.label?.trim(),
@@ -211,10 +218,6 @@ function mapMarker(marker: number | undefined, color?: string): EdgeMarkerType |
 	switch (marker) {
 		case FlowChartEdgeMarkerValues.FlowChartEdgeMarkerArrow:
 			return { type: MarkerType.Arrow, color };
-		case FlowChartEdgeMarkerValues.FlowChartEdgeMarkerArrowClosed:
-		case FlowChartEdgeMarkerValues.FlowChartEdgeMarkerDiamond:
-		case FlowChartEdgeMarkerValues.FlowChartEdgeMarkerCircle:
-			return { type: MarkerType.ArrowClosed, color };
 		default:
 			return undefined;
 	}
@@ -236,13 +239,14 @@ function onNodesUpdate(changes: NodeChange[]) {
 							change.position.x,
 							change.position.y
 						);
-						debouncedInput(valueCopy);
+						debouncedInputModel(valueCopy);
 					}
 				});
 				break;
 			case 'remove':
 				valueCopy.nodes.value = valueCopy.nodes?.value.filter((node) => node.id !== change.id);
-				debouncedInput(valueCopy);
+				debouncedInputModel(valueCopy);
+				onSelectionChange();
 				break;
 		}
 	});
@@ -257,9 +261,19 @@ function onEdgesUpdate(changes: EdgeChange[]) {
 		switch (change.type) {
 			case 'remove':
 				valueCopy.edges.value = valueCopy.edges?.value.filter((edge) => edge.id !== change.id);
-				debouncedInput(valueCopy);
+				debouncedInputModel(valueCopy);
+				onSelectionChange();
 				break;
 		}
+	});
+}
+
+function onSelectionChange(): void {
+	if (!flowChart.value) return;
+
+	inputAction({
+		selectedNodes: flowChart.value.getSelectedNodes.map((n) => n.id),
+		selectedEdges: flowChart.value.getSelectedEdges.map((e) => e.id),
 	});
 }
 
@@ -272,10 +286,53 @@ function onNodesConnect(connection: Connection) {
 	);
 	if (!valueCopy.edges) valueCopy.edges = new FlowChartEdges();
 	valueCopy.edges.value.push(newFlowChartEdge);
-	debouncedInput(valueCopy);
+	debouncedInputModel(valueCopy);
 }
 
-function debouncedInput(value: FlowChartModel) {
+function onNodeClick(e: NodeMouseEvent) {
+	if (!flowChart.value) return;
+
+	const event = e.event as PointerEvent;
+	const node = e.node;
+	inputAction({
+		node: node.data,
+		viewX: event.clientX,
+		viewY: event.clientY,
+		selectedNodes: flowChart.value.getSelectedNodes.map((n) => n.id),
+		selectedEdges: flowChart.value.getSelectedEdges.map((e) => e.id),
+	});
+}
+
+function onEdgeClick(e: EdgeMouseEvent) {
+	if (!flowChart.value) return;
+
+	const event = e.event as PointerEvent;
+	const edge = e.edge;
+	inputAction({
+		edge: edge.data,
+		viewX: event.clientX,
+		viewY: event.clientY,
+		selectedNodes: flowChart.value.getSelectedNodes.map((n) => n.id),
+		selectedEdges: flowChart.value.getSelectedEdges.map((e) => e.id),
+	});
+}
+
+function onPaneClick(e: MouseEvent) {
+	if (!flowChart.value) return;
+
+	inputAction({
+		viewX: e.clientX,
+		viewY: e.clientY,
+		selectedNodes: flowChart.value.getSelectedNodes.map((n) => n.id),
+		selectedEdges: flowChart.value.getSelectedEdges.map((e) => e.id),
+	});
+}
+
+function inputAction(action: object) {
+	serviceAdapter.sendEvent(new UpdateStateValueRequested(props.ui.actionValue, 0, nextRID(), JSON.stringify(action)));
+}
+
+function debouncedInputModel(value: FlowChartModel) {
 	const debounceTime = 100; // ms
 
 	clearTimeout(debounceTimer);

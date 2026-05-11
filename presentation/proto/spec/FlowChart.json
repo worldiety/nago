@@ -50,6 +50,10 @@
     "12": {
       "name": "MaxZoom",
       "type": "Float"
+    },
+    "13": {
+      "name": "ActionValue",
+      "type": "Ptr"
     }
   }
 }

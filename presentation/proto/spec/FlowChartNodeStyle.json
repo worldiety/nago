@@ -1,0 +1,15 @@
+{
+  "doc": "FlowChartNodeStyle describes the predefined style of a node.",
+  "kind": "Uint",
+  "id": 250,
+  "const": {
+    "0": {
+      "name": "FlowChartNodeStyleDefault"
+    },
+    "1": {
+      "name": "FlowChartNodeStyleNone"
+    }
+  }
+}
+
+

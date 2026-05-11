@@ -4,17 +4,21 @@
 			@apply min-w-0;
 
 			.custom-node {
-				@apply bg-M2 border border-M3 rounded-lg;
-				@apply hover:border-M5;
+				&.style-default {
+					@apply bg-M2 border border-M3 rounded-lg;
+					@apply hover:border-M5;
 
-				.label {
-					@apply px-4;
+					.label {
+						@apply px-4;
+					}
 				}
 			}
 
 			&.selected {
 				.custom-node {
-					@apply border-I0;
+					&.style-default {
+						@apply border-I0;
+					}
 				}
 			}
 		}
