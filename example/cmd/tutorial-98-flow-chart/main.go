@@ -213,15 +213,15 @@ func lastAction(state *core.State[flowchart.FlowChartActionData]) core.View {
 	return ui.Stack(
 		ui.Grid(
 			ui.GridCell(ui.Text("Node:")),
-			ui.GridCell(ui.IfElse(len(actionData.Node.ID) > 0, ui.Text(fmt.Sprintf("%v", actionData.Node)), ui.Text("-"))),
+			ui.GridCell(ui.IfElse(len(actionData.Node.ID) > 0, ui.Text(fmt.Sprintf("%+v", actionData.Node)), ui.Text("-"))),
 			ui.GridCell(ui.Text("Edge:")),
-			ui.GridCell(ui.IfElse(len(actionData.Edge.ID) > 0, ui.Text(fmt.Sprintf("%v", actionData.Edge)), ui.Text("-"))),
+			ui.GridCell(ui.IfElse(len(actionData.Edge.ID) > 0, ui.Text(fmt.Sprintf("%+v", actionData.Edge)), ui.Text("-"))),
 			ui.GridCell(ui.Text("Point:")),
 			ui.GridCell(ui.Text(fmt.Sprintf("%d %d", int(actionData.ViewX), int(actionData.ViewY)))),
 			ui.GridCell(ui.Text("Selected nodes:")),
-			ui.GridCell(ui.Text(fmt.Sprintf("%v", actionData.SelectedNodes))),
+			ui.GridCell(ui.Text(fmt.Sprintf("%+v", actionData.SelectedNodes))),
 			ui.GridCell(ui.Text("Selected edges:")),
-			ui.GridCell(ui.Text(fmt.Sprintf("%v", actionData.SelectedEdges))),
+			ui.GridCell(ui.Text(fmt.Sprintf("%+v", actionData.SelectedEdges))),
 		).
 			Columns(2).
 			RowGap(ui.L2).
