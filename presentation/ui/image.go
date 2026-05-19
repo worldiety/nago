@@ -35,6 +35,9 @@ const (
 	FitContain ObjectFit = 3
 	// FitNone maps the pixel buffer 1:1 into its render context.
 	FitNone ObjectFit = 4
+	// FitRepeat repeats the image in both directions to fill the entire image view with a 1:1 mapping of the
+	// pixel buffer.
+	FitRepeat ObjectFit = 5
 )
 
 // TImage is a basic component (Image).

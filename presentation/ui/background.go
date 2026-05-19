@@ -78,6 +78,9 @@ func (b *Background) proto() *proto.Background {
 	case FitNone:
 		bg.Size = "contain"
 		bg.Repeat = "repeat"
+	case FitRepeat:
+		bg.Size = "auto"
+		bg.Repeat = "repeat"
 	}
 
 	slices.Reverse(b.effectStack)
