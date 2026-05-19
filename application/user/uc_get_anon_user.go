@@ -29,7 +29,7 @@ import (
 func NewGetAnonUser(ctx func() context.Context, bus events.Bus, loadGlobal settings.LoadGlobal, findRoleByID role.FindByID, listPerms role.ListPermissions) GetAnonUser {
 	var subj atomic.Pointer[anonSubject]
 	loadSubject := func() {
-		subject := createAnonSubject(ctx(), language.English, loadGlobal, findRoleByID, listPerms)
+		subject := createAnonSubject(ctx, language.English, loadGlobal, findRoleByID, listPerms)
 		subj.Store(&subject)
 	}
 
@@ -54,7 +54,7 @@ func NewGetAnonUser(ctx func() context.Context, bus events.Bus, loadGlobal setti
 	}
 }
 
-func createAnonSubject(ctx context.Context, tag language.Tag, loadGlobal settings.LoadGlobal, findRoleByID role.FindByID, listPerms role.ListPermissions) anonSubject {
+func createAnonSubject(ctx func() context.Context, tag language.Tag, loadGlobal settings.LoadGlobal, findRoleByID role.FindByID, listPerms role.ListPermissions) anonSubject {
 	bnd, ok := i18n.Default.MatchBundle(tag)
 	if !ok {
 		panic(fmt.Errorf("unreachable"))
@@ -116,7 +116,7 @@ type anonSubject struct {
 	permissions    []permission.ID
 	bundle         *i18n.Bundle
 	tag            language.Tag
-	ctx            context.Context
+	ctx            func() context.Context
 
 	// intentionally anon users never support Licenses because any amount of users share the same anon subject
 	// and a per-user license would be pointless.
@@ -136,7 +136,7 @@ func (a anonSubject) Audit(permission permission.ID) error {
 }
 
 func (a anonSubject) Context() context.Context {
-	return a.ctx
+	return a.ctx()
 }
 
 func (a anonSubject) HasPermission(permission permission.ID) bool {

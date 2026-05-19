@@ -20,7 +20,6 @@ import (
 	"go.wdy.de/nago/application/drive"
 	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/application/user"
-	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/xstrings"
 	"go.wdy.de/nago/presentation/core"
 	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
@@ -124,7 +123,6 @@ func (c TDrive) Breadcrumbs(breadcrumbs ...drive.FID) TDrive {
 }
 
 func (c TDrive) autoInit(ctx core.RenderContext) TDrive {
-	wnd := ctx.Window()
 	if c.canCreateDirectory == nil {
 		c.canCreateDirectory = func(parentDir drive.File) bool {
 			return parentDir.CanWrite(ctx.Window().Subject())
@@ -164,7 +162,7 @@ func (c TDrive) autoInit(ctx core.RenderContext) TDrive {
 	}
 
 	if len(c.breadcrumbs) == 0 && c.current.Get() != "" {
-		fids, err := calculateBreadcrumbs(uc.Stat, wnd.Subject(), c.root, c.current.Get())
+		fids, err := c.calculateBreadcrumbs(c.root, c.current.Get())
 		if err != nil {
 			slog.Error("failed to calculate breadcrumbs", "err", err)
 		}
@@ -561,10 +559,10 @@ func dialogCreateDirectory(wnd core.Window, presented *core.State[bool], onCreat
 	)
 }
 
-func calculateBreadcrumbs(stat drive.Stat, subject auth.Subject, virtualRoot drive.FID, fid drive.FID) ([]drive.FID, error) {
+func (c TDrive) calculateBreadcrumbs(virtualRoot drive.FID, fid drive.FID) ([]drive.FID, error) {
 	var res []drive.FID
 	for fid != "" {
-		optFile, err := stat(subject, fid)
+		optFile, err := c.stat(fid)
 		if err != nil {
 			return nil, err
 		}
