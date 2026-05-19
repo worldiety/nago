@@ -260,7 +260,9 @@ func (s *State[T]) Update(v T) {
 	s.Notify()
 }
 
-func (s *State[T]) addDestroyObserver(fn func()) {
+// AddDestroyObserver registers a callback which is invoked, once the state is destroyed.
+// This happens either in a subsequent render cycle or when the window is destroyed.
+func (s *State[T]) AddDestroyObserver(fn func()) {
 	s.observerLock.Lock()
 	defer s.observerLock.Unlock()
 
@@ -483,7 +485,7 @@ func OnAppear(wnd Window, id string, fn func(ctx context.Context)) {
 		// even though it is not documented clearly, TheMerovius tells us, that cancelling a context is idempotent
 		ctx, cancel := context.WithCancel(wnd.Context())
 
-		state.addDestroyObserver(func() {
+		state.AddDestroyObserver(func() {
 			cancel()
 		})
 
@@ -524,7 +526,7 @@ func OnDisappear(wnd Window, id string, fn func(ctx context.Context)) {
 	state.Init(func() bool {
 		ctx, cancel := context.WithCancel(wnd.Context())
 
-		state.addDestroyObserver(func() {
+		state.AddDestroyObserver(func() {
 			go func() {
 				defer cancel()
 				fn(ctx)
