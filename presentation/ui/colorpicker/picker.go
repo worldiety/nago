@@ -10,6 +10,7 @@ package colorpicker
 import (
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/pkg/xiter"
@@ -36,6 +37,7 @@ type TPalettePicker struct {
 	state              *core.State[ui.Color] // is nil, if no interactivity is required
 	currentState       *core.State[ui.Color]
 	pickerPresented    *core.State[bool] // also nil, if state is nil
+	customColorState   *core.State[string]
 	title              string
 	supportingText     string
 	errorText          string
@@ -117,6 +119,19 @@ func (c TPalettePicker) Disabled(disabled bool) TPalettePicker {
 }
 
 func (c TPalettePicker) Render(ctx core.RenderContext) core.RenderNode {
+	isCustomColor := c.state.Get() != "" && !slices.Contains(c.palette, c.state.Get())
+	c.customColorState = core.AutoState[string](ctx.Window()).Init(func() string {
+		if isCustomColor {
+			return string(c.state.Get())
+		}
+		return ""
+	}).Observe(func(newValue string) {
+		if strings.TrimSpace(newValue) == "" {
+			if c.state.Get() == "" {
+				c.currentState.Set("")
+			}
+		}
+	})
 	colors := core.Colors[ui.Colors](ctx.Window())
 	borderColor := ui.Color("")
 	backgroundColor := ui.Color("")
@@ -135,6 +150,10 @@ func (c TPalettePicker) Render(ctx core.RenderContext) core.RenderNode {
 	).Action(func() {
 		if c.disabled {
 			return
+		}
+		if c.state.Get() != "" && !slices.Contains(c.palette, c.state.Get()) {
+			c.currentState.Set(c.state.Get())
+			c.customColorState.Set(string(c.state.Get()))
 		}
 		c.pickerPresented.Set(true)
 	}).HoveredBorder(ui.Border{}.Color(borderColor).Width(ui.L1).Radius("0.375rem")).
@@ -170,15 +189,16 @@ func (c TPalettePicker) pickerTable() core.View {
 		return ui.HStack(ui.Each(slices.Values(t), func(t ui.Color) core.View {
 
 			var borderColor ui.Color
-			if c.currentState != nil && t == c.currentState.Get() {
+			if c.currentState != nil && t == c.currentState.Get() && c.customColorState.Get() == "" {
 				// mark whatever is selected
 				borderColor = ui.ColorInputBorder
 			} else {
 				borderColor = "#00000000"
 			}
 
-			return ui.HStack(renderColor(nil, t)).Action(func() {
+			return ui.HStack(renderColor(c.palette, t)).Action(func() {
 				c.currentState.Set(t)
+				c.customColorState.Set("")
 			}).
 				Padding(ui.Padding{}.All(ui.L2)).
 				Border(ui.Border{}.Circle().Color(borderColor).Width(ui.L2))
@@ -189,25 +209,86 @@ func (c TPalettePicker) pickerTable() core.View {
 
 // Dialog returns the dialog view as if pressed on the actual button.
 func (c TPalettePicker) Dialog(pickerPresented *core.State[bool]) core.View {
-	return alert.Dialog(c.title, c.pickerTable(), pickerPresented, alert.Cancel(func() {
-		if c.currentState != nil {
-			c.currentState.Set(c.state.Get())
-		}
+	return alert.Dialog(
+		c.title,
+		ui.VStack(
+			c.pickerTable(),
+			c.customColorView(),
+		).Gap(ui.L12).FullWidth(),
+		pickerPresented,
+		alert.Cancel(func() {
+			if c.currentState != nil {
+				c.currentState.Set(c.state.Get())
+			}
+			// if the current color is in palette there is no need to retain the custom color
+			if slices.Contains(c.palette, c.currentState.Get()) {
+				c.customColorState.Set("")
+			}
+		}),
 
-	}), alert.Custom(func(close func(closeDlg bool)) core.View {
-		// positive case
-		return ui.PrimaryButton(func() {
-			c.state.Set(c.currentState.Get())
-			c.state.Notify() // invoke observers
-			close(true)
-		}).Title(fmt.Sprintf("Farbe wählen"))
-	}))
+		alert.Custom(func(close func(closeDlg bool)) core.View {
+			// positive case
+			return ui.PrimaryButton(func() {
+				if strings.TrimSpace(c.customColorState.Get()) != "" {
+					c.currentState.Set(ui.Color(strings.TrimSpace(c.customColorState.Get())))
+				} else {
+					c.customColorState.Set("")
+					if !slices.Contains(c.palette, c.currentState.Get()) {
+						// current color is not in palette which means customColor is empty and no color from palette is selected
+						c.currentState.Set("")
+					}
+				}
+				c.state.Set(c.currentState.Get())
+				c.state.Notify() // invoke observers
+				c.customColorState.Notify()
+				close(true)
+			}).Title(fmt.Sprintf("Farbe wählen"))
+		}),
+	)
+}
+
+// customColorView returns the view where the user can define a custom color with hexcode
+func (c TPalettePicker) customColorView() core.View {
+	raw := strings.TrimSpace(c.customColorState.Get())
+	var valid bool
+	if raw != "" && IsValidHexColor(raw) {
+		valid = true
+	}
+
+	var errorText string
+	if !valid && raw != "" {
+		errorText = "Ungültiger Hexcode (z.B. #FF0000)"
+	}
+
+	var preview core.View
+	if valid {
+		preview = ui.VStack(
+			ui.VStack().
+				BackgroundColor(ui.Color(raw)).
+				Border(ui.Border{}.Circle()).
+				Frame(ui.Frame{}.Size(ui.L24, ui.L24)),
+		).
+			Padding(ui.Padding{}.All(ui.L1)).
+			Border(ui.Border{}.Circle().Color(ui.ColorInputBorder).Width(ui.L2))
+	} else {
+		preview = ui.ImageIcon(heroOutline.NoSymbol)
+	}
+
+	return ui.HStack(
+		ui.HStack(preview).Alignment(ui.Leading).Frame(ui.Frame{MaxWidth: ui.L40}.FullWidth()),
+		ui.TextField("Eigene Farbe", c.customColorState.Get()).
+			InputValue(c.customColorState).
+			SupportingText("Hexcode (z. B. #FF0000)").
+			ErrorText(errorText).
+			FullWidth(),
+	).Gap(ui.L12).FullWidth().Padding(ui.Padding{}.Horizontal(ui.L40))
 }
 
 // renderColor renders a no-color sign, if c is empty or if c is not in palette. If palette is nil, the color is
 // always treated as if it would be in the palette.
 func renderColor(palette Palette, c ui.Color) ui.DecoredView {
-	if c == "" || (palette != nil && !slices.Contains(palette, c)) {
+	//if c == "" || (palette != nil && !slices.Contains(palette, c)) {
+	if c == "" || palette == nil {
 		return renderNone()
 	}
 
