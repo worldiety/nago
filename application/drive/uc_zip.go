@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
@@ -87,7 +88,17 @@ func (z zipFile) Transfer(dst io.Writer) (int64, error) {
 			return cw.Count, err
 		}
 
-		f, err := zipWriter.Create(path)
+		header := &zip.FileHeader{
+			Name:   path,
+			Method: zip.Deflate,
+		}
+		modTime := file.ModTime()
+		if modTime.IsZero() {
+			modTime = time.Now().UTC()
+		}
+		header.Modified = modTime
+
+		f, err := zipWriter.CreateHeader(header)
 		if err != nil {
 			return cw.Count, err
 		}
