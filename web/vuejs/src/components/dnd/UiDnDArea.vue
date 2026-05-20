@@ -26,7 +26,9 @@ const emit = defineEmits<{
 	(e: 'drop-success', id: string): void;
 }>();
 
-const id = props.ui.id || randomStr(16);
+const fallbackId = randomStr(16);
+const id = computed(() => props.ui.id || fallbackId);
+
 const serviceAdapter = useServiceAdapter();
 const store = useDndStore();
 
@@ -42,8 +44,8 @@ const styles = computed<string>(() => {
 function onDragStart(event: DragEvent) {
 	if (!event.dataTransfer) return;
 
-	store.startDrag(id);
-	event.dataTransfer.setData('application/x-drag-id', id);
+	store.startDrag(id.value);
+	event.dataTransfer.setData('application/x-drag-id', id.value);
 	event.dataTransfer.effectAllowed = 'all';
 }
 
