@@ -46,12 +46,24 @@ type Event struct {
 	Label       string  // Title of the event
 	Action      func()  // Action if clicked on the event
 	Category    Category
+	Pillar      Pillar
 	Lane        Lane
 	Chips       []Chip
 	Organiser   string
 	Location    string
 	IsCancelled bool                  // True if event is cancelled by the host
 	Render      func(Style) core.View // custom render func, may be nil to render the default way
+}
+
+// A Pillar represents a high-level theme or strategic focus area
+// that groups related events. It provides contextual framing beyond
+// simple categories and can be used to highlight overarching narratives
+// or program tracks (e.g. "Rise in Action").
+type Pillar struct {
+	Label  string
+	Icon   core.SVG
+	Width  ui.Length
+	Height ui.Length
 }
 
 // Chip can be used to display additional event information,
