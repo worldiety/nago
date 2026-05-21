@@ -42,7 +42,7 @@
 	</div>
 </template>
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import FlowChartCustomNode from '@/components/flowchart/FlowChartCustomNode.vue';
 import { colorValue } from '@/components/shared/colors';
 import { frameCSS } from '@/components/shared/frame';
@@ -318,13 +318,15 @@ function onEdgeClick(e: EdgeMouseEvent) {
 }
 
 function onPaneClick(e: MouseEvent) {
-	if (!flowChart.value) return;
+	nextTick(() => {
+		if (!flowChart.value) return;
 
-	inputAction({
-		viewX: e.clientX,
-		viewY: e.clientY,
-		selectedNodes: flowChart.value.getSelectedNodes.map((n) => n.id),
-		selectedEdges: flowChart.value.getSelectedEdges.map((e) => e.id),
+		inputAction({
+			viewX: e.clientX,
+			viewY: e.clientY,
+			selectedNodes: flowChart.value.getSelectedNodes.map((n) => n.id),
+			selectedEdges: flowChart.value.getSelectedEdges.map((e) => e.id),
+		});
 	});
 }
 
