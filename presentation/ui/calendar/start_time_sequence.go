@@ -9,6 +9,7 @@ package calendar
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/worldiety/i18n"
@@ -190,6 +191,25 @@ func startTimeSeqPill(
 				ui.HStack(
 					titleRow...,
 				).Alignment(ui.Leading).FullWidth(),
+				ui.IfFunc(strings.TrimSpace(evt.Pillar.Label) != "",
+					func() core.View {
+						w := ui.L24
+						h := ui.L24
+						if evt.Pillar.Width != "" {
+							w = evt.Pillar.Width
+						}
+						if evt.Pillar.Height != "" {
+							h = evt.Pillar.Height
+						}
+
+						return ui.HStack(
+							ui.ImageIcon(evt.Pillar.Icon).Frame(ui.Frame{}.Size(w, h)),
+							ui.Text(evt.Pillar.Label),
+						).
+							Alignment(ui.Leading).
+							Gap(ui.L4).FullWidth()
+					},
+				),
 				ui.If(timeStr != "",
 					ui.HStack(
 						ui.ImageIcon(icons.Clock),
