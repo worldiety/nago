@@ -7,24 +7,11 @@
 
 package colorpicker
 
-// IsValidHexColor validates CSS-like hex colors: #RGB, #RGBA, #RRGGBB, #RRGGBBAA.
-// Returns true for valid hex color strings, false otherwise.
-func IsValidHexColor(s string) bool {
-	if len(s) < 4 || s[0] != '#' {
-		return false
-	}
-	n := len(s) - 1
-	if n != 3 && n != 4 && n != 6 && n != 8 {
-		return false
-	}
-	for i := 1; i < len(s); i++ {
-		if !isHexDigit(s[i]) {
-			return false
-		}
-	}
-	return true
-}
+import "go.wdy.de/nago/pkg/xcolor"
 
-func isHexDigit(b byte) bool {
-	return (b >= '0' && b <= '9') || (b >= 'a' && b <= 'f') || (b >= 'A' && b <= 'F')
+// IsValidHexColor validates CSS-like hex colors using xcolor.ParseHex.
+// Accepts #RRGGBB and #RRGGBBAA; returns true for valid hex color strings.
+func IsValidHexColor(hex string) bool {
+	_, err := xcolor.ParseHex(hex)
+	return err == nil
 }

@@ -209,6 +209,14 @@ func (c TPalettePicker) pickerTable() core.View {
 
 // Dialog returns the dialog view as if pressed on the actual button.
 func (c TPalettePicker) Dialog(pickerPresented *core.State[bool]) core.View {
+
+	var primaryEnabled bool
+	if strings.TrimSpace(c.customColorState.Get()) != "" {
+		primaryEnabled = IsValidHexColor(c.customColorState.Get())
+	} else {
+		primaryEnabled = IsValidHexColor(string(c.currentState.Get()))
+	}
+
 	return alert.Dialog(
 		c.title,
 		ui.VStack(
@@ -242,7 +250,10 @@ func (c TPalettePicker) Dialog(pickerPresented *core.State[bool]) core.View {
 				c.state.Notify() // invoke observers
 				c.customColorState.Notify()
 				close(true)
-			}).Title(fmt.Sprintf("Farbe wählen"))
+			}).
+				Title(fmt.Sprintf("Farbe wählen")).
+				AccessibilityLabel("Farbe wählen").
+				Enabled(primaryEnabled)
 		}),
 	)
 }
