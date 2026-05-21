@@ -90,33 +90,36 @@ const textValue = computed<string>(() => {
 </script>
 
 <template>
-	<template v-if="!ui.invisible">
-		<a
-			v-if="ui.link && ui.link.url"
-			:href="ui.link.url"
-			:target="ui.link.target"
-			:style="styles"
-			:title="props.ui.accessibilityLabel"
-			@click="onClick"
-		>
-			{{ textValue }}<br v-if="!ui.invisible && ui.lineBreak" />
-		</a>
+	<a
+		v-if="!ui.invisible && ui.link && ui.link.url"
+		:href="ui.link.url"
+		:target="ui.link.target"
+		:style="styles"
+		:title="props.ui.accessibilityLabel"
+		@click="onClick"
+	>
+		{{ textValue }}<br v-if="!ui.invisible && ui.lineBreak" />
+	</a>
 
-		<span v-else-if="!ui.labelFor" :style="styles" :title="props.ui.accessibilityLabel" @click="onClick">
-			{{ textValue }}<br v-if="!ui.invisible && ui.lineBreak" />
-		</span>
+	<span
+		v-else-if="!ui.invisible && !ui.labelFor"
+		:style="styles"
+		:title="props.ui.accessibilityLabel"
+		@click="onClick"
+	>
+		{{ textValue }}<br v-if="!ui.invisible && ui.lineBreak" />
+	</span>
 
-		<label
-			v-else
-			class="cursor-pointer"
-			:style="styles"
-			:title="props.ui.accessibilityLabel"
-			:for="ui.labelFor"
-			@click="onClick"
-		>
-			{{ textValue }}<br v-if="!ui.invisible && ui.lineBreak" />
-		</label>
-	</template>
+	<label
+		v-else-if="!ui.invisible"
+		class="cursor-pointer"
+		:style="styles"
+		:title="props.ui.accessibilityLabel"
+		:for="ui.labelFor"
+		@click="onClick"
+	>
+		{{ textValue }}<br v-if="!ui.invisible && ui.lineBreak" />
+	</label>
 </template>
 
 <style scoped>
