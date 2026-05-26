@@ -49,7 +49,8 @@ import { frameCSS } from '@/components/shared/frame';
 import { randomStr } from '@/components/shared/util';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
-import type { Connection, EdgeChange, EdgeMouseEvent, NodeChange, NodeMouseEvent, Styles } from '@vue-flow/core';
+import type { Connection, EdgeChange, EdgeMouseEvent, NodeChange, NodeMouseEvent, Styles} from '@vue-flow/core';
+import { useVueFlow } from '@vue-flow/core';
 import { type Edge, type EdgeMarkerType, MarkerType, type Node, Position, VueFlow } from '@vue-flow/core';
 import type { FlowChart, FlowChartNode } from '@/shared/proto/nprotoc_gen';
 import { FlowChartModel } from '@/shared/proto/nprotoc_gen';
@@ -72,6 +73,7 @@ const props = defineProps<{
 
 const themeManager = useThemeManager();
 const serviceAdapter = useServiceAdapter();
+const { project } = useVueFlow();
 let debounceTimer: number = 0;
 
 const flowChart = ref<InstanceType<typeof VueFlow>>();
@@ -294,10 +296,19 @@ function onNodeClick(e: NodeMouseEvent) {
 
 	const event = e.event as PointerEvent;
 	const node = e.node;
+
+	const viewPos = {
+		x: event.clientX,
+		y: event.clientY,
+	};
+	const panePos = project(viewPos);
+
 	inputAction({
 		node: node.data,
-		viewX: event.clientX,
-		viewY: event.clientY,
+		paneX: panePos.x,
+		paneY: panePos.y,
+		viewX: viewPos.x,
+		viewY: viewPos.y,
 		selectedNodes: flowChart.value.getSelectedNodes.map((n) => n.id),
 		selectedEdges: flowChart.value.getSelectedEdges.map((e) => e.id),
 	});
@@ -308,10 +319,19 @@ function onEdgeClick(e: EdgeMouseEvent) {
 
 	const event = e.event as PointerEvent;
 	const edge = e.edge;
+
+	const viewPos = {
+		x: event.clientX,
+		y: event.clientY,
+	};
+	const panePos = project(viewPos);
+
 	inputAction({
 		edge: edge.data,
-		viewX: event.clientX,
-		viewY: event.clientY,
+		paneX: panePos.x,
+		paneY: panePos.y,
+		viewX: viewPos.x,
+		viewY: viewPos.y,
 		selectedNodes: flowChart.value.getSelectedNodes.map((n) => n.id),
 		selectedEdges: flowChart.value.getSelectedEdges.map((e) => e.id),
 	});
@@ -321,9 +341,17 @@ function onPaneClick(e: MouseEvent) {
 	nextTick(() => {
 		if (!flowChart.value) return;
 
+		const viewPos = {
+			x: e.clientX,
+			y: e.clientY,
+		};
+		const panePos = project(viewPos);
+
 		inputAction({
-			viewX: e.clientX,
-			viewY: e.clientY,
+			paneX: panePos.x,
+			paneY: panePos.y,
+			viewX: viewPos.x,
+			viewY: viewPos.y,
 			selectedNodes: flowChart.value.getSelectedNodes.map((n) => n.id),
 			selectedEdges: flowChart.value.getSelectedEdges.map((e) => e.id),
 		});

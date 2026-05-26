@@ -32,9 +32,9 @@ func main() {
 
 		cfg.RootView(".", func(wnd core.Window) core.View {
 			colorState := core.StateOf[ui.Color](wnd, "colorState")
-			actionState := core.StateOf[flowchart.FlowChartAction](wnd, "actionState")
+			actionState := core.StateOf[flowchart.FlowChartActionData](wnd, "actionState")
 
-			actionState.Observe(func(action flowchart.FlowChartAction) {
+			actionState.Observe(func(action flowchart.FlowChartActionData) {
 				fmt.Println("Latest action", action)
 			})
 
@@ -207,21 +207,21 @@ func colorNode(state *core.State[ui.Color], id string, position flowchart.Point,
 		}
 }
 
-func lastAction(state *core.State[flowchart.FlowChartAction]) core.View {
-	action := state.Get()
+func lastAction(state *core.State[flowchart.FlowChartActionData]) core.View {
+	actionData := state.Get()
 
 	return ui.Stack(
 		ui.Grid(
 			ui.GridCell(ui.Text("Node:")),
-			ui.GridCell(ui.IfElse(len(action.Node.ID) > 0, ui.Text(fmt.Sprintf("%v", action.Node)), ui.Text("-"))),
+			ui.GridCell(ui.IfElse(len(actionData.Node.ID) > 0, ui.Text(fmt.Sprintf("%+v", actionData.Node)), ui.Text("-"))),
 			ui.GridCell(ui.Text("Edge:")),
-			ui.GridCell(ui.IfElse(len(action.Edge.ID) > 0, ui.Text(fmt.Sprintf("%v", action.Edge)), ui.Text("-"))),
+			ui.GridCell(ui.IfElse(len(actionData.Edge.ID) > 0, ui.Text(fmt.Sprintf("%+v", actionData.Edge)), ui.Text("-"))),
 			ui.GridCell(ui.Text("Point:")),
-			ui.GridCell(ui.Text(fmt.Sprintf("%d %d", int(action.ViewX), int(action.ViewY)))),
+			ui.GridCell(ui.Text(fmt.Sprintf("%d %d", int(actionData.ViewX), int(actionData.ViewY)))),
 			ui.GridCell(ui.Text("Selected nodes:")),
-			ui.GridCell(ui.Text(fmt.Sprintf("%v", action.SelectedNodes))),
+			ui.GridCell(ui.Text(fmt.Sprintf("%+v", actionData.SelectedNodes))),
 			ui.GridCell(ui.Text("Selected edges:")),
-			ui.GridCell(ui.Text(fmt.Sprintf("%v", action.SelectedEdges))),
+			ui.GridCell(ui.Text(fmt.Sprintf("%+v", actionData.SelectedEdges))),
 		).
 			Columns(2).
 			RowGap(ui.L2).
@@ -233,7 +233,7 @@ func lastAction(state *core.State[flowchart.FlowChartAction]) core.View {
 			Left:   ui.L0,
 			Bottom: ui.L0,
 		}).
-		BackgroundColor(ui.ColorText.WithTransparency(90)).
+		BackgroundColor(ui.ColorBackground.WithTransparency(10)).
 		Font(ui.MonoSmall).
 		Padding(ui.Padding{}.All(ui.L8))
 }

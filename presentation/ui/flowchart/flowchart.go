@@ -68,6 +68,8 @@ type FlowChartActionData struct {
 	Edge          Edge
 	ViewX         float64
 	ViewY         float64
+	PaneX         float64
+	PaneY         float64
 	SelectedNodes []string
 	SelectedEdges []string
 }
