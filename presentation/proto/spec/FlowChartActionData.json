@@ -26,6 +26,14 @@
     "6": {
       "name": "SelectedEdges",
       "type": "Strings"
+    },
+    "7": {
+      "name": "PaneX",
+      "type": "Float"
+    },
+    "8": {
+      "name": "PaneY",
+      "type": "Float"
     }
   }
 }
