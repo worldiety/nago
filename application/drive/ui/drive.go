@@ -511,12 +511,14 @@ func (c TDrive) viewBreadcrumbs(wnd core.Window, breadcrumbs []drive.File, onNav
 		return nil
 	}
 
+	const maxLengthLarge = 5
 	const maxLengthMedium = 4
 	const maxLengthSmall = 3
 
+	truncateLarge := wnd.Info().SizeClass >= core.SizeClassLarge && len(breadcrumbs) > maxLengthLarge
 	truncateMedium := wnd.Info().SizeClass <= core.SizeClassMedium && len(breadcrumbs) > maxLengthMedium
 	truncateSmall := wnd.Info().SizeClass <= core.SizeClassSmall && len(breadcrumbs) > maxLengthSmall
-	mustTruncate := truncateSmall || truncateMedium
+	mustTruncate := truncateSmall || truncateMedium || truncateLarge
 
 	var items []ui.TMenuItem
 
