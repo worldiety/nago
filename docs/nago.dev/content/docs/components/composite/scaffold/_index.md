@@ -17,6 +17,7 @@ Scaffold creates a new scaffold with the given alignment.
 | Method | Description |
 |--------| ------------|
 | `Body(view core.View)` | Body sets the main content body of the scaffold. |
+| `BodyFullSize(fullSize bool)` |  |
 | `BottomView(view core.View)` | BottomView sets the optional bottom view of the scaffold, often used for secondary actions like user profile or settings. |
 | `Breakpoint(breakpoint int)` | Breakpoint sets the responsive breakpoint at which the scaffold layout may adapt (e.g., switch between drawer and permanent menu). |
 | `Footer(view core.View)` | Footer sets the footer content of the scaffold. |

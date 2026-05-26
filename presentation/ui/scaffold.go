@@ -70,14 +70,15 @@ func ParentScaffoldMenuEntry(wnd core.Window, icon core.SVG, title string, child
 // main body, footer, and optional bottom view. It also supports responsive design
 // through alignment and breakpoints.
 type TScaffold struct {
-	logo       core.View               // logo or brand element
-	body       core.View               // main content body
-	alignment  proto.ScaffoldAlignment // scaffold alignment (e.g., left, right, top)
-	menu       []ScaffoldMenuEntry     // navigation menu entries
-	bottomView core.View               // optional bottom view (e.g., settings, profile)
-	breakpoint int                     // breakpoint for responsive layout
-	footer     core.View               // footer content
-	height     Length                  // optional fixed height of the scaffold
+	logo         core.View               // logo or brand element
+	body         core.View               // main content body
+	alignment    proto.ScaffoldAlignment // scaffold alignment (e.g., left, right, top)
+	menu         []ScaffoldMenuEntry     // navigation menu entries
+	bottomView   core.View               // optional bottom view (e.g., settings, profile)
+	breakpoint   int                     // breakpoint for responsive layout
+	footer       core.View               // footer content
+	height       Length                  // optional fixed height of the scaffold
+	bodyFullSize bool                    // allows the body to use the screen's full size
 }
 
 // Scaffold creates a new scaffold with the given alignment.
@@ -128,18 +129,24 @@ func (c TScaffold) Height(height Length) TScaffold {
 	return c
 }
 
+func (c TScaffold) BodyFullSize(fullSize bool) TScaffold {
+	c.bodyFullSize = fullSize
+	return c
+}
+
 // Render builds and returns the protocol representation of the scaffold.
 func (c TScaffold) Render(ctx core.RenderContext) core.RenderNode {
 
 	return &proto.Scaffold{
-		Body:       render(ctx, c.body),
-		Logo:       render(ctx, c.logo),
-		Menu:       makeMenu(ctx, c.menu),
-		BottomView: render(ctx, c.bottomView),
-		Alignment:  c.alignment,
-		Breakpoint: proto.Uint(c.breakpoint),
-		Footer:     render(ctx, c.footer),
-		Height:     proto.Length(c.height),
+		Body:         render(ctx, c.body),
+		Logo:         render(ctx, c.logo),
+		Menu:         makeMenu(ctx, c.menu),
+		BottomView:   render(ctx, c.bottomView),
+		Alignment:    c.alignment,
+		Breakpoint:   proto.Uint(c.breakpoint),
+		Footer:       render(ctx, c.footer),
+		Height:       proto.Length(c.height),
+		BodyFullSize: proto.Bool(c.bodyFullSize),
 	}
 }
 

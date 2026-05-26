@@ -33,12 +33,12 @@ func main() {
 
 		cfg.RootView(".", func(wnd core.Window) core.View {
 
-			return Scaffold(ScaffoldAlignmentLeading).
+			return Scaffold(ScaffoldAlignmentTop).
 				Body(VStack(
 					// this only causes the side effect of setting the current page title
 					WindowTitle("Scaffold Example"),
 					Text("Page body"),
-				)).
+				).Frame(Frame{Width: Full, Height: Full})).BodyFullSize(true).
 				Footer(footer.Footer().
 					Logo(Image().Embed(appIcon)).
 					Impress("https://www.worldiety.de/impressum").

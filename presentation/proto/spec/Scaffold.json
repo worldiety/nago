@@ -35,6 +35,10 @@
     "8": {
       "name": "Height",
       "type": "Length"
+    },
+    "9": {
+      "name": "BodyFullSize",
+      "type": "Bool"
     }
   }
 }

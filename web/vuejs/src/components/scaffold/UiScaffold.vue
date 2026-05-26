@@ -13,8 +13,8 @@
 	<BurgerMenu v-if="burgerMenuVisible" :ui="props.ui" />
 
 	<div class="min-h-full flex flex-col min-h-screen" :class="bodyWrapperClass">
-		<div class="website-content min-h-full flex-grow w-full">
-			<ui-generic v-if="props.ui.body" :ui="props.ui.body" />
+		<div class="website-content min-h-full flex-grow w-full" :style="contentStyles">
+			<ui-generic v-if="props.ui.body" :ui="props.ui.body" :class="{ grow: ui.bodyFullSize }" />
 		</div>
 
 		<!-- Footer -->
@@ -30,13 +30,22 @@ import UiGeneric from '@/components/UiGeneric.vue';
 import NavigationBar from '@/components/scaffold/NavigationBar.vue';
 import Sidebar from '@/components/scaffold/Sidebar.vue';
 import BurgerMenu from '@/components/scaffold/burgermenu/BurgerMenu.vue';
-import { Scaffold, ScaffoldAlignmentValues } from '@/shared/proto/nprotoc_gen';
+import type { Scaffold } from '@/shared/proto/nprotoc_gen';
+import { ScaffoldAlignmentValues } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: Scaffold;
 }>();
 
 const windowWidth = ref<number>(window.innerWidth);
+
+const contentStyles = computed<string>(() => {
+	if (props.ui.bodyFullSize) {
+		return `max-width: none; padding-left: 0; padding-right: 0; display: flex; flex-direction: column;`;
+	}
+
+	return '';
+});
 
 onMounted(() => {
 	window.addEventListener('resize', updateWindowWidth);
