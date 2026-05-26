@@ -511,7 +511,22 @@ func (c TDrive) viewBreadcrumbs(wnd core.Window, breadcrumbs []drive.File, onNav
 		return nil
 	}
 
-	var tmp []core.View
+	const maxLengthMedium = 4
+	const maxLengthSmall = 3
+
+	truncateMedium := wnd.Info().SizeClass <= core.SizeClassMedium && len(breadcrumbs) > maxLengthMedium
+	truncateSmall := wnd.Info().SizeClass <= core.SizeClassSmall && len(breadcrumbs) > maxLengthSmall
+	mustTruncate := truncateSmall || truncateMedium
+
+	var items []ui.TMenuItem
+
+	type viewWithTitle struct {
+		title  string
+		view   core.View
+		action func()
+	}
+
+	var tmp []viewWithTitle
 	for idx, file := range breadcrumbs {
 		var action func()
 		if idx < len(breadcrumbs)-1 {
@@ -530,11 +545,53 @@ func (c TDrive) viewBreadcrumbs(wnd core.Window, breadcrumbs []drive.File, onNav
 		if title == "" {
 			title = StrMyFiles.Get(wnd)
 		}
-		tmp = append(tmp, ui.TertiaryButton(action).Title(title))
+
+		tmp = append(tmp, viewWithTitle{
+			title:  title,
+			view:   ui.TertiaryButton(action).Title(title).AccessibilityLabel(title),
+			action: action,
+		})
 	}
 
-	return breadcrumb.Breadcrumbs(tmp...)
+	var result []core.View
+	if mustTruncate {
+
+		if len(tmp) > 0 {
+			result = append(result, tmp[0].view)
+		}
+
+		// collect items
+		for i, v := range tmp {
+			if i == 0 || i == len(tmp)-1 {
+				continue
+			}
+			items = append(items, ui.MenuItem(func() {
+				v.action()
+			}, ui.Text(v.title)))
+		}
+
+		m := ui.Menu(ui.TertiaryButton(nil).Title("...").AccessibilityLabel(StrShowMoreFolders.Get(wnd)), ui.MenuGroup(items...))
+		result = append(result, m)
+
+		if len(tmp) > 0 {
+			result = append(result, tmp[len(tmp)-1].view)
+		}
+
+	} else {
+		for _, v := range tmp {
+			result = append(result, v.view)
+		}
+	}
+
+	return breadcrumb.Breadcrumbs(result...)
 }
+
+var StrShowMoreFolders = i18n.MustString("nago.drive.breadcrumbs.triplepoints",
+	i18n.Values{
+		language.English: "Show more folders",
+		language.German:  "Mehr Ordner anzeigen",
+	},
+)
 
 func dialogCreateDirectory(wnd core.Window, presented *core.State[bool], onCreate func(name string) error) core.View {
 	if !presented.Get() {
