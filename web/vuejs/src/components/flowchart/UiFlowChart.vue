@@ -50,15 +50,14 @@ import { randomStr } from '@/components/shared/util';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
 import type { Connection, EdgeChange, EdgeMouseEvent, NodeChange, NodeMouseEvent, Styles } from '@vue-flow/core';
-import { useVueFlow } from '@vue-flow/core';
-import { type Edge, type EdgeMarkerType, MarkerType, type Node, Position, VueFlow } from '@vue-flow/core';
+import { type Edge, type EdgeMarkerType, MarkerType, type Node, Position, VueFlow, useVueFlow } from '@vue-flow/core';
 import type { FlowChart, FlowChartNode } from '@/shared/proto/nprotoc_gen';
-import { FlowChartModel } from '@/shared/proto/nprotoc_gen';
 import {
 	FlowChartEdge,
 	FlowChartEdgeMarkerValues,
 	FlowChartEdgeStyleValues,
 	FlowChartEdges,
+	FlowChartModel,
 	FlowChartNodeTypeValues,
 	FlowChartPoint,
 	UpdateStateValueRequested,
@@ -301,7 +300,7 @@ function onNodeClick(e: NodeMouseEvent) {
 		x: event.clientX,
 		y: event.clientY,
 	};
-	const panePos = project(viewPos);
+	const panePos = getPanePosFromClientPos(viewPos);
 
 	inputAction({
 		node: node.data,
@@ -324,7 +323,7 @@ function onEdgeClick(e: EdgeMouseEvent) {
 		x: event.clientX,
 		y: event.clientY,
 	};
-	const panePos = project(viewPos);
+	const panePos = getPanePosFromClientPos(viewPos);
 
 	inputAction({
 		edge: edge.data,
@@ -345,7 +344,7 @@ function onPaneClick(e: MouseEvent) {
 			x: e.clientX,
 			y: e.clientY,
 		};
-		const panePos = project(viewPos);
+		const panePos = getPanePosFromClientPos(viewPos);
 
 		inputAction({
 			paneX: panePos.x,
@@ -356,6 +355,16 @@ function onPaneClick(e: MouseEvent) {
 			selectedEdges: flowChart.value.getSelectedEdges.map((e) => e.id),
 		});
 	});
+}
+
+function getPanePosFromClientPos(clientPos: { x: number; y: number }): { x: number; y: number } {
+	if (!flowChart.value) return { x: 0, y: 0 };
+
+	const flowChartBounds = flowChart.value.$el.getBoundingClientRect();
+	clientPos.x -= flowChartBounds.left;
+	clientPos.y -= flowChartBounds.top;
+
+	return project(clientPos);
 }
 
 function inputAction(action: object) {
