@@ -95,6 +95,7 @@ type Configurator struct {
 	contextPath            atomic.Pointer[string]
 	hasSSL                 bool
 	noFooter               []core.NavigationPath
+	bodyFullSize           []core.NavigationPath
 	migrations             *migration.Migrations
 	rdb                    *rebac.DB
 	oneShot                bool
@@ -278,6 +279,14 @@ func (c *Configurator) OnDestroy(f func()) {
 // to save space and improve readability
 func (c *Configurator) NoFooter(p ...core.NavigationPath) *Configurator {
 	c.noFooter = append(c.noFooter, p...)
+	return c
+}
+
+// BodyFullSize appends the given paths to the internal full body width path list.
+// This is useful to use the entire screen width. Normally, the body is limited to a certain width to improve
+// readability.
+func (c *Configurator) BodyFullSize(p ...core.NavigationPath) *Configurator {
+	c.bodyFullSize = append(c.bodyFullSize, p...)
 	return c
 }
 

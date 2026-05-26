@@ -510,6 +510,9 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 			scaffold = scaffold.Breakpoint(*b.breakpoint)
 		}
 
+		fullBody := slices.Contains(b.cfg.bodyFullSize, wnd.Path())
+		scaffold = scaffold.BodyFullSize(fullBody)
+
 		noFooter := b.cfg.noFooter
 		if len(noFooter) == 0 || (len(noFooter) > 0 && !slices.Contains(noFooter, wnd.Path())) {
 			if b.footer != nil {
