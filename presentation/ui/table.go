@@ -36,6 +36,11 @@ func TableColumn(content core.View) TTableColumn {
 	}
 }
 
+func (c TTableColumn) Content(content core.View) TTableColumn {
+	c.content = content
+	return c
+}
+
 // Action sets an optional click/tap action for the column's cells.
 func (c TTableColumn) Action(action func()) TTableColumn {
 	c.action = action
@@ -106,6 +111,11 @@ func TableCell(content core.View) TTableCell {
 	return TTableCell{content: content}
 }
 
+func (c TTableCell) Content(content core.View) TTableCell {
+	c.content = content
+	return c
+}
+
 // ColSpan sets how many columns this cell spans.
 func (c TTableCell) ColSpan(colSpan int) TTableCell {
 	c.colSpan = colSpan
@@ -171,6 +181,11 @@ func TableRow(cells ...TTableCell) TTableRow {
 	return TTableRow{cells: cells}
 }
 
+func (r TTableRow) Append(cells ...TTableCell) TTableRow {
+	r.cells = append(r.cells, cells...)
+	return r
+}
+
 // Action sets a click/tap action for the entire row.
 func (r TTableRow) Action(action func()) TTableRow {
 	r.action = action
@@ -218,6 +233,11 @@ func Table(columns ...TTableColumn) TTable {
 		rowDividerColor:     M5,
 		border:              Border{}.Radius(L20).ora(),
 	}
+}
+
+func (c TTable) Columns(columns ...TTableColumn) TTable {
+	c.columns = columns
+	return c
 }
 
 // BackgroundColor sets the background color of the table.

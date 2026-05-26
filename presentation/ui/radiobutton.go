@@ -107,6 +107,12 @@ func RadioButton(checked bool) TRadioButton {
 	return c
 }
 
+// Value sets the initial selected state of the radio button.
+func (c TRadioButton) Value(checked bool) TRadioButton {
+	c.value = checked
+	return c
+}
+
 // InputChecked binds the radio button to the given state, enabling two-way data binding
 // so that the selected state is synchronized with external logic.
 func (c TRadioButton) InputChecked(input *core.State[bool]) TRadioButton {

@@ -28,6 +28,12 @@ func RichText(value string) TRichText {
 	}
 }
 
+// Value sets the rich text content to be rendered.
+func (c TRichText) Value(value string) TRichText {
+	c.value = value
+	return c
+}
+
 // Frame sets the layout frame for the rich text component.
 func (c TRichText) Frame(frame Frame) TRichText {
 	c.frame = frame

@@ -35,6 +35,12 @@ func CodeEditor(value string) TCodeEditor {
 	}
 }
 
+// Value sets the initial text content of the code editor.
+func (c TCodeEditor) Value(value string) TCodeEditor {
+	c.value = value
+	return c
+}
+
 // InputValue binds the editor to an external state for controlled text value updates.
 func (c TCodeEditor) InputValue(state *core.State[string]) TCodeEditor {
 	c.inputValue = state

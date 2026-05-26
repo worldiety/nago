@@ -86,6 +86,11 @@ func Scaffold(alignment ScaffoldAlignment) TScaffold {
 	return TScaffold{alignment: alignment.ora()}
 }
 
+func (c TScaffold) Alignment(alignment ScaffoldAlignment) TScaffold {
+	c.alignment = alignment.ora()
+	return c
+}
+
 // Logo sets the logo or brand element of the scaffold.
 func (c TScaffold) Logo(view core.View) TScaffold {
 	c.logo = view

@@ -40,6 +40,16 @@ func ToggleField(label string, value bool) TToggleField {
 	}
 }
 
+func (c TToggleField) Label(label string) TToggleField {
+	c.label = label
+	return c
+}
+
+func (c TToggleField) Value(value bool) TToggleField {
+	c.value = value
+	return c
+}
+
 // ID sets the ID of the toggle field
 func (c TToggleField) ID(id string) TToggleField {
 	c.id = id

@@ -130,6 +130,12 @@ func Text(content string) TText {
 	return TText{content: content}
 }
 
+// Text is a convenience property setter method to set the content for a zero-value Text.
+func (c TText) Text(content string) TText {
+	c.content = content
+	return c
+}
+
 // Underline underlines the Text.
 func (c TText) Underline(b bool) TText {
 	c.underline = b

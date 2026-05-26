@@ -24,6 +24,11 @@ func Space(size Length) TSpace {
 	return TSpace{size: size}
 }
 
+func (t TSpace) Size(size Length) TSpace {
+	t.size = size
+	return t
+}
+
 // Render builds the protocol representation of the space component,
 // enforcing both width and height to the given size.
 func (t TSpace) Render(ctx core.RenderContext) core.RenderNode {

@@ -59,6 +59,11 @@ func TextLayout(views ...core.View) TTextLayout {
 	}
 }
 
+func (c TTextLayout) Append(views ...core.View) TTextLayout {
+	c.children = append(c.children, views...)
+	return c
+}
+
 // Action sets a callback function that is executed when the layout is clicked.
 func (c TTextLayout) Action(f func()) TTextLayout {
 	c.action = f

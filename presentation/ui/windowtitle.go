@@ -24,6 +24,11 @@ func WindowTitle(title string) TWindowTitle {
 	return TWindowTitle{title: title}
 }
 
+func (c TWindowTitle) Title(title string) TWindowTitle {
+	c.title = title
+	return c
+}
+
 // Render builds the protocol representation of the window title.
 // It sets the title value that will be displayed in the browser or application.
 // If the window supports SetTitle (e.g. during SSR), the title is also stored

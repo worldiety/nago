@@ -59,6 +59,13 @@ func PasswordField(label string, value string) TPasswordField {
 	return c
 }
 
+// Value sets the initial value of the password field. Be careful with that, as you should not reuse the
+// value after the user has finished the secret step.
+func (c TPasswordField) Value(value string) TPasswordField {
+	c.value = value
+	return c
+}
+
 // AutoComplete enables or disables browser autocomplete for the field.
 func (c TPasswordField) AutoComplete(autoComplete bool) TPasswordField {
 	c.disableAutocomplete = !autoComplete

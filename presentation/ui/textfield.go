@@ -68,6 +68,17 @@ type TTextField struct {
 	autocomplete    string  // autocomplete tags of the input
 }
 
+// TextField creates a new text field with the given label and initial value.
+// By default, it is single-line and uncontrolled until InputValue is set.
+func TextField(label string, value string) TTextField {
+	c := TTextField{
+		label: label,
+		value: value,
+	}
+
+	return c
+}
+
 // Padding is a placeholder implementation.
 func (c TTextField) Padding(padding Padding) DecoredView {
 	// TODO implement me or reduce interface
@@ -86,14 +97,9 @@ func (c TTextField) AccessibilityLabel(label string) DecoredView {
 	return c
 }
 
-// TextField creates a new text field with the given label and initial value.
-// By default, it is single-line and uncontrolled until InputValue is set.
-func TextField(label string, value string) TTextField {
-	c := TTextField{
-		label: label,
-		value: value,
-	}
-
+// Value sets a static text value for the field. This is used when TextField constructor cannot be used.
+func (c TTextField) Value(value string) TTextField {
+	c.value = value
 	return c
 }
 

@@ -55,6 +55,11 @@ func ScrollView(content core.View) TScrollView {
 	}
 }
 
+func (c TScrollView) Content(content core.View) TScrollView {
+	c.content = content
+	return c
+}
+
 // Axis sets the scroll direction (vertical or horizontal).
 func (c TScrollView) Axis(axis ScrollViewAxis) TScrollView {
 	c.axis = axis
