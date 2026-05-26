@@ -51,6 +51,7 @@ func main() {
 | `Value(color ui.Color)` | Value sets the selected value. An empty Color selects none. |
 | `Visible(visible bool)` |  |
 | `WithFrame(fn func(ui.Frame) ui.Frame)` |  |
+| `customColorView()` | customColorView returns the view where the user can define a custom color with hexcode |
 | `pickerTable()` |  |
 ---
 

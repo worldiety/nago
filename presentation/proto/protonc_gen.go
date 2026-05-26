@@ -5412,13 +5412,14 @@ type Scaffold struct {
 	BottomView Component
 	Alignment  ScaffoldAlignment
 	// Breakpoint at which the navigation bar or side bar should switch to the burger menu. Defaults to 768px.
-	Breakpoint Uint
-	Footer     Component
-	Height     Length
+	Breakpoint   Uint
+	Footer       Component
+	Height       Length
+	BodyFullSize Bool
 }
 
 func (v *Scaffold) write(w *BinaryWriter) error {
-	var fields [9]bool
+	var fields [10]bool
 	fields[1] = v.Body != nil && !v.Body.IsZero()
 	fields[2] = v.Logo != nil && !v.Logo.IsZero()
 	fields[3] = !v.Menu.IsZero()
@@ -5427,6 +5428,7 @@ func (v *Scaffold) write(w *BinaryWriter) error {
 	fields[6] = !v.Breakpoint.IsZero()
 	fields[7] = v.Footer != nil && !v.Footer.IsZero()
 	fields[8] = !v.Height.IsZero()
+	fields[9] = !v.BodyFullSize.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -5529,6 +5531,14 @@ func (v *Scaffold) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[9] {
+		if err := w.writeFieldHeader(uvarint, 9); err != nil {
+			return err
+		}
+		if err := v.BodyFullSize.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -5617,6 +5627,11 @@ func (v *Scaffold) read(r *BinaryReader) error {
 			v.Footer = obj.(Component)
 		case 8:
 			err := v.Height.read(r)
+			if err != nil {
+				return err
+			}
+		case 9:
+			err := v.BodyFullSize.read(r)
 			if err != nil {
 				return err
 			}
@@ -21974,13 +21989,14 @@ func (v *Scaffold) reset() {
 	v.Breakpoint.reset()
 	v.Footer = nil
 	v.Height.reset()
+	v.BodyFullSize.reset()
 }
 
 func (v *Scaffold) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Body.IsZero() && v.Logo.IsZero() && v.Menu.IsZero() && v.BottomView.IsZero() && v.Alignment.IsZero() && v.Breakpoint.IsZero() && v.Footer.IsZero() && v.Height.IsZero()
+	return v.Body.IsZero() && v.Logo.IsZero() && v.Menu.IsZero() && v.BottomView.IsZero() && v.Alignment.IsZero() && v.Breakpoint.IsZero() && v.Footer.IsZero() && v.Height.IsZero() && v.BodyFullSize.IsZero()
 }
 
 func (v *ScaffoldMenuEntry) reset() {

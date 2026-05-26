@@ -49,7 +49,7 @@ import { frameCSS } from '@/components/shared/frame';
 import { randomStr } from '@/components/shared/util';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
-import type { Connection, EdgeChange, EdgeMouseEvent, NodeChange, NodeMouseEvent, Styles} from '@vue-flow/core';
+import type { Connection, EdgeChange, EdgeMouseEvent, NodeChange, NodeMouseEvent, Styles } from '@vue-flow/core';
 import { useVueFlow } from '@vue-flow/core';
 import { type Edge, type EdgeMarkerType, MarkerType, type Node, Position, VueFlow } from '@vue-flow/core';
 import type { FlowChart, FlowChartNode } from '@/shared/proto/nprotoc_gen';

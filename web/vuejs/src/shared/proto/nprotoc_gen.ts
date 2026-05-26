@@ -5588,6 +5588,8 @@ export class Scaffold implements Writeable, Readable, Component {
 
 	public height?: Length;
 
+	public bodyFullSize?: Bool;
+
 	constructor(
 		body: Component | undefined = undefined,
 		logo: Component | undefined = undefined,
@@ -5596,7 +5598,8 @@ export class Scaffold implements Writeable, Readable, Component {
 		alignment: ScaffoldAlignment | undefined = undefined,
 		breakpoint: Uint | undefined = undefined,
 		footer: Component | undefined = undefined,
-		height: Length | undefined = undefined
+		height: Length | undefined = undefined,
+		bodyFullSize: Bool | undefined = undefined
 	) {
 		this.body = body;
 		this.logo = logo;
@@ -5606,6 +5609,7 @@ export class Scaffold implements Writeable, Readable, Component {
 		this.breakpoint = breakpoint;
 		this.footer = footer;
 		this.height = height;
+		this.bodyFullSize = bodyFullSize;
 	}
 
 	read(reader: BinaryReader): void {
@@ -5667,6 +5671,10 @@ export class Scaffold implements Writeable, Readable, Component {
 					this.height = readString(reader);
 					break;
 				}
+				case 9: {
+					this.bodyFullSize = readBool(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -5684,6 +5692,7 @@ export class Scaffold implements Writeable, Readable, Component {
 			this.breakpoint !== undefined,
 			this.footer !== undefined && !this.footer.isZero(),
 			this.height !== undefined,
+			this.bodyFullSize !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -5731,6 +5740,10 @@ export class Scaffold implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 8);
 			writeString(writer, this.height!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[9]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 9);
+			writeBool(writer, this.bodyFullSize!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -5742,7 +5755,8 @@ export class Scaffold implements Writeable, Readable, Component {
 			this.alignment === undefined &&
 			this.breakpoint === undefined &&
 			(this.footer === undefined || this.footer.isZero()) &&
-			this.height === undefined
+			this.height === undefined &&
+			this.bodyFullSize === undefined
 		);
 	}
 
@@ -5755,6 +5769,7 @@ export class Scaffold implements Writeable, Readable, Component {
 		this.breakpoint = undefined;
 		this.footer = undefined;
 		this.height = undefined;
+		this.bodyFullSize = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
