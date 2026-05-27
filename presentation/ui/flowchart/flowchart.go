@@ -63,6 +63,20 @@ func (c CustomContent) render(ctx core.RenderContext) proto.FlowChartCustomConte
 	}
 }
 
+type FlowChartBackgroundGridStyle int
+
+const (
+	FlowChartBackgroundGridStyleDots  = FlowChartBackgroundGridStyle(proto.FlowChartBackgroundGridStyleDots)
+	FlowChartBackgroundGridStyleLines = FlowChartBackgroundGridStyle(proto.FlowChartBackgroundGridStyleLines)
+)
+
+type Background struct {
+	Color     ui.Color
+	GridColor ui.Color
+	GridStyle FlowChartBackgroundGridStyle
+	GridGap   uint64
+}
+
 type FlowChartActionData struct {
 	Node          Node
 	Edge          Edge
@@ -81,7 +95,7 @@ type TFlowChart struct {
 	inputValue         *core.State[Model]
 	actionValue        *core.State[FlowChartActionData]
 	frame              ui.Frame
-	backgroundColor    ui.Color
+	background         Background
 	nodesDraggable     bool
 	nodesConnectable   bool
 	edgesEditable      bool
@@ -133,8 +147,8 @@ func (c TFlowChart) FullWidth() TFlowChart {
 	return c
 }
 
-func (c TFlowChart) BackgroundColor(color ui.Color) TFlowChart {
-	c.backgroundColor = color
+func (c TFlowChart) Background(background Background) TFlowChart {
+	c.background = background
 	return c
 }
 
@@ -193,8 +207,13 @@ func (c TFlowChart) Render(ctx core.RenderContext) core.RenderNode {
 			Nodes: make(proto.FlowChartNodes, 0),
 			Edges: make(proto.FlowChartEdges, 0),
 		},
-		Frame:              frameToOra(c.frame),
-		BackgroundColor:    proto.Color(c.backgroundColor),
+		Frame: frameToOra(c.frame),
+		Background: proto.FlowChartBackground{
+			Color:     proto.Color(c.background.Color),
+			GridColor: proto.Color(c.background.GridColor),
+			GridStyle: proto.FlowChartBackgroundGridStyle(c.background.GridStyle),
+			GridGap:   proto.Uint(c.background.GridGap),
+		},
 		NodesDraggable:     proto.Bool(c.nodesDraggable),
 		NodesConnectable:   proto.Bool(c.nodesConnectable),
 		EdgesEditable:      proto.Bool(c.edgesEditable),

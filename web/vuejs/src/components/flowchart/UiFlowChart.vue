@@ -31,6 +31,22 @@
 			@edge-click="onEdgeClick"
 			@pane-click="onPaneClick"
 		>
+			<Background
+				v-if="ui.background"
+				:pattern-color="
+					ui.background.gridColor
+						? colorValue(ui.background.gridColor)
+						: themeManager.getActiveThemeKey() === ThemeKey.DARK
+							? '#aaa6'
+							: '#aaa'
+				"
+				:gap="ui.background.gridGap"
+				:variant="
+					ui.background.gridStyle === FlowChartBackgroundGridStyleValues.FlowChartBackgroundGridStyleLines
+						? 'lines'
+						: 'dots'
+				"
+			/>
 			<template #node-custom="node">
 				<FlowChartCustomNode
 					:node="node.data as FlowChartNode"
@@ -49,9 +65,11 @@ import { frameCSS } from '@/components/shared/frame';
 import { randomStr } from '@/components/shared/util';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
+import { Background } from '@vue-flow/background';
 import type { Connection, EdgeChange, EdgeMouseEvent, NodeChange, NodeMouseEvent, Styles } from '@vue-flow/core';
 import { type Edge, type EdgeMarkerType, MarkerType, type Node, Position, VueFlow, useVueFlow } from '@vue-flow/core';
 import type { FlowChart, FlowChartNode } from '@/shared/proto/nprotoc_gen';
+import { FlowChartBackgroundGridStyleValues } from '@/shared/proto/nprotoc_gen';
 import {
 	FlowChartEdge,
 	FlowChartEdgeMarkerValues,
@@ -86,8 +104,8 @@ const frameStyles = computed<string>(() => {
 		styles.push('min-height:16rem');
 	}
 
-	if (props.ui.backgroundColor) {
-		styles.push(`background-color:${colorValue(props.ui.backgroundColor)}`);
+	if (props.ui.background?.color) {
+		styles.push(`background-color:${colorValue(props.ui.background?.color)}`);
 	}
 
 	return styles.join(';');
@@ -156,7 +174,7 @@ function setEdges() {
 			labelShowBg: !!edge.label,
 			labelBgPadding: [4, 6],
 			labelBgBorderRadius: 6,
-			labelBgStyle: props.ui.backgroundColor ? { fill: colorValue(props.ui.backgroundColor) } : undefined,
+			labelBgStyle: props.ui.background?.color ? { fill: colorValue(props.ui.background.color) } : undefined,
 			labelStyle: edgeColor ? { fill: edgeColor } : undefined,
 		};
 	});

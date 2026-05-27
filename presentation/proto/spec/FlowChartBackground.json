@@ -1,0 +1,24 @@
+{
+  "doc": "FlowChartBackground describes a flow chart's background.",
+  "kind": "Record",
+  "id": 253,
+  "fields": {
+    "1": {
+      "name": "Color",
+      "type": "Color"
+    },
+    "2": {
+      "name": "GridColor",
+      "type": "Color"
+    },
+    "3": {
+      "name": "GridStyle",
+      "type": "FlowChartBackgroundGridStyle"
+    },
+    "4": {
+      "name": "GridGap",
+      "type": "Uint"
+    }
+  }
+}
+

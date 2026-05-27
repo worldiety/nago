@@ -1,0 +1,15 @@
+{
+  "doc": "FlowChartBackgroundGridStyle describes the background pattern style.",
+  "kind": "Uint",
+  "id": 252,
+  "const": {
+    "0": {
+      "name": "FlowChartBackgroundGridStyleDots"
+    },
+    "1": {
+      "name": "FlowChartBackgroundGridStyleLines"
+    }
+  }
+}
+
+

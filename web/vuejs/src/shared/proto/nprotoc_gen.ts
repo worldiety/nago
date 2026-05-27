@@ -18179,7 +18179,7 @@ export class FlowChart implements Writeable, Readable, Component {
 
 	public frame?: Frame;
 
-	public backgroundColor?: Color;
+	public background?: FlowChartBackground;
 
 	public nodesDraggable?: Bool;
 
@@ -18203,7 +18203,7 @@ export class FlowChart implements Writeable, Readable, Component {
 		inputValue: Ptr | undefined = undefined,
 		value: FlowChartModel | undefined = undefined,
 		frame: Frame | undefined = undefined,
-		backgroundColor: Color | undefined = undefined,
+		background: FlowChartBackground | undefined = undefined,
 		nodesDraggable: Bool | undefined = undefined,
 		nodesConnectable: Bool | undefined = undefined,
 		edgesEditable: Bool | undefined = undefined,
@@ -18217,7 +18217,7 @@ export class FlowChart implements Writeable, Readable, Component {
 		this.inputValue = inputValue;
 		this.value = value;
 		this.frame = frame;
-		this.backgroundColor = backgroundColor;
+		this.background = background;
 		this.nodesDraggable = nodesDraggable;
 		this.nodesConnectable = nodesConnectable;
 		this.edgesEditable = edgesEditable;
@@ -18250,7 +18250,8 @@ export class FlowChart implements Writeable, Readable, Component {
 					break;
 				}
 				case 4: {
-					this.backgroundColor = readString(reader);
+					this.background = new FlowChartBackground();
+					this.background.read(reader);
 					break;
 				}
 				case 5: {
@@ -18302,7 +18303,7 @@ export class FlowChart implements Writeable, Readable, Component {
 			this.inputValue !== undefined,
 			this.value !== undefined && !this.value.isZero(),
 			this.frame !== undefined && !this.frame.isZero(),
-			this.backgroundColor !== undefined,
+			this.background !== undefined && !this.background.isZero(),
 			this.nodesDraggable !== undefined,
 			this.nodesConnectable !== undefined,
 			this.edgesEditable !== undefined,
@@ -18328,8 +18329,8 @@ export class FlowChart implements Writeable, Readable, Component {
 			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
-			writeString(writer, this.backgroundColor!); // typescript linters cannot see, that we already checked this properly above
+			writer.writeFieldHeader(Shapes.RECORD, 4);
+			this.background!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[5]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 5);
@@ -18374,7 +18375,7 @@ export class FlowChart implements Writeable, Readable, Component {
 			this.inputValue === undefined &&
 			(this.value === undefined || this.value.isZero()) &&
 			(this.frame === undefined || this.frame.isZero()) &&
-			this.backgroundColor === undefined &&
+			(this.background === undefined || this.background.isZero()) &&
 			this.nodesDraggable === undefined &&
 			this.nodesConnectable === undefined &&
 			this.edgesEditable === undefined &&
@@ -18391,7 +18392,7 @@ export class FlowChart implements Writeable, Readable, Component {
 		this.inputValue = undefined;
 		this.value = undefined;
 		this.frame = undefined;
-		this.backgroundColor = undefined;
+		this.background = undefined;
 		this.nodesDraggable = undefined;
 		this.nodesConnectable = undefined;
 		this.edgesEditable = undefined;
@@ -19540,6 +19541,118 @@ export class FlowChartActionData implements Writeable, Readable {
 
 	writeTypeHeader(dst: BinaryWriter): void {
 		dst.writeTypeHeader(Shapes.RECORD, 251);
+		return;
+	}
+}
+
+// FlowChartBackgroundGridStyle describes the background pattern style.
+export type FlowChartBackgroundGridStyle = number;
+function writeTypeHeaderFlowChartBackgroundGridStyle(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 252);
+	return;
+}
+// companion enum containing all defined constants for FlowChartBackgroundGridStyle
+export enum FlowChartBackgroundGridStyleValues {
+	FlowChartBackgroundGridStyleDots = 0,
+	FlowChartBackgroundGridStyleLines = 1,
+}
+
+// FlowChartBackground describes a flow chart's background.
+export class FlowChartBackground implements Writeable, Readable {
+	public color?: Color;
+
+	public gridColor?: Color;
+
+	public gridStyle?: FlowChartBackgroundGridStyle;
+
+	public gridGap?: Uint;
+
+	constructor(
+		color: Color | undefined = undefined,
+		gridColor: Color | undefined = undefined,
+		gridStyle: FlowChartBackgroundGridStyle | undefined = undefined,
+		gridGap: Uint | undefined = undefined
+	) {
+		this.color = color;
+		this.gridColor = gridColor;
+		this.gridStyle = gridStyle;
+		this.gridGap = gridGap;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.color = readString(reader);
+					break;
+				}
+				case 2: {
+					this.gridColor = readString(reader);
+					break;
+				}
+				case 3: {
+					this.gridStyle = readInt(reader);
+					break;
+				}
+				case 4: {
+					this.gridGap = readInt(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.color !== undefined,
+			this.gridColor !== undefined,
+			this.gridStyle !== undefined,
+			this.gridGap !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.color!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.gridColor!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 3);
+			writeInt(writer, this.gridStyle!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 4);
+			writeInt(writer, this.gridGap!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.color === undefined &&
+			this.gridColor === undefined &&
+			this.gridStyle === undefined &&
+			this.gridGap === undefined
+		);
+	}
+
+	reset(): void {
+		this.color = undefined;
+		this.gridColor = undefined;
+		this.gridStyle = undefined;
+		this.gridGap = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 253);
 		return;
 	}
 }
@@ -20698,6 +20811,15 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 251: {
 			const v = new FlowChartActionData();
+			v.read(src);
+			return v;
+		}
+		case 252: {
+			const v = readInt(src) as FlowChartBackgroundGridStyle;
+			return v;
+		}
+		case 253: {
+			const v = new FlowChartBackground();
 			v.read(src);
 			return v;
 		}
