@@ -147,7 +147,10 @@ func main() {
 					NodesDraggable(true).
 					NodesConnectable(true).
 					ElementsSelectable(true).
-					BackgroundColor(ui.M1).
+					Background(flowchart.Background{
+						Color:   ui.M1,
+						GridGap: 16,
+					}).
 					Frame(ui.Frame{}.MatchScreen()).
 					Layout(flowchart.FlowChartLayoutVertical).
 					CustomContents(contents).

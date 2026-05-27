@@ -15,7 +15,7 @@ FlowChart creates a new flowchart component for the given model.
 |--------| ------------|
 | `ActionValue(state *core.State[FlowChartActionData])` |  |
 | `AppendCustomContent(content CustomContent)` |  |
-| `BackgroundColor(color ui.Color)` |  |
+| `Background(background Background)` |  |
 | `CustomContents(contents []CustomContent)` |  |
 | `EdgesEditable(val bool)` |  |
 | `ElementsSelectable(val bool)` |  |

@@ -16,8 +16,8 @@
       "type": "Frame"
     },
     "4": {
-      "name": "BackgroundColor",
-      "type": "Color"
+      "name": "Background",
+      "type": "FlowChartBackground"
     },
     "5": {
       "name": "NodesDraggable",

@@ -17684,7 +17684,7 @@ type FlowChart struct {
 	InputValue         Ptr
 	Value              FlowChartModel
 	Frame              Frame
-	BackgroundColor    Color
+	Background         FlowChartBackground
 	NodesDraggable     Bool
 	NodesConnectable   Bool
 	EdgesEditable      Bool
@@ -17701,7 +17701,7 @@ func (v *FlowChart) write(w *BinaryWriter) error {
 	fields[1] = !v.InputValue.IsZero()
 	fields[2] = !v.Value.IsZero()
 	fields[3] = !v.Frame.IsZero()
-	fields[4] = !v.BackgroundColor.IsZero()
+	fields[4] = !v.Background.IsZero()
 	fields[5] = !v.NodesDraggable.IsZero()
 	fields[6] = !v.NodesConnectable.IsZero()
 	fields[7] = !v.EdgesEditable.IsZero()
@@ -17746,10 +17746,10 @@ func (v *FlowChart) write(w *BinaryWriter) error {
 		}
 	}
 	if fields[4] {
-		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+		if err := w.writeFieldHeader(record, 4); err != nil {
 			return err
 		}
-		if err := v.BackgroundColor.write(w); err != nil {
+		if err := v.Background.write(w); err != nil {
 			return err
 		}
 	}
@@ -17856,7 +17856,7 @@ func (v *FlowChart) read(r *BinaryReader) error {
 				return err
 			}
 		case 4:
-			err := v.BackgroundColor.read(r)
+			err := v.Background.read(r)
 			if err != nil {
 				return err
 			}
@@ -18947,6 +18947,130 @@ func (v *FlowChartActionData) read(r *BinaryReader) error {
 			}
 		case 8:
 			err := v.PaneY.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// FlowChartBackgroundGridStyle describes the background pattern style.
+type FlowChartBackgroundGridStyle uint64
+
+const (
+	FlowChartBackgroundGridStyleDots  FlowChartBackgroundGridStyle = 0
+	FlowChartBackgroundGridStyleLines FlowChartBackgroundGridStyle = 1
+)
+
+func (v *FlowChartBackgroundGridStyle) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *FlowChartBackgroundGridStyle) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = FlowChartBackgroundGridStyle(tmp)
+	return nil
+}
+
+func (v *FlowChartBackgroundGridStyle) reset() {
+	*v = FlowChartBackgroundGridStyle(0)
+}
+func (v *FlowChartBackgroundGridStyle) IsZero() bool {
+	return *v == 0
+}
+
+// FlowChartBackground describes a flow chart's background.
+type FlowChartBackground struct {
+	Color     Color
+	GridColor Color
+	GridStyle FlowChartBackgroundGridStyle
+	GridGap   Uint
+}
+
+func (v *FlowChartBackground) write(w *BinaryWriter) error {
+	var fields [5]bool
+	fields[1] = !v.Color.IsZero()
+	fields[2] = !v.GridColor.IsZero()
+	fields[3] = !v.GridStyle.IsZero()
+	fields[4] = !v.GridGap.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Color.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.GridColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(uvarint, 3); err != nil {
+			return err
+		}
+		if err := v.GridStyle.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(uvarint, 4); err != nil {
+			return err
+		}
+		if err := v.GridGap.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *FlowChartBackground) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Color.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.GridColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.GridStyle.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.GridGap.read(r)
 			if err != nil {
 				return err
 			}
@@ -20416,6 +20540,18 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 251:
 		var v FlowChartActionData
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 252:
+		var v FlowChartBackgroundGridStyle
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 253:
+		var v FlowChartBackground
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -24288,7 +24424,7 @@ func (v *FlowChart) reset() {
 	v.InputValue.reset()
 	v.Value.reset()
 	v.Frame.reset()
-	v.BackgroundColor.reset()
+	v.Background.reset()
 	v.NodesDraggable.reset()
 	v.NodesConnectable.reset()
 	v.EdgesEditable.reset()
@@ -24304,7 +24440,7 @@ func (v *FlowChart) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.InputValue.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.BackgroundColor.IsZero() && v.NodesDraggable.IsZero() && v.NodesConnectable.IsZero() && v.EdgesEditable.IsZero() && v.ElementsSelectable.IsZero() && v.Orientation.IsZero() && v.CustomContents.IsZero() && v.MinZoom.IsZero() && v.MaxZoom.IsZero() && v.ActionValue.IsZero()
+	return v.InputValue.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.Background.IsZero() && v.NodesDraggable.IsZero() && v.NodesConnectable.IsZero() && v.EdgesEditable.IsZero() && v.ElementsSelectable.IsZero() && v.Orientation.IsZero() && v.CustomContents.IsZero() && v.MinZoom.IsZero() && v.MaxZoom.IsZero() && v.ActionValue.IsZero()
 }
 
 func (v *FlowChartPoint) reset() {
@@ -24622,6 +24758,20 @@ func (v *FlowChartActionData) IsZero() bool {
 		return true
 	}
 	return v.Node.IsZero() && v.Edge.IsZero() && v.ViewX.IsZero() && v.ViewY.IsZero() && v.SelectedNodes.IsZero() && v.SelectedEdges.IsZero() && v.PaneX.IsZero() && v.PaneY.IsZero()
+}
+
+func (v *FlowChartBackground) reset() {
+	v.Color.reset()
+	v.GridColor.reset()
+	v.GridStyle.reset()
+	v.GridGap.reset()
+}
+
+func (v *FlowChartBackground) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Color.IsZero() && v.GridColor.IsZero() && v.GridStyle.IsZero() && v.GridGap.IsZero()
 }
 
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
@@ -26299,6 +26449,20 @@ func (v *FlowChartNodeStyle) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *FlowChartActionData) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 251); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *FlowChartBackgroundGridStyle) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 252); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *FlowChartBackground) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 253); err != nil {
 		return err
 	}
 	return nil
