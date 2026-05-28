@@ -63,6 +63,10 @@ func FromContext[T any](ctx context.Context, name string) (T, bool) {
 		if v, ok := v.(T); ok {
 			return v, true
 		}
+
+		// do not fallthrough if name is given type does not match
+		var zero T
+		return zero, false
 	}
 
 	v, ok := mCtx.byType.Get(reflect.TypeFor[T]())
