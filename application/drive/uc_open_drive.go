@@ -63,6 +63,7 @@ func NewOpenDrive(mutex *sync.Mutex, repo Repository, globalRootRepo NamedRootRe
 		}
 
 		file := optFile.Unwrap()
+		file.repo = repo
 
 		if opts.Create && user.IsSU(subject) {
 			chmodRequired := file.Group != opts.Group || file.FileMode.Perm() != opts.Mode.Perm()
