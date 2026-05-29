@@ -132,21 +132,22 @@ func MinSize2XL() func(ctx FieldContext) bool {
 }
 
 type TDataView[E data.Aggregate[ID], ID ~string] struct {
-	data            Data[E, ID]
-	action          func(e E)
-	newAction       core.View
-	selectOptions   []SelectOption[ID]
-	modelOptions    pager.ModelOptions
-	model           option.Opt[pager.Model[E, ID]]
-	hideSelection   bool
-	showSearchbar   bool
-	addChevronRight bool
-	wnd             core.Window
-	style           Style
-	cardOptions     CardOptions
-	tableOptions    TableOptions
-	listOptions     ListOptions[ID]
-	createMenuGroup *ui.TMenuGroup
+	data             Data[E, ID]
+	action           func(e E)
+	newAction        core.View
+	selectOptions    []SelectOption[ID]
+	modelOptions     pager.ModelOptions
+	model            option.Opt[pager.Model[E, ID]]
+	hideSelection    bool
+	showSearchbar    bool
+	addChevronRight  bool
+	wnd              core.Window
+	style            Style
+	cardOptions      CardOptions
+	tableOptions     TableOptions
+	listOptions      ListOptions[ID]
+	createMenuGroup  *ui.TMenuGroup
+	selectionChanged func([]ID)
 }
 
 type Idx string
@@ -319,6 +320,13 @@ func (t TDataView[E, ID]) SelectOptions(options ...SelectOption[ID]) TDataView[E
 	return t
 }
 
+// SelectionChanged sets a callback which is triggered when the selection of this data view has changed.
+// It returns the IDs of the currently selected items.
+func (t TDataView[E, ID]) SelectionChanged(fn func([]ID)) TDataView[E, ID] {
+	t.selectionChanged = fn
+	return t
+}
+
 // ModelOptions sets the internal model options used to render directly.
 func (t TDataView[E, ID]) ModelOptions(opts pager.ModelOptions) TDataView[E, ID] {
 	t.modelOptions = opts
@@ -378,5 +386,11 @@ func (t TDataView[E, ID]) wrappedAction(e E) func() {
 
 	return func() {
 		t.action(e)
+	}
+}
+
+func (t TDataView[E, ID]) initModel(ctx core.RenderContext, model pager.Model[E, ID]) {
+	if fn := t.selectionChanged; fn != nil {
+		fn(model.Selected())
 	}
 }

@@ -85,6 +85,8 @@ func (t TDataView[E, ID]) renderCards(ctx core.RenderContext) core.RenderNode {
 		model.Window = wnd
 	}
 
+	t.initModel(ctx, model)
+
 	return ui.VStack(
 		t.cardActionBar(wnd, model),
 	).

@@ -83,6 +83,8 @@ func (t TDataView[E, ID]) renderList(ctx core.RenderContext) core.RenderNode {
 		model.Window = wnd
 	}
 
+	t.initModel(ctx, model)
+
 	return ui.VStack().
 		Append(
 			list.List(
