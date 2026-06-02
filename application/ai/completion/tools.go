@@ -1,0 +1,343 @@
+// Copyright (c) 2025 worldiety GmbH
+//
+// This file is part of the NAGO Low-Code Platform.
+// Licensed under the terms specified in the LICENSE file.
+//
+// SPDX-License-Identifier: Custom-License
+
+package completion
+
+import (
+	"encoding/json"
+	"fmt"
+	"reflect"
+	"strings"
+	"time"
+
+	"go.wdy.de/nago/auth"
+)
+
+// ToolFunc is the canonical shape of a Go function that can be exposed as a callable tool to the model.
+// Both the input In and the output Out must be JSON marshalable, because the model delivers the arguments
+// as JSON and the (string) result is fed back to the model as a tool result.
+//
+// Typical usage:
+//
+//	type AddIn struct {
+//		A int `json:"a" desc:"first summand"`
+//		B int `json:"b" desc:"second summand"`
+//	}
+//	type AddOut struct {
+//		Sum int `json:"sum"`
+//	}
+//
+//	add := completion.NewTool("add", "adds two integers", func(in AddIn) (AddOut, error) {
+//		return AddOut{Sum: in.A + in.B}, nil
+//	})
+type ToolFunc[In, Out any] func(In) (Out, error)
+
+// Tool bundles the advertised [ToolDef] (name, description, JSON schema) with an executable invocation that
+// knows how to unmarshal the JSON arguments, run the underlying Go function and marshal the result back.
+//
+// Create one with [NewTool]. Pass the resulting tools to [Run]/[RunStream], which drives the full agentic
+// loop (call model -> execute requested tools -> feed results back -> repeat) until the model produces a
+// final answer.
+type Tool struct {
+	// Def is the schema advertised to the provider via [Options.Tools].
+	Def ToolDef
+
+	// Invoke executes the underlying Go function for the given raw JSON arguments and returns the raw JSON
+	// encoded result. The error is a transport/marshalling or business error; [Run] turns it into a tool
+	// result flagged as error so the model may react to it.
+	Invoke func(args json.RawMessage) (json.RawMessage, error)
+}
+
+// NewTool wraps an arbitrary Go function of the form func(In) (Out, error) into a callable [Tool].
+//
+// The JSON schema describing In is derived automatically from the Go type via reflection (struct fields use
+// their json tag for the property name and an optional `desc`/`description` struct tag for the property
+// description). In and Out must be JSON marshalable.
+//
+// name must be a stable, unique identifier (the model references it by name). description should explain to
+// the model when and how to use the tool.
+func NewTool[In, Out any](name, description string, fn ToolFunc[In, Out]) Tool {
+	var zeroIn In
+	schema := reflectSchema(reflect.TypeOf(&zeroIn).Elem())
+	rawSchema, err := json.Marshal(schema)
+	if err != nil {
+		// A type whose schema cannot be marshalled is a programming error; encode it defensively as an
+		// empty object so the tool stays usable.
+		rawSchema = json.RawMessage(`{"type":"object"}`)
+	}
+
+	return Tool{
+		Def: ToolDef{
+			Name:        name,
+			Description: description,
+			Schema:      rawSchema,
+		},
+		Invoke: func(args json.RawMessage) (json.RawMessage, error) {
+			var in In
+			if len(args) > 0 {
+				if err := json.Unmarshal(args, &in); err != nil {
+					return nil, fmt.Errorf("cannot decode arguments for tool %q: %w", name, err)
+				}
+			}
+
+			out, err := fn(in)
+			if err != nil {
+				return nil, err
+			}
+
+			raw, err := json.Marshal(out)
+			if err != nil {
+				return nil, fmt.Errorf("cannot encode result of tool %q: %w", name, err)
+			}
+
+			return raw, nil
+		},
+	}
+}
+
+// DefaultMaxToolTurns bounds the agentic loop in [Run] when [RunOptions.MaxTurns] is zero, protecting against
+// models that keep requesting tools indefinitely.
+const DefaultMaxToolTurns = 16
+
+// RunOptions configures the agentic loop executed by [Run]. It embeds the stateless [Options] and adds the
+// executable [Tool]s plus a turn limit.
+type RunOptions struct {
+	// Options is the base stateless request. Its Tools field is overwritten with the schema of the supplied
+	// Tools, so it does not need to be set by the caller.
+	Options
+
+	// Tools are the executable Go functions the model may call. Their [ToolDef]s are advertised to the
+	// provider automatically.
+	Tools []Tool
+
+	// MaxTurns caps how many times the model may request (and we execute) tools before [Run] gives up. Zero
+	// means [DefaultMaxToolTurns].
+	MaxTurns int
+}
+
+// Run drives the full agentic loop on top of [Completions.Complete]:
+//
+//  1. advertise the tool schemas and call the model,
+//  2. if the model requested tool calls, execute the matching Go functions,
+//  3. feed the results back as a follow-up user message,
+//  4. repeat until the model returns a final (non tool_use) answer or the turn limit is hit.
+//
+// It returns the final assistant [Result] together with the complete message history (including all
+// intermediate tool calls and tool results) so callers can inspect or persist the trace.
+func Run(subject auth.Subject, c Completions, opts RunOptions) (Result, []Message, error) {
+	maxTurns := opts.MaxTurns
+	if maxTurns <= 0 {
+		maxTurns = DefaultMaxToolTurns
+	}
+
+	tools := make(map[string]Tool, len(opts.Tools))
+	defs := make([]ToolDef, 0, len(opts.Tools))
+	for _, t := range opts.Tools {
+		tools[t.Def.Name] = t
+		defs = append(defs, t.Def)
+	}
+
+	req := opts.Options
+	req.Tools = defs
+
+	// copy the initial history so we never mutate the caller's slice
+	history := make([]Message, len(req.Messages))
+	copy(history, req.Messages)
+
+	for turn := 0; turn < maxTurns; turn++ {
+		req.Messages = history
+
+		res, err := c.Complete(subject, req)
+		if err != nil {
+			return Result{}, history, err
+		}
+
+		history = append(history, res.Message)
+
+		if res.StopReason != StopToolUse {
+			return res, history, nil
+		}
+
+		var results []Content
+		for _, content := range res.Message.Content {
+			call, ok := content.(ToolCall)
+			if !ok {
+				continue
+			}
+
+			results = append(results, executeToolCall(tools, call))
+		}
+
+		if len(results) == 0 {
+			// The model signalled tool_use but emitted no actual call we understand; stop to avoid looping.
+			return res, history, nil
+		}
+
+		history = append(history, Message{Role: User, Content: results})
+	}
+
+	return Result{}, history, fmt.Errorf("tool loop exceeded %d turns", maxTurns)
+}
+
+// executeToolCall runs a single tool call and wraps the outcome into a [ToolResult] content block. Unknown
+// tools and execution errors are reported back to the model as error results instead of aborting the loop.
+func executeToolCall(tools map[string]Tool, call ToolCall) ToolResult {
+	tool, ok := tools[call.Name]
+	if !ok {
+		return ToolResult{
+			ToolCallID: call.ID,
+			Content:    []Content{Text{Text: fmt.Sprintf("unknown tool %q", call.Name)}},
+			IsError:    true,
+		}
+	}
+
+	out, err := tool.Invoke(call.Arguments)
+	if err != nil {
+		return ToolResult{
+			ToolCallID: call.ID,
+			Content:    []Content{Text{Text: err.Error()}},
+			IsError:    true,
+		}
+	}
+
+	return ToolResult{
+		ToolCallID: call.ID,
+		Content:    []Content{Text{Text: string(out)}},
+	}
+}
+
+// reflectSchema builds a (subset of) JSON Schema object for the given Go type. It supports the JSON
+// marshalable primitives, slices/arrays, maps, pointers and (possibly nested/embedded) structs. Struct
+// fields honour their json tag for the property name and the omitempty option, plus an optional
+// `desc`/`description` struct tag used as the property description.
+func reflectSchema(t reflect.Type) map[string]any {
+	for t != nil && t.Kind() == reflect.Pointer {
+		t = t.Elem()
+	}
+	if t == nil {
+		return map[string]any{}
+	}
+
+	switch t.Kind() {
+	case reflect.Bool:
+		return map[string]any{"type": "boolean"}
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return map[string]any{"type": "integer"}
+	case reflect.Float32, reflect.Float64:
+		return map[string]any{"type": "number"}
+	case reflect.String:
+		return map[string]any{"type": "string"}
+	case reflect.Slice, reflect.Array:
+		// []byte is JSON-encoded as a base64 string
+		if t.Elem().Kind() == reflect.Uint8 {
+			return map[string]any{"type": "string"}
+		}
+		return map[string]any{"type": "array", "items": reflectSchema(t.Elem())}
+	case reflect.Map:
+		return map[string]any{"type": "object", "additionalProperties": reflectSchema(t.Elem())}
+	case reflect.Interface:
+		// "any" – no constraint
+		return map[string]any{}
+	case reflect.Struct:
+		if t == reflect.TypeOf(time.Time{}) {
+			return map[string]any{"type": "string", "format": "date-time"}
+		}
+
+		properties := map[string]any{}
+		var required []string
+		collectStructFields(t, properties, &required)
+
+		schema := map[string]any{
+			"type":                 "object",
+			"properties":           properties,
+			"additionalProperties": false,
+		}
+		if len(required) > 0 {
+			schema["required"] = required
+		}
+		return schema
+	default:
+		return map[string]any{}
+	}
+}
+
+// collectStructFields fills properties/required for a struct type, recursing into embedded (anonymous)
+// structs so their fields are promoted just like encoding/json does.
+func collectStructFields(t reflect.Type, properties map[string]any, required *[]string) {
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
+		if f.PkgPath != "" && !f.Anonymous { // unexported, non-embedded
+			continue
+		}
+
+		name, omitempty, skip := parseJSONField(f)
+		if skip {
+			continue
+		}
+
+		// promote embedded struct fields when they have no explicit json name
+		if f.Anonymous && name == "" {
+			ft := f.Type
+			for ft.Kind() == reflect.Pointer {
+				ft = ft.Elem()
+			}
+			if ft.Kind() == reflect.Struct {
+				collectStructFields(ft, properties, required)
+				continue
+			}
+		}
+
+		if name == "" {
+			name = f.Name
+		}
+
+		sub := reflectSchema(f.Type)
+		if desc := fieldDescription(f); desc != "" {
+			sub["description"] = desc
+		}
+
+		properties[name] = sub
+
+		if !omitempty && f.Type.Kind() != reflect.Pointer {
+			*required = append(*required, name)
+		}
+	}
+}
+
+// parseJSONField returns the JSON property name and options for a struct field. skip is true when the field
+// is explicitly ignored via `json:"-"`.
+func parseJSONField(f reflect.StructField) (name string, omitempty bool, skip bool) {
+	tag := f.Tag.Get("json")
+	if tag == "-" {
+		return "", false, true
+	}
+
+	parts := strings.Split(tag, ",")
+	name = parts[0]
+	for _, opt := range parts[1:] {
+		if opt == "omitempty" {
+			omitempty = true
+		}
+	}
+
+	if name == "" && !f.Anonymous {
+		name = f.Name
+	}
+
+	return name, omitempty, false
+}
+
+// fieldDescription returns the human description for a struct field, honouring both `desc` and `description`
+// struct tags.
+func fieldDescription(f reflect.StructField) string {
+	if d := f.Tag.Get("desc"); d != "" {
+		return d
+	}
+	return f.Tag.Get("description")
+}
+
