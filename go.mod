@@ -10,6 +10,7 @@ require (
 	github.com/google/btree v1.1.3
 	github.com/gorilla/websocket v1.5.3
 	github.com/joho/godotenv v1.5.1
+	github.com/klauspost/compress v1.18.0
 	github.com/laher/mergefs v0.1.1
 	github.com/rogpeppe/go-internal v1.14.1
 	github.com/tidwall/btree v1.8.1

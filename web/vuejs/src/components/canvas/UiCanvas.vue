@@ -31,18 +31,42 @@ import {
 	CanvasFillStyle,
 	CanvasFillText,
 	CanvasFont,
+	CanvasLineCap,
+	CanvasLineJoin,
 	CanvasLineTo,
+	CanvasLineWidth,
 	CanvasLoadImage,
+	CanvasMiterLimit,
 	CanvasMoveTo,
 	CanvasNewList,
+	CanvasQuadraticCurveTo,
+	CanvasRect,
+	CanvasRestore,
+	CanvasRotate,
+	CanvasSave,
+	CanvasScale,
+	CanvasSetTransform,
 	CanvasShadowBlur,
 	CanvasShadowColor,
 	CanvasShadowOffsetX,
 	CanvasShadowOffsetY,
+	CanvasStrokeRect,
+	CanvasStrokeStyle,
+	CanvasStrokeText,
+	CanvasTextAlign,
+	CanvasTextBaseline,
+	CanvasTranslate,
 	type NagoEvent,
 } from '@/shared/proto/nprotoc_gen';
 
 const serviceAdapter = useServiceAdapter();
+
+// Local aliases for the DOM canvas literal union types, because the imported proto
+// classes shadow the global lib.dom.d.ts type names of the same name.
+type CanvasLineCap_ = 'butt' | 'round' | 'square';
+type CanvasLineJoin_ = 'bevel' | 'miter' | 'round';
+type CanvasTextAlign_ = 'center' | 'end' | 'left' | 'right' | 'start';
+type CanvasTextBaseline_ = 'alphabetic' | 'bottom' | 'hanging' | 'ideographic' | 'middle' | 'top';
 
 const props = defineProps<{
 	ui: Canvas;
@@ -170,6 +194,89 @@ function apply(ctx: CanvasRenderingContext2D, invoke: CallRequested, depth: numb
 		return;
 	}
 
+	if (invoke.call instanceof CanvasStrokeStyle) {
+		if (invoke.call.style) {
+			ctx.strokeStyle = invoke.call.style;
+		}
+		return;
+	}
+
+	if (invoke.call instanceof CanvasLineWidth) {
+		ctx.lineWidth = or0(invoke.call.width);
+		return;
+	}
+
+	if (invoke.call instanceof CanvasLineCap) {
+		if (invoke.call.cap) {
+			ctx.lineCap = invoke.call.cap as CanvasLineCap_;
+		}
+		return;
+	}
+
+	if (invoke.call instanceof CanvasLineJoin) {
+		if (invoke.call.join) {
+			ctx.lineJoin = invoke.call.join as CanvasLineJoin_;
+		}
+		return;
+	}
+
+	if (invoke.call instanceof CanvasMiterLimit) {
+		ctx.miterLimit = or0(invoke.call.limit);
+		return;
+	}
+
+	if (invoke.call instanceof CanvasTextAlign) {
+		if (invoke.call.textAlign) {
+			ctx.textAlign = invoke.call.textAlign as CanvasTextAlign_;
+		}
+		return;
+	}
+
+	if (invoke.call instanceof CanvasTextBaseline) {
+		if (invoke.call.baseline) {
+			ctx.textBaseline = invoke.call.baseline as CanvasTextBaseline_;
+		}
+		return;
+	}
+
+	// --- Transformationen & State ---
+	if (invoke.call instanceof CanvasSave) {
+		ctx.save();
+		return;
+	}
+
+	if (invoke.call instanceof CanvasRestore) {
+		ctx.restore();
+		return;
+	}
+
+	if (invoke.call instanceof CanvasTranslate) {
+		ctx.translate(or0(invoke.call.x), or0(invoke.call.y));
+		return;
+	}
+
+	if (invoke.call instanceof CanvasRotate) {
+		ctx.rotate(or0(invoke.call.angle));
+		return;
+	}
+
+	if (invoke.call instanceof CanvasScale) {
+		ctx.scale(or0(invoke.call.x), or0(invoke.call.y));
+		return;
+	}
+
+	if (invoke.call instanceof CanvasSetTransform) {
+		ctx.setTransform(
+			or0(invoke.call.a),
+			or0(invoke.call.b),
+			or0(invoke.call.c),
+			or0(invoke.call.d),
+			or0(invoke.call.e),
+			or0(invoke.call.f)
+		);
+		return;
+	}
+
 	// --- Shadow ---
 	if (invoke.call instanceof CanvasShadowOffsetX) {
 		ctx.shadowOffsetX = or0(invoke.call!.offsetX);
@@ -249,6 +356,21 @@ function apply(ctx: CanvasRenderingContext2D, invoke: CallRequested, depth: numb
 		return;
 	}
 
+	if (invoke.call instanceof CanvasQuadraticCurveTo) {
+		ctx.quadraticCurveTo(
+			or0(invoke.call.cpx),
+			or0(invoke.call.cpy),
+			or0(invoke.call.x),
+			or0(invoke.call.y)
+		);
+		return;
+	}
+
+	if (invoke.call instanceof CanvasRect) {
+		ctx.rect(or0(invoke.call.x), or0(invoke.call.y), or0(invoke.call.w), or0(invoke.call.h));
+		return;
+	}
+
 	// --- Füll- & Clip-Operationen ---
 	if (invoke.call instanceof CanvasFill) {
 		ctx.fill();
@@ -271,6 +393,22 @@ function apply(ctx: CanvasRenderingContext2D, invoke: CallRequested, depth: numb
 			ctx.fillText(invoke.call.text ?? '', or0(invoke.call.x), or0(invoke.call.y), maxWidth);
 		} else {
 			ctx.fillText(invoke.call.text ?? '', or0(invoke.call.x), or0(invoke.call.y));
+		}
+		return;
+	}
+
+	// --- Stroke-Operationen ---
+	if (invoke.call instanceof CanvasStrokeRect) {
+		ctx.strokeRect(or0(invoke.call.x), or0(invoke.call.y), or0(invoke.call.w), or0(invoke.call.h));
+		return;
+	}
+
+	if (invoke.call instanceof CanvasStrokeText) {
+		const maxWidth = invoke.call.maxWidth;
+		if (maxWidth !== undefined && maxWidth > 0) {
+			ctx.strokeText(invoke.call.text ?? '', or0(invoke.call.x), or0(invoke.call.y), maxWidth);
+		} else {
+			ctx.strokeText(invoke.call.text ?? '', or0(invoke.call.x), or0(invoke.call.y));
 		}
 		return;
 	}
