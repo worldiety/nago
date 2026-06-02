@@ -11,6 +11,7 @@ import (
 	"log/slog"
 
 	"go.wdy.de/nago/application/ai/provider"
+	"go.wdy.de/nago/application/ai/provider/anthropic"
 	"go.wdy.de/nago/application/ai/provider/cache"
 	"go.wdy.de/nago/application/ai/provider/mistralai"
 	"go.wdy.de/nago/application/group"
@@ -38,6 +39,8 @@ func NewReloadProvider(m *concurrent.RWMap[provider.ID, provider.Provider], find
 			switch cfg := sec.Credentials.(type) {
 			case mistralai.Settings:
 				prov = mistralai.NewProvider(provider.ID(sec.ID), cfg)
+			case anthropic.Settings:
+				prov = anthropic.NewProvider(provider.ID(sec.ID), cfg)
 			}
 
 			if prov == nil {

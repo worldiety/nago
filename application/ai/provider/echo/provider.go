@@ -11,6 +11,7 @@ import (
 	"iter"
 
 	"github.com/worldiety/option"
+	"go.wdy.de/nago/application/ai/completion"
 	"go.wdy.de/nago/application/ai/conversation"
 	"go.wdy.de/nago/application/ai/message"
 	"go.wdy.de/nago/application/ai/model"
@@ -28,6 +29,10 @@ type Provider struct {
 
 func (p *Provider) Files() option.Opt[provider.Files] {
 	return option.Opt[provider.Files]{}
+}
+
+func (p *Provider) Completions() option.Opt[completion.Completions] {
+	return option.Opt[completion.Completions]{}
 }
 
 func (p *Provider) Tools() provider.Tools {

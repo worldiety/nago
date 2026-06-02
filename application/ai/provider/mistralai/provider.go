@@ -9,6 +9,7 @@ package mistralai
 
 import (
 	"github.com/worldiety/option"
+	"go.wdy.de/nago/application/ai/completion"
 	"go.wdy.de/nago/application/ai/provider"
 )
 
@@ -57,6 +58,11 @@ func NewProvider(id provider.ID, cfg Settings) provider.Provider {
 
 func (p *mistralProvider) Files() option.Opt[provider.Files] {
 	return option.Some[provider.Files](p.files)
+}
+
+func (p *mistralProvider) Completions() option.Opt[completion.Completions] {
+	// Mistral support for stateless chat completions could be added here; not implemented yet.
+	return option.Opt[completion.Completions]{}
 }
 
 func (p *mistralProvider) Tools() provider.Tools {

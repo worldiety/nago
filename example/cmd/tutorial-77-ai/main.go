@@ -37,6 +37,7 @@ func main() {
 		cfg.SetDecorator(cfg.NewScaffold().
 			MenuEntry().Title("home").Forward(".").Private().
 			MenuEntry().Title("drive").Forward("drive").Private().
+			MenuEntry().Title("stateless").Forward("stateless").Private().
 			Decorator())
 		option.Must(cfginspector.Enable(cfg))
 		option.Must(cfglocalization.Enable(cfg))
@@ -63,6 +64,10 @@ func main() {
 		})
 		cfg.RootViewWithDecoration("drive", func(wnd core.Window) core.View {
 			return uidrive.PageDrive(wnd, drives.UseCases)
+		})
+
+		cfg.RootViewWithDecoration("stateless", func(wnd core.Window) core.View {
+			return statelessChat(wnd, modAi.UseCases)
 		})
 
 	}).Run()

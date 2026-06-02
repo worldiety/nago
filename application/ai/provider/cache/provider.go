@@ -14,6 +14,7 @@ import (
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/agent"
+	"go.wdy.de/nago/application/ai/completion"
 	"go.wdy.de/nago/application/ai/conversation"
 	"go.wdy.de/nago/application/ai/document"
 	"go.wdy.de/nago/application/ai/file"
@@ -243,6 +244,11 @@ func (p *Provider) Files() option.Opt[provider.Files] {
 	}
 
 	return option.Some[provider.Files](&cacheFiles{parent: p})
+}
+
+func (p *Provider) Completions() option.Opt[completion.Completions] {
+	// Stateless completions are not cached; just pass through to the wrapped provider.
+	return p.prov.Completions()
 }
 
 func (p *Provider) Identity() provider.ID {

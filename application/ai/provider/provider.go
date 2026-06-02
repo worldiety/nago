@@ -14,6 +14,7 @@ import (
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/agent"
+	"go.wdy.de/nago/application/ai/completion"
 	"go.wdy.de/nago/application/ai/conversation"
 	"go.wdy.de/nago/application/ai/document"
 	"go.wdy.de/nago/application/ai/file"
@@ -58,6 +59,12 @@ type Provider interface {
 
 	// Files interface to work with submitting files into the provider and reading generated files back.
 	Files() option.Opt[Files]
+
+	// Completions returns the stateless message capability, if the provider supports it. In contrast to
+	// Conversations (server-side stored chats), a completion always receives the full history and returns
+	// a single assistant turn. This maps to the Anthropic Messages API and the OpenAI Chat Completions /
+	// Responses API.
+	Completions() option.Opt[completion.Completions]
 }
 
 type Tools interface {
