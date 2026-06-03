@@ -37,7 +37,9 @@ const props = defineProps<{
 	ui: Stack;
 }>();
 
-const id = props.ui.id || randomStr(16);
+const fallbackId = randomStr(16);
+const id = computed(() => props.ui.id || fallbackId);
+
 const serviceAdapter = useServiceAdapter();
 
 const isDiv = computed<boolean>(() => {
