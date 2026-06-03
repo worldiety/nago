@@ -94,10 +94,18 @@ func mapErr(err error) error {
 
 // ----- wire protocol types -----
 
+// apiCacheControl marks a content block as a prompt-cache breakpoint. Everything in the request prefix up to
+// and including the marked block becomes cacheable on Anthropic's servers. See
+// https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching.
+type apiCacheControl struct {
+	Type string `json:"type"`          // always "ephemeral"
+	TTL  string `json:"ttl,omitempty"` // "5m" (default) | "1h"
+}
+
 type apiRequest struct {
 	Model         string            `json:"model"`
 	MaxTokens     int               `json:"max_tokens"`
-	System        string            `json:"system,omitempty"`
+	System        []apiContent      `json:"system,omitempty"`
 	Messages      []apiMessage      `json:"messages"`
 	Tools         []apiTool         `json:"tools,omitempty"`
 	ToolChoice    *apiToolChoice    `json:"tool_choice,omitempty"`
@@ -137,6 +145,9 @@ type apiContent struct {
 	ToolUseID string       `json:"tool_use_id,omitempty"`
 	Content   []apiContent `json:"content,omitempty"`
 	IsError   bool         `json:"is_error,omitempty"`
+
+	// CacheControl, when set, marks this block as a prompt-cache breakpoint.
+	CacheControl *apiCacheControl `json:"cache_control,omitempty"`
 }
 
 type apiSource struct {
@@ -148,9 +159,10 @@ type apiSource struct {
 }
 
 type apiTool struct {
-	Name        string          `json:"name"`
-	Description string          `json:"description,omitempty"`
-	InputSchema json.RawMessage `json:"input_schema"`
+	Name         string           `json:"name"`
+	Description  string           `json:"description,omitempty"`
+	InputSchema  json.RawMessage  `json:"input_schema"`
+	CacheControl *apiCacheControl `json:"cache_control,omitempty"`
 }
 
 type apiToolChoice struct {

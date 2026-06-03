@@ -29,9 +29,12 @@ func (p *anthropicProvider) buildRequest(opts completion.Options) (apiRequest, e
 	req := apiRequest{
 		Model:         string(opts.Model),
 		MaxTokens:     maxTokens,
-		System:        opts.System,
 		StopSequences: opts.StopSequences,
 		Metadata:      opts.Metadata,
+	}
+
+	if opts.System != "" {
+		req.System = []apiContent{{Type: "text", Text: opts.System}}
 	}
 
 	if opts.Temperature.IsSome() {
@@ -64,7 +67,52 @@ func (p *anthropicProvider) buildRequest(opts completion.Options) (apiRequest, e
 		req.ToolChoice = &tc
 	}
 
+	if !p.cfg.DisablePromptCache {
+		p.applyPromptCache(&req)
+	}
+
 	return req, nil
+}
+
+// applyPromptCache places Anthropic prompt-cache breakpoints on the stable request prefix. Anthropic hashes
+// the prefix (tools -> system -> messages) up to and including each marked block, so only the most stable
+// blocks are marked. At most 4 breakpoints are allowed; we use up to three, in order of stability:
+//
+//  1. the last tool definition (tools never change within a run),
+//  2. the system prompt,
+//  3. the last content block of the second-to-last message, i.e. the frozen conversation history just before
+//     the newest (uncached) turn. In the agentic loop this breakpoint advances automatically as the history
+//     grows, so every turn reads the previous prefix from cache.
+func (p *anthropicProvider) applyPromptCache(req *apiRequest) {
+	cc := p.cacheControl()
+
+	// 1. last tool
+	if n := len(req.Tools); n > 0 {
+		req.Tools[n-1].CacheControl = cc
+	}
+
+	// 2. system prompt
+	if n := len(req.System); n > 0 {
+		req.System[n-1].CacheControl = cc
+	}
+
+	// 3. frozen history boundary: the last block of the second-to-last message. With only a single message
+	// there is no stable prefix to cache yet, so we skip it.
+	if n := len(req.Messages); n >= 2 {
+		prev := req.Messages[n-2]
+		if c := len(prev.Content); c > 0 {
+			prev.Content[c-1].CacheControl = cc
+		}
+	}
+}
+
+// cacheControl builds the ephemeral cache marker honoring the configured TTL.
+func (p *anthropicProvider) cacheControl() *apiCacheControl {
+	cc := &apiCacheControl{Type: "ephemeral"}
+	if p.cfg.PromptCacheTTL == "1h" {
+		cc.TTL = "1h"
+	}
+	return cc
 }
 
 func toAPIToolChoice(tc completion.ToolChoice) (apiToolChoice, bool) {

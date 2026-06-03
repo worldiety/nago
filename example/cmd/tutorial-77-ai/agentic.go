@@ -112,6 +112,7 @@ func agenticChat(wnd core.Window, uc ai.UseCases) core.View {
 	})
 	answer := core.AutoState[string](wnd)
 	trace := core.AutoState[string](wnd)
+	usage := core.AutoState[string](wnd)
 	busy := core.AutoState[bool](wnd)
 	selectedModel := core.AutoState[model.ID](wnd).Init(func() model.ID {
 		for m, err := range comps.Models(wnd.Subject()) {
@@ -132,6 +133,7 @@ func agenticChat(wnd core.Window, uc ai.UseCases) core.View {
 		busy.Set(true)
 		answer.Set("")
 		trace.Set("")
+		usage.Set("")
 
 		xsync.Go(func() error {
 			res, history, err := completion.Run(wnd.Subject(), comps, completion.RunOptions{
@@ -167,6 +169,7 @@ func agenticChat(wnd core.Window, uc ai.UseCases) core.View {
 			wnd.Post(func() {
 				answer.Set(sb.String())
 				trace.Set(renderTrace(history))
+				usage.Set(renderUsage(res.Usage))
 				busy.Set(false)
 			})
 
@@ -213,13 +216,33 @@ func agenticChat(wnd core.Window, uc ai.UseCases) core.View {
 			BackgroundColor(ui.M2).
 			Border(ui.Border{}.Radius(ui.L8)).
 			Padding(ui.Padding{}.All(ui.L16))),
+
+		ui.If(usage.Get() != "", ui.VStack(
+			ui.Text("Token-Usage (letzter Turn)").Font(ui.SubTitle),
+			ui.CodeEditor(usage.Get()).Language("text").FullWidth(),
+		).Alignment(ui.Leading).
+			FullWidth().
+			BackgroundColor(ui.M2).
+			Border(ui.Border{}.Radius(ui.L8)).
+			Padding(ui.Padding{}.All(ui.L16))),
 	).Alignment(ui.Leading).
 		Gap(ui.L16).
 		FullWidth().
 		Padding(ui.Padding{}.All(ui.L16))
 }
 
-// renderTrace turns the full message history returned by [completion.Run] into a human readable string so the
+// renderUsage formats the token accounting of the final turn. The cache fields prove whether Anthropic prompt
+// caching kicked in: CacheWriteTokens > 0 means a fresh prefix was stored, CacheReadTokens > 0 means the
+// stable prefix (system prompt, tools and earlier conversation turns) was served from cache at ~0.1x cost.
+func renderUsage(u completion.Usage) string {
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "input_tokens:        %d\n", u.InputTokens)
+	fmt.Fprintf(&sb, "output_tokens:       %d\n", u.OutputTokens)
+	fmt.Fprintf(&sb, "cache_read_tokens:   %d  (aus dem Cache gelesen, ~0.1x Kosten)\n", u.CacheReadTokens)
+	fmt.Fprintf(&sb, "cache_write_tokens:  %d  (neu in den Cache geschrieben, ~1.25x Kosten)\n", u.CacheWriteTokens)
+	return sb.String()
+}
+
 // intermediate tool calls and tool results become visible.
 func renderTrace(history []completion.Message) string {
 	var sb strings.Builder
