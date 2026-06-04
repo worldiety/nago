@@ -115,9 +115,9 @@ export default class WebSocketAdapter implements ServiceAdapter {
 	sendEvent(evt: NagoEvent): void {
 		const startTime = new Date().getTime();
 		//console.log('SEND EVENT', evt);
-		let writer = new BinaryWriter();
+		const writer = new BinaryWriter();
 		marshal(writer, evt);
-		let buffer = writer.getBuffer();
+		const buffer = writer.getBuffer();
 		//console.log('nprotoc buffer', buffer);
 		const endTime = new Date().getTime();
 		//console.log(`nprotoc marshal time ${endTime - startTime} ms. type =`, evt.constructor.name);
@@ -158,11 +158,11 @@ export default class WebSocketAdapter implements ServiceAdapter {
 
 	private receiveBinary(responseRaw: ArrayBuffer): void {
 		let endTime = new Date().getTime();
-		let responseTime = endTime - this.lastEventSendAt;
+		const responseTime = endTime - this.lastEventSendAt;
 
 		const startTime = new Date().getTime();
 		//console.log('WS received', responseRaw);
-		let msg = unmarshal(new BinaryReader(new Uint8Array(responseRaw))); // TODO i don't know what i'm doing here, does it copy?
+		const msg = unmarshal(new BinaryReader(new Uint8Array(responseRaw))); // TODO i don't know what i'm doing here, does it copy?
 		endTime = new Date().getTime();
 		//console.log(
 		//`nprotoc response after ${responseTime}ms, unmarshal time ${endTime - startTime}ms, total ${responseTime + endTime - startTime}ms, type =`,

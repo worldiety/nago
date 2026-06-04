@@ -23,7 +23,7 @@ export class BinaryWriter {
 
 	private ensureCapacity(additionalBytes: number) {
 		if (this.offset + additionalBytes > this.buffer.length) {
-			let nextSize = Math.max(additionalBytes + this.offset * 2, this.buffer.length * 2);
+			const nextSize = Math.max(additionalBytes + this.offset * 2, this.buffer.length * 2);
 			const newBuffer = new Uint8Array(nextSize);
 			newBuffer.set(this.buffer);
 			this.buffer = newBuffer;
@@ -150,7 +150,7 @@ export class BinaryReader {
 	}
 
 	readFloat64(): number {
-		let tmp = this.readBytes(8);
+		const tmp = this.readBytes(8);
 		const buffer = tmp.buffer;
 		const view = new DataView(buffer);
 		return view.getFloat64(0, true);
@@ -344,7 +344,7 @@ export class Box implements Writeable, Readable, Component {
 			this.border !== undefined && !this.border.isZero(),
 			this.disableOutsidePointerEvents !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.ARRAY, 1);
@@ -471,7 +471,7 @@ export class UpdateStateValueRequested implements Writeable, Readable, NagoEvent
 			this.rID !== undefined,
 			this.value !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
@@ -549,7 +549,7 @@ export class FunctionCallRequested implements Writeable, Readable, NagoEvent {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.ptr !== undefined, this.rID !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
@@ -686,7 +686,7 @@ export class Shadow implements Writeable, Readable {
 			this.x !== undefined,
 			this.y !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -879,7 +879,7 @@ export class Border implements Writeable, Readable {
 			this.boxShadow !== undefined && !this.boxShadow.isZero(),
 			this.borderStyle !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -1057,7 +1057,7 @@ export class Frame implements Writeable, Readable {
 			this.width !== undefined,
 			this.height !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -1169,7 +1169,7 @@ export class Padding implements Writeable, Readable {
 			this.right !== undefined,
 			this.bottom !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -1246,7 +1246,7 @@ export class AlignedComponent implements Writeable, Readable {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.component !== undefined && !this.component.isZero(), this.alignment !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			// encode polymorphic enum as 1 element slice
@@ -1442,7 +1442,7 @@ export class Checkbox implements Writeable, Readable, Component {
 			this.id !== undefined,
 			this.name !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
@@ -1539,7 +1539,7 @@ export class ErrorOccurred implements Writeable, Readable, NagoEvent {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.message !== undefined, this.rID !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -1676,7 +1676,7 @@ export class RootViewRenderingRequested implements Writeable, Readable, NagoEven
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.rID !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
@@ -1726,7 +1726,7 @@ export class RootViewDestructionRequested implements Writeable, Readable, NagoEv
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.rID !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
@@ -1789,7 +1789,7 @@ export class RootViewInvalidated implements Writeable, Readable, NagoEvent {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.rID !== undefined, this.root !== undefined && !this.root.isZero()];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
@@ -1847,7 +1847,7 @@ export class ErrorRootViewAllocationRequired implements Writeable, Readable, Nag
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.rID !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
@@ -1941,7 +1941,7 @@ export class RootViewAllocationRequested implements Writeable, Readable, NagoEve
 			this.rID !== undefined,
 			this.values !== undefined && !this.values.isZero(),
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -2061,7 +2061,7 @@ export class ScopeConfigurationChangeRequested implements Writeable, Readable, N
 			this.acceptLanguage !== undefined,
 			this.windowInfo !== undefined && !this.windowInfo.isZero(),
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
@@ -2191,7 +2191,7 @@ export class WindowInfo implements Writeable, Readable {
 			this.colorScheme !== undefined,
 			this.userAgent !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.F64, 1);
@@ -2374,7 +2374,7 @@ export class ScopeConfigurationChanged implements Writeable, Readable, NagoEvent
 			this.fonts !== undefined && !this.fonts.isZero(),
 			this.instance !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -2600,7 +2600,7 @@ export class Theme implements Writeable, Readable {
 			this.colors !== undefined && !this.colors.isZero(),
 			this.lengths !== undefined && !this.lengths.isZero(),
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.ARRAY, 1);
@@ -2769,7 +2769,7 @@ export class Themes implements Writeable, Readable {
 			this.light !== undefined && !this.light.isZero(),
 			this.dark !== undefined && !this.dark.isZero(),
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.RECORD, 1);
@@ -2858,7 +2858,7 @@ export class DateData implements Writeable, Readable {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.day !== undefined, this.month !== undefined, this.year !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
@@ -3043,7 +3043,7 @@ export class DatePicker implements Writeable, Readable, Component {
 			this.disabled !== undefined,
 			this.doubleMode !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -3185,7 +3185,7 @@ export class Divider implements Writeable, Readable, Component {
 			this.border !== undefined && !this.border.isZero(),
 			this.padding !== undefined && !this.padding.isZero(),
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.RECORD, 1);
@@ -3312,7 +3312,7 @@ export class Font implements Writeable, Readable {
 			this.weight !== undefined,
 			this.lineHeight !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -3515,7 +3515,7 @@ export class Grid implements Writeable, Readable, Component {
 			this.invisible !== undefined,
 			this.rowHeights !== undefined && !this.rowHeights.isZero(),
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.ARRAY, 1);
@@ -3831,7 +3831,7 @@ export class GridCell implements Writeable, Readable {
 			this.alignment !== undefined,
 			this.backgroundColor !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			// encode polymorphic enum as 1 element slice
@@ -4006,7 +4006,7 @@ export class Position implements Writeable, Readable {
 			this.bottom !== undefined,
 			this.zIndex !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
@@ -4200,7 +4200,7 @@ export class Img implements Writeable, Readable, Component {
 			this.invisible !== undefined,
 			this.objectFit !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -4401,7 +4401,7 @@ export class FileImportRequested implements Writeable, Readable, NagoEvent {
 			this.maxBytes !== undefined,
 			this.allowedMimeTypes !== undefined && !this.allowedMimeTypes.isZero(),
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -4498,7 +4498,7 @@ export class KeyboardOptions implements Writeable, Readable {
 			this.autoCorrectEnabled !== undefined,
 			this.keyboardType !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
@@ -4664,7 +4664,7 @@ export class Modal implements Writeable, Readable, Component {
 			this.bottom !== undefined,
 			this.allowBackgroundScrolling !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			// encode polymorphic enum as 1 element slice
@@ -4761,7 +4761,7 @@ export class ThemeRequested implements Writeable, Readable, NagoEvent {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.theme !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -4837,7 +4837,7 @@ export class NavigationForwardToRequested implements Writeable, Readable, NagoEv
 			this.values !== undefined && !this.values.isZero(),
 			this.target !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -4908,7 +4908,7 @@ export class NavigationResetRequested implements Writeable, Readable, NagoEvent 
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.rootView !== undefined, this.values !== undefined && !this.values.isZero()];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -5010,7 +5010,7 @@ export class WindowTitle implements Writeable, Readable, Component {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.value !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -5224,7 +5224,7 @@ export class PasswordField implements Writeable, Readable, Component {
 			this.keydownEnter !== undefined,
 			this.autocomplete !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -5460,7 +5460,7 @@ export class Radiobutton implements Writeable, Readable, Component {
 			this.id !== undefined,
 			this.name !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
@@ -5694,7 +5694,7 @@ export class Scaffold implements Writeable, Readable, Component {
 			this.height !== undefined,
 			this.bodyFullSize !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			// encode polymorphic enum as 1 element slice
@@ -5883,7 +5883,7 @@ export class ScaffoldMenuEntry implements Writeable, Readable {
 			this.badge !== undefined,
 			this.expanded !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			// encode polymorphic enum as 1 element slice
@@ -5987,7 +5987,7 @@ export class ScopeDestructionRequested implements Writeable, Readable, NagoEvent
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.rID !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
@@ -6144,7 +6144,7 @@ export class ScrollView implements Writeable, Readable, Component {
 			this.scrollIntoView !== undefined,
 			this.scrollAnimation !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			// encode polymorphic enum as 1 element slice
@@ -6273,7 +6273,7 @@ export class Resource implements Writeable, Readable {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.name !== undefined, this.uRI !== undefined, this.mimeType !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -6380,7 +6380,7 @@ export class SendMultipleRequested implements Writeable, Readable, NagoEvent {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.resources !== undefined && !this.resources.isZero()];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.ARRAY, 1);
@@ -6429,7 +6429,7 @@ export class SessionAssigned implements Writeable, Readable, NagoEvent {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.sessionID !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -6503,7 +6503,7 @@ export class Spacer implements Writeable, Readable, Component {
 			this.border !== undefined && !this.border.isZero(),
 			this.backgroundColor !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.RECORD, 1);
@@ -6639,7 +6639,7 @@ export class Table implements Writeable, Readable, Component {
 			this.rowDividerColor !== undefined,
 			this.headerDividerColor !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.RECORD, 1);
@@ -6826,7 +6826,7 @@ export class TableCell implements Writeable, Readable {
 			this.action !== undefined,
 			this.hovered !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			// encode polymorphic enum as 1 element slice
@@ -7026,7 +7026,7 @@ export class TableColumn implements Writeable, Readable {
 			this.cellHoveredBackgroundColor !== undefined,
 			this.cellHovered !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			// encode polymorphic enum as 1 element slice
@@ -7183,7 +7183,7 @@ export class TableRow implements Writeable, Readable {
 			this.action !== undefined,
 			this.hovered !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.ARRAY, 1);
@@ -7264,7 +7264,7 @@ export class TableHeader implements Writeable, Readable {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.columns !== undefined && !this.columns.isZero()];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.ARRAY, 1);
@@ -7680,7 +7680,7 @@ export class TextView implements Writeable, Readable, Component {
 			this.wordBreak !== undefined,
 			this.link !== undefined && !this.link.isZero(),
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -8142,7 +8142,7 @@ export class TextField implements Writeable, Readable, Component {
 			this.min !== undefined,
 			this.autocomplete !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -8385,7 +8385,7 @@ export class Toggle implements Writeable, Readable, Component {
 			this.invisible !== undefined,
 			this.id !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
@@ -8553,7 +8553,7 @@ export class TextLayout implements Writeable, Readable, Component {
 			this.textAlignment !== undefined,
 			this.invisible !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.ARRAY, 1);
@@ -8708,7 +8708,7 @@ export class WebView implements Writeable, Readable, Component {
 			this.referrerPolicy !== undefined,
 			this.raw !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -8797,7 +8797,7 @@ export class WindowInfoChanged implements Writeable, Readable, NagoEvent {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.windowInfo !== undefined && !this.windowInfo.isZero(), this.rID !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.RECORD, 1);
@@ -8902,7 +8902,7 @@ export class UpdateStateValues2Requested implements Writeable, Readable, NagoEve
 			this.functionPointer !== undefined,
 			this.rID !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
@@ -8990,7 +8990,7 @@ export class OpenHttpLink implements Writeable, Readable, NagoEvent {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.url !== undefined, this.target !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -9076,7 +9076,7 @@ export class OpenHttpFlow implements Writeable, Readable, NagoEvent {
 			this.redirectNavigation !== undefined,
 			this.session !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -9144,7 +9144,7 @@ export class ClipboardWriteTextRequested implements Writeable, Readable, NagoEve
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.text !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -9222,7 +9222,7 @@ export class Menu implements Writeable, Readable, Component {
 			this.groups !== undefined && !this.groups.isZero(),
 			this.frame !== undefined && !this.frame.isZero(),
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			// encode polymorphic enum as 1 element slice
@@ -9288,7 +9288,7 @@ export class MenuGroup implements Writeable, Readable {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.items !== undefined && !this.items.isZero()];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.ARRAY, 1);
@@ -9347,7 +9347,7 @@ export class MenuItem implements Writeable, Readable {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.action !== undefined, this.content !== undefined && !this.content.isZero()];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
@@ -9535,7 +9535,7 @@ export class Form implements Writeable, Readable, Component {
 			this.autocomplete !== undefined,
 			this.frame !== undefined && !this.frame.isZero(),
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.ARRAY, 1);
@@ -9724,7 +9724,7 @@ export class CountDown implements Writeable, Readable, Component {
 			this.progressBackground !== undefined,
 			this.progressColor !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
@@ -9917,7 +9917,7 @@ export class CodeEditor implements Writeable, Readable, Component {
 			this.inputValue !== undefined,
 			this.language !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -10048,7 +10048,7 @@ export class RichTextEditor implements Writeable, Readable, Component {
 			this.disabled !== undefined,
 			this.inputValue !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -10132,7 +10132,7 @@ export class RichText implements Writeable, Readable, Component {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.value !== undefined, this.frame !== undefined && !this.frame.isZero()];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -10268,7 +10268,7 @@ export class HoverGroup implements Writeable, Readable, Component {
 			this.position !== undefined && !this.position.isZero(),
 			this.contentHover !== undefined && !this.contentHover.isZero(),
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			// encode polymorphic enum as 1 element slice
@@ -10442,7 +10442,7 @@ export class FontFace implements Writeable, Readable {
 			this.weight !== undefined,
 			this.source !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -10518,7 +10518,7 @@ export class Fonts implements Writeable, Readable {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.defaultFontFace !== undefined, this.faces !== undefined && !this.faces.isZero()];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -10622,7 +10622,7 @@ export class QrCode implements Writeable, Readable, Component {
 			this.accessibilityLabel !== undefined,
 			this.frame !== undefined && !this.frame.isZero(),
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -10777,7 +10777,7 @@ export class QrCodeReader implements Writeable, Readable, Component {
 			this.onCameraReady !== undefined,
 			this.frame !== undefined && !this.frame.isZero(),
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
@@ -10923,7 +10923,7 @@ export class MediaDevice implements Writeable, Readable {
 			this.label !== undefined,
 			this.kind !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -11017,7 +11017,7 @@ export class CallMediaDevicesEnumerate implements Writeable, Readable, CallArgs 
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.keep !== undefined, this.withAudio !== undefined, this.withVideo !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
@@ -11150,7 +11150,7 @@ export class CallResolved implements Writeable, Readable, NagoEvent {
 			this.ret !== undefined && !this.ret.isZero(),
 			this.rID !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
@@ -11226,7 +11226,7 @@ export class CallRequested implements Writeable, Readable, NagoEvent {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.callPtr !== undefined, this.call !== undefined && !this.call.isZero()];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
@@ -11290,7 +11290,7 @@ export class RetError implements Writeable, Readable, CallRet {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.message !== undefined, this.code !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -11345,7 +11345,7 @@ export class RetMediaDevicesEnumerate implements Writeable, Readable, CallRet {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.devices !== undefined && !this.devices.isZero()];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.ARRAY, 1);
@@ -11422,7 +11422,7 @@ export class RetMediaDevicesPermissionsError implements Writeable, Readable, Cal
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.message !== undefined, this.code !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -11521,7 +11521,7 @@ export class BarChart implements Writeable, Readable, Component {
 			this.horizontal !== undefined,
 			this.stacked !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.RECORD, 1);
@@ -11674,7 +11674,7 @@ export class BarChartMarker implements Writeable, Readable {
 			this.dashed !== undefined,
 			this.color !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -11899,7 +11899,7 @@ export class LineChart implements Writeable, Readable, Component {
 			this.curve !== undefined,
 			this.markers !== undefined && !this.markers.isZero(),
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.RECORD, 1);
@@ -12086,7 +12086,7 @@ export class ChartDataPoint implements Writeable, Readable {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.x !== undefined, this.y !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -12162,7 +12162,7 @@ export class ChartSeries implements Writeable, Readable {
 			this.type !== undefined,
 			this.dataPoints !== undefined && !this.dataPoints.isZero(),
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -12246,7 +12246,7 @@ export class LineChartMarkers implements Writeable, Readable {
 			this.borderColor !== undefined,
 			this.showNullDataPoints !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.VARINT, 1);
@@ -12377,7 +12377,7 @@ export class Chart implements Writeable, Readable {
 			this.yAxisTitle !== undefined,
 			this.labelRounding !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.ARRAY, 1);
@@ -12545,7 +12545,7 @@ export class Video implements Writeable, Readable, Component {
 			this.poster !== undefined,
 			this.autoplay !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -12711,7 +12711,7 @@ export class Transformation implements Writeable, Readable {
 			this.scaleZ !== undefined,
 			this.rotateZ !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -12809,7 +12809,7 @@ export class CallRequestFocus implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.iD !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -12900,7 +12900,7 @@ export class PieChart implements Writeable, Readable, Component {
 			this.showDataLabels !== undefined,
 			this.showAbsoluteValues !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.RECORD, 1);
@@ -12999,7 +12999,7 @@ export class DnD implements Writeable, Readable {
 			this.canDrag !== undefined,
 			this.droppableIDs !== undefined && !this.droppableIDs.isZero(),
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
@@ -13105,7 +13105,7 @@ export class DnDArea implements Writeable, Readable, Component {
 			this.id !== undefined,
 			this.droppedId !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.ARRAY, 1);
@@ -13226,7 +13226,7 @@ export class Background implements Writeable, Readable {
 			this.repeat !== undefined,
 			this.size !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.ARRAY, 1);
@@ -13330,7 +13330,7 @@ export class SelectOption implements Writeable, Readable {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.value !== undefined, this.disabled !== undefined, this.label !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -13549,7 +13549,7 @@ export class Select implements Writeable, Readable, Component {
 			this.options !== undefined && !this.options.isZero(),
 			this.autocomplete !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -13697,7 +13697,7 @@ export class ColorStates implements Writeable, Readable {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.hover !== undefined, this.focus !== undefined, this.pressed !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -14032,7 +14032,7 @@ export class Stack implements Writeable, Readable, Component {
 			this.target !== undefined,
 			this.orientation !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.ARRAY, 1);
@@ -14258,7 +14258,7 @@ export class Canvas implements Writeable, Readable, Component {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined, this.frame !== undefined && !this.frame.isZero()];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -14373,7 +14373,7 @@ export class CanvasArc implements Writeable, Readable, CallArgs {
 			this.end !== undefined,
 			this.antiClockwise !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -14511,7 +14511,7 @@ export class CanvasArcTo implements Writeable, Readable, CallArgs {
 			this.y2 !== undefined,
 			this.radius !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -14592,7 +14592,7 @@ export class CanvasBeginPath implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -14700,7 +14700,7 @@ export class CanvasBezierCurveTo implements Writeable, Readable, CallArgs {
 			this.x !== undefined,
 			this.y !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -14794,7 +14794,7 @@ export class CanvasCallList implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined, this.handle !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -14848,7 +14848,7 @@ export class CanvasClear implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -14938,7 +14938,7 @@ export class CanvasClearRect implements Writeable, Readable, CallArgs {
 			this.w !== undefined,
 			this.h !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -15013,7 +15013,7 @@ export class CanvasClip implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -15062,7 +15062,7 @@ export class CanvasClosePath implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -15197,7 +15197,7 @@ export class CanvasDrawImage implements Writeable, Readable, CallArgs {
 			this.sw !== undefined,
 			this.sh !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -15302,7 +15302,7 @@ export class CanvasEndList implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -15351,7 +15351,7 @@ export class CanvasFill implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -15441,7 +15441,7 @@ export class CanvasFillRect implements Writeable, Readable, CallArgs {
 			this.w !== undefined,
 			this.h !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -15523,7 +15523,7 @@ export class CanvasFillStyle implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined, this.style !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -15618,7 +15618,7 @@ export class CanvasFillText implements Writeable, Readable, CallArgs {
 			this.y !== undefined,
 			this.maxWidth !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -15700,7 +15700,7 @@ export class CanvasFont implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined, this.font !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -15768,7 +15768,7 @@ export class CanvasLineTo implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined, this.x !== undefined, this.y !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -15841,7 +15841,7 @@ export class CanvasMoveTo implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined, this.x !== undefined, this.y !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -15907,7 +15907,7 @@ export class CanvasNewList implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined, this.handle !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -16002,7 +16002,7 @@ export class CanvasQuadraticCurveTo implements Writeable, Readable, CallArgs {
 			this.x !== undefined,
 			this.y !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -16118,7 +16118,7 @@ export class CanvasRect implements Writeable, Readable, CallArgs {
 			this.w !== undefined,
 			this.h !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -16193,7 +16193,7 @@ export class CanvasRestore implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -16250,7 +16250,7 @@ export class CanvasRotate implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined, this.angle !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -16304,7 +16304,7 @@ export class CanvasSave implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -16367,7 +16367,7 @@ export class CanvasScale implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined, this.x !== undefined, this.y !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -16485,7 +16485,7 @@ export class CanvasSetTransform implements Writeable, Readable, CallArgs {
 			this.e !== undefined,
 			this.f !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -16613,7 +16613,7 @@ export class CanvasStrokeRect implements Writeable, Readable, CallArgs {
 			this.w !== undefined,
 			this.h !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -16695,7 +16695,7 @@ export class CanvasStrokeStyle implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined, this.style !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -16790,7 +16790,7 @@ export class CanvasStrokeText implements Writeable, Readable, CallArgs {
 			this.y !== undefined,
 			this.maxWidth !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -16872,7 +16872,7 @@ export class CanvasTextAlign implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined, this.textAlign !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -16933,7 +16933,7 @@ export class CanvasTextBaseline implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined, this.baseline !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -17001,7 +17001,7 @@ export class CanvasTranslate implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined, this.x !== undefined, this.y !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -17086,7 +17086,7 @@ export class RegisterInputEventListener implements Writeable, Readable, CallArgs
 			this.handle !== undefined,
 			this.types !== undefined && !this.types.isZero(),
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -17145,7 +17145,7 @@ export class UnregisterInputEventListener implements Writeable, Readable, CallAr
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.handle !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
@@ -17264,7 +17264,7 @@ export class InputEvent implements Writeable, Readable, CallRet {
 			this.y !== undefined,
 			this.code !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
@@ -17353,7 +17353,7 @@ export class CanvasLoadImage implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined, this.hnd !== undefined, this.url !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -17419,7 +17419,7 @@ export class CanvasLineWidth implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined, this.width !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -17480,7 +17480,7 @@ export class CanvasLineCap implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined, this.cap !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -17541,7 +17541,7 @@ export class CanvasLineJoin implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined, this.join !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -17602,7 +17602,7 @@ export class CanvasMiterLimit implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined, this.limit !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -17708,7 +17708,7 @@ export class Accordion implements Writeable, Readable, Component {
 			this.inputValue !== undefined,
 			this.value !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			// encode polymorphic enum as 1 element slice
@@ -17839,7 +17839,7 @@ export class SwitcherPage implements Writeable, Readable, Component {
 			this.content !== undefined && !this.content.isZero(),
 			this.img !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -18033,7 +18033,7 @@ export class Switcher implements Writeable, Readable, Component {
 			this.dynamicHeight !== undefined,
 			this.imageObjectFit !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -18144,7 +18144,7 @@ export class Link implements Writeable, Readable {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.url !== undefined, this.target !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -18314,7 +18314,7 @@ export class FlowChart implements Writeable, Readable, Component {
 			this.maxZoom !== undefined,
 			this.actionValue !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 1);
@@ -18444,7 +18444,7 @@ export class FlowChartPoint implements Writeable, Readable {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.x !== undefined, this.y !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.F64, 1);
@@ -18552,7 +18552,7 @@ export class FlowChartNode implements Writeable, Readable {
 			this.label !== undefined,
 			this.style !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -18781,7 +18781,7 @@ export class FlowChartEdge implements Writeable, Readable {
 			this.markerStart !== undefined,
 			this.markerEnd !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -18942,7 +18942,7 @@ export class FlowChartModel implements Writeable, Readable {
 			this.nodes !== undefined && !this.nodes.isZero(),
 			this.edges !== undefined && !this.edges.isZero(),
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.ARRAY, 1);
@@ -19007,7 +19007,7 @@ export class FlowChartCustomContent implements Writeable, Readable {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.nodeId !== undefined, this.content !== undefined && !this.content.isZero()];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -19114,7 +19114,7 @@ export class CanvasShadowOffsetX implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined, this.offsetX !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -19175,7 +19175,7 @@ export class CanvasShadowOffsetY implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined, this.offsetY !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -19236,7 +19236,7 @@ export class CanvasShadowColor implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined, this.color !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -19297,7 +19297,7 @@ export class CanvasShadowBlur implements Writeable, Readable, CallArgs {
 
 	write(writer: BinaryWriter): void {
 		const fields = [false, this.id !== undefined, this.blur !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
@@ -19479,7 +19479,7 @@ export class FlowChartActionData implements Writeable, Readable {
 			this.paneX !== undefined,
 			this.paneY !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.RECORD, 1);
@@ -19615,7 +19615,7 @@ export class FlowChartBackground implements Writeable, Readable {
 			this.gridStyle !== undefined,
 			this.gridGap !== undefined,
 		];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		const fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 1);

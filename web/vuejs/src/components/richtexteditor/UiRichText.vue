@@ -43,5 +43,5 @@ const frameStyles = computed<string>(() => {
 </script>
 
 <template>
-	<div v-html="sanitizedHtml" :style="frameStyles" class="prose-custom" />
+	<div :style="frameStyles" class="prose-custom" v-html="sanitizedHtml" />
 </template>

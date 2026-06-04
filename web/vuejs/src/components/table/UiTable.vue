@@ -291,8 +291,8 @@ function onRowMouseLeave(rowIdx: number) {
 		<thead v-if="props.ui.header?.columns?.value?.length > 0" class="" :style="headStyles()">
 			<tr>
 				<th
-					class="font-normal"
 					v-for="(head, headIdx) in props.ui.header?.columns?.value"
+					class="font-normal"
 					scope="col"
 					:style="headCellStyles(headIdx)"
 					@click.stop="onClickHeaderCell(headIdx)"
@@ -313,9 +313,9 @@ function onRowMouseLeave(rowIdx: number) {
 				@mouseleave="onRowMouseLeave(rowIdx)"
 			>
 				<td
+					v-for="(cell, colIdx) in row.cells?.value"
 					:rowspan="cell.rowSpan == 0 ? undefined : cell.rowSpan"
 					:colspan="cell.colSpan == 0 ? undefined : cell.colSpan"
-					v-for="(cell, colIdx) in row.cells?.value"
 					:style="cellStyles(rowIdx, colIdx)"
 					@click.stop="onClickCell(rowIdx, colIdx)"
 					@mouseenter="onCellMouseEnter(rowIdx, colIdx)"

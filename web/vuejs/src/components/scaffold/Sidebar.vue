@@ -135,7 +135,7 @@ const subMenuEntries = computed((): ScaffoldMenuEntry[] => {
 	// Add the expanded menu entry without its sub menu entries, if it has an action
 	// TODO I don't understand this code and the logic behind it? Who owns what entry and are we talking about copies?
 	const xpandedEntry = expandedMenuEntry;
-	if (xpandedEntry == undefined) {
+	if (xpandedEntry.value == undefined) {
 		return [];
 	}
 

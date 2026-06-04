@@ -101,9 +101,9 @@ const rewriteSVG = computed<string>(() => {
 		:style="styles"
 	/>
 	<div
-		@click.capture="invokePointer"
-		:title="props.ui.accessibilityLabel"
 		v-if="props.ui.sVG"
+		:title="props.ui.accessibilityLabel"
+		@click.capture="invokePointer"
 		v-html="rewriteSVG"
 	></div>
 </template>

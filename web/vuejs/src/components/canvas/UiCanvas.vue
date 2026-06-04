@@ -463,10 +463,10 @@ onUnmounted(() => {
 <template>
 	<!-- canvas -->
 	<canvas
+		:id="props.ui.id"
+		ref="canvasRef"
 		:width="extractPixelValue(props.ui.frame?.width)"
 		:height="extractPixelValue(props.ui.frame?.height)"
-		ref="canvasRef"
-		:id="props.ui.id"
 		:style="frameStyles"
 	></canvas>
 </template>

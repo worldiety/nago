@@ -37,10 +37,10 @@ const frameStyles = computed<string>(() => {
 
 <template v-if="props.ui.iv">
 	<form
-		:style="frameStyles"
 		:id="ui.id"
-		@submit.prevent="handleSubmit"
+		:style="frameStyles"
 		:autocomplete="ui.autocomplete ? 'on' : 'off'"
+		@submit.prevent="handleSubmit"
 	>
 		<ui-generic v-for="ui in props.ui.children?.value" :ui="ui" />
 	</form>
