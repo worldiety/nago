@@ -8,14 +8,15 @@
 -->
 
 <script lang="ts" setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
 import { frameCSS } from '@/components/shared/frame';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
+import { autoUpdate, flip, shift, useFloating } from '@floating-ui/vue';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
-import { FunctionCallRequested, Menu as ProtoMenu, MenuItem as ProtoMenuItem } from '@/shared/proto/nprotoc_gen';
-import { usePopper } from '@/shared/use-popper';
+import type { Menu as ProtoMenu, MenuItem as ProtoMenuItem } from '@/shared/proto/nprotoc_gen';
+import { FunctionCallRequested } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: ProtoMenu;
@@ -23,15 +24,14 @@ const props = defineProps<{
 
 const serviceAdapter = useServiceAdapter();
 
-let [trigger, container] = usePopper({
-	placement: 'bottom-end',
+const trigger = ref();
+const menu = ref();
+
+const { floatingStyles } = useFloating(trigger, menu, {
+	placement: 'bottom-start',
 	strategy: 'fixed',
-	disablePortal: false,
-	modifiers: [
-		{ name: 'flip', enabled: true },
-		{ name: 'preventOverflow:', enabled: true, boundariesElement: 'viewport' },
-		{ name: 'offset', options: { offset: [0, 0] } },
-	],
+	whileElementsMounted: autoUpdate,
+	middleware: [flip(), shift({ crossAxis: true })],
 });
 
 function itemClick(item: ProtoMenuItem) {
@@ -42,7 +42,7 @@ function itemClick(item: ProtoMenuItem) {
 }
 
 const styles = computed<string>(() => {
-	let styles = frameCSS(props.ui.frame);
+	const styles = frameCSS(props.ui.frame);
 	return styles.join(';');
 });
 </script>
@@ -50,29 +50,29 @@ const styles = computed<string>(() => {
 <template>
 	<Menu as="div" class="relative inline-block text-left" :style="styles">
 		<div>
-			<MenuButton class="inline-flex w-full justify-center" ref="trigger">
+			<MenuButton ref="trigger" class="inline-flex w-full justify-center">
 				<ui-generic v-if="props.ui.anchor" :ui="props.ui.anchor" />
 			</MenuButton>
 		</div>
 
-		<transition ref="container" style="z-index: 40" class="border border-M3">
-			<MenuItems
-				class="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-M3 rounded-md bg-M1 shadow-lg ring-1 ring-black/5 focus:outline-none"
-			>
-				<div class="px-1 py-1" v-for="section in props.ui.groups?.value">
-					<MenuItem v-for="ui in section.items?.value" v-slot="{ active }">
-						<button
-							:class="[
-								active ? 'bg-I0 bg-opacity-25' : '',
-								'group flex w-full items-center rounded-md px-2 py-2 text-sm',
-							]"
-							@click="itemClick(ui)"
-						>
-							<ui-generic v-if="ui.content" :ui="ui.content" />
-						</button>
-					</MenuItem>
-				</div>
-			</MenuItems>
-		</transition>
+		<MenuItems
+			ref="menu"
+			class="z-40 w-56 max-h-screen divide-y divide-M3 rounded-md bg-M1 shadow-lg ring-1 ring-black/5 focus:outline-none border border-M3 overflow-y-auto"
+			:style="floatingStyles"
+		>
+			<div v-for="section in props.ui.groups?.value" class="px-1 py-1">
+				<MenuItem v-for="ui in section.items?.value" v-slot="{ active }">
+					<button
+						:class="[
+							active ? 'bg-I0 bg-opacity-25' : '',
+							'group flex w-full items-center rounded-md px-2 py-2 text-sm',
+						]"
+						@click="itemClick(ui)"
+					>
+						<ui-generic v-if="ui.content" :ui="ui.content" />
+					</button>
+				</MenuItem>
+			</div>
+		</MenuItems>
 	</Menu>
 </template>
