@@ -24,8 +24,11 @@ const (
 	// https://docs.anthropic.com/en/api/versioning.
 	defaultVersion = "2023-06-01"
 	// defaultMaxTokens is used whenever neither the request nor the settings provide a value. The Anthropic
-	// Messages API requires max_tokens to be set.
-	defaultMaxTokens = 4096
+	// Messages API requires max_tokens to be set. We default fairly high so agentic turns with many
+	// (parallel) tool_use blocks are not truncated (stop_reason == max_tokens), which would otherwise leave
+	// a tool_use without a matching tool_result. Older models (claude-3-opus/haiku) cap output at 4096;
+	// for those set Settings.MaxTokens explicitly.
+	defaultMaxTokens = 8192
 )
 
 // Client is a minimal, dependency-free Anthropic API client implemented directly on top of [xhttp].

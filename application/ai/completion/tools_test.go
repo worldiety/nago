@@ -143,3 +143,125 @@ func TestRun_ExecutesToolLoop(t *testing.T) {
 	}
 }
 
+// hasDanglingToolUse reports whether any assistant message contains a ToolCall that is not answered by a
+// ToolResult with the same ID in the immediately following message. This is exactly the condition the
+// Anthropic API rejects with a 400.
+func hasDanglingToolUse(history []Message) bool {
+	for i, m := range history {
+		var ids []string
+		for _, c := range m.Content {
+			if call, ok := c.(ToolCall); ok {
+				ids = append(ids, call.ID)
+			}
+		}
+		if len(ids) == 0 {
+			continue
+		}
+
+		answered := map[string]bool{}
+		if i+1 < len(history) {
+			for _, c := range history[i+1].Content {
+				if tr, ok := c.(ToolResult); ok {
+					answered[tr.ToolCallID] = true
+				}
+			}
+		}
+		for _, id := range ids {
+			if !answered[id] {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// TestRun_DropsTruncatedToolUse reproduces the 400 from the bug report: the model emitted tool_use blocks
+// but the turn was cut off (stop_reason == max_tokens). The loop must not persist a dangling tool_use.
+func TestRun_DropsTruncatedToolUse(t *testing.T) {
+	tool := NewTool("add", "", func(in addIn) (addOut, error) {
+		return addOut{Sum: in.A + in.B}, nil
+	})
+
+	fake := &fakeCompletions{
+		results: []Result{
+			{
+				Message: Message{Role: Assistant, Content: []Content{
+					Text{Text: "let me compute"},
+					ToolCall{ID: "1", Name: "add", Arguments: json.RawMessage(`{"a":2,"b":40}`)},
+					ToolCall{ID: "2", Name: "add", Arguments: json.RawMessage(`{"a":1,`)}, // truncated args
+				}},
+				StopReason: StopMaxTokens,
+			},
+		},
+	}
+
+	res, history, err := Run(nil, fake, RunOptions{
+		Options: Options{
+			Messages: []Message{{Role: User, Content: []Content{Text{Text: "add some numbers"}}}},
+		},
+		Tools: []Tool{tool},
+	})
+	if err != nil {
+		t.Fatalf("run failed: %v", err)
+	}
+
+	if res.StopReason != StopMaxTokens {
+		t.Fatalf("unexpected stop reason: %v", res.StopReason)
+	}
+
+	if hasDanglingToolUse(history) {
+		t.Fatalf("history contains a tool_use without a matching tool_result: %+v", history)
+	}
+
+	// user prompt + assistant text (tool_use stripped) = 2 messages; no tool was executed.
+	if len(history) != 2 {
+		t.Fatalf("unexpected history length %d: %+v", len(history), history)
+	}
+
+	last := history[1]
+	if last.Role != Assistant || len(last.Content) != 1 {
+		t.Fatalf("expected single-block assistant message, got %+v", last)
+	}
+	if _, ok := last.Content[0].(Text); !ok {
+		t.Fatalf("expected remaining text block, got %T", last.Content[0])
+	}
+}
+
+// TestRun_TruncatedToolUseOnlyDropsMessage verifies that an aborted turn consisting solely of tool_use
+// blocks (no text/thinking) is dropped entirely rather than persisted as an empty assistant message.
+func TestRun_TruncatedToolUseOnlyDropsMessage(t *testing.T) {
+	tool := NewTool("add", "", func(in addIn) (addOut, error) {
+		return addOut{Sum: in.A + in.B}, nil
+	})
+
+	fake := &fakeCompletions{
+		results: []Result{
+			{
+				Message: Message{Role: Assistant, Content: []Content{
+					ToolCall{ID: "1", Name: "add", Arguments: json.RawMessage(`{"a":2,`)},
+				}},
+				StopReason: StopMaxTokens,
+			},
+		},
+	}
+
+	_, history, err := Run(nil, fake, RunOptions{
+		Options: Options{
+			Messages: []Message{{Role: User, Content: []Content{Text{Text: "add"}}}},
+		},
+		Tools: []Tool{tool},
+	})
+	if err != nil {
+		t.Fatalf("run failed: %v", err)
+	}
+
+	if hasDanglingToolUse(history) {
+		t.Fatalf("history contains a dangling tool_use: %+v", history)
+	}
+
+	// Only the original user prompt remains.
+	if len(history) != 1 {
+		t.Fatalf("unexpected history length %d: %+v", len(history), history)
+	}
+}
+

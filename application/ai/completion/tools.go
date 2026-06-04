@@ -156,31 +156,60 @@ func Run(subject auth.Subject, c Completions, opts RunOptions) (Result, []Messag
 			return Result{}, history, err
 		}
 
-		history = append(history, res.Message)
+		// Collect any tool calls in this assistant turn up front, decoupled from the stop reason.
+		var calls []ToolCall
+		for _, content := range res.Message.Content {
+			if call, ok := content.(ToolCall); ok {
+				calls = append(calls, call)
+			}
+		}
 
 		if res.StopReason != StopToolUse {
+			// The turn did not (cleanly) request tools. If it nonetheless carries tool_use blocks the
+			// generation was cut off mid tool-call (e.g. stop_reason == max_tokens). Anthropic requires every
+			// tool_use to be followed by a matching tool_result; a truncated call has invalid/partial
+			// arguments and must not be executed. Drop those blocks so the persisted history stays valid.
+			if len(calls) > 0 {
+				cleaned := stripToolCalls(res.Message)
+				if len(cleaned.Content) > 0 {
+					history = append(history, cleaned)
+				}
+			} else {
+				history = append(history, res.Message)
+			}
 			return res, history, nil
 		}
 
-		var results []Content
-		for _, content := range res.Message.Content {
-			call, ok := content.(ToolCall)
-			if !ok {
-				continue
-			}
+		history = append(history, res.Message)
 
-			results = append(results, executeToolCall(tools, call))
-		}
-
-		if len(results) == 0 {
+		if len(calls) == 0 {
 			// The model signalled tool_use but emitted no actual call we understand; stop to avoid looping.
 			return res, history, nil
+		}
+
+		results := make([]Content, 0, len(calls))
+		for _, call := range calls {
+			results = append(results, executeToolCall(tools, call))
 		}
 
 		history = append(history, Message{Role: User, Content: results})
 	}
 
 	return Result{}, history, fmt.Errorf("tool loop exceeded %d turns", maxTurns)
+}
+
+// stripToolCalls returns a copy of msg with all [ToolCall] content blocks removed. It is used to discard
+// truncated tool_use blocks from an aborted turn (e.g. stop_reason == max_tokens) so the resulting history
+// never contains a tool_use without a matching tool_result.
+func stripToolCalls(msg Message) Message {
+	out := make([]Content, 0, len(msg.Content))
+	for _, c := range msg.Content {
+		if _, ok := c.(ToolCall); ok {
+			continue
+		}
+		out = append(out, c)
+	}
+	return Message{Role: msg.Role, Content: out}
 }
 
 // executeToolCall runs a single tool call and wraps the outcome into a [ToolResult] content block. Unknown
