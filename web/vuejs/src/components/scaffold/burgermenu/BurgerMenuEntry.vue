@@ -141,5 +141,4 @@ function expandMenuEntry(): void {
 .menu-entry:focus-visible .menu-entry-icon > :nth-child(2) {
 	@apply block;
 }
-
 </style>
