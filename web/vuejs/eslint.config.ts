@@ -7,7 +7,7 @@ import eslintConfigPrettier from "eslint-config-prettier/flat";
 
 export default defineConfig([
 	{
-		ignores: ["**/*.d.ts"],
+		ignores: ["**/*.d.ts", "./src/shared/proto"],
 	},
 	{
 		files: ["**/*.{js,mjs,cjs,ts,mts,cts,vue}"],
