@@ -30,7 +30,7 @@ const props = defineProps<{
 
 const serviceAdapter = useServiceAdapter();
 
-const frameStyles = computed<Object | undefined>(() => {
+const frameStyles = computed<object | undefined>(() => {
 	let styles = frameCSSObject(props.ui.frame);
 
 	return styles;
@@ -90,8 +90,8 @@ function extensions(): Extension[] {
 
 <template v-if="props.ui.iv">
 	<codemirror
-		:style="frameStyles"
 		v-model="props.ui.value"
+		:style="frameStyles"
 		placeholder=""
 		:autofocus="true"
 		:indent-with-tab="true"

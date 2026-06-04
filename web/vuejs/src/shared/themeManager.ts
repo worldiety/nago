@@ -72,7 +72,7 @@ export default class ThemeManager {
 			return;
 		}
 
-		let elem = document.getElementsByTagName('html')[0];
+		const elem = document.getElementsByTagName('html')[0];
 
 		if (theme.colors) {
 			// TODO this is underspecified, because the namespace is not involved in the colorname which break the logic namespacing

@@ -42,7 +42,7 @@ export function frameCSS(frame?: Frame): string[] {
 	return styles;
 }
 
-export function frameCSSObject(frame?: Frame): Object | undefined {
+export function frameCSSObject(frame?: Frame): object | undefined {
 	if (!frame) {
 		return undefined;
 	}

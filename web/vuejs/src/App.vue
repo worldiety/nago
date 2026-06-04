@@ -308,17 +308,6 @@ watch(
 );
 </script>
 
-<style scoped>
-.modal-container {
-	z-index: var(--modal-z-index);
-}
-
-.content-container.content-container-freezed {
-	@apply fixed left-0 right-0;
-	top: var(--content-top-offset);
-}
-</style>
-
 <template>
 	<ConnectionLostOverlay v-if="!connected" />
 	<ConnectingChannelOverlay v-if="state === State.Loading" />
@@ -343,3 +332,14 @@ watch(
 		<UIClipboardModal v-model="copy_component_text" />
 	</div>
 </template>
+
+<style scoped>
+.modal-container {
+	z-index: var(--modal-z-index);
+}
+
+.content-container.content-container-freezed {
+	@apply fixed left-0 right-0;
+	top: var(--content-top-offset);
+}
+</style>

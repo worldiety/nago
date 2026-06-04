@@ -21,7 +21,7 @@ const props = defineProps<{
 
 const serviceAdapter = useServiceAdapter();
 
-const frameStyles = computed<Object | undefined>(() => {
+const frameStyles = computed<object | undefined>(() => {
 	let styles = frameCSSObject(props.ui.frame);
 
 	return styles;

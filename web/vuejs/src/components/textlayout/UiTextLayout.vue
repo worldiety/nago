@@ -81,8 +81,8 @@ const clazz = computed<string>(() => {
 		v-if="!props.ui.invisible"
 		:class="clazz"
 		:style="frameStyles"
-		@click="onClick"
 		:title="props.ui.accessibilityLabel"
+		@click="onClick"
 	>
 		<ui-generic v-for="ui in props.ui.children?.value" :ui="ui" />
 	</div>

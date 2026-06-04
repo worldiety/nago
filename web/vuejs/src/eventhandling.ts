@@ -76,7 +76,7 @@ export function windowInfoChanged(chan: Channel, themeManager: ThemeManager) {
  * getWindowInfo calculates the current WindowInfo and returns it.
  */
 export function getWindowInfo(themeManager: ThemeManager): WindowInfo {
-	let windowInfo = new WindowInfo();
+	const windowInfo = new WindowInfo();
 	windowInfo.density = window.devicePixelRatio;
 	windowInfo.width = window.innerWidth;
 	windowInfo.height = window.innerHeight;
@@ -108,8 +108,8 @@ export function requestRootViewRendering(chan: Channel) {
  * The backend will trigger a rendering by specification automatically.
  */
 export function requestRootViewAllocation(chan: Channel, locale: Locale) {
-	let rootViewID = requiredRootViewID();
-	let rootViewParams = requiredRootViewParameter();
+	const rootViewID = requiredRootViewID();
+	const rootViewParams = requiredRootViewParameter();
 
 	history.replaceState(new NavigationForwardToRequested(rootViewID, rootViewParams), '', null);
 
@@ -121,7 +121,7 @@ export function requestRootViewAllocation(chan: Channel, locale: Locale) {
  * once after initialization. Note, that there is a special event just for [WindowInfoChanged].
  */
 export function requestScopeConfigurationChange(chan: Channel, themeManager: ThemeManager) {
-	let evt = new ScopeConfigurationChangeRequested();
+	const evt = new ScopeConfigurationChangeRequested();
 	evt.windowInfo = getWindowInfo(themeManager);
 
 	evt.acceptLanguage = getLocale();
@@ -264,7 +264,7 @@ function requiredRootViewID(): RootViewID {
  * be stateless and safe for bookmarking and must not expose secrets. But that is the responsibility of the backend.
  */
 function requiredRootViewParameter(): RootViewParameters {
-	let params = new RootViewParameters();
+	const params = new RootViewParameters();
 	new URLSearchParams(window.location.search).forEach((value, key) => {
 		params.value.set(key, value);
 	});
@@ -282,8 +282,8 @@ export function triggerFileDownload(evt: SendMultipleRequested): void {
 		return;
 	}
 
-	let res = evt.resources.value[0];
-	let a = document.createElement('a');
+	const res = evt.resources.value[0];
+	const a = document.createElement('a');
 	a.href = res.uRI!;
 	a.download = res.name!;
 	document.body.appendChild(a);
@@ -298,7 +298,7 @@ export function triggerFileDownload(evt: SendMultipleRequested): void {
  * @param evt
  */
 export async function triggerFileUpload(uploadRepository: UploadRepository, evt: FileImportRequested): Promise<void> {
-	let input = document.createElement('input');
+	const input = document.createElement('input');
 	input.className = 'hidden';
 	input.type = 'file';
 	input.id = evt.iD!;
@@ -397,7 +397,7 @@ var nextInvalidationScrollsTopFlag: boolean;
 var lastScrolledRootView: RootViewID | undefined;
 
 export function nextInvalidationScrollsTop(): boolean {
-	let tmp = nextInvalidationScrollsTopFlag;
+	const tmp = nextInvalidationScrollsTopFlag;
 	nextInvalidationScrollsTopFlag = false;
 	console.log('reset next scroll flag');
 	return tmp;
@@ -441,7 +441,7 @@ export function scrollToTop(post: boolean) {
  */
 export function applyRootViewState(chan: Channel, state: any) {
 	const evt = state as NavigationForwardToRequested;
-	let req = new RootViewAllocationRequested();
+	const req = new RootViewAllocationRequested();
 	// important: evt/history.state may be in broken state, due to the way how javascript deserializes the state
 	// it is NOT of NavigationForwardToRequested anymore
 	console.log('applyRootViewState from history', state);
@@ -763,7 +763,7 @@ async function unregisterInputEvents(chan: Channel, evt: CallRequested, args: Un
 
 async function callRequestFocus(chan: Channel, evt: CallRequested, args: CallRequestFocus) {
 	if (args.iD) {
-		let elem = document.getElementById(args.iD);
+		const elem = document.getElementById(args.iD);
 		if (elem) {
 			elem.focus();
 		}
