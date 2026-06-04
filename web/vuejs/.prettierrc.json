@@ -6,20 +6,6 @@
   "singleQuote": true,
   "quoteProps": "consistent",
   "bracketSpacing": true,
-  "arrowParens": "always",
-  "importOrder": [
-    "^vue$",
-    "^vue-router$",
-    "^vue-i18n$",
-    "<THIRD_PARTY_MODULES>",
-    "^@/lib/(.*)$",
-    "^@/shared/(.*)$",
-    "^@/ctx-(.*)$",
-    "^[./]",
-    "^(.*).css$"
-  ],
-  "importOrderSeparation": false,
-  "importOrderSortSpecifiers": true,
-  "plugins": ["@trivago/prettier-plugin-sort-imports"]
+  "arrowParens": "always"
 }
 

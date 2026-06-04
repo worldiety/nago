@@ -357,12 +357,7 @@ function apply(ctx: CanvasRenderingContext2D, invoke: CallRequested, depth: numb
 	}
 
 	if (invoke.call instanceof CanvasQuadraticCurveTo) {
-		ctx.quadraticCurveTo(
-			or0(invoke.call.cpx),
-			or0(invoke.call.cpy),
-			or0(invoke.call.x),
-			or0(invoke.call.y)
-		);
+		ctx.quadraticCurveTo(or0(invoke.call.cpx), or0(invoke.call.cpy), or0(invoke.call.x), or0(invoke.call.y));
 		return;
 	}
 
