@@ -9,23 +9,21 @@
 
 <template>
 	<div class="flex flex-col justify-start items-start gap-y-4 w-full">
-		<div
+		<component
+			:is="menuEntryClickable ? 'button' : 'div'"
 			class="menu-entry flex justify-start items-center gap-x-4 rounded-full w-full p-4"
 			:class="{
 				'cursor-pointer hover:bg-M7 hover:bg-opacity-25 active:bg-opacity-35': menuEntryClickable,
 				'bg-M7 bg-opacity-35': menuEntryActive,
+				'has-active-icon': ui.expanded && ui.iconActive,
 			}"
-			:tabindex="menuEntryClickable ? '0' : '-1'"
 			@click="menuEntryClicked"
 			@keydown.enter="menuEntryClicked"
 		>
 			<div v-if="props.ui.icon" class="relative flex justify-start items-center h-full">
-				<div class="menu-entry-icon-active *:h-full">
-					<ui-generic v-if="ui.expanded && props.ui.iconActive" :ui="props.ui.iconActive" />
-					<ui-generic v-else :ui="props.ui.icon" />
-				</div>
 				<div class="menu-entry-icon *:h-full">
 					<ui-generic :ui="props.ui.icon" />
+					<ui-generic v-if="ui.expanded && props.ui.iconActive" :ui="props.ui.iconActive" />
 				</div>
 
 				<!-- Optional red badge -->
@@ -40,7 +38,7 @@
 				<p class="grow leading-tight select-none align-bottom">{{ ui.title }}</p>
 			</div>
 			<TriangleDown v-if="hasSubMenuEntries" class="shrink-0 basis-2" :class="triangleClass" />
-		</div>
+		</component>
 		<template v-if="ui.expanded">
 			<div class="flex flex-col justify-start items-start gap-y-4 w-full pl-4">
 				<BurgerMenuEntry
@@ -61,7 +59,8 @@ import TriangleDown from '@/assets/svg/triangleDown.svg';
 import UiGeneric from '@/components/UiGeneric.vue';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
-import { FunctionCallRequested, ScaffoldMenuEntry } from '@/shared/proto/nprotoc_gen';
+import type { ScaffoldMenuEntry } from '@/shared/proto/nprotoc_gen';
+import { FunctionCallRequested } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: ScaffoldMenuEntry;
@@ -129,14 +128,18 @@ function expandMenuEntry(): void {
 </script>
 
 <style scoped>
-.menu-entry:hover .menu-entry-icon,
-.menu-entry:focus-visible .menu-entry-icon,
-.menu-entry .menu-entry-icon-active {
+.menu-entry .menu-entry-icon > :nth-child(2) {
 	@apply hidden;
 }
 
-.menu-entry:hover .menu-entry-icon-active,
-.menu-entry:focus-visible .menu-entry-icon-active {
+.menu-entry.has-active-icon:hover .menu-entry-icon > :first-child,
+.menu-entry.has-active-icon:focus-visible .menu-entry-icon > :first-child {
+	@apply hidden;
+}
+
+.menu-entry:hover .menu-entry-icon > :nth-child(2),
+.menu-entry:focus-visible .menu-entry-icon > :nth-child(2) {
 	@apply block;
 }
+
 </style>
