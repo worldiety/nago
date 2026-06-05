@@ -12,13 +12,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Frontend audit high severity
+        run: cd web/vuejs/ && npm audit --audit-level=high
+
+      - name: Frontend lint
+        run: cd web/vuejs/ && npm install && npm run lint
+
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.24'
 
-#      - name: Run go generate
-#        run: go generate ./...
+      #      - name: Run go generate
+      #        run: go generate ./...
 
       - name: Install Hugo
         uses: peaceiris/actions-hugo@v3
