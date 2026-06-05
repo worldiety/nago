@@ -76,7 +76,7 @@ export default class ThemeManager {
 
 		if (theme.colors) {
 			// TODO this is underspecified, because the namespace is not involved in the colorname which break the logic namespacing
-			theme.colors.value.forEach((val, key) => {
+			theme.colors.value.forEach((val) => {
 				val.value.forEach((colorVal, colorName) => {
 					elem.style.setProperty(`--${colorName}`, colorVal);
 				});

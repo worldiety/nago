@@ -10,7 +10,7 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
-import { colorValue, opacityValue } from '@/components/shared/colors';
+import { colorValue } from '@/components/shared/colors';
 import { marginCSS } from '@/components/shared/padding';
 import { AlignmentValues, GridCell } from '@/shared/proto/nprotoc_gen';
 
@@ -50,11 +50,7 @@ const style = computed<string>(() => {
 		styles.push(`background-color: ${color}`);
 	}
 
-	if (props.ui.alignment === undefined) {
-		props.ui.alignment = AlignmentValues.Center;
-	}
-
-	switch (props.ui.alignment) {
+	switch (props.ui.alignment ?? AlignmentValues.Center) {
 		case AlignmentValues.Stretch:
 			// do nothing, which stretches
 			break;

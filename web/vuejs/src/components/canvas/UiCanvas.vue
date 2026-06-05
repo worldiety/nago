@@ -10,7 +10,6 @@
 <script lang="ts" setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { frameCSS } from '@/components/shared/frame';
-import { useServiceAdapter } from '@/composables/serviceAdapter';
 import ConnectionHandler from '@/shared/network/connectionHandler';
 import {
 	CallRequested,
@@ -58,8 +57,6 @@ import {
 	CanvasTranslate,
 	type NagoEvent,
 } from '@/shared/proto/nprotoc_gen';
-
-const serviceAdapter = useServiceAdapter();
 
 // Local aliases for the DOM canvas literal union types, because the imported proto
 // classes shadow the global lib.dom.d.ts type names of the same name.

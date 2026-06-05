@@ -188,7 +188,7 @@ function loadFonts(fonts: Fonts) {
 
 		fontFace
 			.load()
-			.then((value) => {
+			.then(() => {
 				document.fonts.add(fontFace);
 				console.log(`extra font ${JSON.stringify(faceDef)} loaded`);
 			})
@@ -318,17 +318,17 @@ export async function triggerFileUpload(uploadRepository: UploadRepository, evt:
 				evt.iD!,
 				0,
 				evt.scopeID!,
-				(uploauploadId: string, progress: number, total: number) => {
-					console.log('progress', progress);
+				(uploadId: string, progress: number, total: number) => {
+					console.log('upload progress', uploadId, 'progress', progress, 'total', total);
 				},
 				(uploadId) => {
-					// upload finished
+					console.debug('upload finished', uploadId);
 				},
 				(uploadId) => {
-					// upload aborted
+					console.debug('upload aborted', uploadId);
 				},
 				(uploadId) => {
-					console.log('upload failed');
+					console.log('upload failed', uploadId);
 				}
 			);
 		}
@@ -393,8 +393,8 @@ export function navigateForward(chan: Channel, evt: NavigationForwardToRequested
 
 // nextInvalidationScrollsTop is set by navigation events and tells if a redraw must trigger a scroll to top,
 // e.g. because it is really a new page.
-var nextInvalidationScrollsTopFlag: boolean;
-var lastScrolledRootView: RootViewID | undefined;
+let nextInvalidationScrollsTopFlag: boolean;
+let lastScrolledRootView: RootViewID | undefined;
 
 export function nextInvalidationScrollsTop(): boolean {
 	const tmp = nextInvalidationScrollsTopFlag;
@@ -779,7 +779,7 @@ async function callMediaDevicesEnumerate(chan: Channel, evt: CallRequested, args
 			video: withVideo,
 		});
 		console.log('media device get user media success', 'video', withVideo, 'audio', withAudio);
-	} catch (e) {
+	} catch (e: any) {
 		console.warn("Couldn't get requested permissions", e);
 		chan.sendEvent(new CallResolved(evt.callPtr, new RetMediaDevicesPermissionsError(e.toString(), 403)));
 		return;

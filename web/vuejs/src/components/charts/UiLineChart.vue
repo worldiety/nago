@@ -74,7 +74,7 @@ const colors = computed<string[]>(() => {
 
 	return props.ui.chart.colors.value.map(colorToHexValue).filter((c) => c.length > 0);
 });
-const series = computed<ApexAxisChartSeries>(() => {
+const series = computed<any>(() => {
 	if (!props.ui.series) return [];
 
 	return props.ui.series.value.map((s) => {
@@ -83,7 +83,7 @@ const series = computed<ApexAxisChartSeries>(() => {
 			type: mapSeriesType(s.type),
 			data: s.dataPoints?.value.map(mapDataPointsToData),
 		};
-	}) as ApexAxisChartSeries;
+	});
 });
 const frameStyles = computed<string>(() => {
 	const styles = frameCSS(props.ui.chart?.frame);

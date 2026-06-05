@@ -11,7 +11,7 @@
 	<div v-if="!ui.invisible" class="relative" :style="frameStyles">
 		<!-- Input field -->
 		<DatepickerInput
-			:value="ui.value"
+			:value="value"
 			:label="ui.label"
 			:error-text="ui.errorText"
 			:supporting-text="ui.supportingText"
@@ -67,6 +67,9 @@ const props = defineProps<{
 const MIN_YEAR = 1583;
 
 const serviceAdapter = useServiceAdapter();
+
+const value = ref(props.ui.value);
+const endValue = ref(props.ui.endValue);
 const expanded = ref<boolean>(false);
 const selectedStartDate = ref<Date>();
 const selectedEndDate = ref<Date>();
@@ -78,29 +81,24 @@ const frameStyles = computed<string>(() => {
 	return frameCSS(props.ui.frame).join(';');
 });
 
-watch(() => props.ui, initialize);
-
 function initialize(): void {
-	if (props.ui.value === undefined) {
-		props.ui.value = new DateData();
+	if (value.value === undefined) {
+		value.value = new DateData();
 	}
 
-	const hasValue =
-		props.ui.value.year !== undefined && props.ui.value.month !== undefined && props.ui.value.day !== undefined;
+	const hasValue = value.value.year !== undefined && value.value.month !== undefined && value.value.day !== undefined;
 	selectedStartDate.value = hasValue
-		? new Date(props.ui.value.year!, props.ui.value.month! - 1, props.ui.value.day, 0, 0, 0, 0)
+		? new Date(value.value.year!, value.value.month! - 1, value.value.day, 0, 0, 0, 0)
 		: undefined;
 
-	if (props.ui.endValue === undefined) {
-		props.ui.endValue = new DateData();
+	if (endValue.value === undefined) {
+		endValue.value = new DateData();
 	}
 
 	const hasEndValue =
-		props.ui.endValue.year !== undefined &&
-		props.ui.endValue.month !== undefined &&
-		props.ui.endValue.day !== undefined;
+		endValue.value.year !== undefined && endValue.value.month !== undefined && endValue.value.day !== undefined;
 	selectedEndDate.value = hasEndValue
-		? new Date(props.ui.endValue.year!, props.ui.endValue.month! - 1, props.ui.endValue.day, 0, 0, 0, 0)
+		? new Date(endValue.value.year!, endValue.value.month! - 1, endValue.value.day, 0, 0, 0, 0)
 		: undefined;
 
 	rangeSelectionState.value = RangeSelectionState.SELECT_START;
@@ -227,4 +225,20 @@ function submitSelection(): void {
 			throw 'unknown date picker style';
 	}
 }
+
+watch(
+	() => props.ui.value,
+	() => {
+		value.value = props.ui.value;
+		initialize();
+	}
+);
+
+watch(
+	() => props.ui.endValue,
+	() => {
+		endValue.value = props.ui.endValue;
+		initialize();
+	}
+);
 </script>

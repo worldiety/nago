@@ -42,6 +42,6 @@ const frameStyles = computed<string>(() => {
 		:autocomplete="ui.autocomplete ? 'on' : 'off'"
 		@submit.prevent="handleSubmit"
 	>
-		<ui-generic v-for="ui in props.ui.children?.value" :ui="ui" />
+		<ui-generic v-for="childUi in props.ui.children?.value" :ui="childUi" />
 	</form>
 </template>

@@ -8,7 +8,7 @@
 -->
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { frameCSSObject } from '@/components/shared/frame';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
@@ -18,7 +18,6 @@ import { javascript } from '@codemirror/lang-javascript';
 import { json } from '@codemirror/lang-json';
 import { Extension } from '@codemirror/state';
 import { oneDark } from '@codemirror/theme-one-dark';
-import { ViewUpdate } from '@codemirror/view';
 import { Codemirror } from 'vue-codemirror';
 import { CodeEditor, UpdateStateValueRequested } from '@/shared/proto/nprotoc_gen';
 import { ThemeKey, useThemeManager } from '@/shared/themeManager';
@@ -30,34 +29,30 @@ const props = defineProps<{
 
 const serviceAdapter = useServiceAdapter();
 
-const frameStyles = computed<object | undefined>(() => {
-	let styles = frameCSSObject(props.ui.frame);
+const value = ref(props.ui.value);
 
-	return styles;
+const frameStyles = computed<any | undefined>(() => {
+	return frameCSSObject(props.ui.frame);
 });
 
 const themeManager = useThemeManager();
 
-function onTextChange(value: string, event: ViewUpdate): any {
-	//console.log('changed');
+function onTextChange(): any {
 	return undefined;
 }
 
 let lastSent: string | undefined;
 
-function onBlur(event: ViewUpdate): any {
-	//console.log('blurred');
-	if (props.ui.inputValue && lastSent !== props.ui.value) {
-		serviceAdapter.sendEvent(
-			new UpdateStateValueRequested(props.ui.inputValue, undefined, nextRID(), props.ui.value)
-		);
+function onBlur(): any {
+	if (props.ui.inputValue && lastSent !== value.value) {
+		serviceAdapter.sendEvent(new UpdateStateValueRequested(props.ui.inputValue, undefined, nextRID(), value.value));
 
-		lastSent = props.ui.value;
+		lastSent = value.value;
 	}
 	return undefined;
 }
 
-function onFocus(event: ViewUpdate): any {
+function onFocus(): any {
 	return undefined;
 }
 
@@ -86,11 +81,16 @@ function extensions(): Extension[] {
 
 	return tmp;
 }
+
+watch(
+	() => props.ui.value,
+	() => (value.value = props.ui.value)
+);
 </script>
 
 <template v-if="props.ui.iv">
 	<codemirror
-		v-model="props.ui.value"
+		v-model="value"
 		:style="frameStyles"
 		placeholder=""
 		:autofocus="true"

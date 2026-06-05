@@ -8,21 +8,22 @@
 -->
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { colorValue } from '@/components/shared/colors';
 import { frameCSS } from '@/components/shared/frame';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
 import { CountDown, FunctionCallRequested } from '@/shared/proto/nprotoc_gen';
 
-const progress = ref<number>(0);
-const initialDuration = ref<number | undefined>(undefined);
-
 const props = defineProps<{
 	ui: CountDown;
 }>();
 
 const serviceAdapter = useServiceAdapter();
+
+const progress = ref<number>(0);
+const duration = ref(props.ui.duration);
+const initialDuration = ref<number | undefined>(undefined);
 
 const frameStyles = computed<string>(() => {
 	let styles = frameCSS(props.ui.frame);
@@ -65,12 +66,8 @@ const borderStyle = computed<string>(() => {
 	return '';
 });
 
-const duration = computed<Duration>(() => {
-	let d = 0;
-	if (props.ui.duration) {
-		d = props.ui.duration;
-	}
-	return convertNanoseconds(d);
+const durationNano = computed<Duration>(() => {
+	return convertNanoseconds(duration.value ?? 0);
 });
 
 //
@@ -98,9 +95,11 @@ function invoke() {
 }
 
 function updateCountdown() {
+	if (!initialDuration.value) return;
+
 	let d = 0;
-	if (props.ui.duration) {
-		d = props.ui.duration;
+	if (duration.value) {
+		d = duration.value;
 	}
 
 	d -= 1;
@@ -108,11 +107,11 @@ function updateCountdown() {
 		d = 0;
 	}
 
-	props.ui.duration = d;
-	progress.value = (props.ui.duration / initialDuration.value) * 100;
+	duration.value = d;
+	progress.value = (duration.value / initialDuration.value) * 100;
 }
 
-let intervalId: number | undefined = 0;
+let intervalId: any | undefined = 0;
 
 function formatWithLeadingZero(value: number): string {
 	return value.toString().padStart(2, '0');
@@ -120,10 +119,9 @@ function formatWithLeadingZero(value: number): string {
 
 onMounted(() => {
 	intervalId = setInterval(() => {
-		if (props.ui.duration !== undefined) {
-			if (props.ui.duration > 0) {
+		if (duration.value !== undefined) {
+			if (duration.value > 0) {
 				updateCountdown();
-				//console.log("countdown update");
 			} else {
 				invoke();
 				console.log('countdown stopped');
@@ -135,11 +133,11 @@ onMounted(() => {
 		//console.log("tick");
 	}, 1000);
 
-	initialDuration.value = props.ui.duration;
+	initialDuration.value = duration.value;
 	progress.value = 100;
 
 	if (props.ui.done) {
-		props.ui.duration = 0;
+		duration.value = 0;
 		progress.value = 0;
 		return;
 	}
@@ -148,30 +146,37 @@ onMounted(() => {
 onUnmounted(() => {
 	clearInterval(intervalId);
 });
+
+watch(
+	() => props.ui.duration,
+	() => {
+		duration.value = props.ui.duration;
+	}
+);
 </script>
 
 <template v-if="props.ui.iv">
 	<div v-if="!props.ui.style" class="text-center flex flex-col md:flex-row md:space-x-8" :style="frameStyles">
 		<div class="flex justify-center space-x-8 grow">
 			<div v-if="props.ui.showDays" class="grow">
-				<p class="text-6xl font-bold">{{ formatWithLeadingZero(duration.days) }}</p>
+				<p class="text-6xl font-bold">{{ formatWithLeadingZero(durationNano.days) }}</p>
 				<p class="text-lg">Tage</p>
 			</div>
 			<div class="border-l mt-2 mb-2" :style="borderStyle"></div>
 			<div v-if="props.ui.showHours" class="grow">
-				<p class="text-6xl font-bold">{{ formatWithLeadingZero(duration.hours) }}</p>
+				<p class="text-6xl font-bold">{{ formatWithLeadingZero(durationNano.hours) }}</p>
 				<p class="text-lg">Stunden</p>
 			</div>
 		</div>
 		<div class="border-l hidden md:block mt-2 mb-2" :style="borderStyle"></div>
 		<div class="flex justify-center space-x-8 mt-4 md:mt-0 grow">
 			<div v-if="props.ui.showMinutes" class="grow">
-				<p class="text-6xl font-bold">{{ formatWithLeadingZero(duration.minutes) }}</p>
+				<p class="text-6xl font-bold">{{ formatWithLeadingZero(durationNano.minutes) }}</p>
 				<p class="text-lg">Minuten</p>
 			</div>
 			<div class="border-l mt-2 mb-2" :style="borderStyle"></div>
 			<div v-if="props.ui.showSeconds" class="grow">
-				<p class="text-6xl font-bold">{{ formatWithLeadingZero(duration.seconds) }}</p>
+				<p class="text-6xl font-bold">{{ formatWithLeadingZero(durationNano.seconds) }}</p>
 				<p class="text-lg">Sekunden</p>
 			</div>
 		</div>

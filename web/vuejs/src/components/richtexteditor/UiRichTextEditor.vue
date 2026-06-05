@@ -8,12 +8,12 @@
 -->
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import Editor from '@/components/richtexteditor/Editor.vue';
+import { computed, ref, watch } from 'vue';
 import { frameCSSObject } from '@/components/shared/frame';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
 import { RichTextEditor, UpdateStateValueRequested } from '@/shared/proto/nprotoc_gen';
+import Editor from '@/components/richtexteditor/Editor.vue';
 
 const props = defineProps<{
 	ui: RichTextEditor;
@@ -21,10 +21,10 @@ const props = defineProps<{
 
 const serviceAdapter = useServiceAdapter();
 
-const frameStyles = computed<object | undefined>(() => {
-	let styles = frameCSSObject(props.ui.frame);
+const value = ref(props.ui.value);
 
-	return styles;
+const frameStyles = computed<object | undefined>(() => {
+	return frameCSSObject(props.ui.frame);
 });
 
 // security note: an attacker may have introduced malicious html into the model,
@@ -37,18 +37,22 @@ const frameStyles = computed<object | undefined>(() => {
 let lastSent: string | undefined;
 
 function onBlur(): any {
-	//console.log('blurred', props.ui.value);
-	if (props.ui.inputValue && lastSent !== props.ui.value) {
-		serviceAdapter.sendEvent(
-			new UpdateStateValueRequested(props.ui.inputValue, undefined, nextRID(), props.ui.value)
-		);
+	if (props.ui.inputValue && lastSent !== value.value) {
+		serviceAdapter.sendEvent(new UpdateStateValueRequested(props.ui.inputValue, undefined, nextRID(), value.value));
 
-		lastSent = props.ui.value;
+		lastSent = value.value;
 	}
 	return undefined;
 }
+
+watch(
+	() => props.ui.value,
+	() => {
+		value.value = props.ui.value;
+	}
+);
 </script>
 
 <template v-if="props.ui.iv">
-	<editor v-model="ui.value" :style="frameStyles" :disabled="props.ui.disabled" @blur="onBlur" />
+	<Editor v-model="value" :style="frameStyles" :disabled="props.ui.disabled" @blur="onBlur" />
 </template>

@@ -16,6 +16,7 @@ import { paddingCSS } from '@/components/shared/padding';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
 import { FunctionCallRequested, Img, ObjectFitValues } from '@/shared/proto/nprotoc_gen';
+import VHtml from '@/components/VHtml.vue';
 
 const props = defineProps<{
 	ui: Img;
@@ -100,10 +101,11 @@ const rewriteSVG = computed<string>(() => {
 		:title="props.ui.accessibilityLabel"
 		:style="styles"
 	/>
-	<div
+	<VHtml
 		v-if="props.ui.sVG"
+		tag="div"
+		:html="rewriteSVG"
 		:title="props.ui.accessibilityLabel"
 		@click.capture="invokePointer"
-		v-html="rewriteSVG"
-	></div>
+	></VHtml>
 </template>

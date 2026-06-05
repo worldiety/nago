@@ -9,7 +9,6 @@
 
 <script lang="ts" setup>
 import { computed } from 'vue';
-import { colorValue } from '@/components/shared/colors';
 import { frameCSS } from '@/components/shared/frame';
 import { WebView } from '@/shared/proto/nprotoc_gen';
 
@@ -29,7 +28,7 @@ const styles = computed<string>(() => {
 	<iframe
 		:title="props.ui.title"
 		:allow="props.ui.allow"
-		:referrerpolicy="props.ui.referrerPolicy"
+		:referrerpolicy="props.ui.referrerPolicy as any"
 		:style="styles"
 		:srcdoc="props.ui.raw"
 		:src="props.ui.uRI"

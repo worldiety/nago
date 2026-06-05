@@ -8,7 +8,6 @@
  */
 import type { InjectionKey } from 'vue';
 import type { UploadRepository } from '@/api/upload/uploadRepository';
-import type EventBus from '@/shared/eventbus/eventBus';
 import type ServiceAdapter from '@/shared/network/serviceAdapter';
 import type ThemeManager from '@/shared/themeManager';
 

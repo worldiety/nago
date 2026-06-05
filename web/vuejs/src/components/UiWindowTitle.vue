@@ -19,4 +19,6 @@ if (props.ui.value) {
 }
 </script>
 
-<template></template>
+<template>
+	<teleport to="body"></teleport>
+</template>

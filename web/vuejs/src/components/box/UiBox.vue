@@ -94,11 +94,11 @@ function childClass(a?: Alignment): string {
 	<!-- box -->
 	<div :class="clazz" :style="frameStyles">
 		<div
-			v-for="ui in props.ui.children?.value"
-			:class="childClass(ui.alignment)"
-			:style="childMargin(ui.alignment, props.ui.padding)"
+			v-for="childUi in props.ui.children?.value"
+			:class="childClass(childUi.alignment)"
+			:style="childMargin(childUi.alignment, props.ui.padding)"
 		>
-			<ui-generic v-if="ui.component" :ui="ui.component" class="pointer-events-auto" />
+			<ui-generic v-if="childUi.component" :ui="childUi.component" class="pointer-events-auto" />
 		</div>
 	</div>
 </template>
