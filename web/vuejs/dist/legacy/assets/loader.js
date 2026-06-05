@@ -57,8 +57,6 @@
       document.head.appendChild(link);
       console.debug("Loaded link '".concat(rel, "' with href '").concat(href, "'"));
     }
-
-    // eslint-disable-next-line
     var browser = window.bowser.getParser(window.navigator.userAgent);
     var info = browser.getBrowser();
     var name = info.name;
@@ -81,8 +79,6 @@
           console.error("Error while loading build manifest for build ".concat(buildType), err);
           return;
         }
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         var mainEntry = manifest['src/main.ts'];
         if (!mainEntry || !mainEntry.file) {
           console.error("No entry file in build manifest found for build ".concat(buildType));
@@ -98,7 +94,6 @@
         // load build and stylesheets
         loadScript("/".concat(buildType, "/").concat(mainEntry.file), isOutdated ? 'text/javascript' : 'module');
         if (mainEntry.css) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           mainEntry.css.forEach(cssFile => {
             loadLink('stylesheet', "/".concat(buildType, "/").concat(cssFile));
           });
