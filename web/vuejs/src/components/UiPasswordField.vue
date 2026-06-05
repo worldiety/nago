@@ -23,6 +23,8 @@ const props = defineProps<{
 }>();
 
 const serviceAdapter = useServiceAdapter();
+
+const revealed = ref(props.ui.revealed);
 const passwordInput = ref<HTMLElement | undefined>();
 const inputValue = ref<string>(props.ui.value ? props.ui.value : '');
 let timer: number = 0;
@@ -91,9 +93,14 @@ function handleKeydownEnter(event: Event) {
 }
 
 function toggleRevealed(): void {
-	props.ui.revealed = !props.ui.revealed;
+	revealed.value = !revealed.value;
 	passwordInput.value?.focus();
 }
+
+watch(
+	() => props.ui.revealed,
+	() => (revealed.value = props.ui.revealed)
+);
 </script>
 
 <template>
@@ -113,7 +120,7 @@ function toggleRevealed(): void {
 					:autocomplete="props.ui.disableAutocomplete ? 'off' : ui.autocomplete"
 					class="input-field !pr-10"
 					:disabled="props.ui.disabled"
-					:type="props.ui.revealed ? 'text' : 'password'"
+					:type="revealed ? 'text' : 'password'"
 					@keydown.enter="handleKeydownEnter"
 					@focusout="submitInputValue(true)"
 					@input="submitInputValue(false)"
@@ -125,7 +132,7 @@ function toggleRevealed(): void {
 						@click="toggleRevealed"
 						@keydown.enter="toggleRevealed"
 					>
-						<RevealIcon v-if="!props.ui.revealed" class="w-6" />
+						<RevealIcon v-if="!revealed" class="w-6" />
 						<HideIcon v-else class="w-6" />
 					</button>
 				</div>

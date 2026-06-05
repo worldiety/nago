@@ -61,15 +61,15 @@ const styles = computed<string>(() => {
 			:style="floatingStyles"
 		>
 			<div v-for="section in props.ui.groups?.value" class="px-1 py-1">
-				<MenuItem v-for="ui in section.items?.value" v-slot="{ active }">
+				<MenuItem v-for="itemUi in section.items?.value" v-slot="{ active }">
 					<button
 						:class="[
 							active ? 'bg-I0 bg-opacity-25' : '',
 							'group flex w-full items-center rounded-md px-2 py-2 text-sm',
 						]"
-						@click="itemClick(ui)"
+						@click="itemClick(itemUi)"
 					>
-						<ui-generic v-if="ui.content" :ui="ui.content" />
+						<ui-generic v-if="itemUi.content" :ui="itemUi.content" />
 					</button>
 				</MenuItem>
 			</div>

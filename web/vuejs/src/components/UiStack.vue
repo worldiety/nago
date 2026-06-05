@@ -267,7 +267,7 @@ function onKeydown(event: KeyboardEvent) {
 		@click="onClick"
 		@keydown="onKeydown"
 	>
-		<ui-generic v-for="ui in props.ui.children?.value" :ui="ui" />
+		<ui-generic v-for="childUi in props.ui.children?.value" :ui="childUi" />
 	</div>
 
 	<button
@@ -279,7 +279,7 @@ function onKeydown(event: KeyboardEvent) {
 		:title="props.ui.accessibilityLabel"
 		@click="onClick"
 	>
-		<ui-generic v-for="ui in props.ui.children?.value" :ui="ui" />
+		<ui-generic v-for="childUi in props.ui.children?.value" :ui="childUi" />
 	</button>
 
 	<a
@@ -291,6 +291,6 @@ function onKeydown(event: KeyboardEvent) {
 		:title="props.ui.accessibilityLabel"
 		:tabindex="ui.disabled ? -1 : 0"
 	>
-		<ui-generic v-for="ui in props.ui.children?.value" :ui="ui" />
+		<ui-generic v-for="childUi in props.ui.children?.value" :ui="childUi" />
 	</a>
 </template>

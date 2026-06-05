@@ -46,8 +46,11 @@ const frameStyles = computed<string>(() => {
 });
 
 function rowStyles(idx: number): string {
+	let row = props.ui.rows?.value?.at(idx);
+	if (!row) return '';
+
 	const styles: string[] = [];
-	let row = props.ui.rows?.value?.at(idx)!;
+
 	if (row.backgroundColor) {
 		styles.push(`background-color: ${colorValue(row.backgroundColor)}`);
 	}
@@ -95,8 +98,11 @@ function headStyles() {
 }
 
 function cellStyles(rowIdx: number, colIdx: number): string {
+	let cell = props.ui.rows?.value.at(rowIdx)?.cells?.value.at(colIdx);
+	if (!cell) return '';
+
 	const styles: string[] = [];
-	let cell = props.ui.rows?.value.at(rowIdx)?.cells?.value.at(colIdx)!;
+
 	if (cell.backgroundColor) {
 		styles.push(`background-color: ${colorValue(cell.backgroundColor)}`);
 	}
@@ -160,8 +166,11 @@ function cellStyles(rowIdx: number, colIdx: number): string {
 }
 
 function headCellStyles(colIdx: number): string {
+	let cell = props.ui.header?.columns?.value.at(colIdx);
+	if (!cell) return '';
+
 	const styles: string[] = [];
-	let cell = props.ui.header?.columns?.value.at(colIdx)!;
+
 	if (cell.cellBackgroundColor) {
 		styles.push(`background-color: ${colorValue(cell.cellBackgroundColor)}`);
 	}
@@ -229,15 +238,20 @@ function headCellStyles(colIdx: number): string {
 }
 
 function onClickRow(rowIdx: number) {
-	let row = props.ui.rows?.value?.at(rowIdx)!;
+	let row = props.ui.rows?.value?.at(rowIdx);
+	if (!row) return;
 	if (row.action) {
 		serviceAdapter.sendEvent(new FunctionCallRequested(row.action, nextRID()));
 	}
 }
 
 function onClickCell(rowIdx: number, colIdx: number) {
-	let row = props.ui.rows?.value?.at(rowIdx)!;
-	let cell = row.cells?.value.at(colIdx)!;
+	let row = props.ui.rows?.value?.at(rowIdx);
+	if (!row) return;
+
+	let cell = row.cells?.value.at(colIdx);
+	if (!cell) return;
+
 	if (cell.action) {
 		serviceAdapter.sendEvent(new FunctionCallRequested(cell.action, nextRID()));
 	} else if (row.action) {
@@ -246,39 +260,46 @@ function onClickCell(rowIdx: number, colIdx: number) {
 }
 
 function onClickHeaderCell(colIdx: number) {
-	let cell = props.ui.header?.columns?.value?.at(colIdx)!;
+	let cell = props.ui.header?.columns?.value?.at(colIdx);
+	if (!cell) return;
 	if (cell.cellAction) {
 		serviceAdapter.sendEvent(new FunctionCallRequested(cell.cellAction, nextRID()));
 	}
 }
 
 function onCellMouseEnter(rowIdx: number, colIdx: number) {
-	let cell = props.ui.rows?.value?.at(rowIdx)?.cells?.value.at(colIdx)!;
+	let cell = props.ui.rows?.value?.at(rowIdx)?.cells?.value.at(colIdx);
+	if (!cell) return;
 	cell.hovered = true;
 }
 
 function onCellMouseLeave(rowIdx: number, colIdx: number) {
-	let cell = props.ui.rows?.value?.at(rowIdx)?.cells?.value.at(colIdx)!;
+	let cell = props.ui.rows?.value?.at(rowIdx)?.cells?.value.at(colIdx);
+	if (!cell) return;
 	cell.hovered = false;
 }
 
 function onHeadCellMouseEnter(colIdx: number) {
-	let cell = props.ui.header?.columns?.value?.at(colIdx)!;
+	let cell = props.ui.header?.columns?.value?.at(colIdx);
+	if (!cell) return;
 	cell.cellHovered = true;
 }
 
 function onHeadCellMouseLeave(colIdx: number) {
-	let cell = props.ui.header?.columns?.value?.at(colIdx)!;
+	let cell = props.ui.header?.columns?.value?.at(colIdx);
+	if (!cell) return;
 	cell.cellHovered = false;
 }
 
 function onRowMouseEnter(rowIdx: number) {
-	let row = props.ui.rows?.value?.at(rowIdx)!;
+	let row = props.ui.rows?.value?.at(rowIdx);
+	if (!row) return;
 	row.hovered = true;
 }
 
 function onRowMouseLeave(rowIdx: number) {
-	let row = props.ui.rows?.value?.at(rowIdx)!;
+	let row = props.ui.rows?.value?.at(rowIdx);
+	if (!row) return;
 	row.hovered = false;
 }
 </script>
@@ -288,7 +309,7 @@ function onRowMouseLeave(rowIdx: number) {
 		class="w-full text-left rtl:text-right overflow-clip break-all md:break-normal whitespace-normal sm:whitespace-nowrap"
 		:style="frameStyles"
 	>
-		<thead v-if="props.ui.header?.columns?.value?.length > 0" class="" :style="headStyles()">
+		<thead v-if="(props.ui.header?.columns?.value?.length ?? 0) > 0" class="" :style="headStyles()">
 			<tr>
 				<th
 					v-for="(head, headIdx) in props.ui.header?.columns?.value"

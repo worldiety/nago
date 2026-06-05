@@ -71,12 +71,9 @@ const serviceAdapter = useServiceAdapter();
 const themeManager = useThemeManager();
 const state = ref(State.Loading);
 const ui = ref<Component>();
-const componentKey = ref(0);
 const copy_component_text = ref('');
 
 const connected = ref(true);
-
-let configurationPromise: Promise<void> | null = null;
 
 //TODO: Torben baut zukünftig /health ein, der einen 200er und eine json-response zurückgibt, wenn der Service grundsätzlich läuft
 
@@ -244,7 +241,7 @@ function addEventListeners(): void {
 		applyRootViewState(serviceAdapter, history.state);
 	});
 
-	window.addEventListener('resize', function (event) {
+	window.addEventListener('resize', () => {
 		const info = getWindowInfo(themeManager);
 		if (info.sizeClass === activeBreakpoint.value) {
 			// avoid spamming the backend with messages from fluid window resizing
@@ -272,9 +269,7 @@ function addConnectionListeners(): void {
 	ConnectionHandler.addConnectionChangeListener(onConnectionChange);
 }
 
-onBeforeMount(() => {
-	configurationPromise = applyConfiguration();
-});
+onBeforeMount(applyConfiguration);
 
 onMounted(async () => {});
 

@@ -36,7 +36,8 @@ const frameStyles = computed<string>(() => {
 	return styles.join(';');
 });
 
-const constraints = computed<MediaTrackConstraints>(() => {
+// any = MediaTrackConstraints
+const constraints = computed<any>(() => {
 	return { deviceId: props.ui.mediaDevice?.deviceID, groupId: props.ui.mediaDevice?.groupID };
 });
 
@@ -88,7 +89,7 @@ function onError(err: Error) {
 
 	console.error(error.value);
 }
-function onUpdatedConstraints(newConstraints?: MediaTrackConstraints, oldConstraints?: MediaTrackConstraints) {
+function onUpdatedConstraints(newConstraints?: any, oldConstraints?: any) {
 	if (
 		newConstraints &&
 		oldConstraints &&

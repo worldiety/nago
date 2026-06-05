@@ -90,6 +90,7 @@ export class HttpRequest<T> {
 				credentials: 'include',
 			});
 		} catch (e) {
+			console.error(e);
 			const customError: CustomError = {
 				errorCode: '001',
 			};
@@ -112,6 +113,7 @@ export class HttpRequest<T> {
 					return undefined as T;
 			}
 		} catch (e) {
+			console.error(e);
 			const customError: CustomError = {
 				errorCode: '002',
 			};

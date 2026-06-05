@@ -68,7 +68,7 @@ const colors = computed<string[]>(() => {
 
 	return props.ui.chart?.colors.value.map(colorToHexValue).filter((c) => c.length > 0);
 });
-const series = computed<ApexNonAxisChartSeries>(() => {
+const series = computed<number[]>(() => {
 	if (!props.ui.series || props.ui.series.value.length === 0) return [];
 
 	const apexAxisChartSeriesRaw = props.ui.series.value.map((s) => {
@@ -81,7 +81,7 @@ const series = computed<ApexNonAxisChartSeries>(() => {
 		console.warn('Multiple series are not supported. Only the first series will be used for data points.');
 	}
 
-	return apexAxisChartSeriesRaw[0] as ApexNonAxisChartSeries;
+	return apexAxisChartSeriesRaw[0];
 });
 const labelsFromData = computed<string[]>(() => {
 	if (!props.ui.series || props.ui.series.value.length === 0) return [];

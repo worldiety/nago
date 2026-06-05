@@ -19,7 +19,7 @@ export default {
 		},
 	},
 
-	emits: ['update:modelValue'],
+	emits: ['update:modelValue', 'blur'],
 
 	data() {
 		return {
@@ -70,7 +70,7 @@ export default {
 				// JSON
 				// this.$emit('update:modelValue', this.editor.getJSON())
 			},
-			onBlur: (props) => {
+			onBlur: (event) => {
 				this.$emit('blur', event);
 			},
 		});

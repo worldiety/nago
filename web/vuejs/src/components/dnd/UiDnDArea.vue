@@ -124,8 +124,8 @@ function onDrop() {
 		</div>-->
 
 		<ui-generic
-			v-for="ui in props.ui.children?.value"
-			:ui="ui"
+			v-for="childUi in props.ui.children?.value"
+			:ui="childUi"
 			:class="store.dragging ? '!pointer-events-none' : ''"
 		/>
 	</div>

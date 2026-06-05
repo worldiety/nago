@@ -6,8 +6,7 @@
  *
  * SPDX-License-Identifier: Custom-License
  */
-import { cssLengthValue } from '@/components/shared/length';
-import { Background, Frame } from '@/shared/proto/nprotoc_gen';
+import { Background } from '@/shared/proto/nprotoc_gen';
 
 export function backgroundCSS(bg?: Background): string[] {
 	const styles: string[] = [];

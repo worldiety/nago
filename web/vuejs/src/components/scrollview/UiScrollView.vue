@@ -69,7 +69,7 @@ const innerStyles = computed<string>(() => {
 	return css.join(';');
 });
 
-watch(props, (newValue, oldValue) => {
+watch(props, () => {
 	if (props.ui.scrollIntoView) {
 		let id = props.ui.scrollIntoView;
 		nextTick(() => {

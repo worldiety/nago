@@ -24,7 +24,7 @@
 		<!-- icon -->
 		<div v-if="ui.icon" class="flex justify-center items-center grow shrink rounded-full py-2" :class="iconClasses">
 			<div class="relative">
-				<div v-if="ui.expanded && ui.iconActive" class="*:h-full">
+				<div v-if="expanded && ui.iconActive" class="*:h-full">
 					<ui-generic :ui="props.ui.iconActive!" />
 				</div>
 				<div v-else-if="ui.title && props.ui.icon" class="*:h-full">
@@ -58,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
@@ -79,6 +79,7 @@ const props = defineProps<{
 const serviceAdapter = useServiceAdapter();
 const interacted = ref<boolean>(false);
 const hover = ref<boolean>(false);
+const expanded = ref(!!props.ui.expanded);
 
 const linksToCurrentPage = computed((): boolean => {
 	if (props.ui.rootView == '.' && (window.location.pathname == '' || window.location.pathname == '/')) {
@@ -110,7 +111,7 @@ const iconClasses = computed((): string => {
 	if (props.ui.isZero() && hover.value) {
 		iconClasses.push('mix-blend-multiply', 'bg-M7');
 	}
-	if (props.ui.expanded) {
+	if (expanded.value) {
 		iconClasses.push('bg-M7', 'bg-opacity-25');
 	}
 	if (interacted.value) {
@@ -146,7 +147,7 @@ function handleMouseLeave(): void {
 			...props.ui.x,
 			v: false,
 		});*/
-		props.ui.expanded = false;
+		expanded.value = false;
 	}
 }
 
@@ -161,4 +162,11 @@ function focusFirstLinkedSubMenuEntry(keyPressed: 'down' | 'right'): void {
 		emit('focusFirstLinkedSubMenuEntry');
 	}
 }
+
+watch(
+	() => props.ui.expanded,
+	() => {
+		expanded.value = !!props.ui.expanded;
+	}
+);
 </script>

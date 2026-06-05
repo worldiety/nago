@@ -15,7 +15,7 @@
 			:class="{
 				'cursor-pointer hover:bg-M7 hover:bg-opacity-25 active:bg-opacity-35': menuEntryClickable,
 				'bg-M7 bg-opacity-35': menuEntryActive,
-				'has-active-icon': ui.expanded && ui.iconActive,
+				'has-active-icon': expanded && ui.iconActive,
 			}"
 			@click="menuEntryClicked"
 			@keydown.enter="menuEntryClicked"
@@ -23,7 +23,7 @@
 			<div v-if="props.ui.icon" class="relative flex justify-start items-center h-full">
 				<div class="menu-entry-icon *:h-full">
 					<ui-generic :ui="props.ui.icon" />
-					<ui-generic v-if="ui.expanded && props.ui.iconActive" :ui="props.ui.iconActive" />
+					<ui-generic v-if="expanded && props.ui.iconActive" :ui="props.ui.iconActive" />
 				</div>
 
 				<!-- Optional red badge -->
@@ -39,7 +39,7 @@
 			</div>
 			<TriangleDown v-if="hasSubMenuEntries" class="shrink-0 basis-2" :class="triangleClass" />
 		</component>
-		<template v-if="ui.expanded">
+		<template v-if="expanded">
 			<div class="flex flex-col justify-start items-start gap-y-4 w-full pl-4">
 				<BurgerMenuEntry
 					v-for="(menuEntry, index) in ui.menu?.value"
@@ -54,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import TriangleDown from '@/assets/svg/triangleDown.svg';
 import UiGeneric from '@/components/UiGeneric.vue';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
@@ -72,6 +72,8 @@ const emit = defineEmits<{
 }>();
 
 const serviceAdapter = useServiceAdapter();
+
+const expanded = ref(!!props.ui.expanded);
 
 const hasSubMenuEntries = computed((): boolean => {
 	if (!props.ui.menu) {
@@ -93,10 +95,7 @@ const menuEntryActive = computed((): boolean => {
 });
 
 const triangleClass = computed((): string | null => {
-	if (props.topLevel) {
-		return '-rotate-90';
-	}
-	if (props.ui.expanded) {
+	if (expanded.value) {
 		return 'rotate-180';
 	}
 	return null;
@@ -104,7 +103,7 @@ const triangleClass = computed((): string | null => {
 
 function menuEntryClicked(): void {
 	if (hasSubMenuEntries.value) {
-		expandMenuEntry();
+		toggleMenuEntry();
 		return;
 	}
 	if (props.ui.action !== undefined) {
@@ -113,7 +112,7 @@ function menuEntryClicked(): void {
 	}
 }
 
-function expandMenuEntry(): void {
+function toggleMenuEntry(): void {
 	// if (hasSubMenuEntries.value) {
 	// 	serviceAdapter.setPropertiesAndCallFunctions([
 	// 		{
@@ -123,8 +122,15 @@ function expandMenuEntry(): void {
 	// 	], [props.ui.onFocus]);
 	// }
 
-	props.ui.expanded = true;
+	expanded.value = !expanded.value;
 }
+
+watch(
+	() => props.ui.expanded,
+	() => {
+		expanded.value = !!props.ui.expanded;
+	},
+);
 </script>
 
 <style scoped>

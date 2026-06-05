@@ -10,15 +10,13 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { frameCSS } from '@/components/shared/frame';
-import { useServiceAdapter } from '@/composables/serviceAdapter';
 import sanitizeHtml from 'sanitize-html';
 import { RichText } from '@/shared/proto/nprotoc_gen';
+import VHtml from '@/components/VHtml.vue';
 
 const props = defineProps<{
 	ui: RichText;
 }>();
-
-const serviceAdapter = useServiceAdapter();
 
 // security note: an attacker may inject malicious html into our model and the server or backend developer
 // forgot to check or remove it.
@@ -43,5 +41,5 @@ const frameStyles = computed<string>(() => {
 </script>
 
 <template>
-	<div :style="frameStyles" class="prose-custom" v-html="sanitizedHtml" />
+	<VHtml tag="div" :style="frameStyles" class="prose-custom" :html="sanitizedHtml" />
 </template>

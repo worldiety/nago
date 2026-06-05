@@ -84,6 +84,6 @@ const clazz = computed<string>(() => {
 		:title="props.ui.accessibilityLabel"
 		@click="onClick"
 	>
-		<ui-generic v-for="ui in props.ui.children?.value" :ui="ui" />
+		<ui-generic v-for="childUi in props.ui.children?.value" :ui="childUi" />
 	</div>
 </template>

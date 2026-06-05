@@ -1,33 +1,27 @@
 {
-  "compilerOptions": {
-      "target": "ESNext",
-      "types": ["vite/client", "@intlify/vite-plugin-vue-i18n/client"],
-      "useDefineForClassFields": true,
-      "module": "ESNext",
-      "moduleResolution": "Node",
-      "strict": true,
-      "jsx": "preserve",
-      "resolveJsonModule": true,
-      "isolatedModules": true,
-      "esModuleInterop": true,
-      "lib": ["ESNext", "DOM"],
-      "skipLibCheck": true,
-      "noEmit": true,
-      "baseUrl": ".",
-      "paths": {
-          "@/*": ["src/*"]
-      }
-  },
-  "include": [
-		"src/**/*.ts",
-		"src/**/*.d.ts",
-		"src/**/*.tsx",
-		"src/**/*.vue",
-    "vite.config.ts"
-  ],
-  "references": [
-      {
-          "path": "./tsconfig.node.json"
-      }
-  ]
+	"compilerOptions": {
+		"target": "ESNext",
+		"types": ["vite/client", "@intlify/vite-plugin-vue-i18n/client"],
+		"useDefineForClassFields": true,
+		"module": "ESNext",
+		"moduleResolution": "Node",
+		"strict": true,
+		"jsx": "preserve",
+		"resolveJsonModule": true,
+		"isolatedModules": true,
+		"esModuleInterop": true,
+		"lib": ["ESNext", "DOM", "DOM.Iterable"],
+		"skipLibCheck": true,
+		"noEmit": true,
+		"baseUrl": ".",
+		"paths": {
+			"@/*": ["src/*"]
+		}
+	},
+	"include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue", "vite.config.ts"],
+	"references": [
+		{
+			"path": "./tsconfig.node.json"
+		}
+	]
 }
