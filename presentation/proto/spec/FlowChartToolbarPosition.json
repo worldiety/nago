@@ -1,0 +1,33 @@
+{
+  "doc": "FlowChartToolbarPosition describes the position of the flow chart's toolbar.",
+  "kind": "Uint",
+  "id": 257,
+  "const": {
+    "0": {
+      "name": "FlowChartToolbarPositionTopRight"
+    },
+    "1": {
+      "name": "FlowChartToolbarPositionCenterRight"
+    },
+    "2": {
+      "name": "FlowChartToolbarPositionBottomRight"
+    },
+    "3": {
+      "name": "FlowChartToolbarPositionBottomCenter"
+    },
+    "4": {
+      "name": "FlowChartToolbarPositionBottomLeft"
+    },
+    "5": {
+      "name": "FlowChartToolbarPositionCenterLeft"
+    },
+    "6": {
+      "name": "FlowChartToolbarPositionTopLeft"
+    },
+    "7": {
+      "name": "FlowChartToolbarPositionTopCenter"
+    }
+  }
+}
+
+

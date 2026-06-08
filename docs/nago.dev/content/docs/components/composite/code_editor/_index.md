@@ -21,6 +21,7 @@ and a default tab size of 4 spaces.
 | `FullWidth()` | FullWidth sets the editor to span the full available width. |
 | `InputValue(state *core.State[string])` | InputValue binds the editor to an external state for controlled text value updates. |
 | `Language(language string)` | Language gives a syntax highlighting hint. Defined are go, html, css, json, xml, markdown but there may be arbitrary support. |
+| `Value(value string)` | Value sets the initial text content of the code editor. |
 ---
 
 ## Related

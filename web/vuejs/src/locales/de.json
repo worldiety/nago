@@ -63,6 +63,11 @@
 	"dropdown": {
 		"select": "Auswählen..."
 	},
+	"flowChart": {
+		"actions": {
+			"autoLayout": "Graph automatisch anordnen"
+		}
+	},
 	"inputWrapper": {
 		"error": "Fehler"
 	},

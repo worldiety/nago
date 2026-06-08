@@ -295,6 +295,7 @@ func (CanvasShadowOffsetX) isCallArgs()          {}
 func (CanvasShadowOffsetY) isCallArgs()          {}
 func (CanvasShadowColor) isCallArgs()            {}
 func (CanvasShadowBlur) isCallArgs()             {}
+func (FlowChartAutoLayout) isCallArgs()          {}
 
 // CallRet is the sum type of all declared type safe async method invocations results. See also [CallArgs] for the async invocation calls.
 type CallRet interface {
@@ -17694,10 +17695,11 @@ type FlowChart struct {
 	MinZoom            Float
 	MaxZoom            Float
 	ActionValue        Ptr
+	Toolbar            FlowChartToolbar
 }
 
 func (v *FlowChart) write(w *BinaryWriter) error {
-	var fields [14]bool
+	var fields [15]bool
 	fields[1] = !v.InputValue.IsZero()
 	fields[2] = !v.Value.IsZero()
 	fields[3] = !v.Frame.IsZero()
@@ -17711,6 +17713,7 @@ func (v *FlowChart) write(w *BinaryWriter) error {
 	fields[11] = !v.MinZoom.IsZero()
 	fields[12] = !v.MaxZoom.IsZero()
 	fields[13] = !v.ActionValue.IsZero()
+	fields[14] = !v.Toolbar.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -17825,6 +17828,14 @@ func (v *FlowChart) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[14] {
+		if err := w.writeFieldHeader(record, 14); err != nil {
+			return err
+		}
+		if err := v.Toolbar.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -17902,6 +17913,11 @@ func (v *FlowChart) read(r *BinaryReader) error {
 			}
 		case 13:
 			err := v.ActionValue.read(r)
+			if err != nil {
+				return err
+			}
+		case 14:
+			err := v.Toolbar.read(r)
 			if err != nil {
 				return err
 			}
@@ -19071,6 +19087,199 @@ func (v *FlowChartBackground) read(r *BinaryReader) error {
 			}
 		case 4:
 			err := v.GridGap.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// FlowChartToolbarAction describes predefined actions of the flow chart's toolbar.
+type FlowChartToolbarAction uint64
+
+const (
+	FlowChartToolbarActionAutoLayout FlowChartToolbarAction = 1
+)
+
+func (v *FlowChartToolbarAction) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *FlowChartToolbarAction) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = FlowChartToolbarAction(tmp)
+	return nil
+}
+
+func (v *FlowChartToolbarAction) reset() {
+	*v = FlowChartToolbarAction(0)
+}
+func (v *FlowChartToolbarAction) IsZero() bool {
+	return *v == 0
+}
+
+// FlowChartToolbar represents a flow chart's toolbar.
+type FlowChartToolbar struct {
+	Position    FlowChartToolbarPosition
+	Orientation Orientation
+	Actions     FlowChartToolbarActions
+}
+
+func (v *FlowChartToolbar) write(w *BinaryWriter) error {
+	var fields [4]bool
+	fields[1] = !v.Position.IsZero()
+	fields[2] = !v.Orientation.IsZero()
+	fields[3] = !v.Actions.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(uvarint, 1); err != nil {
+			return err
+		}
+		if err := v.Position.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.Orientation.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(array, 3); err != nil {
+			return err
+		}
+		if err := v.Actions.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *FlowChartToolbar) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Position.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Orientation.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Actions.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// FlowChartToolbarPosition describes the position of the flow chart's toolbar.
+type FlowChartToolbarPosition uint64
+
+const (
+	FlowChartToolbarPositionTopRight     FlowChartToolbarPosition = 0
+	FlowChartToolbarPositionCenterRight  FlowChartToolbarPosition = 1
+	FlowChartToolbarPositionBottomRight  FlowChartToolbarPosition = 2
+	FlowChartToolbarPositionBottomCenter FlowChartToolbarPosition = 3
+	FlowChartToolbarPositionBottomLeft   FlowChartToolbarPosition = 4
+	FlowChartToolbarPositionCenterLeft   FlowChartToolbarPosition = 5
+	FlowChartToolbarPositionTopLeft      FlowChartToolbarPosition = 6
+	FlowChartToolbarPositionTopCenter    FlowChartToolbarPosition = 7
+)
+
+func (v *FlowChartToolbarPosition) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *FlowChartToolbarPosition) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = FlowChartToolbarPosition(tmp)
+	return nil
+}
+
+func (v *FlowChartToolbarPosition) reset() {
+	*v = FlowChartToolbarPosition(0)
+}
+func (v *FlowChartToolbarPosition) IsZero() bool {
+	return *v == 0
+}
+
+type FlowChartAutoLayout struct {
+	// Dummy is needed for the event to not be purged out.
+	Dummy Uint
+}
+
+func (v *FlowChartAutoLayout) write(w *BinaryWriter) error {
+	var fields [2]bool
+	fields[1] = !v.Dummy.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(uvarint, 1); err != nil {
+			return err
+		}
+		if err := v.Dummy.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *FlowChartAutoLayout) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Dummy.read(r)
 			if err != nil {
 				return err
 			}
@@ -20552,6 +20761,36 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 253:
 		var v FlowChartBackground
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 254:
+		var v FlowChartToolbarAction
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 255:
+		var v FlowChartToolbarActions
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 256:
+		var v FlowChartToolbar
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 257:
+		var v FlowChartToolbarPosition
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 258:
+		var v FlowChartAutoLayout
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -24434,13 +24673,14 @@ func (v *FlowChart) reset() {
 	v.MinZoom.reset()
 	v.MaxZoom.reset()
 	v.ActionValue.reset()
+	v.Toolbar.reset()
 }
 
 func (v *FlowChart) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.InputValue.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.Background.IsZero() && v.NodesDraggable.IsZero() && v.NodesConnectable.IsZero() && v.EdgesEditable.IsZero() && v.ElementsSelectable.IsZero() && v.Orientation.IsZero() && v.CustomContents.IsZero() && v.MinZoom.IsZero() && v.MaxZoom.IsZero() && v.ActionValue.IsZero()
+	return v.InputValue.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.Background.IsZero() && v.NodesDraggable.IsZero() && v.NodesConnectable.IsZero() && v.EdgesEditable.IsZero() && v.ElementsSelectable.IsZero() && v.Orientation.IsZero() && v.CustomContents.IsZero() && v.MinZoom.IsZero() && v.MaxZoom.IsZero() && v.ActionValue.IsZero() && v.Toolbar.IsZero()
 }
 
 func (v *FlowChartPoint) reset() {
@@ -24772,6 +25012,75 @@ func (v *FlowChartBackground) IsZero() bool {
 		return true
 	}
 	return v.Color.IsZero() && v.GridColor.IsZero() && v.GridStyle.IsZero() && v.GridGap.IsZero()
+}
+
+// FlowChartToolbarActions is a list of predefined actions of the flow chart toolbar.
+type FlowChartToolbarActions []FlowChartToolbarAction
+
+func (v *FlowChartToolbarActions) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *FlowChartToolbarActions) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	slice := make([]FlowChartToolbarAction, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = *obj.(*FlowChartToolbarAction)
+	}
+
+	*v = slice
+	return nil
+}
+
+func (v *FlowChartToolbarActions) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
+}
+
+func (v *FlowChartToolbarActions) reset() {
+	*v = nil
+}
+
+func (v *FlowChartToolbar) reset() {
+	v.Position.reset()
+	v.Orientation.reset()
+	v.Actions.reset()
+}
+
+func (v *FlowChartToolbar) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Position.IsZero() && v.Orientation.IsZero() && v.Actions.IsZero()
+}
+
+func (v *FlowChartAutoLayout) reset() {
+	v.Dummy.reset()
+}
+
+func (v *FlowChartAutoLayout) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Dummy.IsZero()
 }
 
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
@@ -26463,6 +26772,41 @@ func (v *FlowChartBackgroundGridStyle) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *FlowChartBackground) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 253); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *FlowChartToolbarAction) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 254); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *FlowChartToolbarActions) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 255); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *FlowChartToolbar) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 256); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *FlowChartToolbarPosition) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 257); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *FlowChartAutoLayout) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 258); err != nil {
 		return err
 	}
 	return nil

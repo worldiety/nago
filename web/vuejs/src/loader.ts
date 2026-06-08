@@ -45,7 +45,6 @@ type Callback = (err: Error | unknown | null, data: unknown) => void;
 		console.debug(`Loaded link '${rel}' with href '${href}'`);
 	}
 
-	 
 	const browser = (window as any).bowser.getParser(window.navigator.userAgent);
 	const info = browser.getBrowser();
 	const name = info.name;
@@ -72,7 +71,6 @@ type Callback = (err: Error | unknown | null, data: unknown) => void;
 				return;
 			}
 
-			 
 			const mainEntry = (manifest as any)['src/main.ts'];
 			if (!mainEntry || !mainEntry.file) {
 				console.error(`No entry file in build manifest found for build ${buildType}`);
@@ -89,7 +87,6 @@ type Callback = (err: Error | unknown | null, data: unknown) => void;
 			// load build and stylesheets
 			loadScript(`/${buildType}/${mainEntry.file}`, isOutdated ? 'text/javascript' : 'module');
 			if (mainEntry.css) {
-				 
 				mainEntry.css.forEach((cssFile: any) => {
 					loadLink('stylesheet', `/${buildType}/${cssFile}`);
 				});

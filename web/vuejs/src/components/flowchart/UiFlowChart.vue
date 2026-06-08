@@ -9,6 +9,13 @@
 
 <template>
 	<div class="ui-flow-chart" :style="frameStyles">
+		<FlowChartActions
+			v-if="flowChart && ui.toolbar && ui.toolbar.actions"
+			:toolbar="ui.toolbar"
+			:orientation="ui.orientation ?? OrientationValues.Horizontal"
+			:flow-chart="flowChart"
+			@action:auto-layout="autoLayout"
+		/>
 		<VueFlow
 			ref="flowChart"
 			class="ui-flow-chart__canvas"
@@ -58,7 +65,7 @@
 	</div>
 </template>
 <script lang="ts" setup>
-import { computed, nextTick, ref, watch } from 'vue';
+import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
 import FlowChartCustomNode from '@/components/flowchart/FlowChartCustomNode.vue';
 import { colorValue } from '@/components/shared/colors';
 import { frameCSS } from '@/components/shared/frame';
@@ -68,7 +75,15 @@ import { nextRID } from '@/eventhandling';
 import { Background } from '@vue-flow/background';
 import type { Connection, EdgeChange, EdgeMouseEvent, NodeChange, NodeMouseEvent, Styles } from '@vue-flow/core';
 import { type Edge, type EdgeMarkerType, MarkerType, type Node, Position, VueFlow, useVueFlow } from '@vue-flow/core';
-import type { FlowChart, FlowChartNode } from '@/shared/proto/nprotoc_gen';
+import {
+	CallRequested,
+	FlowChart,
+	FlowChartAutoLayout,
+	FlowChartNode,
+	FlowChartNodes,
+	NagoEvent,
+	OrientationValues,
+} from '@/shared/proto/nprotoc_gen';
 import { FlowChartBackgroundGridStyleValues } from '@/shared/proto/nprotoc_gen';
 import {
 	FlowChartEdge,
@@ -83,6 +98,9 @@ import {
 import { ThemeKey, useThemeManager } from '@/shared/themeManager';
 import '@vue-flow/core/dist/style.css';
 import '@vue-flow/core/dist/theme-default.css';
+import FlowChartActions from '@/components/flowchart/FlowChartActions.vue';
+import ConnectionHandler from '@/shared/network/connectionHandler';
+import { useLayout } from '@/components/flowchart/useLayout';
 
 const props = defineProps<{
 	ui: FlowChart;
@@ -92,6 +110,8 @@ const themeManager = useThemeManager();
 const serviceAdapter = useServiceAdapter();
 const { project } = useVueFlow();
 let debounceTimer: number = 0;
+
+const { layout } = useLayout();
 
 const flowChart = ref<InstanceType<typeof VueFlow>>();
 
@@ -113,6 +133,19 @@ const frameStyles = computed<string>(() => {
 
 const nodes = ref<Node[]>([]);
 const edges = ref<Edge[]>([]);
+
+function onUpdateNodes(updated: Node[]): void {
+	nodes.value = updated;
+	nextTick(() => {
+		if (flowChart.value) flowChart.value.fitView();
+	});
+
+	const newValue = new FlowChartModel(
+		new FlowChartNodes(updated.map((u) => u.data as FlowChartNode)),
+		props.ui.value?.edges
+	);
+	debouncedInputModel(newValue);
+}
 
 function setNodesAndEdges() {
 	setNodes();
@@ -406,11 +439,25 @@ function debouncedInputModel(value: FlowChartModel) {
 	}, debounceTime);
 }
 
+function autoLayout() {
+	if (!flowChart.value) return;
+	const nodes = layout(flowChart.value, props.ui.orientation ?? OrientationValues.Horizontal);
+	onUpdateNodes(nodes);
+}
+
+function onNagoEvent(invoke: NagoEvent): void {
+	if (!(invoke instanceof CallRequested)) return;
+
+	if (invoke.call instanceof FlowChartAutoLayout) autoLayout();
+}
+
 function init() {
 	setNodesAndEdges();
+	ConnectionHandler.addEventListener(onNagoEvent);
 }
 
 watch(() => props.ui.value, setNodesAndEdges, { deep: true });
+onUnmounted(() => ConnectionHandler.removeEventListener(onNagoEvent));
 
 init();
 </script>

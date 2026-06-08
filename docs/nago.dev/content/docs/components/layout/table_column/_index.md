@@ -18,6 +18,7 @@ TableColumn creates a new table column with the given header content.
 | `Alignment(alignment Alignment)` | Alignment sets the content alignment within the column cell. |
 | `BackgroundColor(backgroundColor Color)` | BackgroundColor sets the background color for the column cell. |
 | `Border(border Border)` | Border sets the border for the column cell. |
+| `Content(content core.View)` |  |
 | `HoveredBackgroundColor(backgroundColor Color)` | HoveredBackgroundColor sets the background color when the column cell is hovered. |
 | `Padding(padding Padding)` | Padding sets the padding for the column cell. |
 | `Span(span int)` | Span sets how many columns this header should span. |

@@ -1,0 +1,12 @@
+{
+  "doc": "FlowChartToolbarAction describes predefined actions of the flow chart's toolbar.",
+  "kind": "Uint",
+  "id": 254,
+  "const": {
+    "1": {
+      "name": "FlowChartToolbarActionAutoLayout"
+    }
+  }
+}
+
+

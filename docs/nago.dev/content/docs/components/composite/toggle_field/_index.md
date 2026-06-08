@@ -21,8 +21,10 @@ A ToggleField aggregates a toggle together with form field typical labels, hints
 | `Frame(frame Frame)` | Frame sets the layout frame of the toggle field. |
 | `ID(id string)` | ID sets the ID of the toggle field |
 | `InputValue(inputValue *core.State[bool])` | InputValue binds the toggle field to a reactive state for two-way binding. |
+| `Label(label string)` |  |
 | `Padding(padding Padding)` | Padding sets the inner padding of the toggle field. |
 | `SupportingText(text string)` | SupportingText sets optional supporting text displayed below the field. |
+| `Value(value bool)` |  |
 | `Visible(visible bool)` | Visible controls the visibility of the toggle field. |
 | `WithFrame(fn func(Frame) Frame)` | WithFrame modifies the layout frame using the provided function. |
 ---

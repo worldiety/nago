@@ -11,3 +11,9 @@ between UI elements in both vertical and horizontal layouts.
 Space creates a fixed-size spacer with the given length.
 
 ---
+## Methods
+| Method | Description |
+|--------| ------------|
+| `Size(size Length)` |  |
+---
+

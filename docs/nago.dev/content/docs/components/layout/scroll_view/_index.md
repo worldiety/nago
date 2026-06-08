@@ -16,6 +16,7 @@ A ScrollView can either be horizontal or vertical. By default, it is vertical.
 | `Axis(axis ScrollViewAxis)` | Axis sets the scroll direction (vertical or horizontal). |
 | `BackgroundColor(color Color)` | BackgroundColor sets the background color of the scroll view. |
 | `Border(border Border)` | Border applies a border around the scroll view. |
+| `Content(content core.View)` |  |
 | `Frame(frame Frame)` | Frame sets the layout frame for the scroll view. |
 | `FullWidth()` |  |
 | `Padding(padding Padding)` | Padding sets the inner padding of the scroll view. |
