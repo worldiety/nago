@@ -24,6 +24,7 @@
 		"@codemirror/lang-json": "^6.0.1",
 		"@codemirror/lang-markdown": "^6.3.2",
 		"@codemirror/theme-one-dark": "^6.1.2",
+		"@dagrejs/dagre": "^3.0.0",
 		"@floating-ui/vue": "^1.1.11",
 		"@headlessui/vue": "^1.7.23",
 		"@tiptap/extension-color": "^2.11.7",

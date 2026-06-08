@@ -16,6 +16,7 @@ RichText creates a new rich text component with the given value.
 |--------| ------------|
 | `Frame(frame Frame)` | Frame sets the layout frame for the rich text component. |
 | `FullWidth()` | FullWidth expands the rich text component to take the full available width. |
+| `Value(value string)` | Value sets the rich text content to be rendered. |
 ---
 
 ## Related

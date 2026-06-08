@@ -19,6 +19,7 @@ See also [Toggle], [Checkbox] and [Select].
 | `ID(id string)` |  |
 | `InputChecked(input *core.State[bool])` | InputChecked binds the radio button to the given state, enabling two-way data binding so that the selected state is synchronized with external logic. |
 | `Name(name string)` | Name defines the name of the checkbox |
+| `Value(checked bool)` | Value sets the initial selected state of the radio button. |
 | `Visible(v bool)` | Visible controls the visibility of the radio button. Passing false will hide the component from the UI. |
 ---
 

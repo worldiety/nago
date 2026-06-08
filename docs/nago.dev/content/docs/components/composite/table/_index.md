@@ -17,6 +17,7 @@ Table creates a new table with the specified columns and default styling.
 | `BackgroundColor(backgroundColor Color)` | BackgroundColor sets the background color of the table. |
 | `Border(border Border)` | Border sets the border of the table. |
 | `CellPadding(padding Padding)` | CellPadding sets the default cell padding for all cells. Specific cell padding overrides this setting. |
+| `Columns(columns ...)` |  |
 | `Frame(frame Frame)` | Frame sets the frame of the table. |
 | `HeaderDividerColor(color Color)` | HeaderDividerColor sets the divider color between header and body. |
 | `RowDividerColor(color Color)` | RowDividerColor sets the divider color between rows. |

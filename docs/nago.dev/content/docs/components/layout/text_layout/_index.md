@@ -21,6 +21,7 @@ as they can be rendered inline.
 | `AccessibilityLabel(label string)` | AccessibilityLabel sets the screen-reader label describing the layout's content or purpose. |
 | `Action(f func())` | Action sets a callback function that is executed when the layout is clicked. |
 | `Alignment(alignment TextAlignment)` | Alignment defines the text alignment within the layout. |
+| `Append(views ...)` |  |
 | `BackgroundColor(backgroundColor Color)` | BackgroundColor sets the background color of the layout. |
 | `Border(border Border)` | Border applies the given border (widths, radii, colors, shadow) to the layout. |
 | `Font(font Font)` | Font sets the font styling for the text in the layout. |

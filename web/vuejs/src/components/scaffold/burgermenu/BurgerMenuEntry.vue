@@ -129,7 +129,7 @@ watch(
 	() => props.ui.expanded,
 	() => {
 		expanded.value = !!props.ui.expanded;
-	},
+	}
 );
 </script>
 

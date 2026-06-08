@@ -19,6 +19,7 @@ TableCell creates a new table cell with the given content.
 | `BackgroundColor(backgroundColor Color)` | BackgroundColor sets the background color of the cell. |
 | `Border(border Border)` | Border sets the border of the cell. |
 | `ColSpan(colSpan int)` | ColSpan sets how many columns this cell spans. |
+| `Content(content core.View)` |  |
 | `HoveredBackgroundColor(backgroundColor Color)` | HoveredBackgroundColor sets the background color when the cell is hovered. |
 | `Padding(padding Padding)` | Padding sets the padding of the cell. |
 | `RowSpan(rowSpan int)` | RowSpan sets how many rows this cell spans. |

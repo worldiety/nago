@@ -165,7 +165,7 @@ const subMenuEntries = computed((): ScaffoldMenuEntry[] => {
 });
 
 function navigateToExpandedTopLevelMenuEntry(): void {
-	if (!expandedTopLevelMenuEntry.value?.action) return
+	if (!expandedTopLevelMenuEntry.value?.action) return;
 
 	if (expandedTopLevelMenuEntry.value) {
 		menuEntryClicked(expandedTopLevelMenuEntry.value);

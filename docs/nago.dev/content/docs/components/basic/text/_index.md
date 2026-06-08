@@ -80,6 +80,7 @@ func main() {
 | `Padding(padding Padding)` | Padding sets a top, right, bottom and left spacing. |
 | `PressedBorder(border Border)` | PressedBorder sets the Border width, color and radius when the component is clicked. |
 | `Resolve(b bool)` | Resolve tries to resolve the current text content against the window bundle at render time to translate its contents. This may cause a lot of redundant or wrong lookups and therefore it is disabled by default. |
+| `Text(content string)` | Text is a convenience property setter method to set the content for a zero-value Text. |
 | `TextAlignment(align TextAlignment)` | TextAlignment sets the position of the Text. For more information also have a look at TextAlignment. |
 | `Underline(b bool)` | Underline underlines the Text. |
 | `Visible(visible bool)` | Visible decides whether a text is shown. |

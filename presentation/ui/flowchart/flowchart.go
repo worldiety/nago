@@ -20,37 +20,6 @@ const (
 	FlowChartLayoutVertical   = FlowChartLayout(proto.Vertical)
 )
 
-// Model contains the full declarative flowchart data.
-//
-// It can be used as a plain immutable value or be stored inside a [core.State]
-// and bound via [TFlowChart.InputValue]. Because the current FlowChart proto type
-// has no dedicated InputValue pointer yet, the state is currently used as the
-// render source of truth (one-way binding).
-type Model struct {
-	Nodes []Node
-	Edges []Edge
-}
-
-func (m Model) WithNodes(nodes ...Node) Model {
-	m.Nodes = nodes
-	return m
-}
-
-func (m Model) AppendNodes(nodes ...Node) Model {
-	m.Nodes = append(m.Nodes, nodes...)
-	return m
-}
-
-func (m Model) WithEdges(edges ...Edge) Model {
-	m.Edges = edges
-	return m
-}
-
-func (m Model) AppendEdges(edges ...Edge) Model {
-	m.Edges = append(m.Edges, edges...)
-	return m
-}
-
 type CustomContent struct {
 	NodeID  string
 	Content core.View
@@ -104,6 +73,7 @@ type TFlowChart struct {
 	customContents     []CustomContent
 	minZoom            float64
 	maxZoom            float64
+	toolbar            Toolbar
 }
 
 // FlowChart creates a new flowchart component for the given model.
@@ -197,6 +167,17 @@ func (c TFlowChart) MaxZoom(maxZoom float64) TFlowChart {
 	return c
 }
 
+func (c TFlowChart) Toolbar(toolbar Toolbar) TFlowChart {
+	c.toolbar = toolbar
+	return c
+}
+
+func (c TFlowChart) AutoLayout(wnd core.Window) {
+	core.AsyncCall(wnd, &proto.FlowChartAutoLayout{
+		Dummy: 1,
+	}, nil)
+}
+
 func (c TFlowChart) Render(ctx core.RenderContext) core.RenderNode {
 	m := c.model
 
@@ -222,6 +203,11 @@ func (c TFlowChart) Render(ctx core.RenderContext) core.RenderNode {
 		CustomContents:     make(proto.FlowChartCustomContents, 0),
 		MinZoom:            proto.Float(c.minZoom),
 		MaxZoom:            proto.Float(c.maxZoom),
+		Toolbar: proto.FlowChartToolbar{
+			Position:    proto.FlowChartToolbarPosition(c.toolbar.Position),
+			Orientation: proto.Orientation(c.toolbar.Orientation),
+			Actions:     make(proto.FlowChartToolbarActions, 0),
+		},
 	}
 
 	for _, node := range m.Nodes {
@@ -234,6 +220,10 @@ func (c TFlowChart) Render(ctx core.RenderContext) core.RenderNode {
 
 	for _, content := range c.customContents {
 		res.CustomContents = append(res.CustomContents, content.render(ctx))
+	}
+
+	for _, action := range c.toolbar.Actions {
+		res.Toolbar.Actions = append(res.Toolbar.Actions, proto.FlowChartToolbarAction(action))
 	}
 
 	return &res

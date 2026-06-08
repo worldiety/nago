@@ -1,0 +1,11 @@
+{
+  "kind": "Record",
+  "id": 258,
+  "fields": {
+    "1": {
+      "name": "Dummy",
+      "type": "Uint",
+      "doc": "Dummy is needed for the event to not be purged out."
+    }
+  }
+}

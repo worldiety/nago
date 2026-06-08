@@ -1,0 +1,20 @@
+{
+  "doc": "FlowChartToolbar represents a flow chart's toolbar.",
+  "kind": "Record",
+  "id": 256,
+  "fields": {
+    "1": {
+      "name": "Position",
+      "type": "FlowChartToolbarPosition"
+    },
+    "2": {
+      "name": "Orientation",
+      "type": "Orientation"
+    },
+    "3": {
+      "name": "Actions",
+      "type": "FlowChartToolbarActions"
+    }
+  }
+}
+

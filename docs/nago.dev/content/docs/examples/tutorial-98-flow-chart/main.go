@@ -140,21 +140,26 @@ func main() {
 				}
 			})
 
+			chart := flowchart.FlowChart(state.Get()).
+				InputValue(state).
+				ActionValue(actionState).
+				NodesDraggable(true).
+				NodesConnectable(true).
+				ElementsSelectable(true).
+				Background(flowchart.Background{
+					Color:   ui.M1,
+					GridGap: 16,
+				}).
+				Frame(ui.Frame{}.MatchScreen()).
+				Layout(flowchart.FlowChartLayoutVertical).
+				CustomContents(contents).
+				MaxZoom(1.5).
+				Toolbar(flowchart.Toolbar{
+					Actions: []flowchart.FlowChartToolbarAction{flowchart.FlowChartToolbarActionAutoLayout},
+				})
+
 			return ui.Stack(
-				flowchart.FlowChart(state.Get()).
-					InputValue(state).
-					ActionValue(actionState).
-					NodesDraggable(true).
-					NodesConnectable(true).
-					ElementsSelectable(true).
-					Background(flowchart.Background{
-						Color:   ui.M1,
-						GridGap: 16,
-					}).
-					Frame(ui.Frame{}.MatchScreen()).
-					Layout(flowchart.FlowChartLayoutVertical).
-					CustomContents(contents).
-					MaxZoom(1.5),
+				chart,
 				ui.Stack(
 					ui.PrimaryButton(func() {
 						if wnd.Info().ColorScheme == core.Light {
@@ -163,12 +168,16 @@ func main() {
 							wnd.SetColorScheme(core.Light)
 						}
 					}).Title("Toggle theme"),
+					ui.SecondaryButton(func() {
+						chart.AutoLayout(wnd)
+					}).Title("Auto Layout"),
 				).Position(ui.Position{
 					Type:  ui.PositionFixed,
 					Left:  ui.L0,
 					Top:   ui.L16,
 					Right: ui.L0,
-				}).Alignment(ui.Center),
+				}).Alignment(ui.Center).
+					Gap(ui.L8),
 				lastAction(actionState),
 			).Frame(ui.Frame{}.MatchScreen())
 		})

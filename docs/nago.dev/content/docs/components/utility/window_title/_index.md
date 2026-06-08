@@ -14,3 +14,9 @@ WindowTitle creates a new TWindowTitle with the given title text.
 ```
 
 ---
+## Methods
+| Method | Description |
+|--------| ------------|
+| `Title(title string)` |  |
+---
+

@@ -4,7 +4,6 @@ import { RoundingTypeValues } from '@/shared/proto/nprotoc_gen';
 export class Chart {
 	public static DataLabelFormatter(
 		chart?: ChartProto
-		 
 	): (val: string | number | number[], opts?: any) => string | number | (string | number)[] {
 		return (val: string | number | number[]): string | number | (string | number)[] => {
 			if (!chart || typeof val !== 'number') return val;

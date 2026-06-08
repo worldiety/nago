@@ -44,6 +44,7 @@ So, consider the following situations:
 | `Padding(padding Padding)` | Padding sets the padding around the field. |
 | `Style(s TextFieldStyle)` | Style sets the wanted style. If empty, [proto.TextFieldOutlined] is applied. |
 | `SupportingText(text string)` | SupportingText sets helper text displayed below the field. |
+| `Value(value string)` | Value sets the initial value of the password field. Be careful with that, as you should not reuse the value after the user has finished the secret step. |
 | `Visible(v bool)` | Visible sets the field's visibility. |
 | `WithFrame(fn func(Frame) Frame)` | WithFrame applies a transformation function to the field's frame. |
 ---

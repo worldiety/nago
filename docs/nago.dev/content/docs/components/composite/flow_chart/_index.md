@@ -15,6 +15,7 @@ FlowChart creates a new flowchart component for the given model.
 |--------| ------------|
 | `ActionValue(state *core.State[FlowChartActionData])` |  |
 | `AppendCustomContent(content CustomContent)` |  |
+| `AutoLayout(wnd core.Window)` |  |
 | `Background(background Background)` |  |
 | `CustomContents(contents []CustomContent)` |  |
 | `EdgesEditable(val bool)` |  |
@@ -28,6 +29,7 @@ FlowChart creates a new flowchart component for the given model.
 | `Model(model Model)` | Model sets the static flowchart model. |
 | `NodesConnectable(val bool)` |  |
 | `NodesDraggable(val bool)` |  |
+| `Toolbar(toolbar Toolbar)` |  |
 | `WithFrame(fn func(ui.Frame) ui.Frame)` |  |
 ---
 
