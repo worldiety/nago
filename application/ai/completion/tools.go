@@ -103,6 +103,58 @@ func NewTool[In, Out any](name, description string, fn ToolFunc[In, Out]) Tool {
 // models that keep requesting tools indefinitely.
 const DefaultMaxToolTurns = 16
 
+// ProgressPhase classifies a [Progress] event emitted during the agentic loop in [Run].
+type ProgressPhase string
+
+const (
+	// PhaseTurnStarted is emitted right before the model is asked to complete the current history.
+	PhaseTurnStarted ProgressPhase = "turn_started"
+
+	// PhaseModelResponded is emitted after the model returned an assistant turn. The [Progress.Result] field
+	// carries the raw model answer (which may request tools).
+	PhaseModelResponded ProgressPhase = "model_responded"
+
+	// PhaseToolStarted is emitted just before a requested tool is executed. The [Progress.ToolCall] field
+	// describes the call.
+	PhaseToolStarted ProgressPhase = "tool_started"
+
+	// PhaseToolCompleted is emitted after a tool finished executing. The [Progress.ToolCall] and
+	// [Progress.ToolResult] fields describe the call and its outcome.
+	PhaseToolCompleted ProgressPhase = "tool_completed"
+)
+
+// Progress is a single observability event handed to [RunOptions.OnProgress] while [Run] drives the agentic
+// loop. It lets a caller surface what is happening (e.g. "calling tool X", "thinking ...") to a waiting user.
+//
+// Depending on Phase only a subset of the optional fields is populated:
+//   - PhaseTurnStarted: Turn, MaxTurns
+//   - PhaseModelResponded: Turn, MaxTurns, Result
+//   - PhaseToolStarted: Turn, MaxTurns, ToolCall
+//   - PhaseToolCompleted: Turn, MaxTurns, ToolCall, ToolResult
+type Progress struct {
+	// Phase identifies which step of the loop produced this event.
+	Phase ProgressPhase
+
+	// Turn is the zero-based index of the current loop iteration.
+	Turn int
+
+	// MaxTurns is the effective turn limit (see [RunOptions.MaxTurns]).
+	MaxTurns int
+
+	// Result is the model answer for PhaseModelResponded, nil otherwise.
+	Result *Result
+
+	// ToolCall is the tool invocation for PhaseToolStarted/PhaseToolCompleted, nil otherwise.
+	ToolCall *ToolCall
+
+	// ToolResult is the tool outcome for PhaseToolCompleted, nil otherwise.
+	ToolResult *ToolResult
+}
+
+// ProgressFunc receives [Progress] events while [Run] executes. It must not block for long, as it is invoked
+// synchronously inside the loop.
+type ProgressFunc func(Progress)
+
 // RunOptions configures the agentic loop executed by [Run]. It embeds the stateless [Options] and adds the
 // executable [Tool]s plus a turn limit.
 type RunOptions struct {
@@ -117,6 +169,10 @@ type RunOptions struct {
 	// MaxTurns caps how many times the model may request (and we execute) tools before [Run] gives up. Zero
 	// means [DefaultMaxToolTurns].
 	MaxTurns int
+
+	// OnProgress is an optional callback invoked synchronously for every [Progress] event of the loop. Use
+	// it to keep a waiting user informed (e.g. show which tool is currently running). May be nil.
+	OnProgress ProgressFunc
 }
 
 // Run drives the full agentic loop on top of [Completions.Complete]:
@@ -132,6 +188,15 @@ func Run(subject auth.Subject, c Completions, opts RunOptions) (Result, []Messag
 	maxTurns := opts.MaxTurns
 	if maxTurns <= 0 {
 		maxTurns = DefaultMaxToolTurns
+	}
+
+	// notify reports a progress event to the optional callback, guarding against a nil OnProgress.
+	notify := func(p Progress) {
+		if opts.OnProgress == nil {
+			return
+		}
+		p.MaxTurns = maxTurns
+		opts.OnProgress(p)
 	}
 
 	tools := make(map[string]Tool, len(opts.Tools))
@@ -151,10 +216,14 @@ func Run(subject auth.Subject, c Completions, opts RunOptions) (Result, []Messag
 	for turn := 0; turn < maxTurns; turn++ {
 		req.Messages = history
 
+		notify(Progress{Phase: PhaseTurnStarted, Turn: turn})
+
 		res, err := c.Complete(subject, req)
 		if err != nil {
 			return Result{}, history, err
 		}
+
+		notify(Progress{Phase: PhaseModelResponded, Turn: turn, Result: &res})
 
 		// Collect any tool calls in this assistant turn up front, decoupled from the stop reason.
 		var calls []ToolCall
@@ -189,7 +258,14 @@ func Run(subject auth.Subject, c Completions, opts RunOptions) (Result, []Messag
 
 		results := make([]Content, 0, len(calls))
 		for _, call := range calls {
-			results = append(results, executeToolCall(tools, call))
+			call := call
+			notify(Progress{Phase: PhaseToolStarted, Turn: turn, ToolCall: &call})
+
+			result := executeToolCall(tools, call)
+
+			notify(Progress{Phase: PhaseToolCompleted, Turn: turn, ToolCall: &call, ToolResult: &result})
+
+			results = append(results, result)
 		}
 
 		history = append(history, Message{Role: User, Content: results})
