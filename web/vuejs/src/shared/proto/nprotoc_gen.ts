@@ -19881,6 +19881,255 @@ export class FlowChartAutoLayout implements Writeable, Readable, CallArgs {
 	isCallArgs(): void {}
 }
 
+// StepperStep represents a step of the stepper component.
+export class StepperStep implements Writeable, Readable {
+	public title?: Str;
+
+	public subtitle?: Str;
+
+	constructor(title: Str | undefined = undefined, subtitle: Str | undefined = undefined) {
+		this.title = title;
+		this.subtitle = subtitle;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.title = readString(reader);
+					break;
+				}
+				case 2: {
+					this.subtitle = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.title !== undefined, this.subtitle !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.title!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.subtitle!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.title === undefined && this.subtitle === undefined;
+	}
+
+	reset(): void {
+		this.title = undefined;
+		this.subtitle = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 259);
+		return;
+	}
+}
+
+// Stepper represents a component to display and control progress stepwise.
+export class Stepper implements Writeable, Readable, Component {
+	public inputValue?: Ptr;
+
+	public value?: Uint;
+
+	public steps?: StepperSteps;
+
+	public layout?: StepperLayout;
+
+	public simpleText?: Str;
+
+	public numbers?: Bool;
+
+	constructor(
+		inputValue: Ptr | undefined = undefined,
+		value: Uint | undefined = undefined,
+		steps: StepperSteps | undefined = undefined,
+		layout: StepperLayout | undefined = undefined,
+		simpleText: Str | undefined = undefined,
+		numbers: Bool | undefined = undefined
+	) {
+		this.inputValue = inputValue;
+		this.value = value;
+		this.steps = steps;
+		this.layout = layout;
+		this.simpleText = simpleText;
+		this.numbers = numbers;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.inputValue = readInt(reader);
+					break;
+				}
+				case 2: {
+					this.value = readInt(reader);
+					break;
+				}
+				case 3: {
+					this.steps = new StepperSteps();
+					this.steps.read(reader);
+					break;
+				}
+				case 4: {
+					this.layout = readInt(reader);
+					break;
+				}
+				case 5: {
+					this.simpleText = readString(reader);
+					break;
+				}
+				case 6: {
+					this.numbers = readBool(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.inputValue !== undefined,
+			this.value !== undefined,
+			this.steps !== undefined && !this.steps.isZero(),
+			this.layout !== undefined,
+			this.simpleText !== undefined,
+			this.numbers !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 1);
+			writeInt(writer, this.inputValue!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 2);
+			writeInt(writer, this.value!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 3);
+			this.steps!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 4);
+			writeInt(writer, this.layout!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
+			writeString(writer, this.simpleText!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 6);
+			writeBool(writer, this.numbers!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.inputValue === undefined &&
+			this.value === undefined &&
+			(this.steps === undefined || this.steps.isZero()) &&
+			this.layout === undefined &&
+			this.simpleText === undefined &&
+			this.numbers === undefined
+		);
+	}
+
+	reset(): void {
+		this.inputValue = undefined;
+		this.value = undefined;
+		this.steps = undefined;
+		this.layout = undefined;
+		this.simpleText = undefined;
+		this.numbers = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 260);
+		return;
+	}
+	isComponent(): void {}
+}
+
+export class StepperSteps implements Writeable, Readable {
+	public value: StepperStep[];
+
+	constructor(value: StepperStep[] = []) {
+		this.value = value;
+	}
+
+	isZero(): boolean {
+		return !this.value || this.value.length === 0;
+	}
+
+	reset(): void {
+		this.value = [];
+	}
+
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value.length); // Write the length of the array
+		for (const c of this.value) {
+			c.writeTypeHeader(writer); // Write the type header for each component)
+			c.write(writer); // Write the component data
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
+		}
+	}
+
+	read(reader: BinaryReader): void {
+		const count = reader.readUvarint(); // Read the length of the array
+		const values: StepperStep[] = [];
+
+		for (let i = 0; i < count; i++) {
+			const obj = unmarshal(reader); // Read and unmarshal each component
+			values.push(obj as any as StepperStep); // Cast and add to the array
+		}
+
+		this.value = values;
+	}
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 261);
+		return;
+	}
+}
+
+export type StepperLayout = number;
+function writeTypeHeaderStepperLayout(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 262);
+	return;
+}
+// companion enum containing all defined constants for StepperLayout
+export enum StepperLayoutValues {
+	StepperLayoutAuto = 0,
+	StepperLayoutHorizontal = 1,
+	StepperLayoutVertical = 2,
+	StepperLayoutSimple = 3,
+	StepperLayoutSimpleList = 4,
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -21068,6 +21317,25 @@ export function unmarshal(src: BinaryReader): any {
 		case 258: {
 			const v = new FlowChartAutoLayout();
 			v.read(src);
+			return v;
+		}
+		case 259: {
+			const v = new StepperStep();
+			v.read(src);
+			return v;
+		}
+		case 260: {
+			const v = new Stepper();
+			v.read(src);
+			return v;
+		}
+		case 261: {
+			const v = new StepperSteps();
+			v.read(src);
+			return v;
+		}
+		case 262: {
+			const v = readInt(src) as StepperLayout;
 			return v;
 		}
 	}

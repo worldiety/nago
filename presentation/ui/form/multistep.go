@@ -26,7 +26,7 @@ type TMultiSteps struct {
 	colorCurrent ui.Color
 	colorDone    ui.Color
 	colorFuture  ui.Color
-	style        stepper.Style
+	layout       stepper.StepperLayout
 }
 
 // MultiSteps creates a new TMultiSteps with the provided steps.
@@ -76,9 +76,8 @@ func (c TMultiSteps) ColorFuture(color ui.Color) TMultiSteps {
 	return c
 }
 
-// Style sets the display style of the stepper (Auto, Simple or Full).
-func (c TMultiSteps) Style(style stepper.Style) TMultiSteps {
-	c.style = style
+func (c TMultiSteps) Layout(layout stepper.StepperLayout) TMultiSteps {
+	c.layout = layout
 	return c
 }
 
@@ -132,22 +131,10 @@ func (c TMultiSteps) Render(ctx core.RenderContext) core.RenderNode {
 
 	s := stepper.Stepper(ui.ForEach(c.steps, func(t TStep) stepper.TStep {
 		return stepper.Step().Headline(t.headline).SupportingText(t.supportingText)
-	})...).Index(c.activeIndex.Get())
+	})...).Value(c.activeIndex.Get())
 
-	if c.colorCurrent != "" {
-		s = s.ColorCurrent(c.colorCurrent)
-	}
-
-	if c.colorDone != "" {
-		s = s.ColorDone(c.colorDone)
-	}
-
-	if c.colorFuture != "" {
-		s = s.ColorFuture(c.colorFuture)
-	}
-
-	if c.style != stepper.Auto {
-		s = s.Style(c.style)
+	if c.layout != stepper.StepperLayoutAuto {
+		s = s.Layout(c.layout)
 	}
 
 	return ui.VStack(

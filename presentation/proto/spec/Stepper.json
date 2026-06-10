@@ -1,0 +1,31 @@
+{
+  "doc": "Stepper represents a component to display and control progress stepwise.",
+  "kind": "Record",
+  "id": 260,
+  "fields": {
+    "1": {
+      "name": "InputValue",
+      "type": "Ptr"
+    },
+    "2": {
+      "name": "Value",
+      "type": "Uint"
+    },
+    "3": {
+      "name": "Steps",
+      "type": "StepperSteps"
+    },
+    "4": {
+      "name": "Layout",
+      "type": "StepperLayout"
+    },
+    "5": {
+      "name": "SimpleText",
+      "type": "Str"
+    },
+    "6": {
+      "name": "Numbers",
+      "type": "Bool"
+    }
+  }
+}
