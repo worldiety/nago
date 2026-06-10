@@ -126,6 +126,13 @@ type apiMessage struct {
 
 // apiContent is the polymorphic content block used for both requests and responses. Only the fields
 // relevant for the respective Type are populated.
+//
+// It carries a custom [apiContent.MarshalJSON] because the struct tags alone cannot express the
+// Anthropic schema correctly: the API became stricter and requires the "thinking" (and "signature")
+// fields to be present on every thinking block, even when the reasoning text is empty. Relying on
+// "omitempty" silently dropped an empty "thinking" field and produced
+// `messages[i].content[j].thinking.thinking: Field required`. The custom marshaller therefore emits
+// exactly the fields that belong to the respective Type.
 type apiContent struct {
 	Type string `json:"type"`
 
@@ -135,6 +142,9 @@ type apiContent struct {
 	// type == "thinking"
 	Thinking  string `json:"thinking,omitempty"`
 	Signature string `json:"signature,omitempty"`
+
+	// type == "redacted_thinking"
+	Data string `json:"data,omitempty"`
 
 	// type == "image" | "document"
 	Source *apiSource `json:"source,omitempty"`
@@ -151,6 +161,56 @@ type apiContent struct {
 
 	// CacheControl, when set, marks this block as a prompt-cache breakpoint.
 	CacheControl *apiCacheControl `json:"cache_control,omitempty"`
+}
+
+// MarshalJSON renders the content block with only the fields relevant to its Type. This is required
+// because Anthropic's Messages API validates each block against a per-type schema and now (a) demands
+// that thinking blocks always carry their "thinking" and "signature" fields — even when the reasoning
+// text is empty — and (b) rejects unrelated/empty sibling fields. A plain struct with "omitempty" tags
+// cannot satisfy both constraints with a single shared struct, so we assemble the payload explicitly.
+func (c apiContent) MarshalJSON() ([]byte, error) {
+	m := map[string]any{"type": c.Type}
+
+	switch c.Type {
+	case "text":
+		m["text"] = c.Text
+	case "thinking":
+		// thinking and signature are mandatory for thinking blocks; never drop them.
+		m["thinking"] = c.Thinking
+		m["signature"] = c.Signature
+	case "redacted_thinking":
+		m["data"] = c.Data
+	case "image", "document":
+		m["source"] = c.Source
+	case "tool_use":
+		m["id"] = c.ID
+		m["name"] = c.Name
+		input := c.Input
+		if len(input) == 0 {
+			input = json.RawMessage("{}")
+		}
+		m["input"] = input
+	case "tool_result":
+		m["tool_use_id"] = c.ToolUseID
+		if c.Content != nil {
+			m["content"] = c.Content
+		}
+		if c.IsError {
+			m["is_error"] = true
+		}
+	default:
+		// Unknown/forward-compatible block types: fall back to the non-empty known fields so we never
+		// emit something the validator is guaranteed to reject.
+		if c.Text != "" {
+			m["text"] = c.Text
+		}
+	}
+
+	if c.CacheControl != nil {
+		m["cache_control"] = c.CacheControl
+	}
+
+	return json.Marshal(m)
 }
 
 type apiSource struct {

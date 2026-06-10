@@ -8,6 +8,8 @@
 package anthropic
 
 import (
+	"encoding/json"
+	"strings"
 	"testing"
 
 	"go.wdy.de/nago/application/ai/completion"
@@ -98,6 +100,63 @@ func TestBuildRequest_PromptCache_TTL(t *testing.T) {
 
 	if cc := req.System[len(req.System)-1].CacheControl; cc == nil || cc.TTL != "1h" {
 		t.Errorf("expected 1h ttl, got %+v", cc)
+	}
+}
+
+// TestThinkingBlock_AlwaysSerializesThinkingField guards against a regression where an empty thinking
+// text caused the "thinking" field to be dropped (json "omitempty"), which the stricter Anthropic schema
+// rejects with `messages[i].content[j].thinking.thinking: Field required`.
+func TestThinkingBlock_AlwaysSerializesThinkingField(t *testing.T) {
+	cases := map[string]completion.Content{
+		"non-empty": completion.Thinking{Text: "let me reason", Signature: "sig"},
+		"empty":     completion.Thinking{Text: "", Signature: "sig"},
+	}
+
+	for name, in := range cases {
+		t.Run(name, func(t *testing.T) {
+			ac, err := toAPIContent(in)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			raw, err := json.Marshal(ac)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			var got map[string]any
+			if err := json.Unmarshal(raw, &got); err != nil {
+				t.Fatal(err)
+			}
+
+			if got["type"] != "thinking" {
+				t.Fatalf("expected type thinking, got %v", got["type"])
+			}
+			if _, ok := got["thinking"]; !ok {
+				t.Errorf("thinking field must always be present, got %s", raw)
+			}
+			if _, ok := got["signature"]; !ok {
+				t.Errorf("signature field must always be present, got %s", raw)
+			}
+		})
+	}
+}
+
+// TestTextBlock_DoesNotLeakThinkingField ensures the shared content struct does not emit empty,
+// type-irrelevant sibling fields (which the stricter schema may reject).
+func TestTextBlock_DoesNotLeakThinkingField(t *testing.T) {
+	ac, err := toAPIContent(completion.Text{Text: "hello"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	raw, err := json.Marshal(ac)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if strings.Contains(string(raw), "thinking") || strings.Contains(string(raw), "signature") {
+		t.Errorf("text block must not contain thinking/signature fields, got %s", raw)
 	}
 }
 
