@@ -1,1 +1,0 @@
-import{d as o,b as a,t as n,bh as i}from"./main-Zh3RXid6.js";const p=o({__name:"UiWindowTitle",props:{ui:{}},setup(t){const e=t;return e.ui.value&&(document.title=e.ui.value),(r,s)=>(a(),n(i,{to:"body"}))}});export{p as default};
