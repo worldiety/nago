@@ -8,7 +8,7 @@
  */
 import type { Component } from 'vue';
 import { defineAsyncComponent } from 'vue';
-import type { Component as NagoComponent } from '@/shared/proto/nprotoc_gen';
+import { Component as NagoComponent, Stepper } from '@/shared/proto/nprotoc_gen';
 import { Canvas } from '@/shared/proto/nprotoc_gen';
 import {
 	Accordion,
@@ -81,6 +81,7 @@ const LazyUiScrollView = defineAsyncComponent(() => import('@/components/scrollv
 const LazyUiSelect = defineAsyncComponent(() => import('@/components/UiSelect.vue'));
 const LazyUiSpacer = defineAsyncComponent(() => import('@/components/spacer/UiSpacer.vue'));
 const LazyUiStack = defineAsyncComponent(() => import('@/components/UiStack.vue'));
+const LazyUiStepper = defineAsyncComponent(() => import('@/components/UiStepper.vue'));
 const LazyUiSwitcher = defineAsyncComponent(() => import('@/components/switcher/UiSwitcher.vue'));
 const LazyUiTable = defineAsyncComponent(() => import('@/components/table/UiTable.vue'));
 const LazyUiText = defineAsyncComponent(() => import('@/components/UiText.vue'));
@@ -215,6 +216,10 @@ export function vueComponentFor(ngc: NagoComponent): Component {
 
 	if (ngc instanceof Stack) {
 		return LazyUiStack;
+	}
+
+	if (ngc instanceof Stepper) {
+		return LazyUiStepper;
 	}
 
 	if (ngc instanceof Switcher) {

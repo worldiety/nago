@@ -353,6 +353,7 @@ func (ScrollView) isComponent()     {}
 func (Select) isComponent()         {}
 func (Spacer) isComponent()         {}
 func (Stack) isComponent()          {}
+func (Stepper) isComponent()        {}
 func (Switcher) isComponent()       {}
 func (SwitcherPage) isComponent()   {}
 func (Table) isComponent()          {}
@@ -19288,6 +19289,228 @@ func (v *FlowChartAutoLayout) read(r *BinaryReader) error {
 	return nil
 }
 
+// StepperStep represents a step of the stepper component.
+type StepperStep struct {
+	Title    Str
+	Subtitle Str
+}
+
+func (v *StepperStep) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Title.IsZero()
+	fields[2] = !v.Subtitle.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Title.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Subtitle.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *StepperStep) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Title.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Subtitle.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// Stepper represents a component to display and control progress stepwise.
+type Stepper struct {
+	InputValue Ptr
+	Value      Uint
+	Steps      StepperSteps
+	Layout     StepperLayout
+	SimpleText Str
+	Numbers    Bool
+}
+
+func (v *Stepper) write(w *BinaryWriter) error {
+	var fields [7]bool
+	fields[1] = !v.InputValue.IsZero()
+	fields[2] = !v.Value.IsZero()
+	fields[3] = !v.Steps.IsZero()
+	fields[4] = !v.Layout.IsZero()
+	fields[5] = !v.SimpleText.IsZero()
+	fields[6] = !v.Numbers.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(uvarint, 1); err != nil {
+			return err
+		}
+		if err := v.InputValue.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.Value.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(array, 3); err != nil {
+			return err
+		}
+		if err := v.Steps.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(uvarint, 4); err != nil {
+			return err
+		}
+		if err := v.Layout.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(byteSlice, 5); err != nil {
+			return err
+		}
+		if err := v.SimpleText.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(uvarint, 6); err != nil {
+			return err
+		}
+		if err := v.Numbers.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Stepper) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.InputValue.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Value.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Steps.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Layout.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.SimpleText.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.Numbers.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type StepperLayout uint64
+
+const (
+	StepperLayoutAuto       StepperLayout = 0
+	StepperLayoutHorizontal StepperLayout = 1
+	StepperLayoutVertical   StepperLayout = 2
+	StepperLayoutSimple     StepperLayout = 3
+	StepperLayoutSimpleList StepperLayout = 4
+)
+
+func (v *StepperLayout) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *StepperLayout) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = StepperLayout(tmp)
+	return nil
+}
+
+func (v *StepperLayout) reset() {
+	*v = StepperLayout(0)
+}
+func (v *StepperLayout) IsZero() bool {
+	return *v == 0
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -20791,6 +21014,30 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 258:
 		var v FlowChartAutoLayout
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 259:
+		var v StepperStep
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 260:
+		var v Stepper
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 261:
+		var v StepperSteps
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 262:
+		var v StepperLayout
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -25083,6 +25330,78 @@ func (v *FlowChartAutoLayout) IsZero() bool {
 	return v.Dummy.IsZero()
 }
 
+func (v *StepperStep) reset() {
+	v.Title.reset()
+	v.Subtitle.reset()
+}
+
+func (v *StepperStep) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Title.IsZero() && v.Subtitle.IsZero()
+}
+
+func (v *Stepper) reset() {
+	v.InputValue.reset()
+	v.Value.reset()
+	v.Steps.reset()
+	v.Layout.reset()
+	v.SimpleText.reset()
+	v.Numbers.reset()
+}
+
+func (v *Stepper) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.InputValue.IsZero() && v.Value.IsZero() && v.Steps.IsZero() && v.Layout.IsZero() && v.SimpleText.IsZero() && v.Numbers.IsZero()
+}
+
+type StepperSteps []StepperStep
+
+func (v *StepperSteps) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *StepperSteps) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	slice := make([]StepperStep, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = *obj.(*StepperStep)
+	}
+
+	*v = slice
+	return nil
+}
+
+func (v *StepperSteps) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
+}
+
+func (v *StepperSteps) reset() {
+	*v = nil
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -26807,6 +27126,34 @@ func (v *FlowChartToolbarPosition) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *FlowChartAutoLayout) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 258); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *StepperStep) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 259); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Stepper) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 260); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *StepperSteps) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 261); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *StepperLayout) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 262); err != nil {
 		return err
 	}
 	return nil

@@ -1,0 +1,21 @@
+{
+  "kind": "Uint",
+  "id": 262,
+  "const": {
+    "0": {
+      "name": "StepperLayoutAuto"
+    },
+    "1": {
+      "name": "StepperLayoutHorizontal"
+    },
+    "2": {
+      "name": "StepperLayoutVertical"
+    },
+    "3": {
+      "name": "StepperLayoutSimple"
+    },
+    "4": {
+      "name": "StepperLayoutSimpleList"
+    }
+  }
+}

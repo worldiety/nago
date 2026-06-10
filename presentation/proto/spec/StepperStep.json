@@ -1,0 +1,15 @@
+{
+  "doc": "StepperStep represents a step of the stepper component.",
+  "kind": "Record",
+  "id": 259,
+  "fields": {
+    "1": {
+      "name": "Title",
+      "type": "Str"
+    },
+    "2": {
+      "name": "Subtitle",
+      "type": "Str"
+    }
+  }
+}

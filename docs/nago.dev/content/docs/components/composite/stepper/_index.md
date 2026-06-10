@@ -14,15 +14,10 @@ or full-sized step representations.
 ## Methods
 | Method | Description |
 |--------| ------------|
-| `ColorCurrent(color ui.Color)` | ColorCurrent sets the color for the currently active step. |
-| `ColorDone(color ui.Color)` | ColorDone sets the color for completed steps. |
-| `ColorFuture(color ui.Color)` | ColorFuture sets the color for upcoming steps. |
-| `FullCircleSize(length ui.Length)` | FullCircleSize sets the diameter of the step circles in full layout mode. |
-| `FullStepWidth(length ui.Length)` | FullStepWidth sets the width allocated to each step in full layout mode. |
-| `Index(idx int)` |  |
-| `StepText(pattern string)` | StepText sets a different localized and parameterized (simple) step text, like "Schritt %d von %d". An empty string will omit the step text entirely. |
-| `Style(style Style)` |  |
-| `renderFull(ctx core.RenderContext)` |  |
-| `renderSimple(ctx core.RenderContext)` |  |
+| `InputValue(state *core.State[int])` |  |
+| `Layout(layout StepperLayout)` |  |
+| `SimpleTextPattern(pattern string)` |  |
+| `Steps(steps ...)` |  |
+| `Value(value int)` |  |
 ---
 
