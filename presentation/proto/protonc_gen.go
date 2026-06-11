@@ -19363,16 +19363,19 @@ type Stepper struct {
 	Layout     StepperLayout
 	SimpleText Str
 	Numbers    Bool
+	// If false, the stepper will render without lines in simple and simple list layouts. Default: true.
+	Lines Bool
 }
 
 func (v *Stepper) write(w *BinaryWriter) error {
-	var fields [7]bool
+	var fields [8]bool
 	fields[1] = !v.InputValue.IsZero()
 	fields[2] = !v.Value.IsZero()
 	fields[3] = !v.Steps.IsZero()
 	fields[4] = !v.Layout.IsZero()
 	fields[5] = !v.SimpleText.IsZero()
 	fields[6] = !v.Numbers.IsZero()
+	fields[7] = !v.Lines.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -19431,6 +19434,14 @@ func (v *Stepper) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[7] {
+		if err := w.writeFieldHeader(uvarint, 7); err != nil {
+			return err
+		}
+		if err := v.Lines.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -19473,6 +19484,11 @@ func (v *Stepper) read(r *BinaryReader) error {
 			}
 		case 6:
 			err := v.Numbers.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.Lines.read(r)
 			if err != nil {
 				return err
 			}
@@ -25349,13 +25365,14 @@ func (v *Stepper) reset() {
 	v.Layout.reset()
 	v.SimpleText.reset()
 	v.Numbers.reset()
+	v.Lines.reset()
 }
 
 func (v *Stepper) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.InputValue.IsZero() && v.Value.IsZero() && v.Steps.IsZero() && v.Layout.IsZero() && v.SimpleText.IsZero() && v.Numbers.IsZero()
+	return v.InputValue.IsZero() && v.Value.IsZero() && v.Steps.IsZero() && v.Layout.IsZero() && v.SimpleText.IsZero() && v.Numbers.IsZero() && v.Lines.IsZero()
 }
 
 type StepperSteps []StepperStep

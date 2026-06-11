@@ -100,6 +100,9 @@ export default {
 				customColors['CBIB'] = 'rgb(from var(--CBIB) r g b / <alpha-value>)'; // BannerInfoBackground
 				customColors['CBIT'] = 'rgb(from var(--CBIT) r g b / <alpha-value>)'; // BannerInfoText
 
+				// constants
+				customColors['DIS'] = '#636363';
+
 				return customColors;
 			},
 			boxShadow: {

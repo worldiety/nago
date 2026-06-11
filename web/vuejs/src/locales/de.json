@@ -81,6 +81,13 @@
 	"scaffold": {
 		"toMenu": "Hauptmenü"
 	},
+	"stepper": {
+		"aria": {
+			"progressUnknown": "Fortschritt: Unbekannt",
+			"progressComplete": "Fortschritt: Vollständig abgeschlossen",
+			"progress": "Fortschritt: Schritt {current} von {total}"
+		}
+	},
 	"connectionLostOverlay": {
 		"content": "Verbindung unterbrochen"
 	},

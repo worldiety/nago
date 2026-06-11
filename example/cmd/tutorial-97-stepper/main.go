@@ -26,6 +26,11 @@ func main() {
 		cfg.RootView(".", func(wnd core.Window) core.View {
 			state := core.StateOf[int](wnd, "stepperState")
 
+			nextText := "Weiter >"
+			if state.Get() >= 4 {
+				nextText = "Fertig >"
+			}
+
 			return ui.VStack(
 				ui.Text("Aktueller Step: "+strconv.Itoa(state.Get()+1)),
 				stepper.Stepper(
@@ -41,7 +46,7 @@ func main() {
 					}).Title("< Zurück").Disabled(state.Get() <= 0),
 					ui.PrimaryButton(func() {
 						state.Set(state.Get() + 1)
-					}).Title("Weiter >").Disabled(state.Get() >= 4),
+					}).Title(nextText).Disabled(state.Get() > 4),
 				).Gap(ui.L8),
 			).Gap(ui.L32).Frame(ui.Frame{}.MatchScreen())
 		})

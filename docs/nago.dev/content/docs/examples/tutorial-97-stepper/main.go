@@ -26,14 +26,19 @@ func main() {
 		cfg.RootView(".", func(wnd core.Window) core.View {
 			state := core.StateOf[int](wnd, "stepperState")
 
+			nextText := "Weiter >"
+			if state.Get() >= 4 {
+				nextText = "Fertig >"
+			}
+
 			return ui.VStack(
 				ui.Text("Aktueller Step: "+strconv.Itoa(state.Get()+1)),
 				stepper.Stepper(
-					stepper.Step().Headline("first").SupportingText("the first thing"),
-					stepper.Step().Headline("second").SupportingText("the second thing"),
-					stepper.Step().Headline("third").SupportingText("the third thing"),
-					stepper.Step().Headline("fourth").SupportingText("the fourth thing"),
-					stepper.Step().Headline("fifth").SupportingText("the fifth thing"),
+					stepper.Step().Headline("Schritt 1").SupportingText("Einkaufsliste"),
+					stepper.Step().Headline("Schritt 2").SupportingText("Einkaufen"),
+					stepper.Step().Headline("Schritt 3").SupportingText("Zutaten schnibbeln"),
+					stepper.Step().Headline("Schritt 4").SupportingText("Kochen"),
+					stepper.Step().Headline("Schritt 5").SupportingText("Essen und freuen"),
 				).InputValue(state),
 				ui.Stack(
 					ui.PrimaryButton(func() {
@@ -41,7 +46,7 @@ func main() {
 					}).Title("< Zurück").Disabled(state.Get() <= 0),
 					ui.PrimaryButton(func() {
 						state.Set(state.Get() + 1)
-					}).Title("Weiter >").Disabled(state.Get() >= 4),
+					}).Title(nextText).Disabled(state.Get() > 4),
 				).Gap(ui.L8),
 			).Gap(ui.L32).Frame(ui.Frame{}.MatchScreen())
 		})

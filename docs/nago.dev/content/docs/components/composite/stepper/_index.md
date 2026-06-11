@@ -16,6 +16,7 @@ or full-sized step representations.
 |--------| ------------|
 | `InputValue(state *core.State[int])` |  |
 | `Layout(layout StepperLayout)` |  |
+| `Numbers(b bool)` |  |
 | `SimpleTextPattern(pattern string)` |  |
 | `Steps(steps ...)` |  |
 | `Value(value int)` |  |

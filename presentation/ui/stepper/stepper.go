@@ -36,6 +36,7 @@ type TStepper struct {
 	steps             []TStep          // list of steps making up the stepper
 	simpleTextPattern string           // label format for simplified step display
 	numbers           bool             // defines whether to display step numbers
+	lines             bool             // defines whether to display lines in simple and simple list layouts
 }
 
 func Stepper(steps ...TStep) TStepper {
@@ -45,6 +46,7 @@ func Stepper(steps ...TStep) TStepper {
 		steps:             steps,
 		simpleTextPattern: "Schritt %d von %d",
 		numbers:           true,
+		lines:             true,
 	}
 
 	return stepper
@@ -77,6 +79,11 @@ func (c TStepper) SimpleTextPattern(pattern string) TStepper {
 
 func (c TStepper) Numbers(b bool) TStepper {
 	c.numbers = b
+	return c
+}
+
+func (c TStepper) Lines(b bool) TStepper {
+	c.lines = b
 	return c
 }
 
@@ -132,6 +139,7 @@ func (c TStepper) Render(ctx core.RenderContext) core.RenderNode {
 		Layout:     proto.StepperLayout(layout),
 		SimpleText: proto.Str(simpleText),
 		Numbers:    proto.Bool(c.numbers),
+		Lines:      proto.Bool(c.lines),
 	}
 
 	for _, step := range c.steps {
