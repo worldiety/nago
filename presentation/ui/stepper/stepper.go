@@ -9,6 +9,7 @@ package stepper
 
 import (
 	"fmt"
+	"strings"
 
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
@@ -30,23 +31,25 @@ const (
 // Each step can display a label, and the layout adapts between simple
 // or full-sized step representations.
 type TStepper struct {
-	value             int              // current step index
-	inputValue        *core.State[int] // optional external state for controlled component behavior
-	layout            StepperLayout    // visual layout of the stepper (e.g., horizontal or vertical)
-	steps             []TStep          // list of steps making up the stepper
-	simpleTextPattern string           // label format for simplified step display
-	numbers           bool             // defines whether to display step numbers
-	lines             bool             // defines whether to display lines in simple and simple list layouts
+	value                int              // current step index
+	inputValue           *core.State[int] // optional external state for controlled component behavior
+	layout               StepperLayout    // visual layout of the stepper (e.g., horizontal or vertical)
+	steps                []TStep          // list of steps making up the stepper
+	simpleTextPattern    string           // label format for simplified step display
+	completedTextPattern string           // label format for completed stepper
+	numbers              bool             // defines whether to display step numbers
+	lines                bool             // defines whether to display lines in simple and simple list layouts
 }
 
 func Stepper(steps ...TStep) TStepper {
 	stepper := TStepper{
-		value:             0,
-		layout:            StepperLayoutAuto,
-		steps:             steps,
-		simpleTextPattern: "Schritt %d von %d",
-		numbers:           true,
-		lines:             true,
+		value:                0,
+		layout:               StepperLayoutAuto,
+		steps:                steps,
+		simpleTextPattern:    "Schritt %d von %d",
+		completedTextPattern: "Fertig",
+		numbers:              true,
+		lines:                true,
 	}
 
 	return stepper
@@ -74,6 +77,11 @@ func (c TStepper) Steps(steps ...TStep) TStepper {
 
 func (c TStepper) SimpleTextPattern(pattern string) TStepper {
 	c.simpleTextPattern = pattern
+	return c
+}
+
+func (c TStepper) CompletedTextPattern(pattern string) TStepper {
+	c.completedTextPattern = pattern
 	return c
 }
 
@@ -119,6 +127,11 @@ func (c TStepper) Render(ctx core.RenderContext) core.RenderNode {
 		simpleText = fmt.Sprintf(c.simpleTextPattern, value+1, len(c.steps))
 	}
 
+	completedText := c.completedTextPattern
+	if strings.Contains(c.completedTextPattern, "%d") {
+		completedText = fmt.Sprintf(c.completedTextPattern, len(c.steps))
+	}
+
 	layout := c.layout
 	if layout == StepperLayoutAuto {
 		if wnd.Info().SizeClass < core.SizeClassMedium {
@@ -133,13 +146,14 @@ func (c TStepper) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	stepper := &proto.Stepper{
-		InputValue: c.inputValue.Ptr(),
-		Value:      proto.Uint(value),
-		Steps:      make(proto.StepperSteps, 0),
-		Layout:     proto.StepperLayout(layout),
-		SimpleText: proto.Str(simpleText),
-		Numbers:    proto.Bool(c.numbers),
-		Lines:      proto.Bool(c.lines),
+		InputValue:    c.inputValue.Ptr(),
+		Value:         proto.Uint(value),
+		Steps:         make(proto.StepperSteps, 0),
+		Layout:        proto.StepperLayout(layout),
+		SimpleText:    proto.Str(simpleText),
+		CompletedText: proto.Str(completedText),
+		Numbers:       proto.Bool(c.numbers),
+		Lines:         proto.Bool(c.lines),
 	}
 
 	for _, step := range c.steps {

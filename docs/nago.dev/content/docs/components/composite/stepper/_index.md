@@ -14,8 +14,10 @@ or full-sized step representations.
 ## Methods
 | Method | Description |
 |--------| ------------|
+| `CompletedTextPattern(pattern string)` |  |
 | `InputValue(state *core.State[int])` |  |
 | `Layout(layout StepperLayout)` |  |
+| `Lines(b bool)` |  |
 | `Numbers(b bool)` |  |
 | `SimpleTextPattern(pattern string)` |  |
 | `Steps(steps ...)` |  |

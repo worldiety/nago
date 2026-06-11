@@ -21,7 +21,8 @@
     },
     "5": {
       "name": "SimpleText",
-      "type": "Str"
+      "type": "Str",
+      "doc": "Progress text for the simple layout, for example 'Schritt %d von %d'"
     },
     "6": {
       "name": "Numbers",
@@ -31,6 +32,11 @@
       "name": "Lines",
       "type": "Bool",
       "doc": "If false, the stepper will render without lines in simple and simple list layouts. Default: true."
+    },
+    "8": {
+      "name": "CompletedText",
+      "type": "Str",
+      "doc": "Text for completed stepper in simple layout, for example 'Alle %d Schritte abgeschlossen'"
     }
   }
 }
