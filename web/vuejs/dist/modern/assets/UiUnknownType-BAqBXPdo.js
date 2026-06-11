@@ -1,0 +1,1 @@
+import{d as s,b as o,e as n,al as i}from"./main-BxdlHR3E.js";const c={key:0},a={key:1},m=s({__name:"UiUnknownType",props:{ui:{}},setup(t){const e=t;return(p,r)=>e.ui?(o(),n("div",c,"[Protocol type has not been implemented: '"+i(e.ui.constructor.name)+"']",1)):(o(),n("div",a,"ui component is null"))}});export{m as default};
