@@ -56,8 +56,8 @@ func Picker(label string, selectedState *core.State[xtime.TimeFrame]) TPicker {
 	tz := selectedState.Get().Timezone.Location()
 
 	day := selectedState.Get().StartTime.Date(tz)
-	startOffset := selectedState.Get().StartTime.Time(tz).Sub(day.Time(tz)).Truncate(time.Minute)
-	endOffset := selectedState.Get().EndTime.Time(tz).Sub(day.Time(tz)).Truncate(time.Minute)
+	startOffset := clockOffset(day, selectedState.Get().StartTime, tz)
+	endOffset := clockOffset(day, selectedState.Get().EndTime, tz)
 
 	p := TPicker{
 		label:       label,
@@ -86,11 +86,11 @@ func Picker(label string, selectedState *core.State[xtime.TimeFrame]) TPicker {
 			p.endTime.Notify()
 		}
 
-		day := p.day.Get().Time(p.tz)
+		day := p.day.Get()
 
 		tf := p.targetState.Get()
-		tf.StartTime = roundToMinute(xtime.UnixMilliseconds(newValue.Milliseconds() + day.UnixMilli()))
-		tf.EndTime = roundToMinute(xtime.UnixMilliseconds(p.endTime.Get().Milliseconds() + day.UnixMilli()))
+		tf.StartTime = wallClock(day, newValue, p.tz)
+		tf.EndTime = wallClock(day, p.endTime.Get(), p.tz)
 		tf.Timezone = xtime.Timezone(tz.String())
 		p.targetState.Set(tf)
 		p.targetState.Notify()
@@ -102,11 +102,11 @@ func Picker(label string, selectedState *core.State[xtime.TimeFrame]) TPicker {
 			p.endTime.Notify()
 		}
 
-		day := p.day.Get().Time(p.tz)
+		day := p.day.Get()
 
 		tf := p.targetState.Get()
-		tf.StartTime = roundToMinute(xtime.UnixMilliseconds(p.startTime.Get().Milliseconds() + day.UnixMilli()))
-		tf.EndTime = roundToMinute(xtime.UnixMilliseconds(newValue.Milliseconds() + day.UnixMilli()))
+		tf.StartTime = wallClock(day, p.startTime.Get(), p.tz)
+		tf.EndTime = wallClock(day, p.endTime.Get(), p.tz)
 		tf.Timezone = xtime.Timezone(tz.String())
 		p.targetState.Set(tf)
 		p.targetState.Notify()
@@ -115,10 +115,42 @@ func Picker(label string, selectedState *core.State[xtime.TimeFrame]) TPicker {
 	return p
 }
 
-// roundToMinute rounds the given Unix timestamp in milliseconds
-// to the nearest whole minute.
-func roundToMinute(t xtime.UnixMilliseconds) xtime.UnixMilliseconds {
-	return xtime.UnixMilliseconds(math.Round(float64(t)/1000/60)) * 1000 * 60
+// clockOffset returns the wall-clock time of t (hours and minutes since
+// midnight) relative to the given reference day, expressed as a duration.
+// If t falls on a later calendar day than ref (e.g. an end time past
+// midnight), whole nominal days (24h each) are added so the value can wrap
+// past 24h. Using wall-clock components instead of an absolute epoch
+// difference keeps the result stable across daylight-saving transitions.
+func clockOffset(ref xtime.Date, t xtime.UnixMilliseconds, loc *time.Location) time.Duration {
+	lt := t.Time(loc)
+	offset := time.Duration(lt.Hour())*time.Hour + time.Duration(lt.Minute())*time.Minute
+
+	refMidnight := ref.Time(loc)
+	tMidnight := time.Date(lt.Year(), lt.Month(), lt.Day(), 0, 0, 0, 0, loc)
+	dayDelta := int(math.Round(tMidnight.Sub(refMidnight).Hours() / 24))
+	offset += time.Duration(dayDelta) * 24 * time.Hour
+
+	return offset
+}
+
+// wallClock builds an absolute timestamp from a calendar day and a wall-clock
+// offset (hours and minutes since midnight) interpreted in the given location.
+// Unlike adding an absolute duration to midnight's epoch value, this correctly
+// handles days with a daylight-saving-time transition (23 or 25 hours), because
+// time.Date resolves the wall-clock components within the location.
+//
+// The offset may exceed 24h (e.g. when an end time wraps past midnight); the
+// surplus is added as additional calendar days. Seconds and below are dropped,
+// so the result is rounded down to the whole minute.
+func wallClock(day xtime.Date, offset time.Duration, loc *time.Location) xtime.UnixMilliseconds {
+	extraDays := int(offset / (24 * time.Hour))
+	rem := offset % (24 * time.Hour)
+
+	hours := int(rem / time.Hour)
+	minutes := int((rem % time.Hour) / time.Minute)
+
+	t := time.Date(day.Year, day.Month, day.Day+extraDays, hours, minutes, 0, 0, loc)
+	return xtime.UnixMilliseconds(t.UnixMilli())
 }
 
 // Padding sets the inner spacing around the picker content.
