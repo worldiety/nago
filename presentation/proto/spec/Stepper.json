@@ -26,6 +26,11 @@
     "6": {
       "name": "Numbers",
       "type": "Bool"
+    },
+    "7": {
+      "name": "Lines",
+      "type": "Bool",
+      "doc": "If false, the stepper will render without lines in simple and simple list layouts. Default: true."
     }
   }
 }

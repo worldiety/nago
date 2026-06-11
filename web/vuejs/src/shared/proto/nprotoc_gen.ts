@@ -19955,13 +19955,17 @@ export class Stepper implements Writeable, Readable, Component {
 
 	public numbers?: Bool;
 
+	// If false, the stepper will render without lines in simple and simple list layouts. Default: true.
+	public lines?: Bool;
+
 	constructor(
 		inputValue: Ptr | undefined = undefined,
 		value: Uint | undefined = undefined,
 		steps: StepperSteps | undefined = undefined,
 		layout: StepperLayout | undefined = undefined,
 		simpleText: Str | undefined = undefined,
-		numbers: Bool | undefined = undefined
+		numbers: Bool | undefined = undefined,
+		lines: Bool | undefined = undefined
 	) {
 		this.inputValue = inputValue;
 		this.value = value;
@@ -19969,6 +19973,7 @@ export class Stepper implements Writeable, Readable, Component {
 		this.layout = layout;
 		this.simpleText = simpleText;
 		this.numbers = numbers;
+		this.lines = lines;
 	}
 
 	read(reader: BinaryReader): void {
@@ -20002,6 +20007,10 @@ export class Stepper implements Writeable, Readable, Component {
 					this.numbers = readBool(reader);
 					break;
 				}
+				case 7: {
+					this.lines = readBool(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -20017,6 +20026,7 @@ export class Stepper implements Writeable, Readable, Component {
 			this.layout !== undefined,
 			this.simpleText !== undefined,
 			this.numbers !== undefined,
+			this.lines !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -20044,6 +20054,10 @@ export class Stepper implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.UVARINT, 6);
 			writeBool(writer, this.numbers!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 7);
+			writeBool(writer, this.lines!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -20053,7 +20067,8 @@ export class Stepper implements Writeable, Readable, Component {
 			(this.steps === undefined || this.steps.isZero()) &&
 			this.layout === undefined &&
 			this.simpleText === undefined &&
-			this.numbers === undefined
+			this.numbers === undefined &&
+			this.lines === undefined
 		);
 	}
 
@@ -20064,6 +20079,7 @@ export class Stepper implements Writeable, Readable, Component {
 		this.layout = undefined;
 		this.simpleText = undefined;
 		this.numbers = undefined;
+		this.lines = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

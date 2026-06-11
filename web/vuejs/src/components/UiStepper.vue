@@ -1,5 +1,5 @@
 <template>
-	<div class="stepper-container">
+	<div class="stepper-container" :aria-label="ariaLabelStepper">
 		<div v-if="isSimple" class="simple-text">
 			{{ ui.simpleText }}
 		</div>
@@ -12,6 +12,7 @@
 				'simple': isSimple,
 				'simple-list': isSimpleList,
 				'no-numbers': !ui.numbers,
+				'no-lines': !ui.lines,
 			}"
 			:style="`grid-template-columns: repeat(${ui.steps.value.length - 1}, minmax(0, 1fr));`"
 		>
@@ -49,12 +50,14 @@
 import { Stepper, StepperLayoutValues } from '@/shared/proto/nprotoc_gen';
 import { computed, onMounted, ref } from 'vue';
 import IconCheck from '@/assets/svg/check.svg';
+import { useI18n } from 'vue-i18n';
 
 interface Props {
 	ui: Stepper;
 }
 
 const props = defineProps<Props>();
+const { t } = useI18n();
 
 const stepper = ref<HTMLDivElement>();
 const lineLength = ref(0);
@@ -63,6 +66,12 @@ const isHorizontal = computed<boolean>(() => props.ui.layout === StepperLayoutVa
 const isVertical = computed<boolean>(() => props.ui.layout === StepperLayoutValues.StepperLayoutVertical);
 const isSimple = computed<boolean>(() => props.ui.layout === StepperLayoutValues.StepperLayoutSimple);
 const isSimpleList = computed<boolean>(() => props.ui.layout === StepperLayoutValues.StepperLayoutSimpleList);
+
+const ariaLabelStepper = computed<string>(() => {
+	if (!props.ui.steps || !props.ui.steps.value.length) return t('stepper.aria.progressUnknown');
+	if ((props.ui.value ?? 0) >= props.ui.steps.value.length) return t('stepper.aria.progressComplete');
+	return t('stepper.aria.progress', { current: (props.ui.value ?? 0) + 1, total: props.ui.steps.value.length });
+});
 
 const stepStyles = computed<string>(() => {
 	if (isHorizontal.value || isSimple.value) return `min-width: ${stepSize.value}px;`;
@@ -85,16 +94,17 @@ const contentStyles = computed<string>(() => {
 	return `top: ${bubbleSize.value / 2}px;`;
 });
 
+// line styles contain tiny offsets to prevent render errors
 const lineStyles = computed<string>(() => {
 	let styles;
 	if (isVertical.value || isSimpleList.value) {
-		styles = `height: ${lineLength.value}px;`;
-		if (bubbleSize.value) styles += ` left: ${bubbleSize.value / 2}px; top: ${bubbleSize.value}px;`;
+		styles = `height: ${lineLength.value + 2}px;`;
+		if (bubbleSize.value) styles += ` left: ${bubbleSize.value / 2}px; top: ${bubbleSize.value - 1}px;`;
 		return styles;
 	}
 
-	styles = `width: ${lineLength.value}px;`;
-	if (bubbleSize.value) styles += ` left: ${bubbleSize.value / 2}px; top: ${bubbleSize.value / 2}px;`;
+	styles = `width: ${lineLength.value + 2}px;`;
+	if (bubbleSize.value) styles += ` left: ${bubbleSize.value / 2 - 1}px; top: ${bubbleSize.value / 2}px;`;
 	return styles;
 });
 
@@ -142,9 +152,9 @@ onMounted(() => {
 			@apply relative flex flex-col;
 
 			.bubble {
-				@apply relative mb-2 flex justify-center items-center rounded-full text-lg;
+				@apply relative mb-2 flex justify-center items-center rounded-full text-lg z-[1];
 				@apply outline outline-2 -outline-offset-2 outline-current;
-				@apply opacity-50 duration-200;
+				@apply text-DIS duration-200;
 
 				svg {
 					@apply hidden;
@@ -152,7 +162,7 @@ onMounted(() => {
 			}
 
 			.content {
-				@apply pr-4 opacity-50 duration-200 -translate-x-4 flex flex-col gap-1;
+				@apply pr-4 text-DIS duration-200 -translate-x-4 flex flex-col gap-1;
 
 				.title {
 					@apply font-semibold leading-none;
@@ -169,7 +179,7 @@ onMounted(() => {
 			}
 
 			.line {
-				@apply opacity-50;
+				@apply bg-DIS;
 			}
 
 			.line-active {
@@ -183,14 +193,14 @@ onMounted(() => {
 			&.active {
 				.bubble,
 				.content {
-					@apply opacity-100;
+					@apply text-current;
 				}
 			}
 
 			&.complete {
 				.bubble,
 				.content {
-					@apply opacity-100;
+					@apply text-current;
 				}
 
 				.bubble {
@@ -297,6 +307,16 @@ onMounted(() => {
 							@apply block size-3 *:fill-M1;
 						}
 					}
+				}
+			}
+		}
+
+		&.simple.no-lines,
+		&.simple-list.no-lines {
+			.step {
+				.line,
+				.line-active {
+					@apply hidden;
 				}
 			}
 		}
