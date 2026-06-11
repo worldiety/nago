@@ -19361,14 +19361,17 @@ type Stepper struct {
 	Value      Uint
 	Steps      StepperSteps
 	Layout     StepperLayout
+	// Progress text for the simple layout, for example 'Schritt %d von %d'
 	SimpleText Str
 	Numbers    Bool
 	// If false, the stepper will render without lines in simple and simple list layouts. Default: true.
 	Lines Bool
+	// Text for completed stepper in simple layout, for example 'Alle %d Schritte abgeschlossen'
+	CompletedText Str
 }
 
 func (v *Stepper) write(w *BinaryWriter) error {
-	var fields [8]bool
+	var fields [9]bool
 	fields[1] = !v.InputValue.IsZero()
 	fields[2] = !v.Value.IsZero()
 	fields[3] = !v.Steps.IsZero()
@@ -19376,6 +19379,7 @@ func (v *Stepper) write(w *BinaryWriter) error {
 	fields[5] = !v.SimpleText.IsZero()
 	fields[6] = !v.Numbers.IsZero()
 	fields[7] = !v.Lines.IsZero()
+	fields[8] = !v.CompletedText.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -19442,6 +19446,14 @@ func (v *Stepper) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[8] {
+		if err := w.writeFieldHeader(byteSlice, 8); err != nil {
+			return err
+		}
+		if err := v.CompletedText.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -19489,6 +19501,11 @@ func (v *Stepper) read(r *BinaryReader) error {
 			}
 		case 7:
 			err := v.Lines.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.CompletedText.read(r)
 			if err != nil {
 				return err
 			}
@@ -25366,13 +25383,14 @@ func (v *Stepper) reset() {
 	v.SimpleText.reset()
 	v.Numbers.reset()
 	v.Lines.reset()
+	v.CompletedText.reset()
 }
 
 func (v *Stepper) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.InputValue.IsZero() && v.Value.IsZero() && v.Steps.IsZero() && v.Layout.IsZero() && v.SimpleText.IsZero() && v.Numbers.IsZero() && v.Lines.IsZero()
+	return v.InputValue.IsZero() && v.Value.IsZero() && v.Steps.IsZero() && v.Layout.IsZero() && v.SimpleText.IsZero() && v.Numbers.IsZero() && v.Lines.IsZero() && v.CompletedText.IsZero()
 }
 
 type StepperSteps []StepperStep

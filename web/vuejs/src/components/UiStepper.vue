@@ -1,7 +1,12 @@
 <template>
 	<div class="stepper-container" :aria-label="ariaLabelStepper">
 		<div v-if="isSimple" class="simple-text">
-			{{ ui.simpleText }}
+			<template v-if="(ui.value ?? 0) < (ui.steps?.value.length ?? 0)">
+				{{ ui.simpleText }}
+			</template>
+			<template v-else>
+				{{ ui.completedText }}
+			</template>
 		</div>
 		<div
 			v-if="ui.steps && ui.steps.value.length > 1"

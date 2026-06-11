@@ -19951,12 +19951,16 @@ export class Stepper implements Writeable, Readable, Component {
 
 	public layout?: StepperLayout;
 
+	// Progress text for the simple layout, for example 'Schritt %d von %d'
 	public simpleText?: Str;
 
 	public numbers?: Bool;
 
 	// If false, the stepper will render without lines in simple and simple list layouts. Default: true.
 	public lines?: Bool;
+
+	// Text for completed stepper in simple layout, for example 'Alle %d Schritte abgeschlossen'
+	public completedText?: Str;
 
 	constructor(
 		inputValue: Ptr | undefined = undefined,
@@ -19965,7 +19969,8 @@ export class Stepper implements Writeable, Readable, Component {
 		layout: StepperLayout | undefined = undefined,
 		simpleText: Str | undefined = undefined,
 		numbers: Bool | undefined = undefined,
-		lines: Bool | undefined = undefined
+		lines: Bool | undefined = undefined,
+		completedText: Str | undefined = undefined
 	) {
 		this.inputValue = inputValue;
 		this.value = value;
@@ -19974,6 +19979,7 @@ export class Stepper implements Writeable, Readable, Component {
 		this.simpleText = simpleText;
 		this.numbers = numbers;
 		this.lines = lines;
+		this.completedText = completedText;
 	}
 
 	read(reader: BinaryReader): void {
@@ -20011,6 +20017,10 @@ export class Stepper implements Writeable, Readable, Component {
 					this.lines = readBool(reader);
 					break;
 				}
+				case 8: {
+					this.completedText = readString(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -20027,6 +20037,7 @@ export class Stepper implements Writeable, Readable, Component {
 			this.simpleText !== undefined,
 			this.numbers !== undefined,
 			this.lines !== undefined,
+			this.completedText !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -20058,6 +20069,10 @@ export class Stepper implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.UVARINT, 7);
 			writeBool(writer, this.lines!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 8);
+			writeString(writer, this.completedText!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -20068,7 +20083,8 @@ export class Stepper implements Writeable, Readable, Component {
 			this.layout === undefined &&
 			this.simpleText === undefined &&
 			this.numbers === undefined &&
-			this.lines === undefined
+			this.lines === undefined &&
+			this.completedText === undefined
 		);
 	}
 
@@ -20080,6 +20096,7 @@ export class Stepper implements Writeable, Readable, Component {
 		this.simpleText = undefined;
 		this.numbers = undefined;
 		this.lines = undefined;
+		this.completedText = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
