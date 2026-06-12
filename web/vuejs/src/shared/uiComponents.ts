@@ -8,7 +8,6 @@
  */
 import type { Component } from 'vue';
 import { defineAsyncComponent } from 'vue';
-import { Component as NagoComponent, Stepper } from '@/shared/proto/nprotoc_gen';
 import { Canvas } from '@/shared/proto/nprotoc_gen';
 import {
 	Accordion,
@@ -16,6 +15,7 @@ import {
 	Box,
 	Checkbox,
 	CodeEditor,
+	Component as NagoComponent,
 	CountDown,
 	DatePicker,
 	Divider,
@@ -39,7 +39,9 @@ import {
 	ScrollView,
 	Select,
 	Spacer,
+	SplitView,
 	Stack,
+	Stepper,
 	Switcher,
 	Table,
 	TextField,
@@ -80,6 +82,7 @@ const LazyUiScaffold = defineAsyncComponent(() => import('@/components/scaffold/
 const LazyUiScrollView = defineAsyncComponent(() => import('@/components/scrollview/UiScrollView.vue'));
 const LazyUiSelect = defineAsyncComponent(() => import('@/components/UiSelect.vue'));
 const LazyUiSpacer = defineAsyncComponent(() => import('@/components/spacer/UiSpacer.vue'));
+const LazyUiSplitView = defineAsyncComponent(() => import('@/components/UiSplitView.vue'));
 const LazyUiStack = defineAsyncComponent(() => import('@/components/UiStack.vue'));
 const LazyUiStepper = defineAsyncComponent(() => import('@/components/UiStepper.vue'));
 const LazyUiSwitcher = defineAsyncComponent(() => import('@/components/switcher/UiSwitcher.vue'));
@@ -212,6 +215,10 @@ export function vueComponentFor(ngc: NagoComponent): Component {
 
 	if (ngc instanceof Spacer) {
 		return LazyUiSpacer;
+	}
+
+	if (ngc instanceof SplitView) {
+		return LazyUiSplitView;
 	}
 
 	if (ngc instanceof Stack) {

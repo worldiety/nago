@@ -1,0 +1,40 @@
+{
+  "doc": "SplitView represents a component to display to resizable content areas side by side.",
+  "kind": "Record",
+  "id": 263,
+  "fields": {
+    "1": {
+      "name": "InputValue",
+      "type": "Ptr"
+    },
+    "2": {
+      "name": "Value",
+      "type": "Float",
+      "doc": "Describes the current split, e.g. 0 means the separator is on the left/top, 0.5 means the separator is in the middle, 1 means the separator is on the right/bottom."
+    },
+    "3": {
+      "name": "ContentA",
+      "type": "Component"
+    },
+    "4": {
+      "name": "ContentB",
+      "type": "Component"
+    },
+    "5": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "6": {
+      "name": "Orientation",
+      "type": "Orientation"
+    },
+    "7": {
+      "name": "MinRatio",
+      "type": "Float"
+    },
+    "8": {
+      "name": "MaxRatio",
+      "type": "Float"
+    }
+  }
+}
