@@ -9,6 +9,7 @@ package completion
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -103,6 +104,23 @@ func NewTool[In, Out any](name, description string, fn ToolFunc[In, Out]) Tool {
 // models that keep requesting tools indefinitely.
 const DefaultMaxToolTurns = 16
 
+// DefaultMaxCompactions bounds how often [Run] may invoke the [Compactor] across the whole run when
+// [RunOptions.MaxCompactions] is zero. Each compaction must strictly shrink the history, so a small budget is
+// sufficient and guarantees the loop terminates.
+const DefaultMaxCompactions = 4
+
+// Compactor shrinks the conversation history so that a subsequent request fits into the model's context
+// window. It is invoked by [Run] whenever a completion fails with [ContextWindowExceeded]. The returned
+// history replaces the previous one and the failed turn is retried.
+//
+// A Compactor receives everything it needs to perform its own completion requests (e.g. to summarize older
+// turns): the subject, the [Completions] capability and the in-flight [Options] (which carries the active
+// model and system prompt). Implementations MUST return a history that is strictly smaller than the input
+// (fewer runes), otherwise [Run] aborts to avoid an infinite loop.
+//
+// See [NewSummaryCompactor] for the default summarizing implementation.
+type Compactor func(subject auth.Subject, c Completions, opts Options, history []Message) ([]Message, error)
+
 // ProgressPhase classifies a [Progress] event emitted during the agentic loop in [Run].
 type ProgressPhase string
 
@@ -173,6 +191,15 @@ type RunOptions struct {
 	// OnProgress is an optional callback invoked synchronously for every [Progress] event of the loop. Use
 	// it to keep a waiting user informed (e.g. show which tool is currently running). May be nil.
 	OnProgress ProgressFunc
+
+	// Compactor shrinks the history when a turn fails with [ContextWindowExceeded] so the request fits the
+	// model's context window again. When nil, [Run] initializes and uses a default [NewSummaryCompactor] so
+	// context overflows are recovered from out of the box.
+	Compactor Compactor
+
+	// MaxCompactions caps how often [Compactor] may run across the whole [Run]. Zero means
+	// [DefaultMaxCompactions].
+	MaxCompactions int
 }
 
 // Run drives the full agentic loop on top of [Completions.Complete]:
@@ -188,6 +215,19 @@ func Run(subject auth.Subject, c Completions, opts RunOptions) (Result, []Messag
 	maxTurns := opts.MaxTurns
 	if maxTurns <= 0 {
 		maxTurns = DefaultMaxToolTurns
+	}
+
+	maxCompactions := opts.MaxCompactions
+	if maxCompactions <= 0 {
+		maxCompactions = DefaultMaxCompactions
+	}
+	compactions := 0
+
+	// Compaction is on by default: when the caller did not supply a strategy, fall back to the summarizing
+	// compactor so context window overflows are recovered from automatically.
+	compactor := opts.Compactor
+	if compactor == nil {
+		compactor = NewSummaryCompactor(SummaryCompactorConfig{})
 	}
 
 	// notify reports a progress event to the optional callback, guarding against a nil OnProgress.
@@ -218,9 +258,34 @@ func Run(subject auth.Subject, c Completions, opts RunOptions) (Result, []Messag
 
 		notify(Progress{Phase: PhaseTurnStarted, Turn: turn})
 
-		res, err := c.Complete(subject, req)
-		if err != nil {
-			return Result{}, history, err
+		// complete the current turn, transparently compacting the history and retrying on a context window
+		// overflow until either the request fits or the compaction budget is exhausted.
+		var res Result
+		for {
+			var err error
+			res, err = c.Complete(subject, req)
+			if err == nil {
+				break
+			}
+
+			if !errors.Is(err, ContextWindowExceeded) || compactions >= maxCompactions {
+				return Result{}, history, err
+			}
+
+			before := runeLen(history)
+			compacted, cerr := compactor(subject, c, req, history)
+			if cerr != nil {
+				return Result{}, history, fmt.Errorf("compaction failed: %w", cerr)
+			}
+			compactions++
+
+			// A compactor must make progress; otherwise we would loop forever on the same overflow.
+			if runeLen(compacted) >= before {
+				return Result{}, history, fmt.Errorf("compaction did not shrink history (%d runes): %w", before, err)
+			}
+
+			history = compacted
+			req.Messages = history
 		}
 
 		notify(Progress{Phase: PhaseModelResponded, Turn: turn, Result: &res})

@@ -11,8 +11,11 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"regexp"
+	"strconv"
 	"time"
 
+	"go.wdy.de/nago/application/ai/completion"
 	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/pkg/xhttp"
 )
@@ -78,7 +81,8 @@ func (c *Client) newReq() *xhttp.Request {
 }
 
 // mapErr translates transport errors into the provider's defined error set, e.g. HTTP 429 to
-// [provider.TooManyRequests].
+// [provider.TooManyRequests] and the HTTP 400 "prompt is too long" overflow to
+// [completion.ContextWindowError].
 func mapErr(err error) error {
 	if err == nil {
 		return nil
@@ -89,10 +93,38 @@ func mapErr(err error) error {
 		switch statusErr.StatusCode {
 		case http.StatusTooManyRequests:
 			return provider.TooManyRequests
+		case http.StatusBadRequest:
+			if cwe, ok := parseContextWindowError(statusErr.Body); ok {
+				return cwe
+			}
 		}
 	}
 
 	return err
+}
+
+// promptTooLongRe matches the Anthropic overflow message, e.g.
+// "prompt is too long: 215534 tokens > 200000 maximum". The numbers are optional from our perspective; only
+// the "prompt is too long" marker is required to classify the error.
+var promptTooLongRe = regexp.MustCompile(`prompt is too long(?:: (\d+) tokens > (\d+) maximum)?`)
+
+// parseContextWindowError detects Anthropic's context window overflow in a 400 response body and extracts the
+// reported token count and limit when present.
+func parseContextWindowError(body []byte) (completion.ContextWindowError, bool) {
+	m := promptTooLongRe.FindSubmatch(body)
+	if m == nil {
+		return completion.ContextWindowError{}, false
+	}
+
+	var cwe completion.ContextWindowError
+	if len(m[1]) > 0 {
+		cwe.Tokens, _ = strconv.Atoi(string(m[1]))
+	}
+	if len(m[2]) > 0 {
+		cwe.Limit, _ = strconv.Atoi(string(m[2]))
+	}
+
+	return cwe, true
 }
 
 // ----- wire protocol types -----
