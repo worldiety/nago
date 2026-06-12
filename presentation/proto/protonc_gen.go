@@ -352,6 +352,7 @@ func (Scaffold) isComponent()       {}
 func (ScrollView) isComponent()     {}
 func (Select) isComponent()         {}
 func (Spacer) isComponent()         {}
+func (SplitView) isComponent()      {}
 func (Stack) isComponent()          {}
 func (Stepper) isComponent()        {}
 func (Switcher) isComponent()       {}
@@ -19544,6 +19545,195 @@ func (v *StepperLayout) IsZero() bool {
 	return *v == 0
 }
 
+// SplitView represents a component to display to resizable content areas side by side.
+type SplitView struct {
+	InputValue Ptr
+	// Describes the current split, e.g. 0 means the separator is on the left/top, 0.5 means the separator is in the middle, 1 means the separator is on the right/bottom.
+	Value       Float
+	ContentA    Component
+	ContentB    Component
+	Frame       Frame
+	Orientation Orientation
+	MinRatio    Float
+	MaxRatio    Float
+}
+
+func (v *SplitView) write(w *BinaryWriter) error {
+	var fields [9]bool
+	fields[1] = !v.InputValue.IsZero()
+	fields[2] = !v.Value.IsZero()
+	fields[3] = v.ContentA != nil && !v.ContentA.IsZero()
+	fields[4] = v.ContentB != nil && !v.ContentB.IsZero()
+	fields[5] = !v.Frame.IsZero()
+	fields[6] = !v.Orientation.IsZero()
+	fields[7] = !v.MinRatio.IsZero()
+	fields[8] = !v.MaxRatio.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(uvarint, 1); err != nil {
+			return err
+		}
+		if err := v.InputValue.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(f64, 2); err != nil {
+			return err
+		}
+		if err := v.Value.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 3); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.ContentA.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.ContentA.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 4); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.ContentB.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.ContentB.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(record, 5); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(uvarint, 6); err != nil {
+			return err
+		}
+		if err := v.Orientation.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(f64, 7); err != nil {
+			return err
+		}
+		if err := v.MinRatio.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		if err := w.writeFieldHeader(f64, 8); err != nil {
+			return err
+		}
+		if err := v.MaxRatio.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *SplitView) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.InputValue.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Value.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.ContentA = obj.(Component)
+		case 4:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.ContentB = obj.(Component)
+		case 5:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.Orientation.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.MinRatio.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.MaxRatio.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -21071,6 +21261,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 262:
 		var v StepperLayout
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 263:
+		var v SplitView
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -25437,6 +25633,24 @@ func (v *StepperSteps) reset() {
 	*v = nil
 }
 
+func (v *SplitView) reset() {
+	v.InputValue.reset()
+	v.Value.reset()
+	v.ContentA = nil
+	v.ContentB = nil
+	v.Frame.reset()
+	v.Orientation.reset()
+	v.MinRatio.reset()
+	v.MaxRatio.reset()
+}
+
+func (v *SplitView) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.InputValue.IsZero() && v.Value.IsZero() && v.ContentA.IsZero() && v.ContentB.IsZero() && v.Frame.IsZero() && v.Orientation.IsZero() && v.MinRatio.IsZero() && v.MaxRatio.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -27189,6 +27403,13 @@ func (v *StepperSteps) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *StepperLayout) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(uvarint, 262); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *SplitView) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 263); err != nil {
 		return err
 	}
 	return nil

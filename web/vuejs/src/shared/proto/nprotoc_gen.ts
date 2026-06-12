@@ -20163,6 +20163,185 @@ export enum StepperLayoutValues {
 	StepperLayoutSimpleList = 4,
 }
 
+// SplitView represents a component to display to resizable content areas side by side.
+export class SplitView implements Writeable, Readable, Component {
+	public inputValue?: Ptr;
+
+	// Describes the current split, e.g. 0 means the separator is on the left/top, 0.5 means the separator is in the middle, 1 means the separator is on the right/bottom.
+	public value?: Float;
+
+	public contentA?: Component;
+
+	public contentB?: Component;
+
+	public frame?: Frame;
+
+	public orientation?: Orientation;
+
+	public minRatio?: Float;
+
+	public maxRatio?: Float;
+
+	constructor(
+		inputValue: Ptr | undefined = undefined,
+		value: Float | undefined = undefined,
+		contentA: Component | undefined = undefined,
+		contentB: Component | undefined = undefined,
+		frame: Frame | undefined = undefined,
+		orientation: Orientation | undefined = undefined,
+		minRatio: Float | undefined = undefined,
+		maxRatio: Float | undefined = undefined
+	) {
+		this.inputValue = inputValue;
+		this.value = value;
+		this.contentA = contentA;
+		this.contentB = contentB;
+		this.frame = frame;
+		this.orientation = orientation;
+		this.minRatio = minRatio;
+		this.maxRatio = maxRatio;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.inputValue = readInt(reader);
+					break;
+				}
+				case 2: {
+					this.value = readFloat(reader);
+					break;
+				}
+				case 3: {
+					// decode polymorphic field as 1 element array
+					const len = reader.readUvarint();
+					if (len != 1) {
+						throw new Error(`unexpected length: ` + len);
+					}
+					this.contentA = unmarshal(reader) as Component;
+					break;
+				}
+				case 4: {
+					// decode polymorphic field as 1 element array
+					const len = reader.readUvarint();
+					if (len != 1) {
+						throw new Error(`unexpected length: ` + len);
+					}
+					this.contentB = unmarshal(reader) as Component;
+					break;
+				}
+				case 5: {
+					this.frame = new Frame();
+					this.frame.read(reader);
+					break;
+				}
+				case 6: {
+					this.orientation = readInt(reader);
+					break;
+				}
+				case 7: {
+					this.minRatio = readFloat(reader);
+					break;
+				}
+				case 8: {
+					this.maxRatio = readFloat(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.inputValue !== undefined,
+			this.value !== undefined,
+			this.contentA !== undefined && !this.contentA.isZero(),
+			this.contentB !== undefined && !this.contentB.isZero(),
+			this.frame !== undefined && !this.frame.isZero(),
+			this.orientation !== undefined,
+			this.minRatio !== undefined,
+			this.maxRatio !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 1);
+			writeInt(writer, this.inputValue!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.F64, 2);
+			writeFloat(writer, this.value!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			// encode polymorphic enum as 1 element slice
+			writer.writeFieldHeader(Shapes.ARRAY, 3);
+			writer.writeByte(1);
+			this.contentA.writeTypeHeader(writer);
+			this.contentA!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			// encode polymorphic enum as 1 element slice
+			writer.writeFieldHeader(Shapes.ARRAY, 4);
+			writer.writeByte(1);
+			this.contentB.writeTypeHeader(writer);
+			this.contentB!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.RECORD, 5);
+			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 6);
+			writeInt(writer, this.orientation!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.F64, 7);
+			writeFloat(writer, this.minRatio!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.F64, 8);
+			writeFloat(writer, this.maxRatio!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.inputValue === undefined &&
+			this.value === undefined &&
+			(this.contentA === undefined || this.contentA.isZero()) &&
+			(this.contentB === undefined || this.contentB.isZero()) &&
+			(this.frame === undefined || this.frame.isZero()) &&
+			this.orientation === undefined &&
+			this.minRatio === undefined &&
+			this.maxRatio === undefined
+		);
+	}
+
+	reset(): void {
+		this.inputValue = undefined;
+		this.value = undefined;
+		this.contentA = undefined;
+		this.contentB = undefined;
+		this.frame = undefined;
+		this.orientation = undefined;
+		this.minRatio = undefined;
+		this.maxRatio = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 263);
+		return;
+	}
+	isComponent(): void {}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -21369,6 +21548,11 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 262: {
 			const v = readInt(src) as StepperLayout;
+			return v;
+		}
+		case 263: {
+			const v = new SplitView();
+			v.read(src);
 			return v;
 		}
 	}
