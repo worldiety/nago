@@ -39,7 +39,6 @@
 </template>
 <script lang="ts" setup>
 import { computed, ref, useTemplateRef, watch } from 'vue';
-import ArrowDownIcon from '@/assets/svg/arrowDown.svg';
 import UiGeneric from '@/components/UiGeneric.vue';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import { frameCSS } from '@/components/shared/frame';
