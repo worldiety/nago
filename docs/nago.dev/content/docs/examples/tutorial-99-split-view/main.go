@@ -23,7 +23,7 @@ func main() {
 
 		cfg.RootView(".", func(wnd core.Window) core.View {
 			state := core.AutoState[float64](wnd).Init(func() float64 {
-				return 0.8
+				return 0.7
 			})
 
 			return ui.VStack(
@@ -48,7 +48,11 @@ func main() {
 						ui.ScrollView(
 							ui.Text("Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet."),
 						).BackgroundColor(ui.M3).Padding(ui.Padding{}.All(ui.L16)).Frame(ui.Frame{Height: ui.Full}),
-					).InputValue(state).Frame(ui.Frame{Height: ui.Full}),
+					).
+						InputValue(state).
+						MinRatio(0.1).
+						MaxRatio(0.9).
+						Frame(ui.Frame{Height: ui.Full}),
 				).Frame(ui.Frame{MaxWidth: ui.L880, Height: ui.L480}),
 			).Gap(ui.L32).Frame(ui.Frame{}.MatchScreen())
 		})

@@ -4,7 +4,6 @@
 <script lang="ts" setup>
 import { onMounted, ref, watch } from 'vue';
 
-
 interface Props {
 	html: string;
 	tag?: string;

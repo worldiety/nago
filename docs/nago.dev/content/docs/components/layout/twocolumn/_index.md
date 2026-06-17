@@ -20,7 +20,7 @@ right: sidebar, content, detail.
 | `BackgroundColorContent(bg ui.Color)` |  |
 | `BackgroundColorDetail(bg ui.Color)` |  |
 | `BackgroundColorSidebar(bg ui.Color)` |  |
-| `Default(content ViewID, detail ViewID, sidebar ViewID)` |  |
+| `Default(detail ViewID, sidebar ViewID, content ViewID)` |  |
 | `Frame(frame ui.Frame)` |  |
 | `FullWidth()` |  |
 | `ID(id string)` |  |

@@ -61,7 +61,11 @@
 		"select": "Auswählen..."
 	},
 	"dropdown": {
-		"select": "Auswählen..."
+		"select": "Auswählen...",
+		"search": {
+			"no-results": "Keine Optionen",
+			"placeholder": "Suchen nach..."
+		}
 	},
 	"flowChart": {
 		"actions": {

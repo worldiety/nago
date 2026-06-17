@@ -80,7 +80,7 @@ const LazyUiRichText = defineAsyncComponent(() => import('@/components/richtexte
 const LazyUiRichTextEditor = defineAsyncComponent(() => import('@/components/richtexteditor/UiRichTextEditor.vue'));
 const LazyUiScaffold = defineAsyncComponent(() => import('@/components/scaffold/UiScaffold.vue'));
 const LazyUiScrollView = defineAsyncComponent(() => import('@/components/scrollview/UiScrollView.vue'));
-const LazyUiSelect = defineAsyncComponent(() => import('@/components/UiSelect.vue'));
+const LazyUiSelect = defineAsyncComponent(() => import('@/components/select/UiSelect.vue'));
 const LazyUiSpacer = defineAsyncComponent(() => import('@/components/spacer/UiSpacer.vue'));
 const LazyUiSplitView = defineAsyncComponent(() => import('@/components/UiSplitView.vue'));
 const LazyUiStack = defineAsyncComponent(() => import('@/components/UiStack.vue'));

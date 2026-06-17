@@ -13438,6 +13438,14 @@ export class Select implements Writeable, Readable, Component {
 
 	public autocomplete?: Str;
 
+	public oRADropdown?: Bool;
+
+	// If true, the user can search for an option by typing in the input field. Only works with styled dropdown.
+	public searchable?: Bool;
+
+	// Info text to display in the dropdown. Only works with styled dropdown.
+	public dropdownInfo?: Str;
+
 	constructor(
 		label: Str | undefined = undefined,
 		supportingText: Str | undefined = undefined,
@@ -13450,7 +13458,10 @@ export class Select implements Writeable, Readable, Component {
 		disabled: Bool | undefined = undefined,
 		id: Str | undefined = undefined,
 		options: SelectOptions | undefined = undefined,
-		autocomplete: Str | undefined = undefined
+		autocomplete: Str | undefined = undefined,
+		oRADropdown: Bool | undefined = undefined,
+		searchable: Bool | undefined = undefined,
+		dropdownInfo: Str | undefined = undefined
 	) {
 		this.label = label;
 		this.supportingText = supportingText;
@@ -13464,6 +13475,9 @@ export class Select implements Writeable, Readable, Component {
 		this.id = id;
 		this.options = options;
 		this.autocomplete = autocomplete;
+		this.oRADropdown = oRADropdown;
+		this.searchable = searchable;
+		this.dropdownInfo = dropdownInfo;
 	}
 
 	read(reader: BinaryReader): void {
@@ -13527,6 +13541,18 @@ export class Select implements Writeable, Readable, Component {
 					this.autocomplete = readString(reader);
 					break;
 				}
+				case 13: {
+					this.oRADropdown = readBool(reader);
+					break;
+				}
+				case 14: {
+					this.searchable = readBool(reader);
+					break;
+				}
+				case 15: {
+					this.dropdownInfo = readString(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -13548,6 +13574,9 @@ export class Select implements Writeable, Readable, Component {
 			this.id !== undefined,
 			this.options !== undefined && !this.options.isZero(),
 			this.autocomplete !== undefined,
+			this.oRADropdown !== undefined,
+			this.searchable !== undefined,
+			this.dropdownInfo !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -13602,6 +13631,18 @@ export class Select implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 12);
 			writeString(writer, this.autocomplete!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[13]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 13);
+			writeBool(writer, this.oRADropdown!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[14]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 14);
+			writeBool(writer, this.searchable!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[15]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 15);
+			writeString(writer, this.dropdownInfo!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -13617,7 +13658,10 @@ export class Select implements Writeable, Readable, Component {
 			this.disabled === undefined &&
 			this.id === undefined &&
 			(this.options === undefined || this.options.isZero()) &&
-			this.autocomplete === undefined
+			this.autocomplete === undefined &&
+			this.oRADropdown === undefined &&
+			this.searchable === undefined &&
+			this.dropdownInfo === undefined
 		);
 	}
 
@@ -13634,6 +13678,9 @@ export class Select implements Writeable, Readable, Component {
 		this.id = undefined;
 		this.options = undefined;
 		this.autocomplete = undefined;
+		this.oRADropdown = undefined;
+		this.searchable = undefined;
+		this.dropdownInfo = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

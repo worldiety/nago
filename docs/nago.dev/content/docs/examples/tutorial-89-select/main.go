@@ -67,7 +67,17 @@ func main() {
 			})
 
 			return ui.VStack(
-				dropdown.Dropdown("Person auswählen", selectOptions, personState.Get()).InputValue(personState),
+				dropdown.Dropdown("Default (disabled)", selectOptions, personState.Get()).InputValue(personState).Disabled(true).Style(ui.TextFieldReduced),
+				dropdown.Dropdown("Styled (disabled)", selectOptions, personState.Get()).InputValue(personState).StyledDropdown(true).Disabled(true).Style(ui.TextFieldReduced),
+				dropdown.Dropdown("Default", selectOptions, personState.Get()).InputValue(personState).Style(ui.TextFieldReduced),
+				dropdown.Dropdown("Styled", selectOptions, personState.Get()).InputValue(personState).StyledDropdown(true).Style(ui.TextFieldReduced),
+				ui.PrimaryButton(func() {
+					if wnd.Info().ColorScheme == core.Light {
+						wnd.SetColorScheme(core.Dark)
+					} else {
+						wnd.SetColorScheme(core.Light)
+					}
+				}).Title("Toggle theme"),
 				ui.PrimaryButton(func() {
 					fmt.Println(personState)
 				}).Title("print selected").Enabled(len(personState.Get()) > 0),
@@ -75,7 +85,9 @@ func main() {
 					wnd.Navigation().ForwardTo("picker-drop-in", nil)
 				}).Title("show picker-drop-in api"),
 			).
+				Alignment(ui.Top).
 				Gap(ui.L16).
+				Padding(ui.Padding{}.All(ui.L16)).
 				Frame(ui.Frame{}.MatchScreen())
 		})
 

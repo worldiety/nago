@@ -39,6 +39,9 @@ func DarkMode(base BaseColors) ui.Colors {
 		BannerErrorText:       "#FF543E",
 		BannerInfoBackground:  "#1c3b12",
 		BannerInfoText:        "#55ff3e",
+
+		Disabled:     "#636363",
+		DisabledText: "#E2E2E2",
 	}
 
 	withSemanticColors(&c)
@@ -72,6 +75,9 @@ func TrueDarkMode(base BaseColors) ui.Colors {
 		BannerErrorText:       "#FF543E",
 		BannerInfoBackground:  "#1c3b12",
 		BannerInfoText:        "#55ff3e",
+
+		Disabled:     "#636363",
+		DisabledText: "#E2E2E2",
 	}
 
 	withSemanticColors(&c)
@@ -105,6 +111,9 @@ func LightMode(base BaseColors) ui.Colors {
 		BannerErrorText:       "#FF543E",
 		BannerInfoBackground:  "#1c3b12",
 		BannerInfoText:        "#55ff3e",
+
+		Disabled:     "#E2E2E2",
+		DisabledText: "#636363",
 	}
 
 	withSemanticColors(&c)
@@ -138,6 +147,9 @@ func TrueLightMode(base BaseColors) ui.Colors {
 		BannerErrorText:       "#FF543E",
 		BannerInfoBackground:  "#1c3b12",
 		BannerInfoText:        "#55ff3e",
+
+		Disabled:     "#E2E2E2",
+		DisabledText: "#636363",
 	}
 
 	withSemanticColors(&c)
@@ -150,8 +162,6 @@ func withSemanticColors(c *ui.Colors) {
 	c.Warning = "#F7A823"
 	c.Informative = "#17428C"
 	c.Good = "#2BCA73"
-	c.Disabled = "#E2E2E2"
-	c.DisabledText = "#848484"
 }
 
 func calcTextColor(background ui.Color) ui.Color {
