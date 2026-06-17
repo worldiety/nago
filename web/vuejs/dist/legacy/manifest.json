@@ -456,10 +456,13 @@
     "src": "src/assets/fonts/inter/InterVariable.woff2"
   },
   "src/main.ts": {
-    "file": "assets/main-BY6gQBSd.js",
+    "file": "assets/main-Bbfvu8Uo.js",
     "name": "main",
     "src": "src/main.ts",
     "isEntry": true,
+    "dynamicImports": [
+      "src/main.ts"
+    ],
     "assets": [
       "assets/InterVariable-DiVDrmQJ.woff2",
       "assets/InterVariable-Italic-FCBEiFp6.woff2",
