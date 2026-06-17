@@ -49,7 +49,6 @@ const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const selectedValue = ref(props.ui.value);
-const isActive = ref(false);
 
 const id = computed<string>(() => {
 	if (props.ui.id) {
