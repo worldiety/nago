@@ -13,6 +13,7 @@ import (
 	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/application/ai/provider/anthropic"
 	"go.wdy.de/nago/application/ai/provider/cache"
+	"go.wdy.de/nago/application/ai/provider/gollama"
 	"go.wdy.de/nago/application/ai/provider/mistralai"
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/secret"
@@ -41,6 +42,8 @@ func NewReloadProvider(m *concurrent.RWMap[provider.ID, provider.Provider], find
 				prov = mistralai.NewProvider(provider.ID(sec.ID), cfg)
 			case anthropic.Settings:
 				prov = anthropic.NewProvider(provider.ID(sec.ID), cfg)
+			case gollama.Settings:
+				prov = gollama.NewProvider(provider.ID(sec.ID), cfg)
 			}
 
 			if prov == nil {

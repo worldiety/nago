@@ -4,6 +4,7 @@ go 1.26.0
 
 require (
 	github.com/dave/jennifer v1.7.1
+	github.com/dianlight/gollama.cpp v0.2.2-llamacpp.b6862.0.20251113101306-6376d0d4e0a2
 	github.com/expr-lang/expr v1.17.7
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/go-chi/cors v1.2.2
@@ -31,7 +32,10 @@ require (
 )
 
 require (
-	github.com/stretchr/testify v1.11.1 // indirect
+	github.com/ebitengine/purego v0.9.1 // indirect
+	github.com/google/go-github/v68 v68.0.0 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
+	github.com/jupiterrider/ffi v0.5.1 // indirect
 	golang.org/x/exp v0.0.0-20251113190631-e25ba8c21ef6 // indirect
 	golang.org/x/mod v0.30.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect

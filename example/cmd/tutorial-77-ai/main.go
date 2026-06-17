@@ -13,6 +13,7 @@ import (
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application"
 	cfgai "go.wdy.de/nago/application/ai/cfg"
+	_ "go.wdy.de/nago/application/ai/provider/gollama"
 	_ "go.wdy.de/nago/application/ai/provider/mistralai"
 	_ "go.wdy.de/nago/application/ai/provider/openai"
 	uiai "go.wdy.de/nago/application/ai/ui"
