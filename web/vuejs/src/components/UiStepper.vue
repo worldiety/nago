@@ -159,7 +159,7 @@ onMounted(() => {
 			.bubble {
 				@apply relative mb-2 flex justify-center items-center rounded-full text-lg z-[1];
 				@apply outline outline-2 -outline-offset-2 outline-current;
-				@apply text-DIS duration-200;
+				@apply text-ST0 duration-200;
 
 				svg {
 					@apply hidden;
@@ -167,7 +167,7 @@ onMounted(() => {
 			}
 
 			.content {
-				@apply pr-4 text-DIS duration-200 -translate-x-4 flex flex-col gap-1;
+				@apply pr-4 text-ST0 duration-200 -translate-x-4 flex flex-col gap-1;
 
 				.title {
 					@apply font-semibold leading-none;
@@ -184,7 +184,7 @@ onMounted(() => {
 			}
 
 			.line {
-				@apply bg-DIS;
+				@apply bg-ST0;
 			}
 
 			.line-active {

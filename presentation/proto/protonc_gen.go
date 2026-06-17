@@ -12868,10 +12868,15 @@ type Select struct {
 	Id           Str
 	Options      SelectOptions
 	Autocomplete Str
+	ORADropdown  Bool
+	// If true, the user can search for an option by typing in the input field. Only works with styled dropdown.
+	Searchable Bool
+	// Info text to display in the dropdown. Only works with styled dropdown.
+	DropdownInfo Str
 }
 
 func (v *Select) write(w *BinaryWriter) error {
-	var fields [13]bool
+	var fields [16]bool
 	fields[1] = !v.Label.IsZero()
 	fields[2] = !v.SupportingText.IsZero()
 	fields[3] = !v.ErrorText.IsZero()
@@ -12884,6 +12889,9 @@ func (v *Select) write(w *BinaryWriter) error {
 	fields[10] = !v.Id.IsZero()
 	fields[11] = !v.Options.IsZero()
 	fields[12] = !v.Autocomplete.IsZero()
+	fields[13] = !v.ORADropdown.IsZero()
+	fields[14] = !v.Searchable.IsZero()
+	fields[15] = !v.DropdownInfo.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -12997,6 +13005,30 @@ func (v *Select) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[13] {
+		if err := w.writeFieldHeader(uvarint, 13); err != nil {
+			return err
+		}
+		if err := v.ORADropdown.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[14] {
+		if err := w.writeFieldHeader(uvarint, 14); err != nil {
+			return err
+		}
+		if err := v.Searchable.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[15] {
+		if err := w.writeFieldHeader(byteSlice, 15); err != nil {
+			return err
+		}
+		if err := v.DropdownInfo.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -13078,6 +13110,21 @@ func (v *Select) read(r *BinaryReader) error {
 			}
 		case 12:
 			err := v.Autocomplete.read(r)
+			if err != nil {
+				return err
+			}
+		case 13:
+			err := v.ORADropdown.read(r)
+			if err != nil {
+				return err
+			}
+		case 14:
+			err := v.Searchable.read(r)
+			if err != nil {
+				return err
+			}
+		case 15:
+			err := v.DropdownInfo.read(r)
 			if err != nil {
 				return err
 			}
@@ -24430,13 +24477,16 @@ func (v *Select) reset() {
 	v.Id.reset()
 	v.Options.reset()
 	v.Autocomplete.reset()
+	v.ORADropdown.reset()
+	v.Searchable.reset()
+	v.DropdownInfo.reset()
 }
 
 func (v *Select) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.Leading.IsZero() && v.Disabled.IsZero() && v.Id.IsZero() && v.Options.IsZero() && v.Autocomplete.IsZero()
+	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.Leading.IsZero() && v.Disabled.IsZero() && v.Id.IsZero() && v.Options.IsZero() && v.Autocomplete.IsZero() && v.ORADropdown.IsZero() && v.Searchable.IsZero() && v.DropdownInfo.IsZero()
 }
 
 func (v *ColorStates) reset() {

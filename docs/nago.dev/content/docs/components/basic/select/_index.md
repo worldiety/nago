@@ -27,6 +27,7 @@ replacement for single selection.
 | `Leading(v core.View)` | Leading sets a leading view for the select. This view is displayed at the start of the select, e.g., an icon. |
 | `Options(options []Option[ID])` | Options sets the list of options available for selection. |
 | `Style(s ui.TextFieldStyle)` | Style sets the visual style of the select. |
+| `StyledDropdown(b bool)` | StyledDropdown enables or disables the ORA styled dropdown. |
 | `SupportingText(text string)` | SupportingText sets the supporting text displayed below the select. |
 | `Value(value ID)` | Value sets the initial value of the select. |
 ---

@@ -43,6 +43,9 @@ type TDropdown[ID ~string] struct {
 	frame          ui.Frame          // layout constraints
 	id             string            // unique identifier for the select
 	autocomplete   string            // autocomplete tags of the select
+	oraDropdown    bool              // when true, the styled ORA dropdown is used
+	searchable     bool              // when true, the ora dropdown contains a searchbar to filter options
+	dropdownInfo   string            // short text to be shown in the ora dropdown
 }
 
 // Dropdown represents a user interface element which lets the user select one option from a list.
@@ -183,6 +186,24 @@ func (c TDropdown[ID]) Autocomplete(tags string) TDropdown[ID] {
 	return c
 }
 
+// StyledDropdown enables or disables the ORA styled dropdown.
+func (c TDropdown[ID]) StyledDropdown(b bool) TDropdown[ID] {
+	c.oraDropdown = b
+	return c
+}
+
+// Searchable allows the user to filter options in the styled dropdown
+func (c TDropdown[ID]) Searchable(b bool) TDropdown[ID] {
+	c.searchable = b
+	return c
+}
+
+// DropdownInfo sets an info text to be shown in the styled dropdown
+func (c TDropdown[ID]) DropdownInfo(info string) TDropdown[ID] {
+	c.dropdownInfo = info
+	return c
+}
+
 // Render builds and returns the protocol representation of the select.
 func (c TDropdown[ID]) Render(ctx core.RenderContext) core.RenderNode {
 	options := make([]proto.SelectOption, 0, len(c.options))
@@ -207,5 +228,8 @@ func (c TDropdown[ID]) Render(ctx core.RenderContext) core.RenderNode {
 		Id:             proto.Str(c.id),
 		Options:        options,
 		Autocomplete:   proto.Str(c.autocomplete),
+		ORADropdown:    proto.Bool(c.oraDropdown),
+		Searchable:     proto.Bool(c.searchable),
+		DropdownInfo:   proto.Str(c.dropdownInfo),
 	}
 }

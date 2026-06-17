@@ -115,7 +115,7 @@ const inputFieldWrapperClasses = computed((): string | null => {
 
 		&.input-field-wrapper-detailed {
 			.input-field {
-				@apply border-none outline outline-1 -outline-offset-1 rounded-md px-3;
+				@apply border-none outline outline-1 -outline-offset-1 rounded-lg px-3;
 				@apply focus:outline-2 focus:-outline-offset-2 focus:outline-I0;
 			}
 		}
@@ -124,7 +124,7 @@ const inputFieldWrapperClasses = computed((): string | null => {
 		&.input-field-wrapper-reduced {
 			.input-field {
 				outline: none !important;
-				@apply border-b border-transparent;
+				@apply border-b border-transparent !rounded-none;
 				@apply focus:border-b-2 focus:-mb-px focus:border-I0;
 			}
 		}
@@ -143,10 +143,16 @@ const inputFieldWrapperClasses = computed((): string | null => {
 		}
 
 		&.input-field-wrapper-disabled {
-			@apply text-ST0;
+			@apply text-ST0 pointer-events-none;
 
 			.input-field {
-				@apply border-ST0 outline-ST0;
+				@apply opacity-100 border-SI0 outline-SI0 cursor-default;
+			}
+
+			&:not(.input-field-wrapper-reduced, .input-field-wrapper-basic) {
+				.input-field {
+					@apply bg-SI0;
+				}
 			}
 		}
 

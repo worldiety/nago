@@ -56,6 +56,20 @@
     "12": {
       "name": "Autocomplete",
       "type": "Str"
+    },
+    "13": {
+      "name": "ORADropdown",
+      "type": "Bool"
+    },
+    "14": {
+      "name": "Searchable",
+      "type": "Bool",
+      "doc": "If true, the user can search for an option by typing in the input field. Only works with styled dropdown."
+    },
+    "15": {
+      "name": "DropdownInfo",
+      "type": "Str",
+      "doc": "Info text to display in the dropdown. Only works with styled dropdown."
     }
   }
 }
