@@ -32,6 +32,7 @@ import {
 	OrientationValues,
 	StylePresetValues,
 } from '@/shared/proto/nprotoc_gen';
+import { outlineCSS } from '@/components/shared/outline';
 
 const props = defineProps<{
 	ui: Stack;
@@ -64,7 +65,7 @@ const isA = computed<boolean>(() => {
 });
 
 const focusable = computed<boolean>(
-	() => !!props.ui.action || !!props.ui.focusedBorder || !!props.ui.backgroundColorStates?.focus
+	() => !!props.ui.action || !!props.ui.border?.focused || !!props.ui.backgroundColorStates?.focus
 );
 
 const classes = computed<string>(() => {
@@ -98,7 +99,8 @@ const classes = computed<string>(() => {
 
 const activeClass = computed<string | undefined>(() => {
 	const styles: string[] = [];
-	if (props.ui.pressedBorder) styles.push(...borderCSS(props.ui.pressedBorder));
+	if (props.ui.border?.active) styles.push(...borderCSS(props.ui.border.active));
+	if (props.ui.outline?.active) styles.push(...outlineCSS(props.ui.outline.active));
 	if (props.ui.backgroundColorStates?.pressed)
 		styles.push(`background-color: ${colorValue(props.ui.backgroundColorStates.pressed)}`);
 
@@ -108,7 +110,8 @@ const activeClass = computed<string | undefined>(() => {
 
 const defaultClass = computed<string>(() => {
 	const styles = frameCSS(props.ui.frame);
-	styles.push(...borderCSS(props.ui.border));
+	styles.push(...borderCSS(props.ui.border?.initial));
+	styles.push(...outlineCSS(props.ui.outline?.initial));
 	styles.push(...positionCSS(props.ui.position));
 	styles.push(...transformationCSS(props.ui.transformation));
 	styles.push(...backgroundCSS(props.ui.background));
@@ -127,7 +130,8 @@ const defaultClass = computed<string>(() => {
 
 const focusClass = computed<string | undefined>(() => {
 	const styles: string[] = [];
-	if (props.ui.focusedBorder) styles.push(...borderCSS(props.ui.focusedBorder));
+	if (props.ui.border?.focused) styles.push(...borderCSS(props.ui.border.focused));
+	if (props.ui.outline?.focused) styles.push(...outlineCSS(props.ui.outline.focused));
 	if (props.ui.backgroundColorStates?.focus)
 		styles.push(`background-color: ${colorValue(props.ui.backgroundColorStates.focus)}`);
 
@@ -137,7 +141,8 @@ const focusClass = computed<string | undefined>(() => {
 
 const hoverClass = computed<string | undefined>(() => {
 	const styles: string[] = [];
-	if (props.ui.hoveredBorder) styles.push(...borderCSS(props.ui.hoveredBorder));
+	if (props.ui.border?.hovered) styles.push(...borderCSS(props.ui.border.hovered));
+	if (props.ui.outline?.hovered) styles.push(...outlineCSS(props.ui.outline.hovered));
 	if (props.ui.backgroundColorStates?.hover)
 		styles.push(`background-color: ${colorValue(props.ui.backgroundColorStates.hover)}`);
 

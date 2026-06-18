@@ -1,0 +1,22 @@
+{
+  "kind": "Record",
+  "id": 266,
+  "fields": {
+    "1": {
+      "name": "Initial",
+      "type": "Outline"
+    },
+    "2": {
+      "name": "Hovered",
+      "type": "Outline"
+    },
+    "3": {
+      "name": "Active",
+      "type": "Outline"
+    },
+    "4": {
+      "name": "Focused",
+      "type": "Outline"
+    }
+  }
+}

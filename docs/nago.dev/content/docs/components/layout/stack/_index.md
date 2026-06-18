@@ -34,6 +34,7 @@ you need to apply additional padding.
 | `Enabled(enabled bool)` | Enabled has only an effect if StylePreset is applied, otherwise it is ignored. |
 | `FocusedBackgroundColor(backgroundColor Color)` | FocusedBackgroundColor sets the background color of the stack when it is focused (e.g., via keyboard navigation). |
 | `FocusedBorder(border Border)` | FocusedBorder sets the border styling when the stack is focused. |
+| `FocusedOutline(outline Outline)` | FocusedOutline sets the outline styling when the stack is focused. |
 | `Font(font Font)` | Font sets the font style applied to text content inside the stack. |
 | `Frame(frame Frame)` |  |
 | `FullWidth()` |  |
@@ -41,14 +42,17 @@ you need to apply additional padding.
 | `HRef(url core.URI)` | HRef sets the URL that the button navigates to when clicked if no action is specified. If both URL and Action are set, the URL takes precedence. This avoids another render cycle if the only goal is to navigate to a different page. It also avoids issues with browser which block async browser interactions like Safari. In fact, the [core.Navigation.Open] does not work properly on Safari. See also [TButton.Target]. |
 | `HoveredBackgroundColor(backgroundColor Color)` | HoveredBackgroundColor sets the background color of the stack when the user hovers over it. |
 | `HoveredBorder(border Border)` | HoveredBorder sets the border styling when the stack is hovered. |
+| `HoveredOutline(outline Outline)` | HoveredOutline sets the outline styling when the stack is hovered. |
 | `ID(id string)` | ID assigns a unique identifier to the stack, useful for testing or referencing. |
 | `Layout(layout StackLayout)` |  |
 | `NoClip(b bool)` |  |
 | `Opacity(opacity float64)` | Opacity sets the visibility of this component. The range is [0..1] where 0 means fully transparent and 1 means fully visible. This also affects all contained children. |
+| `Outline(outline Outline)` | Outline sets the default outline styling for the stack. |
 | `Padding(padding Padding)` |  |
 | `Position(position Position)` | Position sets the position of the horizontal stack within its parent layout. |
 | `PressedBackgroundColor(backgroundColor Color)` | PressedBackgroundColor sets the background color of the stack when it is pressed or clicked. |
 | `PressedBorder(border Border)` | PressedBorder sets the border styling when the stack is pressed or clicked. |
+| `PressedOutline(outline Outline)` | PressedOutline sets the outline styling when the stack is pressed or clicked. |
 | `Responsive(fn func(wnd core.Windowstack TStack) TStack)` |  |
 | `StylePreset(preset StylePreset)` | StylePreset applies a predefined style preset to the stack, controlling its appearance. |
 | `Target(target string)` | Target sets the name of the browsing context, like _self, _blank, _ parent, _top. |

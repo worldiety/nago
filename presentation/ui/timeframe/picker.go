@@ -237,10 +237,10 @@ func (c TPicker) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	inner := ui.VStack(
-		ui.SingleDatePicker("", c.day.Get(), c.day).Frame(ui.Frame{}.FullWidth()),
+		ui.SingleDatePicker("", c.day.Get(), c.day).Disabled(c.disabled).Frame(ui.Frame{}.FullWidth()),
 		ui.Grid(
-			ui.GridCell(timepicker.Picker("Startzeit wählen", c.startTime).Hours(true).Minutes(true)),
-			ui.GridCell(timepicker.Picker("Endzeit wählen", c.endTime).Hours(true).Minutes(true)),
+			ui.GridCell(timepicker.Picker("Startzeit wählen", c.startTime).Hours(true).Minutes(true).Disabled(c.disabled)),
+			ui.GridCell(timepicker.Picker("Endzeit wählen", c.endTime).Hours(true).Minutes(true).Disabled(c.disabled)),
 			ui.GridCell(ui.TextField("Dauer", duration).Disabled(true)),
 		).Gap(ui.L8).
 			Rows(1).

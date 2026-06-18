@@ -238,7 +238,7 @@ func (c TImage) Render(ctx core.RenderContext) core.RenderNode {
 			Orientation:        proto.Vertical,
 			AccessibilityLabel: proto.Str(c.accessibilityLabel),
 			Invisible:          proto.Bool(c.invisible),
-			Border:             c.border,
+			Border:             proto.BorderStates{Initial: c.border},
 			Frame:              c.frame.ora(),
 			Padding:            c.padding,
 		}

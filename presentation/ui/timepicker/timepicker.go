@@ -520,17 +520,20 @@ func (c TPicker) Render(ctx core.RenderContext) core.RenderNode {
 				return
 			}
 			c.pickerPresented.Set(true)
-		}).HoveredBorder(ui.Border{}.Color(option.Must(colors.I1.WithChromaAndTone(16, 50))).Width(ui.L1).Radius("0.375rem")).
-			FocusedBorder(ui.Border{}.Color(ui.I0).Width(ui.L1)).
+		}).Outline(ui.Outline{Width: 1, Color: ui.M8}.Inside()).
+			HoveredOutline(ui.Outline{Color: option.Must(colors.I1.WithChromaAndTone(16, 50))}).
+			FocusedOutline(ui.Outline{Color: ui.I0}).
 			Gap(ui.L8).
 			Frame(ui.Frame{}.FullWidth()).
-			Border(ui.Border{}.Color(ui.M8).Width(ui.L1).Radius("0.375rem")).
+			Border(ui.Border{}.Radius("0.375rem")).
 			Padding(ui.Padding{}.All(ui.L8))
 	} else {
 		innerView = inner.
 			Gap(ui.L8).
+			BackgroundColor(ui.SI0).
+			TextColor(ui.ST0).
 			Frame(ui.Frame{}.FullWidth()).
-			Border(ui.Border{}.Color(ui.ST0).Width(ui.L1).Radius("0.375rem")).
+			Border(ui.Border{}.Radius("0.375rem")).
 			Padding(ui.Padding{}.All(ui.L8))
 	}
 

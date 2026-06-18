@@ -1,0 +1,21 @@
+{
+  "doc": "Outline adds the defined outline to the component.",
+  "kind": "Record",
+  "id": 264,
+  "fields": {
+    "1": {
+      "name": "Width",
+      "type": "Int"
+    },
+    "2": {
+      "name": "Offset",
+      "type": "Int"
+    },
+    "3": {
+      "name": "Color",
+      "type": "Color"
+    }
+  }
+}
+
+
