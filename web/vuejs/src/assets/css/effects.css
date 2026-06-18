@@ -18,8 +18,6 @@ select,
 textarea,
 object,
 [tabindex]:not([tabindex='-1']) {
-	@apply outline-2 -outline-offset-2;
-
 	&:focus-visible:not(
 			.custom-focus,
 			.button-primary,
@@ -31,7 +29,7 @@ object,
 			.toggle-switch,
 			.toggle-switch-container
 		) {
-		@apply outline outline-2 outline-I0 rounded-lg;
+		@apply outline outline-2 -outline-offset-2 outline-I0 rounded-lg;
 	}
 }
 

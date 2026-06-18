@@ -19,6 +19,7 @@ replacement for single selection.
 |--------| ------------|
 | `Autocomplete(tags string)` | Autocomplete defines the autocomplete tags of the input |
 | `Disabled(disabled bool)` | Disabled enables or disables user interaction with the select. |
+| `DropdownInfo(info string)` | DropdownInfo sets an info text to be shown in the styled dropdown |
 | `ErrorText(text string)` | ErrorText sets the error text displayed below the select. |
 | `Frame(frame ui.Frame)` | Frame sets the layout frame of the field (size, width, height, etc.). |
 | `ID(id string)` | ID assigns a unique identifier to the select, useful for testing or referencing. |
@@ -26,6 +27,7 @@ replacement for single selection.
 | `Label(label string)` | Label sets the label displayed above or inside the select. |
 | `Leading(v core.View)` | Leading sets a leading view for the select. This view is displayed at the start of the select, e.g., an icon. |
 | `Options(options []Option[ID])` | Options sets the list of options available for selection. |
+| `Searchable(b bool)` | Searchable allows the user to filter options in the styled dropdown |
 | `Style(s ui.TextFieldStyle)` | Style sets the visual style of the select. |
 | `StyledDropdown(b bool)` | StyledDropdown enables or disables the ORA styled dropdown. |
 | `SupportingText(text string)` | SupportingText sets the supporting text displayed below the select. |

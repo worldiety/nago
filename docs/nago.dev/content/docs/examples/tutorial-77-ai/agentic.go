@@ -22,6 +22,7 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
+	"go.wdy.de/nago/presentation/ui/dropdown"
 	"go.wdy.de/nago/presentation/ui/markdown"
 )
 
@@ -88,24 +89,41 @@ func agenticTools() []completion.Tool {
 // -> execute requested tools -> feed results back -> repeat) and renders both the final answer and the full
 // message trace so the tool calls become visible.
 func agenticChat(wnd core.Window, uc ai.UseCases) core.View {
-	var prov provider.Provider
-	var comps completion.Completions
+	// Collect all providers that expose stateless completions so the user can pick one.
+	type provEntry struct {
+		prov  provider.Provider
+		comps completion.Completions
+	}
 
+	var entries []provEntry
 	for p, err := range uc.FindAllProvider(wnd.Subject()) {
 		if err != nil {
 			return alert.BannerError(err)
 		}
 
 		if c := p.Completions(); c.IsSome() {
-			prov = p
-			comps = c.Unwrap()
-			break
+			entries = append(entries, provEntry{prov: p, comps: c.Unwrap()})
 		}
 	}
 
-	if comps == nil {
+	if len(entries) == 0 {
 		return alert.BannerError(fmt.Errorf("kein Provider mit stateless Completions gefunden – bitte ein Secret konfigurieren"))
 	}
+
+	selectedProvider := core.AutoState[provider.ID](wnd).Init(func() provider.ID {
+		return entries[0].prov.Identity()
+	})
+
+	// Resolve the currently selected provider (fallback to the first one).
+	current := entries[0]
+	for _, e := range entries {
+		if e.prov.Identity() == selectedProvider.Get() {
+			current = e
+			break
+		}
+	}
+	prov := current.prov
+	comps := current.comps
 
 	prompt := core.AutoState[string](wnd).Init(func() string {
 		return "Was ist die Quadratwurzel aus (3 mal 12)? Nutze die Tools."
@@ -123,6 +141,35 @@ func agenticChat(wnd core.Window, uc ai.UseCases) core.View {
 		}
 		return ""
 	})
+
+	// When the provider changes, reset the model to the first model of the new provider.
+	selectedProvider.Observe(func(newValue provider.ID) {
+		first := model.ID("")
+		for _, e := range entries {
+			if e.prov.Identity() == newValue {
+				for m, err := range e.comps.Models(wnd.Subject()) {
+					if err == nil {
+						first = m.ID
+					}
+					break
+				}
+				break
+			}
+		}
+		selectedModel.Set(first)
+		answer.Set("")
+		trace.Set("")
+		usage.Set("")
+	})
+
+	// Build the dropdown options from the available completion providers.
+	providerOptions := make([]dropdown.Option[provider.ID], 0, len(entries))
+	for _, e := range entries {
+		providerOptions = append(providerOptions, dropdown.Option[provider.ID]{
+			Value: e.prov.Identity(),
+			Label: e.prov.Name(),
+		})
+	}
 
 	submit := func() {
 		question := strings.TrimSpace(prompt.Get())
@@ -186,6 +233,11 @@ func agenticChat(wnd core.Window, uc ai.UseCases) core.View {
 
 	return ui.VStack(
 		ui.Text(fmt.Sprintf("Agentic Tool-Loop – %s (%s)", prov.Name(), selectedModel.Get())).Font(ui.Title),
+
+		dropdown.Dropdown("Provider", providerOptions, selectedProvider.Get()).
+			InputValue(selectedProvider).
+			Disabled(busy.Get()).
+			Frame(ui.Frame{}.FullWidth()),
 
 		ui.TextField("Deine Eingabe", prompt.Get()).
 			InputValue(prompt).

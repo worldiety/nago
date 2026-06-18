@@ -13255,13 +13255,11 @@ type Stack struct {
 	Padding         Padding
 	// see also https://www.w3.org/WAI/tutorials/images/decision-tree/
 	AccessibilityLabel    Str
-	Border                Border
+	Border                BorderStates
 	Font                  Font
 	Action                Ptr
 	BackgroundColorStates ColorStates
-	HoveredBorder         Border
-	PressedBorder         Border
-	FocusedBorder         Border
+	Outline               OutlineStates
 	Wrap                  Bool
 	StylePreset           StylePreset
 	Position              Position
@@ -13282,7 +13280,7 @@ type Stack struct {
 }
 
 func (v *Stack) write(w *BinaryWriter) error {
-	var fields [30]bool
+	var fields [28]bool
 	fields[1] = !v.Children.IsZero()
 	fields[2] = !v.Gap.IsZero()
 	fields[3] = !v.Frame.IsZero()
@@ -13294,24 +13292,22 @@ func (v *Stack) write(w *BinaryWriter) error {
 	fields[9] = !v.Font.IsZero()
 	fields[10] = !v.Action.IsZero()
 	fields[11] = !v.BackgroundColorStates.IsZero()
-	fields[12] = !v.HoveredBorder.IsZero()
-	fields[13] = !v.PressedBorder.IsZero()
-	fields[14] = !v.FocusedBorder.IsZero()
-	fields[15] = !v.Wrap.IsZero()
-	fields[16] = !v.StylePreset.IsZero()
-	fields[17] = !v.Position.IsZero()
-	fields[18] = !v.Disabled.IsZero()
-	fields[19] = !v.Invisible.IsZero()
-	fields[20] = !v.Id.IsZero()
-	fields[21] = !v.TextColor.IsZero()
-	fields[22] = !v.NoClip.IsZero()
-	fields[23] = !v.Animation.IsZero()
-	fields[24] = !v.Transformation.IsZero()
-	fields[25] = !v.Opacity.IsZero()
-	fields[26] = !v.Background.IsZero()
-	fields[27] = !v.Url.IsZero()
-	fields[28] = !v.Target.IsZero()
-	fields[29] = !v.Orientation.IsZero()
+	fields[12] = !v.Outline.IsZero()
+	fields[13] = !v.Wrap.IsZero()
+	fields[14] = !v.StylePreset.IsZero()
+	fields[15] = !v.Position.IsZero()
+	fields[16] = !v.Disabled.IsZero()
+	fields[17] = !v.Invisible.IsZero()
+	fields[18] = !v.Id.IsZero()
+	fields[19] = !v.TextColor.IsZero()
+	fields[20] = !v.NoClip.IsZero()
+	fields[21] = !v.Animation.IsZero()
+	fields[22] = !v.Transformation.IsZero()
+	fields[23] = !v.Opacity.IsZero()
+	fields[24] = !v.Background.IsZero()
+	fields[25] = !v.Url.IsZero()
+	fields[26] = !v.Target.IsZero()
+	fields[27] = !v.Orientation.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -13414,31 +13410,31 @@ func (v *Stack) write(w *BinaryWriter) error {
 		if err := w.writeFieldHeader(record, 12); err != nil {
 			return err
 		}
-		if err := v.HoveredBorder.write(w); err != nil {
+		if err := v.Outline.write(w); err != nil {
 			return err
 		}
 	}
 	if fields[13] {
-		if err := w.writeFieldHeader(record, 13); err != nil {
+		if err := w.writeFieldHeader(uvarint, 13); err != nil {
 			return err
 		}
-		if err := v.PressedBorder.write(w); err != nil {
+		if err := v.Wrap.write(w); err != nil {
 			return err
 		}
 	}
 	if fields[14] {
-		if err := w.writeFieldHeader(record, 14); err != nil {
+		if err := w.writeFieldHeader(uvarint, 14); err != nil {
 			return err
 		}
-		if err := v.FocusedBorder.write(w); err != nil {
+		if err := v.StylePreset.write(w); err != nil {
 			return err
 		}
 	}
 	if fields[15] {
-		if err := w.writeFieldHeader(uvarint, 15); err != nil {
+		if err := w.writeFieldHeader(record, 15); err != nil {
 			return err
 		}
-		if err := v.Wrap.write(w); err != nil {
+		if err := v.Position.write(w); err != nil {
 			return err
 		}
 	}
@@ -13446,55 +13442,55 @@ func (v *Stack) write(w *BinaryWriter) error {
 		if err := w.writeFieldHeader(uvarint, 16); err != nil {
 			return err
 		}
-		if err := v.StylePreset.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[17] {
-		if err := w.writeFieldHeader(record, 17); err != nil {
-			return err
-		}
-		if err := v.Position.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[18] {
-		if err := w.writeFieldHeader(uvarint, 18); err != nil {
-			return err
-		}
 		if err := v.Disabled.write(w); err != nil {
 			return err
 		}
 	}
-	if fields[19] {
-		if err := w.writeFieldHeader(uvarint, 19); err != nil {
+	if fields[17] {
+		if err := w.writeFieldHeader(uvarint, 17); err != nil {
 			return err
 		}
 		if err := v.Invisible.write(w); err != nil {
 			return err
 		}
 	}
-	if fields[20] {
-		if err := w.writeFieldHeader(byteSlice, 20); err != nil {
+	if fields[18] {
+		if err := w.writeFieldHeader(byteSlice, 18); err != nil {
 			return err
 		}
 		if err := v.Id.write(w); err != nil {
 			return err
 		}
 	}
-	if fields[21] {
-		if err := w.writeFieldHeader(byteSlice, 21); err != nil {
+	if fields[19] {
+		if err := w.writeFieldHeader(byteSlice, 19); err != nil {
 			return err
 		}
 		if err := v.TextColor.write(w); err != nil {
 			return err
 		}
 	}
-	if fields[22] {
-		if err := w.writeFieldHeader(uvarint, 22); err != nil {
+	if fields[20] {
+		if err := w.writeFieldHeader(uvarint, 20); err != nil {
 			return err
 		}
 		if err := v.NoClip.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[21] {
+		if err := w.writeFieldHeader(uvarint, 21); err != nil {
+			return err
+		}
+		if err := v.Animation.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[22] {
+		if err := w.writeFieldHeader(record, 22); err != nil {
+			return err
+		}
+		if err := v.Transformation.write(w); err != nil {
 			return err
 		}
 	}
@@ -13502,7 +13498,7 @@ func (v *Stack) write(w *BinaryWriter) error {
 		if err := w.writeFieldHeader(uvarint, 23); err != nil {
 			return err
 		}
-		if err := v.Animation.write(w); err != nil {
+		if err := v.Opacity.write(w); err != nil {
 			return err
 		}
 	}
@@ -13510,44 +13506,28 @@ func (v *Stack) write(w *BinaryWriter) error {
 		if err := w.writeFieldHeader(record, 24); err != nil {
 			return err
 		}
-		if err := v.Transformation.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[25] {
-		if err := w.writeFieldHeader(uvarint, 25); err != nil {
-			return err
-		}
-		if err := v.Opacity.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[26] {
-		if err := w.writeFieldHeader(record, 26); err != nil {
-			return err
-		}
 		if err := v.Background.write(w); err != nil {
 			return err
 		}
 	}
-	if fields[27] {
-		if err := w.writeFieldHeader(byteSlice, 27); err != nil {
+	if fields[25] {
+		if err := w.writeFieldHeader(byteSlice, 25); err != nil {
 			return err
 		}
 		if err := v.Url.write(w); err != nil {
 			return err
 		}
 	}
-	if fields[28] {
-		if err := w.writeFieldHeader(byteSlice, 28); err != nil {
+	if fields[26] {
+		if err := w.writeFieldHeader(byteSlice, 26); err != nil {
 			return err
 		}
 		if err := v.Target.write(w); err != nil {
 			return err
 		}
 	}
-	if fields[29] {
-		if err := w.writeFieldHeader(uvarint, 29); err != nil {
+	if fields[27] {
+		if err := w.writeFieldHeader(uvarint, 27); err != nil {
 			return err
 		}
 		if err := v.Orientation.write(w); err != nil {
@@ -13625,91 +13605,81 @@ func (v *Stack) read(r *BinaryReader) error {
 				return err
 			}
 		case 12:
-			err := v.HoveredBorder.read(r)
+			err := v.Outline.read(r)
 			if err != nil {
 				return err
 			}
 		case 13:
-			err := v.PressedBorder.read(r)
-			if err != nil {
-				return err
-			}
-		case 14:
-			err := v.FocusedBorder.read(r)
-			if err != nil {
-				return err
-			}
-		case 15:
 			err := v.Wrap.read(r)
 			if err != nil {
 				return err
 			}
-		case 16:
+		case 14:
 			err := v.StylePreset.read(r)
 			if err != nil {
 				return err
 			}
-		case 17:
+		case 15:
 			err := v.Position.read(r)
 			if err != nil {
 				return err
 			}
-		case 18:
+		case 16:
 			err := v.Disabled.read(r)
 			if err != nil {
 				return err
 			}
-		case 19:
+		case 17:
 			err := v.Invisible.read(r)
 			if err != nil {
 				return err
 			}
-		case 20:
+		case 18:
 			err := v.Id.read(r)
 			if err != nil {
 				return err
 			}
-		case 21:
+		case 19:
 			err := v.TextColor.read(r)
 			if err != nil {
 				return err
 			}
-		case 22:
+		case 20:
 			err := v.NoClip.read(r)
 			if err != nil {
 				return err
 			}
-		case 23:
+		case 21:
 			err := v.Animation.read(r)
 			if err != nil {
 				return err
 			}
-		case 24:
+		case 22:
 			err := v.Transformation.read(r)
 			if err != nil {
 				return err
 			}
-		case 25:
+		case 23:
 			err := v.Opacity.read(r)
 			if err != nil {
 				return err
 			}
-		case 26:
+		case 24:
 			err := v.Background.read(r)
 			if err != nil {
 				return err
 			}
-		case 27:
+		case 25:
 			err := v.Url.read(r)
 			if err != nil {
 				return err
 			}
-		case 28:
+		case 26:
 			err := v.Target.read(r)
 			if err != nil {
 				return err
 			}
-		case 29:
+		case 27:
 			err := v.Orientation.read(r)
 			if err != nil {
 				return err
@@ -19781,6 +19751,277 @@ func (v *SplitView) read(r *BinaryReader) error {
 	return nil
 }
 
+// Outline adds the defined outline to the component.
+type Outline struct {
+	Width  Int
+	Offset Int
+	Color  Color
+}
+
+func (v *Outline) write(w *BinaryWriter) error {
+	var fields [4]bool
+	fields[1] = !v.Width.IsZero()
+	fields[2] = !v.Offset.IsZero()
+	fields[3] = !v.Color.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(varint, 1); err != nil {
+			return err
+		}
+		if err := v.Width.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(varint, 2); err != nil {
+			return err
+		}
+		if err := v.Offset.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.Color.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Outline) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Width.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Offset.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Color.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type BorderStates struct {
+	Initial Border
+	Hovered Border
+	Active  Border
+	Focused Border
+}
+
+func (v *BorderStates) write(w *BinaryWriter) error {
+	var fields [5]bool
+	fields[1] = !v.Initial.IsZero()
+	fields[2] = !v.Hovered.IsZero()
+	fields[3] = !v.Active.IsZero()
+	fields[4] = !v.Focused.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(record, 1); err != nil {
+			return err
+		}
+		if err := v.Initial.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(record, 2); err != nil {
+			return err
+		}
+		if err := v.Hovered.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(record, 3); err != nil {
+			return err
+		}
+		if err := v.Active.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(record, 4); err != nil {
+			return err
+		}
+		if err := v.Focused.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *BorderStates) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Initial.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Hovered.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Active.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Focused.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type OutlineStates struct {
+	Initial Outline
+	Hovered Outline
+	Active  Outline
+	Focused Outline
+}
+
+func (v *OutlineStates) write(w *BinaryWriter) error {
+	var fields [5]bool
+	fields[1] = !v.Initial.IsZero()
+	fields[2] = !v.Hovered.IsZero()
+	fields[3] = !v.Active.IsZero()
+	fields[4] = !v.Focused.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(record, 1); err != nil {
+			return err
+		}
+		if err := v.Initial.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(record, 2); err != nil {
+			return err
+		}
+		if err := v.Hovered.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(record, 3); err != nil {
+			return err
+		}
+		if err := v.Active.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(record, 4); err != nil {
+			return err
+		}
+		if err := v.Focused.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *OutlineStates) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Initial.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Hovered.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Active.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Focused.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -21314,6 +21555,24 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 263:
 		var v SplitView
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 264:
+		var v Outline
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 265:
+		var v BorderStates
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 266:
+		var v OutlineStates
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -24514,9 +24773,7 @@ func (v *Stack) reset() {
 	v.Font.reset()
 	v.Action.reset()
 	v.BackgroundColorStates.reset()
-	v.HoveredBorder.reset()
-	v.PressedBorder.reset()
-	v.FocusedBorder.reset()
+	v.Outline.reset()
 	v.Wrap.reset()
 	v.StylePreset.reset()
 	v.Position.reset()
@@ -24538,7 +24795,7 @@ func (v *Stack) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Children.IsZero() && v.Gap.IsZero() && v.Frame.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.BackgroundColorStates.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.Wrap.IsZero() && v.StylePreset.IsZero() && v.Position.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero() && v.TextColor.IsZero() && v.NoClip.IsZero() && v.Animation.IsZero() && v.Transformation.IsZero() && v.Opacity.IsZero() && v.Background.IsZero() && v.Url.IsZero() && v.Target.IsZero() && v.Orientation.IsZero()
+	return v.Children.IsZero() && v.Gap.IsZero() && v.Frame.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.BackgroundColorStates.IsZero() && v.Outline.IsZero() && v.Wrap.IsZero() && v.StylePreset.IsZero() && v.Position.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero() && v.TextColor.IsZero() && v.NoClip.IsZero() && v.Animation.IsZero() && v.Transformation.IsZero() && v.Opacity.IsZero() && v.Background.IsZero() && v.Url.IsZero() && v.Target.IsZero() && v.Orientation.IsZero()
 }
 
 func (v *Canvas) reset() {
@@ -25699,6 +25956,47 @@ func (v *SplitView) IsZero() bool {
 		return true
 	}
 	return v.InputValue.IsZero() && v.Value.IsZero() && v.ContentA.IsZero() && v.ContentB.IsZero() && v.Frame.IsZero() && v.Orientation.IsZero() && v.MinRatio.IsZero() && v.MaxRatio.IsZero()
+}
+
+func (v *Outline) reset() {
+	v.Width.reset()
+	v.Offset.reset()
+	v.Color.reset()
+}
+
+func (v *Outline) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Width.IsZero() && v.Offset.IsZero() && v.Color.IsZero()
+}
+
+func (v *BorderStates) reset() {
+	v.Initial.reset()
+	v.Hovered.reset()
+	v.Active.reset()
+	v.Focused.reset()
+}
+
+func (v *BorderStates) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Initial.IsZero() && v.Hovered.IsZero() && v.Active.IsZero() && v.Focused.IsZero()
+}
+
+func (v *OutlineStates) reset() {
+	v.Initial.reset()
+	v.Hovered.reset()
+	v.Active.reset()
+	v.Focused.reset()
+}
+
+func (v *OutlineStates) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Initial.IsZero() && v.Hovered.IsZero() && v.Active.IsZero() && v.Focused.IsZero()
 }
 
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
@@ -27460,6 +27758,27 @@ func (v *StepperLayout) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *SplitView) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 263); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Outline) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 264); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *BorderStates) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 265); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *OutlineStates) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 266); err != nil {
 		return err
 	}
 	return nil

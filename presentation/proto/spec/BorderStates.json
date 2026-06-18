@@ -1,0 +1,22 @@
+{
+  "kind": "Record",
+  "id": 265,
+  "fields": {
+    "1": {
+      "name": "Initial",
+      "type": "Border"
+    },
+    "2": {
+      "name": "Hovered",
+      "type": "Border"
+    },
+    "3": {
+      "name": "Active",
+      "type": "Border"
+    },
+    "4": {
+      "name": "Focused",
+      "type": "Border"
+    }
+  }
+}

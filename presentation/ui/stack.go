@@ -43,10 +43,8 @@ type TStack struct {
 	frame                  Frame
 	gap                    Length
 	padding                Padding
-	border                 Border
-	hoveredBorder          Border
-	focusedBorder          Border
-	pressedBorder          Border
+	border                 BorderStates
+	outline                OutlineStates
 	layout                 StackLayout
 	noClip                 bool
 	font                   Font
@@ -290,25 +288,49 @@ func (c TStack) WithPadding(padding Padding) TStack {
 }
 
 func (c TStack) Border(border Border) DecoredView {
-	c.border = border
+	c.border.Initial = border
 	return c
 }
 
 // HoveredBorder sets the border styling when the stack is hovered.
 func (c TStack) HoveredBorder(border Border) TStack {
-	c.hoveredBorder = border
+	c.border.Hovered = border
 	return c
 }
 
 // PressedBorder sets the border styling when the stack is pressed or clicked.
 func (c TStack) PressedBorder(border Border) TStack {
-	c.pressedBorder = border
+	c.border.Active = border
 	return c
 }
 
 // FocusedBorder sets the border styling when the stack is focused.
 func (c TStack) FocusedBorder(border Border) TStack {
-	c.focusedBorder = border
+	c.border.Focused = border
+	return c
+}
+
+// Outline sets the default outline styling for the stack.
+func (c TStack) Outline(outline Outline) TStack {
+	c.outline.Initial = outline
+	return c
+}
+
+// HoveredOutline sets the outline styling when the stack is hovered.
+func (c TStack) HoveredOutline(outline Outline) TStack {
+	c.outline.Hovered = outline
+	return c
+}
+
+// PressedOutline sets the outline styling when the stack is pressed or clicked.
+func (c TStack) PressedOutline(outline Outline) TStack {
+	c.outline.Active = outline
+	return c
+}
+
+// FocusedOutline sets the outline styling when the stack is focused.
+func (c TStack) FocusedOutline(outline Outline) TStack {
+	c.outline.Focused = outline
 	return c
 }
 
@@ -353,6 +375,7 @@ func (c TStack) Render(ctx core.RenderContext) core.RenderNode {
 		Padding:            c.padding.ora(),
 		AccessibilityLabel: proto.Str(c.accessibilityLabel),
 		Border:             c.border.ora(),
+		Outline:            c.outline.ora(),
 		Font:               c.font.ora(),
 		Action:             ptr,
 		BackgroundColorStates: proto.ColorStates{
@@ -360,9 +383,6 @@ func (c TStack) Render(ctx core.RenderContext) core.RenderNode {
 			Focus:   proto.Color(c.focusedBackgroundColor),
 			Pressed: proto.Color(c.pressedBackgroundColor),
 		},
-		HoveredBorder:  c.hoveredBorder.ora(),
-		PressedBorder:  c.pressedBorder.ora(),
-		FocusedBorder:  c.focusedBorder.ora(),
 		Wrap:           proto.Bool(c.wrap),
 		StylePreset:    proto.StylePreset(c.stylePreset),
 		Position:       c.position.ora(),

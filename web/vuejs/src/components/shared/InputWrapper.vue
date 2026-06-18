@@ -97,7 +97,7 @@ const inputFieldWrapperClasses = computed((): string | null => {
 	@apply flex flex-col-reverse;
 
 	.label-container {
-		@apply flex justify-between items-end text-sm -mb-px;
+		@apply flex justify-between items-end text-sm;
 
 		label {
 			@apply flex justify-start items-center gap-x-1 pb-1;

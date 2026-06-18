@@ -13798,7 +13798,7 @@ export class Stack implements Writeable, Readable, Component {
 	// see also https://www.w3.org/WAI/tutorials/images/decision-tree/
 	public accessibilityLabel?: Str;
 
-	public border?: Border;
+	public border?: BorderStates;
 
 	public font?: Font;
 
@@ -13806,11 +13806,7 @@ export class Stack implements Writeable, Readable, Component {
 
 	public backgroundColorStates?: ColorStates;
 
-	public hoveredBorder?: Border;
-
-	public pressedBorder?: Border;
-
-	public focusedBorder?: Border;
+	public outline?: OutlineStates;
 
 	public wrap?: Bool;
 
@@ -13852,13 +13848,11 @@ export class Stack implements Writeable, Readable, Component {
 		backgroundColor: Color | undefined = undefined,
 		padding: Padding | undefined = undefined,
 		accessibilityLabel: Str | undefined = undefined,
-		border: Border | undefined = undefined,
+		border: BorderStates | undefined = undefined,
 		font: Font | undefined = undefined,
 		action: Ptr | undefined = undefined,
 		backgroundColorStates: ColorStates | undefined = undefined,
-		hoveredBorder: Border | undefined = undefined,
-		pressedBorder: Border | undefined = undefined,
-		focusedBorder: Border | undefined = undefined,
+		outline: OutlineStates | undefined = undefined,
 		wrap: Bool | undefined = undefined,
 		stylePreset: StylePreset | undefined = undefined,
 		position: Position | undefined = undefined,
@@ -13886,9 +13880,7 @@ export class Stack implements Writeable, Readable, Component {
 		this.font = font;
 		this.action = action;
 		this.backgroundColorStates = backgroundColorStates;
-		this.hoveredBorder = hoveredBorder;
-		this.pressedBorder = pressedBorder;
-		this.focusedBorder = focusedBorder;
+		this.outline = outline;
 		this.wrap = wrap;
 		this.stylePreset = stylePreset;
 		this.position = position;
@@ -13944,7 +13936,7 @@ export class Stack implements Writeable, Readable, Component {
 					break;
 				}
 				case 8: {
-					this.border = new Border();
+					this.border = new BorderStates();
 					this.border.read(reader);
 					break;
 				}
@@ -13963,80 +13955,70 @@ export class Stack implements Writeable, Readable, Component {
 					break;
 				}
 				case 12: {
-					this.hoveredBorder = new Border();
-					this.hoveredBorder.read(reader);
+					this.outline = new OutlineStates();
+					this.outline.read(reader);
 					break;
 				}
 				case 13: {
-					this.pressedBorder = new Border();
-					this.pressedBorder.read(reader);
-					break;
-				}
-				case 14: {
-					this.focusedBorder = new Border();
-					this.focusedBorder.read(reader);
-					break;
-				}
-				case 15: {
 					this.wrap = readBool(reader);
 					break;
 				}
-				case 16: {
+				case 14: {
 					this.stylePreset = readInt(reader);
 					break;
 				}
-				case 17: {
+				case 15: {
 					this.position = new Position();
 					this.position.read(reader);
 					break;
 				}
-				case 18: {
+				case 16: {
 					this.disabled = readBool(reader);
 					break;
 				}
-				case 19: {
+				case 17: {
 					this.invisible = readBool(reader);
 					break;
 				}
-				case 20: {
+				case 18: {
 					this.id = readString(reader);
 					break;
 				}
-				case 21: {
+				case 19: {
 					this.textColor = readString(reader);
 					break;
 				}
-				case 22: {
+				case 20: {
 					this.noClip = readBool(reader);
 					break;
 				}
-				case 23: {
+				case 21: {
 					this.animation = readInt(reader);
 					break;
 				}
-				case 24: {
+				case 22: {
 					this.transformation = new Transformation();
 					this.transformation.read(reader);
 					break;
 				}
-				case 25: {
+				case 23: {
 					this.opacity = readInt(reader);
 					break;
 				}
-				case 26: {
+				case 24: {
 					this.background = new Background();
 					this.background.read(reader);
 					break;
 				}
-				case 27: {
+				case 25: {
 					this.url = readString(reader);
 					break;
 				}
-				case 28: {
+				case 26: {
 					this.target = readString(reader);
 					break;
 				}
-				case 29: {
+				case 27: {
 					this.orientation = readInt(reader);
 					break;
 				}
@@ -14060,9 +14042,7 @@ export class Stack implements Writeable, Readable, Component {
 			this.font !== undefined && !this.font.isZero(),
 			this.action !== undefined,
 			this.backgroundColorStates !== undefined && !this.backgroundColorStates.isZero(),
-			this.hoveredBorder !== undefined && !this.hoveredBorder.isZero(),
-			this.pressedBorder !== undefined && !this.pressedBorder.isZero(),
-			this.focusedBorder !== undefined && !this.focusedBorder.isZero(),
+			this.outline !== undefined && !this.outline.isZero(),
 			this.wrap !== undefined,
 			this.stylePreset !== undefined,
 			this.position !== undefined && !this.position.isZero(),
@@ -14127,74 +14107,66 @@ export class Stack implements Writeable, Readable, Component {
 		}
 		if (fields[12]) {
 			writer.writeFieldHeader(Shapes.RECORD, 12);
-			this.hoveredBorder!.write(writer); // typescript linters cannot see, that we already checked this properly above
+			this.outline!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[13]) {
-			writer.writeFieldHeader(Shapes.RECORD, 13);
-			this.pressedBorder!.write(writer); // typescript linters cannot see, that we already checked this properly above
+			writer.writeFieldHeader(Shapes.UVARINT, 13);
+			writeBool(writer, this.wrap!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[14]) {
-			writer.writeFieldHeader(Shapes.RECORD, 14);
-			this.focusedBorder!.write(writer); // typescript linters cannot see, that we already checked this properly above
+			writer.writeFieldHeader(Shapes.UVARINT, 14);
+			writeInt(writer, this.stylePreset!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[15]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 15);
-			writeBool(writer, this.wrap!); // typescript linters cannot see, that we already checked this properly above
+			writer.writeFieldHeader(Shapes.RECORD, 15);
+			this.position!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[16]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 16);
-			writeInt(writer, this.stylePreset!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[17]) {
-			writer.writeFieldHeader(Shapes.RECORD, 17);
-			this.position!.write(writer); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[18]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 18);
 			writeBool(writer, this.disabled!); // typescript linters cannot see, that we already checked this properly above
 		}
-		if (fields[19]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 19);
+		if (fields[17]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 17);
 			writeBool(writer, this.invisible!); // typescript linters cannot see, that we already checked this properly above
 		}
-		if (fields[20]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 20);
+		if (fields[18]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 18);
 			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
 		}
-		if (fields[21]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 21);
+		if (fields[19]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 19);
 			writeString(writer, this.textColor!); // typescript linters cannot see, that we already checked this properly above
 		}
-		if (fields[22]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 22);
+		if (fields[20]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 20);
 			writeBool(writer, this.noClip!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[21]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 21);
+			writeInt(writer, this.animation!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[22]) {
+			writer.writeFieldHeader(Shapes.RECORD, 22);
+			this.transformation!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[23]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 23);
-			writeInt(writer, this.animation!); // typescript linters cannot see, that we already checked this properly above
+			writeInt(writer, this.opacity!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[24]) {
 			writer.writeFieldHeader(Shapes.RECORD, 24);
-			this.transformation!.write(writer); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[25]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 25);
-			writeInt(writer, this.opacity!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[26]) {
-			writer.writeFieldHeader(Shapes.RECORD, 26);
 			this.background!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
-		if (fields[27]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 27);
+		if (fields[25]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 25);
 			writeString(writer, this.url!); // typescript linters cannot see, that we already checked this properly above
 		}
-		if (fields[28]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 28);
+		if (fields[26]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 26);
 			writeString(writer, this.target!); // typescript linters cannot see, that we already checked this properly above
 		}
-		if (fields[29]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 29);
+		if (fields[27]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 27);
 			writeInt(writer, this.orientation!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
@@ -14212,9 +14184,7 @@ export class Stack implements Writeable, Readable, Component {
 			(this.font === undefined || this.font.isZero()) &&
 			this.action === undefined &&
 			(this.backgroundColorStates === undefined || this.backgroundColorStates.isZero()) &&
-			(this.hoveredBorder === undefined || this.hoveredBorder.isZero()) &&
-			(this.pressedBorder === undefined || this.pressedBorder.isZero()) &&
-			(this.focusedBorder === undefined || this.focusedBorder.isZero()) &&
+			(this.outline === undefined || this.outline.isZero()) &&
 			this.wrap === undefined &&
 			this.stylePreset === undefined &&
 			(this.position === undefined || this.position.isZero()) &&
@@ -14245,9 +14215,7 @@ export class Stack implements Writeable, Readable, Component {
 		this.font = undefined;
 		this.action = undefined;
 		this.backgroundColorStates = undefined;
-		this.hoveredBorder = undefined;
-		this.pressedBorder = undefined;
-		this.focusedBorder = undefined;
+		this.outline = undefined;
 		this.wrap = undefined;
 		this.stylePreset = undefined;
 		this.position = undefined;
@@ -20389,6 +20357,288 @@ export class SplitView implements Writeable, Readable, Component {
 	isComponent(): void {}
 }
 
+// Outline adds the defined outline to the component.
+export class Outline implements Writeable, Readable {
+	public width?: Int;
+
+	public offset?: Int;
+
+	public color?: Color;
+
+	constructor(
+		width: Int | undefined = undefined,
+		offset: Int | undefined = undefined,
+		color: Color | undefined = undefined
+	) {
+		this.width = width;
+		this.offset = offset;
+		this.color = color;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.width = readSint(reader);
+					break;
+				}
+				case 2: {
+					this.offset = readSint(reader);
+					break;
+				}
+				case 3: {
+					this.color = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.width !== undefined, this.offset !== undefined, this.color !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.VARINT, 1);
+			writeSint(writer, this.width!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.VARINT, 2);
+			writeSint(writer, this.offset!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			writeString(writer, this.color!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.width === undefined && this.offset === undefined && this.color === undefined;
+	}
+
+	reset(): void {
+		this.width = undefined;
+		this.offset = undefined;
+		this.color = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 264);
+		return;
+	}
+}
+
+export class BorderStates implements Writeable, Readable {
+	public initial?: Border;
+
+	public hovered?: Border;
+
+	public active?: Border;
+
+	public focused?: Border;
+
+	constructor(
+		initial: Border | undefined = undefined,
+		hovered: Border | undefined = undefined,
+		active: Border | undefined = undefined,
+		focused: Border | undefined = undefined
+	) {
+		this.initial = initial;
+		this.hovered = hovered;
+		this.active = active;
+		this.focused = focused;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.initial = new Border();
+					this.initial.read(reader);
+					break;
+				}
+				case 2: {
+					this.hovered = new Border();
+					this.hovered.read(reader);
+					break;
+				}
+				case 3: {
+					this.active = new Border();
+					this.active.read(reader);
+					break;
+				}
+				case 4: {
+					this.focused = new Border();
+					this.focused.read(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.initial !== undefined && !this.initial.isZero(),
+			this.hovered !== undefined && !this.hovered.isZero(),
+			this.active !== undefined && !this.active.isZero(),
+			this.focused !== undefined && !this.focused.isZero(),
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.RECORD, 1);
+			this.initial!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.RECORD, 2);
+			this.hovered!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.RECORD, 3);
+			this.active!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.RECORD, 4);
+			this.focused!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			(this.initial === undefined || this.initial.isZero()) &&
+			(this.hovered === undefined || this.hovered.isZero()) &&
+			(this.active === undefined || this.active.isZero()) &&
+			(this.focused === undefined || this.focused.isZero())
+		);
+	}
+
+	reset(): void {
+		this.initial = undefined;
+		this.hovered = undefined;
+		this.active = undefined;
+		this.focused = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 265);
+		return;
+	}
+}
+
+export class OutlineStates implements Writeable, Readable {
+	public initial?: Outline;
+
+	public hovered?: Outline;
+
+	public active?: Outline;
+
+	public focused?: Outline;
+
+	constructor(
+		initial: Outline | undefined = undefined,
+		hovered: Outline | undefined = undefined,
+		active: Outline | undefined = undefined,
+		focused: Outline | undefined = undefined
+	) {
+		this.initial = initial;
+		this.hovered = hovered;
+		this.active = active;
+		this.focused = focused;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.initial = new Outline();
+					this.initial.read(reader);
+					break;
+				}
+				case 2: {
+					this.hovered = new Outline();
+					this.hovered.read(reader);
+					break;
+				}
+				case 3: {
+					this.active = new Outline();
+					this.active.read(reader);
+					break;
+				}
+				case 4: {
+					this.focused = new Outline();
+					this.focused.read(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.initial !== undefined && !this.initial.isZero(),
+			this.hovered !== undefined && !this.hovered.isZero(),
+			this.active !== undefined && !this.active.isZero(),
+			this.focused !== undefined && !this.focused.isZero(),
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.RECORD, 1);
+			this.initial!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.RECORD, 2);
+			this.hovered!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.RECORD, 3);
+			this.active!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.RECORD, 4);
+			this.focused!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			(this.initial === undefined || this.initial.isZero()) &&
+			(this.hovered === undefined || this.hovered.isZero()) &&
+			(this.active === undefined || this.active.isZero()) &&
+			(this.focused === undefined || this.focused.isZero())
+		);
+	}
+
+	reset(): void {
+		this.initial = undefined;
+		this.hovered = undefined;
+		this.active = undefined;
+		this.focused = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 266);
+		return;
+	}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -21599,6 +21849,21 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 263: {
 			const v = new SplitView();
+			v.read(src);
+			return v;
+		}
+		case 264: {
+			const v = new Outline();
+			v.read(src);
+			return v;
+		}
+		case 265: {
+			const v = new BorderStates();
+			v.read(src);
+			return v;
+		}
+		case 266: {
+			const v = new OutlineStates();
 			v.read(src);
 			return v;
 		}

@@ -34,7 +34,7 @@
     },
     "8": {
       "name": "Border",
-      "type": "Border"
+      "type": "BorderStates"
     },
     "9": {
       "name": "Font",
@@ -49,77 +49,69 @@
       "type": "ColorStates"
     },
     "12": {
-      "name": "HoveredBorder",
-      "type": "Border"
+      "name": "Outline",
+      "type": "OutlineStates"
     },
     "13": {
-      "name": "PressedBorder",
-      "type": "Border"
-    },
-    "14": {
-      "name": "FocusedBorder",
-      "type": "Border"
-    },
-    "15": {
       "name": "Wrap",
       "type": "Bool"
     },
-    "16": {
+    "14": {
       "name": "StylePreset",
       "type": "StylePreset"
     },
-    "17": {
+    "15": {
       "name": "Position",
       "type": "Position"
     },
-    "18": {
+    "16": {
       "name": "Disabled",
       "type": "Bool"
     },
-    "19": {
+    "17": {
       "name": "Invisible",
       "type": "Bool"
     },
-    "20": {
+    "18": {
       "doc": "Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.",
       "name": "Id",
       "type": "Str"
     },
-    "21": {
+    "19": {
       "name": "TextColor",
       "type": "Color"
     },
-    "22": {
+    "20": {
       "name": "NoClip",
       "type": "Bool"
     },
-    "23": {
+    "21": {
       "name": "Animation",
       "type": "Animation"
     },
-    "24": {
+    "22": {
       "name": "Transformation",
       "type": "Transformation"
     },
-    "25": {
+    "23": {
       "doc": "Opacity is an integer between [0..100]% which represents the alpha channel. 1 means fully transparent and 0 means fully visible.",
       "name": "Opacity",
       "type": "Uint"
     },
-    "26": {
+    "24": {
       "name": "Background",
       "type": "Background",
       "pointer": true
     },
-    "27": {
+    "25": {
       "name": "Url",
       "type": "URI"
     },
-    "28": {
+    "26": {
       "name": "Target",
       "type": "Str"
     },
-    "29": {
+    "27": {
       "name": "Orientation",
       "type": "Orientation"
     }

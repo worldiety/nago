@@ -67,28 +67,40 @@ func main() {
 			})
 
 			return ui.VStack(
-				dropdown.Dropdown("Default (disabled)", selectOptions, personState.Get()).InputValue(personState).Disabled(true).Style(ui.TextFieldReduced),
-				dropdown.Dropdown("Styled (disabled)", selectOptions, personState.Get()).InputValue(personState).StyledDropdown(true).Disabled(true).Style(ui.TextFieldReduced),
-				dropdown.Dropdown("Default", selectOptions, personState.Get()).InputValue(personState).Style(ui.TextFieldReduced),
-				dropdown.Dropdown("Styled", selectOptions, personState.Get()).InputValue(personState).StyledDropdown(true).Style(ui.TextFieldReduced),
-				ui.PrimaryButton(func() {
-					if wnd.Info().ColorScheme == core.Light {
-						wnd.SetColorScheme(core.Dark)
-					} else {
-						wnd.SetColorScheme(core.Light)
-					}
-				}).Title("Toggle theme"),
-				ui.PrimaryButton(func() {
-					fmt.Println(personState)
-				}).Title("print selected").Enabled(len(personState.Get()) > 0),
-				ui.SecondaryButton(func() {
-					wnd.Navigation().ForwardTo("picker-drop-in", nil)
-				}).Title("show picker-drop-in api"),
-			).
-				Alignment(ui.Top).
-				Gap(ui.L16).
-				Padding(ui.Padding{}.All(ui.L16)).
-				Frame(ui.Frame{}.MatchScreen())
+				ui.Stack(
+					ui.VStack(
+						dropdown.Dropdown("Default (disabled)", selectOptions, personState.Get()).InputValue(personState).Disabled(true),
+						dropdown.Dropdown("Styled (disabled)", selectOptions, personState.Get()).InputValue(personState).StyledDropdown(true).Disabled(true),
+						dropdown.Dropdown("Default", selectOptions, personState.Get()).InputValue(personState),
+						dropdown.Dropdown("Styled", selectOptions, personState.Get()).InputValue(personState).StyledDropdown(true),
+						dropdown.Dropdown("Styled mit Suche", selectOptions, personState.Get()).InputValue(personState).StyledDropdown(true).Searchable(true),
+						dropdown.Dropdown("Styled mit Info", selectOptions, personState.Get()).InputValue(personState).StyledDropdown(true).DropdownInfo("Personen"),
+					).Gap(ui.L16).NoClip(true),
+					ui.VStack(
+						dropdown.Dropdown("Default (disabled)", selectOptions, personState.Get()).InputValue(personState).Disabled(true).Style(ui.TextFieldReduced),
+						dropdown.Dropdown("Styled (disabled)", selectOptions, personState.Get()).InputValue(personState).StyledDropdown(true).Disabled(true).Style(ui.TextFieldReduced),
+						dropdown.Dropdown("Default", selectOptions, personState.Get()).InputValue(personState).Style(ui.TextFieldReduced),
+						dropdown.Dropdown("Styled", selectOptions, personState.Get()).InputValue(personState).StyledDropdown(true).Style(ui.TextFieldReduced),
+						dropdown.Dropdown("Styled mit Suche", selectOptions, personState.Get()).InputValue(personState).StyledDropdown(true).Searchable(true).Style(ui.TextFieldReduced),
+						dropdown.Dropdown("Styled mit Info", selectOptions, personState.Get()).InputValue(personState).StyledDropdown(true).DropdownInfo("Personen").Style(ui.TextFieldReduced),
+					).Gap(ui.L16).NoClip(true),
+				).Gap(ui.L64).NoClip(true),
+				ui.Stack(
+					ui.PrimaryButton(func() {
+						if wnd.Info().ColorScheme == core.Light {
+							wnd.SetColorScheme(core.Dark)
+						} else {
+							wnd.SetColorScheme(core.Light)
+						}
+					}).Title("Toggle theme"),
+					ui.PrimaryButton(func() {
+						fmt.Println(personState)
+					}).Title("print selected").Enabled(len(personState.Get()) > 0),
+					ui.SecondaryButton(func() {
+						wnd.Navigation().ForwardTo("picker-drop-in", nil)
+					}).Title("show picker-drop-in api"),
+				).Gap(ui.L16).Padding(ui.Padding{Top: ui.L32}).Border(ui.Border{TopWidth: ui.L1, TopColor: ui.M5}),
+			).Gap(ui.L32).Frame(ui.Frame{}.MatchScreen())
 		})
 
 		cfg.RootView("picker-drop-in", func(wnd core.Window) core.View {
