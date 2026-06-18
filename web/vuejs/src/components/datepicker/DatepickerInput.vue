@@ -13,6 +13,7 @@
 						class="input-day arrows-none"
 						:aria-label="rangeMode ? 'Startdatum Tag auswählen' : 'Datum Tag auswählen'"
 						onfocus="this.select()"
+						:disabled="disabled"
 						@input="onInputInput"
 						@blur="onInputBlur"
 						@click.stop
@@ -27,6 +28,7 @@
 						class="input-month arrows-none"
 						:aria-label="rangeMode ? 'Startdatum Monat auswählen' : 'Datum Monat auswählen'"
 						onfocus="this.select()"
+						:disabled="disabled"
 						@input="onInputInput"
 						@blur="onInputBlur"
 						@click.stop
@@ -41,6 +43,7 @@
 						class="input-year arrows-none"
 						:aria-label="rangeMode ? 'Startdatum Jahr eingeben' : 'Datum Jahr eingeben'"
 						onfocus="this.select()"
+						:disabled="disabled"
 						@input="onInputInput"
 						@blur="onInputBlur"
 						@click.stop
@@ -105,6 +108,7 @@
 				tabindex="0"
 				role="button"
 				:aria-label="datepickerCalendarAriaLabel"
+				:disabled="disabled"
 				@click="$emit('showDatepicker')"
 				@keydown.enter="$emit('showDatepicker')"
 			>
