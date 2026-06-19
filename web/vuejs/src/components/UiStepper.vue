@@ -90,7 +90,8 @@ const stepperContainerStyles = computed<string>(() => {
 
 const stepperStyles = computed<string>(() => {
 	if (!props.ui.steps) return '';
-	if (isVertical.value) return `grid-template-rows: auto repeat(${props.ui.steps.value.length - 1}, minmax(0, 1fr)) auto;`;
+	if (isVertical.value)
+		return `grid-template-rows: auto repeat(${props.ui.steps.value.length - 1}, minmax(0, 1fr)) auto;`;
 	return `grid-template-columns: repeat(${props.ui.steps.value.length + 1}, minmax(0, 1fr));`;
 });
 
