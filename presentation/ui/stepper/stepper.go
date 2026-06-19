@@ -41,6 +41,7 @@ type TStepper struct {
 	lines                bool             // defines whether to display lines in simple and simple list layouts
 }
 
+// Stepper creates a new stepper with the given steps
 func Stepper(steps ...TStep) TStepper {
 	stepper := TStepper{
 		value:                0,
@@ -55,60 +56,72 @@ func Stepper(steps ...TStep) TStepper {
 	return stepper
 }
 
+// Value sets the current step index value
 func (c TStepper) Value(value int) TStepper {
 	c.value = value
 	return c
 }
 
+// InputValue sets a step index state, that will be used instead of the fixed value of the component
 func (c TStepper) InputValue(state *core.State[int]) TStepper {
 	c.inputValue = state
 	return c
 }
 
+// Layout sets a fixed layout for the stepper
 func (c TStepper) Layout(layout StepperLayout) TStepper {
 	c.layout = layout
 	return c
 }
 
+// Steps sets the steps of the stepper. Previously set steps will be overwritten
 func (c TStepper) Steps(steps ...TStep) TStepper {
 	c.steps = steps
 	return c
 }
 
+// SimpleTextPattern overwrites the default text pattern for the simple stepper layout. Use %d for the current step and another %d for the total number of steps
 func (c TStepper) SimpleTextPattern(pattern string) TStepper {
 	c.simpleTextPattern = pattern
 	return c
 }
 
+// CompletedTextPattern overwrites the default text pattern for completed simple steppers. Use %d for the total number of steps
 func (c TStepper) CompletedTextPattern(pattern string) TStepper {
 	c.completedTextPattern = pattern
 	return c
 }
 
+// Numbers defines whether to display step numbers in the stepper
 func (c TStepper) Numbers(b bool) TStepper {
 	c.numbers = b
 	return c
 }
 
+// Lines defines whether to display lines in the stepper with the simple or simple list layout
 func (c TStepper) Lines(b bool) TStepper {
 	c.lines = b
 	return c
 }
 
+// TStep is the component, that contains the content of a stepper step
 type TStep struct {
 	headline       string
 	supportingText string
 }
 
+// Step creates an empty step
 func Step() TStep {
 	return TStep{}
 }
 
+// Headline sets the headline/title of a step
 func (c TStep) Headline(headline string) TStep {
 	c.headline = headline
 	return c
 }
 
+// SupportingText sets the supporting text/subtitle of a step
 func (c TStep) SupportingText(text string) TStep {
 	c.supportingText = text
 	return c

@@ -32,6 +32,13 @@ func main() {
 			}
 
 			return ui.VStack(
+				ui.PrimaryButton(func() {
+					if wnd.Info().ColorScheme == core.Light {
+						wnd.SetColorScheme(core.Dark)
+					} else {
+						wnd.SetColorScheme(core.Light)
+					}
+				}).Title("Toggle theme"),
 				ui.Text("Aktueller Step: "+strconv.Itoa(state.Get()+1)),
 				stepper.Stepper(
 					stepper.Step().Headline("Schritt 1").SupportingText("Einkaufsliste"),

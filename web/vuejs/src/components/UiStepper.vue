@@ -1,5 +1,5 @@
 <template>
-	<div class="stepper-container" :aria-label="ariaLabelStepper">
+	<div class="stepper-container" :aria-label="ariaLabelStepper" :style="stepperContainerStyles">
 		<div v-if="isSimple" class="simple-text">
 			<template v-if="(ui.value ?? 0) < (ui.steps?.value.length ?? 0)">
 				{{ ui.simpleText }}
@@ -19,8 +19,11 @@
 				'no-numbers': !ui.numbers,
 				'no-lines': !ui.lines,
 			}"
-			:style="`grid-template-columns: repeat(${ui.steps.value.length - 1}, minmax(0, 1fr));`"
+			:style="stepperStyles"
 		>
+			<div>
+				<!-- empty space in front of first step -->
+			</div>
 			<template v-for="(step, index) in ui.steps.value" :key="`step_${index}`">
 				<div
 					class="step"
@@ -45,7 +48,7 @@
 						</div>
 					</div>
 					<div v-if="index < ui.steps.value.length - 1" class="line" :style="lineStyles"></div>
-					<div v-if="index < ui.steps.value.length - 1" class="line-active" :style="lineStyles"></div>
+					<div v-if="index < ui.steps.value.length - 1" class="line-active" :style="activeLineStyles"></div>
 				</div>
 			</template>
 		</div>
@@ -66,6 +69,9 @@ const { t } = useI18n();
 
 const stepper = ref<HTMLDivElement>();
 const lineLength = ref(0);
+const resizing = ref(false);
+const resizingTimeout = ref();
+const transitionDuration = computed<number>(() => (resizing.value ? 0 : 200));
 
 const isHorizontal = computed<boolean>(() => props.ui.layout === StepperLayoutValues.StepperLayoutHorizontal);
 const isVertical = computed<boolean>(() => props.ui.layout === StepperLayoutValues.StepperLayoutVertical);
@@ -78,6 +84,16 @@ const ariaLabelStepper = computed<string>(() => {
 	return t('stepper.aria.progress', { current: (props.ui.value ?? 0) + 1, total: props.ui.steps.value.length });
 });
 
+const stepperContainerStyles = computed<string>(() => {
+	return `padding-left: ${bubbleSize.value / 2}px; padding-right: ${bubbleSize.value / 2}px;`;
+});
+
+const stepperStyles = computed<string>(() => {
+	if (!props.ui.steps) return '';
+	if (isVertical.value) return `grid-template-rows: auto repeat(${props.ui.steps.value.length - 1}, minmax(0, 1fr)) auto;`;
+	return `grid-template-columns: repeat(${props.ui.steps.value.length + 1}, minmax(0, 1fr));`;
+});
+
 const stepStyles = computed<string>(() => {
 	if (isHorizontal.value || isSimple.value) return `min-width: ${stepSize.value}px;`;
 	if (isVertical.value || isSimpleList.value) return `min-height: ${stepSize.value}px;`;
@@ -86,7 +102,7 @@ const stepStyles = computed<string>(() => {
 });
 
 const bubbleStyles = computed<string>(() => {
-	let styles = `width: ${bubbleSize.value}px; height: ${bubbleSize.value}px;`;
+	let styles = `width: ${bubbleSize.value}px; height: ${bubbleSize.value}px; transition-duration: ${transitionDuration.value}ms;`;
 	if (isHorizontal.value || isSimple.value) {
 		styles += ` transform: translateX(-50%);`;
 	}
@@ -94,16 +110,19 @@ const bubbleStyles = computed<string>(() => {
 });
 
 const contentStyles = computed<string>(() => {
-	if (isHorizontal.value || isSimple.value) return '';
+	let styles = `transition-duration: ${transitionDuration.value}ms;`;
+	if (isHorizontal.value || isSimple.value) return styles;
 
-	return `top: ${bubbleSize.value / 2}px;`;
+	styles += ` top: ${bubbleSize.value / 2}px;`;
+
+	return styles;
 });
 
 // line styles contain tiny offsets to prevent render errors
 const lineStyles = computed<string>(() => {
 	let styles;
 	if (isVertical.value || isSimpleList.value) {
-		styles = `height: ${lineLength.value + 2}px;`;
+		styles = `height: ${lineLength.value + 2}px; transform: translate(-50%, ${-bubbleSize.value / 2}px);`;
 		if (bubbleSize.value) styles += ` left: ${bubbleSize.value / 2}px; top: ${bubbleSize.value - 1}px;`;
 		return styles;
 	}
@@ -113,8 +132,12 @@ const lineStyles = computed<string>(() => {
 	return styles;
 });
 
+const activeLineStyles = computed<string>(() => {
+	return `transition-duration: ${transitionDuration.value}ms; ${lineStyles.value}`;
+});
+
 const stepSize = computed<number>(() => {
-	if (isHorizontal.value || isVertical.value) return 130;
+	if (isHorizontal.value || isVertical.value) return 100;
 	if (isSimple.value) return 20;
 	if (isSimpleList.value) return 30;
 
@@ -141,14 +164,21 @@ function calcLineLength() {
 	else lineLength.value = step.clientWidth - bubble.clientWidth;
 }
 
+function onWindowResize() {
+	if (resizingTimeout.value) clearTimeout(resizingTimeout.value);
+	resizing.value = true;
+	resizingTimeout.value = setTimeout(() => (resizing.value = false), 50);
+	calcLineLength();
+}
+
 onMounted(() => {
 	calcLineLength();
-	window.addEventListener('resize', calcLineLength);
+	window.addEventListener('resize', onWindowResize);
 });
 </script>
 <style scoped>
 .stepper-container {
-	@apply flex justify-center items-center gap-8;
+	@apply flex justify-center items-center gap-4;
 
 	.stepper {
 		@apply grid relative;
@@ -159,7 +189,7 @@ onMounted(() => {
 			.bubble {
 				@apply relative mb-2 flex justify-center items-center rounded-full text-lg z-[1];
 				@apply outline outline-2 -outline-offset-2 outline-current;
-				@apply text-ST0 duration-200;
+				@apply text-SI0;
 
 				svg {
 					@apply hidden;
@@ -167,7 +197,7 @@ onMounted(() => {
 			}
 
 			.content {
-				@apply pr-4 text-ST0 duration-200 -translate-x-4 flex flex-col gap-1;
+				@apply pr-4 text-SI0 -translate-x-4 flex flex-col gap-1;
 
 				.title {
 					@apply font-semibold leading-none;
@@ -184,15 +214,7 @@ onMounted(() => {
 			}
 
 			.line {
-				@apply bg-ST0;
-			}
-
-			.line-active {
-				@apply duration-200;
-			}
-
-			&:last-child {
-				@apply absolute left-full w-max;
+				@apply bg-SI0;
 			}
 
 			&.active {
@@ -226,17 +248,17 @@ onMounted(() => {
 
 		&.vertical,
 		&.simple-list {
-			@apply !grid-cols-1 mb-8;
+			@apply !grid-cols-1;
 
 			.step {
 				@apply flex-row gap-4;
 
 				.bubble {
-					@apply mb-0;
+					@apply mb-0 -translate-y-1/2;
 				}
 
 				.content {
-					@apply absolute left-full -translate-y-1/2 translate-x-0 pr-0 pl-3;
+					@apply justify-center -translate-y-1/2 translate-x-0 pr-0;
 
 					.title,
 					.subtitle {
@@ -246,17 +268,17 @@ onMounted(() => {
 
 				.line,
 				.line-active {
-					@apply -translate-x-1/2 translate-y-0 w-0.5;
-				}
-
-				&:last-child {
-					@apply left-auto top-full;
+					@apply w-0.5;
 				}
 
 				&:not(.complete) {
 					.line-active {
 						@apply !h-0;
 					}
+				}
+
+				&:last-child {
+					@apply !min-h-0;
 				}
 			}
 		}
