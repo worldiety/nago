@@ -16,15 +16,6 @@
 			:disabled="props.ui.disabled"
 		>
 			<div class="relative">
-				<!-- Leading view -->
-				<div
-					v-if="props.ui.leading"
-					ref="leadingElement"
-					class="absolute inset-y-0 left-0 pl-2 pr-1 flex items-center pointer-events-none"
-				>
-					<UiGeneric :ui="props.ui.leading" />
-				</div>
-
 				<SelectORA
 					v-if="ui.oRADropdown"
 					v-model="selectedValue"
@@ -32,14 +23,19 @@
 					:ui="ui"
 					:style="inputStyle"
 				/>
-				<SelectDefault v-else v-model="selectedValue" :class="styleClass" :ui="ui" :style="inputStyle" />
+				<SelectDefault
+					v-else
+					v-model="selectedValue"
+					:class="styleClass"
+					:ui="ui"
+					:style="inputStyle"
+				/>
 			</div>
 		</InputWrapper>
 	</div>
 </template>
 <script lang="ts" setup>
-import { computed, ref, useTemplateRef, watch } from 'vue';
-import UiGeneric from '@/components/UiGeneric.vue';
+import { computed, ref, watch } from 'vue';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import { frameCSS } from '@/components/shared/frame';
 import { inputWrapperStyleFrom } from '@/components/shared/inputWrapperStyle';
@@ -55,7 +51,6 @@ const props = defineProps<{
 }>();
 
 const serviceAdapter = useServiceAdapter();
-const leadingElement = useTemplateRef('leadingElement');
 const selectedValue = ref(props.ui.value);
 
 const styleClass = computed<string>(() => {
@@ -94,11 +89,7 @@ const inputStyle = computed<string>(() => {
 		return styles.join(';');
 	}
 
-	const leadingElementWidth = leadingElement.value?.offsetWidth;
-	const paddingLeft = leadingElementWidth ? `${leadingElementWidth}px` : 'auto';
-
-	styles.push('padding-left:' + paddingLeft);
-	return styles.join(';');
+	return '';
 });
 
 watch(
