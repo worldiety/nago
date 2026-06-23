@@ -8,13 +8,17 @@
 -->
 <template>
 	<div class="select-default">
+		<div v-if="props.ui.leading" ref="leading" class="leading">
+			<UiGeneric :ui="props.ui.leading" />
+		</div>
+
 		<select
 			:id="id"
 			v-model="selectedValue"
 			:autocomplete="ui.autocomplete"
 			class="input-field !pr-8 cursor-pointer"
 			:disabled="props.ui.disabled"
-			:style="$attrs.style as string"
+			:style="{ paddingLeft: paddingLeft ? `${paddingLeft}px` : undefined }"
 		>
 			<template v-if="props.ui.options">
 				<option
@@ -33,9 +37,10 @@
 	</div>
 </template>
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue';
+import { computed, ref, useTemplateRef, watch } from 'vue';
 import type { Select } from '@/shared/proto/nprotoc_gen';
 import ArrowDownIcon from '@/assets/svg/arrowDown.svg';
+import UiGeneric from '@/components/UiGeneric.vue';
 
 interface Props {
 	ui: Select;
@@ -48,7 +53,12 @@ interface Emits {
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
+const leading = useTemplateRef('leading');
 const selectedValue = ref(props.ui.value);
+
+const paddingLeft = computed<number | undefined>(() => {
+	return leading.value?.offsetWidth;
+});
 
 const id = computed<string>(() => {
 	if (props.ui.id) {
@@ -74,6 +84,10 @@ watch(selectedValue, () => {
 <style scoped>
 .select-default {
 	@apply relative;
+
+	.leading {
+		@apply absolute inset-y-0 left-0 pl-2 pr-1 flex items-center pointer-events-none;
+	}
 
 	.chevron {
 		@apply absolute inset-y-0 right-0 pr-3 pl-1 flex items-center pointer-events-none;

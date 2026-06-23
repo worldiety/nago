@@ -16,12 +16,16 @@
 			flipped: isFlipped,
 		}"
 	>
+		<div v-if="props.ui.leading" ref="leading" class="leading">
+			<UiGeneric :ui="props.ui.leading" />
+		</div>
+
 		<input
 			:id="id"
 			:value="valueLabel"
 			class="input-field !pr-8 cursor-pointer"
 			:disabled="props.ui.disabled"
-			:style="$attrs.style as string"
+			:style="{ paddingLeft: paddingLeft ? `${paddingLeft}px` : undefined }"
 			role="combobox"
 			readonly
 			@click="toggleDropdown(undefined)"
@@ -30,7 +34,12 @@
 			<ArrowDownIcon class="size-3" />
 		</div>
 
-		<div ref="dropdown" class="dropdown" :class="{ visible: dropdownVisible }" :style="floatingStyles">
+		<div
+			ref="dropdown"
+			class="dropdown"
+			:class="{ visible: dropdownVisible }"
+			:style="{ ...floatingStyles, minWidth: `${dropdownMinWidth}px` }"
+		>
 			<div v-if="ui.dropdownInfo || ui.searchable" class="adds">
 				<div v-if="ui.dropdownInfo" class="info">
 					{{ ui.dropdownInfo }}
@@ -65,13 +74,14 @@
 	</div>
 </template>
 <script lang="ts" setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
 import { Select, SelectOption, TextFieldStyleValues } from '@/shared/proto/nprotoc_gen';
 import { autoUpdate, flip, Middleware, offset, shift, useFloating } from '@floating-ui/vue';
 import ArrowDownIcon from '@/assets/svg/arrowDown.svg';
 import MagnifierIcon from '@/assets/svg/magnifier.svg';
 import { InputWrapperStyle } from '@/components/shared/inputWrapperStyle';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
+import UiGeneric from '@/components/UiGeneric.vue';
 
 interface Props {
 	ui: Select;
@@ -85,13 +95,16 @@ const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const container = ref();
+const leading = useTemplateRef('leading');
 const dropdown = ref();
 const options = ref();
 const dropdownVisible = ref(false);
 const filter = ref('');
+const dropdownMinWidth = ref<number>();
 
 const { floatingStyles, middlewareData } = useFloating(container, dropdown, {
 	placement: 'bottom-start',
+	strategy: 'fixed',
 	whileElementsMounted: autoUpdate,
 	middleware: [
 		offset(props.ui.style === TextFieldStyleValues.TextFieldReduced ? 0 : 8),
@@ -111,6 +124,10 @@ const isShifted = computed<boolean>(() => {
 const valueLabel = computed<string>(() => {
 	if (!props.ui.value || !props.ui.options?.value.length) return '';
 	return props.ui.options.value.find((o) => o.value === props.ui.value)?.label || '';
+});
+
+const paddingLeft = computed<number | undefined>(() => {
+	return leading.value?.offsetWidth;
 });
 
 const id = computed<string>(() => {
@@ -152,7 +169,22 @@ function resetDropdown() {
 	if (options.value) (options.value as HTMLElement).scrollTo(0, 0);
 }
 
-function onWindowClick(event: MouseEvent) {
+function calcDropdownMinWidth() {
+	if (!container.value) return;
+
+	let minWidth = container.value.clientWidth;
+
+	if (props.ui.style === TextFieldStyleValues.TextFieldReduced) {
+		const dropdown = container.value.querySelector('.dropdown');
+		if (!dropdown) return minWidth;
+		const negativeMargin = parseFloat(getComputedStyle(dropdown).marginLeft.replaceAll('px', ''));
+		minWidth += 2 * Math.abs(negativeMargin);
+	}
+
+	dropdownMinWidth.value = minWidth;
+}
+
+function onWindowPointerDown(event: MouseEvent) {
 	if (isTargetInSelect(event.target as HTMLElement)) return;
 	toggleDropdown(false);
 }
@@ -174,18 +206,26 @@ function onWindowBlur() {
 }
 
 onMounted(() => {
-	window.addEventListener('click', onWindowClick);
+	calcDropdownMinWidth();
+	const observer = new ResizeObserver(calcDropdownMinWidth);
+	observer.observe(container.value);
+
+	window.addEventListener('pointerdown', onWindowPointerDown);
 	window.addEventListener('blur', onWindowBlur);
 });
 
 onUnmounted(() => {
-	window.removeEventListener('click', onWindowClick);
+	window.removeEventListener('pointerdown', onWindowPointerDown);
 	window.removeEventListener('blur', onWindowBlur);
 });
 </script>
 <style scoped>
 .select-ora {
 	@apply relative;
+
+	.leading {
+		@apply absolute inset-y-0 left-0 pl-2 pr-1 flex items-center pointer-events-none;
+	}
 
 	input {
 		&:hover + .chevron {
@@ -198,7 +238,7 @@ onUnmounted(() => {
 	}
 
 	.dropdown {
-		@apply hidden min-w-full max-h-80 rounded-lg bg-M2 px-1.5 z-10 shadow-md overscroll-none;
+		@apply hidden max-h-80 rounded-lg bg-M2 px-1.5 z-10 shadow-md overscroll-none;
 
 		.adds {
 			@apply flex flex-col gap-px px-1.5 pt-1.5;
@@ -244,6 +284,10 @@ onUnmounted(() => {
 	}
 
 	&.active {
+		.leading {
+			@apply z-20;
+		}
+
 		.chevron {
 			@apply -scale-y-100;
 		}
@@ -283,7 +327,7 @@ onUnmounted(() => {
 
 		&.flipped {
 			& > input {
-				@apply !border-b-transparent border-t;
+				@apply !border-b-transparent border-t -mt-px;
 			}
 
 			.dropdown {
