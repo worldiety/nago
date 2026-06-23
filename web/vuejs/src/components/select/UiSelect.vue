@@ -23,13 +23,7 @@
 					:ui="ui"
 					:style="inputStyle"
 				/>
-				<SelectDefault
-					v-else
-					v-model="selectedValue"
-					:class="styleClass"
-					:ui="ui"
-					:style="inputStyle"
-				/>
+				<SelectDefault v-else v-model="selectedValue" :class="styleClass" :ui="ui" :style="inputStyle" />
 			</div>
 		</InputWrapper>
 	</div>
