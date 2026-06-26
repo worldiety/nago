@@ -8,478 +8,303 @@
 -->
 
 <template>
-	<div>
-		<span v-if="props.ui.label.v" class="block mb-2 text-sm">{{ props.ui.label.v }}</span>
-
-		<div
-			class="slider"
-			:class="{
-				'slider-disabled': props.ui.disabled.v,
-				'mb-6': props.ui.showLabel.v,
-			}"
-			:style="`--slider-thumb-start-offset: ${sliderThumbStartOffset}px; --slider-thumb-end-offset: ${sliderThumbEndOffset}px;`"
+	<div :style="frameStyles">
+		<InputWrapper
+			:wrapper-style="InputWrapperStyle.BASIC"
+			:label="ui.label"
+			:error="ui.errorText"
+			:help="ui.supportingText"
+			:disabled="ui.disabled"
 		>
-			<div class="relative flex items-center h-4">
-				<!-- Slider track -->
-				<div ref="sliderTrack" class="slider-track w-full">
-					<!-- Slider tick marks -->
-					<template v-if="props.ui.showTickMarks.v">
+			<div
+				class="slider"
+				:class="{ disabled: ui.disabled, error: ui.errorText }"
+				:aria-valuemin="(ui.min ?? 0) + (ui.unit ?? '')"
+				:aria-valuemax="(ui.max ?? 0) + (ui.unit ?? '')"
+				:aria-valuenow="value + (ui.unit ?? '')"
+				role="slider"
+			>
+				<div ref="bar" class="bar">
+					<template v-if="ui.showMarkers">
 						<div
-							v-for="(sliderTickMark, index) in sliderTickMarks"
-							:key="index"
-							class="slider-tick-mark"
-							:class="{ 'slider-tick-mark-in-range': sliderTickMark.withinRange }"
-							:style="`--slider-tick-mark-offset: ${sliderTickMark.offset}px;`"
+							v-for="i in stepsBetween"
+							:key="`slider_step_${i}`"
+							class="step"
+							:class="{ active: value >= (ui.min ?? 0) + step * i }"
+							:style="`left: ${i * stepWidth * 100}%;`"
 						></div>
 					</template>
-				</div>
-				<!-- Left slider thumb -->
-				<div
-					v-if="props.ui.rangeMode.v"
-					class="slider-thumb slider-thumb-start absolute left-0 size-4 rounded-full bg-primary"
-					:class="{
-						'slider-thumb-dragging': startDragging,
-						'slider-thumb-uninitialized': !props.ui.startInitialized.v,
-						'z-10': !startDragging,
-						'z-20': startDragging,
-					}"
-					:tabindex="props.ui.disabled.v ? '-1' : '0'"
-					@mousedown="startSliderThumbPressed"
-					@touchstart="startSliderThumbPressed"
-					@keydown.left="decreaseStartSliderValue"
-					@keydown.right="increaseStartSliderValue"
-				>
-					<div v-if="props.ui.showLabel.v && props.ui.startInitialized.v" class="slider-thumb-label">
-						<span>{{ getSliderLabel(sliderStartValue + scaleOffset) }}</span>
-					</div>
-				</div>
-				<!-- Slider thumb connector -->
-				<div
-					v-if="sliderThumbConnectorVisible"
-					class="slider-thumb-connector absolute top-1/2 border-b border-b-primary darkmode:border-b-primary z-0"
-				></div>
-				<!-- Right slider thumb -->
-				<div
-					class="slider-thumb slider-thumb-end absolute left-0 size-4 rounded-full bg-primary"
-					:class="{
-						'slider-thumb-dragging': endDragging,
-						'slider-thumb-uninitialized': !props.ui.endInitialized.v,
-						'z-10': !endDragging,
-						'z-20': endDragging,
-					}"
-					:tabindex="props.ui.disabled.v ? '-1' : '0'"
-					@mousedown="endSliderThumbPressed"
-					@touchstart="endSliderThumbPressed"
-					@keydown.left="decreaseEndSliderValue"
-					@keydown.right="increaseEndSliderValue"
-				>
+					<div class="bar-left" :style="barLeftStyles"></div>
 					<div
-						v-if="props.ui.showLabel.v && props.ui.endInitialized.v"
-						class="slider-thumb-label"
-						:class="endDragging ? 'z-10' : 'z-0'"
+						class="grabber"
+						:style="grabberStyles"
+						:class="{ dragging: isDragging }"
+						:tabindex="ui.disabled ? -1 : 0"
+						@pointerdown.prevent="onPointerDown"
+						@keydown.left="prevStep"
+						@keydown.right="nextStep"
 					>
-						<span>{{ getSliderLabel(sliderEndValue + scaleOffset) }}</span>
+						<span ref="grabber" class="dot"></span>
+						<span class="value"> {{ value }}{{ ui.unit }} </span>
 					</div>
+					<div class="bar-right" :style="barRightStyles"></div>
 				</div>
 			</div>
-		</div>
-
-		<!-- Error message has precedence over hints -->
-		<p v-if="props.ui.error.v" class="mt-2 text-sm text-red-600">{{ props.ui.error.v }}</p>
-		<p v-else-if="props.ui.hint.v" class="mt-2 text-sm text-gray-500">{{ props.ui.hint.v }}</p>
+		</InputWrapper>
 	</div>
 </template>
-
-<script setup lang="ts">
-import { computed, onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue';
+<script lang="ts" setup>
+import { computed, ref, onUnmounted, watch } from 'vue';
+import InputWrapper from '@/components/shared/InputWrapper.vue';
+import { frameCSS } from '@/components/shared/frame';
+import { InputWrapperStyle } from '@/components/shared/inputWrapperStyle';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
-import type { Slider } from '@/shared/protocol/ora/slider';
-
-interface SliderTickMark {
-	offset: number;
-	withinRange: boolean;
-}
+import { nextRID } from '@/eventhandling';
+import { Slider, UpdateStateValueRequested } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: Slider;
 }>();
 
 const serviceAdapter = useServiceAdapter();
-const sliderTrack = ref<HTMLElement | undefined>();
-const startDragging = ref<boolean>(false);
-const endDragging = ref<boolean>(false);
-const scaleOffset = ref<number>(roundValue(props.ui.min.v));
-const minRounded = ref<number>(0);
-const maxRounded = ref<number>(roundValue(props.ui.max.v - scaleOffset.value));
-const sliderStartValue = ref<number>(0);
-const sliderEndValue = ref<number>(0);
-const stepsizeRounded = ref<number>(roundValue(props.ui.stepsize.v));
-const sliderThumbStartOffset = ref<number>(0);
-const sliderThumbEndOffset = ref<number>(0);
-const sliderTickMarks = ref<SliderTickMark[]>([]);
 
-onBeforeMount(() => {
-	initializeBoundaries();
+const bar = ref<HTMLElement>();
+const grabber = ref<HTMLElement>();
+
+const step = ref(props.ui.step ?? 1);
+const value = ref(props.ui.value ?? 0);
+
+const isDragging = ref(false);
+let lastSnappedValue: number | null = null;
+
+const stepsBetween = computed<number>(() => {
+	const min = props.ui.min ?? 0;
+	const max = props.ui.max ?? 0;
+	return Math.floor((max - min) / step.value) - 1;
 });
 
-onMounted(() => {
-	initializeSliderThumbOffsets();
-
-	addEventListeners();
+const stepWidth = computed<number>(() => {
+	const min = props.ui.min ?? 0;
+	const max = props.ui.max ?? 0;
+	return step.value / (max - min);
 });
 
-onUnmounted(removeEventListeners);
+const frameStyles = computed<string>(() => {
+	const styles = frameCSS(props.ui.frame);
 
-watch(
-	() => props.ui.min.v,
-	(newValue) => {
-		scaleOffset.value = roundValue(newValue);
-		initializeBoundaries();
-		initializeSliderThumbOffsets();
-		submitSliderValues();
-	}
-);
-
-watch(
-	() => props.ui.max.v,
-	(newValue) => {
-		maxRounded.value = roundValue(newValue - scaleOffset.value);
-		initializeBoundaries();
-		initializeSliderThumbOffsets();
-		submitSliderValues();
-	}
-);
-
-watch(
-	() => props.ui.stepsize.v,
-	(newValue) => {
-		stepsizeRounded.value = roundValue(newValue);
-		initializeBoundaries();
-		initializeSliderThumbOffsets();
-		submitSliderValues();
-	}
-);
-
-watch(sliderThumbStartOffset, initializeSliderTickMarks);
-
-watch(sliderThumbEndOffset, initializeSliderTickMarks);
-
-watch(() => props.ui.endInitialized.v, initializeSliderTickMarks);
-
-watch(() => props.ui.startInitialized.v, initializeSliderTickMarks);
-
-const sliderThumbConnectorVisible = computed((): boolean => {
-	return (
-		props.ui.showLabel.v &&
-		((props.ui.startInitialized.v && props.ui.endInitialized.v) ||
-			(!props.ui.rangeMode.v && props.ui.endInitialized.v))
-	);
+	return styles.join(';');
 });
 
-function getSliderLabel(sliderValue: number): string {
-	return (
-		sliderValue.toLocaleString(undefined, {
-			minimumFractionDigits: 2,
-		}) + props.ui.labelSuffix.v
-	);
+const grabberStyles = computed<string>(() => {
+	return `left: ${valueRatio.value * 100}%;`;
+});
+
+const valueRatio = computed<number>(() => {
+	const min = props.ui.min ?? 0;
+	const max = props.ui.max ?? 0;
+	return (value.value - min) / (max - min);
+});
+
+const grabberWidth = computed<number>(() => {
+	if (!grabber.value) return 0;
+	return grabber.value.clientWidth;
+});
+
+const barLeftStyles = computed<string>(() => {
+	return `width: calc(${valueRatio.value * 100}% - ${grabberWidth.value / 2}px);`;
+});
+
+const barRightStyles = computed<string>(() => {
+	return `width: calc(${(1 - valueRatio.value) * 100}% - ${grabberWidth.value / 2}px);`;
+});
+
+function submitValue(value: number) {
+	serviceAdapter.sendEvent(new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), `${value}`));
 }
 
-function initializeBoundaries(): void {
-	const startValue = props.ui.rangeMode.v
-		? roundValue(props.ui.startValue.v - scaleOffset.value)
-		: roundValue(minRounded.value);
-	sliderStartValue.value = getDiscreteValue(startValue);
-	const endValue = roundValue(props.ui.endValue.v - scaleOffset.value);
-	sliderEndValue.value = getDiscreteValue(endValue);
-}
+function prevStep() {
+	if (props.ui.disabled || value.value === props.ui.min) return;
 
-function initializeSliderThumbOffsets(): void {
-	sliderThumbStartOffset.value = sliderValueToOffset(sliderStartValue.value);
-	sliderThumbEndOffset.value = sliderValueToOffset(sliderEndValue.value);
-}
-
-function initializeSliderTickMarks(): void {
-	const updatedSliderTickMarks: SliderTickMark[] = [];
-	const totalSteps = Math.floor((maxRounded.value - minRounded.value) / stepsizeRounded.value + 1);
-	for (let i = 0; i < totalSteps; i++) {
-		const tickMarkOffset = sliderValueToOffset(i * stepsizeRounded.value);
-		const withinRange =
-			props.ui.showLabel.v &&
-			props.ui.startInitialized.v &&
-			props.ui.endInitialized.v &&
-			sliderThumbStartOffset.value <= tickMarkOffset &&
-			tickMarkOffset <= sliderThumbEndOffset.value;
-		updatedSliderTickMarks.push({
-			offset: tickMarkOffset,
-			withinRange: withinRange,
-		});
+	const startVal = value.value ?? 0;
+	let prevVal = props.ui.min ?? 0;
+	while (prevVal + step.value < startVal) {
+		prevVal += step.value;
 	}
-	sliderTickMarks.value = updatedSliderTickMarks;
+
+	value.value = prevVal;
+	submitValue(prevVal);
 }
 
-function addEventListeners(): void {
-	document.addEventListener('mouseup', onMouseUp);
-	document.addEventListener('touchend', onMouseUp);
-	document.addEventListener('touchcancel', onMouseUp);
-	document.addEventListener('touchmove', onTouchMove);
-	document.addEventListener('mousemove', onMouseMove);
-	window.addEventListener('resize', initializeSliderThumbOffsets, { passive: true });
-}
+function nextStep() {
+	if (props.ui.disabled || value.value === props.ui.max) return;
 
-function removeEventListeners(): void {
-	document.removeEventListener('mouseup', onMouseUp);
-	document.removeEventListener('touchend', onMouseUp);
-	document.removeEventListener('touchcancel', onMouseUp);
-	document.removeEventListener('touchmove', onTouchMove);
-	document.removeEventListener('mousemove', onMouseMove);
-	window.removeEventListener('resize', initializeSliderThumbOffsets);
-}
-
-function onMouseUp(): void {
-	if (startDragging.value || endDragging.value) {
-		startDragging.value = false;
-		endDragging.value = false;
-		submitSliderValues();
+	const startVal = value.value ?? 0;
+	let nextVal = props.ui.min ?? 0;
+	while (!(nextVal > startVal)) {
+		nextVal += step.value;
 	}
+
+	value.value = nextVal;
+	submitValue(nextVal);
 }
 
-function onMouseMove(event: MouseEvent): void {
-	if (!sliderTrack.value || (!startDragging.value && !endDragging.value)) {
-		return;
-	}
-	handleSliderThumbDrag(event.x, sliderTrack.value.getBoundingClientRect().x, sliderTrack.value.offsetWidth);
+function snapToStep(clientX: number): number {
+	const rect = bar.value!.getBoundingClientRect();
+	const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+	const min = props.ui.min ?? 0;
+	const max = props.ui.max ?? 0;
+	const totalSteps = (max - min) / step.value;
+	const snappedStep = Math.round(ratio * totalSteps);
+	return parseFloat((min + snappedStep * step.value).toFixed(getDecimalPlacesByStepSize()));
 }
 
-function onTouchMove(event: TouchEvent): void {
-	const touchLocation = event.touches.item(0);
-	if (!touchLocation || !sliderTrack.value || (!startDragging.value && !endDragging.value)) {
-		return;
-	}
-	handleSliderThumbDrag(
-		touchLocation.clientX,
-		sliderTrack.value.getBoundingClientRect().x,
-		sliderTrack.value.offsetWidth
-	);
+function getDecimalPlacesByStepSize(): number {
+	const split = `${step.value}`.split('.');
+	if (split.length === 1) return 0;
+	return split[1].length;
 }
 
-/**
- * Maps a slider value to a pixel offset value for the corresponding slider thumb
- *
- * @param sliderValue The slider value to map
- */
-function sliderValueToOffset(sliderValue: number): number {
-	if (!sliderTrack.value) {
-		return 0;
-	}
-	const sliderValuePercentage = sliderValue / maxRounded.value;
-	return sliderTrack.value.offsetWidth * sliderValuePercentage;
-}
-
-/**
- * Maps a pixel offset value of a slider thumb to its corresponding slider value
- *
- * @param sliderThumbOffset The pixel offset value of a slider thumb to map
- */
-function offsetToSliderValue(sliderThumbOffset: number): number {
-	if (!sliderTrack.value) {
-		return 0;
-	}
-	const sliderOffsetPercentage = sliderThumbOffset / sliderTrack.value.offsetWidth;
-	const continuousValue = sliderOffsetPercentage * maxRounded.value;
-	return getDiscreteValue(continuousValue);
-}
-
-function getDiscreteValue(continuousValue: number): number {
-	let validValueBelow: number = minRounded.value;
-	for (let validValue = minRounded.value; validValue <= continuousValue; validValue += stepsizeRounded.value) {
-		validValueBelow = roundValue(validValue);
-	}
-	const validValueAbove = roundValue(validValueBelow + stepsizeRounded.value);
-	if (
-		validValueAbove > roundValue(props.ui.max.v - scaleOffset.value) ||
-		continuousValue - validValueBelow < validValueAbove - continuousValue
-	) {
-		return validValueBelow;
-	}
-	return validValueAbove;
-}
-
-function startSliderThumbPressed(): void {
-	if (!props.ui.disabled.v) {
-		startDragging.value = true;
+function onPointerMove(event: PointerEvent) {
+	const snapped = snapToStep(event.clientX);
+	if (snapped !== lastSnappedValue) {
+		lastSnappedValue = snapped;
+		value.value = snapped;
 	}
 }
 
-function endSliderThumbPressed(): void {
-	if (props.ui.disabled.v || !sliderTrack.value) {
-		return;
+function onPointerUp() {
+	if (lastSnappedValue !== null && lastSnappedValue !== (props.ui.value ?? 0)) {
+		submitValue(lastSnappedValue);
 	}
-	if (sliderThumbStartOffset.value === sliderTrack.value.offsetWidth) {
-		// Drag start slider thumb because of higher z-index of end slider thumb
-		startDragging.value = true;
-	} else {
-		endDragging.value = true;
+	isDragging.value = false;
+	document.removeEventListener('pointermove', onPointerMove);
+	document.removeEventListener('pointerup', onPointerUp);
+}
+
+function onPointerDown() {
+	if (props.ui.disabled) return;
+	isDragging.value = true;
+	lastSnappedValue = value.value ?? null;
+	document.addEventListener('pointermove', onPointerMove);
+	document.addEventListener('pointerup', onPointerUp);
+}
+
+onUnmounted(() => {
+	document.removeEventListener('pointermove', onPointerMove);
+	document.removeEventListener('pointerup', onPointerUp);
+});
+
+watch(
+	() => props.ui.value,
+	(nextValue) => {
+		value.value = nextValue ?? 0;
 	}
-}
-
-function handleSliderThumbDrag(mouseX: number, sliderTrackOffsetX: number, sliderTrackOffsetWidth: number): void {
-	if (startDragging.value) {
-		const continuousOffset = Math.max(0, Math.min(sliderThumbEndOffset.value, mouseX - sliderTrackOffsetX));
-		sliderStartValue.value = offsetToSliderValue(continuousOffset);
-		sliderThumbStartOffset.value = sliderValueToOffset(sliderStartValue.value);
-	} else if (endDragging.value) {
-		const continuousOffset = Math.max(
-			sliderThumbStartOffset.value,
-			Math.min(mouseX - sliderTrackOffsetX, sliderTrackOffsetWidth)
-		);
-		sliderEndValue.value = offsetToSliderValue(continuousOffset);
-		sliderThumbEndOffset.value = sliderValueToOffset(sliderEndValue.value);
-	}
-}
-
-function roundValue(value: number): number {
-	return Math.round(value * 100) / 100;
-}
-
-function submitSliderValues(): void {
-	serviceAdapter.setPropertiesAndCallFunctions(
-		[
-			{
-				...props.ui.startValue,
-				v: roundValue(sliderStartValue.value + scaleOffset.value),
-			},
-			{
-				...props.ui.endValue,
-				v: roundValue(sliderEndValue.value + scaleOffset.value),
-			},
-		],
-		[props.ui.onChanged]
-	);
-}
-
-function decreaseStartSliderValue(): void {
-	sliderStartValue.value = getDiscreteValue(sliderStartValue.value - stepsizeRounded.value);
-	sliderThumbStartOffset.value = sliderValueToOffset(sliderStartValue.value);
-	submitSliderValues();
-}
-
-function increaseStartSliderValue(): void {
-	sliderStartValue.value = Math.min(
-		getDiscreteValue(sliderStartValue.value + stepsizeRounded.value),
-		sliderEndValue.value
-	);
-	sliderThumbStartOffset.value = sliderValueToOffset(sliderStartValue.value);
-	submitSliderValues();
-}
-
-function decreaseEndSliderValue(): void {
-	sliderEndValue.value = Math.max(
-		getDiscreteValue(sliderEndValue.value - stepsizeRounded.value),
-		sliderStartValue.value
-	);
-	sliderThumbEndOffset.value = sliderValueToOffset(sliderEndValue.value);
-	submitSliderValues();
-}
-
-function increaseEndSliderValue(): void {
-	sliderEndValue.value = getDiscreteValue(sliderEndValue.value + stepsizeRounded.value);
-	sliderThumbEndOffset.value = sliderValueToOffset(sliderEndValue.value);
-	submitSliderValues();
-}
+);
 </script>
 
 <style scoped>
-.slider.slider-disabled .slider-thumb {
-	@apply bg-disabled-text;
-}
-
-.slider-track {
-	@apply relative border-b;
-}
-
-.slider.slider-disabled .slider-track {
-	@apply border-b-disabled-background;
-}
-
-.slider-tick-mark {
-	@apply absolute -top-[4px] border-l h-[9px];
-	left: var(--slider-tick-mark-offset);
-}
-
-.slider.slider-disabled .slider-tick-mark {
-	@apply border-l-disabled-background;
-}
-
-.slider:not(.slider-disabled) .slider-tick-mark.slider-tick-mark-in-range {
-	@apply border-l-primary;
-}
-
-.slider.slider-disabled .slider-tick-mark.slider-tick-mark-in-range {
-	@apply border-l-disabled-text;
-}
-
-.slider:not(.slider-disabled) .slider-thumb.slider-thumb-uninitialized {
-	@apply bg-black;
-}
-
-.slider:not(.slider-disabled) .slider-thumb.slider-thumb-uninitialized:hover,
-.slider:not(.slider-disabled) .slider-thumb.slider-thumb-uninitialized.slider-thumb-dragging {
-	@apply bg-primary;
-}
-
 .slider {
-	@apply rounded-full p-2 -mx-2;
-}
+	@apply pt-8 pb-4 min-w-32;
 
-.slider-thumb {
-	@apply select-none;
-}
+	.bar {
+		@apply relative w-full h-px;
 
-.slider-thumb:focus-visible:not(:hover) {
-	@apply outline-none outline-black outline-offset-2 ring-white ring-2;
-}
+		.bar-left {
+			@apply absolute left-0 top-0 h-full bg-I0;
+		}
 
-.slider:not(.slider-disabled) .slider-thumb:hover,
-.slider:not(.slider-disabled) .slider-thumb.slider-thumb-dragging {
-	@apply outline-none ring-8 ring-primary ring-opacity-15;
-}
+		.bar-right {
+			@apply absolute right-0 top-0 h-full bg-current;
+		}
 
-.slider:not(.slider-disabled) .slider-thumb.slider-thumb-dragging {
-	@apply ring-opacity-25;
-}
+		.step {
+			@apply absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-px h-1 bg-current z-0;
 
-.slider-thumb-start {
-	left: calc(var(--slider-thumb-start-offset) - 0.5rem);
-}
+			&.active {
+				@apply bg-I0;
+			}
+		}
 
-.slider-thumb-end {
-	left: calc(var(--slider-thumb-end-offset) - 0.5rem);
-}
+		.grabber {
+			@apply absolute top-1/2 -translate-x-1/2 -translate-y-1/2 size-8 !rounded-full flex justify-center items-center cursor-grab;
 
-.slider .slider-thumb-connector {
-	width: calc(var(--slider-thumb-end-offset) - var(--slider-thumb-start-offset));
-	left: calc(var(--slider-thumb-start-offset));
-}
+			.dot {
+				content: '';
+				@apply block size-3.5 rounded-full bg-I0;
+			}
 
-.slider.slider-disabled .slider-thumb-connector {
-	@apply border-b-disabled-text;
-}
+			.value {
+				@apply absolute left-1/2 bottom-full -translate-x-1/2 text-I0 text-xs pb-px;
+			}
 
-.slider-thumb-label {
-	@apply absolute left-0 right-0 flex justify-center text-sm whitespace-nowrap overflow-visible;
-	top: 150%;
-}
+			&:focus,
+			&:hover,
+			&.dragging {
+				@apply bg-I0 bg-opacity-20;
+			}
 
-.slider-thumb-label * {
-	@apply text-primary;
-	@apply darkmode:text-primary;
-}
+			&.dragging {
+				@apply cursor-grabbing;
+			}
+		}
+	}
 
-.slider.slider-disabled .slider-thumb-label {
-	@apply text-disabled-text;
-}
+	&.error {
+		.bar {
+			.bar-left {
+				@apply bg-SE0;
+			}
 
-.slider-thumb-label > span {
-	@apply bg-primary-98 darkmode:bg-primary-10 rounded-lg px-1;
+			.grabber {
+				.dot {
+					@apply bg-SE0;
+				}
+
+				.value {
+					@apply text-SE0;
+				}
+
+				&:focus,
+				&:hover,
+				&.dragging {
+					@apply bg-SE0 bg-opacity-20;
+				}
+			}
+		}
+	}
+
+	&.disabled {
+		@apply text-SI0;
+
+		.bar {
+			.bar-left {
+				@apply bg-ST0;
+			}
+
+			.step {
+				@apply bg-SI0;
+
+				&.active {
+					@apply bg-ST0;
+				}
+			}
+
+			.grabber {
+				.dot {
+					@apply bg-ST0;
+				}
+
+				.value {
+					@apply text-ST0;
+				}
+
+				&:focus,
+				&:hover,
+				&.dragging {
+					@apply bg-ST0 bg-opacity-20;
+				}
+			}
+		}
+	}
 }
 </style>

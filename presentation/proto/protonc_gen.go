@@ -351,6 +351,7 @@ func (RichTextEditor) isComponent() {}
 func (Scaffold) isComponent()       {}
 func (ScrollView) isComponent()     {}
 func (Select) isComponent()         {}
+func (Slider) isComponent()         {}
 func (Spacer) isComponent()         {}
 func (SplitView) isComponent()      {}
 func (Stack) isComponent()          {}
@@ -20022,6 +20023,226 @@ func (v *OutlineStates) read(r *BinaryReader) error {
 	return nil
 }
 
+type Slider struct {
+	Label          Str
+	SupportingText Str
+	ErrorText      Str
+	Value          Float
+	Frame          Frame
+	// InputValue is a binding to a state containing the current value. This is the pointer to a state.
+	InputValue Ptr
+	Disabled   Bool
+	// Step allows to set numeric steps, that will be used to increase/decrease the value stepwise.
+	Step Float
+	// Max defines the max value of the slider.
+	Max Float
+	// Min defines the min value of the slider.
+	Min         Float
+	ShowMarkers Bool
+	// Unit defines the unit to display next to the slider value.
+	Unit Str
+}
+
+func (v *Slider) write(w *BinaryWriter) error {
+	var fields [13]bool
+	fields[1] = !v.Label.IsZero()
+	fields[2] = !v.SupportingText.IsZero()
+	fields[3] = !v.ErrorText.IsZero()
+	fields[4] = !v.Value.IsZero()
+	fields[5] = !v.Frame.IsZero()
+	fields[6] = !v.InputValue.IsZero()
+	fields[7] = !v.Disabled.IsZero()
+	fields[8] = !v.Step.IsZero()
+	fields[9] = !v.Max.IsZero()
+	fields[10] = !v.Min.IsZero()
+	fields[11] = !v.ShowMarkers.IsZero()
+	fields[12] = !v.Unit.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Label.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.SupportingText.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.ErrorText.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(f64, 4); err != nil {
+			return err
+		}
+		if err := v.Value.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(record, 5); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(uvarint, 6); err != nil {
+			return err
+		}
+		if err := v.InputValue.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(uvarint, 7); err != nil {
+			return err
+		}
+		if err := v.Disabled.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		if err := w.writeFieldHeader(f64, 8); err != nil {
+			return err
+		}
+		if err := v.Step.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[9] {
+		if err := w.writeFieldHeader(f64, 9); err != nil {
+			return err
+		}
+		if err := v.Max.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[10] {
+		if err := w.writeFieldHeader(f64, 10); err != nil {
+			return err
+		}
+		if err := v.Min.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[11] {
+		if err := w.writeFieldHeader(uvarint, 11); err != nil {
+			return err
+		}
+		if err := v.ShowMarkers.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[12] {
+		if err := w.writeFieldHeader(byteSlice, 12); err != nil {
+			return err
+		}
+		if err := v.Unit.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Slider) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Label.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.SupportingText.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.ErrorText.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Value.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.InputValue.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.Disabled.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.Step.read(r)
+			if err != nil {
+				return err
+			}
+		case 9:
+			err := v.Max.read(r)
+			if err != nil {
+				return err
+			}
+		case 10:
+			err := v.Min.read(r)
+			if err != nil {
+				return err
+			}
+		case 11:
+			err := v.ShowMarkers.read(r)
+			if err != nil {
+				return err
+			}
+		case 12:
+			err := v.Unit.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -21573,6 +21794,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 266:
 		var v OutlineStates
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 267:
+		var v Slider
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -25999,6 +26226,28 @@ func (v *OutlineStates) IsZero() bool {
 	return v.Initial.IsZero() && v.Hovered.IsZero() && v.Active.IsZero() && v.Focused.IsZero()
 }
 
+func (v *Slider) reset() {
+	v.Label.reset()
+	v.SupportingText.reset()
+	v.ErrorText.reset()
+	v.Value.reset()
+	v.Frame.reset()
+	v.InputValue.reset()
+	v.Disabled.reset()
+	v.Step.reset()
+	v.Max.reset()
+	v.Min.reset()
+	v.ShowMarkers.reset()
+	v.Unit.reset()
+}
+
+func (v *Slider) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Disabled.IsZero() && v.Step.IsZero() && v.Max.IsZero() && v.Min.IsZero() && v.ShowMarkers.IsZero() && v.Unit.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -27779,6 +28028,13 @@ func (v *BorderStates) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *OutlineStates) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 266); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Slider) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 267); err != nil {
 		return err
 	}
 	return nil
