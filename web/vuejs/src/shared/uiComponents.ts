@@ -38,6 +38,7 @@ import {
 	Scaffold,
 	ScrollView,
 	Select,
+	Slider,
 	Spacer,
 	SplitView,
 	Stack,
@@ -81,6 +82,7 @@ const LazyUiRichTextEditor = defineAsyncComponent(() => import('@/components/ric
 const LazyUiScaffold = defineAsyncComponent(() => import('@/components/scaffold/UiScaffold.vue'));
 const LazyUiScrollView = defineAsyncComponent(() => import('@/components/scrollview/UiScrollView.vue'));
 const LazyUiSelect = defineAsyncComponent(() => import('@/components/select/UiSelect.vue'));
+const LazyUiSlider = defineAsyncComponent(() => import('@/components/UiSlider.vue'));
 const LazyUiSpacer = defineAsyncComponent(() => import('@/components/spacer/UiSpacer.vue'));
 const LazyUiSplitView = defineAsyncComponent(() => import('@/components/UiSplitView.vue'));
 const LazyUiStack = defineAsyncComponent(() => import('@/components/UiStack.vue'));
@@ -211,6 +213,10 @@ export function vueComponentFor(ngc: NagoComponent): Component {
 
 	if (ngc instanceof Select) {
 		return LazyUiSelect;
+	}
+
+	if (ngc instanceof Slider) {
+		return LazyUiSlider;
 	}
 
 	if (ngc instanceof Spacer) {

@@ -20639,6 +20639,232 @@ export class OutlineStates implements Writeable, Readable {
 	}
 }
 
+export class Slider implements Writeable, Readable, Component {
+	public label?: Str;
+
+	public supportingText?: Str;
+
+	public errorText?: Str;
+
+	public value?: Float;
+
+	public frame?: Frame;
+
+	// InputValue is a binding to a state containing the current value. This is the pointer to a state.
+	public inputValue?: Ptr;
+
+	public disabled?: Bool;
+
+	// Step allows to set numeric steps, that will be used to increase/decrease the value stepwise.
+	public step?: Float;
+
+	// Max defines the max value of the slider.
+	public max?: Float;
+
+	// Min defines the min value of the slider.
+	public min?: Float;
+
+	public showMarkers?: Bool;
+
+	// Unit defines the unit to display next to the slider value.
+	public unit?: Str;
+
+	constructor(
+		label: Str | undefined = undefined,
+		supportingText: Str | undefined = undefined,
+		errorText: Str | undefined = undefined,
+		value: Float | undefined = undefined,
+		frame: Frame | undefined = undefined,
+		inputValue: Ptr | undefined = undefined,
+		disabled: Bool | undefined = undefined,
+		step: Float | undefined = undefined,
+		max: Float | undefined = undefined,
+		min: Float | undefined = undefined,
+		showMarkers: Bool | undefined = undefined,
+		unit: Str | undefined = undefined
+	) {
+		this.label = label;
+		this.supportingText = supportingText;
+		this.errorText = errorText;
+		this.value = value;
+		this.frame = frame;
+		this.inputValue = inputValue;
+		this.disabled = disabled;
+		this.step = step;
+		this.max = max;
+		this.min = min;
+		this.showMarkers = showMarkers;
+		this.unit = unit;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.label = readString(reader);
+					break;
+				}
+				case 2: {
+					this.supportingText = readString(reader);
+					break;
+				}
+				case 3: {
+					this.errorText = readString(reader);
+					break;
+				}
+				case 4: {
+					this.value = readFloat(reader);
+					break;
+				}
+				case 5: {
+					this.frame = new Frame();
+					this.frame.read(reader);
+					break;
+				}
+				case 6: {
+					this.inputValue = readInt(reader);
+					break;
+				}
+				case 7: {
+					this.disabled = readBool(reader);
+					break;
+				}
+				case 8: {
+					this.step = readFloat(reader);
+					break;
+				}
+				case 9: {
+					this.max = readFloat(reader);
+					break;
+				}
+				case 10: {
+					this.min = readFloat(reader);
+					break;
+				}
+				case 11: {
+					this.showMarkers = readBool(reader);
+					break;
+				}
+				case 12: {
+					this.unit = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.label !== undefined,
+			this.supportingText !== undefined,
+			this.errorText !== undefined,
+			this.value !== undefined,
+			this.frame !== undefined && !this.frame.isZero(),
+			this.inputValue !== undefined,
+			this.disabled !== undefined,
+			this.step !== undefined,
+			this.max !== undefined,
+			this.min !== undefined,
+			this.showMarkers !== undefined,
+			this.unit !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.label!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.supportingText!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			writeString(writer, this.errorText!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.F64, 4);
+			writeFloat(writer, this.value!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.RECORD, 5);
+			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 6);
+			writeInt(writer, this.inputValue!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 7);
+			writeBool(writer, this.disabled!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.F64, 8);
+			writeFloat(writer, this.step!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[9]) {
+			writer.writeFieldHeader(Shapes.F64, 9);
+			writeFloat(writer, this.max!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[10]) {
+			writer.writeFieldHeader(Shapes.F64, 10);
+			writeFloat(writer, this.min!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[11]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 11);
+			writeBool(writer, this.showMarkers!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[12]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 12);
+			writeString(writer, this.unit!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.label === undefined &&
+			this.supportingText === undefined &&
+			this.errorText === undefined &&
+			this.value === undefined &&
+			(this.frame === undefined || this.frame.isZero()) &&
+			this.inputValue === undefined &&
+			this.disabled === undefined &&
+			this.step === undefined &&
+			this.max === undefined &&
+			this.min === undefined &&
+			this.showMarkers === undefined &&
+			this.unit === undefined
+		);
+	}
+
+	reset(): void {
+		this.label = undefined;
+		this.supportingText = undefined;
+		this.errorText = undefined;
+		this.value = undefined;
+		this.frame = undefined;
+		this.inputValue = undefined;
+		this.disabled = undefined;
+		this.step = undefined;
+		this.max = undefined;
+		this.min = undefined;
+		this.showMarkers = undefined;
+		this.unit = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 267);
+		return;
+	}
+	isComponent(): void {}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -21864,6 +22090,11 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 266: {
 			const v = new OutlineStates();
+			v.read(src);
+			return v;
+		}
+		case 267: {
+			const v = new Slider();
 			v.read(src);
 			return v;
 		}

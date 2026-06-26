@@ -1,0 +1,59 @@
+{
+  "kind": "Record",
+  "id": 267,
+  "fields": {
+    "1": {
+      "name": "Label",
+      "type": "Str"
+    },
+    "2": {
+      "name": "SupportingText",
+      "type": "Str"
+    },
+    "3": {
+      "name": "ErrorText",
+      "type": "Str"
+    },
+    "4": {
+      "name": "Value",
+      "type": "Float"
+    },
+    "5": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "6": {
+      "doc": "InputValue is a binding to a state containing the current value. This is the pointer to a state.",
+      "name": "InputValue",
+      "type": "Ptr"
+    },
+    "7": {
+      "name": "Disabled",
+      "type": "Bool"
+    },
+    "8": {
+      "doc": "Step allows to set numeric steps, that will be used to increase/decrease the value stepwise.",
+      "name": "Step",
+      "type": "Float"
+    },
+    "9": {
+      "doc": "Max defines the max value of the slider.",
+      "name": "Max",
+      "type": "Float"
+    },
+    "10": {
+      "doc": "Min defines the min value of the slider.",
+      "name": "Min",
+      "type": "Float"
+    },
+    "11": {
+      "name": "ShowMarkers",
+      "type": "Bool"
+    },
+    "12": {
+      "doc": "Unit defines the unit to display next to the slider value.",
+      "name": "Unit",
+      "type": "Str"
+    }
+  }
+}

@@ -8,13 +8,12 @@
 package main
 
 import (
-	"time"
-
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
 	. "go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/timepicker"
 	"go.wdy.de/nago/web/vuejs"
+	"time"
 )
 
 func main() {
@@ -29,7 +28,7 @@ func main() {
 			return VStack(
 				timepicker.Picker("Dauer", duration).
 					SupportingText("Wähle eine tolle Zeit").
-					//Format(timepicker.DecomposedFormat).
+					Format(timepicker.DecomposedFormat).
 					Days(true).
 					Hours(true).
 					Minutes(true).
