@@ -174,7 +174,18 @@ func startTimeSeqPill(
 
 	return ui.HStack(
 		// category color
-		ui.HStack().BackgroundColor(evt.Category.Color).Frame(ui.Frame{MinWidth: ui.L12}).AccessibilityLabel(evt.Category.Label),
+		ui.VStack(
+			ui.IfFunc(strings.TrimSpace(string(evt.Category.Color)) != "",
+				func() core.View {
+					return ui.HStack().BackgroundColor(evt.Category.Color).Frame(ui.Frame{MinWidth: ui.L12, Height: ui.Full}).AccessibilityLabel(evt.Category.Label)
+				},
+			),
+			ui.IfFunc(strings.TrimSpace(string(evt.Category2.Color)) != "",
+				func() core.View {
+					return ui.HStack().BackgroundColor(evt.Category2.Color).Frame(ui.Frame{MinWidth: ui.L12, Height: ui.Full}).AccessibilityLabel(evt.Category2.Label)
+				},
+			),
+		),
 		ui.VStack(
 			// Departure
 			ui.IfFunc(evt.From.Offset.Duration > 0,
