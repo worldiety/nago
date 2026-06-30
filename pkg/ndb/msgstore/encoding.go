@@ -22,3 +22,11 @@ type TypeID = ndb.TypeID
 
 // Seq is the global strict-monotonic sequence number. Alias of [ndb.Seq].
 type Seq = ndb.Seq
+
+// TraceID is the opaque 16-byte correlation id carried by a message. Alias of
+// [ndb.TraceID]; see [Encoding] for the rationale.
+type TraceID = ndb.TraceID
+
+// NewTraceID returns a TraceID filled with random bytes. It is a thin re-export
+// of [ndb.NewTraceID] so engine-local code need not import ndb for it.
+func NewTraceID() TraceID { return ndb.NewTraceID() }

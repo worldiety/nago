@@ -8,6 +8,9 @@
 package ndb
 
 import (
+	"crypto/rand"
+	"encoding/hex"
+	"fmt"
 	"io"
 	"iter"
 
@@ -30,6 +33,40 @@ type TypeID uint64
 // intent at call sites such as Replay(types, minSeq, maxSeq) and prevents
 // accidental mixing with byte lengths or offsets.
 type Seq uint64
+
+// TraceID is an opaque 16-byte correlation id a writer attaches to a message,
+// so that an event can be tied back to whatever the caller wants (a request,
+// a workflow, a batch id, ...). The store treats it as opaque bytes and never
+// interprets it; the caller decides what to put in it.
+//
+// It is a distinct named type rather than a bare [16]byte so that the intent is
+// clear at call sites, the value is self-describing in logs (see [TraceID.String]),
+// and it cannot be confused with other 16-byte arrays. The zero value is a valid
+// "no trace" marker (see [TraceID.IsZero]).
+type TraceID [16]byte
+
+// NewTraceID returns a TraceID filled with random bytes from a cryptographically
+// secure source. Callers that want their own identifier can construct a TraceID
+// directly instead. It panics only if the system random source fails, which
+// indicates a broken platform rather than a recoverable condition.
+func NewTraceID() TraceID {
+	var t TraceID
+	if _, err := rand.Read(t[:]); err != nil {
+		panic(fmt.Errorf("ndb: read random for TraceID: %w", err))
+	}
+	return t
+}
+
+// String returns the lowercase hex encoding of the TraceID (32 characters),
+// which is convenient for logging.
+func (t TraceID) String() string {
+	return hex.EncodeToString(t[:])
+}
+
+// IsZero reports whether the TraceID is the zero value, i.e. no trace was set.
+func (t TraceID) IsZero() bool {
+	return t == TraceID{}
+}
 
 // Encoding describes how a [Message] payload is encoded on the wire. It is part
 // of the neutral contract so that consumers can decide whether they must decode
@@ -84,7 +121,7 @@ type Message struct {
 	//	t := time.Unix(0, msg.TimeNano)
 	TimeNano int64
 	// TraceID is an opaque correlation id (e.g. a UUID) supplied by the writer.
-	TraceID [16]byte
+	TraceID TraceID
 	// Encoding marks how Payload is encoded.
 	Encoding Encoding
 	// UncompressedLen is the original payload length in bytes before encoding.
@@ -118,7 +155,7 @@ type History interface {
 	//
 	// payload is copied/encoded by the engine before Append returns, so the
 	// caller may reuse the backing array immediately.
-	Append(typeID TypeID, traceID [16]byte, payload []byte) (Seq, error)
+	Append(typeID TypeID, traceID TraceID, payload []byte) (Seq, error)
 
 	// Replay yields all messages for the requested types whose Seq lies within
 	// the inclusive range [minSeq, maxSeq], in strict ascending global Seq
@@ -140,7 +177,7 @@ type Retained interface {
 	// Put writes or overwrites the single retained value for typeID and returns
 	// the global Seq assigned to it, so consumers can detect updates by
 	// comparing sequence numbers.
-	Put(typeID TypeID, traceID [16]byte, payload []byte) (Seq, error)
+	Put(typeID TypeID, traceID TraceID, payload []byte) (Seq, error)
 
 	// Get returns the current value for typeID, or an empty option if no value
 	// has ever been written. The returned Message owns an independent Payload
@@ -174,6 +211,41 @@ type Pruner interface {
 	DeleteSeq(typeID TypeID, seq Seq) error
 }
 
+// Notification is the live signal that a message was written. It deliberately
+// carries no payload: fan-out stays cheap and allocation-light, and the payload
+// lifetime pitfalls of [History.Replay] (a reused-buffer view) do not apply.
+// A subscriber that needs the bytes loads them on demand via [Retained.Get] or
+// [History.Replay].
+type Notification struct {
+	// Type is the event type the written message belongs to.
+	Type TypeID
+	// Seq is the global, strict-monotonic sequence number of the written message.
+	Seq Seq
+	// TimeNano is the wall-clock append time in unix nanoseconds.
+	TimeNano int64
+	// TraceID is the opaque correlation id the writer supplied.
+	TraceID TraceID
+}
+
+// Notifier is the optional live-notification capability. It delivers only the
+// live edge — messages written from the moment of subscription onwards.
+// Historical catch-up is the caller's job via [History.Replay], or, more
+// conveniently, via the engine-neutral [Tail] helper which composes Subscribe
+// and Replay into a single "replay then follow" stream.
+type Notifier interface {
+	// Subscribe registers fn for new messages of the given types (empty = all
+	// types). fn is invoked synchronously on the writer's goroutine, just after
+	// the message becomes durable.
+	//
+	// Because delivery is synchronous and inline, fn MUST be fast and MUST NOT
+	// block or write back into the same store: a slow fn delays the writer, and
+	// writing back risks a deadlock. Do only trivial work (set a flag, signal a
+	// worker, enqueue) and hand off anything expensive to another goroutine.
+	//
+	// The returned close function unsubscribes and is idempotent.
+	Subscribe(types []TypeID, fn func(Notification)) (close func())
+}
+
 // Messages is the full-featured composition of all message capabilities plus
 // [io.Closer]. It is a convenience for engines that implement everything (such
 // as the default msgstore engine). Consumers should depend on the narrowest
@@ -185,5 +257,6 @@ type Messages interface {
 	Retained
 	TimeLookup
 	Pruner
+	Notifier
 	io.Closer
 }

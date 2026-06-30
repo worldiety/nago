@@ -32,6 +32,7 @@ type DB struct {
 	lockFile *lockedfile.File // exclusive cross-platform file lock
 	tindex   *timeIndex
 	pool     *FilePool
+	notify   *notifyRegistry // live append/put subscribers
 }
 
 // Compile-time proof that the engine implements the full neutral contract as
@@ -43,6 +44,7 @@ var (
 	_ ndb.Retained   = (*DB)(nil)
 	_ ndb.TimeLookup = (*DB)(nil)
 	_ ndb.Pruner     = (*DB)(nil)
+	_ ndb.Notifier   = (*DB)(nil)
 )
 
 // typeState tracks the pending segment for a single event type.
@@ -87,6 +89,7 @@ func Open(dir string, opts Options) (*DB, error) {
 		pool:     pool,
 		tindex:   newTimeIndex(timesDir, pool),
 		types:    make(map[TypeID]*typeState),
+		notify:   newNotifyRegistry(),
 	}
 
 	// bootstrap: find the global max sequence ID across all event type directories
@@ -221,7 +224,7 @@ func (db *DB) getTypeState(typeID TypeID) (*typeState, error) {
 // sequence counter is allocated lock-free via atomic increment.
 //
 // This implements [ndb.History].
-func (db *DB) Append(typeID TypeID, traceID [16]byte, payload []byte) (Seq, error) {
+func (db *DB) Append(typeID TypeID, traceID TraceID, payload []byte) (Seq, error) {
 	if int64(len(payload)) > db.opts.MaxMessageSize {
 		return 0, fmt.Errorf("%w: %d bytes", ErrPayloadTooLarge, len(payload))
 	}
@@ -287,6 +290,9 @@ func (db *DB) Append(typeID TypeID, traceID [16]byte, payload []byte) (Seq, erro
 	if err := db.tindex.Append(now, seqID); err != nil {
 		slog.Warn("msgstore: time index append failed", "err", err)
 	}
+
+	// notify live subscribers (non-blocking; never stalls the writer)
+	db.notify.publish(Notification{Type: typeID, Seq: Seq(seqID), TimeNano: now, TraceID: traceID})
 
 	return Seq(seqID), nil
 }
@@ -450,7 +456,7 @@ func (db *DB) SeqForTime(tsNano int64) (Seq, error) {
 // Get reads directly via lastMsgOffset + TotalLen and never sees the tail.
 //
 // This implements [ndb.Retained].
-func (db *DB) Put(typeID TypeID, traceID [16]byte, payload []byte) (Seq, error) {
+func (db *DB) Put(typeID TypeID, traceID TraceID, payload []byte) (Seq, error) {
 	if int64(len(payload)) > db.opts.MaxMessageSize {
 		return 0, fmt.Errorf("%w: %d bytes", ErrPayloadTooLarge, len(payload))
 	}
@@ -503,6 +509,9 @@ func (db *DB) Put(typeID TypeID, traceID [16]byte, payload []byte) (Seq, error) 
 	ts.mu.Unlock()
 
 	// deliberately no time index update – Put types have no history
+
+	// notify live subscribers (non-blocking; never stalls the writer)
+	db.notify.publish(Notification{Type: typeID, Seq: Seq(seqID), TimeNano: now, TraceID: traceID})
 
 	return Seq(seqID), nil
 }
@@ -562,8 +571,27 @@ func (db *DB) Get(typeID TypeID) (option.Opt[Message], error) {
 	return option.Some(msg), nil
 }
 
+// Subscribe registers fn for messages newly written via Append or Put for the
+// given types (empty = all types). fn is invoked synchronously on the writer's
+// goroutine right after the message becomes durable, so it must be fast and must
+// not write back into the same store (see [ndb.Notifier]).
+//
+// The returned close function unsubscribes and is idempotent. All subscriptions
+// are also dropped by [DB.Close].
+//
+// This implements [ndb.Notifier]. For a convenient "replay then follow" stream,
+// see [ndb.Tail].
+func (db *DB) Subscribe(types []TypeID, fn func(Notification)) (close func()) {
+	return db.notify.subscribe(types, fn)
+}
+
 // Close releases all resources: the file pool and the lock file.
 func (db *DB) Close() error {
+	// drop live subscribers first
+	if db.notify != nil {
+		db.notify.closeAll()
+	}
+
 	db.typesMu.Lock()
 	db.types = nil
 	db.typesMu.Unlock()

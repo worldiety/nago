@@ -1,7 +1,6 @@
 package msgstore_test
 
 import (
-	"crypto/rand"
 	"math"
 	"slices"
 	"testing"
@@ -24,8 +23,7 @@ func TestAppendAndReplay(t *testing.T) {
 	}))
 	defer func() { option.MustZero(db.Close()) }()
 
-	var traceID [16]byte
-	option.Must(rand.Read(traceID[:]))
+	traceID := msgstore.NewTraceID()
 
 	const eventType msgstore.TypeID = 42
 	const count = 100
@@ -77,8 +75,7 @@ func TestAppendWithS2Compression(t *testing.T) {
 	}))
 	defer func() { option.MustZero(db.Close()) }()
 
-	var traceID [16]byte
-	option.Must(rand.Read(traceID[:]))
+	traceID := msgstore.NewTraceID()
 
 	payload := make([]byte, 4096)
 	for i := range payload {
