@@ -144,7 +144,7 @@ func renderStack(v *proto.Stack) dom.FlowContent {
 
 	styles = append(styles, FrameCSS(v.Frame)...)
 	styles = append(styles, PaddingCSS(v.Padding)...)
-	styles = append(styles, BorderCSS(v.Border)...)
+	styles = append(styles, BorderCSS(v.Border.Initial)...)
 
 	// ── Case 1: URL gesetzt (nur bei horizontal sinnvoll) → <a> ──────────────
 	if v.Url != "" {
