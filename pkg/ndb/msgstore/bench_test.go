@@ -293,10 +293,9 @@ func BenchmarkMarshalMessage(b *testing.B) {
 		b.Run(fmt.Sprintf("payload=%d", size), func(b *testing.B) {
 			payload := make([]byte, size)
 			msg := msgstore.Message{
-				SequenceID:      42,
-				Timestamp:       1234567890,
+				Seq:             42,
+				TimeNano:        1234567890,
 				Encoding:        msgstore.EncodingRaw,
-				PayloadLen:      uint32(size),
 				UncompressedLen: uint32(size),
 				Payload:         payload,
 			}
@@ -307,7 +306,7 @@ func BenchmarkMarshalMessage(b *testing.B) {
 			b.ReportAllocs()
 
 			for i := 0; i < b.N; i++ {
-				buf = msg.MarshalInto(buf)
+				buf = msgstore.MarshalInto(&msg, buf)
 			}
 
 			b.StopTimer()
@@ -326,14 +325,13 @@ func BenchmarkUnmarshalMessage(b *testing.B) {
 		b.Run(fmt.Sprintf("payload=%d", size), func(b *testing.B) {
 			payload := make([]byte, size)
 			msg := msgstore.Message{
-				SequenceID:      42,
-				Timestamp:       1234567890,
+				Seq:             42,
+				TimeNano:        1234567890,
 				Encoding:        msgstore.EncodingRaw,
-				PayloadLen:      uint32(size),
 				UncompressedLen: uint32(size),
 				Payload:         payload,
 			}
-			data := msg.MarshalBinary()
+			data := msgstore.MarshalBinary(&msg)
 
 			b.SetBytes(int64(size))
 			b.ResetTimer()

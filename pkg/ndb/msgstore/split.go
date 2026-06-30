@@ -61,4 +61,3 @@ func CombineSplits(funcs ...SplitFunc) SplitFunc {
 
 // defaultSplit splits at 64 MiB or on day boundary.
 var defaultSplit = CombineSplits(SplitBySize(64<<20), SplitByDay())
-

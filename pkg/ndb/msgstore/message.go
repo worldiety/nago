@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"hash/crc32"
+
+	"go.wdy.de/nago/pkg/ndb"
 )
 
 // segHeaderSize is Magic(4) + FormatMagic(4) + Version(1) = 9 bytes.
@@ -30,7 +32,16 @@ var (
 
 const formatVersion uint8 = 1
 
-// Message represents a single event stored in a segment file.
+// Message is a single event stored in a segment file. It is an alias of
+// [ndb.Message]; the engine reads and writes exactly the neutral contract type,
+// so no conversion happens between the storage layer and consumers.
+//
+// The on-disk wire frame is independent of this Go struct: the per-message
+// PayloadLen field is derived from len(Payload) on marshal and only used for
+// validation on unmarshal, so it is not carried in the struct. The Type field
+// is encoded by the segment's parent directory, not redundantly in the frame;
+// low-level (un)marshalling therefore leaves Type untouched and the caller
+// (Replay/Get) populates it from the directory it read from.
 //
 // When obtained from an iterator (Replay, readMessages), the Payload slice may
 // be a view into a shared read buffer. It is only valid until the iterator
@@ -38,26 +49,17 @@ const formatVersion uint8 = 1
 // the current iteration step must copy it:
 //
 //	kept := slices.Clone(msg.Payload)
-type Message struct {
-	SequenceID       uint64
-	Timestamp        int64 // unix nanoseconds
-	TraceID          [16]byte
-	Encoding         Encoding
-	PayloadLen       uint32 // byte length of (possibly compressed) payload
-	UncompressedLen  uint32 // original uncompressed length
-	Payload          []byte
-}
-
-// IsTombstone returns true if the message has been soft-deleted.
-func (m *Message) IsTombstone() bool {
-	return m.SequenceID == 0
-}
+type Message = ndb.Message
 
 // MarshalBinary encodes the message into wire format including trailing CRC32.
 // A new slice is allocated on every call. For high-throughput paths use
 // MarshalInto with a reusable buffer instead.
-func (m *Message) MarshalBinary() []byte {
-	return m.MarshalInto(nil)
+//
+// It is a package-level function (not a method) because Message is an alias of
+// [ndb.Message], which lives in another package and therefore cannot carry
+// engine-specific methods.
+func MarshalBinary(m *Message) []byte {
+	return MarshalInto(m, nil)
 }
 
 // MarshalInto encodes the message into dst, growing it if necessary.
@@ -65,7 +67,10 @@ func (m *Message) MarshalBinary() []byte {
 // the complete wire-format message including the leading sync marker and
 // TotalLen frame header, ready for WriteAt.
 // Passing the same slice across calls avoids per-message heap allocations.
-func (m *Message) MarshalInto(dst []byte) []byte {
+//
+// PayloadLen is derived from len(m.Payload); m.Type is not encoded (it is
+// implied by the segment directory).
+func MarshalInto(m *Message, dst []byte) []byte {
 	innerSize := msgFixedSize + len(m.Payload)
 	totalSize := msgFrameOverhead + innerSize
 	if cap(dst) < totalSize {
@@ -80,11 +85,11 @@ func (m *Message) MarshalInto(dst []byte) []byte {
 
 	// inner message body starts after frame header
 	b := dst[msgFrameOverhead:]
-	binary.BigEndian.PutUint64(b[0:8], m.SequenceID)
-	binary.BigEndian.PutUint64(b[8:16], uint64(m.Timestamp))
+	binary.BigEndian.PutUint64(b[0:8], uint64(m.Seq))
+	binary.BigEndian.PutUint64(b[8:16], uint64(m.TimeNano))
 	copy(b[16:32], m.TraceID[:])
 	b[32] = byte(m.Encoding)
-	binary.BigEndian.PutUint32(b[33:37], m.PayloadLen)
+	binary.BigEndian.PutUint32(b[33:37], uint32(len(m.Payload)))
 	binary.BigEndian.PutUint32(b[37:41], m.UncompressedLen)
 	copy(b[41:41+len(m.Payload)], m.Payload)
 
@@ -157,24 +162,24 @@ func UnmarshalMessageNoCopy(buf []byte, maxMessageSize int64) (Message, int, err
 	inner := buf[msgFrameOverhead : msgFrameOverhead+int(innerLen)]
 
 	var m Message
-	m.SequenceID = binary.BigEndian.Uint64(inner[0:8])
-	m.Timestamp = int64(binary.BigEndian.Uint64(inner[8:16]))
+	m.Seq = Seq(binary.BigEndian.Uint64(inner[0:8]))
+	m.TimeNano = int64(binary.BigEndian.Uint64(inner[8:16]))
 	copy(m.TraceID[:], inner[16:32])
 	m.Encoding = Encoding(inner[32])
-	m.PayloadLen = binary.BigEndian.Uint32(inner[33:37])
+	payloadLen := binary.BigEndian.Uint32(inner[33:37])
 	m.UncompressedLen = binary.BigEndian.Uint32(inner[37:41])
 
-	expectedInner := msgFixedSize + int(m.PayloadLen)
+	expectedInner := msgFixedSize + int(payloadLen)
 	if expectedInner != int(innerLen) {
 		return Message{}, 0, fmt.Errorf("%w: TotalLen/PayloadLen mismatch", ErrCorruptCRC)
 	}
 
-	if int64(m.PayloadLen) > maxMessageSize {
-		return Message{}, 0, fmt.Errorf("%w: %d bytes", ErrPayloadTooLarge, m.PayloadLen)
+	if int64(payloadLen) > maxMessageSize {
+		return Message{}, 0, fmt.Errorf("%w: %d bytes", ErrPayloadTooLarge, payloadLen)
 	}
 
 	// zero-copy: payload references the input buffer directly
-	m.Payload = inner[41 : 41+m.PayloadLen]
+	m.Payload = inner[41 : 41+payloadLen]
 
 	// verify CRC over everything before the CRC field
 	wantCRC := binary.BigEndian.Uint32(inner[int(innerLen)-4:])
@@ -211,4 +216,3 @@ func validateSegHeader(buf []byte) error {
 	}
 	return nil
 }
-

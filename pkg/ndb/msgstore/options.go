@@ -37,4 +37,3 @@ func (o *Options) resolve() {
 		o.FilePool = NewFilePool(1024)
 	}
 }
-

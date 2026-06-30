@@ -34,7 +34,7 @@ func TestAppendAndReplay(t *testing.T) {
 	for i := range count {
 		payload := []byte("hello world " + string(rune('A'+i%26)))
 		seq := option.Must(db.Append(eventType, traceID, payload))
-		if seq != uint64(i+1) {
+		if seq != msgstore.Seq(i+1) {
 			t.Fatalf("expected seq %d, got %d", i+1, seq)
 		}
 	}
@@ -233,10 +233,10 @@ func TestReplayGlobalSequenceOrder(t *testing.T) {
 	option.Must(db.Append(msgstore.TypeID(2), traceID, []byte("logout-bob")))    // seq 5
 
 	// replay both types: must come out in strict sequence order 1,2,3,4,5
-	var seqIDs []uint64
+	var seqIDs []msgstore.Seq
 	var typeIDs []msgstore.TypeID
 	for tid, msg := range db.Replay(nil, 1, math.MaxUint64) {
-		seqIDs = append(seqIDs, msg.SequenceID)
+		seqIDs = append(seqIDs, msg.Seq)
 		typeIDs = append(typeIDs, tid)
 	}
 
@@ -268,14 +268,17 @@ func TestPutAndGet(t *testing.T) {
 	var traceID [16]byte
 	const eventType msgstore.TypeID = 100
 
-	// Get on empty type returns ErrNotFound
-	_, err := db.Get(eventType)
-	if err == nil {
-		t.Fatal("expected ErrNotFound on empty type")
+	// Get on empty type returns an empty option (no error)
+	empty, err := db.Get(eventType)
+	if err != nil {
+		t.Fatalf("unexpected error on empty type: %v", err)
+	}
+	if empty.IsSome() {
+		t.Fatal("expected empty option on empty type")
 	}
 
 	// Put multiple times – each overwrites the previous
-	var lastSeq uint64
+	var lastSeq msgstore.Seq
 	for i := range 10 {
 		payload := []byte("value-" + string(rune('A'+i)))
 		seq := option.Must(db.Put(eventType, traceID, payload))
@@ -285,12 +288,12 @@ func TestPutAndGet(t *testing.T) {
 		lastSeq = seq
 
 		// Get must always return the latest value
-		msg := option.Must(db.Get(eventType))
+		msg := option.Must(db.Get(eventType)).Unwrap()
 		if string(msg.Payload) != string(payload) {
 			t.Fatalf("Get after Put %d: got %q, want %q", i, msg.Payload, payload)
 		}
-		if msg.SequenceID != seq {
-			t.Fatalf("Get seqID: got %d, want %d", msg.SequenceID, seq)
+		if msg.Seq != seq {
+			t.Fatalf("Get seqID: got %d, want %d", msg.Seq, seq)
 		}
 	}
 }
@@ -315,12 +318,12 @@ func TestPutShrinkPayload(t *testing.T) {
 	seq := option.Must(db.Put(eventType, traceID, smallPayload))
 
 	// Get must return the small payload, not stale data
-	msg := option.Must(db.Get(eventType))
+	msg := option.Must(db.Get(eventType)).Unwrap()
 	if string(msg.Payload) != string(smallPayload) {
 		t.Fatalf("expected %q, got %q", smallPayload, msg.Payload)
 	}
-	if msg.SequenceID != seq {
-		t.Fatalf("expected seq %d, got %d", seq, msg.SequenceID)
+	if msg.Seq != seq {
+		t.Fatalf("expected seq %d, got %d", seq, msg.Seq)
 	}
 }
 
@@ -339,12 +342,12 @@ func TestPutReopenBootstrap(t *testing.T) {
 	db2 := option.Must(msgstore.Open(dir, msgstore.Options{Compress: msgstore.NoCompression}))
 	defer func() { option.MustZero(db2.Close()) }()
 
-	msg := option.Must(db2.Get(eventType))
+	msg := option.Must(db2.Get(eventType)).Unwrap()
 	if string(msg.Payload) != "retained-value" {
 		t.Fatalf("expected %q after reopen, got %q", "retained-value", msg.Payload)
 	}
-	if msg.SequenceID != seq1 {
-		t.Fatalf("expected seq %d after reopen, got %d", seq1, msg.SequenceID)
+	if msg.Seq != seq1 {
+		t.Fatalf("expected seq %d after reopen, got %d", seq1, msg.Seq)
 	}
 
 	// next Put must get a higher sequence ID
@@ -368,9 +371,9 @@ func TestGetAfterAppend(t *testing.T) {
 	}
 
 	// Get must return the last appended event
-	msg := option.Must(db.Get(eventType))
-	if msg.SequenceID != 20 {
-		t.Fatalf("expected seq 20, got %d", msg.SequenceID)
+	msg := option.Must(db.Get(eventType)).Unwrap()
+	if msg.Seq != 20 {
+		t.Fatalf("expected seq 20, got %d", msg.Seq)
 	}
 	if string(msg.Payload) != "event-T" {
 		t.Fatalf("expected %q, got %q", "event-T", msg.Payload)

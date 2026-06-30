@@ -30,7 +30,7 @@ func TestRebuildTimeIndexBasic(t *testing.T) {
 	}
 
 	// lookup should work before rebuild
-	seq, err := db.SeqForTimestamp(before)
+	seq, err := db.SeqForTime(before)
 	if err != nil {
 		t.Fatalf("SeqForTimestamp before rebuild: %v", err)
 	}
@@ -42,7 +42,7 @@ func TestRebuildTimeIndexBasic(t *testing.T) {
 	option.MustZero(db.RebuildTimeIndex())
 
 	// lookup should still work after rebuild
-	seqAfter, err := db.SeqForTimestamp(before)
+	seqAfter, err := db.SeqForTime(before)
 	if err != nil {
 		t.Fatalf("SeqForTimestamp after rebuild: %v", err)
 	}
@@ -64,23 +64,23 @@ func TestRebuildTimeIndexAfterDeleteByID(t *testing.T) {
 	var traceID [16]byte
 	const typeID msgstore.TypeID = 1
 
-	var seqIDs []uint64
+	var seqIDs []msgstore.Seq
 	for i := range 5 {
 		seq := option.Must(db.Append(typeID, traceID, []byte("msg-"+strconv.Itoa(i))))
 		seqIDs = append(seqIDs, seq)
 	}
 
 	// delete two messages
-	option.MustZero(db.DeleteByID(typeID, seqIDs[1]))
-	option.MustZero(db.DeleteByID(typeID, seqIDs[3]))
+	option.MustZero(db.DeleteSeq(typeID, seqIDs[1]))
+	option.MustZero(db.DeleteSeq(typeID, seqIDs[3]))
 
 	// rebuild
 	option.MustZero(db.RebuildTimeIndex())
 
 	// replay should still return 3 messages
-	var remaining []uint64
+	var remaining []msgstore.Seq
 	for _, msg := range db.Replay([]msgstore.TypeID{typeID}, 1, math.MaxUint64) {
-		remaining = append(remaining, msg.SequenceID)
+		remaining = append(remaining, msg.Seq)
 	}
 	if len(remaining) != 3 {
 		t.Fatalf("expected 3 messages after rebuild, got %d", len(remaining))
@@ -112,7 +112,7 @@ func TestRebuildTimeIndexAfterDeleteByType(t *testing.T) {
 	}
 
 	// delete all events of typeA
-	option.MustZero(db.DeleteByType(typeA))
+	option.MustZero(db.DeleteType(typeA))
 
 	// rebuild
 	option.MustZero(db.RebuildTimeIndex())
@@ -151,7 +151,7 @@ func TestRebuildTimeIndexMultipleTypes(t *testing.T) {
 	option.MustZero(db.RebuildTimeIndex())
 
 	// lookup should return a valid sequence ID
-	seq, err := db.SeqForTimestamp(before)
+	seq, err := db.SeqForTime(before)
 	if err != nil {
 		t.Fatalf("SeqForTimestamp after rebuild: %v", err)
 	}
@@ -190,7 +190,7 @@ func TestRebuildTimeIndexCleansOldFiles(t *testing.T) {
 	}
 
 	// force flush of the time index buffer by performing a lookup
-	_, _ = db.SeqForTimestamp(before)
+	_, _ = db.SeqForTime(before)
 
 	// count time index files before rebuild
 	timesDir := filepath.Join(dir, "times")
@@ -200,7 +200,7 @@ func TestRebuildTimeIndexCleansOldFiles(t *testing.T) {
 	}
 
 	// delete all messages, then rebuild
-	option.MustZero(db.DeleteByType(msgstore.TypeID(1)))
+	option.MustZero(db.DeleteType(msgstore.TypeID(1)))
 	option.MustZero(db.RebuildTimeIndex())
 
 	// with all messages deleted, the rebuilt index should have no files
@@ -234,7 +234,7 @@ func TestRebuildTimeIndexWithSplitSegments(t *testing.T) {
 	option.MustZero(db.RebuildTimeIndex())
 
 	// lookup should still work
-	seq, err := db.SeqForTimestamp(before)
+	seq, err := db.SeqForTime(before)
 	if err != nil {
 		t.Fatalf("SeqForTimestamp after rebuild: %v", err)
 	}
@@ -279,7 +279,7 @@ func TestRebuildTimeIndexAppendAfterRebuild(t *testing.T) {
 	}
 
 	// lookup for the post-rebuild timestamp should find a sequence >= 6
-	seq, err := db.SeqForTimestamp(afterRebuild)
+	seq, err := db.SeqForTime(afterRebuild)
 	if err != nil {
 		t.Fatalf("SeqForTimestamp after rebuild+append: %v", err)
 	}

@@ -41,7 +41,7 @@ func TestDeleteByType(t *testing.T) {
 	}
 
 	// delete typeA
-	option.MustZero(db.DeleteByType(typeA))
+	option.MustZero(db.DeleteType(typeA))
 
 	// typeA should be gone
 	if c := countReplayForType(db, typeA); c != 0 {
@@ -71,7 +71,7 @@ func TestDeleteByTypeAllowsReappend(t *testing.T) {
 	const typeID msgstore.TypeID = 1
 
 	option.Must(db.Append(typeID, traceID, []byte("before-delete")))
-	option.MustZero(db.DeleteByType(typeID))
+	option.MustZero(db.DeleteType(typeID))
 
 	// appending to the same type after delete should work
 	seq := option.Must(db.Append(typeID, traceID, []byte("after-delete")))
@@ -92,7 +92,7 @@ func TestDeleteByTypeNonExistent(t *testing.T) {
 	defer func() { option.MustZero(db.Close()) }()
 
 	// deleting a type that was never written should not error
-	if err := db.DeleteByType(999); err != nil {
+	if err := db.DeleteType(999); err != nil {
 		t.Fatalf("expected no error for non-existent type, got: %v", err)
 	}
 }
@@ -117,7 +117,7 @@ func TestDeleteByTypeWithSplitSegments(t *testing.T) {
 		t.Fatalf("before delete: expected 10 messages, got %d", c)
 	}
 
-	option.MustZero(db.DeleteByType(typeID))
+	option.MustZero(db.DeleteType(typeID))
 
 	if c := countReplayForType(db, typeID); c != 0 {
 		t.Fatalf("after delete: expected 0 messages, got %d", c)
@@ -136,19 +136,19 @@ func TestDeleteByID(t *testing.T) {
 	var traceID [16]byte
 	const typeID msgstore.TypeID = 1
 
-	var seqIDs []uint64
+	var seqIDs []msgstore.Seq
 	for i := range 5 {
 		seq := option.Must(db.Append(typeID, traceID, []byte("msg-"+strconv.Itoa(i))))
 		seqIDs = append(seqIDs, seq)
 	}
 
 	// delete the middle message
-	option.MustZero(db.DeleteByID(typeID, seqIDs[2]))
+	option.MustZero(db.DeleteSeq(typeID, seqIDs[2]))
 
 	// replay should return 4 messages (tombstones are filtered)
-	var remaining []uint64
+	var remaining []msgstore.Seq
 	for _, msg := range db.Replay([]msgstore.TypeID{typeID}, 1, math.MaxUint64) {
-		remaining = append(remaining, msg.SequenceID)
+		remaining = append(remaining, msg.Seq)
 	}
 	if len(remaining) != 4 {
 		t.Fatalf("expected 4 messages after delete, got %d", len(remaining))
@@ -179,7 +179,7 @@ func TestDeleteByIDPayloadZeroed(t *testing.T) {
 	db = option.Must(msgstore.Open(dir, msgstore.Options{
 		Compress: msgstore.NoCompression,
 	}))
-	option.MustZero(db.DeleteByID(typeID, seq))
+	option.MustZero(db.DeleteSeq(typeID, seq))
 	option.MustZero(db.Close())
 
 	// read the raw segment file and verify the payload region is zeroed
@@ -209,7 +209,7 @@ func TestDeleteByIDNotFound(t *testing.T) {
 
 	option.Must(db.Append(typeID, traceID, []byte("hello")))
 
-	err := db.DeleteByID(typeID, 9999)
+	err := db.DeleteSeq(typeID, 9999)
 	if !errors.Is(err, msgstore.ErrNotFound) {
 		t.Fatalf("expected ErrNotFound, got: %v", err)
 	}
@@ -225,19 +225,19 @@ func TestDeleteByIDFirstAndLast(t *testing.T) {
 	var traceID [16]byte
 	const typeID msgstore.TypeID = 1
 
-	var seqIDs []uint64
+	var seqIDs []msgstore.Seq
 	for i := range 5 {
 		seq := option.Must(db.Append(typeID, traceID, []byte("msg-"+strconv.Itoa(i))))
 		seqIDs = append(seqIDs, seq)
 	}
 
 	// delete first and last
-	option.MustZero(db.DeleteByID(typeID, seqIDs[0]))
-	option.MustZero(db.DeleteByID(typeID, seqIDs[4]))
+	option.MustZero(db.DeleteSeq(typeID, seqIDs[0]))
+	option.MustZero(db.DeleteSeq(typeID, seqIDs[4]))
 
-	var remaining []uint64
+	var remaining []msgstore.Seq
 	for _, msg := range db.Replay([]msgstore.TypeID{typeID}, 1, math.MaxUint64) {
-		remaining = append(remaining, msg.SequenceID)
+		remaining = append(remaining, msg.Seq)
 	}
 	if len(remaining) != 3 {
 		t.Fatalf("expected 3 messages, got %d", len(remaining))
@@ -262,19 +262,19 @@ func TestDeleteByIDWithSplitSegments(t *testing.T) {
 	var traceID [16]byte
 	const typeID msgstore.TypeID = 1
 
-	var seqIDs []uint64
+	var seqIDs []msgstore.Seq
 	for i := range 10 {
 		seq := option.Must(db.Append(typeID, traceID, []byte("msg-"+strconv.Itoa(i))))
 		seqIDs = append(seqIDs, seq)
 	}
 
 	// delete one message from the first segment and one from a later segment
-	option.MustZero(db.DeleteByID(typeID, seqIDs[1]))
-	option.MustZero(db.DeleteByID(typeID, seqIDs[7]))
+	option.MustZero(db.DeleteSeq(typeID, seqIDs[1]))
+	option.MustZero(db.DeleteSeq(typeID, seqIDs[7]))
 
-	var remaining []uint64
+	var remaining []msgstore.Seq
 	for _, msg := range db.Replay([]msgstore.TypeID{typeID}, 1, math.MaxUint64) {
-		remaining = append(remaining, msg.SequenceID)
+		remaining = append(remaining, msg.Seq)
 	}
 	if len(remaining) != 8 {
 		t.Fatalf("expected 8 messages after deleting 2, got %d", len(remaining))
@@ -300,11 +300,11 @@ func TestDeleteByIDIdempotent(t *testing.T) {
 	seq := option.Must(db.Append(typeID, traceID, []byte("hello")))
 
 	// first delete succeeds
-	option.MustZero(db.DeleteByID(typeID, seq))
+	option.MustZero(db.DeleteSeq(typeID, seq))
 
 	// second delete on already-tombstoned message returns not found
 	// (SequenceID is now 0, so no match)
-	err := db.DeleteByID(typeID, seq)
+	err := db.DeleteSeq(typeID, seq)
 	if !errors.Is(err, msgstore.ErrNotFound) {
 		t.Fatalf("expected ErrNotFound on second delete, got: %v", err)
 	}
@@ -320,12 +320,12 @@ func TestDeleteByIDSurvivesReopen(t *testing.T) {
 	db := option.Must(msgstore.Open(dir, msgstore.Options{
 		Compress: msgstore.NoCompression,
 	}))
-	var seqIDs []uint64
+	var seqIDs []msgstore.Seq
 	for i := range 5 {
 		seq := option.Must(db.Append(typeID, traceID, []byte("msg-"+strconv.Itoa(i))))
 		seqIDs = append(seqIDs, seq)
 	}
-	option.MustZero(db.DeleteByID(typeID, seqIDs[2]))
+	option.MustZero(db.DeleteSeq(typeID, seqIDs[2]))
 	option.MustZero(db.Close())
 
 	// reopen and verify the tombstone persisted
@@ -334,9 +334,9 @@ func TestDeleteByIDSurvivesReopen(t *testing.T) {
 	}))
 	defer func() { option.MustZero(db2.Close()) }()
 
-	var remaining []uint64
+	var remaining []msgstore.Seq
 	for _, msg := range db2.Replay([]msgstore.TypeID{typeID}, 1, math.MaxUint64) {
-		remaining = append(remaining, msg.SequenceID)
+		remaining = append(remaining, msg.Seq)
 	}
 	if len(remaining) != 4 {
 		t.Fatalf("expected 4 messages after reopen, got %d", len(remaining))

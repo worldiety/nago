@@ -452,8 +452,8 @@ func findMaxSeqInDir(pool *FilePool, dir string, maxMsgSize int64) uint64 {
 		if err != nil {
 			break
 		}
-		if msg.SequenceID > maxSeq {
-			maxSeq = msg.SequenceID
+		if uint64(msg.Seq) > maxSeq {
+			maxSeq = uint64(msg.Seq)
 		}
 	}
 
@@ -466,4 +466,3 @@ func findMaxSeqInDir(pool *FilePool, dir string, maxMsgSize int64) uint64 {
 
 	return maxSeq
 }
-

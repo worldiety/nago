@@ -18,11 +18,15 @@ type replayCursor struct {
 	typeID TypeID
 	msg    Message
 	next   func() (Message, error, bool) // pull iterator from iter.Pull2
-	stop   func()                         // release goroutine
+	stop   func()                        // release goroutine
 }
 
 // advance moves the cursor to the next valid (non-tombstone, no error) message.
 // Returns false when the iterator is exhausted.
+//
+// The message's Type field is populated from the cursor's typeID so that the
+// yielded message is self-describing (the low-level decoder leaves Type unset
+// because the type is implied by the segment directory, not the wire frame).
 func (c *replayCursor) advance() bool {
 	for {
 		msg, err, ok := c.next()
@@ -36,6 +40,7 @@ func (c *replayCursor) advance() bool {
 		if msg.IsTombstone() {
 			continue
 		}
+		msg.Type = c.typeID
 		c.msg = msg
 		return true
 	}
@@ -45,10 +50,10 @@ func (c *replayCursor) advance() bool {
 // This ensures the merged output is in strict global sequence order.
 type cursorHeap []*replayCursor
 
-func (h cursorHeap) Len() int            { return len(h) }
-func (h cursorHeap) Less(i, j int) bool  { return h[i].msg.SequenceID < h[j].msg.SequenceID }
-func (h cursorHeap) Swap(i, j int)       { h[i], h[j] = h[j], h[i] }
-func (h *cursorHeap) Push(x any)         { *h = append(*h, x.(*replayCursor)) }
+func (h cursorHeap) Len() int           { return len(h) }
+func (h cursorHeap) Less(i, j int) bool { return h[i].msg.Seq < h[j].msg.Seq }
+func (h cursorHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
+func (h *cursorHeap) Push(x any)        { *h = append(*h, x.(*replayCursor)) }
 
 func (h *cursorHeap) Pop() any {
 	old := *h
@@ -86,10 +91,10 @@ func replayType(pool *FilePool, segments []segmentFile, maxMsgSize int64, minSeq
 					}
 					break // skip rest of this corrupt segment
 				}
-				if msg.SequenceID < minSeq {
+				if uint64(msg.Seq) < minSeq {
 					continue
 				}
-				if msg.SequenceID > maxSeq {
+				if uint64(msg.Seq) > maxSeq {
 					return // remaining messages in this type are beyond range
 				}
 				if !yield(msg, nil) {
@@ -99,4 +104,3 @@ func replayType(pool *FilePool, segments []segmentFile, maxMsgSize int64, minSeq
 		}
 	}
 }
-

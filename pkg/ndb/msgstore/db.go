@@ -15,6 +15,8 @@ import (
 	"time"
 
 	"github.com/rogpeppe/go-internal/lockedfile"
+	"github.com/worldiety/option"
+	"go.wdy.de/nago/pkg/ndb"
 )
 
 // DB is the main event store handle. Only one process may hold it open at a time.
@@ -24,13 +26,24 @@ type DB struct {
 
 	nextSeq atomic.Uint64 // next sequence ID to assign (atomic for lock-free allocation)
 
-	typesMu sync.RWMutex           // protects the types map
-	types   map[TypeID]*typeState  // per event-type state
+	typesMu sync.RWMutex          // protects the types map
+	types   map[TypeID]*typeState // per event-type state
 
 	lockFile *lockedfile.File // exclusive cross-platform file lock
 	tindex   *timeIndex
 	pool     *FilePool
 }
+
+// Compile-time proof that the engine implements the full neutral contract as
+// well as each disjoint capability on its own. If a method signature drifts
+// from the ndb contract, this fails to build.
+var (
+	_ ndb.Messages   = (*DB)(nil)
+	_ ndb.History    = (*DB)(nil)
+	_ ndb.Retained   = (*DB)(nil)
+	_ ndb.TimeLookup = (*DB)(nil)
+	_ ndb.Pruner     = (*DB)(nil)
+)
 
 // typeState tracks the pending segment for a single event type.
 // All file I/O goes through db.pool – no *os.File is held here.
@@ -38,7 +51,7 @@ type typeState struct {
 	mu            sync.Mutex // per-type lock for concurrent append
 	dir           string
 	seg           *segmentFile
-	writeOffset   int64  // current append position in the pending segment
+	writeOffset   int64 // current append position in the pending segment
 	lastSeq       uint64
 	lastMsgOffset int64  // file offset where the last written message starts (for O(1) Get)
 	writeBuf      []byte // reusable marshal buffer, avoids per-append heap allocation
@@ -177,11 +190,11 @@ func (db *DB) getTypeState(typeID TypeID) (*typeState, error) {
 			}
 			count++
 			if firstSeq == 0 {
-				firstSeq = msg.SequenceID
-				firstTS = msg.Timestamp
+				firstSeq = uint64(msg.Seq)
+				firstTS = msg.TimeNano
 			}
 			lastMsgOff = off
-			lastSeq = msg.SequenceID
+			lastSeq = uint64(msg.Seq)
 			off += int64(msgFrameOverhead + msgFixedSize + len(msg.Payload))
 		}
 		seg.info.MessageCount = count
@@ -201,12 +214,14 @@ func (db *DB) getTypeState(typeID TypeID) (*typeState, error) {
 }
 
 // Append writes a new event to the store. It assigns a globally unique,
-// strictly monotonic sequence ID. Returns the assigned sequence ID.
+// strictly monotonic [Seq]. Returns the assigned sequence number.
 //
 // Concurrent appends to different event types proceed in parallel – only
 // appends to the same type are serialized via the per-type mutex. The global
 // sequence counter is allocated lock-free via atomic increment.
-func (db *DB) Append(typeID TypeID, traceID [16]byte, payload []byte) (uint64, error) {
+//
+// This implements [ndb.History].
+func (db *DB) Append(typeID TypeID, traceID [16]byte, payload []byte) (Seq, error) {
 	if int64(len(payload)) > db.opts.MaxMessageSize {
 		return 0, fmt.Errorf("%w: %d bytes", ErrPayloadTooLarge, len(payload))
 	}
@@ -225,11 +240,11 @@ func (db *DB) Append(typeID TypeID, traceID [16]byte, payload []byte) (uint64, e
 	enc, compressed := db.opts.Compress(typeID, payload)
 
 	msg := Message{
-		SequenceID:      seqID,
-		Timestamp:       now,
+		Type:            typeID,
+		Seq:             Seq(seqID),
+		TimeNano:        now,
 		TraceID:         traceID,
 		Encoding:        enc,
-		PayloadLen:      uint32(len(compressed)),
 		UncompressedLen: uint32(len(payload)),
 		Payload:         compressed,
 	}
@@ -245,7 +260,7 @@ func (db *DB) Append(typeID TypeID, traceID [16]byte, payload []byte) (uint64, e
 		}
 	}
 
-	data := msg.MarshalInto(ts.writeBuf)
+	data := MarshalInto(&msg, ts.writeBuf)
 	ts.writeBuf = data // keep for reuse on next append
 
 	// write via pool at tracked offset (pwrite semantics)
@@ -273,7 +288,7 @@ func (db *DB) Append(typeID TypeID, traceID [16]byte, payload []byte) (uint64, e
 		slog.Warn("msgstore: time index append failed", "err", err)
 	}
 
-	return seqID, nil
+	return Seq(seqID), nil
 }
 
 // splitSegment finalizes the current pending segment and opens a new one.
@@ -317,7 +332,12 @@ func (db *DB) splitSegment(ts *typeState) error {
 // yielded Message.Payload is a view into a reusable read buffer and is only
 // valid until the next iteration step. Callers that need to keep the payload
 // beyond the current step must copy it (e.g. slices.Clone(msg.Payload)).
-func (db *DB) Replay(types []TypeID, minSeq, maxSeq uint64) iter.Seq2[TypeID, Message] {
+//
+// The yielded Message.Type is populated with the type the message belongs to,
+// so it is consistent with the TypeID returned as the iterator's first value.
+//
+// This implements [ndb.History].
+func (db *DB) Replay(types []TypeID, minSeq, maxSeq Seq) iter.Seq2[TypeID, Message] {
 	return func(yield func(TypeID, Message) bool) {
 		eventsDir := filepath.Join(db.dir, "events")
 		maxMsgSize := db.opts.MaxMessageSize
@@ -342,7 +362,7 @@ func (db *DB) Replay(types []TypeID, minSeq, maxSeq uint64) iter.Seq2[TypeID, Me
 				continue
 			}
 
-			seq := replayType(pool, segments, maxMsgSize, minSeq, maxSeq)
+			seq := replayType(pool, segments, maxMsgSize, uint64(minSeq), uint64(maxSeq))
 			next, stop := iter.Pull2(seq)
 			stops = append(stops, stop)
 
@@ -402,9 +422,12 @@ func (db *DB) resolveTypeDirs(eventsDir string, types []TypeID) []typeDir {
 	return result
 }
 
-// SeqForTimestamp returns the smallest sequence ID with a timestamp >= tsNano.
-func (db *DB) SeqForTimestamp(tsNano int64) (uint64, error) {
-	return db.tindex.LookupMinSeq(tsNano)
+// SeqForTime returns the smallest [Seq] with a timestamp >= tsNano.
+//
+// This implements [ndb.TimeLookup].
+func (db *DB) SeqForTime(tsNano int64) (Seq, error) {
+	s, err := db.tindex.LookupMinSeq(tsNano)
+	return Seq(s), err
 }
 
 // Put writes or overwrites the single retained event for the given type.
@@ -425,7 +448,9 @@ func (db *DB) SeqForTimestamp(tsNano int64) (uint64, error) {
 // readMessages / Replay will stop at the invalid boundary. On the next
 // DB reopen, repairTailTruncation cleans up the stale tail once.
 // Get reads directly via lastMsgOffset + TotalLen and never sees the tail.
-func (db *DB) Put(typeID TypeID, traceID [16]byte, payload []byte) (uint64, error) {
+//
+// This implements [ndb.Retained].
+func (db *DB) Put(typeID TypeID, traceID [16]byte, payload []byte) (Seq, error) {
 	if int64(len(payload)) > db.opts.MaxMessageSize {
 		return 0, fmt.Errorf("%w: %d bytes", ErrPayloadTooLarge, len(payload))
 	}
@@ -444,11 +469,11 @@ func (db *DB) Put(typeID TypeID, traceID [16]byte, payload []byte) (uint64, erro
 	enc, compressed := db.opts.Compress(typeID, payload)
 
 	msg := Message{
-		SequenceID:      seqID,
-		Timestamp:       now,
+		Type:            typeID,
+		Seq:             Seq(seqID),
+		TimeNano:        now,
 		TraceID:         traceID,
 		Encoding:        enc,
-		PayloadLen:      uint32(len(compressed)),
 		UncompressedLen: uint32(len(payload)),
 		Payload:         compressed,
 	}
@@ -456,7 +481,7 @@ func (db *DB) Put(typeID TypeID, traceID [16]byte, payload []byte) (uint64, erro
 	// per-type lock: marshal, overwrite at fixed offset, update segment info
 	ts.mu.Lock()
 
-	data := msg.MarshalInto(ts.writeBuf)
+	data := MarshalInto(&msg, ts.writeBuf)
 	ts.writeBuf = data // keep for reuse
 
 	// always write at the first message slot – overwrites the previous value
@@ -479,7 +504,7 @@ func (db *DB) Put(typeID TypeID, traceID [16]byte, payload []byte) (uint64, erro
 
 	// deliberately no time index update – Put types have no history
 
-	return seqID, nil
+	return Seq(seqID), nil
 }
 
 // Get returns the last message written to the given event type.
@@ -487,19 +512,22 @@ func (db *DB) Put(typeID TypeID, traceID [16]byte, payload []byte) (uint64, erro
 // (history) types by reading directly from the cached lastMsgOffset
 // in a single ReadAt call – no segment scanning required.
 //
-// Returns ErrNotFound if no message has been written for the type yet.
-// The returned Message.Payload is an independent copy safe to retain.
-func (db *DB) Get(typeID TypeID) (Message, error) {
+// Returns an empty option (with a nil error) if no message has been written
+// for the type yet. The returned Message.Payload is an independent copy safe
+// to retain, and Message.Type is set to typeID.
+//
+// This implements [ndb.Retained].
+func (db *DB) Get(typeID TypeID) (option.Opt[Message], error) {
 	ts, err := db.getTypeState(typeID)
 	if err != nil {
-		return Message{}, err
+		return option.None[Message](), err
 	}
 
 	ts.mu.Lock()
 	defer ts.mu.Unlock()
 
 	if ts.lastMsgOffset == 0 {
-		return Message{}, ErrNotFound
+		return option.None[Message](), nil
 	}
 
 	pool := db.pool
@@ -509,11 +537,11 @@ func (db *DB) Get(typeID TypeID) (Message, error) {
 	// read the frame header to determine the total message size
 	hdr := make([]byte, prePayloadSize)
 	if _, err := pool.ReadAt(path, hdr, ts.lastMsgOffset); err != nil {
-		return Message{}, fmt.Errorf("msgstore: get read header: %w", err)
+		return option.None[Message](), fmt.Errorf("msgstore: get read header: %w", err)
 	}
 
 	if [8]byte(hdr[0:8]) != syncMarker {
-		return Message{}, fmt.Errorf("msgstore: get: %w", ErrInvalidSyncMarker)
+		return option.None[Message](), fmt.Errorf("msgstore: get: %w", ErrInvalidSyncMarker)
 	}
 
 	innerLen := binary.BigEndian.Uint32(hdr[8:12])
@@ -522,15 +550,16 @@ func (db *DB) Get(typeID TypeID) (Message, error) {
 	// read the complete framed message
 	buf := make([]byte, framedTotal)
 	if _, err := pool.ReadAt(path, buf, ts.lastMsgOffset); err != nil {
-		return Message{}, fmt.Errorf("msgstore: get read message: %w", err)
+		return option.None[Message](), fmt.Errorf("msgstore: get read message: %w", err)
 	}
 
 	msg, _, err := UnmarshalMessage(buf, maxMsgSize)
 	if err != nil {
-		return Message{}, fmt.Errorf("msgstore: get unmarshal: %w", err)
+		return option.None[Message](), fmt.Errorf("msgstore: get unmarshal: %w", err)
 	}
+	msg.Type = typeID
 
-	return msg, nil
+	return option.Some(msg), nil
 }
 
 // Close releases all resources: the file pool and the lock file.
@@ -599,8 +628,8 @@ func (db *DB) RebuildTimeIndex() error {
 
 	// iterate all messages in global sequence order and rebuild the index
 	var count uint64
-	for _, msg := range db.Replay(nil, 0, ^uint64(0)) {
-		if err := db.tindex.Append(msg.Timestamp, msg.SequenceID); err != nil {
+	for _, msg := range db.Replay(nil, 0, ^Seq(0)) {
+		if err := db.tindex.Append(msg.TimeNano, uint64(msg.Seq)); err != nil {
 			return fmt.Errorf("msgstore: rebuild time index append: %w", err)
 		}
 		count++
@@ -615,10 +644,12 @@ func (db *DB) RebuildTimeIndex() error {
 	return nil
 }
 
-// DeleteByType removes all events for the given event type by deleting the
+// DeleteType removes all events for the given event type by deleting the
 // entire type directory. The in-memory state for the type is also cleaned up.
 // Time index entries are intentionally kept for performance reasons.
-func (db *DB) DeleteByType(typeID TypeID) error {
+//
+// This implements [ndb.Pruner].
+func (db *DB) DeleteType(typeID TypeID) error {
 	// remove from in-memory map first
 	db.typesMu.Lock()
 	ts, ok := db.types[typeID]
@@ -652,11 +683,14 @@ func (db *DB) DeleteByType(typeID TypeID) error {
 	return nil
 }
 
-// DeleteByID soft-deletes a single message by overwriting it as a tombstone.
-// The SequenceID is set to 0 and the payload is zeroed out. The message frame
+// DeleteSeq soft-deletes a single message by overwriting it as a tombstone.
+// The Seq is set to 0 and the payload is zeroed out. The message frame
 // size and time index entries are preserved for performance reasons.
-// Returns ErrNotFound if no message with the given seqID exists for the type.
-func (db *DB) DeleteByID(typeID TypeID, seqID uint64) error {
+// Returns ErrNotFound if no message with the given seq exists for the type.
+//
+// This implements [ndb.Pruner].
+func (db *DB) DeleteSeq(typeID TypeID, seq Seq) error {
+	seqID := uint64(seq)
 	typeDir := filepath.Join(db.dir, "events", strconv.FormatUint(uint64(typeID), 10))
 
 	segments, err := listSegments(typeDir)
@@ -780,4 +814,3 @@ func tombstoneMessage(pool *FilePool, path string, seqID uint64, maxMsgSize int6
 
 	return false, nil
 }
-

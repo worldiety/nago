@@ -232,4 +232,3 @@ func (ti *timeIndex) LookupMinSeq(tsNano int64) (uint64, error) {
 	}
 	return entry.SequenceID, nil
 }
-

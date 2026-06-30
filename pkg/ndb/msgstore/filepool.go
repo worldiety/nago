@@ -134,4 +134,3 @@ func (p *FilePool) Close() error {
 	p.lru.Init()
 	return firstErr
 }
-

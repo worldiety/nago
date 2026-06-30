@@ -45,4 +45,3 @@ func Decompress(enc Encoding, compressed []byte, uncompressedLen uint32) ([]byte
 		return nil, ErrCorruptCRC // unknown encoding treated as corruption
 	}
 }
-
