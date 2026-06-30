@@ -60,7 +60,7 @@ func TestTailReplayThenLive(t *testing.T) {
 	m, closeDB := openMessages(t)
 	defer closeDB()
 
-	const typeID ndb.TypeID = 1
+	const typeID ndb.TypeID = "1"
 	var trace [16]byte
 
 	// historical events before tailing
@@ -131,7 +131,7 @@ func TestTailFromSeqSkipsOlder(t *testing.T) {
 	m, closeDB := openMessages(t)
 	defer closeDB()
 
-	const typeID ndb.TypeID = 1
+	const typeID ndb.TypeID = "1"
 	var trace [16]byte
 	for i := 0; i < 10; i++ {
 		option.Must(m.Append(typeID, trace, []byte("x")))
@@ -168,8 +168,8 @@ func TestTailMultipleTypesOrdered(t *testing.T) {
 	m, closeDB := openMessages(t)
 	defer closeDB()
 
-	const a ndb.TypeID = 1
-	const b ndb.TypeID = 2
+	const a ndb.TypeID = "1"
+	const b ndb.TypeID = "2"
 	var trace [16]byte
 
 	c := &collector{}
@@ -217,7 +217,7 @@ func TestTailStopsOnBreak(t *testing.T) {
 	m, closeDB := openMessages(t)
 	defer closeDB()
 
-	const typeID ndb.TypeID = 1
+	const typeID ndb.TypeID = "1"
 	var trace [16]byte
 	option.Must(m.Append(typeID, trace, []byte("one")))
 

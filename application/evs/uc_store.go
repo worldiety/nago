@@ -21,7 +21,7 @@ import (
 	"go.wdy.de/nago/pkg/xtime"
 )
 
-func NewStore[Evt any](perms Permissions, inverseMutex *sync.Mutex, typeRegistry *concurrent.RWMap[reflect.Type, Discriminator], eventStore blob.Store, timeStore blob.Store, gOpts Options[Evt]) Store[Evt] {
+func NewStore[Evt any](perms Permissions, typeRegistry *concurrent.RWMap[reflect.Type, Discriminator], eventStore blob.Store) Store[Evt] {
 	var lastId atomic.Int64
 	var once sync.Once
 
@@ -58,7 +58,7 @@ func NewStore[Evt any](perms Permissions, inverseMutex *sync.Mutex, typeRegistry
 		return SeqID(lastId.Add(1)), nil
 	}
 
-	return func(subject auth.Subject, evt Evt, opts StoreOptions) (Envelope[Evt], error) {
+	return func(subject auth.Subject, evt Evt) (Envelope[Evt], error) {
 		var zero Envelope[Evt]
 		if err := subject.Audit(perms.Store); err != nil {
 			return zero, err
@@ -86,19 +86,11 @@ func NewStore[Evt any](perms Permissions, inverseMutex *sync.Mutex, typeRegistry
 			return zero, err
 		}
 
-		if opts.CreatedBy == "" {
-			opts.CreatedBy = subject.ID()
-		}
-
-		if opts.EventTime == 0 {
-			opts.EventTime = xtime.Now()
-		}
+		eventTime := xtime.Now()
 
 		env := JsonEnvelope{
 			Discriminator: discriminator,
-			EventTime:     opts.EventTime,
-			CreatedBy:     opts.CreatedBy,
-			Metadata:      opts.Metadata,
+			EventTime:     eventTime,
 			Data:          payloadBuf,
 		}
 
@@ -111,32 +103,13 @@ func NewStore[Evt any](perms Permissions, inverseMutex *sync.Mutex, typeRegistry
 			return zero, fmt.Errorf("error storing envelope in store: %w", err)
 		}
 
-		// put the inverse
-		if err := updateTimeSlice(inverseMutex, timeStore, env.EventTime, func(payload jsonInversePayload) jsonInversePayload {
-			payload = append(payload, mySeqId)
-			return payload
-		}); err != nil {
-			return zero, err
-		}
-
-		// update composite indicies
 		e := Envelope[Evt]{
 			Sequence:      mySeqId,
 			Key:           key,
 			Discriminator: env.Discriminator,
 			EventTime:     env.EventTime,
-			CreatedBy:     env.CreatedBy,
-			Metadata:      env.Metadata,
 			Data:          evt,
-			Raw:           buf,
-		}
-
-		for _, idxer := range gOpts.Indexer {
-			if err := idxer.Insert(e); err != nil {
-				// we are essentially screwed: if the write fails, usually due to disk full, we cannot even insert any
-				// deletes for the prior inserts
-				return e, err
-			}
+			Raw:           payloadBuf,
 		}
 
 		return e, nil

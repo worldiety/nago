@@ -29,7 +29,7 @@ func TestSubscribeAppendDelivers(t *testing.T) {
 	db := option.Must(msgstore.Open(dir, msgstore.Options{Compress: msgstore.NoCompression}))
 	defer func() { option.MustZero(db.Close()) }()
 
-	const typeID msgstore.TypeID = 7
+	const typeID msgstore.TypeID = "7"
 	var trace [16]byte
 	trace[0] = 0xAB
 
@@ -57,7 +57,7 @@ func TestSubscribeAppendDelivers(t *testing.T) {
 	defer mu.Unlock()
 	n := got[0]
 	if n.Type != typeID {
-		t.Errorf("type: got %d want %d", n.Type, typeID)
+		t.Errorf("type: got %q want %q", n.Type, typeID)
 	}
 	if n.Seq != seq {
 		t.Errorf("seq: got %d want %d", n.Seq, seq)
@@ -75,7 +75,7 @@ func TestSubscribePutDelivers(t *testing.T) {
 	db := option.Must(msgstore.Open(dir, msgstore.Options{Compress: msgstore.NoCompression}))
 	defer func() { option.MustZero(db.Close()) }()
 
-	const typeID msgstore.TypeID = 3
+	const typeID msgstore.TypeID = "3"
 	var trace [16]byte
 
 	var count atomic.Int64
@@ -97,8 +97,8 @@ func TestSubscribeTypeFilter(t *testing.T) {
 	db := option.Must(msgstore.Open(dir, msgstore.Options{Compress: msgstore.NoCompression}))
 	defer func() { option.MustZero(db.Close()) }()
 
-	const wanted msgstore.TypeID = 1
-	const other msgstore.TypeID = 2
+	const wanted msgstore.TypeID = "1"
+	const other msgstore.TypeID = "2"
 	var trace [16]byte
 
 	var wantedCount, otherCount atomic.Int64
@@ -131,7 +131,7 @@ func TestSubscribeCloseStopsDelivery(t *testing.T) {
 	db := option.Must(msgstore.Open(dir, msgstore.Options{Compress: msgstore.NoCompression}))
 	defer func() { option.MustZero(db.Close()) }()
 
-	const typeID msgstore.TypeID = 5
+	const typeID msgstore.TypeID = "5"
 	var trace [16]byte
 
 	var count atomic.Int64
@@ -162,7 +162,7 @@ func TestSubscribeSynchronousDelivery(t *testing.T) {
 	db := option.Must(msgstore.Open(dir, msgstore.Options{Compress: msgstore.NoCompression}))
 	defer func() { option.MustZero(db.Close()) }()
 
-	const typeID msgstore.TypeID = 9
+	const typeID msgstore.TypeID = "9"
 	var trace [16]byte
 
 	// Delivery is synchronous: by the time Append returns, the callback has run.
@@ -183,7 +183,7 @@ func TestSubscribeOrderMatchesAppend(t *testing.T) {
 	db := option.Must(msgstore.Open(dir, msgstore.Options{Compress: msgstore.NoCompression}))
 	defer func() { option.MustZero(db.Close()) }()
 
-	const typeID msgstore.TypeID = 4
+	const typeID msgstore.TypeID = "4"
 	var trace [16]byte
 
 	var mu sync.Mutex
@@ -217,7 +217,7 @@ func TestSubscribePanicIsContained(t *testing.T) {
 	db := option.Must(msgstore.Open(dir, msgstore.Options{Compress: msgstore.NoCompression}))
 	defer func() { option.MustZero(db.Close()) }()
 
-	const typeID msgstore.TypeID = 11
+	const typeID msgstore.TypeID = "11"
 	var trace [16]byte
 
 	// A panicking subscriber must not break the writer or other subscribers.

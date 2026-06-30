@@ -21,7 +21,7 @@ func TestRebuildTimeIndexBasic(t *testing.T) {
 	}))
 
 	var traceID [16]byte
-	const typeID msgstore.TypeID = 1
+	const typeID msgstore.TypeID = "1"
 
 	before := time.Now().UnixNano()
 
@@ -62,7 +62,7 @@ func TestRebuildTimeIndexAfterDeleteByID(t *testing.T) {
 	}))
 
 	var traceID [16]byte
-	const typeID msgstore.TypeID = 1
+	const typeID msgstore.TypeID = "1"
 
 	var seqIDs []msgstore.Seq
 	for i := range 5 {
@@ -103,8 +103,8 @@ func TestRebuildTimeIndexAfterDeleteByType(t *testing.T) {
 	}))
 
 	var traceID [16]byte
-	const typeA msgstore.TypeID = 1
-	const typeB msgstore.TypeID = 2
+	const typeA msgstore.TypeID = "1"
+	const typeB msgstore.TypeID = "2"
 
 	for i := range 5 {
 		option.Must(db.Append(typeA, traceID, []byte("a-"+strconv.Itoa(i))))
@@ -142,10 +142,10 @@ func TestRebuildTimeIndexMultipleTypes(t *testing.T) {
 	before := time.Now().UnixNano()
 
 	// interleave two types
-	option.Must(db.Append(msgstore.TypeID(1), traceID, []byte("t1-a")))
-	option.Must(db.Append(msgstore.TypeID(2), traceID, []byte("t2-a")))
-	option.Must(db.Append(msgstore.TypeID(1), traceID, []byte("t1-b")))
-	option.Must(db.Append(msgstore.TypeID(2), traceID, []byte("t2-b")))
+	option.Must(db.Append(msgstore.TypeID("1"), traceID, []byte("t1-a")))
+	option.Must(db.Append(msgstore.TypeID("2"), traceID, []byte("t2-a")))
+	option.Must(db.Append(msgstore.TypeID("1"), traceID, []byte("t1-b")))
+	option.Must(db.Append(msgstore.TypeID("2"), traceID, []byte("t2-b")))
 
 	// rebuild
 	option.MustZero(db.RebuildTimeIndex())
@@ -186,7 +186,7 @@ func TestRebuildTimeIndexCleansOldFiles(t *testing.T) {
 	var traceID [16]byte
 	before := time.Now().UnixNano()
 	for i := range 5 {
-		option.Must(db.Append(msgstore.TypeID(1), traceID, []byte("msg-"+strconv.Itoa(i))))
+		option.Must(db.Append(msgstore.TypeID("1"), traceID, []byte("msg-"+strconv.Itoa(i))))
 	}
 
 	// force flush of the time index buffer by performing a lookup
@@ -200,7 +200,7 @@ func TestRebuildTimeIndexCleansOldFiles(t *testing.T) {
 	}
 
 	// delete all messages, then rebuild
-	option.MustZero(db.DeleteType(msgstore.TypeID(1)))
+	option.MustZero(db.DeleteType(msgstore.TypeID("1")))
 	option.MustZero(db.RebuildTimeIndex())
 
 	// with all messages deleted, the rebuilt index should have no files
@@ -222,7 +222,7 @@ func TestRebuildTimeIndexWithSplitSegments(t *testing.T) {
 	}))
 
 	var traceID [16]byte
-	const typeID msgstore.TypeID = 1
+	const typeID msgstore.TypeID = "1"
 
 	before := time.Now().UnixNano()
 
@@ -263,7 +263,7 @@ func TestRebuildTimeIndexAppendAfterRebuild(t *testing.T) {
 	}))
 
 	var traceID [16]byte
-	const typeID msgstore.TypeID = 1
+	const typeID msgstore.TypeID = "1"
 
 	for i := range 5 {
 		option.Must(db.Append(typeID, traceID, []byte("before-"+strconv.Itoa(i))))

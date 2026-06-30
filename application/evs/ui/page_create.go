@@ -82,7 +82,7 @@ func newDefaultCreate[Evt any](wnd core.Window, opts PageCreateOptions[Evt]) fun
 					wnd.Navigation().ForwardTo(opts.Pages.Audit, wnd.Values())
 				}).Title(rstring.ActionCancel.Get(wnd)),
 				ui.PrimaryButton(func() {
-					_, err := uc.Store(wnd.Subject(), state.Get(), evs.StoreOptions{})
+					_, err := uc.Store(wnd.Subject(), state.Get())
 					if err != nil {
 						errState.Set(err)
 						return

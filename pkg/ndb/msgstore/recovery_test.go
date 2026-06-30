@@ -42,7 +42,7 @@ func countReplay(db *msgstore.DB) int {
 // findSegmentFile returns the path to the first .bin file in events/<typeID>/.
 func findSegmentFile(t *testing.T, dir string, typeID msgstore.TypeID) string {
 	t.Helper()
-	typeDir := filepath.Join(dir, "events", strconv.FormatUint(uint64(typeID), 10))
+	typeDir := filepath.Join(dir, "events", string(typeID))
 	entries, err := os.ReadDir(typeDir)
 	if err != nil {
 		t.Fatalf("readdir: %v", err)
@@ -81,7 +81,7 @@ func findAllSyncMarkers(data []byte) []int {
 }
 
 func TestBitrotMiddleMessage(t *testing.T) {
-	const typeID msgstore.TypeID = 1
+	const typeID msgstore.TypeID = "1"
 	const total = 10
 	dir := writeTestEvents(t, total, typeID)
 
@@ -120,7 +120,7 @@ func TestBitrotMiddleMessage(t *testing.T) {
 }
 
 func TestBitrotCorruptPayloadLen(t *testing.T) {
-	const typeID msgstore.TypeID = 1
+	const typeID msgstore.TypeID = "1"
 	const total = 10
 	dir := writeTestEvents(t, total, typeID)
 
@@ -160,7 +160,7 @@ func TestBitrotCorruptPayloadLen(t *testing.T) {
 }
 
 func TestTailTruncation(t *testing.T) {
-	const typeID msgstore.TypeID = 1
+	const typeID msgstore.TypeID = "1"
 	const total = 10
 	dir := writeTestEvents(t, total, typeID)
 
@@ -196,7 +196,7 @@ func TestTailTruncation(t *testing.T) {
 }
 
 func TestTailGarbageAppend(t *testing.T) {
-	const typeID msgstore.TypeID = 1
+	const typeID msgstore.TypeID = "1"
 	const total = 5
 	dir := writeTestEvents(t, total, typeID)
 
@@ -241,7 +241,7 @@ func TestSyncMarkerInPayload(t *testing.T) {
 	copy(payload[50:], syncMarkerBytes)
 	copy(payload[80:], syncMarkerBytes)
 
-	const typeID msgstore.TypeID = 1
+	const typeID msgstore.TypeID = "1"
 	option.Must(db.Append(typeID, traceID, payload))
 	option.Must(db.Append(typeID, traceID, []byte("after-marker-payload")))
 	option.MustZero(db.Close())
@@ -260,7 +260,7 @@ func TestSyncMarkerInPayload(t *testing.T) {
 
 func TestMultipleBitrotRegions(t *testing.T) {
 	// corrupt two separate messages and verify the rest is recovered
-	const typeID msgstore.TypeID = 1
+	const typeID msgstore.TypeID = "1"
 	const total = 20
 	dir := writeTestEvents(t, total, typeID)
 

@@ -60,8 +60,6 @@ func NewLoad[Evt any](perms Permissions, eventStore blob.Store, registry *concur
 			Key:           key,
 			Discriminator: jsonEnv.Discriminator,
 			EventTime:     jsonEnv.EventTime,
-			CreatedBy:     jsonEnv.CreatedBy,
-			Metadata:      jsonEnv.Metadata,
 			Data:          payloadEvt,
 			Raw:           jsonEnv.Data,
 		}), nil

@@ -18,10 +18,37 @@ import (
 )
 
 // TypeID identifies an event type. It is the stable, engine-neutral identifier
-// a caller uses to address a logical stream of messages. How an engine maps a
-// TypeID onto physical storage (a directory, a column family, a table, ...) is
-// an implementation detail and must not leak through this contract.
-type TypeID uint64
+// a caller uses to address a logical stream of messages, and it is meant to be a
+// durable, human-meaningful name (e.g. a discriminator like "FormCreated") that
+// never changes for a given logical type.
+//
+// It is a string rather than a number on purpose: a stable textual identifier
+// removes any need for an external name→number mapping and the sequence-recycling
+// hazards that come with it (a removed type's id can never be accidentally reused,
+// because there is no id pool). An engine may use the TypeID directly as part of
+// its physical layout (e.g. msgstore uses it as a directory name), so callers
+// must keep it filesystem-safe; see [ValidTypeID].
+type TypeID string
+
+// ValidTypeID reports whether s is a well-formed [TypeID]: 1–255 characters from
+// the set [A-Za-z0-9._-]. The restriction keeps a TypeID safe to use directly as
+// a path segment and free of separators, traversal, or case-collision surprises.
+func ValidTypeID(s string) bool {
+	if len(s) == 0 || len(s) > 255 {
+		return false
+	}
+	for _, r := range s {
+		switch {
+		case r >= 'a' && r <= 'z',
+			r >= 'A' && r <= 'Z',
+			r >= '0' && r <= '9',
+			r == '.', r == '_', r == '-':
+		default:
+			return false
+		}
+	}
+	return true
+}
 
 // Seq is a globally strict-monotonic sequence number assigned by the engine on
 // write. It is unique and never reused across the whole store, even across

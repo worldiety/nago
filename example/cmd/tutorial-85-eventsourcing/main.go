@@ -74,22 +74,14 @@ func main() {
 		cfg.SetDecorator(cfg.NewScaffold().Decorator())
 		option.Must(cfginspector.Enable(cfg))
 
-		var replayByLocation evs.ReplayWithIndex[Location, ShopEvent]
 		modShop := option.Must(cfgevs.Enable[ShopEvent](cfg, "test.nago.app", "Shop Events", cfgevs.Options[ShopEvent]{}.WithOptions(
 			cfgevs.Schema[OrderPlaced, ShopEvent]("OrderPlaced"),
 			cfgevs.Schema[OrderPayed, ShopEvent]("OrderPayed"),
 			cfgevs.Schema[OrderCancelled, ShopEvent]("OrderCancelled"),
-			cfgevs.Index[Location, ShopEvent](func(e evs.Envelope[ShopEvent]) (Location, error) {
-				return e.Data.Location(), nil
-			}, func(ctx cfgevs.IndexContext[Location, ShopEvent]) error {
-				replayByLocation = ctx.Replay
-				return nil
-			}),
 		)))
 
 		// take a look for the things you can build your use cases on
 		_ = modShop
-		_ = replayByLocation
 
 		cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {
 			return ui.Text("See the admin center")
@@ -114,7 +106,7 @@ func NewPayOrder(storeEvent evs.Store[ShopEvent]) PayOrder {
 		// ...
 
 		evt := OrderPayed{OrderID: cmd.OrderID}
-		if _, err := storeEvent(user.SU(), evt, evs.StoreOptions{CreatedBy: subject.ID()}); err != nil {
+		if _, err := storeEvent(user.SU(), evt); err != nil {
 			return evt, err
 		}
 

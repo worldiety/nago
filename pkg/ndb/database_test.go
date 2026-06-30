@@ -38,7 +38,7 @@ func TestEngineMessages(t *testing.T) {
 
 	m := me.Messages()
 
-	const typeID ndb.TypeID = 7
+	const typeID ndb.TypeID = "7"
 	var trace [16]byte
 
 	seq, err := m.Append(typeID, trace, []byte("hello"))
@@ -52,10 +52,10 @@ func TestEngineMessages(t *testing.T) {
 	var got []byte
 	for tid, msg := range m.Replay([]ndb.TypeID{typeID}, 1, math.MaxUint64) {
 		if tid != typeID {
-			t.Fatalf("replay type: got %d want %d", tid, typeID)
+			t.Fatalf("replay type: got %q want %q", tid, typeID)
 		}
 		if msg.Type != typeID {
-			t.Fatalf("message Type field not populated: got %d", msg.Type)
+			t.Fatalf("message Type field not populated: got %q", msg.Type)
 		}
 		got = slices.Clone(msg.Payload)
 	}
@@ -94,7 +94,7 @@ func TestEngineDefaultKindAndReopen(t *testing.T) {
 	}
 	m := eng.(ndb.MessageEngine).Messages()
 
-	const typeID ndb.TypeID = 3
+	const typeID ndb.TypeID = "3"
 	var trace [16]byte
 	if _, err := m.Put(typeID, trace, []byte("v1")); err != nil {
 		t.Fatalf("put: %v", err)
@@ -154,7 +154,7 @@ func TestEngineMultipleInstancesSameKind(t *testing.T) {
 		t.Fatal("two differently named engines must be distinct instances")
 	}
 
-	const typeID ndb.TypeID = 1
+	const typeID ndb.TypeID = "1"
 	var trace [16]byte
 
 	am := audit.(ndb.MessageEngine).Messages()
@@ -192,7 +192,7 @@ func TestEngineWithDSNConfig(t *testing.T) {
 	}
 
 	m := eng.(ndb.MessageEngine).Messages()
-	const typeID ndb.TypeID = 1
+	const typeID ndb.TypeID = "1"
 	var trace [16]byte
 	if _, err := m.Append(typeID, trace, []byte("payload")); err != nil {
 		t.Fatalf("append: %v", err)

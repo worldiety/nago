@@ -25,7 +25,7 @@ func TestAppendAndReplay(t *testing.T) {
 
 	traceID := msgstore.NewTraceID()
 
-	const eventType msgstore.TypeID = 42
+	const eventType msgstore.TypeID = "42"
 	const count = 100
 
 	// append events
@@ -54,12 +54,12 @@ func TestAppendAndReplay(t *testing.T) {
 		replayed++
 	}
 	if replayed != count {
-		t.Fatalf("expected %d messages for type %d, got %d", count, eventType, replayed)
+		t.Fatalf("expected %d messages for type %q, got %d", count, eventType, replayed)
 	}
 
 	// replay non-existent type
 	replayed = 0
-	for _, msg := range db.Replay([]msgstore.TypeID{999}, 1, math.MaxUint64) {
+	for _, msg := range db.Replay([]msgstore.TypeID{"999"}, 1, math.MaxUint64) {
 		_ = msg
 		replayed++
 	}
@@ -82,14 +82,14 @@ func TestAppendWithS2Compression(t *testing.T) {
 		payload[i] = byte(i % 256)
 	}
 
-	seq := option.Must(db.Append(1, traceID, payload))
+	seq := option.Must(db.Append("1", traceID, payload))
 	if seq != 1 {
 		t.Fatalf("expected seq 1, got %d", seq)
 	}
 
 	// replay and verify decompression happens
 	var found bool
-	for _, msg := range db.Replay([]msgstore.TypeID{1}, 1, 1) {
+	for _, msg := range db.Replay([]msgstore.TypeID{"1"}, 1, 1) {
 		found = true
 		if msg.Encoding != msgstore.EncodingS2 {
 			t.Fatalf("expected S2 encoding, got %d", msg.Encoding)
@@ -113,7 +113,7 @@ func TestSplitByCount(t *testing.T) {
 	defer func() { option.MustZero(db.Close()) }()
 
 	var traceID [16]byte
-	const eventType msgstore.TypeID = 1
+	const eventType msgstore.TypeID = "1"
 
 	for i := range 12 {
 		option.Must(db.Append(eventType, traceID, []byte("msg")))
@@ -169,7 +169,7 @@ func TestReopenAndBootstrap(t *testing.T) {
 
 	var traceID [16]byte
 	for i := range 10 {
-		option.Must(db.Append(1, traceID, []byte("event")))
+		option.Must(db.Append("1", traceID, []byte("event")))
 		_ = i
 	}
 	option.MustZero(db.Close())
@@ -178,7 +178,7 @@ func TestReopenAndBootstrap(t *testing.T) {
 	db2 := option.Must(msgstore.Open(dir, msgstore.Options{Compress: msgstore.NoCompression}))
 	defer func() { option.MustZero(db2.Close()) }()
 
-	seq := option.Must(db2.Append(1, traceID, []byte("after reopen")))
+	seq := option.Must(db2.Append("1", traceID, []byte("after reopen")))
 	if seq != 11 {
 		t.Fatalf("expected seq 11 after reopen, got %d", seq)
 	}
@@ -191,14 +191,14 @@ func TestMultipleEventTypes(t *testing.T) {
 
 	var traceID [16]byte
 	for i := range 5 {
-		option.Must(db.Append(msgstore.TypeID(1), traceID, []byte("type1")))
-		option.Must(db.Append(msgstore.TypeID(2), traceID, []byte("type2")))
+		option.Must(db.Append(msgstore.TypeID("1"), traceID, []byte("type1")))
+		option.Must(db.Append(msgstore.TypeID("2"), traceID, []byte("type2")))
 		_ = i
 	}
 
 	// replay only type 1
 	var count int
-	for _, _ = range db.Replay([]msgstore.TypeID{1}, 1, math.MaxUint64) {
+	for _, _ = range db.Replay([]msgstore.TypeID{"1"}, 1, math.MaxUint64) {
 		count++
 	}
 	if count != 5 {
@@ -207,7 +207,7 @@ func TestMultipleEventTypes(t *testing.T) {
 
 	// replay only type 2
 	count = 0
-	for _, _ = range db.Replay([]msgstore.TypeID{2}, 1, math.MaxUint64) {
+	for _, _ = range db.Replay([]msgstore.TypeID{"2"}, 1, math.MaxUint64) {
 		count++
 	}
 	if count != 5 {
@@ -223,11 +223,11 @@ func TestReplayGlobalSequenceOrder(t *testing.T) {
 	var traceID [16]byte
 
 	// interleave Login (type 1) and Logout (type 2) events
-	option.Must(db.Append(msgstore.TypeID(1), traceID, []byte("login-alice")))   // seq 1
-	option.Must(db.Append(msgstore.TypeID(1), traceID, []byte("login-bob")))     // seq 2
-	option.Must(db.Append(msgstore.TypeID(2), traceID, []byte("logout-alice")))  // seq 3
-	option.Must(db.Append(msgstore.TypeID(1), traceID, []byte("login-charlie"))) // seq 4
-	option.Must(db.Append(msgstore.TypeID(2), traceID, []byte("logout-bob")))    // seq 5
+	option.Must(db.Append(msgstore.TypeID("1"), traceID, []byte("login-alice")))   // seq 1
+	option.Must(db.Append(msgstore.TypeID("1"), traceID, []byte("login-bob")))     // seq 2
+	option.Must(db.Append(msgstore.TypeID("2"), traceID, []byte("logout-alice")))  // seq 3
+	option.Must(db.Append(msgstore.TypeID("1"), traceID, []byte("login-charlie"))) // seq 4
+	option.Must(db.Append(msgstore.TypeID("2"), traceID, []byte("logout-bob")))    // seq 5
 
 	// replay both types: must come out in strict sequence order 1,2,3,4,5
 	var seqIDs []msgstore.Seq
@@ -249,10 +249,10 @@ func TestReplayGlobalSequenceOrder(t *testing.T) {
 	}
 
 	// verify expected type interleaving: 1,1,2,1,2
-	expectedTypes := []msgstore.TypeID{1, 1, 2, 1, 2}
+	expectedTypes := []msgstore.TypeID{"1", "1", "2", "1", "2"}
 	for i, tid := range typeIDs {
 		if tid != expectedTypes[i] {
-			t.Fatalf("wrong type at index %d: got %d, want %d", i, tid, expectedTypes[i])
+			t.Fatalf("wrong type at index %d: got %q, want %q", i, tid, expectedTypes[i])
 		}
 	}
 }
@@ -263,7 +263,7 @@ func TestPutAndGet(t *testing.T) {
 	defer func() { option.MustZero(db.Close()) }()
 
 	var traceID [16]byte
-	const eventType msgstore.TypeID = 100
+	const eventType msgstore.TypeID = "100"
 
 	// Get on empty type returns an empty option (no error)
 	empty, err := db.Get(eventType)
@@ -301,7 +301,7 @@ func TestPutShrinkPayload(t *testing.T) {
 	defer func() { option.MustZero(db.Close()) }()
 
 	var traceID [16]byte
-	const eventType msgstore.TypeID = 200
+	const eventType msgstore.TypeID = "200"
 
 	// Put a large payload
 	bigPayload := make([]byte, 4096)
@@ -328,7 +328,7 @@ func TestPutReopenBootstrap(t *testing.T) {
 	dir := t.TempDir()
 
 	var traceID [16]byte
-	const eventType msgstore.TypeID = 300
+	const eventType msgstore.TypeID = "300"
 
 	// first session: Put a value
 	db := option.Must(msgstore.Open(dir, msgstore.Options{Compress: msgstore.NoCompression}))
@@ -360,7 +360,7 @@ func TestGetAfterAppend(t *testing.T) {
 	defer func() { option.MustZero(db.Close()) }()
 
 	var traceID [16]byte
-	const eventType msgstore.TypeID = 400
+	const eventType msgstore.TypeID = "400"
 
 	// Append a history of events
 	for i := range 20 {
@@ -383,7 +383,7 @@ func TestReplayAfterPut(t *testing.T) {
 	defer func() { option.MustZero(db.Close()) }()
 
 	var traceID [16]byte
-	const eventType msgstore.TypeID = 500
+	const eventType msgstore.TypeID = "500"
 
 	// Put several times – only last value is physically present
 	for i := range 5 {

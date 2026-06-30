@@ -89,7 +89,7 @@ func TestParseDSNCompress(t *testing.T) {
 		if opts.Compress == nil {
 			t.Fatalf("parseDSN(%q): Compress is nil", dsn)
 		}
-		enc, _ := opts.Compress(1, []byte("tiny"))
+		enc, _ := opts.Compress("tiny-type", []byte("tiny"))
 		if enc != wantEnc {
 			t.Errorf("parseDSN(%q): encoding for tiny payload = %d, want %d", dsn, enc, wantEnc)
 		}

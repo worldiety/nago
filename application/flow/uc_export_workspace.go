@@ -29,8 +29,6 @@ func NewExportWorkspace(handler *evs.Handler[*Workspace, WorkspaceEvent, Workspa
 			res.Events = append(res.Events, evs.JsonEnvelope{
 				Discriminator: evt.Discriminator,
 				EventTime:     evt.EventTime,
-				CreatedBy:     evt.CreatedBy,
-				Metadata:      evt.Metadata,
 				Data:          evt.Raw,
 			})
 		}

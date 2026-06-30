@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"reflect"
 
-	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/std/concurrent"
 	"go.wdy.de/nago/pkg/xtime"
 )
@@ -20,8 +19,6 @@ import (
 type JsonEnvelope struct {
 	Discriminator Discriminator          `json:"t,omitempty"`
 	EventTime     xtime.UnixMilliseconds `json:"ts,omitempty"`
-	CreatedBy     user.ID                `json:"createdBy,omitempty"`
-	Metadata      map[string]string      `json:"metadata,omitempty"`
 	Data          json.RawMessage        `json:"data,omitempty"`
 }
 
@@ -52,5 +49,3 @@ func (e JsonEnvelope) decodeData(registry *concurrent.RWMap[Discriminator, refle
 
 	return rval.Elem().Interface(), nil
 }
-
-type jsonInversePayload []SeqID

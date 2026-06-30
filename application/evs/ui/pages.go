@@ -12,5 +12,4 @@ import "go.wdy.de/nago/presentation/core"
 type Pages struct {
 	Audit  core.NavigationPath // Path to the "audit" page, e.g. "/admin/events/<prefix>/audit"
 	Create core.NavigationPath // Path to the "create" page, e.g. "/admin/events/<prefix>/create/<discriminator>"
-	Index  core.NavigationPath // Path to the "index" page, e.g. "/admin/events/<prefix>/index/<index-id>"
 }

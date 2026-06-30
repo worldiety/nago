@@ -9,7 +9,6 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
-	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -114,9 +113,8 @@ func (db *DB) bootstrap(eventsDir string) error {
 			continue
 		}
 
-		_, err := strconv.ParseUint(e.Name(), 10, 64)
-		if err != nil {
-			slog.Warn("msgstore: skipping non-numeric event type dir", "name", e.Name())
+		if !ndb.ValidTypeID(e.Name()) {
+			slog.Warn("msgstore: skipping invalid event type dir", "name", e.Name())
 			continue
 		}
 
@@ -153,7 +151,11 @@ func (db *DB) getTypeState(typeID TypeID) (*typeState, error) {
 		return ts, nil
 	}
 
-	typeDir := filepath.Join(db.dir, "events", strconv.FormatUint(uint64(typeID), 10))
+	if !ndb.ValidTypeID(string(typeID)) {
+		return nil, fmt.Errorf("msgstore: invalid type id %q", string(typeID))
+	}
+
+	typeDir := filepath.Join(db.dir, "events", string(typeID))
 	if err := os.MkdirAll(typeDir, 0755); err != nil {
 		return nil, fmt.Errorf("msgstore: create type dir: %w", err)
 	}
@@ -409,18 +411,17 @@ func (db *DB) resolveTypeDirs(eventsDir string, types []TypeID) []typeDir {
 			if !e.IsDir() {
 				continue
 			}
-			id, err := strconv.ParseUint(e.Name(), 10, 64)
-			if err != nil {
+			if !ndb.ValidTypeID(e.Name()) {
 				continue
 			}
-			result = append(result, typeDir{TypeID(id), filepath.Join(eventsDir, e.Name())})
+			result = append(result, typeDir{TypeID(e.Name()), filepath.Join(eventsDir, e.Name())})
 		}
 		return result
 	}
 
 	var result []typeDir
 	for _, t := range types {
-		d := filepath.Join(eventsDir, strconv.FormatUint(uint64(t), 10))
+		d := filepath.Join(eventsDir, string(t))
 		if _, err := os.Stat(d); err == nil {
 			result = append(result, typeDir{t, d})
 		}
@@ -686,7 +687,7 @@ func (db *DB) DeleteType(typeID TypeID) error {
 	}
 	db.typesMu.Unlock()
 
-	typeDir := filepath.Join(db.dir, "events", strconv.FormatUint(uint64(typeID), 10))
+	typeDir := filepath.Join(db.dir, "events", string(typeID))
 
 	// evict the current pending segment handle from the pool
 	if ok {
@@ -719,7 +720,7 @@ func (db *DB) DeleteType(typeID TypeID) error {
 // This implements [ndb.Pruner].
 func (db *DB) DeleteSeq(typeID TypeID, seq Seq) error {
 	seqID := uint64(seq)
-	typeDir := filepath.Join(db.dir, "events", strconv.FormatUint(uint64(typeID), 10))
+	typeDir := filepath.Join(db.dir, "events", string(typeID))
 
 	segments, err := listSegments(typeDir)
 	if err != nil {

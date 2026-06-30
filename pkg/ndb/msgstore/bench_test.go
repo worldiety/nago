@@ -3,6 +3,7 @@ package msgstore_test
 import (
 	"fmt"
 	"math"
+	"strconv"
 	"sync"
 	"testing"
 
@@ -36,7 +37,7 @@ func BenchmarkAppend(b *testing.B) {
 			b.ReportAllocs()
 
 			for i := 0; i < b.N; i++ {
-				if _, err := db.Append(1, traceID, payload); err != nil {
+				if _, err := db.Append("1", traceID, payload); err != nil {
 					b.Fatal(err)
 				}
 			}
@@ -75,7 +76,7 @@ func BenchmarkAppendS2(b *testing.B) {
 			b.ReportAllocs()
 
 			for i := 0; i < b.N; i++ {
-				if _, err := db.Append(1, traceID, payload); err != nil {
+				if _, err := db.Append("1", traceID, payload); err != nil {
 					b.Fatal(err)
 				}
 			}
@@ -112,7 +113,7 @@ func BenchmarkAppendMultiType(b *testing.B) {
 			b.ReportAllocs()
 
 			for i := 0; i < b.N; i++ {
-				typeID := msgstore.TypeID(i % nTypes)
+				typeID := msgstore.TypeID(strconv.Itoa(i % nTypes))
 				if _, err := db.Append(typeID, traceID, payload); err != nil {
 					b.Fatal(err)
 				}
@@ -152,7 +153,7 @@ func BenchmarkReplay(b *testing.B) {
 			}
 
 			for i := 0; i < count; i++ {
-				if _, err := db.Append(1, traceID, payload); err != nil {
+				if _, err := db.Append("1", traceID, payload); err != nil {
 					b.Fatal(err)
 				}
 			}
@@ -163,7 +164,7 @@ func BenchmarkReplay(b *testing.B) {
 
 			for i := 0; i < b.N; i++ {
 				n := 0
-				for _, msg := range db.Replay([]msgstore.TypeID{1}, 1, math.MaxUint64) {
+				for _, msg := range db.Replay([]msgstore.TypeID{"1"}, 1, math.MaxUint64) {
 					_ = msg
 					n++
 				}
@@ -203,7 +204,7 @@ func BenchmarkReplayMultiType(b *testing.B) {
 			payload := []byte("benchmark-event-payload")
 
 			for i := 0; i < totalEvents; i++ {
-				typeID := msgstore.TypeID(i % nTypes)
+				typeID := msgstore.TypeID(strconv.Itoa(i % nTypes))
 				if _, err := db.Append(typeID, traceID, payload); err != nil {
 					b.Fatal(err)
 				}
@@ -256,7 +257,7 @@ func BenchmarkReplayS2(b *testing.B) {
 	}
 
 	for i := 0; i < count; i++ {
-		if _, err := db.Append(1, traceID, payload); err != nil {
+		if _, err := db.Append("1", traceID, payload); err != nil {
 			b.Fatal(err)
 		}
 	}
@@ -267,7 +268,7 @@ func BenchmarkReplayS2(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		n := 0
-		for _, msg := range db.Replay([]msgstore.TypeID{1}, 1, math.MaxUint64) {
+		for _, msg := range db.Replay([]msgstore.TypeID{"1"}, 1, math.MaxUint64) {
 			_ = msg
 			n++
 		}
@@ -379,7 +380,7 @@ func BenchmarkAppendConcurrent(b *testing.B) {
 			// pre-create type states so lazy-init overhead doesn't skew results
 			var traceID [16]byte
 			for t := range nWriters {
-				if _, err := db.Append(msgstore.TypeID(t+1), traceID, payload); err != nil {
+				if _, err := db.Append(msgstore.TypeID(strconv.Itoa(t+1)), traceID, payload); err != nil {
 					b.Fatal(err)
 				}
 			}
@@ -406,7 +407,7 @@ func BenchmarkAppendConcurrent(b *testing.B) {
 							return
 						}
 					}
-				}(msgstore.TypeID(w + 1))
+				}(msgstore.TypeID(strconv.Itoa(w + 1)))
 			}
 			wg.Wait()
 

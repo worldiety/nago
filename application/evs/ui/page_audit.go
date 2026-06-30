@@ -20,7 +20,6 @@ import (
 	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/user"
-	"go.wdy.de/nago/pkg/xmaps"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
@@ -35,7 +34,6 @@ type PageAuditOptions[Evt any] struct {
 	Prefix       permission.ID
 	Audit        func(wnd core.Window, uc evs.UseCases[Evt]) core.View
 	DecorateView func(wnd core.Window, state *core.State[Evt], view core.View) core.View
-	Indexer      []evs.Indexer[Evt]
 }
 
 func PageAudit[Evt any](wnd core.Window, uc evs.UseCases[Evt], opts PageAuditOptions[Evt]) core.View {
@@ -53,34 +51,10 @@ func newDefaultAudit[Evt any](wnd core.Window, opts PageAuditOptions[Evt]) func(
 
 	return func(wnd core.Window, uc evs.UseCases[Evt]) core.View {
 		displayName, _ := core.FromContext[user.DisplayName](wnd.Context(), "")
-		var indexer evs.Indexer[Evt]
-		filter := wnd.Values()["primary"]
-		indexId := wnd.Values()["indexer"]
-
-		for _, e := range opts.Indexer {
-			if e.Info().ID == evs.IdxID(indexId) {
-				indexer = e
-				break
-			}
-		}
 
 		dv := dataview.FromData(wnd, dataview.Data[evs.Envelope[Evt], evs.SeqKey]{
 			FindAll: func(yield func(evs.SeqKey, error) bool) {
-				if filter == "" {
-					for key, err := range uc.ReadAll(wnd.Subject()) {
-						if !yield(key, err) {
-							return
-						}
-					}
-
-					return
-				}
-
-				if indexer == nil {
-					return
-				}
-
-				for key, err := range indexer.GroupByPrimary(filter) {
+				for key, err := range uc.ReadAll(wnd.Subject()) {
 					if !yield(key, err) {
 						return
 					}
@@ -113,7 +87,7 @@ func newDefaultAudit[Evt any](wnd core.Window, opts PageAuditOptions[Evt]) func(
 					ID:   "user",
 					Name: rstring.LabelUser.Get(wnd),
 					Map: func(obj evs.Envelope[Evt]) core.View {
-						return ui.Text(displayName(obj.CreatedBy).Displayname)
+						return ui.Text(displayName(createdByOf(obj)).Displayname)
 					},
 				},
 
@@ -162,9 +136,6 @@ func newDefaultAudit[Evt any](wnd core.Window, opts PageAuditOptions[Evt]) func(
 		}
 
 		pageTitle := opts.EntityName
-		if indexer != nil {
-			pageTitle = fmt.Sprintf("%s / %s / %s", opts.EntityName, indexer.Info().Name, filter)
-		}
 
 		return ui.VStack(
 			ui.Space(ui.L16),
@@ -192,14 +163,6 @@ func eventDetailsDialog[Evt any](wnd core.Window, presented *core.State[bool], e
 		raw = string(evt.Get().Raw)
 	} else {
 		raw = string(buf)
-	}
-
-	var rows []ui.TTableRow
-	for k, v := range xmaps.All(evt.Get().Metadata) {
-		rows = append(rows, ui.TableRow(
-			ui.TableCell(ui.Text(k)),
-			ui.TableCell(ui.Text(v)),
-		))
 	}
 
 	var pkgName string
@@ -254,9 +217,9 @@ func eventDetailsDialog[Evt any](wnd core.Window, presented *core.State[bool], e
 
 				ui.TableRow(
 					ui.TableCell(ui.Text("CreatedBy")),
-					ui.TableCell(ui.Text(string(evt.Get().CreatedBy))),
+					ui.TableCell(ui.Text(string(createdByOf(evt.Get())))),
 				),
-			).Rows(rows...).
+			).
 				Frame(ui.Frame{}.FullWidth()),
 			ui.CodeEditor(raw).Disabled(true).Language("json").FullWidth(),
 		).FullWidth(),
@@ -266,3 +229,18 @@ func eventDetailsDialog[Evt any](wnd core.Window, presented *core.State[bool], e
 		alert.Larger(),
 	)
 }
+
+// createdByOf heuristically extracts a creator from an event's raw JSON. Events
+// that care about provenance carry a conventional "createdBy" field; for events
+// that do not, this returns the empty id and the user column simply stays blank.
+func createdByOf[Evt any](env evs.Envelope[Evt]) user.ID {
+	if len(env.Raw) == 0 {
+		return ""
+	}
+	var probe struct {
+		CreatedBy user.ID `json:"createdBy"`
+	}
+	_ = json.Unmarshal(env.Raw, &probe)
+	return probe.CreatedBy
+}
+

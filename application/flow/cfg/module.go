@@ -82,39 +82,18 @@ func Enable(cfg *application.Configurator, opts Options) (Module, error) {
 		opts.Events = slices.Collect(flow.DefaultEvents)
 	}
 
-	evsSchemas := map[evs.Discriminator]reflect.Type{}
-	for _, ev := range opts.Events {
-		if other, ok := evsSchemas[ev.Discriminator()]; ok {
-			return Module{}, fmt.Errorf("duplicate event discriminator: %s defined by both %v and %T", ev.Discriminator(), other, ev)
-		}
-
-		evsSchemas[ev.Discriminator()] = reflect.TypeOf(ev)
-	}
-
-	var replayByWorkspace evs.ReplayWithIndex[flow.WorkspaceID, flow.WorkspaceEvent]
-	var idxByWorkspace *evs.StoreIndex[flow.WorkspaceID, flow.WorkspaceEvent]
-	modEvs, err := cfgevs.Enable[flow.WorkspaceEvent](cfg, "nago.flow.workspace", "Flow Workspace", cfgevs.Options[flow.WorkspaceEvent]{Schema: evsSchemas}.WithOptions(
-		cfgevs.Index[flow.WorkspaceID, flow.WorkspaceEvent](func(e evs.Envelope[flow.WorkspaceEvent]) (flow.WorkspaceID, error) {
-			return e.Data.WorkspaceID(), nil
-		}, func(ctx cfgevs.IndexContext[flow.WorkspaceID, flow.WorkspaceEvent]) error {
-			replayByWorkspace = ctx.Replay
-			idxByWorkspace = ctx.Index
-			return nil
-		}),
-	))
-
+	workspaceHandler, err := cfgevs.NewHandler[*flow.Workspace, flow.WorkspaceEvent, flow.WorkspaceID](
+		cfg,
+		"nago.flow.workspace",
+		"Flow Workspace",
+		func(e flow.WorkspaceEvent) (flow.WorkspaceID, bool) {
+			id := e.WorkspaceID()
+			return id, id != ""
+		},
+		opts.Events,
+	)
 	if err != nil {
 		return mod, err
-	}
-
-	workspaceHandler := evs.NewHandler[*flow.Workspace](
-		modEvs.UseCases,
-		replayByWorkspace,
-		idxByWorkspace,
-	)
-
-	for _, event := range opts.Events {
-		workspaceHandler.RegisterEvents(event)
 	}
 
 	shareRepo, err := application.JSONRepository[flow.FormShare, flow.FormShareID](cfg, string(prefix+".form.share"))

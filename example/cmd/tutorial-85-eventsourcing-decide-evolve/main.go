@@ -42,6 +42,10 @@ func (e *EmployeeAggregate) Clone() *EmployeeAggregate {
 	}
 }
 
+func (e *EmployeeAggregate) IsDeleted() bool {
+	return false
+}
+
 type EmployeeEvent interface {
 	evs.Evt[*EmployeeAggregate]
 	Employee() EID
@@ -103,8 +107,9 @@ func main() {
 			cfg,
 			"test.employee",
 			"Mitarbeiter",
-			func(e evs.Envelope[EmployeeEvent]) (EID, error) {
-				return e.Data.Employee(), nil
+			func(e EmployeeEvent) (EID, bool) {
+				id := e.Employee()
+				return id, id != ""
 			},
 			[]EmployeeEvent{
 				EmployeeIntroduced{},

@@ -9,8 +9,6 @@ package evs
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"iter"
 	"log/slog"
@@ -23,66 +21,63 @@ import (
 	"go.wdy.de/nago/pkg/std/concurrent"
 )
 
-// Cmd is an interface for a command which also provides the Decide implementation.
-type Cmd[Aggregate, SuperEvt any] interface {
-	Decide(auth.Subject, Aggregate) ([]SuperEvt, error)
-}
-
-// Evt is an interface for an event which also provides the Evolve implementation.
-type Evt[Aggregate any] interface {
-	Evolve(context.Context, Aggregate) error
-	Discriminator() Discriminator
-}
-
-// Cloner declares a contract which performs a deep copy of a mutable aggregate.
-type Cloner[T any] interface {
-	// Clone returns a deep copy of itself. An implementation must not return mutable memory shared with
-	// any clone.
-	Clone() T
-}
-
 type aggregateState[Aggregate any] struct {
-	replayed  bool
 	aggregate Aggregate
 	mutex     sync.Mutex
 }
 
-// Handler provides a default implementation for the decide-evolve pattern by using the basic use-cases of
-// this package. It trades the simplicity of a mutable and immutable aggregate for performance and thread safety
-// against a per-aggregate mutex and keeping the aggregate in memory and creates clones under the same lock
-// for reading.
-type Handler[Aggregate Cloner[Aggregate], SuperEvt Evt[Aggregate], Primary ~string] struct {
-	uc             UseCases[SuperEvt]
-	eventTypes     map[Discriminator]func() SuperEvt
-	replay         ReplayWithIndex[Primary, SuperEvt]
-	storeEvent     Store[SuperEvt]
-	register       Register[SuperEvt]
-	aggregateCache concurrent.RWMap[Primary, *aggregateState[Aggregate]]
-	index          *StoreIndex[Primary, SuperEvt]
+// Handler is the default implementation of the decide-evolve pattern.
+//
+// It is eager: on first use it replays the entire event log once (via
+// [Backend.ReplayAll]), routes each event to its aggregate using the injected
+// [AggregateID] extractor, and folds it in with Evolve. All aggregates are then
+// kept in memory; there is no per-aggregate index and no lazy per-aggregate
+// replay. This trades memory (every aggregate stays resident) for simplicity and
+// speed, and suits domains with a bounded number of aggregates.
+//
+// An aggregate that reports IsDeleted after an event is dropped from the set, so
+// deletions are ordinary events that vanish correctly on replay.
+type Handler[Aggregate aggregateConstraint[Aggregate], SuperEvt Evt[Aggregate], Primary ~string] struct {
+	backend    Backend[SuperEvt]
+	aggID      AggregateID[SuperEvt, Primary]
+	eventTypes map[Discriminator]func() SuperEvt
+	register   Register[SuperEvt]
+
+	aggregates concurrent.RWMap[Primary, *aggregateState[Aggregate]]
+	initOnce   sync.Once
+	initErr    error
 }
 
-func NewHandler[Aggregate Cloner[Aggregate], SuperEvt Evt[Aggregate], Primary ~string](
-	uc UseCases[SuperEvt],
-	replay ReplayWithIndex[Primary, SuperEvt],
-	index *StoreIndex[Primary, SuperEvt],
-) *Handler[Aggregate, SuperEvt, Primary] {
-	h := &Handler[Aggregate, SuperEvt, Primary]{
-		replay:     replay,
-		uc:         uc,
-		storeEvent: uc.Store,
-		register:   uc.Register,
-		eventTypes: make(map[Discriminator]func() SuperEvt),
-		index:      index,
-	}
+// aggregateConstraint binds the aggregate type to the [Aggregate] contract.
+type aggregateConstraint[T any] interface {
+	Aggregate[T]
+}
 
+// NewHandler creates a handler backed by the given [Backend], using aggID to
+// route events to their aggregate. register associates event Go types with their
+// discriminators for the backend's (de)serialization; pass uc.Register from a
+// wired backend, or nil if the backend does not need a registry.
+func NewHandler[Aggregate aggregateConstraint[Aggregate], SuperEvt Evt[Aggregate], Primary ~string](
+	backend Backend[SuperEvt],
+	aggID AggregateID[SuperEvt, Primary],
+	register Register[SuperEvt],
+) *Handler[Aggregate, SuperEvt, Primary] {
 	if reflect.TypeFor[Aggregate]().Kind() != reflect.Ptr {
 		panic("Aggregate must be a pointer type")
 	}
 
-	return h
+	return &Handler[Aggregate, SuperEvt, Primary]{
+		backend:    backend,
+		aggID:      aggID,
+		register:   register,
+		eventTypes: make(map[Discriminator]func() SuperEvt),
+	}
 }
 
-// RegisterEvents is not thread safe and must be called before any other operation.
+// RegisterEvents declares the event types this handler manages. It is not thread
+// safe and must be called before any other operation. It validates the
+// discriminator, registers the type (if a registry is present), checks JSON
+// marshalability, and builds the local discriminator→factory map.
 func (h *Handler[Aggregate, SuperEvt, Primary]) RegisterEvents(m ...Evt[Aggregate]) {
 	for _, e := range m {
 		if err := e.Discriminator().Validate(); err != nil {
@@ -98,185 +93,183 @@ func (h *Handler[Aggregate, SuperEvt, Primary]) RegisterEvents(m ...Evt[Aggregat
 			rType = rType.Elem()
 		}
 
-		if err := h.register(rType, e.Discriminator()); err != nil {
-			panic(fmt.Errorf("cannot register type %T: %w", e, err))
-		}
-
-		// check if marshaling works
-		if _, err := json.Marshal(e); err != nil {
-			panic(fmt.Errorf("cannot marshal type %T: %w", e, err))
+		if h.register != nil {
+			if err := h.register(rType, e.Discriminator()); err != nil {
+				panic(fmt.Errorf("cannot register type %T: %w", e, err))
+			}
 		}
 
 		h.eventTypes[e.Discriminator()] = func() SuperEvt {
 			return reflect.New(rType).Elem().Interface().(SuperEvt)
 		}
-
 	}
-
 }
 
-// ensureReplayed expects to be run on active mutex lock.
-func (h *Handler[Aggregate, SuperEvt, Primary]) ensureReplayed(ctx context.Context, state *aggregateState[Aggregate], key Primary) error {
-
-	if !state.replayed {
-		h.resetAggregate(state)
-		count := 0
-		for env, err := range h.replay(user.SU(), key, ReplayOptions{}) {
+// ensureInit replays the whole log exactly once and builds the in-memory
+// aggregate set. Safe for concurrent callers.
+func (h *Handler[Aggregate, SuperEvt, Primary]) ensureInit() error {
+	h.initOnce.Do(func() {
+		ctx := context.Background()
+		for env, err := range h.backend.ReplayAll(user.SU()) {
 			if err != nil {
-				return fmt.Errorf("cannot replay events: %w", err)
+				h.initErr = fmt.Errorf("cannot replay events: %w", err)
+				return
 			}
 
-			// implementation note: this works, because we ensured in Handler constructor
-			// that mutAggregate is a pointer type
-			if err := env.Data.Evolve(ctx, state.aggregate); err != nil {
-				return fmt.Errorf("cannot evolve aggregate: %w: type %T", err, env.Data)
+			key, ok := h.aggID(env.Data)
+			if !ok {
+				continue // event belongs to no aggregate
 			}
-			count++
+
+			st := h.loadOrCreate(key)
+			if err := env.Data.Evolve(ctx, st.aggregate); err != nil {
+				h.initErr = fmt.Errorf("cannot evolve aggregate %v: %w: type %T", key, err, env.Data)
+				return
+			}
+
+			if st.aggregate.IsDeleted() {
+				h.aggregates.Delete(key)
+			}
 		}
+	})
 
-		if count == 0 {
-			return fmt.Errorf("no events found for aggregate %s: %w", key, os.ErrNotExist)
-		}
-
-		state.replayed = true
-	}
-
-	return nil
+	return h.initErr
 }
 
-// resetAggregate expects to be run on active mutex lock.
-func (h *Handler[Aggregate, SuperEvt, Primary]) resetAggregate(state *aggregateState[Aggregate]) {
-	state.replayed = false
-	state.aggregate = reflect.New(reflect.TypeFor[Aggregate]().Elem()).Interface().(Aggregate)
+func (h *Handler[Aggregate, SuperEvt, Primary]) loadOrCreate(key Primary) *aggregateState[Aggregate] {
+	st, _ := h.aggregates.LoadOrStore(key, &aggregateState[Aggregate]{
+		aggregate: reflect.New(reflect.TypeFor[Aggregate]().Elem()).Interface().(Aggregate),
+	})
+	return st
 }
 
-func (h *Handler[Aggregate, SuperEvt, Primary]) Delete(subject auth.Subject, key Primary) error {
-	if err := h.uc.DeleteByPrimary(subject, h.index.Info().ID, string(key)); err != nil {
-		return err
-	}
-
-	h.Evict(key)
-	return nil
-}
-
+// Handle runs a command against the current aggregate state: decide → append →
+// evolve. Generated events are stored first (improving the chance the durable
+// log and in-memory state agree), then applied as a batch. If the aggregate
+// reports IsDeleted after an event, it is dropped from the set.
 func (h *Handler[Aggregate, SuperEvt, Primary]) Handle(subject auth.Subject, key Primary, cmd Cmd[Aggregate, SuperEvt]) error {
 	if key == "" {
 		return fmt.Errorf("aggregate id / key cannot be empty")
 	}
 
-	state, _ := h.aggregateCache.LoadOrStore(key, &aggregateState[Aggregate]{})
-	state.mutex.Lock()
-	defer state.mutex.Unlock()
-
-	if err := h.ensureReplayed(subject.Context(), state, key); err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-			return err
-		}
-
-		// ignore not-exist errors, may be a bootstrap command
+	if err := h.ensureInit(); err != nil {
+		return err
 	}
 
-	events, err := cmd.Decide(subject, state.aggregate)
+	st := h.loadOrCreate(key)
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+
+	events, err := cmd.Decide(subject, st.aggregate)
 	if err != nil {
 		return fmt.Errorf("cannot decide command %T: %w", cmd, err)
 	}
 
-	// fast return: Decide did not produce any events. This optimization must always be "free"
 	if len(events) == 0 {
 		return nil
 	}
 
-	batch := make([]Envelope[SuperEvt], 0, len(events))
-	// first store all generated events to improve consistency probability slightly
+	batch := make([]SuperEvt, 0, len(events))
 	for _, e := range events {
-		env, err := h.storeEvent(user.SU(), e, StoreOptions{
-			CreatedBy: subject.ID(),
-		})
-
-		if err != nil {
-			// this is less likely to happen and only occurs if storage is full.
-			// We already checked if Evt can get marshaled at register time.
+		if _, err := h.backend.Append(user.SU(), e); err != nil {
 			return fmt.Errorf("cannot store event %T: %w", e, err)
 		}
-
-		batch = append(batch, env)
+		batch = append(batch, e)
 	}
 
-	// second: apply them as an atomic batch
-	for _, env := range batch {
-		if e2 := env.Data.Evolve(subject.Context(), state.aggregate); e2 != nil {
-			err = fmt.Errorf("cannot evolve aggregate: %w: type %T", e2, env.Data)
-			break
+	for _, e := range batch {
+		if e2 := e.Evolve(subject.Context(), st.aggregate); e2 != nil {
+			// in-memory state is now partially applied and inconsistent; drop it
+			// so the next access rebuilds from the durable log.
+			h.aggregates.Delete(key)
+			return fmt.Errorf("cannot evolve aggregate: %w: type %T", e2, e)
 		}
 	}
 
-	if err != nil {
-		// our aggregate is now corrupted and partially applied. Reset the mutable aggregate for the next read to
-		// be consistent again
-		h.resetAggregate(state)
-		return err
+	if st.aggregate.IsDeleted() {
+		h.aggregates.Delete(key)
 	}
 
 	return nil
 }
 
-// All returns all aggregate ids. The implementation avoids to load replay all aggregates and just consults
-// the inverse primary index to return potential aggregates.
+// All returns all live aggregate ids. Because every aggregate is resident, this
+// is a pure in-memory enumeration of the aggregate set.
 func (h *Handler[Aggregate, SuperEvt, Primary]) All(ctx context.Context) (iter.Seq[Primary], error) {
-	it, err := h.index.GroupPrimary(ctx)
-	if err != nil {
+	if err := h.ensureInit(); err != nil {
 		return nil, err
 	}
 
 	return func(yield func(Primary) bool) {
-		for id := range it {
-			if !yield(id) {
+		for key := range h.aggregates.All() {
+			if !yield(key) {
 				return
 			}
 		}
 	}, nil
 }
 
-// Aggregate returns the current immutable aggregate snapshot. This is only race-free if ReadOnlyAggregate does
-// not share mutable memory with the mutable aggregate.
+// Aggregate returns a deep copy of the current aggregate, or [os.ErrNotExist] if
+// no such (live) aggregate exists.
 func (h *Handler[Aggregate, SuperEvt, Primary]) Aggregate(ctx context.Context, key Primary) (Aggregate, error) {
-	state, _ := h.aggregateCache.LoadOrStore(key, &aggregateState[Aggregate]{})
-	state.mutex.Lock()
-	defer state.mutex.Unlock()
-
-	if err := h.ensureReplayed(ctx, state, key); err != nil {
+	if err := h.ensureInit(); err != nil {
 		var zero Aggregate
 		return zero, err
 	}
 
-	return state.aggregate.Clone(), nil
-}
-
-// Evict removes the aggregate from the cache. This must be done manually.
-func (h *Handler[Aggregate, SuperEvt, Primary]) Evict(key Primary) {
-	h.aggregateCache.Delete(key)
-}
-
-func (h *Handler[Aggregate, SuperEvt, Primary]) EvictAll() {
-	h.aggregateCache.Clear()
-}
-
-// Replay replays all events for the given aggregate id in raw form. It does not mutate any internal state.
-// This is useful for debugging or backup purposes.
-func (h *Handler[Aggregate, SuperEvt, Primary]) Replay(key Primary) iter.Seq2[Envelope[SuperEvt], error] {
-	return h.replay(user.SU(), key, ReplayOptions{})
-}
-
-// Restore is in the danger zone of the handler because it blindly tries to decode the given envelope and
-// evolves the affected aggregate. It may screw up the internal state of any aggregate. Its use is mainly for
-// restoring or exchanging aggregate states.
-func (h *Handler[Aggregate, SuperEvt, Primary]) Restore(ctx context.Context, it iter.Seq2[JsonEnvelope, error]) error {
-	registry := make(map[Discriminator]reflect.Type)
-	for registeredType := range h.uc.RegisteredTypes() {
-		registry[registeredType.Discriminator] = registeredType.Type
+	st, ok := h.aggregates.Get(key)
+	if !ok {
+		var zero Aggregate
+		return zero, fmt.Errorf("aggregate %v: %w", key, os.ErrNotExist)
 	}
 
-	var decodedEvents []Envelope[SuperEvt]
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	return st.aggregate.Clone(), nil
+}
+
+// Replay yields the raw events of a single aggregate by filtering the global
+// replay through the aggregate id extractor. It does not mutate any state and is
+// intended for debugging, export or backup.
+func (h *Handler[Aggregate, SuperEvt, Primary]) Replay(key Primary) iter.Seq2[Envelope[SuperEvt], error] {
+	return func(yield func(Envelope[SuperEvt], error) bool) {
+		for env, err := range h.backend.ReplayAll(user.SU()) {
+			if err != nil {
+				if !yield(env, err) {
+					return
+				}
+				continue
+			}
+
+			k, ok := h.aggID(env.Data)
+			if !ok || k != key {
+				continue
+			}
+
+			if !yield(env, nil) {
+				return
+			}
+		}
+	}
+}
+
+// Delete semantically deletes an aggregate by issuing cmd (which is expected to
+// produce a deletion event whose Evolve sets IsDeleted). It is a thin wrapper
+// over [Handler.Handle] kept for call-site clarity.
+func (h *Handler[Aggregate, SuperEvt, Primary]) Delete(subject auth.Subject, key Primary, cmd Cmd[Aggregate, SuperEvt]) error {
+	return h.Handle(subject, key, cmd)
+}
+
+// Restore blindly decodes and re-stores the given raw envelopes. It is dangerous
+// (it can corrupt aggregate state) and is meant only for restoring or migrating
+// event data. After a restore the in-memory set is reset so it rebuilds lazily.
+func (h *Handler[Aggregate, SuperEvt, Primary]) Restore(ctx context.Context, it iter.Seq2[JsonEnvelope, error]) error {
+	registry := make(map[Discriminator]reflect.Type)
+	for d, factory := range h.eventTypes {
+		registry[d] = reflect.TypeOf(factory())
+	}
+
+	var decoded []SuperEvt
 	for env, err := range it {
 		if err != nil {
 			return err
@@ -287,36 +280,31 @@ func (h *Handler[Aggregate, SuperEvt, Primary]) Restore(ctx context.Context, it 
 			return err
 		}
 
-		if e, ok := obj.(SuperEvt); ok {
-			decodedEvents = append(decodedEvents, Envelope[SuperEvt]{
-				Discriminator: env.Discriminator,
-				EventTime:     env.EventTime,
-				CreatedBy:     env.CreatedBy,
-				Metadata:      env.Metadata,
-				Data:          e,
-				Raw:           env.Data,
-			})
-		} else {
+		e, ok := obj.(SuperEvt)
+		if !ok {
 			return fmt.Errorf("decoded event %T is not a SuperEvt", obj)
 		}
+		decoded = append(decoded, e)
 	}
 
-	if len(decodedEvents) == 0 {
+	if len(decoded) == 0 {
 		return nil
 	}
 
-	for _, event := range decodedEvents {
-		_, err := h.uc.Store(user.SU(), event.Data, StoreOptions{
-			Metadata:  event.Metadata,
-			EventTime: event.EventTime,
-			CreatedBy: event.CreatedBy,
-		})
-		if err != nil {
+	for _, e := range decoded {
+		if _, err := h.backend.Append(user.SU(), e); err != nil {
 			return err
 		}
 	}
 
-	slog.Info("restored events", "count", len(decodedEvents))
-	h.EvictAll()
+	slog.Info("restored events", "count", len(decoded))
+	h.reset()
 	return nil
+}
+
+// reset drops the in-memory set and arms a fresh replay on next access.
+func (h *Handler[Aggregate, SuperEvt, Primary]) reset() {
+	h.aggregates.Clear()
+	h.initOnce = sync.Once{}
+	h.initErr = nil
 }

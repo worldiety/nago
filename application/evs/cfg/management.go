@@ -29,7 +29,6 @@ type Module[Evt any] struct {
 	UseCases    evs.UseCases[Evt]
 	Pages       uievs.Pages
 	Permissions evs.Permissions
-	Indexers    []evs.Indexer[Evt]
 }
 
 type AdminCenter struct {
@@ -50,15 +49,6 @@ type Options[Evt any] struct {
 
 	// Schema maps discriminators to concrete types implementing Evt.
 	Schema map[evs.Discriminator]reflect.Type
-
-	// Indexer is evaluated on insertion into the event store and will return those strings which
-	// are used as a composite key lookup.
-	Indexer []evs.Indexer[Evt]
-
-	// indexerFactories is an addition to the Indexer field which delays construction of the indexer
-	// to avoid that the developer needs to declare the actual indexer implementation upfront.
-	// This is just for convenience and the factories will append to the indexer slice.
-	indexerFactories []func(cfg *application.Configurator, opts *Options[Evt], prefix permission.ID, entityName string, perms evs.Permissions) (evs.Indexer[Evt], error)
 
 	// DecorateUseCases is invoked before the use cases are passed into all generated and dependent code fragments
 	// thus you can customize, intercept or replace any standard use case here. For example, you can
@@ -94,43 +84,6 @@ func Schema[T any, Evt any](d evs.Discriminator) Opt[Evt] {
 	}
 }
 
-type IndexContext[Primary ~string, Evt any] struct {
-	Replay evs.ReplayWithIndex[Primary, Evt]
-	Index  *evs.StoreIndex[Primary, Evt]
-}
-
-func Index[Primary ~string, Evt any](reader evs.PrimaryReader[Primary, Evt], onCreated func(ctx IndexContext[Primary, Evt]) error) Opt[Evt] {
-	return func(o *Options[Evt]) {
-		o.indexerFactories = append(o.indexerFactories, func(cfg *application.Configurator, opts *Options[Evt], prefix permission.ID, entityName string, perms evs.Permissions) (evs.Indexer[Evt], error) {
-			name := strings.ToLower(reflect.TypeFor[Primary]().Name())
-			store, err := cfg.EntityStore(string(prefix.WithName(name)) + ".idx")
-			if err != nil {
-				return nil, err
-			}
-
-			rType := reflect.TypeFor[Primary]()
-			idx := evs.NewStoreIndex[Primary, Evt](store, reader)
-			idx.SetInfo(evs.IndexerInfo{
-				ID:          evs.IdxID(makeFactoryID(permission.ID(rType.String()))),
-				Name:        rType.Name(),
-				Description: uievs.StrIndexManagement.String(),
-			})
-
-			if onCreated != nil {
-				// note: opts is a different instance than the one passed into the factory function
-				opts.onCreated = append(opts.onCreated, func(uc evs.UseCases[Evt]) error {
-					return onCreated(IndexContext[Primary, Evt]{
-						Replay: evs.NewReplayWithIndex(perms, uc.Load, idx),
-						Index:  idx,
-					})
-				})
-			}
-
-			return idx, nil
-		})
-	}
-}
-
 // Enable configures an event sourcing module instance. See also [evs.UseCases] and [evs.DeclarePermissions] for details.
 func Enable[Evt any](cfg *application.Configurator, prefix permission.ID, entityName string, opts Options[Evt]) (Module[Evt], error) {
 	mod, ok := core.FromContext[Module[Evt]](cfg.Context(), "")
@@ -148,31 +101,15 @@ func Enable[Evt any](cfg *application.Configurator, prefix permission.ID, entity
 		return mod, fmt.Errorf("failed to open entity store: %w", err)
 	}
 
-	timesBucketName := string(prefix) + ".time.idx"
-	timesStore, err := cfg.EntityStore(timesBucketName)
-	if err != nil {
-		return mod, fmt.Errorf("failed to open entity store: %w", err)
-	}
-
 	if opts.Mutex == nil {
 		opts.Mutex = &sync.Mutex{}
 	}
 
 	perms := evs.DeclarePermissions[Evt](prefix, entityName)
 
-	for _, factory := range opts.indexerFactories {
-		fac, err := factory(cfg, &opts, prefix, entityName, perms)
-		if err != nil {
-			return mod, err
-		}
-
-		opts.Indexer = append(opts.Indexer, fac)
-	}
-
-	uc := evs.NewUseCases[Evt](perms, eventStore, timesStore, evs.Options[Evt]{
-		Mutex:   opts.Mutex,
-		Bus:     opts.Bus,
-		Indexer: opts.Indexer,
+	uc := evs.NewUseCases[Evt](perms, eventStore, evs.Options[Evt]{
+		Mutex: opts.Mutex,
+		Bus:   opts.Bus,
 	})
 
 	for discriminator, r := range opts.Schema {
@@ -193,8 +130,8 @@ func Enable[Evt any](cfg *application.Configurator, prefix permission.ID, entity
 
 // NewHandler enables a new event sourcing module instance but just returns
 // the according handler instance. This is a convenience method for all domain implementations which just
-// need the handler as foundation.
-func NewHandler[Aggregate evs.Cloner[Aggregate], SuperEvt evs.Evt[Aggregate], Primary ~string](cfg *application.Configurator, prefix permission.ID, entityName string, primaryReader evs.PrimaryReader[Primary, SuperEvt], events []SuperEvt) (*evs.Handler[Aggregate, SuperEvt, Primary], error) {
+// need the handler as foundation. aggID routes each event to its aggregate (see [evs.AggregateID]).
+func NewHandler[Aggregate evs.Aggregate[Aggregate], SuperEvt evs.Evt[Aggregate], Primary ~string](cfg *application.Configurator, prefix permission.ID, entityName string, aggID evs.AggregateID[SuperEvt, Primary], events []SuperEvt) (*evs.Handler[Aggregate, SuperEvt, Primary], error) {
 	if !prefix.Valid() {
 		return nil, fmt.Errorf("prefix is not valid")
 	}
@@ -208,31 +145,25 @@ func NewHandler[Aggregate evs.Cloner[Aggregate], SuperEvt evs.Evt[Aggregate], Pr
 		evsSchemas[ev.Discriminator()] = reflect.TypeOf(ev)
 	}
 
-	var replayByWorkspace evs.ReplayWithIndex[Primary, SuperEvt]
-	var idxByWorkspace *evs.StoreIndex[Primary, SuperEvt]
-	modEvs, err := Enable[SuperEvt](cfg, prefix, entityName, Options[SuperEvt]{Schema: evsSchemas}.WithOptions(
-		Index[Primary, SuperEvt](primaryReader, func(ctx IndexContext[Primary, SuperEvt]) error {
-			replayByWorkspace = ctx.Replay
-			idxByWorkspace = ctx.Index
-			return nil
-		}),
-	))
-
-	if err != nil {
+	// Enable wires the admin UI / use cases on top of the same event store the
+	// backend below persists into.
+	if _, err := Enable[SuperEvt](cfg, prefix, entityName, Options[SuperEvt]{Schema: evsSchemas}); err != nil {
 		return nil, err
 	}
 
-	workspaceHandler := evs.NewHandler[Aggregate](
-		modEvs.UseCases,
-		replayByWorkspace,
-		idxByWorkspace,
-	)
-
-	for _, event := range events {
-		workspaceHandler.RegisterEvents(event)
+	eventStore, err := cfg.EntityStore(string(prefix) + ".event")
+	if err != nil {
+		return nil, fmt.Errorf("failed to open entity store: %w", err)
 	}
 
-	return workspaceHandler, nil
+	backend := evs.NewBlobBackend[SuperEvt, Aggregate](eventStore)
+	handler := evs.NewHandler[Aggregate](backend, aggID, backend.Register)
+
+	for _, event := range events {
+		handler.RegisterEvents(event)
+	}
+
+	return handler, nil
 }
 
 func configureMod[Evt any](cfg *application.Configurator, perms evs.Permissions, uc evs.UseCases[Evt], opts Options[Evt]) Module[Evt] {
@@ -246,7 +177,6 @@ func configureMod[Evt any](cfg *application.Configurator, perms evs.Permissions,
 		Pages: uievs.Pages{
 			Audit:  "admin/events/" + makeFactoryID(perms.Prefix) + "/audit",
 			Create: "admin/events/" + makeFactoryID(perms.Prefix) + "/create",
-			Index:  "admin/events/" + makeFactoryID(perms.Prefix) + "/index",
 		},
 		Permissions: perms,
 	}
@@ -257,7 +187,6 @@ func configureMod[Evt any](cfg *application.Configurator, perms evs.Permissions,
 			Perms:      perms,
 			Pages:      mod.Pages,
 			Prefix:     perms.Prefix,
-			Indexer:    opts.Indexer,
 		})
 	})
 
@@ -268,19 +197,6 @@ func configureMod[Evt any](cfg *application.Configurator, perms evs.Permissions,
 				Perms:      perms,
 				Pages:      mod.Pages,
 				Prefix:     perms.Prefix,
-			})
-		})
-	}
-
-	for _, idxer := range opts.Indexer {
-		info := idxer.Info()
-		cfg.RootViewWithDecoration(mod.Pages.Index.Join(string(info.ID)), func(wnd core.Window) core.View {
-			return uievs.PageIndex(wnd, mod.UseCases, uievs.PageIndexOptions[Evt]{
-				EntityName: perms.EntityName,
-				Perms:      perms,
-				Pages:      mod.Pages,
-				Prefix:     perms.Prefix,
-				Indexer:    opts.Indexer,
 			})
 		})
 	}
@@ -311,24 +227,12 @@ func configureMod[Evt any](cfg *application.Configurator, perms evs.Permissions,
 			ID:     string(perms.Prefix),
 		})
 
-		for _, idxer := range opts.Indexer {
-			info := idxer.Info()
-			desc := subject.Bundle().Resolve(info.Description, i18n.String("name", info.Name))
-			res.Entries = append(res.Entries, admin.Card{
-				Title:  info.Name,
-				Text:   desc,
-				Target: mod.Pages.Index.Join(string(info.ID)),
-				ID:     string(info.ID),
-			})
-		}
-
 		return res
 	})
 
 	cfg.AddContextValue(core.ContextValue(string("module-"+perms.Prefix), mod))
 	//cfg.AddContextValue(core.ContextValue(string(perms.Prefix), form.AnyUseCaseList[T, ID](uc.FindAll)))
 
-	mod.Indexers = opts.Indexer
 	return mod
 }
 

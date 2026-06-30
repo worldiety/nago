@@ -20,6 +20,7 @@ type Workspace struct {
 	Name         Ident
 	Description  string
 	owners       map[user.ID]struct{}
+	deleted      bool
 	// Extensions can be used by custom events and commands to introduce additional functionality.
 	// We cannot know the according types, thus this has to be type-unsafe.
 	Extensions map[string]cloner.Cloneable
@@ -38,8 +39,15 @@ func (a *Workspace) Clone() *Workspace {
 		Forms:        a.Forms.Clone(),
 		Name:         a.Name,
 		Description:  a.Description,
+		deleted:      a.deleted,
 		Extensions:   xClone,
 	}
+}
+
+// IsDeleted reports whether this workspace has been semantically deleted. Once
+// true, the event-sourcing handler drops the aggregate from its in-memory set.
+func (a *Workspace) IsDeleted() bool {
+	return a.deleted
 }
 
 func (a *Workspace) Identity() WorkspaceID {

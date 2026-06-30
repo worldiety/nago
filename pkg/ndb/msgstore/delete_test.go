@@ -23,8 +23,8 @@ func TestDeleteByType(t *testing.T) {
 	defer func() { option.MustZero(db.Close()) }()
 
 	var traceID [16]byte
-	const typeA msgstore.TypeID = 1
-	const typeB msgstore.TypeID = 2
+	const typeA msgstore.TypeID = "1"
+	const typeB msgstore.TypeID = "2"
 
 	// append events to two different types
 	for i := range 5 {
@@ -54,7 +54,7 @@ func TestDeleteByType(t *testing.T) {
 	}
 
 	// the type directory should no longer exist on disk
-	typeDirA := filepath.Join(dir, "events", strconv.FormatUint(uint64(typeA), 10))
+	typeDirA := filepath.Join(dir, "events", string(typeA))
 	if _, err := os.Stat(typeDirA); !os.IsNotExist(err) {
 		t.Fatalf("expected type dir to be removed, stat returned: %v", err)
 	}
@@ -68,7 +68,7 @@ func TestDeleteByTypeAllowsReappend(t *testing.T) {
 	defer func() { option.MustZero(db.Close()) }()
 
 	var traceID [16]byte
-	const typeID msgstore.TypeID = 1
+	const typeID msgstore.TypeID = "1"
 
 	option.Must(db.Append(typeID, traceID, []byte("before-delete")))
 	option.MustZero(db.DeleteType(typeID))
@@ -92,7 +92,7 @@ func TestDeleteByTypeNonExistent(t *testing.T) {
 	defer func() { option.MustZero(db.Close()) }()
 
 	// deleting a type that was never written should not error
-	if err := db.DeleteType(999); err != nil {
+	if err := db.DeleteType("999"); err != nil {
 		t.Fatalf("expected no error for non-existent type, got: %v", err)
 	}
 }
@@ -106,7 +106,7 @@ func TestDeleteByTypeWithSplitSegments(t *testing.T) {
 	defer func() { option.MustZero(db.Close()) }()
 
 	var traceID [16]byte
-	const typeID msgstore.TypeID = 1
+	const typeID msgstore.TypeID = "1"
 
 	// write enough messages to trigger multiple splits
 	for i := range 10 {
@@ -134,7 +134,7 @@ func TestDeleteByID(t *testing.T) {
 	defer func() { option.MustZero(db.Close()) }()
 
 	var traceID [16]byte
-	const typeID msgstore.TypeID = 1
+	const typeID msgstore.TypeID = "1"
 
 	var seqIDs []msgstore.Seq
 	for i := range 5 {
@@ -169,7 +169,7 @@ func TestDeleteByIDPayloadZeroed(t *testing.T) {
 	}))
 
 	var traceID [16]byte
-	const typeID msgstore.TypeID = 1
+	const typeID msgstore.TypeID = "1"
 
 	payload := []byte("sensitive-data-that-must-be-erased")
 	seq := option.Must(db.Append(typeID, traceID, payload))
@@ -205,7 +205,7 @@ func TestDeleteByIDNotFound(t *testing.T) {
 	defer func() { option.MustZero(db.Close()) }()
 
 	var traceID [16]byte
-	const typeID msgstore.TypeID = 1
+	const typeID msgstore.TypeID = "1"
 
 	option.Must(db.Append(typeID, traceID, []byte("hello")))
 
@@ -223,7 +223,7 @@ func TestDeleteByIDFirstAndLast(t *testing.T) {
 	defer func() { option.MustZero(db.Close()) }()
 
 	var traceID [16]byte
-	const typeID msgstore.TypeID = 1
+	const typeID msgstore.TypeID = "1"
 
 	var seqIDs []msgstore.Seq
 	for i := range 5 {
@@ -260,7 +260,7 @@ func TestDeleteByIDWithSplitSegments(t *testing.T) {
 	defer func() { option.MustZero(db.Close()) }()
 
 	var traceID [16]byte
-	const typeID msgstore.TypeID = 1
+	const typeID msgstore.TypeID = "1"
 
 	var seqIDs []msgstore.Seq
 	for i := range 10 {
@@ -295,7 +295,7 @@ func TestDeleteByIDIdempotent(t *testing.T) {
 	defer func() { option.MustZero(db.Close()) }()
 
 	var traceID [16]byte
-	const typeID msgstore.TypeID = 1
+	const typeID msgstore.TypeID = "1"
 
 	seq := option.Must(db.Append(typeID, traceID, []byte("hello")))
 
@@ -314,7 +314,7 @@ func TestDeleteByIDSurvivesReopen(t *testing.T) {
 	dir := t.TempDir()
 
 	var traceID [16]byte
-	const typeID msgstore.TypeID = 1
+	const typeID msgstore.TypeID = "1"
 
 	// write and delete
 	db := option.Must(msgstore.Open(dir, msgstore.Options{
