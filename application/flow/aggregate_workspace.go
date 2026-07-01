@@ -32,6 +32,14 @@ func (a *Workspace) Clone() *Workspace {
 		xClone[k] = v.Clone()
 	}
 
+	var owners map[user.ID]struct{}
+	if a.owners != nil {
+		owners = make(map[user.ID]struct{}, len(a.owners))
+		for k, v := range a.owners {
+			owners[k] = v
+		}
+	}
+
 	return &Workspace{
 		ID:           a.ID,
 		Packages:     a.Packages.Clone(),
@@ -39,6 +47,7 @@ func (a *Workspace) Clone() *Workspace {
 		Forms:        a.Forms.Clone(),
 		Name:         a.Name,
 		Description:  a.Description,
+		owners:       owners,
 		deleted:      a.deleted,
 		Extensions:   xClone,
 	}

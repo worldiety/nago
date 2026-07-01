@@ -11,6 +11,7 @@ import (
 	"context"
 	"fmt"
 	"iter"
+	"sync"
 	"testing"
 
 	"github.com/worldiety/option"
@@ -134,4 +135,119 @@ func TestHandler(t *testing.T) {
 	}
 
 	t.Log(handler.Aggregate(context.Background(), "1"))
+}
+
+func newPersonHandler() *evs.Handler[*Person, Evt, PID] {
+	backend := &memBackend{}
+	h := evs.NewHandler[*Person](backend, func(e Evt) (PID, bool) {
+		switch evt := e.(type) {
+		case FirstnameUpdated:
+			return evt.Person, evt.Person != ""
+		case LastnameUpdated:
+			return evt.Person, evt.Person != ""
+		default:
+			return "", false
+		}
+	}, nil)
+	h.RegisterEvents(FirstnameUpdated{}, LastnameUpdated{})
+	return h
+}
+
+// TestAggregateSnapshotIsolation verifies that mutating a returned aggregate
+// (the reader snapshot) cannot corrupt the handler's source of truth: a later
+// read reflects only what was persisted and evolved, not the stray mutation.
+func TestAggregateSnapshotIsolation(t *testing.T) {
+	h := newPersonHandler()
+	if err := h.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: "John"}); err != nil {
+		t.Fatal(err)
+	}
+
+	// reader accidentally mutates the returned snapshot
+	snap := option.Must(h.Aggregate(context.Background(), "1"))
+	snap.firstname = "CORRUPTED"
+
+	// a subsequent legit change + read must not carry the stray mutation
+	if err := h.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: "Jane"}); err != nil {
+		t.Fatal(err)
+	}
+	got := option.Must(h.Aggregate(context.Background(), "1"))
+	if got.firstname != "Jane" {
+		t.Fatalf("truth corrupted by reader mutation: got %q want Jane", got.firstname)
+	}
+}
+
+// TestAggregateSnapshotReuse verifies that repeated reads without an intervening
+// write return the identical cached snapshot (no re-clone), while a write makes
+// the next read observe the new value.
+func TestAggregateSnapshotReuse(t *testing.T) {
+	h := newPersonHandler()
+	if err := h.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: "John"}); err != nil {
+		t.Fatal(err)
+	}
+
+	a := option.Must(h.Aggregate(context.Background(), "1"))
+	b := option.Must(h.Aggregate(context.Background(), "1"))
+	if a != b {
+		t.Fatal("expected the same cached snapshot pointer for repeated reads without a write")
+	}
+
+	if err := h.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: "Jane"}); err != nil {
+		t.Fatal(err)
+	}
+	c := option.Must(h.Aggregate(context.Background(), "1"))
+	if c == a {
+		t.Fatal("expected a fresh snapshot after a write")
+	}
+	if c.firstname != "Jane" {
+		t.Fatalf("snapshot did not refresh: got %q want Jane", c.firstname)
+	}
+}
+
+// TestAggregateConcurrentReadWrite hammers concurrent Handle (writer) and
+// Aggregate (readers) on the same aggregate. Under -race this proves the RCU
+// design is data-race free: readers only ever touch the immutable snapshot while
+// the writer mutates the separate live instance.
+func TestAggregateConcurrentReadWrite(t *testing.T) {
+	h := newPersonHandler()
+	if err := h.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: "n0"}); err != nil {
+		t.Fatal(err)
+	}
+
+	var wg sync.WaitGroup
+	stop := make(chan struct{})
+
+	// readers
+	for i := 0; i < 8; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for {
+				select {
+				case <-stop:
+					return
+				default:
+				}
+				ws, err := h.Aggregate(context.Background(), "1")
+				if err == nil {
+					_ = ws.firstname // read the snapshot
+				}
+			}
+		}()
+	}
+
+	// writer
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for i := 1; i <= 500; i++ {
+			_ = h.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: fmt.Sprintf("n%d", i)})
+		}
+		close(stop)
+	}()
+
+	wg.Wait()
+
+	if option.Must(h.Aggregate(context.Background(), "1")).firstname != "n500" {
+		t.Fatalf("final state wrong: %q", option.Must(h.Aggregate(context.Background(), "1")).firstname)
+	}
 }

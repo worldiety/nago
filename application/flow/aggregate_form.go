@@ -163,9 +163,16 @@ func (b *baseViewGroup) Clone() FormView {
 }
 
 func (b *baseViewGroup) clone() *baseViewGroup {
+	var views []FormView
+	if b.views != nil {
+		views = make([]FormView, len(b.views))
+		for i, v := range b.views {
+			views[i] = v.Clone() // deep clone: child view nodes must not be shared with the source
+		}
+	}
 	return &baseViewGroup{
 		id:          b.id,
-		views:       slices.Clone(b.views),
+		views:       views,
 		visibleExpr: b.visibleExpr,
 	}
 }
@@ -221,6 +228,14 @@ type FormCard struct {
 
 func NewFormCard(id ViewID) *FormCard {
 	return &FormCard{baseViewGroup: &baseViewGroup{id: id}}
+}
+
+func (f *FormCard) Clone() FormView {
+	return &FormCard{
+		baseViewGroup:  f.baseViewGroup.clone(),
+		label:          f.label,
+		supportingText: f.supportingText,
+	}
 }
 
 func (f *FormCard) Label() string {

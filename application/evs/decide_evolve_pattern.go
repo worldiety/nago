@@ -15,15 +15,30 @@ import (
 	"os"
 	"reflect"
 	"sync"
+	"sync/atomic"
 
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/std/concurrent"
 )
 
+// aggregateState holds one aggregate in two copies to make reads cheap and
+// race-free (an RCU / read-copy-update style):
+//
+//   - live is the internal source of truth. Only the handler mutates it, always
+//     under mutex, by folding events with Evolve. Readers never touch it.
+//   - snapshot is a lazily produced deep clone handed to readers lock-free via
+//     an atomic pointer. It is (re)built on the first read after a change and
+//     reused by further reads until the next write marks it stale.
+//
+// Because readers only ever see the snapshot, an accidental mutation on a
+// returned aggregate can never corrupt the truth: the next write evolves live
+// and the next read replaces the snapshot with a fresh clone.
 type aggregateState[Aggregate any] struct {
-	aggregate Aggregate
-	mutex     sync.Mutex
+	mutex    sync.Mutex
+	live     Aggregate
+	snapshot atomic.Pointer[Aggregate]
+	stale    atomic.Bool
 }
 
 // Handler is the default implementation of the decide-evolve pattern.
@@ -122,12 +137,12 @@ func (h *Handler[Aggregate, SuperEvt, Primary]) ensureInit() error {
 			}
 
 			st := h.loadOrCreate(key)
-			if err := env.Data.Evolve(ctx, st.aggregate); err != nil {
+			if err := env.Data.Evolve(ctx, st.live); err != nil {
 				h.initErr = fmt.Errorf("cannot evolve aggregate %v: %w: type %T", key, err, env.Data)
 				return
 			}
 
-			if st.aggregate.IsDeleted() {
+			if st.live.IsDeleted() {
 				h.aggregates.Delete(key)
 			}
 		}
@@ -137,9 +152,13 @@ func (h *Handler[Aggregate, SuperEvt, Primary]) ensureInit() error {
 }
 
 func (h *Handler[Aggregate, SuperEvt, Primary]) loadOrCreate(key Primary) *aggregateState[Aggregate] {
-	st, _ := h.aggregates.LoadOrStore(key, &aggregateState[Aggregate]{
-		aggregate: reflect.New(reflect.TypeFor[Aggregate]().Elem()).Interface().(Aggregate),
+	st, loaded := h.aggregates.LoadOrStore(key, &aggregateState[Aggregate]{
+		live: reflect.New(reflect.TypeFor[Aggregate]().Elem()).Interface().(Aggregate),
 	})
+	if !loaded {
+		// fresh state: no snapshot yet, so the first read must clone.
+		st.stale.Store(true)
+	}
 	return st
 }
 
@@ -160,7 +179,7 @@ func (h *Handler[Aggregate, SuperEvt, Primary]) Handle(subject auth.Subject, key
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
 
-	events, err := cmd.Decide(subject, st.aggregate)
+	events, err := cmd.Decide(subject, st.live)
 	if err != nil {
 		return fmt.Errorf("cannot decide command %T: %w", cmd, err)
 	}
@@ -178,18 +197,24 @@ func (h *Handler[Aggregate, SuperEvt, Primary]) Handle(subject auth.Subject, key
 	}
 
 	for _, e := range batch {
-		if e2 := e.Evolve(subject.Context(), st.aggregate); e2 != nil {
+		if e2 := e.Evolve(subject.Context(), st.live); e2 != nil {
 			// in-memory state is now partially applied and inconsistent; drop it
-			// so the next access rebuilds from the durable log.
+			// (and its snapshot) so the next access rebuilds from the durable log.
+			st.snapshot.Store(nil)
 			h.aggregates.Delete(key)
 			return fmt.Errorf("cannot evolve aggregate: %w: type %T", e2, e)
 		}
 	}
 
-	if st.aggregate.IsDeleted() {
+	if st.live.IsDeleted() {
+		st.snapshot.Store(nil)
 		h.aggregates.Delete(key)
+		return nil
 	}
 
+	// the live state changed: the reader snapshot is now out of date and will be
+	// re-cloned lazily on the next read.
+	st.stale.Store(true)
 	return nil
 }
 
@@ -209,8 +234,17 @@ func (h *Handler[Aggregate, SuperEvt, Primary]) All(ctx context.Context) (iter.S
 	}, nil
 }
 
-// Aggregate returns a deep copy of the current aggregate, or [os.ErrNotExist] if
-// no such (live) aggregate exists.
+// Aggregate returns the current aggregate snapshot, or [os.ErrNotExist] if no
+// such (live) aggregate exists.
+//
+// The returned value is a deep clone that is safe to read concurrently with
+// writes: it is served lock-free from an atomic snapshot pointer and is only
+// (re)cloned on the first read after a change. Repeated reads without an
+// intervening write return the same snapshot without cloning again.
+//
+// Callers must treat the result as read-only. Mutating it is harmless to the
+// store (the truth is a separate instance) but pointless — the change is not
+// persisted and is discarded on the next re-clone.
 func (h *Handler[Aggregate, SuperEvt, Primary]) Aggregate(ctx context.Context, key Primary) (Aggregate, error) {
 	if err := h.ensureInit(); err != nil {
 		var zero Aggregate
@@ -223,9 +257,24 @@ func (h *Handler[Aggregate, SuperEvt, Primary]) Aggregate(ctx context.Context, k
 		return zero, fmt.Errorf("aggregate %v: %w", key, os.ErrNotExist)
 	}
 
+	// fast path: a fresh snapshot exists — no lock, no clone.
+	if !st.stale.Load() {
+		if snap := st.snapshot.Load(); snap != nil {
+			return *snap, nil
+		}
+	}
+
+	// slow path: (re)clone the live state under the lock.
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
-	return st.aggregate.Clone(), nil
+
+	// re-check under the lock: another goroutine may have refreshed it.
+	if st.stale.Load() || st.snapshot.Load() == nil {
+		clone := st.live.Clone()
+		st.snapshot.Store(&clone)
+		st.stale.Store(false)
+	}
+	return *st.snapshot.Load(), nil
 }
 
 // Replay yields the raw events of a single aggregate by filtering the global
