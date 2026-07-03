@@ -10,7 +10,6 @@ package session
 import (
 	"fmt"
 	"log/slog"
-	"sync"
 
 	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/auth"
@@ -18,11 +17,11 @@ import (
 
 // NewDelete returns a [Delete] use case. Deleting a non-existent session is a no-op (idempotent). A session
 // the subject may not access (no PermDelete globally nor as an instance grant) is treated as non-existent, so
-// it is neither deleted nor revealed. On success the session's ReBAC grants are revoked as well.
-func NewDelete(mutex *sync.Mutex, repo Repository, rdb *rebac.DB) Delete {
+// it is neither deleted nor revealed. On success the session's ReBAC grants are revoked as well. Serializes
+// with other mutations of the same session via its keyed lock.
+func NewDelete(locks *locker, repo Repository, rdb *rebac.DB) Delete {
 	return func(subject auth.Subject, id ID) error {
-		mutex.Lock()
-		defer mutex.Unlock()
+		defer locks.lock(id)()
 
 		optSession, err := repo.FindByID(id)
 		if err != nil {

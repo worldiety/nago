@@ -10,6 +10,7 @@ package session
 import (
 	"iter"
 	"testing"
+	"time"
 
 	"go.wdy.de/nago/application/ai/completion"
 	"go.wdy.de/nago/application/ai/model"
@@ -302,5 +303,203 @@ func TestCreateGrantsOwnerAndDeleteRevokes(t *testing.T) {
 		t.Fatalf("find after delete: %v", err)
 	} else if reloaded.IsSome() {
 		t.Fatal("session should be gone after delete")
+	}
+}
+
+// TestAppendSystemOverride verifies that AppendOptions.System overrides the session's fixed system prompt for
+// that turn only, and is not persisted back onto the session.
+func TestAppendSystemOverride(t *testing.T) {
+	uc, repo, _ := newTestUseCases(t)
+	subject := user.SU()
+	fake := &fakeCompletions{}
+
+	session, err := uc.Create(subject, CreateOptions{Model: model.ID("fake-model"), System: "fixed session prompt"})
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+
+	// Turn with a per-turn override.
+	if _, err := uc.Append(subject, session.ID, AppendOptions{
+		Completions: fake,
+		System:      "fresh per-turn prompt with domain model",
+		Input:       []completion.Content{completion.Text{Text: "hi"}},
+	}); err != nil {
+		t.Fatalf("append with override: %v", err)
+	}
+	if fake.lastOptions.System != "fresh per-turn prompt with domain model" {
+		t.Fatalf("override not forwarded, got %q", fake.lastOptions.System)
+	}
+
+	// The override must not be persisted.
+	reloaded, err := repo.FindByID(session.ID)
+	if err != nil || reloaded.IsNone() {
+		t.Fatalf("reload: %v", err)
+	}
+	if reloaded.Unwrap().System != "fixed session prompt" {
+		t.Fatalf("session system prompt must stay fixed, got %q", reloaded.Unwrap().System)
+	}
+
+	// A turn without override falls back to the session prompt.
+	if _, err := uc.Append(subject, session.ID, AppendOptions{
+		Completions: fake,
+		Input:       []completion.Content{completion.Text{Text: "again"}},
+	}); err != nil {
+		t.Fatalf("append without override: %v", err)
+	}
+	if fake.lastOptions.System != "fixed session prompt" {
+		t.Fatalf("fallback to session prompt failed, got %q", fake.lastOptions.System)
+	}
+}
+
+// blockingCompletions blocks inside Complete until released, so a test can observe that an Append holds the
+// lock for its whole duration. Each instance is used by a single session to avoid data races on its fields.
+type blockingCompletions struct {
+	started chan struct{}
+	release chan struct{}
+}
+
+func (b *blockingCompletions) Models(subject auth.Subject) iter.Seq2[model.Model, error] {
+	return func(yield func(model.Model, error) bool) { yield(model.Model{ID: "fake-model"}, nil) }
+}
+
+func (b *blockingCompletions) Complete(subject auth.Subject, opts completion.Options) (completion.Result, error) {
+	close(b.started)
+	<-b.release
+	return completion.Result{
+		Message:    completion.Message{Role: completion.Assistant, Content: []completion.Content{completion.Text{Text: "done"}}},
+		StopReason: completion.StopEndTurn,
+		Model:      opts.Model,
+	}, nil
+}
+
+func (b *blockingCompletions) Stream(subject auth.Subject, opts completion.Options) iter.Seq2[completion.Delta, error] {
+	return func(yield func(completion.Delta, error) bool) {}
+}
+
+// TestAppendLocksPerSession proves that a long-running Append on one session does not block an Append on a
+// different session (per-session keyed lock, not a global mutex).
+func TestAppendLocksPerSession(t *testing.T) {
+	uc, _, _ := newTestUseCases(t)
+	subject := user.SU()
+
+	sA, err := uc.Create(subject, CreateOptions{Model: model.ID("fake-model")})
+	if err != nil {
+		t.Fatalf("create A: %v", err)
+	}
+	sB, err := uc.Create(subject, CreateOptions{Model: model.ID("fake-model")})
+	if err != nil {
+		t.Fatalf("create B: %v", err)
+	}
+
+	blockA := &blockingCompletions{started: make(chan struct{}), release: make(chan struct{})}
+
+	// Start a blocking Append on session A.
+	doneA := make(chan error, 1)
+	go func() {
+		_, err := uc.Append(subject, sA.ID, AppendOptions{
+			Completions: blockA,
+			Input:       []completion.Content{completion.Text{Text: "a"}},
+		})
+		doneA <- err
+	}()
+
+	// Wait until A is inside Complete (i.e. holding A's lock).
+	select {
+	case <-blockA.started:
+	case <-time.After(2 * time.Second):
+		t.Fatal("append A did not start in time")
+	}
+
+	// Session B must complete while A is still blocked.
+	fakeB := &fakeCompletions{reply: "b-answer"}
+	doneB := make(chan error, 1)
+	go func() {
+		_, err := uc.Append(subject, sB.ID, AppendOptions{
+			Completions: fakeB,
+			Input:       []completion.Content{completion.Text{Text: "b"}},
+		})
+		doneB <- err
+	}()
+
+	select {
+	case err := <-doneB:
+		if err != nil {
+			t.Fatalf("append B failed: %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("append B was blocked by append A - locking is not per session")
+	}
+
+	// Now release A and make sure it finishes cleanly.
+	close(blockA.release)
+	select {
+	case err := <-doneA:
+		if err != nil {
+			t.Fatalf("append A failed: %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("append A did not finish after release")
+	}
+}
+
+// TestFindAllTagFilter verifies that FindAllOptions.Tags narrows the result to sessions carrying all given
+// tags, that CreateOptions.Tags is persisted, and that an empty filter yields everything.
+func TestFindAllTagFilter(t *testing.T) {
+	uc, _, _ := newTestUseCases(t)
+	subject := user.SU()
+
+	mk := func(tags ...string) ID {
+		s, err := uc.Create(subject, CreateOptions{Model: model.ID("fake-model"), Tags: tags})
+		if err != nil {
+			t.Fatalf("create: %v", err)
+		}
+		return s.ID
+	}
+
+	invoice42 := mk("ctx:invoice/42", "pinned")
+	invoice7 := mk("ctx:invoice/7")
+	untagged := mk()
+
+	collect := func(opts FindAllOptions) map[ID]bool {
+		got := map[ID]bool{}
+		for s, err := range uc.FindAll(subject, opts) {
+			if err != nil {
+				t.Fatalf("find all: %v", err)
+			}
+			got[s.ID] = true
+		}
+		return got
+	}
+
+	// No filter -> all three.
+	if all := collect(FindAllOptions{}); len(all) != 3 || !all[invoice42] || !all[invoice7] || !all[untagged] {
+		t.Fatalf("empty filter should yield all, got %v", all)
+	}
+
+	// Single tag -> only the matching session.
+	if got := collect(FindAllOptions{Tags: []string{"ctx:invoice/42"}}); len(got) != 1 || !got[invoice42] {
+		t.Fatalf("tag ctx:invoice/42 should yield only that session, got %v", got)
+	}
+
+	// AND semantics: both tags must be present.
+	if got := collect(FindAllOptions{Tags: []string{"ctx:invoice/42", "pinned"}}); len(got) != 1 || !got[invoice42] {
+		t.Fatalf("AND filter should yield only invoice42, got %v", got)
+	}
+
+	// A tag present on none -> empty result.
+	if got := collect(FindAllOptions{Tags: []string{"nope"}}); len(got) != 0 {
+		t.Fatalf("unknown tag should yield nothing, got %v", got)
+	}
+
+	// A partially-matching AND filter (invoice7 lacks "pinned") -> empty.
+	if got := collect(FindAllOptions{Tags: []string{"ctx:invoice/7", "pinned"}}); len(got) != 0 {
+		t.Fatalf("partial AND match should yield nothing, got %v", got)
+	}
+
+	// Tags are persisted on the session.
+	if opt, err := uc.FindByID(subject, invoice42); err != nil || opt.IsNone() {
+		t.Fatalf("find invoice42: %v", err)
+	} else if got := opt.Unwrap().Tags; len(got) != 2 || got[0] != "ctx:invoice/42" || got[1] != "pinned" {
+		t.Fatalf("tags not persisted, got %v", got)
 	}
 }

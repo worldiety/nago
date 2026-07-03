@@ -9,18 +9,16 @@ package session
 
 import (
 	"fmt"
-	"sync"
 
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/xtime"
 )
 
 // NewRename returns a [Rename] use case that updates the title of a session. Requires PermRename globally or
-// as an instance grant on the session.
-func NewRename(mutex *sync.Mutex, repo Repository) Rename {
+// as an instance grant on the session. Serializes with other mutations of the same session via its keyed lock.
+func NewRename(locks *locker, repo Repository) Rename {
 	return func(subject auth.Subject, id ID, title string) error {
-		mutex.Lock()
-		defer mutex.Unlock()
+		defer locks.lock(id)()
 
 		optSession, err := repo.FindByID(id)
 		if err != nil {

@@ -9,7 +9,6 @@ package session
 
 import (
 	"fmt"
-	"sync"
 
 	"go.wdy.de/nago/application/ai/completion"
 	"go.wdy.de/nago/auth"
@@ -18,14 +17,15 @@ import (
 
 // NewAppend returns an [Append] use case.
 //
-// It performs a read-modify-write cycle guarded by the shared mutex: load the session, append the new user
-// turn, run the completion against the supplied [completion.Completions] (agentic via [completion.Run] when
-// tools are given, otherwise a single [completion.Completions.Complete]), append the produced messages, update
-// the accumulated usage and timestamp, persist and return the updated session.
+// It performs a read-modify-write cycle guarded by the session's keyed lock: load the session, append the new
+// user turn, run the completion against the supplied [completion.Completions] (agentic via [completion.Run]
+// when tools are given, otherwise a single [completion.Completions.Complete]), append the produced messages,
+// update the accumulated usage and timestamp, persist and return the updated session.
 //
-// Note that the potentially long-running provider call happens while the mutex is held so that a concurrent
-// Append on the same session cannot build on a stale history. Callers should run Append off the UI thread.
-func NewAppend(mutex *sync.Mutex, repo Repository) Append {
+// The potentially long-running provider call happens while the per-session lock is held so that a concurrent
+// Append on the SAME session cannot build on a stale history; operations on other sessions are unaffected.
+// Callers should run Append off the UI thread.
+func NewAppend(locks *locker, repo Repository) Append {
 	return func(subject auth.Subject, id ID, opts AppendOptions) (Session, error) {
 		if opts.Completions == nil {
 			return Session{}, fmt.Errorf("session: AppendOptions.Completions must not be nil")
@@ -35,8 +35,7 @@ func NewAppend(mutex *sync.Mutex, repo Repository) Append {
 			return Session{}, fmt.Errorf("session: AppendOptions.Input must not be empty")
 		}
 
-		mutex.Lock()
-		defer mutex.Unlock()
+		defer locks.lock(id)()
 
 		optSession, err := repo.FindByID(id)
 		if err != nil {
@@ -63,6 +62,14 @@ func NewAppend(mutex *sync.Mutex, repo Repository) Append {
 			return Session{}, fmt.Errorf("session: no model set (neither on the session nor in AppendOptions)")
 		}
 
+		// System prompt: a per-turn override wins over the session's fixed prompt. This lets callers rebuild
+		// a fresh system prompt each turn (e.g. embedding the currently rendered domain model). The override
+		// is transient and never persisted on the session.
+		system := session.System
+		if opts.System != "" {
+			system = opts.System
+		}
+
 		// Build the request history: the persisted history plus the new user turn.
 		userMsg := completion.Message{Role: completion.User, Content: opts.Input}
 		history := make([]completion.Message, 0, len(session.Messages)+1)
@@ -71,7 +78,7 @@ func NewAppend(mutex *sync.Mutex, repo Repository) Append {
 
 		baseOpts := completion.Options{
 			Model:       mdl,
-			System:      session.System,
+			System:      system,
 			Messages:    history,
 			MaxTokens:   opts.MaxTokens,
 			Temperature: opts.Temperature,

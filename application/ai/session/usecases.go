@@ -23,7 +23,6 @@ package session
 
 import (
 	"iter"
-	"sync"
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/completion"
@@ -67,6 +66,12 @@ type Session struct {
 	// risk an import cycle. A caller resolves the hint back to a provider at runtime (e.g. to preselect the
 	// matching provider when continuing a session). Optional.
 	ProviderHint string `json:"providerHint,omitempty"`
+
+	// Tags are opaque, free-form labels used to classify and filter sessions (see [FindAllOptions.Tags]).
+	// They are provider- and domain-agnostic on purpose; a caller decides on their meaning. Typical uses are
+	// binding a session to an application context (e.g. "ctx:invoice/42"), marking user-pinned chats, or
+	// grouping by feature area. Optional.
+	Tags []string `json:"tags,omitempty"`
 
 	// Messages is the full, ordered, lossless history including tool calls and tool results. It is exactly
 	// the slice that would be fed back into [completion.Completions.Complete] to continue the session.
@@ -127,6 +132,10 @@ type CreateOptions struct {
 	// ProviderHint optionally records the originating provider (see [Session.ProviderHint]).
 	ProviderHint string
 
+	// Tags optionally classifies the session (see [Session.Tags]). Used later to filter via
+	// [FindAllOptions.Tags].
+	Tags []string
+
 	// Input is an optional first user turn. When set, it is stored as the initial history entry but NOT yet
 	// completed - call [Append] to obtain an assistant answer. Leave empty to create an empty session.
 	Input []completion.Content
@@ -144,6 +153,12 @@ type AppendOptions struct {
 	// Model overrides [Session.Model] for this (and only this) turn. Optional; when empty the session model
 	// is used.
 	Model model.ID
+
+	// System overrides the session's system/developer prompt for this (and only this) turn. Optional; when
+	// empty [Session.System] is used. This lets a caller rebuild a fresh system prompt per turn (e.g. to
+	// embed the currently rendered, compact domain model) instead of relying on the session's fixed one. The
+	// override is not persisted on the session.
+	System string
 
 	// Tools are the executable tools offered to the model for this turn. When non-empty, [Append] drives the
 	// full agentic loop via [completion.Run]; otherwise a single [completion.Completions.Complete] is used.
@@ -171,8 +186,17 @@ type Create func(subject auth.Subject, opts CreateOptions) (Session, error)
 // FindByID returns the session with the given id if it exists and the subject may read it.
 type FindByID func(subject auth.Subject, id ID) (option.Opt[Session], error)
 
-// FindAll yields all sessions owned by (visible to) the subject.
-type FindAll func(subject auth.Subject) iter.Seq2[Session, error]
+// FindAllOptions filters the sessions yielded by [FindAll]. The zero value applies no filter and yields every
+// session the subject may see.
+type FindAllOptions struct {
+	// Tags, when non-empty, restricts the result to sessions carrying ALL of the given tags (set/AND
+	// semantics). An empty slice means "no tag filter". This is how a caller scopes sessions to an
+	// application context, e.g. Tags: []string{"ctx:invoice/42"}.
+	Tags []string
+}
+
+// FindAll yields the sessions the subject may see (per ReBAC), optionally narrowed by [FindAllOptions].
+type FindAll func(subject auth.Subject, opts FindAllOptions) iter.Seq2[Session, error]
 
 // Append adds a user turn, runs the completion (optionally agentic) against the supplied provider capability,
 // appends the produced messages to the history and persists the updated session, which it returns.
@@ -194,9 +218,12 @@ type UseCases struct {
 	Delete   Delete
 }
 
-// NewUseCases wires the session use cases against the given repository and ReBAC database. A single shared
-// mutex serializes mutating operations so concurrent [Append] calls on the same repository cannot interleave
-// read-modify-write cycles.
+// NewUseCases wires the session use cases against the given repository and ReBAC database.
+//
+// Mutating operations on an existing session ([Append], [Rename], [Delete]) serialize per session id via a
+// keyed lock, so a long-running [Append] (e.g. blocking on an agentic ask_user round-trip) only blocks other
+// operations on the same session, never on unrelated ones. [Create] needs no lock because it works on a
+// freshly generated, collision-free id.
 //
 // Authorization is resource-scoped: every use case audits via [auth.Subject.AuditResource] against the
 // session's ReBAC instance, so a subject may act either through a global permission (e.g. an IAM group that
@@ -204,14 +231,14 @@ type UseCases struct {
 // for the creator, so users can see and continue only their own sessions unless additionally granted global
 // access.
 func NewUseCases(repo Repository, rdb *rebac.DB) UseCases {
-	var mutex sync.Mutex
+	var locks locker
 
 	return UseCases{
-		Create:   NewCreate(&mutex, repo, rdb),
+		Create:   NewCreate(repo, rdb),
 		FindByID: NewFindByID(repo),
 		FindAll:  NewFindAll(repo),
-		Append:   NewAppend(&mutex, repo),
-		Rename:   NewRename(&mutex, repo),
-		Delete:   NewDelete(&mutex, repo, rdb),
+		Append:   NewAppend(&locks, repo),
+		Rename:   NewRename(&locks, repo),
+		Delete:   NewDelete(&locks, repo, rdb),
 	}
 }

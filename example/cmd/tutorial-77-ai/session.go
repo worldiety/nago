@@ -197,7 +197,7 @@ func sessionChat(wnd core.Window, uc ai.UseCases, sessions session.UseCases) cor
 	sessionOptions := []dropdown.Option[session.ID]{
 		{Value: "", Label: "– neue Unterhaltung –"},
 	}
-	for s, err := range sessions.FindAll(wnd.Subject()) {
+	for s, err := range sessions.FindAll(wnd.Subject(), session.FindAllOptions{}) {
 		if err != nil {
 			return alert.BannerError(err)
 		}

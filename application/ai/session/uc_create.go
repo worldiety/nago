@@ -9,7 +9,6 @@ package session
 
 import (
 	"fmt"
-	"sync"
 
 	"go.wdy.de/nago/application/ai/completion"
 	"go.wdy.de/nago/application/rebac"
@@ -24,14 +23,14 @@ import (
 // PermCreate globally (e.g. via an IAM group). After persisting, the creator is granted the per-instance
 // permissions (see grantOwner) so they - and only they, unless granted globally - can find, continue, rename
 // and delete this specific session.
-func NewCreate(mutex *sync.Mutex, repo Repository, rdb *rebac.DB) Create {
+//
+// No lock is needed: the session id is freshly generated and collision-free, so there is no concurrent
+// read-modify-write on the same instance.
+func NewCreate(repo Repository, rdb *rebac.DB) Create {
 	return func(subject auth.Subject, opts CreateOptions) (Session, error) {
 		if err := subject.AuditResource(Namespace, "", PermCreate); err != nil {
 			return Session{}, err
 		}
-
-		mutex.Lock()
-		defer mutex.Unlock()
 
 		now := xtime.Now()
 
@@ -48,6 +47,7 @@ func NewCreate(mutex *sync.Mutex, repo Repository, rdb *rebac.DB) Create {
 			Model:        opts.Model,
 			System:       opts.System,
 			ProviderHint: opts.ProviderHint,
+			Tags:         opts.Tags,
 			Messages:     messages,
 			CreatedAt:    now,
 			CreatedBy:    subject.ID(),

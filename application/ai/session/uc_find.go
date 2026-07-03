@@ -10,6 +10,7 @@ package session
 import (
 	"fmt"
 	"iter"
+	"slices"
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/auth"
@@ -38,15 +39,21 @@ func NewFindByID(repo Repository) FindByID {
 }
 
 // NewFindAll returns a [FindAll] use case yielding the sessions the subject may see: those granted per
-// instance (its own) plus all sessions if the subject holds PermFindAll globally.
+// instance (its own) plus all sessions if the subject holds PermFindAll globally. When [FindAllOptions.Tags]
+// is set, only sessions carrying all of those tags are yielded. The (cheap) tag filter is applied before the
+// (potentially more expensive) ReBAC audit.
 func NewFindAll(repo Repository) FindAll {
-	return func(subject auth.Subject) iter.Seq2[Session, error] {
+	return func(subject auth.Subject, opts FindAllOptions) iter.Seq2[Session, error] {
 		return func(yield func(Session, error) bool) {
 			for session, err := range repo.All() {
 				if err != nil {
 					if !yield(Session{}, err) {
 						return
 					}
+					continue
+				}
+
+				if !hasAllTags(session.Tags, opts.Tags) {
 					continue
 				}
 
@@ -60,4 +67,17 @@ func NewFindAll(repo Repository) FindAll {
 			}
 		}
 	}
+}
+
+// hasAllTags reports whether have contains every tag in want (AND semantics). An empty want matches anything.
+func hasAllTags(have, want []string) bool {
+	if len(want) == 0 {
+		return true
+	}
+	for _, w := range want {
+		if !slices.Contains(have, w) {
+			return false
+		}
+	}
+	return true
 }
