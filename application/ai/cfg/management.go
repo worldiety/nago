@@ -25,9 +25,12 @@ import (
 	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/application/ai/provider/cache"
 	"go.wdy.de/nago/application/ai/rest"
+	"go.wdy.de/nago/application/ai/session"
 	uiai "go.wdy.de/nago/application/ai/ui"
 	cfgdrive "go.wdy.de/nago/application/drive/cfg"
 	"go.wdy.de/nago/application/localization/rstring"
+	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/presentation/core"
@@ -36,11 +39,15 @@ import (
 
 var (
 	StrMaintenanceAdminCardDesc = i18n.MustString("nago.ai.admin.maintenance_desc", i18n.Values{language.English: "Apply some maintenance tasks to the AI subsystem.", language.German: "Wartungsarbeiten am KI Subsystem durchführen."})
+
+	StrResSessions = i18n.MustString("nago.ai.session.resources.name", i18n.Values{language.English: "AI Sessions", language.German: "KI Sitzungen"})
+	StrResSessDesc = i18n.MustString("nago.ai.session.resources.desc", i18n.Values{language.English: "Persisted, provider-independent AI chat sessions with their full message history.", language.German: "Persistierte, providerunabhängige KI-Chat-Sitzungen mit vollständigem Nachrichtenverlauf."})
 )
 
 type Management struct {
 	UseCases        ai.UseCases
 	LibSyncUseCases libsync.UseCases
+	SessionUseCases session.UseCases
 	Pages           uiai.Pages
 }
 
@@ -188,9 +195,45 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		modDrive.UseCases.Stat,
 	)
 
+	// Sessions are provider-independent, locally persisted chats on top of the stateless completion API.
+	// Unlike provider conversations they are not wrapped by the cache decorator - the whole (lossless)
+	// history lives in this repository.
+	repoSessions, err := application.JSONRepository[session.Session](cfg, string(session.Namespace))
+	if err != nil {
+		return Management{}, err
+	}
+
+	rdb, err := cfg.RDB()
+	if err != nil {
+		return Management{}, err
+	}
+
+	// Register the ReBAC static rules that allow granting a user ownership and the per-instance permissions
+	// on a specific session (required before rebac.DB.Put may write those triples). The global user ->
+	// global rules for these permissions are already registered by the user management for every permission.
+	rdb.RegisterStaticRule(rebac.StaticRule{
+		Source:   user.Namespace,
+		Relation: rebac.Owner,
+		Target:   session.Namespace,
+	})
+	for _, pid := range session.InstancePermissions {
+		rdb.RegisterStaticRule(rebac.StaticRule{
+			Source:   user.Namespace,
+			Relation: rebac.Relation(pid),
+			Target:   session.Namespace,
+		})
+	}
+
+	// Make sessions browsable in the general ReBAC editor. The default mapper uses Session.String() for a
+	// recognizable instance label (title / first-message preview).
+	rdb.RegisterResources(rebac.NewRepositoryResources(StrResSessions, StrResSessDesc, repoSessions))
+
+	ucSession := session.NewUseCases(repoSessions, rdb)
+
 	management = Management{
 		LibSyncUseCases: ucLibSync,
 		UseCases:        ucAI,
+		SessionUseCases: ucSession,
 		Pages: uiai.Pages{
 			Maintenance:  "admin/ai/maintenance",
 			Provider:     "admin/ai/provider",

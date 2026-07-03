@@ -40,6 +40,7 @@ func main() {
 			MenuEntry().Title("drive").Forward("drive").Private().
 			MenuEntry().Title("stateless").Forward("stateless").Private().
 			MenuEntry().Title("agentic").Forward("agentic").Private().
+			MenuEntry().Title("session").Forward("session").Private().
 			Decorator())
 		option.Must(cfginspector.Enable(cfg))
 		option.Must(cfglocalization.Enable(cfg))
@@ -74,6 +75,10 @@ func main() {
 
 		cfg.RootViewWithDecoration("agentic", func(wnd core.Window) core.View {
 			return agenticChat(wnd, modAi.UseCases)
+		})
+
+		cfg.RootViewWithDecoration("session", func(wnd core.Window) core.View {
+			return sessionChat(wnd, modAi.UseCases, modAi.SessionUseCases)
 		})
 
 	}).Run()
