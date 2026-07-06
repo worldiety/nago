@@ -17,6 +17,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"go.wdy.de/nago/pkg/cloner"
 	"go.wdy.de/nago/pkg/ndb"
 )
 
@@ -81,12 +82,24 @@ type Source = ndb.Followable
 //
 // # Concurrency
 //
-// The tail goroutine is the sole writer of the state map; Get/All read it under
-// an RWMutex and return a shallow copy of S. Treat the returned S as read-only:
-// if S contains mutable reference fields (maps, slices, pointers), a reader could
-// otherwise race the next fold — model S as a flat value or copy those fields in
-// the fold.
-type Projection[K ~string, S any] struct {
+// The tail goroutine is the sole writer of the state map. Reads (Get/All) never
+// touch the folded ("live") state; they are served a deep clone via a read-copy-
+// update (RCU) scheme, mirroring [Handler.Aggregate]:
+//
+//   - The live state per key is mutated only by the fold, under the projection's
+//     mutex.
+//   - A clone is produced lazily on the first read after a change and cached in
+//     an atomic snapshot pointer; further reads without an intervening fold are
+//     served from that snapshot lock-free and clone-free (one clone per change,
+//     not per read).
+//
+// The returned S shares no memory with live, so the fold never needs copy-on-
+// write and an accidental mutation on a returned value can never corrupt the
+// truth (the next fold evolves live and the next read re-clones). Callers must
+// nonetheless treat the result as read-only: between two changes all readers
+// share the one cached snapshot, so mutating it would disturb concurrent readers
+// (and is pointless — it is discarded on the next re-clone).
+type Projection[K ~string, S cloner.Cloner[S]] struct {
 	src  Source
 	opts ProjectionOptions
 
@@ -96,7 +109,7 @@ type Projection[K ~string, S any] struct {
 	types []ndb.TypeID
 
 	mu    sync.RWMutex
-	state map[K]*S
+	state map[K]*stateCell[S]
 
 	// processedSeq is the highest global Seq the fold has accounted for
 	// (folded, skipped as unwanted, or skipped on error). It advances
@@ -109,6 +122,24 @@ type Projection[K ~string, S any] struct {
 
 	runOnce sync.Once
 	stopFn  func()
+}
+
+// stateCell holds one projected row in two copies, RCU-style, so reads are cheap
+// and race-free:
+//
+//   - live is the fold's source of truth. Only the tail goroutine mutates it,
+//     under the projection's mutex, by folding events. Readers never touch it.
+//   - snapshot is a lazily produced deep clone handed to readers lock-free via an
+//     atomic pointer. It is (re)built on the first read after a change and reused
+//     by further reads until the next fold marks it stale.
+//
+// Because readers only ever see the snapshot, an accidental mutation on a
+// returned value can never corrupt the truth: the next fold evolves live and the
+// next read replaces the snapshot with a fresh clone.
+type stateCell[S any] struct {
+	live     S
+	snapshot atomic.Pointer[S]
+	stale    atomic.Bool
 }
 
 // ProjectionOptions configures a [Projection]. The zero value is valid: warm-up
@@ -144,22 +175,31 @@ const theUnit Unit = ""
 // counter, a latest-snapshot, a rollup). Register folds with [Project] exactly
 // as for a keyed projection, using a key function that returns [TheUnit]. Read
 // it with [Value].
-type Singleton[S any] = Projection[Unit, S]
+type Singleton[S cloner.Cloner[S]] = Projection[Unit, S]
 
 // NewProjection creates a keyed projection reading from src. Register folds with
 // [Project], then start it with [Projection.Run].
-func NewProjection[K ~string, S any](src Source, opts ProjectionOptions) *Projection[K, S] {
+//
+// S must be a pointer type implementing [cloner.Cloner] (e.g. *ThreadDetail with
+// a Clone() *ThreadDetail returning a deep copy). Reads hand out such clones, so
+// the fold never needs copy-on-write and callers get an isolated instance. This
+// is enforced at construction: a non-pointer S panics.
+func NewProjection[K ~string, S cloner.Cloner[S]](src Source, opts ProjectionOptions) *Projection[K, S] {
+	if reflect.TypeFor[S]().Kind() != reflect.Ptr {
+		panic("evs: projection state S must be a pointer type implementing cloner.Cloner[S]")
+	}
+
 	return &Projection[K, S]{
 		src:    src,
 		opts:   opts,
 		rules:  make(map[ndb.TypeID]func(msg ndb.Message)),
-		state:  make(map[K]*S),
+		state:  make(map[K]*stateCell[S]),
 		waitCh: make(chan struct{}),
 	}
 }
 
 // NewSingleton creates a [Singleton] reading from src.
-func NewSingleton[S any](src Source, opts ProjectionOptions) *Singleton[S] {
+func NewSingleton[S cloner.Cloner[S]](src Source, opts ProjectionOptions) *Singleton[S] {
 	return NewProjection[Unit, S](src, opts)
 }
 
@@ -176,17 +216,18 @@ func TheUnit() Unit { return theUnit }
 // is E's discriminator (E{}.Discriminator()). key selects which K this event
 // contributes to for THIS projection — the same event type may map to different
 // keys in different projections (e.g. a Posted event carries both a thread id and
-// a comment id). fold applies the decoded event to the target state, which is
-// created on first touch (the zero value of S).
+// a comment id). fold applies the decoded event to the target state s (the live
+// pointer, mirroring an event's Evolve), which is created on first touch (a fresh
+// zero value of the pointee).
 //
 // fold is intentionally errorless to keep call sites terse; report and skip
 // exceptional events via [ProjectionOptions.OnError]. A panic inside fold is
 // recovered and routed to OnError as well, so a single bad event never stalls
 // the projection.
-func Project[K ~string, S any, E interface{ Discriminator() Discriminator }](
+func Project[K ~string, S cloner.Cloner[S], E interface{ Discriminator() Discriminator }](
 	p *Projection[K, S],
 	key func(E) K,
-	fold func(s *S, e E),
+	fold func(s S, e E),
 ) {
 	var proto E
 	disc := proto.Discriminator()
@@ -234,12 +275,21 @@ func Project[K ~string, S any, E interface{ Discriminator() Discriminator }](
 		k := key(evt)
 
 		p.mu.Lock()
-		s, exists := p.state[k]
+		cell, exists := p.state[k]
 		if !exists {
-			s = new(S)
-			p.state[k] = s
+			// fresh row: allocate the pointee (S is a pointer type, verified in
+			// NewProjection) so the fold receives a usable instance, mirroring
+			// Handler.loadOrCreate.
+			cell = &stateCell[S]{
+				live: reflect.New(reflect.TypeFor[S]().Elem()).Interface().(S),
+			}
+			p.state[k] = cell
 		}
-		applyFold(p, msg.Seq, typeID, s, evt, fold)
+		applyFold(p, msg.Seq, typeID, cell.live, evt, fold)
+		// the live state (may have) changed: the reader snapshot is now out of
+		// date and will be re-cloned lazily on the next read. Set even after a
+		// recovered panic; at worst it forces one redundant re-clone.
+		cell.stale.Store(true)
 		p.mu.Unlock()
 	}
 	p.types = append(p.types, typeID)
@@ -247,7 +297,7 @@ func Project[K ~string, S any, E interface{ Discriminator() Discriminator }](
 
 // applyFold runs fold under recover so a panic becomes a skipped event plus an
 // OnError callback instead of a dead tail goroutine. It runs while p.mu is held.
-func applyFold[K ~string, S any, E any](p *Projection[K, S], seq ndb.Seq, typeID ndb.TypeID, s *S, e E, fold func(*S, E)) {
+func applyFold[K ~string, S cloner.Cloner[S], E any](p *Projection[K, S], seq ndb.Seq, typeID ndb.TypeID, s S, e E, fold func(S, E)) {
 	defer func() {
 		if rec := recover(); rec != nil {
 			p.reportError(seq, typeID, fmt.Errorf("fold panicked: %v", rec))
@@ -370,35 +420,70 @@ func (p *Projection[K, S]) WaitFor(ctx context.Context, seq ndb.Seq) error {
 	}
 }
 
-// Get returns a shallow copy of the state for key k, and whether it exists. The
-// copy is served under a read lock; treat it as read-only (see the type-level
-// note on mutable fields in S).
+// Get returns a deep clone of the state for key k, and whether it exists.
+//
+// The clone shares no memory with the fold's live state, so it is safe to read
+// concurrently with the fold. It is served lock-free from an atomic snapshot
+// pointer and is only (re)cloned on the first read after a change; repeated reads
+// without an intervening fold return the same snapshot without cloning again.
+// Treat the result as read-only: concurrent readers share that one snapshot
+// between changes (see the type-level Concurrency note).
 func (p *Projection[K, S]) Get(k K) (S, bool) {
 	p.mu.RLock()
-	defer p.mu.RUnlock()
-	s, ok := p.state[k]
+	cell, ok := p.state[k]
+	p.mu.RUnlock()
 	if !ok {
 		var zero S
 		return zero, false
 	}
-	return *s, true
+
+	return p.snapshotOf(cell), true
 }
 
-// All iterates over a point-in-time snapshot of every (key, state) pair. The
-// snapshot is taken under a read lock and then yielded lock-free, so the fold
+// snapshotOf returns the cell's current deep-clone snapshot, (re)cloning it if
+// stale. The fast path is lock-free; the slow path clones under a read lock,
+// which excludes the fold's writes to live (the fold mutates live only under the
+// write lock) while allowing concurrent reader clones. Two readers racing the
+// slow path is benign: both clone an identical live and the last Store wins.
+func (p *Projection[K, S]) snapshotOf(cell *stateCell[S]) S {
+	// fast path: a fresh snapshot exists — no lock, no clone.
+	if !cell.stale.Load() {
+		if snap := cell.snapshot.Load(); snap != nil {
+			return *snap
+		}
+	}
+
+	// slow path: (re)clone the live state under the read lock.
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	if cell.stale.Load() || cell.snapshot.Load() == nil {
+		clone := cell.live.Clone()
+		cell.snapshot.Store(&clone)
+		cell.stale.Store(false)
+	}
+	return *cell.snapshot.Load()
+}
+
+// All iterates over a point-in-time snapshot of every (key, state) pair. The set
+// of keys is captured under a read lock and then yielded lock-free, so the fold
 // may advance the projection while the caller ranges; the caller observes a
-// consistent set as of the call. Each yielded S is a shallow copy (read-only).
+// consistent set as of the call. Each yielded S is a deep clone (served via the
+// same RCU path as [Projection.Get]).
 func (p *Projection[K, S]) All() iter.Seq2[K, S] {
 	p.mu.RLock()
-	snap := make(map[K]S, len(p.state))
-	for k, s := range p.state {
-		snap[k] = *s
+	type entry struct {
+		k    K
+		cell *stateCell[S]
+	}
+	cells := make([]entry, 0, len(p.state))
+	for k, cell := range p.state {
+		cells = append(cells, entry{k, cell})
 	}
 	p.mu.RUnlock()
 
 	return func(yield func(K, S) bool) {
-		for k, s := range snap {
-			if !yield(k, s) {
+		for _, e := range cells {
+			if !yield(e.k, p.snapshotOf(e.cell)) {
 				return
 			}
 		}
@@ -409,6 +494,6 @@ func (p *Projection[K, S]) All() iter.Seq2[K, S] {
 // folded into it yet. It is the [Singleton] convenience over
 // [Projection.Get]. (It is a free function, not a method, because Go does not
 // allow methods on a generic alias type.)
-func Value[S any](p *Singleton[S]) (S, bool) {
+func Value[S cloner.Cloner[S]](p *Singleton[S]) (S, bool) {
 	return p.Get(theUnit)
 }

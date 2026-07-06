@@ -26,15 +26,26 @@ import (
 // read as intent ("register this event value") rather than reflection noise.
 func reflectTypeOf(v any) reflect.Type { return reflect.TypeOf(v) }
 
-// personView is a flat read-model row folded from the person events. It is a
-// value type with no mutable reference fields, so Projection.Get can hand out a
-// safe shallow copy.
+// personView is a read-model row folded from the person events. Projections now
+// require the state to be a pointer type implementing cloner.Cloner, so reads
+// hand out an isolated deep clone.
 type personView struct {
 	First string
 	Last  string
 	// Events counts how many events were folded into this row (proves ordering
 	// and that both event types reach the same projection under one key).
 	Events int
+}
+
+// Clone returns a deep copy. personView has no reference fields, so a plain value
+// copy is already a deep copy; a downstream state with slices/maps would clone
+// those here (e.g. via xslices.Clone / xmaps.Clone).
+func (p *personView) Clone() *personView {
+	if p == nil {
+		return nil
+	}
+	c := *p
+	return &c
 }
 
 // waitForProcessed spins (cheaply) until the projection has folded up to seq or
@@ -63,8 +74,8 @@ func appendPerson(t *testing.T, backend evs.RegisterableBackend[Evt], e Evt) ndb
 	return ndb.Seq(env.Sequence)
 }
 
-func newPersonDetail(src evs.Source) *evs.Projection[PID, personView] {
-	detail := evs.NewProjection[PID, personView](src, evs.ProjectionOptions{})
+func newPersonDetail(src evs.Source) *evs.Projection[PID, *personView] {
+	detail := evs.NewProjection[PID, *personView](src, evs.ProjectionOptions{})
 	evs.Project(detail,
 		func(e FirstnameUpdated) PID { return e.Person },
 		func(s *personView, e FirstnameUpdated) { s.First = e.Firstname; s.Events++ },
@@ -123,7 +134,7 @@ func TestProjectionCrossKey(t *testing.T) {
 	option.MustZero(backend.Register(reflectTypeOf(FirstnameUpdated{}), "FirstnameUpdated"))
 
 	// projection A: keyed by person id
-	byPerson := evs.NewProjection[PID, personView](msgs, evs.ProjectionOptions{})
+	byPerson := evs.NewProjection[PID, *personView](msgs, evs.ProjectionOptions{})
 	evs.Project(byPerson,
 		func(e FirstnameUpdated) PID { return e.Person },
 		func(s *personView, e FirstnameUpdated) { s.First = e.Firstname; s.Events++ },
@@ -131,7 +142,7 @@ func TestProjectionCrossKey(t *testing.T) {
 
 	// projection B: a global counter over the very same event type (singleton),
 	// i.e. a different target type AND a different key from the same event.
-	total := evs.NewSingleton[personView](msgs, evs.ProjectionOptions{})
+	total := evs.NewSingleton[*personView](msgs, evs.ProjectionOptions{})
 	evs.Project(total,
 		func(e FirstnameUpdated) evs.Unit { return evs.TheUnit() },
 		func(s *personView, e FirstnameUpdated) { s.Events++ },
@@ -219,7 +230,7 @@ func TestProjectionToleratesBadFold(t *testing.T) {
 	option.MustZero(backend.Register(reflectTypeOf(FirstnameUpdated{}), "FirstnameUpdated"))
 
 	var errCount atomic.Int64
-	detail := evs.NewProjection[PID, personView](msgs, evs.ProjectionOptions{
+	detail := evs.NewProjection[PID, *personView](msgs, evs.ProjectionOptions{
 		OnError: func(seq ndb.Seq, typeID ndb.TypeID, err error) { errCount.Add(1) },
 	})
 	evs.Project(detail,
@@ -308,7 +319,10 @@ func TestProjectionConcurrentReadWrite(t *testing.T) {
 	var wg sync.WaitGroup
 	done := make(chan struct{})
 
-	// readers
+	// readers: read the clones. Between two folds all readers share one cached
+	// snapshot (fast path, "kein clone"), so they must treat it read-only; the
+	// guarantee is that the fold never mutates a handed-out snapshot and a
+	// re-clone after a change reflects live. We therefore only read here.
 	for i := 0; i < 8; i++ {
 		wg.Add(1)
 		go func() {
@@ -335,9 +349,53 @@ func TestProjectionConcurrentReadWrite(t *testing.T) {
 	close(done)
 	wg.Wait()
 
-	got, _ := detail.Get("1")
-	if got.First != "n299" {
-		t.Fatalf("final fold wrong: %+v", got)
+	got, ok := detail.Get("1")
+	if !ok || got.First != "n299" {
+		t.Fatalf("final fold wrong: %+v ok=%v", got, ok)
+	}
+}
+
+// TestProjectionSnapshotIsolatedFromLive proves the RCU read contract: a returned
+// snapshot shares no memory with the fold's live state. Mutating a returned value
+// must not corrupt the truth — the next fold evolves live (unaffected) and the
+// next read after that change reflects live, not the caller's tampering.
+//
+// Note this is the same guarantee [Handler.Aggregate] makes: between two changes
+// all readers share one cached snapshot ("kein clone" on the fast path), so the
+// snapshot is not isolated between concurrent readers — only from live.
+func TestProjectionSnapshotIsolatedFromLive(t *testing.T) {
+	msgs := openNDBMessages(t)
+	backend := evs.NewNDBBackend[Evt, *Person](msgs)
+	option.MustZero(backend.Register(reflectTypeOf(FirstnameUpdated{}), "FirstnameUpdated"))
+
+	detail := newPersonDetail(msgs)
+	stop := detail.Run()
+	defer stop()
+
+	first := appendPerson(t, backend, FirstnameUpdated{Person: "1", Firstname: "A"})
+	waitProcessed(t, detail, first, 2*time.Second)
+
+	v1, ok := detail.Get("1")
+	if !ok {
+		t.Fatal("expected person 1")
+	}
+
+	// mutate the returned snapshot; the fold's live state must be unaffected.
+	v1.First = "TAMPERED"
+	v1.Events = 999
+
+	// fold another event: it must evolve the pristine live (Events 1 -> 2,
+	// First A -> B), proving live was never aliased by the handed-out snapshot.
+	live := appendPerson(t, backend, FirstnameUpdated{Person: "1", Firstname: "B"})
+	waitProcessed(t, detail, live, 2*time.Second)
+
+	v2, _ := detail.Get("1")
+	if v2.First != "B" || v2.Events != 2 {
+		t.Fatalf("caller mutation leaked into live: %+v", v2)
+	}
+	// the fresh read after a change is a new clone, distinct from the tampered one.
+	if v2 == v1 {
+		t.Fatal("expected a fresh clone instance after the fold, got an aliased pointer")
 	}
 }
 
