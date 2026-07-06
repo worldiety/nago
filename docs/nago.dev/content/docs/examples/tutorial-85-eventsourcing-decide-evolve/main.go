@@ -171,6 +171,7 @@ func NewIntroduceEmployee(handler *evs.Handler[*EmployeeAggregate, EmployeeEvent
 			cmd.ID = data.RandIdent[EID]()
 		}
 
-		return handler.Handle(subject, cmd.ID, cmd)
+		_, err := handler.Handle(subject, cmd.ID, cmd)
+		return err
 	}
 }

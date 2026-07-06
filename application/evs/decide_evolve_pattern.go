@@ -166,13 +166,24 @@ func (h *Handler[Aggregate, SuperEvt, Primary]) loadOrCreate(key Primary) *aggre
 // evolve. Generated events are stored first (improving the chance the durable
 // log and in-memory state agree), then applied as a batch. If the aggregate
 // reports IsDeleted after an event, it is dropped from the set.
-func (h *Handler[Aggregate, SuperEvt, Primary]) Handle(subject auth.Subject, key Primary, cmd Cmd[Aggregate, SuperEvt]) error {
+//
+// It returns the global [SeqID] of the last event the command persisted, i.e.
+// the highest sequence of this commit (a command may emit several events; the
+// last one's sequence covers them all because sequences are globally monotonic).
+// This is the value to pass to [Projection.WaitFor] for read-your-write: after
+// WaitFor returns, a resident projection reflects this command's events. The
+// returned sequence is 0 when the command had no effect (Decide produced no
+// events) and 0 on error; both mean "nothing to wait for" and WaitFor(ctx, 0)
+// returns immediately. In the success and the delete case alike the returned
+// sequence is the last persisted event's, since the delete tombstone is a
+// real, awaitable event too.
+func (h *Handler[Aggregate, SuperEvt, Primary]) Handle(subject auth.Subject, key Primary, cmd Cmd[Aggregate, SuperEvt]) (SeqID, error) {
 	if key == "" {
-		return fmt.Errorf("aggregate id / key cannot be empty")
+		return 0, fmt.Errorf("aggregate id / key cannot be empty")
 	}
 
 	if err := h.ensureInit(); err != nil {
-		return err
+		return 0, err
 	}
 
 	st := h.loadOrCreate(key)
@@ -181,18 +192,21 @@ func (h *Handler[Aggregate, SuperEvt, Primary]) Handle(subject auth.Subject, key
 
 	events, err := cmd.Decide(subject, st.live)
 	if err != nil {
-		return fmt.Errorf("cannot decide command %T: %w", cmd, err)
+		return 0, fmt.Errorf("cannot decide command %T: %w", cmd, err)
 	}
 
 	if len(events) == 0 {
-		return nil
+		return 0, nil
 	}
 
+	var lastSeq SeqID
 	batch := make([]SuperEvt, 0, len(events))
 	for _, e := range events {
-		if _, err := h.backend.Append(user.SU(), e); err != nil {
-			return fmt.Errorf("cannot store event %T: %w", e, err)
+		env, err := h.backend.Append(user.SU(), e)
+		if err != nil {
+			return 0, fmt.Errorf("cannot store event %T: %w", e, err)
 		}
+		lastSeq = env.Sequence
 		batch = append(batch, e)
 	}
 
@@ -202,20 +216,20 @@ func (h *Handler[Aggregate, SuperEvt, Primary]) Handle(subject auth.Subject, key
 			// (and its snapshot) so the next access rebuilds from the durable log.
 			st.snapshot.Store(nil)
 			h.aggregates.Delete(key)
-			return fmt.Errorf("cannot evolve aggregate: %w: type %T", e2, e)
+			return 0, fmt.Errorf("cannot evolve aggregate: %w: type %T", e2, e)
 		}
 	}
 
 	if st.live.IsDeleted() {
 		st.snapshot.Store(nil)
 		h.aggregates.Delete(key)
-		return nil
+		return lastSeq, nil
 	}
 
 	// the live state changed: the reader snapshot is now out of date and will be
 	// re-cloned lazily on the next read.
 	st.stale.Store(true)
-	return nil
+	return lastSeq, nil
 }
 
 // All returns all live aggregate ids. Because every aggregate is resident, this
@@ -304,8 +318,11 @@ func (h *Handler[Aggregate, SuperEvt, Primary]) Replay(key Primary) iter.Seq2[En
 
 // Delete semantically deletes an aggregate by issuing cmd (which is expected to
 // produce a deletion event whose Evolve sets IsDeleted). It is a thin wrapper
-// over [Handler.Handle] kept for call-site clarity.
-func (h *Handler[Aggregate, SuperEvt, Primary]) Delete(subject auth.Subject, key Primary, cmd Cmd[Aggregate, SuperEvt]) error {
+// over [Handler.Handle] kept for call-site clarity and returns the same
+// [SeqID]: the sequence of the deletion (tombstone) event, so a caller can
+// [Projection.WaitFor] it before reading a projection that must reflect the
+// deletion.
+func (h *Handler[Aggregate, SuperEvt, Primary]) Delete(subject auth.Subject, key Primary, cmd Cmd[Aggregate, SuperEvt]) (SeqID, error) {
 	return h.Handle(subject, key, cmd)
 }
 

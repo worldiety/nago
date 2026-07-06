@@ -14,6 +14,7 @@ import (
 
 func NewHandleCommand(handler *evs.Handler[*Workspace, WorkspaceEvent, WorkspaceID]) HandleCommand {
 	return func(subject auth.Subject, cmd WorkspaceCommand) error {
-		return handler.Handle(subject, cmd.WorkspaceID(), cmd)
+		_, err := handler.Handle(subject, cmd.WorkspaceID(), cmd)
+		return err
 	}
 }

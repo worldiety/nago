@@ -28,6 +28,7 @@ func NewDeleteWorkspace(handler *evs.Handler[*Workspace, WorkspaceEvent, Workspa
 			return err
 		}
 
-		return handler.Delete(subject, id, deleteWorkspaceCmd{id: id})
+		_, err := handler.Delete(subject, id, deleteWorkspaceCmd{id: id})
+		return err
 	}
 }

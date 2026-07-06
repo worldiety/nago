@@ -126,7 +126,7 @@ func TestHandler(t *testing.T) {
 		LastnameUpdated{},
 	)
 
-	if err := handler.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: "John"}); err != nil {
+	if _, err := handler.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: "John"}); err != nil {
 		t.Error(err)
 	}
 
@@ -158,7 +158,7 @@ func newPersonHandler() *evs.Handler[*Person, Evt, PID] {
 // read reflects only what was persisted and evolved, not the stray mutation.
 func TestAggregateSnapshotIsolation(t *testing.T) {
 	h := newPersonHandler()
-	if err := h.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: "John"}); err != nil {
+	if _, err := h.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: "John"}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -167,7 +167,7 @@ func TestAggregateSnapshotIsolation(t *testing.T) {
 	snap.firstname = "CORRUPTED"
 
 	// a subsequent legit change + read must not carry the stray mutation
-	if err := h.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: "Jane"}); err != nil {
+	if _, err := h.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: "Jane"}); err != nil {
 		t.Fatal(err)
 	}
 	got := option.Must(h.Aggregate(context.Background(), "1"))
@@ -181,7 +181,7 @@ func TestAggregateSnapshotIsolation(t *testing.T) {
 // the next read observe the new value.
 func TestAggregateSnapshotReuse(t *testing.T) {
 	h := newPersonHandler()
-	if err := h.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: "John"}); err != nil {
+	if _, err := h.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: "John"}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -191,7 +191,7 @@ func TestAggregateSnapshotReuse(t *testing.T) {
 		t.Fatal("expected the same cached snapshot pointer for repeated reads without a write")
 	}
 
-	if err := h.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: "Jane"}); err != nil {
+	if _, err := h.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: "Jane"}); err != nil {
 		t.Fatal(err)
 	}
 	c := option.Must(h.Aggregate(context.Background(), "1"))
@@ -209,7 +209,7 @@ func TestAggregateSnapshotReuse(t *testing.T) {
 // the writer mutates the separate live instance.
 func TestAggregateConcurrentReadWrite(t *testing.T) {
 	h := newPersonHandler()
-	if err := h.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: "n0"}); err != nil {
+	if _, err := h.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: "n0"}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -240,7 +240,7 @@ func TestAggregateConcurrentReadWrite(t *testing.T) {
 	go func() {
 		defer wg.Done()
 		for i := 1; i <= 500; i++ {
-			_ = h.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: fmt.Sprintf("n%d", i)})
+			_, _ = h.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: fmt.Sprintf("n%d", i)})
 		}
 		close(stop)
 	}()
@@ -249,5 +249,58 @@ func TestAggregateConcurrentReadWrite(t *testing.T) {
 
 	if option.Must(h.Aggregate(context.Background(), "1")).firstname != "n500" {
 		t.Fatalf("final state wrong: %q", option.Must(h.Aggregate(context.Background(), "1")).firstname)
+	}
+}
+
+// noopCmd decides to emit no events at all (a command without effect).
+type noopCmd struct{}
+
+func (noopCmd) Decide(subject auth.Subject, aggregate *Person) ([]Evt, error) {
+	return nil, nil
+}
+
+// TestHandleReturnsCommitSeq verifies the sequence Handle returns: a monotonic,
+// non-zero value for an effective command, and 0 for a no-op command (Decide
+// produced no events), matching the "nothing to wait for" convention.
+func TestHandleReturnsCommitSeq(t *testing.T) {
+	h := newPersonHandler()
+
+	seq1, err := h.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: "John"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if seq1 == 0 {
+		t.Fatal("expected a non-zero commit seq for an effective command")
+	}
+
+	seq2, err := h.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: "Jane"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if seq2 <= seq1 {
+		t.Fatalf("commit seq must increase: got %d after %d", seq2, seq1)
+	}
+
+	// a no-op command persists nothing → seq 0 ("nothing to wait for")
+	noopSeq, err := h.Handle(user.SU(), "1", noopCmd{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if noopSeq != 0 {
+		t.Fatalf("expected seq 0 for a no-op command, got %d", noopSeq)
+	}
+}
+
+// TestHandleErrorReturnsZeroSeq verifies a failed decide yields seq 0.
+func TestHandleErrorReturnsZeroSeq(t *testing.T) {
+	h := newPersonHandler()
+	// same firstname as the zero-value aggregate ("") triggers a decide error
+	// only when non-empty; use an empty firstname which UpdateFirstnameCmd rejects.
+	seq, err := h.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: ""})
+	if err == nil {
+		t.Fatal("expected an error for empty firstname")
+	}
+	if seq != 0 {
+		t.Fatalf("expected seq 0 on error, got %d", seq)
 	}
 }

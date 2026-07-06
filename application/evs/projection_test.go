@@ -340,3 +340,54 @@ func TestProjectionConcurrentReadWrite(t *testing.T) {
 		t.Fatalf("final fold wrong: %+v", got)
 	}
 }
+
+// TestProjectionHandleWaitForGet is the end-to-end read-your-write scenario the
+// whole design targets: a command is run through the Handler (which persists to
+// the same ndb store the projection tails), the returned commit seq is awaited
+// via WaitFor, and the projection is then guaranteed to reflect the command.
+func TestProjectionHandleWaitForGet(t *testing.T) {
+	msgs := openNDBMessages(t)
+
+	// write side: a real Handler over the ndb backend
+	backend := evs.NewNDBBackend[Evt, *Person](msgs)
+	aggID := func(e Evt) (PID, bool) {
+		switch evt := e.(type) {
+		case FirstnameUpdated:
+			return evt.Person, evt.Person != ""
+		case LastnameUpdated:
+			return evt.Person, evt.Person != ""
+		default:
+			return "", false
+		}
+	}
+	handler := evs.NewHandler[*Person](backend, aggID, backend.Register)
+	handler.RegisterEvents(FirstnameUpdated{}, LastnameUpdated{})
+
+	// read side: a projection tailing the very same store
+	detail := newPersonDetail(msgs)
+	stop := detail.Run()
+	defer stop()
+
+	for i := 0; i < 25; i++ {
+		name := fmt.Sprintf("n%d", i)
+		seq, err := handler.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: name})
+		if err != nil {
+			t.Fatalf("handle i=%d: %v", i, err)
+		}
+		if seq == 0 {
+			t.Fatalf("expected non-zero commit seq at i=%d", i)
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		if err := detail.WaitFor(ctx, ndb.Seq(seq)); err != nil {
+			cancel()
+			t.Fatalf("WaitFor(%d): %v", seq, err)
+		}
+		cancel()
+
+		got, ok := detail.Get("1")
+		if !ok || got.First != name {
+			t.Fatalf("read-your-write via Handle violated at i=%d: got %+v ok=%v", i, got, ok)
+		}
+	}
+}

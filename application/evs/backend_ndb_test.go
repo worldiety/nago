@@ -57,7 +57,7 @@ func TestHandlerOverNDBBackend(t *testing.T) {
 	handler := evs.NewHandler[*Person](backend, aggID, backend.Register)
 	handler.RegisterEvents(FirstnameUpdated{}, LastnameUpdated{})
 
-	if err := handler.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: "John"}); err != nil {
+	if _, err := handler.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: "John"}); err != nil {
 		t.Fatalf("handle: %v", err)
 	}
 
@@ -67,7 +67,7 @@ func TestHandlerOverNDBBackend(t *testing.T) {
 	}
 
 	// A second aggregate must stay independent.
-	if err := handler.Handle(user.SU(), "2", UpdateFirstnameCmd{ID: "2", Firstname: "Jane"}); err != nil {
+	if _, err := handler.Handle(user.SU(), "2", UpdateFirstnameCmd{ID: "2", Firstname: "Jane"}); err != nil {
 		t.Fatalf("handle 2: %v", err)
 	}
 	if option.Must(handler.Aggregate(context.Background(), "2")).firstname != "Jane" {
@@ -99,7 +99,7 @@ func TestHandlerNDBReplayRebuild(t *testing.T) {
 		backend := evs.NewNDBBackend[Evt, *Person](msgs)
 		h := evs.NewHandler[*Person](backend, aggID, backend.Register)
 		h.RegisterEvents(FirstnameUpdated{}, LastnameUpdated{})
-		if err := h.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: "John"}); err != nil {
+		if _, err := h.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: "John"}); err != nil {
 			t.Fatalf("handle: %v", err)
 		}
 	}
