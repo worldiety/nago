@@ -10,9 +10,11 @@ package drive
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"sync"
 
 	"github.com/worldiety/option"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/blob"
@@ -20,7 +22,7 @@ import (
 	"go.wdy.de/nago/pkg/xtime"
 )
 
-func NewDelete(mutex *sync.Mutex, bus events.Bus, repo Repository, walkDir WalkDir, blobs blob.Store) Delete {
+func NewDelete(mutex *sync.Mutex, bus events.Bus, repo Repository, walkDir WalkDir, blobs blob.Store, rdb *rebac.DB) Delete {
 	return func(subject auth.Subject, fid FID, opts DeleteOptions) error {
 		mutex.Lock()
 		defer mutex.Unlock()
@@ -99,6 +101,12 @@ func NewDelete(mutex *sync.Mutex, bus events.Bus, repo Repository, walkDir WalkD
 
 			if err := repo.DeleteByID(file.ID); err != nil {
 				return fmt.Errorf("cannot delete file %s: %w", file.ID, err)
+			}
+
+			// best-effort cleanup of the file's ReBAC ACL grants so the store does not accumulate dangling
+			// grants for removed files.
+			if err := revokeAllForFile(rdb, file.ID); err != nil {
+				slog.Error("cannot revoke rebac grants of deleted file", "fid", file.ID, "err", err)
 			}
 
 			bus.Publish(Deleted{

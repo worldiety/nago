@@ -170,9 +170,13 @@ func (f File) CanDelete(subject auth.Subject) bool {
 	}
 
 	canDelete := subject.HasResourcePermission(rebac.Namespace(f.repo.Name()), rebac.Instance(f.ID), PermDelete)
-	optParent, err := f.repo.FindByID(f.ID)
+
+	// In unix semantics, deleting a file means removing its entry from the parent directory, thus write
+	// permission on the parent is sufficient to delete. We must load the parent (f.Parent), not the file
+	// itself, and via readFileStat so the loaded parent has its repo attached for its own CanWrite checks.
+	optParent, err := readFileStat(f.repo, f.Parent)
 	if err != nil {
-		slog.Error("cannot determine deletability", "fid", f.ID, "err", err)
+		slog.Error("cannot determine deletability", "fid", f.ID, "parent", f.Parent, "err", err)
 		return false
 	}
 

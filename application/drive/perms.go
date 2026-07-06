@@ -10,7 +10,25 @@ package drive
 import (
 	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/application/rebac"
 	"golang.org/x/text/language"
+)
+
+// FileNamespace is the ReBAC namespace under which all drive file objects are addressed. It equals the
+// name of the file [Repository] and is used to grant, revoke or check per-file resource permissions
+// (see [GrantFileAccess], [RevokeFileAccess] and the File.Can* methods).
+const FileNamespace rebac.Namespace = "nago.drive.file"
+
+var (
+	// ACLPermissions enumerates all per-file resource permissions which may be granted to a user or group
+	// on a distinct file object. The wiring registers the corresponding [rebac.StaticRule]s for these.
+	ACLPermissions = []permission.ID{PermOpenFile, PermPut, PermDelete, PermRename}
+
+	// PermsReader is a convenience set that grants read-only access to a file (see [GrantFileAccess]).
+	PermsReader = []permission.ID{PermOpenFile}
+
+	// PermsWriter is a convenience set that grants read and write access to a file (see [GrantFileAccess]).
+	PermsWriter = []permission.ID{PermOpenFile, PermPut}
 )
 
 var (

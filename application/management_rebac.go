@@ -13,6 +13,7 @@ import (
 
 	"github.com/worldiety/i18n"
 	"github.com/worldiety/option"
+	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/role"
@@ -38,6 +39,9 @@ func (c *Configurator) RDB() (*rebac.DB, error) {
 
 		// automatically resolve role relations by user memberships
 		db.AddResolver(rebac.NewSourceMemberResolver(user.Namespace, role.Namespace))
+		// automatically resolve group relations by user memberships, so that resource permissions
+		// (e.g. a drive file ACL) which are granted to a group are honored for its members.
+		db.AddResolver(rebac.NewSourceMemberResolver(user.Namespace, group.Namespace))
 		db.RegisterResources(globalResources{})
 		db.RegisterResources(relationResources{})
 

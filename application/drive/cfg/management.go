@@ -10,11 +10,20 @@ package cfgdrive
 import (
 	"log/slog"
 
+	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/drive"
 	uidrive "go.wdy.de/nago/application/drive/ui"
+	"go.wdy.de/nago/application/group"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/presentation/core"
+	"golang.org/x/text/language"
+)
+
+var (
+	strResFiles     = i18n.MustString("nago.drive.resources.name", i18n.Values{language.German: "Drive Dateien", language.English: "Drive files"})
+	strResFilesDesc = i18n.MustString("nago.drive.resources.desc", i18n.Values{language.German: "Dateien und Ordner mit ihren Zugriffsrechten (ACL).", language.English: "Files and folders with their access rights (ACL)."})
 )
 
 // Management is a nago system(Drive Management).
@@ -38,7 +47,7 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		return management, nil
 	}
 
-	fileRepo, err := application.JSONRepository[drive.File, drive.FID](cfg, "nago.drive.file")
+	fileRepo, err := application.JSONRepository[drive.File, drive.FID](cfg, string(drive.FileNamespace))
 	if err != nil {
 		return Management{}, err
 	}
@@ -58,7 +67,41 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		return Management{}, err
 	}
 
-	uc := drive.NewUseCases(cfg.EventBus(), fileRepo, globalRootsRepo, userRootsRepo, fileBlobs)
+	rdb, err := cfg.RDB()
+	if err != nil {
+		return Management{}, err
+	}
+
+	// Register the ReBAC static rules that allow granting per-file resource permissions to users and groups
+	// (required before rebac.DB.Put may write those triples, see drive.GrantFileAccess). The global
+	// user/group -> global rules for these permissions are already registered by the user management for
+	// every declared permission.
+	for _, ns := range []rebac.Namespace{user.Namespace, group.Namespace} {
+		for _, pid := range drive.ACLPermissions {
+			rdb.RegisterStaticRule(rebac.StaticRule{
+				Source:   ns,
+				Relation: rebac.Relation(pid),
+				Target:   drive.FileNamespace,
+			})
+		}
+	}
+
+	// Make drive files browsable and manageable in the general ReBAC editor. The mapper renders a
+	// human-readable path/name for each file instance.
+	rdb.RegisterResources(rebac.NewRepositoryResources(strResFiles, strResFilesDesc, fileRepo).Map(func(f drive.File) rebac.InstanceInfo {
+		name := f.Name()
+		if path, err := f.AbsolutePath(); err == nil && path != "" {
+			name = path
+		}
+
+		return rebac.InstanceInfo{
+			Namespace: drive.FileNamespace,
+			ID:        rebac.Instance(f.Identity()),
+			Name:      name,
+		}
+	}))
+
+	uc := drive.NewUseCases(cfg.EventBus(), fileRepo, globalRootsRepo, userRootsRepo, fileBlobs, rdb)
 
 	management = Management{
 		UseCases: uc,

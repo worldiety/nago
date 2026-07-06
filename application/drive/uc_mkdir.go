@@ -23,7 +23,7 @@ import (
 	"go.wdy.de/nago/pkg/xtime"
 )
 
-func NewMkDir(mutex *sync.Mutex, bus events.Bus, repo Repository) MkDir {
+func NewMkDir(mutex *sync.Mutex, bus events.Bus, repo Repository, rdb *rebac.DB) MkDir {
 	return func(subject auth.Subject, parent FID, name string, opts MkDirOptions) (File, error) {
 		var zero File
 
@@ -150,6 +150,13 @@ func NewMkDir(mutex *sync.Mutex, bus events.Bus, repo Repository) MkDir {
 
 		if log, ok := parentFile.AuditLog.Last(); ok {
 			bus.Publish(log)
+		}
+
+		// inherit the parent's ReBAC ACL grants (user/group per-file permissions) onto the new directory,
+		// analogous to the owner/group/mode inheritance above. Best-effort: a failure here must not fail the
+		// directory creation itself.
+		if err := copyGrantsFromParent(rdb, parent, file.ID); err != nil {
+			slog.Error("cannot inherit rebac grants from parent", "parent", parent, "child", file.ID, "err", err)
 		}
 
 		return file, nil

@@ -18,6 +18,7 @@ import (
 	"sync"
 
 	"github.com/worldiety/option"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/blob"
@@ -27,7 +28,7 @@ import (
 	"go.wdy.de/nago/pkg/xtime"
 )
 
-func NewPut(mutex *sync.Mutex, bus events.Bus, repo Repository, blobs blob.Store) Put {
+func NewPut(mutex *sync.Mutex, bus events.Bus, repo Repository, blobs blob.Store, rdb *rebac.DB) Put {
 	return func(subject auth.Subject, parent FID, name string, src io.Reader, opts PutOptions) error {
 		requiresKeyDeletion := false
 		key, size, err := storeBlob(blobs, src)
@@ -192,6 +193,13 @@ func NewPut(mutex *sync.Mutex, bus events.Bus, repo Repository, blobs blob.Store
 				if v, ok := v.Unwrap(); ok {
 					bus.Publish(v)
 				}
+			}
+
+			// A new file was created inside the parent. Inherit the parent's ReBAC ACL grants (user/group
+			// per-file permissions) onto the new file, analogous to the owner/group/mode inheritance above.
+			// Best-effort: a failure here must not fail the put itself, the blob is already stored.
+			if err := copyGrantsFromParent(rdb, parent, file.ID); err != nil {
+				slog.Error("cannot inherit rebac grants from parent", "parent", parent, "child", file.ID, "err", err)
 			}
 
 		}

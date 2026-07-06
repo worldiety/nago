@@ -19,6 +19,8 @@ import (
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/group"
+	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/blob"
@@ -179,6 +181,55 @@ type Rename func(subject auth.Subject, fid FID, newName string) error
 // have a lot of drives.
 type FindDrive func(subject auth.Subject, fid FID) (option.Opt[Drive], error)
 
+// A Grantee identifies the target of a per-file access grant. Exactly one of the fields must be set: either a
+// concrete [user.ID] or a [group.ID]. A group grant is honored for all members of that group.
+type Grantee struct {
+	User  user.ID  // if set, the grant targets this single user.
+	Group group.ID // if set, the grant targets this group and thereby all its members.
+}
+
+// IsZero reports whether neither a user nor a group is set.
+func (g Grantee) IsZero() bool {
+	return g.User == "" && g.Group == ""
+}
+
+// Valid reports whether exactly one of user or group is set.
+func (g Grantee) Valid() bool {
+	return (g.User == "") != (g.Group == "")
+}
+
+// UserGrantee is a small constructor for a user [Grantee].
+func UserGrantee(uid user.ID) Grantee {
+	return Grantee{User: uid}
+}
+
+// GroupGrantee is a small constructor for a group [Grantee].
+func GroupGrantee(gid group.ID) Grantee {
+	return Grantee{Group: gid}
+}
+
+// FileGrant describes which permissions a distinct [Grantee] currently holds on a file. See [ReadFileGrants].
+type FileGrant struct {
+	Grantee     Grantee
+	Permissions []permission.ID
+}
+
+// GrantFileAccess grants the given per-file resource permissions to a user or group on a distinct file object.
+// This supplements the unix owner/group/other permission bits with a flexible, additive ACL. Only a subject
+// which may write the file (owner, write permission or SU) is allowed to change its ACL. Granting is additive
+// and idempotent. Use the convenience sets [PermsReader] or [PermsWriter] for the common cases. See also
+// [RevokeFileAccess] and [ReadFileGrants].
+type GrantFileAccess func(subject auth.Subject, fid FID, grantee Grantee, perms ...permission.ID) error
+
+// RevokeFileAccess removes the given per-file resource permissions from a user or group. Removing a permission
+// which was not granted is not an error. The same authorization rules as for [GrantFileAccess] apply.
+type RevokeFileAccess func(subject auth.Subject, fid FID, grantee Grantee, perms ...permission.ID) error
+
+// ReadFileGrants returns the currently effective per-file grants (the additive ACL) for the given file.
+// The subject must be allowed to read the file. Note that this does not resolve indirect grants (e.g. group
+// memberships or roles); it only lists the direct grants stored on this file object.
+type ReadFileGrants func(subject auth.Subject, fid FID) ([]FileGrant, error)
+
 // Namespace describes the name space to use to lookup the root FID by name.
 type Namespace int
 
@@ -221,37 +272,43 @@ type WalkDir func(subject auth.Subject, root FID, walker func(fid FID, file File
 // more events into the event bus. These are all concrete types of [Activity].
 // To find out which drive was actually affected, inspect the Activity element and use [FindDrive].
 type UseCases struct {
-	OpenDrive  OpenDrive
-	ReadDrives ReadDrives
-	FindDrive  FindDrive
-	Stat       Stat
-	MkDir      MkDir
-	Delete     Delete
-	WalkDir    WalkDir
-	Put        Put
-	Get        Get
-	Zip        Zip
-	Rename     Rename
+	OpenDrive        OpenDrive
+	ReadDrives       ReadDrives
+	FindDrive        FindDrive
+	Stat             Stat
+	MkDir            MkDir
+	Delete           Delete
+	WalkDir          WalkDir
+	Put              Put
+	Get              Get
+	Zip              Zip
+	Rename           Rename
+	GrantFileAccess  GrantFileAccess
+	RevokeFileAccess RevokeFileAccess
+	ReadFileGrants   ReadFileGrants
 }
 
-func NewUseCases(bus events.Bus, repo Repository, globalRootRepo NamedRootRepository, userRootRepo UserRootRepository, fileBlobs blob.Store) UseCases {
+func NewUseCases(bus events.Bus, repo Repository, globalRootRepo NamedRootRepository, userRootRepo UserRootRepository, fileBlobs blob.Store, rdb *rebac.DB) UseCases {
 	// IMPORTANT: we must ensure that no evil locks occur. No (huge) payload use case call must be stalled or at least must stall other concurrent calls
 	var mutex sync.Mutex
 
 	walkDirFn := NewWalkDir(repo)
 
 	return UseCases{
-		OpenDrive:  NewOpenDrive(&mutex, repo, globalRootRepo, userRootRepo),
-		Stat:       NewStat(repo),
-		ReadDrives: NewReadDrives(globalRootRepo, userRootRepo),
-		FindDrive:  NewFindDrive(repo, globalRootRepo, userRootRepo),
-		MkDir:      NewMkDir(&mutex, bus, repo),
-		Delete:     NewDelete(&mutex, bus, repo, walkDirFn, fileBlobs),
-		WalkDir:    walkDirFn,
-		Put:        NewPut(&mutex, bus, repo, fileBlobs),
-		Get:        NewGet(repo, fileBlobs),
-		Zip:        NewZip(repo, fileBlobs, walkDirFn),
-		Rename:     NewRename(&mutex, bus, repo),
+		OpenDrive:        NewOpenDrive(&mutex, repo, globalRootRepo, userRootRepo),
+		Stat:             NewStat(repo),
+		ReadDrives:       NewReadDrives(globalRootRepo, userRootRepo),
+		FindDrive:        NewFindDrive(repo, globalRootRepo, userRootRepo),
+		MkDir:            NewMkDir(&mutex, bus, repo, rdb),
+		Delete:           NewDelete(&mutex, bus, repo, walkDirFn, fileBlobs, rdb),
+		WalkDir:          walkDirFn,
+		Put:              NewPut(&mutex, bus, repo, fileBlobs, rdb),
+		Get:              NewGet(repo, fileBlobs),
+		Zip:              NewZip(repo, fileBlobs, walkDirFn),
+		Rename:           NewRename(&mutex, bus, repo),
+		GrantFileAccess:  NewGrantFileAccess(&mutex, repo, rdb),
+		RevokeFileAccess: NewRevokeFileAccess(&mutex, repo, rdb),
+		ReadFileGrants:   NewReadFileGrants(repo, rdb),
 	}
 }
 

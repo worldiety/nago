@@ -218,7 +218,10 @@ func (v *viewImpl) HasResourcePermission(name rebac.Namespace, id rebac.Instance
 		return true
 	}
 
-	ok, err := v.rdb.Contains(rebac.Triple{
+	// Resolve (not just Contains) so that indirect grants are honored as well, e.g. a resource permission
+	// which was granted to a group (or role) the subject is a member of. See the registered member resolvers
+	// in Configurator.RDB.
+	ok, err := v.rdb.Resolve(rebac.Triple{
 		Source: rebac.Entity{
 			Namespace: Namespace,
 			Instance:  rebac.Instance(v.ID()),
