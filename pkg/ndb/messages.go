@@ -273,12 +273,22 @@ type Notifier interface {
 	Subscribe(types []TypeID, fn func(Notification)) (close func())
 }
 
+// Followable is the minimal capability [Tail] needs: replayable history plus a
+// live-notification edge. It is intentionally the narrowest composition that
+// supports "replay then follow", so consumers of a tailing stream (e.g. a read
+// model) can depend on it instead of the full [Messages] and remain usable on
+// engines that implement only these two capabilities.
+type Followable interface {
+	History
+	Notifier
+}
+
 // Messages is the full-featured composition of all message capabilities plus
 // [io.Closer]. It is a convenience for engines that implement everything (such
 // as the default msgstore engine). Consumers should depend on the narrowest
 // capability interface they actually need (e.g. accept a [History] when they
-// only replay) so that alternative engines with a reduced feature set remain
-// usable.
+// only replay, or a [Followable] when they tail) so that alternative engines
+// with a reduced feature set remain usable.
 type Messages interface {
 	History
 	Retained

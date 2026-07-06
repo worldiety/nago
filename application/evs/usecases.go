@@ -17,6 +17,7 @@ import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/events"
+	"go.wdy.de/nago/pkg/ndb"
 	"go.wdy.de/nago/pkg/std/concurrent"
 	"go.wdy.de/nago/pkg/xtime"
 )
@@ -43,7 +44,7 @@ func (d Discriminator) Validate() error {
 
 // SeqID is a strict monotonic increasing sequence identifier, which is guaranteed to be unique per topic.
 // It is similar to a Kafka offset, but technically it is more like a database autoincrement.
-type SeqID int64
+type SeqID = ndb.Seq
 
 // Envelope is the read-side view of a stored event. EventTime uses explicit unix
 // milliseconds to avoid timezone ambiguity.

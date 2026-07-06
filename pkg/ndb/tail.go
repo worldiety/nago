@@ -24,9 +24,10 @@ type TailOptions struct {
 // they are written, until the consumer stops ranging.
 //
 // It is the engine-neutral composition of [Notifier.Subscribe] and
-// [History.Replay]: every engine that provides a [Messages] capability inherits
-// this "replay then follow" behaviour without implementing it itself. Tail
-// bridges the replay→live gap so no message is lost or delivered twice:
+// [History.Replay]: every engine that provides those two capabilities (a
+// [Followable], which any [Messages] satisfies) inherits this "replay then
+// follow" behaviour without implementing it itself. Tail bridges the replay→live
+// gap so no message is lost or delivered twice:
 //
 //   - It subscribes BEFORE replaying, so live writes are observed from the start.
 //   - It then replays up to the current tip and follows the live edge, holding a
@@ -54,7 +55,7 @@ type TailOptions struct {
 //
 // The yielded Message.Payload follows the same lifetime rules as [History.Replay]
 // (a view valid only for the current iteration step); clone it to retain it.
-func Tail(m Messages, types []TypeID, opts TailOptions) iter.Seq2[TypeID, Message] {
+func Tail(m Followable, types []TypeID, opts TailOptions) iter.Seq2[TypeID, Message] {
 	return func(yield func(TypeID, Message) bool) {
 		// wake is a coalescing "something was written" signal with capacity 1.
 		// We never depend on individual notifications — only on the fact that the
