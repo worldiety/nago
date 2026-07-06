@@ -114,3 +114,54 @@ func TestHandlerNDBReplayRebuild(t *testing.T) {
 		t.Fatalf("rebuilt firstname: got %q want John", got.firstname)
 	}
 }
+
+// TestHandlerNDBSharedStoreIgnoresForeignEvents reproduces the shared-store bug:
+// a single ndb.Messages engine holds events of several aggregates. A handler for
+// one aggregate must replay only its own registered discriminators and must not
+// choke on a foreign event type (here "ThreadOpened") written by another bounded
+// context into the same stream.
+func TestHandlerNDBSharedStoreIgnoresForeignEvents(t *testing.T) {
+	msgs := openNDBMessages(t)
+
+	// A foreign aggregate's event lands in the same store under a discriminator
+	// this handler never registers. Before the fix, ReplayAll read it too and
+	// aborted ensureInit with `unknown discriminator "ThreadOpened"`.
+	if _, err := msgs.Append(ndb.TypeID("ThreadOpened"), ndb.NewTraceID(), []byte(`{"threadId":"t1","title":"hi"}`)); err != nil {
+		t.Fatalf("append foreign event: %v", err)
+	}
+
+	aggID := func(e Evt) (PID, bool) {
+		switch evt := e.(type) {
+		case FirstnameUpdated:
+			return evt.Person, evt.Person != ""
+		case LastnameUpdated:
+			return evt.Person, evt.Person != ""
+		default:
+			return "", false
+		}
+	}
+
+	backend := evs.NewNDBBackend[Evt, *Person](msgs)
+	handler := evs.NewHandler[*Person](backend, aggID, backend.Register)
+	handler.RegisterEvents(FirstnameUpdated{}, LastnameUpdated{})
+
+	// A normal command interleaves the person's own event with the foreign one.
+	if _, err := handler.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: "John"}); err != nil {
+		t.Fatalf("handle: %v", err)
+	}
+
+	// ensureInit must succeed despite the foreign ThreadOpened event in the store.
+	got := option.Must(handler.Aggregate(context.Background(), "1"))
+	if got.firstname != "John" {
+		t.Fatalf("firstname: got %q want John", got.firstname)
+	}
+
+	// A fresh handler over the same store must rebuild purely from its own events
+	// and likewise ignore the foreign one.
+	backend2 := evs.NewNDBBackend[Evt, *Person](msgs)
+	h2 := evs.NewHandler[*Person](backend2, aggID, backend2.Register)
+	h2.RegisterEvents(FirstnameUpdated{}, LastnameUpdated{})
+	if option.Must(h2.Aggregate(context.Background(), "1")).firstname != "John" {
+		t.Fatal("rebuild over shared store failed to ignore foreign event")
+	}
+}

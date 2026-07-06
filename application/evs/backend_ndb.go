@@ -96,10 +96,32 @@ func (b *ndbBackend[E, A]) Append(subject auth.Subject, e E) (Envelope[E], error
 	}, nil
 }
 
+// ReplayAll yields this backend's events in ascending global Sequence order. It
+// reads ONLY the registered discriminators, never the whole store: an
+// [ndb.Messages] engine may be shared by several aggregates (a single engine per
+// bounded context or per process), each backend writing its own event types into
+// the same stream. Passing the registered type set to [ndb.History.Replay] keeps
+// each backend from decoding a sibling aggregate's events (which would fail with
+// an "unknown discriminator" and abort the handler's replay). This mirrors how a
+// [Projection] hands its type set to [ndb.Tail].
 func (b *ndbBackend[E, A]) ReplayAll(subject auth.Subject) iter.Seq2[Envelope[E], error] {
+	// Snapshot the registered discriminators as the type filter.
+	types := make([]ndb.TypeID, 0, b.byDiscrimentr.Len())
+	for d := range b.byDiscrimentr.All() {
+		types = append(types, ndb.TypeID(d))
+	}
+
 	return func(yield func(Envelope[E], error) bool) {
+		// No registered types means there is nothing this backend could decode.
+		// Return empty instead of calling Replay with an empty slice, which the
+		// contract interprets as "all types" — exactly the over-read this method
+		// must avoid.
+		if len(types) == 0 {
+			return
+		}
+
 		var zero Envelope[E]
-		for typeID, msg := range b.msgs.Replay(nil, 1, ndb.Seq(math.MaxUint64)) {
+		for typeID, msg := range b.msgs.Replay(types, 1, ndb.Seq(math.MaxUint64)) {
 			env, err := b.decode(Discriminator(typeID), msg)
 			if err != nil {
 				if !yield(zero, err) {
