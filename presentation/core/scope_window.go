@@ -58,10 +58,15 @@ type scopeWindow struct {
 	values               atomic.Pointer[Values]
 	isRendering          bool
 	generation           int64
-	mutex                sync.Mutex
-	clipboard            *clipboardController
-	lastAsyncInvokePtr   atomic.Int64
-	asyncCallbacks       concurrent.RWMap[proto.Ptr, func(ret proto.CallRet)]
+	// dirtyGeneration is set to the current generation whenever any [State] which belongs to this window
+	// is mutated (see markStateDirty). It allows the frame ticker to decide in O(1) whether a re-render is
+	// required, instead of iterating over all states. It is accessed atomically because the frame ticker reads
+	// it concurrently to the render loop.
+	dirtyGeneration    int64
+	mutex              sync.Mutex
+	clipboard          *clipboardController
+	lastAsyncInvokePtr atomic.Int64
+	asyncCallbacks     concurrent.RWMap[proto.Ptr, func(ret proto.CallRet)]
 }
 
 func (s *scopeWindow) Clipboard() Clipboard {
@@ -136,12 +141,32 @@ func (s *scopeWindow) removeDetachedStates(currentGeneration int64) {
 	}
 }
 
+// generationOf returns the current render generation. It is read atomically, because the frame ticker
+// (see hasDirtyStates) may read it concurrently to the render loop.
+func (s *scopeWindow) generationOf() int64 {
+	return atomic.LoadInt64(&s.generation)
+}
+
+// markStateDirty records that a [State] belonging to this window has been mutated within the current
+// generation. This is the O(1) replacement for iterating over all states in the frame ticker.
+// After the next render increments the generation, dirtyGeneration is implicitly older than the generation
+// again, thus the window is considered clean until the next mutation.
+func (s *scopeWindow) markStateDirty() {
+	atomic.StoreInt64(&s.dirtyGeneration, atomic.LoadInt64(&s.generation))
+}
+
+// hasDirtyStates reports in O(1) whether any [State] of this window has been mutated since the last render.
+// It intentionally does not cover the scope-level transient states, which are still checked separately.
+func (s *scopeWindow) hasDirtyStates() bool {
+	return atomic.LoadInt64(&s.dirtyGeneration) >= atomic.LoadInt64(&s.generation)
+}
+
 func (s *scopeWindow) render() proto.Component {
 	s.isRendering = true
-	s.generation++
+	generation := atomic.AddInt64(&s.generation, 1)
 	defer func() {
 		s.isRendering = false
-		s.removeDetachedStates(s.generation)
+		s.removeDetachedStates(generation)
 	}()
 
 	if s.rootFactory.IsNone() {
@@ -160,7 +185,7 @@ func (s *scopeWindow) render() proto.Component {
 	// update global scope transient states with the latest render generation.
 	// this is used by the ticker to check, if a re-render is required
 	for _, property := range s.parent.statesById {
-		property.setGeneration(s.generation)
+		property.setGeneration(generation)
 	}
 
 	return tree

@@ -376,27 +376,22 @@ func (s *Scope) hasDirtyStates() bool {
 		return false
 	}
 
-	// TODO replace individual flags with a single flag per scope_window
 	alloc := s.allocatedRootView.Unwrap()
 
-	requiresRender := false
-	for _, property := range alloc.states {
+	// window scoped states are aggregated in O(1) via a single dirty marker per window.
+	if alloc.hasDirtyStates() {
+		return true
+	}
+
+	// transient (scope/session level) states are not attached to a window and are therefore still checked
+	// individually. Their amount is expected to be small.
+	for _, property := range s.statesById {
 		if property.dirty() {
-			requiresRender = true
-			break
+			return true
 		}
 	}
 
-	if !requiresRender {
-		for _, property := range s.statesById {
-			if property.dirty() {
-				requiresRender = true
-				break
-			}
-		}
-	}
-
-	return requiresRender
+	return false
 }
 
 // only for event loop

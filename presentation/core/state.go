@@ -237,7 +237,7 @@ func (s *State[T]) Set(v T) {
 		return
 	}
 
-	s.Invalidate() // TODO set this once in the scope_window for better performance
+	s.Invalidate()
 	s.value = v
 }
 
@@ -302,6 +302,13 @@ func (s *State[T]) dirty() bool {
 // state.
 func (s *State[T]) Invalidate() {
 	atomic.StoreInt64(&s.lastChangedGeneration, s.getGeneration())
+
+	// Additionally aggregate the dirty marker on the owning window, so the frame ticker can detect a required
+	// re-render in O(1) instead of iterating over all states. States allocated without a proper scope window
+	// (see the fallback in StateOf) simply skip this, which is fine because they cannot be rendered anyway.
+	if w, ok := s.wnd.(*scopeWindow); ok {
+		w.markStateDirty()
+	}
 }
 
 func (s *State[T]) Ptr() proto.Ptr {
@@ -391,7 +398,7 @@ func StateOf[T any](wnd Window, id string) *State[T] {
 	some, ok := w.statesById[id]
 	if ok {
 		if found, ok := some.(*State[T]); ok {
-			found.setGeneration(w.generation)
+			found.setGeneration(w.generationOf())
 			return found
 		}
 		var zero T
@@ -404,7 +411,7 @@ func StateOf[T any](wnd Window, id string) *State[T] {
 		id:         id,
 		ptr:        w.lastStatePtrById,
 		valid:      false,
-		generation: w.generation,
+		generation: w.generationOf(),
 	}
 	w.states[w.lastStatePtrById] = state
 	w.statesById[id] = state
