@@ -16,7 +16,7 @@
     },
     "4": {
       "name": "Value",
-      "type": "Float"
+      "type": "SliderValue"
     },
     "5": {
       "name": "Frame",
@@ -54,6 +54,11 @@
       "doc": "Unit defines the unit to display next to the slider value.",
       "name": "Unit",
       "type": "Str"
+    },
+    "13": {
+      "doc": "RangeMode defines whether the slider is a range slider or not.",
+      "name": "RangeMode",
+      "type": "Bool"
     }
   }
 }

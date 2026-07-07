@@ -1,0 +1,14 @@
+{
+  "kind": "Record",
+  "id": 268,
+  "fields": {
+    "1": {
+      "name": "From",
+      "type": "Float"
+    },
+    "2": {
+      "name": "To",
+      "type": "Float"
+    }
+  }
+}

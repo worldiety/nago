@@ -85,6 +85,10 @@
 	"scaffold": {
 		"toMenu": "Hauptmenü"
 	},
+	"slider": {
+		"from": "von",
+		"to": "bis"
+	},
 	"stepper": {
 		"aria": {
 			"progressUnknown": "Fortschritt: Unbekannt",

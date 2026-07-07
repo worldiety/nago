@@ -106,7 +106,7 @@ func NewPayOrder(storeEvent evs.Store[ShopEvent]) PayOrder {
 		// ...
 
 		evt := OrderPayed{OrderID: cmd.OrderID}
-		if _, err := storeEvent(user.SU(), evt, evs.StoreOptions{CreatedBy: subject.ID()}); err != nil {
+		if _, err := storeEvent(user.SU(), evt); err != nil {
 			return evt, err
 		}
 
