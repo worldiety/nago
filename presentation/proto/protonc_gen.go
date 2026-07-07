@@ -20027,7 +20027,7 @@ type Slider struct {
 	Label          Str
 	SupportingText Str
 	ErrorText      Str
-	Value          Float
+	Value          SliderValue
 	Frame          Frame
 	// InputValue is a binding to a state containing the current value. This is the pointer to a state.
 	InputValue Ptr
@@ -20041,10 +20041,12 @@ type Slider struct {
 	ShowMarkers Bool
 	// Unit defines the unit to display next to the slider value.
 	Unit Str
+	// RangeMode defines whether the slider is a range slider or not.
+	RangeMode Bool
 }
 
 func (v *Slider) write(w *BinaryWriter) error {
-	var fields [13]bool
+	var fields [14]bool
 	fields[1] = !v.Label.IsZero()
 	fields[2] = !v.SupportingText.IsZero()
 	fields[3] = !v.ErrorText.IsZero()
@@ -20057,6 +20059,7 @@ func (v *Slider) write(w *BinaryWriter) error {
 	fields[10] = !v.Min.IsZero()
 	fields[11] = !v.ShowMarkers.IsZero()
 	fields[12] = !v.Unit.IsZero()
+	fields[13] = !v.RangeMode.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -20092,7 +20095,7 @@ func (v *Slider) write(w *BinaryWriter) error {
 		}
 	}
 	if fields[4] {
-		if err := w.writeFieldHeader(f64, 4); err != nil {
+		if err := w.writeFieldHeader(record, 4); err != nil {
 			return err
 		}
 		if err := v.Value.write(w); err != nil {
@@ -20160,6 +20163,14 @@ func (v *Slider) write(w *BinaryWriter) error {
 			return err
 		}
 		if err := v.Unit.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[13] {
+		if err := w.writeFieldHeader(uvarint, 13); err != nil {
+			return err
+		}
+		if err := v.RangeMode.write(w); err != nil {
 			return err
 		}
 	}
@@ -20235,6 +20246,76 @@ func (v *Slider) read(r *BinaryReader) error {
 			}
 		case 12:
 			err := v.Unit.read(r)
+			if err != nil {
+				return err
+			}
+		case 13:
+			err := v.RangeMode.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type SliderValue struct {
+	From Float
+	To   Float
+}
+
+func (v *SliderValue) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.From.IsZero()
+	fields[2] = !v.To.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(f64, 1); err != nil {
+			return err
+		}
+		if err := v.From.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(f64, 2); err != nil {
+			return err
+		}
+		if err := v.To.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *SliderValue) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.From.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.To.read(r)
 			if err != nil {
 				return err
 			}
@@ -21800,6 +21881,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 267:
 		var v Slider
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 268:
+		var v SliderValue
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -26239,13 +26326,26 @@ func (v *Slider) reset() {
 	v.Min.reset()
 	v.ShowMarkers.reset()
 	v.Unit.reset()
+	v.RangeMode.reset()
 }
 
 func (v *Slider) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Disabled.IsZero() && v.Step.IsZero() && v.Max.IsZero() && v.Min.IsZero() && v.ShowMarkers.IsZero() && v.Unit.IsZero()
+	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Disabled.IsZero() && v.Step.IsZero() && v.Max.IsZero() && v.Min.IsZero() && v.ShowMarkers.IsZero() && v.Unit.IsZero() && v.RangeMode.IsZero()
+}
+
+func (v *SliderValue) reset() {
+	v.From.reset()
+	v.To.reset()
+}
+
+func (v *SliderValue) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.From.IsZero() && v.To.IsZero()
 }
 
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
@@ -28035,6 +28135,13 @@ func (v *OutlineStates) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *Slider) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 267); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *SliderValue) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 268); err != nil {
 		return err
 	}
 	return nil

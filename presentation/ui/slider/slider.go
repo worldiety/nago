@@ -5,11 +5,12 @@
 //
 // SPDX-License-Identifier: Custom-License
 
-package ui
+package slider
 
 import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
+	"go.wdy.de/nago/presentation/ui"
 )
 
 // TSlider is a basic component to input number within a given range.
@@ -20,7 +21,7 @@ type TSlider struct {
 	supportingText string               // helper text shown by the slider
 	errorText      string               // error message shown by the slider
 	disabled       bool                 // disables user interaction
-	frame          Frame                // layout constraints
+	frame          ui.Frame             // layout constraints
 	step           float64              // step size to increase/decrease the value
 	maxValue       float64              // max value
 	minValue       float64              // min value
@@ -81,7 +82,7 @@ func (c TSlider) Disabled(disabled bool) TSlider {
 }
 
 // Frame sets the layout frame of the slider (size, width, height, etc.).
-func (c TSlider) Frame(frame Frame) TSlider {
+func (c TSlider) Frame(frame ui.Frame) TSlider {
 	c.frame = frame
 	return c
 }
@@ -117,10 +118,14 @@ func (c TSlider) Unit(unit string) TSlider {
 }
 
 // Render builds and returns the protocol representation of the slider.
-func (c TSlider) Render(ctx core.RenderContext) core.RenderNode {
-	value := proto.Float(c.value)
+func (c TSlider) Render(_ core.RenderContext) core.RenderNode {
+	value := proto.SliderValue{
+		From: proto.Float(c.value),
+	}
 	if c.inputValue != nil {
-		value = proto.Float(c.inputValue.Get())
+		value = proto.SliderValue{
+			From: proto.Float(c.inputValue.Get()),
+		}
 	}
 
 	return &proto.Slider{
@@ -130,11 +135,18 @@ func (c TSlider) Render(ctx core.RenderContext) core.RenderNode {
 		Value:          value,
 		InputValue:     c.inputValue.Ptr(),
 		Disabled:       proto.Bool(c.disabled),
-		Frame:          c.frame.ora(),
-		Step:           proto.Float(c.step),
-		Max:            proto.Float(c.maxValue),
-		Min:            proto.Float(c.minValue),
-		ShowMarkers:    proto.Bool(c.showMarkers),
-		Unit:           proto.Str(c.unit),
+		Frame: proto.Frame{
+			MinWidth:  proto.Length(c.frame.MinWidth),
+			MaxWidth:  proto.Length(c.frame.MaxWidth),
+			MinHeight: proto.Length(c.frame.MinHeight),
+			MaxHeight: proto.Length(c.frame.MaxHeight),
+			Width:     proto.Length(c.frame.Width),
+			Height:    proto.Length(c.frame.Height),
+		},
+		Step:        proto.Float(c.step),
+		Max:         proto.Float(c.maxValue),
+		Min:         proto.Float(c.minValue),
+		ShowMarkers: proto.Bool(c.showMarkers),
+		Unit:        proto.Str(c.unit),
 	}
 }

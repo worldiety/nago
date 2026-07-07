@@ -20646,7 +20646,7 @@ export class Slider implements Writeable, Readable, Component {
 
 	public errorText?: Str;
 
-	public value?: Float;
+	public value?: SliderValue;
 
 	public frame?: Frame;
 
@@ -20669,11 +20669,14 @@ export class Slider implements Writeable, Readable, Component {
 	// Unit defines the unit to display next to the slider value.
 	public unit?: Str;
 
+	// RangeMode defines whether the slider is a range slider or not.
+	public rangeMode?: Bool;
+
 	constructor(
 		label: Str | undefined = undefined,
 		supportingText: Str | undefined = undefined,
 		errorText: Str | undefined = undefined,
-		value: Float | undefined = undefined,
+		value: SliderValue | undefined = undefined,
 		frame: Frame | undefined = undefined,
 		inputValue: Ptr | undefined = undefined,
 		disabled: Bool | undefined = undefined,
@@ -20681,7 +20684,8 @@ export class Slider implements Writeable, Readable, Component {
 		max: Float | undefined = undefined,
 		min: Float | undefined = undefined,
 		showMarkers: Bool | undefined = undefined,
-		unit: Str | undefined = undefined
+		unit: Str | undefined = undefined,
+		rangeMode: Bool | undefined = undefined
 	) {
 		this.label = label;
 		this.supportingText = supportingText;
@@ -20695,6 +20699,7 @@ export class Slider implements Writeable, Readable, Component {
 		this.min = min;
 		this.showMarkers = showMarkers;
 		this.unit = unit;
+		this.rangeMode = rangeMode;
 	}
 
 	read(reader: BinaryReader): void {
@@ -20716,7 +20721,8 @@ export class Slider implements Writeable, Readable, Component {
 					break;
 				}
 				case 4: {
-					this.value = readFloat(reader);
+					this.value = new SliderValue();
+					this.value.read(reader);
 					break;
 				}
 				case 5: {
@@ -20752,6 +20758,10 @@ export class Slider implements Writeable, Readable, Component {
 					this.unit = readString(reader);
 					break;
 				}
+				case 13: {
+					this.rangeMode = readBool(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -20764,7 +20774,7 @@ export class Slider implements Writeable, Readable, Component {
 			this.label !== undefined,
 			this.supportingText !== undefined,
 			this.errorText !== undefined,
-			this.value !== undefined,
+			this.value !== undefined && !this.value.isZero(),
 			this.frame !== undefined && !this.frame.isZero(),
 			this.inputValue !== undefined,
 			this.disabled !== undefined,
@@ -20773,6 +20783,7 @@ export class Slider implements Writeable, Readable, Component {
 			this.min !== undefined,
 			this.showMarkers !== undefined,
 			this.unit !== undefined,
+			this.rangeMode !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -20789,8 +20800,8 @@ export class Slider implements Writeable, Readable, Component {
 			writeString(writer, this.errorText!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
-			writer.writeFieldHeader(Shapes.F64, 4);
-			writeFloat(writer, this.value!); // typescript linters cannot see, that we already checked this properly above
+			writer.writeFieldHeader(Shapes.RECORD, 4);
+			this.value!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[5]) {
 			writer.writeFieldHeader(Shapes.RECORD, 5);
@@ -20824,6 +20835,10 @@ export class Slider implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 12);
 			writeString(writer, this.unit!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[13]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 13);
+			writeBool(writer, this.rangeMode!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -20831,7 +20846,7 @@ export class Slider implements Writeable, Readable, Component {
 			this.label === undefined &&
 			this.supportingText === undefined &&
 			this.errorText === undefined &&
-			this.value === undefined &&
+			(this.value === undefined || this.value.isZero()) &&
 			(this.frame === undefined || this.frame.isZero()) &&
 			this.inputValue === undefined &&
 			this.disabled === undefined &&
@@ -20839,7 +20854,8 @@ export class Slider implements Writeable, Readable, Component {
 			this.max === undefined &&
 			this.min === undefined &&
 			this.showMarkers === undefined &&
-			this.unit === undefined
+			this.unit === undefined &&
+			this.rangeMode === undefined
 		);
 	}
 
@@ -20856,6 +20872,7 @@ export class Slider implements Writeable, Readable, Component {
 		this.min = undefined;
 		this.showMarkers = undefined;
 		this.unit = undefined;
+		this.rangeMode = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -20863,6 +20880,65 @@ export class Slider implements Writeable, Readable, Component {
 		return;
 	}
 	isComponent(): void {}
+}
+
+export class SliderValue implements Writeable, Readable {
+	public from?: Float;
+
+	public to?: Float;
+
+	constructor(from: Float | undefined = undefined, to: Float | undefined = undefined) {
+		this.from = from;
+		this.to = to;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.from = readFloat(reader);
+					break;
+				}
+				case 2: {
+					this.to = readFloat(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.from !== undefined, this.to !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.F64, 1);
+			writeFloat(writer, this.from!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.F64, 2);
+			writeFloat(writer, this.to!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.from === undefined && this.to === undefined;
+	}
+
+	reset(): void {
+		this.from = undefined;
+		this.to = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 268);
+		return;
+	}
 }
 
 // Function to marshal a Writeable object into a BinaryWriter
@@ -22095,6 +22171,11 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 267: {
 			const v = new Slider();
+			v.read(src);
+			return v;
+		}
+		case 268: {
+			const v = new SliderValue();
 			v.read(src);
 			return v;
 		}
