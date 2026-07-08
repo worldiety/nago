@@ -98,7 +98,7 @@ func (c TRadioButtonField) Render(ctx core.RenderContext) core.RenderNode {
 		RadioButton(c.value).
 			InputChecked(c.inputValue).Disabled(c.disabled).ID(c.id).Visible(!c.invisible).Name(c.name),
 		HStack(
-			Text(c.label).Action(action),
-		).Opacity(opacity),
-	).Gap(L4).Render(ctx)
+			Text(c.label),
+		).Opacity(opacity).Action(action).Padding(Padding{Left: L4}),
+	).Render(ctx)
 }
