@@ -93,10 +93,11 @@ func NewAppend(locks *locker, repo Repository) Append {
 			// Agentic loop: completion.Run returns the full trace (starting from our history) including all
 			// intermediate tool calls and tool results.
 			res, runHistory, rerr := completion.Run(subject, opts.Completions, completion.RunOptions{
-				Options:    baseOpts,
-				Tools:      opts.Tools,
-				MaxTurns:   opts.MaxTurns,
-				OnProgress: opts.OnProgress,
+				Options:      baseOpts,
+				Tools:        opts.Tools,
+				MaxTurns:     opts.MaxTurns,
+				OnProgress:   opts.OnProgress,
+				FileUploader: opts.FileUploader,
 			})
 			if rerr != nil {
 				return Session{}, fmt.Errorf("completion run failed: %w", rerr)

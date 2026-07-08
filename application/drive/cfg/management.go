@@ -115,6 +115,14 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		Pages:    uidrive.Pages{},
 	}
 
+	// Register the Management under its own type so a repeated Enable() short-circuits at the top (the
+	// idempotency check reads core.FromContext[Management]). This must be set, otherwise a second Enable
+	// (e.g. once directly and once transitively via cfgai.Enable) would run again and attempt to Mount the
+	// drive download handler a second time, panicking chi with "attempting to Mount() a handler on an
+	// existing path".
+	cfg.AddContextValue(core.ContextValue("nago.drive.management", management))
+
+	// The bare UseCases is additionally exposed for consumers that resolve it by type (e.g. the drive UI).
 	cfg.AddContextValue(core.ContextValue("nago.drive", management.UseCases))
 
 	slog.Info("installed drive management")

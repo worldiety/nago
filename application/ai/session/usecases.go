@@ -165,6 +165,11 @@ type AppendOptions struct {
 	// Tools are never persisted.
 	Tools []completion.Tool
 
+	// FileUploader is required only when [Tools] contains file-providing tools (see
+	// [completion.NewOpenFileTool]); it uploads a file to the active provider so it can be attached to the
+	// conversation by id. Wire it to provider.Files().Put. Runtime-only; not persisted. Optional.
+	FileUploader completion.FileUploader
+
 	// MaxTokens caps the generated output tokens for this turn. Optional.
 	MaxTokens int
 

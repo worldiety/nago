@@ -11,10 +11,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/worldiety/option"
+	"go.wdy.de/nago/application/ai/file"
 	"go.wdy.de/nago/auth"
 )
 
@@ -51,7 +54,35 @@ type Tool struct {
 	// encoded result. The error is a transport/marshalling or business error; [Run] turns it into a tool
 	// result flagged as error so the model may react to it.
 	Invoke func(args json.RawMessage) (json.RawMessage, error)
+
+	// OpenFile, when set, marks this tool as a file-providing tool: instead of (or in addition to) a textual
+	// result, the tool yields a file that [Run] uploads to the active provider and attaches to the
+	// conversation as a [Media] block referencing it by id. This lets the model ask to "look at" a file
+	// (e.g. a PDF from a drive) without the caller pre-attaching it.
+	//
+	// [Run] requires a [RunOptions.FileUploader] to perform the upload. The attached [Media] is added to the
+	// same user turn that carries the tool_result blocks (never inside the tool_result itself, which the
+	// provider would reject for file-id sources). When set, OpenFile takes precedence over [Invoke]. May be
+	// nil. Create such a tool with [NewOpenFileTool].
+	OpenFile func(args json.RawMessage) (OpenedFile, error)
 }
+
+// OpenedFile is the file returned by an [Tool.OpenFile] invocation. The bytes are read lazily via Open so a
+// tool can decline (return an error) cheaply before any data is transferred.
+type OpenedFile struct {
+	// Name is the human-readable file name (used as the upload name and shown to the model).
+	Name string
+	// MimeType classifies the content so the provider can pick the right block type (image vs. document).
+	MimeType file.Type
+	// Open yields the file content. It is called at most once by [Run].
+	Open func() (io.ReadCloser, error)
+}
+
+// FileUploader uploads an [OpenedFile] to the active provider and returns the provider-native file id under
+// which it can be referenced from message content (see [Source.FileID]). It decouples [Run] from the concrete
+// provider.Files capability (which completion must not import); the caller wires it, typically to
+// provider.Files().Put.
+type FileUploader func(subject auth.Subject, f OpenedFile) (file.ID, error)
 
 // NewTool wraps an arbitrary Go function of the form func(In) (Out, error) into a callable [Tool].
 //
@@ -96,6 +127,42 @@ func NewTool[In, Out any](name, description string, fn ToolFunc[In, Out]) Tool {
 			}
 
 			return raw, nil
+		},
+	}
+}
+
+// NewOpenFileTool wraps a Go function of the form func(In) (OpenedFile, error) into a file-providing [Tool].
+// When the model calls it, [Run] executes fn, uploads the returned [OpenedFile] via [RunOptions.FileUploader]
+// and attaches it to the conversation as a [Media] block (referenced by its provider file id) so the model
+// can inspect its content — e.g. letting the model ask to "look at" a PDF stored in a drive.
+//
+// The JSON input schema for In is derived by reflection exactly like [NewTool]. The tool_result reported back
+// to the model is a short textual confirmation; the actual file is added as a separate Media block on the same
+// user turn (a file-id source is not valid inside a tool_result). If no [RunOptions.FileUploader] is
+// configured, the call is reported to the model as an error.
+func NewOpenFileTool[In any](name, description string, fn func(In) (OpenedFile, error)) Tool {
+	var zeroIn In
+	schema := reflectSchema(reflect.TypeOf(&zeroIn).Elem())
+	rawSchema, err := json.Marshal(schema)
+	if err != nil {
+		rawSchema = json.RawMessage(`{"type":"object"}`)
+	}
+
+	return Tool{
+		Def: ToolDef{
+			Name:        name,
+			Description: description,
+			Schema:      rawSchema,
+		},
+		OpenFile: func(args json.RawMessage) (OpenedFile, error) {
+			var in In
+			if len(args) > 0 {
+				if err := json.Unmarshal(args, &in); err != nil {
+					return OpenedFile{}, fmt.Errorf("cannot decode arguments for tool %q: %w", name, err)
+				}
+			}
+
+			return fn(in)
 		},
 	}
 }
@@ -200,6 +267,11 @@ type RunOptions struct {
 	// MaxCompactions caps how often [Compactor] may run across the whole [Run]. Zero means
 	// [DefaultMaxCompactions].
 	MaxCompactions int
+
+	// FileUploader uploads files produced by [Tool.OpenFile] tools to the active provider so they can be
+	// attached to the conversation by id. It is required only when such tools are used; a nil uploader makes
+	// every OpenFile call fail (reported to the model as an error). Wire it to provider.Files().Put.
+	FileUploader FileUploader
 }
 
 // Run drives the full agentic loop on top of [Completions.Complete]:
@@ -322,18 +394,25 @@ func Run(subject auth.Subject, c Completions, opts RunOptions) (Result, []Messag
 		}
 
 		results := make([]Content, 0, len(calls))
+		// attachments collects Media blocks contributed by OpenFile tools. They are appended to the SAME user
+		// turn as the tool_result blocks (Anthropic combines consecutive user turns anyway, and a file-id
+		// source is not valid inside a tool_result). Keeping them on the tool-result turn keeps the history
+		// valid and lets the model see the file on the next turn.
+		var attachments []Content
 		for _, call := range calls {
 			call := call
 			notify(Progress{Phase: PhaseToolStarted, Turn: turn, ToolCall: &call})
 
-			result := executeToolCall(tools, call)
+			result, media := executeToolCall(subject, tools, call, opts.FileUploader)
 
 			notify(Progress{Phase: PhaseToolCompleted, Turn: turn, ToolCall: &call, ToolResult: &result})
 
 			results = append(results, result)
+			attachments = append(attachments, media...)
 		}
 
-		history = append(history, Message{Role: User, Content: results})
+		content := append(results, attachments...)
+		history = append(history, Message{Role: User, Content: content})
 	}
 
 	return Result{}, history, fmt.Errorf("tool loop exceeded %d turns", maxTurns)
@@ -355,14 +434,24 @@ func stripToolCalls(msg Message) Message {
 
 // executeToolCall runs a single tool call and wraps the outcome into a [ToolResult] content block. Unknown
 // tools and execution errors are reported back to the model as error results instead of aborting the loop.
-func executeToolCall(tools map[string]Tool, call ToolCall) ToolResult {
+//
+// For a file-providing tool (see [Tool.OpenFile]) it additionally uploads the produced file via uploader and
+// returns the resulting [Media] block(s) to be attached to the user turn (never inside the tool_result). The
+// tool_result itself is then a short textual confirmation. The returned media slice is empty for regular
+// tools or when the file could not be provided/uploaded.
+func executeToolCall(subject auth.Subject, tools map[string]Tool, call ToolCall, uploader FileUploader) (ToolResult, []Content) {
 	tool, ok := tools[call.Name]
 	if !ok {
 		return ToolResult{
 			ToolCallID: call.ID,
 			Content:    []Content{Text{Text: fmt.Sprintf("unknown tool %q", call.Name)}},
 			IsError:    true,
-		}
+		}, nil
+	}
+
+	// File-providing tool: upload the file and attach it to the conversation as a Media block.
+	if tool.OpenFile != nil {
+		return executeOpenFileCall(subject, call, tool, uploader)
 	}
 
 	out, err := tool.Invoke(call.Arguments)
@@ -371,13 +460,51 @@ func executeToolCall(tools map[string]Tool, call ToolCall) ToolResult {
 			ToolCallID: call.ID,
 			Content:    []Content{Text{Text: err.Error()}},
 			IsError:    true,
-		}
+		}, nil
 	}
 
 	return ToolResult{
 		ToolCallID: call.ID,
 		Content:    []Content{Text{Text: string(out)}},
+	}, nil
+}
+
+// executeOpenFileCall handles a [Tool.OpenFile] tool call: it runs the tool, uploads the returned file via
+// uploader and produces (a) a short textual tool_result confirming the attachment and (b) a [Media] block
+// referencing the uploaded file by id, to be added to the user turn. Any failure (no uploader, tool error,
+// open/upload error) is reported back to the model as an error tool_result with no attachment.
+func executeOpenFileCall(subject auth.Subject, call ToolCall, tool Tool, uploader FileUploader) (ToolResult, []Content) {
+	toolErr := func(msg string) (ToolResult, []Content) {
+		return ToolResult{
+			ToolCallID: call.ID,
+			Content:    []Content{Text{Text: msg}},
+			IsError:    true,
+		}, nil
 	}
+
+	if uploader == nil {
+		return toolErr("cannot attach file: no file uploader configured for this run")
+	}
+
+	opened, err := tool.OpenFile(call.Arguments)
+	if err != nil {
+		return toolErr(err.Error())
+	}
+
+	fileID, err := uploader(subject, opened)
+	if err != nil {
+		return toolErr(fmt.Sprintf("cannot attach file %q: %v", opened.Name, err))
+	}
+
+	media := Media{MimeType: opened.MimeType, Source: Source{FileID: option.Some(fileID)}}
+	confirm := ToolResult{
+		ToolCallID: call.ID,
+		Content: []Content{Text{Text: fmt.Sprintf(
+			"Attached file %q (%s) to the conversation; its content follows as an attachment.",
+			opened.Name, opened.MimeType)}},
+	}
+
+	return confirm, []Content{media}
 }
 
 // reflectSchema builds a (subset of) JSON Schema object for the given Go type. It supports the JSON

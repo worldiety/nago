@@ -8,10 +8,14 @@
 package completion
 
 import (
+	"bytes"
 	"encoding/json"
+	"io"
 	"iter"
+	"strings"
 	"testing"
 
+	"go.wdy.de/nago/application/ai/file"
 	"go.wdy.de/nago/application/ai/model"
 	"go.wdy.de/nago/auth"
 )
@@ -262,5 +266,213 @@ func TestRun_TruncatedToolUseOnlyDropsMessage(t *testing.T) {
 	// Only the original user prompt remains.
 	if len(history) != 1 {
 		t.Fatalf("unexpected history length %d: %+v", len(history), history)
+	}
+}
+
+type openIn struct {
+	FID string `json:"fid" desc:"the id of the file to open"`
+}
+
+// TestNewOpenFileTool_Schema verifies the file-providing tool advertises OpenFile (not Invoke) and derives its
+// input schema from In just like NewTool.
+func TestNewOpenFileTool_Schema(t *testing.T) {
+	tool := NewOpenFileTool("open_file", "opens a file", func(in openIn) (OpenedFile, error) {
+		return OpenedFile{}, nil
+	})
+
+	if tool.OpenFile == nil {
+		t.Fatal("expected OpenFile to be set")
+	}
+	if tool.Invoke != nil {
+		t.Fatal("expected Invoke to be nil for a file tool")
+	}
+
+	var schema map[string]any
+	if err := json.Unmarshal(tool.Def.Schema, &schema); err != nil {
+		t.Fatalf("schema not valid json: %v", err)
+	}
+	props, ok := schema["properties"].(map[string]any)
+	if !ok || props["fid"] == nil {
+		t.Fatalf("expected fid property in schema, got %v", schema)
+	}
+}
+
+// TestRun_OpenFileTool_AttachesMediaOnUserTurn is the core test: an OpenFile tool must upload its file and add
+// a Media block to the SAME user turn as the tool_result, and the tool_result itself must NOT contain the
+// media (a file-id source is invalid inside a tool_result).
+func TestRun_OpenFileTool_AttachesMediaOnUserTurn(t *testing.T) {
+	tool := NewOpenFileTool("open_drive_file", "opens a drive file", func(in openIn) (OpenedFile, error) {
+		return OpenedFile{
+			Name:     "report.pdf",
+			MimeType: file.PDF,
+			Open:     func() (io.ReadCloser, error) { return io.NopCloser(bytes.NewReader([]byte("%PDF-1.7"))), nil },
+		}, nil
+	})
+
+	var uploadedName string
+	uploader := func(_ auth.Subject, f OpenedFile) (file.ID, error) {
+		uploadedName = f.Name
+		// drain the reader to prove it is readable
+		rc, err := f.Open()
+		if err != nil {
+			return "", err
+		}
+		defer rc.Close()
+		_, _ = io.Copy(io.Discard, rc)
+		return file.ID("file-xyz"), nil
+	}
+
+	fake := &fakeCompletions{
+		results: []Result{
+			{
+				Message: Message{Role: Assistant, Content: []Content{
+					ToolCall{ID: "1", Name: "open_drive_file", Arguments: json.RawMessage(`{"fid":"abc"}`)},
+				}},
+				StopReason: StopToolUse,
+			},
+			{
+				Message:    Message{Role: Assistant, Content: []Content{Text{Text: "the pdf says hello"}}},
+				StopReason: StopEndTurn,
+			},
+		},
+	}
+
+	_, history, err := Run(nil, fake, RunOptions{
+		Options: Options{
+			Messages: []Message{{Role: User, Content: []Content{Text{Text: "look at file abc"}}}},
+		},
+		Tools:        []Tool{tool},
+		FileUploader: uploader,
+	})
+	if err != nil {
+		t.Fatalf("run failed: %v", err)
+	}
+
+	if uploadedName != "report.pdf" {
+		t.Fatalf("expected uploader to receive the file, got %q", uploadedName)
+	}
+
+	// history: user prompt + assistant tool_use + user(tool_result + media) + assistant final = 4
+	if len(history) != 4 {
+		t.Fatalf("unexpected history length %d: %+v", len(history), history)
+	}
+
+	userTurn := history[2]
+	if userTurn.Role != User {
+		t.Fatalf("expected user turn at index 2, got %s", userTurn.Role)
+	}
+	if len(userTurn.Content) != 2 {
+		t.Fatalf("expected tool_result + media on the user turn, got %d blocks: %#v", len(userTurn.Content), userTurn.Content)
+	}
+
+	tr, ok := userTurn.Content[0].(ToolResult)
+	if !ok || tr.ToolCallID != "1" || tr.IsError {
+		t.Fatalf("expected a successful tool_result first, got %#v", userTurn.Content[0])
+	}
+	// The tool_result must NOT carry the media itself.
+	for _, c := range tr.Content {
+		if _, isMedia := c.(Media); isMedia {
+			t.Fatalf("tool_result must not contain a Media block: %#v", tr.Content)
+		}
+	}
+
+	media, ok := userTurn.Content[1].(Media)
+	if !ok {
+		t.Fatalf("expected a Media block after the tool_result, got %T", userTurn.Content[1])
+	}
+	if media.MimeType != file.PDF || media.Source.FileID.UnwrapOr("") != file.ID("file-xyz") {
+		t.Fatalf("unexpected media: %#v", media)
+	}
+}
+
+// TestRun_OpenFileTool_NoUploaderIsError verifies that without a FileUploader the OpenFile call is reported as
+// an error tool_result and no media is attached.
+func TestRun_OpenFileTool_NoUploaderIsError(t *testing.T) {
+	opened := false
+	tool := NewOpenFileTool("open_drive_file", "", func(in openIn) (OpenedFile, error) {
+		opened = true
+		return OpenedFile{Name: "x.pdf", MimeType: file.PDF, Open: func() (io.ReadCloser, error) {
+			return io.NopCloser(strings.NewReader("data")), nil
+		}}, nil
+	})
+
+	fake := &fakeCompletions{
+		results: []Result{
+			{
+				Message: Message{Role: Assistant, Content: []Content{
+					ToolCall{ID: "1", Name: "open_drive_file", Arguments: json.RawMessage(`{"fid":"abc"}`)},
+				}},
+				StopReason: StopToolUse,
+			},
+			{
+				Message:    Message{Role: Assistant, Content: []Content{Text{Text: "done"}}},
+				StopReason: StopEndTurn,
+			},
+		},
+	}
+
+	_, history, err := Run(nil, fake, RunOptions{
+		Options: Options{Messages: []Message{{Role: User, Content: []Content{Text{Text: "open abc"}}}}},
+		Tools:   []Tool{tool}, // no FileUploader
+	})
+	if err != nil {
+		t.Fatalf("run failed: %v", err)
+	}
+	_ = opened // the tool may or may not be opened before the uploader check; not asserted
+
+	userTurn := history[2]
+	if len(userTurn.Content) != 1 {
+		t.Fatalf("expected only the error tool_result, got %#v", userTurn.Content)
+	}
+	tr, ok := userTurn.Content[0].(ToolResult)
+	if !ok || !tr.IsError {
+		t.Fatalf("expected an error tool_result, got %#v", userTurn.Content[0])
+	}
+}
+
+// TestRun_OpenFileTool_ToolErrorIsReported verifies that an error from the OpenFile function is reported as an
+// error tool_result and no upload happens.
+func TestRun_OpenFileTool_ToolErrorIsReported(t *testing.T) {
+	tool := NewOpenFileTool("open_drive_file", "", func(in openIn) (OpenedFile, error) {
+		return OpenedFile{}, io.ErrUnexpectedEOF
+	})
+
+	uploaderCalled := false
+	uploader := func(_ auth.Subject, f OpenedFile) (file.ID, error) {
+		uploaderCalled = true
+		return "", nil
+	}
+
+	fake := &fakeCompletions{
+		results: []Result{
+			{
+				Message: Message{Role: Assistant, Content: []Content{
+					ToolCall{ID: "1", Name: "open_drive_file", Arguments: json.RawMessage(`{"fid":"abc"}`)},
+				}},
+				StopReason: StopToolUse,
+			},
+			{
+				Message:    Message{Role: Assistant, Content: []Content{Text{Text: "done"}}},
+				StopReason: StopEndTurn,
+			},
+		},
+	}
+
+	_, history, err := Run(nil, fake, RunOptions{
+		Options:      Options{Messages: []Message{{Role: User, Content: []Content{Text{Text: "open abc"}}}}},
+		Tools:        []Tool{tool},
+		FileUploader: uploader,
+	})
+	if err != nil {
+		t.Fatalf("run failed: %v", err)
+	}
+
+	if uploaderCalled {
+		t.Fatal("uploader must not be called when the tool itself errors")
+	}
+
+	tr, ok := history[2].Content[0].(ToolResult)
+	if !ok || !tr.IsError {
+		t.Fatalf("expected an error tool_result, got %#v", history[2].Content[0])
 	}
 }

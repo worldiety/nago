@@ -132,7 +132,8 @@ func (t TDataView[E, ID]) renderTable(ctx core.RenderContext) core.RenderNode {
 		ui.Table(cols...).Rows(
 			ui.ForEach(model.Page.Items, func(u E) ui.TTableRow {
 				if v := u.Identity(); v == "" {
-					panic(fmt.Errorf("an item must not have a zero identity"))
+					//panic(fmt.Errorf("an item must not have a zero identity"))
+					return ui.TableRow(ui.TableCell(ui.Text("invalid item: zero identity"))).BackgroundColor(ui.ColorSemanticError)
 				}
 
 				myState := model.Selections[u.Identity()]
