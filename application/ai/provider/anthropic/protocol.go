@@ -8,14 +8,21 @@
 package anthropic
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
+	"mime/multipart"
 	"net/http"
+	"net/textproto"
+	"net/url"
 	"regexp"
 	"strconv"
 	"time"
 
 	"go.wdy.de/nago/application/ai/completion"
+	"go.wdy.de/nago/application/ai/file"
 	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/pkg/xhttp"
 )
@@ -294,13 +301,20 @@ func (c *Client) CreateMessage(req apiRequest) (apiResponse, error) {
 	req.Stream = false
 
 	var resp apiResponse
-	err := c.newReq().
+	r := c.newReq().
 		URL("messages").
 		Assert2xx(true).
 		BodyJSON(req).
 		ToJSON(&resp).
-		ToLimit(8 * 1024 * 1024).
-		Post()
+		ToLimit(8 * 1024 * 1024)
+
+	if requestUsesFileSource(req) {
+		// Referencing an uploaded file by id (source.type == "file") requires opting the Messages request
+		// into the Files API beta; without this header the API rejects "file" as an unknown source type.
+		r = r.Header("anthropic-beta", filesAPIBeta)
+	}
+
+	err := r.Post()
 
 	return resp, mapErr(err)
 }
@@ -322,3 +336,164 @@ func (c *Client) ListModels() ([]apiModel, error) {
 	return resp.Data, mapErr(err)
 }
 
+// filesAPIBeta is the required beta header value that opts a request into the Anthropic Files API.
+// See https://docs.anthropic.com/en/docs/build-with-claude/files.
+const filesAPIBeta = "files-api-2025-04-14"
+
+// requestUsesFileSource reports whether any content block in the request references an uploaded file by id
+// (source.type == "file"). Such requests must carry the Files API beta header; requests that only use inline
+// base64/url sources must not, to avoid opting into an unrelated beta unnecessarily. Nested tool_result
+// content is inspected too.
+func requestUsesFileSource(req apiRequest) bool {
+	var anyBlock func(blocks []apiContent) bool
+	anyBlock = func(blocks []apiContent) bool {
+		for _, b := range blocks {
+			if b.Source != nil && b.Source.Type == "file" {
+				return true
+			}
+			if len(b.Content) > 0 && anyBlock(b.Content) {
+				return true
+			}
+		}
+		return false
+	}
+
+	for _, m := range req.Messages {
+		if anyBlock(m.Content) {
+			return true
+		}
+	}
+	return false
+}
+
+// apiFileMetadata is the wire representation of a file object returned by the Files API.
+type apiFileMetadata struct {
+	ID           string `json:"id"`
+	Type         string `json:"type"`
+	FileName     string `json:"filename"`
+	MimeType     string `json:"mime_type"`
+	SizeBytes    int64  `json:"size_bytes"`
+	CreatedAt    string `json:"created_at"`
+	Downloadable bool   `json:"downloadable"`
+}
+
+// UploadFile uploads a file via multipart/form-data to POST /v1/files and returns its metadata. The bytes
+// travel outbound to Anthropic exactly once; afterwards the returned id is referenced by callers instead of
+// re-sending the content.
+func (c *Client) UploadFile(name, mimeType string, r io.Reader) (apiFileMetadata, error) {
+	var resp apiFileMetadata
+
+	// Buffer the multipart body so it can be rebuilt on retry (the source reader is not rewindable).
+	var buf bytes.Buffer
+	mw := multipart.NewWriter(&buf)
+	hdr := make(textproto.MIMEHeader)
+	hdr.Set("Content-Disposition", fmt.Sprintf(`form-data; name="file"; filename=%q`, name))
+	if mimeType != "" {
+		hdr.Set("Content-Type", mimeType)
+	}
+	part, err := mw.CreatePart(hdr)
+	if err != nil {
+		return apiFileMetadata{}, err
+	}
+	if _, err := io.Copy(part, r); err != nil {
+		return apiFileMetadata{}, err
+	}
+	if err := mw.Close(); err != nil {
+		return apiFileMetadata{}, err
+	}
+	body := buf.Bytes()
+
+	err = c.newReq().
+		URL("files").
+		Header("anthropic-beta", filesAPIBeta).
+		Header("Content-Type", mw.FormDataContentType()).
+		Body(func() (io.Reader, error) { return bytes.NewReader(body), nil }).
+		Assert2xx(true).
+		ToJSON(&resp).
+		ToLimit(1024 * 1024).
+		Post()
+
+	return resp, mapErr(err)
+}
+
+// ListFiles returns one page of file metadata (up to 1000 entries) from GET /v1/files.
+func (c *Client) ListFiles() ([]apiFileMetadata, error) {
+	var resp struct {
+		Data []apiFileMetadata `json:"data"`
+	}
+
+	err := c.newReq().
+		URL("files").
+		Header("anthropic-beta", filesAPIBeta).
+		Query("limit", "1000").
+		Assert2xx(true).
+		ToJSON(&resp).
+		ToLimit(4 * 1024 * 1024).
+		Get()
+
+	return resp.Data, mapErr(err)
+}
+
+// GetFileMetadata returns the metadata for a single file from GET /v1/files/{id}.
+func (c *Client) GetFileMetadata(id string) (apiFileMetadata, error) {
+	var resp apiFileMetadata
+
+	err := c.newReq().
+		URL("files/"+url.PathEscape(id)).
+		Header("anthropic-beta", filesAPIBeta).
+		Assert2xx(true).
+		ToJSON(&resp).
+		ToLimit(1024 * 1024).
+		Get()
+
+	return resp, mapErr(err)
+}
+
+// DeleteFile removes a file via DELETE /v1/files/{id}.
+func (c *Client) DeleteFile(id string) error {
+	err := c.newReq().
+		URL("files/"+url.PathEscape(id)).
+		Header("anthropic-beta", filesAPIBeta).
+		Assert2xx(true).
+		Delete()
+
+	return mapErr(err)
+}
+
+// DownloadFile streams the raw bytes of a file from GET /v1/files/{id}/content. Anthropic only permits this
+// for API-generated files; user-uploaded files respond with a 400 "File is not downloadable". The returned
+// reader must be closed by the caller.
+func (c *Client) DownloadFile(id string) (io.ReadCloser, error) {
+	var out io.ReadCloser
+	err := c.newReq().
+		URL("files/"+url.PathEscape(id)+"/content").
+		Header("anthropic-beta", filesAPIBeta).
+		Assert2xx(true).
+		ToCloser(func(rc io.ReadCloser) { out = rc }).
+		Get()
+	if err != nil {
+		return nil, mapFilesErr(err)
+	}
+
+	return out, nil
+}
+
+// mapFilesErr augments [mapErr] with the Files API specific "not downloadable" case: user-uploaded files
+// cannot be downloaded and are reported by Anthropic as a 400 which we translate to [file.ErrNotDownloadable].
+func mapFilesErr(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	var statusErr xhttp.UnexpectedStatusCodeError
+	if errors.As(err, &statusErr) && statusErr.StatusCode == http.StatusBadRequest {
+		if notDownloadableRe.Match(statusErr.Body) {
+			return file.ErrNotDownloadable
+		}
+	}
+
+	return mapErr(err)
+}
+
+// notDownloadableRe matches Anthropic's "File is not downloadable" 400 message for user-uploaded files.
+var notDownloadableRe = regexp.MustCompile(`(?i)not downloadable`)

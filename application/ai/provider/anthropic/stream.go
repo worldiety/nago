@@ -19,7 +19,7 @@ func (c *Client) CreateMessageStream(req apiRequest, onEvent func(event string, 
 	req.Stream = true
 
 	var cbErr error
-	err := c.newReq().
+	r := c.newReq().
 		URL("messages").
 		Assert2xx(true).
 		BodyJSON(req).
@@ -27,8 +27,14 @@ func (c *Client) CreateMessageStream(req apiRequest, onEvent func(event string, 
 		ToCloser(func(rc io.ReadCloser) {
 			defer func() { _ = rc.Close() }()
 			cbErr = parseSSE(rc, onEvent)
-		}).
-		Post()
+		})
+
+	if requestUsesFileSource(req) {
+		// See CreateMessage: file-id sources require the Files API beta header on the Messages request.
+		r = r.Header("anthropic-beta", filesAPIBeta)
+	}
+
+	err := r.Post()
 
 	if err != nil {
 		return mapErr(err)
@@ -84,4 +90,3 @@ func parseSSE(r io.Reader, onEvent func(event string, data []byte) error) error 
 	// flush a trailing event without terminating blank line
 	return dispatch()
 }
-

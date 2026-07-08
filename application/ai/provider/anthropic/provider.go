@@ -25,10 +25,11 @@ type anthropicProvider struct {
 	cl          *Client
 	models      *anthropicModels
 	completions *anthropicCompletions
+	files       *anthropicFiles
 }
 
-// NewProvider creates a stateless Anthropic (Claude) provider. Only Models, Tools and Completions are
-// supported; the stateful capabilities (Libraries, Agents, Conversations, Files) are intentionally
+// NewProvider creates a stateless Anthropic (Claude) provider. Models, Tools, Completions and Files are
+// supported; the remaining stateful capabilities (Libraries, Agents, Conversations) are intentionally
 // unavailable because Anthropic's Messages API is stateless.
 func NewProvider(id provider.ID, cfg Settings) provider.Provider {
 	p := &anthropicProvider{
@@ -39,6 +40,7 @@ func NewProvider(id provider.ID, cfg Settings) provider.Provider {
 
 	p.models = &anthropicModels{parent: p}
 	p.completions = &anthropicCompletions{parent: p}
+	p.files = &anthropicFiles{parent: p}
 
 	return p
 }
@@ -86,7 +88,7 @@ func (p *anthropicProvider) Conversations() option.Opt[provider.Conversations] {
 }
 
 func (p *anthropicProvider) Files() option.Opt[provider.Files] {
-	return option.None[provider.Files]()
+	return option.Some[provider.Files](p.files)
 }
 
 // anthropicTools reports no parameterless built-in tools. Function tools are supplied per request via

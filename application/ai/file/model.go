@@ -8,6 +8,7 @@
 package file
 
 import (
+	"errors"
 	"io"
 	"path/filepath"
 
@@ -15,6 +16,11 @@ import (
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/xtime"
 )
+
+// ErrNotDownloadable indicates that a file cannot be downloaded through the provider. Some providers only
+// allow downloading files they generated themselves (e.g. Anthropic permits downloading API/tool-generated
+// files but rejects user-uploaded ones). Callers can check for this with errors.Is.
+var ErrNotDownloadable = errors.New("file is not downloadable")
 
 type ID string
 
@@ -52,9 +58,31 @@ const (
 	Binary Type = "application/octet-stream"
 )
 
+// Purpose declares the intended use of an uploaded file. Some providers require it on upload (e.g. OpenAI's
+// Files API mandates a purpose such as "vision" or "user_data"), while others treat it as an optional scope
+// hint (e.g. Anthropic). The zero value is left to the provider, which should pick a sensible default.
+type Purpose string
+
+const (
+	// PurposeUserData is a generic, flexible purpose for files that are referenced from message content.
+	// It maps to OpenAI's "user_data" and is a safe default for the Anthropic Files API (no scope).
+	PurposeUserData Purpose = "user_data"
+
+	// PurposeVision marks images used for vision. It maps to OpenAI's "vision" purpose.
+	PurposeVision Purpose = "vision"
+)
+
 type CreateOptions struct {
 	Name string
 	Open func() (io.ReadCloser, error)
+
+	// MimeType is the media type of the uploaded content. Optional; providers may infer it from the
+	// filename when empty.
+	MimeType Type
+
+	// Purpose declares the intended use of the file. Optional; when empty the provider chooses a default
+	// (see [Purpose]).
+	Purpose Purpose
 }
 
 type File struct {

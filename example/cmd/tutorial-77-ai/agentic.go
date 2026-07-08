@@ -171,7 +171,6 @@ func agenticChat(wnd core.Window, uc ai.UseCases) core.View {
 		})
 	}
 
-
 	submit := func() {
 		question := strings.TrimSpace(prompt.Get())
 		if question == "" || busy.Get() {
@@ -312,8 +311,13 @@ func renderTrace(history []completion.Message) string {
 			case completion.ToolResult:
 				var inner strings.Builder
 				for _, ic := range v.Content {
-					if t, ok := ic.(completion.Text); ok {
+					switch t := ic.(type) {
+					case completion.Text:
 						inner.WriteString(t.Text)
+					case completion.FileRef:
+						fmt.Fprintf(&inner, "[file_ref id=%s type=%s] ", t.File, t.MimeType)
+					case completion.Media:
+						fmt.Fprintf(&inner, "[media type=%s] ", t.MimeType)
 					}
 				}
 				marker := "ok"
@@ -321,6 +325,8 @@ func renderTrace(history []completion.Message) string {
 					marker = "error"
 				}
 				fmt.Fprintf(&sb, "  tool_result %s [%s]: %s\n", v.ToolCallID, marker, inner.String())
+			case completion.FileRef:
+				fmt.Fprintf(&sb, "  file_ref id=%s type=%s\n", v.File, v.MimeType)
 			default:
 				raw, _ := json.Marshal(v)
 				fmt.Fprintf(&sb, "  %T: %s\n", v, string(raw))
@@ -329,4 +335,3 @@ func renderTrace(history []completion.Message) string {
 	}
 	return sb.String()
 }
-
