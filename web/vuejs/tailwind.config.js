@@ -13,6 +13,7 @@ export default {
 	content: ['./src/**/*.{html,vue}'],
 	plugins: [
 		plugin(function ({ addVariant }) {
+			addVariant('lightmode', '.lightmode &');
 			addVariant('darkmode', '.darkmode &');
 			addVariant('contrast', '.contrast &');
 			addVariant('protanopia', '.protanopia &');

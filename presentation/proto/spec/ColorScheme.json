@@ -3,11 +3,15 @@
   "kind": "Uint",
   "id": 30,
   "const": {
-    "0": {
+    "0":{
+      "name": "System",
+      "doc": "System represents the auto mode."
+    },
+    "1": {
       "name": "Light",
       "doc": "Light represents the light theme color mode."
     },
-    "1":{
+    "2":{
       "name": "Dark",
       "doc": "Dark represents the dark theme color mode."
     }

@@ -39,3 +39,12 @@ export function cssLengthValue0Px(l?: Length): string {
 	l = l.replaceAll('dp', 'px');
 	return l;
 }
+
+export function pxLengthValue(l?: Length): number {
+	const el = document.createElement('div');
+	document.body.appendChild(el);
+	el.style.width = cssLengthValue(l) || '0';
+	const elWidth = el.clientWidth;
+	document.body.removeChild(el);
+	return elWidth;
+}

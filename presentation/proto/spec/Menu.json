@@ -13,6 +13,10 @@
     "3": {
       "name": "Frame",
       "type": "Frame"
+    },
+    "4": {
+      "name": "Offset",
+      "type": "Length"
     }
   }
 }

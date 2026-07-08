@@ -10,8 +10,8 @@ import { UploadRepository } from '@/api/upload/uploadRepository';
 import { Channel } from '@/shared/network/serviceAdapter';
 import {
 	CallMediaDevicesEnumerate,
-	CallRequestFocus,
 	CallRequested,
+	CallRequestFocus,
 	CallResolved,
 	ClipboardWriteTextRequested,
 	ColorSchemeValues,
@@ -26,20 +26,20 @@ import {
 	NavigationForwardToRequested,
 	OpenHttpFlow,
 	OpenHttpLink,
-	RID,
 	RegisterInputEventListener,
 	RetMediaDevicesEnumerate,
 	RetMediaDevicesPermissionsError,
+	RID,
 	RootViewAllocationRequested,
 	RootViewID,
 	RootViewParameters,
 	RootViewRenderingRequested,
-	ScopeConfigurationChangeRequested,
 	ScopeConfigurationChanged,
+	ScopeConfigurationChangeRequested,
 	SendMultipleRequested,
 	ThemeRequested,
-	URI,
 	UnregisterInputEventListener,
+	URI,
 	WindowInfo,
 	WindowInfoChanged,
 	WindowSizeClass,
@@ -83,10 +83,16 @@ export function getWindowInfo(themeManager: ThemeManager): WindowInfo {
 	windowInfo.sizeClass = currentSizeClass();
 	windowInfo.userAgent = navigator.userAgent;
 
-	if (themeManager.getActiveThemeKey() === ThemeKey.DARK) {
-		windowInfo.colorScheme = ColorSchemeValues.Dark;
-	} else {
-		windowInfo.colorScheme = ColorSchemeValues.Light;
+	switch (themeManager.getActiveThemeKey()) {
+		case ThemeKey.LIGHT:
+			windowInfo.colorScheme = ColorSchemeValues.Light;
+			break;
+		case ThemeKey.DARK:
+			windowInfo.colorScheme = ColorSchemeValues.Dark;
+			break;
+		default:
+			windowInfo.colorScheme = ColorSchemeValues.System;
+			break;
 	}
 
 	return windowInfo;
@@ -497,6 +503,9 @@ export function setTheme(chan: Channel, themeManager: ThemeManager, evt: ThemeRe
 			break;
 		case 'dark':
 			themeManager.applyDarkmodeTheme();
+			break;
+		case 'system':
+			themeManager.applySystemTheme();
 			break;
 		default:
 			console.log('unknown theme', evt.theme);

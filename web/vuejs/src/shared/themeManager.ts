@@ -18,9 +18,10 @@ export default class ThemeManager {
 	constructor() {
 		this.activeLocale = '';
 		if (!localStorage.getItem(this.localStorageKey)) {
-			const userPrefersDarkTheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
-			localStorage.setItem(this.localStorageKey, userPrefersDarkTheme ? ThemeKey.DARK : ThemeKey.LIGHT);
+			localStorage.setItem(this.localStorageKey, ThemeKey.SYSTEM);
 		}
+
+		window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', this.applyActiveTheme.bind(this));
 	}
 
 	setThemes(themes: Themes): void {
@@ -39,12 +40,33 @@ export default class ThemeManager {
 			case ThemeKey.DARK:
 				this.applyDarkmodeTheme();
 				break;
+			default:
+				this.applySystemTheme();
+				break;
 		}
 	}
 
 	getActiveThemeKey(): ThemeKey | null {
 		const activeThemeKey = localStorage.getItem(this.localStorageKey);
 		return activeThemeKey ? (activeThemeKey as ThemeKey) : null;
+	}
+
+	applySystemTheme(): void {
+		if (!this.themes) {
+			return;
+		}
+
+		const darkModeMql = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+
+		if (darkModeMql && darkModeMql.matches) {
+			this.applyTheme(this.themes.dark);
+		} else {
+			this.applyTheme(this.themes.light);
+		}
+
+		document.getElementsByTagName('html')[0].classList.remove('lightmode');
+		document.getElementsByTagName('html')[0].classList.remove('darkmode');
+		localStorage.setItem(this.localStorageKey, ThemeKey.SYSTEM);
 	}
 
 	applyLightmodeTheme(): void {
@@ -54,6 +76,7 @@ export default class ThemeManager {
 
 		this.applyTheme(this.themes.light);
 		document.getElementsByTagName('html')[0].classList.remove('darkmode');
+		document.getElementsByTagName('html')[0].classList.add('lightmode');
 		localStorage.setItem(this.localStorageKey, ThemeKey.LIGHT);
 	}
 
@@ -63,6 +86,7 @@ export default class ThemeManager {
 		}
 
 		this.applyTheme(this.themes.dark);
+		document.getElementsByTagName('html')[0].classList.remove('lightmode');
 		document.getElementsByTagName('html')[0].classList.add('darkmode');
 		localStorage.setItem(this.localStorageKey, ThemeKey.DARK);
 	}
@@ -99,6 +123,7 @@ export default class ThemeManager {
 export enum ThemeKey {
 	LIGHT = 'light',
 	DARK = 'dark',
+	SYSTEM = 'system',
 }
 
 export function useThemeManager(): ThemeManager {
