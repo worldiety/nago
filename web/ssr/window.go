@@ -101,7 +101,7 @@ func (w *ssrWindow) Info() core.WindowInfo {
 		Height:      1080,
 		Density:     1,
 		SizeClass:   core.SizeClass2XL,
-		ColorScheme: core.Light,
+		ColorScheme: core.System,
 	}
 }
 func (w *ssrWindow) ExportFiles(_ core.ExportFilesOptions) {}

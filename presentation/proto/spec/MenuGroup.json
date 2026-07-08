@@ -5,6 +5,10 @@
     "1": {
       "name": "Items",
       "type": "MenuItems"
+    },
+    "2": {
+      "name": "CustomContent",
+      "type": "Component"
     }
   }
 }

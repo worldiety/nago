@@ -20,6 +20,7 @@ type TMenu struct {
 	anchor core.View    // view the menu is anchored to
 	groups []TMenuGroup // groups of menu items
 	frame  Frame        // layout frame for sizing and positioning
+	offset Length       // offset of the menu to its anchor
 }
 
 // Menu creates a new menu with the given anchor and groups.
@@ -37,45 +38,65 @@ func (c TMenu) Frame(frame Frame) TMenu {
 	return c
 }
 
+// Offset sets the offset of the menu from its anchor.
+func (c TMenu) Offset(offset Length) TMenu {
+	c.offset = offset
+	return c
+}
+
 // Render builds and returns the protocol representation of the menu.
 // It renders the anchor view and each non-empty group with its items.
 func (c TMenu) Render(ctx core.RenderContext) core.RenderNode {
 	groups := make([]proto.MenuGroup, 0, len(c.groups))
 	for _, grp := range c.groups {
-		if len(grp.items) == 0 {
+		if grp.customContent != nil {
+			groups = append(groups, proto.MenuGroup{
+				CustomContent: grp.customContent.Render(ctx),
+			})
 			continue
 		}
 
-		items := make([]proto.MenuItem, 0, len(grp.items))
-		for _, item := range grp.items {
-			if item.content == nil {
-				continue
+		if len(grp.items) > 0 {
+			items := make([]proto.MenuItem, 0, len(grp.items))
+			for _, item := range grp.items {
+				if item.content == nil {
+					continue
+				}
+				items = append(items, proto.MenuItem{
+					Action:  ctx.MountCallback(item.action),
+					Content: render(ctx, item.content),
+				})
 			}
-			items = append(items, proto.MenuItem{
-				Action:  ctx.MountCallback(item.action),
-				Content: render(ctx, item.content),
+			groups = append(groups, proto.MenuGroup{
+				Items:         items,
+				CustomContent: grp.customContent.Render(ctx),
 			})
+			continue
 		}
-		groups = append(groups, proto.MenuGroup{
-			Items: items,
-		})
 	}
 
 	return &proto.Menu{
 		Anchor: render(ctx, c.anchor),
 		Groups: groups,
 		Frame:  c.frame.ora(),
+		Offset: c.offset.ora(),
 	}
 }
 
 // TMenuGroup is a collection of related menu items grouped together.
 type TMenuGroup struct {
-	items []TMenuItem // list of menu items in the group
+	items         []TMenuItem // list of menu items in the group
+	customContent core.View   // optional custom content view to show instead of menu items
 }
 
 // MenuGroup creates a new menu group containing the given items.
 func MenuGroup(items ...TMenuItem) TMenuGroup {
 	return TMenuGroup{items: items}
+}
+
+func (c TMenuGroup) CustomContent(content core.View) TMenuGroup {
+	c.customContent = content
+	return c
 }
 
 // TMenuItem represents a single menu entry with an action and content view.

@@ -2106,10 +2106,12 @@ function writeTypeHeaderColorScheme(dst: BinaryWriter): void {
 }
 // companion enum containing all defined constants for ColorScheme
 export enum ColorSchemeValues {
+	// System represents the auto mode.
+	System = 0,
 	// Light represents the light theme color mode.
-	Light = 0,
+	Light = 1,
 	// Dark represents the dark theme color mode.
-	Dark = 1,
+	Dark = 2,
 }
 
 // WindowInfo describes the area into which the frontend renders the ora view tree.
@@ -9174,14 +9176,18 @@ export class Menu implements Writeable, Readable, Component {
 
 	public frame?: Frame;
 
+	public offset?: Length;
+
 	constructor(
 		anchor: Component | undefined = undefined,
 		groups: MenuGroups | undefined = undefined,
-		frame: Frame | undefined = undefined
+		frame: Frame | undefined = undefined,
+		offset: Length | undefined = undefined
 	) {
 		this.anchor = anchor;
 		this.groups = groups;
 		this.frame = frame;
+		this.offset = offset;
 	}
 
 	read(reader: BinaryReader): void {
@@ -9209,6 +9215,10 @@ export class Menu implements Writeable, Readable, Component {
 					this.frame.read(reader);
 					break;
 				}
+				case 4: {
+					this.offset = readString(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -9221,6 +9231,7 @@ export class Menu implements Writeable, Readable, Component {
 			this.anchor !== undefined && !this.anchor.isZero(),
 			this.groups !== undefined && !this.groups.isZero(),
 			this.frame !== undefined && !this.frame.isZero(),
+			this.offset !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -9239,13 +9250,18 @@ export class Menu implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.RECORD, 3);
 			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
+			writeString(writer, this.offset!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
 		return (
 			(this.anchor === undefined || this.anchor.isZero()) &&
 			(this.groups === undefined || this.groups.isZero()) &&
-			(this.frame === undefined || this.frame.isZero())
+			(this.frame === undefined || this.frame.isZero()) &&
+			this.offset === undefined
 		);
 	}
 
@@ -9253,6 +9269,7 @@ export class Menu implements Writeable, Readable, Component {
 		this.anchor = undefined;
 		this.groups = undefined;
 		this.frame = undefined;
+		this.offset = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -9265,8 +9282,11 @@ export class Menu implements Writeable, Readable, Component {
 export class MenuGroup implements Writeable, Readable {
 	public items?: MenuItems;
 
-	constructor(items: MenuItems | undefined = undefined) {
+	public customContent?: Component;
+
+	constructor(items: MenuItems | undefined = undefined, customContent: Component | undefined = undefined) {
 		this.items = items;
+		this.customContent = customContent;
 	}
 
 	read(reader: BinaryReader): void {
@@ -9280,6 +9300,15 @@ export class MenuGroup implements Writeable, Readable {
 					this.items.read(reader);
 					break;
 				}
+				case 2: {
+					// decode polymorphic field as 1 element array
+					const len = reader.readUvarint();
+					if (len != 1) {
+						throw new Error(`unexpected length: ` + len);
+					}
+					this.customContent = unmarshal(reader) as Component;
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -9287,21 +9316,36 @@ export class MenuGroup implements Writeable, Readable {
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, this.items !== undefined && !this.items.isZero()];
+		const fields = [
+			false,
+			this.items !== undefined && !this.items.isZero(),
+			this.customContent !== undefined && !this.customContent.isZero(),
+		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
 			writer.writeFieldHeader(Shapes.ARRAY, 1);
 			this.items!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[2]) {
+			// encode polymorphic enum as 1 element slice
+			writer.writeFieldHeader(Shapes.ARRAY, 2);
+			writer.writeByte(1);
+			this.customContent.writeTypeHeader(writer);
+			this.customContent!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
-		return this.items === undefined || this.items.isZero();
+		return (
+			(this.items === undefined || this.items.isZero()) &&
+			(this.customContent === undefined || this.customContent.isZero())
+		);
 	}
 
 	reset(): void {
 		this.items = undefined;
+		this.customContent = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

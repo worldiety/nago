@@ -38,6 +38,17 @@ func AutoRadioStateGroup(wnd core.Window, id string, states int) RadioStateGroup
 	return RadioStateGroup{states: wndStates}
 }
 
+// InitIndex allows to initialize the radio group with a specific index.
+func (s RadioStateGroup) InitIndex(idx int) RadioStateGroup {
+	for i, state := range s.states {
+		state.Init(func() bool {
+			return i == idx
+		})
+	}
+
+	return s
+}
+
 // Observe registers a callback that is invoked with the currently selected index
 // whenever any state in the group changes.
 func (s RadioStateGroup) Observe(f func(newIdx int)) {

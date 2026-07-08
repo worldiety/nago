@@ -2133,10 +2133,12 @@ func (v *ScopeConfigurationChangeRequested) read(r *BinaryReader) error {
 type ColorScheme uint64
 
 const (
+	// System represents the auto mode.
+	System ColorScheme = 0
 	// Light represents the light theme color mode.
-	Light ColorScheme = 0
+	Light ColorScheme = 1
 	// Dark represents the dark theme color mode.
-	Dark ColorScheme = 1
+	Dark ColorScheme = 2
 )
 
 func (v *ColorScheme) write(r *BinaryWriter) error {
@@ -8870,13 +8872,15 @@ type Menu struct {
 	Anchor Component
 	Groups MenuGroups
 	Frame  Frame
+	Offset Length
 }
 
 func (v *Menu) write(w *BinaryWriter) error {
-	var fields [4]bool
+	var fields [5]bool
 	fields[1] = v.Anchor != nil && !v.Anchor.IsZero()
 	fields[2] = !v.Groups.IsZero()
 	fields[3] = !v.Frame.IsZero()
+	fields[4] = !v.Offset.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -8915,6 +8919,14 @@ func (v *Menu) write(w *BinaryWriter) error {
 			return err
 		}
 		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.Offset.write(w); err != nil {
 			return err
 		}
 	}
@@ -8957,18 +8969,25 @@ func (v *Menu) read(r *BinaryReader) error {
 			if err != nil {
 				return err
 			}
+		case 4:
+			err := v.Offset.read(r)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
 }
 
 type MenuGroup struct {
-	Items MenuItems
+	Items         MenuItems
+	CustomContent Component
 }
 
 func (v *MenuGroup) write(w *BinaryWriter) error {
-	var fields [2]bool
+	var fields [3]bool
 	fields[1] = !v.Items.IsZero()
+	fields[2] = v.CustomContent != nil && !v.CustomContent.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -8984,6 +9003,21 @@ func (v *MenuGroup) write(w *BinaryWriter) error {
 			return err
 		}
 		if err := v.Items.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 2); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.CustomContent.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.CustomContent.write(w); err != nil {
 			return err
 		}
 	}
@@ -9007,6 +9041,20 @@ func (v *MenuGroup) read(r *BinaryReader) error {
 			if err != nil {
 				return err
 			}
+		case 2:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.CustomContent = obj.(Component)
 		}
 	}
 	return nil
@@ -24063,24 +24111,26 @@ func (v *Menu) reset() {
 	v.Anchor = nil
 	v.Groups.reset()
 	v.Frame.reset()
+	v.Offset.reset()
 }
 
 func (v *Menu) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Anchor.IsZero() && v.Groups.IsZero() && v.Frame.IsZero()
+	return v.Anchor.IsZero() && v.Groups.IsZero() && v.Frame.IsZero() && v.Offset.IsZero()
 }
 
 func (v *MenuGroup) reset() {
 	v.Items.reset()
+	v.CustomContent = nil
 }
 
 func (v *MenuGroup) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Items.IsZero()
+	return v.Items.IsZero() && v.CustomContent.IsZero()
 }
 
 func (v *MenuItem) reset() {

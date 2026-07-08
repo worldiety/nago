@@ -9,8 +9,9 @@ package core
 
 import (
 	"fmt"
-	"go.wdy.de/nago/presentation/proto"
 	"regexp"
+
+	"go.wdy.de/nago/presentation/proto"
 )
 
 // A ColorSet marks a simple struct with public color fields (like [Colors]) to be a set of colors.
@@ -42,12 +43,15 @@ func (c ColorScheme) String() string {
 		return "light"
 	case Dark:
 		return "dark"
+	case System:
+		return "system"
 	default:
 		return fmt.Sprintf("%d", c)
 	}
 }
 
 const (
-	Light ColorScheme = ColorScheme(proto.Light)
-	Dark  ColorScheme = ColorScheme(proto.Dark)
+	System ColorScheme = ColorScheme(proto.System)
+	Light  ColorScheme = ColorScheme(proto.Light)
+	Dark   ColorScheme = ColorScheme(proto.Dark)
 )
