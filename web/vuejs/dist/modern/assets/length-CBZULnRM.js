@@ -1,1 +1,0 @@
-function e(e){return!e||e===``?``:(e=e.replaceAll(`dp`,`px`),e.charAt(0)===`-`||e.charAt(0)>=`0`&&e.charAt(0)<=`9`||e.startsWith(`calc`)||e==`auto`?e:`var(--${e})`)}function t(e){return e?(e=e.replaceAll(`dp`,`px`),e):`0px`}export{t as n,e as t};
