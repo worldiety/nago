@@ -21,7 +21,6 @@ type contentType string
 const (
 	contentTypeText       contentType = "text"
 	contentTypeMedia      contentType = "media"
-	contentTypeFileRef    contentType = "file_ref"
 	contentTypeToolCall   contentType = "tool_call"
 	contentTypeToolResult contentType = "tool_result"
 	contentTypeThinking   contentType = "thinking"
@@ -40,9 +39,6 @@ type contentEnvelope struct {
 	// media
 	Media *Media `json:"media,omitempty"`
 
-	// file_ref
-	FileRef *FileRef `json:"fileRef,omitempty"`
-
 	// tool_call
 	ToolCall *ToolCall `json:"toolCall,omitempty"`
 
@@ -60,9 +56,6 @@ func marshalContent(c Content) (contentEnvelope, error) {
 	case Media:
 		m := v
 		return contentEnvelope{Type: contentTypeMedia, Media: &m}, nil
-	case FileRef:
-		fr := v
-		return contentEnvelope{Type: contentTypeFileRef, FileRef: &fr}, nil
 	case ToolCall:
 		tc := v
 		return contentEnvelope{Type: contentTypeToolCall, ToolCall: &tc}, nil
@@ -89,11 +82,6 @@ func (e contentEnvelope) toContent() (Content, error) {
 			return Media{}, nil
 		}
 		return *e.Media, nil
-	case contentTypeFileRef:
-		if e.FileRef == nil {
-			return FileRef{}, nil
-		}
-		return *e.FileRef, nil
 	case contentTypeToolCall:
 		if e.ToolCall == nil {
 			return ToolCall{}, nil

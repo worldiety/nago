@@ -175,16 +175,6 @@ func toAPIContent(c completion.Content) (apiContent, error) {
 
 		return apiContent{Type: blockType, Source: &src}, nil
 
-	case completion.FileRef:
-		// A FileRef always resolves to a provider-native file id; it is never inlined as base64, keeping the
-		// request O(1) per turn.
-		src := apiSource{Type: "file", FileID: string(v.File)}
-		blockType := "document"
-		if isImageMime(v.MimeType) {
-			blockType = "image"
-		}
-		return apiContent{Type: blockType, Source: &src}, nil
-
 	case completion.ToolCall:
 		input := v.Arguments
 		if len(input) == 0 {
@@ -195,9 +185,8 @@ func toAPIContent(c completion.Content) (apiContent, error) {
 	case completion.ToolResult:
 		// Anthropic restricts what may appear inside a tool_result: only text and image blocks are allowed,
 		// and image blocks there accept only base64/url sources — never a file id. Normalize the content
-		// first so file-id references (FileRef) and non-image inline media become descriptive text instead of
-		// blocks the API rejects. The model can still reference an uploaded file (image or document) by its id
-		// in a subsequent user turn, where file sources are permitted.
+		// first so inline media that cannot be embedded becomes descriptive text instead of a block the API
+		// rejects.
 		nested, err := toAPIContents(normalizeToolResultContent(v.Content))
 		if err != nil {
 			return apiContent{}, err
@@ -219,21 +208,13 @@ func toAPIContent(c completion.Content) (apiContent, error) {
 //
 // Consequences:
 //   - [completion.Text] passes through unchanged.
-//   - A [completion.FileRef] (which always resolves to a file id) is ALWAYS replaced by a neutral text
-//     reference — even for images — because file-id sources are rejected inside a tool_result. The reference
-//     keeps the file id so the model can attach the file (as image or document) in a later user turn, where
-//     file sources are allowed.
 //   - A [completion.Media] with inline base64 image data passes through (base64 image sources are allowed);
-//     any other inline media (non-image, or an image sourced by url/file id) is replaced by a text reference.
+//     any other inline media (non-image, or an image sourced by url/file id) is replaced by a text reference,
+//     because embedding it here would either be rejected by the API or bloat every follow-up turn.
 func normalizeToolResultContent(in []completion.Content) []completion.Content {
 	out := make([]completion.Content, 0, len(in))
 	for _, c := range in {
 		switch v := c.(type) {
-		case completion.FileRef:
-			out = append(out, completion.Text{Text: fmt.Sprintf(
-				"[file %s of type %s is available; reference it by its file id in a follow-up message]",
-				v.File, v.MimeType)})
-
 		case completion.Media:
 			// Only inline base64 image data is permitted as an image block inside a tool_result.
 			if isImageMime(v.MimeType) && len(v.Source.Data) > 0 {

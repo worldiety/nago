@@ -114,23 +114,6 @@ type Media struct {
 
 func (Media) isContent() {}
 
-// FileRef references a file managed by a provider's Files capability (uploaded via [provider.Files.Put]) so
-// it can be sent to the model by its provider-native file id instead of inlining the bytes. This keeps the
-// request small and efficient: the provider fetches the file once, while the reference stays O(1) in size on
-// every follow-up turn of an agentic loop (where the full history is re-sent each turn).
-//
-// A FileRef is bound to the provider of the active completion; it deliberately does not carry a provider id.
-// Obtain one from the result of an upload rather than constructing it ad hoc, so it always points at a file
-// the active provider can actually resolve.
-type FileRef struct {
-	// File is the provider-native file identifier returned by the upload.
-	File file.ID `json:"file"`
-	// MimeType lets the provider pick the correct block type (image vs. document) without re-fetching.
-	MimeType file.Type `json:"mimeType"`
-}
-
-func (FileRef) isContent() {}
-
 // ToolCall is emitted by the assistant when it wants to call a tool (Anthropic "tool_use",
 // OpenAI assistant.tool_calls[]).
 type ToolCall struct {
@@ -209,10 +192,10 @@ type Result struct {
 // Delta is a single streaming chunk. Either TextDelta or a (partial) ToolCall is set; the final chunk
 // carries Done == true together with StopReason and Usage.
 type Delta struct {
-	TextDelta  string         `json:"textDelta,omitzero"`
+	TextDelta  string               `json:"textDelta,omitzero"`
 	ToolCall   option.Opt[ToolCall] `json:"toolCall,omitzero"`
-	Done       bool           `json:"done,omitzero"`
-	StopReason StopReason     `json:"stopReason,omitzero"`
+	Done       bool                 `json:"done,omitzero"`
+	StopReason StopReason           `json:"stopReason,omitzero"`
 	Usage      option.Opt[Usage]    `json:"usage,omitzero"`
 }
 
@@ -230,4 +213,3 @@ type Completions interface {
 	// return option.None for [Streaming].
 	Stream(subject auth.Subject, opts Options) iter.Seq2[Delta, error]
 }
-

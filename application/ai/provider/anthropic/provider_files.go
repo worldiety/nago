@@ -23,8 +23,8 @@ var _ provider.Files = (*anthropicFiles)(nil)
 
 // anthropicFiles implements [provider.Files] on top of the Anthropic Files API (beta). It supports uploading,
 // listing, inspecting and deleting files. Files uploaded here can be referenced from message content by their
-// id (see [completion.FileRef]), so binary content is sent to Anthropic once and then referenced O(1) per
-// turn instead of being inlined as base64.
+// id (via [completion.Media] with a [completion.Source.FileID]), so binary content is sent to Anthropic once
+// and then referenced O(1) per turn instead of being inlined as base64.
 //
 // Note: Anthropic only allows downloading API/tool-generated files. Downloading a user-uploaded file yields
 // [file.ErrNotDownloadable].

@@ -51,13 +51,6 @@ type Tool struct {
 	// encoded result. The error is a transport/marshalling or business error; [Run] turns it into a tool
 	// result flagged as error so the model may react to it.
 	Invoke func(args json.RawMessage) (json.RawMessage, error)
-
-	// InvokeContent, when set, takes precedence over [Invoke]. Instead of a JSON-encoded text result it
-	// returns structured [Content] blocks (e.g. [Text] plus a [FileRef] or image [Media]) that become the
-	// tool result content verbatim. Use it for tools whose result is more than plain text, such as tools
-	// that produce a file. The provider adapts the returned blocks to what its API accepts inside a
-	// tool_result (e.g. Anthropic permits only text and image there). May be nil.
-	InvokeContent func(args json.RawMessage) ([]Content, error)
 }
 
 // NewTool wraps an arbitrary Go function of the form func(In) (Out, error) into a callable [Tool].
@@ -103,40 +96,6 @@ func NewTool[In, Out any](name, description string, fn ToolFunc[In, Out]) Tool {
 			}
 
 			return raw, nil
-		},
-	}
-}
-
-// NewContentTool wraps a Go function of the form func(In) ([]Content, error) into a callable [Tool] whose
-// result is a slice of structured [Content] blocks rather than JSON text. Use it when a tool needs to return
-// more than plain text, e.g. an image or a [FileRef] pointing at a produced file.
-//
-// The input schema for In is derived exactly like [NewTool]. The returned blocks become the tool result
-// content verbatim (see [Tool.InvokeContent]); the provider then adapts them to what its API accepts inside a
-// tool_result.
-func NewContentTool[In any](name, description string, fn func(In) ([]Content, error)) Tool {
-	var zeroIn In
-	schema := reflectSchema(reflect.TypeOf(&zeroIn).Elem())
-	rawSchema, err := json.Marshal(schema)
-	if err != nil {
-		rawSchema = json.RawMessage(`{"type":"object"}`)
-	}
-
-	return Tool{
-		Def: ToolDef{
-			Name:        name,
-			Description: description,
-			Schema:      rawSchema,
-		},
-		InvokeContent: func(args json.RawMessage) ([]Content, error) {
-			var in In
-			if len(args) > 0 {
-				if err := json.Unmarshal(args, &in); err != nil {
-					return nil, fmt.Errorf("cannot decode arguments for tool %q: %w", name, err)
-				}
-			}
-
-			return fn(in)
 		},
 	}
 }
@@ -406,24 +365,6 @@ func executeToolCall(tools map[string]Tool, call ToolCall) ToolResult {
 		}
 	}
 
-	// Content-returning tools take precedence: their blocks become the tool result verbatim (subject to
-	// provider-side normalization), so a tool can return e.g. an image or a FileRef instead of plain text.
-	if tool.InvokeContent != nil {
-		blocks, err := tool.InvokeContent(call.Arguments)
-		if err != nil {
-			return ToolResult{
-				ToolCallID: call.ID,
-				Content:    []Content{Text{Text: err.Error()}},
-				IsError:    true,
-			}
-		}
-
-		return ToolResult{
-			ToolCallID: call.ID,
-			Content:    blocks,
-		}
-	}
-
 	out, err := tool.Invoke(call.Arguments)
 	if err != nil {
 		return ToolResult{
@@ -569,4 +510,3 @@ func fieldDescription(f reflect.StructField) string {
 	}
 	return f.Tag.Get("description")
 }
-

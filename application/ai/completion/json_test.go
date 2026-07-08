@@ -45,7 +45,6 @@ func TestMessageJSONRoundtrip(t *testing.T) {
 					Content: []Content{
 						Text{Text: "36"},
 						Media{MimeType: file.Type("image/jpeg"), Source: Source{Data: []byte("binary")}},
-						FileRef{File: file.ID("file-789"), MimeType: file.PDF},
 					},
 				},
 				ToolResult{

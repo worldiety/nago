@@ -314,8 +314,6 @@ func renderTrace(history []completion.Message) string {
 					switch t := ic.(type) {
 					case completion.Text:
 						inner.WriteString(t.Text)
-					case completion.FileRef:
-						fmt.Fprintf(&inner, "[file_ref id=%s type=%s] ", t.File, t.MimeType)
 					case completion.Media:
 						fmt.Fprintf(&inner, "[media type=%s] ", t.MimeType)
 					}
@@ -325,8 +323,6 @@ func renderTrace(history []completion.Message) string {
 					marker = "error"
 				}
 				fmt.Fprintf(&sb, "  tool_result %s [%s]: %s\n", v.ToolCallID, marker, inner.String())
-			case completion.FileRef:
-				fmt.Fprintf(&sb, "  file_ref id=%s type=%s\n", v.File, v.MimeType)
 			default:
 				raw, _ := json.Marshal(v)
 				fmt.Fprintf(&sb, "  %T: %s\n", v, string(raw))
