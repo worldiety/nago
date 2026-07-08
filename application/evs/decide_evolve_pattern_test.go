@@ -9,6 +9,7 @@ package evs_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"iter"
 	"sync"
@@ -18,6 +19,7 @@ import (
 	"go.wdy.de/nago/application/evs"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/pkg/std"
 )
 
 type PID string
@@ -302,5 +304,46 @@ func TestHandleErrorReturnsZeroSeq(t *testing.T) {
 	}
 	if seq != 0 {
 		t.Fatalf("expected seq 0 on error, got %d", seq)
+	}
+}
+
+// TestHandleEmptyKeyIsRenderableError verifies that an empty aggregate key is
+// rejected as a renderable, sentinel error (not a raw fmt.Errorf that a UI would
+// hide behind an anonymous support token): it must match errors.Is(ErrEmptyKey),
+// carry a localized title/description, return seq 0, and never touch the backend.
+func TestHandleEmptyKeyIsRenderableError(t *testing.T) {
+	backend := &memBackend{}
+	h := evs.NewHandler[*Person](backend, func(e Evt) (PID, bool) {
+		switch evt := e.(type) {
+		case FirstnameUpdated:
+			return evt.Person, evt.Person != ""
+		default:
+			return "", false
+		}
+	}, nil)
+	h.RegisterEvents(FirstnameUpdated{}, LastnameUpdated{})
+
+	seq, err := h.Handle(user.SU(), "", UpdateFirstnameCmd{ID: "", Firstname: "John"})
+	if err == nil {
+		t.Fatal("expected an error for an empty key")
+	}
+	if seq != 0 {
+		t.Fatalf("expected seq 0 on error, got %d", seq)
+	}
+	if !errors.Is(err, evs.ErrEmptyKey) {
+		t.Fatalf("expected errors.Is(err, ErrEmptyKey), got %v", err)
+	}
+
+	var loc std.LocalizedError
+	if !errors.As(err, &loc) {
+		t.Fatalf("expected a std.LocalizedError so the UI can render it, got %T", err)
+	}
+	if loc.Title() == "" || loc.Description() == "" {
+		t.Fatalf("expected a non-empty localized title/description, got %q / %q", loc.Title(), loc.Description())
+	}
+
+	// the guard must run before any persistence: nothing may have been appended.
+	if len(backend.events) != 0 {
+		t.Fatalf("expected no events appended for an empty key, got %d", len(backend.events))
 	}
 }

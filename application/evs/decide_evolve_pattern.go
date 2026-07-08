@@ -19,8 +19,25 @@ import (
 
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/std/concurrent"
 )
+
+// ErrEmptyKey is returned by [Handler.Handle] (and thus [Handler.Delete]) when
+// it is asked to run a command against an empty aggregate key.
+//
+// An empty key is rejected because the key is the aggregate's identity: it is
+// used to load or create the in-memory state, to identify the appended events
+// and to delete the aggregate. Persisting an event under the empty key would
+// merge all "keyless" aggregates into one stream and poison the cache.
+//
+// It is a [std.LocalizedError] so a UI can render it directly (as a banner)
+// instead of showing an anonymous support token, and it is a stable sentinel so
+// callers may test for it with errors.Is. Note that a missing user-facing key is
+// a required-field violation and should ideally be reported field-bound from the
+// command's Decide via [go.wdy.de/nago/pkg/xerrors.ErrorWithFields]; this guard
+// is the persistence safety net that only fires when Decide did not.
+var ErrEmptyKey = std.NewLocalizedError("Ungültiger Schlüssel", "Der Stream-Schlüssel darf nicht leer sein.")
 
 // aggregateState holds one aggregate in two copies to make reads cheap and
 // race-free (an RCU / read-copy-update style):
@@ -179,7 +196,7 @@ func (h *Handler[Aggregate, SuperEvt, Primary]) loadOrCreate(key Primary) *aggre
 // real, awaitable event too.
 func (h *Handler[Aggregate, SuperEvt, Primary]) Handle(subject auth.Subject, key Primary, cmd Cmd[Aggregate, SuperEvt]) (SeqID, error) {
 	if key == "" {
-		return 0, fmt.Errorf("aggregate id / key cannot be empty")
+		return 0, ErrEmptyKey
 	}
 
 	if err := h.ensureInit(); err != nil {
