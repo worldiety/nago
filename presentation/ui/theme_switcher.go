@@ -40,10 +40,23 @@ func (c TThemeSwitcher) Render(ctx core.RenderContext) core.RenderNode {
 	wnd := ctx.Window()
 
 	themes := []string{core.Light.String(), core.Dark.String(), core.System.String()}
+	themeByIdx := func(idx int) core.ColorScheme {
+		switch themes[idx] {
+		case core.Light.String():
+			return core.Light
+		case core.Dark.String():
+			return core.Dark
+		default:
+			return core.System
+		}
+	}
+
 	themeIndex := slices.Index(themes, wnd.Info().ColorScheme.String())
 	stateTheme := AutoRadioStateGroup(wnd, "stateTheme", len(themes)).InitIndex(themeIndex)
-	wndInfo := wnd.Info()
-	wndInfo = wndInfo
+
+	if themeIndex != stateTheme.SelectedIndex() {
+		wnd.SetColorScheme(themeByIdx(stateTheme.SelectedIndex()))
+	}
 
 	stateTheme.Observe(func(idx int) {
 		switch themes[idx] {
