@@ -78,6 +78,7 @@ type TDrive struct {
 	canCreateDirectory func(parentDir drive.File) bool
 	mkdir              func(parentDir drive.File, name string) error
 	actionDirectory    func(drive.File)
+	actionFile         func(drive.File)
 	root               drive.FID
 	rootName           string
 	importOptions      core.ImportFilesOptions
@@ -106,6 +107,13 @@ func (c TDrive) OnNavigate(f func(drive.File)) TDrive {
 
 func (c TDrive) DirectoryAction(f func(drive.File)) TDrive {
 	c.actionDirectory = f
+	return c
+}
+
+// FileAction overrides what happens when a regular (non-directory) file is clicked. If not set, the built-in
+// full-screen preview is shown (images, videos, markdown and utf8 text; other types offer a download).
+func (c TDrive) FileAction(f func(drive.File)) TDrive {
+	c.actionFile = f
 	return c
 }
 
@@ -284,6 +292,8 @@ func (c TDrive) viewListing(wnd core.Window, uc drive.UseCases, curDir drive.Fil
 	selectedFid := core.StateOf[drive.FID](wnd, string(curDir.ID)+"-selectedfid")
 	movePresented := core.StateOf[bool](wnd, string(curDir.ID)+"-mv-presented")
 	moveFids := core.StateOf[[]drive.FID](wnd, string(curDir.ID)+"-mv-fids")
+	previewPresented := core.StateOf[bool](wnd, string(curDir.ID)+"-preview-presented")
+	previewFid := core.StateOf[drive.FID](wnd, string(curDir.ID)+"-preview-fid")
 
 	canCreateDir := c.canCreateDirectory(curDir)
 	canCreateFile := c.canCreateFile(curDir)
@@ -372,10 +382,21 @@ func (c TDrive) viewListing(wnd core.Window, uc drive.UseCases, curDir drive.Fil
 		},
 	).ModelOptions(pager.ModelOptions{StatePrefix: string(curDir.ID)}).
 		Action(func(e drive.File) {
-			if e.IsDir() && c.actionDirectory != nil {
-				c.actionDirectory(e)
+			if e.IsDir() {
+				if c.actionDirectory != nil {
+					c.actionDirectory(e)
+				}
 				return
 			}
+
+			// a regular file: use the custom hook if provided, otherwise open the built-in preview.
+			if c.actionFile != nil {
+				c.actionFile(e)
+				return
+			}
+
+			previewFid.Set(e.ID)
+			previewPresented.Set(true)
 		}).
 		CreateOptions(
 			dataview.CreateOption{
@@ -530,6 +551,7 @@ func (c TDrive) viewListing(wnd core.Window, uc drive.UseCases, curDir drive.Fil
 		}),
 		dialogRename(wnd, renamePresented, uc.Stat, uc.Rename, selectedFid),
 		c.dialogMove(wnd, uc, movePresented, moveFids),
+		c.dialogPreview(wnd, uc, previewPresented, previewFid),
 		dv,
 	).FullWidth()
 }

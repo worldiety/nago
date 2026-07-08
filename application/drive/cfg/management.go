@@ -13,6 +13,7 @@ import (
 	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/drive"
+	drivehttp "go.wdy.de/nago/application/drive/http"
 	uidrive "go.wdy.de/nago/application/drive/ui"
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/rebac"
@@ -102,6 +103,12 @@ func Enable(cfg *application.Configurator) (Management, error) {
 	}))
 
 	uc := drive.NewUseCases(cfg.EventBus(), fileRepo, globalRootsRepo, userRootsRepo, fileBlobs, rdb)
+
+	// Authenticated endpoint that streams a file's binary content, used by the UI preview (ui.Image,
+	// video.Video) and downloads. Authorization is enforced by uc.Get (CanRead) for the resolved subject.
+	if err := cfg.HandleFuncSubject(drivehttp.Endpoint, drivehttp.NewHandler(uc.Get)); err != nil {
+		return Management{}, err
+	}
 
 	management = Management{
 		UseCases: uc,
