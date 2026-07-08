@@ -176,6 +176,13 @@ type Chmod func(subject auth.Subject, mode os.FileMode, fid FID) error
 // even though we actually would not need that limitation.
 type Rename func(subject auth.Subject, fid FID, newName string) error
 
+// Move relocates a file or directory into a new parent directory (reparent). It requires write permission on
+// both the current parent and the destination directory (unix rename semantics; the moved file itself does not
+// need to be writable). The file keeps its FID, its version history and its per-file ACL grants. Moving a
+// directory into itself or into one of its own descendants is rejected with [os.ErrInvalid], and a name
+// collision in the destination directory is rejected with [os.ErrExist].
+type Move func(subject auth.Subject, fid FID, newParent FID) error
+
 // FindDrive is the inverse of [OpenDrive] and inspects the given fid to eventually return the declaring root drive.
 // The current implementation requires O(n) on all (global and private) drive namespaces, thus be careful if you
 // have a lot of drives.
@@ -283,6 +290,7 @@ type UseCases struct {
 	Get              Get
 	Zip              Zip
 	Rename           Rename
+	Move             Move
 	GrantFileAccess  GrantFileAccess
 	RevokeFileAccess RevokeFileAccess
 	ReadFileGrants   ReadFileGrants
@@ -306,6 +314,7 @@ func NewUseCases(bus events.Bus, repo Repository, globalRootRepo NamedRootReposi
 		Get:              NewGet(repo, fileBlobs),
 		Zip:              NewZip(repo, fileBlobs, walkDirFn),
 		Rename:           NewRename(&mutex, bus, repo),
+		Move:             NewMove(&mutex, bus, repo, walkDirFn),
 		GrantFileAccess:  NewGrantFileAccess(&mutex, repo, rdb),
 		RevokeFileAccess: NewRevokeFileAccess(&mutex, repo, rdb),
 		ReadFileGrants:   NewReadFileGrants(repo, rdb),

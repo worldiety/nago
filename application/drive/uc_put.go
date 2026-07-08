@@ -30,6 +30,12 @@ import (
 
 func NewPut(mutex *sync.Mutex, bus events.Bus, repo Repository, blobs blob.Store, rdb *rebac.DB) Put {
 	return func(subject auth.Subject, parent FID, name string, src io.Reader, opts PutOptions) error {
+		// validate the name before doing any (potentially expensive) blob transfer. The name is the
+		// authoritative file name within the parent directory.
+		if err := ValidateName(name); err != nil {
+			return err
+		}
+
 		requiresKeyDeletion := false
 		key, size, err := storeBlob(blobs, src)
 		if err != nil {
@@ -147,13 +153,9 @@ func NewPut(mutex *sync.Mutex, bus events.Bus, repo Repository, blobs blob.Store
 			Time:   now,
 		}
 
-		if file.Filename == "" {
-			file.Filename = versionAdded.FileInfo.OriginalFilename
-		}
-
-		if file.Filename == "" {
-			file.Filename = string(versionAdded.FileInfo.Blob)
-		}
+		// the name argument is authoritative for the file name within the parent directory. OriginalFilename
+		// remains a pure metadata hint about the uploaded source and does not drive the directory entry name.
+		file.Filename = name
 
 		file.FileInfo = option.Some(versionAdded.FileInfo)
 		file.AuditLog = file.AuditLog.Append(LogEntry{VersionAdded: option.Pointer(&versionAdded)})

@@ -42,6 +42,8 @@ func (e LogEntry) Unwrap() (Activity, bool) {
 		return e.VersionAdded.Unwrap(), true
 	case e.Renamed.IsSome():
 		return e.Renamed.Unwrap(), true
+	case e.Moved.IsSome():
+		return e.Moved.Unwrap(), true
 	}
 
 	return nil, false
@@ -112,7 +114,22 @@ func (d Deleted) ModBy() user.ID {
 type ModeChanged struct {
 }
 
+// Moved records that a file or directory was relocated (reparented) from OldParent to NewParent. The file keeps
+// its FID, version history and per-file ACL grants. See the Move use case.
 type Moved struct {
+	FID       FID                    `json:"fid"`
+	OldParent FID                    `json:"oldParent,omitempty"`
+	NewParent FID                    `json:"newParent,omitempty"`
+	ByUser    user.ID                `json:"uid,omitempty"`
+	Time      xtime.UnixMilliseconds `json:"ts,omitempty"`
+}
+
+func (m Moved) Mod() xtime.UnixMilliseconds {
+	return m.Time
+}
+
+func (m Moved) ModBy() user.ID {
+	return m.ByUser
 }
 
 type Added struct {

@@ -23,8 +23,9 @@ func applyStandardEntryOrder(repo Repository, seq iter.Seq[FID]) ([]FID, error) 
 		}
 
 		if optFile.IsNone() {
-			// stale file, but we must not purge the file
+			// stale file, but we must not purge the reference
 			tmp = append(tmp, File{ID: fid})
+			continue
 		}
 
 		tmp = append(tmp, optFile.Unwrap())

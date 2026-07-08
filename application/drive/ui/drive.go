@@ -54,6 +54,18 @@ var (
 	StrDialogRenameTitle       = i18n.MustString("nago.drive.dialog.rename_title", i18n.Values{language.English: "Rename file", language.German: "Datei umbenennen"})
 	StrDialogRenameDesc        = i18n.MustString("nago.drive.dialog.rename_desc", i18n.Values{language.English: "Enter your new name", language.German: "Den neuen Dateinamen eingeben"})
 	StrDialogRenameInvalidName = i18n.MustString("nago.drive.dialog.rename_invalid", i18n.Values{language.English: "The file name is invalid. Keep below 255 chars and use less special characters.", language.German: "Der Dateiname ist ungültig. Namen länger als 255 Zeichen sind nicht erlaubt genauso wie verschiedene Sonderzeichen."})
+
+	StrActionMove         = i18n.MustString("nago.drive.action.move", i18n.Values{language.English: "Move to", language.German: "Verschieben nach"})
+	StrDialogMoveTitle    = i18n.MustString("nago.drive.dialog.move_title", i18n.Values{language.English: "Move to", language.German: "Verschieben nach"})
+	StrDialogMoveConfirm  = i18n.MustString("nago.drive.dialog.move_confirm", i18n.Values{language.English: "Move here", language.German: "Hierher verschieben"})
+	StrDialogMoveEmptyDir = i18n.MustString("nago.drive.dialog.move_empty_dir", i18n.Values{language.English: "This folder contains no subfolders.", language.German: "Dieser Ordner enthält keine Unterordner."})
+	StrDialogMoveSuccessX = i18n.MustQuantityString(
+		"nago.drive.dialog.move_success",
+		i18n.QValues{
+			language.English: i18n.Quantities{One: "Moved 1 element.", Other: "Moved {amount} elements."},
+			language.German:  i18n.Quantities{One: "1 Element verschoben.", Other: "{amount} Elemente verschoben."},
+		},
+	)
 )
 
 type TDrive struct {
@@ -270,6 +282,8 @@ func (c TDrive) viewListing(wnd core.Window, uc drive.UseCases, curDir drive.Fil
 	createDirPresented := core.StateOf[bool](wnd, string(curDir.ID)+"-mkdir-presented")
 	renamePresented := core.StateOf[bool](wnd, string(curDir.ID)+"-rn-presented")
 	selectedFid := core.StateOf[drive.FID](wnd, string(curDir.ID)+"-selectedfid")
+	movePresented := core.StateOf[bool](wnd, string(curDir.ID)+"-mv-presented")
+	moveFids := core.StateOf[[]drive.FID](wnd, string(curDir.ID)+"-mv-fids")
 
 	canCreateDir := c.canCreateDirectory(curDir)
 	canCreateFile := c.canCreateFile(curDir)
@@ -492,6 +506,19 @@ func (c TDrive) viewListing(wnd core.Window, uc drive.UseCases, curDir drive.Fil
 					return len(selected) == 1
 				},
 			},
+
+			dataview.SelectOption[drive.FID]{
+				Icon: icons.FolderArrowRight,
+				Name: StrActionMove.Get(wnd),
+				Action: func(selected []drive.FID) error {
+					moveFids.Set(slices.Clone(selected))
+					movePresented.Set(true)
+					return nil
+				},
+				Visible: func(selected []drive.FID) bool {
+					return len(selected) >= 1
+				},
+			},
 		).
 		Search(true).
 		Style(dataview.Table).
@@ -502,6 +529,7 @@ func (c TDrive) viewListing(wnd core.Window, uc drive.UseCases, curDir drive.Fil
 			return c.mkdir(curDir, name)
 		}),
 		dialogRename(wnd, renamePresented, uc.Stat, uc.Rename, selectedFid),
+		c.dialogMove(wnd, uc, movePresented, moveFids),
 		dv,
 	).FullWidth()
 }
