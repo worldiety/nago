@@ -8,6 +8,8 @@
 package uiuser
 
 import (
+	"log/slog"
+
 	"go.wdy.de/nago/application/admin"
 	uiadmin "go.wdy.de/nago/application/admin/ui"
 	uisession "go.wdy.de/nago/application/session/ui"
@@ -15,10 +17,14 @@ import (
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/presentation/core"
 	flowbiteOutline "go.wdy.de/nago/presentation/icons/flowbite/outline"
+	icons "go.wdy.de/nago/presentation/icons/material/outlined"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/avatar"
-	"log/slog"
+)
+
+var (
+	StrSwitchTheme = core.DefaultStr("account-view.switch-theme", "Switch theme", "Farbschema wechseln")
 )
 
 type TAccountView struct {
@@ -42,16 +48,6 @@ func AccountView(wnd core.Window) TAccountView {
 		}
 	}
 
-	var schemeModeIcon core.SVG
-	var schemeModeText string
-	if wnd.Info().ColorScheme == core.Light {
-		schemeModeIcon = flowbiteOutline.Moon
-		schemeModeText = "Dunkle Darstellung verwenden"
-	} else {
-		schemeModeIcon = flowbiteOutline.Sun
-		schemeModeText = "Helle Darstellung verwenden"
-	}
-
 	userPages, _ := core.FromContext[Pages](wnd.Context(), "")
 	sessionPages, _ := core.FromContext[uisession.Pages](wnd.Context(), "")
 
@@ -66,14 +62,7 @@ func AccountView(wnd core.Window) TAccountView {
 				AccountAction(flowbiteOutline.UserEdit, "Profil verwalten", func() {
 					wnd.Navigation().ForwardTo(userPages.MyProfile, nil)
 				}),
-				AccountAction(schemeModeIcon, schemeModeText, func() {
-					if wnd.Info().ColorScheme == core.Light {
-						wnd.SetColorScheme(core.Dark)
-					} else {
-						wnd.SetColorScheme(core.Light)
-					}
-
-				}),
+				switchThemeButton(wnd),
 			),
 	)
 
@@ -181,4 +170,19 @@ func AccountAction(icon core.SVG, text string, action func()) core.View {
 		FullWidth().
 		Padding(ui.Padding{}.All(ui.L4)).
 		Border(ui.Border{}.Radius(ui.L8))
+}
+
+func switchThemeButton(wnd core.Window) core.View {
+	return ui.ThemeSwitcher(
+		ui.HStack(
+			ui.ImageIcon(icons.Palette).FillColor(ui.M8),
+			ui.Text(StrSwitchTheme.Get(wnd)).Font(ui.Font{Weight: ui.HeadlineAndTitleFontWeight}),
+			ui.Spacer(),
+			ui.ImageIcon(flowbiteOutline.ChevronRight),
+		).Gap(ui.L8).
+			HoveredBackgroundColor(ui.I1).
+			FullWidth().
+			Padding(ui.Padding{}.All(ui.L4)).
+			Border(ui.Border{}.Radius(ui.L8)),
+	).Frame(ui.Frame{}.FullWidth())
 }

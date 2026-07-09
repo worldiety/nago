@@ -20,6 +20,7 @@ import (
 	uiuser "go.wdy.de/nago/application/user/ui"
 	"go.wdy.de/nago/auth"
 	flowbiteOutline "go.wdy.de/nago/presentation/icons/flowbite/outline"
+	icons "go.wdy.de/nago/presentation/icons/material/outlined"
 	"go.wdy.de/nago/presentation/ui/footer"
 
 	"go.wdy.de/nago/presentation/core"
@@ -27,6 +28,10 @@ import (
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/avatar"
 	"go.wdy.de/nago/presentation/ui/tracking"
+)
+
+var (
+	StrSwitchTheme = core.DefaultStr("scaffold.switch-theme", "Switch theme", "Farbschema wechseln")
 )
 
 type MenuEntryBuilder struct {
@@ -475,16 +480,6 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 			}
 		}
 
-		var schemeModeIcon core.SVG
-		var schemeModeText string
-		if wnd.Info().ColorScheme == core.Light {
-			schemeModeIcon = flowbiteOutline.Moon
-			schemeModeText = "Dunkle Darstellung verwenden"
-		} else {
-			schemeModeIcon = flowbiteOutline.Sun
-			schemeModeText = "Helle Darstellung verwenden"
-		}
-
 		var scaffold = ui.Scaffold(b.alignment).Body(
 			ui.VStack(
 				ui.WindowTitle(b.name()),
@@ -496,13 +491,7 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 				alert.BannerMessages(wnd),
 				tracking.SupportRequestDialog(wnd), // be the last one, to guarantee to be on top
 			).FullWidth(),
-		).BottomView(lightDarkButton(schemeModeIcon, schemeModeText, func() {
-			if wnd.Info().ColorScheme == core.Light {
-				wnd.SetColorScheme(core.Dark)
-			} else {
-				wnd.SetColorScheme(core.Light)
-			}
-		})).
+		).BottomView(lightDarkButton(wnd)).
 			Logo(ui.HStack(logo).Action(b.logoActionClick(wnd)).Frame(ui.Frame{Height: ui.L96})).
 			Menu(menu...).Height(b.height)
 
@@ -587,14 +576,15 @@ func (b *ScaffoldBuilder) profileDialog(wnd core.Window, sessionManagement *Sess
 	return alert.Dialog("Nutzerkonto", b.profileMenu(wnd), state, opts...)
 }
 
-func lightDarkButton(icon core.SVG, text string, action func()) core.View {
-	return ui.HStack(
-		ui.ImageIcon(icon),
-		ui.Text(text).Font(ui.Font{Weight: ui.HeadlineAndTitleFontWeight}),
-	).Gap(ui.L8).
-		HoveredBackgroundColor(ui.I1).
-		Action(action).
-		FullWidth().
-		Padding(ui.Padding{}.All(ui.L4)).
-		Border(ui.Border{}.Radius(ui.L8))
+func lightDarkButton(wnd core.Window) core.View {
+	return ui.ThemeSwitcher(
+		ui.HStack(
+			ui.ImageIcon(icons.Palette).FillColor(ui.M8),
+			ui.Text(StrSwitchTheme.Get(wnd)).Font(ui.Font{Weight: ui.HeadlineAndTitleFontWeight}),
+		).Gap(ui.L8).
+			HoveredBackgroundColor(ui.I1).
+			FullWidth().
+			Padding(ui.Padding{}.All(ui.L4)).
+			Border(ui.Border{}.Radius(ui.L8)),
+	).Frame(ui.Frame{}.FullWidth())
 }
