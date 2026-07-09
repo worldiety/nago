@@ -311,8 +311,11 @@ func renderTrace(history []completion.Message) string {
 			case completion.ToolResult:
 				var inner strings.Builder
 				for _, ic := range v.Content {
-					if t, ok := ic.(completion.Text); ok {
+					switch t := ic.(type) {
+					case completion.Text:
 						inner.WriteString(t.Text)
+					case completion.Media:
+						fmt.Fprintf(&inner, "[media type=%s] ", t.MimeType)
 					}
 				}
 				marker := "ok"

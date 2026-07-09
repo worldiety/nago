@@ -51,14 +51,18 @@ export default class ThemeManager {
 		return activeThemeKey ? (activeThemeKey as ThemeKey) : null;
 	}
 
+	public getSystemThemeKey(): ThemeKey {
+		const darkModeMql = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+		return darkModeMql && darkModeMql.matches ? ThemeKey.DARK : ThemeKey.LIGHT;
+	}
+
 	applySystemTheme(): void {
 		if (!this.themes) {
 			return;
 		}
 
-		const darkModeMql = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
-
-		if (darkModeMql && darkModeMql.matches) {
+		const theme = this.getSystemThemeKey();
+		if (theme === ThemeKey.DARK) {
 			this.applyTheme(this.themes.dark);
 		} else {
 			this.applyTheme(this.themes.light);

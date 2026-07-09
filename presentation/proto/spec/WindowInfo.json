@@ -26,6 +26,11 @@
     "6": {
       "name": "UserAgent",
       "type": "Str"
+    },
+    "7": {
+      "doc": "If the ColorScheme is set to system/auto, this attribute tells the preferred color scheme. It allows the frontend to provide the systems current light/dark mode setting.",
+      "name": "SystemColorScheme",
+      "type": "ColorScheme"
     }
   }
 }

@@ -97,11 +97,12 @@ func (w *ssrWindow) Locale() language.Tag         { return w.locale }
 func (w *ssrWindow) Location() *time.Location     { return time.UTC }
 func (w *ssrWindow) Info() core.WindowInfo {
 	return core.WindowInfo{
-		Width:       1920,
-		Height:      1080,
-		Density:     1,
-		SizeClass:   core.SizeClass2XL,
-		ColorScheme: core.System,
+		Width:             1920,
+		Height:            1080,
+		Density:           1,
+		SizeClass:         core.SizeClass2XL,
+		ColorScheme:       core.System,
+		SystemColorScheme: core.Light,
 	}
 }
 func (w *ssrWindow) ExportFiles(_ core.ExportFilesOptions) {}

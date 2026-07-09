@@ -232,6 +232,10 @@ func Colors[CS ColorSet](wnd Window) CS {
 	scope := wnd.(*scopeWindow)
 
 	scheme := scope.parent.windowInfo.ColorScheme
+	if scheme == System {
+		scheme = scope.parent.windowInfo.SystemColorScheme
+	}
+
 	colors, ok := scope.parent.app.colorSets[scheme]
 	if !ok {
 		slog.Error("could not find color set for scheme", "scheme", scheme)

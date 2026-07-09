@@ -13,6 +13,7 @@ import (
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application"
 	cfgai "go.wdy.de/nago/application/ai/cfg"
+	_ "go.wdy.de/nago/application/ai/provider/anthropic"
 	_ "go.wdy.de/nago/application/ai/provider/gollama"
 	_ "go.wdy.de/nago/application/ai/provider/mistralai"
 	_ "go.wdy.de/nago/application/ai/provider/openai"
@@ -40,6 +41,7 @@ func main() {
 			MenuEntry().Title("drive").Forward("drive").Private().
 			MenuEntry().Title("stateless").Forward("stateless").Private().
 			MenuEntry().Title("agentic").Forward("agentic").Private().
+			MenuEntry().Title("fileupload").Forward("fileupload").Private().
 			MenuEntry().Title("session").Forward("session").Private().
 			Decorator())
 		option.Must(cfginspector.Enable(cfg))
@@ -75,6 +77,10 @@ func main() {
 
 		cfg.RootViewWithDecoration("agentic", func(wnd core.Window) core.View {
 			return agenticChat(wnd, modAi.UseCases)
+		})
+
+		cfg.RootViewWithDecoration("fileupload", func(wnd core.Window) core.View {
+			return fileUploadChat(wnd, modAi.UseCases)
 		})
 
 		cfg.RootViewWithDecoration("session", func(wnd core.Window) core.View {

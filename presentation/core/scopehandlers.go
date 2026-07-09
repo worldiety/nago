@@ -52,12 +52,13 @@ func (s *Scope) handleEvent(t proto.NagoEvent) {
 func (s *Scope) handleWindowInfoChanged(evt *proto.WindowInfoChanged) {
 	winfo := evt.WindowInfo
 	s.updateWindowInfo(WindowInfo{
-		UserAgent:   UserAgent(winfo.UserAgent),
-		Width:       DP(winfo.Width),
-		Height:      DP(winfo.Height),
-		Density:     Density(winfo.Density),
-		SizeClass:   WindowSizeClass(winfo.SizeClass),
-		ColorScheme: ColorScheme(winfo.ColorScheme),
+		UserAgent:         UserAgent(winfo.UserAgent),
+		Width:             DP(winfo.Width),
+		Height:            DP(winfo.Height),
+		Density:           Density(winfo.Density),
+		SizeClass:         WindowSizeClass(winfo.SizeClass),
+		ColorScheme:       ColorScheme(winfo.ColorScheme),
+		SystemColorScheme: ColorScheme(winfo.SystemColorScheme),
 	})
 }
 
@@ -307,11 +308,12 @@ func convertColorSetToMap(colorSet ColorSet) proto.NamedColors {
 func (s *Scope) handleConfigurationRequested(evt *proto.ScopeConfigurationChangeRequested) {
 	winfo := evt.WindowInfo
 	s.windowInfo = WindowInfo{
-		Width:       DP(winfo.Width),
-		Height:      DP(winfo.Height),
-		Density:     Density(winfo.Density),
-		SizeClass:   WindowSizeClass(winfo.SizeClass),
-		ColorScheme: ColorScheme(winfo.ColorScheme),
+		Width:             DP(winfo.Width),
+		Height:            DP(winfo.Height),
+		Density:           Density(winfo.Density),
+		SizeClass:         WindowSizeClass(winfo.SizeClass),
+		ColorScheme:       ColorScheme(winfo.ColorScheme),
+		SystemColorScheme: ColorScheme(winfo.SystemColorScheme),
 	}
 	s.updateWindowInfo(s.windowInfo)
 	s.updateLanguage(string(evt.AcceptLanguage))
