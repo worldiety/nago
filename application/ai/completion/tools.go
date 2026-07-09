@@ -72,7 +72,9 @@ type Tool struct {
 type OpenedFile struct {
 	// Name is the human-readable file name (used as the upload name and shown to the model).
 	Name string
-	// MimeType classifies the content so the provider can pick the right block type (image vs. document).
+	// MimeType classifies the content so the loop can pick the right handling: text types (see [file.IsText])
+	// are injected inline as text, everything else is uploaded and attached as a Media block (image vs.
+	// document is then decided by the provider).
 	MimeType file.Type
 	// Open yields the file content. It is called at most once by [Run].
 	Open func() (io.ReadCloser, error)
@@ -268,9 +270,10 @@ type RunOptions struct {
 	// [DefaultMaxCompactions].
 	MaxCompactions int
 
-	// FileUploader uploads files produced by [Tool.OpenFile] tools to the active provider so they can be
-	// attached to the conversation by id. It is required only when such tools are used; a nil uploader makes
-	// every OpenFile call fail (reported to the model as an error). Wire it to provider.Files().Put.
+	// FileUploader uploads binary files (images, PDFs, office documents) produced by [Tool.OpenFile] tools to
+	// the active provider so they can be attached to the conversation by id. Text files (see [file.IsText])
+	// are injected inline and never need an uploader. It is required only when a tool opens a binary file; a
+	// nil uploader makes such calls fail (reported to the model as an error). Wire it to provider.Files().Put.
 	FileUploader FileUploader
 }
 
@@ -449,7 +452,7 @@ func executeToolCall(subject auth.Subject, tools map[string]Tool, call ToolCall,
 		}, nil
 	}
 
-	// File-providing tool: upload the file and attach it to the conversation as a Media block.
+	// File-providing tool: inject text files inline or upload binary files and attach them as a Media block.
 	if tool.OpenFile != nil {
 		return executeOpenFileCall(subject, call, tool, uploader)
 	}
@@ -469,10 +472,13 @@ func executeToolCall(subject auth.Subject, tools map[string]Tool, call ToolCall,
 	}, nil
 }
 
-// executeOpenFileCall handles a [Tool.OpenFile] tool call: it runs the tool, uploads the returned file via
-// uploader and produces (a) a short textual tool_result confirming the attachment and (b) a [Media] block
-// referencing the uploaded file by id, to be added to the user turn. Any failure (no uploader, tool error,
-// open/upload error) is reported back to the model as an error tool_result with no attachment.
+// executeOpenFileCall handles a [Tool.OpenFile] tool call. Text files (see [file.IsText]) are read and
+// injected inline as the textual tool_result, so the model can read them directly without an upload - this
+// works with every provider and needs no [FileUploader]. Binary files (images, PDFs, office documents) are
+// uploaded via uploader and produce (a) a short textual tool_result confirming the attachment and (b) a
+// [Media] block referencing the uploaded file by id, to be added to the user turn. Any failure (no uploader
+// for a binary file, tool error, open/upload error) is reported back to the model as an error tool_result
+// with no attachment.
 func executeOpenFileCall(subject auth.Subject, call ToolCall, tool Tool, uploader FileUploader) (ToolResult, []Content) {
 	toolErr := func(msg string) (ToolResult, []Content) {
 		return ToolResult{
@@ -482,13 +488,18 @@ func executeOpenFileCall(subject auth.Subject, call ToolCall, tool Tool, uploade
 		}, nil
 	}
 
-	if uploader == nil {
-		return toolErr("cannot attach file: no file uploader configured for this run")
-	}
-
 	opened, err := tool.OpenFile(call.Arguments)
 	if err != nil {
 		return toolErr(err.Error())
+	}
+
+	// Text files are fed to the model inline instead of being uploaded as a binary attachment.
+	if file.IsText(opened.MimeType) {
+		return injectFileAsText(call, opened)
+	}
+
+	if uploader == nil {
+		return toolErr("cannot attach file: no file uploader configured for this run")
 	}
 
 	fileID, err := uploader(subject, opened)
@@ -505,6 +516,53 @@ func executeOpenFileCall(subject auth.Subject, call ToolCall, tool Tool, uploade
 	}
 
 	return confirm, []Content{media}
+}
+
+// maxInlineTextBytes caps how much of a text file is injected inline by [injectFileAsText]. Larger files are
+// truncated with a note so a single tool call cannot blow the model's context window.
+const maxInlineTextBytes = 256 * 1024
+
+// injectFileAsText reads a text [OpenedFile] and returns its content as the textual tool_result (no upload, no
+// [Media] block). The content is capped at [maxInlineTextBytes] and a truncation note is appended when the
+// file is larger. The returned media slice is always nil.
+func injectFileAsText(call ToolCall, opened OpenedFile) (ToolResult, []Content) {
+	toolErr := func(msg string) (ToolResult, []Content) {
+		return ToolResult{
+			ToolCallID: call.ID,
+			Content:    []Content{Text{Text: msg}},
+			IsError:    true,
+		}, nil
+	}
+
+	rc, err := opened.Open()
+	if err != nil {
+		return toolErr(fmt.Sprintf("cannot open file %q: %v", opened.Name, err))
+	}
+	defer rc.Close()
+
+	// read one byte more than the cap so we can detect (and report) truncation
+	buf, err := io.ReadAll(io.LimitReader(rc, maxInlineTextBytes+1))
+	if err != nil {
+		return toolErr(fmt.Sprintf("cannot read file %q: %v", opened.Name, err))
+	}
+
+	truncated := false
+	if len(buf) > maxInlineTextBytes {
+		buf = buf[:maxInlineTextBytes]
+		truncated = true
+	}
+
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "Contents of %q (%s):\n", opened.Name, opened.MimeType)
+	sb.Write(buf)
+	if truncated {
+		fmt.Fprintf(&sb, "\n\n[truncated: showing the first %d bytes; the file is larger]", maxInlineTextBytes)
+	}
+
+	return ToolResult{
+		ToolCallID: call.ID,
+		Content:    []Content{Text{Text: sb.String()}},
+	}, nil
 }
 
 // reflectSchema builds a (subset of) JSON Schema object for the given Go type. It supports the JSON

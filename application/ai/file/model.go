@@ -11,6 +11,7 @@ import (
 	"errors"
 	"io"
 	"path/filepath"
+	"strings"
 
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/data"
@@ -42,21 +43,64 @@ func (t Type) Ext() string {
 		return ".pptx"
 	case XLSX:
 		return ".xlsx"
+	case Text:
+		return ".txt"
+	case Markdown:
+		return ".md"
+	case CSV:
+		return ".csv"
+	case JSON:
+		return ".json"
+	case XML:
+		return ".xml"
 	default:
 		return ""
 	}
 }
 
 const (
-	PNG    Type = "image/png"
-	JPEG   Type = "image/jpeg"
-	GIF    Type = "image/gif"
-	PDF    Type = "application/pdf"
-	DOCX   Type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-	PPTX   Type = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
-	XLSX   Type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-	Binary Type = "application/octet-stream"
+	PNG      Type = "image/png"
+	JPEG     Type = "image/jpeg"
+	GIF      Type = "image/gif"
+	PDF      Type = "application/pdf"
+	DOCX     Type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+	PPTX     Type = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+	XLSX     Type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+	Text     Type = "text/plain"
+	Markdown Type = "text/markdown"
+	CSV      Type = "text/csv"
+	JSON     Type = "application/json"
+	XML      Type = "application/xml"
+	Binary   Type = "application/octet-stream"
 )
+
+// IsText reports whether the given media type carries human-readable text that can be injected inline into a
+// conversation (as a text block) instead of being uploaded and referenced as a binary attachment. This covers
+// every "text/*" type as well as common structured-text types such as application/json, application/xml and
+// their structured suffixes (e.g. application/vnd.api+json). Binary document formats (PDF, DOCX, images, ...)
+// are not considered text.
+func IsText(t Type) bool {
+	s := strings.ToLower(strings.TrimSpace(string(t)))
+	if s == "" {
+		return false
+	}
+
+	if strings.HasPrefix(s, "text/") {
+		return true
+	}
+
+	switch s {
+	case string(JSON), string(XML), "application/xhtml+xml", "application/javascript", "application/x-yaml", "application/yaml", "application/toml", "application/x-sh":
+		return true
+	}
+
+	// structured syntax suffixes, e.g. application/vnd.api+json, image/svg+xml
+	if strings.HasSuffix(s, "+json") || strings.HasSuffix(s, "+xml") {
+		return true
+	}
+
+	return false
+}
 
 // Purpose declares the intended use of an uploaded file. Some providers require it on upload (e.g. OpenAI's
 // Files API mandates a purpose such as "vision" or "user_data"), while others treat it as an optional scope

@@ -476,3 +476,198 @@ func TestRun_OpenFileTool_ToolErrorIsReported(t *testing.T) {
 		t.Fatalf("expected an error tool_result, got %#v", history[2].Content[0])
 	}
 }
+
+// TestRun_OpenFileTool_TextInjectedInline verifies that a text file is injected inline as the tool_result text
+// (no upload, no Media block) and works even without a FileUploader configured.
+func TestRun_OpenFileTool_TextInjectedInline(t *testing.T) {
+	const content = "# Requirements\n\nthe system must do X and Y"
+	tool := NewOpenFileTool("open_drive_file", "opens a drive file", func(in openIn) (OpenedFile, error) {
+		return OpenedFile{
+			Name:     "anforderungen.md",
+			MimeType: file.Markdown,
+			Open:     func() (io.ReadCloser, error) { return io.NopCloser(strings.NewReader(content)), nil },
+		}, nil
+	})
+
+	uploaderCalled := false
+	uploader := func(_ auth.Subject, _ OpenedFile) (file.ID, error) {
+		uploaderCalled = true
+		return "", nil
+	}
+
+	fake := &fakeCompletions{
+		results: []Result{
+			{
+				Message: Message{Role: Assistant, Content: []Content{
+					ToolCall{ID: "1", Name: "open_drive_file", Arguments: json.RawMessage(`{"fid":"abc"}`)},
+				}},
+				StopReason: StopToolUse,
+			},
+			{
+				Message:    Message{Role: Assistant, Content: []Content{Text{Text: "summary"}}},
+				StopReason: StopEndTurn,
+			},
+		},
+	}
+
+	_, history, err := Run(nil, fake, RunOptions{
+		Options:      Options{Messages: []Message{{Role: User, Content: []Content{Text{Text: "read abc"}}}}},
+		Tools:        []Tool{tool},
+		FileUploader: uploader,
+	})
+	if err != nil {
+		t.Fatalf("run failed: %v", err)
+	}
+
+	if uploaderCalled {
+		t.Fatal("uploader must not be called for a text file")
+	}
+
+	userTurn := history[2]
+	// only the tool_result must be present; no Media attachment
+	if len(userTurn.Content) != 1 {
+		t.Fatalf("expected only the tool_result (no media), got %#v", userTurn.Content)
+	}
+	tr, ok := userTurn.Content[0].(ToolResult)
+	if !ok || tr.IsError {
+		t.Fatalf("expected a successful tool_result, got %#v", userTurn.Content[0])
+	}
+	if len(tr.Content) != 1 {
+		t.Fatalf("expected a single text block in the tool_result, got %#v", tr.Content)
+	}
+	txt, ok := tr.Content[0].(Text)
+	if !ok {
+		t.Fatalf("expected a Text block, got %T", tr.Content[0])
+	}
+	if !strings.Contains(txt.Text, content) {
+		t.Fatalf("tool_result text does not contain the file content: %q", txt.Text)
+	}
+	if !strings.Contains(txt.Text, "anforderungen.md") {
+		t.Fatalf("expected the file name in the injected text header: %q", txt.Text)
+	}
+	if strings.Contains(txt.Text, "truncated") {
+		t.Fatalf("small file must not be reported as truncated: %q", txt.Text)
+	}
+}
+
+// TestRun_OpenFileTool_TextWithoutUploader verifies a text file is injected even when no FileUploader is set.
+func TestRun_OpenFileTool_TextWithoutUploader(t *testing.T) {
+	tool := NewOpenFileTool("open_drive_file", "", func(in openIn) (OpenedFile, error) {
+		return OpenedFile{
+			Name:     "notes.txt",
+			MimeType: file.Text,
+			Open:     func() (io.ReadCloser, error) { return io.NopCloser(strings.NewReader("hello world")), nil },
+		}, nil
+	})
+
+	fake := &fakeCompletions{
+		results: []Result{
+			{
+				Message: Message{Role: Assistant, Content: []Content{
+					ToolCall{ID: "1", Name: "open_drive_file", Arguments: json.RawMessage(`{"fid":"abc"}`)},
+				}},
+				StopReason: StopToolUse,
+			},
+			{
+				Message:    Message{Role: Assistant, Content: []Content{Text{Text: "ok"}}},
+				StopReason: StopEndTurn,
+			},
+		},
+	}
+
+	_, history, err := Run(nil, fake, RunOptions{
+		Options: Options{Messages: []Message{{Role: User, Content: []Content{Text{Text: "read abc"}}}}},
+		Tools:   []Tool{tool}, // no FileUploader
+	})
+	if err != nil {
+		t.Fatalf("run failed: %v", err)
+	}
+
+	tr, ok := history[2].Content[0].(ToolResult)
+	if !ok || tr.IsError {
+		t.Fatalf("expected a successful tool_result even without an uploader, got %#v", history[2].Content[0])
+	}
+	txt := tr.Content[0].(Text)
+	if !strings.Contains(txt.Text, "hello world") {
+		t.Fatalf("expected file content in tool_result, got %q", txt.Text)
+	}
+}
+
+// TestExecuteOpenFileCall_TextTruncated verifies that a text file larger than the inline cap is truncated and
+// carries a truncation note.
+func TestExecuteOpenFileCall_TextTruncated(t *testing.T) {
+	big := strings.Repeat("a", maxInlineTextBytes+1000)
+	tool := NewOpenFileTool("open_drive_file", "", func(in openIn) (OpenedFile, error) {
+		return OpenedFile{
+			Name:     "big.txt",
+			MimeType: file.Text,
+			Open:     func() (io.ReadCloser, error) { return io.NopCloser(strings.NewReader(big)), nil },
+		}, nil
+	})
+
+	call := ToolCall{ID: "1", Name: "open_drive_file", Arguments: json.RawMessage(`{"fid":"abc"}`)}
+	tr, media := executeOpenFileCall(nil, call, tool, nil)
+
+	if media != nil {
+		t.Fatalf("text injection must not produce media, got %#v", media)
+	}
+	if tr.IsError {
+		t.Fatalf("unexpected error tool_result: %#v", tr)
+	}
+	txt := tr.Content[0].(Text)
+	if !strings.Contains(txt.Text, "truncated") {
+		t.Fatalf("expected a truncation note, got tail: %q", txt.Text[len(txt.Text)-80:])
+	}
+	// the injected text is "<header>\n<body><note>"; the body is the capped run of 'a's. Verify the longest
+	// run of 'a' equals exactly the cap (header/note contain only isolated 'a's).
+	longestRun := 0
+	run := 0
+	for _, r := range txt.Text {
+		if r == 'a' {
+			run++
+			if run > longestRun {
+				longestRun = run
+			}
+		} else {
+			run = 0
+		}
+	}
+	if longestRun != maxInlineTextBytes {
+		t.Fatalf("expected exactly %d body bytes, got a longest run of %d", maxInlineTextBytes, longestRun)
+	}
+}
+
+// TestExecuteOpenFileCall_ImageStillUploads is a regression guard: a binary (image) file must still go through
+// the uploader and produce a Media block.
+func TestExecuteOpenFileCall_ImageStillUploads(t *testing.T) {
+	tool := NewOpenFileTool("open_drive_file", "", func(in openIn) (OpenedFile, error) {
+		return OpenedFile{
+			Name:     "pic.png",
+			MimeType: file.PNG,
+			Open:     func() (io.ReadCloser, error) { return io.NopCloser(strings.NewReader("\x89PNG")), nil },
+		}, nil
+	})
+
+	uploaderCalled := false
+	uploader := func(_ auth.Subject, _ OpenedFile) (file.ID, error) {
+		uploaderCalled = true
+		return file.ID("file-png"), nil
+	}
+
+	call := ToolCall{ID: "1", Name: "open_drive_file", Arguments: json.RawMessage(`{"fid":"abc"}`)}
+	tr, media := executeOpenFileCall(nil, call, tool, uploader)
+
+	if !uploaderCalled {
+		t.Fatal("expected the uploader to be called for an image")
+	}
+	if tr.IsError {
+		t.Fatalf("unexpected error tool_result: %#v", tr)
+	}
+	if len(media) != 1 {
+		t.Fatalf("expected exactly one media block, got %#v", media)
+	}
+	m, ok := media[0].(Media)
+	if !ok || m.MimeType != file.PNG || m.Source.FileID.UnwrapOr("") != file.ID("file-png") {
+		t.Fatalf("unexpected media block: %#v", media[0])
+	}
+}

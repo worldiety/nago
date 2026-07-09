@@ -291,7 +291,7 @@ func driveTools(subject auth.Subject, drives drive.UseCases) []completion.Tool {
 	}
 
 	open := completion.NewOpenFileTool("open_drive_file",
-		"opens a drive file by its id and attaches its content to the conversation so it can be inspected",
+		"opens a drive file by its id and makes its content available to the conversation. Text files (e.g. .md, .txt, .csv, .json, source code) are injected inline as text; images and PDFs are attached as media.",
 		func(in openFileIn) (completion.OpenedFile, error) {
 			optFile, err := drives.Get(subject, drive.FID(in.FID), "")
 			if err != nil {
@@ -305,7 +305,7 @@ func driveTools(subject auth.Subject, drives drive.UseCases) []completion.Tool {
 			mimeStr, _ := f.MimeType()
 			mime := driveMimeToFileType(mimeStr, f.Name())
 			if mime == file.Binary {
-				return completion.OpenedFile{}, fmt.Errorf("unsupported file type %q for %q; only images and PDFs can be attached", mimeStr, f.Name())
+				return completion.OpenedFile{}, fmt.Errorf("unsupported file type %q for %q; only text files, images and PDFs can be opened", mimeStr, f.Name())
 			}
 
 			return completion.OpenedFile{
@@ -319,10 +319,23 @@ func driveTools(subject auth.Subject, drives drive.UseCases) []completion.Tool {
 }
 
 // driveMimeToFileType maps a drive-reported mime string (falling back to the filename extension) to a
-// [file.Type] the AI provider supports as an attachment. Unsupported types map to [file.Binary].
+// [file.Type] the AI chat can handle: text types are injected inline by the completion loop, while images and
+// PDFs are attached as media. Unsupported binary types map to [file.Binary].
 func driveMimeToFileType(mime, name string) file.Type {
+	// defensively strip any RFC 6838 parameters (e.g. "text/plain; charset=binary") that older drive
+	// records may still carry, so the comparisons below see the bare media type.
+	if i := strings.IndexByte(mime, ';'); i >= 0 {
+		mime = strings.TrimSpace(mime[:i])
+	}
+
+	// canonical media types we attach as-is
 	switch file.Type(mime) {
 	case file.PNG, file.JPEG, file.GIF, file.PDF:
+		return file.Type(mime)
+	}
+
+	// any text-ish mime (text/*, application/json, ...) is injected inline as text
+	if file.IsText(file.Type(mime)) {
 		return file.Type(mime)
 	}
 
@@ -336,6 +349,33 @@ func driveMimeToFileType(mime, name string) file.Type {
 		return file.GIF
 	case strings.HasSuffix(lower, ".pdf"):
 		return file.PDF
+	case strings.HasSuffix(lower, ".md"), strings.HasSuffix(lower, ".markdown"):
+		return file.Markdown
+	case strings.HasSuffix(lower, ".csv"):
+		return file.CSV
+	case strings.HasSuffix(lower, ".json"):
+		return file.JSON
+	case strings.HasSuffix(lower, ".xml"):
+		return file.XML
+	case strings.HasSuffix(lower, ".txt"),
+		strings.HasSuffix(lower, ".log"),
+		strings.HasSuffix(lower, ".go"),
+		strings.HasSuffix(lower, ".ts"),
+		strings.HasSuffix(lower, ".js"),
+		strings.HasSuffix(lower, ".py"),
+		strings.HasSuffix(lower, ".java"),
+		strings.HasSuffix(lower, ".rs"),
+		strings.HasSuffix(lower, ".c"),
+		strings.HasSuffix(lower, ".h"),
+		strings.HasSuffix(lower, ".yaml"),
+		strings.HasSuffix(lower, ".yml"),
+		strings.HasSuffix(lower, ".toml"),
+		strings.HasSuffix(lower, ".ini"),
+		strings.HasSuffix(lower, ".sh"),
+		strings.HasSuffix(lower, ".sql"),
+		strings.HasSuffix(lower, ".html"),
+		strings.HasSuffix(lower, ".htm"):
+		return file.Text
 	default:
 		return file.Binary
 	}
