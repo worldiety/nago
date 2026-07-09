@@ -66,11 +66,18 @@ func NewOpenDrive(mutex *sync.Mutex, repo Repository, globalRootRepo NamedRootRe
 		file.repo = repo
 
 		if opts.Create && user.IsSU(subject) {
+			// self-heal roots that lost their directory bit due to an earlier chmod bug (a root is always a
+			// directory by definition). Without this bit, IsDir() is false and every Put into the root fails
+			// with "parent file is not a directory".
+			dirBitRequired := !file.FileMode.IsDir()
 			chmodRequired := file.Group != opts.Group || file.FileMode.Perm() != opts.Mode.Perm()
-			if chmodRequired {
-				slog.Warn("su changed root permissions", "fid", file.ID)
+			if chmodRequired || dirBitRequired {
+				slog.Warn("su changed root permissions", "fid", file.ID, "restoredDirBit", dirBitRequired)
 				file.Group = opts.Group
-				file.FileMode = opts.Mode
+				// only replace the permission bits and always keep/restore the directory type bit.
+				// opts.Mode is a plain perm value, so assigning it directly would strip the directory
+				// flag from the root and break every subsequent Put ("parent file is not a directory").
+				file.FileMode = os.ModeDir | opts.Mode.Perm()
 				if err := repo.Save(file); err != nil {
 					return zero, fmt.Errorf("failed su chmod file: %w", err)
 				}
