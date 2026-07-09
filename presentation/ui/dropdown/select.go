@@ -207,7 +207,9 @@ func (c TDropdown[ID]) Searchable(b bool) TDropdown[ID] {
 // Implicitly enables the ORA styled dropdown.
 func (c TDropdown[ID]) DropdownInfo(info string) TDropdown[ID] {
 	c.dropdownInfo = info
-	c.oraDropdown = true
+	if info != "" {
+		c.oraDropdown = true
+	}
 	return c
 }
 
