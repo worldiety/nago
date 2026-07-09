@@ -187,20 +187,27 @@ func (c TDropdown[ID]) Autocomplete(tags string) TDropdown[ID] {
 }
 
 // StyledDropdown enables or disables the ORA styled dropdown.
+// Note: calling Searchable(true) or DropdownInfo(...) will implicitly enable this.
 func (c TDropdown[ID]) StyledDropdown(b bool) TDropdown[ID] {
 	c.oraDropdown = b
 	return c
 }
 
-// Searchable allows the user to filter options in the styled dropdown
+// Searchable allows the user to filter options in the styled dropdown.
+// Implicitly enables the ORA styled dropdown when set to true.
 func (c TDropdown[ID]) Searchable(b bool) TDropdown[ID] {
 	c.searchable = b
+	if b {
+		c.oraDropdown = true
+	}
 	return c
 }
 
-// DropdownInfo sets an info text to be shown in the styled dropdown
+// DropdownInfo sets an info text to be shown in the styled dropdown.
+// Implicitly enables the ORA styled dropdown.
 func (c TDropdown[ID]) DropdownInfo(info string) TDropdown[ID] {
 	c.dropdownInfo = info
+	c.oraDropdown = true
 	return c
 }
 
