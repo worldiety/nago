@@ -285,7 +285,7 @@ onUnmounted(() => {
 
 	&.active {
 		.leading {
-			@apply z-20;
+			@apply z-40;
 		}
 
 		.chevron {
@@ -317,11 +317,11 @@ onUnmounted(() => {
 
 		&.active {
 			& > input {
-				@apply z-20;
+				@apply z-40;
 			}
 
 			.chevron {
-				@apply z-20;
+				@apply z-40;
 			}
 		}
 
