@@ -15,6 +15,13 @@ import (
 	"go.wdy.de/nago/presentation/proto"
 )
 
+var (
+	StrTheme       = core.DefaultStr("theme-switcher.theme", "Color scheme", "Farbschema")
+	StrThemeLight  = core.DefaultStr("theme-switcher.theme.light", "Light", "Hell")
+	StrThemeDark   = core.DefaultStr("theme-switcher.theme.dark", "Dark", "Dunkel")
+	StrThemeSystem = core.DefaultStr("theme-switcher.theme.system", "System", "System")
+)
+
 // TThemeSwitcher is a component to display a theme switching ui.
 // It displays a dropdown menu anchored to a specific view.
 type TThemeSwitcher struct {
@@ -76,11 +83,11 @@ func (c TThemeSwitcher) Render(ctx core.RenderContext) core.RenderNode {
 				CustomContent: VStack(
 					VStack(
 						ImageIcon(icons.Palette).FillColor(M8),
-						Text("Farbschema"),
+						Text(StrTheme.Get(wnd)),
 					).FullWidth(),
 					VStack(
 						Each2(stateTheme.All(), func(idx int, checked *core.State[bool]) core.View {
-							return RadioButtonField(getLabelFromTheme(themes[idx]), &stateTheme, idx)
+							return RadioButtonField(getLabelFromTheme(wnd, themes[idx]), &stateTheme, idx)
 						})...,
 					).Alignment(Leading).FullWidth().Padding(Padding{}.Vertical(L8)),
 				).FullWidth().Padding(Padding{}.All(L8)).Render(ctx),
@@ -91,14 +98,14 @@ func (c TThemeSwitcher) Render(ctx core.RenderContext) core.RenderNode {
 	}
 }
 
-func getLabelFromTheme(theme string) string {
+func getLabelFromTheme(wnd core.Window, theme string) string {
 	switch theme {
 	case core.Light.String():
-		return "Hell"
+		return StrThemeLight.Get(wnd)
 	case core.Dark.String():
-		return "Dunkel"
+		return StrThemeDark.Get(wnd)
 	case core.System.String():
-		return "System"
+		return StrThemeSystem.Get(wnd)
 	default:
 		return "?"
 	}
