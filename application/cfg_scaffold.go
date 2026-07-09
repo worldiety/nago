@@ -212,6 +212,7 @@ type ScaffoldBuilder struct {
 	cfg                     *Configurator
 	alignment               ui.ScaffoldAlignment
 	menu                    []*MenuEntryBuilder
+	fnMenu                  func(wnd core.Window, menu []ui.ScaffoldMenuEntry) []ui.ScaffoldMenuEntry
 	logoClick               func(wnd core.Window)
 	logoImage               ui.DecoredView
 	showLogin               bool
@@ -314,6 +315,12 @@ func (b *ScaffoldBuilder) MenuEntry() *MenuEntryBuilder {
 	e := &MenuEntryBuilder{parent: b}
 	b.menu = append(b.menu, e)
 	return e
+}
+
+// Menu allows to configure a dynamic menu which is evaluated on every render.
+func (b *ScaffoldBuilder) Menu(fn func(wnd core.Window, menu []ui.ScaffoldMenuEntry) []ui.ScaffoldMenuEntry) *ScaffoldBuilder {
+	b.fnMenu = fn
+	return b
 }
 
 // NoFooterContentPadding disables the footers content padding on the given paths.
@@ -455,6 +462,10 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 			}
 
 			menu = append(menu, sentry)
+		}
+
+		if b.fnMenu != nil {
+			menu = b.fnMenu(wnd, menu)
 		}
 
 		menuDialogPresented := ScaffoldUserMenuPresentedState(wnd)
