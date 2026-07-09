@@ -95,6 +95,18 @@ export function getWindowInfo(themeManager: ThemeManager): WindowInfo {
 			break;
 	}
 
+	switch (themeManager.getSystemThemeKey()) {
+		case ThemeKey.LIGHT:
+			windowInfo.systemColorScheme = ColorSchemeValues.Light;
+			break;
+		case ThemeKey.DARK:
+			windowInfo.systemColorScheme = ColorSchemeValues.Dark;
+			break;
+		default:
+			windowInfo.systemColorScheme = ColorSchemeValues.System;
+			break;
+	}
+
 	return windowInfo;
 }
 

@@ -8,8 +8,9 @@
 package core
 
 import (
-	"go.wdy.de/nago/presentation/proto"
 	"strings"
+
+	"go.wdy.de/nago/presentation/proto"
 )
 
 // DP is Density-independent pixels: an abstract unit that is based on the physical density of the screen.
@@ -68,12 +69,13 @@ func (a UserAgent) IsEdge() bool {
 }
 
 type WindowInfo struct {
-	Width       DP
-	Height      DP
-	Density     Density
-	SizeClass   WindowSizeClass
-	ColorScheme ColorScheme
-	UserAgent   UserAgent
+	Width             DP
+	Height            DP
+	Density           Density
+	SizeClass         WindowSizeClass
+	ColorScheme       ColorScheme
+	SystemColorScheme ColorScheme
+	UserAgent         UserAgent
 }
 
 // WindowSizeClass represents media break points of the screen which an ora application is shown.

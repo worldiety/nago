@@ -2131,13 +2131,17 @@ export class WindowInfo implements Writeable, Readable {
 
 	public userAgent?: Str;
 
+	// If the ColorScheme is set to system/auto, this attribute tells the preferred color scheme. It allows the frontend to provide the systems current light/dark mode setting.
+	public systemColorScheme?: ColorScheme;
+
 	constructor(
 		width: DP | undefined = undefined,
 		height: DP | undefined = undefined,
 		density: Density | undefined = undefined,
 		sizeClass: WindowSizeClass | undefined = undefined,
 		colorScheme: ColorScheme | undefined = undefined,
-		userAgent: Str | undefined = undefined
+		userAgent: Str | undefined = undefined,
+		systemColorScheme: ColorScheme | undefined = undefined
 	) {
 		this.width = width;
 		this.height = height;
@@ -2145,6 +2149,7 @@ export class WindowInfo implements Writeable, Readable {
 		this.sizeClass = sizeClass;
 		this.colorScheme = colorScheme;
 		this.userAgent = userAgent;
+		this.systemColorScheme = systemColorScheme;
 	}
 
 	read(reader: BinaryReader): void {
@@ -2177,6 +2182,10 @@ export class WindowInfo implements Writeable, Readable {
 					this.userAgent = readString(reader);
 					break;
 				}
+				case 7: {
+					this.systemColorScheme = readInt(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -2192,6 +2201,7 @@ export class WindowInfo implements Writeable, Readable {
 			this.sizeClass !== undefined,
 			this.colorScheme !== undefined,
 			this.userAgent !== undefined,
+			this.systemColorScheme !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -2219,6 +2229,10 @@ export class WindowInfo implements Writeable, Readable {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 6);
 			writeString(writer, this.userAgent!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 7);
+			writeInt(writer, this.systemColorScheme!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -2228,7 +2242,8 @@ export class WindowInfo implements Writeable, Readable {
 			this.density === undefined &&
 			this.sizeClass === undefined &&
 			this.colorScheme === undefined &&
-			this.userAgent === undefined
+			this.userAgent === undefined &&
+			this.systemColorScheme === undefined
 		);
 	}
 
@@ -2239,6 +2254,7 @@ export class WindowInfo implements Writeable, Readable {
 		this.sizeClass = undefined;
 		this.colorScheme = undefined;
 		this.userAgent = undefined;
+		this.systemColorScheme = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

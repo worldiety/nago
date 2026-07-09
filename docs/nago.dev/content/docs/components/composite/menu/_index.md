@@ -16,6 +16,7 @@ Empty groups are discarded when rendering.
 | Method | Description |
 |--------| ------------|
 | `Frame(frame Frame)` | Frame sets the layout frame of the menu. |
+| `Offset(offset Length)` | Offset sets the offset of the menu from its anchor. |
 ---
 
 ## Related

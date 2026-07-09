@@ -24,7 +24,7 @@ func main() {
 		cfg.RootView(".", func(wnd core.Window) core.View {
 
 			return ui.VStack(
-				ui.ThemeSwitcher(ui.PrimaryButton(nil).Title("THEME SWITCH")),
+				ui.ThemeSwitcher(ui.SecondaryButton(nil).Title("THEME SWITCH")),
 			).Padding(ui.Padding{}.All(ui.L16)).Frame(ui.Frame{}.MatchScreen())
 		})
 	}).Run()

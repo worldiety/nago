@@ -2172,16 +2172,19 @@ type WindowInfo struct {
 	// ColorScheme which the frontend wants to pick. This may reduce graphical glitches, if the backend creates images or webview resources for the frontend.
 	ColorScheme ColorScheme
 	UserAgent   Str
+	// If the ColorScheme is set to system/auto, this attribute tells the preferred color scheme. It allows the frontend to provide the systems current light/dark mode setting.
+	SystemColorScheme ColorScheme
 }
 
 func (v *WindowInfo) write(w *BinaryWriter) error {
-	var fields [7]bool
+	var fields [8]bool
 	fields[1] = !v.Width.IsZero()
 	fields[2] = !v.Height.IsZero()
 	fields[3] = !v.Density.IsZero()
 	fields[4] = !v.SizeClass.IsZero()
 	fields[5] = !v.ColorScheme.IsZero()
 	fields[6] = !v.UserAgent.IsZero()
+	fields[7] = !v.SystemColorScheme.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -2240,6 +2243,14 @@ func (v *WindowInfo) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[7] {
+		if err := w.writeFieldHeader(uvarint, 7); err != nil {
+			return err
+		}
+		if err := v.SystemColorScheme.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -2282,6 +2293,11 @@ func (v *WindowInfo) read(r *BinaryReader) error {
 			}
 		case 6:
 			err := v.UserAgent.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.SystemColorScheme.read(r)
 			if err != nil {
 				return err
 			}
@@ -22550,13 +22566,14 @@ func (v *WindowInfo) reset() {
 	v.SizeClass.reset()
 	v.ColorScheme.reset()
 	v.UserAgent.reset()
+	v.SystemColorScheme.reset()
 }
 
 func (v *WindowInfo) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Width.IsZero() && v.Height.IsZero() && v.Density.IsZero() && v.SizeClass.IsZero() && v.ColorScheme.IsZero() && v.UserAgent.IsZero()
+	return v.Width.IsZero() && v.Height.IsZero() && v.Density.IsZero() && v.SizeClass.IsZero() && v.ColorScheme.IsZero() && v.UserAgent.IsZero() && v.SystemColorScheme.IsZero()
 }
 
 type DP float64
