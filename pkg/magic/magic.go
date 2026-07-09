@@ -9,9 +9,10 @@ package magic
 
 import (
 	"bytes"
-	"go.wdy.de/nago/pkg/blob/crypto"
 	"net/http"
 	"unicode"
+
+	"go.wdy.de/nago/pkg/blob/crypto"
 )
 
 var zipMagicBytes = [][]byte{
@@ -42,6 +43,10 @@ func Detect(buf []byte) string {
 
 	if maybeJson(buf) {
 		return "application/json"
+	}
+
+	if maybeSVG(buf) {
+		return "image/svg+xml"
 	}
 
 	return http.DetectContentType(buf)
@@ -76,4 +81,53 @@ func maybeJson(buf []byte) bool {
 	}
 
 	return false
+}
+
+func maybeSVG(buf []byte) bool {
+	// skip a possible UTF-8 BOM
+	buf = bytes.TrimPrefix(buf, []byte{0xEF, 0xBB, 0xBF})
+
+	// only inspect the beginning of the document to keep detection cheap
+	const window = 1024
+	if len(buf) > window {
+		buf = buf[:window]
+	}
+
+	for {
+		buf = bytes.TrimLeftFunc(buf, unicode.IsSpace)
+		if len(buf) == 0 || buf[0] != '<' {
+			return false
+		}
+
+		// Skip xml declaration, comments, doctype or other markup declarations
+		// Only look for elements with <svg* as root
+		switch {
+		case bytes.HasPrefix(buf, []byte("<?")):
+			end := bytes.Index(buf, []byte("?>"))
+			if end < 0 {
+				return false
+			}
+			buf = buf[end+2:]
+
+		case bytes.HasPrefix(buf, []byte("<!--")):
+			end := bytes.Index(buf[4:], []byte("-->"))
+			if end < 0 {
+				return false
+			}
+			buf = buf[4+end+3:]
+
+		case bytes.HasPrefix(buf, []byte("<!")):
+			end := bytes.IndexByte(buf, '>')
+			if end < 0 {
+				return false
+			}
+			buf = buf[end+1:]
+
+		default:
+			lower := bytes.ToLower(buf)
+			return bytes.HasPrefix(lower, []byte("<svg>")) || bytes.HasPrefix(lower, []byte("<svg ")) ||
+				bytes.HasPrefix(lower, []byte("<svg/")) || bytes.HasPrefix(lower, []byte("<svg\t")) ||
+				bytes.HasPrefix(lower, []byte("<svg\n")) || bytes.HasPrefix(lower, []byte("<svg\r"))
+		}
+	}
 }

@@ -270,6 +270,18 @@ func (c *Configurator) newHandler() http.Handler {
 
 	}))
 
+	// Serve the configured application icon under the static favicon paths referenced by index.html.
+	faviconHandler := http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if c.appIconUri == "" {
+			http.NotFound(writer, request)
+			return
+		}
+
+		http.Redirect(writer, request, string(c.appIconUri), http.StatusFound)
+	})
+	r.Mount("/favicon.svg", faviconHandler)
+	r.Mount("/favicon.ico", faviconHandler)
+
 	if len(c.fsys) > 0 {
 		c.defaultLogger().Info("serving fsys assets")
 		assets := statigz.FileServer(mergefs.Merge(c.fsys...).(mergefs.MergedFS), statigz.EncodeOnInit)
