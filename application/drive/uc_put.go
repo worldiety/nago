@@ -272,7 +272,14 @@ func mimeType(store blob.Store, key string) (string, error) {
 			return "", fmt.Errorf("cannot process exec file cmd result %s: %s, %w", fname, string(buf), err)
 		}
 
-		return strings.TrimSpace(tokens[1]), nil
+		// file --mime yields e.g. "image/png; charset=binary". Strip the RFC 6838 parameters (everything
+		// after the ';') and keep only the media type, so the value matches canonical types like "image/png".
+		mt := strings.TrimSpace(tokens[1])
+		if i := strings.IndexByte(mt, ';'); i >= 0 {
+			mt = strings.TrimSpace(mt[:i])
+		}
+
+		return mt, nil
 	}
 
 	return "", fmt.Errorf("cannot get system file tool to detect mimetype %s: %w", key, os.ErrNotExist)
