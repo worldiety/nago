@@ -8,6 +8,7 @@
 package ndb
 
 import (
+	"context"
 	"iter"
 	"math"
 )
@@ -17,6 +18,17 @@ type TailOptions struct {
 	// FromSeq is the inclusive sequence number at which historical catch-up
 	// starts. 0 means "from the very beginning".
 	FromSeq Seq
+
+	// Ctx, when non-nil, cancels the stream: once Ctx is done, Tail stops
+	// ranging and returns, even while blocked waiting on the live edge for the
+	// next write. It is the way to unblock a caller that is idle on a quiet tail.
+	//
+	// A nil Ctx preserves the classic behaviour: cancellation is done purely by
+	// breaking out of the range loop, which is sufficient while actively
+	// iterating (replay/catch-up) but cannot interrupt a wait on a silent live
+	// edge. Prefer Ctx for long-lived followers; the zero value stays fully
+	// backwards compatible.
+	Ctx context.Context
 }
 
 // Tail returns a stream that first catches up the history from opts.FromSeq via
@@ -51,7 +63,11 @@ type TailOptions struct {
 // history are handled normally.
 //
 // Cancellation is done — as with Replay — by breaking out of the range loop; no
-// context.Context is required, consistent with the rest of the ndb API.
+// context.Context is required for that, consistent with the rest of the ndb API.
+// That suffices while actively iterating, but cannot interrupt a wait on a
+// silent live edge (no more writes are coming). For long-lived followers that
+// must return promptly on shutdown, pass [TailOptions.Ctx]; a nil Ctx keeps the
+// classic break-to-cancel behaviour.
 //
 // The yielded Message.Payload follows the same lifetime rules as [History.Replay]
 // (a view valid only for the current iteration step); clone it to retain it.
@@ -76,6 +92,14 @@ func Tail(m Followable, types []TypeID, opts TailOptions) iter.Seq2[TypeID, Mess
 			signal()
 		})
 		defer unsubscribe()
+
+		// ctxDone is the cancellation signal. A nil Ctx yields a nil channel,
+		// which blocks forever in a select — so the zero value behaves exactly
+		// like the classic break-to-cancel Tail.
+		var ctxDone <-chan struct{}
+		if opts.Ctx != nil {
+			ctxDone = opts.Ctx.Done()
+		}
 
 		// wanted reports whether a type is selected for delivery. An empty filter
 		// means "all types".
@@ -141,6 +165,8 @@ func Tail(m Followable, types []TypeID, opts TailOptions) iter.Seq2[TypeID, Mess
 				return
 			}
 			select {
+			case <-ctxDone:
+				return
 			case <-wake:
 				continue // more was written meanwhile; drain again
 			default:
@@ -149,10 +175,19 @@ func Tail(m Followable, types []TypeID, opts TailOptions) iter.Seq2[TypeID, Mess
 		}
 
 		// Phase 3: follow the live edge. Every wake replays the newly available
-		// range, which preserves global ordering.
-		for range wake {
-			if !drain() {
+		// range, which preserves global ordering. A done Ctx returns promptly
+		// even though no further write would arrive to unblock the wait.
+		for {
+			select {
+			case <-ctxDone:
 				return
+			case _, ok := <-wake:
+				if !ok {
+					return
+				}
+				if !drain() {
+					return
+				}
 			}
 		}
 	}

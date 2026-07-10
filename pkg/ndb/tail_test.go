@@ -1,6 +1,7 @@
 package ndb_test
 
 import (
+	"context"
 	"slices"
 	"sync"
 	"testing"
@@ -235,5 +236,50 @@ func TestTailStopsOnBreak(t *testing.T) {
 	case <-done:
 	case <-time.After(2 * time.Second):
 		t.Fatal("Tail did not return after break")
+	}
+}
+
+func TestTailCtxCancelOnSilentEdge(t *testing.T) {
+	m, closeDB := openMessages(t)
+	defer closeDB()
+
+	const typeID ndb.TypeID = "1"
+	var trace [16]byte
+
+	// One historical event; after replaying it the tail blocks on a silent live
+	// edge (no further writes). A range-break cannot fire there because the loop
+	// body is never re-entered. Ctx cancellation must unblock and return.
+	option.Must(m.Append(typeID, trace, []byte("one")))
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	replayed := make(chan struct{})
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		first := true
+		for range ndb.Tail(m, nil, ndb.TailOptions{FromSeq: 1, Ctx: ctx}) {
+			if first {
+				first = false
+				close(replayed) // seen the historical event; now blocking on the edge
+			}
+		}
+	}()
+
+	select {
+	case <-replayed:
+	case <-time.After(2 * time.Second):
+		t.Fatal("Tail did not deliver the historical event")
+	}
+
+	// Give the tail a moment to settle into the blocking wait, then cancel.
+	time.Sleep(20 * time.Millisecond)
+	cancel()
+
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("Tail did not return after ctx cancel on a silent live edge")
 	}
 }
