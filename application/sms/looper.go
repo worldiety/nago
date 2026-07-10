@@ -66,6 +66,11 @@ func loop(ctx context.Context, repo message.Repository, sendFn Send) {
 				slog.Error("failed to save sms to repository", "err", err.Error())
 			}
 		}
+
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(time.Minute):
+		}
 	}
-	time.Sleep(time.Minute)
 }
