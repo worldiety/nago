@@ -204,7 +204,7 @@ func (c *Column) DeleteRange(min, max int64) error {
 		seen[e.ts] = struct{}{}
 	}
 	c.mu.Lock()
-	relevant := c.chunksOverlapping(min, max)
+	relevant := c.chunksForRead(min, max)
 	var bd blockData
 	for _, ci := range relevant {
 		_ = scanChunkBlocks(c.pool, ci.path, func(frame []byte, h blockHeader) bool {
@@ -222,6 +222,13 @@ func (c *Column) DeleteRange(min, max int64) error {
 			return true
 		})
 	}
+	// also tombstone in-memory buffered points in range (not yet on disk)
+	c.app.snapshotBuffered(min, max, func(ts, _ []int64, _ []string) bool {
+		for _, t := range ts {
+			seen[t] = struct{}{}
+		}
+		return true
+	})
 	c.mu.Unlock()
 	for t := range seen {
 		if err := c.head.tombstone(t); err != nil {
@@ -281,6 +288,23 @@ func (c *Column) chunksOverlapping(min, max int64) []chunkInfo {
 	return out
 }
 
+// chunksForRead returns the finalized overlapping chunks plus, appended last,
+// the appender's still-open pending chunk when it overlaps the range. The
+// pending chunk holds monotonic blocks already sealed to disk but not yet
+// finalized; reads must include it so data written during a large burst is
+// visible before an explicit Flush. Its blocks are the newest on disk, so it is
+// scanned after the finalized chunks; the in-memory append buffer (newer still)
+// is emitted separately by the caller.
+func (c *Column) chunksForRead(min, max int64) []chunkInfo {
+	out := c.chunksOverlapping(min, max)
+	if pc, ok := c.app.pendingChunk(); ok {
+		if !(pc.maxMillis < min || pc.minMillis > max) {
+			out = append(out, pc)
+		}
+	}
+	return out
+}
+
 // mergedRange yields every non-deleted point with min <= ts <= max in ascending
 // timestamp order, merging sealed chunks with the head (head wins). It decodes
 // block by block and calls fn with parallel slices; fn returns false to stop.
@@ -302,7 +326,7 @@ func (c *Column) mergedRange(min, max int64, fn func(ts []int64, vals []int64, s
 	// reads over immutable files.
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	chunks := c.chunksOverlapping(min, max)
+	chunks := c.chunksForRead(min, max)
 
 	sc := &c.readScratch
 	numeric := c.schema.Scheme != SchemeString

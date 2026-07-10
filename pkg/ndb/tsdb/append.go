@@ -173,6 +173,25 @@ func (a *appender) flush() error {
 	return a.finalizePending()
 }
 
+// pendingChunk returns a chunkInfo describing the currently open pending chunk
+// file, if any, so the read path can scan the blocks already sealed to it (but
+// not yet finalized). ok is false when there is no pending chunk or it has no
+// sealed block yet. sizeBytes is the exact number of bytes already written
+// (pendingOff), so the reader needs no Fstat. The returned max reflects the last
+// sealed block; points still in the in-memory buffer are read separately.
+func (a *appender) pendingChunk() (chunkInfo, bool) {
+	if a.pendingPath == "" || a.pendingPts == 0 {
+		return chunkInfo{}, false
+	}
+	return chunkInfo{
+		path:      a.pendingPath,
+		minMillis: a.pendingMin,
+		maxMillis: a.pendingMax,
+		pending:   true,
+		sizeBytes: a.pendingOff,
+	}, true
+}
+
 // snapshotBuffered appends the in-memory (not yet sealed) buffered points that
 // fall in [min,max] to the read output via the provided callback. Used by the
 // read path to include the newest tail that has not been written to a chunk yet.

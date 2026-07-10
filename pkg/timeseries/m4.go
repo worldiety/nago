@@ -12,112 +12,119 @@ import (
 	"iter"
 )
 
-// M4 applies the according downsampling algorithm for visualization by Uwe Jugel, Zbigniew Jerzak,
-// Gregor Hackenbroich and Volker Markl. See http://www.vldb.org/pvldb/vol7/p797-jugel.pdf. It expects
-// that the given db.TimeSeries is already sorted.
+// M4 applies a visualization-oriented downsampling. It expects the input iterator
+// to be sorted ascending by time.
 //
-// The width determines how many buckets are created in the given time interval as defined by the time series.
-// Each bucket may have a variable amount of entries, which are sampled to at most 4 values:
-// the highest/lowest values and the max/min values. If these points overlap, they are only returned once, so
-// at worst only one value per bucket is returned.
+// The time span [tMin,tMax] defined by interval is divided into width buckets of
+// equal width Δ = (tMax-tMin)/width. A point at time t falls into the fixed grid
+// bucket floor((t-tMin)/Δ) (t == tMax is clamped into the last bucket). For each
+// non-empty bucket M4 emits at most four points — the ones with the smallest
+// time (first), the largest time (last), the minimum value and the maximum value
+// — deduplicated and in ascending time order. These four per pixel column are
+// exactly what is needed to render a line chart without visual loss.
 //
-// If the width is larger than the amount of available seconds, the original points are returned.
+// This implementation is a single streaming pass with O(1) memory: because the
+// input is time-sorted, only the four accumulators of the currently open bucket
+// are ever held, and a bucket is flushed as soon as a point crosses into a later
+// bucket. It therefore scales to billions of points at constant memory.
+//
+// If Δ <= 0 (width larger than the available time span) the input is returned
+// unchanged.
 func M4[Y Number](it iter.Seq[Point[UnixMilli, Y]], interval Range, width int) iter.Seq[Point[UnixMilli, Y]] {
 	tMin, tMax, err := interval.Interval()
 	if err != nil {
 		panic(fmt.Errorf("invalid interval: %w", err))
 	}
 
-	timeInterval := (tMax - tMin) / UnixMilli(width)
-	if timeInterval <= 0 {
-		return it // return unmodified data set, because our time interval is too small
+	if width <= 0 {
+		return it
 	}
+	delta := (tMax - tMin) / UnixMilli(width)
+	if delta <= 0 {
+		return it // time span too small to bucket; return unmodified data set
+	}
+	lastBucket := int64(width) - 1
 
 	return func(yield func(Point[UnixMilli, Y]) bool) {
-		left, right := Point[UnixMilli, Y]{X: NA}, Point[UnixMilli, Y]{X: NA}
-		min, max := Point[UnixMilli, Y]{X: NA}, Point[UnixMilli, Y]{X: NA}
-		t := tMin
-		for point := range it {
-			next := m4Points(point, timeInterval, &left, &right, &min, &max)
-			if !next {
-				set := m4UniquePoints(left, right, min, max)
+		var (
+			curBucket int64 = -1
+			have      bool
+			first     Point[UnixMilli, Y]
+			last      Point[UnixMilli, Y]
+			min       Point[UnixMilli, Y]
+			max       Point[UnixMilli, Y]
+		)
 
-				left, right = Point[UnixMilli, Y]{X: NA}, Point[UnixMilli, Y]{X: NA}
-				min, max = Point[UnixMilli, Y]{X: NA}, Point[UnixMilli, Y]{X: NA}
-				for _, p := range set {
-					if p.X != NA {
-						if !yield(p) {
-							return
-						}
-					}
+		// flushBucket emits the current bucket's first, min, max and last points
+		// in ascending time order, dropping duplicates. Returns false if the
+		// consumer stopped.
+		flushBucket := func() bool {
+			if !have {
+				return true
+			}
+			return emitM4Bucket(first, last, min, max, yield)
+		}
+
+		for p := range it {
+			// assign the fixed grid bucket; clamp out-of-range into [0,lastBucket]
+			b := int64((p.X - tMin) / delta)
+			if b < 0 {
+				b = 0
+			}
+			if b > lastBucket {
+				b = lastBucket
+			}
+
+			if !have || b != curBucket {
+				if !flushBucket() {
+					return
 				}
+				curBucket = b
+				have = true
+				first, last, min, max = p, p, p, p
+				continue
+			}
 
-				t += timeInterval
+			last = p
+			if p.Y < min.Y {
+				min = p
+			}
+			if p.Y > max.Y {
+				max = p
 			}
 		}
 
-		if t != tMax {
-			set := m4UniquePoints(left, right, min, max)
-
-			for _, p := range set {
-				if p.X != NA {
-					if !yield(p) {
-						return
-					}
-				}
-			}
-		}
+		flushBucket()
 	}
-
 }
 
-// m4Points returns the points for left, right, min and max values of the given series.
-// Having secondsInWindow <= 0 is undefined.
-func m4Points[Y Number](p Point[UnixMilli, Y], secondsInWindow UnixMilli, left, right, min, max *Point[UnixMilli, Y]) (next bool) {
-	if left.X == NA {
-		*left = p
-	}
-
-	*right = p
-	if min.X == NA || p.Y < min.Y {
-		*min = p
-	}
-
-	if max.X == NA || p.Y > max.Y {
-		*max = p
-	}
-
-	if right.X-left.X >= secondsInWindow {
-		return false
-	}
-
-	return true
-}
-
-// m4UniquePoints returns an array with 4 indices, if they are not unique. Invalid indices have the value -1.
-func m4UniquePoints[Y Number](left, right, min, max Point[UnixMilli, Y]) [4]Point[UnixMilli, Y] {
-	var set [4]Point[UnixMilli, Y]
-	set[0] = left
-	if min.X < max.X {
-		// min is older than max
-		set[1] = min
-		set[2] = max
+// emitM4Bucket yields the first, min, max and last points of a bucket in
+// ascending time order without duplicates. At most four, at least one, point is
+// produced. Returns false if the consumer stopped.
+func emitM4Bucket[Y Number](first, last, min, max Point[UnixMilli, Y], yield func(Point[UnixMilli, Y]) bool) bool {
+	// order the four candidates by time: first is the earliest and last the
+	// latest by construction; min and max fall in between in either order.
+	var ordered [4]Point[UnixMilli, Y]
+	ordered[0] = first
+	if min.X <= max.X {
+		ordered[1] = min
+		ordered[2] = max
 	} else {
-		// max is older than min
-		set[1] = max
-		set[2] = min
+		ordered[1] = max
+		ordered[2] = min
 	}
-	set[3] = right
+	ordered[3] = last
 
-	// search for duplicates and set those to NA. We can short circuit because we are always monotonic (== equal
-	// timestamps) or even strict monotonic (== all different timestamps).
-	for i1, p1 := range set {
-		for i2 := i1 + 1; i2 < len(set); i2++ {
-			if p1.X == set[i2].X {
-				set[i2].X = NA
-			}
+	prevX := UnixMilli(NA)
+	for i, p := range ordered {
+		// skip duplicates by timestamp; the array is non-decreasing in time.
+		if i > 0 && p.X == prevX {
+			continue
+		}
+		prevX = p.X
+		if !yield(p) {
+			return false
 		}
 	}
-
-	return set
+	return true
 }

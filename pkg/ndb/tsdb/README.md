@@ -114,8 +114,8 @@ TSDB_SCALES=1000000,1000000000 go test -run '^TestScale$' -v -timeout 30m \
 
 | points | insert  | insert pts/s | read   | read pts/s | on-disk  | bytes/pt | peak heap growth |
 |--------|---------|--------------|--------|------------|----------|----------|------------------|
-| 1 M    | 26.8 ms | 37.3 M/s     | 6.6 ms | 152 M/s    | 987 KiB  | 1.01     | 0.0 MiB          |
-| 1 B    | 25.1 s  | 39.9 M/s     | 3.56 s | 281 M/s    | 964 MiB  | 1.01     | 3.6 MiB          |
+| 1 M    | 26.7 ms | 37.4 M/s     | 6.0 ms | 165 M/s    | 987 KiB  | 1.01     | 0.0 MiB          |
+| 1 B    | 25.3 s  | 39.5 M/s     | 3.5 s  | 286 M/s    | 964 MiB  | 1.01     | 3.5 MiB          |
 
 (Oscillating 50 Hz values. The equidistant-timestamp mode stores the per-block
 time axis as `(start, step)`, so only the value delta remains → ~1 byte/point.)
@@ -127,20 +127,26 @@ mode makes storage and speed essentially independent of point count:
 
 | points | insert  | insert pts/s | read   | read pts/s | on-disk  | bytes/pt |
 |--------|---------|--------------|--------|------------|----------|----------|
-| 1 M    | 17.5 ms | 57.3 M/s     | 7.7 ms | 130 M/s    | 11.1 KiB | 0.01     |
-| 1 B    | 15.6 s  | 64.1 M/s     | 1.93 s | 519 M/s    | 10.7 MiB | 0.01     |
+| 1 M    | 16.8 ms | 59.7 M/s     | 4.2 ms | 239 M/s    | 11.1 KiB | 0.01     |
+| 1 B    | 15.7 s  | 63.8 M/s     | 1.94 s | 514 M/s    | 10.7 MiB | 0.01     |
 
 A billion unchanged samples occupy **10.7 MiB** (≈180× smaller than the
-oscillating case) and read at ~520 M points/s.
+oscillating case) and read at ~510 M points/s.
 
 ### Micro-benchmarks (`go test -bench . -benchmem`)
 
 | Operation  | ns/op | throughput  | B/op | allocs/op |
 |------------|-------|-------------|------|-----------|
-| `PutI64`   | 33    | 30 M/s      | 8    | 0         |
-| `ScanI64`  | —     | 221 M pts/s | ~1 buffer | 1    |
-| `IterI64`  | —     | 162 M pts/s | ~1 buffer | 1    |
-| `IterF64`  | —     | 109 M pts/s | ~1 buffer | 2    |
+| `PutI64`   | 25    | 40 M/s      | 4    | 0         |
+| `ScanI64`  | —     | 348 M pts/s | ~1 buffer | 1    |
+| `IterI64`  | —     | 217 M pts/s | ~1 buffer | 1    |
+| `IterF64`  | —     | 130 M pts/s | ~1 buffer | 2    |
+
+A read over a column with an unflushed pending chunk (data written but not yet
+`Flush`-ed) performs within ~1 % of a flushed read (348 vs 348 M pts/s,
+`BenchmarkScanI64Pending` vs `BenchmarkScanI64`): the read merges the pending
+chunk in-place using its already-known size, so reader-visible unflushed data
+adds no measurable cost.
 
 ### Concurrent columns (read/write scaling)
 

@@ -273,3 +273,41 @@ func TestM4Composition(t *testing.T) {
 		t.Fatalf("M4 produced too many points: %d", n)
 	}
 }
+
+// TestReadSeesUnflushedPendingChunk proves that a read observes data the append
+// fast path has already sealed into the pending chunk file but not yet finalized
+// (i.e. without an explicit Flush). During a large monotonic burst most data
+// lives in the pending chunk; it must be visible to reads immediately.
+func TestReadSeesUnflushedPendingChunk(t *testing.T) {
+	db := openTestDB(t)
+	c, err := db.Column("b", "c", Schema{Scheme: SchemeDecimal, Decimals: 0})
+	if err != nil {
+		t.Fatal(err)
+	}
+	const n = 20000 // >> BlockPoints, so many blocks seal to the pending chunk
+	for i := int64(0); i < n; i++ {
+		if err := c.PutI64(1000+i*20, i); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// no Flush: read must still see all n points (pending chunk + buffer).
+	ts, vs := collectI64(t, c, 0, 1<<62)
+	if int64(len(ts)) != n {
+		t.Fatalf("read saw %d points without Flush, want %d", len(ts), n)
+	}
+	for i := int64(0); i < n; i++ {
+		if ts[i] != 1000+i*20 || vs[i] != i {
+			t.Fatalf("point %d = (%d,%d), want (%d,%d)", i, ts[i], vs[i], 1000+i*20, i)
+		}
+	}
+
+	// a bounded range read across the pending chunk must be correct too.
+	lo, hi := int64(1000+5000*20), int64(1000+15000*20)
+	rts, _ := collectI64(t, c, lo, hi)
+	if len(rts) != 10001 {
+		t.Fatalf("range read saw %d points, want 10001", len(rts))
+	}
+	if rts[0] != lo || rts[len(rts)-1] != hi {
+		t.Fatalf("range read bounds = [%d,%d], want [%d,%d]", rts[0], rts[len(rts)-1], lo, hi)
+	}
+}
