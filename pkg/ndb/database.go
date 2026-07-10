@@ -40,6 +40,7 @@ const engineMarker = ".engine"
 type DB struct {
 	root string
 	opts Options
+	pool *FilePool
 
 	mu     sync.Mutex
 	open   map[string]openEngine
@@ -61,9 +62,14 @@ func Open(root string, opts Options) (*DB, error) {
 	if err := os.MkdirAll(root, 0755); err != nil {
 		return nil, fmt.Errorf("ndb: create root dir: %w", err)
 	}
+	pool := opts.FilePool
+	if pool == nil {
+		pool = NewFilePool(1024)
+	}
 	return &DB{
 		root: root,
 		opts: opts,
+		pool: pool,
 		open: make(map[string]openEngine),
 	}, nil
 }
@@ -112,7 +118,7 @@ func (db *DB) Engine(name string, opts EngineOptions) (Engine, error) {
 	}
 	kind = resolvedKind
 
-	eng, closeFn, err := factory(name, dir, opts.Config)
+	eng, closeFn, err := factory(name, dir, db.pool, opts.Config)
 	if err != nil {
 		return nil, fmt.Errorf("ndb: open engine %q with kind %q: %w", name, kind, err)
 	}
@@ -214,6 +220,15 @@ func (db *DB) Close() error {
 			}
 		}
 		delete(db.open, name)
+	}
+
+	// Close the shared pool once, after every engine has released its files
+	// (engines may still Evict/flush during their own close). Engines never
+	// close this pool themselves.
+	if db.pool != nil {
+		if err := db.pool.Close(); err != nil && firstErr == nil {
+			firstErr = err
+		}
 	}
 	return firstErr
 }

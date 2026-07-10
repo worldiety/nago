@@ -31,6 +31,7 @@ type DB struct {
 	lockFile *lockedfile.File // exclusive cross-platform file lock
 	tindex   *timeIndex
 	pool     *FilePool
+	ownPool  bool            // true only if pool was created by this DB (default); shared/injected pools are not closed here
 	notify   *notifyRegistry // live append/put subscribers
 }
 
@@ -61,6 +62,10 @@ type typeState struct {
 // Open opens (or creates) the event store at dir.
 // The store is exclusively locked via lockedfile; a second Open on the same dir will block.
 func Open(dir string, opts Options) (*DB, error) {
+	// A pool supplied by the caller (Options.FilePool / DSN filepool=N) or the
+	// injected shared ndb pool is owned by that caller; only a pool allocated by
+	// resolve() below as a default is owned by this DB and closed on Close.
+	ownPool := opts.FilePool == nil
 	opts.resolve()
 
 	eventsDir := filepath.Join(dir, "events")
@@ -86,6 +91,7 @@ func Open(dir string, opts Options) (*DB, error) {
 		opts:     opts,
 		lockFile: lockFile,
 		pool:     pool,
+		ownPool:  ownPool,
 		tindex:   newTimeIndex(timesDir, pool),
 		types:    make(map[TypeID]*typeState),
 		notify:   newNotifyRegistry(),
@@ -606,7 +612,9 @@ func (db *DB) Close() error {
 		}
 	}
 
-	if db.pool != nil {
+	// Only close a pool this DB owns. A shared pool injected by ndb (or a
+	// caller-supplied pool) is closed by its owner, not here.
+	if db.ownPool && db.pool != nil {
 		if err := db.pool.Close(); err != nil && firstErr == nil {
 			firstErr = err
 		}

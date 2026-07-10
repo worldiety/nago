@@ -37,7 +37,7 @@ var (
 //   - string: a DSN such as "?compress=s2&split=64mib&maxmsg=16mib" (see
 //     [parseDSN]). Convenient and declarative, but limited to scalar settings.   - [Options]: the native options struct for full programmatic control,
 //     including custom Compress/ShouldSplit functions and a shared FilePool.
-func openEngine(name, dir string, cfg ndb.EngineConfig) (ndb.Engine, func() error, error) {
+func openEngine(name, dir string, pool *ndb.FilePool, cfg ndb.EngineConfig) (ndb.Engine, func() error, error) {
 	var opts Options
 	switch c := cfg.(type) {
 	case nil:
@@ -52,6 +52,14 @@ func openEngine(name, dir string, cfg ndb.EngineConfig) (ndb.Engine, func() erro
 		opts = c
 	default:
 		return nil, nil, fmt.Errorf("msgstore: unsupported engine config type %T", cfg)
+	}
+
+	// Use the shared pool injected by ndb unless the caller explicitly supplied
+	// one (via Options.FilePool or the filepool=N DSN option), which takes
+	// precedence. This keeps all engines of a DB on a single bounded pool while
+	// still allowing an explicit override.
+	if opts.FilePool == nil {
+		opts.FilePool = pool
 	}
 
 	db, err := Open(dir, opts)

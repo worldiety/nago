@@ -80,6 +80,20 @@ type MessageEngine interface {
 	Messages() Messages
 }
 
+// SeriesEngine is the capability of an [Engine] that stores typed, columnar
+// time series (bucket-based columns keyed by unix-milli time). The tsdb engine
+// implements it. The concrete, performance-critical typed read/write API lives
+// on the engine's own package types; this neutral capability exposes only the
+// engine-agnostic surface (naming the buckets/columns present). Callers that
+// need the full API type-assert to the concrete engine and use its accessor.
+type SeriesEngine interface {
+	Engine
+
+	// SeriesColumns lists the columns present in this engine instance as
+	// "bucket/column" identifiers.
+	SeriesColumns() ([]string, error)
+}
+
 // EngineKind identifies a storage engine implementation. It is the stable key
 // under which an engine factory is registered (see [Register]) and that an
 // engine instance reports via [Engine.Kind].
@@ -106,6 +120,14 @@ type Options struct {
 	// single registered engine is used when exactly one exists; otherwise
 	// opening a missing instance is an error.
 	DefaultKind EngineKind
+
+	// FilePool is the bounded set of open file descriptors shared by every
+	// engine instance opened by the DB. Sharing one pool across all engines
+	// bounds the process-wide descriptor count regardless of how many engines
+	// are active. If nil, a NewFilePool(1024) is created. The DB owns the
+	// pool's lifecycle: it is closed by [DB.Close] and must never be closed by
+	// an engine.
+	FilePool *FilePool
 }
 
 // EngineOptions configures a single [DB.Engine] call.
@@ -132,12 +154,17 @@ type EngineInfo struct {
 // on any concrete engine package (which would otherwise create an import cycle,
 // since engines depend on this contract package).
 //
+// pool is the DB's shared [FilePool]; every engine instance receives the same
+// pool so the process holds one bounded set of file descriptors. Engines must
+// route their file I/O through it and must never close it — its lifecycle is
+// owned by the DB (see [DB.Close]).
+//
 // It returns the instance and a close function. The close function is retained
 // solely by the owning [DB] and invoked by [DB.Close]; it is never exposed to
 // consumers. This is why [Engine] itself has no Close: ownership stays with the
 // DB, and a returned close func works across packages (unlike an unexported
 // interface method, which a foreign package cannot implement).
-type EngineFactory func(name, dir string, cfg EngineConfig) (eng Engine, close func() error, err error)
+type EngineFactory func(name, dir string, pool *FilePool, cfg EngineConfig) (eng Engine, close func() error, err error)
 
 var (
 	enginesMu sync.RWMutex
