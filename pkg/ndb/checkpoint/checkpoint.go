@@ -29,6 +29,8 @@ package checkpoint
 import (
 	"context"
 	"iter"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"go.wdy.de/nago/pkg/blob"
@@ -192,60 +194,97 @@ func (c *Committer) Committed() ndb.Seq {
 }
 
 // Handler processes a single message. It runs synchronously in the calling
-// goroutine of [Run], in strict ascending global Seq order.
+// goroutine of [Consumer.Run], in strict ascending global Seq order.
 //
 // It MUST be idempotent: under at-least-once delivery a crash between the side
 // effect and the cursor commit re-delivers a few events on restart. Return a
-// non-nil error to stop [Run] BEFORE the cursor advances past this Seq, so the
-// message is re-delivered on the next run (treat the error as "retry later").
+// non-nil error to stop the run BEFORE the cursor (and the watermark) advance
+// past this Seq, so the message is re-delivered on the next run (treat the error
+// as "retry later").
 type Handler func(typeID ndb.TypeID, msg ndb.Message) error
 
-// Run is the high-level, batteries-included entry point: it resumes from the
-// cursor stored under key in store, follows the log, and invokes fn for every
-// selected message — committing the cursor AFTER fn returns nil (at-least-once).
+// Consumer is the high-level, batteries-included driver over [Tail]: it resumes
+// from a blob-backed cursor, follows the log, invokes a [Handler] per message
+// and commits the cursor after each success (at-least-once).
 //
-// It blocks until one of:
+// Beyond the fire-and-forget loop it offers a read-your-write watermark
+// ([Consumer.WaitFor]), mirroring evs.Projection: after the write side appends
+// an event and learns its global Seq, a caller can block until this consumer has
+// applied that Seq's side effect before reading the sink. This replaces the
+// WaitFor a projection-based mirror used to provide, without making the consumer
+// stateful — the sink (e.g. the mirrored store) remains the sole state.
+//
+// # Watermark vs. cursor
+//
+// The watermark advances AFTER the handler applies a Seq's side effect, which is
+// the exact read-your-write boundary. The persisted cursor advances separately
+// and is batched (see [Options]); read-your-write needs "effect applied", not
+// "cursor durably saved", so the two are deliberately decoupled.
+//
+// # Out of scope: event self-sufficiency
+//
+// Because a delta-resume never replays already-committed history, each event
+// must carry everything its handler needs (e.g. a revoke must carry the full
+// tuple, not a bare id that a prior grant would have supplied). That is a
+// property of the event schema and the handler, not of this package.
+type Consumer struct {
+	src   ndb.Followable
+	types []ndb.TypeID
+	store Store
+	opts  Options
+	fn    Handler
+
+	// processed is the highest global Seq whose handler has completed
+	// successfully. It is the read-your-write watermark and advances contiguously
+	// with Tail's delivery.
+	processed atomic.Uint64
+	waitMu    sync.Mutex
+	waitCh    chan struct{}
+}
+
+// NewConsumer builds a [Consumer] that reads from src, resumes from the cursor
+// stored under key in store (as an 8-byte big-endian Seq via [NewBlobStore]) and
+// invokes fn for each selected message. Call [Consumer.Run] to start it.
+func NewConsumer(src ndb.Followable, types []ndb.TypeID, store blob.Store, key string, opts Options, fn Handler) *Consumer {
+	return &Consumer{
+		src:    src,
+		types:  types,
+		store:  NewBlobStore(store, key),
+		opts:   opts,
+		fn:     fn,
+		waitCh: make(chan struct{}),
+	}
+}
+
+// Run follows the log and invokes the [Handler] for every selected message,
+// committing the cursor after each success (at-least-once) and advancing the
+// read-your-write watermark. It blocks until one of:
 //
 //   - ctx is cancelled: Run flushes the last batched cursor and returns ctx.Err().
-//   - fn returns an error: Run flushes what was committed so far and returns that
-//     error WITHOUT committing the failing Seq, so it is re-delivered next run.
+//   - the handler returns an error: Run flushes what was committed so far and
+//     returns that error WITHOUT committing/advancing the failing Seq, so it is
+//     re-delivered on the next run.
 //   - the stream ends: Run flushes and returns nil.
 //
-// The cursor is persisted as an 8-byte big-endian Seq under key via
-// [NewBlobStore]. Batching follows [Options]; the final Flush on return persists
-// the tail of the current batch window.
-//
-// Typical use — a persistent-side-effect consumer (mirror, outbox, integration):
-//
-//	err := checkpoint.Run(ctx, src, []ndb.TypeID{"OrderPlaced"},
-//	    blobStore, "mirror.cursor", checkpoint.Options{},
-//	    func(_ ndb.TypeID, msg ndb.Message) error {
-//	        return mirror.Apply(msg) // idempotent
-//	    })
-//
-// For consumers that must control the commit point themselves (batched folds),
-// use [Tail] with a [Committer] directly.
-func Run(
-	ctx context.Context,
-	src ndb.Followable,
-	types []ndb.TypeID,
-	store blob.Store,
-	key string,
-	opts Options,
-	fn Handler,
-) error {
+// Run must be called at most once per Consumer.
+func (c *Consumer) Run(ctx context.Context) error {
+	opts := c.opts
 	opts.Ctx = ctx
-	stream, cp, err := Tail(src, types, NewBlobStore(store, key), opts)
+	stream, cp, err := Tail(c.src, c.types, c.store, opts)
 	if err != nil {
 		return err
 	}
 
 	var handlerErr error
 	for typeID, msg := range stream {
-		if err := fn(typeID, msg); err != nil {
+		if err := c.fn(typeID, msg); err != nil {
 			handlerErr = err
-			break // do NOT commit this Seq: re-delivered on the next run
+			break // do NOT commit/advance this Seq: re-delivered on the next run
 		}
+		// Advance the watermark AFTER the side effect is applied: that is the
+		// read-your-write boundary a WaitFor(seq) relies on. The cursor commit
+		// below is mere (batched) persistence and independent of it.
+		c.advance(msg.Seq)
 		if err := cp.Commit(msg.Seq); err != nil {
 			handlerErr = err
 			break
@@ -260,6 +299,85 @@ func Run(
 	if handlerErr != nil {
 		return handlerErr
 	}
-	// The stream ended (or was cancelled). Surface a cancellation cause.
 	return ctx.Err()
+}
+
+// Processed returns the highest global Seq whose handler has completed. It is 0
+// before anything has been processed. Lock-free read.
+func (c *Consumer) Processed() ndb.Seq {
+	return ndb.Seq(c.processed.Load())
+}
+
+// WaitFor blocks until the consumer has applied the side effect of every event
+// up to and including seq, or until ctx is done. It returns nil once
+// Processed >= seq, or ctx.Err() if cancelled first. A seq of 0, or one already
+// reached, returns immediately.
+//
+// This is the opt-in read-your-write primitive: pass the global Seq your write
+// returned ([ndb.Envelope]/Append), then read the sink. It does not poll — it
+// waits on a broadcast that fires each time the watermark advances.
+func (c *Consumer) WaitFor(ctx context.Context, seq ndb.Seq) error {
+	target := uint64(seq)
+	for {
+		if c.processed.Load() >= target {
+			return nil
+		}
+
+		c.waitMu.Lock()
+		ch := c.waitCh
+		c.waitMu.Unlock()
+
+		if c.processed.Load() >= target {
+			return nil
+		}
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ch:
+		}
+	}
+}
+
+// advance moves the watermark forward and wakes any waiters. It is monotonic:
+// Tail delivers in ascending Seq order, so this only ever moves forward.
+func (c *Consumer) advance(seq ndb.Seq) {
+	for {
+		cur := c.processed.Load()
+		if uint64(seq) <= cur {
+			return
+		}
+		if c.processed.CompareAndSwap(cur, uint64(seq)) {
+			break
+		}
+	}
+
+	c.waitMu.Lock()
+	old := c.waitCh
+	c.waitCh = make(chan struct{})
+	c.waitMu.Unlock()
+	close(old)
+}
+
+// Run is a convenience wrapper over [NewConsumer] + [Consumer.Run] for the
+// fire-and-forget case that does not need read-your-write. Callers that need
+// [Consumer.WaitFor] must build a [Consumer] and hold on to it.
+//
+// Typical use — a persistent-side-effect consumer (mirror, outbox, integration):
+//
+//	err := checkpoint.Run(ctx, src, []ndb.TypeID{"OrderPlaced"},
+//	    blobStore, "mirror.cursor", checkpoint.Options{},
+//	    func(_ ndb.TypeID, msg ndb.Message) error {
+//	        return mirror.Apply(msg) // idempotent
+//	    })
+func Run(
+	ctx context.Context,
+	src ndb.Followable,
+	types []ndb.TypeID,
+	store blob.Store,
+	key string,
+	opts Options,
+	fn Handler,
+) error {
+	return NewConsumer(src, types, store, key, opts, fn).Run(ctx)
 }

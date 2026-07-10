@@ -375,3 +375,84 @@ func TestRunCtxCancelOnSilentEdge(t *testing.T) {
 		t.Fatalf("committed cursor = %d, want 2", got)
 	}
 }
+
+func TestConsumerWaitForReadYourWrite(t *testing.T) {
+	m, closeDB := openMessages(t)
+	defer closeDB()
+
+	blobs := mem.NewBlobStore("cp")
+	c := checkpoint.NewConsumer(m, []ndb.TypeID{typeID}, blobs, "cursor",
+		checkpoint.Options{SaveEvery: 1},
+		func(_ ndb.TypeID, _ ndb.Message) error { return nil })
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go func() { _ = c.Run(ctx) }()
+
+	// Append a fresh event and learn its Seq (read-your-write target).
+	var trace [16]byte
+	seq := option.Must(m.Append(typeID, trace, []byte("x")))
+
+	wctx, wcancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer wcancel()
+	if err := c.WaitFor(wctx, seq); err != nil {
+		t.Fatalf("WaitFor(%d) = %v, want nil", seq, err)
+	}
+	if got := c.Processed(); got < seq {
+		t.Fatalf("Processed = %d after WaitFor(%d)", got, seq)
+	}
+}
+
+func TestConsumerWaitForCtxCancel(t *testing.T) {
+	m, closeDB := openMessages(t)
+	defer closeDB()
+
+	blobs := mem.NewBlobStore("cp")
+	// Handler blocks forever, so the watermark never reaches the target.
+	block := make(chan struct{})
+	c := checkpoint.NewConsumer(m, []ndb.TypeID{typeID}, blobs, "cursor",
+		checkpoint.Options{SaveEvery: 1},
+		func(_ ndb.TypeID, _ ndb.Message) error { <-block; return nil })
+
+	runCtx, runCancel := context.WithCancel(context.Background())
+	go func() { _ = c.Run(runCtx) }()
+
+	var trace [16]byte
+	option.Must(m.Append(typeID, trace, []byte("x")))
+
+	wctx, wcancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer wcancel()
+	if err := c.WaitFor(wctx, 1); !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("WaitFor err = %v, want DeadlineExceeded", err)
+	}
+
+	close(block)
+	runCancel()
+}
+
+func TestConsumerWatermarkStopsAtHandlerError(t *testing.T) {
+	m, closeDB := openMessages(t)
+	defer closeDB()
+
+	appendN(t, m, 5)
+
+	blobs := mem.NewBlobStore("cp")
+	boom := errors.New("boom")
+	c := checkpoint.NewConsumer(m, []ndb.TypeID{typeID}, blobs, "cursor",
+		checkpoint.Options{SaveEvery: 1},
+		func(_ ndb.TypeID, msg ndb.Message) error {
+			if msg.Seq == 3 {
+				return boom
+			}
+			return nil
+		})
+
+	if err := c.Run(context.Background()); !errors.Is(err, boom) {
+		t.Fatalf("Run err = %v, want boom", err)
+	}
+
+	// Watermark advanced to 2 (seqs 1,2 succeeded) but NOT to 3 (handler failed).
+	if got := c.Processed(); got != 2 {
+		t.Fatalf("Processed = %d, want 2 (must not include the failed seq 3)", got)
+	}
+}
