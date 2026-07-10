@@ -26,8 +26,8 @@ const typeID ndb.TypeID = "1"
 func openMessages(t *testing.T) (ndb.Messages, func()) {
 	t.Helper()
 	root := t.TempDir()
-	db := option.Must(ndb.Open(root, ndb.Options{DefaultKind: "msgstore"}))
-	eng, err := db.Engine("events", ndb.EngineOptions{Config: msgstore.Options{Compress: msgstore.NoCompression}})
+	db := option.Must(ndb.Open(root, ndb.Options{}))
+	eng, err := db.Engine("events", ndb.EngineOptions{Kind: msgstore.EngineKind, Config: msgstore.Options{Compress: msgstore.NoCompression}})
 	if err != nil {
 		t.Fatalf("open engine: %v", err)
 	}

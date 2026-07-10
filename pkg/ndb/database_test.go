@@ -10,13 +10,20 @@ import (
 	"go.wdy.de/nago/pkg/ndb/msgstore" // registers the "msgstore" engine via init
 )
 
+// msgstoreOpts is the explicit EngineOptions for creating a msgstore instance
+// with its documented default configuration. Creating an instance always
+// requires an explicit kind and a non-nil config.
+func msgstoreOpts() ndb.EngineOptions {
+	return ndb.EngineOptions{Kind: msgstore.EngineKind, Config: msgstore.Options{}}
+}
+
 func TestEngineMessages(t *testing.T) {
 	root := t.TempDir()
 
-	db := option.Must(ndb.Open(root, ndb.Options{DefaultKind: "msgstore"}))
+	db := option.Must(ndb.Open(root, ndb.Options{}))
 	defer func() { option.MustZero(db.Close()) }()
 
-	eng, err := db.Engine("events", ndb.EngineOptions{})
+	eng, err := db.Engine("events", msgstoreOpts())
 	if err != nil {
 		t.Fatalf("open engine: %v", err)
 	}
@@ -69,7 +76,7 @@ func TestEngineCachedIdentity(t *testing.T) {
 	db := option.Must(ndb.Open(root, ndb.Options{}))
 	defer func() { option.MustZero(db.Close()) }()
 
-	a, err := db.Engine("events", ndb.EngineOptions{})
+	a, err := db.Engine("events", msgstoreOpts())
 	if err != nil {
 		t.Fatalf("open a: %v", err)
 	}
@@ -82,13 +89,35 @@ func TestEngineCachedIdentity(t *testing.T) {
 	}
 }
 
-func TestEngineDefaultKindAndReopen(t *testing.T) {
+// TestEngineRequiresExplicitKindAndConfig verifies that creating a new instance
+// with no kind, or with a nil config, is rejected — there are no implicit engine
+// or configuration defaults.
+func TestEngineRequiresExplicitKindAndConfig(t *testing.T) {
+	root := t.TempDir()
+	db := option.Must(ndb.Open(root, ndb.Options{}))
+	defer func() { option.MustZero(db.Close()) }()
+
+	if _, err := db.Engine("nokind", ndb.EngineOptions{Config: msgstore.Options{}}); err == nil {
+		t.Fatal("creating an instance without a kind must fail")
+	}
+	if _, err := db.Engine("noconfig", ndb.EngineOptions{Kind: msgstore.EngineKind}); err == nil {
+		t.Fatal("creating an instance with a nil config must fail")
+	}
+	if _, err := db.Engine("badkind", ndb.EngineOptions{Kind: "does-not-exist", Config: msgstore.Options{}}); err == nil {
+		t.Fatal("creating an instance with an unregistered kind must fail")
+	}
+	// nothing should have been created
+	if _, err := db.LookupEngine("nokind"); err != nil {
+		t.Fatalf("lookup nokind: %v", err)
+	}
+}
+
+func TestEngineExplicitKindAndReopen(t *testing.T) {
 	root := t.TempDir()
 
-	// No explicit kind: the sole registered engine (msgstore) is used.
 	db := option.Must(ndb.Open(root, ndb.Options{}))
 
-	eng, err := db.Engine("retained", ndb.EngineOptions{})
+	eng, err := db.Engine("retained", msgstoreOpts())
 	if err != nil {
 		t.Fatalf("open engine: %v", err)
 	}
@@ -101,8 +130,8 @@ func TestEngineDefaultKindAndReopen(t *testing.T) {
 	}
 	option.MustZero(db.Close())
 
-	// Reopen: the instance must come back via the recorded engine marker, and
-	// the retained value must still be there.
+	// Reopen: the instance must come back via the recorded engine marker with no
+	// kind or config supplied, and the retained value must still be there.
 	db2 := option.Must(ndb.Open(root, ndb.Options{}))
 	defer func() { option.MustZero(db2.Close()) }()
 
@@ -137,16 +166,40 @@ func TestEngineDefaultKindAndReopen(t *testing.T) {
 	}
 }
 
+// TestEngineReopenKindMismatch verifies that reopening an existing instance with
+// a contradicting explicit kind is rejected. The check runs against the on-disk
+// marker, so it is exercised with a fresh DB handle where the instance is not
+// already cached.
+func TestEngineReopenKindMismatch(t *testing.T) {
+	root := t.TempDir()
+
+	db := option.Must(ndb.Open(root, ndb.Options{}))
+	if _, err := db.Engine("x", msgstoreOpts()); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	option.MustZero(db.Close())
+
+	db2 := option.Must(ndb.Open(root, ndb.Options{}))
+	defer func() { option.MustZero(db2.Close()) }()
+	if _, err := db2.Engine("x", ndb.EngineOptions{Kind: "other", Config: msgstore.Options{}}); err == nil {
+		t.Fatal("reopening with a contradicting kind must fail")
+	}
+	// reopening with the correct kind (or none) must still work
+	if _, err := db2.Engine("x", ndb.EngineOptions{}); err != nil {
+		t.Fatalf("reopen with no kind: %v", err)
+	}
+}
+
 func TestEngineMultipleInstancesSameKind(t *testing.T) {
 	root := t.TempDir()
-	db := option.Must(ndb.Open(root, ndb.Options{DefaultKind: "msgstore"}))
+	db := option.Must(ndb.Open(root, ndb.Options{}))
 	defer func() { option.MustZero(db.Close()) }()
 
-	audit, err := db.Engine("audit", ndb.EngineOptions{})
+	audit, err := db.Engine("audit", msgstoreOpts())
 	if err != nil {
 		t.Fatalf("open audit: %v", err)
 	}
-	telemetry, err := db.Engine("telemetry", ndb.EngineOptions{})
+	telemetry, err := db.Engine("telemetry", msgstoreOpts())
 	if err != nil {
 		t.Fatalf("open telemetry: %v", err)
 	}
@@ -180,11 +233,12 @@ func TestEngineMultipleInstancesSameKind(t *testing.T) {
 
 func TestEngineWithDSNConfig(t *testing.T) {
 	root := t.TempDir()
-	db := option.Must(ndb.Open(root, ndb.Options{DefaultKind: "msgstore"}))
+	db := option.Must(ndb.Open(root, ndb.Options{}))
 	defer func() { option.MustZero(db.Close()) }()
 
 	// A DSN string is a valid EngineConfig for msgstore.
 	eng, err := db.Engine("dsn", ndb.EngineOptions{
+		Kind:   msgstore.EngineKind,
 		Config: "?compress=s2&split=count:5&maxmsg=8mib",
 	})
 	if err != nil {
@@ -201,12 +255,13 @@ func TestEngineWithDSNConfig(t *testing.T) {
 
 func TestEngineWithStructConfig(t *testing.T) {
 	root := t.TempDir()
-	db := option.Must(ndb.Open(root, ndb.Options{DefaultKind: "msgstore"}))
+	db := option.Must(ndb.Open(root, ndb.Options{}))
 	defer func() { option.MustZero(db.Close()) }()
 
 	// The native options struct is also a valid EngineConfig and allows custom
 	// strategy functions that a DSN cannot express.
 	eng, err := db.Engine("struct", ndb.EngineOptions{
+		Kind: msgstore.EngineKind,
 		Config: msgstore.Options{
 			Compress:    msgstore.NoCompression,
 			ShouldSplit: msgstore.SplitByCount(2),
@@ -236,10 +291,10 @@ func TestLookupEngineMissing(t *testing.T) {
 
 func TestLookupEngineExisting(t *testing.T) {
 	root := t.TempDir()
-	db := option.Must(ndb.Open(root, ndb.Options{DefaultKind: "msgstore"}))
+	db := option.Must(ndb.Open(root, ndb.Options{}))
 	defer func() { option.MustZero(db.Close()) }()
 
-	if _, err := db.Engine("present", ndb.EngineOptions{}); err != nil {
+	if _, err := db.Engine("present", msgstoreOpts()); err != nil {
 		t.Fatalf("open: %v", err)
 	}
 
@@ -257,14 +312,14 @@ func TestLookupEngineExisting(t *testing.T) {
 
 func TestDBClosedIsSpent(t *testing.T) {
 	root := t.TempDir()
-	db := option.Must(ndb.Open(root, ndb.Options{DefaultKind: "msgstore"}))
+	db := option.Must(ndb.Open(root, ndb.Options{}))
 
-	if _, err := db.Engine("a", ndb.EngineOptions{}); err != nil {
+	if _, err := db.Engine("a", msgstoreOpts()); err != nil {
 		t.Fatalf("open: %v", err)
 	}
 	option.MustZero(db.Close())
 
-	if _, err := db.Engine("b", ndb.EngineOptions{}); err == nil {
+	if _, err := db.Engine("b", msgstoreOpts()); err == nil {
 		t.Fatal("expected error opening engine on a closed database")
 	}
 }

@@ -101,26 +101,24 @@ type EngineKind string
 
 // EngineConfig is an engine-specific configuration value. It is passed through
 // to the engine factory unchanged; the engine casts it to whatever type it
-// understands. A nil EngineConfig means "engine defaults".
+// understands.
+//
+// When a NEW engine instance is created it must be non-nil: a developer must
+// consciously choose the engine settings rather than inherit implicit defaults.
+// An explicit but empty value (e.g. an empty options struct, whose zero fields
+// each engine documents and fills with sane internals) is accepted — it is the
+// deliberate "I accept this engine's documented behaviour" gesture. A nil
+// EngineConfig when creating an instance is an error.
 //
 // An engine may accept several shapes for convenience. The msgstore engine, for
-// example, accepts nil (defaults), a DSN string ("?compress=s2&split=64mib"),
-// or its native options struct for full programmatic control (custom strategy
-// functions, a shared file pool). Which shapes are supported, and the DSN
-// syntax, are documented by each engine.
+// example, accepts a DSN string ("?compress=s2&split=64mib") or its native
+// options struct for full programmatic control (custom strategy functions, a
+// shared file pool). Which shapes are supported, and the DSN syntax, are
+// documented by each engine.
 type EngineConfig any
 
 // Options configures how a [DB] (a directory of engine instances) is opened.
 type Options struct {
-	// DefaultKind selects the engine implementation used for instances that do
-	// not yet exist on disk and must be created, whenever [EngineOptions.Kind]
-	// is empty. Existing instances are always reopened with the engine that
-	// created them (recorded in a per-instance marker file), regardless of this
-	// setting, so that an on-disk format is never misinterpreted. If empty, a
-	// single registered engine is used when exactly one exists; otherwise
-	// opening a missing instance is an error.
-	DefaultKind EngineKind
-
 	// FilePool is the bounded set of open file descriptors shared by every
 	// engine instance opened by the DB. Sharing one pool across all engines
 	// bounds the process-wide descriptor count regardless of how many engines
@@ -132,13 +130,15 @@ type Options struct {
 
 // EngineOptions configures a single [DB.Engine] call.
 type EngineOptions struct {
-	// Kind selects the engine implementation for a NEW instance. For an
-	// existing instance the recorded kind always wins. If empty, the DB's
-	// [Options.DefaultKind] (then the sole registered engine) is used.
+	// Kind selects the engine implementation. It is REQUIRED when creating a new
+	// instance (there is no default engine kind). For an instance that already
+	// exists on disk the recorded kind always wins, and Kind may be left empty;
+	// if set, it must match the recorded kind.
 	Kind EngineKind
 
 	// Config is passed through to the engine factory unchanged (see
-	// [EngineConfig]). It is ignored when the instance is already open.
+	// [EngineConfig]). It is REQUIRED (non-nil) when creating a new instance and
+	// ignored when the instance already exists (its on-disk state is reused).
 	Config EngineConfig
 }
 
@@ -201,30 +201,17 @@ func RegisteredEngines() []EngineKind {
 	return kinds
 }
 
-// lookupEngine resolves the factory for kind. When kind is empty it falls back
-// to the sole registered engine. It also returns the resolved kind so that the
-// caller can record it (e.g. in the per-instance marker) rather than an empty
-// string.
-func lookupEngine(kind EngineKind) (EngineFactory, EngineKind, error) {
+// lookupEngine resolves the factory for kind. kind must be non-empty (there is
+// no default engine); an empty or unregistered kind is an error.
+func lookupEngine(kind EngineKind) (EngineFactory, error) {
+	if kind == "" {
+		return nil, fmt.Errorf("ndb: no engine kind specified")
+	}
 	enginesMu.RLock()
 	defer enginesMu.RUnlock()
-
-	if kind != "" {
-		f, ok := engines[kind]
-		if !ok {
-			return nil, "", fmt.Errorf("ndb: no engine registered for kind %q", kind)
-		}
-		return f, kind, nil
+	f, ok := engines[kind]
+	if !ok {
+		return nil, fmt.Errorf("ndb: no engine registered for kind %q", kind)
 	}
-
-	// no explicit kind: fall back to the sole registered engine, if unambiguous
-	switch len(engines) {
-	case 0:
-		return nil, "", fmt.Errorf("ndb: no storage engines registered")
-	case 1:
-		for k, f := range engines {
-			return f, k, nil
-		}
-	}
-	return nil, "", fmt.Errorf("ndb: multiple engines registered, set Options.DefaultKind or EngineOptions.Kind")
+	return f, nil
 }

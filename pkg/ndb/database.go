@@ -79,13 +79,14 @@ func Open(root string, opts Options) (*DB, error) {
 //
 // An existing instance is always reopened with the engine that originally
 // created it (recorded in a per-instance marker file), so its on-disk format is
-// never reinterpreted by a different engine. A new instance is created with the
-// engine selected by [EngineOptions.Kind], falling back to [Options.DefaultKind]
-// and then to the sole registered engine when unambiguous.
+// never reinterpreted by a different engine; for an existing instance
+// [EngineOptions.Kind] and [EngineOptions.Config] may be omitted.
 //
-// opts.Config is passed through to the engine factory, but only when the
-// instance is actually created/opened: if the instance is already open, the
-// cached instance is returned and opts.Config is ignored.
+// Creating a new instance is explicit: [EngineOptions.Kind] must name a
+// registered engine and [EngineOptions.Config] must be non-nil (there are no
+// implicit engine or configuration defaults). opts.Config is passed to the
+// factory only when the instance is actually created; once cached, subsequent
+// calls return the same instance and opts.Config is ignored.
 func (db *DB) Engine(name string, opts EngineOptions) (Engine, error) {
 	if err := validateEngineName(name); err != nil {
 		return nil, err
@@ -107,16 +108,36 @@ func (db *DB) Engine(name string, opts EngineOptions) (Engine, error) {
 		return nil, fmt.Errorf("ndb: create engine dir: %w", err)
 	}
 
-	kind, err := db.resolveEngineKind(dir, opts.Kind)
+	// An existing instance is identified by its engine marker; a new instance
+	// has none and must be fully specified by the caller.
+	recorded, err := readEngineMarker(dir)
 	if err != nil {
 		return nil, err
+	}
+	creating := recorded == ""
+
+	var kind EngineKind
+	if creating {
+		if opts.Kind == "" {
+			return nil, fmt.Errorf("ndb: creating engine %q requires an explicit EngineOptions.Kind", name)
+		}
+		if opts.Config == nil {
+			return nil, fmt.Errorf("ndb: creating engine %q with kind %q requires an explicit EngineOptions.Config", name, opts.Kind)
+		}
+		kind = opts.Kind
+	} else {
+		// existing instance: the recorded kind wins; a caller-supplied kind, if
+		// any, must not contradict it.
+		if opts.Kind != "" && opts.Kind != recorded {
+			return nil, fmt.Errorf("ndb: engine %q was created with kind %q, cannot reopen as %q", name, recorded, opts.Kind)
+		}
+		kind = recorded
 	}
 
-	factory, resolvedKind, err := lookupEngine(kind)
+	factory, err := lookupEngine(kind)
 	if err != nil {
 		return nil, err
 	}
-	kind = resolvedKind
 
 	eng, closeFn, err := factory(name, dir, db.pool, opts.Config)
 	if err != nil {
@@ -151,12 +172,16 @@ func (db *DB) LookupEngine(name string) (option.Opt[Engine], error) {
 		return option.None[Engine](), fmt.Errorf("ndb: database is closed")
 	}
 
+	// An instance exists iff its engine marker is present. Gate on the marker
+	// (not merely the directory) so a stray/empty directory is not mistaken for
+	// an instance and does not trigger the creation path in Engine.
 	dir := filepath.Join(db.root, name)
-	if _, err := os.Stat(dir); err != nil {
-		if os.IsNotExist(err) {
-			return option.None[Engine](), nil
-		}
-		return option.None[Engine](), fmt.Errorf("ndb: stat engine %q: %w", name, err)
+	recorded, err := readEngineMarker(dir)
+	if err != nil {
+		return option.None[Engine](), err
+	}
+	if recorded == "" {
+		return option.None[Engine](), nil
 	}
 
 	eng, err := db.Engine(name, EngineOptions{})
@@ -231,24 +256,6 @@ func (db *DB) Close() error {
 		}
 	}
 	return firstErr
-}
-
-// resolveEngineKind determines which engine kind to use for the instance at dir:
-// the recorded kind for an existing instance, otherwise the requested kind
-// (want) and finally the DB's configured default for a new one. Caller must
-// hold db.mu.
-func (db *DB) resolveEngineKind(dir string, want EngineKind) (EngineKind, error) {
-	recorded, err := readEngineMarker(dir)
-	if err != nil {
-		return "", err
-	}
-	if recorded != "" {
-		return recorded, nil
-	}
-	if want != "" {
-		return want, nil
-	}
-	return db.opts.DefaultKind, nil
 }
 
 func validateEngineName(name string) error {

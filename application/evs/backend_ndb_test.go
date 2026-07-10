@@ -22,10 +22,10 @@ import (
 func openNDBMessages(t *testing.T) ndb.Messages {
 	t.Helper()
 	root := t.TempDir()
-	db := option.Must(ndb.Open(root, ndb.Options{DefaultKind: msgstore.EngineKind}))
+	db := option.Must(ndb.Open(root, ndb.Options{}))
 	t.Cleanup(func() { option.MustZero(db.Close()) })
 
-	eng, err := db.Engine("events", ndb.EngineOptions{})
+	eng, err := db.Engine("events", ndb.EngineOptions{Kind: msgstore.EngineKind, Config: msgstore.Options{}})
 	if err != nil {
 		t.Fatalf("open engine: %v", err)
 	}

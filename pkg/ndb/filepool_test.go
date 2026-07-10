@@ -34,13 +34,13 @@ func TestSharedFilePoolAcrossEngines(t *testing.T) {
 	registerPoolCapture()
 
 	root := t.TempDir()
-	db := option.Must(ndb.Open(root, ndb.Options{DefaultKind: "poolcapture"}))
+	db := option.Must(ndb.Open(root, ndb.Options{}))
 
-	a, err := db.Engine("a", ndb.EngineOptions{})
+	a, err := db.Engine("a", ndb.EngineOptions{Kind: "poolcapture", Config: struct{}{}})
 	if err != nil {
 		t.Fatalf("open a: %v", err)
 	}
-	b, err := db.Engine("b", ndb.EngineOptions{})
+	b, err := db.Engine("b", ndb.EngineOptions{Kind: "poolcapture", Config: struct{}{}})
 	if err != nil {
 		t.Fatalf("open b: %v", err)
 	}
@@ -61,12 +61,12 @@ func TestSharedFilePoolAcrossEngines(t *testing.T) {
 }
 
 func TestExplicitSharedFilePoolIsClosedOnce(t *testing.T) {
+	registerPoolCapture()
 	root := t.TempDir()
 	shared := ndb.NewFilePool(8)
-	db := option.Must(ndb.Open(root, ndb.Options{DefaultKind: "poolcapture", FilePool: shared}))
-	registerPoolCapture()
+	db := option.Must(ndb.Open(root, ndb.Options{FilePool: shared}))
 
-	eng, err := db.Engine("only", ndb.EngineOptions{})
+	eng, err := db.Engine("only", ndb.EngineOptions{Kind: "poolcapture", Config: struct{}{}})
 	if err != nil {
 		t.Fatalf("open: %v", err)
 	}

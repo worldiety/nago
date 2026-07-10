@@ -17,10 +17,10 @@ import (
 
 func TestNDBIntegration(t *testing.T) {
 	root := t.TempDir()
-	db := option.Must(ndb.Open(root, ndb.Options{DefaultKind: "tsdb"}))
+	db := option.Must(ndb.Open(root, ndb.Options{}))
 	defer func() { _ = db.Close() }()
 
-	eng, err := db.Engine("metrics", ndb.EngineOptions{})
+	eng, err := db.Engine("metrics", ndb.EngineOptions{Kind: "tsdb", Config: tsdb.Options{}})
 	if err != nil {
 		t.Fatalf("open engine: %v", err)
 	}
