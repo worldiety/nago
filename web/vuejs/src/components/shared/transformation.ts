@@ -10,39 +10,39 @@ import { cssLengthValue } from '@/components/shared/length';
 import { Transformation } from '@/shared/proto/nprotoc_gen';
 
 export function transformationCSS(transformation?: Transformation): string[] {
-	const styles: string[] = [];
-
 	if (!transformation) {
-		return styles;
+		return [];
 	}
 
+	const transformations: string[] = [];
+
 	if (transformation.rotateZ) {
-		styles.push('transform: rotateZ(' + transformation.rotateZ + 'deg)');
+		transformations.push('rotateZ(' + transformation.rotateZ + 'deg)');
 	}
 
 	if (transformation.scaleX) {
-		styles.push('transform: scaleX(' + transformation.scaleX + ')');
+		transformations.push('scaleX(' + transformation.scaleX + ')');
 	}
 
 	if (transformation.scaleY) {
-		styles.push('transform: scaleY(' + transformation.scaleY + ')');
+		transformations.push('scaleY(' + transformation.scaleY + ')');
 	}
 
 	if (transformation.scaleZ) {
-		styles.push('transform: scaleZ(' + transformation.scaleZ + ')');
+		transformations.push('scaleZ(' + transformation.scaleZ + ')');
 	}
 
 	if (transformation.translateX) {
-		styles.push('transform: translateX(' + cssLengthValue(transformation.translateX) + ')');
+		transformations.push('translateX(' + cssLengthValue(transformation.translateX) + ')');
 	}
 
 	if (transformation.translateY) {
-		styles.push('transform: translateY(' + cssLengthValue(transformation.translateY) + ')');
+		transformations.push('translateY(' + cssLengthValue(transformation.translateY) + ')');
 	}
 
 	if (transformation.translateZ) {
-		styles.push('transform: translateZ(' + cssLengthValue(transformation.translateZ) + ')');
+		transformations.push('translateZ(' + cssLengthValue(transformation.translateZ) + ')');
 	}
 
-	return styles;
+	return [`transform: ${transformations.join(' ')}`];
 }
