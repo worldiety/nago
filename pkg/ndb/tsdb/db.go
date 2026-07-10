@@ -14,6 +14,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/rogpeppe/go-internal/lockedfile"
 )
@@ -26,9 +27,16 @@ type DB struct {
 	opts     Options
 	lockFile *lockedfile.File
 
-	mu      sync.RWMutex
-	columns map[string]*Column // key: bucket + "/" + column
-	closed  bool
+	// columns caches every opened column keyed by "bucket/column". It is a
+	// sync.Map so that the overwhelmingly common cache-hit path (a stateless
+	// caller re-resolving a column on every operation) is lock-free and does not
+	// suffer the reader cache-line contention of a RWMutex under concurrency.
+	columns sync.Map // map[string]*Column
+	// createMu serializes the rare create/miss path (schema I/O + first insert)
+	// and fences Close against in-flight creates. It is never taken on a hit.
+	createMu sync.Mutex
+	// closed is checked lock-free on the hit path.
+	closed atomic.Bool
 
 	compactor *compactor
 }
@@ -47,7 +55,6 @@ func Open(dir string, opts Options) (*DB, error) {
 		dir:      dir,
 		opts:     opts,
 		lockFile: lockFile,
-		columns:  make(map[string]*Column),
 	}
 	db.compactor = newCompactor(db)
 	return db, nil
@@ -58,7 +65,28 @@ func columnKey(bucket, column string) string { return bucket + "/" + column }
 // Column opens (creating if necessary) the column with the given scheme in the
 // given bucket. If the column already exists its recorded schema must match the
 // requested scheme and decimals, otherwise an error is returned.
+//
+// The already-open case is a lock-free map lookup plus a schema-compatibility
+// check; name and schema validation only run when a column must actually be
+// created, so re-resolving a live column on every operation is cheap even under
+// heavy concurrency.
 func (db *DB) Column(bucket, column string, schema Schema) (*Column, error) {
+	if db.closed.Load() {
+		return nil, errClosed
+	}
+
+	key := columnKey(bucket, column)
+
+	// fast path: already open — lock-free load, then compatibility check.
+	if v, ok := db.columns.Load(key); ok {
+		c := v.(*Column)
+		if c.schema.Scheme != schema.Scheme || c.schema.Decimals != schema.Decimals {
+			return nil, errColumnExists
+		}
+		return c, nil
+	}
+
+	// miss: validate then create under createMu (serializes schema I/O).
 	if err := validateName(bucket); err != nil {
 		return nil, err
 	}
@@ -70,28 +98,15 @@ func (db *DB) Column(bucket, column string, schema Schema) (*Column, error) {
 	}
 	schema.Version = schemaVersion
 
-	key := columnKey(bucket, column)
+	db.createMu.Lock()
+	defer db.createMu.Unlock()
 
-	db.mu.RLock()
-	if db.closed {
-		db.mu.RUnlock()
+	if db.closed.Load() {
 		return nil, errClosed
 	}
-	if c, ok := db.columns[key]; ok {
-		db.mu.RUnlock()
-		if c.schema.Scheme != schema.Scheme || c.schema.Decimals != schema.Decimals {
-			return nil, errColumnExists
-		}
-		return c, nil
-	}
-	db.mu.RUnlock()
-
-	db.mu.Lock()
-	defer db.mu.Unlock()
-	if db.closed {
-		return nil, errClosed
-	}
-	if c, ok := db.columns[key]; ok {
+	// double-check: another goroutine may have created it while we waited.
+	if v, ok := db.columns.Load(key); ok {
+		c := v.(*Column)
 		if c.schema.Scheme != schema.Scheme || c.schema.Decimals != schema.Decimals {
 			return nil, errColumnExists
 		}
@@ -122,30 +137,29 @@ func (db *DB) Column(bucket, column string, schema Schema) (*Column, error) {
 	if err != nil {
 		return nil, err
 	}
-	db.columns[key] = c
+	db.columns.Store(key, c)
 	return c, nil
 }
 
 // LookupColumn returns an already-open or on-disk column without creating a new
 // one. ok is false if the column does not exist.
 func (db *DB) LookupColumn(bucket, column string) (*Column, bool, error) {
+	if db.closed.Load() {
+		return nil, false, errClosed
+	}
+
+	key := columnKey(bucket, column)
+	// fast path: already open — lock-free.
+	if v, ok := db.columns.Load(key); ok {
+		return v.(*Column), true, nil
+	}
+
 	if err := validateName(bucket); err != nil {
 		return nil, false, err
 	}
 	if err := validateName(column); err != nil {
 		return nil, false, err
 	}
-	key := columnKey(bucket, column)
-	db.mu.RLock()
-	if db.closed {
-		db.mu.RUnlock()
-		return nil, false, errClosed
-	}
-	if c, ok := db.columns[key]; ok {
-		db.mu.RUnlock()
-		return c, true, nil
-	}
-	db.mu.RUnlock()
 
 	dir := filepath.Join(db.dir, bucket, column)
 	schema, ok, err := loadSchema(dir)
@@ -203,17 +217,18 @@ func (c *Column) Flush() error {
 // Close flushes all columns, stops the compactor, and releases the lock. The
 // shared FilePool is owned by ndb and is not closed here.
 func (db *DB) Close() error {
-	db.mu.Lock()
-	if db.closed {
-		db.mu.Unlock()
-		return nil
+	if !db.closed.CompareAndSwap(false, true) {
+		return nil // already closed
 	}
-	db.closed = true
-	cols := make([]*Column, 0, len(db.columns))
-	for _, c := range db.columns {
-		cols = append(cols, c)
-	}
-	db.mu.Unlock()
+
+	// fence against an in-flight create so no column is opened after we snapshot.
+	db.createMu.Lock()
+	var cols []*Column
+	db.columns.Range(func(_, v any) bool {
+		cols = append(cols, v.(*Column))
+		return true
+	})
+	db.createMu.Unlock()
 
 	db.compactor.stop()
 

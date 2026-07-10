@@ -187,6 +187,25 @@ per-path shard sharding (single-mutex pool: 189 ms; sharded pool: 3 ms), so the
 remaining limit is hardware, not the engine. Runs are data-race clean under
 `go test -race`.
 
+### Column resolution (`DB.Column` / `LookupColumn`)
+
+Opened columns are cached, so a stateless caller can re-resolve a column on every
+operation instead of holding the handle. The cache is a `sync.Map`, so a hit is a
+lock-free load with no reader cache-line contention; name/schema validation only
+runs when a column is actually created. Resolving a live column
+(`BenchmarkColumnAccessParallel`) therefore gets *faster* with more cores instead
+of degrading:
+
+| cores | RWMutex (before) | sync.Map (after) |
+|-------|------------------|------------------|
+| 1     | 54 ns/op         | 52 ns/op         |
+| 4     | 93 ns/op         | 15 ns/op         |
+| 10    | 123 ns/op        | 13 ns/op         |
+
+Under a `RWMutex` the reader lock's shared state ping-pongs between cores, so
+throughput *degraded* with concurrency; the lock-free cache removes that. (The
+single remaining allocation per call is the `"bucket/column"` lookup key.)
+
 ## Essential findings
 
 * **Constant-memory burst ingest is real.** Inserting 1 billion points grew the
