@@ -67,9 +67,10 @@ func (c TMenu) Render(ctx core.RenderContext) core.RenderNode {
 					Content: render(ctx, item.content),
 				})
 			}
+
 			groups = append(groups, proto.MenuGroup{
 				Items:         items,
-				CustomContent: grp.customContent.Render(ctx),
+				CustomContent: render(ctx, grp.customContent), // CustomContent is optional and was introduced later, render only if available
 			})
 			continue
 		}
