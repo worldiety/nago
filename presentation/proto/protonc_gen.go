@@ -5671,10 +5671,12 @@ type ScaffoldMenuEntry struct {
 	Menu       ScaffoldMenuEntries
 	Badge      Str
 	Expanded   Bool
+	// If set, the custom component overrides the default behavior of the menu entry. Other fields like the icon will be ignored.
+	CustomView Component
 }
 
 func (v *ScaffoldMenuEntry) write(w *BinaryWriter) error {
-	var fields [9]bool
+	var fields [10]bool
 	fields[1] = v.Icon != nil && !v.Icon.IsZero()
 	fields[2] = v.IconActive != nil && !v.IconActive.IsZero()
 	fields[3] = !v.Title.IsZero()
@@ -5683,6 +5685,7 @@ func (v *ScaffoldMenuEntry) write(w *BinaryWriter) error {
 	fields[6] = !v.Menu.IsZero()
 	fields[7] = !v.Badge.IsZero()
 	fields[8] = !v.Expanded.IsZero()
+	fields[9] = v.CustomView != nil && !v.CustomView.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -5771,6 +5774,21 @@ func (v *ScaffoldMenuEntry) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[9] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 9); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.CustomView.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.CustomView.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -5844,6 +5862,20 @@ func (v *ScaffoldMenuEntry) read(r *BinaryReader) error {
 			if err != nil {
 				return err
 			}
+		case 9:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.CustomView = obj.(Component)
 		}
 	}
 	return nil
@@ -23544,13 +23576,14 @@ func (v *ScaffoldMenuEntry) reset() {
 	v.Menu.reset()
 	v.Badge.reset()
 	v.Expanded.reset()
+	v.CustomView = nil
 }
 
 func (v *ScaffoldMenuEntry) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Icon.IsZero() && v.IconActive.IsZero() && v.Title.IsZero() && v.Action.IsZero() && v.RootView.IsZero() && v.Menu.IsZero() && v.Badge.IsZero() && v.Expanded.IsZero()
+	return v.Icon.IsZero() && v.IconActive.IsZero() && v.Title.IsZero() && v.Action.IsZero() && v.RootView.IsZero() && v.Menu.IsZero() && v.Badge.IsZero() && v.Expanded.IsZero() && v.CustomView.IsZero()
 }
 
 type ScopeID string

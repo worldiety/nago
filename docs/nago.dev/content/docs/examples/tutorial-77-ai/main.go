@@ -42,6 +42,7 @@ func main() {
 			MenuEntry().Title("stateless").Forward("stateless").Private().
 			MenuEntry().Title("agentic").Forward("agentic").Private().
 			MenuEntry().Title("fileupload").Forward("fileupload").Private().
+			MenuEntry().Title("drivetools").Forward("drivetools").Private().
 			MenuEntry().Title("session").Forward("session").Private().
 			Decorator())
 		option.Must(cfginspector.Enable(cfg))
@@ -81,6 +82,10 @@ func main() {
 
 		cfg.RootViewWithDecoration("fileupload", func(wnd core.Window) core.View {
 			return fileUploadChat(wnd, modAi.UseCases)
+		})
+
+		cfg.RootViewWithDecoration("drivetools", func(wnd core.Window) core.View {
+			return driveToolsChat(wnd, modAi.UseCases, drives.UseCases)
 		})
 
 		cfg.RootViewWithDecoration("session", func(wnd core.Window) core.View {

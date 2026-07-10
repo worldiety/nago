@@ -45,13 +45,10 @@
 				<div class="flex flex-col justify-start items-start gap-y-4 overflow-y-auto basis-full w-full">
 					<template v-if="!subMenuVisible">
 						<!-- Top level menu entries -->
-						<BurgerMenuEntry
-							v-for="(menuEntry, index) in ui.menu?.value"
-							:key="index"
-							:ui="menuEntry"
-							:top-level="true"
-							@clicked="menuOpen = false"
-						/>
+						<template v-for="(menuEntry, index) in ui.menu?.value" :key="index">
+							<UiGeneric v-if="menuEntry.customView" :ui="menuEntry.customView" />
+							<BurgerMenuEntry v-else :ui="menuEntry" :top-level="true" @clicked="menuOpen = false" />
+						</template>
 					</template>
 					<div v-else class="flex flex-col justify-start items-start gap-y-4 w-full pl-4">
 						<!-- Back to top level menu button -->

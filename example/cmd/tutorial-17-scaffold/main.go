@@ -85,6 +85,9 @@ func main() {
 						MarkAsActiveAt: ".",
 					},
 					ForwardScaffoldMenuEntry(wnd, icons.User, "Forward entry", "/"),
+					ScaffoldMenuEntry{
+						CustomView: Stack(ThemeSwitcher(PrimaryButton(nil).Title("Farbschema wählen"))),
+					},
 				).
 				BottomView(
 					VStack(

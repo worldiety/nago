@@ -408,7 +408,7 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 			}
 
 			if entry.customView != nil {
-				sentry.Icon = entry.customView
+				sentry.CustomView = entry.customView
 			}
 
 			if entry.submenu != nil {
