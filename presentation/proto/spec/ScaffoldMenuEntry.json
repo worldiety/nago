@@ -33,6 +33,11 @@
     "8": {
       "name": "Expanded",
       "type": "Bool"
+    },
+    "9": {
+      "doc": "If set, the custom component overrides the default behavior of the menu entry. Other fields like the icon will be ignored.",
+      "name": "CustomView",
+      "type": "Component"
     }
   }
 }

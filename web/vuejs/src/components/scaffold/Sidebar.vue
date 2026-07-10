@@ -19,7 +19,9 @@
 				class="flex flex-col gap-y-4 justify-start items-center overflow-y-auto overflow-x-hidden h-full w-full"
 			>
 				<div v-for="(menuEntry, index) in ui.menu?.value" :key="index" ref="menuEntryElements" class="w-full">
+					<UiGeneric v-if="menuEntry.customView" :ui="menuEntry.customView" />
 					<TopLevelMenuEntry
+						v-else
 						:ui="menuEntry"
 						:menu-entry-index="index"
 						:mode="'sidebar'"

@@ -28,7 +28,9 @@
 						class="h-full"
 						:data-index="index"
 					>
+						<UiGeneric v-if="menuEntry.customView" :ui="menuEntry.customView" />
 						<TopLevelMenuEntry
+							v-else
 							:ui="menuEntry"
 							:menu-entry-index="index"
 							:mode="'navigationBar'"

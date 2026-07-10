@@ -35,6 +35,7 @@ type ScaffoldMenuEntry struct {
 	// Use . for index.
 	MarkAsActiveAt core.NavigationPath
 	Menu           []ScaffoldMenuEntry
+	CustomView     core.View // if set, the custom component will be used instead of the default menu entry.
 
 	// intentionally left out expanded and badge, because badge can be emulated with Box layout and expanded is automatic
 }
@@ -172,6 +173,7 @@ func makeMenu(ctx core.RenderContext, menu []ScaffoldMenuEntry) []proto.Scaffold
 			Action:     ctx.MountCallback(entry.Action),
 			RootView:   proto.RootViewID(entry.MarkAsActiveAt),
 			Menu:       makeMenu(ctx, entry.Menu),
+			CustomView: render(ctx, entry.CustomView),
 		})
 	}
 

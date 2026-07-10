@@ -5814,6 +5814,9 @@ export class ScaffoldMenuEntry implements Writeable, Readable {
 
 	public expanded?: Bool;
 
+	// If set, the custom component overrides the default behavior of the menu entry. Other fields like the icon will be ignored.
+	public customView?: Component;
+
 	constructor(
 		icon: Component | undefined = undefined,
 		iconActive: Component | undefined = undefined,
@@ -5822,7 +5825,8 @@ export class ScaffoldMenuEntry implements Writeable, Readable {
 		rootView: RootViewID | undefined = undefined,
 		menu: ScaffoldMenuEntries | undefined = undefined,
 		badge: Str | undefined = undefined,
-		expanded: Bool | undefined = undefined
+		expanded: Bool | undefined = undefined,
+		customView: Component | undefined = undefined
 	) {
 		this.icon = icon;
 		this.iconActive = iconActive;
@@ -5832,6 +5836,7 @@ export class ScaffoldMenuEntry implements Writeable, Readable {
 		this.menu = menu;
 		this.badge = badge;
 		this.expanded = expanded;
+		this.customView = customView;
 	}
 
 	read(reader: BinaryReader): void {
@@ -5883,6 +5888,15 @@ export class ScaffoldMenuEntry implements Writeable, Readable {
 					this.expanded = readBool(reader);
 					break;
 				}
+				case 9: {
+					// decode polymorphic field as 1 element array
+					const len = reader.readUvarint();
+					if (len != 1) {
+						throw new Error(`unexpected length: ` + len);
+					}
+					this.customView = unmarshal(reader) as Component;
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -5900,6 +5914,7 @@ export class ScaffoldMenuEntry implements Writeable, Readable {
 			this.menu !== undefined && !this.menu.isZero(),
 			this.badge !== undefined,
 			this.expanded !== undefined,
+			this.customView !== undefined && !this.customView.isZero(),
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -5941,6 +5956,13 @@ export class ScaffoldMenuEntry implements Writeable, Readable {
 			writer.writeFieldHeader(Shapes.UVARINT, 8);
 			writeBool(writer, this.expanded!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[9]) {
+			// encode polymorphic enum as 1 element slice
+			writer.writeFieldHeader(Shapes.ARRAY, 9);
+			writer.writeByte(1);
+			this.customView.writeTypeHeader(writer);
+			this.customView!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -5952,7 +5974,8 @@ export class ScaffoldMenuEntry implements Writeable, Readable {
 			this.rootView === undefined &&
 			(this.menu === undefined || this.menu.isZero()) &&
 			this.badge === undefined &&
-			this.expanded === undefined
+			this.expanded === undefined &&
+			(this.customView === undefined || this.customView.isZero())
 		);
 	}
 
@@ -5965,6 +5988,7 @@ export class ScaffoldMenuEntry implements Writeable, Readable {
 		this.menu = undefined;
 		this.badge = undefined;
 		this.expanded = undefined;
+		this.customView = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
