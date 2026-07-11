@@ -13,6 +13,8 @@ import (
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/admin"
 	"go.wdy.de/nago/application/inspector"
+	inspectorndb "go.wdy.de/nago/application/inspector/ndb"
+	uindbinspector "go.wdy.de/nago/application/inspector/ndb/ui"
 	"go.wdy.de/nago/application/inspector/rest"
 	"go.wdy.de/nago/application/inspector/ui"
 	"go.wdy.de/nago/auth"
@@ -20,12 +22,19 @@ import (
 )
 
 // Management is a Nago system(Inspector Management).
-// It provides functionality to inspect and manage entity and blob stores.
+// It provides functionality to inspect and manage entity and blob stores, and –
+// when an ndb database has been configured – to inspect ndb message streams
+// (msgstore) and time series (tsdb).
 // The system allows users to view and edit repository entries, download and delete blob files,
 // and interact with stores through the Admin Center UI.
 type Management struct {
 	UseCases inspector.UseCases
 	Pages    uiinspector.Pages
+
+	// NDB holds the ndb inspector wiring. It is always installed, but its admin
+	// card only appears once at least one ndb database is registered.
+	NDBUseCases inspectorndb.UseCases
+	NDBPages    uindbinspector.Pages
 }
 
 func Enable(cfg *application.Configurator) (Management, error) {
@@ -39,17 +48,37 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		return Management{}, err
 	}
 
+	// The ndb inspector browses every ndb database registered with the
+	// Configurator (via cfg.NDB / cfg.OpenNDB). The provider is live so
+	// databases opened after Enable still appear.
+	ndbProvider := func() []inspectorndb.Instance {
+		var out []inspectorndb.Instance
+		for _, in := range cfg.NDBInstances() {
+			out = append(out, inspectorndb.Instance{Path: in.Path, Name: in.Name, DB: in.DB})
+		}
+		return out
+	}
+
 	management = Management{
 		UseCases: inspector.NewUseCases(stores),
 		Pages: uiinspector.Pages{
 			PageDataInspector: "admin/inspector",
 		},
+		NDBUseCases: inspectorndb.NewUseCases(ndbProvider),
+		NDBPages: uindbinspector.Pages{
+			PageMessages: "admin/inspector/ndb/messages",
+		},
 	}
 
 	cfg.NoFooter(management.Pages.PageDataInspector)
+	cfg.NoFooter(management.NDBPages.PageMessages)
 
 	cfg.RootViewWithDecoration(management.Pages.PageDataInspector, func(wnd core.Window) core.View {
 		return uiinspector.PageInspector(wnd, management.UseCases)
+	})
+
+	cfg.RootViewWithDecoration(management.NDBPages.PageMessages, func(wnd core.Window) core.View {
+		return uindbinspector.PageMessages(wnd, management.NDBUseCases)
 	})
 
 	cfg.AddAdminCenterGroup(func(subject auth.Subject) admin.Group {
@@ -58,6 +87,17 @@ func Enable(cfg *application.Configurator) (Management, error) {
 			Entries: []admin.Card{
 				{Title: "Stores", Text: "Stores bilden die Grundlage für Repositories. Es gibt spezialisierte Stores für Entities und Blobs.", Target: management.Pages.PageDataInspector, Permission: inspector.PermDataInspector},
 			},
+		}
+
+		// The ndb card appears automatically once an ndb database has been
+		// configured anywhere in the application.
+		if len(cfg.NDBInstances()) > 0 {
+			group.Entries = append(group.Entries, admin.Card{
+				Title:      "ndb Nachrichten",
+				Text:       "Message-Streams (msgstore) über alle ndb Datenbanken einsehen: nach Seq oder Zeit springen, Nachrichten fensterweise anzeigen und einzelne Einträge oder ganze Streams löschen.",
+				Target:     management.NDBPages.PageMessages,
+				Permission: inspectorndb.PermNDBInspector,
+			})
 		}
 
 		return group

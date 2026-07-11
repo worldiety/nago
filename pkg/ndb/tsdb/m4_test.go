@@ -15,7 +15,7 @@ import (
 	"go.wdy.de/nago/pkg/timeseries"
 )
 
-// M4's own algorithmic correctness (matching the Jugel et al. paper) is proven
+// M4's own algorithmic correctness is proven
 // independently in pkg/timeseries/m4_test.go against a fixed-grid reference and
 // under a constant-memory streaming test. The tests here prove the complementary
 // tsdb-side property: the tsdb column iterator is a faithful M4 data source, so

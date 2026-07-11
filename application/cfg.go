@@ -30,6 +30,7 @@ import (
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/pkg/events"
+	"go.wdy.de/nago/pkg/ndb"
 	"go.wdy.de/nago/pkg/sitemap"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
@@ -46,6 +47,8 @@ type BlobStorageFactory interface {
 type Configurator struct {
 	stores                     *LocalStores
 	storesMutex                sync.Mutex
+	ndbMutex                   sync.Mutex
+	ndbs                       map[string]*ndb.DB // cache of opened ndb databases, keyed by resolved absolute path
 	origCtx                    context.Context
 	mutCtx                     atomic.Pointer[context.Context] // we are in the configuration phase and chaining the contexts over complicates things
 	done                       context.CancelFunc
