@@ -44,9 +44,6 @@ func (c *Configurator) HandleMethod(method string, pattern string, handler http.
 // The handler will be wrapped by a session and user middleware.
 // See also [Configurator.HandleFunc] and [Configurator.HandleMethod].
 func (c *Configurator) HandleFuncSubject(pattern string, handler http2.SubjectHandlerFunc) error {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-
 	modSessions, err := c.SessionManagement()
 	if err != nil {
 		return err
@@ -56,6 +53,9 @@ func (c *Configurator) HandleFuncSubject(pattern string, handler http2.SubjectHa
 	if err != nil {
 		return err
 	}
+
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 
 	c.rawEndpoint = append(c.rawEndpoint, rawEndpoint{
 		pattern: pattern,
