@@ -261,6 +261,17 @@ func (h *head) maxTS() (int64, bool) {
 	return e.ts, ok
 }
 
+// minTS returns the smallest timestamp held in the head, if any.
+func (h *head) minTS() (int64, bool) {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	if h.tree.Len() == 0 {
+		return 0, false
+	}
+	e, ok := h.tree.Min()
+	return e.ts, ok
+}
+
 func (h *head) len() int {
 	h.mu.RLock()
 	defer h.mu.RUnlock()

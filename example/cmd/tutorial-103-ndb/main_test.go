@@ -40,8 +40,9 @@ func openApp(t *testing.T) (*app, *ndb.DB) {
 	tsEng := option.Must(db.Engine("metrics", ndb.EngineOptions{Kind: tsdb.EngineKind, Config: tsdb.Options{}}))
 	tdb := tsEng.(interface{ DB() *tsdb.DB }).DB()
 	col := option.Must(tdb.Column(tsBucket, tsColumn, tsdb.Schema{Scheme: tsdb.SchemeDecimal, Decimals: 2}))
+	colStr := option.Must(tdb.Column(tsBucket, tsColumnStr, tsdb.Schema{Scheme: tsdb.SchemeString}))
 
-	a := &app{handler: handler, ledger: ledger, tsColumn: col}
+	a := &app{handler: handler, ledger: ledger, tsColumn: col, tsColumnStr: colStr}
 	a.tsBaseMs = time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC).UnixMilli()
 	a.tsLastMs = a.tsBaseMs + int64(tsCount-1)*tsStepMs
 	return a, db
@@ -127,5 +128,40 @@ func TestTimeseriesSeedAndM4(t *testing.T) {
 	}
 	if n >= raw {
 		t.Fatalf("M4 did not downsample: %d >= %d", n, raw)
+	}
+}
+
+func TestStatusTimeseriesSeed(t *testing.T) {
+	a, db := openApp(t)
+	defer db.Close()
+
+	strLast := a.tsBaseMs + int64(tsStrCount-1)*tsStrStepMs
+	if !isColumnEmptyStr(a.tsColumnStr, a.tsBaseMs, strLast) {
+		t.Fatal("fresh string column should be empty")
+	}
+	if err := seedStatusTimeseries(a.tsColumnStr, a.tsBaseMs); err != nil {
+		t.Fatal(err)
+	}
+	if isColumnEmptyStr(a.tsColumnStr, a.tsBaseMs, strLast) {
+		t.Fatal("string column should be populated after seeding")
+	}
+
+	// read back all values and check count + that several distinct states occur
+	var count int
+	seen := map[string]bool{}
+	if err := a.tsColumnStr.ScanString(a.tsBaseMs, strLast, func(ts []int64, vals []string) bool {
+		for i := range ts {
+			count++
+			seen[vals[i]] = true
+		}
+		return true
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if count != tsStrCount {
+		t.Fatalf("status points = %d, want %d", count, tsStrCount)
+	}
+	if !seen["running"] || !seen["error"] || !seen["warning"] {
+		t.Fatalf("expected multiple distinct states, saw %v", seen)
 	}
 }

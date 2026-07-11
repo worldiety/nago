@@ -81,6 +81,9 @@ func TestUseCasesMessages(t *testing.T) {
 	if orders.Type != "orders" || orders.Bytes <= 0 || orders.Segments < 1 {
 		t.Fatalf("orders stat = %+v", orders)
 	}
+	if n, err := uc.CountType(su, instPath, "events", "orders"); err != nil || n != 5 {
+		t.Fatalf("orders count = %d (err %v), want 5", n, err)
+	}
 
 	// window: read all 5 orders
 	rows, err := uc.Window(su, ndbinspector.WindowRequest{Instance: instPath, Engine: "events", Types: []ndb.TypeID{"orders"}, MinSeq: 0, Limit: 100})

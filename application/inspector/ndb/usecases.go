@@ -204,6 +204,20 @@ func (uc UseCases) Types(subject auth.Subject, instancePath, engine string) ([]T
 	return out, nil
 }
 
+// CountType returns the exact number of live (non-tombstone) messages of one
+// event type. This performs a full replay (O(messages)); the UI caches the
+// result in page state so the scan runs only once per page visit.
+func (uc UseCases) CountType(subject auth.Subject, instancePath, engine string, typeID ndb.TypeID) (int64, error) {
+	if err := subject.Audit(PermNDBInspector); err != nil {
+		return 0, err
+	}
+	db, err := uc.messages(instancePath, engine)
+	if err != nil {
+		return 0, err
+	}
+	return db.CountType(typeID)
+}
+
 // SeqForTime resolves the smallest Seq whose append time is >= tsNano, to seek a
 // replay window by wall-clock time.
 func (uc UseCases) SeqForTime(subject auth.Subject, instancePath, engine string, tsNano int64) (ndb.Seq, error) {

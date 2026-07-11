@@ -21,10 +21,9 @@ import (
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/dropdown"
 	"go.wdy.de/nago/presentation/ui/picker"
-)
 
-// selKey is a string alias satisfying dropdown's ~string constraint.
-type selKey string
+	"github.com/worldiety/i18n"
+)
 
 // previewMaxLen is the maximum number of characters shown in the payload
 // preview column before it is ellipsized.
@@ -38,7 +37,7 @@ const previewMaxLen = 200
 // messages.
 func PageMessages(wnd core.Window, uc ndbinspector.UseCases) core.View {
 	if !wnd.Subject().HasPermission(ndbinspector.PermNDBInspector) {
-		return alert.Banner("Kein Zugriff", "Es fehlt die Berechtigung nago.ndb.inspector.")
+		return alert.Banner(StrNoAccessTitle.Get(wnd), StrNoAccessBody.Get(wnd))
 	}
 
 	instances, err := uc.Instances(wnd.Subject())
@@ -47,8 +46,8 @@ func PageMessages(wnd core.Window, uc ndbinspector.UseCases) core.View {
 	}
 	if len(instances) == 0 {
 		return ui.VStack(
-			header("ndb Nachrichten"),
-			alert.Banner("Keine ndb Datenbank", "Es wurde keine ndb Datenbank registriert."),
+			header(StrMessagesTitle.Get(wnd)),
+			alert.Banner(StrNoNdbTitle.Get(wnd), StrNoNdbBody.Get(wnd)),
 		).FullWidth().Alignment(ui.Leading)
 	}
 
@@ -108,21 +107,21 @@ func PageMessages(wnd core.Window, uc ndbinspector.UseCases) core.View {
 	var right core.View
 	switch {
 	case len(engines) == 0:
-		right = alert.Banner("Keine Message-Datenbank", "In dieser ndb Datenbank wurde keine msgstore-Engine gefunden.")
+		right = alert.Banner(StrNoMsgEngineTitle.Get(wnd), StrNoMsgEngineBody.Get(wnd))
 	default:
 		right = messageWindow(wnd, uc, instancePath, engine, selectedTypesOf(selectedTypes, types), fromSeq, invalidate)
 	}
 
 	return ui.VStack(
-		header("ndb Nachrichten"),
+		header(StrMessagesTitle.Get(wnd)),
 		ui.Space(ui.L16),
 		ui.HStack(
 			ui.VStack(
-				dropdown.Dropdown[selKey]("Datenbank", instOpts, selectedInstance.Get()).
+				dropdown.Dropdown[selKey](StrDatabase.Get(wnd), instOpts, selectedInstance.Get()).
 					InputValue(selectedInstance).
 					Frame(ui.Frame{}.FullWidth()),
 				ui.Space(ui.L8),
-				dropdown.Dropdown[selKey]("Engine", engOpts, selectedEngine.Get()).
+				dropdown.Dropdown[selKey](StrEngine.Get(wnd), engOpts, selectedEngine.Get()).
 					InputValue(selectedEngine).
 					Frame(ui.Frame{}.FullWidth()),
 				ui.Space(ui.L8),
@@ -137,16 +136,12 @@ func PageMessages(wnd core.Window, uc ndbinspector.UseCases) core.View {
 	).FullWidth().Alignment(ui.Leading)
 }
 
-func header(title string) core.View {
-	return ui.HStack(ui.Text(title).Font(ui.Title), ui.Spacer()).FullWidth()
-}
-
 // typePicker is the multi-select filter over the available message types. It is
 // the primary way to choose which streams appear in the list. When the selection
 // changes, the seek cursor resets to the beginning.
 func typePicker(wnd core.Window, types []ndbinspector.TypeInfo, selected *core.State[[]selKey], fromSeq *core.State[int64]) core.View {
 	if len(types) == 0 {
-		return ui.Text("Keine Streams vorhanden.").Font(ui.Small)
+		return ui.Text(StrNoStreams.Get(wnd)).Font(ui.Small)
 	}
 	values := make([]selKey, 0, len(types))
 	for _, ti := range types {
@@ -154,10 +149,10 @@ func typePicker(wnd core.Window, types []ndbinspector.TypeInfo, selected *core.S
 	}
 	selected.Observe(func([]selKey) { fromSeq.Set(0) })
 
-	return picker.Picker[selKey]("Nachrichtentypen", values, selected).
+	return picker.Picker[selKey](StrMessageTypes.Get(wnd), values, selected).
 		MultiSelect(true).
 		Stringer(func(k selKey) string { return string(k) }).
-		SupportingText("Mehrfachauswahl – leer = alle Typen").
+		SupportingText(StrMessageTypesHint.Get(wnd)).
 		Frame(ui.Frame{}.FullWidth())
 }
 
@@ -224,12 +219,25 @@ func streamStatRow(wnd core.Window, uc ndbinspector.UseCases, instancePath, engi
 	if ti.HasPending {
 		pending = " +"
 	}
+	// The exact message count needs a full replay; cache it per page under a
+	// fixed id so the scan runs at most once per visit. Destructive actions call
+	// resetCountCache to re-scan the affected counts.
+	key := instancePath + "|" + engine + "|" + string(ti.Type)
+	count := cachedCount(wnd, countCacheMessages, key, func() (int64, error) {
+		return uc.CountType(wnd.Subject(), instancePath, engine, ti.Type)
+	})
+
 	return ui.HStack(
 		ui.VStack(
 			ui.Text(string(ti.Type)).Font(ui.BodyLarge),
-			ui.Text(fmt.Sprintf("Seq %d–%d%s · %d Segmente · %s",
-				ti.MinSeq, ti.MaxSeq, pending, ti.Segments,
-				xstrings.FormatByteSize(wnd.Locale(), ti.Bytes, 1))).Font(ui.Small),
+			ui.Text(StrMsgStatRow.Get(wnd,
+				i18n.Int("min", int(ti.MinSeq)),
+				i18n.Int("max", int(ti.MaxSeq)),
+				i18n.String("pending", pending),
+				i18n.String("count", countLabel(count)),
+				i18n.Int("segments", ti.Segments),
+				i18n.String("size", xstrings.FormatByteSize(wnd.Locale(), ti.Bytes, 1)),
+			)).Font(ui.Small),
 		).Alignment(ui.Leading),
 		ui.Spacer(),
 		deleteTypeButton(wnd, uc, instancePath, engine, string(ti.Type), invalidate),
@@ -242,7 +250,7 @@ func streamStatRow(wnd core.Window, uc ndbinspector.UseCases, instancePath, engi
 
 func messageWindow(wnd core.Window, uc ndbinspector.UseCases, instancePath, engine string, selTypes []ndb.TypeID, fromSeq *core.State[int64], invalidate *core.State[int]) core.View {
 	if engine == "" {
-		return ui.Text("Wähle eine Engine aus, um Nachrichten anzuzeigen.")
+		return ui.Text(StrSelectEngineHint.Get(wnd))
 	}
 
 	// Page size is derived from the available window height exactly like the
@@ -271,7 +279,7 @@ func messageWindow(wnd core.Window, uc ndbinspector.UseCases, instancePath, engi
 	showPreview := wnd.Info().SizeClass > core.SizeClassSmall
 
 	controls := ui.HStack(
-		ui.IntField("Ab Seq", fromSeq.Get(), fromSeq).Frame(ui.Frame{Width: ui.L160}),
+		ui.IntField(StrFromSeq.Get(wnd), fromSeq.Get(), fromSeq).Frame(ui.Frame{Width: ui.L160}),
 
 		ui.Spacer(),
 		ui.SecondaryButton(func() {
@@ -280,7 +288,7 @@ func messageWindow(wnd core.Window, uc ndbinspector.UseCases, instancePath, engi
 				return
 			}
 			invalidate.Set(invalidate.Get() + 1)
-		}).PreIcon(icons.Refresh).Title("Zeitindex"),
+		}).PreIcon(icons.Refresh).Title(StrTimeIndex.Get(wnd)),
 	).FullWidth()
 
 	// The table (incl. its pager footer) is always rendered – even for an empty
@@ -290,49 +298,29 @@ func messageWindow(wnd core.Window, uc ndbinspector.UseCases, instancePath, engi
 	return ui.VStack(controls, ui.Space(ui.L16), table).FullWidth().Alignment(ui.Leading)
 }
 
-// pageSizeFor computes how many rows fit into the current window height, using
-// the same calculation as the blob store inspector. It never returns less than
-// one and requires no state.
-func pageSizeFor(wnd core.Window) int {
-	const (
-		lineHeight    = 69.0
-		overheadLines = 4
-	)
-	return max(1, int((float64(wnd.Info().Height)-(overheadLines*lineHeight)-96)/lineHeight))
-}
-
-// maxPages is the number of pages the in-window pager can navigate before the
-// seq cursor advances to the next window (limit = pageSize * maxPages).
-const maxPages = 5
-
 func messageTable(wnd core.Window, uc ndbinspector.UseCases, instancePath, engine string, rows []ndbinspector.MessageRow, pageSize int, fromSeq *core.State[int64], showType, showPreview bool, invalidate *core.State[int]) core.View {
 	cols := []ui.TTableColumn{
-		ui.TableColumn(ui.Text("Seq")),
-		ui.TableColumn(ui.Text("Zeit")),
+		ui.TableColumn(ui.Text(StrColSeq.Get(wnd))),
+		ui.TableColumn(ui.Text(StrColTime.Get(wnd))),
 	}
 	if showType {
-		cols = append(cols, ui.TableColumn(ui.Text("Typ")))
+		cols = append(cols, ui.TableColumn(ui.Text(StrColType.Get(wnd))))
 	}
 	cols = append(cols,
-		ui.TableColumn(ui.Text("Trace")),
-		ui.TableColumn(ui.Text("Größe")),
+		ui.TableColumn(ui.Text(StrColTrace.Get(wnd))),
+		ui.TableColumn(ui.Text(StrColSize.Get(wnd))),
 	)
 	if showPreview {
-		cols = append(cols, ui.TableColumn(ui.Text("Vorschau")))
+		cols = append(cols, ui.TableColumn(ui.Text(StrColPreview.Get(wnd))))
 	}
 	cols = append(cols, ui.TableColumn(ui.Text("")))
 
 	// page within the fetched window
 	pageIdx := core.StateOf[int](wnd, "ndbmsg-page")
 	pageCount := (len(rows) + pageSize - 1) / pageSize
+	clampPage(pageIdx, pageCount)
 	if pageCount < 1 {
 		pageCount = 1
-	}
-	if pageIdx.Get() >= pageCount {
-		pageIdx.Set(pageCount - 1)
-	}
-	if pageIdx.Get() < 0 {
-		pageIdx.Set(0)
 	}
 	start := pageIdx.Get() * pageSize
 	end := min(start+pageSize, len(rows))
@@ -343,67 +331,44 @@ func messageTable(wnd core.Window, uc ndbinspector.UseCases, instancePath, engin
 		tableRows = append(tableRows, messageRow(wnd, uc, instancePath, engine, r, showType, showPreview, invalidate))
 	}
 	// dataview-style pager footer, always present so navigation is always possible.
-	tableRows = append(tableRows, pagerFooter(len(cols), rows, pageSize, pageIdx, pageCount, fromSeq))
+	tableRows = append(tableRows, messagePagerFooter(wnd, len(cols), rows, pageSize, pageIdx, pageCount, fromSeq))
 
 	return ui.Table(cols...).Rows(tableRows...).Frame(ui.Frame{}.FullWidth())
 }
 
-// pagerFooter mimics the dataview optic: a footer row with an entries label, a
-// spacer and prev/next chevrons on a card-footer background. It pages within the
-// fetched window; on the boundaries it advances/retreats the seq cursor so the
-// user can always navigate, even when the current window is empty.
-func pagerFooter(colCount int, rows []ndbinspector.MessageRow, pageSize int, pageIdx *core.State[int], pageCount int, fromSeq *core.State[int64]) ui.TTableRow {
+// messagePagerFooter builds the footer with a message-specific label and the
+// seq-cursor window shifts, delegating the shared optic to footerPager.
+func messagePagerFooter(wnd core.Window, colCount int, rows []ndbinspector.MessageRow, pageSize int, pageIdx *core.State[int], pageCount int, fromSeq *core.State[int64]) ui.TTableRow {
 	var label string
 	if len(rows) == 0 {
-		label = "Keine Nachrichten in diesem Fenster"
+		label = StrNoMessagesInWindow.Get(wnd)
 	} else {
 		start := pageIdx.Get() * pageSize
 		end := min(start+pageSize, len(rows))
-		label = fmt.Sprintf("Seq %d–%d · Seite %d von %d",
-			rows[start].Seq, rows[end-1].Seq, pageIdx.Get()+1, pageCount)
+		label = StrMsgPageLabel.Get(wnd,
+			i18n.Int("min", int(rows[start].Seq)),
+			i18n.Int("max", int(rows[end-1].Seq)),
+			i18n.Int("page", pageIdx.Get()+1),
+			i18n.Int("pages", pageCount),
+		)
 	}
 
-	canPrev := pageIdx.Get() > 0 || fromSeq.Get() > 0
-	// A next window exists if the fetch filled the whole limit; otherwise this
-	// was the last (partial) window.
 	windowFull := len(rows) == pageSize*maxPages
-	canNext := pageIdx.Get() < pageCount-1 || windowFull
-
-	prev := func() {
-		if pageIdx.Get() > 0 {
-			pageIdx.Set(pageIdx.Get() - 1)
-			return
-		}
-		// step the seq window back by one full fetch and land on its last page.
+	onPrev := func() {
 		n := fromSeq.Get() - int64(pageSize*maxPages)
 		if n < 0 {
 			n = 0
 		}
 		fromSeq.Set(n)
-		pageIdx.Set(maxPages - 1)
 	}
-	next := func() {
-		if pageIdx.Get() < pageCount-1 {
-			pageIdx.Set(pageIdx.Get() + 1)
-			return
-		}
-		// advance the seq window to just after the last visible message.
+	onNext := func() {
 		if len(rows) > 0 {
 			fromSeq.Set(int64(rows[len(rows)-1].Seq) + 1)
 		}
-		pageIdx.Set(0)
 	}
 
-	return ui.TableRow(
-		ui.TableCell(
-			ui.HStack(
-				ui.Text(label),
-				ui.Spacer(),
-				ui.TertiaryButton(prev).PreIcon(icons.ChevronLeft).Enabled(canPrev),
-				ui.TertiaryButton(next).PreIcon(icons.ChevronRight).Enabled(canNext),
-			).Gap(ui.L8).FullWidth(),
-		).ColSpan(colCount),
-	).BackgroundColor(ui.ColorCardFooter)
+	return footerPager(colCount, label, len(rows) == 0, pageIdx, pageCount,
+		fromSeq.Get() == 0, windowFull, onPrev, onNext)
 }
 
 func messageRow(wnd core.Window, uc ndbinspector.UseCases, instancePath, engine string, r ndbinspector.MessageRow, showType, showPreview bool, invalidate *core.State[int]) ui.TTableRow {
@@ -430,7 +395,7 @@ func messageRow(wnd core.Window, uc ndbinspector.UseCases, instancePath, engine 
 		ui.TableCell(ui.Text(xstrings.FormatByteSize(wnd.Locale(), int64(r.Size), 1))),
 	)
 	if showPreview {
-		cells = append(cells, ui.TableCell(ui.Text(payloadPreview(r.Payload))))
+		cells = append(cells, ui.TableCell(ui.Text(payloadPreview(wnd, r.Payload))))
 	}
 	cells = append(cells, ui.TableCell(deleteSeqButton(wnd, uc, instancePath, engine, r.Type, r.Seq, invalidate)))
 
@@ -439,25 +404,25 @@ func messageRow(wnd core.Window, uc ndbinspector.UseCases, instancePath, engine 
 
 func messageDetailDialog(wnd core.Window, r ndbinspector.MessageRow, presented *core.State[bool]) core.View {
 	meta := ui.Table(
-		ui.TableColumn(ui.Text("Feld")),
-		ui.TableColumn(ui.Text("Wert")),
+		ui.TableColumn(ui.Text(StrColField.Get(wnd))),
+		ui.TableColumn(ui.Text(StrColValue.Get(wnd))),
 	).Rows(
 		metaRow("Seq", fmt.Sprintf("%d", r.Seq)),
-		metaRow("Typ", string(r.Type)),
-		metaRow("Zeit", time.Unix(0, r.TimeNano).Format(time.RFC3339Nano)),
+		metaRow(StrColType.Get(wnd), string(r.Type)),
+		metaRow(StrColTime.Get(wnd), time.Unix(0, r.TimeNano).Format(time.RFC3339Nano)),
 		metaRow("TraceID", r.TraceID),
 		metaRow("Encoding", fmt.Sprintf("%d", r.Encoding)),
 		metaRow("Tombstone", fmt.Sprintf("%v", r.Tomb)),
-		metaRow("Größe", xstrings.FormatByteSize(wnd.Locale(), int64(r.Size), 2)),
+		metaRow(StrColSize.Get(wnd), xstrings.FormatByteSize(wnd.Locale(), int64(r.Size), 2)),
 	).Frame(ui.Frame{}.FullWidth())
 
 	body := ui.VStack(
 		meta,
 		ui.Space(ui.L8),
-		payloadView(r.Payload),
+		payloadView(wnd, r.Payload),
 	).Alignment(ui.Leading).FullWidth()
 
-	return alert.Dialog(fmt.Sprintf("Nachricht %d", r.Seq), body, presented, alert.Larger(), alert.Ok(), alert.Closeable())
+	return alert.Dialog(StrMessageX.Get(wnd, i18n.Int("seq", int(r.Seq))), body, presented, alert.Larger(), alert.Ok(), alert.Closeable())
 }
 
 func metaRow(field, value string) ui.TTableRow {
@@ -467,12 +432,12 @@ func metaRow(field, value string) ui.TTableRow {
 	)
 }
 
-func payloadView(payload []byte) core.View {
+func payloadView(wnd core.Window, payload []byte) core.View {
 	if len(payload) == 0 {
-		return ui.Text("<leer>").Font(ui.Small)
+		return ui.Text(StrEmpty.Get(wnd)).Font(ui.Small)
 	}
 	if !utf8.Valid(payload) {
-		return ui.Text(fmt.Sprintf("<binäre Daten, %d Bytes>", len(payload))).Font(ui.Small)
+		return ui.Text(StrBinaryDataX.Get(wnd, i18n.Int("bytes", len(payload)))).Font(ui.Small)
 	}
 	return ui.CodeEditor(string(payload)).Frame(ui.Frame{Height: ui.L320}.FullWidth()).Language("json")
 }
@@ -480,8 +445,8 @@ func payloadView(payload []byte) core.View {
 func deleteSeqButton(wnd core.Window, uc ndbinspector.UseCases, instancePath, engine string, typeID ndb.TypeID, seq ndb.Seq, invalidate *core.State[int]) core.View {
 	presented := core.StateOf[bool](wnd, fmt.Sprintf("delseq-%s-%s-%d", instancePath, engine, seq))
 	return ui.HStack(
-		alert.Dialog("Nachricht löschen",
-			ui.Text(fmt.Sprintf("Seq %d aus Stream %q als gelöscht markieren (Tombstone)?", seq, typeID)),
+		alert.Dialog(StrDeleteMessage.Get(wnd),
+			ui.Text(StrDeleteMessageBody.Get(wnd, i18n.Int("seq", int(seq)), i18n.String("type", string(typeID)))),
 			presented,
 			alert.Cancel(nil),
 			alert.Delete(func() {
@@ -489,18 +454,19 @@ func deleteSeqButton(wnd core.Window, uc ndbinspector.UseCases, instancePath, en
 					alert.ShowBannerError(wnd, err)
 					return
 				}
+				resetCountCache(wnd, countCacheMessages)
 				invalidate.Set(invalidate.Get() + 1)
 			}),
 		),
-		ui.TertiaryButton(func() { presented.Set(true) }).PreIcon(icons.TrashBin).AccessibilityLabel("Löschen"),
+		ui.TertiaryButton(func() { presented.Set(true) }).PreIcon(icons.TrashBin).AccessibilityLabel(StrDelete.Get(wnd)),
 	)
 }
 
 func deleteTypeButton(wnd core.Window, uc ndbinspector.UseCases, instancePath, engine, typeID string, invalidate *core.State[int]) core.View {
 	presented := core.StateOf[bool](wnd, "deltype-"+instancePath+"-"+engine+"-"+typeID)
 	return ui.HStack(
-		alert.Dialog("Stream löschen",
-			ui.Text(fmt.Sprintf("Den gesamten Stream %q unwiderruflich löschen?", typeID)),
+		alert.Dialog(StrDeleteStream.Get(wnd),
+			ui.Text(StrDeleteStreamBody.Get(wnd, i18n.String("type", typeID))),
 			presented,
 			alert.Cancel(nil),
 			alert.Delete(func() {
@@ -508,19 +474,20 @@ func deleteTypeButton(wnd core.Window, uc ndbinspector.UseCases, instancePath, e
 					alert.ShowBannerError(wnd, err)
 					return
 				}
+				resetCountCache(wnd, countCacheMessages)
 				invalidate.Set(invalidate.Get() + 1)
 			}),
 		),
-		ui.TertiaryButton(func() { presented.Set(true) }).PreIcon(icons.TrashBin).AccessibilityLabel("Stream löschen"),
+		ui.TertiaryButton(func() { presented.Set(true) }).PreIcon(icons.TrashBin).AccessibilityLabel(StrDeleteStream.Get(wnd)),
 	)
 }
 
-func payloadPreview(payload []byte) string {
+func payloadPreview(wnd core.Window, payload []byte) string {
 	if len(payload) == 0 {
 		return ""
 	}
 	if !utf8.Valid(payload) {
-		return fmt.Sprintf("<binär, %d Bytes>", len(payload))
+		return StrBinaryDataX.Get(wnd, i18n.Int("bytes", len(payload)))
 	}
 	return xstrings.EllipsisEnd(string(payload), previewMaxLen)
 }

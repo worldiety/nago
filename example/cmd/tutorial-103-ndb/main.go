@@ -202,19 +202,23 @@ const (
 	pageMessages core.NavigationPath = "."
 	pageTSDB     core.NavigationPath = "tsdb"
 
-	tsBucket = "demo"
-	tsColumn = "sensor"
-	tsStepMs = 20 // 50 Hz
-	tsCount  = 200_000
+	tsBucket    = "demo"
+	tsColumn    = "sensor"
+	tsColumnStr = "status" // string-Zeitreihe zum Testen des String/Enum-Falls
+	tsStepMs    = 20       // 50 Hz
+	tsCount     = 200_000
+	tsStrStepMs = 1000 // 1 Hz Statuswechsel
+	tsStrCount  = 4_000
 )
 
 // app hält die zur Laufzeit gemeinsam genutzten Objekte.
 type app struct {
-	handler  *evs.Handler[*Account, AccEvt, AccountID]
-	ledger   *evs.Singleton[*ledgerStats]
-	tsColumn *tsdb.Column
-	tsBaseMs int64
-	tsLastMs int64
+	handler     *evs.Handler[*Account, AccEvt, AccountID]
+	ledger      *evs.Singleton[*ledgerStats]
+	tsColumn    *tsdb.Column
+	tsColumnStr *tsdb.Column
+	tsBaseMs    int64
+	tsLastMs    int64
 }
 
 func main() {
@@ -282,13 +286,25 @@ func setup(cfg *application.Configurator) (*app, error) {
 		return nil, err
 	}
 
-	a := &app{handler: handler, ledger: ledger, tsColumn: col}
+	// zweite Zeitreihe: eine String-Spalte für den String/Enum-Fall im Inspektor.
+	colStr, err := tdb.Column(tsBucket, tsColumnStr, tsdb.Schema{Scheme: tsdb.SchemeString})
+	if err != nil {
+		return nil, err
+	}
 
-	// Zeitreihe nur einmalig seeden (falls die Spalte noch leer ist).
+	a := &app{handler: handler, ledger: ledger, tsColumn: col, tsColumnStr: colStr}
+
+	// Zeitreihen nur einmalig seeden (falls die Spalten noch leer sind).
 	a.tsBaseMs = time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC).UnixMilli()
 	a.tsLastMs = a.tsBaseMs + int64(tsCount-1)*tsStepMs
-	if empty := isColumnEmpty(col, a.tsBaseMs, a.tsLastMs); empty {
+	if isColumnEmpty(col, a.tsBaseMs, a.tsLastMs) {
 		if err := seedTimeseries(col, a.tsBaseMs); err != nil {
+			return nil, err
+		}
+	}
+	strLast := a.tsBaseMs + int64(tsStrCount-1)*tsStrStepMs
+	if isColumnEmptyStr(colStr, a.tsBaseMs, strLast) {
+		if err := seedStatusTimeseries(colStr, a.tsBaseMs); err != nil {
 			return nil, err
 		}
 	}
@@ -314,6 +330,42 @@ func seedTimeseries(col *tsdb.Column, baseMs int64) error {
 		ts := baseMs + int64(i)*tsStepMs
 		v := 20.0 + 5.0*math.Sin(float64(i)/200.0) + 0.5*math.Sin(float64(i)/7.0)
 		if err := col.PutF64(ts, v); err != nil {
+			return err
+		}
+	}
+	return col.Flush()
+}
+
+func isColumnEmptyStr(col *tsdb.Column, min, max int64) bool {
+	empty := true
+	_ = col.ScanString(min, max, func(ts []int64, _ []string) bool {
+		if len(ts) > 0 {
+			empty = false
+		}
+		return false
+	})
+	return empty
+}
+
+// seedStatusTimeseries schreibt eine String-Zeitreihe mit wechselnden
+// Statuswerten (1 Hz) für den String/Enum-Fall des Zeitreihen-Inspektors.
+func seedStatusTimeseries(col *tsdb.Column, baseMs int64) error {
+	states := []string{"idle", "running", "warning", "error", "maintenance"}
+	for i := 0; i < tsStrCount; i++ {
+		ts := baseMs + int64(i)*tsStrStepMs
+		// die meiste Zeit "running", gelegentlich andere Zustände
+		s := states[1]
+		switch {
+		case i%137 == 0:
+			s = states[3] // error
+		case i%53 == 0:
+			s = states[2] // warning
+		case i%311 == 0:
+			s = states[4] // maintenance
+		case i%17 == 0:
+			s = states[0] // idle
+		}
+		if err := col.PutString(ts, s); err != nil {
 			return err
 		}
 	}
@@ -477,7 +529,48 @@ func pageTSDBView(wnd core.Window, a *app) core.View {
 				"iter.Seq[Point], den M4 direkt und speicherschonend konsumiert.",
 			linechart.LineChart(c).Curve(linechart.CurveSmooth).Series(series),
 		),
+
+		ui.Space(ui.L8),
+
+		explainerCard(
+			"String-Zeitreihe (Status)",
+			"tsdb speichert neben Dezimalwerten auch String-/Enum-Spalten. Diese lassen sich "+
+				"nicht als Chart darstellen, sondern werden im Zeitreihen-Inspektor als "+
+				"fensterweise Werteliste angezeigt. Unten die ersten Statuswechsel.",
+			statusTable(a),
+		),
 	).Gap(ui.L8).Alignment(ui.Leading).FullWidth()
+}
+
+// statusTable zeigt die ersten Werte der String-Zeitreihe als kleine Tabelle.
+func statusTable(a *app) core.View {
+	strLast := a.tsBaseMs + int64(tsStrCount-1)*tsStrStepMs
+	type row struct {
+		ts int64
+		v  string
+	}
+	var rows []row
+	_ = a.tsColumnStr.ScanString(a.tsBaseMs, strLast, func(ts []int64, vals []string) bool {
+		for i := range ts {
+			rows = append(rows, row{ts[i], vals[i]})
+			if len(rows) >= 20 {
+				return false
+			}
+		}
+		return len(rows) < 20
+	})
+
+	trows := make([]ui.TTableRow, 0, len(rows))
+	for _, r := range rows {
+		trows = append(trows, ui.TableRow(
+			ui.TableCell(ui.Text(time.UnixMilli(r.ts).UTC().Format("15:04:05"))),
+			ui.TableCell(ui.Text(r.v)),
+		))
+	}
+	return ui.Table(
+		ui.TableColumn(ui.Text("Zeit")),
+		ui.TableColumn(ui.Text("Status")),
+	).Rows(trows...).Frame(ui.Frame{}.FullWidth())
 }
 
 // ============================================================================

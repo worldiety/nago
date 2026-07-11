@@ -106,3 +106,17 @@ func (db *DB) TypeStat(typeID ndb.TypeID) (TypeStat, error) {
 	}
 	return stat, nil
 }
+
+// CountType returns the exact number of live (non-tombstone) messages of one
+// event type. Unlike TypeStat, this replays the whole type, so it is O(messages)
+// — call it deliberately, not on a hot path. A missing or empty type yields 0.
+func (db *DB) CountType(typeID ndb.TypeID) (int64, error) {
+	var n int64
+	for _, msg := range db.Replay([]ndb.TypeID{typeID}, 0, ndb.Seq(^uint64(0))) {
+		if msg.IsTombstone() {
+			continue
+		}
+		n++
+	}
+	return n, nil
+}

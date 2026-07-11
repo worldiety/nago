@@ -11,5 +11,6 @@ import "go.wdy.de/nago/presentation/core"
 
 // Pages declares the navigation targets of the ndb inspector.
 type Pages struct {
-	PageMessages core.NavigationPath
+	PageMessages   core.NavigationPath
+	PageTimeseries core.NavigationPath
 }

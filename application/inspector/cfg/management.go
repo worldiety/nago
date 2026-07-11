@@ -66,12 +66,14 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		},
 		NDBUseCases: inspectorndb.NewUseCases(ndbProvider),
 		NDBPages: uindbinspector.Pages{
-			PageMessages: "admin/inspector/ndb/messages",
+			PageMessages:   "admin/inspector/ndb/messages",
+			PageTimeseries: "admin/inspector/ndb/timeseries",
 		},
 	}
 
 	cfg.NoFooter(management.Pages.PageDataInspector)
 	cfg.NoFooter(management.NDBPages.PageMessages)
+	cfg.NoFooter(management.NDBPages.PageTimeseries)
 
 	cfg.RootViewWithDecoration(management.Pages.PageDataInspector, func(wnd core.Window) core.View {
 		return uiinspector.PageInspector(wnd, management.UseCases)
@@ -79,6 +81,10 @@ func Enable(cfg *application.Configurator) (Management, error) {
 
 	cfg.RootViewWithDecoration(management.NDBPages.PageMessages, func(wnd core.Window) core.View {
 		return uindbinspector.PageMessages(wnd, management.NDBUseCases)
+	})
+
+	cfg.RootViewWithDecoration(management.NDBPages.PageTimeseries, func(wnd core.Window) core.View {
+		return uindbinspector.PageTimeseries(wnd, management.NDBUseCases)
 	})
 
 	cfg.AddAdminCenterGroup(func(subject auth.Subject) admin.Group {
@@ -89,15 +95,23 @@ func Enable(cfg *application.Configurator) (Management, error) {
 			},
 		}
 
-		// The ndb card appears automatically once an ndb database has been
+		// The ndb cards appear automatically once an ndb database has been
 		// configured anywhere in the application.
 		if len(cfg.NDBInstances()) > 0 {
-			group.Entries = append(group.Entries, admin.Card{
-				Title:      "ndb Nachrichten",
-				Text:       "Message-Streams (msgstore) über alle ndb Datenbanken einsehen: nach Seq oder Zeit springen, Nachrichten fensterweise anzeigen und einzelne Einträge oder ganze Streams löschen.",
-				Target:     management.NDBPages.PageMessages,
-				Permission: inspectorndb.PermNDBInspector,
-			})
+			group.Entries = append(group.Entries,
+				admin.Card{
+					Title:      "ndb Nachrichten",
+					Text:       "Message-Streams (msgstore) über alle ndb Datenbanken einsehen: nach Seq oder Zeit springen, Nachrichten fensterweise anzeigen und einzelne Einträge oder ganze Streams löschen.",
+					Target:     management.NDBPages.PageMessages,
+					Permission: inspectorndb.PermNDBInspector,
+				},
+				admin.Card{
+					Title:      "ndb Zeitreihen",
+					Text:       "Zeitreihen (tsdb) über alle ndb Datenbanken einsehen: Spalte und Zeitbereich wählen, als M4-Chart darstellen und einzelne Punkte oder Bereiche löschen bzw. kompaktieren.",
+					Target:     management.NDBPages.PageTimeseries,
+					Permission: inspectorndb.PermNDBInspector,
+				},
+			)
 		}
 
 		return group
