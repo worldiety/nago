@@ -18,6 +18,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	llsyscall "github.com/landlock-lsm/go-landlock/landlock/syscall"
 )
 
 // requireSandbox skips the test when unprivileged user namespaces are not
@@ -245,5 +247,94 @@ func TestNetModes(t *testing.T) {
 			t.Fatalf("net=%v: got exit %d, want %d (loopback up=%v expected)",
 				tc.net, res.ExitCode, tc.wantExit, tc.wantUp)
 		}
+	}
+}
+
+// landlockAvailable skips the test when landlock cannot be enforced on this
+// kernel (e.g. Docker Desktop's LinuxKit VM has no landlock LSM).
+func landlockAvailable(t *testing.T) {
+	t.Helper()
+	v, err := llsyscall.LandlockGetABIVersion()
+	if err != nil || v < 1 {
+		t.Skipf("landlock unavailable (abi=%d, err=%v)", v, err)
+	}
+}
+
+// TestLandlockOnlySecretsUnreachable is the core proof for IsolationLandlockOnly:
+// it runs WITHOUT any namespaces (so it works under a hardened confinement) and
+// asserts that a path that is not in the allowlist cannot be read.
+func TestLandlockOnlySecretsUnreachable(t *testing.T) {
+	landlockAvailable(t)
+
+	secretDir := t.TempDir()
+	secret := secretDir + "/secret.txt"
+	if err := os.WriteFile(secret, []byte("top-secret"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	catBin := lookBin(t, "cat", "/bin/cat", "/usr/bin/cat")
+	workDir := t.TempDir()
+
+	var out, errBuf bytes.Buffer
+	p := Profile{
+		Isolation: IsolationLandlockOnly,
+		Binds:     []Bind{{Host: workDir, Writable: true}},
+		WorkDir:   workDir,
+		Seccomp:   SeccompStrict,
+		Landlock:  true,
+		Env:       []string{"PATH=/usr/bin:/bin"},
+	}
+	res, err := Run(context.Background(), p, Cmd{
+		Path:   catBin,
+		Args:   []string{secret},
+		Stdout: &out,
+		Stderr: &errBuf,
+	})
+	if err != nil {
+		t.Fatalf("Run: %v (stderr=%q)", err, errBuf.String())
+	}
+	if res.ExitCode == 0 {
+		t.Fatalf("expected cat to be denied, but it succeeded: %q", out.String())
+	}
+	if bytes.Contains(out.Bytes(), []byte("top-secret")) {
+		t.Fatalf("SECRET LEAKED in landlock-only mode: %q", out.String())
+	}
+}
+
+// TestLandlockOnlyAllowsBind verifies that an explicitly bound path IS readable
+// in landlock-only mode.
+func TestLandlockOnlyAllowsBind(t *testing.T) {
+	landlockAvailable(t)
+
+	workDir := t.TempDir()
+	allowed := workDir + "/data.txt"
+	if err := os.WriteFile(allowed, []byte("visible"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	catBin := lookBin(t, "cat", "/bin/cat", "/usr/bin/cat")
+
+	var out bytes.Buffer
+	p := Profile{
+		Isolation: IsolationLandlockOnly,
+		Binds:     []Bind{{Host: workDir, Writable: false}},
+		WorkDir:   workDir,
+		Seccomp:   SeccompStrict,
+		Landlock:  true,
+		Env:       []string{"PATH=/usr/bin:/bin"},
+	}
+	res, err := Run(context.Background(), p, Cmd{
+		Path:   catBin,
+		Args:   []string{allowed},
+		Stdout: &out,
+	})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if res.ExitCode != 0 {
+		t.Fatalf("expected exit 0 reading allowed bind, got %d", res.ExitCode)
+	}
+	if got := out.String(); got != "visible" {
+		t.Fatalf("output = %q, want %q", got, "visible")
 	}
 }

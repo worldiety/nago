@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/landlock-lsm/go-landlock/landlock"
+	llsyscall "github.com/landlock-lsm/go-landlock/landlock/syscall"
 	"golang.org/x/sys/unix"
 )
 
@@ -49,6 +50,10 @@ func trampoline() error {
 	sp, err := readSpec()
 	if err != nil {
 		return err
+	}
+
+	if sp.Isolation == int(IsolationLandlockOnly) {
+		return trampolineLandlockOnly(sp)
 	}
 
 	if err := setupNet(sp); err != nil {
@@ -98,6 +103,84 @@ func trampoline() error {
 		return fmt.Errorf("exec %q: %w", sp.Path, err)
 	}
 	return nil // unreachable
+}
+
+// trampolineLandlockOnly applies the weaker, privilege-free isolation: no
+// namespaces, no mounts, no pivot_root. It restricts filesystem access via a
+// landlock allowlist over the real (host) paths, sets rlimits, no_new_privs and
+// seccomp, then execs. It is used when the calling process runs under a
+// hardened confinement that forbids namespace creation and mount.
+func trampolineLandlockOnly(sp spec) error {
+	if sp.WorkDir != "" && sp.WorkDir != "/" {
+		if err := os.Chdir(sp.WorkDir); err != nil {
+			return fmt.Errorf("chdir %q: %w", sp.WorkDir, err)
+		}
+	}
+
+	if err := applyRLimits(sp.RLimits); err != nil {
+		return fmt.Errorf("rlimits: %w", err)
+	}
+
+	if sp.Landlock {
+		if err := applyLandlockAllowlist(sp); err != nil {
+			return fmt.Errorf("landlock: %w", err)
+		}
+	}
+
+	if err := unix.Prctl(unix.PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0); err != nil {
+		return fmt.Errorf("no_new_privs: %w", err)
+	}
+
+	if sp.Seccomp != int(SeccompOff) {
+		if err := applySeccomp(SeccompMode(sp.Seccomp), sp.AllowNewUserNS); err != nil {
+			return fmt.Errorf("seccomp: %w", err)
+		}
+	}
+
+	argv := append([]string{sp.Path}, sp.Args...)
+	env := sp.Env
+	if env == nil {
+		env = []string{}
+	}
+	if err := unix.Exec(sp.Path, argv, env); err != nil {
+		return fmt.Errorf("exec %q: %w", sp.Path, err)
+	}
+	return nil // unreachable
+}
+
+// applyLandlockAllowlist builds a strict landlock allowlist over the real host
+// paths. Unlike the namespace-mode landlock (which trusts mount isolation and
+// may grant RODirs("/")), this is the ONLY filesystem boundary, so it must
+// never grant "/". It exposes only the minimal read-only system paths needed by
+// common toolchains plus the explicit binds. Any path not listed here — notably
+// the application's data directory — is inaccessible.
+func applyLandlockAllowlist(sp spec) error {
+	// Landlock is the sole filesystem boundary in this mode. If the kernel does
+	// not support it at all, a BestEffort call would silently succeed and leave
+	// the process unconfined, so we verify availability first and fail hard.
+	if v, err := llsyscall.LandlockGetABIVersion(); err != nil || v < 1 {
+		return fmt.Errorf("landlock unavailable (abi=%d, err=%v): cannot enforce landlock-only isolation", v, err)
+	}
+
+	var rules []landlock.Rule
+	for _, p := range minimalROPaths {
+		rules = append(rules, landlock.RODirs(p).IgnoreIfMissing())
+	}
+	for _, b := range sp.Binds {
+		if b.Writable {
+			rules = append(rules, landlock.RWDirs(b.Host).IgnoreIfMissing())
+		} else {
+			rules = append(rules, landlock.RODirs(b.Host).IgnoreIfMissing())
+		}
+	}
+	// A private, writable scratch space. Under a systemd unit with
+	// PrivateTmp=yes this /tmp is already service-private.
+	rules = append(rules, landlock.RWDirs("/tmp").IgnoreIfMissing())
+
+	// Not BestEffort-optional here: landlock is the sole boundary, so if the
+	// kernel cannot enforce it we must fail rather than run unconfined.
+	// BestEffort still degrades gracefully across landlock ABI versions.
+	return landlock.V4.BestEffort().RestrictPaths(rules...)
 }
 
 func readSpec() (spec, error) {

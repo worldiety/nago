@@ -15,6 +15,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"os/exec"
 	"syscall"
@@ -31,8 +32,20 @@ func run(ctx context.Context, p Profile, cmd Cmd) (Result, error) {
 		return Result{ExitCode: -1}, errors.New("sbox: cmd.Path is empty")
 	}
 
-	if err := checkUserNamespaces(); err != nil {
-		return Result{ExitCode: -1}, err
+	// In landlock-only mode there is no network namespace, so any non-host Net
+	// value cannot be honored. Warn and fall back to host networking.
+	if p.Isolation == IsolationLandlockOnly && p.Net != NetHost {
+		slog.Warn("sbox: Net is ignored in IsolationLandlockOnly mode (no network namespace); treating as NetHost",
+			slog.Int("net", int(p.Net)))
+		p.Net = NetHost
+	}
+
+	// Namespace mode requires unprivileged user namespaces; landlock-only does
+	// not and must not fail on their absence.
+	if p.Isolation == IsolationNamespaces {
+		if err := checkUserNamespaces(); err != nil {
+			return Result{ExitCode: -1}, err
+		}
 	}
 
 	sp, err := buildSpec(p, cmd)
@@ -73,29 +86,40 @@ func run(ctx context.Context, p Profile, cmd Cmd) (Result, error) {
 	// pr becomes fd 3 (specFD) in the child; ExtraFiles[0] -> fd 3.
 	c.ExtraFiles = []*os.File{pr}
 
-	cloneFlags := uintptr(unix.CLONE_NEWUSER |
-		unix.CLONE_NEWNS |
-		unix.CLONE_NEWPID |
-		unix.CLONE_NEWIPC |
-		unix.CLONE_NEWUTS)
-	if p.Net != NetHost {
-		cloneFlags |= unix.CLONE_NEWNET
-	}
+	if p.Isolation == IsolationLandlockOnly {
+		// No namespaces, no uid/gid mapping: the trampoline only applies
+		// landlock, seccomp, no_new_privs and rlimits before exec. We still put
+		// the child in its own process group so the whole tree can be killed on
+		// timeout or context cancellation.
+		c.SysProcAttr = &syscall.SysProcAttr{
+			Setpgid:   true,
+			Pdeathsig: syscall.SIGKILL,
+		}
+	} else {
+		cloneFlags := uintptr(unix.CLONE_NEWUSER |
+			unix.CLONE_NEWNS |
+			unix.CLONE_NEWPID |
+			unix.CLONE_NEWIPC |
+			unix.CLONE_NEWUTS)
+		if p.Net != NetHost {
+			cloneFlags |= unix.CLONE_NEWNET
+		}
 
-	c.SysProcAttr = &syscall.SysProcAttr{
-		Cloneflags: cloneFlags,
-		// Map the current uid/gid to root inside the new user namespace so the
-		// trampoline can mount, pivot_root and chown within the sandbox.
-		UidMappings: []syscall.SysProcIDMap{
-			{ContainerID: 0, HostID: os.Getuid(), Size: 1},
-		},
-		GidMappings: []syscall.SysProcIDMap{
-			{ContainerID: 0, HostID: os.Getgid(), Size: 1},
-		},
-		GidMappingsEnableSetgroups: false,
-		// Put the child in its own process group so we can kill the whole tree.
-		Setpgid:   true,
-		Pdeathsig: syscall.SIGKILL,
+		c.SysProcAttr = &syscall.SysProcAttr{
+			Cloneflags: cloneFlags,
+			// Map the current uid/gid to root inside the new user namespace so
+			// the trampoline can mount, pivot_root and chown within the sandbox.
+			UidMappings: []syscall.SysProcIDMap{
+				{ContainerID: 0, HostID: os.Getuid(), Size: 1},
+			},
+			GidMappings: []syscall.SysProcIDMap{
+				{ContainerID: 0, HostID: os.Getgid(), Size: 1},
+			},
+			GidMappingsEnableSetgroups: false,
+			// Put the child in its own process group so we can kill the whole tree.
+			Setpgid:   true,
+			Pdeathsig: syscall.SIGKILL,
+		}
 	}
 
 	if err := c.Start(); err != nil {
@@ -208,6 +232,7 @@ func buildSpec(p Profile, cmd Cmd) (spec, error) {
 		AllowNewUserNS: p.AllowNewUserNS,
 		Seccomp:        int(p.Seccomp),
 		Landlock:       p.Landlock,
+		Isolation:      int(p.Isolation),
 		RLimits: specRLimits{
 			CPUSeconds:   cpuSeconds,
 			AddressSpace: p.Limits.AddressSpace,

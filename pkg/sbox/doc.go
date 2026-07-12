@@ -48,4 +48,40 @@
 // every invocation. Because production always runs on linux, the insecure stub
 // can never be compiled into a production binary. Setting the environment
 // variable SBOX_REQUIRE_ISOLATION=1 makes the stub refuse to run at all.
+//
+// # Isolation modes
+//
+// [Profile.Isolation] selects how the sandbox is built:
+//
+//   - [IsolationNamespaces] (default): the strong mode. Fresh
+//     user/mount/pid/ipc/uts (and optionally net) namespaces, a private root
+//     filesystem via pivot_root, plus landlock and seccomp. The data directory
+//     is protected redundantly (it is absent from the mount namespace AND
+//     denied by landlock). This mode needs unprivileged user namespaces and
+//     mount to be available.
+//
+//   - [IsolationLandlockOnly]: a privilege-free mode that applies only
+//     landlock, seccomp, no_new_privs and rlimits before exec — no namespaces,
+//     no mount, no pivot_root. Use it when the calling process runs under a
+//     confinement that forbids namespace creation and mount. Here the data
+//     directory is protected by landlock ALONE (landlock governs only
+//     filesystem access), there is no PID/network namespace, and Net is treated
+//     as NetHost.
+//
+// # systemd compatibility
+//
+// A hardened systemd unit commonly forbids exactly what [IsolationNamespaces]
+// needs, causing clone(2) to fail with EPERM ("operation not permitted") when
+// [Run] starts the trampoline. The relevant directives are RestrictNamespaces=
+// (blocklisting user/mnt/pid/... namespaces), DynamicUser=/PrivateUsers= (only
+// one uid is mapped, so a nested user namespace is impossible),
+// SystemCallFilter= denying @mount, and CapabilityBoundingSet= dropping
+// CAP_SYS_ADMIN/CAP_SETUID/CAP_SETGID.
+//
+// Such units can keep all of that hardening and use [IsolationLandlockOnly],
+// which requires none of those capabilities: the landlock and seccomp syscalls
+// are not in the denied @mount/@privileged groups and prctl(PR_SET_NO_NEW_PRIVS)
+// is permitted. It is recommended to complement it with ProtectProc=,
+// PrivatePIDs=, PrivateIPC= and PrivateTmp= to cover the vectors that landlock
+// alone does not (process inspection, IPC, shared /tmp).
 package sbox

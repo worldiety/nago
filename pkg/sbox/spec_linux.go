@@ -36,6 +36,7 @@ type spec struct {
 	AllowNewUserNS bool
 	Seccomp        int
 	Landlock       bool
+	Isolation      int
 
 	RLimits specRLimits
 

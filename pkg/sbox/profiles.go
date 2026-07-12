@@ -16,6 +16,21 @@ import "time"
 // All profiles use RootMinimal so that dynamically linked tools and TLS work
 // out of the box, enable landlock and the strict seccomp policy, and expose
 // only the explicitly listed working directories as writable.
+//
+// The profiles default to [IsolationNamespaces]. When running under a hardened
+// systemd unit that forbids namespace creation and mount (RestrictNamespaces=,
+// DynamicUser=/PrivateUsers=, SystemCallFilter=~@mount, ...), switch the
+// returned profile to landlock-only isolation with [WithLandlockOnly]:
+//
+//	p := sbox.WithLandlockOnly(sbox.GoBuild(goroot, cache, work))
+
+// WithLandlockOnly returns a copy of p with Isolation set to
+// [IsolationLandlockOnly]. Use it when the calling process cannot create
+// namespaces or mount (e.g. under a hardened systemd sandbox).
+func WithLandlockOnly(p Profile) Profile {
+	p.Isolation = IsolationLandlockOnly
+	return p
+}
 
 // GoBuild returns a profile suited to running the go compiler ("go build").
 //

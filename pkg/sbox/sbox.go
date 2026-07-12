@@ -83,6 +83,39 @@ const (
 	SeccompOff
 )
 
+// IsolationMode selects how the sandbox is constructed.
+type IsolationMode int
+
+const (
+	// IsolationNamespaces is the strong, default mode. It re-executes into a
+	// trampoline inside fresh user/mount/pid/ipc/uts (and optionally net)
+	// namespaces, builds a private root filesystem via pivot_root, and adds
+	// landlock and seccomp on top. It requires that unprivileged user
+	// namespaces and mount are available to the calling process.
+	//
+	// This mode does NOT work when the process is confined such that it may not
+	// create namespaces or mount, for example under a hardened systemd unit
+	// with RestrictNamespaces=, DynamicUser=/PrivateUsers=, a SystemCallFilter
+	// denying @mount, or a CapabilityBoundingSet dropping CAP_SYS_ADMIN. In
+	// that case clone(2) fails with EPERM. Use IsolationLandlockOnly instead.
+	IsolationNamespaces IsolationMode = iota
+
+	// IsolationLandlockOnly is a weaker mode that requires no privileges and no
+	// namespaces. It applies only landlock (filesystem access), seccomp
+	// (syscall filtering), no_new_privs and rlimits before exec. It is the
+	// right choice when the calling process already runs inside a hardened
+	// systemd sandbox that forbids namespace creation and mount.
+	//
+	// Trade-offs compared to IsolationNamespaces:
+	//   - The data directory is protected by landlock ONLY (no redundant mount
+	//     isolation). Landlock only governs filesystem access.
+	//   - There is no PID or network namespace. Net is ignored (treated as
+	//     NetHost); NetNone/NetLoopback have no effect.
+	//   - It is recommended to complement it with systemd directives such as
+	//     ProtectProc=, PrivatePIDs=, PrivateIPC= and PrivateTmp=.
+	IsolationLandlockOnly
+)
+
 // Bind describes a host path that is made available inside the sandbox.
 type Bind struct {
 	// Host is the absolute path on the host filesystem.
@@ -134,7 +167,9 @@ type Profile struct {
 	WorkDir string
 	// Hostname sets the UTS namespace hostname. Defaults to "sandbox".
 	Hostname string
-	// Net selects the network isolation mode.
+	// Net selects the network isolation mode. It is ignored in
+	// IsolationLandlockOnly mode (there is no network namespace); a non-NetHost
+	// value is then treated as NetHost and a warning is logged.
 	Net NetMode
 	// Limits applies resource limits.
 	Limits Limits
@@ -148,6 +183,11 @@ type Profile struct {
 	// AllowNewUserNS permits the sandboxed process to create nested user
 	// namespaces. Disabled by default.
 	AllowNewUserNS bool
+
+	// Isolation selects how the sandbox is constructed. The zero value is
+	// IsolationNamespaces (strong). Set IsolationLandlockOnly when running
+	// under a hardened systemd unit that forbids namespace creation and mount.
+	Isolation IsolationMode
 }
 
 // Cmd is a concrete program execution within a [Profile].
