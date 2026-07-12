@@ -20,6 +20,7 @@ import (
 	"go.wdy.de/nago/application/evs"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/ndb"
+	"go.wdy.de/nago/pkg/ndb/msgstore"
 )
 
 // reflectTypeOf is a tiny readability shim so the many backend.Register lines
@@ -447,5 +448,39 @@ func TestProjectionHandleWaitForGet(t *testing.T) {
 		if !ok || got.First != name {
 			t.Fatalf("read-your-write via Handle violated at i=%d: got %+v ok=%v", i, got, ok)
 		}
+	}
+}
+
+// TestProjectionS2Compression proves the projection fold path decodes payloads
+// the engine compressed on write. With AlwaysS2 every message reaches the rule
+// with Encoding=S2; before the fix the rule rejected anything != Raw via
+// reportError and never folded. Both warm-up (ReplayAll) and live tail must
+// reconstruct the row over the S2 store.
+func TestProjectionS2Compression(t *testing.T) {
+	msgs := openNDBMessagesWith(t, msgstore.Options{Compress: msgstore.AlwaysS2})
+	backend := evs.NewNDBBackend[Evt, *Person](msgs)
+	option.MustZero(backend.Register(reflectTypeOf(FirstnameUpdated{}), "FirstnameUpdated"))
+	option.MustZero(backend.Register(reflectTypeOf(LastnameUpdated{}), "LastnameUpdated"))
+
+	// history (folded via ReplayAll warm-up)
+	appendPerson(t, backend, FirstnameUpdated{Person: "1", Firstname: "John"})
+	lastHist := appendPerson(t, backend, LastnameUpdated{Person: "1", Name: "Doe"})
+
+	detail := newPersonDetail(msgs)
+	stop := detail.Run()
+	defer stop()
+
+	waitProcessed(t, detail, lastHist, 2*time.Second)
+	got, ok := detail.Get("1")
+	if !ok || got.First != "John" || got.Last != "Doe" || got.Events != 2 {
+		t.Fatalf("S2 warm-up fold wrong: %+v ok=%v", got, ok)
+	}
+
+	// live event over the same compressed store
+	live := appendPerson(t, backend, FirstnameUpdated{Person: "1", Firstname: "Jonathan"})
+	waitProcessed(t, detail, live, 2*time.Second)
+	got, _ = detail.Get("1")
+	if got.First != "Jonathan" || got.Events != 3 {
+		t.Fatalf("S2 live fold wrong: %+v", got)
 	}
 }

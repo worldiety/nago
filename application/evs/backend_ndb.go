@@ -139,8 +139,13 @@ func (b *ndbBackend[E, A]) ReplayAll(subject auth.Subject) iter.Seq2[Envelope[E]
 func (b *ndbBackend[E, A]) decode(discriminator Discriminator, msg ndb.Message) (Envelope[E], error) {
 	var zero Envelope[E]
 
-	if msg.Encoding != ndb.EncodingRaw {
-		return zero, fmt.Errorf("unexpected payload encoding %d for %q", msg.Encoding, discriminator)
+	// The engine may have compressed the payload on write (a storage detail
+	// exposed through msg.Encoding). Decode it back to raw JSON here; the store
+	// deliberately hands out payloads verbatim so consumers that forward bytes
+	// pay no decompression cost.
+	payload, err := ndb.Decompress(msg.Encoding, msg.Payload, msg.UncompressedLen)
+	if err != nil {
+		return zero, fmt.Errorf("cannot decompress payload for %q: %w", discriminator, err)
 	}
 
 	rtype, ok := b.byDiscrimentr.Get(discriminator)
@@ -149,7 +154,7 @@ func (b *ndbBackend[E, A]) decode(discriminator Discriminator, msg ndb.Message) 
 	}
 
 	rval := reflect.New(rtype)
-	if err := json.Unmarshal(msg.Payload, rval.Interface()); err != nil {
+	if err := json.Unmarshal(payload, rval.Interface()); err != nil {
 		return zero, err
 	}
 
@@ -158,10 +163,12 @@ func (b *ndbBackend[E, A]) decode(discriminator Discriminator, msg ndb.Message) 
 		return zero, fmt.Errorf("type mismatch for discriminator %q: stored type is not convertible into %T (incompatible refactor?)", discriminator, *new(E))
 	}
 
-	// Payload is a view into the engine's reusable read buffer; clone it so the
-	// envelope can be retained beyond this iteration step.
-	raw := make([]byte, len(msg.Payload))
-	copy(raw, msg.Payload)
+	// For EncodingRaw, payload aliases the engine's reusable read buffer; clone
+	// it so the envelope can be retained beyond this iteration step. For a
+	// compressed payload Decompress already returned a freshly owned buffer, but
+	// cloning unconditionally keeps this path simple and correct.
+	raw := make([]byte, len(payload))
+	copy(raw, payload)
 
 	key, _ := NewSeqKey(SeqID(msg.Seq))
 	return Envelope[E]{

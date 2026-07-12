@@ -251,13 +251,16 @@ func Project[K ~string, S cloner.Cloner[S], E interface{ Discriminator() Discrim
 	}
 
 	p.rules[typeID] = func(msg ndb.Message) {
-		if msg.Encoding != ndb.EncodingRaw {
-			p.reportError(msg.Seq, typeID, fmt.Errorf("unexpected payload encoding %d", msg.Encoding))
+		// Decode any storage-side compression back to raw JSON; the engine hands
+		// out payloads verbatim with a self-describing Encoding marker.
+		payload, err := ndb.Decompress(msg.Encoding, msg.Payload, msg.UncompressedLen)
+		if err != nil {
+			p.reportError(msg.Seq, typeID, fmt.Errorf("cannot decompress payload: %w", err))
 			return
 		}
 
 		rv := reflect.New(rtype)
-		if err := json.Unmarshal(msg.Payload, rv.Interface()); err != nil {
+		if err := json.Unmarshal(payload, rv.Interface()); err != nil {
 			p.reportError(msg.Seq, typeID, fmt.Errorf("decode: %w", err))
 			return
 		}

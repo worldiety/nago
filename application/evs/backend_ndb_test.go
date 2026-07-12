@@ -21,11 +21,18 @@ import (
 // openNDBMessages opens a fresh msgstore-backed ndb.Messages in a temp dir.
 func openNDBMessages(t *testing.T) ndb.Messages {
 	t.Helper()
+	return openNDBMessagesWith(t, msgstore.Options{})
+}
+
+// openNDBMessagesWith opens a fresh msgstore-backed ndb.Messages with explicit
+// engine options (e.g. a compression strategy).
+func openNDBMessagesWith(t *testing.T, opts msgstore.Options) ndb.Messages {
+	t.Helper()
 	root := t.TempDir()
 	db := option.Must(ndb.Open(root, ndb.Options{}))
 	t.Cleanup(func() { option.MustZero(db.Close()) })
 
-	eng, err := db.Engine("events", ndb.EngineOptions{Kind: msgstore.EngineKind, Config: msgstore.Options{}})
+	eng, err := db.Engine("events", ndb.EngineOptions{Kind: msgstore.EngineKind, Config: opts})
 	if err != nil {
 		t.Fatalf("open engine: %v", err)
 	}
@@ -163,5 +170,44 @@ func TestHandlerNDBSharedStoreIgnoresForeignEvents(t *testing.T) {
 	h2.RegisterEvents(FirstnameUpdated{}, LastnameUpdated{})
 	if option.Must(h2.Aggregate(context.Background(), "1")).firstname != "John" {
 		t.Fatal("rebuild over shared store failed to ignore foreign event")
+	}
+}
+
+// TestHandlerNDBS2Compression proves the backend transparently decodes payloads
+// the engine compressed on write. With AlwaysS2 every stored event carries
+// Encoding=S2; before the fix decode/fold rejected anything != Raw. Both the
+// live aggregate and a replay-rebuilt handler over the same store must still
+// reconstruct the state, exercising decode() (backend_ndb.go) on the S2 path.
+func TestHandlerNDBS2Compression(t *testing.T) {
+	msgs := openNDBMessagesWith(t, msgstore.Options{Compress: msgstore.AlwaysS2})
+
+	aggID := func(e Evt) (PID, bool) {
+		switch evt := e.(type) {
+		case FirstnameUpdated:
+			return evt.Person, evt.Person != ""
+		case LastnameUpdated:
+			return evt.Person, evt.Person != ""
+		default:
+			return "", false
+		}
+	}
+
+	backend := evs.NewNDBBackend[Evt, *Person](msgs)
+	handler := evs.NewHandler[*Person](backend, aggID, backend.Register)
+	handler.RegisterEvents(FirstnameUpdated{}, LastnameUpdated{})
+
+	if _, err := handler.Handle(user.SU(), "1", UpdateFirstnameCmd{ID: "1", Firstname: "John"}); err != nil {
+		t.Fatalf("handle: %v", err)
+	}
+	if option.Must(handler.Aggregate(context.Background(), "1")).firstname != "John" {
+		t.Fatal("live aggregate wrong over S2 store")
+	}
+
+	// A fresh handler must rebuild from the S2-compressed events via ReplayAll.
+	backend2 := evs.NewNDBBackend[Evt, *Person](msgs)
+	h2 := evs.NewHandler[*Person](backend2, aggID, backend2.Register)
+	h2.RegisterEvents(FirstnameUpdated{}, LastnameUpdated{})
+	if option.Must(h2.Aggregate(context.Background(), "1")).firstname != "John" {
+		t.Fatal("replay rebuild over S2 store failed")
 	}
 }

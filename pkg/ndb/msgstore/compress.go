@@ -1,7 +1,11 @@
 package msgstore
 
 import (
+	"errors"
+
 	"github.com/klauspost/compress/s2"
+
+	"go.wdy.de/nago/pkg/ndb"
 )
 
 // CompressFunc decides per message how to compress the payload.
@@ -34,14 +38,15 @@ func DefaultCompression(_ TypeID, payload []byte) (Encoding, []byte) {
 }
 
 // Decompress decompresses a message payload according to its encoding.
+//
+// It delegates to the engine-neutral [ndb.Decompress] so that the decode logic
+// lives in a single place shared by every consumer. An unknown encoding is
+// mapped to [ErrCorruptCRC], matching this engine's treatment of a
+// self-describing marker it cannot honour as on-disk corruption.
 func Decompress(enc Encoding, compressed []byte, uncompressedLen uint32) ([]byte, error) {
-	switch enc {
-	case EncodingRaw:
-		return compressed, nil
-	case EncodingS2:
-		dst := make([]byte, uncompressedLen)
-		return s2.Decode(dst, compressed)
-	default:
-		return nil, ErrCorruptCRC // unknown encoding treated as corruption
+	payload, err := ndb.Decompress(enc, compressed, uncompressedLen)
+	if errors.Is(err, ndb.ErrUnknownEncoding) {
+		return nil, ErrCorruptCRC
 	}
+	return payload, err
 }
