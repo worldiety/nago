@@ -163,15 +163,14 @@ func applyLandlockAllowlist(sp spec) error {
 	}
 
 	var rules []landlock.Rule
-	for _, p := range minimalROPaths {
+	for _, p := range minimalRODirs {
 		rules = append(rules, landlock.RODirs(p).IgnoreIfMissing())
 	}
+	for _, p := range minimalROFiles {
+		rules = append(rules, landlock.ROFiles(p).IgnoreIfMissing())
+	}
 	for _, b := range sp.Binds {
-		if b.Writable {
-			rules = append(rules, landlock.RWDirs(b.Host).IgnoreIfMissing())
-		} else {
-			rules = append(rules, landlock.RODirs(b.Host).IgnoreIfMissing())
-		}
+		rules = append(rules, landlockBindRule(b.Host, b.Writable))
 	}
 	// A private, writable scratch space. Under a systemd unit with
 	// PrivateTmp=yes this /tmp is already service-private.
@@ -181,6 +180,27 @@ func applyLandlockAllowlist(sp spec) error {
 	// kernel cannot enforce it we must fail rather than run unconfined.
 	// BestEffort still degrades gracefully across landlock ABI versions.
 	return landlock.V4.BestEffort().RestrictPaths(rules...)
+}
+
+// landlockBindRule returns the appropriate landlock rule for a bind, choosing
+// between the directory and single-file variants based on the path type.
+// Landlock's *Dirs rules require an actual directory and return EINVAL on a
+// regular file (or a symlink to one, such as /etc/resolv.conf).
+func landlockBindRule(path string, writable bool) landlock.Rule {
+	isDir := false
+	if fi, err := os.Stat(path); err == nil {
+		isDir = fi.IsDir()
+	}
+	switch {
+	case writable && isDir:
+		return landlock.RWDirs(path).IgnoreIfMissing()
+	case writable:
+		return landlock.RWFiles(path).IgnoreIfMissing()
+	case isDir:
+		return landlock.RODirs(path).IgnoreIfMissing()
+	default:
+		return landlock.ROFiles(path).IgnoreIfMissing()
+	}
 }
 
 func readSpec() (spec, error) {
@@ -400,8 +420,10 @@ func bindResolvedInto(newRoot string, rb resolvedBind) error {
 	return nil
 }
 
-// minimalROPaths are the common system paths exposed read-only in RootMinimal.
-var minimalROPaths = []string{
+// minimalRODirs are common system directories exposed read-only in
+// RootMinimal. Landlock's RODirs requires an actual directory, so single files
+// must go into minimalROFiles instead.
+var minimalRODirs = []string{
 	"/usr",
 	"/bin",
 	"/sbin",
@@ -409,11 +431,25 @@ var minimalROPaths = []string{
 	"/lib64",
 	"/etc/ssl",
 	"/etc/ca-certificates",
+}
+
+// minimalROFiles are common single files exposed read-only in RootMinimal.
+// These are frequently symlinks (e.g. /etc/resolv.conf), which is why they must
+// be added with ROFiles and not RODirs (RODirs on a non-directory returns
+// EINVAL).
+var minimalROFiles = []string{
 	"/etc/resolv.conf",
 	"/etc/nsswitch.conf",
 	"/etc/passwd",
 	"/etc/group",
+	"/etc/hosts",
+	"/etc/localtime",
 }
+
+// minimalROPaths is the union of minimalRODirs and minimalROFiles, used where a
+// bind (not a landlock rule) is created and the dir/file distinction is handled
+// by resolveBindFD via stat.
+var minimalROPaths = append(append([]string{}, minimalRODirs...), minimalROFiles...)
 
 // setupNet configures networking inside the (possibly new) network namespace.
 // For NetHost we inherit the host network and do nothing. For NetLoopback we
@@ -477,7 +513,7 @@ func applyLandlock(sp spec) error {
 	}
 	for _, b := range sp.Binds {
 		if b.Writable {
-			rules = append(rules, landlock.RWDirs(b.Target).IgnoreIfMissing())
+			rules = append(rules, landlockBindRule(b.Target, true))
 		}
 	}
 	// BestEffort so that older kernels degrade gracefully; mount isolation

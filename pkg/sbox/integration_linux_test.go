@@ -338,3 +338,43 @@ func TestLandlockOnlyAllowsBind(t *testing.T) {
 		t.Fatalf("output = %q, want %q", got, "visible")
 	}
 }
+
+// TestLandlockOnlyFileBind verifies that binding a single FILE (not a directory)
+// works in landlock-only mode. This exercises the ROFiles branch of
+// landlockBindRule and guards against the EINVAL regression that RODirs causes
+// on non-directory paths such as symlinked /etc/resolv.conf.
+func TestLandlockOnlyFileBind(t *testing.T) {
+	landlockAvailable(t)
+
+	dir := t.TempDir()
+	file := dir + "/single.txt"
+	if err := os.WriteFile(file, []byte("onefile"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	catBin := lookBin(t, "cat", "/bin/cat", "/usr/bin/cat")
+
+	var out bytes.Buffer
+	p := Profile{
+		Isolation: IsolationLandlockOnly,
+		// Bind only the single file, not its directory.
+		Binds:    []Bind{{Host: file, Writable: false}},
+		Seccomp:  SeccompStrict,
+		Landlock: true,
+		Env:      []string{"PATH=/usr/bin:/bin"},
+	}
+	res, err := Run(context.Background(), p, Cmd{
+		Path:   catBin,
+		Args:   []string{file},
+		Stdout: &out,
+	})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if res.ExitCode != 0 {
+		t.Fatalf("expected exit 0 reading single-file bind, got %d", res.ExitCode)
+	}
+	if out.String() != "onefile" {
+		t.Fatalf("output = %q", out.String())
+	}
+}
