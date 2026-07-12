@@ -5,6 +5,7 @@ go 1.26.0
 require (
 	github.com/dave/jennifer v1.7.1
 	github.com/dianlight/gollama.cpp v0.2.2-llamacpp.b6862.0.20251113101306-6376d0d4e0a2
+	github.com/elastic/go-seccomp-bpf v1.6.0
 	github.com/expr-lang/expr v1.17.7
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/go-chi/cors v1.2.2
@@ -13,6 +14,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/klauspost/compress v1.18.0
 	github.com/laher/mergefs v0.1.1
+	github.com/landlock-lsm/go-landlock v0.9.0
 	github.com/rogpeppe/go-internal v1.14.1
 	github.com/tidwall/btree v1.8.1
 	github.com/vearutop/statigz v1.5.0
@@ -27,6 +29,7 @@ require (
 	golang.org/x/crypto v0.45.0
 	golang.org/x/image v0.33.0
 	golang.org/x/net v0.47.0
+	golang.org/x/sys v0.40.0
 	golang.org/x/text v0.31.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -38,5 +41,5 @@ require (
 	github.com/jupiterrider/ffi v0.5.1 // indirect
 	golang.org/x/exp v0.0.0-20251113190631-e25ba8c21ef6 // indirect
 	golang.org/x/mod v0.30.0 // indirect
-	golang.org/x/sys v0.38.0 // indirect
+	kernel.org/pub/linux/libs/security/libcap/psx v1.2.77 // indirect
 )
