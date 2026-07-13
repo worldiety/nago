@@ -62,7 +62,7 @@ func (r BenchRecord) Identity() BenchRecordID {
 
 func main() {
 	application.Configure(func(cfg *application.Configurator) {
-		cfg.SetApplicationID("de.worldiety.tutorial_101")
+		cfg.SetApplicationID("de.worldiety.tutorial_105")
 
 		cfg.Serve(vuejs.Dist())
 		cfg.SetDecorator(cfg.NewScaffold().
