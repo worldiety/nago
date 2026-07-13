@@ -72,6 +72,13 @@ func redraw(ctx canvas.TContext2D, evt core.InputEvent) {
 	ctx.FillColor("#ff0000")
 	ctx.FillRect(evt.X, evt.Y, 100, 100)
 	ctx.DrawImage(1, evt.X, evt.Y)
+
+	ctx.BeginPath()
+	ctx.MoveTo(0, 0)
+	ctx.LineTo(100, 100)
+	ctx.LineTo(50, 100)
+	ctx.Fill()
+
 	ctx.EndList()
 
 	// check nested list calls

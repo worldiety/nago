@@ -204,6 +204,12 @@ func (c TContext2D) Fill() TContext2D {
 	return c
 }
 
+// Stroke strokes the current path with the current stroke style.
+func (c TContext2D) Stroke() TContext2D {
+	core.AsyncCall(c.wnd, &proto.CanvasStroke{Id: proto.Str(c.id)}, nil)
+	return c
+}
+
 // FillText draws a text string at the specified coordinates using the current fillStyle.
 // maxWidth limits the rendered width; the text is scaled down to fit if needed.
 func (c TContext2D) FillText(text string, x, y, maxWidth float64) TContext2D {
@@ -432,4 +438,3 @@ func (c TContext2D) ShadowBlur(blur float64) TContext2D {
 	core.AsyncCall(c.wnd, &proto.CanvasShadowBlur{Id: proto.Str(c.id), Blur: proto.Float(blur)}, nil)
 	return c
 }
-

@@ -49,6 +49,7 @@ import {
 	CanvasShadowColor,
 	CanvasShadowOffsetX,
 	CanvasShadowOffsetY,
+	CanvasStroke,
 	CanvasStrokeRect,
 	CanvasStrokeStyle,
 	CanvasStrokeText,
@@ -366,6 +367,11 @@ function apply(ctx: CanvasRenderingContext2D, invoke: CallRequested, depth: numb
 	// --- Füll- & Clip-Operationen ---
 	if (invoke.call instanceof CanvasFill) {
 		ctx.fill();
+		return;
+	}
+
+	if (invoke.call instanceof CanvasStroke) {
+		ctx.stroke();
 		return;
 	}
 
