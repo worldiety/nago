@@ -85,7 +85,7 @@ const clearButtonVisible = computed<boolean>(() => {
 
 function parseFloat(input: string) {
 	if (input === '') {
-		return '0';
+		return '';
 	}
 
 	const negative = input.lastIndexOf('-') >= 0;
@@ -365,7 +365,7 @@ function leaveFocus(): void {
 }
 
 function clearInputValue(): void {
-	inputValue.value = isNumerical() ? '0' : '';
+	inputValue.value = '';
 	submitInputValue(true);
 }
 
