@@ -71,6 +71,11 @@ func main() {
 						Style(TextFieldReduced).
 						FullWidth(),
 
+					FloatField("just numbers (float)", myFloatState.Get(), myFloatState).
+						KeyboardType(KeyboardFloat).
+						Style(TextFieldReduced).
+						FullWidth(),
+
 					TextField("just numbers", numsOf(firstname.Get())).
 						InputValue(firstname).
 						KeyboardType(KeyboardInteger).

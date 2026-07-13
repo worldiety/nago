@@ -150,13 +150,23 @@ func FloatField(label string, value float64, state *core.State[float64]) TTextFi
 	if state != nil {
 
 		strState = core.StateOf[string](state.Window(), state.ID()+".float64").Init(func() string {
-			return strconv.FormatFloat(value, 'f', -1, 64)
+			if state.Valid() || state.Get() != 0 {
+				return strconv.FormatFloat(value, 'f', -1, 64)
+			}
+
+			return ""
 		})
 
 		strState.Observe(func(newValue string) {
-			v, err := strconv.ParseFloat(newValue, 64)
-			if err != nil {
-				slog.Error("cannot parse FloatField value from TextField state", "strState", strState.ID(), "err", err)
+			v := 0.0
+
+			if len(newValue) > 0 {
+				parsed, err := strconv.ParseFloat(newValue, 64)
+				if err != nil {
+					slog.Error("cannot parse FloatField value from TextField state", "strState", strState.ID(), "err", err)
+				} else {
+					v = parsed
+				}
 			}
 
 			if v != state.Get() {
@@ -166,9 +176,12 @@ func FloatField(label string, value float64, state *core.State[float64]) TTextFi
 		})
 
 		state.Observe(func(newValue float64) {
-			i := strconv.FormatFloat(newValue, 'f', -1, 64)
-			if strState.Get() != i {
-				strState.Set(i)
+			if strState.Get() != "" || newValue != 0 {
+				state = state
+				i := strconv.FormatFloat(newValue, 'f', -1, 64)
+				if strState.Get() != i {
+					strState.Set(i)
+				}
 			}
 		})
 
