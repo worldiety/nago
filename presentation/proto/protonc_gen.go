@@ -280,6 +280,7 @@ func (CanvasRotate) isCallArgs()                 {}
 func (CanvasSave) isCallArgs()                   {}
 func (CanvasScale) isCallArgs()                  {}
 func (CanvasSetTransform) isCallArgs()           {}
+func (CanvasStroke) isCallArgs()                 {}
 func (CanvasStrokeRect) isCallArgs()             {}
 func (CanvasStrokeStyle) isCallArgs()            {}
 func (CanvasStrokeText) isCallArgs()             {}
@@ -20420,6 +20421,57 @@ func (v *SliderValue) read(r *BinaryReader) error {
 	return nil
 }
 
+type CanvasStroke struct {
+	// Id is the unique ID of the canvas.
+	Id Str
+}
+
+func (v *CanvasStroke) write(w *BinaryWriter) error {
+	var fields [2]bool
+	fields[1] = !v.Id.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CanvasStroke) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -21983,6 +22035,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 268:
 		var v SliderValue
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 269:
+		var v CanvasStroke
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -26448,6 +26506,17 @@ func (v *SliderValue) IsZero() bool {
 	return v.From.IsZero() && v.To.IsZero()
 }
 
+func (v *CanvasStroke) reset() {
+	v.Id.reset()
+}
+
+func (v *CanvasStroke) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -28242,6 +28311,13 @@ func (v *Slider) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *SliderValue) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 268); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CanvasStroke) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 269); err != nil {
 		return err
 	}
 	return nil

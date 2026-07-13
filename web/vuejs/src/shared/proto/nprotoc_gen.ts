@@ -21025,6 +21025,55 @@ export class SliderValue implements Writeable, Readable {
 	}
 }
 
+export class CanvasStroke implements Writeable, Readable, CallArgs {
+	// Id is the unique ID of the canvas.
+	public id?: Str;
+
+	constructor(id: Str | undefined = undefined) {
+		this.id = id;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.id !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.id === undefined;
+	}
+
+	reset(): void {
+		this.id = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 269);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -22260,6 +22309,11 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 268: {
 			const v = new SliderValue();
+			v.read(src);
+			return v;
+		}
+		case 269: {
+			const v = new CanvasStroke();
 			v.read(src);
 			return v;
 		}
