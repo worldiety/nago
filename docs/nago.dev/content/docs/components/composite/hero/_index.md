@@ -19,7 +19,7 @@ Hero creates a new THero with the given title and a default full-width height of
 | `BackgroundColor(color ui.Color)` |  |
 | `BackgroundImage(img core.URI)` | BackgroundImage places a fit-cover image into the background. |
 | `ForegroundColor(col ui.Color)` |  |
-| `ForegroundColorAdaptive(onLight ui.Color, onDark ui.Color)` |  |
+| `ForegroundColorAdaptive(onDark ui.Color, onLight ui.Color)` |  |
 | `Frame(frame ui.Frame)` | Frame sets the frame of the hero section. |
 | `Padding(padding ui.Padding)` |  |
 | `SideSVG(svg core.SVG)` |  |

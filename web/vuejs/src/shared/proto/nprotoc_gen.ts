@@ -21074,6 +21074,67 @@ export class CanvasStroke implements Writeable, Readable, CallArgs {
 	isCallArgs(): void {}
 }
 
+export class NavigationReplaceRequested implements Writeable, Readable, NagoEvent {
+	public rootView?: RootViewID;
+
+	public values?: RootViewParameters;
+
+	constructor(rootView: RootViewID | undefined = undefined, values: RootViewParameters | undefined = undefined) {
+		this.rootView = rootView;
+		this.values = values;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.rootView = readString(reader);
+					break;
+				}
+				case 2: {
+					this.values = new RootViewParameters();
+					this.values.read(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.rootView !== undefined, this.values !== undefined && !this.values.isZero()];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.rootView!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 2);
+			this.values!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.rootView === undefined && (this.values === undefined || this.values.isZero());
+	}
+
+	reset(): void {
+		this.rootView = undefined;
+		this.values = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 270);
+		return;
+	}
+	isNagoEvent(): void {}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -22314,6 +22375,11 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 269: {
 			const v = new CanvasStroke();
+			v.read(src);
+			return v;
+		}
+		case 270: {
+			const v = new NavigationReplaceRequested();
 			v.read(src);
 			return v;
 		}

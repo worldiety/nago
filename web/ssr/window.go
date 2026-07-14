@@ -26,6 +26,7 @@ func (n ssrNavigation) ForwardTo(_ core.NavigationPath, _ core.Values)          
 func (n ssrNavigation) ForwardToTarget(_ core.NavigationPath, _ string, _ core.Values) {}
 func (n ssrNavigation) BackwardTo(_ core.NavigationPath, _ core.Values)                {}
 func (n ssrNavigation) Back()                                                          {}
+func (n ssrNavigation) Replace(_ core.NavigationPath, _ core.Values)                   {}
 func (n ssrNavigation) ResetTo(_ core.NavigationPath, _ core.Values)                   {}
 func (n ssrNavigation) Reload()                                                        {}
 func (n ssrNavigation) Open(_ core.URI)                                                {}

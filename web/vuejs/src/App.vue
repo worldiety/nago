@@ -48,6 +48,7 @@ import {
 	NavigationBackRequested,
 	NavigationForwardToRequested,
 	NavigationReloadRequested,
+	NavigationReplaceRequested,
 	NavigationResetRequested,
 	OpenHttpFlow,
 	OpenHttpLink,
@@ -144,6 +145,11 @@ async function applyConfiguration(): Promise<void> {
 
 		if (evt instanceof NavigationForwardToRequested) {
 			navigateForward(serviceAdapter, evt);
+			return;
+		}
+
+		if (evt instanceof NavigationReplaceRequested) {
+			navigateForward(serviceAdapter, evt, true);
 			return;
 		}
 
