@@ -16,7 +16,7 @@ import type ApexCharts from 'apexcharts';
 import VueApexCharts from 'vue3-apexcharts';
 import type { PieChart } from '@/shared/proto/nprotoc_gen';
 import { colorToHexValue } from '@/shared/tailwindTranslator';
-import { ThemeKey, useThemeManager } from '@/shared/themeManager';
+import { useThemeManager } from '@/shared/themeManager';
 
 const props = defineProps<{
 	ui: PieChart;
@@ -28,7 +28,7 @@ const id = randomStr(16);
 const refreshCount = ref(0);
 const refreshKey = computed<string>(() => `${id}_${refreshCount.value}`);
 
-const chartType = computed<string>(() => {
+const chartType = computed<'donut' | 'pie'>(() => {
 	return props.ui.showAsDonut ? 'donut' : 'pie';
 });
 
@@ -43,7 +43,7 @@ const options = computed<ApexCharts.ApexOptions>(() => {
 			},
 		},
 		tooltip: {
-			theme: themeManager.getActiveThemeKey() === ThemeKey.DARK ? 'dark' : 'light',
+			theme: themeManager.isDarkTheme() ? 'dark' : 'light',
 		},
 		colors: colors.value,
 		noData: {

@@ -11,13 +11,12 @@
 import { computed } from 'vue';
 import { Chart } from '@/components/charts/chart';
 import { frameCSS } from '@/components/shared/frame';
-import { cssLengthValue } from '@/components/shared/length';
 import type ApexCharts from 'apexcharts';
 import VueApexCharts from 'vue3-apexcharts';
 import type { ChartDataPoint, LineChart } from '@/shared/proto/nprotoc_gen';
 import { ChartSeriesTypeValues, LineChartCurveValues } from '@/shared/proto/nprotoc_gen';
 import { colorToHexValue } from '@/shared/tailwindTranslator';
-import { ThemeKey, useThemeManager } from '@/shared/themeManager';
+import { useThemeManager } from '@/shared/themeManager';
 
 const props = defineProps<{
 	ui: LineChart;
@@ -35,11 +34,9 @@ const options = computed<ApexCharts.ApexOptions>(() => {
 					download: props.ui.chart?.downloadable ?? false,
 				},
 			},
-			height: cssLengthValue(props.ui.chart?.frame?.height ?? 'auto'),
-			width: cssLengthValue(props.ui.chart?.frame?.width ?? 'auto'),
 		},
 		tooltip: {
-			theme: themeManager.getActiveThemeKey() === ThemeKey.DARK ? 'dark' : 'light',
+			theme: themeManager.isDarkTheme() ? 'dark' : 'light',
 		},
 		colors: colors.value,
 		noData: {

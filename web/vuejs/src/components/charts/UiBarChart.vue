@@ -36,7 +36,7 @@ const options = computed<ApexCharts.ApexOptions>(() => {
 			},
 		},
 		tooltip: {
-			theme: themeManager.getActiveThemeKey() === ThemeKey.DARK ? 'dark' : 'light',
+			theme: themeManager.isDarkTheme() ? 'dark' : 'light',
 		},
 		plotOptions: {
 			bar: {
