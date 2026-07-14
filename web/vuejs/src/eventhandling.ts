@@ -364,8 +364,9 @@ export async function triggerFileUpload(uploadRepository: UploadRepository, evt:
  * navigateForward issues a RootViewAllocationRequested to the backend and updates the browser history stack.
  * @param chan
  * @param evt
+ * @param replace
  */
-export function navigateForward(chan: Channel, evt: NavigationForwardToRequested): void {
+export function navigateForward(chan: Channel, evt: NavigationForwardToRequested, replace = false): void {
 	//console.log('!!!!', evt);
 	let url = `/${evt.rootView!}`;
 	let hashTagValue = ``;
@@ -406,7 +407,11 @@ export function navigateForward(chan: Channel, evt: NavigationForwardToRequested
 		nextInvalidationScrollsTopFlag = true;
 	}
 
-	history.pushState(evt, '', url);
+	if (replace) {
+		history.replaceState(evt, '', url);
+	} else {
+		history.pushState(evt, '', url);
+	}
 }
 
 // nextInvalidationScrollsTop is set by navigation events and tells if a redraw must trigger a scroll to top,

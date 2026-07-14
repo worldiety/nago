@@ -390,6 +390,7 @@ func (ErrorRootViewAllocationRequired) isNagoEvent()   {}
 func (FileImportRequested) isNagoEvent()               {}
 func (NavigationBackRequested) isNagoEvent()           {}
 func (NavigationForwardToRequested) isNagoEvent()      {}
+func (NavigationReplaceRequested) isNagoEvent()        {}
 func (NavigationReloadRequested) isNagoEvent()         {}
 func (NavigationResetRequested) isNagoEvent()          {}
 func (ScopeConfigurationChangeRequested) isNagoEvent() {}
@@ -20472,6 +20473,71 @@ func (v *CanvasStroke) read(r *BinaryReader) error {
 	return nil
 }
 
+type NavigationReplaceRequested struct {
+	RootView RootViewID
+	Values   RootViewParameters
+}
+
+func (v *NavigationReplaceRequested) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.RootView.IsZero()
+	fields[2] = !v.Values.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.RootView.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(array, 2); err != nil {
+			return err
+		}
+		if err := v.Values.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *NavigationReplaceRequested) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.RootView.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Values.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -22041,6 +22107,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 269:
 		var v CanvasStroke
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 270:
+		var v NavigationReplaceRequested
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -26517,6 +26589,18 @@ func (v *CanvasStroke) IsZero() bool {
 	return v.Id.IsZero()
 }
 
+func (v *NavigationReplaceRequested) reset() {
+	v.RootView.reset()
+	v.Values.reset()
+}
+
+func (v *NavigationReplaceRequested) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.RootView.IsZero() && v.Values.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -28318,6 +28402,13 @@ func (v *SliderValue) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *CanvasStroke) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 269); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *NavigationReplaceRequested) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 270); err != nil {
 		return err
 	}
 	return nil

@@ -10,9 +10,10 @@ package core
 import (
 	"encoding/hex"
 	"fmt"
+	"strings"
+
 	"go.wdy.de/nago/pkg/blob/crypto"
 	"go.wdy.de/nago/presentation/proto"
-	"strings"
 )
 
 type Navigation interface {
@@ -20,6 +21,7 @@ type Navigation interface {
 	ForwardToTarget(id NavigationPath, target string, values Values)
 	BackwardTo(id NavigationPath, values Values)
 	Back()
+	Replace(id NavigationPath, values Values)
 	ResetTo(id NavigationPath, values Values)
 	Reload()
 
@@ -82,6 +84,19 @@ func (n *navigationController) Back() {
 	n.IgnoreNextInvalidation()
 
 	n.scope.Publish(&proto.NavigationBackRequested{})
+}
+
+func (n *navigationController) Replace(id NavigationPath, values Values) {
+	if n.destroyed {
+		return
+	}
+
+	n.IgnoreNextInvalidation()
+
+	n.scope.Publish(&proto.NavigationReplaceRequested{
+		RootView: proto.RootViewID(id),
+		Values:   values.proto(),
+	})
 }
 
 func (n *navigationController) ResetTo(id NavigationPath, values Values) {
