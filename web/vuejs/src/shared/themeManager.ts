@@ -57,7 +57,10 @@ export default class ThemeManager {
 	}
 
 	isDarkTheme(): boolean {
-		return this.getActiveThemeKey() === ThemeKey.DARK || (this.getActiveThemeKey() === ThemeKey.SYSTEM && this.getSystemThemeKey() === ThemeKey.DARK);
+		return (
+			this.getActiveThemeKey() === ThemeKey.DARK ||
+			(this.getActiveThemeKey() === ThemeKey.SYSTEM && this.getSystemThemeKey() === ThemeKey.DARK)
+		);
 	}
 
 	applySystemTheme(): void {

@@ -15,7 +15,7 @@ import type ApexCharts from 'apexcharts';
 import VueApexCharts from 'vue3-apexcharts';
 import type { BarChart, BarChartMarker, ChartDataPoint } from '@/shared/proto/nprotoc_gen';
 import { colorToHexValue } from '@/shared/tailwindTranslator';
-import { ThemeKey, useThemeManager } from '@/shared/themeManager';
+import { useThemeManager } from '@/shared/themeManager';
 
 const props = defineProps<{
 	ui: BarChart;
