@@ -44,6 +44,10 @@ func main() {
 						X: "Nicht verfügbar",
 						Y: 5,
 					},
+					{
+						X: "Null-Wert",
+						Y: 0,
+					},
 				},
 			})
 

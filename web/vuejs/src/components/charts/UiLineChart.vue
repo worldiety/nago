@@ -91,7 +91,7 @@ const frameStyles = computed<string>(() => {
 function mapDataPointsToData(dataPoint: ChartDataPoint) {
 	return {
 		x: dataPoint.x,
-		y: dataPoint.y,
+		y: dataPoint.y ?? 0,
 	};
 }
 
