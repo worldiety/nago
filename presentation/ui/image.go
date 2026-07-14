@@ -195,7 +195,7 @@ func (c TImage) Render(ctx core.RenderContext) core.RenderNode {
 	// start of delayed encoding
 	if c.light != nil || c.dark != nil {
 		var buf []byte
-		if ctx.Window().Info().ColorScheme == core.Dark {
+		if ctx.Window().Info().PrefersDark() {
 			buf = c.dark
 		} else {
 			buf = c.light
@@ -225,7 +225,7 @@ func (c TImage) Render(ctx core.RenderContext) core.RenderNode {
 
 	myUri := c.lightUri
 	if c.lightUri != "" && c.darkUri != "" {
-		if ctx.Window().Info().ColorScheme == core.Dark {
+		if ctx.Window().Info().PrefersDark() {
 			myUri = c.darkUri
 		} else {
 			myUri = c.lightUri

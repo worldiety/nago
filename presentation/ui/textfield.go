@@ -177,7 +177,6 @@ func FloatField(label string, value float64, state *core.State[float64]) TTextFi
 
 		state.Observe(func(newValue float64) {
 			if strState.Get() != "" || newValue != 0 {
-				state = state
 				i := strconv.FormatFloat(newValue, 'f', -1, 64)
 				if strState.Get() != i {
 					strState.Set(i)

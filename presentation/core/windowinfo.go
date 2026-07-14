@@ -73,9 +73,23 @@ type WindowInfo struct {
 	Height            DP
 	Density           Density
 	SizeClass         WindowSizeClass
-	ColorScheme       ColorScheme
-	SystemColorScheme ColorScheme
+	ColorScheme       ColorScheme // The ColorScheme which the frontend currently uses, like auto, light, dark, high contrast, etc. See also PrefersDark() and PrefersLight().
+	SystemColorScheme ColorScheme // If the ColorScheme is set to system/auto, this attribute tells the preferred color scheme. It allows the frontend to provide the systems current light/dark mode setting. See also PrefersDark() and PrefersLight().
 	UserAgent         UserAgent
+}
+
+// PrefersDark returns true if the current ColorScheme is set to a dark-like scheme. This semantic
+// will not change if additional color schemes are added in the future, e.g. like high contrast or other
+// accessibility schemes.
+func (w WindowInfo) PrefersDark() bool {
+	return w.SystemColorScheme == Dark
+}
+
+// PrefersLight returns true if the current ColorScheme is set to a light-like scheme. This semantic
+// will not change if additional color schemes are added in the future, e.g. like high contrast or other
+// accessibility schemes.
+func (w WindowInfo) PrefersLight() bool {
+	return w.SystemColorScheme == Light
 }
 
 // WindowSizeClass represents media break points of the screen which an ora application is shown.

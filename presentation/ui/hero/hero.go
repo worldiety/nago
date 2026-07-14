@@ -120,7 +120,7 @@ func (c THero) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	fgColor := c.foregroundColorLight
-	if winfo.ColorScheme == core.Dark && c.foregroundColorDark != "" {
+	if winfo.PrefersDark() && c.foregroundColorDark != "" {
 		fgColor = c.foregroundColorDark
 	}
 

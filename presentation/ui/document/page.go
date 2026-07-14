@@ -116,7 +116,7 @@ func (c TPage) Render(ctx core.RenderContext) core.RenderNode {
 
 	bgColor := c.backgroundColor
 	if bgColor == "" {
-		if wnd.Info().ColorScheme == core.Dark {
+		if wnd.Info().PrefersDark() {
 			bgColor = ui.M1
 		} else {
 			bgColor = ui.ColorWhite

@@ -194,7 +194,7 @@ func (c TSwitcher) Render(ctx core.RenderContext) core.RenderNode {
 	for _, page := range c.pages {
 		myUri := page.lightUri
 		if page.lightUri != "" && page.darkUri != "" {
-			if ctx.Window().Info().ColorScheme == core.Dark {
+			if ctx.Window().Info().PrefersDark() {
 				myUri = page.darkUri
 			} else {
 				myUri = page.lightUri
