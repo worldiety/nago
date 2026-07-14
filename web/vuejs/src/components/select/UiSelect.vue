@@ -66,14 +66,6 @@ const frameStyles = computed<string>(() => {
 	return styles.join(';');
 });
 
-const id = computed<string>(() => {
-	if (props.ui.id) {
-		return props.ui.id;
-	}
-
-	return 'tf-' + props.ui.inputValue;
-});
-
 const inputStyle = computed<string>(() => {
 	const styles: string[] = [];
 
@@ -89,7 +81,7 @@ const inputStyle = computed<string>(() => {
 watch(
 	() => props.ui.value,
 	(newValue) => {
-		if (document.getElementById(id.value) !== document.activeElement && selectedValue.value !== newValue) {
+		if (selectedValue.value !== newValue) {
 			selectedValue.value = newValue;
 		}
 	}
