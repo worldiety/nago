@@ -91,7 +91,7 @@ function mapDataPointsToData(dataPoint: ChartDataPoint, seriesIndex: number, dat
 
 	return {
 		x: dataPoint.x,
-		y: dataPoint.y,
+		y: dataPoint.y ?? 0,
 		goals: markers?.map(mapMarkerToGoal),
 	};
 }
