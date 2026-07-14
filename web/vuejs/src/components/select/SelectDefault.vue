@@ -71,7 +71,7 @@ const id = computed<string>(() => {
 watch(
 	() => props.ui.value,
 	(newValue) => {
-		if (document.getElementById(id.value) !== document.activeElement && selectedValue.value !== newValue) {
+		if (selectedValue.value !== newValue) {
 			selectedValue.value = newValue;
 		}
 	}
