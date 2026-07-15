@@ -1,4 +1,8 @@
 {
+  "node_modules/@embedpdf/snippet/dist/pdfium.wasm": {
+    "file": "assets/pdfium-RAgkpwfK.wasm",
+    "src": "node_modules/@embedpdf/snippet/dist/pdfium.wasm"
+  },
   "src/assets/fonts/ibm-plex-mono/complete/woff/IBMPlexMono-Bold.woff": {
     "file": "assets/IBMPlexMono-Bold-BV9METIw.woff",
     "src": "src/assets/fonts/ibm-plex-mono/complete/woff/IBMPlexMono-Bold.woff"
@@ -456,7 +460,7 @@
     "src": "src/assets/fonts/inter/InterVariable.woff2"
   },
   "src/main.ts": {
-    "file": "assets/main-D2DDtI7r.js",
+    "file": "assets/main-DDm8uE5x.js",
     "name": "main",
     "src": "src/main.ts",
     "isEntry": true,
@@ -464,6 +468,7 @@
       "src/main.ts"
     ],
     "assets": [
+      "assets/pdfium-RAgkpwfK.wasm",
       "assets/InterVariable-DiVDrmQJ.woff2",
       "assets/InterVariable-Italic-FCBEiFp6.woff2",
       "assets/IBMPlexMono-Bold-DXjtWYQI.woff2",

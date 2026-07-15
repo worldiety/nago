@@ -1,1 +1,0 @@
-import{M as e,f as t,kt as n,v as r}from"./runtime-core.esm-bundler-CadAoJuB.js";var i={key:0},a={key:1},o=r({__name:`UiUnknownType`,props:{ui:{}},setup(r){let o=r;return(r,s)=>o.ui?(e(),t(`div`,i,`[Protocol type has not been implemented: '`+n(o.ui.constructor.name)+`']`,1)):(e(),t(`div`,a,`ui component is null`))}});export{o as default};
