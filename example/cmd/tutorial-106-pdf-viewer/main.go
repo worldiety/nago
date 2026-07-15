@@ -9,7 +9,6 @@ package main
 
 import (
 	_ "embed"
-	"net/url"
 
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
@@ -23,13 +22,11 @@ func main() {
 		cfg.Serve(vuejs.Dist())
 
 		cfg.RootView(".", func(wnd core.Window) core.View {
-			pdfUrl, _ := url.Parse("https://pdfobject.com/pdf/sample.pdf")
-
 			return ui.VStack(
 				ui.ThemeSwitcher(
 					ui.PrimaryButton(nil).Title("Toggle theme"),
 				),
-				ui.PDF(*pdfUrl).Frame(ui.Frame{Width: ui.L880, Height: ui.L880, MaxWidth: ui.Full}),
+				ui.PDF("https://pdfobject.com/pdf/sample.pdf").Frame(ui.Frame{Width: ui.L880, Height: ui.L880, MaxWidth: ui.Full}),
 			).Gap(ui.L32).Padding(ui.Padding{}.All(ui.L16)).Frame(ui.Frame{}.MatchScreen())
 		})
 	}).Run()
