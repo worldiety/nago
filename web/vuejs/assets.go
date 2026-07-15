@@ -12,7 +12,7 @@ import (
 	"io/fs"
 )
 
-//go:embed  dist/index.html dist/legacy/* dist/modern/*
+//go:embed dist/index.html all:dist/legacy all:dist/modern
 var Frontend embed.FS
 
 func Dist() fs.FS {
