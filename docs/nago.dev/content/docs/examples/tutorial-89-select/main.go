@@ -87,7 +87,7 @@ func main() {
 				).Gap(ui.L64).NoClip(true),
 				ui.Stack(
 					ui.PrimaryButton(func() {
-						if wnd.Info().ColorScheme == core.Light {
+						if wnd.Info().PrefersLight() {
 							wnd.SetColorScheme(core.Dark)
 						} else {
 							wnd.SetColorScheme(core.Light)

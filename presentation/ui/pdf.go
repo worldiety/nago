@@ -8,39 +8,25 @@
 package ui
 
 import (
-	"net/url"
-
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
 )
 
 // TPDF is a component to view PDF files from a source URL.
 type TPDF struct {
-	src   url.URL // the source URL of the PDF file
-	frame Frame   // layout frame for sizing
+	src   core.URI // the source URL of the PDF file
+	frame Frame    // layout frame for sizing
 }
 
 // PDF creates a new PDF viewer component with the given source URL.
-func PDF(src url.URL) TPDF {
+func PDF(src core.URI) TPDF {
 	return TPDF{src: src}
 }
 
 // Src sets the source URL of the PDF viewer.
-func (c TPDF) Src(src url.URL) TPDF {
+func (c TPDF) Src(src core.URI) TPDF {
 	c.src = src
 	return c
-}
-
-// SrcFromString parses the given string as a URL and sets it as the source URL of the PDF viewer.
-func (c TPDF) SrcFromString(src string) (TPDF, error) {
-	parsed, err := url.Parse(src)
-	if err != nil {
-		return c, err
-	}
-
-	c.src = *parsed
-
-	return c, nil
 }
 
 // Frame sets the viewer's frame for sizing purposes
@@ -51,7 +37,7 @@ func (c TPDF) Frame(frame Frame) TPDF {
 
 func (c TPDF) Render(_ core.RenderContext) core.RenderNode {
 	return &proto.PDF{
-		Src:   proto.Str(c.src.String()),
+		Src:   proto.Str(c.src),
 		Frame: c.frame.ora(),
 	}
 }
