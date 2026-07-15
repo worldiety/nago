@@ -14,6 +14,7 @@ export default class ThemeManager {
 	private readonly localStorageKey = 'color-theme';
 	private themes: Themes | null = null;
 	public activeLocale: Locale;
+	private readonly themeObservers: ((themeKey: ThemeKey) => void)[] = [];
 
 	constructor() {
 		this.activeLocale = '';
@@ -33,7 +34,9 @@ export default class ThemeManager {
 			return;
 		}
 
-		switch (localStorage.getItem(this.localStorageKey)) {
+		const themeKey = localStorage.getItem(this.localStorageKey);
+
+		switch (themeKey) {
 			case ThemeKey.LIGHT:
 				this.applyLightmodeTheme();
 				break;
@@ -78,6 +81,8 @@ export default class ThemeManager {
 		document.getElementsByTagName('html')[0].classList.remove('lightmode');
 		document.getElementsByTagName('html')[0].classList.remove('darkmode');
 		localStorage.setItem(this.localStorageKey, ThemeKey.SYSTEM);
+
+		this.notifyThemeObservers(theme);
 	}
 
 	applyLightmodeTheme(): void {
@@ -89,6 +94,8 @@ export default class ThemeManager {
 		document.getElementsByTagName('html')[0].classList.remove('darkmode');
 		document.getElementsByTagName('html')[0].classList.add('lightmode');
 		localStorage.setItem(this.localStorageKey, ThemeKey.LIGHT);
+
+		this.notifyThemeObservers(ThemeKey.LIGHT);
 	}
 
 	applyDarkmodeTheme(): void {
@@ -100,6 +107,16 @@ export default class ThemeManager {
 		document.getElementsByTagName('html')[0].classList.remove('lightmode');
 		document.getElementsByTagName('html')[0].classList.add('darkmode');
 		localStorage.setItem(this.localStorageKey, ThemeKey.DARK);
+
+		this.notifyThemeObservers(ThemeKey.DARK);
+	}
+
+	observeTheme(callback: (themeKey: ThemeKey) => void): void {
+		this.themeObservers.push(callback);
+	}
+
+	private notifyThemeObservers(themeKey: ThemeKey): void {
+		this.themeObservers.forEach((observer) => observer(themeKey));
 	}
 
 	private applyTheme(theme?: Theme): void {

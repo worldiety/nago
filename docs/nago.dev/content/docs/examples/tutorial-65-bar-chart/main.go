@@ -44,6 +44,10 @@ func main() {
 						X: "2010",
 						Y: 300.45,
 					},
+					{
+						X: "2011",
+						Y: 0,
+					},
 				},
 			})
 			barChartSeries = append(barChartSeries, chart.Series{
@@ -54,8 +58,12 @@ func main() {
 						Y: 400,
 					},
 					{
-						X: "2011",
+						X: "2010",
 						Y: 500,
+					},
+					{
+						X: "2011",
+						Y: 50,
 					},
 				},
 			})

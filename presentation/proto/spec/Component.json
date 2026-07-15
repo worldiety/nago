@@ -21,6 +21,7 @@
     "Menu",
     "Modal",
     "PasswordField",
+    "PDF",
     "PieChart",
     "QrCode",
     "QrCodeReader",

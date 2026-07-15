@@ -343,6 +343,7 @@ func (LineChart) isComponent()      {}
 func (Menu) isComponent()           {}
 func (Modal) isComponent()          {}
 func (PasswordField) isComponent()  {}
+func (PDF) isComponent()            {}
 func (PieChart) isComponent()       {}
 func (QrCode) isComponent()         {}
 func (QrCodeReader) isComponent()   {}
@@ -20538,6 +20539,72 @@ func (v *NavigationReplaceRequested) read(r *BinaryReader) error {
 	return nil
 }
 
+// PDF allows to view a PDF file.
+type PDF struct {
+	Src   Str
+	Frame Frame
+}
+
+func (v *PDF) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Src.IsZero()
+	fields[2] = !v.Frame.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Src.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(record, 2); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *PDF) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Src.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -22113,6 +22180,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 270:
 		var v NavigationReplaceRequested
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 271:
+		var v PDF
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -26601,6 +26674,18 @@ func (v *NavigationReplaceRequested) IsZero() bool {
 	return v.RootView.IsZero() && v.Values.IsZero()
 }
 
+func (v *PDF) reset() {
+	v.Src.reset()
+	v.Frame.reset()
+}
+
+func (v *PDF) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Src.IsZero() && v.Frame.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -28409,6 +28494,13 @@ func (v *CanvasStroke) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *NavigationReplaceRequested) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 270); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *PDF) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 271); err != nil {
 		return err
 	}
 	return nil

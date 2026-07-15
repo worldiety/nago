@@ -1,0 +1,16 @@
+{
+  "doc": "PDF allows to view a PDF file.",
+  "kind": "Record",
+  "id": 271,
+  "fields": {
+    "1": {
+      "name": "Src",
+      "type": "Str"
+    },
+    "2": {
+      "name": "Frame",
+      "type": "Frame"
+    }
+  }
+}
+
