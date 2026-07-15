@@ -21135,6 +21135,68 @@ export class NavigationReplaceRequested implements Writeable, Readable, NagoEven
 	isNagoEvent(): void {}
 }
 
+// PDF allows to view a PDF file.
+export class PDF implements Writeable, Readable, Component {
+	public src?: Str;
+
+	public frame?: Frame;
+
+	constructor(src: Str | undefined = undefined, frame: Frame | undefined = undefined) {
+		this.src = src;
+		this.frame = frame;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.src = readString(reader);
+					break;
+				}
+				case 2: {
+					this.frame = new Frame();
+					this.frame.read(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.src !== undefined, this.frame !== undefined && !this.frame.isZero()];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.src!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.RECORD, 2);
+			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.src === undefined && (this.frame === undefined || this.frame.isZero());
+	}
+
+	reset(): void {
+		this.src = undefined;
+		this.frame = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 271);
+		return;
+	}
+	isComponent(): void {}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -22380,6 +22442,11 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 270: {
 			const v = new NavigationReplaceRequested();
+			v.read(src);
+			return v;
+		}
+		case 271: {
+			const v = new PDF();
 			v.read(src);
 			return v;
 		}

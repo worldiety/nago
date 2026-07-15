@@ -8,11 +8,11 @@
  */
 import type { Component } from 'vue';
 import { defineAsyncComponent } from 'vue';
-import { Canvas } from '@/shared/proto/nprotoc_gen';
 import {
 	Accordion,
 	BarChart,
 	Box,
+	Canvas,
 	Checkbox,
 	CodeEditor,
 	Component as NagoComponent,
@@ -29,6 +29,7 @@ import {
 	Menu,
 	Modal,
 	PasswordField,
+	PDF,
 	PieChart,
 	QrCode,
 	QrCodeReader,
@@ -64,6 +65,7 @@ const LazyUiCountDown = defineAsyncComponent(() => import('@/components/countdow
 const LazyUiDatepicker = defineAsyncComponent(() => import('@/components/datepicker/UiDatepicker.vue'));
 const LazyUiDivider = defineAsyncComponent(() => import('@/components/UiDivider.vue'));
 const LazyUiDnDArea = defineAsyncComponent(() => import('@/components/dnd/UiDnDArea.vue'));
+const LazyUiPDF = defineAsyncComponent(() => import('@/components/UiPDF.vue'));
 const LazyUiFlowChart = defineAsyncComponent(() => import('@/components/flowchart/UiFlowChart.vue'));
 const LazyUiForm = defineAsyncComponent(() => import('@/components/form/UiForm.vue'));
 const LazyUiGrid = defineAsyncComponent(() => import('@/components/UiGrid.vue'));
@@ -141,6 +143,10 @@ export function vueComponentFor(ngc: NagoComponent): Component {
 
 	if (ngc instanceof DnDArea) {
 		return LazyUiDnDArea;
+	}
+
+	if (ngc instanceof PDF) {
+		return LazyUiPDF;
 	}
 
 	if (ngc instanceof FlowChart) {

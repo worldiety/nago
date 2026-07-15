@@ -20,6 +20,6 @@ Calendar creates a new TCalendar initialized with the current year, a yearly tim
 | `FullWidth()` |  |
 | `Style(style Style)` | Style sets the display style (e.g., timeline view) for the calendar. |
 | `ViewPort(vp ViewPort)` | ViewPort sets the visible time range (e.g., year, month) of the calendar. |
-| `mapStartTimeCluster(events []Event, vp ViewPort)` |  |
+| `mapStartTimeCluster(vp ViewPort, events []Event)` |  |
 ---
 
