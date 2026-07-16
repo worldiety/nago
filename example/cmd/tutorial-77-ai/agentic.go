@@ -8,7 +8,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"math"
 	"strings"
@@ -16,14 +15,12 @@ import (
 
 	"go.wdy.de/nago/application/ai"
 	"go.wdy.de/nago/application/ai/completion"
-	"go.wdy.de/nago/application/ai/model"
-	"go.wdy.de/nago/application/ai/provider"
-	"go.wdy.de/nago/pkg/xsync"
+	uicompletion "go.wdy.de/nago/application/ai/completion/ui"
+	"go.wdy.de/nago/application/ai/session"
+	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
-	"go.wdy.de/nago/presentation/ui/dropdown"
-	"go.wdy.de/nago/presentation/ui/markdown"
 )
 
 // agenticTools are the executable Go functions exposed to the model. The schema for the input struct is
@@ -85,198 +82,44 @@ func agenticTools() []completion.Tool {
 	return []completion.Tool{calc, sqrt, now}
 }
 
-// agenticChat is an interactive playground for [completion.Run]: it drives the full agentic loop (call model
-// -> execute requested tools -> feed results back -> repeat) and renders both the final answer and the full
-// message trace so the tool calls become visible.
-func agenticChat(wnd core.Window, uc ai.UseCases) core.View {
-	// Collect all providers that expose stateless completions so the user can pick one.
-	type provEntry struct {
-		prov  provider.Provider
-		comps completion.Completions
+// agenticChat demonstrates the generic [uicompletion.Chat] component driving a tool-using assistant. It
+// configures TWO agents so the component renders an agent picker: a general assistant with the calculator/
+// sqrt/time tools and a math specialist that additionally asks the user for confirmation via the built-in
+// ask_user tool (enabled through ChatOptions.AskUser). History is off here, so this chat is transient.
+func agenticChat(wnd core.Window, uc ai.UseCases, sessions session.UseCases) core.View {
+	prov, comps, err := firstCompletionProvider(wnd.Subject(), uc, false)
+	if err != nil {
+		return alert.BannerError(err)
 	}
 
-	var entries []provEntry
-	for p, err := range uc.FindAllProvider(wnd.Subject()) {
-		if err != nil {
-			return alert.BannerError(err)
-		}
+	tools := func(auth.Subject) []completion.Tool { return agenticTools() }
 
-		if c := p.Completions(); c.IsSome() {
-			entries = append(entries, provEntry{prov: p, comps: c.Unwrap()})
-		}
-	}
-
-	if len(entries) == 0 {
-		return alert.BannerError(fmt.Errorf("kein Provider mit stateless Completions gefunden – bitte ein Secret konfigurieren"))
-	}
-
-	selectedProvider := core.AutoState[provider.ID](wnd).Init(func() provider.ID {
-		return entries[0].prov.Identity()
+	chat := uicompletion.Chat(wnd, uicompletion.ChatOptions{
+		Sessions:    sessions,
+		Completions: comps,
+		Provider:    prov,
+		Title:       "Agentic Tool-Loop",
+		AskUser:     true,
+		Agents: []uicompletion.Agent{
+			{
+				ID:           "assistant",
+				Name:         "Allrounder",
+				SystemPrompt: "You are a helpful assistant. Use the provided tools to compute results instead of guessing.",
+				Tools:        tools,
+			},
+			{
+				ID:           "math",
+				Name:         "Mathe-Spezialist",
+				SystemPrompt: "You are a meticulous math specialist. Use the tools for every calculation and use ask_user to confirm ambiguous inputs before computing.",
+				Tools:        tools,
+			},
+		},
 	})
-
-	// Resolve the currently selected provider (fallback to the first one).
-	current := entries[0]
-	for _, e := range entries {
-		if e.prov.Identity() == selectedProvider.Get() {
-			current = e
-			break
-		}
-	}
-	prov := current.prov
-	comps := current.comps
-
-	prompt := core.AutoState[string](wnd).Init(func() string {
-		return "Was ist die Quadratwurzel aus (3 mal 12)? Nutze die Tools."
-	})
-	answer := core.AutoState[string](wnd)
-	trace := core.AutoState[string](wnd)
-	usage := core.AutoState[string](wnd)
-	busy := core.AutoState[bool](wnd)
-	selectedModel := core.AutoState[model.ID](wnd).Init(func() model.ID {
-		for m, err := range comps.Models(wnd.Subject()) {
-			if err != nil {
-				return ""
-			}
-			return m.ID
-		}
-		return ""
-	})
-
-	// When the provider changes, reset the model to the first model of the new provider.
-	selectedProvider.Observe(func(newValue provider.ID) {
-		first := model.ID("")
-		for _, e := range entries {
-			if e.prov.Identity() == newValue {
-				for m, err := range e.comps.Models(wnd.Subject()) {
-					if err == nil {
-						first = m.ID
-					}
-					break
-				}
-				break
-			}
-		}
-		selectedModel.Set(first)
-		answer.Set("")
-		trace.Set("")
-		usage.Set("")
-	})
-
-	// Build the dropdown options from the available completion providers.
-	providerOptions := make([]dropdown.Option[provider.ID], 0, len(entries))
-	for _, e := range entries {
-		providerOptions = append(providerOptions, dropdown.Option[provider.ID]{
-			Value: e.prov.Identity(),
-			Label: e.prov.Name(),
-		})
-	}
-
-	submit := func() {
-		question := strings.TrimSpace(prompt.Get())
-		if question == "" || busy.Get() {
-			return
-		}
-
-		busy.Set(true)
-		answer.Set("")
-		trace.Set("")
-		usage.Set("")
-
-		xsync.Go(func() error {
-			res, history, err := completion.Run(wnd.Subject(), comps, completion.RunOptions{
-				Options: completion.Options{
-					Model:     selectedModel.Get(),
-					System:    "You are a helpful assistant. Use the provided tools to compute results instead of guessing.",
-					MaxTokens: 1024,
-					Messages: []completion.Message{
-						{
-							Role:    completion.User,
-							Content: []completion.Content{completion.Text{Text: question}},
-						},
-					},
-				},
-				Tools: agenticTools(),
-			})
-
-			if err != nil {
-				wnd.Post(func() {
-					busy.Set(false)
-					alert.ShowBannerError(wnd, err)
-				})
-				return nil
-			}
-
-			var sb strings.Builder
-			for _, c := range res.Message.Content {
-				if t, ok := c.(completion.Text); ok {
-					sb.WriteString(t.Text)
-				}
-			}
-
-			wnd.Post(func() {
-				answer.Set(sb.String())
-				trace.Set(renderTrace(history))
-				usage.Set(renderUsage(res.Usage))
-				busy.Set(false)
-			})
-
-			return nil
-		}, func(err error) {
-			if err != nil {
-				wnd.Post(func() {
-					busy.Set(false)
-					alert.ShowBannerError(wnd, err)
-				})
-			}
-		})
-	}
 
 	return ui.VStack(
-		ui.Text(fmt.Sprintf("Agentic Tool-Loop – %s (%s)", prov.Name(), selectedModel.Get())).Font(ui.Title),
-
-		dropdown.Dropdown("Provider", providerOptions, selectedProvider.Get()).
-			InputValue(selectedProvider).
-			Disabled(busy.Get()).
-			Frame(ui.Frame{}.FullWidth()),
-
-		ui.TextField("Deine Eingabe", prompt.Get()).
-			InputValue(prompt).
-			Lines(4).
-			FullWidth().
-			Disabled(busy.Get()),
-
-		ui.PrimaryButton(submit).
-			Title("completion.Run starten").
-			Enabled(!busy.Get()),
-
-		ui.If(busy.Get(), ui.Text("… die KI denkt nach und ruft ggf. Tools auf")),
-
-		ui.If(answer.Get() != "", ui.VStack(
-			ui.Text("Antwort").Font(ui.SubTitle),
-			markdown.RichText(answer.Get()),
-		).Alignment(ui.Leading).
-			FullWidth().
-			BackgroundColor(ui.M2).
-			Border(ui.Border{}.Radius(ui.L8)).
-			Padding(ui.Padding{}.All(ui.L16))),
-
-		ui.If(trace.Get() != "", ui.VStack(
-			ui.Text("Message-Trace").Font(ui.SubTitle),
-			ui.CodeEditor(trace.Get()).Language("text").FullWidth(),
-		).Alignment(ui.Leading).
-			FullWidth().
-			BackgroundColor(ui.M2).
-			Border(ui.Border{}.Radius(ui.L8)).
-			Padding(ui.Padding{}.All(ui.L16))),
-
-		ui.If(usage.Get() != "", ui.VStack(
-			ui.Text("Token-Usage (letzter Turn)").Font(ui.SubTitle),
-			ui.CodeEditor(usage.Get()).Language("text").FullWidth(),
-		).Alignment(ui.Leading).
-			FullWidth().
-			BackgroundColor(ui.M2).
-			Border(ui.Border{}.Radius(ui.L8)).
-			Padding(ui.Padding{}.All(ui.L16))),
+		ui.Text("Agentic Tool-Loop (uicompletion.Chat mit Agent-Auswahl + ask_user)").Font(ui.Title),
+		ui.Text("Zwei Agenten stehen zur Auswahl. Beide nutzen dieselben Rechen-Tools; der Mathe-Spezialist fragt bei Bedarf per ask_user nach."),
+		chat,
 	).Alignment(ui.Leading).
 		Gap(ui.L16).
 		FullWidth().
@@ -292,42 +135,5 @@ func renderUsage(u completion.Usage) string {
 	fmt.Fprintf(&sb, "output_tokens:       %d\n", u.OutputTokens)
 	fmt.Fprintf(&sb, "cache_read_tokens:   %d  (aus dem Cache gelesen, ~0.1x Kosten)\n", u.CacheReadTokens)
 	fmt.Fprintf(&sb, "cache_write_tokens:  %d  (neu in den Cache geschrieben, ~1.25x Kosten)\n", u.CacheWriteTokens)
-	return sb.String()
-}
-
-// intermediate tool calls and tool results become visible.
-func renderTrace(history []completion.Message) string {
-	var sb strings.Builder
-	for i, msg := range history {
-		fmt.Fprintf(&sb, "#%d [%s]\n", i, msg.Role)
-		for _, c := range msg.Content {
-			switch v := c.(type) {
-			case completion.Text:
-				fmt.Fprintf(&sb, "  text: %s\n", v.Text)
-			case completion.Thinking:
-				fmt.Fprintf(&sb, "  thinking: %s\n", v.Text)
-			case completion.ToolCall:
-				fmt.Fprintf(&sb, "  tool_call %s(%s) -> %s\n", v.Name, v.ID, string(v.Arguments))
-			case completion.ToolResult:
-				var inner strings.Builder
-				for _, ic := range v.Content {
-					switch t := ic.(type) {
-					case completion.Text:
-						inner.WriteString(t.Text)
-					case completion.Media:
-						fmt.Fprintf(&inner, "[media type=%s] ", t.MimeType)
-					}
-				}
-				marker := "ok"
-				if v.IsError {
-					marker = "error"
-				}
-				fmt.Fprintf(&sb, "  tool_result %s [%s]: %s\n", v.ToolCallID, marker, inner.String())
-			default:
-				raw, _ := json.Marshal(v)
-				fmt.Fprintf(&sb, "  %T: %s\n", v, string(raw))
-			}
-		}
-	}
 	return sb.String()
 }

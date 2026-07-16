@@ -44,6 +44,7 @@ func main() {
 			MenuEntry().Title("fileupload").Forward("fileupload").Private().
 			MenuEntry().Title("drivetools").Forward("drivetools").Private().
 			MenuEntry().Title("session").Forward("session").Private().
+			MenuEntry().Title("button").Forward("button").Private().
 			Decorator())
 		option.Must(cfginspector.Enable(cfg))
 		option.Must(cfglocalization.Enable(cfg))
@@ -77,7 +78,7 @@ func main() {
 		})
 
 		cfg.RootViewWithDecoration("agentic", func(wnd core.Window) core.View {
-			return agenticChat(wnd, modAi.UseCases)
+			return agenticChat(wnd, modAi.UseCases, modAi.SessionUseCases)
 		})
 
 		cfg.RootViewWithDecoration("fileupload", func(wnd core.Window) core.View {
@@ -85,11 +86,15 @@ func main() {
 		})
 
 		cfg.RootViewWithDecoration("drivetools", func(wnd core.Window) core.View {
-			return driveToolsChat(wnd, modAi.UseCases, drives.UseCases)
+			return driveToolsChat(wnd, modAi.UseCases, modAi.SessionUseCases, drives.UseCases)
 		})
 
 		cfg.RootViewWithDecoration("session", func(wnd core.Window) core.View {
 			return sessionChat(wnd, modAi.UseCases, modAi.SessionUseCases)
+		})
+
+		cfg.RootViewWithDecoration("button", func(wnd core.Window) core.View {
+			return buttonOverlayPage(wnd, modAi.UseCases, modAi.SessionUseCases)
 		})
 
 	}).Run()
