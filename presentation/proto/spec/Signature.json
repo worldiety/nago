@@ -1,0 +1,10 @@
+{
+  "kind": "Record",
+  "id": 273,
+  "fields": {
+    "1": {
+      "name": "SVG",
+      "type": "Str"
+    }
+  }
+}

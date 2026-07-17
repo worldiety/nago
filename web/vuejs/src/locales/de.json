@@ -85,6 +85,12 @@
 	"scaffold": {
 		"toMenu": "Hauptmenü"
 	},
+	"signature-field": {
+		"overlay": {
+			"reset": "Unterschrift löschen",
+			"submit": "Bestätigen"
+		}
+	},
 	"slider": {
 		"from": "von",
 		"to": "bis"
