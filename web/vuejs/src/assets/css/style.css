@@ -15,6 +15,7 @@
 @import 'container.css';
 @import 'scrollbars.css';
 @import 'vueflow.css';
+@import 'charts.css';
 
 body {
 	@apply h-full;
