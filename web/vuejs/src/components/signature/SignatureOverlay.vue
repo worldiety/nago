@@ -53,12 +53,17 @@ const emit = defineEmits<{
 
 const canvas = ref<HTMLCanvasElement>();
 const signaturePad = ref<SignaturePad>();
+const color = ref('');
 
 const clearButtonVisible = ref(false);
 
 function onSubmit(): void {
 	if (!signaturePad.value) return;
-	emit('submit', new Signature(signaturePad.value.toSVG()));
+	emit('submit', new Signature(removeColorInfoFromSVG(signaturePad.value.toSVG())));
+}
+
+function removeColorInfoFromSVG(svg: string): string {
+	return svg.replaceAll(color.value, 'currentColor');
 }
 
 function clearInputValue(): void {
@@ -67,11 +72,17 @@ function clearInputValue(): void {
 	clearButtonVisible.value = false;
 }
 
+function getCurrentColor(): string {
+	if (!canvas.value) return '';
+	return getComputedStyle(canvas.value).color;
+}
+
 onMounted(() => {
 	if (!canvas.value) return;
+	color.value = getCurrentColor();
 	canvas.value.width = canvas.value.clientWidth;
 	canvas.value.height = canvas.value.clientHeight;
-	signaturePad.value = new SignaturePad(canvas.value, { penColor: 'currentColor' }); // TODO: Change color
+	signaturePad.value = new SignaturePad(canvas.value, { penColor: color.value });
 	signaturePad.value.addEventListener('endStroke', () => {
 		clearButtonVisible.value = !signaturePad.value?.isEmpty();
 	});
