@@ -21197,6 +21197,219 @@ export class PDF implements Writeable, Readable, Component {
 	isComponent(): void {}
 }
 
+export class Signature implements Writeable, Readable {
+	public sVG?: Str;
+
+	constructor(sVG: Str | undefined = undefined) {
+		this.sVG = sVG;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.sVG = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.sVG !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.sVG!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.sVG === undefined;
+	}
+
+	reset(): void {
+		this.sVG = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 273);
+		return;
+	}
+}
+
+export class SignatureField implements Writeable, Readable, Component {
+	// Value contains the current signature.
+	public value?: Signature;
+
+	public frame?: Frame;
+
+	// InputValue is a binding to a state, into which the frontend will put the user entered signature. This is the pointer a State.
+	public inputValue?: Ptr;
+
+	public label?: Str;
+
+	public supportingText?: Str;
+
+	// ErrorText is shown instead of SupportingText, even if they are (today) independent
+	public errorText?: Str;
+
+	public disabled?: Bool;
+
+	// Style to apply. Use TextFieldReduced in forms where many textfields cause too much visual noise and you need to reduce it. By default, the TextFieldOutlined is applied.
+	public style?: TextFieldStyle;
+
+	constructor(
+		value: Signature | undefined = undefined,
+		frame: Frame | undefined = undefined,
+		inputValue: Ptr | undefined = undefined,
+		label: Str | undefined = undefined,
+		supportingText: Str | undefined = undefined,
+		errorText: Str | undefined = undefined,
+		disabled: Bool | undefined = undefined,
+		style: TextFieldStyle | undefined = undefined
+	) {
+		this.value = value;
+		this.frame = frame;
+		this.inputValue = inputValue;
+		this.label = label;
+		this.supportingText = supportingText;
+		this.errorText = errorText;
+		this.disabled = disabled;
+		this.style = style;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.value = new Signature();
+					this.value.read(reader);
+					break;
+				}
+				case 2: {
+					this.frame = new Frame();
+					this.frame.read(reader);
+					break;
+				}
+				case 3: {
+					this.inputValue = readInt(reader);
+					break;
+				}
+				case 4: {
+					this.label = readString(reader);
+					break;
+				}
+				case 5: {
+					this.supportingText = readString(reader);
+					break;
+				}
+				case 6: {
+					this.errorText = readString(reader);
+					break;
+				}
+				case 7: {
+					this.disabled = readBool(reader);
+					break;
+				}
+				case 8: {
+					this.style = readInt(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.value !== undefined && !this.value.isZero(),
+			this.frame !== undefined && !this.frame.isZero(),
+			this.inputValue !== undefined,
+			this.label !== undefined,
+			this.supportingText !== undefined,
+			this.errorText !== undefined,
+			this.disabled !== undefined,
+			this.style !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.RECORD, 1);
+			this.value!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.RECORD, 2);
+			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 3);
+			writeInt(writer, this.inputValue!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
+			writeString(writer, this.label!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
+			writeString(writer, this.supportingText!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 6);
+			writeString(writer, this.errorText!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 7);
+			writeBool(writer, this.disabled!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 8);
+			writeInt(writer, this.style!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			(this.value === undefined || this.value.isZero()) &&
+			(this.frame === undefined || this.frame.isZero()) &&
+			this.inputValue === undefined &&
+			this.label === undefined &&
+			this.supportingText === undefined &&
+			this.errorText === undefined &&
+			this.disabled === undefined &&
+			this.style === undefined
+		);
+	}
+
+	reset(): void {
+		this.value = undefined;
+		this.frame = undefined;
+		this.inputValue = undefined;
+		this.label = undefined;
+		this.supportingText = undefined;
+		this.errorText = undefined;
+		this.disabled = undefined;
+		this.style = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 274);
+		return;
+	}
+	isComponent(): void {}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -22447,6 +22660,16 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 271: {
 			const v = new PDF();
+			v.read(src);
+			return v;
+		}
+		case 273: {
+			const v = new Signature();
+			v.read(src);
+			return v;
+		}
+		case 274: {
+			const v = new SignatureField();
 			v.read(src);
 			return v;
 		}

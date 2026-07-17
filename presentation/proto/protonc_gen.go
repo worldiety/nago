@@ -353,6 +353,7 @@ func (RichTextEditor) isComponent() {}
 func (Scaffold) isComponent()       {}
 func (ScrollView) isComponent()     {}
 func (Select) isComponent()         {}
+func (SignatureField) isComponent() {}
 func (Slider) isComponent()         {}
 func (Spacer) isComponent()         {}
 func (SplitView) isComponent()      {}
@@ -20605,6 +20606,215 @@ func (v *PDF) read(r *BinaryReader) error {
 	return nil
 }
 
+type Signature struct {
+	SVG Str
+}
+
+func (v *Signature) write(w *BinaryWriter) error {
+	var fields [2]bool
+	fields[1] = !v.SVG.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.SVG.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Signature) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.SVG.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type SignatureField struct {
+	// Value contains the current signature.
+	Value Signature
+	Frame Frame
+	// InputValue is a binding to a state, into which the frontend will put the user entered signature. This is the pointer a State.
+	InputValue     Ptr
+	Label          Str
+	SupportingText Str
+	// ErrorText is shown instead of SupportingText, even if they are (today) independent
+	ErrorText Str
+	Disabled  Bool
+	// Style to apply. Use TextFieldReduced in forms where many textfields cause too much visual noise and you need to reduce it. By default, the TextFieldOutlined is applied.
+	Style TextFieldStyle
+}
+
+func (v *SignatureField) write(w *BinaryWriter) error {
+	var fields [9]bool
+	fields[1] = !v.Value.IsZero()
+	fields[2] = !v.Frame.IsZero()
+	fields[3] = !v.InputValue.IsZero()
+	fields[4] = !v.Label.IsZero()
+	fields[5] = !v.SupportingText.IsZero()
+	fields[6] = !v.ErrorText.IsZero()
+	fields[7] = !v.Disabled.IsZero()
+	fields[8] = !v.Style.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(record, 1); err != nil {
+			return err
+		}
+		if err := v.Value.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(record, 2); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(uvarint, 3); err != nil {
+			return err
+		}
+		if err := v.InputValue.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.Label.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(byteSlice, 5); err != nil {
+			return err
+		}
+		if err := v.SupportingText.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(byteSlice, 6); err != nil {
+			return err
+		}
+		if err := v.ErrorText.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(uvarint, 7); err != nil {
+			return err
+		}
+		if err := v.Disabled.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		if err := w.writeFieldHeader(uvarint, 8); err != nil {
+			return err
+		}
+		if err := v.Style.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *SignatureField) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Value.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.InputValue.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Label.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.SupportingText.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.ErrorText.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.Disabled.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.Style.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -22186,6 +22396,18 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 271:
 		var v PDF
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 273:
+		var v Signature
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 274:
+		var v SignatureField
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -26686,6 +26908,35 @@ func (v *PDF) IsZero() bool {
 	return v.Src.IsZero() && v.Frame.IsZero()
 }
 
+func (v *Signature) reset() {
+	v.SVG.reset()
+}
+
+func (v *Signature) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.SVG.IsZero()
+}
+
+func (v *SignatureField) reset() {
+	v.Value.reset()
+	v.Frame.reset()
+	v.InputValue.reset()
+	v.Label.reset()
+	v.SupportingText.reset()
+	v.ErrorText.reset()
+	v.Disabled.reset()
+	v.Style.reset()
+}
+
+func (v *SignatureField) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Disabled.IsZero() && v.Style.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -28501,6 +28752,20 @@ func (v *NavigationReplaceRequested) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *PDF) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 271); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Signature) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 273); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *SignatureField) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 274); err != nil {
 		return err
 	}
 	return nil

@@ -1,0 +1,42 @@
+{
+  "kind": "Record",
+  "id": 274,
+  "fields": {
+    "1": {
+      "doc": "Value contains the current signature.",
+      "name": "Value",
+      "type": "Signature"
+    },
+    "2": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "3": {
+      "doc": "InputValue is a binding to a state, into which the frontend will put the user entered signature. This is the pointer a State.",
+      "name": "InputValue",
+      "type": "Ptr"
+    },
+    "4": {
+      "name": "Label",
+      "type": "Str"
+    },
+    "5": {
+      "name": "SupportingText",
+      "type": "Str"
+    },
+    "6": {
+      "doc": "ErrorText is shown instead of SupportingText, even if they are (today) independent",
+      "name": "ErrorText",
+      "type": "Str"
+    },
+    "7": {
+      "name": "Disabled",
+      "type": "Bool"
+    },
+    "8": {
+      "doc": "Style to apply. Use TextFieldReduced in forms where many textfields cause too much visual noise and you need to reduce it. By default, the TextFieldOutlined is applied.",
+      "name": "Style",
+      "type": "TextFieldStyle"
+    }
+  }
+}
