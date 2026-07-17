@@ -9,7 +9,7 @@
 <template>
 	<div class="signature-field" :style="frameStyles">
 		<SignatureInput :ui="props.ui" @expand="expanded = true" />
-		<SignatureOverlay v-if="expanded" :ui="props.ui" class="overlay" @submit="onSubmit" @close="expanded = false"/>
+		<SignatureOverlay v-if="expanded" :ui="props.ui" class="overlay" @submit="onSubmit" @close="expanded = false" />
 	</div>
 </template>
 <script lang="ts" setup>
