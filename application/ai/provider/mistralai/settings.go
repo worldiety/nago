@@ -10,6 +10,7 @@ package mistralai
 import (
 	"github.com/worldiety/enum"
 	"github.com/worldiety/i18n"
+	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/application/secret"
 	"golang.org/x/text/language"
 )
@@ -17,6 +18,15 @@ import (
 var _ = enum.Variant[secret.Credentials, Settings](
 	enum.Rename[Settings]("nago.ai.mistralai.settings"),
 )
+
+// Register wires this provider's factory into the global provider registry, so it becomes available only when
+// the host application side-imports this package.
+var _ = registerProvider()
+
+func registerProvider() any {
+	provider.Register[Settings](NewProvider)
+	return nil
+}
 
 var (
 	StrMistralAISettingsTitle       = i18n.MustString("nago.ai.mistralai.settings_title", i18n.Values{language.English: "My Mistral AI Token", language.German: "Mein Mistral AI Token"})

@@ -11,10 +11,7 @@ import (
 	"log/slog"
 
 	"go.wdy.de/nago/application/ai/provider"
-	"go.wdy.de/nago/application/ai/provider/anthropic"
 	"go.wdy.de/nago/application/ai/provider/cache"
-	"go.wdy.de/nago/application/ai/provider/gollama"
-	"go.wdy.de/nago/application/ai/provider/mistralai"
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/secret"
 	"go.wdy.de/nago/application/user"
@@ -36,17 +33,11 @@ func NewReloadProvider(m *concurrent.RWMap[provider.ID, provider.Provider], find
 				continue
 			}
 
-			var prov provider.Provider
-			switch cfg := sec.Credentials.(type) {
-			case mistralai.Settings:
-				prov = mistralai.NewProvider(provider.ID(sec.ID), cfg)
-			case anthropic.Settings:
-				prov = anthropic.NewProvider(provider.ID(sec.ID), cfg)
-			case gollama.Settings:
-				prov = gollama.NewProvider(provider.ID(sec.ID), cfg)
-			}
-
-			if prov == nil {
+			// The concrete provider is resolved through the global registry. A provider is only registered
+			// (and thus compiled in) when the host application side-imports its package, e.g.
+			// _ "go.wdy.de/nago/application/ai/provider/anthropic". Unknown credentials types are skipped.
+			prov, ok := provider.NewProviderFor(provider.ID(sec.ID), sec.Credentials)
+			if !ok {
 				continue
 			}
 

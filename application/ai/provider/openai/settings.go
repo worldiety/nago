@@ -18,6 +18,14 @@ var _ = enum.Variant[secret.Credentials, Settings](
 	enum.Rename[Settings]("nago.ai.openai.settings"),
 )
 
+// NOTE: Unlike the other providers, openai currently ships only its credentials Settings and has no working
+// Provider implementation (no provider.go / NewProvider). Once a NewProvider(id provider.ID, cfg Settings)
+// provider.Provider exists, add the registration next to the enum.Variant above so the provider becomes
+// available when this package is side-imported:
+//
+//	var _ = registerProvider()
+//	func registerProvider() any { provider.Register[Settings](NewProvider); return nil }
+
 var (
 	StrMyOpenAiSettingsTitle       = i18n.MustString("nago.ai.openai.settings_title", i18n.Values{language.English: "My OpenAI Token", language.German: "Mein OpenAI Token"})
 	StrMyOpenAiSettingsName        = i18n.MustString("nago.ai.openai.settings_name", i18n.Values{language.English: "OpenAI", language.German: "OpenAI"})
