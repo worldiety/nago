@@ -59,7 +59,23 @@ const clearButtonVisible = ref(false);
 
 function onSubmit(): void {
 	if (!signaturePad.value) return;
-	emit('submit', new Signature(removeColorInfoFromSVG(signaturePad.value.toSVG())));
+
+	const svg = fixSVG(signaturePad.value.toSVG());
+	emit('submit', new Signature(svg));
+}
+
+function fixSVG(svg: string): string | undefined {
+	if (!canvas.value) return;
+
+	const parser = new DOMParser();
+	const svgElem = parser.parseFromString(svg, 'image/svg+xml').querySelector('svg') as SVGElement;
+	if (!svgElem) return;
+
+	svgElem.setAttribute('viewBox', `0 0 ${canvas.value.width} ${canvas.value.height}`);
+	svgElem.setAttribute('width', `${canvas.value.width}`);
+	svgElem.setAttribute('height', `${canvas.value.height}`);
+
+	return removeColorInfoFromSVG(svgElem.outerHTML);
 }
 
 function removeColorInfoFromSVG(svg: string): string {
