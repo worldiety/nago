@@ -233,10 +233,11 @@ function onPointerUpFrom() {
 	document.removeEventListener('pointerup', onPointerUpFrom);
 }
 
-function onPointerDownFrom() {
+function onPointerDownFrom(event: PointerEvent) {
 	if (props.ui.disabled) return;
 	isDraggingFrom.value = true;
 	lastSnappedFrom = valueFrom.value;
+	(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
 	document.addEventListener('pointermove', onPointerMoveFrom);
 	document.addEventListener('pointerup', onPointerUpFrom);
 }
@@ -275,10 +276,11 @@ function onPointerUpTo() {
 	document.removeEventListener('pointerup', onPointerUpTo);
 }
 
-function onPointerDownTo() {
+function onPointerDownTo(event: PointerEvent) {
 	if (props.ui.disabled) return;
 	isDraggingTo.value = true;
 	lastSnappedTo = valueTo.value;
+	(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
 	document.addEventListener('pointermove', onPointerMoveTo);
 	document.addEventListener('pointerup', onPointerUpTo);
 }
@@ -327,7 +329,7 @@ watch(
 		}
 
 		.grabber {
-			@apply absolute top-1/2 -translate-x-1/2 -translate-y-1/2 size-8 !rounded-full flex justify-center items-center cursor-grab z-10;
+			@apply absolute top-1/2 -translate-x-1/2 -translate-y-1/2 size-8 !rounded-full flex justify-center items-center cursor-grab z-10 touch-none;
 
 			.dot {
 				content: '';
