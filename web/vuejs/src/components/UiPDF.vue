@@ -32,6 +32,10 @@ const config: PDFViewerConfig = {
 			accent: {
 				primary: 'var(--I0)',
 			},
+			foreground: {
+				secondary: 'currentColor',
+				muted: 'currentColor',
+			},
 			background: {
 				app: 'var(--M2)',
 				surface: 'var(--M3)',
@@ -49,6 +53,10 @@ const config: PDFViewerConfig = {
 		dark: {
 			accent: {
 				primary: 'var(--I0)',
+			},
+			foreground: {
+				secondary: 'currentColor',
+				muted: 'currentColor',
 			},
 			background: {
 				app: 'var(--M2)',
