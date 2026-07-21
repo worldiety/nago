@@ -63,17 +63,14 @@ func AdminCenter(wnd core.Window, queryGroups admin.QueryGroups) core.View {
 	)
 
 	for _, grp := range adminGroups {
-		viewBuilder.Append(ui.H2(grp.Title))
+		anchor := slug.Slugify(grp.Title)
+
+		viewBuilder.Append(ui.H2(grp.Title).ID(anchor))
 		var cardLayoutViews xslices.Builder[core.View]
 		for _, entry := range grp.Entries {
-			anchor := entry.ID
-			if len(anchor) == 0 {
-				anchor = slug.Slugify(grp.Title, entry.Title)
-			}
-
 			cardLayoutViews.Append(
 				cardlayout.Card(entry.Title).
-					ID(anchor).
+					ID(entry.ID).
 					Body(ui.Text(entry.Text)).
 					Footer(
 						ui.SecondaryButton(func() {

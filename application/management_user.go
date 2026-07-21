@@ -24,6 +24,7 @@ import (
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui/form"
+	"go.wdy.de/nago/presentation/ui/layout"
 )
 
 // UserManagement is a nago system(User Management).
@@ -144,7 +145,7 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 		rdb.RegisterResources(c.userManagement.UseCases.Resources)
 
 		c.RootViewWithDecoration(c.userManagement.Pages.MyProfile, func(wnd core.Window) core.View {
-			return uiuser.ProfilePage(
+			return layout.WithBackButton(wnd, uiuser.ProfilePage(
 				wnd,
 				c.userManagement.Pages,
 				c.userManagement.UseCases.ChangeMyPassword,
@@ -152,16 +153,16 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 				c.roleManagement.UseCases.FindMyRoles,
 				c.userManagement.UseCases.FindByID,
 				c.userManagement.UseCases.Consent,
-			)
+			))
 		})
 
 		c.RootViewWithDecoration(c.userManagement.Pages.MyContact, func(wnd core.Window) core.View {
-			return uiuser.ContactPage(
+			return layout.WithBackButton(wnd, uiuser.ContactPage(
 				wnd,
 				c.userManagement.Pages,
 				c.userManagement.UseCases.UpdateMyContact,
 				c.userManagement.UseCases.ReadMyContact,
-			)
+			))
 		})
 
 		c.RootViewWithDecoration(c.userManagement.Pages.ConfirmMail, func(wnd core.Window) core.View {
@@ -170,7 +171,7 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 				path = c.sessionManagement.Pages.Login
 			}
 
-			return uiuser.ConfirmPage(
+			return layout.WithBackButton(wnd, uiuser.ConfirmPage(
 				wnd,
 				path,
 				c.userManagement.UseCases.ConfirmMail,
@@ -179,7 +180,7 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 				c.userManagement.UseCases.SysUser,
 				c.userManagement.UseCases.ChangeOtherPassword,
 				c.sessionManagement.UseCases.Logout,
-			)
+			))
 		})
 
 		c.RootViewWithDecoration(c.userManagement.Pages.ResetPassword, func(wnd core.Window) core.View {
@@ -188,25 +189,25 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 				path = c.sessionManagement.Pages.Login
 			}
 
-			return uiuser.ResetPasswordPage(
+			return layout.WithBackButton(wnd, uiuser.ResetPasswordPage(
 				wnd,
 				path,
 				c.userManagement.UseCases.ChangePasswordWithCode,
 				c.sessionManagement.UseCases.Logout,
-			)
+			))
 		})
 
 		c.RootView(c.userManagement.Pages.Register, func(wnd core.Window) core.View {
-			return uiuser.PageSelfRegister(wnd, c.userManagement.UseCases.EMailUsed, c.userManagement.UseCases.Create)
+			return layout.WithBackButton(wnd, uiuser.PageSelfRegister(wnd, c.userManagement.UseCases.EMailUsed, c.userManagement.UseCases.Create))
 		})
 
 		c.RootViewWithDecoration(c.userManagement.Pages.Users, func(wnd core.Window) core.View {
-			return uiuser.PageUsers(wnd,
+			return layout.WithBackButton(wnd, uiuser.PageUsers(wnd,
 				c.userManagement.UseCases,
 				groups.UseCases,
 				roleUseCases.UseCases,
 				permissions.UseCases,
-			)
+			))
 		})
 
 		c.AddContextValue(core.ContextValue("nago.users", form.AnyUseCaseList[user.User, user.ID](func(subject auth.Subject) iter.Seq2[user.User, error] {

@@ -21,6 +21,7 @@ import (
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui/form"
+	"go.wdy.de/nago/presentation/ui/layout"
 )
 
 // RoleManagement is a nago system(Role Management).
@@ -93,11 +94,11 @@ func (c *Configurator) RoleManagement() (RoleManagement, error) {
 		rdb.RegisterResources(c.roleManagement.UseCases.Resources)
 
 		c.RootView(c.roleManagement.Pages.Roles, c.DecorateRootView(func(wnd core.Window) core.View {
-			return uirole.PageRoles(wnd, c.roleManagement.Pages, c.roleManagement.UseCases)
+			return layout.WithBackButton(wnd, uirole.PageRoles(wnd, c.roleManagement.Pages, c.roleManagement.UseCases))
 		}))
 
 		c.RootView(c.roleManagement.Pages.Role, c.DecorateRootView(func(wnd core.Window) core.View {
-			return uirole.PageRole(wnd, c.roleManagement.Pages, c.roleManagement.UseCases)
+			return layout.WithBackButton(wnd, uirole.PageRole(wnd, c.roleManagement.Pages, c.roleManagement.UseCases))
 		}))
 
 		c.AddContextValue(core.ContextValue("nago.roles", form.AnyUseCaseList[role.Role, role.ID](func(subject auth.Subject) iter.Seq2[role.Role, error] {

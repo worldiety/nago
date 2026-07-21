@@ -13,6 +13,8 @@ import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui/form"
+	"go.wdy.de/nago/presentation/ui/layout"
+
 	"iter"
 )
 
@@ -40,7 +42,7 @@ func (c *Configurator) PermissionManagement() (PermissionManagement, error) {
 		})))
 
 		c.RootView(c.permissionManagement.Pages.Permissions, c.DecorateRootView(func(wnd core.Window) core.View {
-			return uipermission.Permissions(wnd, c.permissionManagement.UseCases.FindAll)
+			return layout.WithBackButton(wnd, uipermission.Permissions(wnd, c.permissionManagement.UseCases.FindAll))
 		}))
 	}
 

@@ -21,6 +21,7 @@ import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ui/layout"
 )
 
 // TokenManagement is a nago system(Token Management).
@@ -145,7 +146,7 @@ func (c *Configurator) TokenManagement() (TokenManagement, error) {
 		})
 
 		c.RootViewWithDecoration(c.tokenManagement.Pages.Tokens, func(wnd core.Window) core.View {
-			return uitoken.PageCrud(wnd, c.tokenManagement.UseCases)
+			return layout.WithBackButton(wnd, uitoken.PageCrud(wnd, c.tokenManagement.UseCases))
 		})
 
 	}

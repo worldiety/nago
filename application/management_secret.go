@@ -15,6 +15,7 @@ import (
 	"go.wdy.de/nago/pkg/blob/crypto"
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ui/layout"
 )
 
 // SecretManagement is a nago system(Secret Management).
@@ -66,15 +67,15 @@ func (c *Configurator) SecretManagement() (SecretManagement, error) {
 		}
 
 		c.RootViewWithDecoration(c.secretManagement.Pages.Vault, func(wnd core.Window) core.View {
-			return uisecret.VaultPage(wnd, c.secretManagement.Pages, uc.FindMySecrets, groups.UseCases.FindByID)
+			return layout.WithBackButton(wnd, uisecret.VaultPage(wnd, c.secretManagement.Pages, uc.FindMySecrets, groups.UseCases.FindByID))
 		})
 
 		c.RootViewWithDecoration(c.secretManagement.Pages.CreateSecret, func(wnd core.Window) core.View {
-			return uisecret.CreateSecretPage(wnd, c.secretManagement.Pages, uc.CreateSecret)
+			return layout.WithBackButton(wnd, uisecret.CreateSecretPage(wnd, c.secretManagement.Pages, uc.CreateSecret))
 		})
 
 		c.RootViewWithDecoration(c.secretManagement.Pages.EditSecret, func(wnd core.Window) core.View {
-			return uisecret.EditSecretPage(
+			return layout.WithBackButton(wnd, uisecret.EditSecretPage(
 				wnd,
 				c.secretManagement.Pages,
 				uc.DeleteMySecretByID,
@@ -84,7 +85,7 @@ func (c *Configurator) SecretManagement() (SecretManagement, error) {
 				uc.UpdateMySecretOwners,
 				groups.UseCases.FindMyGroups,
 				users.UseCases.FindAll,
-			)
+			))
 		})
 	}
 
