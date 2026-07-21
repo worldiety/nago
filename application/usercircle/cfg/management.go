@@ -18,6 +18,7 @@ import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ui/layout"
 )
 
 // Management is a nago system(User Circle Management.
@@ -92,29 +93,29 @@ func Enable(cfg *application.Configurator) (Management, error) {
 	}
 
 	cfg.RootViewWithDecoration(management.Pages.CirclesAdmin, func(wnd core.Window) core.View {
-		return uiusercircles.PageOverview(wnd, rcrud.UseCasesFrom(&funcs))
+		return layout.WithBackButton(wnd, uiusercircles.PageOverview(wnd, rcrud.UseCasesFrom(&funcs)))
 	})
 
 	cfg.RootViewWithDecoration(management.Pages.MyCircle, func(wnd core.Window) core.View {
-		return uiusercircles.PageMyCircleDashboard(wnd, management.Pages, useCases)
+		return layout.WithBackButton(wnd, uiusercircles.PageMyCircleDashboard(wnd, management.Pages, useCases))
 	})
 
 	cfg.RootViewWithDecoration(management.Pages.MyCircleUsers, func(wnd core.Window) core.View {
-		return uiusercircles.PageMyCircleUsers(wnd, useCases, rdb)
+		return layout.WithBackButton(wnd, uiusercircles.PageMyCircleUsers(wnd, useCases, rdb))
 	})
 
 	cfg.RootViewWithDecoration(management.Pages.MyCircleRoles, func(wnd core.Window) core.View {
-		return uiusercircles.PageMyCircleRoles(wnd, management.Pages, useCases, roles.UseCases.FindByID, rdb)
+		return layout.WithBackButton(wnd, uiusercircles.PageMyCircleRoles(wnd, management.Pages, useCases, roles.UseCases.FindByID, rdb))
 	})
 	cfg.RootViewWithDecoration(management.Pages.MyCircleRolesUsers, func(wnd core.Window) core.View {
-		return uiusercircles.PageMyCircleRolesUsers(wnd, management.Pages, useCases, roles.UseCases.FindByID, rdb)
+		return layout.WithBackButton(wnd, uiusercircles.PageMyCircleRolesUsers(wnd, management.Pages, useCases, roles.UseCases.FindByID, rdb))
 	})
 	cfg.RootViewWithDecoration(management.Pages.MyCircleGroups, func(wnd core.Window) core.View {
-		return uiusercircles.PageMyCircleGroups(wnd, management.Pages, useCases, groups.UseCases.FindByID)
+		return layout.WithBackButton(wnd, uiusercircles.PageMyCircleGroups(wnd, management.Pages, useCases, groups.UseCases.FindByID))
 	})
 
 	cfg.RootViewWithDecoration(management.Pages.MyCircleGroupsUsers, func(wnd core.Window) core.View {
-		return uiusercircles.PageMyCircleGroupsUsers(wnd, management.Pages, useCases, groups.UseCases.FindByID, users.UseCases.ListGroups, rdb)
+		return layout.WithBackButton(wnd, uiusercircles.PageMyCircleGroupsUsers(wnd, management.Pages, useCases, groups.UseCases.FindByID, users.UseCases.ListGroups, rdb))
 	})
 
 	cfg.AddAdminCenterGroup(func(subject auth.Subject) admin.Group {
