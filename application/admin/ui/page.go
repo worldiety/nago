@@ -10,6 +10,7 @@ package uiadmin
 import (
 	"go.wdy.de/nago/application/admin"
 	"go.wdy.de/nago/application/localization/rstring"
+	"go.wdy.de/nago/application/slug"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/xslices"
 	"go.wdy.de/nago/presentation/core"
@@ -65,12 +66,22 @@ func AdminCenter(wnd core.Window, queryGroups admin.QueryGroups) core.View {
 		viewBuilder.Append(ui.H2(grp.Title))
 		var cardLayoutViews xslices.Builder[core.View]
 		for _, entry := range grp.Entries {
+			anchor := entry.ID
+			if len(anchor) == 0 {
+				anchor = slug.Slugify(grp.Title, entry.Title)
+			}
+
 			cardLayoutViews.Append(
 				cardlayout.Card(entry.Title).
-					ID(entry.ID).
+					ID(anchor).
 					Body(ui.Text(entry.Text)).
 					Footer(
 						ui.SecondaryButton(func() {
+							currentPath := wnd.Path()
+							currentValues := wnd.Values()
+							currentValues = currentValues.Put("#", anchor)
+
+							wnd.Navigation().Replace(currentPath, currentValues)
 							wnd.Navigation().ForwardTo(entry.Target, entry.TargetParams)
 						}).Title(rstring.ActionSelect.Get(wnd)),
 					),
