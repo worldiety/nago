@@ -12,6 +12,7 @@ var (
 	StrBack = i18n.MustString("backbar-view.back", i18n.Values{language.German: "Zurück", language.English: "Back"})
 )
 
+// WithBackButton wraps a view with a back button at the top.
 func WithBackButton(wnd core.Window, view core.View) core.View {
 	return ui.VStack(
 		ui.HStack(
