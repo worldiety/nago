@@ -367,9 +367,8 @@ export async function triggerFileUpload(uploadRepository: UploadRepository, evt:
  * @param replace
  */
 export function navigateForward(chan: Channel, evt: NavigationForwardToRequested, replace = false): void {
-	//console.log('!!!!', evt);
 	let url = `/${evt.rootView!}`;
-	let hashTagValue = ``;
+	let anchorValue = ``;
 	if (evt.values) {
 		url += '?';
 		let idx = 0;
@@ -378,7 +377,7 @@ export function navigateForward(chan: Channel, evt: NavigationForwardToRequested
 				return;
 			}
 			if (key === `#`) {
-				hashTagValue = value;
+				anchorValue = value;
 				return;
 			}
 
@@ -390,8 +389,12 @@ export function navigateForward(chan: Channel, evt: NavigationForwardToRequested
 		});
 	}
 
-	if (hashTagValue !== ``) {
-		url += '#' + hashTagValue;
+	if (url.endsWith('?')) {
+		url = url.substring(0, url.length - 1);
+	}
+
+	if (anchorValue !== ``) {
+		url += '#' + anchorValue;
 	}
 
 	if (evt.target === '_blank') {
