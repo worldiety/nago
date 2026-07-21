@@ -34,6 +34,7 @@ import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ui/layout"
 	"golang.org/x/text/language"
 )
 
@@ -246,31 +247,31 @@ func Enable(cfg *application.Configurator) (Management, error) {
 	}
 
 	cfg.RootViewWithDecoration(management.Pages.Provider, func(wnd core.Window) core.View {
-		return uiai.PageProvider(wnd, management.UseCases)
+		return layout.WithBackButton(wnd, uiai.PageProvider(wnd, management.UseCases))
 	})
 	cfg.RootViewWithDecoration(management.Pages.Library, func(wnd core.Window) core.View {
-		return uiai.PageLibrary(wnd, stores, modDrive.UseCases.ReadDrives, modDrive.UseCases.Stat, management.UseCases, management.LibSyncUseCases)
+		return layout.WithBackButton(wnd, uiai.PageLibrary(wnd, stores, modDrive.UseCases.ReadDrives, modDrive.UseCases.Stat, management.UseCases, management.LibSyncUseCases))
 	})
 
 	cfg.RootViewWithDecoration(management.Pages.Conversation, func(wnd core.Window) core.View {
-		return uiai.PageConversation(wnd, management.UseCases)
+		return layout.WithBackButton(wnd, uiai.PageConversation(wnd, management.UseCases))
 	})
 
 	cfg.NoFooter(management.Pages.Chat)
 	cfg.RootViewWithDecoration(management.Pages.Chat, func(wnd core.Window) core.View {
-		return uiai.PageChat(wnd, management.UseCases)
+		return layout.WithBackButton(wnd, uiai.PageChat(wnd, management.UseCases))
 	})
 
 	cfg.RootViewWithDecoration(management.Pages.Maintenance, func(wnd core.Window) core.View {
-		return uiai.PageMaintenance(wnd, management.UseCases)
+		return layout.WithBackButton(wnd, uiai.PageMaintenance(wnd, management.UseCases))
 	})
 
 	cfg.RootViewWithDecoration(management.Pages.Agent, func(wnd core.Window) core.View {
-		return uiai.PageAgent(wnd, management.UseCases)
+		return layout.WithBackButton(wnd, uiai.PageAgent(wnd, management.UseCases))
 	})
 
 	cfg.RootViewWithDecoration(management.Pages.Document, func(wnd core.Window) core.View {
-		return uiai.PageDocument(wnd, management.UseCases)
+		return layout.WithBackButton(wnd, uiai.PageDocument(wnd, management.UseCases))
 	})
 
 	cfg.AddAdminCenterGroup(func(subject auth.Subject) admin.Group {
