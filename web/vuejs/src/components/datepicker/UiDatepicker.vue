@@ -24,6 +24,7 @@
 			:input-value="ui.inputValue"
 			:end-input-value="ui.endInputValue"
 			:min-year="MIN_YEAR"
+			:optional="ui.optional"
 			@show-datepicker="showDatepicker"
 		/>
 

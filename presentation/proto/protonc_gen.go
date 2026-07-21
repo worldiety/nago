@@ -2827,10 +2827,11 @@ type DatePicker struct {
 	Disabled      Bool
 	// DoubleMode determines whether the picker shall show two months instead of one.
 	DoubleMode Bool
+	Optional   Bool
 }
 
 func (v *DatePicker) write(w *BinaryWriter) error {
-	var fields [13]bool
+	var fields [14]bool
 	fields[1] = !v.Label.IsZero()
 	fields[2] = !v.SupportingText.IsZero()
 	fields[3] = !v.ErrorText.IsZero()
@@ -2843,6 +2844,7 @@ func (v *DatePicker) write(w *BinaryWriter) error {
 	fields[10] = !v.Invisible.IsZero()
 	fields[11] = !v.Disabled.IsZero()
 	fields[12] = !v.DoubleMode.IsZero()
+	fields[13] = !v.Optional.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -2949,6 +2951,14 @@ func (v *DatePicker) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[13] {
+		if err := w.writeFieldHeader(uvarint, 13); err != nil {
+			return err
+		}
+		if err := v.Optional.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -3021,6 +3031,11 @@ func (v *DatePicker) read(r *BinaryReader) error {
 			}
 		case 12:
 			err := v.DoubleMode.read(r)
+			if err != nil {
+				return err
+			}
+		case 13:
+			err := v.Optional.read(r)
 			if err != nil {
 				return err
 			}
@@ -7674,10 +7689,11 @@ type TextField struct {
 	// Min defines the min value of a number field.
 	Min          Float
 	Autocomplete Str
+	Optional     Bool
 }
 
 func (v *TextField) write(w *BinaryWriter) error {
-	var fields [26]bool
+	var fields [27]bool
 	fields[1] = !v.Label.IsZero()
 	fields[2] = !v.SupportingText.IsZero()
 	fields[3] = !v.ErrorText.IsZero()
@@ -7703,6 +7719,7 @@ func (v *TextField) write(w *BinaryWriter) error {
 	fields[23] = !v.Max.IsZero()
 	fields[24] = !v.Min.IsZero()
 	fields[25] = !v.Autocomplete.IsZero()
+	fields[26] = !v.Optional.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -7927,6 +7944,14 @@ func (v *TextField) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[26] {
+		if err := w.writeFieldHeader(uvarint, 26); err != nil {
+			return err
+		}
+		if err := v.Optional.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -8082,6 +8107,11 @@ func (v *TextField) read(r *BinaryReader) error {
 			}
 		case 25:
 			err := v.Autocomplete.read(r)
+			if err != nil {
+				return err
+			}
+		case 26:
+			err := v.Optional.read(r)
 			if err != nil {
 				return err
 			}
@@ -12974,10 +13004,11 @@ type Select struct {
 	Searchable Bool
 	// Info text to display in the dropdown. Only works with styled dropdown.
 	DropdownInfo Str
+	Optional     Bool
 }
 
 func (v *Select) write(w *BinaryWriter) error {
-	var fields [16]bool
+	var fields [17]bool
 	fields[1] = !v.Label.IsZero()
 	fields[2] = !v.SupportingText.IsZero()
 	fields[3] = !v.ErrorText.IsZero()
@@ -12993,6 +13024,7 @@ func (v *Select) write(w *BinaryWriter) error {
 	fields[13] = !v.ORADropdown.IsZero()
 	fields[14] = !v.Searchable.IsZero()
 	fields[15] = !v.DropdownInfo.IsZero()
+	fields[16] = !v.Optional.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -13130,6 +13162,14 @@ func (v *Select) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[16] {
+		if err := w.writeFieldHeader(uvarint, 16); err != nil {
+			return err
+		}
+		if err := v.Optional.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -13226,6 +13266,11 @@ func (v *Select) read(r *BinaryReader) error {
 			}
 		case 15:
 			err := v.DropdownInfo.read(r)
+			if err != nil {
+				return err
+			}
+		case 16:
+			err := v.Optional.read(r)
 			if err != nil {
 				return err
 			}
@@ -20668,11 +20713,12 @@ type SignatureField struct {
 	ErrorText Str
 	Disabled  Bool
 	// Style to apply. Use TextFieldReduced in forms where many textfields cause too much visual noise and you need to reduce it. By default, the TextFieldOutlined is applied.
-	Style TextFieldStyle
+	Style    TextFieldStyle
+	Optional Bool
 }
 
 func (v *SignatureField) write(w *BinaryWriter) error {
-	var fields [9]bool
+	var fields [10]bool
 	fields[1] = !v.Value.IsZero()
 	fields[2] = !v.Frame.IsZero()
 	fields[3] = !v.InputValue.IsZero()
@@ -20681,6 +20727,7 @@ func (v *SignatureField) write(w *BinaryWriter) error {
 	fields[6] = !v.ErrorText.IsZero()
 	fields[7] = !v.Disabled.IsZero()
 	fields[8] = !v.Style.IsZero()
+	fields[9] = !v.Optional.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -20755,6 +20802,14 @@ func (v *SignatureField) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[9] {
+		if err := w.writeFieldHeader(uvarint, 9); err != nil {
+			return err
+		}
+		if err := v.Optional.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -20807,6 +20862,11 @@ func (v *SignatureField) read(r *BinaryReader) error {
 			}
 		case 8:
 			err := v.Style.read(r)
+			if err != nil {
+				return err
+			}
+		case 9:
+			err := v.Optional.read(r)
 			if err != nil {
 				return err
 			}
@@ -23439,13 +23499,14 @@ func (v *DatePicker) reset() {
 	v.Invisible.reset()
 	v.Disabled.reset()
 	v.DoubleMode.reset()
+	v.Optional.reset()
 }
 
 func (v *DatePicker) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Style.IsZero() && v.Value.IsZero() && v.InputValue.IsZero() && v.EndValue.IsZero() && v.EndInputValue.IsZero() && v.Frame.IsZero() && v.Invisible.IsZero() && v.Disabled.IsZero() && v.DoubleMode.IsZero()
+	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Style.IsZero() && v.Value.IsZero() && v.InputValue.IsZero() && v.EndValue.IsZero() && v.EndInputValue.IsZero() && v.Frame.IsZero() && v.Invisible.IsZero() && v.Disabled.IsZero() && v.DoubleMode.IsZero() && v.Optional.IsZero()
 }
 
 func (v *Divider) reset() {
@@ -24451,13 +24512,14 @@ func (v *TextField) reset() {
 	v.Max.reset()
 	v.Min.reset()
 	v.Autocomplete.reset()
+	v.Optional.reset()
 }
 
 func (v *TextField) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.Leading.IsZero() && v.Trailing.IsZero() && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.KeyboardOptions.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero() && v.KeydownEnter.IsZero() && v.TextAlignment.IsZero() && v.ShowZero.IsZero() && v.Step.IsZero() && v.Max.IsZero() && v.Min.IsZero() && v.Autocomplete.IsZero()
+	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.Leading.IsZero() && v.Trailing.IsZero() && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.KeyboardOptions.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero() && v.KeydownEnter.IsZero() && v.TextAlignment.IsZero() && v.ShowZero.IsZero() && v.Step.IsZero() && v.Max.IsZero() && v.Min.IsZero() && v.Autocomplete.IsZero() && v.Optional.IsZero()
 }
 
 func (v *Toggle) reset() {
@@ -25578,13 +25640,14 @@ func (v *Select) reset() {
 	v.ORADropdown.reset()
 	v.Searchable.reset()
 	v.DropdownInfo.reset()
+	v.Optional.reset()
 }
 
 func (v *Select) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.Leading.IsZero() && v.Disabled.IsZero() && v.Id.IsZero() && v.Options.IsZero() && v.Autocomplete.IsZero() && v.ORADropdown.IsZero() && v.Searchable.IsZero() && v.DropdownInfo.IsZero()
+	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.Leading.IsZero() && v.Disabled.IsZero() && v.Id.IsZero() && v.Options.IsZero() && v.Autocomplete.IsZero() && v.ORADropdown.IsZero() && v.Searchable.IsZero() && v.DropdownInfo.IsZero() && v.Optional.IsZero()
 }
 
 func (v *ColorStates) reset() {
@@ -26928,13 +26991,14 @@ func (v *SignatureField) reset() {
 	v.ErrorText.reset()
 	v.Disabled.reset()
 	v.Style.reset()
+	v.Optional.reset()
 }
 
 func (v *SignatureField) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Disabled.IsZero() && v.Style.IsZero()
+	return v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Disabled.IsZero() && v.Style.IsZero() && v.Optional.IsZero()
 }
 
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {

@@ -50,6 +50,7 @@ By default, it is single-line and uncontrolled until InputValue is set.
 | `Max(max float64)` | Max defines the max value of number fields |
 | `Min(min float64)` | Min defines the min value of number fields |
 | `Padding(padding Padding)` | Padding is a placeholder implementation. |
+| `Required(required bool)` | Required defines whether the text field is required. |
 | `ShowZero(showZero bool)` | ShowZero defines wheter the '0' character should be displayed for empty/zero values in number fields. |
 | `Step(step int)` | Step defines the step size to increase/decrease number values stepwise |
 | `Style(s TextFieldStyle)` | Style sets the wanted style. If empty, [proto.TextFieldOutlined] is applied. |

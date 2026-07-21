@@ -23,6 +23,7 @@ type TSignatureField struct {
 	disabled       bool                   // disables user interaction
 	frame          Frame                  // layout constraints
 	style          TextFieldStyle         // visual style of the field (outlined, filled, etc.)
+	optional       bool                   // indicates if the field is optional
 }
 
 type Signature struct {
@@ -97,6 +98,12 @@ func (c TSignatureField) Style(style TextFieldStyle) TSignatureField {
 	return c
 }
 
+// Optional sets whether the field is optional.
+func (c TSignatureField) Optional(optional bool) TSignatureField {
+	c.optional = optional
+	return c
+}
+
 // Render builds and returns the protocol representation of the field.
 func (c TSignatureField) Render(_ core.RenderContext) core.RenderNode {
 	value := c.value
@@ -114,5 +121,6 @@ func (c TSignatureField) Render(_ core.RenderContext) core.RenderNode {
 		SupportingText: proto.Str(c.supportingText),
 		ErrorText:      proto.Str(c.errorText),
 		Disabled:       proto.Bool(c.disabled),
+		Optional:       proto.Bool(c.optional),
 	}
 }

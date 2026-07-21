@@ -1,5 +1,12 @@
 <template>
-	<InputWrapper :label="label" :error="errorText" :help="supportingText" :disabled="disabled" :no-hover-effect="true">
+	<InputWrapper
+		:label="label"
+		:error="errorText"
+		:help="supportingText"
+		:disabled="disabled"
+		:no-hover-effect="true"
+		:optional="optional"
+	>
 		<div class="input-field relative z-0 !pr-10">
 			<div ref="datepickerInputContainer">
 				<!-- Editable start date parts -->
@@ -144,6 +151,7 @@ const props = defineProps<{
 	// needed by Nago to submit updated dates
 	endInputValue?: number;
 	minYear?: number;
+	optional?: boolean;
 }>();
 
 defineEmits<{

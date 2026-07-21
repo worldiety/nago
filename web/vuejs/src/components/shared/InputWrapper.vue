@@ -23,9 +23,8 @@
 				<ErrorIcon v-else-if="error" class="h-2.5" />
 				<span>{{ label }}</span>
 			</label>
-			<div v-if="!disabled && (error || hint)" class="font-normal">
-				<span v-if="error" class="text-error">{{ t('inputWrapper.error') }}</span>
-				<span v-else-if="hint" class="text-disabled-text">{{ hint }}</span>
+			<div v-if="!disabled" class="hint">
+				<span v-if="optional">{{ t('inputWrapper.optional') }}</span>
 			</div>
 		</div>
 	</div>
@@ -49,10 +48,10 @@ const props = defineProps<{
 	inputId?: string;
 	label?: string;
 	error?: string;
-	hint?: string;
 	help?: string;
 	disabled?: boolean;
 	noHoverEffect?: boolean;
+	optional?: boolean;
 }>();
 
 const { t } = useI18n();
@@ -97,10 +96,10 @@ const inputFieldWrapperClasses = computed((): string | null => {
 	@apply flex flex-col-reverse;
 
 	.label-container {
-		@apply flex justify-between items-end text-sm;
+		@apply flex justify-between items-end text-sm pb-1 leading-none gap-4;
 
 		label {
-			@apply flex justify-start items-center gap-x-1 pb-1;
+			@apply flex justify-start items-center gap-x-1 ;
 		}
 	}
 

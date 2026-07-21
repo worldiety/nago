@@ -27,6 +27,7 @@ replacement for single selection.
 | `Label(label string)` | Label sets the label displayed above or inside the select. |
 | `Leading(v core.View)` | Leading sets a leading view for the select. This view is displayed at the start of the select, e.g., an icon. |
 | `Options(options []Option[ID])` | Options sets the list of options available for selection. |
+| `Required(required bool)` | Required sets whether a selection is required. |
 | `Searchable(b bool)` | Searchable allows the user to filter options in the styled dropdown. Implicitly enables the ORA styled dropdown when set to true. |
 | `Style(s ui.TextFieldStyle)` | Style sets the visual style of the select. |
 | `StyledDropdown(b bool)` | StyledDropdown enables or disables the ORA styled dropdown. Note: calling Searchable(true) or DropdownInfo(...) will implicitly enable this. |

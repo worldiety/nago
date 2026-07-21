@@ -46,6 +46,7 @@ type TDropdown[ID ~string] struct {
 	oraDropdown    bool              // when true, the styled ORA dropdown is used
 	searchable     bool              // when true, the ora dropdown contains a searchbar to filter options
 	dropdownInfo   string            // short text to be shown in the ora dropdown
+	optional       bool              // indicates if the field is optional
 }
 
 // Dropdown represents a user interface element which lets the user select one option from a list.
@@ -213,6 +214,12 @@ func (c TDropdown[ID]) DropdownInfo(info string) TDropdown[ID] {
 	return c
 }
 
+// Optional sets whether a selection is optional.
+func (c TDropdown[ID]) Optional(optional bool) TDropdown[ID] {
+	c.optional = optional
+	return c
+}
+
 // Render builds and returns the protocol representation of the select.
 func (c TDropdown[ID]) Render(ctx core.RenderContext) core.RenderNode {
 	options := make([]proto.SelectOption, 0, len(c.options))
@@ -240,5 +247,6 @@ func (c TDropdown[ID]) Render(ctx core.RenderContext) core.RenderNode {
 		ORADropdown:    proto.Bool(c.oraDropdown),
 		Searchable:     proto.Bool(c.searchable),
 		DropdownInfo:   proto.Str(c.dropdownInfo),
+		Optional:       proto.Bool(c.optional),
 	}
 }

@@ -72,18 +72,20 @@ func main() {
 						dropdown.Dropdown("Default (disabled)", selectOptions, personState.Get()).InputValue(personState).Disabled(true),
 						dropdown.Dropdown("Styled (disabled)", selectOptions, personState.Get()).InputValue(personState).StyledDropdown(true).Disabled(true),
 						dropdown.Dropdown("Default", selectOptions, personState.Get()).InputValue(personState),
+						dropdown.Dropdown("Default (optional)", selectOptions, personState.Get()).Optional(true).InputValue(personState),
 						dropdown.Dropdown("Styled", selectOptions, personState.Get()).InputValue(personState).StyledDropdown(true),
 						dropdown.Dropdown("Styled mit Suche", selectOptions, personState.Get()).InputValue(personState).StyledDropdown(true).Searchable(true),
 						dropdown.Dropdown("Styled mit Info", selectOptions, personState.Get()).InputValue(personState).StyledDropdown(true).DropdownInfo("Personen"),
-					).Gap(ui.L16).NoClip(true),
+					).Gap(ui.L32).NoClip(true),
 					ui.VStack(
 						dropdown.Dropdown("Default (disabled)", selectOptions, personState.Get()).InputValue(personState).Disabled(true).Style(ui.TextFieldReduced),
 						dropdown.Dropdown("Styled (disabled)", selectOptions, personState.Get()).InputValue(personState).StyledDropdown(true).Disabled(true).Style(ui.TextFieldReduced),
 						dropdown.Dropdown("Default", selectOptions, personState.Get()).InputValue(personState).Style(ui.TextFieldReduced),
+						dropdown.Dropdown("Default (optional)", selectOptions, personState.Get()).Optional(true).InputValue(personState).Style(ui.TextFieldReduced),
 						dropdown.Dropdown("Styled", selectOptions, personState.Get()).InputValue(personState).StyledDropdown(true).Style(ui.TextFieldReduced),
 						dropdown.Dropdown("Styled mit Suche", selectOptions, personState.Get()).InputValue(personState).StyledDropdown(true).Searchable(true).Style(ui.TextFieldReduced),
 						dropdown.Dropdown("Styled mit Info", selectOptions, personState.Get()).InputValue(personState).StyledDropdown(true).DropdownInfo("Personen").Style(ui.TextFieldReduced),
-					).Gap(ui.L16).NoClip(true),
+					).Gap(ui.L32).NoClip(true),
 				).Gap(ui.L64).NoClip(true),
 				ui.Stack(
 					ui.PrimaryButton(func() {

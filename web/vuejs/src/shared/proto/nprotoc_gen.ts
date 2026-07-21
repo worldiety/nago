@@ -2954,6 +2954,8 @@ export class DatePicker implements Writeable, Readable, Component {
 	// DoubleMode determines whether the picker shall show two months instead of one.
 	public doubleMode?: Bool;
 
+	public optional?: Bool;
+
 	constructor(
 		label: Str | undefined = undefined,
 		supportingText: Str | undefined = undefined,
@@ -2966,7 +2968,8 @@ export class DatePicker implements Writeable, Readable, Component {
 		frame: Frame | undefined = undefined,
 		invisible: Bool | undefined = undefined,
 		disabled: Bool | undefined = undefined,
-		doubleMode: Bool | undefined = undefined
+		doubleMode: Bool | undefined = undefined,
+		optional: Bool | undefined = undefined
 	) {
 		this.label = label;
 		this.supportingText = supportingText;
@@ -2980,6 +2983,7 @@ export class DatePicker implements Writeable, Readable, Component {
 		this.invisible = invisible;
 		this.disabled = disabled;
 		this.doubleMode = doubleMode;
+		this.optional = optional;
 	}
 
 	read(reader: BinaryReader): void {
@@ -3039,6 +3043,10 @@ export class DatePicker implements Writeable, Readable, Component {
 					this.doubleMode = readBool(reader);
 					break;
 				}
+				case 13: {
+					this.optional = readBool(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -3060,6 +3068,7 @@ export class DatePicker implements Writeable, Readable, Component {
 			this.invisible !== undefined,
 			this.disabled !== undefined,
 			this.doubleMode !== undefined,
+			this.optional !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -3111,6 +3120,10 @@ export class DatePicker implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.UVARINT, 12);
 			writeBool(writer, this.doubleMode!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[13]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 13);
+			writeBool(writer, this.optional!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -3126,7 +3139,8 @@ export class DatePicker implements Writeable, Readable, Component {
 			(this.frame === undefined || this.frame.isZero()) &&
 			this.invisible === undefined &&
 			this.disabled === undefined &&
-			this.doubleMode === undefined
+			this.doubleMode === undefined &&
+			this.optional === undefined
 		);
 	}
 
@@ -3143,6 +3157,7 @@ export class DatePicker implements Writeable, Readable, Component {
 		this.invisible = undefined;
 		this.disabled = undefined;
 		this.doubleMode = undefined;
+		this.optional = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -7977,6 +7992,8 @@ export class TextField implements Writeable, Readable, Component {
 
 	public autocomplete?: Str;
 
+	public optional?: Bool;
+
 	constructor(
 		label: Str | undefined = undefined,
 		supportingText: Str | undefined = undefined,
@@ -8002,7 +8019,8 @@ export class TextField implements Writeable, Readable, Component {
 		step: Uint | undefined = undefined,
 		max: Float | undefined = undefined,
 		min: Float | undefined = undefined,
-		autocomplete: Str | undefined = undefined
+		autocomplete: Str | undefined = undefined,
+		optional: Bool | undefined = undefined
 	) {
 		this.label = label;
 		this.supportingText = supportingText;
@@ -8029,6 +8047,7 @@ export class TextField implements Writeable, Readable, Component {
 		this.max = max;
 		this.min = min;
 		this.autocomplete = autocomplete;
+		this.optional = optional;
 	}
 
 	read(reader: BinaryReader): void {
@@ -8149,6 +8168,10 @@ export class TextField implements Writeable, Readable, Component {
 					this.autocomplete = readString(reader);
 					break;
 				}
+				case 26: {
+					this.optional = readBool(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -8183,6 +8206,7 @@ export class TextField implements Writeable, Readable, Component {
 			this.max !== undefined,
 			this.min !== undefined,
 			this.autocomplete !== undefined,
+			this.optional !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -8292,6 +8316,10 @@ export class TextField implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 25);
 			writeString(writer, this.autocomplete!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[26]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 26);
+			writeBool(writer, this.optional!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -8320,7 +8348,8 @@ export class TextField implements Writeable, Readable, Component {
 			this.step === undefined &&
 			this.max === undefined &&
 			this.min === undefined &&
-			this.autocomplete === undefined
+			this.autocomplete === undefined &&
+			this.optional === undefined
 		);
 	}
 
@@ -8350,6 +8379,7 @@ export class TextField implements Writeable, Readable, Component {
 		this.max = undefined;
 		this.min = undefined;
 		this.autocomplete = undefined;
+		this.optional = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -13530,6 +13560,8 @@ export class Select implements Writeable, Readable, Component {
 	// Info text to display in the dropdown. Only works with styled dropdown.
 	public dropdownInfo?: Str;
 
+	public optional?: Bool;
+
 	constructor(
 		label: Str | undefined = undefined,
 		supportingText: Str | undefined = undefined,
@@ -13545,7 +13577,8 @@ export class Select implements Writeable, Readable, Component {
 		autocomplete: Str | undefined = undefined,
 		oRADropdown: Bool | undefined = undefined,
 		searchable: Bool | undefined = undefined,
-		dropdownInfo: Str | undefined = undefined
+		dropdownInfo: Str | undefined = undefined,
+		optional: Bool | undefined = undefined
 	) {
 		this.label = label;
 		this.supportingText = supportingText;
@@ -13562,6 +13595,7 @@ export class Select implements Writeable, Readable, Component {
 		this.oRADropdown = oRADropdown;
 		this.searchable = searchable;
 		this.dropdownInfo = dropdownInfo;
+		this.optional = optional;
 	}
 
 	read(reader: BinaryReader): void {
@@ -13637,6 +13671,10 @@ export class Select implements Writeable, Readable, Component {
 					this.dropdownInfo = readString(reader);
 					break;
 				}
+				case 16: {
+					this.optional = readBool(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -13661,6 +13699,7 @@ export class Select implements Writeable, Readable, Component {
 			this.oRADropdown !== undefined,
 			this.searchable !== undefined,
 			this.dropdownInfo !== undefined,
+			this.optional !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -13727,6 +13766,10 @@ export class Select implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 15);
 			writeString(writer, this.dropdownInfo!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[16]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 16);
+			writeBool(writer, this.optional!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -13745,7 +13788,8 @@ export class Select implements Writeable, Readable, Component {
 			this.autocomplete === undefined &&
 			this.oRADropdown === undefined &&
 			this.searchable === undefined &&
-			this.dropdownInfo === undefined
+			this.dropdownInfo === undefined &&
+			this.optional === undefined
 		);
 	}
 
@@ -13765,6 +13809,7 @@ export class Select implements Writeable, Readable, Component {
 		this.oRADropdown = undefined;
 		this.searchable = undefined;
 		this.dropdownInfo = undefined;
+		this.optional = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -21265,6 +21310,8 @@ export class SignatureField implements Writeable, Readable, Component {
 	// Style to apply. Use TextFieldReduced in forms where many textfields cause too much visual noise and you need to reduce it. By default, the TextFieldOutlined is applied.
 	public style?: TextFieldStyle;
 
+	public optional?: Bool;
+
 	constructor(
 		value: Signature | undefined = undefined,
 		frame: Frame | undefined = undefined,
@@ -21273,7 +21320,8 @@ export class SignatureField implements Writeable, Readable, Component {
 		supportingText: Str | undefined = undefined,
 		errorText: Str | undefined = undefined,
 		disabled: Bool | undefined = undefined,
-		style: TextFieldStyle | undefined = undefined
+		style: TextFieldStyle | undefined = undefined,
+		optional: Bool | undefined = undefined
 	) {
 		this.value = value;
 		this.frame = frame;
@@ -21283,6 +21331,7 @@ export class SignatureField implements Writeable, Readable, Component {
 		this.errorText = errorText;
 		this.disabled = disabled;
 		this.style = style;
+		this.optional = optional;
 	}
 
 	read(reader: BinaryReader): void {
@@ -21325,6 +21374,10 @@ export class SignatureField implements Writeable, Readable, Component {
 					this.style = readInt(reader);
 					break;
 				}
+				case 9: {
+					this.optional = readBool(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -21342,6 +21395,7 @@ export class SignatureField implements Writeable, Readable, Component {
 			this.errorText !== undefined,
 			this.disabled !== undefined,
 			this.style !== undefined,
+			this.optional !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -21377,6 +21431,10 @@ export class SignatureField implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.UVARINT, 8);
 			writeInt(writer, this.style!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[9]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 9);
+			writeBool(writer, this.optional!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -21388,7 +21446,8 @@ export class SignatureField implements Writeable, Readable, Component {
 			this.supportingText === undefined &&
 			this.errorText === undefined &&
 			this.disabled === undefined &&
-			this.style === undefined
+			this.style === undefined &&
+			this.optional === undefined
 		);
 	}
 
@@ -21401,6 +21460,7 @@ export class SignatureField implements Writeable, Readable, Component {
 		this.errorText = undefined;
 		this.disabled = undefined;
 		this.style = undefined;
+		this.optional = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

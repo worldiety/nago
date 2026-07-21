@@ -70,6 +70,10 @@
       "name": "DropdownInfo",
       "type": "Str",
       "doc": "Info text to display in the dropdown. Only works with styled dropdown."
+    },
+    "16": {
+      "name": "Optional",
+      "type": "Bool"
     }
   }
 }

@@ -116,6 +116,10 @@
     "25": {
       "name": "Autocomplete",
       "type": "Str"
+    },
+    "26": {
+      "name": "Optional",
+      "type": "Bool"
     }
   }
 }
