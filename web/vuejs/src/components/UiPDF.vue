@@ -31,7 +31,7 @@ const config: PDFViewerConfig = {
 	src: props.ui.src,
 	i18n: {
 		defaultLocale: locale.value.split('-')[0],
-		fallbackLocale: 'de'
+		fallbackLocale: 'de',
 	},
 	theme: {
 		light: {
