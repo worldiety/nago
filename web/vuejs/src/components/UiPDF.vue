@@ -16,17 +16,23 @@ import { frameCSS } from '@/components/shared/frame';
 import { PDF } from '@/shared/proto/nprotoc_gen';
 import PDFViewer, { EmbedPdfContainer, PDFViewerConfig } from '@embedpdf/vue-pdf-viewer';
 import { ThemeKey, useThemeManager } from '@/shared/themeManager';
+import { useI18n } from 'vue-i18n';
 
 const props = defineProps<{
 	ui: PDF;
 }>();
 
 const themeManager = useThemeManager();
+const { locale } = useI18n();
 
 const viewer = ref<EmbedPdfContainer>();
 
 const config: PDFViewerConfig = {
 	src: props.ui.src,
+	i18n: {
+		defaultLocale: locale.value.split('-')[0],
+		fallbackLocale: 'de'
+	},
 	theme: {
 		light: {
 			accent: {
