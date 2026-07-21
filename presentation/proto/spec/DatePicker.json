@@ -56,6 +56,10 @@
       "doc": "DoubleMode determines whether the picker shall show two months instead of one.",
       "name": "DoubleMode",
       "type": "Bool"
+    },
+    "13": {
+      "name": "Optional",
+      "type": "Bool"
     }
   }
 }

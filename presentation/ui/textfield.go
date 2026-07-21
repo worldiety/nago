@@ -66,6 +66,7 @@ type TTextField struct {
 	maxValue        float64 // max value for number fields
 	minValue        float64 // min value for number fields
 	autocomplete    string  // autocomplete tags of the input
+	optional        bool    // whether the field is optional
 }
 
 // TextField creates a new text field with the given label and initial value.
@@ -358,6 +359,12 @@ func (c TTextField) Autocomplete(tags string) TTextField {
 	return c
 }
 
+// Optional defines whether the text field is optional.
+func (c TTextField) Optional(optional bool) TTextField {
+	c.optional = optional
+	return c
+}
+
 // Render builds and returns the protocol representation of the text field.
 func (c TTextField) Render(ctx core.RenderContext) core.RenderNode {
 
@@ -385,5 +392,6 @@ func (c TTextField) Render(ctx core.RenderContext) core.RenderNode {
 		Max:             proto.Float(c.maxValue),
 		Min:             proto.Float(c.minValue),
 		Autocomplete:    proto.Str(c.autocomplete),
+		Optional:        proto.Bool(c.optional),
 	}
 }

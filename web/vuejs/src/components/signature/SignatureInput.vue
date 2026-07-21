@@ -6,6 +6,7 @@
 		:help="ui.supportingText"
 		:disabled="ui.disabled"
 		:input-id="id"
+		:optional="ui.optional"
 	>
 		<div class="relative">
 			<input class="input-field" readonly @click="onFocus" @keydown.enter="onFocus" />

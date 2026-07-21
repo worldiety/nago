@@ -14,6 +14,7 @@
 			:error="props.ui.errorText"
 			:help="props.ui.supportingText"
 			:disabled="props.ui.disabled"
+			:optional="ui.optional"
 		>
 			<div class="relative">
 				<SelectORA

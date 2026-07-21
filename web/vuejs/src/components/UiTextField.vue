@@ -451,6 +451,7 @@ onMounted(() => {
 			:help="props.ui.supportingText"
 			:disabled="props.ui.disabled"
 			:input-id="id"
+			:optional="ui.optional"
 		>
 			<div class="relative flex flex-col">
 				<!-- Leading view -->

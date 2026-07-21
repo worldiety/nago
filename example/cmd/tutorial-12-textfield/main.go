@@ -50,6 +50,13 @@ func main() {
 
 					TextField("hello world", firstname.Get()).
 						InputValue(firstname).
+						Optional(true).
+						Leading(ImageIcon(heroOutline.UserCircle)).
+						Trailing(ImageIcon(heroOutline.UserCircle)).
+						FullWidth(),
+
+					TextField("hello world", firstname.Get()).
+						InputValue(firstname).
 						Leading(ImageIcon(heroOutline.UserCircle)).
 						Trailing(ImageIcon(heroOutline.UserCircle)).
 						ErrorText("this is an error").

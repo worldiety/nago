@@ -37,6 +37,10 @@
       "doc": "Style to apply. Use TextFieldReduced in forms where many textfields cause too much visual noise and you need to reduce it. By default, the TextFieldOutlined is applied.",
       "name": "Style",
       "type": "TextFieldStyle"
+    },
+    "9": {
+      "name": "Optional",
+      "type": "Bool"
     }
   }
 }
