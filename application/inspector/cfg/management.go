@@ -19,6 +19,7 @@ import (
 	"go.wdy.de/nago/application/inspector/ui"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ui/layout"
 )
 
 // Management is a Nago system(Inspector Management).
@@ -76,15 +77,15 @@ func Enable(cfg *application.Configurator) (Management, error) {
 	cfg.NoFooter(management.NDBPages.PageTimeseries)
 
 	cfg.RootViewWithDecoration(management.Pages.PageDataInspector, func(wnd core.Window) core.View {
-		return uiinspector.PageInspector(wnd, management.UseCases)
+		return layout.WithBackButton(wnd, uiinspector.PageInspector(wnd, management.UseCases))
 	})
 
 	cfg.RootViewWithDecoration(management.NDBPages.PageMessages, func(wnd core.Window) core.View {
-		return uindbinspector.PageMessages(wnd, management.NDBUseCases)
+		return layout.WithBackButton(wnd, uindbinspector.PageMessages(wnd, management.NDBUseCases))
 	})
 
 	cfg.RootViewWithDecoration(management.NDBPages.PageTimeseries, func(wnd core.Window) core.View {
-		return uindbinspector.PageTimeseries(wnd, management.NDBUseCases)
+		return layout.WithBackButton(wnd, uindbinspector.PageTimeseries(wnd, management.NDBUseCases))
 	})
 
 	cfg.AddAdminCenterGroup(func(subject auth.Subject) admin.Group {

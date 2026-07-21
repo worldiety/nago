@@ -9,11 +9,14 @@ package application
 
 import (
 	"fmt"
+
 	"go.wdy.de/nago/application/template"
 	uitemplate "go.wdy.de/nago/application/template/ui"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ui/layout"
+
 	"io"
 )
 
@@ -56,15 +59,15 @@ func (c *Configurator) TemplateManagement() (TemplateManagement, error) {
 		}
 
 		c.RootViewWithDecoration(c.templateManagement.Pages.Projects, func(wnd core.Window) core.View {
-			return uitemplate.ProjectPickerPage(wnd, c.templateManagement.Pages, uc.FindAll, uc.Delete)
+			return layout.WithBackButton(wnd, uitemplate.ProjectPickerPage(wnd, c.templateManagement.Pages, uc.FindAll, uc.Delete))
 		})
 
 		c.RootViewWithDecoration(c.templateManagement.Pages.NewProject, func(wnd core.Window) core.View {
-			return uitemplate.NewProjectPage(wnd, c.templateManagement.Pages, uc.Create)
+			return layout.WithBackButton(wnd, uitemplate.NewProjectPage(wnd, c.templateManagement.Pages, uc.Create))
 		})
 
 		c.RootViewWithDecoration(c.templateManagement.Pages.Editor, func(wnd core.Window) core.View {
-			return uitemplate.PageEditor(wnd, uc)
+			return layout.WithBackButton(wnd, uitemplate.PageEditor(wnd, uc))
 		})
 	}
 

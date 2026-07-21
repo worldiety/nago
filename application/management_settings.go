@@ -9,6 +9,7 @@ package application
 
 import (
 	"fmt"
+
 	"github.com/worldiety/enum"
 	"go.wdy.de/nago/application/admin"
 	"go.wdy.de/nago/application/settings"
@@ -16,6 +17,7 @@ import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ui/layout"
 )
 
 // SettingsManagement is a nago system(Settings Management).
@@ -72,7 +74,7 @@ func (c *Configurator) SettingsManagement() (SettingsManagement, error) {
 		c.AddContextValue(core.ContextValue("nago.settings.global.load", uc.LoadGlobal))
 
 		c.RootViewWithDecoration(c.settingsManagement.Pages.PageSettings, func(wnd core.Window) core.View {
-			return uisettings.PageSettings(wnd, uc.LoadGlobal, uc.StoreGlobal)
+			return layout.WithBackButton(wnd, uisettings.PageSettings(wnd, uc.LoadGlobal, uc.StoreGlobal))
 		})
 
 		c.AddAdminCenterGroup(func(subject auth.Subject) admin.Group {

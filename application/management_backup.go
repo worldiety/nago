@@ -13,6 +13,8 @@ import (
 	uibackup "go.wdy.de/nago/application/backup/ui"
 	"go.wdy.de/nago/pkg/blob/crypto"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ui/layout"
+
 	"log/slog"
 )
 
@@ -61,7 +63,7 @@ func (c *Configurator) BackupManagement() (BackupManagement, error) {
 		}
 
 		c.RootViewWithDecoration(c.backupManagement.Pages.BackupAndRestore, func(wnd core.Window) core.View {
-			return uibackup.BackupAndRestorePage(wnd, c.backupManagement.UseCases)
+			return layout.WithBackButton(wnd, uibackup.BackupAndRestorePage(wnd, c.backupManagement.UseCases))
 		})
 	}
 

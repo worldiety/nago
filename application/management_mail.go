@@ -20,6 +20,7 @@ import (
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ui/layout"
 	"golang.org/x/text/language"
 )
 
@@ -88,11 +89,11 @@ func (c *Configurator) MailManagement() (MailManagement, error) {
 		}
 
 		c.RootView(c.mailManagement.Pages.SendMailTest, c.DecorateRootView(func(wnd core.Window) core.View {
-			return uimail.SendTestMailPage(wnd, c.mailManagement.UseCases.SendMail, templates.UseCases.Execute)
+			return layout.WithBackButton(wnd, uimail.SendTestMailPage(wnd, c.mailManagement.UseCases.SendMail, templates.UseCases.Execute))
 		}))
 
 		c.RootView(c.mailManagement.Pages.OutgoingMailQueue, c.DecorateRootView(func(wnd core.Window) core.View {
-			return uimail.OutgoingQueuePage(wnd, c.mailManagement.UseCases)
+			return layout.WithBackButton(wnd, uimail.OutgoingQueuePage(wnd, c.mailManagement.UseCases))
 		}))
 
 		events.SubscribeFor[user.Created](c.eventBus, func(evt user.Created) {

@@ -19,6 +19,7 @@ import (
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui/form"
+	"go.wdy.de/nago/presentation/ui/layout"
 )
 
 // GroupManagement is a nago system(Group Management).
@@ -71,7 +72,7 @@ func (c *Configurator) GroupManagement() (GroupManagement, error) {
 		}
 
 		c.RootView(c.groupManagement.Pages.Groups, c.DecorateRootView(func(wnd core.Window) core.View {
-			return uigroup.Groups(wnd, c.groupManagement.UseCases)
+			return layout.WithBackButton(wnd, uigroup.Groups(wnd, c.groupManagement.UseCases))
 		}))
 
 		c.AddContextValue(core.ContextValue("nago.groups", form.AnyUseCaseList[group.Group, group.ID](func(subject auth.Subject) iter.Seq2[group.Group, error] {
