@@ -41,6 +41,7 @@ const config: PDFViewerConfig = {
 			foreground: {
 				secondary: 'currentColor',
 				muted: 'currentColor',
+				onAccent: 'currentColor',
 			},
 			background: {
 				app: 'var(--M2)',
