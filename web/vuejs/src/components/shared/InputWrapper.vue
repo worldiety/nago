@@ -99,7 +99,7 @@ const inputFieldWrapperClasses = computed((): string | null => {
 		@apply flex justify-between items-end text-sm pb-1 leading-none gap-4;
 
 		label {
-			@apply flex justify-start items-center gap-x-1 ;
+			@apply flex justify-start items-center gap-x-1;
 		}
 	}
 
