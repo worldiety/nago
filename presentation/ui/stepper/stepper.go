@@ -160,7 +160,7 @@ func (c TStepper) Render(ctx core.RenderContext) core.RenderNode {
 
 	stepper := &proto.Stepper{
 		InputValue:    c.inputValue.Ptr(),
-		Value:         proto.Uint(value),
+		Value:         proto.Int(value),
 		Steps:         make(proto.StepperSteps, 0),
 		Layout:        proto.StepperLayout(layout),
 		SimpleText:    proto.Str(simpleText),

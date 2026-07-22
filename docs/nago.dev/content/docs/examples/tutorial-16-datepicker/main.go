@@ -41,6 +41,7 @@ func main() {
 			return VStack(
 				alert.Dialog("Achtung", Text(fmt.Sprintf("Deine Eingabe: %v, start=%v end=%v", date, start, end)), showAlert, alert.Ok()),
 				SingleDatePicker("Single date", date.Get(), date),
+				SingleDatePicker("Single date", date.Get(), date).Optional(true),
 				SingleDatePicker("Singel date (double month view)", date.Get(), date).DoubleMode(true),
 				RangeDatePicker("Date range", start.Get(), start, end.Get(), end),
 				RangeDatePicker("Date range (double month view)", start.Get(), start, end.Get(), end).DoubleMode(true),

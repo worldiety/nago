@@ -20089,7 +20089,7 @@ export class StepperStep implements Writeable, Readable {
 export class Stepper implements Writeable, Readable, Component {
 	public inputValue?: Ptr;
 
-	public value?: Uint;
+	public value?: Int;
 
 	public steps?: StepperSteps;
 
@@ -20108,7 +20108,7 @@ export class Stepper implements Writeable, Readable, Component {
 
 	constructor(
 		inputValue: Ptr | undefined = undefined,
-		value: Uint | undefined = undefined,
+		value: Int | undefined = undefined,
 		steps: StepperSteps | undefined = undefined,
 		layout: StepperLayout | undefined = undefined,
 		simpleText: Str | undefined = undefined,
@@ -20137,7 +20137,7 @@ export class Stepper implements Writeable, Readable, Component {
 					break;
 				}
 				case 2: {
-					this.value = readInt(reader);
+					this.value = readSint(reader);
 					break;
 				}
 				case 3: {
@@ -20190,8 +20190,8 @@ export class Stepper implements Writeable, Readable, Component {
 			writeInt(writer, this.inputValue!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 2);
-			writeInt(writer, this.value!); // typescript linters cannot see, that we already checked this properly above
+			writer.writeFieldHeader(Shapes.VARINT, 2);
+			writeSint(writer, this.value!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
 			writer.writeFieldHeader(Shapes.ARRAY, 3);

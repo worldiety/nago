@@ -32,6 +32,7 @@ func main() {
 			}
 
 			stateDefault := core.StateOf[ui.Signature](wnd, "stateDefault").Init(stateInitFunc)
+			stateOptional := core.StateOf[ui.Signature](wnd, "stateOptional").Init(stateInitFunc)
 			stateSupport := core.StateOf[ui.Signature](wnd, "stateSupport").Init(stateInitFunc)
 			stateError := core.StateOf[ui.Signature](wnd, "stateError").Init(stateInitFunc)
 			stateDisabled := core.StateOf[ui.Signature](wnd, "stateDisabled").Init(stateInitFunc)
@@ -41,6 +42,7 @@ func main() {
 					ui.PrimaryButton(nil).Title("Toggle theme"),
 				),
 				ui.SignatureField("Default", stateDefault),
+				ui.SignatureField("Default (optional)", stateOptional).Optional(true),
 				ui.SignatureField("Mit Support", stateSupport).SupportingText("Ich bin ein Support-Text"),
 				ui.SignatureField("Mit Fehler", stateError).ErrorText("Ich bin ein Fehler-Text"),
 				ui.SignatureField("Disabled", stateDisabled).Disabled(true),

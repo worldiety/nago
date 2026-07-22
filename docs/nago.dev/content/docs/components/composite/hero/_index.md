@@ -22,10 +22,14 @@ Hero creates a new THero with the given title and a default full-width height of
 | `ForegroundColorAdaptive(onDark ui.Color, onLight ui.Color)` |  |
 | `Frame(frame ui.Frame)` | Frame sets the frame of the hero section. |
 | `Padding(padding ui.Padding)` |  |
+| `SideImage(img ui.TImage)` | SideImage sets a side image for the hero section, which is displayed alongside the text content. |
 | `SideSVG(svg core.SVG)` |  |
 | `SideView(img core.View)` |  |
 | `Subtitle(text string)` | Subtitle sets the subtitle text of the hero section. |
-| `SubtitleView(subtitle core.View)` |  |
+| `SubtitleView(view core.View)` |  |
 | `TextColor(color ui.Color)` |  |
+| `contentWidth(winfo core.WindowInfo)` |  |
+| `minHeight(winfo core.WindowInfo)` |  |
+| `titleFont(winfo core.WindowInfo)` |  |
 ---
 

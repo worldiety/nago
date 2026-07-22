@@ -24,7 +24,7 @@ func main() {
 		cfg.Serve(vuejs.Dist())
 
 		cfg.RootView(".", func(wnd core.Window) core.View {
-			state := core.StateOf[int](wnd, "stepperState")
+			state := core.StateOf[int](wnd, "stepperState").Init(func() int { return -1 })
 
 			nextText := "Weiter >"
 			if state.Get() >= 4 {
