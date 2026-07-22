@@ -10,7 +10,8 @@ import (
 // title, subtitle, and optional action buttons.
 type THero struct {
 	title                string      // main headline text
-	subtitle             core.View   // supporting subtitle text
+	subtitle             string      // supporting subtitle text
+	subtitleView         core.View   // supporting subtitle view, replaces subtitle text if set
 	actions              []core.View // list of action buttons or links
 	frame                ui.Frame    // layout frame for the hero section
 	backgroundImage      core.URI
@@ -33,7 +34,12 @@ func Hero(title string) THero {
 		textColor:       ui.M1,
 		alignment:       ui.Center,
 		border:          ui.Border{}.Radius(ui.L32),
-		padding:         ui.Padding{}.All(ui.L48),
+		padding: ui.Padding{
+			Top:    ui.L60,
+			Left:   ui.L80,
+			Right:  ui.L80,
+			Bottom: ui.L48,
+		},
 	}
 }
 
@@ -56,11 +62,12 @@ func (c THero) Padding(padding ui.Padding) THero {
 
 // Subtitle sets the subtitle text of the hero section.
 func (c THero) Subtitle(text string) THero {
-	return c.SubtitleView(ui.Text(text))
+	c.subtitle = text
+	return c
 }
 
-func (c THero) SubtitleView(subtitle core.View) THero {
-	c.subtitle = subtitle
+func (c THero) SubtitleView(view core.View) THero {
+	c.subtitleView = view
 	return c
 }
 
@@ -105,18 +112,22 @@ func (c THero) SideSVG(svg core.SVG) THero {
 	return c.SideView(ui.Image().Embed(svg).Frame(ui.Frame{Width: ui.Full, Height: ui.Full}))
 }
 
+// SideImage sets a side image for the hero section, which is displayed alongside the text content.
+func (c THero) SideImage(img ui.TImage) THero {
+	return c.SideView(img.ObjectFit(ui.FitContain).Padding(ui.Padding{}.All(ui.L64)).Frame(ui.Frame{}.FullHeight()))
+}
+
 // Render shows the hero section with title, subtitle, actions, and optional teaser image.
 // On small screens, the text takes full width and the image is hidden.
 func (c THero) Render(ctx core.RenderContext) core.RenderNode {
 	winfo := ctx.Window().Info()
 	small := winfo.SizeClass.Ordinal() <= core.SizeClassSmall.Ordinal()
-	var heroTextWidth ui.Length
 
-	if small {
-		heroTextWidth = ui.Full
-		c.alignment = ui.Center
-	} else {
-		heroTextWidth = "70%"
+	contentAlignment := ui.Leading
+	textAlignment := ui.TextAlignStart
+	if c.alignment == ui.Trailing || c.alignment == ui.TopTrailing || c.alignment == ui.BottomTrailing {
+		contentAlignment = ui.Trailing
+		textAlignment = ui.TextAlignEnd
 	}
 
 	fgColor := c.foregroundColorLight
@@ -124,15 +135,36 @@ func (c THero) Render(ctx core.RenderContext) core.RenderNode {
 		fgColor = c.foregroundColorDark
 	}
 
+	colors := core.Colors[ui.Colors](ctx.Window())
+
+	if fgColor == "" {
+		lightM8, err := colors.M0.WithChromaAndTone(8, 10)
+		if err == nil {
+			fgColor = lightM8.WithTransparency(30)
+		}
+	}
+
+	if c.frame.MinHeight == "" {
+		c.frame.MinHeight = c.minHeight(winfo)
+	}
+
+	textColor := c.textColor
+	darkM8, err := colors.M8.WithChromaAndTone(8, 98)
+	if err == nil {
+		textColor = darkM8
+	}
+
+	c.textColor = textColor
+
 	return ui.HStack(
 		ui.VStack(
-			ui.Text(c.title).Font(ui.DisplayLarge),
-			c.subtitle,
+			ui.Text(c.title).Font(c.titleFont(winfo)).TextAlignment(textAlignment),
+			ui.IfElse(c.subtitleView != nil, c.subtitleView, ui.Text(c.subtitle).TextAlignment(textAlignment)),
 			ui.HStack(c.actions...).FullWidth().Alignment(c.alignment),
-		).Alignment(c.alignment).
+		).Alignment(contentAlignment).
 			Gap(ui.L16).
 			Padding(c.padding).
-			Frame(ui.Frame{Width: heroTextWidth}),
+			Frame(ui.Frame{MaxWidth: c.contentWidth(winfo)}),
 		ui.IfFunc(c.sideView != nil, func() core.View {
 			if small {
 				return nil
@@ -160,4 +192,56 @@ func (c THero) Render(ctx core.RenderContext) core.RenderNode {
 		Frame(c.frame).
 		Border(c.border).
 		Render(ctx)
+}
+
+func (c THero) titleFont(winfo core.WindowInfo) ui.Font {
+	if winfo.SizeClass < core.SizeClassMedium {
+		return ui.DisplaySmall
+	}
+
+	if winfo.SizeClass < core.SizeClassXL {
+		return ui.DisplayMedium
+	}
+
+	return ui.DisplayLarge
+}
+
+func (c THero) contentWidth(winfo core.WindowInfo) ui.Length {
+	if winfo.SizeClass >= core.SizeClassMedium && c.sideView != nil {
+		return "70%"
+	}
+
+	if winfo.SizeClass >= core.SizeClassMedium {
+		return "80%"
+	}
+
+	if winfo.SizeClass >= core.SizeClassMedium {
+		return "90%"
+	}
+
+	return ui.Full
+}
+
+func (c THero) minHeight(winfo core.WindowInfo) ui.Length {
+	if winfo.SizeClass >= core.SizeClassXL {
+		return ui.L480
+	}
+
+	if winfo.SizeClass >= core.SizeClassLarge {
+		return ui.L400
+	}
+
+	if winfo.SizeClass >= core.SizeClassMedium {
+		return ui.L320
+	}
+
+	if winfo.SizeClass >= core.SizeClassSmall {
+		return ui.L256
+	}
+
+	if winfo.SizeClass >= core.SizeClassMedium {
+		return ui.L200
+	}
+
+	return ui.L0
 }
