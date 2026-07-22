@@ -19522,7 +19522,7 @@ func (v *StepperStep) read(r *BinaryReader) error {
 // Stepper represents a component to display and control progress stepwise.
 type Stepper struct {
 	InputValue Ptr
-	Value      Uint
+	Value      Int
 	Steps      StepperSteps
 	Layout     StepperLayout
 	// Progress text for the simple layout, for example 'Schritt %d von %d'
@@ -19563,7 +19563,7 @@ func (v *Stepper) write(w *BinaryWriter) error {
 		}
 	}
 	if fields[2] {
-		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+		if err := w.writeFieldHeader(varint, 2); err != nil {
 			return err
 		}
 		if err := v.Value.write(w); err != nil {

@@ -9,7 +9,7 @@
     },
     "2": {
       "name": "Value",
-      "type": "Uint"
+      "type": "Int"
     },
     "3": {
       "name": "Steps",

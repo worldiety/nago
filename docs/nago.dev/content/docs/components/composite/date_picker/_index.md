@@ -26,8 +26,8 @@ binding the given value and optional state.
 | `DoubleMode(doubleMode bool)` | DoubleMode enables double-month mode for range pickers. |
 | `ErrorText(text string)` | ErrorText sets the validation or error message displayed below the picker. |
 | `Frame(frame Frame)` | Frame sets the layout frame of the date picker, including size and positioning. |
+| `Optional(optional bool)` | Optional sets whether a date selection is optional. |
 | `Padding(padding Padding)` | Padding sets the inner spacing around the date picker content. |
-| `Required(required bool)` | Required sets whether a date selection is required. |
 | `SupportingText(text string)` | SupportingText sets helper or secondary text displayed below the picker label. |
 | `Visible(visible bool)` | Visible controls the visibility of the date picker; setting false hides it. |
 | `WithFrame(fn func(Frame) Frame)` | WithFrame applies a transformation function to the picker's frame and returns the updated component. |
