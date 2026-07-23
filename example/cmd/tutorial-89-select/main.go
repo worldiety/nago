@@ -52,9 +52,10 @@ func main() {
 		selectOptions := make([]dropdown.Option[ID], 0, len(persons))
 		for i, person := range persons {
 			selectOptions = append(selectOptions, dropdown.Option[ID]{
-				Label:    person.String(),
-				Value:    person.ID,
-				Disabled: i%10 == 0,
+				Label:       person.String(),
+				Description: "Description for " + person.String(),
+				Value:       person.ID,
+				Disabled:    i%10 == 0,
 			})
 		}
 

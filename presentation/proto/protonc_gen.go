@@ -12900,16 +12900,18 @@ func (v *BorderStyle) IsZero() bool {
 
 // SelectOption represents a selectable option, e.g. used in a native select element.
 type SelectOption struct {
-	Value    Str
-	Disabled Bool
-	Label    Str
+	Value       Str
+	Disabled    Bool
+	Label       Str
+	Description Str
 }
 
 func (v *SelectOption) write(w *BinaryWriter) error {
-	var fields [4]bool
+	var fields [5]bool
 	fields[1] = !v.Value.IsZero()
 	fields[2] = !v.Disabled.IsZero()
 	fields[3] = !v.Label.IsZero()
+	fields[4] = !v.Description.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -12944,6 +12946,14 @@ func (v *SelectOption) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.Description.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -12971,6 +12981,11 @@ func (v *SelectOption) read(r *BinaryReader) error {
 			}
 		case 3:
 			err := v.Label.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Description.read(r)
 			if err != nil {
 				return err
 			}
@@ -25570,13 +25585,14 @@ func (v *SelectOption) reset() {
 	v.Value.reset()
 	v.Disabled.reset()
 	v.Label.reset()
+	v.Description.reset()
 }
 
 func (v *SelectOption) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Value.IsZero() && v.Disabled.IsZero() && v.Label.IsZero()
+	return v.Value.IsZero() && v.Disabled.IsZero() && v.Label.IsZero() && v.Description.IsZero()
 }
 
 // SelectOptions is an array of select options.

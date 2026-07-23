@@ -13408,14 +13408,18 @@ export class SelectOption implements Writeable, Readable {
 
 	public label?: Str;
 
+	public description?: Str;
+
 	constructor(
 		value: Str | undefined = undefined,
 		disabled: Bool | undefined = undefined,
-		label: Str | undefined = undefined
+		label: Str | undefined = undefined,
+		description: Str | undefined = undefined
 	) {
 		this.value = value;
 		this.disabled = disabled;
 		this.label = label;
+		this.description = description;
 	}
 
 	read(reader: BinaryReader): void {
@@ -13436,6 +13440,10 @@ export class SelectOption implements Writeable, Readable {
 					this.label = readString(reader);
 					break;
 				}
+				case 4: {
+					this.description = readString(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -13443,7 +13451,13 @@ export class SelectOption implements Writeable, Readable {
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, this.value !== undefined, this.disabled !== undefined, this.label !== undefined];
+		const fields = [
+			false,
+			this.value !== undefined,
+			this.disabled !== undefined,
+			this.label !== undefined,
+			this.description !== undefined,
+		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
@@ -13458,16 +13472,26 @@ export class SelectOption implements Writeable, Readable {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
 			writeString(writer, this.label!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
+			writeString(writer, this.description!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
-		return this.value === undefined && this.disabled === undefined && this.label === undefined;
+		return (
+			this.value === undefined &&
+			this.disabled === undefined &&
+			this.label === undefined &&
+			this.description === undefined
+		);
 	}
 
 	reset(): void {
 		this.value = undefined;
 		this.disabled = undefined;
 		this.label = undefined;
+		this.description = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

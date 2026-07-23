@@ -51,10 +51,15 @@ func main() {
 
 		selectOptions := make([]dropdown.Option[ID], 0, len(persons))
 		for i, person := range persons {
+			description := ""
+			if i%3 == 0 {
+				description = "Description for " + person.String()
+			}
 			selectOptions = append(selectOptions, dropdown.Option[ID]{
-				Label:    person.String(),
-				Value:    person.ID,
-				Disabled: i%10 == 0,
+				Label:       person.String(),
+				Description: description,
+				Value:       person.ID,
+				Disabled:    i%10 == 0,
 			})
 		}
 

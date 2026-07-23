@@ -23,9 +23,10 @@ import (
 // UX-wise multiple selection would be possible, but the native web layout is so awkward to use and view that
 // it does not make sense to support it.
 type Option[ID ~string] struct {
-	Value    ID
-	Label    string
-	Disabled bool
+	Value       ID
+	Label       string
+	Description string // Description/subtitle of the option, only visible in the styled ORA dropdown
+	Disabled    bool
 }
 
 // TDropdown is a basic component (Select).
@@ -225,9 +226,10 @@ func (c TDropdown[ID]) Render(ctx core.RenderContext) core.RenderNode {
 	options := make([]proto.SelectOption, 0, len(c.options))
 	for _, option := range c.options {
 		options = append(options, proto.SelectOption{
-			Value:    proto.Str(option.Value),
-			Disabled: proto.Bool(option.Disabled),
-			Label:    proto.Str(option.Label),
+			Value:       proto.Str(option.Value),
+			Disabled:    proto.Bool(option.Disabled),
+			Label:       proto.Str(option.Label),
+			Description: proto.Str(option.Description),
 		})
 	}
 

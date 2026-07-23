@@ -14,6 +14,10 @@
     "3": {
       "name": "Label",
       "type": "Str"
+    },
+    "4": {
+      "name": "Description",
+      "type": "Str"
     }
   }
 }

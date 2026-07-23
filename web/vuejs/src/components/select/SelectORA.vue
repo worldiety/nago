@@ -61,7 +61,12 @@
 						role="option"
 						@click="selectOption(option)"
 					>
-						{{ option.label }}
+						<span>
+							{{ option.label }}
+						</span>
+						<span v-if="option.description" class="description">
+							{{ option.description }}
+						</span>
 					</button>
 				</template>
 				<template v-else>
@@ -265,8 +270,12 @@ onUnmounted(() => {
 			@apply w-full grow py-2;
 
 			button[role='option'] {
-				@apply block w-full text-left p-1.5 rounded;
+				@apply flex flex-col w-full text-left p-1.5 rounded;
 				@apply hover:bg-I0/20 hover:text-I0;
+
+				.description {
+					@apply text-sm text-M7 leading-tight -mt-0.5;
+				}
 
 				&[disabled] {
 					@apply opacity-50 pointer-events-none;
