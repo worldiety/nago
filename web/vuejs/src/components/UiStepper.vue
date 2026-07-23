@@ -188,7 +188,7 @@ onMounted(() => {
 			@apply relative flex flex-col;
 
 			.bubble {
-				@apply relative mb-2 flex justify-center items-center rounded-full text-lg z-[1];
+				@apply relative mb-2 flex justify-center items-center rounded-full text-lg z-[1] shrink-0;
 				@apply outline outline-2 -outline-offset-2 outline-current;
 				@apply text-SI0;
 
