@@ -243,7 +243,7 @@ onUnmounted(() => {
 	}
 
 	.dropdown {
-		@apply hidden max-h-80 rounded-lg bg-M2 px-1.5 z-30 shadow-md overscroll-none;
+		@apply hidden max-h-80 rounded-lg bg-M4 px-1.5 z-30 shadow-md overscroll-none;
 
 		.adds {
 			@apply flex flex-col gap-px px-1.5 pt-1.5;
