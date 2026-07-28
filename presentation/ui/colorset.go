@@ -72,10 +72,14 @@ type Colors struct {
 	// PrimaryButtonText is the color of the text which a primary-colored button should have.
 	PrimaryButtonText Color `json:"PBT"`
 
-	BannerErrorBackground Color `json:"CBEB"`
-	BannerErrorText       Color `json:"CBET"`
-	BannerInfoBackground  Color `json:"CBIB"`
-	BannerInfoText        Color `json:"CBIT"`
+	BannerErrorBackground   Color `json:"CBEB"`
+	BannerErrorText         Color `json:"CBET"`
+	BannerInfoBackground    Color `json:"CBIB"`
+	BannerInfoText          Color `json:"CBIT"`
+	BannerWarningBackground Color `json:"CBWB"`
+	BannerWarningText       Color `json:"CBWT"`
+	BannerSuccessBackground Color `json:"CBSB"`
+	BannerSuccessText       Color `json:"CBST"`
 }
 
 func (c Colors) Valid() bool {

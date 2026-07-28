@@ -28,6 +28,8 @@ type Intent int
 const (
 	IntentError Intent = iota
 	IntentOk
+	IntentWarning
+	IntentSuccess
 )
 
 type Message struct {
@@ -157,7 +159,7 @@ func makeMessageFromError(wnd core.Window, err error) (Message, bool) {
 		if name != "" {
 			msg += " Ein übergeordneter Rechteinhaber muss " + name + " zunächst explizit erteilen."
 		}
-		
+
 		return Message{
 			Title:   "Zugriff verweigert",
 			Message: msg,
