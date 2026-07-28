@@ -117,8 +117,12 @@ const (
 	ColorSemanticWarn  = SW0
 	ColorSemanticError = SE0
 
-	ColorBannerErrorBackground = "CBEB"
-	ColorBannerErrorText       = "CBET"
-	ColorBannerInfoBackground  = "CBIB"
-	ColorBannerInfoText        = "CBIT"
+	ColorBannerErrorBackground   = "CBEB"
+	ColorBannerErrorText         = "CBET"
+	ColorBannerInfoBackground    = "CBIB"
+	ColorBannerInfoText          = "CBIT"
+	ColorBannerWarningBackground = "CBWB"
+	ColorBannerWarningText       = "CBWT"
+	ColorBannerSuccessBackground = "CBSB"
+	ColorBannerSuccessText       = "CBST"
 )

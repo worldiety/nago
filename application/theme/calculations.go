@@ -35,10 +35,14 @@ func DarkMode(base BaseColors) ui.Colors {
 
 		PrimaryButtonText: calcTextColor(base.Interactive),
 
-		BannerErrorBackground: "#3b1812",
-		BannerErrorText:       "#FF543E",
-		BannerInfoBackground:  "#1c3b12",
-		BannerInfoText:        "#55ff3e",
+		BannerErrorBackground:   "#7D0014",
+		BannerErrorText:         "#FFE5E3",
+		BannerInfoBackground:    "#003E66",
+		BannerInfoText:          "#DFECFF",
+		BannerWarningBackground: "#453B00",
+		BannerWarningText:       "#FAECA3",
+		BannerSuccessBackground: "#004612",
+		BannerSuccessText:       "#D1F5C3",
 
 		Disabled:     "#636363",
 		DisabledText: "#E2E2E2",
@@ -71,10 +75,14 @@ func TrueDarkMode(base BaseColors) ui.Colors {
 
 		PrimaryButtonText: calcTextColor(base.Interactive),
 
-		BannerErrorBackground: "#3b1812",
-		BannerErrorText:       "#FF543E",
-		BannerInfoBackground:  "#1c3b12",
-		BannerInfoText:        "#55ff3e",
+		BannerErrorBackground:   "#7D0014",
+		BannerErrorText:         "#FFE5E3",
+		BannerInfoBackground:    "#003E66",
+		BannerInfoText:          "#DFECFF",
+		BannerWarningBackground: "#453B00",
+		BannerWarningText:       "#FAECA3",
+		BannerSuccessBackground: "#004612",
+		BannerSuccessText:       "#D1F5C3",
 
 		Disabled:     "#636363",
 		DisabledText: "#E2E2E2",
@@ -107,10 +115,14 @@ func LightMode(base BaseColors) ui.Colors {
 
 		PrimaryButtonText: calcTextColor(base.Interactive),
 
-		BannerErrorBackground: "#F6d2de",
-		BannerErrorText:       "#FF543E",
-		BannerInfoBackground:  "#1c3b12",
-		BannerInfoText:        "#55ff3e",
+		BannerErrorBackground:   "#FFE5E3",
+		BannerErrorText:         "#7D0014",
+		BannerInfoBackground:    "#DFECFF",
+		BannerInfoText:          "#003E66",
+		BannerWarningBackground: "#FAECA3",
+		BannerWarningText:       "#453B00",
+		BannerSuccessBackground: "#D1F5C3",
+		BannerSuccessText:       "#004612",
 
 		Disabled:     "#E2E2E2",
 		DisabledText: "#636363",
@@ -143,10 +155,14 @@ func TrueLightMode(base BaseColors) ui.Colors {
 
 		PrimaryButtonText: calcTextColor(base.Interactive),
 
-		BannerErrorBackground: "#F6d2de",
-		BannerErrorText:       "#FF543E",
-		BannerInfoBackground:  "#1c3b12",
-		BannerInfoText:        "#55ff3e",
+		BannerErrorBackground:   "#FFE5E3",
+		BannerErrorText:         "#7D0014",
+		BannerInfoBackground:    "#DFECFF",
+		BannerInfoText:          "#003E66",
+		BannerWarningBackground: "#FAECA3",
+		BannerWarningText:       "#453B00",
+		BannerSuccessBackground: "#D1F5C3",
+		BannerSuccessText:       "#004612",
 
 		Disabled:     "#E2E2E2",
 		DisabledText: "#636363",

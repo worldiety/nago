@@ -100,6 +100,10 @@ export default {
 				customColors['CBET'] = 'rgb(from var(--CBET) r g b / <alpha-value>)'; // BannerErrorText
 				customColors['CBIB'] = 'rgb(from var(--CBIB) r g b / <alpha-value>)'; // BannerInfoBackground
 				customColors['CBIT'] = 'rgb(from var(--CBIT) r g b / <alpha-value>)'; // BannerInfoText
+				customColors['CBWB'] = 'rgb(from var(--CBWB) r g b / <alpha-value>)'; // BannerWarningBackground
+				customColors['CBWT'] = 'rgb(from var(--CBWT) r g b / <alpha-value>)'; // BannerWarningText
+				customColors['CBSB'] = 'rgb(from var(--CBSB) r g b / <alpha-value>)'; // BannerSuccessBackground
+				customColors['CBST'] = 'rgb(from var(--CBST) r g b / <alpha-value>)'; // BannerSuccessText
 
 				return customColors;
 			},
