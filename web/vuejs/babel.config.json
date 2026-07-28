@@ -10,7 +10,6 @@
 					"safari": "10",
 					"opera": "36"
 				},
-				"useBuiltIns": "entry",
 				"corejs": "3.6.5"
 			}
 		],
