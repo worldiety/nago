@@ -144,7 +144,7 @@ watch(
 <style scoped>
 .additional-left,
 .additional-right {
-	@apply absolute top-1/2 -translate-y-1/2;
+	@apply absolute top-1/2 -translate-y-1/2 pointer-events-auto;
 }
 
 .additional-left {
