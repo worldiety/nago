@@ -48,14 +48,14 @@
       script.defer = true;
       script.type = type;
       document.head.appendChild(script);
-      console.debug("Loaded script '".concat(src, "' with type '").concat(type, "'"));
+      console.debug(`Loaded script '${src}' with type '${type}'`);
     }
     function loadLink(rel, href) {
       var link = document.createElement('link');
       link.rel = rel;
       link.href = href;
       document.head.appendChild(link);
-      console.debug("Loaded link '".concat(rel, "' with href '").concat(href, "'"));
+      console.debug(`Loaded link '${rel}' with href '${href}'`);
     }
     var browser = window.bowser.getParser(window.navigator.userAgent);
     var info = browser.getBrowser();
@@ -72,34 +72,35 @@
     };
     var isOutdated = thresholds[name] !== undefined && version < thresholds[name];
     var buildType = isOutdated ? 'legacy' : 'modern';
-    console.info("Detected browser '".concat(name, "' with version '").concat(version, "'. Loading build '").concat(buildType, "'..."));
+    console.info(`Detected browser '${name}' with version '${version}'. Loading build '${buildType}'...`);
     try {
-      loadJSON("/".concat(buildType, "/manifest.json"), function (err, manifest) {
+      loadJSON(`/${buildType}/manifest.json`, function (err, manifest) {
         if (err) {
-          console.error("Error while loading build manifest for build ".concat(buildType), err);
+          console.error(`Error while loading build manifest for build ${buildType}`, err);
           return;
         }
         var mainEntry = manifest['src/main.ts'];
         if (!mainEntry || !mainEntry.file) {
-          console.error("No entry file in build manifest found for build ".concat(buildType));
+          console.error(`No entry file in build manifest found for build ${buildType}`);
           return;
         }
         if (isOutdated) {
           // manually load polyfills
-          loadScript("/".concat(buildType, "/assets/polyfill.min.js"), 'text/javascript');
-          loadScript("/".concat(buildType, "/assets/minified.js"), 'text/javascript');
-          loadScript("/".concat(buildType, "/assets/runtime.js"), 'text/javascript');
+          loadScript(`/${buildType}/assets/polyfill.min.js`, 'text/javascript');
+          loadScript(`/${buildType}/assets/minified.js`, 'text/javascript');
+          loadScript(`/${buildType}/assets/runtime.js`, 'text/javascript');
         }
 
         // load build and stylesheets
-        loadScript("/".concat(buildType, "/").concat(mainEntry.file), isOutdated ? 'text/javascript' : 'module');
+        loadScript(`/${buildType}/${mainEntry.file}`, isOutdated ? 'text/javascript' : 'module');
         if (mainEntry.css) {
           mainEntry.css.forEach(cssFile => {
-            loadLink('stylesheet', "/".concat(buildType, "/").concat(cssFile));
+            loadLink('stylesheet', `/${buildType}/${cssFile}`);
           });
         }
-        loadLink('manifest', "/".concat(buildType, "/manifest.json"));
-        console.info("Successfully loaded build '".concat(buildType, "' for browser '").concat(name, "'.\nVersion '").concat(version, "' is ").concat(isOutdated ? 'older' : 'newer', " than the threshold '").concat(thresholds[name], "'."));
+        loadLink('manifest', `/${buildType}/manifest.json`);
+        console.info(`Successfully loaded build '${buildType}' for browser '${name}'.
+Version '${version}' is ${isOutdated ? 'older' : 'newer'} than the threshold '${thresholds[name]}'.`);
       });
     } catch (err) {
       console.error('Error while initializing the build:', err);
