@@ -257,6 +257,10 @@ func calStartTimeSeqTimeExample(chipAlignment ui.Alignment, txtColor color.Color
 				Label: "Kategorie 2",
 				Color: "#ff0000",
 			},
+			Category2: calendar.Category{
+				Color: "#0000ff",
+				Label: "Zweite Kategorie",
+			},
 			Pillar: calendar.Pillar{
 				Label:  "Rise in Action",
 				Icon:   flowbiteSolid.Lightbulb,

@@ -46,6 +46,7 @@ type Event struct {
 	Label       string  // Title of the event
 	Action      func()  // Action if clicked on the event
 	Category    Category
+	Category2   Category // Optional second category for additional classification
 	Pillar      Pillar
 	Lane        Lane
 	Chips       []Chip
