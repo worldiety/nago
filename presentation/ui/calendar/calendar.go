@@ -8,6 +8,7 @@
 package calendar
 
 import (
+	"fmt"
 	"time"
 
 	"go.wdy.de/nago/presentation/core"
@@ -27,11 +28,12 @@ const (
 // and supports rendering events within a defined viewport.
 // It allows customization of frame, style, and colors to adapt to different use cases.
 type TCalendar struct {
-	style  Style
-	events []Event
-	frame  ui.Frame
-	vp     ViewPort
-	colors Colors
+	style         Style
+	events        []Event
+	frame         ui.Frame
+	vp            ViewPort
+	colors        Colors
+	maxCategories int
 }
 
 // Calendar creates a new TCalendar initialized with the current year, a yearly timeline style, and default colors.
@@ -78,6 +80,45 @@ func (c TCalendar) Colors(colors Colors) TCalendar {
 func (c TCalendar) FullWidth() TCalendar {
 	c.frame = c.frame.FullWidth()
 	return c
+}
+
+// MaxCategories limits how many category color bars are rendered per event.
+// A value <= 0 means unlimited (all categories are shown).
+func (c TCalendar) MaxCategories(n int) TCalendar {
+	c.maxCategories = n
+	return c
+}
+
+// limitCategories truncates the given categories to at most max entries.
+// A max value <= 0 means no limit.
+func limitCategories(cats []Category, max int) []Category {
+	if max > 0 && len(cats) > max {
+		return cats[:max]
+	}
+	return cats
+}
+
+// categoryBar renders the categories of an event as a single vertical bar that
+// is split into equally sized segments stacked on top of each other. With two
+// categories the bar is split in half, with three into thirds and so on. The
+// number of visible categories is limited by max (<= 0 means unlimited).
+func categoryBar(cats []Category, max int) core.View {
+	cats = limitCategories(cats, max)
+	n := len(cats)
+
+	segHeight := ui.Full
+	if n > 0 {
+		segHeight = ui.Length(fmt.Sprintf("%f%%", 100/float64(n)))
+	}
+
+	return ui.VStack(
+		ui.ForEach(cats, func(cat Category) core.View {
+			return ui.HStack().
+				BackgroundColor(cat.Color).
+				Frame(ui.Frame{Width: ui.Full, Height: segHeight}).
+				AccessibilityLabel(cat.Label)
+		})...,
+	).Frame(ui.Frame{MinWidth: ui.L12, Height: ui.Full})
 }
 
 // Render renders the calendar component based on the selected style and configuration.

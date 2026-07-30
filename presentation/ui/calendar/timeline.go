@@ -22,7 +22,7 @@ import (
 //  1. The **lane header** on the left, showing the label of the lane.
 //  2. The **lane events area** on the right, which displays the lane's events,
 //     background grid, and separators.
-func timelineLane(colors Colors, iv ViewPort, cluster laneCluster) ui.THStack {
+func timelineLane(colors Colors, iv ViewPort, cluster laneCluster, maxCategories int) ui.THStack {
 	// background padding look-through
 	var bgTop ui.Length = "0rem"
 	var bgBot ui.Length = "0rem"
@@ -65,7 +65,7 @@ func timelineLane(colors Colors, iv ViewPort, cluster laneCluster) ui.THStack {
 				// actual events
 				for _, e := range cluster.Events {
 					yield(
-						timelineEventPill(colors, iv, e),
+						timelineEventPill(colors, iv, e, maxCategories),
 					)
 				}
 
@@ -76,7 +76,7 @@ func timelineLane(colors Colors, iv ViewPort, cluster laneCluster) ui.THStack {
 
 // timelineEventPill renders a timeline event as a pill with optional pre/post durations,
 // a category color bar, and an event body that can include hover/click actions.
-func timelineEventPill(colors Colors, iv ViewPort, e Event) core.View {
+func timelineEventPill(colors Colors, iv ViewPort, e Event, maxCategories int) core.View {
 	left := iv.Percent(e.From.At).Length()
 	right := (100 - iv.Percent(e.To.At)).Length()
 	return ui.HStack(
@@ -86,8 +86,8 @@ func timelineEventPill(colors Colors, iv ViewPort, e Event) core.View {
 		).BackgroundColor(colors.PrePostBackground).Border(ui.Border{}.Radius(ui.L8)).Padding(ui.Padding{}.Horizontal(ui.L16))),
 
 		ui.HStack(
-			// category color
-			ui.HStack().BackgroundColor(e.Category.Color).Frame(ui.Frame{MinWidth: ui.L12}).AccessibilityLabel(e.Category.Label),
+			// category colors (single bar split into equal segments)
+			categoryBar(e.resolvedCategories(), maxCategories),
 			ui.HStack(ui.Text(e.Label).Color(colors.EventText).AccessibilityLabel(e.Label)).BackgroundColor(colors.EventBackground).
 				FullWidth().
 				With(func(stack ui.THStack) ui.THStack {
@@ -137,7 +137,7 @@ func renderTimelineYear(c TCalendar, ctx core.RenderContext) core.RenderNode {
 
 			lanes := mapLanes(c.vp, c.events)
 			for _, lane := range lanes {
-				yield(timelineLane(c.colors, c.vp, lane))
+				yield(timelineLane(c.colors, c.vp, lane, c.maxCategories))
 			}
 
 		})...,

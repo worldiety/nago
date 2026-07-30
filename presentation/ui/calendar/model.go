@@ -8,6 +8,7 @@
 package calendar
 
 import (
+	"strings"
 	"time"
 
 	"go.wdy.de/nago/application/color"
@@ -41,11 +42,19 @@ type Lane struct {
 
 // Event represents a calendar entry or scheduled activity with metadata.
 type Event struct {
-	From        Instant // From is inclusive and Offset is e.g. the travel time by bus
-	To          Instant // To is inclusive and Offset is e.g. the travel time by train
-	Label       string  // Title of the event
-	Action      func()  // Action if clicked on the event
-	Category    Category
+	From   Instant // From is inclusive and Offset is e.g. the travel time by bus
+	To     Instant // To is inclusive and Offset is e.g. the travel time by train
+	Label  string  // Title of the event
+	Action func()  // Action if clicked on the event
+	// Category is deprecated: use Categories instead. It is kept for backwards
+	// compatibility and is merged into the effective categories automatically.
+	//
+	// Deprecated: use Categories instead.
+	Category Category
+	// Categories holds one or more classifications for this event. An event is
+	// usually assigned to a single category, but multiple categories are supported.
+	// Each category is rendered as its own color bar.
+	Categories  []Category
 	Pillar      Pillar
 	Lane        Lane
 	Chips       []Chip
@@ -53,6 +62,21 @@ type Event struct {
 	Location    string
 	IsCancelled bool                  // True if event is cancelled by the host
 	Render      func(Style) core.View // custom render func, may be nil to render the default way
+}
+
+// resolvedCategories returns the effective categories for this event, merging
+// the deprecated Category field (if set) with the Categories slice. The
+// deprecated single Category is placed first to preserve prior visual behaviour.
+func (e Event) resolvedCategories() []Category {
+	hasLegacy := strings.TrimSpace(string(e.Category.Color)) != "" || strings.TrimSpace(e.Category.Label) != ""
+	if !hasLegacy {
+		return e.Categories
+	}
+
+	cats := make([]Category, 0, len(e.Categories)+1)
+	cats = append(cats, e.Category)
+	cats = append(cats, e.Categories...)
+	return cats
 }
 
 // A Pillar represents a high-level theme or strategic focus area
