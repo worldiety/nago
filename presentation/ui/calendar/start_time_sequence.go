@@ -173,8 +173,8 @@ func startTimeSeqPill(
 	}
 
 	return ui.HStack(
-		// category color
-		ui.HStack().BackgroundColor(evt.Category.Color).Frame(ui.Frame{MinWidth: ui.L12}).AccessibilityLabel(evt.Category.Label),
+		// category colors (single bar split into equal segments)
+		categoryBar(evt.resolvedCategories(), c.maxCategories),
 		ui.VStack(
 			// Departure
 			ui.IfFunc(evt.From.Offset.Duration > 0,
