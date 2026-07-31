@@ -15,7 +15,7 @@ import (
 	"go.wdy.de/nago/presentation/ui/alert"
 )
 
-// TThreeColumn is a layout component (TwoColumn).
+// TThreeColumn is a layout component (ThreeColumn).
 type TThreeColumn struct {
 	nav              Factory
 	frame            ui.Frame
@@ -77,8 +77,9 @@ func (c TThreeColumn) WidthSidebar(width ui.Length) TThreeColumn {
 	c.sidebarWidth = width
 	return c
 }
+
 func (c TThreeColumn) WidthDetail(width ui.Length) TThreeColumn {
-	c.sidebarWidth = width
+	c.detailWidth = width
 	return c
 }
 
@@ -155,12 +156,9 @@ func (c TThreeColumn) Render(ctx core.RenderContext) core.RenderNode {
 
 	// smartphone etc
 	if wnd.Info().SizeClass <= core.SizeClassMedium {
-		if detailView == nil {
-			return ui.VStack().Render(ctx)
-		}
-
 		var myView core.View
 		var backAction func()
+
 		switch {
 		case detailId != "":
 			myView = detailView

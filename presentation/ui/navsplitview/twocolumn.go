@@ -146,10 +146,6 @@ func (c TTwoColumn) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	if wnd.Info().SizeClass <= core.SizeClassMedium {
-		if detailView == nil {
-			return ui.VStack().Render(ctx)
-		}
-
 		return ui.VStack(
 			ui.If(detailId != "", ui.SecondaryButton(func() {
 				wnd.Navigation().BackwardTo(wnd.Path(), wnd.Values().Delete(detailKey))
