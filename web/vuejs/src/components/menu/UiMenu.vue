@@ -8,14 +8,14 @@
 -->
 
 <script lang="ts" setup>
-import { Component, computed, onMounted, onUpdated, ref } from 'vue';
+import { computed, onMounted, onUpdated, ref } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
 import { frameCSS } from '@/components/shared/frame';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/vue';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
-import { Menu as ProtoMenu, MenuItem as ProtoMenuItem, Stack } from '@/shared/proto/nprotoc_gen';
+import { Menu as ProtoMenu, MenuItem as ProtoMenuItem } from '@/shared/proto/nprotoc_gen';
 import { FunctionCallRequested } from '@/shared/proto/nprotoc_gen';
 import { pxLengthValue } from '@/components/shared/length';
 
@@ -28,7 +28,6 @@ const serviceAdapter = useServiceAdapter();
 const trigger = ref();
 const menu = ref();
 
-const anchor = ref<HTMLElement>();
 const anchorIsButton = ref(false);
 
 const { floatingStyles } = useFloating(trigger, menu, {
@@ -66,7 +65,11 @@ onUpdated(checkAnchorType);
 <template>
 	<Menu as="div" class="relative inline-block text-left" :style="styles">
 		<div>
-			<MenuButton ref="trigger" class="inline-flex w-full justify-center" :as="anchorIsButton ? 'div' : undefined">
+			<MenuButton
+				ref="trigger"
+				class="inline-flex w-full justify-center"
+				:as="anchorIsButton ? 'div' : undefined"
+			>
 				<ui-generic v-if="props.ui.anchor" :ui="props.ui.anchor" :tabindex="anchorIsButton ? 0 : undefined" />
 			</MenuButton>
 		</div>
