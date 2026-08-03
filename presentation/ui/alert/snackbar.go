@@ -106,9 +106,9 @@ func (t TBannerMessages) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	return ui.NotificationsOverlay(alertNotifications{wnd: t.wnd, messages: messages}).
-		Right(ui.L16).
+		Right(ui.L24).
 		Top(ui.L120).
-		Bottom(ui.L16).
+		Bottom(ui.L24).
 		Render(ctx)
 }
 
