@@ -33,10 +33,10 @@
 				<div
 					v-for="(noti, i) in notifications"
 					ref="notificationElements"
+					:key="getNotificationKey(noti)"
 					class="notification"
 					:style="getNotificationStyles(i)"
 					:inert="stacked && i > 0"
-					:key="getNotificationKey(noti)"
 				>
 					<UiGeneric :ui="noti" />
 				</div>
