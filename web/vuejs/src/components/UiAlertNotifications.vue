@@ -87,12 +87,16 @@ const notifications = computed<Stack[]>(() => {
 });
 
 const innerStyles = computed<string | undefined>(() => {
-	if (stacked.value) return undefined;
+	if (stacked.value || !notificationTops.value.length) return undefined;
 
 	let top = 0;
-	notificationTops.value.forEach((t) => {
-		if (t > top) top = t;
-	});
+	if (stacked.value) {
+		top = notificationTops.value[0];
+	} else {
+		notificationTops.value.forEach((t) => {
+			if (t > top) top = t;
+		});
+	}
 
 	return `height: ${top}px;`;
 });
@@ -270,7 +274,7 @@ onMounted(() => {
 		scrollbar-gutter: stable;
 
 		.notifications-inner {
-			@apply relative h-full flex flex-col gap-4 pointer-events-auto;
+			@apply relative flex flex-col gap-4 pointer-events-auto;
 
 			.notification {
 				@apply absolute pointer-events-auto top-0 left-1/2 -translate-x-1/2 origin-bottom max-w-full;
