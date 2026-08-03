@@ -51,6 +51,13 @@
 			"additionalInformation": "Undefinierter HTTP-Fehler "
 		}
 	},
+	"alertNotifications": {
+		"actions": {
+			"closeAll": "Alle schließen",
+			"collapse": "Weniger",
+			"expand": "Mehr"
+		}
+	},
 	"clipboardModal": {
 		"confirm": "Kopieren",
 		"cancel": "Abbrechen",

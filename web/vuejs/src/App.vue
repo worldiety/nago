@@ -313,13 +313,15 @@ watch(
 	<ConnectionLostOverlay v-if="!connected" />
 	<ConnectingChannelOverlay v-if="state === State.Loading" />
 
-	<div
-		id="ora-overlay"
-		class="modal-container fixed inset-0 pointer-events-none z-40"
-		style="--modal-z-index: 35"
-	></div>
+	<div id="ora-overlay" class="modal-container fixed inset-0 pointer-events-none" style="--modal-z-index: 35"></div>
 
 	<div id="ora-modals" class="modal-container fixed inset-0 pointer-events-none" style="--modal-z-index: 40"></div>
+
+	<div
+		id="ora-notifications"
+		class="modal-container fixed inset-0 pointer-events-none"
+		style="--modal-z-index: 45"
+	></div>
 
 	<ui-upload></ui-upload>
 

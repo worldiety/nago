@@ -324,51 +324,52 @@ type Component interface {
 	Readable
 }
 
-func (Accordion) isComponent()      {}
-func (BarChart) isComponent()       {}
-func (Box) isComponent()            {}
-func (Canvas) isComponent()         {}
-func (Checkbox) isComponent()       {}
-func (CodeEditor) isComponent()     {}
-func (CountDown) isComponent()      {}
-func (DatePicker) isComponent()     {}
-func (Divider) isComponent()        {}
-func (DnDArea) isComponent()        {}
-func (FlowChart) isComponent()      {}
-func (Form) isComponent()           {}
-func (Grid) isComponent()           {}
-func (HoverGroup) isComponent()     {}
-func (Img) isComponent()            {}
-func (LineChart) isComponent()      {}
-func (Menu) isComponent()           {}
-func (Modal) isComponent()          {}
-func (PasswordField) isComponent()  {}
-func (PDF) isComponent()            {}
-func (PieChart) isComponent()       {}
-func (QrCode) isComponent()         {}
-func (QrCodeReader) isComponent()   {}
-func (Radiobutton) isComponent()    {}
-func (RichText) isComponent()       {}
-func (RichTextEditor) isComponent() {}
-func (Scaffold) isComponent()       {}
-func (ScrollView) isComponent()     {}
-func (Select) isComponent()         {}
-func (SignatureField) isComponent() {}
-func (Slider) isComponent()         {}
-func (Spacer) isComponent()         {}
-func (SplitView) isComponent()      {}
-func (Stack) isComponent()          {}
-func (Stepper) isComponent()        {}
-func (Switcher) isComponent()       {}
-func (SwitcherPage) isComponent()   {}
-func (Table) isComponent()          {}
-func (TextField) isComponent()      {}
-func (TextLayout) isComponent()     {}
-func (TextView) isComponent()       {}
-func (Toggle) isComponent()         {}
-func (Video) isComponent()          {}
-func (WebView) isComponent()        {}
-func (WindowTitle) isComponent()    {}
+func (Accordion) isComponent()          {}
+func (AlertNotifications) isComponent() {}
+func (BarChart) isComponent()           {}
+func (Box) isComponent()                {}
+func (Canvas) isComponent()             {}
+func (Checkbox) isComponent()           {}
+func (CodeEditor) isComponent()         {}
+func (CountDown) isComponent()          {}
+func (DatePicker) isComponent()         {}
+func (Divider) isComponent()            {}
+func (DnDArea) isComponent()            {}
+func (FlowChart) isComponent()          {}
+func (Form) isComponent()               {}
+func (Grid) isComponent()               {}
+func (HoverGroup) isComponent()         {}
+func (Img) isComponent()                {}
+func (LineChart) isComponent()          {}
+func (Menu) isComponent()               {}
+func (Modal) isComponent()              {}
+func (PasswordField) isComponent()      {}
+func (PDF) isComponent()                {}
+func (PieChart) isComponent()           {}
+func (QrCode) isComponent()             {}
+func (QrCodeReader) isComponent()       {}
+func (Radiobutton) isComponent()        {}
+func (RichText) isComponent()           {}
+func (RichTextEditor) isComponent()     {}
+func (Scaffold) isComponent()           {}
+func (ScrollView) isComponent()         {}
+func (Select) isComponent()             {}
+func (SignatureField) isComponent()     {}
+func (Slider) isComponent()             {}
+func (Spacer) isComponent()             {}
+func (SplitView) isComponent()          {}
+func (Stack) isComponent()              {}
+func (Stepper) isComponent()            {}
+func (Switcher) isComponent()           {}
+func (SwitcherPage) isComponent()       {}
+func (Table) isComponent()              {}
+func (TextField) isComponent()          {}
+func (TextLayout) isComponent()         {}
+func (TextView) isComponent()           {}
+func (Toggle) isComponent()             {}
+func (Video) isComponent()              {}
+func (WebView) isComponent()            {}
+func (WindowTitle) isComponent()        {}
 
 // NagoEvent is the union type of all allowed NAGO protocol events. Everything which goes through a NAGO channel must be an Event at the root level.
 type NagoEvent interface {
@@ -4377,8 +4378,9 @@ func (v *KeyboardType) IsZero() bool {
 type ModalType uint64
 
 const (
-	ModalTypeDialog  ModalType = 0
-	ModalTypeOverlay ModalType = 1
+	ModalTypeDialog        ModalType = 0
+	ModalTypeOverlay       ModalType = 1
+	ModalTypeNotifications ModalType = 2
 )
 
 func (v *ModalType) write(r *BinaryWriter) error {
@@ -20890,6 +20892,72 @@ func (v *SignatureField) read(r *BinaryReader) error {
 	return nil
 }
 
+// AlertNotification is a alert banner variant, that will be shown in the top right corner (web frontend).
+type AlertNotifications struct {
+	Notifications Components
+	CloseAll      Ptr
+}
+
+func (v *AlertNotifications) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Notifications.IsZero()
+	fields[2] = !v.CloseAll.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(array, 1); err != nil {
+			return err
+		}
+		if err := v.Notifications.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.CloseAll.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *AlertNotifications) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Notifications.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.CloseAll.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -22483,6 +22551,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 274:
 		var v SignatureField
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 275:
+		var v AlertNotifications
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -27017,6 +27091,18 @@ func (v *SignatureField) IsZero() bool {
 	return v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Disabled.IsZero() && v.Style.IsZero() && v.Optional.IsZero()
 }
 
+func (v *AlertNotifications) reset() {
+	v.Notifications.reset()
+	v.CloseAll.reset()
+}
+
+func (v *AlertNotifications) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Notifications.IsZero() && v.CloseAll.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -28846,6 +28932,13 @@ func (v *Signature) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *SignatureField) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 274); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *AlertNotifications) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 275); err != nil {
 		return err
 	}
 	return nil

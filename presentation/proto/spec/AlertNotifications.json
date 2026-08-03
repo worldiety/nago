@@ -1,0 +1,17 @@
+{
+  "doc": "AlertNotification is a alert banner variant, that will be shown in the top right corner (web frontend).",
+  "kind": "Record",
+  "id": 275,
+  "fields": {
+    "1": {
+      "name": "Notifications",
+      "type": "Components"
+    },
+    "2": {
+      "name": "CloseAll",
+      "type": "Ptr"
+    }
+  }
+}
+
+

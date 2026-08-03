@@ -36,6 +36,11 @@ func Overlay(content core.View) TModal {
 	return TModal{content: content, mtype: proto.ModalTypeOverlay, allowBackgroundScrolling: true}
 }
 
+// NotificationsOverlay is like Overlay, but with notifications modal type to be positions in front of other overlay
+func NotificationsOverlay(content core.View) TModal {
+	return TModal{content: content, mtype: proto.ModalTypeNotifications, allowBackgroundScrolling: true}
+}
+
 // Top sets the top offset of the modal.
 func (c TModal) Top(top Length) TModal {
 	c.top = top
