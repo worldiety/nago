@@ -3,6 +3,7 @@
   "kind": "Enum",
   "variants": [
     "Accordion",
+    "AlertNotifications",
     "BarChart",
     "Box",
     "Canvas",

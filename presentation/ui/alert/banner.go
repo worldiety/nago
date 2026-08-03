@@ -31,25 +31,32 @@ const (
 //
 // It also supports a callback when the banner is closed.
 type TBanner struct {
+	id               string
 	title            string
 	message          string
 	presented        *core.State[bool]
 	onClosed         func()
 	intent           Intent
 	frame            ui.Frame
-	autoCloseTimeout time.Duration
+	autoCloseTimeout time.Duration // Deprecated: Will be removed because of accessibility concerns.
 }
 
 func Banner(title, message string) TBanner {
 	return TBanner{
-		title:            title,
-		message:          message,
-		frame:            ui.Frame{Width: ui.L400, MaxWidth: "calc(100% - 2rem)"},
-		autoCloseTimeout: 5 * time.Second,
+		title:   title,
+		message: message,
+		frame:   ui.Frame{Width: ui.L400, MaxWidth: ui.Full},
 	}
 }
 
+// ID sets an optional ID for the banner component
+func (t TBanner) ID(id string) TBanner {
+	t.id = id
+	return t
+}
+
 // AutoCloseTimeoutOrDefault either takes the given duration d or timeouts after 5 seconds.
+// Deprecated: Will be removed because of accessibility concerns.
 func (t TBanner) AutoCloseTimeoutOrDefault(d time.Duration) TBanner {
 	if d <= 0 {
 		d = time.Second * 5
@@ -143,11 +150,13 @@ func (t TBanner) Render(ctx core.RenderContext) core.RenderNode {
 				if t.onClosed != nil {
 					t.onClosed()
 				}
-			})),
+			}).
+				Padding(ui.Padding{}.All(ui.L4)),
+			),
 		).Gap(ui.L12).
 			FullWidth(),
 		ui.Text(t.message).Color(textColor),
-		ui.IfFunc(t.intent == IntentOk && t.presented != nil, func() core.View {
+		ui.IfFunc(t.intent == IntentOk && t.presented != nil && t.autoCloseTimeout > 0, func() core.View {
 			targetTime := core.DerivedState[time.Time](t.presented, "ctt").Init(func() time.Time {
 				return time.Now().Add(t.autoCloseTimeout)
 			})
@@ -183,6 +192,7 @@ func (t TBanner) Render(ctx core.RenderContext) core.RenderNode {
 	).Alignment(ui.Leading).
 		Gap(ui.L8).
 		BackgroundColor(bgColor).
+		ID(t.id).
 		Border(ui.Border{}.Radius(ui.L12)).
 		Padding(ui.Padding{}.All(ui.L20)).
 		Frame(t.frame).Render(ctx)
