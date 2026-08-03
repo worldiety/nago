@@ -7,8 +7,12 @@
  SPDX-License-Identifier: Custom-License
 -->
 <template>
-	<div :id="id" ref="alertNotifications" class="alert-notifications">
+	<div :id="id" ref="alertNotifications" class="alert-notifications" :class="{ stacked: stacked }">
 		<div v-if="notifications.length" class="actions">
+			<button class="button-tertiary" @click.stop="onClickCloseAll">
+				<CloseIcon />
+				{{ $t('alertNotifications.actions.closeAll') }}
+			</button>
 			<button v-if="notifications.length >= 3" class="button-tertiary" @click.stop="onClickToggleExpand">
 				<ArrowDownIcon :class="{ '-scale-y-100': !stacked }" />
 				<span v-if="expanded">
@@ -17,10 +21,6 @@
 				<span v-else>
 					{{ $t('alertNotifications.actions.expand') }}
 				</span>
-			</button>
-			<button class="button-tertiary" @click.stop="onClickCloseAll">
-				<CloseIcon />
-				{{ $t('alertNotifications.actions.closeAll') }}
 			</button>
 		</div>
 		<div
@@ -35,6 +35,7 @@
 					ref="notificationElements"
 					class="notification"
 					:style="getNotificationStyles(i)"
+					:inert="stacked && i > 0"
 					:key="getNotificationKey(noti)"
 				>
 					<UiGeneric :ui="noti" />
@@ -253,7 +254,7 @@ onMounted(() => {
 	@apply flex flex-col gap-4 h-full pointer-events-none;
 
 	.actions {
-		@apply flex items-center justify-end gap-4;
+		@apply flex items-center justify-start flex-row-reverse gap-4;
 
 		& > button {
 			@apply pointer-events-auto;
@@ -295,6 +296,18 @@ onMounted(() => {
 
 		&.overflow-both {
 			mask-image: linear-gradient(transparent 0, black 1.5rem, black calc(100% - 1.5rem), transparent 100%);
+		}
+	}
+
+	&.stacked {
+		.notifications {
+			.notifications-inner {
+				.notification {
+					&:not(:first-child) {
+						@apply pointer-events-none select-none;
+					}
+				}
+			}
 		}
 	}
 }
