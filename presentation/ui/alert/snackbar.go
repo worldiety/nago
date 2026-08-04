@@ -58,6 +58,9 @@ func (an alertNotifications) Render(ctx core.RenderContext) core.RenderNode {
 		presented := core.StateOf[bool](an.wnd, ".msg-"+msg.Title+msg.Message).Init(func() bool {
 			return true
 		})
+		if !presented.Get() {
+			continue
+		}
 
 		notifications.Notifications = append(
 			notifications.Notifications,
