@@ -10,6 +10,7 @@ import type { Component } from 'vue';
 import { defineAsyncComponent } from 'vue';
 import {
 	Accordion,
+	AlertNotifications,
 	BarChart,
 	Box,
 	Canvas,
@@ -57,6 +58,7 @@ import {
 } from '@/shared/proto/nprotoc_gen';
 
 const LazyUiAccordion = defineAsyncComponent(() => import('@/components/UiAccordion.vue'));
+const LazyUiAlertNotifications = defineAsyncComponent(() => import('@/components/UiAlertNotifications.vue'));
 const LazyUiBarChart = defineAsyncComponent(() => import('@/components/charts/UiBarChart.vue'));
 const LazyUiBox = defineAsyncComponent(() => import('@/components/box/UiBox.vue'));
 const LazyUiCanvas = defineAsyncComponent(() => import('@/components/canvas/UiCanvas.vue'));
@@ -109,6 +111,10 @@ const LazyUiWindowTitle = defineAsyncComponent(() => import('@/components/UiWind
 export function vueComponentFor(ngc: NagoComponent): Component {
 	if (ngc instanceof Accordion) {
 		return LazyUiAccordion;
+	}
+
+	if (ngc instanceof AlertNotifications) {
+		return LazyUiAlertNotifications;
 	}
 
 	if (ngc instanceof BarChart) {

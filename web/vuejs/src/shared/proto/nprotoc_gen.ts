@@ -4593,6 +4593,7 @@ function writeTypeHeaderModalType(dst: BinaryWriter): void {
 export enum ModalTypeValues {
 	ModalTypeDialog = 0,
 	ModalTypeOverlay = 1,
+	ModalTypeNotifications = 2,
 }
 
 // A Modal can be declared at any place in the composed view tree. However, these dialogs are teleported into
@@ -21494,6 +21495,72 @@ export class SignatureField implements Writeable, Readable, Component {
 	isComponent(): void {}
 }
 
+// AlertNotification is a alert banner variant, that will be shown in the top right corner (web frontend).
+export class AlertNotifications implements Writeable, Readable, Component {
+	public notifications?: Components;
+
+	public closeAll?: Ptr;
+
+	constructor(notifications: Components | undefined = undefined, closeAll: Ptr | undefined = undefined) {
+		this.notifications = notifications;
+		this.closeAll = closeAll;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.notifications = new Components();
+					this.notifications.read(reader);
+					break;
+				}
+				case 2: {
+					this.closeAll = readInt(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.notifications !== undefined && !this.notifications.isZero(),
+			this.closeAll !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 1);
+			this.notifications!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 2);
+			writeInt(writer, this.closeAll!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (this.notifications === undefined || this.notifications.isZero()) && this.closeAll === undefined;
+	}
+
+	reset(): void {
+		this.notifications = undefined;
+		this.closeAll = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 275);
+		return;
+	}
+	isComponent(): void {}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -22754,6 +22821,11 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 274: {
 			const v = new SignatureField();
+			v.read(src);
+			return v;
+		}
+		case 275: {
+			const v = new AlertNotifications();
 			v.read(src);
 			return v;
 		}

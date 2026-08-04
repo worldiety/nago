@@ -7,6 +7,9 @@
     },
     "1": {
       "name": "ModalTypeOverlay"
+    },
+    "2": {
+      "name": "ModalTypeNotifications"
     }
   }
 }

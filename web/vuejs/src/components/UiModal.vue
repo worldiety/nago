@@ -9,6 +9,14 @@
 
 <template>
 	<div v-if="!ui.content"></div>
+	<Teleport v-else-if="ui.modalType == ModalTypeValues.ModalTypeNotifications" to="#ora-notifications">
+		<Transition>
+			<div v-show="ui.content" class="pointer-events-none fixed max-w-full" :style="styles">
+				<UiGeneric :ui="ui.content" class="" />
+			</div>
+		</Transition>
+	</Teleport>
+
 	<Teleport v-else-if="ui.modalType == ModalTypeValues.ModalTypeOverlay" to="#ora-overlay">
 		<Transition>
 			<div v-show="ui.content" class="pointer-events-auto fixed" :style="styles" @click.stop="sendDismissEvent">

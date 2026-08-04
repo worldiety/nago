@@ -19,6 +19,7 @@ import (
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/proto"
 	"go.wdy.de/nago/presentation/ui"
 	"golang.org/x/crypto/sha3"
 )
@@ -37,6 +38,45 @@ type Message struct {
 	Message  string
 	Intent   Intent
 	Duration time.Duration
+}
+
+type alertNotifications struct {
+	wnd      core.Window
+	messages *core.TransientState[[]Message]
+}
+
+func (an alertNotifications) Render(ctx core.RenderContext) core.RenderNode {
+	closeAllFunc := func() {
+		an.messages.Set(make([]Message, 0))
+	}
+
+	notifications := proto.AlertNotifications{
+		CloseAll: ctx.MountCallback(closeAllFunc),
+	}
+	notifications.Notifications = make([]proto.Component, 0)
+	for i, msg := range an.messages.Get() {
+		presented := core.StateOf[bool](an.wnd, ".msg-"+msg.Title+msg.Message).Init(func() bool {
+			return true
+		})
+		if !presented.Get() {
+			continue
+		}
+
+		notifications.Notifications = append(
+			notifications.Notifications,
+			Banner(msg.Title, msg.Message).
+				ID(fmt.Sprintf("banner-%d", i)).
+				Intent(msg.Intent).
+				Closeable(presented).
+				OnClosed(func() {
+					an.messages.Set(slices.DeleteFunc(an.messages.Get(), func(message Message) bool {
+						return message == msg
+					}))
+				}).Render(ctx),
+		)
+	}
+
+	return &notifications
 }
 
 // TBannerMessages is a feedback component (Banner Messages).
@@ -68,38 +108,10 @@ func (t TBannerMessages) Render(ctx core.RenderContext) core.RenderNode {
 		return nil
 	}
 
-	padRight := ui.L24
-	overlayRight := ui.L8
-	isSmall := t.wnd.Info().SizeClass <= core.SizeClassSmall
-	if isSmall {
-		padRight = ui.L8
-		overlayRight = ""
-	}
-
-	return ui.Overlay(
-		ui.ScrollView(
-			ui.VStack(
-				ui.Each(slices.Values(messages.Get()), func(m Message) core.View {
-					presented := core.StateOf[bool](t.wnd, ".msg-"+m.Title+m.Message).Init(func() bool {
-						return true
-					})
-
-					return Banner(m.Title, m.Message).
-						Intent(m.Intent).
-						Closeable(presented).
-						AutoCloseTimeoutOrDefault(m.Duration).
-						OnClosed(func() {
-							messages.Set(slices.DeleteFunc(messages.Get(), func(message Message) bool {
-								return message == m
-							}))
-						})
-				})...,
-			).Gap(ui.L8).Padding(ui.Padding{Right: padRight}),
-		).
-			Frame(ui.Frame{MaxHeight: "calc(100dvh - 8rem)", MaxWidth: "100dvw"}),
-	).
-		Right(overlayRight).
+	return ui.NotificationsOverlay(alertNotifications{wnd: t.wnd, messages: messages}).
+		Right(ui.L24).
 		Top(ui.L120).
+		Bottom(ui.L24).
 		Render(ctx)
 }
 
@@ -245,8 +257,8 @@ func (t TBannerError) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	msg := Message{
-		Title:   "Ein unerwarteter Fehler ist aufgetreten",
-		Message: fmt.Sprintf("Sie können sich mit dem folgenden Code an den Support wenden: %s", token),
+		Title:   "Fehler",
+		Message: fmt.Sprintf("Ein unerwarteter Fehler ist aufgetreten. Sie können sich mit dem folgenden Code an den Support wenden: %s", token),
 	}
 
 	slog.Error("unexpected banner error", "token", token, "err", t.err.Error())
@@ -274,8 +286,8 @@ func ShowBannerError(wnd core.Window, err error) {
 	}
 
 	msg := Message{
-		Title:   "Ein unerwarteter Fehler ist aufgetreten",
-		Message: fmt.Sprintf("Sie können sich mit dem folgenden Code an den Support wenden: %s", token),
+		Title:   "Fehler",
+		Message: fmt.Sprintf("Ein unerwarteter Fehler ist aufgetreten. Sie können sich mit dem folgenden Code an den Support wenden: %s", token),
 	}
 
 	messages := core.TransientStateOf[[]Message](wnd, ".nago-messages")
