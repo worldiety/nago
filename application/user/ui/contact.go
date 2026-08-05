@@ -24,7 +24,7 @@ type contactViewModel struct {
 	Salutation string   `label:"Anrede" section:"Daten"`
 	Firstname  string   `label:"Vorname" section:"Daten"`
 	Lastname   string   `label:"Nachname" section:"Daten"`
-	EMail      string   `label:"E-Mail Adresse" section:"Daten" disabled:"true" supportingText:"Die E-Mail Adresse kann hier nicht geändert werden, da sie Bestandteil der Identität ist."`
+	EMail      string   `label:"E-Mail Adresse" section:"Daten" disabled:"true" supportingText:"Die E-Mail Adresse kann nicht geändert werden, da sie Bestandteil der Identität ist."`
 
 	AboutMe string `label:"" section:"Über mich" lines:"5"`
 
