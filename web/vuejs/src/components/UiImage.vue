@@ -97,7 +97,7 @@ const rewriteSVG = computed<string>(() => {
 		v-if="!ui.invisible && !ui.sVG"
 		class="h-auto max-w-full"
 		:src="props.ui.uri"
-		:alt="props.ui.accessibilityLabel"
+		:alt="props.ui.accessibilityLabel ?? ''"
 		:title="props.ui.accessibilityLabel"
 		:style="styles"
 	/>
