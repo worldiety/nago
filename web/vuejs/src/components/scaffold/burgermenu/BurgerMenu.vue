@@ -17,7 +17,7 @@
 				@click="menuOpen = true"
 				@keydown.enter="menuOpen = true"
 			/>
-			<div class="absolute top-0 left-0 bottom-0 right-0 flex justify-center items-center h-full z-0">
+			<div class="absolute top-0 left-0 bottom-0 right-0 flex justify-center items-center h-full z-0 max-xs:pl-10">
 				<div class="">
 					<ui-generic v-if="props.ui.logo" :ui="props.ui.logo" />
 				</div>
