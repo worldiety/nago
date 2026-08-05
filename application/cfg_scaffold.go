@@ -13,20 +13,19 @@ import (
 	"strings"
 
 	"go.wdy.de/nago/application/image"
-	"go.wdy.de/nago/application/image/http"
+	httpimage "go.wdy.de/nago/application/image/http"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/theme"
 	uiuser "go.wdy.de/nago/application/user/ui"
 	"go.wdy.de/nago/auth"
 	flowbiteOutline "go.wdy.de/nago/presentation/icons/flowbite/outline"
-	icons "go.wdy.de/nago/presentation/icons/material/outlined"
+	"go.wdy.de/nago/presentation/ui/avatar"
 	"go.wdy.de/nago/presentation/ui/footer"
 
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
-	"go.wdy.de/nago/presentation/ui/avatar"
 	"go.wdy.de/nago/presentation/ui/tracking"
 )
 
@@ -368,13 +367,7 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 			}
 
 			if len(entry.oneOfRoles) > 0 {
-				hasRole := false
-				for _, roleId := range entry.oneOfRoles {
-					if wnd.Subject().HasRole(roleId) {
-						hasRole = true
-						break
-					}
-				}
+				hasRole := slices.ContainsFunc(entry.oneOfRoles, wnd.Subject().HasRole)
 
 				if !hasRole {
 					continue
@@ -430,13 +423,7 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 					}
 
 					if len(subentry.oneOfRoles) > 0 {
-						hasRole := false
-						for _, roleId := range subentry.oneOfRoles {
-							if wnd.Subject().HasRole(roleId) {
-								hasRole = true
-								break
-							}
-						}
+						hasRole := slices.ContainsFunc(subentry.oneOfRoles, wnd.Subject().HasRole)
 
 						if !hasRole {
 							continue
@@ -468,22 +455,16 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 			menu = b.fnMenu(wnd, menu)
 		}
 
+		isMobile := wnd.Info().SizeClass == core.SizeClassSmall
+
 		menuDialogPresented := ScaffoldUserMenuPresentedState(wnd)
 
-		if sessionManagement := b.cfg.sessionManagement; sessionManagement != nil && b.showLogin {
+		if sessionManagement := b.cfg.sessionManagement; !isMobile && sessionManagement != nil && b.showLogin {
 			if !wnd.Subject().Valid() {
 				menu = append(menu, ui.ForwardScaffoldMenuEntry(wnd, flowbiteOutline.ArrowLeftToBracket, "Anmelden", sessionManagement.Pages.Login))
 			} else {
-				var avatarIcon core.View
-				if id := wnd.Subject().Avatar(); id != "" {
-					avatarIcon = avatar.URI(httpimage.URI(image.ID(id), image.FitCover, 40, 40))
-				} else {
-					avatarIcon = avatar.Text(wnd.Subject().Name()).Size(ui.L40)
-				}
-
 				menu = append(menu, ui.ScaffoldMenuEntry{
-					Icon:  avatarIcon,
-					Title: "",
+					Icon: b.avatarIcon(wnd),
 					Action: func() {
 						menuDialogPresented.Set(true)
 					},
@@ -494,15 +475,14 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 		var scaffold = ui.Scaffold(b.alignment).Body(
 			ui.VStack(
 				ui.WindowTitle(b.name()),
-				ui.IfFunc(b.cfg.sessionManagement != nil, func() core.View {
-					return b.profileDialog(wnd, b.cfg.sessionManagement, menuDialogPresented)
-				}),
+				ui.If(b.cfg.sessionManagement != nil, b.profileDialog(wnd, menuDialogPresented, isMobile)),
 
 				view,
 				alert.BannerMessages(wnd),
 				tracking.SupportRequestDialog(wnd), // be the last one, to guarantee to be on top
 			).FullWidth(),
-		).BottomView(lightDarkButton(wnd)).
+		).
+			BottomView(b.profileButton(wnd, menuDialogPresented)).
 			Logo(ui.HStack(logo).Action(b.logoActionClick(wnd)).Frame(ui.Frame{Height: ui.L96})).
 			Menu(menu...).Height(b.height)
 
@@ -569,12 +549,10 @@ func (b *ScaffoldBuilder) profileMenu(wnd core.Window) core.View {
 	return uiuser.AccountView(wnd)
 }
 
-func (b *ScaffoldBuilder) profileDialog(wnd core.Window, sessionManagement *SessionManagement, state *core.State[bool]) core.View {
+func (b *ScaffoldBuilder) profileDialog(wnd core.Window, state *core.State[bool], isMobile bool) core.View {
 	if !state.Get() {
 		return nil
 	}
-
-	isMobile := wnd.Info().SizeClass == core.SizeClassSmall
 
 	var opts []alert.Option
 
@@ -587,15 +565,40 @@ func (b *ScaffoldBuilder) profileDialog(wnd core.Window, sessionManagement *Sess
 	return alert.Dialog("Nutzerkonto", b.profileMenu(wnd), state, opts...)
 }
 
-func lightDarkButton(wnd core.Window) core.View {
-	return ui.ThemeSwitcher(
-		ui.HStack(
-			ui.ImageIcon(icons.Palette).FillColor(ui.M8),
-			ui.Text(StrSwitchTheme.Get(wnd)).Font(ui.Font{Weight: ui.HeadlineAndTitleFontWeight}),
-		).Gap(ui.L8).
-			HoveredBackgroundColor(ui.I1).
-			FullWidth().
-			Padding(ui.Padding{}.All(ui.L4)).
-			Border(ui.Border{}.Radius(ui.L8)),
-	).Frame(ui.Frame{}.FullWidth())
+func (b *ScaffoldBuilder) avatarIcon(wnd core.Window) core.View {
+	if id := wnd.Subject().Avatar(); id != "" {
+		return avatar.URI(httpimage.URI(image.ID(id), image.FitCover, 40, 40))
+	} else {
+		return avatar.Text(wnd.Subject().Name()).Size(ui.L40)
+	}
+}
+
+func (b *ScaffoldBuilder) profileButton(wnd core.Window, menuPresentedState *core.State[bool]) core.View {
+	buttonStack := func(callback func(), title string, leading core.View) core.View {
+		return ui.HStack(
+			leading,
+			ui.Text(title),
+		).
+			Action(callback).
+			Alignment(ui.Leading).
+			Gap(ui.L16).
+			HoveredBackgroundColor(ui.M7.WithTransparency(75)).
+			Padding(ui.Padding{}.All(ui.L16)).
+			Frame(ui.Frame{MinHeight: "3.5rem"}.FullWidth()).
+			Border(ui.Border{}.Radius("1.75rem"))
+	}
+
+	if sessionManagement := b.cfg.sessionManagement; sessionManagement != nil && b.showLogin {
+		if !wnd.Subject().Valid() {
+			return buttonStack(func() {
+				wnd.Navigation().ForwardTo(sessionManagement.Pages.Login, nil)
+			}, "Anmelden", ui.ImageIcon(flowbiteOutline.ArrowLeftToBracket).Frame(ui.Frame{}.Size("1.125rem", "1.125rem")))
+		} else {
+			return buttonStack(func() {
+				menuPresentedState.Set(true)
+			}, "Mein Profil", b.avatarIcon(wnd))
+		}
+	}
+
+	return ui.Spacer()
 }
