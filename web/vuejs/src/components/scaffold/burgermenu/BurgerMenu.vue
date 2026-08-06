@@ -44,7 +44,7 @@
 					/>
 				</div>
 
-				<div class="flex flex-col justify-start items-start gap-y-4 overflow-y-auto basis-full w-full">
+				<nav class="flex flex-col justify-start items-start gap-y-4 overflow-y-auto basis-full w-full">
 					<template v-if="!subMenuVisible">
 						<!-- Top level menu entries -->
 						<template v-for="(menuEntry, index) in ui.menu?.value" :key="index">
@@ -91,7 +91,7 @@
 							@clicked="menuOpen = false"
 						/>
 					</div>
-				</div>
+				</nav>
 
 				<!-- Bottom view -->
 				<div v-if="ui.bottomView" class="w-full">

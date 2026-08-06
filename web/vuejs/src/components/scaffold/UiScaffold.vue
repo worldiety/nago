@@ -13,9 +13,9 @@
 	<BurgerMenu v-if="burgerMenuVisible" :ui="props.ui" />
 
 	<div class="min-h-full flex flex-col min-h-screen" :class="bodyWrapperClass">
-		<div class="website-content min-h-full flex-grow w-full" :style="contentStyles">
+		<main class="website-content min-h-full flex-grow w-full" :style="contentStyles">
 			<ui-generic v-if="props.ui.body" :ui="props.ui.body" :class="{ grow: ui.bodyFullSize }" />
-		</div>
+		</main>
 
 		<!-- Footer -->
 		<footer v-if="props.ui.footer" class="">

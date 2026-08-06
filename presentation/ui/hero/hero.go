@@ -174,6 +174,7 @@ func (c THero) Render(ctx core.RenderContext) core.RenderNode {
 			).Alignment(ui.Stretch).Frame(ui.Frame{Width: "30%", Height: "100%"})
 		}),
 	).
+		HtmlTag("header").
 		TextColor(c.textColor).
 		With(func(stack ui.THStack) ui.THStack {
 			if c.backgroundImage != "" {
