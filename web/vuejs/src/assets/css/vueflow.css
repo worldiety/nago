@@ -4,6 +4,10 @@
 			@apply min-w-0;
 
 			.custom-node {
+				.vue-flow__handle {
+					@apply z-[1];
+				}
+
 				&.style-default {
 					@apply bg-M2 border border-M3 rounded-lg;
 					@apply hover:border-M5;
