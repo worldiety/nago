@@ -45,7 +45,17 @@ type TCountDown struct {
 
 // CountDown creates a new countdown timer initialized with the given duration.
 // By default, days, hours, minutes, and seconds are all displayed.
+// A negative duration is clamped to zero.
 func CountDown(duration time.Duration) TCountDown {
+	// Negative values must never reach Render/proto.DurationSec: the
+	// float64->uint64 conversion there is implementation-specific for
+	// negative input and has been observed to corrupt the binary wire
+	// protocol ("varint too long"), breaking the client for the rest
+	// of the session.
+	if duration < 0 {
+		duration = 0
+	}
+
 	return TCountDown{
 		duration:    duration,
 		showDays:    true,
