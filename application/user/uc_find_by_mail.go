@@ -14,14 +14,14 @@ import (
 	"go.wdy.de/nago/pkg/std"
 )
 
-func NewFindByMail(repository Repository, mailIdx *MailIndex) FindByMail {
+func NewFindByMail(repository Repository, idx *UserIndex) FindByMail {
 	return func(subject permission.Auditable, email Email) (std.Option[User], error) {
 		if err := subject.Audit(PermFindByMail); err != nil {
 			return std.None[User](), err
 		}
 
 		// do not introduce the global mutex here, because they are not reentrant you likely get a deadlock
-		id, ok, err := mailIdx.Lookup(email)
+		id, ok, err := idx.LookupMail(email)
 		if err != nil {
 			return std.None[User](), fmt.Errorf("cannot lookup mail index: %w", err)
 		}

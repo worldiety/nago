@@ -7,8 +7,8 @@
 
 package user
 
-func NewEMailUsed(mailIdx *MailIndex) EMailUsed {
+func NewEMailUsed(idx *UserIndex) EMailUsed {
 	return func(email Email) (bool, error) {
-		return mailIdx.Used(email)
+		return idx.Used(email)
 	}
 }

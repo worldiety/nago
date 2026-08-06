@@ -53,6 +53,13 @@ var (
 	StrChangeMailInvalid = i18n.MustString("nago.admin.user.change_mail_invalid", i18n.Values{language.English: "The email address is invalid.", language.German: "Die E-Mail-Adresse ist ungültig."})
 	StrChangeMailInUse   = i18n.MustString("nago.admin.user.change_mail_in_use", i18n.Values{language.English: "The email address is already used by another user.", language.German: "Die E-Mail-Adresse wird bereits von einem anderen Nutzer verwendet."})
 	StrChangeMailOk      = i18n.MustString("nago.admin.user.change_mail_ok", i18n.Values{language.English: "Email address changed", language.German: "E-Mail-Adresse geändert"})
+
+	StrSSOIdentity     = i18n.MustString("nago.admin.user.sso_identity", i18n.Values{language.English: "Single sign-on identity", language.German: "Single-Sign-On-Identität"})
+	StrSSOIdentityDesc = i18n.MustString("nago.admin.user.sso_identity_desc", i18n.Values{
+		language.English: "Stable identifier of this account within the connected identity provider. It is used to recognize the account even if the email address has been changed there, and it is assigned automatically during the next single sign-on login.",
+		language.German:  "Stabile Kennung dieses Kontos im angebundenen Identitätsanbieter. Darüber wird das Konto auch dann wiedererkannt, wenn die E-Mail-Adresse dort geändert wurde. Die Kennung wird beim nächsten Single-Sign-On-Login automatisch hinterlegt.",
+	})
+	StrSSOIdentityUnknown = i18n.MustString("nago.admin.user.sso_identity_unknown", i18n.Values{language.English: "not yet known", language.German: "noch nicht bekannt"})
 )
 
 type UserModel struct {
@@ -63,6 +70,7 @@ type UserModel struct {
 	Status                user.AccountStatus
 	RequirePasswordChange bool
 	NLSManagedUser        bool
+	NLSUserID             user.NLSUserID
 	VerificationCode      user.Code
 
 	// some legal/regulatory properties
@@ -82,6 +90,7 @@ func (u UserModel) IntoUser() user.User {
 		Status:                u.Status,
 		RequirePasswordChange: u.RequirePasswordChange,
 		NLSManagedUser:        u.NLSManagedUser,
+		NLSUserID:             u.NLSUserID,
 		VerificationCode:      u.VerificationCode,
 		Consents:              u.Consents,
 	}
@@ -297,6 +306,7 @@ func dlgEditUser(wnd core.Window, ucUsers user.UseCases, ucGroups group.UseCases
 			Status:                usr.Status,
 			RequirePasswordChange: usr.RequirePasswordChange,
 			NLSManagedUser:        usr.NLSManagedUser,
+			NLSUserID:             usr.NLSUserID,
 			Consents:              usr.Consents,
 			VerificationCode:      usr.VerificationCode,
 		}

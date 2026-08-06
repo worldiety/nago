@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
@@ -22,24 +21,83 @@ import (
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/events"
+	"go.wdy.de/nago/pkg/std"
 	"golang.org/x/crypto/sha3"
 )
 
-func NewMergeSingleSignOnUser(mutex *sync.Mutex, repo Repository, findByMail FindByMail, loadGlobal settings.LoadGlobal, createSrcSet image.CreateSrcSet, rdb *rebac.DB) MergeSingleSignOnUser {
+// findSingleSignOnUser resolves the local user for the given external identity.
+//
+// The stable subject id of the identity provider is the primary criteria, because in contrast to the mail
+// address it never changes. Only if it is unknown, we fall back to the mail address, which also backfills the
+// subject id for accounts that have been merged before this field existed.
+func findSingleSignOnUser(repo Repository, idx *UserIndex, createData SingleSignOnUser) (std.Option[User], error) {
+	if id, ok, err := idx.LookupNLSUserID(createData.ID); err != nil {
+		return std.None[User](), fmt.Errorf("cannot lookup nls user id: %w", err)
+	} else if ok {
+		optUsr, err := repo.FindByID(id)
+		if err != nil {
+			return std.None[User](), fmt.Errorf("cannot find user by id: %w", err)
+		}
+
+		if optUsr.IsSome() {
+			return optUsr, nil
+		}
+
+		// stale index entry, fall through to the mail based matching
+		slog.Warn("nls user id index points to a missing user", "nlsUserId", createData.ID, "user", id)
+	}
+
+	id, ok, err := idx.LookupMail(createData.Email)
+	if err != nil {
+		return std.None[User](), fmt.Errorf("cannot lookup mail: %w", err)
+	}
+
+	if !ok {
+		return std.None[User](), nil
+	}
+
+	optUsr, err := repo.FindByID(id)
+	if err != nil {
+		return std.None[User](), fmt.Errorf("cannot find user by id: %w", err)
+	}
+
+	if optUsr.IsNone() {
+		return std.None[User](), nil
+	}
+
+	usr := optUsr.Unwrap()
+
+	// security note: the mail address alone must never be enough to take over an account which already
+	// belongs to a different external identity, otherwise anybody who manages to get that address assigned
+	// within any connected identity provider could hijack it. This can legitimately happen after a tenant
+	// migration, which an administrator has to resolve by hand.
+	if createData.ID != "" && usr.NLSUserID != "" && usr.NLSUserID != createData.ID {
+		slog.Error("refused nls login, mail belongs to a different external identity",
+			"user", usr.ID, "mail", createData.Email, "known", usr.NLSUserID, "provided", createData.ID)
+
+		return std.None[User](), fmt.Errorf("mail %s belongs to the external identity %s, but %s was provided: %w",
+			createData.Email, usr.NLSUserID, createData.ID, os.ErrPermission)
+	}
+
+	return optUsr, nil
+}
+
+func NewMergeSingleSignOnUser(mutex *sync.Mutex, bus events.Bus, repo Repository, idx *UserIndex, loadGlobal settings.LoadGlobal, createSrcSet image.CreateSrcSet, rdb *rebac.DB) MergeSingleSignOnUser {
 	return func(createData SingleSignOnUser, avatarBuf []byte) (ID, error) {
 		mutex.Lock()
 		defer mutex.Unlock()
 
 		cfg := settings.ReadGlobal[Settings](loadGlobal)
 
-		createData.Email = Email(strings.ToLower(string(createData.Email)))
+		createData.Email = NormalizeEmail(createData.Email)
 		if !createData.Email.Valid() {
 			return "", fmt.Errorf("email is invalid: %s", createData.Email)
 		}
 
-		optUser, err := findByMail(SU(), createData.Email)
+		optUser, err := findSingleSignOnUser(repo, idx, createData)
 		if err != nil {
-			return "", fmt.Errorf("cannot find user by mail: %w", err)
+			return "", err
 		}
 
 		if optUser.IsNone() {
@@ -57,6 +115,7 @@ func NewMergeSingleSignOnUser(mutex *sync.Mutex, repo Repository, findByMail Fin
 			usr := User{
 				ID:             id,
 				NLSManagedUser: true,
+				NLSUserID:      createData.ID,
 				Email:          createData.Email,
 				Contact: Contact{
 					Firstname:         createData.FirstName(),
@@ -124,6 +183,19 @@ func NewMergeSingleSignOnUser(mutex *sync.Mutex, repo Repository, findByMail Fin
 		// merge existing
 		user := optUser.Unwrap()
 
+		// the mail address may have been changed within the identity provider. Because we matched by the
+		// stable subject id, we can simply follow that change. The address stays verified, because the
+		// identity provider has verified it, otherwise the user would be locked out immediately.
+		if !user.Email.Equals(createData.Email) {
+			oldMail := user.Email
+			user, err = applyEmailChange(bus, repo, idx, user, createData.Email, emailChangeOptions{KeepVerified: true})
+			if err != nil {
+				return "", fmt.Errorf("cannot follow mail change of nls user %s from %s to %s: %w", user.ID, oldMail, createData.Email, err)
+			}
+
+			slog.Info("followed nls mail change", "user", user.ID, "old", oldMail, "new", createData.Email)
+		}
+
 		if len(avatarBuf) > 0 {
 			h := sha3.Sum256(avatarBuf)
 			id := image.ID(hex.EncodeToString(h[:]))
@@ -157,6 +229,10 @@ func NewMergeSingleSignOnUser(mutex *sync.Mutex, repo Repository, findByMail Fin
 
 		// clear auth status
 		user.NLSManagedUser = true
+		if createData.ID != "" {
+			// note: never clear an already known subject id, an older NLS may simply not report it
+			user.NLSUserID = createData.ID
+		}
 		user.VerificationCode = Code{}
 		user.EMailVerified = true
 		user.PasswordRequestCode = Code{}

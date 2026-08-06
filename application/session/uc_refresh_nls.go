@@ -67,6 +67,9 @@ type nlsUser struct {
 
 func (u nlsUser) intoSSOUser() user.SingleSignOnUser {
 	return user.SingleSignOnUser{
+		// note: this is the stable object id of the identity provider (currently Entra), which the NLS just
+		// passes through. It stays the same even if the mail address is changed.
+		ID:                user.NLSUserID(u.ID),
 		Firstname:         u.GivenName,
 		Lastname:          u.Surname,
 		Name:              u.DisplayName,

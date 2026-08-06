@@ -196,6 +196,11 @@ func (c Code) IsZero() bool {
 	return c.Value == "" && c.ValidUntil.IsZero()
 }
 
+// NLSUserID is the stable and opaque subject identifier of the connected identity provider, currently the
+// Entra object id which the NLS just passes through. In contrast to the mail address it never changes,
+// therefore it is the primary matching criteria for SSO managed users.
+type NLSUserID string
+
 type User struct {
 	ID                    ID            `json:"id"`
 	Email                 Email         `json:"email"`
@@ -209,6 +214,7 @@ type User struct {
 	Status                AccountStatus `json:"status,omitempty"`
 	RequirePasswordChange bool          `json:"requirePasswordChange,omitempty"`
 	NLSManagedUser        bool          `json:"nls,omitempty"`
+	NLSUserID             NLSUserID     `json:"nlsUserId,omitempty"`
 	VerificationCode      Code          `json:"verificationCode,omitzero"`
 	PasswordRequestCode   Code          `json:"passwordRequestCode,omitzero"`
 
@@ -222,6 +228,12 @@ func (u User) String() string {
 
 func (u User) SSO() bool {
 	return u.NLSManagedUser
+}
+
+// SSOID returns the stable subject identifier of the identity provider, if this user has ever been
+// authenticated through the NLS. It may be empty for accounts which have been merged before this field existed.
+func (u User) SSOID() NLSUserID {
+	return u.NLSUserID
 }
 
 func (u User) Identity() ID {

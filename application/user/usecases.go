@@ -126,6 +126,10 @@ type ListRoles func(subject AuditableUser, uid ID) iter.Seq2[role.ID, error]
 type ListGlobalPermissions func(subject AuditableUser, uid ID) iter.Seq2[permission.ID, error]
 
 type SingleSignOnUser struct {
+	// ID is the stable and opaque subject identifier of the identity provider. It is the primary matching
+	// criteria, because in contrast to the mail address it never changes. It may be empty, if the connected
+	// NLS does not provide it, in which case we fall back to mail based matching.
+	ID                NLSUserID
 	Firstname         string
 	Lastname          string
 	Name              string
@@ -248,11 +252,11 @@ type UseCases struct {
 }
 
 func NewUseCases(ctx func() context.Context, eventBus events.EventBus, rdb *rebac.DB, loadGlobal settings.LoadGlobal, users data.NotifyRepository[User, ID], roles data.ReadRepository[role.Role, role.ID], groups group.FindAll, findRoleByID role.FindByID, listRolePerms role.ListPermissions, createSrcSet image.CreateSrcSet) UseCases {
-	// note: the mail index attaches itself to the repository, thus it must be created before any
+	// note: the user index attaches itself to the repository, thus it must be created before any
 	// writing use case, otherwise updates would be lost.
-	mailIdx := NewMailIndex(users)
+	idx := NewUserIndex(users)
 
-	findByMailFn := NewFindByMail(users, mailIdx)
+	findByMailFn := NewFindByMail(users, idx)
 	var globalLock sync.Mutex
 	createFn := NewCreate(&globalLock, rdb, loadGlobal, eventBus, findByMailFn, users)
 
@@ -298,7 +302,7 @@ func NewUseCases(ctx func() context.Context, eventBus events.EventBus, rdb *reba
 		UpdateOtherRoles:          updateOtherRolesFn,
 		UpdateOtherPermissions:    updateOtherPermissionsFn,
 		UpdateOtherGroups:         updateOtherGroupsFn,
-		ChangeOtherEmail:          NewChangeOtherEmail(&globalLock, eventBus, users, mailIdx),
+		ChangeOtherEmail:          NewChangeOtherEmail(&globalLock, eventBus, users, idx),
 		ReadMyContact:             readMyContactFn,
 		SubjectFromUser:           subjectFromUserFn,
 		EnableBootstrapAdmin:      enableBootstrapAdminFn,
@@ -315,7 +319,7 @@ func NewUseCases(ctx func() context.Context, eventBus events.EventBus, rdb *reba
 		UpdateVerification:        NewUpdateVerification(&globalLock, users),
 		UpdateVerificationByMail:  NewUpdateVerificationByMail(&globalLock, users, findByMailFn),
 		FindAllIdentifiers:        findAllIdentsFn,
-		EMailUsed:                 NewEMailUsed(mailIdx),
+		EMailUsed:                 NewEMailUsed(idx),
 		CountUsers:                NewCountUsers(users),
 		GetAnonUser:               NewGetAnonUser(ctx, eventBus, loadGlobal, findRoleByID, listRolePerms),
 		Consent:                   NewConsent(&globalLock, eventBus, users),
@@ -326,7 +330,7 @@ func NewUseCases(ctx func() context.Context, eventBus events.EventBus, rdb *reba
 		ListGrantedPermissions:    NewListGrantedPermissions(rdb),
 		ListGrantedUsers:          NewListGrantedUsers(rdb),
 		ExportUsers:               NewExportUsers(users),
-		MergeSingleSignOnUser:     NewMergeSingleSignOnUser(&globalLock, users, findByMailFn, loadGlobal, createSrcSet, rdb),
+		MergeSingleSignOnUser:     NewMergeSingleSignOnUser(&globalLock, eventBus, users, idx, loadGlobal, createSrcSet, rdb),
 		ListGroups:                NewListGroups(rdb),
 		ListRoles:                 NewListRoles(rdb),
 		ListGlobalPermissions:     NewListGlobalPermissions(rdb),

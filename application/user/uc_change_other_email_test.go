@@ -103,7 +103,7 @@ func newChangeOtherEmailFixture(t *testing.T, users ...User) (ChangeOtherEmail, 
 	var mutex sync.Mutex
 	bus := &syncBus{}
 
-	return NewChangeOtherEmail(&mutex, bus, notifyRepo, NewMailIndex(notifyRepo)), repo, bus
+	return NewChangeOtherEmail(&mutex, bus, notifyRepo, NewUserIndex(notifyRepo)), repo, bus
 }
 
 func TestChangeOtherEmail_PermissionDenied(t *testing.T) {

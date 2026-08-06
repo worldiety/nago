@@ -115,6 +115,8 @@ func viewEtc(wnd core.Window, ucUsers user.UseCases, usr *core.State[UserModel])
 			),
 		),
 
+		ui.If(usr.Get().IntoUser().SSO(), ssoIdentityInfo(wnd, usr)),
+
 		passwordChangeOtherDialog(wnd, usr.Get().ID, ucUsers.ChangeOtherPassword, presentedPwdChange),
 		mailChangeOtherDialog(wnd, usr, ucUsers.ChangeOtherEmail, presentedMailChange),
 
@@ -146,6 +148,23 @@ func viewEtc(wnd core.Window, ucUsers user.UseCases, usr *core.State[UserModel])
 			),
 		),
 	).FullWidth().Gap(ui.L32)
+}
+
+// ssoIdentityInfo displays the stable subject id of the identity provider read only. It is useful to diagnose
+// matching problems, e.g. after a tenant migration, where the identifier changes and a login gets refused.
+func ssoIdentityInfo(wnd core.Window, usr *core.State[UserModel]) core.View {
+	value := string(usr.Get().NLSUserID)
+	if value == "" {
+		value = StrSSOIdentityUnknown.Get(wnd)
+	}
+
+	return ui.VStack(
+		ui.VStack(
+			ui.H2(StrSSOIdentity.Get(wnd)),
+			ui.Text(StrSSOIdentityDesc.Get(wnd)),
+			ui.TextField("", value).Disabled(true).Frame(ui.Frame{}.FullWidth()),
+		).FullWidth().Alignment(ui.Leading).Gap(ui.L8).Border(ui.Border{}.Radius(ui.L16).Width(ui.L1).Color(ui.ColorInputBorder)).Padding(ui.Padding{}.All(ui.L16)),
+	).FullWidth().Alignment(ui.Leading).Gap(ui.L32)
 }
 
 func mailChangeOtherDialog(wnd core.Window, usr *core.State[UserModel], changeOtherEmail user.ChangeOtherEmail, presented *core.State[bool]) core.View {
