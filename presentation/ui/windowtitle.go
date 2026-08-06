@@ -53,6 +53,26 @@ func H2(title string) TVStack {
 	return Heading(2, title)
 }
 
+// H3 creates a level 3 heading.
+func H3(title string) TVStack {
+	return Heading(3, title)
+}
+
+// H4 creates a level 4 heading.
+func H4(title string) TVStack {
+	return Heading(4, title)
+}
+
+// H5 creates a level 5 heading.
+func H5(title string) TVStack {
+	return Heading(5, title)
+}
+
+// H6 creates a level 6 heading.
+func H6(title string) TVStack {
+	return Heading(6, title)
+}
+
 // Heading returns a default formatted heading text. Level 1 is page heading H1 and so forth. H1 levels also
 // set automatically the window title.
 func Heading(level int, title string) TVStack {
@@ -62,18 +82,26 @@ func Heading(level int, title string) TVStack {
 			WindowTitle(title),
 			Text(title).Font(HeadlineLarge),
 			HLineWithColor(ColorAccent),
-		).Alignment(Leading).WithPadding(Padding{Top: "1rem", Bottom: "1rem"})
+		).
+			HtmlTag("h1").
+			Alignment(Leading).
+			WithPadding(Padding{Top: "1rem", Bottom: "1rem"})
 	case 2:
 		return VStack(
 			Text(title).Font(HeadlineMedium),
 			HLine(),
-		).Alignment(Leading).WithPadding(Padding{Bottom: "1rem"})
+		).
+			HtmlTag("h2").
+			Alignment(Leading).
+			WithPadding(Padding{Bottom: "1rem"})
 	case 3:
 		return VStack(Text(title).Font(HeadlineSmall))
 	case 4:
 		return VStack(Text(title).Font(TitleLarge))
 	case 5:
 		return VStack(Text(title).Font(TitleMedium))
+	case 6:
+		return VStack(Text(title).Font(TitleSmall))
 	default:
 		return VStack(Text(title).Font(TitleSmall))
 	}
