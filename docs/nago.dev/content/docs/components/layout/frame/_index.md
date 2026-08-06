@@ -11,10 +11,12 @@ dimensions. Frames are used to control layout behavior and responsiveness. All f
 |--------| ------------|
 | `FullHeight()` | FullHeight sets the frame's height to 100% of the available space. |
 | `FullWidth()` | FullWidth sets the frame's width to 100% of the available space. |
+| `Grow()` | Grow tells the frame to grow inside the available space of a flex stack |
 | `IsZero()` | IsZero returns true if all fields of the Frame are unset (zero value). |
 | `Large()` | Large sets the max width to 560dp (35rem) and Width to Full. |
 | `Larger()` | Larger sets the width to 880dp (55rem) and Width to Full. |
 | `MatchScreen()` | MatchScreen sets the frame to match the full viewport height and width. This is useful for fullscreen layouts or sections that should fill the screen. |
+| `PreventShrink()` | PreventShrink tells the frame to not shrink inside a flex stack |
 | `Size(h Length, w Length)` | Size sets both Width and Height to the given values and returns the updated Frame. |
 ---
 

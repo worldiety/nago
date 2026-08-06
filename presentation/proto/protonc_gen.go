@@ -19950,13 +19950,15 @@ type Outline struct {
 	Width  Int
 	Offset Int
 	Color  Color
+	Style  OutlineStyle
 }
 
 func (v *Outline) write(w *BinaryWriter) error {
-	var fields [4]bool
+	var fields [5]bool
 	fields[1] = !v.Width.IsZero()
 	fields[2] = !v.Offset.IsZero()
 	fields[3] = !v.Color.IsZero()
+	fields[4] = !v.Style.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -19991,6 +19993,14 @@ func (v *Outline) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[4] {
+		if err := w.writeFieldHeader(uvarint, 4); err != nil {
+			return err
+		}
+		if err := v.Style.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -20018,6 +20028,11 @@ func (v *Outline) read(r *BinaryReader) error {
 			}
 		case 3:
 			err := v.Color.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Style.read(r)
 			if err != nil {
 				return err
 			}
@@ -21052,6 +21067,33 @@ func (v *FlexProperties) read(r *BinaryReader) error {
 		}
 	}
 	return nil
+}
+
+type OutlineStyle uint64
+
+const (
+	OutlineSolid  OutlineStyle = 0
+	OutlineDotted OutlineStyle = 1
+)
+
+func (v *OutlineStyle) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *OutlineStyle) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = OutlineStyle(tmp)
+	return nil
+}
+
+func (v *OutlineStyle) reset() {
+	*v = OutlineStyle(0)
+}
+func (v *OutlineStyle) IsZero() bool {
+	return *v == 0
 }
 
 type Writeable interface {
@@ -22659,6 +22701,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 276:
 		var v FlexProperties
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 277:
+		var v OutlineStyle
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -27058,13 +27106,14 @@ func (v *Outline) reset() {
 	v.Width.reset()
 	v.Offset.reset()
 	v.Color.reset()
+	v.Style.reset()
 }
 
 func (v *Outline) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Width.IsZero() && v.Offset.IsZero() && v.Color.IsZero()
+	return v.Width.IsZero() && v.Offset.IsZero() && v.Color.IsZero() && v.Style.IsZero()
 }
 
 func (v *BorderStates) reset() {
@@ -29062,6 +29111,13 @@ func (v *AlertNotifications) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *FlexProperties) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 276); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *OutlineStyle) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 277); err != nil {
 		return err
 	}
 	return nil

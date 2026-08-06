@@ -20551,14 +20551,18 @@ export class Outline implements Writeable, Readable {
 
 	public color?: Color;
 
+	public style?: OutlineStyle;
+
 	constructor(
 		width: Int | undefined = undefined,
 		offset: Int | undefined = undefined,
-		color: Color | undefined = undefined
+		color: Color | undefined = undefined,
+		style: OutlineStyle | undefined = undefined
 	) {
 		this.width = width;
 		this.offset = offset;
 		this.color = color;
+		this.style = style;
 	}
 
 	read(reader: BinaryReader): void {
@@ -20579,6 +20583,10 @@ export class Outline implements Writeable, Readable {
 					this.color = readString(reader);
 					break;
 				}
+				case 4: {
+					this.style = readInt(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -20586,7 +20594,13 @@ export class Outline implements Writeable, Readable {
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, this.width !== undefined, this.offset !== undefined, this.color !== undefined];
+		const fields = [
+			false,
+			this.width !== undefined,
+			this.offset !== undefined,
+			this.color !== undefined,
+			this.style !== undefined,
+		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
@@ -20601,16 +20615,26 @@ export class Outline implements Writeable, Readable {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
 			writeString(writer, this.color!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 4);
+			writeInt(writer, this.style!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
-		return this.width === undefined && this.offset === undefined && this.color === undefined;
+		return (
+			this.width === undefined &&
+			this.offset === undefined &&
+			this.color === undefined &&
+			this.style === undefined
+		);
 	}
 
 	reset(): void {
 		this.width = undefined;
 		this.offset = undefined;
 		this.color = undefined;
+		this.style = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -21650,6 +21674,17 @@ export class FlexProperties implements Writeable, Readable {
 		dst.writeTypeHeader(Shapes.RECORD, 276);
 		return;
 	}
+}
+
+export type OutlineStyle = number;
+function writeTypeHeaderOutlineStyle(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 277);
+	return;
+}
+// companion enum containing all defined constants for OutlineStyle
+export enum OutlineStyleValues {
+	OutlineSolid = 0,
+	OutlineDotted = 1,
 }
 
 // Function to marshal a Writeable object into a BinaryWriter
@@ -22923,6 +22958,10 @@ export function unmarshal(src: BinaryReader): any {
 		case 276: {
 			const v = new FlexProperties();
 			v.read(src);
+			return v;
+		}
+		case 277: {
+			const v = readInt(src) as OutlineStyle;
 			return v;
 		}
 	}
