@@ -106,6 +106,16 @@ func (c *Configurator) MailManagement() (MailManagement, error) {
 			}
 		})
 
+		events.SubscribeFor[user.EMailChanged](c.eventBus, func(evt user.EMailChanged) {
+			if !evt.NotifyUser {
+				return
+			}
+
+			if err := c.SendVerificationMail(evt.ID); err != nil {
+				slog.Error("user mail changed but cannot send verification mail", "err", err)
+			}
+		})
+
 	}
 
 	return *c.mailManagement, nil

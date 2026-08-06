@@ -44,3 +44,13 @@ type ContactUpdated struct {
 	ID      ID
 	Contact Contact
 }
+
+// EMailChanged is published whenever the mail address of a user has been changed by an administrator.
+// The new address is not verified at that point in time, see also [ChangeOtherEmail].
+type EMailChanged struct {
+	ID         ID
+	OldEMail   Email
+	NewEMail   Email
+	NotifyUser bool
+	ChangedAt  time.Time
+}

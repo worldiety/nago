@@ -13,6 +13,8 @@ const (
 	NewPasswordMustBeDifferentFromOldPasswordErr NewPasswordMustBeDifferentFromOldPasswordError = "new password must be different from old password"
 	PasswordsDontMatchErr                        PasswordsDontMatchError                        = "passwords dont match"
 	InvalidOldPasswordErr                        InvalidOldPasswordError                        = "invalid old password"
+	InvalidEMailErr                              InvalidEMailError                              = "invalid email"
+	EMailAlreadyInUseErr                         EMailAlreadyInUseError                         = "email already in use"
 )
 
 type InvalidSubjectError string
@@ -54,5 +56,17 @@ func (e PasswordsDontMatchError) Error() string {
 type InvalidOldPasswordError string
 
 func (e InvalidOldPasswordError) Error() string {
+	return string(e)
+}
+
+type InvalidEMailError string
+
+func (e InvalidEMailError) Error() string {
+	return string(e)
+}
+
+type EMailAlreadyInUseError string
+
+func (e EMailAlreadyInUseError) Error() string {
 	return string(e)
 }

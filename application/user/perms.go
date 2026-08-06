@@ -23,6 +23,7 @@ var (
 	PermUpdateOtherPermissions = permission.Declare[UpdateOtherPermissions]("nago.user.update_other_permissions", "Berechtigungen von Nutzern ändern", "Träger dieser Berechtigung können die individuellen Berechtigungen vorhandener Nutzer aktualisieren.")
 	PermUpdateOtherGroups      = permission.Declare[UpdateOtherGroups]("nago.user.update_other_groups", "Gruppenzugehörigkeit von Nutzern ändern", "Träger dieser Berechtigung können die Kontaktdaten vorhandener Nutzer aktualisieren.")
 	PermUpdateaccountStatus    = permission.Declare[UpdateAccountStatus]("nago.user.update_account_status", "Account Status von Nutzern ändern", "Träger dieser Berechtigung können Nutzer aktivieren oder deaktivieren.")
+	PermChangeOtherEmail       = permission.Declare[ChangeOtherEmail]("nago.user.change_other_email", "E-Mail-Adresse von Nutzern ändern", "Träger dieser Berechtigung können die E-Mail-Adresse und damit die Login-Kennung vorhandener Nutzer ändern.")
 	PermExportUsers            = permission.Declare[ExportUsers]("nago.user.export_users", "Ausgewählte Nutzer exportieren", "Träger dieser Berechtigung können die Kontaktdaten beliebiger Nutzer exportieren.")
 
 	// deprecated use rebac api
@@ -54,6 +55,7 @@ var Permissions = []permission.ID{
 	PermUpdateOtherPermissions,
 	PermUpdateOtherGroups,
 	PermUpdateaccountStatus,
+	PermChangeOtherEmail,
 	PermExportUsers,
 	PermAddResourcePermissions,
 	PermRemoveResourcePermissions,

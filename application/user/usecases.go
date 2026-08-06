@@ -49,6 +49,15 @@ type UpdateOtherRoles func(subject AuditableUser, id ID, roles []role.ID) error
 type UpdateOtherPermissions func(subject AuditableUser, id ID, permissions []permission.ID) error
 type UpdateOtherGroups func(subject AuditableUser, id ID, groups []group.ID) error
 
+// ChangeOtherEmail sets a new email for the given user. The new address is applied immediately, but the
+// account is marked as unverified and a new verification mail is triggered through the [EMailChanged] event,
+// if notifyUser is set.
+//
+// Note that this intentionally also works for SSO/NLS managed users: if the mail has been changed within the
+// identity provider, an admin must be able to fix the local address manually, so that the matching
+// in [MergeSingleSignOnUser] works again.
+type ChangeOtherEmail func(subject AuditableUser, id ID, newEmail Email, notifyUser bool) error
+
 type AddUserToGroup func(subject AuditableUser, id ID, group group.ID) error
 
 type ReadMyContact func(subject AuditableUser) (Contact, error)
@@ -195,6 +204,7 @@ type UseCases struct {
 	UpdateOtherRoles         UpdateOtherRoles
 	UpdateOtherPermissions   UpdateOtherPermissions
 	UpdateOtherGroups        UpdateOtherGroups
+	ChangeOtherEmail         ChangeOtherEmail
 	ReadMyContact            ReadMyContact
 	SubjectFromUser          SubjectFromUser
 	EnableBootstrapAdmin     EnableBootstrapAdmin
@@ -284,6 +294,7 @@ func NewUseCases(ctx func() context.Context, eventBus events.EventBus, rdb *reba
 		UpdateOtherRoles:          updateOtherRolesFn,
 		UpdateOtherPermissions:    updateOtherPermissionsFn,
 		UpdateOtherGroups:         updateOtherGroupsFn,
+		ChangeOtherEmail:          NewChangeOtherEmail(&globalLock, eventBus, users),
 		ReadMyContact:             readMyContactFn,
 		SubjectFromUser:           subjectFromUserFn,
 		EnableBootstrapAdmin:      enableBootstrapAdminFn,
