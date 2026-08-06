@@ -9,6 +9,7 @@ package uiuser
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"go.wdy.de/nago/application/user"
@@ -19,6 +20,7 @@ import (
 
 func viewEtc(wnd core.Window, ucUsers user.UseCases, usr *core.State[UserModel]) core.View {
 	presentedPwdChange := core.AutoState[bool](wnd)
+	presentedMailChange := core.AutoState[bool](wnd)
 
 	return ui.VStack(
 		ui.Text("Die Änderungen und Aktionen werden sofort angewendet und können nicht durch 'Abbrechen' rückgängig gemacht werden."),
@@ -83,7 +85,9 @@ func viewEtc(wnd core.Window, ucUsers user.UseCases, usr *core.State[UserModel])
 			),
 		),
 
-		ui.If(!usr.Get().VerificationCode.IsZero(),
+		// security note: an unverified mail address blocks the login, thus this action must stay reachable
+		// even if no verification code is pending, e.g. after the mail address has been changed manually.
+		ui.If(!usr.Get().EMailVerified,
 			etcAction(
 				wnd,
 				"E-Mail bestätigen",
@@ -96,6 +100,12 @@ func viewEtc(wnd core.Window, ucUsers user.UseCases, usr *core.State[UserModel])
 						return
 					}
 
+					u := usr.Get()
+					u.EMailVerified = true
+					u.VerificationCode = user.Code{}
+					usr.Set(u)
+					usr.Notify()
+
 					alert.ShowBannerMessage(wnd, alert.Message{
 						Title:   "Nutzer bestätigt",
 						Message: "Der Nutzer " + usr.String() + " wurde bestätigt.",
@@ -106,6 +116,22 @@ func viewEtc(wnd core.Window, ucUsers user.UseCases, usr *core.State[UserModel])
 		),
 
 		passwordChangeOtherDialog(wnd, usr.Get().ID, ucUsers.ChangeOtherPassword, presentedPwdChange),
+		mailChangeOtherDialog(wnd, usr, ucUsers.ChangeOtherEmail, presentedMailChange),
+
+		// note: this is intentionally also offered for SSO managed users, because a mail address which has
+		// been changed within the identity provider must be repairable by hand.
+		ui.If(wnd.Subject().HasPermission(user.PermChangeOtherEmail),
+			etcAction(
+				wnd,
+				StrChangeMail.Get(wnd),
+				StrChangeMailDesc.Get(wnd),
+				"",
+				StrChangeMail.Get(wnd),
+				func() {
+					presentedMailChange.Set(true)
+				},
+			),
+		),
 
 		ui.If(!usr.Get().IntoUser().SSO(),
 			etcAction(
@@ -120,6 +146,98 @@ func viewEtc(wnd core.Window, ucUsers user.UseCases, usr *core.State[UserModel])
 			),
 		),
 	).FullWidth().Gap(ui.L32)
+}
+
+func mailChangeOtherDialog(wnd core.Window, usr *core.State[UserModel], changeOtherEmail user.ChangeOtherEmail, presented *core.State[bool]) core.View {
+	if !presented.Get() {
+		// purge our states below, if the dialog is not visible
+		return nil
+	}
+
+	newMail := core.AutoState[string](wnd)
+	notify := core.AutoState[bool](wnd).Init(func() bool {
+		return true
+	})
+	errMsg := core.AutoState[error](wnd)
+	mailErrMsg := core.AutoState[string](wnd)
+
+	currentMail := string(usr.Get().Email)
+
+	body := ui.VStack(
+		ui.If(errMsg.Get() != nil, ui.VStack(alert.BannerError(errMsg.Get())).Padding(ui.Padding{Bottom: ui.L20})),
+
+		ui.TextField(StrChangeMailCurrent.Get(wnd), currentMail).
+			Disabled(true).
+			Frame(ui.Frame{}.FullWidth()),
+
+		ui.Space(ui.L16),
+
+		ui.TextField(StrChangeMailNew.Get(wnd), newMail.Get()).
+			ID("other-new-mail").
+			InputValue(newMail).
+			ErrorText(mailErrMsg.Get()).
+			Frame(ui.Frame{}.FullWidth()),
+
+		ui.Space(ui.L16),
+
+		ui.HStack(
+			ui.Checkbox(notify.Get()).InputChecked(notify),
+			ui.VStack(
+				ui.Text(StrChangeMailNotify.Get(wnd)),
+				ui.Text(StrChangeMailNotifyDesc.Get(wnd)).Font(ui.Small),
+			).Alignment(ui.Leading).Gap(ui.L4),
+		).Alignment(ui.Leading).Gap(ui.L8).FullWidth(),
+	).FullWidth()
+
+	trimmedMail := strings.TrimSpace(newMail.Get())
+
+	return alert.Dialog(StrChangeMail.Get(wnd), body, presented, alert.Cancel(func() {
+		errMsg.Set(nil)
+		mailErrMsg.Set("")
+		newMail.Set("")
+	}),
+		alert.Width(ui.L560),
+		alert.Custom(
+			func(close func(closeDlg bool)) core.View {
+				return ui.PrimaryButton(func() {
+					errMsg.Set(nil)
+					mailErrMsg.Set("")
+
+					if err := changeOtherEmail(wnd.Subject(), usr.Get().ID, user.Email(trimmedMail), notify.Get()); err != nil {
+						switch {
+						case errors.Is(err, user.InvalidEMailErr):
+							mailErrMsg.Set(StrChangeMailInvalid.Get(wnd))
+						case errors.Is(err, user.EMailAlreadyInUseErr):
+							mailErrMsg.Set(StrChangeMailInUse.Get(wnd))
+						default:
+							errMsg.Set(err)
+						}
+
+						return
+					}
+
+					// keep the transient model in sync, so that the surrounding dialog does not show stale data.
+					// note: if the user is notified, the backend creates a fresh verification code asynchronously,
+					// which we intentionally do not mirror here.
+					u := usr.Get()
+					u.Email = user.Email(trimmedMail)
+					u.EMailVerified = false
+					u.VerificationCode = user.Code{}
+					usr.Set(u)
+					usr.Notify()
+
+					newMail.Set("")
+
+					alert.ShowBannerMessage(wnd, alert.Message{
+						Title:   StrChangeMailOk.Get(wnd),
+						Message: trimmedMail,
+						Intent:  alert.IntentOk,
+					})
+
+					close(true)
+				}).Enabled(trimmedMail != "" && !user.Email(trimmedMail).Equals(usr.Get().Email)).Title(StrChangeMail.Get(wnd))
+			},
+		))
 }
 
 func etcActionExportUsers(wnd core.Window, action func()) core.View {

@@ -37,6 +37,22 @@ var (
 	StrNotifyUserDesc    = i18n.MustString("nago.admin.user.notify_desc", i18n.Values{language.English: "Notify the user by email that this account has been created and ask them to log in. To do this, the same internal domain event is generated as if this user had been newly created. Processes or procedures that assume this event is unique may behave incorrectly.", language.German: "Den Nutzer per E-Mail darüber benachrichtigen, dass dieses Konto angelegt wurde und ihn auffordern sich anzumelden. Dazu wird das gleiche interne Domänen-Ereignis erzeugt, als ob dieser Nutzer neu angelegt wurde. Prozesse oder Abläufe die davon ausgehen, dass dieses Ereignis einmalig ist, können sich womöglich fehlerhaft verhalten."})
 	StrExportUserCSV     = i18n.MustString("nago.admin.user.export_csv", i18n.Values{language.English: "Export users as CSV", language.German: "Nutzer als CSV exportieren"})
 	StrExportUserCSVDesc = i18n.MustString("nago.admin.user.export_csv_desc", i18n.Values{language.English: "Export the selected users with their personal data to a CSV file. Please note that using this data without the users' consent could be a violation of the GDPR.", language.German: "Die ausgewählten Nutzer mit ihren persönlichen Daten in einer CSV Datei exportieren. Beachten Sie, dass die Verwendung dieser Daten ohne Zustimmung der Nutzer ein Verstoß gegen die DSGVO sein könnte."})
+
+	StrChangeMail     = i18n.MustString("nago.admin.user.change_mail", i18n.Values{language.English: "Change email address", language.German: "E-Mail-Adresse ändern"})
+	StrChangeMailDesc = i18n.MustString("nago.admin.user.change_mail_desc", i18n.Values{
+		language.English: "The email address is the login identity of the account. After the change, the account counts as unconfirmed, therefore the user cannot log in until the new address has been confirmed. Use this e.g. if the address has been changed within the connected single sign-on system, so that the account can be matched again.",
+		language.German:  "Die E-Mail-Adresse ist die Anmeldekennung des Kontos. Nach der Änderung gilt das Konto als unbestätigt, der Nutzer kann sich also erst wieder anmelden, wenn die neue Adresse bestätigt wurde. Dies wird z. B. benötigt, wenn die Adresse im angebundenen Single-Sign-On-System geändert wurde, damit das Konto wieder zugeordnet werden kann.",
+	})
+	StrChangeMailNew        = i18n.MustString("nago.admin.user.change_mail_new", i18n.Values{language.English: "New email address", language.German: "Neue E-Mail-Adresse"})
+	StrChangeMailCurrent    = i18n.MustString("nago.admin.user.change_mail_current", i18n.Values{language.English: "Current email address", language.German: "Aktuelle E-Mail-Adresse"})
+	StrChangeMailNotify     = i18n.MustString("nago.admin.user.change_mail_notify", i18n.Values{language.English: "Notify user about the new address", language.German: "Nutzer über die neue Adresse benachrichtigen"})
+	StrChangeMailNotifyDesc = i18n.MustString("nago.admin.user.change_mail_notify_desc", i18n.Values{
+		language.English: "Sends a confirmation mail to the new address. Without it, an administrator has to confirm the address manually, otherwise the user stays locked out.",
+		language.German:  "Verschickt eine Bestätigungsmail an die neue Adresse. Andernfalls muss die Adresse manuell von einem Administrator bestätigt werden, sonst bleibt der Nutzer ausgesperrt.",
+	})
+	StrChangeMailInvalid = i18n.MustString("nago.admin.user.change_mail_invalid", i18n.Values{language.English: "The email address is invalid.", language.German: "Die E-Mail-Adresse ist ungültig."})
+	StrChangeMailInUse   = i18n.MustString("nago.admin.user.change_mail_in_use", i18n.Values{language.English: "The email address is already used by another user.", language.German: "Die E-Mail-Adresse wird bereits von einem anderen Nutzer verwendet."})
+	StrChangeMailOk      = i18n.MustString("nago.admin.user.change_mail_ok", i18n.Values{language.English: "Email address changed", language.German: "E-Mail-Adresse geändert"})
 )
 
 type UserModel struct {
@@ -242,19 +258,21 @@ func PageUsers(wnd core.Window, ucUsers user.UseCases, ucGroups group.UseCases, 
 }
 
 func stateStr(usr user.User) string {
-	if usr.Enabled() {
-		if !usr.VerificationCode.IsZero() {
-			return "E-Mail-Bestätigung erforderlich"
-		}
-
-		if usr.RequirePasswordChange {
-			return "Kennwort erforderlich"
-		}
-
-		return "Aktiv"
-	} else {
+	if !usr.Enabled() {
 		return "Deaktiviert"
 	}
+
+	// security note: an unverified mail address blocks the login, no matter if a verification code is
+	// currently pending or not.
+	if !usr.EMailVerified {
+		return "E-Mail-Bestätigung erforderlich"
+	}
+
+	if usr.RequirePasswordChange {
+		return "Kennwort erforderlich"
+	}
+
+	return "Aktiv"
 }
 
 func dlgEditUser(wnd core.Window, ucUsers user.UseCases, ucGroups group.UseCases, ucRoles role.UseCases, ucPermissions permission.UseCases, presented *core.State[bool], selectedUsr *core.State[user.User]) core.View {
