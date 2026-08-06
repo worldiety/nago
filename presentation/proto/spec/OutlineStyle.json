@@ -1,0 +1,12 @@
+{
+  "kind": "Uint",
+  "id": 277,
+  "const": {
+    "0": {
+      "name": "OutlineSolid"
+    },
+    "1": {
+      "name": "OutlineDotted"
+    }
+  }
+}
