@@ -8,6 +8,7 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
 	"strconv"
 
@@ -53,6 +54,11 @@ func main() {
 				})
 			}
 
+			showBannerTechnicalError := func() {
+				stateCount.Set(stateCount.Get() + 1)
+				alert.ShowBannerError(wnd, fmt.Errorf("beep boop err %d", stateCount.Get()))
+			}
+
 			return ui.VStack(
 				ui.ThemeSwitcher(
 					ui.PrimaryButton(nil).Title("Toggle theme"),
@@ -70,6 +76,7 @@ func main() {
 								ui.PrimaryButton(func() { showBanner(alert.IntentSuccess) }).Title("Show alert Success"),
 								ui.PrimaryButton(func() { showBanner(alert.IntentWarning) }).Title("Show alert Warning"),
 								ui.PrimaryButton(func() { showBanner(alert.IntentError) }).Title("Show alert Error"),
+								ui.PrimaryButton(func() { showBannerTechnicalError() }).Title("Show alert Technical error"),
 							).Gap(ui.L16),
 						),
 					).OnDismissRequest(func() {

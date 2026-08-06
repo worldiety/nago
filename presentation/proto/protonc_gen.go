@@ -1143,16 +1143,19 @@ type Frame struct {
 	MaxHeight Length
 	Width     Length
 	Height    Length
+	// FlexProperties defines the element's behaviour within flex stacks.
+	FlexProperties FlexProperties
 }
 
 func (v *Frame) write(w *BinaryWriter) error {
-	var fields [7]bool
+	var fields [8]bool
 	fields[1] = !v.MinWidth.IsZero()
 	fields[2] = !v.MaxWidth.IsZero()
 	fields[3] = !v.MinHeight.IsZero()
 	fields[4] = !v.MaxHeight.IsZero()
 	fields[5] = !v.Width.IsZero()
 	fields[6] = !v.Height.IsZero()
+	fields[7] = !v.FlexProperties.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -1211,6 +1214,14 @@ func (v *Frame) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[7] {
+		if err := w.writeFieldHeader(record, 7); err != nil {
+			return err
+		}
+		if err := v.FlexProperties.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -1253,6 +1264,11 @@ func (v *Frame) read(r *BinaryReader) error {
 			}
 		case 6:
 			err := v.Height.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.FlexProperties.read(r)
 			if err != nil {
 				return err
 			}
@@ -13440,10 +13456,11 @@ type Stack struct {
 	Url         URI
 	Target      Str
 	Orientation Orientation
+	HtmlTag     Str
 }
 
 func (v *Stack) write(w *BinaryWriter) error {
-	var fields [28]bool
+	var fields [29]bool
 	fields[1] = !v.Children.IsZero()
 	fields[2] = !v.Gap.IsZero()
 	fields[3] = !v.Frame.IsZero()
@@ -13471,6 +13488,7 @@ func (v *Stack) write(w *BinaryWriter) error {
 	fields[25] = !v.Url.IsZero()
 	fields[26] = !v.Target.IsZero()
 	fields[27] = !v.Orientation.IsZero()
+	fields[28] = !v.HtmlTag.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -13697,6 +13715,14 @@ func (v *Stack) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[28] {
+		if err := w.writeFieldHeader(byteSlice, 28); err != nil {
+			return err
+		}
+		if err := v.HtmlTag.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -13844,6 +13870,11 @@ func (v *Stack) read(r *BinaryReader) error {
 			}
 		case 27:
 			err := v.Orientation.read(r)
+			if err != nil {
+				return err
+			}
+		case 28:
+			err := v.HtmlTag.read(r)
 			if err != nil {
 				return err
 			}
@@ -20958,6 +20989,71 @@ func (v *AlertNotifications) read(r *BinaryReader) error {
 	return nil
 }
 
+type FlexProperties struct {
+	Grow          Bool
+	PreventShrink Bool
+}
+
+func (v *FlexProperties) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Grow.IsZero()
+	fields[2] = !v.PreventShrink.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(uvarint, 1); err != nil {
+			return err
+		}
+		if err := v.Grow.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.PreventShrink.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *FlexProperties) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Grow.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.PreventShrink.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -22561,6 +22657,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 			return nil, err
 		}
 		return &v, nil
+	case 276:
+		var v FlexProperties
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
 	default:
 		return nil, fmt.Errorf("unknown type in marshal: %d", tid)
 	}
@@ -22729,13 +22831,14 @@ func (v *Frame) reset() {
 	v.MaxHeight.reset()
 	v.Width.reset()
 	v.Height.reset()
+	v.FlexProperties.reset()
 }
 
 func (v *Frame) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.MinWidth.IsZero() && v.MaxWidth.IsZero() && v.MinHeight.IsZero() && v.MaxHeight.IsZero() && v.Width.IsZero() && v.Height.IsZero()
+	return v.MinWidth.IsZero() && v.MaxWidth.IsZero() && v.MinHeight.IsZero() && v.MaxHeight.IsZero() && v.Width.IsZero() && v.Height.IsZero() && v.FlexProperties.IsZero()
 }
 
 func (v *Padding) reset() {
@@ -25781,13 +25884,14 @@ func (v *Stack) reset() {
 	v.Url.reset()
 	v.Target.reset()
 	v.Orientation.reset()
+	v.HtmlTag.reset()
 }
 
 func (v *Stack) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Children.IsZero() && v.Gap.IsZero() && v.Frame.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.BackgroundColorStates.IsZero() && v.Outline.IsZero() && v.Wrap.IsZero() && v.StylePreset.IsZero() && v.Position.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero() && v.TextColor.IsZero() && v.NoClip.IsZero() && v.Animation.IsZero() && v.Transformation.IsZero() && v.Opacity.IsZero() && v.Background.IsZero() && v.Url.IsZero() && v.Target.IsZero() && v.Orientation.IsZero()
+	return v.Children.IsZero() && v.Gap.IsZero() && v.Frame.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.Padding.IsZero() && v.AccessibilityLabel.IsZero() && v.Border.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.BackgroundColorStates.IsZero() && v.Outline.IsZero() && v.Wrap.IsZero() && v.StylePreset.IsZero() && v.Position.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero() && v.TextColor.IsZero() && v.NoClip.IsZero() && v.Animation.IsZero() && v.Transformation.IsZero() && v.Opacity.IsZero() && v.Background.IsZero() && v.Url.IsZero() && v.Target.IsZero() && v.Orientation.IsZero() && v.HtmlTag.IsZero()
 }
 
 func (v *Canvas) reset() {
@@ -27101,6 +27205,18 @@ func (v *AlertNotifications) IsZero() bool {
 		return true
 	}
 	return v.Notifications.IsZero() && v.CloseAll.IsZero()
+}
+
+func (v *FlexProperties) reset() {
+	v.Grow.reset()
+	v.PreventShrink.reset()
+}
+
+func (v *FlexProperties) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Grow.IsZero() && v.PreventShrink.IsZero()
 }
 
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
@@ -28939,6 +29055,13 @@ func (v *SignatureField) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *AlertNotifications) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 275); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *FlexProperties) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 276); err != nil {
 		return err
 	}
 	return nil

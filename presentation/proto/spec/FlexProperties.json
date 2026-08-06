@@ -1,0 +1,14 @@
+{
+  "kind": "Record",
+  "id": 276,
+  "fields": {
+    "1": {
+      "name": "Grow",
+      "type": "Bool"
+    },
+    "2": {
+      "name": "PreventShrink",
+      "type": "Bool"
+    }
+  }
+}

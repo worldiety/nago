@@ -995,13 +995,17 @@ export class Frame implements Writeable, Readable {
 
 	public height?: Length;
 
+	// FlexProperties defines the element's behaviour within flex stacks.
+	public flexProperties?: FlexProperties;
+
 	constructor(
 		minWidth: Length | undefined = undefined,
 		maxWidth: Length | undefined = undefined,
 		minHeight: Length | undefined = undefined,
 		maxHeight: Length | undefined = undefined,
 		width: Length | undefined = undefined,
-		height: Length | undefined = undefined
+		height: Length | undefined = undefined,
+		flexProperties: FlexProperties | undefined = undefined
 	) {
 		this.minWidth = minWidth;
 		this.maxWidth = maxWidth;
@@ -1009,6 +1013,7 @@ export class Frame implements Writeable, Readable {
 		this.maxHeight = maxHeight;
 		this.width = width;
 		this.height = height;
+		this.flexProperties = flexProperties;
 	}
 
 	read(reader: BinaryReader): void {
@@ -1041,6 +1046,11 @@ export class Frame implements Writeable, Readable {
 					this.height = readString(reader);
 					break;
 				}
+				case 7: {
+					this.flexProperties = new FlexProperties();
+					this.flexProperties.read(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -1056,6 +1066,7 @@ export class Frame implements Writeable, Readable {
 			this.maxHeight !== undefined,
 			this.width !== undefined,
 			this.height !== undefined,
+			this.flexProperties !== undefined && !this.flexProperties.isZero(),
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -1083,6 +1094,10 @@ export class Frame implements Writeable, Readable {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 6);
 			writeString(writer, this.height!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.RECORD, 7);
+			this.flexProperties!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -1092,7 +1107,8 @@ export class Frame implements Writeable, Readable {
 			this.minHeight === undefined &&
 			this.maxHeight === undefined &&
 			this.width === undefined &&
-			this.height === undefined
+			this.height === undefined &&
+			(this.flexProperties === undefined || this.flexProperties.isZero())
 		);
 	}
 
@@ -1103,6 +1119,7 @@ export class Frame implements Writeable, Readable {
 		this.maxHeight = undefined;
 		this.width = undefined;
 		this.height = undefined;
+		this.flexProperties = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -13994,6 +14011,8 @@ export class Stack implements Writeable, Readable, Component {
 
 	public orientation?: Orientation;
 
+	public htmlTag?: Str;
+
 	constructor(
 		children: Components | undefined = undefined,
 		gap: Length | undefined = undefined,
@@ -14021,7 +14040,8 @@ export class Stack implements Writeable, Readable, Component {
 		background: Background | undefined = undefined,
 		url: URI | undefined = undefined,
 		target: Str | undefined = undefined,
-		orientation: Orientation | undefined = undefined
+		orientation: Orientation | undefined = undefined,
+		htmlTag: Str | undefined = undefined
 	) {
 		this.children = children;
 		this.gap = gap;
@@ -14050,6 +14070,7 @@ export class Stack implements Writeable, Readable, Component {
 		this.url = url;
 		this.target = target;
 		this.orientation = orientation;
+		this.htmlTag = htmlTag;
 	}
 
 	read(reader: BinaryReader): void {
@@ -14176,6 +14197,10 @@ export class Stack implements Writeable, Readable, Component {
 					this.orientation = readInt(reader);
 					break;
 				}
+				case 28: {
+					this.htmlTag = readString(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -14212,6 +14237,7 @@ export class Stack implements Writeable, Readable, Component {
 			this.url !== undefined,
 			this.target !== undefined,
 			this.orientation !== undefined,
+			this.htmlTag !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -14323,6 +14349,10 @@ export class Stack implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.UVARINT, 27);
 			writeInt(writer, this.orientation!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[28]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 28);
+			writeString(writer, this.htmlTag!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -14353,7 +14383,8 @@ export class Stack implements Writeable, Readable, Component {
 			(this.background === undefined || this.background.isZero()) &&
 			this.url === undefined &&
 			this.target === undefined &&
-			this.orientation === undefined
+			this.orientation === undefined &&
+			this.htmlTag === undefined
 		);
 	}
 
@@ -14385,6 +14416,7 @@ export class Stack implements Writeable, Readable, Component {
 		this.url = undefined;
 		this.target = undefined;
 		this.orientation = undefined;
+		this.htmlTag = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -21561,6 +21593,65 @@ export class AlertNotifications implements Writeable, Readable, Component {
 	isComponent(): void {}
 }
 
+export class FlexProperties implements Writeable, Readable {
+	public grow?: Bool;
+
+	public preventShrink?: Bool;
+
+	constructor(grow: Bool | undefined = undefined, preventShrink: Bool | undefined = undefined) {
+		this.grow = grow;
+		this.preventShrink = preventShrink;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.grow = readBool(reader);
+					break;
+				}
+				case 2: {
+					this.preventShrink = readBool(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.grow !== undefined, this.preventShrink !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 1);
+			writeBool(writer, this.grow!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 2);
+			writeBool(writer, this.preventShrink!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.grow === undefined && this.preventShrink === undefined;
+	}
+
+	reset(): void {
+		this.grow = undefined;
+		this.preventShrink = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 276);
+		return;
+	}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -22826,6 +22917,11 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 275: {
 			const v = new AlertNotifications();
+			v.read(src);
+			return v;
+		}
+		case 276: {
+			const v = new FlexProperties();
 			v.read(src);
 			return v;
 		}

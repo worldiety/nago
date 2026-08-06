@@ -15,12 +15,14 @@ import "go.wdy.de/nago/presentation/proto"
 // dimensions. Frames are used to control layout behavior and responsiveness.
 // All fields are optional. If a field is zero, it will not constrain the layout.
 type Frame struct {
-	MinWidth  Length `json:"minWidth,omitempty"`
-	MaxWidth  Length `json:"maxWidth,omitempty"`
-	MinHeight Length `json:"minHeight,omitempty"`
-	MaxHeight Length `json:"maxHeight,omitempty"`
-	Width     Length `json:"width,omitempty"`
-	Height    Length `json:"height,omitempty"`
+	MinWidth          Length `json:"minWidth,omitempty"`
+	MaxWidth          Length `json:"maxWidth,omitempty"`
+	MinHeight         Length `json:"minHeight,omitempty"`
+	MaxHeight         Length `json:"maxHeight,omitempty"`
+	Width             Length `json:"width,omitempty"`
+	Height            Length `json:"height,omitempty"`
+	FlexGrow          bool   `json:"flexGrow,omitempty"`
+	FlexPreventShrink bool   `json:"flexPreventShrink,omitempty"`
 }
 
 // IsZero returns true if all fields of the Frame are unset (zero value).
@@ -36,6 +38,10 @@ func (f Frame) ora() proto.Frame {
 		MaxHeight: proto.Length(f.MaxHeight),
 		Width:     proto.Length(f.Width),
 		Height:    proto.Length(f.Height),
+		FlexProperties: proto.FlexProperties{
+			Grow:          proto.Bool(f.FlexGrow),
+			PreventShrink: proto.Bool(f.FlexPreventShrink),
+		},
 	}
 }
 
@@ -77,5 +83,17 @@ func (f Frame) Larger() Frame {
 // FullHeight sets the frame's height to 100% of the available space.
 func (f Frame) FullHeight() Frame {
 	f.Height = "100%"
+	return f
+}
+
+// Grow tells the frame to grow inside the available space of a flex stack
+func (f Frame) Grow() Frame {
+	f.FlexGrow = true
+	return f
+}
+
+// PreventShrink tells the frame to not shrink inside a flex stack
+func (f Frame) PreventShrink() Frame {
+	f.FlexPreventShrink = true
 	return f
 }

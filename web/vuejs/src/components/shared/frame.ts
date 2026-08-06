@@ -39,6 +39,14 @@ export function frameCSS(frame?: Frame): string[] {
 		styles.push('max-height:' + cssLengthValue(frame.maxHeight));
 	}
 
+	if (frame.flexProperties?.grow) {
+		styles.push('flex-grow: 1');
+	}
+
+	if (frame.flexProperties?.preventShrink) {
+		styles.push('flex-shrink: 0');
+	}
+
 	return styles;
 }
 

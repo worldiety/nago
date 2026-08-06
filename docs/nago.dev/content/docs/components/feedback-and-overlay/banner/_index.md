@@ -20,9 +20,10 @@ according to intent (e. g. , success, warning, error). It also supports a callba
 ## Methods
 | Method | Description |
 |--------| ------------|
-| `AutoCloseTimeoutOrDefault(d time.Duration)` | AutoCloseTimeoutOrDefault either takes the given duration d or timeouts after 5 seconds. |
+| `AutoCloseTimeoutOrDefault(d time.Duration)` | AutoCloseTimeoutOrDefault either takes the given duration d or timeouts after 5 seconds. Deprecated: Will be removed because of accessibility concerns. |
 | `Closeable(presented *core.State[bool])` | Closeable makes the banner dismissible by binding its visibility to the given state. |
 | `Frame(frame ui.Frame)` | Frame sets a custom frame (layout constraints) for the banner. |
+| `ID(id string)` | ID sets an optional ID for the banner component |
 | `Intent(intent Intent)` | Intent sets the visual intent of the banner (e.g., success, warning, error). |
 | `OnClosed(fn func())` | OnClosed sets a callback function that is triggered when the banner is closed. |
 ---
