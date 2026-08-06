@@ -99,7 +99,7 @@ export function borderCSS(border?: Border): string[] {
 		}
 
 		css.push(
-			`box-shadow: ${cssLengthValue(border.boxShadow.x)} ${cssLengthValue(border.boxShadow.y)} ${cssLengthValue(border.boxShadow.radius)} 0 ${border.boxShadow.color}`
+			`box-shadow: ${cssLengthValue(border.boxShadow.x)} ${cssLengthValue(border.boxShadow.y)} ${cssLengthValue(border.boxShadow.radius)} 0 ${colorValue(border.boxShadow.color)}`
 		);
 	}
 
