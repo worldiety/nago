@@ -26,6 +26,11 @@
     "6": {
       "name": "Height",
       "type": "Length"
+    },
+    "7": {
+      "doc": "FlexProperties defines the element's behaviour within flex stacks.",
+      "name": "FlexProperties",
+      "type": "FlexProperties"
     }
   }
 }

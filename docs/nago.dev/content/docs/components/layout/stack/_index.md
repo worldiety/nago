@@ -39,10 +39,12 @@ you need to apply additional padding.
 | `Frame(frame Frame)` |  |
 | `FullWidth()` |  |
 | `Gap(gap Length)` |  |
+| `Grow(grow bool)` | Grow defines whether |
 | `HRef(url core.URI)` | HRef sets the URL that the button navigates to when clicked if no action is specified. If both URL and Action are set, the URL takes precedence. This avoids another render cycle if the only goal is to navigate to a different page. It also avoids issues with browser which block async browser interactions like Safari. In fact, the [core.Navigation.Open] does not work properly on Safari. See also [TButton.Target]. |
 | `HoveredBackgroundColor(backgroundColor Color)` | HoveredBackgroundColor sets the background color of the stack when the user hovers over it. |
 | `HoveredBorder(border Border)` | HoveredBorder sets the border styling when the stack is hovered. |
 | `HoveredOutline(outline Outline)` | HoveredOutline sets the outline styling when the stack is hovered. |
+| `HtmlTag(tag string)` | HtmlTag defines the html, that the stack should be rendered as. |
 | `ID(id string)` | ID assigns a unique identifier to the stack, useful for testing or referencing. |
 | `Layout(layout StackLayout)` |  |
 | `NoClip(b bool)` |  |

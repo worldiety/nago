@@ -65,12 +65,16 @@ type TStack struct {
 	transformation         Transformation
 	originTrace            string
 	adapt                  func(wnd core.Window, stack TStack) TStack
+	htmlTag                string
+	flexGrow               bool
+	flexShrink             bool
 }
 
 // Stack is a responsive variant which decides between [VStack] and [HStack].
 func Stack(children ...core.View) TStack {
 	return TStack{
-		children: children,
+		children:   children,
+		flexShrink: true,
 	}
 }
 
@@ -79,8 +83,9 @@ func Stack(children ...core.View) TStack {
 // you need to apply additional padding.
 func HStack(children ...core.View) TStack {
 	c := TStack{
-		children: children,
-		layout:   StackLayoutHorizontal,
+		children:   children,
+		layout:     StackLayoutHorizontal,
+		flexShrink: true,
 	}
 
 	if core.Debug {
@@ -95,8 +100,9 @@ func HStack(children ...core.View) TStack {
 // you need to apply additional padding.
 func VStack(children ...core.View) TStack {
 	c := TStack{
-		children: children,
-		layout:   StackLayoutVertical,
+		children:   children,
+		layout:     StackLayoutVertical,
+		flexShrink: true,
 	}
 
 	if core.Debug {
@@ -339,6 +345,12 @@ func (c TStack) Layout(layout StackLayout) TStack {
 	return c
 }
 
+// HtmlTag defines the html, that the stack should be rendered as.
+func (c TStack) HtmlTag(tag string) TStack {
+	c.htmlTag = tag
+	return c
+}
+
 func (c TStack) Render(ctx core.RenderContext) core.RenderNode {
 	wnd := ctx.Window()
 	if c.adapt != nil {
@@ -398,6 +410,7 @@ func (c TStack) Render(ctx core.RenderContext) core.RenderNode {
 		Url:            proto.URI(c.url),
 		Target:         proto.Str(c.target),
 		Orientation:    orientation,
+		HtmlTag:        proto.Str(c.htmlTag),
 	}
 }
 

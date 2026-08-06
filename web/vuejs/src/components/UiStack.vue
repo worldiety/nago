@@ -45,7 +45,7 @@ const serviceAdapter = useServiceAdapter();
 
 const isDiv = computed<boolean>(() => {
 	return (
-		!(props.ui.orientation === OrientationValues.Horizontal && props.ui.url) &&
+		!isA.value &&
 		(props.ui.stylePreset === StylePresetValues.StyleNone || props.ui.stylePreset === undefined) &&
 		!props.ui.invisible
 	);
@@ -53,7 +53,7 @@ const isDiv = computed<boolean>(() => {
 
 const isButton = computed<boolean>(() => {
 	return (
-		!(props.ui.orientation === OrientationValues.Horizontal && props.ui.url) &&
+		!isA.value &&
 		props.ui.stylePreset !== StylePresetValues.StyleNone &&
 		props.ui.stylePreset !== undefined &&
 		(props.ui.invisible === undefined || !props.ui.invisible)
@@ -263,8 +263,9 @@ function onKeydown(event: KeyboardEvent) {
 </script>
 
 <template>
-	<div
-		v-if="isDiv"
+	<component
+		:is="ui.htmlTag || 'div'"
+		v-if="isDiv || ui.htmlTag"
 		:id="id"
 		:class="classes"
 		:title="props.ui.accessibilityLabel"
@@ -273,7 +274,7 @@ function onKeydown(event: KeyboardEvent) {
 		@keydown="onKeydown"
 	>
 		<ui-generic v-for="childUi in props.ui.children?.value" :ui="childUi" />
-	</div>
+	</component>
 
 	<button
 		v-else-if="isButton"

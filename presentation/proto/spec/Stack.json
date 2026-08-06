@@ -114,6 +114,10 @@
     "27": {
       "name": "Orientation",
       "type": "Orientation"
+    },
+    "28": {
+      "name": "HtmlTag",
+      "type": "Str"
     }
   }
 }

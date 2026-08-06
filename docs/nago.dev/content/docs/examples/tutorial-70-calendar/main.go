@@ -273,9 +273,19 @@ func calStartTimeSeqTimeExample(chipAlignment ui.Alignment, txtColor color.Color
 				At: time.Date(2026, 7, 11, 14, 30, 0, 0, time.Local),
 			},
 			Label: "Mittagschläfchen",
-			Category: calendar.Category{
-				Label: "Kategorie 2",
-				Color: "#ffff00",
+			Categories: []calendar.Category{
+				{
+					Label: "Kategorie 1",
+					Color: "#ff0000",
+				},
+				{
+					Label: "Kategorie 2",
+					Color: "#00ffff",
+				},
+				{
+					Label: "Kategorie 3",
+					Color: "#00ff00",
+				},
 			},
 			Chips: []calendar.Chip{
 				{
@@ -299,5 +309,6 @@ func calStartTimeSeqTimeExample(chipAlignment ui.Alignment, txtColor color.Color
 		},
 	).ViewPort(calendar.Day(2026, 7, 11)).
 		FullWidth().
+		MaxCategories(3).
 		Style(calendar.StartTimeSequence)
 }
