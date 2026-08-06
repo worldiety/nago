@@ -11,6 +11,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -302,6 +303,41 @@ func TestProjectionAllSnapshot(t *testing.T) {
 	}
 	if len(seen) != 3 || seen["1"] != "A" || seen["2"] != "B" || seen["3"] != "C" {
 		t.Fatalf("All snapshot wrong: %+v", seen)
+	}
+}
+
+// TestProjectionAllStableOrder pins the ordering contract of All: keys are
+// yielded ascending, identically on every call. The keys are written in an order
+// that is neither ascending nor descending, so a naive map range would surface
+// Go's per-range randomisation. A single pass could pass by chance, hence many
+// passes are compared against each other and against the expected order.
+func TestProjectionAllStableOrder(t *testing.T) {
+	msgs := openNDBMessages(t)
+	backend := evs.NewNDBBackend[Evt, *Person](msgs)
+	option.MustZero(backend.Register(reflectTypeOf(FirstnameUpdated{}), "FirstnameUpdated"))
+
+	detail := newPersonDetail(msgs)
+	stop := detail.Run()
+	defer stop()
+
+	// insertion order deliberately scrambled relative to the sorted order
+	insertion := []PID{"m", "c", "z", "a", "q", "b", "y", "d", "x", "e"}
+	var last ndb.Seq
+	for _, pid := range insertion {
+		last = appendPerson(t, backend, FirstnameUpdated{Person: pid, Firstname: string(pid)})
+	}
+	waitProcessed(t, detail, last, 2*time.Second)
+
+	want := slices.Sorted(slices.Values(insertion))
+
+	for pass := 0; pass < 50; pass++ {
+		var got []PID
+		for k := range detail.All() {
+			got = append(got, k)
+		}
+		if !slices.Equal(got, want) {
+			t.Fatalf("pass %d: All() order = %v, want %v", pass, got, want)
+		}
 	}
 }
 

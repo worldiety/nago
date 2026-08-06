@@ -8,12 +8,14 @@
 package evs
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
 	"iter"
 	"log/slog"
 	"reflect"
+	"slices"
 	"sync"
 	"sync/atomic"
 
@@ -472,6 +474,13 @@ func (p *Projection[K, S]) snapshotOf(cell *stateCell[S]) S {
 // may advance the projection while the caller ranges; the caller observes a
 // consistent set as of the call. Each yielded S is a deep clone (served via the
 // same RCU path as [Projection.Get]).
+//
+// # Ordering
+//
+// Keys are yielded in ascending order. This is part of the contract: the same
+// key set always iterates identically, across repeated calls, process restarts
+// and rebuilds. Do not fall back to raw map order here — Go randomises it per
+// range, which makes callers (and their golden tests) intermittently flaky.
 func (p *Projection[K, S]) All() iter.Seq2[K, S] {
 	p.mu.RLock()
 	type entry struct {
@@ -483,6 +492,9 @@ func (p *Projection[K, S]) All() iter.Seq2[K, S] {
 		cells = append(cells, entry{k, cell})
 	}
 	p.mu.RUnlock()
+
+	// Sorted outside the lock: cells is local and exclusively ours by now.
+	slices.SortFunc(cells, func(a, b entry) int { return cmp.Compare(a.k, b.k) })
 
 	return func(yield func(K, S) bool) {
 		for _, e := range cells {
