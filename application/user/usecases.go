@@ -248,7 +248,11 @@ type UseCases struct {
 }
 
 func NewUseCases(ctx func() context.Context, eventBus events.EventBus, rdb *rebac.DB, loadGlobal settings.LoadGlobal, users data.NotifyRepository[User, ID], roles data.ReadRepository[role.Role, role.ID], groups group.FindAll, findRoleByID role.FindByID, listRolePerms role.ListPermissions, createSrcSet image.CreateSrcSet) UseCases {
-	findByMailFn := NewFindByMail(users)
+	// note: the mail index attaches itself to the repository, thus it must be created before any
+	// writing use case, otherwise updates would be lost.
+	mailIdx := NewMailIndex(users)
+
+	findByMailFn := NewFindByMail(users, mailIdx)
 	var globalLock sync.Mutex
 	createFn := NewCreate(&globalLock, rdb, loadGlobal, eventBus, findByMailFn, users)
 
@@ -294,7 +298,7 @@ func NewUseCases(ctx func() context.Context, eventBus events.EventBus, rdb *reba
 		UpdateOtherRoles:          updateOtherRolesFn,
 		UpdateOtherPermissions:    updateOtherPermissionsFn,
 		UpdateOtherGroups:         updateOtherGroupsFn,
-		ChangeOtherEmail:          NewChangeOtherEmail(&globalLock, eventBus, users),
+		ChangeOtherEmail:          NewChangeOtherEmail(&globalLock, eventBus, users, mailIdx),
 		ReadMyContact:             readMyContactFn,
 		SubjectFromUser:           subjectFromUserFn,
 		EnableBootstrapAdmin:      enableBootstrapAdminFn,
@@ -311,7 +315,7 @@ func NewUseCases(ctx func() context.Context, eventBus events.EventBus, rdb *reba
 		UpdateVerification:        NewUpdateVerification(&globalLock, users),
 		UpdateVerificationByMail:  NewUpdateVerificationByMail(&globalLock, users, findByMailFn),
 		FindAllIdentifiers:        findAllIdentsFn,
-		EMailUsed:                 NewEMailUsed(users),
+		EMailUsed:                 NewEMailUsed(mailIdx),
 		CountUsers:                NewCountUsers(users),
 		GetAnonUser:               NewGetAnonUser(ctx, eventBus, loadGlobal, findRoleByID, listRolePerms),
 		Consent:                   NewConsent(&globalLock, eventBus, users),

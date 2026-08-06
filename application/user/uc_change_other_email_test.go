@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/data/mem"
 	"go.wdy.de/nago/pkg/events"
 )
@@ -97,10 +98,12 @@ func newChangeOtherEmailFixture(t *testing.T, users ...User) (ChangeOtherEmail, 
 		}
 	}
 
+	notifyRepo := data.NewNotifyRepository[User, ID](nil, repo)
+
 	var mutex sync.Mutex
 	bus := &syncBus{}
 
-	return NewChangeOtherEmail(&mutex, bus, repo), repo, bus
+	return NewChangeOtherEmail(&mutex, bus, notifyRepo, NewMailIndex(notifyRepo)), repo, bus
 }
 
 func TestChangeOtherEmail_PermissionDenied(t *testing.T) {

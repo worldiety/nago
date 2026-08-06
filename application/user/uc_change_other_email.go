@@ -16,7 +16,7 @@ import (
 	"go.wdy.de/nago/pkg/std"
 )
 
-func NewChangeOtherEmail(mutex *sync.Mutex, bus events.Bus, repo Repository) ChangeOtherEmail {
+func NewChangeOtherEmail(mutex *sync.Mutex, bus events.Bus, repo Repository, mailIdx *MailIndex) ChangeOtherEmail {
 	return func(subject AuditableUser, id ID, newEmail Email, notifyUser bool) error {
 		if err := subject.Audit(PermChangeOtherEmail); err != nil {
 			return err
@@ -45,16 +45,14 @@ func NewChangeOtherEmail(mutex *sync.Mutex, bus events.Bus, repo Repository) Cha
 			return nil
 		}
 
-		// security note: the mail address is the login identity, thus it must be unique. We scan the repository
-		// directly, so that we don't require an additional FindByMail permission for the subject.
-		for other, err := range repo.All() {
-			if err != nil {
-				return fmt.Errorf("cannot scan users: %w", err)
-			}
+		// security note: the mail address is the login identity, thus it must be unique.
+		inUse, err := mailIdx.UsedByOther(newEmail, usr.ID)
+		if err != nil {
+			return fmt.Errorf("cannot check mail uniqueness: %w", err)
+		}
 
-			if other.ID != usr.ID && other.Email.Equals(newEmail) {
-				return std.NewLocalizedError("Nutzer nicht aktualisiert", "Die E-Mail-Adresse wird bereits von einem anderen Nutzer verwendet.").WithError(EMailAlreadyInUseErr)
-			}
+		if inUse {
+			return std.NewLocalizedError("Nutzer nicht aktualisiert", "Die E-Mail-Adresse wird bereits von einem anderen Nutzer verwendet.").WithError(EMailAlreadyInUseErr)
 		}
 
 		// note: we intentionally do NOT block SSO/NLS managed users here. If the mail address has been changed
