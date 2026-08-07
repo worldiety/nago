@@ -9,6 +9,8 @@
 import { inject } from 'vue';
 import { themeManagerKey } from '@/shared/injectionKeys';
 import { Locale, Theme, Themes } from '@/shared/proto/nprotoc_gen';
+import { requestScopeConfigurationChange } from '@/eventhandling';
+import ServiceAdapter from '@/shared/network/serviceAdapter';
 
 export default class ThemeManager {
 	private readonly localStorageKey = 'color-theme';
@@ -21,12 +23,15 @@ export default class ThemeManager {
 		if (!localStorage.getItem(this.localStorageKey)) {
 			localStorage.setItem(this.localStorageKey, ThemeKey.SYSTEM);
 		}
-
-		window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', this.applyActiveTheme.bind(this));
 	}
 
 	setThemes(themes: Themes): void {
 		this.themes = themes;
+	}
+
+	systemThemeChanged(serviceAdapter: ServiceAdapter): void {
+		requestScopeConfigurationChange(serviceAdapter, this);
+		this.applyActiveTheme();
 	}
 
 	applyActiveTheme(): void {
