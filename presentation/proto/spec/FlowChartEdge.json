@@ -42,6 +42,14 @@
     "10": {
       "name": "MarkerEnd",
       "type": "FlowChartEdgeMarker"
+    },
+    "11": {
+      "name": "LabelBgColor",
+      "type": "Color"
+    },
+    "12": {
+      "name": "LabelTextColor",
+      "type": "Color"
     }
   }
 }

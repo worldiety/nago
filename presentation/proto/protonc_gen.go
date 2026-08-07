@@ -18404,20 +18404,22 @@ func (v *FlowChartEdgeMarker) IsZero() bool {
 
 // FlowChartEdge connects two nodes in a flow chart.
 type FlowChartEdge struct {
-	Id           Str
-	SourceNodeId Str
-	TargetNodeId Str
-	Label        Str
-	Style        FlowChartEdgeStyle
-	Color        Color
-	Width        Float
-	Animated     Bool
-	MarkerStart  FlowChartEdgeMarker
-	MarkerEnd    FlowChartEdgeMarker
+	Id             Str
+	SourceNodeId   Str
+	TargetNodeId   Str
+	Label          Str
+	Style          FlowChartEdgeStyle
+	Color          Color
+	Width          Float
+	Animated       Bool
+	MarkerStart    FlowChartEdgeMarker
+	MarkerEnd      FlowChartEdgeMarker
+	LabelBgColor   Color
+	LabelTextColor Color
 }
 
 func (v *FlowChartEdge) write(w *BinaryWriter) error {
-	var fields [11]bool
+	var fields [13]bool
 	fields[1] = !v.Id.IsZero()
 	fields[2] = !v.SourceNodeId.IsZero()
 	fields[3] = !v.TargetNodeId.IsZero()
@@ -18428,6 +18430,8 @@ func (v *FlowChartEdge) write(w *BinaryWriter) error {
 	fields[8] = !v.Animated.IsZero()
 	fields[9] = !v.MarkerStart.IsZero()
 	fields[10] = !v.MarkerEnd.IsZero()
+	fields[11] = !v.LabelBgColor.IsZero()
+	fields[12] = !v.LabelTextColor.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -18518,6 +18522,22 @@ func (v *FlowChartEdge) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[11] {
+		if err := w.writeFieldHeader(byteSlice, 11); err != nil {
+			return err
+		}
+		if err := v.LabelBgColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[12] {
+		if err := w.writeFieldHeader(byteSlice, 12); err != nil {
+			return err
+		}
+		if err := v.LabelTextColor.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -18580,6 +18600,16 @@ func (v *FlowChartEdge) read(r *BinaryReader) error {
 			}
 		case 10:
 			err := v.MarkerEnd.read(r)
+			if err != nil {
+				return err
+			}
+		case 11:
+			err := v.LabelBgColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 12:
+			err := v.LabelTextColor.read(r)
 			if err != nil {
 				return err
 			}
@@ -26693,13 +26723,15 @@ func (v *FlowChartEdge) reset() {
 	v.Animated.reset()
 	v.MarkerStart.reset()
 	v.MarkerEnd.reset()
+	v.LabelBgColor.reset()
+	v.LabelTextColor.reset()
 }
 
 func (v *FlowChartEdge) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Id.IsZero() && v.SourceNodeId.IsZero() && v.TargetNodeId.IsZero() && v.Label.IsZero() && v.Style.IsZero() && v.Color.IsZero() && v.Width.IsZero() && v.Animated.IsZero() && v.MarkerStart.IsZero() && v.MarkerEnd.IsZero()
+	return v.Id.IsZero() && v.SourceNodeId.IsZero() && v.TargetNodeId.IsZero() && v.Label.IsZero() && v.Style.IsZero() && v.Color.IsZero() && v.Width.IsZero() && v.Animated.IsZero() && v.MarkerStart.IsZero() && v.MarkerEnd.IsZero() && v.LabelBgColor.IsZero() && v.LabelTextColor.IsZero()
 }
 
 // FlowChartEdges is the list of all edges in a flow chart.

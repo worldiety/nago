@@ -12,6 +12,7 @@ callback to be executed when the countdown completes.
 ### CountDown
 CountDown creates a new countdown timer initialized with the given duration.
 By default, days, hours, minutes, and seconds are all displayed.
+A negative duration is clamped to zero.
 
 ---
 ## Methods

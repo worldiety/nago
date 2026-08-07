@@ -115,6 +115,9 @@ const { layout } = useLayout();
 
 const flowChart = ref<InstanceType<typeof VueFlow>>();
 
+const nodes = ref<Node[]>([]);
+const edges = ref<Edge[]>([]);
+
 const frameStyles = computed<string>(() => {
 	const styles = frameCSS(props.ui.frame);
 	styles.push('position:relative');
@@ -130,9 +133,6 @@ const frameStyles = computed<string>(() => {
 
 	return styles.join(';');
 });
-
-const nodes = ref<Node[]>([]);
-const edges = ref<Edge[]>([]);
 
 function onUpdateNodes(updated: Node[]): void {
 	nodes.value = updated;
@@ -205,10 +205,10 @@ function setEdges() {
 			markerEnd: mapMarker(edge.markerEnd, edgeColor),
 			style: edgeStyle(edge, edgeColor),
 			labelShowBg: !!edge.label,
-			labelBgPadding: [4, 6],
+			labelBgPadding: [6, 6],
 			labelBgBorderRadius: 6,
-			labelBgStyle: props.ui.background?.color ? { fill: colorValue(props.ui.background.color) } : undefined,
-			labelStyle: edgeColor ? { fill: edgeColor } : undefined,
+			labelBgStyle: { fill: colorValue(edge.labelBgColor ?? props.ui.background?.color) },
+			labelStyle: { fill: edge.labelTextColor ? colorValue(edge.labelTextColor) : edgeColor },
 		};
 	});
 }

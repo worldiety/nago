@@ -30,29 +30,33 @@ func (m EdgeMarker) ora() proto.FlowChartEdgeMarker {
 
 // Edge represents a connection between two nodes.
 type Edge struct {
-	ID           string
-	SourceNodeID string
-	TargetNodeID string
-	Label        string
-	Style        EdgeStyle
-	Color        ui.Color
-	Width        float64
-	Animated     bool
-	MarkerStart  EdgeMarker
-	MarkerEnd    EdgeMarker
+	ID             string
+	SourceNodeID   string
+	TargetNodeID   string
+	Label          string
+	LabelBgColor   ui.Color
+	LabelTextColor ui.Color
+	Style          EdgeStyle
+	Color          ui.Color
+	Width          float64
+	Animated       bool
+	MarkerStart    EdgeMarker
+	MarkerEnd      EdgeMarker
 }
 
 func (e Edge) render() proto.FlowChartEdge {
 	return proto.FlowChartEdge{
-		Id:           proto.Str(e.ID),
-		SourceNodeId: proto.Str(e.SourceNodeID),
-		TargetNodeId: proto.Str(e.TargetNodeID),
-		Label:        proto.Str(e.Label),
-		Style:        e.Style.ora(),
-		Color:        proto.Color(e.Color),
-		Width:        proto.Float(e.Width),
-		Animated:     proto.Bool(e.Animated),
-		MarkerStart:  e.MarkerStart.ora(),
-		MarkerEnd:    e.MarkerEnd.ora(),
+		Id:             proto.Str(e.ID),
+		SourceNodeId:   proto.Str(e.SourceNodeID),
+		TargetNodeId:   proto.Str(e.TargetNodeID),
+		Label:          proto.Str(e.Label),
+		LabelBgColor:   proto.Color(e.LabelBgColor),
+		LabelTextColor: proto.Color(e.LabelTextColor),
+		Style:          e.Style.ora(),
+		Color:          proto.Color(e.Color),
+		Width:          proto.Float(e.Width),
+		Animated:       proto.Bool(e.Animated),
+		MarkerStart:    e.MarkerStart.ora(),
+		MarkerEnd:      e.MarkerEnd.ora(),
 	}
 }
