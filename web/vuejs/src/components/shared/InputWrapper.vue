@@ -17,7 +17,7 @@
 		</div>
 
 		<!-- Label with optional hint -->
-		<div class="label-container">
+		<div v-if="label || optional" class="label-container">
 			<label v-if="label" :for="inputId" :class="labelClass">
 				<LockIcon v-if="disabled" class="h-4" />
 				<ErrorIcon v-else-if="error" class="h-2.5" />
