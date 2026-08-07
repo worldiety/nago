@@ -278,7 +278,9 @@ function addConnectionListeners(): void {
 onBeforeMount(applyConfiguration);
 
 onMounted(() => {
-	window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => themeManager.systemThemeChanged(serviceAdapter));
+	window
+		.matchMedia('(prefers-color-scheme: dark)')
+		.addEventListener('change', () => themeManager.systemThemeChanged(serviceAdapter));
 });
 
 onUnmounted(() => {
