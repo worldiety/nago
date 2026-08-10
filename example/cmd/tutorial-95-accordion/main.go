@@ -13,7 +13,7 @@ import (
 
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
-	. "go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/accordion"
 	"go.wdy.de/nago/web/vuejs"
 )
@@ -32,17 +32,29 @@ func main() {
 			accordions := make([]core.View, 0)
 			for i := range count {
 				accordions = append(accordions, accordion.Accordion(
-					Text(fmt.Sprintf("Accordion %d", i+1)),
-					RichText(fmt.Sprintf("Content %d: %s", i+1, accordionContent)),
+					ui.Text(fmt.Sprintf("Accordion %d", i+1)),
+					ui.RichText(fmt.Sprintf("Content %d: %s", i+1, accordionContent)),
 					core.StateOf[bool](wnd, fmt.Sprintf("accordion_state_%d", i)),
 				).FullWidth())
 			}
 
-			return HStack(
-				VStack(
+			accordionsSmall := make([]core.View, 0)
+			for i := range count {
+				accordionsSmall = append(accordionsSmall, accordion.Accordion(
+					ui.Text(fmt.Sprintf("Accordion Small %d", i+1)),
+					ui.RichText(fmt.Sprintf("Content %d: %s", i+1, accordionContent)),
+					core.StateOf[bool](wnd, fmt.Sprintf("accordion_small_state_%d", i)),
+				).Small().HideSeparator().FullWidth())
+			}
+
+			return ui.VStack(
+				ui.VStack(
 					accordions...,
-				).Alignment(Center).Padding(Padding{}.All(L32)).Frame(Frame{MaxWidth: "800px"}.FullWidth()),
-			).Alignment(Center).Frame(Frame{}.FullWidth())
+				).Alignment(ui.Center).Padding(ui.Padding{}.All(ui.L32)).Frame(ui.Frame{MaxWidth: "800px"}.FullWidth()),
+				ui.VStack(
+					accordionsSmall...,
+				).Alignment(ui.Center).Padding(ui.Padding{}.All(ui.L32)).Frame(ui.Frame{MaxWidth: "420px"}.FullWidth()),
+			).Gap(ui.L32).Alignment(ui.Center).Frame(ui.Frame{}.FullWidth())
 		})
 
 	}).Run()

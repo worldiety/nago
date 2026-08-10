@@ -17843,18 +17843,26 @@ export class Accordion implements Writeable, Readable, Component {
 
 	public value?: Bool;
 
+	public small?: Bool;
+
+	public separator?: Bool;
+
 	constructor(
 		header: Component | undefined = undefined,
 		content: Component | undefined = undefined,
 		frame: Frame | undefined = undefined,
 		inputValue: Ptr | undefined = undefined,
-		value: Bool | undefined = undefined
+		value: Bool | undefined = undefined,
+		small: Bool | undefined = undefined,
+		separator: Bool | undefined = undefined
 	) {
 		this.header = header;
 		this.content = content;
 		this.frame = frame;
 		this.inputValue = inputValue;
 		this.value = value;
+		this.small = small;
+		this.separator = separator;
 	}
 
 	read(reader: BinaryReader): void {
@@ -17894,6 +17902,14 @@ export class Accordion implements Writeable, Readable, Component {
 					this.value = readBool(reader);
 					break;
 				}
+				case 6: {
+					this.small = readBool(reader);
+					break;
+				}
+				case 7: {
+					this.separator = readBool(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -17908,6 +17924,8 @@ export class Accordion implements Writeable, Readable, Component {
 			this.frame !== undefined && !this.frame.isZero(),
 			this.inputValue !== undefined,
 			this.value !== undefined,
+			this.small !== undefined,
+			this.separator !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -17937,6 +17955,14 @@ export class Accordion implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.UVARINT, 5);
 			writeBool(writer, this.value!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 6);
+			writeBool(writer, this.small!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 7);
+			writeBool(writer, this.separator!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -17945,7 +17971,9 @@ export class Accordion implements Writeable, Readable, Component {
 			(this.content === undefined || this.content.isZero()) &&
 			(this.frame === undefined || this.frame.isZero()) &&
 			this.inputValue === undefined &&
-			this.value === undefined
+			this.value === undefined &&
+			this.small === undefined &&
+			this.separator === undefined
 		);
 	}
 
@@ -17955,6 +17983,8 @@ export class Accordion implements Writeable, Readable, Component {
 		this.frame = undefined;
 		this.inputValue = undefined;
 		this.value = undefined;
+		this.small = undefined;
+		this.separator = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

@@ -17366,15 +17366,19 @@ type Accordion struct {
 	// InputValue is where updated value of the open states are written.
 	InputValue Ptr
 	Value      Bool
+	Small      Bool
+	Separator  Bool
 }
 
 func (v *Accordion) write(w *BinaryWriter) error {
-	var fields [6]bool
+	var fields [8]bool
 	fields[1] = v.Header != nil && !v.Header.IsZero()
 	fields[2] = v.Content != nil && !v.Content.IsZero()
 	fields[3] = !v.Frame.IsZero()
 	fields[4] = !v.InputValue.IsZero()
 	fields[5] = !v.Value.IsZero()
+	fields[6] = !v.Small.IsZero()
+	fields[7] = !v.Separator.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -17439,6 +17443,22 @@ func (v *Accordion) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[6] {
+		if err := w.writeFieldHeader(uvarint, 6); err != nil {
+			return err
+		}
+		if err := v.Small.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(uvarint, 7); err != nil {
+			return err
+		}
+		if err := v.Separator.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -17494,6 +17514,16 @@ func (v *Accordion) read(r *BinaryReader) error {
 			}
 		case 5:
 			err := v.Value.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.Small.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.Separator.read(r)
 			if err != nil {
 				return err
 			}
@@ -26518,13 +26548,15 @@ func (v *Accordion) reset() {
 	v.Frame.reset()
 	v.InputValue.reset()
 	v.Value.reset()
+	v.Small.reset()
+	v.Separator.reset()
 }
 
 func (v *Accordion) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Header.IsZero() && v.Content.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Value.IsZero()
+	return v.Header.IsZero() && v.Content.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Value.IsZero() && v.Small.IsZero() && v.Separator.IsZero()
 }
 
 func (v *SwitcherPage) reset() {
