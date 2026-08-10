@@ -33,6 +33,8 @@ const classes = computed<string[]>(() => {
 	const styles = frameCSS(props.ui.frame);
 	const cls: string[] = [CssClasses.getOrCreate(styles)];
 	if (props.ui.value) cls.push('open');
+	if (props.ui.small) cls.push('small');
+	if (props.ui.separator) cls.push('separator');
 	return cls;
 });
 
@@ -100,7 +102,7 @@ onUnmounted(() => {
 	@apply text-M8;
 
 	.accordion {
-		@apply relative w-full border-b border-M5;
+		@apply relative w-full;
 
 		.header {
 			@apply w-full flex items-center py-3;
@@ -128,6 +130,28 @@ onUnmounted(() => {
 
 		.body-dummy {
 			@apply absolute left-0 w-full opacity-0 pointer-events-none p-2;
+		}
+	}
+
+	&.small {
+		.accordion {
+			.header {
+				@apply py-0;
+
+				.header-icon {
+					@apply px-2;
+
+					svg {
+						@apply size-2 duration-300;
+					}
+				}
+			}
+		}
+	}
+
+	&.separator {
+		.accordion {
+			@apply border-b border-M5;
 		}
 	}
 

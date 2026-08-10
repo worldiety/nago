@@ -17,6 +17,8 @@ type TAccordion struct {
 	header     core.View
 	body       core.View
 	frame      ui.Frame
+	small      bool
+	separator  bool
 	value      bool
 	inputValue *core.State[bool]
 }
@@ -29,12 +31,25 @@ func Accordion(header, body core.View, open *core.State[bool]) TAccordion {
 		body:       body,
 		value:      open.Get(),
 		inputValue: open,
+		separator:  true,
 	}
 }
 
 // Frame sets the accordions frame to control the accordions bounds
 func (t TAccordion) Frame(frame ui.Frame) TAccordion {
 	t.frame = frame
+	return t
+}
+
+// Small sets the small flag to enable a smaller visual appearance of the accordion
+func (t TAccordion) Small() TAccordion {
+	t.small = true
+	return t
+}
+
+// HideSeparator sets a flag to hide the bottom border (separator) of the accordion
+func (t TAccordion) HideSeparator() TAccordion {
+	t.separator = false
 	return t
 }
 
@@ -63,6 +78,8 @@ func (t TAccordion) Render(ctx core.RenderContext) core.RenderNode {
 			Width:     proto.Length(t.frame.Width),
 			Height:    proto.Length(t.frame.Height),
 		},
+		Small:      proto.Bool(t.small),
+		Separator:  proto.Bool(t.separator),
 		InputValue: t.inputValue.Ptr(),
 		Value:      proto.Bool(t.value),
 	}
