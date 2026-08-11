@@ -1,0 +1,12 @@
+{
+  "kind": "Uint",
+  "id": 278,
+  "const": {
+    "0": {
+      "name": "WhiteSpaceNormal"
+    },
+    "1": {
+      "name": "WhiteSpaceNoWrap"
+    }
+  }
+}

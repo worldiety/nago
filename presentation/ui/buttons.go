@@ -33,6 +33,7 @@ type TButton struct {
 	id                 string
 	url                core.URI
 	target             string
+	noWrap             bool
 }
 
 // Button creates a new Button with the given style preset.
@@ -154,6 +155,12 @@ func (c TButton) ID(id string) TButton {
 	return c
 }
 
+// NoWrap sets a flag to set the button's text to not wrap at white spaces
+func (c TButton) NoWrap() TButton {
+	c.noWrap = true
+	return c
+}
+
 // Render builds and returns the visual representation of the button.
 func (c TButton) Render(context core.RenderContext) proto.Component {
 	alabel := c.accessibilityLabel
@@ -167,9 +174,14 @@ func (c TButton) Render(context core.RenderContext) proto.Component {
 		}
 	}
 
+	whiteSpace := WhiteSpaceNormal
+	if c.noWrap {
+		whiteSpace = WhiteSpaceNoWrap
+	}
+
 	return HStack(
 		If(len(c.preIcon) != 0, Image().Embed(c.preIcon).Frame(Frame{}.Size(L16, L16))),
-		If(c.title != "", Text(c.title).Font(c.font)),
+		If(c.title != "", Text(c.title).Font(c.font).WhiteSpace(whiteSpace)),
 		If(len(c.postIcon) != 0, Image().Embed(c.postIcon).Frame(Frame{}.Size(L16, L16))),
 	).Gap(L4).
 		ID(c.id).

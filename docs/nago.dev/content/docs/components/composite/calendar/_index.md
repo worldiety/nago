@@ -21,6 +21,6 @@ Calendar creates a new TCalendar initialized with the current year, a yearly tim
 | `MaxCategories(n int)` | MaxCategories limits how many category color bars are rendered per event. A value <= 0 means unlimited (all categories are shown). |
 | `Style(style Style)` | Style sets the display style (e.g., timeline view) for the calendar. |
 | `ViewPort(vp ViewPort)` | ViewPort sets the visible time range (e.g., year, month) of the calendar. |
-| `mapStartTimeCluster(vp ViewPort, events []Event)` |  |
+| `mapStartTimeCluster(events []Event, vp ViewPort)` |  |
 ---
 

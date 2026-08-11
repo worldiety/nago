@@ -44,7 +44,7 @@ func main() {
 					ui.Text(fmt.Sprintf("Accordion Small %d", i+1)),
 					ui.RichText(fmt.Sprintf("Content %d: %s", i+1, accordionContent)),
 					core.StateOf[bool](wnd, fmt.Sprintf("accordion_small_state_%d", i)),
-				).Small().FullWidth())
+				).Small().HideSeparator().FullWidth())
 			}
 
 			return ui.VStack(
