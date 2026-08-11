@@ -10,6 +10,7 @@ package main
 import (
 	_ "embed"
 	"fmt"
+	"strings"
 
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/presentation/core"
@@ -187,6 +188,18 @@ func main() {
 }
 
 func personNode(id, name, title string, icon core.SVG, position flowchart.Point, nodeType flowchart.NodeType, style flowchart.NodeStyle) (flowchart.Node, flowchart.CustomContent) {
+	var menu core.View
+	if strings.Contains(strings.ToLower(name), "kalle") {
+		menu = ui.Stack(
+			ui.Text("node menu of " + name).
+				WhiteSpace(ui.WhiteSpaceNoWrap).
+				Font(ui.MonoSmall).
+				BackgroundColor(ui.ColorSemanticError).
+				Border(ui.Border{}.Radius(ui.L4)).
+				Padding(ui.Padding{}.All(ui.L4)),
+		)
+	}
+
 	return flowchart.Node{
 			ID:       id,
 			Position: position,
@@ -203,6 +216,7 @@ func personNode(id, name, title string, icon core.SVG, position flowchart.Point,
 					ui.Text(title).Font(ui.TitleSmall),
 				),
 			).Gap(ui.L4).Padding(ui.Padding{}.All(ui.L8)),
+			Menu: menu,
 		}
 }
 

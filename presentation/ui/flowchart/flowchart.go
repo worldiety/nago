@@ -23,12 +23,24 @@ const (
 type CustomContent struct {
 	NodeID  string
 	Content core.View
+	Menu    core.View
 }
 
 func (c CustomContent) render(ctx core.RenderContext) proto.FlowChartCustomContent {
+	var content proto.Component
+	if c.Content != nil {
+		content = c.Content.Render(ctx)
+	}
+
+	var menu proto.Component
+	if c.Menu != nil {
+		menu = c.Menu.Render(ctx)
+	}
+
 	return proto.FlowChartCustomContent{
 		NodeId:  proto.Str(c.NodeID),
-		Content: c.Content.Render(ctx),
+		Content: content,
+		Menu:    menu,
 	}
 }
 
