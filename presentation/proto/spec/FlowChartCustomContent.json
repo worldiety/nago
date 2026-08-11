@@ -10,6 +10,10 @@
     "2": {
       "name": "Content",
       "type": "Component"
+    },
+    "3": {
+      "name": "Menu",
+      "type": "Component"
     }
   }
 }

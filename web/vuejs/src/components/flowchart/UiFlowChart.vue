@@ -59,6 +59,7 @@
 					:node="node.data as FlowChartNode"
 					:orientation="ui.orientation"
 					:custom-contents="ui.customContents"
+					:zoom="currentZoom"
 				/>
 			</template>
 		</VueFlow>
@@ -117,6 +118,10 @@ const flowChart = ref<InstanceType<typeof VueFlow>>();
 
 const nodes = ref<Node[]>([]);
 const edges = ref<Edge[]>([]);
+
+const currentZoom = computed<number | undefined>(() => {
+	return flowChart.value?.getViewport().zoom;
+});
 
 const frameStyles = computed<string>(() => {
 	const styles = frameCSS(props.ui.frame);

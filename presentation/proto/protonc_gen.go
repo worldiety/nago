@@ -18733,12 +18733,14 @@ func (v *FlowChartModel) read(r *BinaryReader) error {
 type FlowChartCustomContent struct {
 	NodeId  Str
 	Content Component
+	Menu    Component
 }
 
 func (v *FlowChartCustomContent) write(w *BinaryWriter) error {
-	var fields [3]bool
+	var fields [4]bool
 	fields[1] = !v.NodeId.IsZero()
 	fields[2] = v.Content != nil && !v.Content.IsZero()
+	fields[3] = v.Menu != nil && !v.Menu.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -18769,6 +18771,21 @@ func (v *FlowChartCustomContent) write(w *BinaryWriter) error {
 			return err
 		}
 		if err := v.Content.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 3); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.Menu.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.Menu.write(w); err != nil {
 			return err
 		}
 	}
@@ -18806,6 +18823,20 @@ func (v *FlowChartCustomContent) read(r *BinaryReader) error {
 				return err
 			}
 			v.Content = obj.(Component)
+		case 3:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.Menu = obj.(Component)
 		}
 	}
 	return nil
@@ -26875,13 +26906,14 @@ func (v *FlowChartModel) IsZero() bool {
 func (v *FlowChartCustomContent) reset() {
 	v.NodeId.reset()
 	v.Content = nil
+	v.Menu = nil
 }
 
 func (v *FlowChartCustomContent) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.NodeId.IsZero() && v.Content.IsZero()
+	return v.NodeId.IsZero() && v.Content.IsZero() && v.Menu.IsZero()
 }
 
 // FlowChartCustomContents is the list of all custom contents in a flow chart.

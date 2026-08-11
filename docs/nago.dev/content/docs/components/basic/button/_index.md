@@ -67,6 +67,7 @@ Button. This may behave slightly different (but more correctly), due to optimiza
 | Method | Description |
 |--------| ------------|
 | `AccessibilityLabel(label string)` | AccessibilityLabel sets a label used by screen readers for accessibility. |
+| `Alignment(alignment Alignment)` | Alignment sets the button's content alignment |
 | `Disabled(b bool)` |  |
 | `Enabled(b bool)` | Enabled toggles whether the button is interactive. This has an effect only if a StylePreset is applied; otherwise it is ignored. |
 | `Font(font Font)` | Font sets the font style for the button's text label. |
@@ -74,6 +75,7 @@ Button. This may behave slightly different (but more correctly), due to optimiza
 | `FullWidth()` |  |
 | `HRef(url core.URI)` | HRef sets the URL that the button navigates to when clicked if no action is specified. If both URL and Action are set, the URL takes precedence. This avoids another render cycle if the only goal is to navigate to a different page. It also avoids issues with browser which block async browser interactions like Safari. In fact, the [core.Navigation.Open] does not work properly on Safari. See also [TButton.Target]. |
 | `ID(id string)` | ID assigns a unique identifier to the button, useful for testing or referencing. |
+| `NoWrap()` | NoWrap sets a flag to set the button's text to not wrap at white spaces |
 | `PostIcon(svg core.SVG)` | PostIcon sets the icon displayed after the text label. |
 | `PreIcon(svg core.SVG)` | PreIcon sets the icon displayed before the text label. |
 | `Preset(preset ButtonStyle)` | Preset applies a style preset to the button, controlling its appearance and behavior. |
@@ -83,5 +85,6 @@ Button. This may behave slightly different (but more correctly), due to optimiza
 ---
 
 ## Related
+- [Alignment](../../layout/alignment/)
 - [Frame](../../layout/frame/)
 
