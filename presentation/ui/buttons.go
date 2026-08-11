@@ -34,6 +34,7 @@ type TButton struct {
 	url                core.URI
 	target             string
 	noWrap             bool
+	alignment          Alignment
 }
 
 // Button creates a new Button with the given style preset.
@@ -155,6 +156,12 @@ func (c TButton) ID(id string) TButton {
 	return c
 }
 
+// Alignment sets the button's content alignment
+func (c TButton) Alignment(alignment Alignment) TButton {
+	c.alignment = alignment
+	return c
+}
+
 // NoWrap sets a flag to set the button's text to not wrap at white spaces
 func (c TButton) NoWrap() TButton {
 	c.noWrap = true
@@ -190,6 +197,7 @@ func (c TButton) Render(context core.RenderContext) proto.Component {
 		Enabled(!c.disabled).
 		Action(c.action).
 		StylePreset(c.preset).
+		Alignment(c.alignment).
 		Frame(c.frame).
 		Visible(!c.invisible).
 		AccessibilityLabel(alabel). // this is redundant and requires the text twice, however we are "just" an hstack
