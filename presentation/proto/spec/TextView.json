@@ -107,6 +107,10 @@
     "26": {
       "name": "Link",
       "type": "Link"
+    },
+    "27": {
+      "name": "WhiteSpace",
+      "type": "WhiteSpace"
     }
   }
 }

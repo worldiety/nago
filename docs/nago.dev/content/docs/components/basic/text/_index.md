@@ -84,6 +84,7 @@ func main() {
 | `TextAlignment(align TextAlignment)` | TextAlignment sets the position of the Text. For more information also have a look at TextAlignment. |
 | `Underline(b bool)` | Underline underlines the Text. |
 | `Visible(visible bool)` | Visible decides whether a text is shown. |
+| `WhiteSpace(whiteSpace WhiteSpace)` |  |
 | `WithFrame(fn func(Frame) Frame)` | WithFrame sets width, minWidth, maxWidth, height, minHeight and maxHeight using a function. |
 | `WordBreak(wordBreak WordBreak)` |  |
 ---

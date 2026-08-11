@@ -7545,6 +7545,8 @@ export class TextView implements Writeable, Readable, Component {
 
 	public link?: Link;
 
+	public whiteSpace?: WhiteSpace;
+
 	constructor(
 		value: Str | undefined = undefined,
 		color: Color | undefined = undefined,
@@ -7571,7 +7573,8 @@ export class TextView implements Writeable, Readable, Component {
 		hyphens: Str | undefined = undefined,
 		labelFor: Str | undefined = undefined,
 		wordBreak: Str | undefined = undefined,
-		link: Link | undefined = undefined
+		link: Link | undefined = undefined,
+		whiteSpace: WhiteSpace | undefined = undefined
 	) {
 		this.value = value;
 		this.color = color;
@@ -7599,6 +7602,7 @@ export class TextView implements Writeable, Readable, Component {
 		this.labelFor = labelFor;
 		this.wordBreak = wordBreak;
 		this.link = link;
+		this.whiteSpace = whiteSpace;
 	}
 
 	read(reader: BinaryReader): void {
@@ -7719,6 +7723,10 @@ export class TextView implements Writeable, Readable, Component {
 					this.link.read(reader);
 					break;
 				}
+				case 27: {
+					this.whiteSpace = readInt(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -7754,6 +7762,7 @@ export class TextView implements Writeable, Readable, Component {
 			this.labelFor !== undefined,
 			this.wordBreak !== undefined,
 			this.link !== undefined && !this.link.isZero(),
+			this.whiteSpace !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -7861,6 +7870,10 @@ export class TextView implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.RECORD, 26);
 			this.link!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[27]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 27);
+			writeInt(writer, this.whiteSpace!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -7890,7 +7903,8 @@ export class TextView implements Writeable, Readable, Component {
 			this.hyphens === undefined &&
 			this.labelFor === undefined &&
 			this.wordBreak === undefined &&
-			(this.link === undefined || this.link.isZero())
+			(this.link === undefined || this.link.isZero()) &&
+			this.whiteSpace === undefined
 		);
 	}
 
@@ -7921,6 +7935,7 @@ export class TextView implements Writeable, Readable, Component {
 		this.labelFor = undefined;
 		this.wordBreak = undefined;
 		this.link = undefined;
+		this.whiteSpace = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -21747,6 +21762,17 @@ export enum OutlineStyleValues {
 	OutlineDotted = 1,
 }
 
+export type WhiteSpace = number;
+function writeTypeHeaderWhiteSpace(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 278);
+	return;
+}
+// companion enum containing all defined constants for WhiteSpace
+export enum WhiteSpaceValues {
+	WhiteSpaceNormal = 0,
+	WhiteSpaceNoWrap = 1,
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -23022,6 +23048,10 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 277: {
 			const v = readInt(src) as OutlineStyle;
+			return v;
+		}
+		case 278: {
+			const v = readInt(src) as WhiteSpace;
 			return v;
 		}
 	}

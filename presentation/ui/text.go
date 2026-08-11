@@ -46,6 +46,13 @@ const (
 	TextAlignJustify TextAlignment = TextAlignment(proto.TextAlignJustify)
 )
 
+type WhiteSpace uint
+
+const (
+	WhiteSpaceNormal WhiteSpace = WhiteSpace(proto.WhiteSpaceNormal)
+	WhiteSpaceNoWrap WhiteSpace = WhiteSpace(proto.WhiteSpaceNoWrap)
+)
+
 // TText is a basic component (Text).
 // This component displays text with customizable styling and interaction options.
 // It supports colors, background states, padding, borders, accessibility labels,
@@ -79,6 +86,7 @@ type TText struct {
 	wordBreak          WordBreak
 	url                string
 	target             string
+	whiteSpace         WhiteSpace
 }
 
 // MailTo creates a mailto: link text component.
@@ -268,6 +276,11 @@ func (c TText) Link(url, target string) TText {
 	return c
 }
 
+func (c TText) WhiteSpace(whiteSpace WhiteSpace) TText {
+	c.whiteSpace = whiteSpace
+	return c
+}
+
 func (c TText) Render(ctx core.RenderContext) core.RenderNode {
 
 	value := c.content
@@ -321,6 +334,7 @@ func (c TText) Render(ctx core.RenderContext) core.RenderNode {
 		Hyphens:                proto.Str(hyphens),
 		LabelFor:               proto.Str(c.labelFor),
 		WordBreak:              wordBreak,
+		WhiteSpace:             proto.WhiteSpace(c.whiteSpace),
 		Link: proto.Link{
 			Url:    proto.URI(c.url),
 			Target: proto.Str(c.target),

@@ -18,6 +18,7 @@ import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
 import type { TextView } from '@/shared/proto/nprotoc_gen';
 import { FunctionCallRequested, TextAlignmentValues } from '@/shared/proto/nprotoc_gen';
+import { whiteSpaceCSS } from '@/components/shared/whiteSpace';
 
 const props = defineProps<{
 	ui: TextView;
@@ -44,7 +45,7 @@ const styles = computed<string>(() => {
 	styles.push(...borderCSS(props.ui.border));
 	styles.push(...paddingCSS(props.ui.padding));
 	styles.push(...fontCSS(props.ui.font));
-	styles.push('white-space:pre-wrap'); // TODO not sure if this is the intentional effect for all platforms
+	styles.push(...whiteSpaceCSS(props.ui.whiteSpace));
 
 	switch (props.ui.textAlignment) {
 		case TextAlignmentValues.TextAlignStart:

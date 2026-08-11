@@ -7238,10 +7238,11 @@ type TextView struct {
 	LabelFor               Str
 	WordBreak              Str
 	Link                   Link
+	WhiteSpace             WhiteSpace
 }
 
 func (v *TextView) write(w *BinaryWriter) error {
-	var fields [27]bool
+	var fields [28]bool
 	fields[1] = !v.Value.IsZero()
 	fields[2] = !v.Color.IsZero()
 	fields[3] = !v.BackgroundColor.IsZero()
@@ -7268,6 +7269,7 @@ func (v *TextView) write(w *BinaryWriter) error {
 	fields[24] = !v.LabelFor.IsZero()
 	fields[25] = !v.WordBreak.IsZero()
 	fields[26] = !v.Link.IsZero()
+	fields[27] = !v.WhiteSpace.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -7486,6 +7488,14 @@ func (v *TextView) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[27] {
+		if err := w.writeFieldHeader(uvarint, 27); err != nil {
+			return err
+		}
+		if err := v.WhiteSpace.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -7628,6 +7638,11 @@ func (v *TextView) read(r *BinaryReader) error {
 			}
 		case 26:
 			err := v.Link.read(r)
+			if err != nil {
+				return err
+			}
+		case 27:
+			err := v.WhiteSpace.read(r)
 			if err != nil {
 				return err
 			}
@@ -21156,6 +21171,33 @@ func (v *OutlineStyle) IsZero() bool {
 	return *v == 0
 }
 
+type WhiteSpace uint64
+
+const (
+	WhiteSpaceNormal WhiteSpace = 0
+	WhiteSpaceNoWrap WhiteSpace = 1
+)
+
+func (v *WhiteSpace) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *WhiteSpace) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = WhiteSpace(tmp)
+	return nil
+}
+
+func (v *WhiteSpace) reset() {
+	*v = WhiteSpace(0)
+}
+func (v *WhiteSpace) IsZero() bool {
+	return *v == 0
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -22767,6 +22809,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 277:
 		var v OutlineStyle
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 278:
+		var v WhiteSpace
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -24777,13 +24825,14 @@ func (v *TextView) reset() {
 	v.LabelFor.reset()
 	v.WordBreak.reset()
 	v.Link.reset()
+	v.WhiteSpace.reset()
 }
 
 func (v *TextView) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Value.IsZero() && v.Color.IsZero() && v.BackgroundColor.IsZero() && v.OnClick.IsZero() && v.OnHoverStart.IsZero() && v.OnHoverEnd.IsZero() && v.Border.IsZero() && v.Padding.IsZero() && v.Frame.IsZero() && v.AccessibilityLabel.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.TextAlignment.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.LineBreak.IsZero() && v.Invisible.IsZero() && v.Underline.IsZero() && v.Hyphens.IsZero() && v.LabelFor.IsZero() && v.WordBreak.IsZero() && v.Link.IsZero()
+	return v.Value.IsZero() && v.Color.IsZero() && v.BackgroundColor.IsZero() && v.OnClick.IsZero() && v.OnHoverStart.IsZero() && v.OnHoverEnd.IsZero() && v.Border.IsZero() && v.Padding.IsZero() && v.Frame.IsZero() && v.AccessibilityLabel.IsZero() && v.Font.IsZero() && v.Action.IsZero() && v.TextAlignment.IsZero() && v.HoveredBackgroundColor.IsZero() && v.PressedBackgroundColor.IsZero() && v.FocusedBackgroundColor.IsZero() && v.HoveredBorder.IsZero() && v.PressedBorder.IsZero() && v.FocusedBorder.IsZero() && v.LineBreak.IsZero() && v.Invisible.IsZero() && v.Underline.IsZero() && v.Hyphens.IsZero() && v.LabelFor.IsZero() && v.WordBreak.IsZero() && v.Link.IsZero() && v.WhiteSpace.IsZero()
 }
 
 func (v *TextField) reset() {
@@ -29182,6 +29231,13 @@ func (v *FlexProperties) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *OutlineStyle) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(uvarint, 277); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *WhiteSpace) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 278); err != nil {
 		return err
 	}
 	return nil
