@@ -35,8 +35,11 @@
 			@edges-change="onEdgesUpdate"
 			@connect="onNodesConnect"
 			@node-click="onNodeClick"
+			@node-context-menu="onNodeContextMenu"
 			@edge-click="onEdgeClick"
+			@edge-context-menu="onEdgeContextMenu"
 			@pane-click="onPaneClick"
+			@pane-context-menu.prevent="onPaneContextMenu"
 		>
 			<Background
 				v-if="ui.background"
@@ -377,7 +380,7 @@ function onNodesConnect(connection: Connection) {
 	debouncedInputModel(valueCopy);
 }
 
-function onNodeClick(e: NodeMouseEvent) {
+function onNodeClick(e: NodeMouseEvent, rightClick?: boolean) {
 	if (!flowChart.value) return;
 
 	const event = e.event as PointerEvent;
@@ -397,10 +400,16 @@ function onNodeClick(e: NodeMouseEvent) {
 		viewY: viewPos.y,
 		selectedNodes: flowChart.value.getSelectedNodes.map((n) => n.id),
 		selectedEdges: flowChart.value.getSelectedEdges.map((e) => e.id),
+		rightClick: rightClick,
 	});
 }
 
-function onEdgeClick(e: EdgeMouseEvent) {
+function onNodeContextMenu(e: NodeMouseEvent) {
+	e.event.preventDefault();
+	onNodeClick(e, true);
+}
+
+function onEdgeClick(e: EdgeMouseEvent, rightClick?: boolean) {
 	if (!flowChart.value) return;
 
 	const event = e.event as PointerEvent;
@@ -420,10 +429,16 @@ function onEdgeClick(e: EdgeMouseEvent) {
 		viewY: viewPos.y,
 		selectedNodes: flowChart.value.getSelectedNodes.map((n) => n.id),
 		selectedEdges: flowChart.value.getSelectedEdges.map((e) => e.id),
+		rightClick: rightClick,
 	});
 }
 
-function onPaneClick(e: MouseEvent) {
+function onEdgeContextMenu(e: EdgeMouseEvent) {
+	e.event.preventDefault();
+	onEdgeClick(e, true);
+}
+
+function onPaneClick(e: MouseEvent, rightClick?: boolean) {
 	nextTick(() => {
 		if (!flowChart.value) return;
 
@@ -440,8 +455,13 @@ function onPaneClick(e: MouseEvent) {
 			viewY: viewPos.y,
 			selectedNodes: flowChart.value.getSelectedNodes.map((n) => n.id),
 			selectedEdges: flowChart.value.getSelectedEdges.map((e) => e.id),
+			rightClick: rightClick,
 		});
 	});
+}
+
+function onPaneContextMenu(e: MouseEvent) {
+	onPaneClick(e, true);
 }
 
 function getPanePosFromClientPos(clientPos: { x: number; y: number }): { x: number; y: number } {

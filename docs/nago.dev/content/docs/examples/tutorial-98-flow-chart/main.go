@@ -32,9 +32,6 @@ func main() {
 		cfg.Serve(vuejs.Dist())
 
 		cfg.RootView(".", func(wnd core.Window) core.View {
-
-			return ui.Scaffold(ui.ScaffoldAlignmentLeading)
-
 			colorState := core.StateOf[ui.Color](wnd, "colorState")
 			menuVisibleState := core.StateOf[bool](wnd, "menuVisibleState")
 

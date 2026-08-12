@@ -14,7 +14,7 @@ title: TwoColumn
 |--------| ------------|
 | `BackgroundColorContent(bg ui.Color)` |  |
 | `BackgroundColorDetail(bg ui.Color)` |  |
-| `Default(detail ViewID, content ViewID)` |  |
+| `Default(content ViewID, detail ViewID)` |  |
 | `Frame(frame ui.Frame)` |  |
 | `FullWidth()` |  |
 | `ID(id string)` |  |
