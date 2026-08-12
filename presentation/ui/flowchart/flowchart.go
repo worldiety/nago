@@ -67,6 +67,7 @@ type FlowChartActionData struct {
 	PaneY         float64
 	SelectedNodes []string
 	SelectedEdges []string
+	RightClick    bool
 }
 
 // TFlowChart is a composite component (Flow Chart).

@@ -278,6 +278,8 @@ func lastAction(state *core.State[flowchart.FlowChartActionData]) core.View {
 			ui.GridCell(ui.Text(fmt.Sprintf("%+v", actionData.SelectedNodes))),
 			ui.GridCell(ui.Text("Selected edges:")),
 			ui.GridCell(ui.Text(fmt.Sprintf("%+v", actionData.SelectedEdges))),
+			ui.GridCell(ui.Text("Right click:")),
+			ui.GridCell(ui.Text(fmt.Sprintf("%t", actionData.RightClick))),
 		).
 			Columns(2).
 			RowGap(ui.L2).

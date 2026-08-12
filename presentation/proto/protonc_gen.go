@@ -19163,10 +19163,11 @@ type FlowChartActionData struct {
 	SelectedEdges Strings
 	PaneX         Float
 	PaneY         Float
+	RightClick    Bool
 }
 
 func (v *FlowChartActionData) write(w *BinaryWriter) error {
-	var fields [9]bool
+	var fields [10]bool
 	fields[1] = !v.Node.IsZero()
 	fields[2] = !v.Edge.IsZero()
 	fields[3] = !v.ViewX.IsZero()
@@ -19175,6 +19176,7 @@ func (v *FlowChartActionData) write(w *BinaryWriter) error {
 	fields[6] = !v.SelectedEdges.IsZero()
 	fields[7] = !v.PaneX.IsZero()
 	fields[8] = !v.PaneY.IsZero()
+	fields[9] = !v.RightClick.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -19249,6 +19251,14 @@ func (v *FlowChartActionData) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[9] {
+		if err := w.writeFieldHeader(uvarint, 9); err != nil {
+			return err
+		}
+		if err := v.RightClick.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -19301,6 +19311,11 @@ func (v *FlowChartActionData) read(r *BinaryReader) error {
 			}
 		case 8:
 			err := v.PaneY.read(r)
+			if err != nil {
+				return err
+			}
+		case 9:
+			err := v.RightClick.read(r)
 			if err != nil {
 				return err
 			}
@@ -27171,13 +27186,14 @@ func (v *FlowChartActionData) reset() {
 	v.SelectedEdges.reset()
 	v.PaneX.reset()
 	v.PaneY.reset()
+	v.RightClick.reset()
 }
 
 func (v *FlowChartActionData) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Node.IsZero() && v.Edge.IsZero() && v.ViewX.IsZero() && v.ViewY.IsZero() && v.SelectedNodes.IsZero() && v.SelectedEdges.IsZero() && v.PaneX.IsZero() && v.PaneY.IsZero()
+	return v.Node.IsZero() && v.Edge.IsZero() && v.ViewX.IsZero() && v.ViewY.IsZero() && v.SelectedNodes.IsZero() && v.SelectedEdges.IsZero() && v.PaneX.IsZero() && v.PaneY.IsZero() && v.RightClick.IsZero()
 }
 
 func (v *FlowChartBackground) reset() {

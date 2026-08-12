@@ -19740,6 +19740,8 @@ export class FlowChartActionData implements Writeable, Readable {
 
 	public paneY?: Float;
 
+	public rightClick?: Bool;
+
 	constructor(
 		node: FlowChartNode | undefined = undefined,
 		edge: FlowChartEdge | undefined = undefined,
@@ -19748,7 +19750,8 @@ export class FlowChartActionData implements Writeable, Readable {
 		selectedNodes: Strings | undefined = undefined,
 		selectedEdges: Strings | undefined = undefined,
 		paneX: Float | undefined = undefined,
-		paneY: Float | undefined = undefined
+		paneY: Float | undefined = undefined,
+		rightClick: Bool | undefined = undefined
 	) {
 		this.node = node;
 		this.edge = edge;
@@ -19758,6 +19761,7 @@ export class FlowChartActionData implements Writeable, Readable {
 		this.selectedEdges = selectedEdges;
 		this.paneX = paneX;
 		this.paneY = paneY;
+		this.rightClick = rightClick;
 	}
 
 	read(reader: BinaryReader): void {
@@ -19802,6 +19806,10 @@ export class FlowChartActionData implements Writeable, Readable {
 					this.paneY = readFloat(reader);
 					break;
 				}
+				case 9: {
+					this.rightClick = readBool(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -19819,6 +19827,7 @@ export class FlowChartActionData implements Writeable, Readable {
 			this.selectedEdges !== undefined && !this.selectedEdges.isZero(),
 			this.paneX !== undefined,
 			this.paneY !== undefined,
+			this.rightClick !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -19854,6 +19863,10 @@ export class FlowChartActionData implements Writeable, Readable {
 			writer.writeFieldHeader(Shapes.F64, 8);
 			writeFloat(writer, this.paneY!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[9]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 9);
+			writeBool(writer, this.rightClick!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -19865,7 +19878,8 @@ export class FlowChartActionData implements Writeable, Readable {
 			(this.selectedNodes === undefined || this.selectedNodes.isZero()) &&
 			(this.selectedEdges === undefined || this.selectedEdges.isZero()) &&
 			this.paneX === undefined &&
-			this.paneY === undefined
+			this.paneY === undefined &&
+			this.rightClick === undefined
 		);
 	}
 
@@ -19878,6 +19892,7 @@ export class FlowChartActionData implements Writeable, Readable {
 		this.selectedEdges = undefined;
 		this.paneX = undefined;
 		this.paneY = undefined;
+		this.rightClick = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
