@@ -86,6 +86,7 @@ type TFlowChart struct {
 	minZoom            float64
 	maxZoom            float64
 	toolbar            Toolbar
+	menu               Menu
 }
 
 // FlowChart creates a new flowchart component for the given model.
@@ -184,6 +185,11 @@ func (c TFlowChart) Toolbar(toolbar Toolbar) TFlowChart {
 	return c
 }
 
+func (c TFlowChart) Menu(menu Menu) TFlowChart {
+	c.menu = menu
+	return c
+}
+
 func (c TFlowChart) AutoLayout(wnd core.Window) {
 	core.AsyncCall(wnd, &proto.FlowChartAutoLayout{
 		Dummy: 1,
@@ -220,6 +226,7 @@ func (c TFlowChart) Render(ctx core.RenderContext) core.RenderNode {
 			Orientation: proto.Orientation(c.toolbar.Orientation),
 			Actions:     make(proto.FlowChartToolbarActions, 0),
 		},
+		Menu: c.menu.render(ctx),
 	}
 
 	for _, node := range m.Nodes {

@@ -10,6 +10,10 @@ import(
 	"unsafe"
 )
 
+func isZeroComponent(c Component) bool {
+    return c==nil || c.IsZero()
+}
+
 {{.BinaryWriter}}
 
 {{range .Marshals}}

@@ -25,6 +25,7 @@ FlowChart creates a new flowchart component for the given model.
 | `InputValue(input *core.State[Model])` | InputValue binds the flowchart to a stateful model.  At the moment this acts as the render source of truth. The component reads the model from the state during rendering. A dedicated frontend write-back requires proto support for an InputValue pointer on proto.FlowChart. |
 | `Layout(layout FlowChartLayout)` |  |
 | `MaxZoom(maxZoom float64)` |  |
+| `Menu(menu Menu)` |  |
 | `MinZoom(minZoom float64)` |  |
 | `Model(model Model)` | Model sets the static flowchart model. |
 | `NodesConnectable(val bool)` |  |
