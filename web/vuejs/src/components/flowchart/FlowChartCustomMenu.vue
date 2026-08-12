@@ -9,7 +9,8 @@
 
 <template>
 	<div ref="container" class="custom-node style-none">
-		<div class="opacity-0 pointer-events-none h-px">.</div> <!-- This is needed for some reason... -->
+		<!-- This is needed for some reason... -->
+		<div class="opacity-0 pointer-events-none h-px">.</div>
 		<div>
 			<div v-if="zoom" :style="`transform: scale(${1 / zoom});`">
 				<div ref="menu" :style="floatingStyles">
@@ -22,9 +23,7 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
-import {
-	Component,
-} from '@/shared/proto/nprotoc_gen';
+import { Component } from '@/shared/proto/nprotoc_gen';
 import { autoUpdate, offset, shift, useFloating } from '@floating-ui/vue';
 
 interface Props {

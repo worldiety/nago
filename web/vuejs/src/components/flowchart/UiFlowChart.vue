@@ -110,7 +110,6 @@ import '@vue-flow/core/dist/theme-default.css';
 import FlowChartActions from '@/components/flowchart/FlowChartActions.vue';
 import ConnectionHandler from '@/shared/network/connectionHandler';
 import { useLayout } from '@/components/flowchart/useLayout';
-import UiGeneric from '@/components/UiGeneric.vue';
 import FlowChartCustomMenu from '@/components/flowchart/FlowChartCustomMenu.vue';
 
 const props = defineProps<{
