@@ -160,6 +160,7 @@ function setNodesAndEdges() {
 function setNodes() {
 	props.ui.value?.nodes?.value.forEach((node, index) => {
 		const id = node.id?.trim() || `${index}`;
+		const hasMenu = !!props.ui.customContents?.value.some((cc) => cc.nodeId === node.id && cc.menu);
 
 		const newNode: Node = {
 			id: id,
@@ -173,6 +174,7 @@ function setNodes() {
 			targetPosition: mapTargetPosition(node),
 			focusable: true,
 			class: nodeClass(node),
+			zIndex: hasMenu ? 1 : undefined,
 		};
 
 		const idx = nodes.value.findIndex((e) => e.id === newNode.id);
