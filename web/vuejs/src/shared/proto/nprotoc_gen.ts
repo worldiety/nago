@@ -18447,6 +18447,8 @@ export class FlowChart implements Writeable, Readable, Component {
 
 	public toolbar?: FlowChartToolbar;
 
+	public menu?: FlowChartMenu;
+
 	constructor(
 		inputValue: Ptr | undefined = undefined,
 		value: FlowChartModel | undefined = undefined,
@@ -18461,7 +18463,8 @@ export class FlowChart implements Writeable, Readable, Component {
 		minZoom: Float | undefined = undefined,
 		maxZoom: Float | undefined = undefined,
 		actionValue: Ptr | undefined = undefined,
-		toolbar: FlowChartToolbar | undefined = undefined
+		toolbar: FlowChartToolbar | undefined = undefined,
+		menu: FlowChartMenu | undefined = undefined
 	) {
 		this.inputValue = inputValue;
 		this.value = value;
@@ -18477,6 +18480,7 @@ export class FlowChart implements Writeable, Readable, Component {
 		this.maxZoom = maxZoom;
 		this.actionValue = actionValue;
 		this.toolbar = toolbar;
+		this.menu = menu;
 	}
 
 	read(reader: BinaryReader): void {
@@ -18546,6 +18550,11 @@ export class FlowChart implements Writeable, Readable, Component {
 					this.toolbar.read(reader);
 					break;
 				}
+				case 15: {
+					this.menu = new FlowChartMenu();
+					this.menu.read(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -18569,6 +18578,7 @@ export class FlowChart implements Writeable, Readable, Component {
 			this.maxZoom !== undefined,
 			this.actionValue !== undefined,
 			this.toolbar !== undefined && !this.toolbar.isZero(),
+			this.menu !== undefined && !this.menu.isZero(),
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -18628,6 +18638,10 @@ export class FlowChart implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.RECORD, 14);
 			this.toolbar!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[15]) {
+			writer.writeFieldHeader(Shapes.RECORD, 15);
+			this.menu!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -18645,7 +18659,8 @@ export class FlowChart implements Writeable, Readable, Component {
 			this.minZoom === undefined &&
 			this.maxZoom === undefined &&
 			this.actionValue === undefined &&
-			(this.toolbar === undefined || this.toolbar.isZero())
+			(this.toolbar === undefined || this.toolbar.isZero()) &&
+			(this.menu === undefined || this.menu.isZero())
 		);
 	}
 
@@ -18664,6 +18679,7 @@ export class FlowChart implements Writeable, Readable, Component {
 		this.maxZoom = undefined;
 		this.actionValue = undefined;
 		this.toolbar = undefined;
+		this.menu = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -21806,6 +21822,82 @@ export enum WhiteSpaceValues {
 	WhiteSpaceNoWrap = 1,
 }
 
+// FlowChartMenu represents an optional menu to be positioned in a flow chart.
+export class FlowChartMenu implements Writeable, Readable {
+	public position?: FlowChartPoint;
+
+	public content?: Component;
+
+	constructor(position: FlowChartPoint | undefined = undefined, content: Component | undefined = undefined) {
+		this.position = position;
+		this.content = content;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.position = new FlowChartPoint();
+					this.position.read(reader);
+					break;
+				}
+				case 2: {
+					// decode polymorphic field as 1 element array
+					const len = reader.readUvarint();
+					if (len != 1) {
+						throw new Error(`unexpected length: ` + len);
+					}
+					this.content = unmarshal(reader) as Component;
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.position !== undefined && !this.position.isZero(),
+			this.content !== undefined && !this.content.isZero(),
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.RECORD, 1);
+			this.position!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			// encode polymorphic enum as 1 element slice
+			writer.writeFieldHeader(Shapes.ARRAY, 2);
+			writer.writeByte(1);
+			this.content.writeTypeHeader(writer);
+			this.content!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			(this.position === undefined || this.position.isZero()) &&
+			(this.content === undefined || this.content.isZero())
+		);
+	}
+
+	reset(): void {
+		this.position = undefined;
+		this.content = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 279);
+		return;
+	}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -23085,6 +23177,11 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 278: {
 			const v = readInt(src) as WhiteSpace;
+			return v;
+		}
+		case 279: {
+			const v = new FlowChartMenu();
+			v.read(src);
 			return v;
 		}
 	}

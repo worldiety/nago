@@ -1,0 +1,16 @@
+{
+  "doc": "FlowChartMenu represents an optional menu to be positioned in a flow chart.",
+  "kind": "Record",
+  "id": 279,
+  "fields": {
+    "1": {
+      "name": "Position",
+      "type": "FlowChartPoint"
+    },
+    "2": {
+      "name": "Content",
+      "type": "Component"
+    }
+  }
+}
+

@@ -33,10 +33,18 @@ func main() {
 
 		cfg.RootView(".", func(wnd core.Window) core.View {
 			colorState := core.StateOf[ui.Color](wnd, "colorState")
-			actionState := core.StateOf[flowchart.FlowChartActionData](wnd, "actionState")
+			menuVisibleState := core.StateOf[bool](wnd, "menuVisibleState")
 
+			actionState := core.StateOf[flowchart.FlowChartActionData](wnd, "actionState")
 			actionState.Observe(func(action flowchart.FlowChartActionData) {
 				fmt.Println("Latest action", action)
+
+				if action.Node.ID == "" && action.Edge.ID == "" {
+					menuVisibleState.Set(!menuVisibleState.Get())
+					return
+				}
+
+				menuVisibleState.Set(false)
 			})
 
 			nodes := make([]flowchart.Node, 0)
@@ -143,6 +151,29 @@ func main() {
 				}
 			})
 
+			var menu flowchart.Menu
+			if menuVisibleState.Get() {
+				menu = flowchart.Menu{
+					Position: flowchart.Point{
+						X: actionState.Get().PaneX,
+						Y: actionState.Get().PaneY,
+					},
+					Content: ui.VStack(
+						ui.Text("Menüeintrag"),
+						ui.Text("Menüeintrag"),
+						ui.Text("Menüeintrag"),
+						ui.Text("Menüeintrag"),
+						ui.Text("Menüeintrag"),
+						ui.Text("Menüeintrag"),
+						ui.Text("Menüeintrag"),
+						ui.Text("Menüeintrag"),
+					).
+						BackgroundColor(ui.I0).
+						Padding(ui.Padding{}.All(ui.L8)).
+						Border(ui.Border{}.Radius(ui.L8).Shadow(ui.L8)),
+				}
+			}
+
 			chart := flowchart.FlowChart(state.Get()).
 				InputValue(state).
 				ActionValue(actionState).
@@ -159,18 +190,13 @@ func main() {
 				MaxZoom(1.5).
 				Toolbar(flowchart.Toolbar{
 					Actions: []flowchart.FlowChartToolbarAction{flowchart.FlowChartToolbarActionAutoLayout},
-				})
+				}).
+				Menu(menu)
 
 			return ui.Stack(
 				chart,
 				ui.Stack(
-					ui.PrimaryButton(func() {
-						if wnd.Info().PrefersLight() {
-							wnd.SetColorScheme(core.Dark)
-						} else {
-							wnd.SetColorScheme(core.Light)
-						}
-					}).Title("Toggle theme"),
+					ui.ThemeSwitcher(ui.PrimaryButton(nil).Title("Toggle theme")),
 					ui.SecondaryButton(func() {
 						chart.AutoLayout(wnd)
 					}).Title("Auto Layout"),

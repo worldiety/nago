@@ -178,7 +178,12 @@ func (c *Compiler) goEmitRecordIsZero(t Typename, decl Record) error {
 	c.p("return ")
 	idx := 0
 	for _, field := range decl.sortedFields() {
-		c.p("v.", goFieldName(field.Name), ".IsZero()")
+		if field.Type == "Component" {
+			c.p("isZeroComponent(v.", goFieldName(field.Name), ")")
+		} else {
+			c.p("v.", goFieldName(field.Name), ".IsZero()")
+		}
+
 		if idx < decl.fieldCount()-1 {
 			c.p(" && ")
 		}

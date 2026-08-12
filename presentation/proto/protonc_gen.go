@@ -10,6 +10,10 @@ import (
 	"unsafe"
 )
 
+func isZeroComponent(c Component) bool {
+	return c == nil || c.IsZero()
+}
+
 type BinaryWriter struct {
 	writer *bytes.Buffer
 	tmp    [32]byte
@@ -17954,10 +17958,11 @@ type FlowChart struct {
 	MaxZoom            Float
 	ActionValue        Ptr
 	Toolbar            FlowChartToolbar
+	Menu               FlowChartMenu
 }
 
 func (v *FlowChart) write(w *BinaryWriter) error {
-	var fields [15]bool
+	var fields [16]bool
 	fields[1] = !v.InputValue.IsZero()
 	fields[2] = !v.Value.IsZero()
 	fields[3] = !v.Frame.IsZero()
@@ -17972,6 +17977,7 @@ func (v *FlowChart) write(w *BinaryWriter) error {
 	fields[12] = !v.MaxZoom.IsZero()
 	fields[13] = !v.ActionValue.IsZero()
 	fields[14] = !v.Toolbar.IsZero()
+	fields[15] = !v.Menu.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -18094,6 +18100,14 @@ func (v *FlowChart) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[15] {
+		if err := w.writeFieldHeader(record, 15); err != nil {
+			return err
+		}
+		if err := v.Menu.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -18176,6 +18190,11 @@ func (v *FlowChart) read(r *BinaryReader) error {
 			}
 		case 14:
 			err := v.Toolbar.read(r)
+			if err != nil {
+				return err
+			}
+		case 15:
+			err := v.Menu.read(r)
 			if err != nil {
 				return err
 			}
@@ -21229,6 +21248,88 @@ func (v *WhiteSpace) IsZero() bool {
 	return *v == 0
 }
 
+// FlowChartMenu represents an optional menu to be positioned in a flow chart.
+type FlowChartMenu struct {
+	Position FlowChartPoint
+	Content  Component
+}
+
+func (v *FlowChartMenu) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Position.IsZero()
+	fields[2] = v.Content != nil && !v.Content.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(record, 1); err != nil {
+			return err
+		}
+		if err := v.Position.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 2); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.Content.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.Content.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *FlowChartMenu) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Position.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.Content = obj.(Component)
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -22850,6 +22951,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 			return nil, err
 		}
 		return &v, nil
+	case 279:
+		var v FlowChartMenu
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
 	default:
 		return nil, fmt.Errorf("unknown type in marshal: %d", tid)
 	}
@@ -23051,7 +23158,7 @@ func (v *AlignedComponent) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Component.IsZero() && v.Alignment.IsZero()
+	return isZeroComponent(v.Component) && v.Alignment.IsZero()
 }
 
 // Components is polymorphic array of various concrete Component instances.
@@ -23408,7 +23515,7 @@ func (v *RootViewInvalidated) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.RID.IsZero() && v.Root.IsZero()
+	return v.RID.IsZero() && isZeroComponent(v.Root)
 }
 
 func (v *ErrorRootViewAllocationRequired) reset() {
@@ -24047,7 +24154,7 @@ func (v *GridCell) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Body.IsZero() && v.ColStart.IsZero() && v.ColEnd.IsZero() && v.RowStart.IsZero() && v.RowEnd.IsZero() && v.ColSpan.IsZero() && v.RowSpan.IsZero() && v.Padding.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero()
+	return isZeroComponent(v.Body) && v.ColStart.IsZero() && v.ColEnd.IsZero() && v.RowStart.IsZero() && v.RowEnd.IsZero() && v.ColSpan.IsZero() && v.RowSpan.IsZero() && v.Padding.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero()
 }
 
 func (v *Position) reset() {
@@ -24210,7 +24317,7 @@ func (v *Modal) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Content.IsZero() && v.OnDismissRequest.IsZero() && v.ModalType.IsZero() && v.Top.IsZero() && v.Left.IsZero() && v.Right.IsZero() && v.Bottom.IsZero() && v.AllowBackgroundScrolling.IsZero()
+	return isZeroComponent(v.Content) && v.OnDismissRequest.IsZero() && v.ModalType.IsZero() && v.Top.IsZero() && v.Left.IsZero() && v.Right.IsZero() && v.Bottom.IsZero() && v.AllowBackgroundScrolling.IsZero()
 }
 
 func (v *ThemeRequested) reset() {
@@ -24429,7 +24536,7 @@ func (v *Scaffold) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Body.IsZero() && v.Logo.IsZero() && v.Menu.IsZero() && v.BottomView.IsZero() && v.Alignment.IsZero() && v.Breakpoint.IsZero() && v.Footer.IsZero() && v.Height.IsZero() && v.BodyFullSize.IsZero()
+	return isZeroComponent(v.Body) && isZeroComponent(v.Logo) && v.Menu.IsZero() && isZeroComponent(v.BottomView) && v.Alignment.IsZero() && v.Breakpoint.IsZero() && isZeroComponent(v.Footer) && v.Height.IsZero() && v.BodyFullSize.IsZero()
 }
 
 func (v *ScaffoldMenuEntry) reset() {
@@ -24448,7 +24555,7 @@ func (v *ScaffoldMenuEntry) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Icon.IsZero() && v.IconActive.IsZero() && v.Title.IsZero() && v.Action.IsZero() && v.RootView.IsZero() && v.Menu.IsZero() && v.Badge.IsZero() && v.Expanded.IsZero() && v.CustomView.IsZero()
+	return isZeroComponent(v.Icon) && isZeroComponent(v.IconActive) && v.Title.IsZero() && v.Action.IsZero() && v.RootView.IsZero() && v.Menu.IsZero() && v.Badge.IsZero() && v.Expanded.IsZero() && isZeroComponent(v.CustomView)
 }
 
 type ScopeID string
@@ -24517,7 +24624,7 @@ func (v *ScrollView) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Content.IsZero() && v.Border.IsZero() && v.Frame.IsZero() && v.Padding.IsZero() && v.BackgroundColor.IsZero() && v.Axis.IsZero() && v.Invisible.IsZero() && v.Position.IsZero() && v.ScrollIntoView.IsZero() && v.ScrollAnimation.IsZero()
+	return isZeroComponent(v.Content) && v.Border.IsZero() && v.Frame.IsZero() && v.Padding.IsZero() && v.BackgroundColor.IsZero() && v.Axis.IsZero() && v.Invisible.IsZero() && v.Position.IsZero() && v.ScrollIntoView.IsZero() && v.ScrollAnimation.IsZero()
 }
 
 func (v *Resource) reset() {
@@ -24647,7 +24754,7 @@ func (v *TableCell) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Content.IsZero() && v.RowSpan.IsZero() && v.ColSpan.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.HoveredBackgroundColor.IsZero() && v.Padding.IsZero() && v.Border.IsZero() && v.Action.IsZero() && v.Hovered.IsZero()
+	return isZeroComponent(v.Content) && v.RowSpan.IsZero() && v.ColSpan.IsZero() && v.Alignment.IsZero() && v.BackgroundColor.IsZero() && v.HoveredBackgroundColor.IsZero() && v.Padding.IsZero() && v.Border.IsZero() && v.Action.IsZero() && v.Hovered.IsZero()
 }
 
 func (v *TableColumn) reset() {
@@ -24667,7 +24774,7 @@ func (v *TableColumn) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Content.IsZero() && v.ColSpan.IsZero() && v.Width.IsZero() && v.Alignment.IsZero() && v.CellBackgroundColor.IsZero() && v.CellAction.IsZero() && v.CellPadding.IsZero() && v.CellBorder.IsZero() && v.CellHoveredBackgroundColor.IsZero() && v.CellHovered.IsZero()
+	return isZeroComponent(v.Content) && v.ColSpan.IsZero() && v.Width.IsZero() && v.Alignment.IsZero() && v.CellBackgroundColor.IsZero() && v.CellAction.IsZero() && v.CellPadding.IsZero() && v.CellBorder.IsZero() && v.CellHoveredBackgroundColor.IsZero() && v.CellHovered.IsZero()
 }
 
 func (v *TableRow) reset() {
@@ -24899,7 +25006,7 @@ func (v *TextField) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.Leading.IsZero() && v.Trailing.IsZero() && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.KeyboardOptions.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero() && v.KeydownEnter.IsZero() && v.TextAlignment.IsZero() && v.ShowZero.IsZero() && v.Step.IsZero() && v.Max.IsZero() && v.Min.IsZero() && v.Autocomplete.IsZero() && v.Optional.IsZero()
+	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && isZeroComponent(v.Leading) && isZeroComponent(v.Trailing) && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.KeyboardOptions.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero() && v.KeydownEnter.IsZero() && v.TextAlignment.IsZero() && v.ShowZero.IsZero() && v.Step.IsZero() && v.Max.IsZero() && v.Min.IsZero() && v.Autocomplete.IsZero() && v.Optional.IsZero()
 }
 
 func (v *Toggle) reset() {
@@ -25035,7 +25142,7 @@ func (v *Menu) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Anchor.IsZero() && v.Groups.IsZero() && v.Frame.IsZero() && v.Offset.IsZero()
+	return isZeroComponent(v.Anchor) && v.Groups.IsZero() && v.Frame.IsZero() && v.Offset.IsZero()
 }
 
 func (v *MenuGroup) reset() {
@@ -25047,7 +25154,7 @@ func (v *MenuGroup) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Items.IsZero() && v.CustomContent.IsZero()
+	return v.Items.IsZero() && isZeroComponent(v.CustomContent)
 }
 
 func (v *MenuItem) reset() {
@@ -25059,7 +25166,7 @@ func (v *MenuItem) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Action.IsZero() && v.Content.IsZero()
+	return v.Action.IsZero() && isZeroComponent(v.Content)
 }
 
 // MenuItems is just a bunch of menu items which belong together.
@@ -25249,7 +25356,7 @@ func (v *HoverGroup) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Content.IsZero() && v.Border.IsZero() && v.Frame.IsZero() && v.Padding.IsZero() && v.BackgroundColor.IsZero() && v.Invisible.IsZero() && v.Position.IsZero() && v.ContentHover.IsZero()
+	return isZeroComponent(v.Content) && v.Border.IsZero() && v.Frame.IsZero() && v.Padding.IsZero() && v.BackgroundColor.IsZero() && v.Invisible.IsZero() && v.Position.IsZero() && isZeroComponent(v.ContentHover)
 }
 
 type FontFaces []FontFace
@@ -25351,7 +25458,7 @@ func (v *QrCodeReader) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.InputValue.IsZero() && v.MediaDevice.IsZero() && v.ShowTracker.IsZero() && v.TrackerColor.IsZero() && v.TrackerLineWidth.IsZero() && v.ActivatedTorch.IsZero() && v.NoMediaDeviceContent.IsZero() && v.OnCameraReady.IsZero() && v.Frame.IsZero()
+	return v.InputValue.IsZero() && v.MediaDevice.IsZero() && v.ShowTracker.IsZero() && v.TrackerColor.IsZero() && v.TrackerLineWidth.IsZero() && v.ActivatedTorch.IsZero() && isZeroComponent(v.NoMediaDeviceContent) && v.OnCameraReady.IsZero() && v.Frame.IsZero()
 }
 
 func (v *MediaDevice) reset() {
@@ -26028,7 +26135,7 @@ func (v *Select) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.Leading.IsZero() && v.Disabled.IsZero() && v.Id.IsZero() && v.Options.IsZero() && v.Autocomplete.IsZero() && v.ORADropdown.IsZero() && v.Searchable.IsZero() && v.DropdownInfo.IsZero() && v.Optional.IsZero()
+	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && isZeroComponent(v.Leading) && v.Disabled.IsZero() && v.Id.IsZero() && v.Options.IsZero() && v.Autocomplete.IsZero() && v.ORADropdown.IsZero() && v.Searchable.IsZero() && v.DropdownInfo.IsZero() && v.Optional.IsZero()
 }
 
 func (v *ColorStates) reset() {
@@ -26636,7 +26743,7 @@ func (v *Accordion) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Header.IsZero() && v.Content.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Value.IsZero() && v.Small.IsZero() && v.Separator.IsZero()
+	return isZeroComponent(v.Header) && isZeroComponent(v.Content) && v.Frame.IsZero() && v.InputValue.IsZero() && v.Value.IsZero() && v.Small.IsZero() && v.Separator.IsZero()
 }
 
 func (v *SwitcherPage) reset() {
@@ -26651,7 +26758,7 @@ func (v *SwitcherPage) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Id.IsZero() && v.Title.IsZero() && v.Toggle.IsZero() && v.Content.IsZero() && v.Img.IsZero()
+	return v.Id.IsZero() && v.Title.IsZero() && isZeroComponent(v.Toggle) && isZeroComponent(v.Content) && v.Img.IsZero()
 }
 
 type SwitcherPages []SwitcherPage
@@ -26743,13 +26850,14 @@ func (v *FlowChart) reset() {
 	v.MaxZoom.reset()
 	v.ActionValue.reset()
 	v.Toolbar.reset()
+	v.Menu.reset()
 }
 
 func (v *FlowChart) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.InputValue.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.Background.IsZero() && v.NodesDraggable.IsZero() && v.NodesConnectable.IsZero() && v.EdgesEditable.IsZero() && v.ElementsSelectable.IsZero() && v.Orientation.IsZero() && v.CustomContents.IsZero() && v.MinZoom.IsZero() && v.MaxZoom.IsZero() && v.ActionValue.IsZero() && v.Toolbar.IsZero()
+	return v.InputValue.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.Background.IsZero() && v.NodesDraggable.IsZero() && v.NodesConnectable.IsZero() && v.EdgesEditable.IsZero() && v.ElementsSelectable.IsZero() && v.Orientation.IsZero() && v.CustomContents.IsZero() && v.MinZoom.IsZero() && v.MaxZoom.IsZero() && v.ActionValue.IsZero() && v.Toolbar.IsZero() && v.Menu.IsZero()
 }
 
 func (v *FlowChartPoint) reset() {
@@ -26913,7 +27021,7 @@ func (v *FlowChartCustomContent) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.NodeId.IsZero() && v.Content.IsZero() && v.Menu.IsZero()
+	return v.NodeId.IsZero() && isZeroComponent(v.Content) && isZeroComponent(v.Menu)
 }
 
 // FlowChartCustomContents is the list of all custom contents in a flow chart.
@@ -27244,7 +27352,7 @@ func (v *SplitView) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.InputValue.IsZero() && v.Value.IsZero() && v.ContentA.IsZero() && v.ContentB.IsZero() && v.Frame.IsZero() && v.Orientation.IsZero() && v.MinRatio.IsZero() && v.MaxRatio.IsZero()
+	return v.InputValue.IsZero() && v.Value.IsZero() && isZeroComponent(v.ContentA) && isZeroComponent(v.ContentB) && v.Frame.IsZero() && v.Orientation.IsZero() && v.MinRatio.IsZero() && v.MaxRatio.IsZero()
 }
 
 func (v *Outline) reset() {
@@ -27411,6 +27519,18 @@ func (v *FlexProperties) IsZero() bool {
 		return true
 	}
 	return v.Grow.IsZero() && v.PreventShrink.IsZero()
+}
+
+func (v *FlowChartMenu) reset() {
+	v.Position.reset()
+	v.Content = nil
+}
+
+func (v *FlowChartMenu) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Position.IsZero() && isZeroComponent(v.Content)
 }
 
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
@@ -29270,6 +29390,13 @@ func (v *OutlineStyle) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *WhiteSpace) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(uvarint, 278); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *FlowChartMenu) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 279); err != nil {
 		return err
 	}
 	return nil

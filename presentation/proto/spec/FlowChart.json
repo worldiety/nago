@@ -58,6 +58,10 @@
     "14": {
       "name": "Toolbar",
       "type": "FlowChartToolbar"
+    },
+    "15": {
+      "name": "Menu",
+      "type": "FlowChartMenu"
     }
   }
 }

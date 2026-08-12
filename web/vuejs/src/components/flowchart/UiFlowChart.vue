@@ -56,9 +56,15 @@
 			/>
 			<template #node-custom="node">
 				<FlowChartCustomNode
-					:node="node.data as FlowChartNode"
+					v-if="node.data instanceof FlowChartNode"
+					:node="node.data"
 					:orientation="ui.orientation"
 					:custom-contents="ui.customContents"
+					:zoom="currentZoom"
+				/>
+				<FlowChartCustomMenu
+					v-if="node.data instanceof FlowChartMenu"
+					:content="node.data.content as Component"
 					:zoom="currentZoom"
 				/>
 			</template>
@@ -78,8 +84,10 @@ import type { Connection, EdgeChange, EdgeMouseEvent, NodeChange, NodeMouseEvent
 import { type Edge, type EdgeMarkerType, MarkerType, type Node, Position, VueFlow, useVueFlow } from '@vue-flow/core';
 import {
 	CallRequested,
+	Component,
 	FlowChart,
 	FlowChartAutoLayout,
+	FlowChartMenu,
 	FlowChartNode,
 	FlowChartNodes,
 	NagoEvent,
@@ -102,6 +110,8 @@ import '@vue-flow/core/dist/theme-default.css';
 import FlowChartActions from '@/components/flowchart/FlowChartActions.vue';
 import ConnectionHandler from '@/shared/network/connectionHandler';
 import { useLayout } from '@/components/flowchart/useLayout';
+import UiGeneric from '@/components/UiGeneric.vue';
+import FlowChartCustomMenu from '@/components/flowchart/FlowChartCustomMenu.vue';
 
 const props = defineProps<{
 	ui: FlowChart;
@@ -183,6 +193,26 @@ function setNodes() {
 	});
 
 	nodes.value = nodes.value.filter((node) => props.ui.value?.nodes?.value.some((n) => n.id === node.id));
+
+	if (props.ui.menu?.position && props.ui.menu.content) {
+		const newNode: Node = {
+			id: 'menu',
+			type: 'custom',
+			data: props.ui.menu,
+			position: {
+				x: props.ui.menu.position.x ?? 0,
+				y: props.ui.menu.position.y ?? 0,
+			},
+			draggable: false,
+			selectable: false,
+			connectable: false,
+			focusable: false,
+			deletable: false,
+			zIndex: 2,
+		};
+
+		nodes.value.push(newNode);
+	}
 }
 
 function setEdges() {
