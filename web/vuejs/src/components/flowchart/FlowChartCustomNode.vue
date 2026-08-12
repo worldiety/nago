@@ -22,13 +22,13 @@
 			:position="orientation === OrientationValues.Vertical ? Position.Top : Position.Left"
 		/>
 		<div>
+			<UiGeneric v-if="customContent && customContent.content" :ui="customContent.content" />
+			<div v-else class="label">{{ node.label }}</div>
 			<div v-if="customContent && customContent.menu && zoom" :style="`transform: scale(${1 / zoom});`">
 				<div ref="menu" :style="floatingStyles">
 					<UiGeneric :ui="customContent.menu" />
 				</div>
 			</div>
-			<UiGeneric v-if="customContent && customContent.content" :ui="customContent.content" />
-			<div v-else class="label">{{ node.label }}</div>
 		</div>
 		<Handle
 			v-if="!node.type || node.type === FlowChartNodeTypeValues.FlowChartNodeTypeStart"
