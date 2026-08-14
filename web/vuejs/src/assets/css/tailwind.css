@@ -12,7 +12,7 @@
 @tailwind utilities;
 
 .prose-custom {
-	@apply prose leading-normal text-current prose-p:text-current prose-em:text-current prose-a:text-I0 prose-code:text-current prose-strong:text-current prose-hr:border-M3 prose-li:marker:text-current prose-h1:text-current prose-h2:text-current prose-h3:text-current prose-pre:text-M3 prose-pre:bg-M3 max-w-none dark:prose-invert focus:outline-none focus-visible:outline-none;
+	@apply prose leading-normal text-current prose-p:text-current prose-em:text-current prose-a:text-I0 prose-code:text-current prose-strong:text-current prose-hr:border-M3 prose-li:marker:text-current prose-h1:text-current prose-h2:text-current prose-h3:text-current prose-h4:text-current prose-h5:text-current prose-h6:text-current prose-pre:text-M3 prose-pre:bg-M3 max-w-none dark:prose-invert focus:outline-none focus-visible:outline-none;
 }
 
 .ProseMirror-focused {
