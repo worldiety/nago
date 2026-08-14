@@ -182,7 +182,7 @@ function setNodes() {
 			type: 'custom',
 			data: node,
 			position: {
-				x: node.position?.x ?? index * 180,
+				x: node.position?.x ?? 0,
 				y: node.position?.y ?? 0,
 			},
 			sourcePosition: mapSourcePosition(node),
