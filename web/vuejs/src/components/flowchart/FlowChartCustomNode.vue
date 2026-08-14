@@ -14,10 +14,11 @@
 		:class="{
 			'style-default': !node.style || node.style === FlowChartNodeStyleValues.FlowChartNodeStyleDefault,
 			'style-none': node.style === FlowChartNodeStyleValues.FlowChartNodeStyleNone,
+			'readonly': readonly,
 		}"
 	>
 		<Handle
-			v-if="!readonly && (!node.type || node.type === FlowChartNodeTypeValues.FlowChartNodeTypeEnd)"
+			v-if="!node.type || node.type === FlowChartNodeTypeValues.FlowChartNodeTypeEnd"
 			type="target"
 			:position="orientation === OrientationValues.Vertical ? Position.Top : Position.Left"
 		/>
@@ -31,7 +32,7 @@
 			</div>
 		</div>
 		<Handle
-			v-if="!readonly && (!node.type || node.type === FlowChartNodeTypeValues.FlowChartNodeTypeStart)"
+			v-if="!node.type || node.type === FlowChartNodeTypeValues.FlowChartNodeTypeStart"
 			type="source"
 			:position="orientation === OrientationValues.Vertical ? Position.Bottom : Position.Right"
 		/>
