@@ -18449,6 +18449,10 @@ export class FlowChart implements Writeable, Readable, Component {
 
 	public menu?: FlowChartMenu;
 
+	public readOnly?: Bool;
+
+	public movable?: Bool;
+
 	constructor(
 		inputValue: Ptr | undefined = undefined,
 		value: FlowChartModel | undefined = undefined,
@@ -18464,7 +18468,9 @@ export class FlowChart implements Writeable, Readable, Component {
 		maxZoom: Float | undefined = undefined,
 		actionValue: Ptr | undefined = undefined,
 		toolbar: FlowChartToolbar | undefined = undefined,
-		menu: FlowChartMenu | undefined = undefined
+		menu: FlowChartMenu | undefined = undefined,
+		readOnly: Bool | undefined = undefined,
+		movable: Bool | undefined = undefined
 	) {
 		this.inputValue = inputValue;
 		this.value = value;
@@ -18481,6 +18487,8 @@ export class FlowChart implements Writeable, Readable, Component {
 		this.actionValue = actionValue;
 		this.toolbar = toolbar;
 		this.menu = menu;
+		this.readOnly = readOnly;
+		this.movable = movable;
 	}
 
 	read(reader: BinaryReader): void {
@@ -18555,6 +18563,14 @@ export class FlowChart implements Writeable, Readable, Component {
 					this.menu.read(reader);
 					break;
 				}
+				case 16: {
+					this.readOnly = readBool(reader);
+					break;
+				}
+				case 17: {
+					this.movable = readBool(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -18579,6 +18595,8 @@ export class FlowChart implements Writeable, Readable, Component {
 			this.actionValue !== undefined,
 			this.toolbar !== undefined && !this.toolbar.isZero(),
 			this.menu !== undefined && !this.menu.isZero(),
+			this.readOnly !== undefined,
+			this.movable !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -18642,6 +18660,14 @@ export class FlowChart implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.RECORD, 15);
 			this.menu!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[16]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 16);
+			writeBool(writer, this.readOnly!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[17]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 17);
+			writeBool(writer, this.movable!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -18660,7 +18686,9 @@ export class FlowChart implements Writeable, Readable, Component {
 			this.maxZoom === undefined &&
 			this.actionValue === undefined &&
 			(this.toolbar === undefined || this.toolbar.isZero()) &&
-			(this.menu === undefined || this.menu.isZero())
+			(this.menu === undefined || this.menu.isZero()) &&
+			this.readOnly === undefined &&
+			this.movable === undefined
 		);
 	}
 
@@ -18680,6 +18708,8 @@ export class FlowChart implements Writeable, Readable, Component {
 		this.actionValue = undefined;
 		this.toolbar = undefined;
 		this.menu = undefined;
+		this.readOnly = undefined;
+		this.movable = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

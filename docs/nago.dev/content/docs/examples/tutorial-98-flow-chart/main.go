@@ -39,8 +39,8 @@ func main() {
 			actionState.Observe(func(action flowchart.FlowChartActionData) {
 				fmt.Println("Latest action", action)
 
-				if action.Node.ID == "" && action.Edge.ID == "" {
-					menuVisibleState.Set(!menuVisibleState.Get())
+				if action.Node.ID == "" && action.Edge.ID == "" && action.RightClick {
+					menuVisibleState.Set(true)
 					return
 				}
 
@@ -278,6 +278,8 @@ func lastAction(state *core.State[flowchart.FlowChartActionData]) core.View {
 			ui.GridCell(ui.Text(fmt.Sprintf("%+v", actionData.SelectedNodes))),
 			ui.GridCell(ui.Text("Selected edges:")),
 			ui.GridCell(ui.Text(fmt.Sprintf("%+v", actionData.SelectedEdges))),
+			ui.GridCell(ui.Text("Right click:")),
+			ui.GridCell(ui.Text(fmt.Sprintf("%t", actionData.RightClick))),
 		).
 			Columns(2).
 			RowGap(ui.L2).

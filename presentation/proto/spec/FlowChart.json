@@ -62,6 +62,14 @@
     "15": {
       "name": "Menu",
       "type": "FlowChartMenu"
+    },
+    "16": {
+      "name": "ReadOnly",
+      "type": "Bool"
+    },
+    "17": {
+      "name": "Movable",
+      "type": "Bool"
     }
   }
 }

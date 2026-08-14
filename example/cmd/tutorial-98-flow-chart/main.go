@@ -39,8 +39,8 @@ func main() {
 			actionState.Observe(func(action flowchart.FlowChartActionData) {
 				fmt.Println("Latest action", action)
 
-				if action.Node.ID == "" && action.Edge.ID == "" {
-					menuVisibleState.Set(!menuVisibleState.Get())
+				if action.Node.ID == "" && action.Edge.ID == "" && action.RightClick {
+					menuVisibleState.Set(true)
 					return
 				}
 
