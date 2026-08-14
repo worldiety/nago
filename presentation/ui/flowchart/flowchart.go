@@ -88,11 +88,16 @@ type TFlowChart struct {
 	maxZoom            float64
 	toolbar            Toolbar
 	menu               Menu
+	readOnly           bool
+	movable            bool
 }
 
 // FlowChart creates a new flowchart component for the given model.
 func FlowChart(model Model) TFlowChart {
-	return TFlowChart{model: model}
+	return TFlowChart{
+		model:   model,
+		movable: true,
+	}
 }
 
 // Model sets the static flowchart model.
@@ -191,6 +196,16 @@ func (c TFlowChart) Menu(menu Menu) TFlowChart {
 	return c
 }
 
+func (c TFlowChart) ReadOnly(val bool) TFlowChart {
+	c.readOnly = val
+	return c
+}
+
+func (c TFlowChart) Movable(val bool) TFlowChart {
+	c.movable = val
+	return c
+}
+
 func (c TFlowChart) AutoLayout(wnd core.Window) {
 	core.AsyncCall(wnd, &proto.FlowChartAutoLayout{
 		Dummy: 1,
@@ -227,7 +242,9 @@ func (c TFlowChart) Render(ctx core.RenderContext) core.RenderNode {
 			Orientation: proto.Orientation(c.toolbar.Orientation),
 			Actions:     make(proto.FlowChartToolbarActions, 0),
 		},
-		Menu: c.menu.render(ctx),
+		Menu:     c.menu.render(ctx),
+		ReadOnly: proto.Bool(c.readOnly),
+		Movable:  proto.Bool(c.movable),
 	}
 
 	for _, node := range m.Nodes {

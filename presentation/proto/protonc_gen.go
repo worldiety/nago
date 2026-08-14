@@ -17959,10 +17959,12 @@ type FlowChart struct {
 	ActionValue        Ptr
 	Toolbar            FlowChartToolbar
 	Menu               FlowChartMenu
+	ReadOnly           Bool
+	Movable            Bool
 }
 
 func (v *FlowChart) write(w *BinaryWriter) error {
-	var fields [16]bool
+	var fields [18]bool
 	fields[1] = !v.InputValue.IsZero()
 	fields[2] = !v.Value.IsZero()
 	fields[3] = !v.Frame.IsZero()
@@ -17978,6 +17980,8 @@ func (v *FlowChart) write(w *BinaryWriter) error {
 	fields[13] = !v.ActionValue.IsZero()
 	fields[14] = !v.Toolbar.IsZero()
 	fields[15] = !v.Menu.IsZero()
+	fields[16] = !v.ReadOnly.IsZero()
+	fields[17] = !v.Movable.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -18108,6 +18112,22 @@ func (v *FlowChart) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[16] {
+		if err := w.writeFieldHeader(uvarint, 16); err != nil {
+			return err
+		}
+		if err := v.ReadOnly.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[17] {
+		if err := w.writeFieldHeader(uvarint, 17); err != nil {
+			return err
+		}
+		if err := v.Movable.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -18195,6 +18215,16 @@ func (v *FlowChart) read(r *BinaryReader) error {
 			}
 		case 15:
 			err := v.Menu.read(r)
+			if err != nil {
+				return err
+			}
+		case 16:
+			err := v.ReadOnly.read(r)
+			if err != nil {
+				return err
+			}
+		case 17:
+			err := v.Movable.read(r)
 			if err != nil {
 				return err
 			}
@@ -26866,13 +26896,15 @@ func (v *FlowChart) reset() {
 	v.ActionValue.reset()
 	v.Toolbar.reset()
 	v.Menu.reset()
+	v.ReadOnly.reset()
+	v.Movable.reset()
 }
 
 func (v *FlowChart) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.InputValue.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.Background.IsZero() && v.NodesDraggable.IsZero() && v.NodesConnectable.IsZero() && v.EdgesEditable.IsZero() && v.ElementsSelectable.IsZero() && v.Orientation.IsZero() && v.CustomContents.IsZero() && v.MinZoom.IsZero() && v.MaxZoom.IsZero() && v.ActionValue.IsZero() && v.Toolbar.IsZero() && v.Menu.IsZero()
+	return v.InputValue.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.Background.IsZero() && v.NodesDraggable.IsZero() && v.NodesConnectable.IsZero() && v.EdgesEditable.IsZero() && v.ElementsSelectable.IsZero() && v.Orientation.IsZero() && v.CustomContents.IsZero() && v.MinZoom.IsZero() && v.MaxZoom.IsZero() && v.ActionValue.IsZero() && v.Toolbar.IsZero() && v.Menu.IsZero() && v.ReadOnly.IsZero() && v.Movable.IsZero()
 }
 
 func (v *FlowChartPoint) reset() {

@@ -17,7 +17,7 @@
 		}"
 	>
 		<Handle
-			v-if="!node.type || node.type === FlowChartNodeTypeValues.FlowChartNodeTypeEnd"
+			v-if="!readonly && (!node.type || node.type === FlowChartNodeTypeValues.FlowChartNodeTypeEnd)"
 			type="target"
 			:position="orientation === OrientationValues.Vertical ? Position.Top : Position.Left"
 		/>
@@ -31,7 +31,7 @@
 			</div>
 		</div>
 		<Handle
-			v-if="!node.type || node.type === FlowChartNodeTypeValues.FlowChartNodeTypeStart"
+			v-if="!readonly && (!node.type || node.type === FlowChartNodeTypeValues.FlowChartNodeTypeStart)"
 			type="source"
 			:position="orientation === OrientationValues.Vertical ? Position.Bottom : Position.Right"
 		/>
@@ -56,6 +56,7 @@ interface Props {
 	orientation?: OrientationValues;
 	customContents?: FlowChartCustomContents;
 	zoom?: number;
+	readonly?: boolean;
 }
 
 const props = defineProps<Props>();
