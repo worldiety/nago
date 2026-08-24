@@ -322,6 +322,8 @@ export async function triggerFileUpload(uploadRepository: UploadRepository, evt:
 	input.id = evt.iD!;
 	input.multiple = evt.multiple!;
 	input.onchange = async (event) => {
+		document.body.removeChild(input);
+
 		const item = event.target as HTMLInputElement;
 		if (!item.files) {
 			return;
@@ -351,13 +353,13 @@ export async function triggerFileUpload(uploadRepository: UploadRepository, evt:
 			);
 		}
 	};
+	input.oncancel = () => document.body.removeChild(input);
 	if (evt.allowedMimeTypes?.value) {
 		input.accept = evt.allowedMimeTypes.value.join(',');
 	}
 	document.body.appendChild(input);
 	input.showPicker();
 	//	input.click() // this does not work properly on safari
-	document.body.removeChild(input);
 }
 
 /**
