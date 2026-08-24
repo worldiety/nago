@@ -49,6 +49,51 @@ func TestNewSloppyJSONRepository(t *testing.T) {
 
 }
 
+type personDBO struct {
+	ID       string
+	FullName string
+}
+
+func (p personDBO) Identity() string {
+	return p.ID
+}
+
+// TestNewJSONRepository_Mapping guards that the read side applies intoDomain, symmetrically to
+// intoPersistence on the write side. A regression here silently yields zero valued domain models.
+func TestNewJSONRepository_Mapping(t *testing.T) {
+	repo := NewJSONRepository[Person, string, personDBO, string](
+		mem.NewBlobStore("test"),
+		func(dbo personDBO) (Person, error) {
+			return Person{ID: dbo.ID, Name: dbo.FullName}, nil
+		},
+		func(p Person) (personDBO, error) {
+			return personDBO{ID: p.ID, FullName: p.Name}, nil
+		},
+	)
+
+	want := Person{ID: "1234", Name: "Torben"}
+	must(repo.Save(want))
+
+	optP := unwrap(repo.FindByID("1234"))
+	if optP.IsNone() {
+		t.Fatal("expected some person")
+	}
+
+	if got := optP.Unwrap(); got != want {
+		t.Fatalf("intoDomain not applied: got %+v, want %+v", got, want)
+	}
+
+	for got, err := range repo.All() {
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if got != want {
+			t.Fatalf("intoDomain not applied in All: got %+v, want %+v", got, want)
+		}
+	}
+}
+
 func BenchmarkNewSloppyJSONRepository(b *testing.B) {
 
 	b.Run("mem", func(t *testing.B) {

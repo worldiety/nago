@@ -63,12 +63,11 @@ func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) Fin
 		return res, nil
 	}
 
-	var domainModel DomainModel
 	reader := optR.Unwrap()
 	defer reader.Close() // otherwise we get a deadlock
 
-	decoder := json.NewDecoder(reader)
-	if err := decoder.Decode(&domainModel); err != nil {
+	domainModel, err := r.decode(reader)
+	if err != nil {
 		return res, err
 	}
 
