@@ -122,7 +122,7 @@ onUnmounted(() => {
 		}
 
 		.body {
-			@apply w-full overflow-hidden duration-300 opacity-0 pt-2 px-2 -ml-2 -mt-2 pointer-events-none;
+			@apply w-full overflow-clip duration-300 opacity-0 pt-2 px-2 -ml-2 -mt-2 pointer-events-none;
 
 			.body-inner {
 				@apply w-full pointer-events-auto;
