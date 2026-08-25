@@ -62,6 +62,7 @@ onMounted(() => {
 	setTimeout(calcBodyHeight, 20); // TODO: Find better way to render correct initial state
 	addEventListener('resize', calcBodyHeight);
 	watch(() => props.ui.value, calcBodyHeight);
+	watch(() => props.ui.content, () => setTimeout(calcBodyHeight));
 });
 
 onUnmounted(() => {
