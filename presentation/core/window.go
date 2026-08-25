@@ -138,6 +138,9 @@ type Window interface {
 	// The frontend may ignore or just not support a specific theme.
 	SetColorScheme(ColorScheme)
 
+	// SetFonts requests the frontend to update its available fonts.
+	SetFonts(fonts Fonts)
+
 	// Application returns the parent application.
 	Application() *Application
 

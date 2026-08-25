@@ -162,16 +162,18 @@ export function getLocale(): Locale {
  * after the backend has processed a [ScopeConfigurationChangeRequested] event.
  */
 export function onScopeConfigurationChanged(themeManager: ThemeManager, evt: ScopeConfigurationChanged) {
-	if (!evt.themes) {
-		return;
+	if (evt.themes) {
+		themeManager.setThemes(evt.themes);
+		themeManager.applyActiveTheme();
 	}
-	themeManager.setThemes(evt.themes);
-	themeManager.applyActiveTheme();
+
 	if (evt.activeLocale) {
 		themeManager.activeLocale = evt.activeLocale;
 	}
 
-	updateFavicon(evt.appIcon);
+	if (evt.appIcon) {
+		updateFavicon(evt.appIcon);
+	}
 
 	if (evt.fonts) {
 		loadFonts(evt.fonts);
@@ -185,7 +187,7 @@ const alreadyLoadedFonts = new Map<string, boolean>();
 /**
  * loadFonts inspects whatever is in the given fonts and loads only those faces, which are unknown.
  */
-function loadFonts(fonts: Fonts) {
+export function loadFonts(fonts: Fonts) {
 	if (fonts.defaultFontFace) {
 		document.documentElement.style.setProperty('font-family', `'${fonts.defaultFontFace}', sans-serif`);
 	}

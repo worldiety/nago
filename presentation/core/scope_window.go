@@ -201,6 +201,25 @@ func (s *scopeWindow) SetColorScheme(scheme ColorScheme) {
 	})
 }
 
+func (s *scopeWindow) SetFonts(fonts Fonts) {
+	faces := proto.FontFaces{}
+	for _, face := range fonts.Faces {
+		faces = append(faces, proto.FontFace{
+			Family: proto.Str(face.Family),
+			Style:  proto.Str(face.Style),
+			Weight: proto.Str(face.Weight),
+			Source: proto.URI(face.Source),
+		})
+	}
+
+	s.parent.Publish(&proto.FontsRequested{
+		Fonts: proto.Fonts{
+			DefaultFontFace: proto.Str(fonts.DefaultFont),
+			Faces:           faces,
+		},
+	})
+}
+
 func (s *scopeWindow) Path() NavigationPath {
 	return NavigationPath(s.factory)
 }

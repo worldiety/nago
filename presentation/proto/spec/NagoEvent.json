@@ -23,6 +23,7 @@
     "Ping",
     "WindowInfoChanged",
     "ScopeConfigurationChanged",
+    "FontsRequested",
     "ThemeRequested",
     "SendMultipleRequested",
     "OpenHttpFlow",

@@ -22,6 +22,7 @@ import {
 	clipboardWriteText,
 	getWindowInfo,
 	lastRID,
+	loadFonts,
 	navigateForward,
 	nextInvalidationScrollsTop,
 	nextRID,
@@ -44,7 +45,8 @@ import {
 	ClipboardWriteTextRequested,
 	Component,
 	ErrorRootViewAllocationRequired,
-	FileImportRequested,
+	FileImportRequested, Fonts,
+	FontsRequested,
 	NavigationBackRequested,
 	NavigationForwardToRequested,
 	NavigationReloadRequested,
@@ -160,6 +162,11 @@ async function applyConfiguration(): Promise<void> {
 
 		if (evt instanceof OpenHttpFlow) {
 			openHttpFlow(evt);
+			return;
+		}
+
+		if (evt instanceof FontsRequested) {
+			loadFonts(evt.fonts ?? new Fonts());
 			return;
 		}
 

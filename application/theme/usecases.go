@@ -58,6 +58,7 @@ type ResetColors func(subject auth.Subject) error
 type UpdateColors func(subject auth.Subject, colors Colors) error
 type ReadColors func(subject auth.Subject) (Colors, error)
 
+type UpdateFonts func(subject auth.Subject, fonts core.Fonts) error
 type ReadFonts func(subject auth.Subject) (core.Fonts, error)
 
 type UseCases struct {
@@ -66,6 +67,7 @@ type UseCases struct {
 	ReadColors   ReadColors
 	HasColors    HasColors
 	ResetColors  ResetColors
+	UpdateFonts  UpdateFonts
 	ReadFonts    ReadFonts
 }
 
@@ -81,6 +83,7 @@ func NewUseCases(bus events.Bus, loadGlobal settings.LoadGlobal, storeGlobal set
 		ReadColors:   NewReadColors(loadGlobal),
 		HasColors:    NewHasColors(loadGlobal),
 		ResetColors:  NewResetColors(bus, loadGlobal, storeGlobal),
+		UpdateFonts:  NewUpdateFonts(bus, loadGlobal, storeGlobal),
 		ReadFonts:    NewReadFonts(loadGlobal),
 	}
 }
