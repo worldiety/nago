@@ -58,14 +58,17 @@ function toggle(value?: boolean) {
 	);
 }
 
+function observeBodyHeightChange() {
+	if (!bodyDummy.value) return;
+	const observer = new ResizeObserver(calcBodyHeight);
+	observer.observe(bodyDummy.value);
+}
+
 onMounted(() => {
 	setTimeout(calcBodyHeight, 20); // TODO: Find better way to render correct initial state
 	addEventListener('resize', calcBodyHeight);
 	watch(() => props.ui.value, calcBodyHeight);
-	watch(
-		() => props.ui.content,
-		() => setTimeout(calcBodyHeight)
-	);
+	observeBodyHeightChange();
 });
 
 onUnmounted(() => {
