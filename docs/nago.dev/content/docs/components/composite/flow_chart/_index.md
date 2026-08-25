@@ -28,8 +28,10 @@ FlowChart creates a new flowchart component for the given model.
 | `Menu(menu Menu)` |  |
 | `MinZoom(minZoom float64)` |  |
 | `Model(model Model)` | Model sets the static flowchart model. |
+| `Movable(val bool)` |  |
 | `NodesConnectable(val bool)` |  |
 | `NodesDraggable(val bool)` |  |
+| `ReadOnly(val bool)` |  |
 | `Toolbar(toolbar Toolbar)` |  |
 | `WithFrame(fn func(ui.Frame) ui.Frame)` |  |
 ---

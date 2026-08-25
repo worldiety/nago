@@ -44,6 +44,7 @@ func (c *Configurator) ThemeManagement() (ThemeManagement, error) {
 			if c.app != nil {
 				c.app.UpdateColorSet(core.Dark, evt.Settings.Colors.Dark)
 				c.app.UpdateColorSet(core.Light, evt.Settings.Colors.Light)
+				c.app.UpdateFonts(evt.Settings.Fonts)
 			}
 		})
 	}

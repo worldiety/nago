@@ -109,6 +109,7 @@ func (w *ssrWindow) Info() core.WindowInfo {
 func (w *ssrWindow) ExportFiles(_ core.ExportFilesOptions) {}
 func (w *ssrWindow) ImportFiles(_ core.ImportFilesOptions) {}
 func (w *ssrWindow) SetColorScheme(_ core.ColorScheme)     {}
+func (w *ssrWindow) SetFonts(_ core.Fonts)                 {}
 func (w *ssrWindow) Application() *core.Application        { return w.application }
 func (w *ssrWindow) Path() core.NavigationPath             { return w.path }
 func (w *ssrWindow) AddDestroyObserver(_ func(), _ ...core.DestroyObserverOption) func() {

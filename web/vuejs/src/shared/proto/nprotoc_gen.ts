@@ -21943,6 +21943,55 @@ export class FlowChartMenu implements Writeable, Readable {
 	}
 }
 
+export class FontsRequested implements Writeable, Readable, NagoEvent {
+	public fonts?: Fonts;
+
+	constructor(fonts: Fonts | undefined = undefined) {
+		this.fonts = fonts;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.fonts = new Fonts();
+					this.fonts.read(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.fonts !== undefined && !this.fonts.isZero()];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.RECORD, 1);
+			this.fonts!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.fonts === undefined || this.fonts.isZero();
+	}
+
+	reset(): void {
+		this.fonts = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 280);
+		return;
+	}
+	isNagoEvent(): void {}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -23226,6 +23275,11 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 279: {
 			const v = new FlowChartMenu();
+			v.read(src);
+			return v;
+		}
+		case 280: {
+			const v = new FontsRequested();
 			v.read(src);
 			return v;
 		}
