@@ -8,7 +8,7 @@
 -->
 
 <script lang="ts" setup>
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import CloseIcon from '@/assets/svg/close.svg';
 import UiGeneric from '@/components/UiGeneric.vue';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
@@ -43,6 +43,9 @@ const showZero = !!props.ui.showZero;
 const step = props.ui.step || 0;
 const inputValue = ref<string>(props.ui.value ? formatValue(props.ui.value) : '');
 let timer: number = 0;
+// unmounting tells a focusout caused by our own destruction apart from the user really leaving the field.
+// See onFocusOut for why this matters.
+let unmounting = false;
 // lastSentValue is the (parsed) value we last transmitted to the server. It is our synchronization anchor:
 // as long as the local input still equals it, the user has not typed anything the server does not know about,
 // and therefore any incoming server value is newer than our local state and must win.
@@ -370,7 +373,26 @@ function onInputFocus() {
 	if (input) input.select();
 }
 
-function leaveFocus(): void {
+/**
+ * Handles the focusout driven submit.
+ *
+ * Removing a focused element from the DOM makes the browser emit focusout, which is indistinguishable from the
+ * user tabbing away: relatedTarget is null and the activeElement falls back to the body, exactly like a click on
+ * an inert area. The element is also still connected at that point, so isConnected cannot be used either.
+ *
+ * Submitting in that situation writes the local text back into the bound server state and resurrects a value the
+ * server has just discarded. The visible symptom is a chat input which refuses to clear after sending: the submit
+ * handler empties the state, the re-rendering recreates this component, and the dying instance pushes its old
+ * text back in, so the next rendering shows it again.
+ *
+ * onBeforeUnmount is guaranteed to run before the DOM node is detached and therefore before that focusout, which
+ * makes it a reliable discriminator.
+ */
+function onFocusOut(): void {
+	if (unmounting) {
+		return;
+	}
+
 	inputValue.value = formatValue(inputValue.value);
 	submitInputValue(true);
 }
@@ -456,6 +478,10 @@ watch(
 );
 
 watch(inputValue, () => nextTick(resizeTextarea));
+onBeforeUnmount(() => {
+	unmounting = true;
+});
+
 onMounted(() => {
 	resizeTextarea();
 	calcAdditionalElementsWidths();
@@ -496,7 +522,7 @@ onMounted(() => {
 					@keydown.up.prevent="onInputUp"
 					@keydown.down.prevent="onInputDown"
 					@focus="onInputFocus"
-					@focusout="leaveFocus"
+					@focusout="onFocusOut"
 					@input="submitInputValue(false)"
 					@wheel="onInputWheel"
 				/>
@@ -512,7 +538,7 @@ onMounted(() => {
 					type="text"
 					:rows="props.ui.lines"
 					@keydown.enter="handleKeydownEnter"
-					@focusout="submitInputValue(true)"
+					@focusout="onFocusOut"
 					@input="onTextareaInput(false)"
 				/>
 
