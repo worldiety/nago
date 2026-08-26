@@ -198,10 +198,10 @@ onUnmounted(() => {
 </script>
 <style scoped>
 .scroll-view {
-	@apply relative;
+	@apply relative flex min-h-0 max-h-full overflow-clip;
 
 	.container-outer {
-		@apply h-full;
+		@apply flex-1 min-h-0 max-h-full;
 	}
 
 	.scroll-action {
