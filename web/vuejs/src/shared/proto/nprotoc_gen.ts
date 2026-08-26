@@ -6120,6 +6120,10 @@ export class ScrollView implements Writeable, Readable, Component {
 
 	public scrollAnimation?: ScrollAnimation;
 
+	public scrollBehavior?: ScrollBehavior;
+
+	public scrollButtonLabel?: Str;
+
 	constructor(
 		content: Component | undefined = undefined,
 		border: Border | undefined = undefined,
@@ -6130,7 +6134,9 @@ export class ScrollView implements Writeable, Readable, Component {
 		invisible: Bool | undefined = undefined,
 		position: Position | undefined = undefined,
 		scrollIntoView: Str | undefined = undefined,
-		scrollAnimation: ScrollAnimation | undefined = undefined
+		scrollAnimation: ScrollAnimation | undefined = undefined,
+		scrollBehavior: ScrollBehavior | undefined = undefined,
+		scrollButtonLabel: Str | undefined = undefined
 	) {
 		this.content = content;
 		this.border = border;
@@ -6142,6 +6148,8 @@ export class ScrollView implements Writeable, Readable, Component {
 		this.position = position;
 		this.scrollIntoView = scrollIntoView;
 		this.scrollAnimation = scrollAnimation;
+		this.scrollBehavior = scrollBehavior;
+		this.scrollButtonLabel = scrollButtonLabel;
 	}
 
 	read(reader: BinaryReader): void {
@@ -6199,6 +6207,14 @@ export class ScrollView implements Writeable, Readable, Component {
 					this.scrollAnimation = readInt(reader);
 					break;
 				}
+				case 11: {
+					this.scrollBehavior = readInt(reader);
+					break;
+				}
+				case 12: {
+					this.scrollButtonLabel = readString(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -6218,6 +6234,8 @@ export class ScrollView implements Writeable, Readable, Component {
 			this.position !== undefined && !this.position.isZero(),
 			this.scrollIntoView !== undefined,
 			this.scrollAnimation !== undefined,
+			this.scrollBehavior !== undefined,
+			this.scrollButtonLabel !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -6264,6 +6282,14 @@ export class ScrollView implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.UVARINT, 10);
 			writeInt(writer, this.scrollAnimation!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[11]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 11);
+			writeInt(writer, this.scrollBehavior!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[12]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 12);
+			writeString(writer, this.scrollButtonLabel!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -6277,7 +6303,9 @@ export class ScrollView implements Writeable, Readable, Component {
 			this.invisible === undefined &&
 			(this.position === undefined || this.position.isZero()) &&
 			this.scrollIntoView === undefined &&
-			this.scrollAnimation === undefined
+			this.scrollAnimation === undefined &&
+			this.scrollBehavior === undefined &&
+			this.scrollButtonLabel === undefined
 		);
 	}
 
@@ -6292,6 +6320,8 @@ export class ScrollView implements Writeable, Readable, Component {
 		this.position = undefined;
 		this.scrollIntoView = undefined;
 		this.scrollAnimation = undefined;
+		this.scrollBehavior = undefined;
+		this.scrollButtonLabel = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -21992,6 +22022,18 @@ export class FontsRequested implements Writeable, Readable, NagoEvent {
 	isNagoEvent(): void {}
 }
 
+export type ScrollBehavior = number;
+function writeTypeHeaderScrollBehavior(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 281);
+	return;
+}
+// companion enum containing all defined constants for ScrollBehavior
+export enum ScrollBehaviorValues {
+	ScrollBehaviorAlways = 0,
+	ScrollBehaviorAuto = 1,
+	ScrollBehaviorAsk = 2,
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -23281,6 +23323,10 @@ export function unmarshal(src: BinaryReader): any {
 		case 280: {
 			const v = new FontsRequested();
 			v.read(src);
+			return v;
+		}
+		case 281: {
+			const v = readInt(src) as ScrollBehavior;
 			return v;
 		}
 	}

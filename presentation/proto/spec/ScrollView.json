@@ -43,6 +43,14 @@
     "10": {
       "name": "ScrollAnimation",
       "type": "ScrollAnimation"
+    },
+    "11": {
+      "name": "ScrollBehavior",
+      "type": "ScrollBehavior"
+    },
+    "12": {
+      "name": "ScrollButtonLabel",
+      "type": "Str"
     }
   }
 }

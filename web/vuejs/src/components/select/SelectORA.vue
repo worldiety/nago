@@ -82,7 +82,7 @@
 import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
 import { Select, SelectOption, TextFieldStyleValues } from '@/shared/proto/nprotoc_gen';
 import { autoUpdate, flip, Middleware, offset, shift, useFloating } from '@floating-ui/vue';
-import ArrowDownIcon from '@/assets/svg/arrowDown.svg';
+import ArrowDownIcon from '@/assets/svg/chevron-down.svg';
 import MagnifierIcon from '@/assets/svg/magnifier.svg';
 import { InputWrapperStyle } from '@/components/shared/inputWrapperStyle';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
