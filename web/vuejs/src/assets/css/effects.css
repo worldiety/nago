@@ -19,6 +19,7 @@ textarea,
 object,
 [tabindex]:not([tabindex='-1']) {
 	&:focus-visible:not(
+			[role=link],
 			.custom-focus,
 			.button-primary,
 			.button-secondary,
@@ -37,11 +38,13 @@ object,
 	@apply outline-none outline-I0 -outline-offset-2 rounded-lg;
 }
 
-a:focus-visible:not(.custom-focus, .button-primary, .button-secondary, .button-tertiary) {
+a:focus-visible:not(.custom-focus, .button-primary, .button-secondary, .button-tertiary),
+button[role=link]:focus-visible:not(.custom-focus, .button-primary, .button-secondary, .button-tertiary) {
 	@apply outline outline-2 outline-I0 outline-offset-4 rounded-full;
 }
 
-a:hover:not(.custom-hover) {
+a:hover:not(.custom-hover),
+button[role=link]:hover:not(.custom-hover) {
 	@apply decoration-I0;
 }
 
