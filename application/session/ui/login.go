@@ -262,10 +262,10 @@ func forgotPasswordLink(presented *core.State[bool], usrSettings user.Settings) 
 func ssoLogin(wnd core.Window, startNLSFlow session.StartNLSFlow) core.View {
 	return ui.VStack(
 		ui.HStack(
-			ui.HLine().Frame(ui.Frame{Width: ui.L40}),
+			ui.HLine().Frame(ui.Frame{Width: ui.L64}),
 			ui.Text(StrSignInWithSSO.Get(wnd)),
-			ui.HLine().Frame(ui.Frame{Width: ui.L40}),
-		).FullWidth().Gap(ui.L8),
+			ui.HLine().Frame(ui.Frame{Width: ui.L64}),
+		).FullWidth().Gap(ui.L8).Padding(ui.Padding{}.Vertical(ui.L8)),
 
 		ui.SecondaryButton(func() {
 			uri, err := startNLSFlow(wnd.Session().ID())
