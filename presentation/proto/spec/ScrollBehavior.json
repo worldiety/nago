@@ -1,0 +1,15 @@
+{
+  "kind": "Uint",
+  "id": 281,
+  "const": {
+    "0": {
+      "name": "ScrollBehaviorAlways"
+    },
+    "1": {
+      "name": "ScrollBehaviorAuto"
+    },
+    "2": {
+      "name": "ScrollBehaviorAsk"
+    }
+  }
+}

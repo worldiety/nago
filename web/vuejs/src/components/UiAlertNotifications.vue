@@ -51,7 +51,7 @@ import UiGeneric from '@/components/UiGeneric.vue';
 import { nextRID } from '@/eventhandling';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { computed, onMounted, ref, watch } from 'vue';
-import ArrowDownIcon from '@/assets/svg/arrowDown.svg';
+import ArrowDownIcon from '@/assets/svg/chevron-down.svg';
 import CloseIcon from '@/assets/svg/close.svg';
 
 const props = defineProps<{

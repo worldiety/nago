@@ -39,7 +39,7 @@
 <script lang="ts" setup>
 import { computed, ref, useTemplateRef, watch } from 'vue';
 import type { Select } from '@/shared/proto/nprotoc_gen';
-import ArrowDownIcon from '@/assets/svg/arrowDown.svg';
+import ArrowDownIcon from '@/assets/svg/chevron-down.svg';
 import UiGeneric from '@/components/UiGeneric.vue';
 
 interface Props {

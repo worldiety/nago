@@ -6013,12 +6013,14 @@ type ScrollView struct {
 	Invisible       Bool
 	Position        Position
 	// ScrollIntoView takes an ID and tries to scroll the denoted view into the visible viewport.
-	ScrollIntoView  Str
-	ScrollAnimation ScrollAnimation
+	ScrollIntoView    Str
+	ScrollAnimation   ScrollAnimation
+	ScrollBehavior    ScrollBehavior
+	ScrollButtonLabel Str
 }
 
 func (v *ScrollView) write(w *BinaryWriter) error {
-	var fields [11]bool
+	var fields [13]bool
 	fields[1] = v.Content != nil && !v.Content.IsZero()
 	fields[2] = !v.Border.IsZero()
 	fields[3] = !v.Frame.IsZero()
@@ -6029,6 +6031,8 @@ func (v *ScrollView) write(w *BinaryWriter) error {
 	fields[8] = !v.Position.IsZero()
 	fields[9] = !v.ScrollIntoView.IsZero()
 	fields[10] = !v.ScrollAnimation.IsZero()
+	fields[11] = !v.ScrollBehavior.IsZero()
+	fields[12] = !v.ScrollButtonLabel.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -6126,6 +6130,22 @@ func (v *ScrollView) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[11] {
+		if err := w.writeFieldHeader(uvarint, 11); err != nil {
+			return err
+		}
+		if err := v.ScrollBehavior.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[12] {
+		if err := w.writeFieldHeader(byteSlice, 12); err != nil {
+			return err
+		}
+		if err := v.ScrollButtonLabel.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -6197,6 +6217,16 @@ func (v *ScrollView) read(r *BinaryReader) error {
 			}
 		case 10:
 			err := v.ScrollAnimation.read(r)
+			if err != nil {
+				return err
+			}
+		case 11:
+			err := v.ScrollBehavior.read(r)
+			if err != nil {
+				return err
+			}
+		case 12:
+			err := v.ScrollButtonLabel.read(r)
 			if err != nil {
 				return err
 			}
@@ -21426,6 +21456,34 @@ func (v *FontsRequested) read(r *BinaryReader) error {
 	return nil
 }
 
+type ScrollBehavior uint64
+
+const (
+	ScrollBehaviorAlways ScrollBehavior = 0
+	ScrollBehaviorAuto   ScrollBehavior = 1
+	ScrollBehaviorAsk    ScrollBehavior = 2
+)
+
+func (v *ScrollBehavior) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *ScrollBehavior) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = ScrollBehavior(tmp)
+	return nil
+}
+
+func (v *ScrollBehavior) reset() {
+	*v = ScrollBehavior(0)
+}
+func (v *ScrollBehavior) IsZero() bool {
+	return *v == 0
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -23055,6 +23113,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 280:
 		var v FontsRequested
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 281:
+		var v ScrollBehavior
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -24720,13 +24784,15 @@ func (v *ScrollView) reset() {
 	v.Position.reset()
 	v.ScrollIntoView.reset()
 	v.ScrollAnimation.reset()
+	v.ScrollBehavior.reset()
+	v.ScrollButtonLabel.reset()
 }
 
 func (v *ScrollView) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return isZeroComponent(v.Content) && v.Border.IsZero() && v.Frame.IsZero() && v.Padding.IsZero() && v.BackgroundColor.IsZero() && v.Axis.IsZero() && v.Invisible.IsZero() && v.Position.IsZero() && v.ScrollIntoView.IsZero() && v.ScrollAnimation.IsZero()
+	return isZeroComponent(v.Content) && v.Border.IsZero() && v.Frame.IsZero() && v.Padding.IsZero() && v.BackgroundColor.IsZero() && v.Axis.IsZero() && v.Invisible.IsZero() && v.Position.IsZero() && v.ScrollIntoView.IsZero() && v.ScrollAnimation.IsZero() && v.ScrollBehavior.IsZero() && v.ScrollButtonLabel.IsZero()
 }
 
 func (v *Resource) reset() {
@@ -29520,6 +29586,13 @@ func (v *FlowChartMenu) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *FontsRequested) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 280); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *ScrollBehavior) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 281); err != nil {
 		return err
 	}
 	return nil
