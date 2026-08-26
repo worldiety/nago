@@ -17,8 +17,6 @@ func passwords(wnd core.Window, password, passwordRepeated, errPasswordRepeated 
 	strength := user.CalculatePasswordStrength(password.Get())
 
 	return ui.VStack(
-		ui.Space(ui.L48),
-		ui.Space(ui.L8), // -8 due to gap
 		ui.PasswordField("Passwort", password.Get()).
 			ErrorText(errPasswordRepeated.Get()).
 			InputValue(password).

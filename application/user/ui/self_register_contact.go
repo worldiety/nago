@@ -31,9 +31,6 @@ func contact(
 	mobilePhone, errMobilePhone *core.State[string],
 ) core.View {
 	return ui.VStack(
-		ui.Space(ui.L48),
-		ui.Space(ui.L8), // -8 due to gap
-
 		ui.IfFunc(!userSettings.Salutation.Hidden(), func() core.View {
 			return ui.TextField("Anrede"+requiredChar(userSettings.Salutation), salutation.Get()).
 				ErrorText(errSalutation.Get()).
@@ -125,7 +122,7 @@ func contact(
 				SupportingText(supportingTextMobilePhone()).
 				FullWidth()
 		}),
-	).FullWidth().Gap(ui.L8)
+	).FullWidth().Gap(ui.L12)
 }
 
 func supportingTextSalutation() string {

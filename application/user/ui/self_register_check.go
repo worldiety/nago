@@ -14,8 +14,6 @@ import (
 
 func check(firstname, lastname, email *core.State[string]) core.View {
 	return ui.VStack(
-		ui.Space(ui.L48),
-		ui.Space(ui.L8), // -8 due to gap
 		ui.Text("Sind die Daten korrekt?"),
 		ui.TextField("E-Mail Adresse", email.Get()).
 			InputValue(email).
