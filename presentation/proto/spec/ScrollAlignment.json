@@ -1,0 +1,12 @@
+{
+  "kind": "Uint",
+  "id": 282,
+  "const": {
+    "0": {
+      "name": "ScrollAlignmentEnd"
+    },
+    "1": {
+      "name": "ScrollAlignmentStart"
+    }
+  }
+}

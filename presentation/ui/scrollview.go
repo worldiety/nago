@@ -45,6 +45,13 @@ const (
 	ScrollBehaviorAsk    ScrollBehavior = ScrollBehavior(proto.ScrollBehaviorAsk)    // Ask the user whether to scroll when the content grows
 )
 
+type ScrollAlignment int
+
+const (
+	ScrollAlignmentEnd   ScrollAlignment = ScrollAlignment(proto.ScrollAlignmentEnd)   // Align the scroll target's bottom/right edge to the scroll container's bottom/right edge
+	ScrollAlignmentStart ScrollAlignment = ScrollAlignment(proto.ScrollAlignmentStart) // Align the scroll target's top/left edge to the scroll container's top/left edge
+)
+
 // TScrollView is a layout component (Scroll View).
 // It provides a scrollable container for a single child view.
 // The scroll direction can be vertical (default) or horizontal.
@@ -61,6 +68,7 @@ type TScrollView struct {
 	scrollAnimation   ScrollAnimation
 	scrollBehavior    ScrollBehavior
 	scrollButtonLabel string
+	scrollAlignment   ScrollAlignment
 }
 
 // A ScrollView can either be horizontal or vertical. By default, it is vertical.
@@ -130,6 +138,12 @@ func (c TScrollView) ScrollButtonLabel(label string) TScrollView {
 	return c
 }
 
+// ScrollAlignment defines how the component should align the scroll target when scrolling into view
+func (c TScrollView) ScrollAlignment(alignment ScrollAlignment) TScrollView {
+	c.scrollAlignment = alignment
+	return c
+}
+
 // Render builds and returns the protocol representation of the scroll view.
 // It includes the scrollable content, axis (vertical/horizontal),
 // frame, alignment, border, background color, and padding.
@@ -151,6 +165,7 @@ func (c TScrollView) Render(ctx core.RenderContext) core.RenderNode {
 		ScrollAnimation:   proto.ScrollAnimation(c.scrollAnimation),
 		ScrollBehavior:    proto.ScrollBehavior(c.scrollBehavior),
 		ScrollButtonLabel: proto.Str(buttonLabel),
+		ScrollAlignment:   proto.ScrollAlignment(c.scrollAlignment),
 	}
 }
 
