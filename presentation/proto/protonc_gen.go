@@ -6017,10 +6017,11 @@ type ScrollView struct {
 	ScrollAnimation   ScrollAnimation
 	ScrollBehavior    ScrollBehavior
 	ScrollButtonLabel Str
+	ScrollAlignment   ScrollAlignment
 }
 
 func (v *ScrollView) write(w *BinaryWriter) error {
-	var fields [13]bool
+	var fields [14]bool
 	fields[1] = v.Content != nil && !v.Content.IsZero()
 	fields[2] = !v.Border.IsZero()
 	fields[3] = !v.Frame.IsZero()
@@ -6033,6 +6034,7 @@ func (v *ScrollView) write(w *BinaryWriter) error {
 	fields[10] = !v.ScrollAnimation.IsZero()
 	fields[11] = !v.ScrollBehavior.IsZero()
 	fields[12] = !v.ScrollButtonLabel.IsZero()
+	fields[13] = !v.ScrollAlignment.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -6146,6 +6148,14 @@ func (v *ScrollView) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[13] {
+		if err := w.writeFieldHeader(uvarint, 13); err != nil {
+			return err
+		}
+		if err := v.ScrollAlignment.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -6227,6 +6237,11 @@ func (v *ScrollView) read(r *BinaryReader) error {
 			}
 		case 12:
 			err := v.ScrollButtonLabel.read(r)
+			if err != nil {
+				return err
+			}
+		case 13:
+			err := v.ScrollAlignment.read(r)
 			if err != nil {
 				return err
 			}
@@ -21484,6 +21499,33 @@ func (v *ScrollBehavior) IsZero() bool {
 	return *v == 0
 }
 
+type ScrollAlignment uint64
+
+const (
+	ScrollAlignmentEnd   ScrollAlignment = 0
+	ScrollAlignmentStart ScrollAlignment = 1
+)
+
+func (v *ScrollAlignment) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *ScrollAlignment) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = ScrollAlignment(tmp)
+	return nil
+}
+
+func (v *ScrollAlignment) reset() {
+	*v = ScrollAlignment(0)
+}
+func (v *ScrollAlignment) IsZero() bool {
+	return *v == 0
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -23119,6 +23161,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 281:
 		var v ScrollBehavior
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 282:
+		var v ScrollAlignment
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -24786,13 +24834,14 @@ func (v *ScrollView) reset() {
 	v.ScrollAnimation.reset()
 	v.ScrollBehavior.reset()
 	v.ScrollButtonLabel.reset()
+	v.ScrollAlignment.reset()
 }
 
 func (v *ScrollView) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return isZeroComponent(v.Content) && v.Border.IsZero() && v.Frame.IsZero() && v.Padding.IsZero() && v.BackgroundColor.IsZero() && v.Axis.IsZero() && v.Invisible.IsZero() && v.Position.IsZero() && v.ScrollIntoView.IsZero() && v.ScrollAnimation.IsZero() && v.ScrollBehavior.IsZero() && v.ScrollButtonLabel.IsZero()
+	return isZeroComponent(v.Content) && v.Border.IsZero() && v.Frame.IsZero() && v.Padding.IsZero() && v.BackgroundColor.IsZero() && v.Axis.IsZero() && v.Invisible.IsZero() && v.Position.IsZero() && v.ScrollIntoView.IsZero() && v.ScrollAnimation.IsZero() && v.ScrollBehavior.IsZero() && v.ScrollButtonLabel.IsZero() && v.ScrollAlignment.IsZero()
 }
 
 func (v *Resource) reset() {
@@ -29593,6 +29642,13 @@ func (v *FontsRequested) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *ScrollBehavior) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(uvarint, 281); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *ScrollAlignment) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 282); err != nil {
 		return err
 	}
 	return nil

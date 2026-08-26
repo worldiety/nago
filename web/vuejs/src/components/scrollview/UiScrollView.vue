@@ -39,6 +39,7 @@ import { frameCSS } from '@/components/shared/frame';
 import { paddingCSS } from '@/components/shared/padding';
 import { positionCSS } from '@/components/shared/position';
 import {
+	ScrollAlignmentValues,
 	ScrollAnimationValues,
 	ScrollBehaviorValues,
 	ScrollView,
@@ -157,14 +158,16 @@ function scroll(force?: boolean): void {
 	const child = outer.value.querySelector(`#${id}`);
 	if (!child) return;
 
+	const scrollAlign = props.ui.scrollAlignment === ScrollAlignmentValues.ScrollAlignmentStart ? 'start' : 'end';
+
 	nextTick(() => {
 		switch (props.ui.scrollAnimation) {
 			case ScrollAnimationValues.Instant:
-				child?.scrollIntoView({});
+				child?.scrollIntoView({ block: scrollAlign });
 				break;
 			default:
 				if (scrolling.value) clearTimeout(scrolling.value);
-				child?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+				child?.scrollIntoView({ behavior: 'smooth', block: scrollAlign });
 				scrolling.value = setTimeout(() => {
 					clearTimeout(scrolling.value);
 					scrolling.value = false;

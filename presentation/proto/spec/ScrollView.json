@@ -51,6 +51,10 @@
     "12": {
       "name": "ScrollButtonLabel",
       "type": "Str"
+    },
+    "13": {
+      "name": "ScrollAlignment",
+      "type": "ScrollAlignment"
     }
   }
 }
