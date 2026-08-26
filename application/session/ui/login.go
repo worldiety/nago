@@ -129,10 +129,10 @@ func Login(
 						Frame(ui.Frame{}.Size(ui.L48, ui.L48)),
 				),
 				ui.If(hasAppIcon, ui.Space(ui.L16)),
-				ui.Text("Mit "+wnd.Application().Name()+"-Konto anmelden").Font(ui.HeadlineSmall),
+				ui.Text("Mit "+wnd.Application().Name()+"-Konto anmelden").Font(ui.HeadlineSmall).Hyphens(ui.HyphensAuto),
 				ui.Text("Bitte Zugangsdaten eingeben"),
 			).Alignment(ui.TopLeading),
-		),
+		).Alignment(ui.Leading),
 
 		ui.GridCell(
 			ui.VStack(
@@ -148,16 +148,21 @@ func Login(
 				}).Font(ui.BodySmall).Visible(presentPasswordForgotten.Get()),
 
 				ui.IfFunc(usrSettings.HasSSO(), func() core.View { return ssoLogin(wnd, startNLSFlow) }),
-			).Gap(ui.L8).FullWidth(),
+			).Gap(ui.L8).FullWidth().NoClip(true),
 		),
-	).Gap(ui.L40).Columns(gridCols).FullWidth().Heights("auto")
+	).
+		Gap(ui.L40).
+		Columns(gridCols).
+		FullWidth().
+		Heights("auto").
+		Padding(ui.Padding{}.All(ui.L16))
 
 	return ui.VStack( // we don't have a scaffold
 		ui.VStack(
 			ui.WindowTitle(rstring.ActionLogin.Get(wnd)),
 			cardlayout.Card("").
 				Body(
-					ui.VStack(content).FullWidth().Padding(ui.Padding{}.All(ui.L16)),
+					ui.VStack(content).FullWidth(),
 				).Footer(
 				ui.HStack(
 					submitForgotPasswordBtn(wnd, login, emailErr, presentPasswordForgotten, sendResetPwdMail, infoText),

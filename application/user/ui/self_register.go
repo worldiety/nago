@@ -147,7 +147,7 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 						Frame(ui.Frame{}.Size(ui.L48, ui.L48)),
 				),
 				ui.If(hasAppIcon, ui.Space(ui.L16)),
-				ui.Text(wnd.Application().Name()+"-Konto").Font(ui.HeadlineSmall),
+				ui.Text(wnd.Application().Name()+"-Konto").Font(ui.HeadlineSmall).Hyphens(ui.HyphensAuto),
 				ui.Text("erstellen").Font(ui.HeadlineSmall),
 				ui.Text(subcaption),
 			).Alignment(ui.TopLeading),
