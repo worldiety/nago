@@ -145,7 +145,7 @@ function calcWantToScroll(): void {
 }
 
 function scroll(force?: boolean): void {
-	if (!props.ui.scrollIntoView || !outer.value) return;
+	if (!props.ui.scrollIntoView) return;
 
 	const scrollNow =
 		force ||
@@ -154,13 +154,15 @@ function scroll(force?: boolean): void {
 		(props.ui.scrollBehavior === ScrollBehaviorValues.ScrollBehaviorAuto && !wantToScroll.value);
 	if (!scrollNow) return;
 
-	let id = props.ui.scrollIntoView;
-	const child = outer.value.querySelector(`#${id}`);
-	if (!child) return;
-
-	const scrollAlign = props.ui.scrollAlignment === ScrollAlignmentValues.ScrollAlignmentStart ? 'start' : 'end';
-
 	nextTick(() => {
+		if (!outer.value) return;
+
+		let id = props.ui.scrollIntoView;
+		const child = outer.value.querySelector(`#${id}`);
+		if (!child) return;
+
+		const scrollAlign = props.ui.scrollAlignment === ScrollAlignmentValues.ScrollAlignmentStart ? 'start' : 'end';
+
 		switch (props.ui.scrollAnimation) {
 			case ScrollAnimationValues.Instant:
 				child?.scrollIntoView({ block: scrollAlign });

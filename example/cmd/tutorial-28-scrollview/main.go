@@ -24,8 +24,11 @@ func main() {
 		cfg.RootView(".", func(wnd core.Window) core.View {
 			stateCount := core.AutoState[int](wnd).Init(func() int { return 6 })
 			listEntries := make([]core.View, 0)
+			lastEntryID := ""
 			for i := range stateCount.Get() {
-				listEntries = append(listEntries, ui.Text(strconv.Itoa(i+1)).Padding(ui.Padding{}.All(ui.L8)))
+				entryID := "entry-" + strconv.Itoa(i)
+				lastEntryID = entryID
+				listEntries = append(listEntries, ui.VStack(ui.Text(strconv.Itoa(i+1)).Padding(ui.Padding{}.All(ui.L8))).ID(entryID))
 			}
 
 			return ui.VStack(
@@ -37,11 +40,10 @@ func main() {
 					ui.ScrollView(
 						ui.VStack(
 							ui.VStack(listEntries...),
-							ui.Stack().ID("scroll-anchor"),
 						),
 					).
 						BackgroundColor(ui.M2).
-						ScrollToView("scroll-anchor", ui.ScrollAnimationSmooth).
+						ScrollToView(lastEntryID, ui.ScrollAnimationSmooth).
 						ScrollBehavior(ui.ScrollBehaviorAuto).
 						ScrollButtonLabel("Neuer Eintrag").
 						Frame(ui.Frame{Width: ui.L480, Height: ui.L320}),
