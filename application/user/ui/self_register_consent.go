@@ -8,22 +8,19 @@
 package uiuser
 
 import (
+	"slices"
+
 	"go.wdy.de/nago/application/consent"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/markdown"
-	"slices"
 )
 
 func consents(wnd core.Window, usrSettings user.Settings, consentStates map[consent.ID]*core.State[bool]) core.View {
 
 	return ui.VStack(
 		slices.Collect(func(yield func(view core.View) bool) {
-
-			yield(ui.Space(ui.L48))
-			yield(ui.Space(ui.L8)) // -8 due to gap
-
 			for _, consentOpt := range usrSettings.Consents {
 				state := consentStates[consentOpt.ID]
 				hasErr := consentStates[consentOpt.ID+"err"]

@@ -198,7 +198,7 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 		})
 
 		c.RootView(c.userManagement.Pages.Register, func(wnd core.Window) core.View {
-			return layout.WithBackButton(wnd, uiuser.PageSelfRegister(wnd, c.userManagement.UseCases.EMailUsed, c.userManagement.UseCases.Create))
+			return uiuser.PageSelfRegister(wnd, c.userManagement.UseCases.EMailUsed, c.userManagement.UseCases.Create, c.sessionManagement.Pages.Login)
 		})
 
 		c.RootViewWithDecoration(c.userManagement.Pages.Users, func(wnd core.Window) core.View {

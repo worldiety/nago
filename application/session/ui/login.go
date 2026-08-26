@@ -112,127 +112,192 @@ func Login(
 		}
 	}
 
+	hasAppIcon := themeSettings.AppIconLight != "" || themeSettings.AppIconDark != ""
+	isMobile := wnd.Info().SizeClass < core.SizeClassMedium
+	gridCols := 2
+	if isMobile {
+		gridCols = 1
+	}
+
+	content := ui.Grid(
+		ui.GridCell(
+			ui.VStack(
+				ui.If(hasAppIcon,
+					ui.Image().
+						Adaptive(themeSettings.AppIconLight, themeSettings.AppIconDark).
+						ObjectFit(ui.FitContain).
+						Frame(ui.Frame{}.Size(ui.L48, ui.L48)),
+				),
+				ui.If(hasAppIcon, ui.Space(ui.L16)),
+				ui.Text("Mit "+wnd.Application().Name()+"-Konto anmelden").Font(ui.HeadlineSmall),
+				ui.Text("Bitte Zugangsdaten eingeben"),
+			).Alignment(ui.TopLeading),
+		),
+
+		ui.GridCell(
+			ui.VStack(
+				verificationDialog(wnd, verificationDialogPresented, su, findByMail, sendVerifyMail, login),
+				logoImg,
+				loginForm(login, emailErr, password, passwordErr, presentPasswordForgotten, triggerLoginAction),
+				forgotPasswordLink(presentPasswordForgotten, usrSettings),
+
+				ui.If(infoText.Get() != "" && presentPasswordForgotten.Get(), ui.Text(fmt.Sprintf("Ein E-Mail mit einem Link zum Zurücksetzen wurde an '%s' gesendet. Prüfen Sie ihr Postfach.", login.Get())).TextAlignment(ui.TextAlignCenter)),
+				ui.LinkWithAction("zurück zur Anmeldung", func() {
+					presentPasswordForgotten.Set(false)
+
+				}).Font(ui.BodySmall).Visible(presentPasswordForgotten.Get()),
+
+				ui.IfFunc(usrSettings.HasSSO(), func() core.View { return ssoLogin(wnd, startNLSFlow) }),
+			).Gap(ui.L8).FullWidth(),
+		),
+	).Gap(ui.L40).Columns(gridCols).FullWidth().Heights("auto")
+
 	return ui.VStack( // we don't have a scaffold
 		ui.VStack(
 			ui.WindowTitle(rstring.ActionLogin.Get(wnd)),
 			cardlayout.Card("").
-				Padding(ui.Padding{}.All(ui.L12)).
 				Body(
-					ui.VStack(
-						alert.Dialog(
-							"Login nicht möglich",
-							ui.Text("Das Konto muss zuerst bestätigt werden."),
-							verificationDialogPresented,
-
-							alert.Custom(
-								func(close func(closeDlg bool)) core.View {
-									return ui.SecondaryButton(func() {
-										close(true)
-									}).Title(rstring.ActionCancel.Get(wnd))
-								},
-							),
-
-							alert.Custom(
-								func(close func(closeDlg bool)) core.View {
-									return ui.PrimaryButton(func() {
-										optUsr, err := findByMail(su(), user.Email(login.Get()))
-										if err != nil {
-											alert.ShowBannerError(wnd, err)
-											return
-										}
-
-										if optUsr.IsNone() {
-											// security note: don't expose knowledge whether the user exists or not
-											return
-										}
-
-										if err := sendVerifyMail(optUsr.Unwrap().ID); err != nil {
-											alert.ShowBannerError(wnd, err)
-										}
-										close(true)
-									}).Title("Verifikationslink anfragen")
-								},
-							),
-						),
-						logoImg,
-						ui.Form(
-							ui.VStack(
-								ui.TextField("E-Mail Adresse", login.Get()).
-									InputValue(login).
-									ErrorText(emailErr.Get()).
-									ID("nago-login").
-									KeydownEnter(triggerLoginAction).
-									Frame(ui.Frame{}.FullWidth()),
-
-								ui.PasswordField("Kennwort", password.Get()).
-									InputValue(password).
-									ErrorText(passwordErr.Get()).
-									ID("nago-password").
-									KeydownEnter(triggerLoginAction).
-									Frame(ui.Frame{}.FullWidth()).
-									Visible(!presentPasswordForgotten.Get()),
-							).Gap(ui.L4),
-						).
-							Autocomplete(true).
-							ID("nago-form-login"),
-						ui.LinkWithAction("Passwort vergessen", func() {
-							presentPasswordForgotten.Set(true)
-
-						}).Font(ui.Small).Visible(usrSettings.SelfPasswordReset && !presentPasswordForgotten.Get()),
-
-						ui.If(infoText.Get() != "", ui.Text(fmt.Sprintf("Ein E-Mail mit einem Link zum Zurücksetzen wurde an '%s' gesendet. Prüfen Sie ihr Postfach.", login.Get())).TextAlignment(ui.TextAlignCenter)),
-						ui.LinkWithAction("zurück zur Anmeldung", func() {
-							presentPasswordForgotten.Set(false)
-
-						}).Font(ui.Small).Visible(presentPasswordForgotten.Get()),
-
-						ui.IfFunc(usrSettings.HasSSO(), func() core.View {
-							return ui.VStack(
-								ui.HStack(
-									ui.HLine().Frame(ui.Frame{Width: ui.L40}),
-									ui.Text(StrSignInWithSSO.Get(wnd)),
-									ui.HLine().Frame(ui.Frame{Width: ui.L40}),
-								).FullWidth().Gap(ui.L8),
-
-								ui.SecondaryButton(func() {
-									uri, err := startNLSFlow(wnd.Session().ID())
-									if err != nil {
-										alert.ShowBannerError(wnd, err)
-										return
-									}
-
-									core.HTTPOpen(wnd.Navigation(), core.URI(uri), "_self")
-								}).Title("SSO").Frame(ui.Frame{}.FullWidth()),
-							).FullWidth().Gap(ui.L8)
-						}),
-					).Gap(ui.L8),
+					ui.VStack(content).FullWidth().Padding(ui.Padding{}.All(ui.L16)),
 				).Footer(
 				ui.HStack(
-					ui.PrimaryButton(func() {
-						if !user.Email(login.Get()).Valid() {
-							emailErr.Set("Diese E-Mail-Adresse ist ungültig.")
-							return
-						}
-
-						if sendResetPwdMail != nil {
-							if err := sendResetPwdMail(user.Email(login.Get())); err != nil {
-								alert.ShowBannerError(wnd, err)
-								return
-							}
-
-						}
-
-						infoText.Set(fmt.Sprintf("Eine E-Mail mit einem Link zum Zurücksetzen wurde an '%s' gesendet. Prüfen Sie ihr Postfach.", login.Get()))
-					}).Visible(presentPasswordForgotten.Get()).Title("Link per E-Mail senden"),
-					ui.PrimaryButton(triggerLoginAction).Visible(!presentPasswordForgotten.Get()).Title(rstring.ActionLogin.Get(wnd)).ID("nago-action-login"),
+					submitForgotPasswordBtn(wnd, login, emailErr, presentPasswordForgotten, sendResetPwdMail, infoText),
+					submitLoginBtn(wnd, triggerLoginAction, presentPasswordForgotten),
 				),
-			),
+			).
+				Padding(ui.Padding{Top: ui.L40, Bottom: ui.L24}.Horizontal(ui.L40)).
+				Frame(ui.Frame{MaxWidth: ui.L880}.FullWidth()),
 			ui.TextLayout(
 				ui.Text("Noch kein Konto? Hier gleich "),
 				ui.LinkWithAction("registrieren!", func() {
 					wnd.Navigation().ForwardTo(registerPath, nil)
 				}),
-			).Font(ui.Small).Visible(usrSettings.SelfRegistration),
-		).Gap(ui.L16).Frame(ui.Frame{Width: ui.L320, Height: ""}), // "calc(100dvh - 7rem)"
+			).Font(ui.BodySmall).Visible(usrSettings.SelfRegistration),
+		).Gap(ui.L16),
 	).Frame(ui.Frame{}.MatchScreen())
+}
+
+func verificationDialog(
+	wnd core.Window,
+	presented *core.State[bool],
+	su user.SysUser,
+	findByMail user.FindByMail,
+	sendVerifyMail SendVerificationMail,
+	login *core.State[string],
+) core.View {
+	return alert.Dialog(
+		"Login nicht möglich",
+		ui.Text("Das Konto muss zuerst bestätigt werden."),
+		presented,
+
+		alert.Custom(
+			func(close func(closeDlg bool)) core.View {
+				return ui.SecondaryButton(func() {
+					close(true)
+				}).Title(rstring.ActionCancel.Get(wnd))
+			},
+		),
+
+		alert.Custom(
+			func(close func(closeDlg bool)) core.View {
+				return ui.PrimaryButton(func() {
+					optUsr, err := findByMail(su(), user.Email(login.Get()))
+					if err != nil {
+						alert.ShowBannerError(wnd, err)
+						return
+					}
+
+					if optUsr.IsNone() {
+						// security note: don't expose knowledge whether the user exists or not
+						return
+					}
+
+					if err := sendVerifyMail(optUsr.Unwrap().ID); err != nil {
+						alert.ShowBannerError(wnd, err)
+					}
+					close(true)
+				}).Title("Verifikationslink anfragen")
+			},
+		),
+	)
+}
+
+func loginForm(
+	login *core.State[string],
+	emailErr *core.State[string],
+	password *core.State[string],
+	passwordErr *core.State[string],
+	presentPasswordForgotten *core.State[bool],
+	triggerLoginAction func(),
+) core.View {
+	return ui.Form(
+		ui.VStack(
+			ui.TextField("E-Mail Adresse", login.Get()).
+				InputValue(login).
+				ErrorText(emailErr.Get()).
+				ID("nago-login").
+				KeydownEnter(triggerLoginAction).
+				Frame(ui.Frame{}.FullWidth()),
+
+			ui.PasswordField("Kennwort", password.Get()).
+				InputValue(password).
+				ErrorText(passwordErr.Get()).
+				ID("nago-password").
+				KeydownEnter(triggerLoginAction).
+				Frame(ui.Frame{}.FullWidth()).
+				Visible(!presentPasswordForgotten.Get()),
+		).Gap(ui.L12).FullWidth(),
+	).
+		Autocomplete(true).
+		ID("nago-form-login").
+		Frame(ui.Frame{}.FullWidth())
+}
+
+func forgotPasswordLink(presented *core.State[bool], usrSettings user.Settings) core.View {
+	return ui.LinkWithAction("Passwort vergessen", func() {
+		presented.Set(true)
+
+	}).Font(ui.BodySmall).Visible(usrSettings.SelfPasswordReset && !presented.Get())
+}
+
+func ssoLogin(wnd core.Window, startNLSFlow session.StartNLSFlow) core.View {
+	return ui.VStack(
+		ui.HStack(
+			ui.HLine().Frame(ui.Frame{Width: ui.L40}),
+			ui.Text(StrSignInWithSSO.Get(wnd)),
+			ui.HLine().Frame(ui.Frame{Width: ui.L40}),
+		).FullWidth().Gap(ui.L8),
+
+		ui.SecondaryButton(func() {
+			uri, err := startNLSFlow(wnd.Session().ID())
+			if err != nil {
+				alert.ShowBannerError(wnd, err)
+				return
+			}
+
+			core.HTTPOpen(wnd.Navigation(), core.URI(uri), "_self")
+		}).Title("SSO").Frame(ui.Frame{}.FullWidth()),
+	).FullWidth().Gap(ui.L8)
+}
+
+func submitForgotPasswordBtn(wnd core.Window, login *core.State[string], emailErr *core.State[string], presentPasswordForgotten *core.State[bool], sendResetPwdMail func(user.Email) error, infoText *core.State[string]) core.View {
+	return ui.PrimaryButton(func() {
+		if !user.Email(login.Get()).Valid() {
+			emailErr.Set("Diese E-Mail-Adresse ist ungültig.")
+			return
+		}
+
+		if sendResetPwdMail != nil {
+			if err := sendResetPwdMail(user.Email(login.Get())); err != nil {
+				alert.ShowBannerError(wnd, err)
+				return
+			}
+
+		}
+
+		infoText.Set(fmt.Sprintf("Eine E-Mail mit einem Link zum Zurücksetzen wurde an '%s' gesendet. Prüfen Sie ihr Postfach.", login.Get()))
+	}).Visible(presentPasswordForgotten.Get()).Title("Link per E-Mail senden")
+}
+
+func submitLoginBtn(wnd core.Window, loginAction func(), presentPasswordForgotten *core.State[bool]) core.View {
+	return ui.PrimaryButton(loginAction).Visible(!presentPasswordForgotten.Get()).Title(rstring.ActionLogin.Get(wnd)).ID("nago-action-login")
 }

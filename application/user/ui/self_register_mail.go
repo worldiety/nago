@@ -8,16 +8,15 @@
 package uiuser
 
 import (
+	"log/slog"
+
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
-	"log/slog"
 )
 
 func emails(email, emailRepeated, errMailRepeated *core.State[string]) core.View {
 	return ui.VStack(
-		ui.Space(ui.L48),
-		ui.Space(ui.L8), // -8 due to gap
 		ui.Text("Die E-Mail Adresse wird mit einem Passwort als Login verwendet. Im Nachgang erhalten Sie eine E-Mail, mit der Sie das Konto bestätigen müssen."),
 		ui.TextField("E-Mail Adresse", email.Get()).
 			ErrorText(errMailRepeated.Get()).

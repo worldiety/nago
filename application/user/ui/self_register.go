@@ -8,6 +8,8 @@
 package uiuser
 
 import (
+	"time"
+
 	"go.wdy.de/nago/application/consent"
 	"go.wdy.de/nago/application/theme"
 	"go.wdy.de/nago/application/user"
@@ -16,10 +18,9 @@ import (
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/cardlayout"
 	"go.wdy.de/nago/presentation/ui/footer"
-	"time"
 )
 
-func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.Create) core.View {
+func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.Create, loginPath core.NavigationPath) core.View {
 	isDesktop := wnd.Info().SizeClass > core.SizeClassSmall
 
 	userSettings := core.GlobalSettings[user.Settings](wnd)
@@ -90,6 +91,7 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 	var subcaption string
 	var pageBody core.View
 	nextCaption := "weiter"
+	backVisible := (registerPageCurrent.Get() > 0 && registerPageCurrent.Get() < registerRes) || regErr.Get() != nil
 	nextVisible := true
 	switch registerPageCurrent.Get() {
 	case registerPageNames:
@@ -129,43 +131,34 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 		nextVisible = false
 	}
 
-	var content core.View
-	var cardFrame ui.Frame
+	gridCols := 1
 	if isDesktop {
-		cardFrame = ui.Frame{}.MatchScreen()
-		content = ui.Grid(
-			ui.GridCell(ui.VStack(
-				ui.If(themeSettings.AppIconLight != "" || themeSettings.AppIconDark != "",
+		gridCols = 2
+	}
+
+	hasAppIcon := themeSettings.AppIconLight != "" || themeSettings.AppIconDark != ""
+	content := ui.Grid(
+		ui.GridCell(
+			ui.VStack(
+				ui.If(hasAppIcon,
 					ui.Image().
 						Adaptive(themeSettings.AppIconLight, themeSettings.AppIconDark).
 						ObjectFit(ui.FitContain).
 						Frame(ui.Frame{}.Size(ui.L48, ui.L48)),
 				),
-				ui.Space(ui.L16),
-				ui.Text(wnd.Application().Name()+"-Konto").Font(ui.Title),
-				ui.Text("erstellen").Font(ui.Title),
+				ui.If(hasAppIcon, ui.Space(ui.L16)),
+				ui.Text(wnd.Application().Name()+"-Konto").Font(ui.HeadlineSmall),
+				ui.Text("erstellen").Font(ui.HeadlineSmall),
 				ui.Text(subcaption),
-			).Alignment(ui.TopLeading)),
+			).Alignment(ui.TopLeading),
+		),
 
-			ui.GridCell(pageBody),
-		).Gap(ui.L16).Rows(1).FullWidth()
-	} else {
-		cardFrame = ui.Frame{}.MatchScreen()
-		content = ui.VStack(
-			ui.If(themeSettings.AppIconLight != "" || themeSettings.AppIconDark != "",
-				ui.Image().
-					Adaptive(themeSettings.AppIconLight, themeSettings.AppIconDark).
-					ObjectFit(ui.FitContain).
-					Frame(ui.Frame{}.Size(ui.L48, ui.L48)),
-			),
-
-			ui.Space(ui.L16),
-			ui.Text(wnd.Application().Name()+"-Konto").Font(ui.Title),
-			ui.Text("erstellen").Font(ui.Title),
-			ui.Text(subcaption),
-			pageBody,
-		).FullWidth().Alignment(ui.TopLeading)
-	}
+		ui.GridCell(pageBody),
+	).
+		Gap(ui.L40).
+		Columns(gridCols).
+		Heights("auto").
+		FullWidth()
 
 	cfgTheme := core.GlobalSettings[theme.Settings](wnd)
 	hasFooter := cfgTheme.ProviderName != "" || cfgTheme.Impress != "" || cfgTheme.GeneralTermsAndConditions != "" || cfgTheme.PrivacyPolicy != ""
@@ -175,96 +168,107 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 		ui.WindowTitle("Konto erstellen"),
 		ui.Spacer(),
 		cardlayout.Card("").Body(
-			ui.VStack(content).Padding(ui.Padding{}.All(ui.L16)),
-		).Padding(ui.Padding{}.All(ui.L40)).
-			Frame(ui.Frame{MaxWidth: ui.L880}.FullWidth()).
-			Footer(ui.HStack(
-				ui.SecondaryButton(func() {
-					registerPageCurrent.Set(registerPageCurrent.Get() - 1)
-					if !requiresAnyAdoption(userSettings) && registerPageCurrent.Get() == registerAdoptAny {
-						registerPageCurrent.Set(registerPageCurrent.Get() - 1)
-					}
-				}).Visible((registerPageCurrent.Get() > 0 && registerPageCurrent.Get() < registerRes) || regErr.Get() != nil).Title("Zurück"),
-				ui.PrimaryButton(func() {
-					switch registerPageCurrent.Get() {
-					case registerPageNames:
-						if validateContact(
-							userSettings,
-							firstname, errFirstname,
-							lastname, errLastname,
-							salutation, errSalutation,
-							title, errTitle,
-							position, errPosition,
-							companyName, errCompanyName,
-							city, errCity,
-							postalCode, errPostalCode,
-							state, errState,
-							country, errCountry,
-							professionalGroup, errProfessionalGroup,
-							mobile, errMobile,
-						) {
-							registerPageCurrent.Set(registerPageCurrent.Get() + 1)
-						}
-					case registerPasswords:
-						strength := validatePasswords(password, passwordRepeated, errPasswordRepeated)
-						if strength.Acceptable {
-							if requiresAnyAdoption(userSettings) {
+			ui.VStack(content).FullWidth().Padding(ui.Padding{}.All(ui.L16)),
+		).
+			Footer(
+				ui.If(backVisible || nextVisible,
+					ui.HStack(
+						ui.SecondaryButton(func() {
+							registerPageCurrent.Set(registerPageCurrent.Get() - 1)
+							if !requiresAnyAdoption(userSettings) && registerPageCurrent.Get() == registerAdoptAny {
+								registerPageCurrent.Set(registerPageCurrent.Get() - 1)
+							}
+						}).Visible(backVisible).Title("Zurück"),
+						ui.PrimaryButton(func() {
+							switch registerPageCurrent.Get() {
+							case registerPageNames:
+								if validateContact(
+									userSettings,
+									firstname, errFirstname,
+									lastname, errLastname,
+									salutation, errSalutation,
+									title, errTitle,
+									position, errPosition,
+									companyName, errCompanyName,
+									city, errCity,
+									postalCode, errPostalCode,
+									state, errState,
+									country, errCountry,
+									professionalGroup, errProfessionalGroup,
+									mobile, errMobile,
+								) {
+									registerPageCurrent.Set(registerPageCurrent.Get() + 1)
+								}
+							case registerPasswords:
+								strength := validatePasswords(password, passwordRepeated, errPasswordRepeated)
+								if strength.Acceptable {
+									if requiresAnyAdoption(userSettings) {
+										registerPageCurrent.Set(registerPageCurrent.Get() + 1)
+									} else {
+										registerPageCurrent.Set(registerPageCurrent.Get() + 2)
+									}
+								}
+							case registerAdoptAny:
+								if validateConsents(userSettings, consentStates) {
+									registerPageCurrent.Set(registerPageCurrent.Get() + 1)
+								}
+
+							case registerMails:
+								if validateEmails(hasMail, email, emailRepeated, errEmailRepeated) {
+									registerPageCurrent.Set(registerPageCurrent.Get() + 1)
+								}
+
+							case registerCheck:
+								var myConsents []consent.Consent
+								for _, option := range userSettings.Consents {
+									status := consent.Revoked
+									if consentStates[option.ID].Get() {
+										status = consent.Approved
+									}
+
+									myConsents = append(myConsents, consent.Consent{
+										ID:      option.ID,
+										History: []consent.Action{{At: time.Now(), Status: status, Location: string(wnd.Path())}},
+									})
+								}
+
+								_, err := createUser(user.SU(), user.ShortRegistrationUser{
+									SelfRegistered:    true,
+									Firstname:         firstname.Get(),
+									Lastname:          lastname.Get(),
+									Email:             user.Email(email.Get()),
+									Password:          user.Password(password.Get()),
+									PasswordRepeated:  user.Password(passwordRepeated.Get()),
+									NotifyUser:        true,
+									Verified:          false, // important, keep it always false
+									Consents:          myConsents,
+									Salutation:        salutation.Get(),
+									Title:             title.Get(),
+									Position:          position.Get(),
+									CompanyName:       companyName.Get(),
+									City:              city.Get(),
+									PostalCode:        postalCode.Get(),
+									State:             state.Get(),
+									Country:           country.Get(),
+									ProfessionalGroup: professionalGroup.Get(),
+									MobilePhone:       mobile.Get(),
+								})
+
+								regErr.Set(err)
 								registerPageCurrent.Set(registerPageCurrent.Get() + 1)
-							} else {
-								registerPageCurrent.Set(registerPageCurrent.Get() + 2)
 							}
-						}
-					case registerAdoptAny:
-						if validateConsents(userSettings, consentStates) {
-							registerPageCurrent.Set(registerPageCurrent.Get() + 1)
-						}
-
-					case registerMails:
-						if validateEmails(hasMail, email, emailRepeated, errEmailRepeated) {
-							registerPageCurrent.Set(registerPageCurrent.Get() + 1)
-						}
-
-					case registerCheck:
-						var myConsents []consent.Consent
-						for _, option := range userSettings.Consents {
-							status := consent.Revoked
-							if consentStates[option.ID].Get() {
-								status = consent.Approved
-							}
-
-							myConsents = append(myConsents, consent.Consent{
-								ID:      option.ID,
-								History: []consent.Action{{At: time.Now(), Status: status, Location: string(wnd.Path())}},
-							})
-						}
-
-						_, err := createUser(user.SU(), user.ShortRegistrationUser{
-							SelfRegistered:    true,
-							Firstname:         firstname.Get(),
-							Lastname:          lastname.Get(),
-							Email:             user.Email(email.Get()),
-							Password:          user.Password(password.Get()),
-							PasswordRepeated:  user.Password(passwordRepeated.Get()),
-							NotifyUser:        true,
-							Verified:          false, // important, keep it always false
-							Consents:          myConsents,
-							Salutation:        salutation.Get(),
-							Title:             title.Get(),
-							Position:          position.Get(),
-							CompanyName:       companyName.Get(),
-							City:              city.Get(),
-							PostalCode:        postalCode.Get(),
-							State:             state.Get(),
-							Country:           country.Get(),
-							ProfessionalGroup: professionalGroup.Get(),
-							MobilePhone:       mobile.Get(),
-						})
-
-						regErr.Set(err)
-						registerPageCurrent.Set(registerPageCurrent.Get() + 1)
-					}
-				}).Title(nextCaption).Enabled(registerPageCurrent.Get() != registerRes).Visible(nextVisible),
-			).Gap(ui.L8)),
+						}).Title(nextCaption).Enabled(registerPageCurrent.Get() != registerRes).Visible(nextVisible),
+					).Gap(ui.L8),
+				),
+			).
+			Padding(ui.Padding{}.All(ui.L40)).
+			Frame(ui.Frame{MaxWidth: ui.L880}.FullWidth()),
+		ui.TextLayout(
+			ui.Text("Bereits registriert? Hier "),
+			ui.LinkWithAction("anmelden!", func() {
+				wnd.Navigation().ForwardTo(loginPath, nil)
+			}),
+		).Font(ui.BodySmall),
 
 		ui.Spacer(),
 		ui.IfFunc(hasFooter, func() core.View {
@@ -277,7 +281,9 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 				GeneralTermsAndConditions(cfgTheme.GeneralTermsAndConditions).
 				Slogan(cfgTheme.Slogan)
 		}),
-	).Frame(cardFrame)
+	).
+		Gap(ui.L16).
+		Frame(ui.Frame{}.MatchScreen())
 }
 
 func acceptedAt(b bool) time.Time {
