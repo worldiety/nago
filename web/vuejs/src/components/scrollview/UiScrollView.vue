@@ -111,6 +111,12 @@ const innerStyles = computed<string>(() => {
 });
 
 function onScroll(): void {
+	if (scrolling.value) clearTimeout(scrolling.value);
+	scrolling.value = setTimeout(() => {
+		clearTimeout(scrolling.value);
+		scrolling.value = false;
+	}, 100);
+
 	calcWantToScroll();
 	if (!wantToScroll.value) contentChanged.value = false;
 }
@@ -127,21 +133,55 @@ function calcWantToScroll(): void {
 		return;
 	}
 
+	const alignStart = props.ui.scrollAlignment === ScrollAlignmentValues.ScrollAlignmentStart;
+
 	if (!props.ui.axis || props.ui.axis === ScrollViewAxisValues.ScrollViewAxisVertical) {
-		const containerBottom = outer.value.getBoundingClientRect().bottom;
-		const scrollToBottom = scrollTo.getBoundingClientRect().bottom;
-		wantToScroll.value = scrollToBottom - containerBottom > SCROLL_TRESHOLD;
+		if (isAtScrollEnd()) {
+			wantToScroll.value = false;
+			return;
+		}
+
+		const containerEdge = alignStart
+			? outer.value.getBoundingClientRect().top
+			: outer.value.getBoundingClientRect().bottom;
+		const scrollToEdge = alignStart
+			? scrollTo.getBoundingClientRect().top
+			: scrollTo.getBoundingClientRect().bottom;
+		wantToScroll.value = scrollToEdge - containerEdge > SCROLL_TRESHOLD;
 		return;
 	}
 
 	if (props.ui.axis === ScrollViewAxisValues.ScrollViewAxisHorizontal) {
-		const containerRight = outer.value.getBoundingClientRect().right;
-		const scrollToRight = scrollTo.getBoundingClientRect().right;
-		wantToScroll.value = scrollToRight - containerRight > SCROLL_TRESHOLD;
+		if (isAtScrollEnd()) {
+			wantToScroll.value = false;
+			return;
+		}
+
+		const containerEdge = alignStart
+			? outer.value.getBoundingClientRect().left
+			: outer.value.getBoundingClientRect().right;
+		const scrollToEdge = alignStart
+			? scrollTo.getBoundingClientRect().left
+			: scrollTo.getBoundingClientRect().right;
+		wantToScroll.value = scrollToEdge - containerEdge > SCROLL_TRESHOLD;
 		return;
 	}
 
 	wantToScroll.value = false;
+}
+
+function isAtScrollEnd(): boolean {
+	if (!outer.value) return false;
+
+	if (!props.ui.axis || props.ui.axis === ScrollViewAxisValues.ScrollViewAxisVertical) {
+		return outer.value.scrollHeight - (outer.value.scrollTop + outer.value.clientHeight) <= SCROLL_TRESHOLD;
+	}
+
+	if (props.ui.axis === ScrollViewAxisValues.ScrollViewAxisHorizontal) {
+		return outer.value.scrollWidth - (outer.value.scrollLeft + outer.value.clientWidth) <= SCROLL_TRESHOLD;
+	}
+
+	return true;
 }
 
 function scroll(force?: boolean): void {
@@ -151,7 +191,7 @@ function scroll(force?: boolean): void {
 		force ||
 		!props.ui.scrollBehavior ||
 		props.ui.scrollBehavior === ScrollBehaviorValues.ScrollBehaviorAlways ||
-		(props.ui.scrollBehavior === ScrollBehaviorValues.ScrollBehaviorAuto && !wantToScroll.value);
+		(props.ui.scrollBehavior === ScrollBehaviorValues.ScrollBehaviorAuto && isAtScrollEnd());
 	if (!scrollNow) return;
 
 	nextTick(() => {
@@ -161,19 +201,21 @@ function scroll(force?: boolean): void {
 		const child = outer.value.querySelector(`#${id}`);
 		if (!child) return;
 
+		const isVertical = !props.ui.axis || props.ui.axis === ScrollViewAxisValues.ScrollViewAxisVertical;
+		if (isVertical) {
+			if (child.getBoundingClientRect().top < outer.value.getBoundingClientRect().top) return;
+		} else {
+			if (child.getBoundingClientRect().left < outer.value.getBoundingClientRect().left) return;
+		}
+
 		const scrollAlign = props.ui.scrollAlignment === ScrollAlignmentValues.ScrollAlignmentStart ? 'start' : 'end';
 
 		switch (props.ui.scrollAnimation) {
 			case ScrollAnimationValues.Instant:
-				child?.scrollIntoView({ block: scrollAlign });
+				child.scrollIntoView({ block: scrollAlign });
 				break;
 			default:
-				if (scrolling.value) clearTimeout(scrolling.value);
-				child?.scrollIntoView({ behavior: 'smooth', block: scrollAlign });
-				scrolling.value = setTimeout(() => {
-					clearTimeout(scrolling.value);
-					scrolling.value = false;
-				}, 500);
+				child.scrollIntoView({ behavior: 'smooth', block: scrollAlign });
 		}
 	});
 }
