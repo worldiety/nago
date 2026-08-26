@@ -9,7 +9,11 @@
 
 <template v-if="props.ui.iv">
 	<!-- UiScrollView -->
-	<div class="scroll-view" :class="{ horizontal: ui.axis === ScrollViewAxisValues.ScrollViewAxisHorizontal }" :style="styles">
+	<div
+		class="scroll-view"
+		:class="{ horizontal: ui.axis === ScrollViewAxisValues.ScrollViewAxisHorizontal }"
+		:style="styles"
+	>
 		<div ref="outer" class="container-outer" :class="classes" @scroll="onScroll">
 			<div ref="inner" :style="innerStyles">
 				<UiGeneric v-if="ui.content" :ui="ui.content" />
