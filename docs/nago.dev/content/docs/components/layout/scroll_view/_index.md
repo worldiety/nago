@@ -19,11 +19,13 @@ A ScrollView can either be horizontal or vertical. By default, it is vertical.
 | `Content(content core.View)` |  |
 | `Frame(frame Frame)` | Frame sets the layout frame for the scroll view. |
 | `FullWidth()` |  |
+| `ListLength(length int)` | ListLength sets the length of the content list. This is optional but should be used if the content is based on a list. |
 | `Padding(padding Padding)` | Padding sets the inner padding of the scroll view. |
 | `Position(position Position)` | Position sets the alignment of the content inside the scroll view. |
+| `ScrollAlignment(alignment ScrollAlignment)` | ScrollAlignment defines how the component should align the scroll target when scrolling into view |
 | `ScrollBehavior(behavior ScrollBehavior)` | ScrollBehavior defines how the component should behave when the scrollable content grows |
 | `ScrollButtonLabel(label string)` | ScrollButtonLabel sets the label of scroll button when the component asks whether to scroll |
-| `ScrollToView(animation ScrollAnimation, scrollToView string)` |  |
+| `ScrollToView(scrollToView string, animation ScrollAnimation)` |  |
 ---
 
 ## Related

@@ -76,7 +76,7 @@ func main() {
 | `Hyphens(h Hyphens)` |  |
 | `LabelFor(id string)` |  |
 | `LineBreak(lb bool)` | LineBreak de-/activates line breaking in between the Text. |
-| `Link(target string, url string)` |  |
+| `Link(url string, target string)` |  |
 | `Padding(padding Padding)` | Padding sets a top, right, bottom and left spacing. |
 | `PressedBorder(border Border)` | PressedBorder sets the Border width, color and radius when the component is clicked. |
 | `Resolve(b bool)` | Resolve tries to resolve the current text content against the window bundle at render time to translate its contents. This may cause a lot of redundant or wrong lookups and therefore it is disabled by default. |
