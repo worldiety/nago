@@ -6126,6 +6126,9 @@ export class ScrollView implements Writeable, Readable, Component {
 
 	public scrollAlignment?: ScrollAlignment;
 
+	// ListLength helps the scroll view to determine the length of the content list. This is optional, but improves the scroll asking behavior when the content contains a list, e.g., chat messages or log entries.
+	public listLength?: Int;
+
 	constructor(
 		content: Component | undefined = undefined,
 		border: Border | undefined = undefined,
@@ -6139,7 +6142,8 @@ export class ScrollView implements Writeable, Readable, Component {
 		scrollAnimation: ScrollAnimation | undefined = undefined,
 		scrollBehavior: ScrollBehavior | undefined = undefined,
 		scrollButtonLabel: Str | undefined = undefined,
-		scrollAlignment: ScrollAlignment | undefined = undefined
+		scrollAlignment: ScrollAlignment | undefined = undefined,
+		listLength: Int | undefined = undefined
 	) {
 		this.content = content;
 		this.border = border;
@@ -6154,6 +6158,7 @@ export class ScrollView implements Writeable, Readable, Component {
 		this.scrollBehavior = scrollBehavior;
 		this.scrollButtonLabel = scrollButtonLabel;
 		this.scrollAlignment = scrollAlignment;
+		this.listLength = listLength;
 	}
 
 	read(reader: BinaryReader): void {
@@ -6223,6 +6228,10 @@ export class ScrollView implements Writeable, Readable, Component {
 					this.scrollAlignment = readInt(reader);
 					break;
 				}
+				case 14: {
+					this.listLength = readSint(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -6245,6 +6254,7 @@ export class ScrollView implements Writeable, Readable, Component {
 			this.scrollBehavior !== undefined,
 			this.scrollButtonLabel !== undefined,
 			this.scrollAlignment !== undefined,
+			this.listLength !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -6303,6 +6313,10 @@ export class ScrollView implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.UVARINT, 13);
 			writeInt(writer, this.scrollAlignment!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[14]) {
+			writer.writeFieldHeader(Shapes.VARINT, 14);
+			writeSint(writer, this.listLength!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -6319,7 +6333,8 @@ export class ScrollView implements Writeable, Readable, Component {
 			this.scrollAnimation === undefined &&
 			this.scrollBehavior === undefined &&
 			this.scrollButtonLabel === undefined &&
-			this.scrollAlignment === undefined
+			this.scrollAlignment === undefined &&
+			this.listLength === undefined
 		);
 	}
 
@@ -6337,6 +6352,7 @@ export class ScrollView implements Writeable, Readable, Component {
 		this.scrollBehavior = undefined;
 		this.scrollButtonLabel = undefined;
 		this.scrollAlignment = undefined;
+		this.listLength = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

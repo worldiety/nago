@@ -6018,10 +6018,12 @@ type ScrollView struct {
 	ScrollBehavior    ScrollBehavior
 	ScrollButtonLabel Str
 	ScrollAlignment   ScrollAlignment
+	// ListLength helps the scroll view to determine the length of the content list. This is optional, but improves the scroll asking behavior when the content contains a list, e.g., chat messages or log entries.
+	ListLength Int
 }
 
 func (v *ScrollView) write(w *BinaryWriter) error {
-	var fields [14]bool
+	var fields [15]bool
 	fields[1] = v.Content != nil && !v.Content.IsZero()
 	fields[2] = !v.Border.IsZero()
 	fields[3] = !v.Frame.IsZero()
@@ -6035,6 +6037,7 @@ func (v *ScrollView) write(w *BinaryWriter) error {
 	fields[11] = !v.ScrollBehavior.IsZero()
 	fields[12] = !v.ScrollButtonLabel.IsZero()
 	fields[13] = !v.ScrollAlignment.IsZero()
+	fields[14] = !v.ListLength.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -6156,6 +6159,14 @@ func (v *ScrollView) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[14] {
+		if err := w.writeFieldHeader(varint, 14); err != nil {
+			return err
+		}
+		if err := v.ListLength.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -6242,6 +6253,11 @@ func (v *ScrollView) read(r *BinaryReader) error {
 			}
 		case 13:
 			err := v.ScrollAlignment.read(r)
+			if err != nil {
+				return err
+			}
+		case 14:
+			err := v.ListLength.read(r)
 			if err != nil {
 				return err
 			}
@@ -24835,13 +24851,14 @@ func (v *ScrollView) reset() {
 	v.ScrollBehavior.reset()
 	v.ScrollButtonLabel.reset()
 	v.ScrollAlignment.reset()
+	v.ListLength.reset()
 }
 
 func (v *ScrollView) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return isZeroComponent(v.Content) && v.Border.IsZero() && v.Frame.IsZero() && v.Padding.IsZero() && v.BackgroundColor.IsZero() && v.Axis.IsZero() && v.Invisible.IsZero() && v.Position.IsZero() && v.ScrollIntoView.IsZero() && v.ScrollAnimation.IsZero() && v.ScrollBehavior.IsZero() && v.ScrollButtonLabel.IsZero() && v.ScrollAlignment.IsZero()
+	return isZeroComponent(v.Content) && v.Border.IsZero() && v.Frame.IsZero() && v.Padding.IsZero() && v.BackgroundColor.IsZero() && v.Axis.IsZero() && v.Invisible.IsZero() && v.Position.IsZero() && v.ScrollIntoView.IsZero() && v.ScrollAnimation.IsZero() && v.ScrollBehavior.IsZero() && v.ScrollButtonLabel.IsZero() && v.ScrollAlignment.IsZero() && v.ListLength.IsZero()
 }
 
 func (v *Resource) reset() {

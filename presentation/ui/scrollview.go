@@ -69,6 +69,7 @@ type TScrollView struct {
 	scrollBehavior    ScrollBehavior
 	scrollButtonLabel string
 	scrollAlignment   ScrollAlignment
+	listLength        int // listLength helps the scroll view to determine the length of the content list. This is optional but improves the scroll asking behavior when the content contains a list, e.g., chat messages or log entries.
 }
 
 // A ScrollView can either be horizontal or vertical. By default, it is vertical.
@@ -144,6 +145,12 @@ func (c TScrollView) ScrollAlignment(alignment ScrollAlignment) TScrollView {
 	return c
 }
 
+// ListLength sets the length of the content list. This is optional but should be used if the content is based on a list.
+func (c TScrollView) ListLength(length int) TScrollView {
+	c.listLength = length
+	return c
+}
+
 // Render builds and returns the protocol representation of the scroll view.
 // It includes the scrollable content, axis (vertical/horizontal),
 // frame, alignment, border, background color, and padding.
@@ -166,6 +173,7 @@ func (c TScrollView) Render(ctx core.RenderContext) core.RenderNode {
 		ScrollBehavior:    proto.ScrollBehavior(c.scrollBehavior),
 		ScrollButtonLabel: proto.Str(buttonLabel),
 		ScrollAlignment:   proto.ScrollAlignment(c.scrollAlignment),
+		ListLength:        proto.Int(c.listLength),
 	}
 }
 

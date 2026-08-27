@@ -55,6 +55,11 @@
     "13": {
       "name": "ScrollAlignment",
       "type": "ScrollAlignment"
+    },
+    "14": {
+      "doc": "ListLength helps the scroll view to determine the length of the content list. This is optional, but improves the scroll asking behavior when the content contains a list, e.g., chat messages or log entries.",
+      "name": "ListLength",
+      "type": "Int"
     }
   }
 }

@@ -226,11 +226,21 @@ function observeContent(): void {
 }
 
 function onContentChanged(): void {
+	if (props.ui.listLength) return;
+
+	contentChanged.value = true;
+	scroll();
+}
+
+function onListLengthChanged(): void {
+	if (!props.ui.listLength) return;
+
 	contentChanged.value = true;
 	scroll();
 }
 
 watch(() => props.ui.content, onContentChanged, { deep: true });
+watch(() => props.ui.listLength, onListLengthChanged);
 
 onMounted(() => {
 	calcWantToScroll();
