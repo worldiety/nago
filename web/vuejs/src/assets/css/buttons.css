@@ -50,7 +50,7 @@
 
 .button-primary:focus:not(.custom-focus),
 .button-primary:focus-visible:not(.custom-focus) {
-	@apply -outline-offset-4 outline-current rounded-full;
+	@apply -outline-offset-4 outline-current;
 }
 
 .button-primary:active:not(.custom-active) {
@@ -77,7 +77,7 @@
 
 .button-secondary:focus:not(.custom-focus),
 .button-secondary:focus-visible:not(.custom-focus) {
-	@apply -outline-offset-2 outline-I0 outline-2 bg-I0/25 rounded-full;
+	@apply -outline-offset-2 outline-I0 outline-2 bg-I0/25;
 }
 
 .button-secondary:active:not(.custom-active) {
@@ -107,7 +107,7 @@
 
 .button-tertiary:focus:not(.custom-focus),
 .button-tertiary:focus-visible:not(.custom-focus) {
-	@apply bg-I0/25 outline-2 -outline-offset-2 rounded-full;
+	@apply bg-I0/25 outline-2 -outline-offset-2;
 }
 
 .button-tertiary:active:not(.custom-active) {
