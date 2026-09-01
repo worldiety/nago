@@ -13,7 +13,7 @@
 .button-destructive {
 	@apply inline-flex items-center justify-center px-5 py-2.5 gap-2;
 	@apply rounded-lg;
-	@apply text-center text-sm font-medium;
+	@apply text-center text-sm font-medium leading-tight;
 	@apply focus-visible:outline-none focus-visible:outline-I0 focus-visible:-outline-offset-2;
 
 	&.disabled,
@@ -26,13 +26,13 @@
 	}
 
 	&.small {
-		@apply p-1.5;
+		@apply min-h-0 p-1.5;
 	}
 }
 
 .button-primary {
 	@apply text-PBT;
-	@apply rounded-full h-10 w-fit px-5 bg-I0;
+	@apply rounded-[1.25rem] min-h-10 w-fit px-5 py-1 bg-I0;
 
 	&.disabled,
 	&:disabled {
@@ -58,7 +58,7 @@
 }
 
 .button-secondary {
-	@apply rounded-full h-10 w-fit px-5 border border-I0 outline-I0 backdrop-blur;
+	@apply rounded-[1.25rem] min-h-10 w-fit px-5 py-1 border border-I0 outline-I0 backdrop-blur;
 	@apply darkmode:border-I0;
 
 	&.disabled,
@@ -89,7 +89,7 @@
 }
 
 .button-tertiary {
-	@apply rounded-full h-10 w-fit px-5 outline-I0 backdrop-blur;
+	@apply rounded-[1.25rem] min-h-10 w-fit px-5 py-1 outline-I0 backdrop-blur;
 
 	&.disabled,
 	&:disabled {
