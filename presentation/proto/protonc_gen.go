@@ -339,6 +339,7 @@ func (CountDown) isComponent()          {}
 func (DatePicker) isComponent()         {}
 func (Divider) isComponent()            {}
 func (DnDArea) isComponent()            {}
+func (Fieldset) isComponent()           {}
 func (FlowChart) isComponent()          {}
 func (Form) isComponent()               {}
 func (Grid) isComponent()               {}
@@ -21542,6 +21543,87 @@ func (v *ScrollAlignment) IsZero() bool {
 	return *v == 0
 }
 
+// A Fieldset is an optional part of a form to add more structure and readability to it.
+type Fieldset struct {
+	Children Components
+	Title    Str
+	Frame    Frame
+}
+
+func (v *Fieldset) write(w *BinaryWriter) error {
+	var fields [4]bool
+	fields[1] = !v.Children.IsZero()
+	fields[2] = !v.Title.IsZero()
+	fields[3] = !v.Frame.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(array, 1); err != nil {
+			return err
+		}
+		if err := v.Children.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Title.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(record, 3); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Fieldset) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Children.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Title.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -23183,6 +23265,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 282:
 		var v ScrollAlignment
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 283:
+		var v Fieldset
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -27781,6 +27869,19 @@ func (v *FontsRequested) IsZero() bool {
 	return v.Fonts.IsZero()
 }
 
+func (v *Fieldset) reset() {
+	v.Children.reset()
+	v.Title.reset()
+	v.Frame.reset()
+}
+
+func (v *Fieldset) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Children.IsZero() && v.Title.IsZero() && v.Frame.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -29666,6 +29767,13 @@ func (v *ScrollBehavior) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *ScrollAlignment) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(uvarint, 282); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Fieldset) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 283); err != nil {
 		return err
 	}
 	return nil
