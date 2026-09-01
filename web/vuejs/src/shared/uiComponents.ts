@@ -21,6 +21,7 @@ import {
 	DatePicker,
 	Divider,
 	DnDArea,
+	Fieldset,
 	FlowChart,
 	Form,
 	Grid,
@@ -69,6 +70,7 @@ const LazyUiDatepicker = defineAsyncComponent(() => import('@/components/datepic
 const LazyUiDivider = defineAsyncComponent(() => import('@/components/UiDivider.vue'));
 const LazyUiDnDArea = defineAsyncComponent(() => import('@/components/dnd/UiDnDArea.vue'));
 const LazyUiPDF = defineAsyncComponent(() => import('@/components/UiPDF.vue'));
+const LazyUiFieldset = defineAsyncComponent(() => import('@/components/form/UiFieldset.vue'));
 const LazyUiFlowChart = defineAsyncComponent(() => import('@/components/flowchart/UiFlowChart.vue'));
 const LazyUiForm = defineAsyncComponent(() => import('@/components/form/UiForm.vue'));
 const LazyUiGrid = defineAsyncComponent(() => import('@/components/UiGrid.vue'));
@@ -155,6 +157,10 @@ export function vueComponentFor(ngc: NagoComponent): Component {
 
 	if (ngc instanceof PDF) {
 		return LazyUiPDF;
+	}
+
+	if (ngc instanceof Fieldset) {
+		return LazyUiFieldset;
 	}
 
 	if (ngc instanceof FlowChart) {

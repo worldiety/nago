@@ -1,0 +1,19 @@
+{
+  "kind": "Record",
+  "doc": "A Fieldset is an optional part of a form to add more structure and readability to it.",
+  "id": 283,
+  "fields": {
+    "1": {
+      "name": "Children",
+      "type": "Components"
+    },
+    "2": {
+      "name": "Title",
+      "type": "Str"
+    },
+    "3": {
+      "name": "Frame",
+      "type": "Frame"
+    }
+  }
+}
