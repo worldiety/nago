@@ -95,13 +95,12 @@ function parseFloat(input: string) {
 		return '';
 	}
 
-	const negative = input.lastIndexOf('-') >= 0;
+	const negative = input.startsWith('-');
 
 	// Remove any non digits, superfluous separators and leading zeros
 	const parts = input.split(/[,.]/);
 	for (let i = 0; i < parts.length; i++) {
 		parts[i] = parts[i].replaceAll(/\D/g, '');
-		parts[i] = parts[i].replaceAll(/^0+/g, '');
 	}
 	const lastPart = parts.length > 1 ? parts.pop() : undefined;
 	const firstPart = parts.join('');
@@ -121,7 +120,7 @@ function formatFloat(input: string) {
 	const parts = input.split(/[,.]/);
 	const decimals = parts.length > 1 ? parts.pop()?.replaceAll(/\D/g, '') : undefined;
 	let finalValue = parts.join('').replaceAll(/\D/g, '');
-	finalValue = /^0+$/g.test(finalValue) ? '0' : finalValue.replaceAll(/^0+/g, '');
+	finalValue = /^0+$/g.test(finalValue) ? '0' : finalValue;
 
 	if (decimals === '' && !showZero) {
 		finalValue += fractionSeparator; // There is a tailing separator symbol
@@ -320,7 +319,10 @@ function putValueInRange() {
 	numberVal = Math.max(props.ui.min || 0, numberVal);
 	if (props.ui.max) numberVal = Math.min(props.ui.max, numberVal);
 
-	inputValue.value = formatValue(`${numberVal}`);
+	const formatted = formatValue(`${numberVal}`);
+	if (formatted === inputValue.value) return;
+
+	inputValue.value = formatted;
 }
 
 function onInputWheel(e: WheelEvent) {
@@ -467,7 +469,9 @@ watch(
 	() => props.ui,
 	(newValue) => {
 		const serverValue = newValue.value ?? '';
-		if (parseValue(inputValue.value) !== lastSentValue) {
+		const parsedInputValue = parseValue(inputValue.value);
+		const parsedServerValue = parseValue(serverValue);
+		if (parsedInputValue !== lastSentValue || parsedInputValue === parsedServerValue) {
 			return;
 		}
 
