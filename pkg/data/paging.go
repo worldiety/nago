@@ -79,10 +79,16 @@ func Paginate[E Aggregate[ID], ID IDType](findByID ByIDFinder[E, ID], it iter.Se
 	if len(idents) == 0 {
 		return page, nil
 	}
-	if len(idents) < opts.PageIdx*opts.PageSize {
+	if opts.PageIdx >= page.PageCount {
 		// this happens e.g. if the UI requests e.g. the second page and then applies a filter, which will cause a drop
-		// of entries below the entire result set
-		opts.PageIdx = len(idents) / opts.PageSize
+		// of entries below the entire result set (or the underlying data set otherwise shrank, or the page size
+		// changed). Clamp to the last valid page instead of an off-by-one guess: using len(idents)/opts.PageSize
+		// here would be one page too far whenever len(idents) is an exact multiple of opts.PageSize, resulting in
+		// an empty page even though data is available.
+		opts.PageIdx = page.PageCount - 1
+		if opts.PageIdx < 0 {
+			opts.PageIdx = 0
+		}
 		page.PageIdx = opts.PageIdx
 	}
 
