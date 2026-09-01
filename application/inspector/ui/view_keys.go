@@ -63,6 +63,7 @@ func viewKeys(wnd core.Window, store inspector.Store) core.View {
 		dialogNewTextEntry(wnd, store, createNewPresented),
 		dialogEditEntry(wnd, store, editPresented, selectedKey),
 		dataview.FromData(wnd, dataview.Data[inspector.Entry, string]{
+			ID: store.Name,
 			FindAll: func(yield func(string, error) bool) {
 				for id, err := range store.Store.List(wnd.Context(), blob.ListOptions{}) {
 					if !yield(id, err) {
