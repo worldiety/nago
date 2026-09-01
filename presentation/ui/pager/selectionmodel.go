@@ -122,6 +122,12 @@ func NewModel[E data.Aggregate[ID], ID ~string](wnd core.Window, findByID data.B
 	}
 
 	model.Page = page
+	if page.PageIdx != model.PageIdx.Get() {
+		// Paginate may have clamped the requested page (e.g. the data set shrank or the page size changed), so
+		// keep the state in sync with the actually loaded page. Otherwise, the Pager component would keep showing
+		// (and navigating from) the stale, out-of-range index.
+		model.PageIdx.Set(page.PageIdx)
+	}
 
 	var recalcSelectedAll func()
 	allTableSelected := core.StateOf[bool](wnd, opts.StatePrefix+"-checkbox-all").Observe(func(newValue bool) {
