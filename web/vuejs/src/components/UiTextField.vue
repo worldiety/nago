@@ -8,7 +8,7 @@
 -->
 
 <script lang="ts" setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, inject, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import CloseIcon from '@/assets/svg/close.svg';
 import UiGeneric from '@/components/UiGeneric.vue';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
@@ -24,6 +24,7 @@ import {
 	TextFieldStyleValues,
 	UpdateStateValueRequested,
 } from '@/shared/proto/nprotoc_gen';
+import { PRE_SUBMIT_GROUP, PreSubmitGroup } from '@/components/form/preSubmitGroup';
 
 const props = defineProps<{
 	ui: TextField;
@@ -32,6 +33,8 @@ const props = defineProps<{
 const id = props.ui.id || randomStr(16);
 
 const serviceAdapter = useServiceAdapter();
+
+const preSubmitGroup = inject<PreSubmitGroup>(PRE_SUBMIT_GROUP);
 
 const leadingElement = ref<HTMLDivElement>();
 const trailingElement = ref<HTMLDivElement>();
@@ -488,6 +491,7 @@ onBeforeUnmount(() => {
 });
 
 onMounted(() => {
+	if (preSubmitGroup) preSubmitGroup.join(() => submitInputValue(true));
 	resizeTextarea();
 	calcAdditionalElementsWidths();
 	observeAdditionalElements();

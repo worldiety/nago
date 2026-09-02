@@ -8,7 +8,7 @@
 -->
 
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue';
+import { computed, inject, onMounted, ref, watch } from 'vue';
 import HideIcon from '@/assets/svg/hide.svg';
 import RevealIcon from '@/assets/svg/reveal.svg';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
@@ -17,12 +17,15 @@ import { inputWrapperStyleFrom } from '@/components/shared/inputWrapperStyle';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
 import { FunctionCallRequested, PasswordField, UpdateStateValueRequested } from '@/shared/proto/nprotoc_gen';
+import { PRE_SUBMIT_GROUP, PreSubmitGroup } from '@/components/form/preSubmitGroup';
 
 const props = defineProps<{
 	ui: PasswordField;
 }>();
 
 const serviceAdapter = useServiceAdapter();
+
+const preSubmitGroup = inject<PreSubmitGroup>(PRE_SUBMIT_GROUP);
 
 const revealed = ref(props.ui.revealed);
 const passwordInput = ref<HTMLElement | undefined>();
@@ -101,6 +104,10 @@ watch(
 	() => props.ui.revealed,
 	() => (revealed.value = props.ui.revealed)
 );
+
+onMounted(() => {
+	if (preSubmitGroup) preSubmitGroup.join(() => submitInputValue(true));
+});
 </script>
 
 <template>

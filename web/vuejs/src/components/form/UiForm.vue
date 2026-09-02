@@ -8,12 +8,13 @@
 -->
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, provide } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
 import { frameCSS } from '@/components/shared/frame';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
 import { Form, FunctionCallRequested } from '@/shared/proto/nprotoc_gen';
+import { PRE_SUBMIT_GROUP, PreSubmitGroup } from '@/components/form/preSubmitGroup';
 
 const props = defineProps<{
 	ui: Form;
@@ -21,10 +22,16 @@ const props = defineProps<{
 
 const serviceAdapter = useServiceAdapter();
 
-const debounceDelay = 500; // delay in ms to wait for inputs to update their values
+const preSubmitDelay = 50; // delay in ms to wait for pre submit group members
 let submitTimeout: any = null;
 
+const preSubmitGroup = new PreSubmitGroup();
+provide(PRE_SUBMIT_GROUP, preSubmitGroup);
+
 function handleSubmit(event: Event) {
+	// tell members of the pre submit group (inputs) to send their current values to the backend before the form is submitted
+	preSubmitGroup.execute();
+
 	if (submitTimeout) {
 		clearTimeout(submitTimeout);
 		submitTimeout = null;
@@ -36,7 +43,7 @@ function handleSubmit(event: Event) {
 			event.stopPropagation();
 			serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.action, nextRID()));
 		}
-	}, debounceDelay);
+	}, preSubmitDelay);
 }
 
 const frameStyles = computed<string>(() => {
