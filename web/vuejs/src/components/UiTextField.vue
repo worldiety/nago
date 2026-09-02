@@ -34,7 +34,7 @@ const id = props.ui.id || randomStr(16);
 
 const serviceAdapter = useServiceAdapter();
 
-const preSubmitGroup = inject<PreSubmitGroup>(PRE_SUBMIT_GROUP);
+const preSubmitGroup = inject<PreSubmitGroup | null>(PRE_SUBMIT_GROUP, null);
 
 const leadingElement = ref<HTMLDivElement>();
 const trailingElement = ref<HTMLDivElement>();
