@@ -67,14 +67,16 @@ type TTextField struct {
 	minValue        float64 // min value for number fields
 	autocomplete    string  // autocomplete tags of the input
 	optional        bool    // whether the field is optional
+	clearButton     bool    // whether to show a clear button for the field
 }
 
 // TextField creates a new text field with the given label and initial value.
 // By default, it is single-line and uncontrolled until InputValue is set.
 func TextField(label string, value string) TTextField {
 	c := TTextField{
-		label: label,
-		value: value,
+		label:       label,
+		value:       value,
+		clearButton: true,
 	}
 
 	return c
@@ -365,6 +367,12 @@ func (c TTextField) Optional(optional bool) TTextField {
 	return c
 }
 
+// ClearButton defines whether the text field should show a clear button. This only shows, if no trailing component is set, and the text field is not empty.
+func (c TTextField) ClearButton(clearButton bool) TTextField {
+	c.clearButton = clearButton
+	return c
+}
+
 // Render builds and returns the protocol representation of the text field.
 func (c TTextField) Render(ctx core.RenderContext) core.RenderNode {
 
@@ -393,5 +401,6 @@ func (c TTextField) Render(ctx core.RenderContext) core.RenderNode {
 		Min:             proto.Float(c.minValue),
 		Autocomplete:    proto.Str(c.autocomplete),
 		Optional:        proto.Bool(c.optional),
+		ClearButton:     proto.Bool(c.clearButton),
 	}
 }

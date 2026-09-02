@@ -43,6 +43,10 @@ func defaultButtons() core.View {
 		}).Title("primary button"),
 
 		PrimaryButton(func() {
+			fmt.Println("clicked the real primary")
+		}).Title("primary button with long content primary button with long content primary button with long content primary button with long content"),
+
+		PrimaryButton(func() {
 			fmt.Println("clicked the real primary with pre icon")
 		}).
 			Title("primary with pre icon").
@@ -62,9 +66,19 @@ func defaultButtons() core.View {
 		SecondaryButton(func() {
 			fmt.Println("clicked the real secondary")
 		}).Title("secondary button"),
+
+		SecondaryButton(func() {
+			fmt.Println("clicked the real secondary")
+		}).Title("secondary button with long content secondary button with long content secondary button with long content secondary button with long content"),
+
 		TertiaryButton(func() {
 			fmt.Println("clicked the real tertiary")
 		}).Title("tertiary button"),
+
+		TertiaryButton(func() {
+			fmt.Println("clicked the real tertiary")
+		}).Title("tertiary button with long content tertiary button with long content tertiary button with long content tertiary button with long content"),
+
 		PasswordField("Test", "Test"),
 		PasswordField("Test", "Test"),
 		Toggle(false),
@@ -74,7 +88,7 @@ func defaultButtons() core.View {
 			HRef("https://www.worldiety.de").
 			Target("_self"),
 	).Gap(L16).
-		Padding(Padding{}.All(L16))
+		Padding(Padding{}.All(L16)).Frame(Frame{MaxWidth: L400})
 }
 
 func customButtons(wnd core.Window) core.View {

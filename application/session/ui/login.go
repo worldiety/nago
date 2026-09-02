@@ -232,6 +232,7 @@ func loginForm(
 		ui.VStack(
 			ui.TextField("E-Mail Adresse", login.Get()).
 				InputValue(login).
+				ClearButton(false).
 				ErrorText(emailErr.Get()).
 				ID("nago-login").
 				Frame(ui.Frame{}.FullWidth()),
