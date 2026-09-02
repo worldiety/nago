@@ -120,6 +120,11 @@
     "26": {
       "name": "Optional",
       "type": "Bool"
+    },
+    "27": {
+      "doc": "ClearButton defines whether a clear button should be displayed for the text field. This only shows, if no trailing component is set, and the text field is not empty.",
+      "name": "ClearButton",
+      "type": "Bool"
     }
   }
 }

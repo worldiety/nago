@@ -86,7 +86,8 @@ const clearButtonVisible = computed<boolean>(() => {
 		!!inputValue.value &&
 		!props.ui.disabled &&
 		!props.ui.lines &&
-		props.ui.style != TextFieldStyleValues.TextFieldBasic
+		props.ui.style != TextFieldStyleValues.TextFieldBasic &&
+		!!props.ui.clearButton
 	);
 });
 
