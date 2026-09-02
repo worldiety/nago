@@ -25,7 +25,7 @@ const props = defineProps<{
 
 const serviceAdapter = useServiceAdapter();
 
-const preSubmitGroup = inject<PreSubmitGroup>(PRE_SUBMIT_GROUP);
+const preSubmitGroup = inject<PreSubmitGroup | null>(PRE_SUBMIT_GROUP, null);
 
 const revealed = ref(props.ui.revealed);
 const passwordInput = ref<HTMLElement | undefined>();
