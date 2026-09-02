@@ -65,20 +65,12 @@ func Login(
 
 	emailErr := core.AutoState[string](wnd)
 	login := core.AutoState[string](wnd).Observe(func(newValue string) {
-		if newValue == "" {
-			emailErr.Set("")
-			return
-		}
-
-		if !user.Email(newValue).Valid() {
-			emailErr.Set("Diese E-Mail-Adresse ist ungültig.")
-			return
-		} else {
-			emailErr.Set("")
-		}
+		emailErr.Set("")
 	})
 	passwordErr := core.AutoState[string](wnd)
-	password := core.AutoState[string](wnd)
+	password := core.AutoState[string](wnd).Observe(func(newValue string) {
+		passwordErr.Set("")
+	})
 	presentPasswordForgotten := core.AutoState[bool](wnd)
 	verificationDialogPresented := core.AutoState[bool](wnd)
 	infoText := core.AutoState[string](wnd)
@@ -86,11 +78,13 @@ func Login(
 	triggerLoginAction := func() {
 		if !user.Email(login.Get()).Valid() {
 			emailErr.Set("Diese E-Mail-Adresse ist ungültig.")
-			return
 		}
 
 		if password.Get() == "" {
-			passwordErr.Set("")
+			passwordErr.Set("Es muss ein Kennwort eingegeben werden.")
+		}
+
+		if emailErr.Get() != "" || passwordErr.Get() != "" {
 			return
 		}
 
@@ -240,20 +234,19 @@ func loginForm(
 				InputValue(login).
 				ErrorText(emailErr.Get()).
 				ID("nago-login").
-				KeydownEnter(triggerLoginAction).
 				Frame(ui.Frame{}.FullWidth()),
 
 			ui.PasswordField("Kennwort", password.Get()).
 				InputValue(password).
 				ErrorText(passwordErr.Get()).
 				ID("nago-password").
-				KeydownEnter(triggerLoginAction).
 				Frame(ui.Frame{}.FullWidth()).
 				Visible(!presentPasswordForgotten.Get()),
 		).Gap(ui.L12).FullWidth(),
 	).
 		Autocomplete(true).
 		ID("nago-form-login").
+		Action(triggerLoginAction).
 		Frame(ui.Frame{}.FullWidth())
 }
 

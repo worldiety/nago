@@ -555,6 +555,7 @@ onMounted(() => {
 				<button
 					v-else-if="clearButtonVisible"
 					ref="clearButton"
+					type="button"
 					class="button-tertiary square small additional-right clear-button"
 					@click="clearInputValue"
 				>
