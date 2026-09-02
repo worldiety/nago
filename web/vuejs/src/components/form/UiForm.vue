@@ -21,11 +21,22 @@ const props = defineProps<{
 
 const serviceAdapter = useServiceAdapter();
 
+const debounceDelay = 500; // delay in ms to wait for inputs to update their values
+let submitTimeout: any = null;
+
 function handleSubmit(event: Event) {
-	if (props.ui.action) {
-		event.stopPropagation();
-		serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.action, nextRID()));
+	if (submitTimeout) {
+		clearTimeout(submitTimeout);
+		submitTimeout = null;
 	}
+
+	// Use delay as workaround to allow all input fields of the form to update their values before sending the submit event.
+	submitTimeout = setTimeout(() => {
+		if (props.ui.action) {
+			event.stopPropagation();
+			serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.action, nextRID()));
+		}
+	}, debounceDelay);
 }
 
 const frameStyles = computed<string>(() => {
@@ -43,5 +54,8 @@ const frameStyles = computed<string>(() => {
 		@submit.prevent="handleSubmit"
 	>
 		<ui-generic v-for="childUi in props.ui.children?.value" :ui="childUi" />
+		<button type="submit" class="hidden" tabindex="-1" aria-hidden="true">
+			<!-- hidden submit button to enable enter key submission -->
+		</button>
 	</form>
 </template>

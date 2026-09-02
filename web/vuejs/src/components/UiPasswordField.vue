@@ -127,6 +127,7 @@ watch(
 				/>
 				<div class="additional-right">
 					<button
+						type="button"
 						class="button-tertiary square small reveal-button"
 						:disabled="ui.disabled"
 						@click="toggleRevealed"
