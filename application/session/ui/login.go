@@ -12,8 +12,6 @@ import (
 	"fmt"
 
 	"github.com/worldiety/i18n"
-	"go.wdy.de/nago/application/image"
-	httpimage "go.wdy.de/nago/application/image/http"
 	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/application/session"
 	"go.wdy.de/nago/application/settings"
@@ -22,7 +20,6 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
-	"go.wdy.de/nago/presentation/ui/cardlayout"
 	"golang.org/x/text/language"
 )
 
@@ -55,13 +52,6 @@ func Login(
 
 	usrSettings := settings.ReadGlobal[user.Settings](loadGlobalSettings)
 	themeSettings := settings.ReadGlobal[theme.Settings](loadGlobalSettings)
-
-	var logoImg core.View
-	if themeSettings.PageLogoDark != "" || themeSettings.PageLogoLight != "" {
-		dark := httpimage.URI(themeSettings.PageLogoDark, image.FitCover, 512, 512)
-		light := httpimage.URI(themeSettings.PageLogoLight, image.FitCover, 512, 512)
-		logoImg = ui.Image().URIAdaptive(light, dark).ObjectFit(ui.FitContain).Frame(ui.Frame{Width: ui.Full, Height: ui.L64})
-	}
 
 	emailErr := core.AutoState[string](wnd)
 	login := core.AutoState[string](wnd).Observe(func(newValue string) {
@@ -106,65 +96,29 @@ func Login(
 		}
 	}
 
-	hasAppIcon := themeSettings.AppIconLight != "" || themeSettings.AppIconDark != ""
-	isMobile := wnd.Info().SizeClass < core.SizeClassMedium
-	gridCols := 2
-	if isMobile {
-		gridCols = 1
+	contentRight := ui.VStack(
+		verificationDialog(wnd, verificationDialogPresented, su, findByMail, sendVerifyMail, login),
+		loginForm(login, emailErr, password, passwordErr, presentPasswordForgotten, triggerLoginAction),
+		forgotPasswordLink(presentPasswordForgotten, usrSettings),
+
+		ui.If(infoText.Get() != "" && presentPasswordForgotten.Get(), ui.Text(fmt.Sprintf("Ein E-Mail mit einem Link zum Zurücksetzen wurde an '%s' gesendet. Prüfen Sie ihr Postfach.", login.Get())).TextAlignment(ui.TextAlignCenter)),
+		ui.LinkWithAction("zurück zur Anmeldung", func() {
+			presentPasswordForgotten.Set(false)
+
+		}).Font(ui.BodySmall).Visible(presentPasswordForgotten.Get()),
+
+		ui.IfFunc(usrSettings.HasSSO(), func() core.View { return ssoLogin(wnd, startNLSFlow) }),
+	).Gap(ui.L8).FullWidth().NoClip(true)
+
+	actions := []core.View{
+		submitForgotPasswordBtn(wnd, login, emailErr, presentPasswordForgotten, sendResetPwdMail, infoText),
+		submitLoginBtn(wnd, triggerLoginAction, presentPasswordForgotten),
 	}
-
-	content := ui.Grid(
-		ui.GridCell(
-			ui.VStack(
-				ui.If(hasAppIcon,
-					ui.Image().
-						Adaptive(themeSettings.AppIconLight, themeSettings.AppIconDark).
-						ObjectFit(ui.FitContain).
-						Frame(ui.Frame{}.Size(ui.L48, ui.L48)),
-				),
-				ui.If(hasAppIcon, ui.Space(ui.L16)),
-				ui.Text("Mit "+wnd.Application().Name()+"-Konto anmelden").Font(ui.HeadlineSmall).Hyphens(ui.HyphensAuto),
-				ui.Text("Bitte Zugangsdaten eingeben"),
-			).Alignment(ui.TopLeading),
-		).Alignment(ui.Leading),
-
-		ui.GridCell(
-			ui.VStack(
-				verificationDialog(wnd, verificationDialogPresented, su, findByMail, sendVerifyMail, login),
-				logoImg,
-				loginForm(login, emailErr, password, passwordErr, presentPasswordForgotten, triggerLoginAction),
-				forgotPasswordLink(presentPasswordForgotten, usrSettings),
-
-				ui.If(infoText.Get() != "" && presentPasswordForgotten.Get(), ui.Text(fmt.Sprintf("Ein E-Mail mit einem Link zum Zurücksetzen wurde an '%s' gesendet. Prüfen Sie ihr Postfach.", login.Get())).TextAlignment(ui.TextAlignCenter)),
-				ui.LinkWithAction("zurück zur Anmeldung", func() {
-					presentPasswordForgotten.Set(false)
-
-				}).Font(ui.BodySmall).Visible(presentPasswordForgotten.Get()),
-
-				ui.IfFunc(usrSettings.HasSSO(), func() core.View { return ssoLogin(wnd, startNLSFlow) }),
-			).Gap(ui.L8).FullWidth().NoClip(true),
-		),
-	).
-		Gap(ui.L40).
-		Columns(gridCols).
-		FullWidth().
-		Heights("auto").
-		Padding(ui.Padding{}.All(ui.L16))
 
 	return ui.VStack( // we don't have a scaffold
 		ui.VStack(
 			ui.WindowTitle(rstring.ActionLogin.Get(wnd)),
-			cardlayout.Card("").
-				Body(
-					ui.VStack(content).FullWidth(),
-				).Footer(
-				ui.HStack(
-					submitForgotPasswordBtn(wnd, login, emailErr, presentPasswordForgotten, sendResetPwdMail, infoText),
-					submitLoginBtn(wnd, triggerLoginAction, presentPasswordForgotten),
-				),
-			).
-				Padding(ui.Padding{Top: ui.L40, Bottom: ui.L24}.Horizontal(ui.L40)).
-				Frame(ui.Frame{MaxWidth: ui.L880}.FullWidth()),
+			LoginRegisterCard(wnd, themeSettings.PageLogoLight, themeSettings.PageLogoDark, "Mit "+wnd.Application().Name()+"-Konto anmelden", "Bitte Zugangsdaten eingeben", contentRight, actions...),
 			ui.TextLayout(
 				ui.Text("Noch kein Konto? Hier gleich "),
 				ui.LinkWithAction("registrieren!", func() {
@@ -252,10 +206,12 @@ func loginForm(
 }
 
 func forgotPasswordLink(presented *core.State[bool], usrSettings user.Settings) core.View {
-	return ui.LinkWithAction("Passwort vergessen", func() {
-		presented.Set(true)
+	return ui.VStack(
+		ui.LinkWithAction("Passwort vergessen", func() {
+			presented.Set(true)
 
-	}).Font(ui.BodySmall).Visible(usrSettings.SelfPasswordReset && !presented.Get())
+		}).Font(ui.BodySmall).Visible(usrSettings.SelfPasswordReset && !presented.Get()),
+	).Alignment(ui.Leading).FullWidth()
 }
 
 func ssoLogin(wnd core.Window, startNLSFlow session.StartNLSFlow) core.View {
