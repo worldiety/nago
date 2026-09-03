@@ -2,7 +2,7 @@
 import { Color } from '@tiptap/extension-color';
 import Link from '@tiptap/extension-link';
 import ListItem from '@tiptap/extension-list-item';
-import TextStyle from '@tiptap/extension-text-style';
+import { TextStyle } from '@tiptap/extension-text-style';
 import { Underline } from '@tiptap/extension-underline';
 import StarterKit from '@tiptap/starter-kit';
 import { Editor, EditorContent } from '@tiptap/vue-3';
