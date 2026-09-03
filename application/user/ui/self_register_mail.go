@@ -17,7 +17,7 @@ import (
 
 func emails(email, emailRepeated, errMailRepeated *core.State[string]) core.View {
 	return ui.VStack(
-		ui.Text("Die E-Mail Adresse wird mit einem Passwort als Login verwendet. Im Nachgang erhalten Sie eine E-Mail, mit der Sie das Konto bestätigen müssen."),
+		ui.Text("Die E-Mail Adresse wird mit einem Passwort als Login verwendet. Im Nachgang erhalten Sie eine E-Mail, mit der Sie das Konto bestätigen müssen.").Padding(ui.Padding{Bottom: ui.L16}),
 		ui.TextField("E-Mail Adresse", email.Get()).
 			ErrorText(errMailRepeated.Get()).
 			InputValue(email).
