@@ -96,16 +96,18 @@ func Login(
 		}
 	}
 
-	contentRight := ui.VStack(
+	content := ui.VStack(
 		verificationDialog(wnd, verificationDialogPresented, su, findByMail, sendVerifyMail, login),
 		loginForm(login, emailErr, password, passwordErr, presentPasswordForgotten, triggerLoginAction),
 		forgotPasswordLink(presentPasswordForgotten, usrSettings),
 
-		ui.If(infoText.Get() != "" && presentPasswordForgotten.Get(), ui.Text(fmt.Sprintf("Ein E-Mail mit einem Link zum Zurücksetzen wurde an '%s' gesendet. Prüfen Sie ihr Postfach.", login.Get())).TextAlignment(ui.TextAlignCenter)),
-		ui.LinkWithAction("zurück zur Anmeldung", func() {
-			presentPasswordForgotten.Set(false)
+		ui.VStack(
+			ui.If(infoText.Get() != "" && presentPasswordForgotten.Get(), ui.Text(fmt.Sprintf("Ein E-Mail mit einem Link zum Zurücksetzen wurde an '%s' gesendet. Prüfen Sie ihr Postfach.", login.Get()))),
+			ui.LinkWithAction("Zurück zur Anmeldung", func() {
+				presentPasswordForgotten.Set(false)
 
-		}).Font(ui.BodySmall).Visible(presentPasswordForgotten.Get()),
+			}).Font(ui.BodySmall).Visible(presentPasswordForgotten.Get()),
+		).Alignment(ui.Leading).Gap(ui.L8).FullWidth().NoClip(true),
 
 		ui.IfFunc(usrSettings.HasSSO(), func() core.View { return ssoLogin(wnd, startNLSFlow) }),
 	).Gap(ui.L8).FullWidth().NoClip(true)
@@ -118,14 +120,14 @@ func Login(
 	return ui.VStack( // we don't have a scaffold
 		ui.VStack(
 			ui.WindowTitle(rstring.ActionLogin.Get(wnd)),
-			LoginRegisterCard(wnd, themeSettings.PageLogoLight, themeSettings.PageLogoDark, "Mit "+wnd.Application().Name()+"-Konto anmelden", "Bitte Zugangsdaten eingeben", contentRight, actions...),
+			LoginRegisterCard(wnd, themeSettings.PageLogoLight, themeSettings.PageLogoDark, "Mit "+wnd.Application().Name()+"-Konto anmelden", "Bitte Zugangsdaten eingeben", content, actions...),
 			ui.TextLayout(
 				ui.Text("Noch kein Konto? Hier gleich "),
 				ui.LinkWithAction("registrieren!", func() {
 					wnd.Navigation().ForwardTo(registerPath, nil)
 				}),
 			).Font(ui.BodySmall).Visible(usrSettings.SelfRegistration),
-		).Gap(ui.L16),
+		).Gap(ui.L16).FullWidth().NoClip(true),
 	).Frame(ui.Frame{}.MatchScreen())
 }
 
@@ -211,7 +213,7 @@ func forgotPasswordLink(presented *core.State[bool], usrSettings user.Settings) 
 			presented.Set(true)
 
 		}).Font(ui.BodySmall).Visible(usrSettings.SelfPasswordReset && !presented.Get()),
-	).Alignment(ui.Leading).FullWidth()
+	).Alignment(ui.Leading).FullWidth().NoClip(true)
 }
 
 func ssoLogin(wnd core.Window, startNLSFlow session.StartNLSFlow) core.View {

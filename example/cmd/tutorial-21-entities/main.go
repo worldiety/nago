@@ -71,6 +71,7 @@ func main() {
 	// we use the applications package to bootstrap our configuration
 	application.Configure(func(cfg *application.Configurator) {
 		cfg.SetApplicationID("de.worldiety.tutorial_21")
+		cfg.SetName("Example-App")
 		cfg.Serve(vuejs.Dist())
 
 		cfg.SetDecorator(cfg.NewScaffold().

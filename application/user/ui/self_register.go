@@ -247,7 +247,7 @@ func PageSelfRegister(wnd core.Window, hasMail user.EMailUsed, createUser user.C
 					GeneralTermsAndConditions(cfgTheme.GeneralTermsAndConditions).
 					Slogan(cfgTheme.Slogan)
 			}),
-		).Gap(ui.L16),
+		).Gap(ui.L16).FullWidth(),
 	).Frame(ui.Frame{}.MatchScreen())
 }
 
