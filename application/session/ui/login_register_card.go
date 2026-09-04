@@ -30,14 +30,15 @@ func LoginRegisterCard(wnd core.Window, logoLight, logoDark image.ID, title, sub
 					ui.Text(title).Font(ui.HeadlineSmall).Hyphens(ui.HyphensAuto),
 					ui.Text(subtitle),
 				).Alignment(ui.Leading).FullWidth(),
-			).Alignment(ui.TopLeading).Gap(ui.L32).FullWidth(),
+			).Alignment(ui.TopLeading).Gap(ui.L32).FullWidth().NoClip(true),
 		).Alignment(ui.Leading),
 		ui.GridCell(contentRight),
 	).
 		Gap(ui.L32).
 		Columns(1).
 		FullWidth().
-		Heights("auto")
+		Heights("auto").
+		Padding(ui.Padding{Top: ui.L48, Bottom: ui.L32}.Horizontal(ui.L48))
 
 	card := cardlayout.Card("").
 		Body(
@@ -45,8 +46,8 @@ func LoginRegisterCard(wnd core.Window, logoLight, logoDark image.ID, title, sub
 				content,
 			).Gap(ui.L16).FullWidth(),
 		).
-		Padding(ui.Padding{Top: ui.L48, Bottom: ui.L32}.Horizontal(ui.L48)).
-		Frame(ui.Frame{MaxWidth: ui.L560}.FullWidth())
+		Padding(ui.Padding{}.All(ui.L0)).
+		Frame(ui.Frame{Width: ui.Full, MaxWidth: ui.L480}.FullWidth())
 
 	hasActions := false
 	for _, action := range actions {
