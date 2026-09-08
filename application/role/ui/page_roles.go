@@ -8,6 +8,7 @@
 package uirole
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/worldiety/i18n"
@@ -25,6 +26,11 @@ import (
 var (
 	StrCreateRole             = i18n.MustString("nago.role.create", i18n.Values{language.German: "Rolle erstellen", language.English: "Create Role"})
 	StrCreateRoleWithCustomID = i18n.MustString("nago.role.create_with_custom_id", i18n.Values{language.German: "Rolle mit ID erstellen", language.English: "Create Role with ID"})
+
+	StrSystemRoleHint = i18n.MustString("nago.role.system_role_hint", i18n.Values{
+		language.German:  "Diese Rolle wird von der Anwendung verwaltet. Ihre Berechtigungen gehören zu der Funktion, die sie bereitstellt, und lassen sich hier nicht ändern. Weisen Sie die Rolle einfach den Nutzern zu, die die Funktion verwenden sollen.",
+		language.English: "This role is maintained by the application. Its permissions belong to the feature providing it and cannot be changed here. Simply assign the role to the users who should use that feature.",
+	})
 )
 
 func PageRoles(wnd core.Window, pages Pages, useCases role.UseCases) core.View {
@@ -63,31 +69,56 @@ func PageRoles(wnd core.Window, pages Pages, useCases role.UseCases) core.View {
 						return ui.Text(obj.Description)
 					},
 				},
+				{
+					ID:   "system",
+					Name: role.StrLabelSystem.Get(wnd),
+					Map: func(obj role.Role) core.View {
+						// Shown as a column rather than hidden, so it is obvious up front why a role cannot
+						// be selected for deletion.
+						if !obj.IsSystem() {
+							return nil
+						}
+
+						return ui.Text(role.StrLabelSystem.Get(wnd))
+					},
+				},
 			},
 		}).Search(true).
 			NextActionIndicator(true).
 			Action(func(e role.Role) {
 				wnd.Navigation().ForwardTo(pages.Role, core.Values{"role": string(e.ID)})
-			}).
-			CreateOptions(
-				dataview.CreateOption{
-					Name: StrCreateRoleWithCustomID.Get(wnd),
-					Action: func() error {
-						createWithCustomID.Set(true)
-						createPresented.Set(true)
-						return nil
-					},
+			}).CreateOptions(
+			dataview.CreateOption{
+				Name: StrCreateRoleWithCustomID.Get(wnd),
+				Action: func() error {
+					createWithCustomID.Set(true)
+					createPresented.Set(true)
+					return nil
 				},
-				dataview.CreateOption{
-					Name: StrCreateRole.Get(wnd),
-					Action: func() error {
-						createWithCustomID.Set(false)
-						createPresented.Set(true)
-						return nil
-					},
+			},
+			dataview.CreateOption{
+				Name: StrCreateRole.Get(wnd),
+				Action: func() error {
+					createWithCustomID.Set(false)
+					createPresented.Set(true)
+					return nil
 				},
-			).SelectOptions(
+			},
+		).SelectOptions(
 			dataview.NewSelectOptionDelete[role.ID](wnd, func(selected []role.ID) error {
+				// The use case refuses system roles anyway; checking here as well turns a bulk delete that
+				// aborts halfway into one that reports the problem before removing anything.
+				for _, id := range selected {
+					optRole, err := useCases.FindByID(wnd.Subject(), id)
+					if err != nil {
+						return err
+					}
+
+					if optRole.IsSome() && optRole.Unwrap().IsSystem() {
+						return fmt.Errorf("%s: %s", optRole.Unwrap().Name, StrSystemRoleHint.Get(wnd))
+					}
+				}
+
 				for _, id := range selected {
 					if err := useCases.Delete(wnd.Subject(), id); err != nil {
 						return err
@@ -108,7 +139,10 @@ func dialogCreate(wnd core.Window, useCases role.UseCases, customID bool, presen
 
 	state := core.AutoState[role.Role](wnd)
 	errState := core.AutoState[error](wnd)
-	var ignore []string
+
+	// The System flag is set by [Configurator.DeclareSystemRole], never by hand, so it must not appear as a
+	// checkbox in the create dialog.
+	ignore := []string{"System"}
 	if !customID {
 		ignore = append(ignore, "ID")
 	}

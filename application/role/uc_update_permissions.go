@@ -12,12 +12,23 @@ import (
 	"go.wdy.de/nago/application/rebac"
 )
 
-func NewUpdatePermissions(rdb *rebac.DB) UpdatePermissions {
+func NewUpdatePermissions(repo Repository, rdb *rebac.DB) UpdatePermissions {
 	return func(subject permission.Auditable, id ID, permissions []permission.ID) error {
 		if err := subject.Audit(PermUpdate); err != nil {
 			return err
 		}
-		
+
+		// The permission set of a system role is part of the feature that declared it. Replacing it here
+		// would be undone on the next start, so it is refused outright rather than silently reverted later.
+		optRole, err := repo.FindByID(id)
+		if err != nil {
+			return err
+		}
+
+		if optRole.IsSome() && optRole.Unwrap().IsSystem() {
+			return errSystemRoleProtected(id)
+		}
+
 		// remove all perms
 		for perm := range permission.All() {
 			err := rdb.Delete(rebac.Triple{

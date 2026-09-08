@@ -12,7 +12,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 
@@ -40,6 +42,10 @@ import (
 //	})
 type ToolFunc[In, Out any] func(In) (Out, error)
 
+// ToolFuncS is [ToolFunc] with the acting subject, which is the shape of every nago use case. See
+// [NewSubjectTool] and [NewUseCaseTool].
+type ToolFuncS[In, Out any] func(auth.Subject, In) (Out, error)
+
 // Tool bundles the advertised [ToolDef] (name, description, JSON schema) with an executable invocation that
 // knows how to unmarshal the JSON arguments, run the underlying Go function and marshal the result back.
 //
@@ -53,7 +59,11 @@ type Tool struct {
 	// Invoke executes the underlying Go function for the given raw JSON arguments and returns the raw JSON
 	// encoded result. The error is a transport/marshalling or business error; [Run] turns it into a tool
 	// result flagged as error so the model may react to it.
-	Invoke func(args json.RawMessage) (json.RawMessage, error)
+	//
+	// The subject is the one [Run] was called with, i.e. the human whose question started the turn. A tool
+	// that reaches into the domain must pass it on to its use cases; that is what bounds the assistant to
+	// exactly what the acting person could do by hand. See [NewSubjectTool] and [NewUseCaseTool].
+	Invoke func(subject auth.Subject, args json.RawMessage) (json.RawMessage, error)
 
 	// OpenFile, when set, marks this tool as a file-providing tool: instead of (or in addition to) a textual
 	// result, the tool yields a file that [Run] uploads to the active provider and attaches to the
@@ -63,8 +73,61 @@ type Tool struct {
 	// [Run] requires a [RunOptions.FileUploader] to perform the upload. The attached [Media] is added to the
 	// same user turn that carries the tool_result blocks (never inside the tool_result itself, which the
 	// provider would reject for file-id sources). When set, OpenFile takes precedence over [Invoke]. May be
-	// nil. Create such a tool with [NewOpenFileTool].
-	OpenFile func(args json.RawMessage) (OpenedFile, error)
+	// nil. Create such a tool with [NewOpenFileTool] or [NewSubjectOpenFileTool].
+	OpenFile func(subject auth.Subject, args json.RawMessage) (OpenedFile, error)
+
+	// Mutating marks a tool that changes state rather than merely reading it. It is a property of the tool,
+	// not a phrase in its description, so it can actually be enforced: [RunOptions.OnBeforeToolCall] sees it
+	// before the call happens, and a UI can refuse or confirm it.
+	//
+	// Relying on the model to honour a "this writes, ask first" instruction in the prompt is not a control -
+	// it is a request. Set this flag instead.
+	Mutating bool
+
+	// Confirm is a short, human-readable sentence describing what this tool will change, shown when a
+	// confirmation is requested. Optional; the tool name and its arguments are shown regardless. Only
+	// meaningful together with Mutating.
+	Confirm string
+
+	// resultDoc is the rendered description of the return type, filled in by the constructors and moved into
+	// the advertised description by [Tool.WithResultDoc]. It is unexported because it is derived, not
+	// configured; a Tool built as a struct literal simply has none and WithResultDoc then does nothing.
+	resultDoc string
+}
+
+// AsMutating marks the tool as state-changing and attaches a human-readable description of the effect. See
+// [Tool.Mutating].
+func (t Tool) AsMutating(confirm string) Tool {
+	t.Mutating = true
+	t.Confirm = confirm
+	return t
+}
+
+// WithResultDoc appends a description of what the tool returns to its advertised description, so the model
+// knows the shape of the answer before it calls.
+//
+// This is opt-in rather than automatic, and the reason is cost. No provider accepts an output schema for a
+// tool - the definition carries a name, a description and an input schema, and nothing else - so the only
+// place this can go is the description text, which is sent on every request for every tool for the lifetime
+// of the conversation. A result whose field names already say what they are teaches the model its shape for
+// free, with the first actual result.
+//
+// Use it where the shape is genuinely unobvious: aggregated rows, results with a truncation flag the model
+// must react to, or fields whose meaning needs a sentence. The `desc` tags on the return type are carried
+// over, and they only ever reach the model through this call.
+func (t Tool) WithResultDoc() Tool {
+	if t.resultDoc == "" {
+		return t
+	}
+
+	if t.Def.Description == "" {
+		t.Def.Description = t.resultDoc
+		return t
+	}
+
+	t.Def.Description = t.Def.Description + "\n\n" + t.resultDoc
+
+	return t
 }
 
 // OpenedFile is the file returned by an [Tool.OpenFile] invocation. The bytes are read lazily via Open so a
@@ -93,32 +156,41 @@ type FileUploader func(subject auth.Subject, f OpenedFile) (file.ID, error)
 // description). In and Out must be JSON marshalable.
 //
 // name must be a stable, unique identifier (the model references it by name). description should explain to
-// the model when and how to use the tool.
+// the model when and how to use the tool. Both are validated; see [ValidateToolName].
+//
+// Use this only for tools that need no authorization, such as pure computation or static knowledge. Anything
+// that touches domain data must go through [NewSubjectTool] or [NewUseCaseTool] so it is bounded by the
+// acting subject.
 func NewTool[In, Out any](name, description string, fn ToolFunc[In, Out]) Tool {
-	var zeroIn In
-	schema := reflectSchema(reflect.TypeOf(&zeroIn).Elem())
-	rawSchema, err := json.Marshal(schema)
-	if err != nil {
-		// A type whose schema cannot be marshalled is a programming error; encode it defensively as an
-		// empty object so the tool stays usable.
-		rawSchema = json.RawMessage(`{"type":"object"}`)
-	}
+	return NewSubjectTool(name, description, func(_ auth.Subject, in In) (Out, error) {
+		return fn(in)
+	})
+}
+
+// NewSubjectTool is [NewTool] for a function that also receives the acting subject.
+//
+// This is the shape to reach for whenever a tool touches domain data: pass the subject on to the use case and
+// the assistant is bounded by exactly the permissions of the person using it. It cannot read a record they
+// may not read, and it cannot write one they may not write - not because the prompt says so, but because the
+// use case audits the very same subject it would audit for a click in the UI.
+//
+// Because the subject arrives per call rather than per construction, a tool can be built once at start-up and
+// shared by every window and every user.
+func NewSubjectTool[In, Out any](name, description string, fn ToolFuncS[In, Out]) Tool {
+	mustValidateTool(name, description)
+
+	var zeroOut Out
 
 	return Tool{
-		Def: ToolDef{
-			Name:        name,
-			Description: description,
-			Schema:      rawSchema,
-		},
-		Invoke: func(args json.RawMessage) (json.RawMessage, error) {
-			var in In
-			if len(args) > 0 {
-				if err := json.Unmarshal(args, &in); err != nil {
-					return nil, fmt.Errorf("cannot decode arguments for tool %q: %w", name, err)
-				}
+		Def:       newToolDef[In](name, description),
+		resultDoc: renderResultDoc(reflect.TypeOf(&zeroOut).Elem()),
+		Invoke: func(subject auth.Subject, args json.RawMessage) (json.RawMessage, error) {
+			in, err := decodeToolArgs[In](name, args)
+			if err != nil {
+				return nil, err
 			}
 
-			out, err := fn(in)
+			out, err := fn(subject, in)
 			if err != nil {
 				return nil, err
 			}
@@ -133,6 +205,22 @@ func NewTool[In, Out any](name, description string, fn ToolFunc[In, Out]) Tool {
 	}
 }
 
+// NewUseCaseTool exposes a nago use case as a tool without any adapter in between.
+//
+// Use cases in nago already have the shape func(auth.Subject, Request) (Response, error), which is exactly
+// what a tool needs, so the wrapper that would otherwise be written by hand for every single tool is not
+// required:
+//
+//	tool := completion.NewUseCaseTool("assign_duty",
+//		"Assigns a training requirement to the given employees.",
+//		dutyUseCases.AssignDuty).AsMutating("creates training obligations for real people")
+//
+// The request type must be JSON marshalable and should carry `desc` struct tags, since it doubles as the
+// documentation the model reads.
+func NewUseCaseTool[In, Out any](name, description string, uc func(auth.Subject, In) (Out, error)) Tool {
+	return NewSubjectTool(name, description, ToolFuncS[In, Out](uc))
+}
+
 // NewOpenFileTool wraps a Go function of the form func(In) (OpenedFile, error) into a file-providing [Tool].
 // When the model calls it, [Run] executes fn, uploads the returned [OpenedFile] via [RunOptions.FileUploader]
 // and attaches it to the conversation as a [Media] block (referenced by its provider file id) so the model
@@ -142,30 +230,95 @@ func NewTool[In, Out any](name, description string, fn ToolFunc[In, Out]) Tool {
 // to the model is a short textual confirmation; the actual file is added as a separate Media block on the same
 // user turn (a file-id source is not valid inside a tool_result). If no [RunOptions.FileUploader] is
 // configured, the call is reported to the model as an error.
+//
+// See [NewSubjectOpenFileTool] for the variant that receives the acting subject, which any file coming out of
+// a permission-checked store needs.
 func NewOpenFileTool[In any](name, description string, fn func(In) (OpenedFile, error)) Tool {
+	return NewSubjectOpenFileTool(name, description, func(_ auth.Subject, in In) (OpenedFile, error) {
+		return fn(in)
+	})
+}
+
+// NewSubjectOpenFileTool is [NewOpenFileTool] for a function that also receives the acting subject, so the
+// per-file permissions of the underlying store are enforced for the person actually asking.
+func NewSubjectOpenFileTool[In any](name, description string, fn func(auth.Subject, In) (OpenedFile, error)) Tool {
+	mustValidateTool(name, description)
+
+	return Tool{
+		Def: newToolDef[In](name, description),
+		OpenFile: func(subject auth.Subject, args json.RawMessage) (OpenedFile, error) {
+			in, err := decodeToolArgs[In](name, args)
+			if err != nil {
+				return OpenedFile{}, err
+			}
+
+			return fn(subject, in)
+		},
+	}
+}
+
+// newToolDef builds the advertised definition including the reflected JSON schema of In.
+func newToolDef[In any](name, description string) ToolDef {
 	var zeroIn In
-	schema := reflectSchema(reflect.TypeOf(&zeroIn).Elem())
+	return newToolDefFromSchema(name, description, reflectSchema(reflect.TypeOf(&zeroIn).Elem()))
+}
+
+// newToolDefFromSchema builds the advertised definition from an already reflected (and possibly adjusted)
+// schema.
+func newToolDefFromSchema(name, description string, schema map[string]any) ToolDef {
 	rawSchema, err := json.Marshal(schema)
 	if err != nil {
+		// A type whose schema cannot be marshalled is a programming error; encode it defensively as an
+		// empty object so the tool stays usable.
 		rawSchema = json.RawMessage(`{"type":"object"}`)
 	}
 
-	return Tool{
-		Def: ToolDef{
-			Name:        name,
-			Description: description,
-			Schema:      rawSchema,
-		},
-		OpenFile: func(args json.RawMessage) (OpenedFile, error) {
-			var in In
-			if len(args) > 0 {
-				if err := json.Unmarshal(args, &in); err != nil {
-					return OpenedFile{}, fmt.Errorf("cannot decode arguments for tool %q: %w", name, err)
-				}
-			}
+	return ToolDef{
+		Name:        name,
+		Description: description,
+		Schema:      rawSchema,
+	}
+}
 
-			return fn(in)
-		},
+// decodeToolArgs turns the raw arguments the model produced into the input type of a tool.
+func decodeToolArgs[In any](name string, args json.RawMessage) (In, error) {
+	var in In
+	if len(args) > 0 {
+		if err := json.Unmarshal(args, &in); err != nil {
+			return in, fmt.Errorf("cannot decode arguments for tool %q: %w", name, err)
+		}
+	}
+
+	return in, nil
+}
+
+// toolNamePattern is what every provider accepts and what a model can reliably reproduce: lower case ASCII,
+// digits and underscores, starting with a letter.
+var toolNamePattern = regexp.MustCompile(`^[a-z][a-z0-9_]{0,63}$`)
+
+// ValidateToolName checks that name is usable as a tool identifier.
+func ValidateToolName(name string) error {
+	if !toolNamePattern.MatchString(name) {
+		return fmt.Errorf("invalid tool name %q: expected lower case letters, digits and underscores, starting with a letter, at most 64 characters", name)
+	}
+
+	return nil
+}
+
+// mustValidateTool rejects a malformed tool at construction time.
+//
+// This panics rather than returning an error because both mistakes are programming errors that are always
+// present or always absent - never data dependent - and both are otherwise diagnosed only by a confused
+// model at runtime: a name the provider rejects fails the whole turn, and an empty description leaves the
+// model guessing what the tool is for. Failing at start-up turns that into a stack trace pointing at the
+// offending line.
+func mustValidateTool(name, description string) {
+	if err := ValidateToolName(name); err != nil {
+		panic(err)
+	}
+
+	if strings.TrimSpace(description) == "" {
+		panic(fmt.Errorf("tool %q has no description: the description is the only thing telling the model when to use it", name))
 	}
 }
 
@@ -242,6 +395,15 @@ type Progress struct {
 // synchronously inside the loop.
 type ProgressFunc func(Progress)
 
+// BeforeToolCallFunc is consulted immediately before a tool is executed and may refuse the call by returning
+// an error. The refusal is reported to the model as an error tool result, so the run continues and the model
+// can explain itself or pick a different route.
+//
+// It is the enforcement point for [Tool.Mutating]: block writes outright in a read-only context, or hold the
+// call until the user has confirmed it. Because it runs on the loop's goroutine it may block for as long as
+// that takes.
+type BeforeToolCallFunc func(subject auth.Subject, tool Tool, call ToolCall) error
+
 // RunOptions configures the agentic loop executed by [Run]. It embeds the stateless [Options] and adds the
 // executable [Tool]s plus a turn limit.
 type RunOptions struct {
@@ -275,6 +437,10 @@ type RunOptions struct {
 	// are injected inline and never need an uploader. It is required only when a tool opens a binary file; a
 	// nil uploader makes such calls fail (reported to the model as an error). Wire it to provider.Files().Put.
 	FileUploader FileUploader
+
+	// OnBeforeToolCall is consulted before each tool execution and may refuse it. Optional; see
+	// [BeforeToolCallFunc].
+	OnBeforeToolCall BeforeToolCallFunc
 }
 
 // Run drives the full agentic loop on top of [Completions.Complete]:
@@ -317,6 +483,12 @@ func Run(subject auth.Subject, c Completions, opts RunOptions) (Result, []Messag
 	tools := make(map[string]Tool, len(opts.Tools))
 	defs := make([]ToolDef, 0, len(opts.Tools))
 	for _, t := range opts.Tools {
+		// Two tools under one name means one of them is unreachable, and which one depends on slice order.
+		// That is a wiring mistake worth reporting rather than a situation to silently pick a winner in.
+		if _, dup := tools[t.Def.Name]; dup {
+			return Result{}, opts.Messages, fmt.Errorf("duplicate tool name %q", t.Def.Name)
+		}
+
 		tools[t.Def.Name] = t
 		defs = append(defs, t.Def)
 	}
@@ -406,7 +578,7 @@ func Run(subject auth.Subject, c Completions, opts RunOptions) (Result, []Messag
 			call := call
 			notify(Progress{Phase: PhaseToolStarted, Turn: turn, ToolCall: &call})
 
-			result, media := executeToolCall(subject, tools, call, opts.FileUploader)
+			result, media := executeToolCall(subject, tools, call, opts.FileUploader, opts.OnBeforeToolCall)
 
 			notify(Progress{Phase: PhaseToolCompleted, Turn: turn, ToolCall: &call, ToolResult: &result})
 
@@ -442,7 +614,7 @@ func stripToolCalls(msg Message) Message {
 // returns the resulting [Media] block(s) to be attached to the user turn (never inside the tool_result). The
 // tool_result itself is then a short textual confirmation. The returned media slice is empty for regular
 // tools or when the file could not be provided/uploaded.
-func executeToolCall(subject auth.Subject, tools map[string]Tool, call ToolCall, uploader FileUploader) (ToolResult, []Content) {
+func executeToolCall(subject auth.Subject, tools map[string]Tool, call ToolCall, uploader FileUploader, before BeforeToolCallFunc) (ToolResult, []Content) {
 	tool, ok := tools[call.Name]
 	if !ok {
 		return ToolResult{
@@ -452,12 +624,25 @@ func executeToolCall(subject auth.Subject, tools map[string]Tool, call ToolCall,
 		}, nil
 	}
 
+	// Give the caller the chance to refuse this call - to ask the user first, or to block a mutating tool
+	// outright. A refusal is reported to the model like any other tool error, so it can explain itself or
+	// choose a different route instead of the whole turn collapsing.
+	if before != nil {
+		if err := before(subject, tool, call); err != nil {
+			return ToolResult{
+				ToolCallID: call.ID,
+				Content:    []Content{Text{Text: err.Error()}},
+				IsError:    true,
+			}, nil
+		}
+	}
+
 	// File-providing tool: inject text files inline or upload binary files and attach them as a Media block.
 	if tool.OpenFile != nil {
 		return executeOpenFileCall(subject, call, tool, uploader)
 	}
 
-	out, err := tool.Invoke(call.Arguments)
+	out, err := tool.Invoke(subject, call.Arguments)
 	if err != nil {
 		return ToolResult{
 			ToolCallID: call.ID,
@@ -488,7 +673,7 @@ func executeOpenFileCall(subject auth.Subject, call ToolCall, tool Tool, uploade
 		}, nil
 	}
 
-	opened, err := tool.OpenFile(call.Arguments)
+	opened, err := tool.OpenFile(subject, call.Arguments)
 	if err != nil {
 		return toolErr(err.Error())
 	}
@@ -658,9 +843,44 @@ func collectStructFields(t reflect.Type, properties map[string]any, required *[]
 
 		properties[name] = sub
 
-		if !omitempty && f.Type.Kind() != reflect.Pointer {
+		if isRequiredField(f, omitempty) {
 			*required = append(*required, name)
 		}
+	}
+}
+
+// isRequiredField decides whether a struct field is advertised as mandatory.
+//
+// A field is required unless it says otherwise. The three ways to say otherwise are, in order of precedence:
+//
+//   - `optional:"true"`, which states it outright. This is the one to reach for on a domain type that is
+//     exposed to the model directly: a filter type carries no omitempty and is not built from pointers, yet
+//     nearly every field on it is optional by nature.
+//   - a json `omitempty`, because a field that may be left out of the encoding may be left out of the call.
+//   - a pointer, because its whole point is the absence of a value.
+//
+// The default is deliberately "required" rather than "optional": stating what a tool must be given is the
+// part a model gets wrong, and an inverted default would silently weaken every existing tool at once.
+func isRequiredField(f reflect.StructField, omitempty bool) bool {
+	if isOptionalTag(f.Tag.Get("optional")) {
+		return false
+	}
+
+	if omitempty {
+		return false
+	}
+
+	return f.Type.Kind() != reflect.Pointer
+}
+
+// isOptionalTag reads the optional struct tag. Anything but an explicit truthy value keeps the field
+// required, so a typo cannot quietly turn a mandatory argument into an omittable one.
+func isOptionalTag(v string) bool {
+	switch strings.ToLower(strings.TrimSpace(v)) {
+	case "true", "yes", "1":
+		return true
+	default:
+		return false
 	}
 }
 
@@ -694,4 +914,167 @@ func fieldDescription(f reflect.StructField) string {
 		return d
 	}
 	return f.Tag.Get("description")
+}
+
+// DefaultSeqToolLimit caps how many elements a [NewSeqTool] returns when the model does not ask for a
+// specific limit.
+//
+// A listing use case happily yields every record it has. Handing all of them to a model is not merely
+// wasteful: a few thousand rows exhaust the context window, and the turn fails with an error that looks like
+// a provider problem rather than a missing limit. So listings are capped by default and say when they were.
+const DefaultSeqToolLimit = 200
+
+// MaxSeqToolLimit is the largest limit a model may request from a [NewSeqTool], regardless of what it asks
+// for. It exists so a model cannot talk itself past the safeguard above.
+const MaxSeqToolLimit = 1000
+
+// SeqToolResult is what a [NewSeqTool] returns to the model.
+type SeqToolResult[T any] struct {
+	// Items are the elements that were read, at most Limit many.
+	Items []T `json:"items" desc:"the entries that were read"`
+
+	// Count is len(Items), stated explicitly because models are unreliable at counting.
+	Count int `json:"count" desc:"number of entries in items"`
+
+	// Truncated reports that the underlying listing had more to offer and the result was cut short. When
+	// this is true, the model must not treat Items as the complete answer - it should narrow its filter
+	// instead.
+	Truncated bool `json:"truncated" desc:"true when there were more entries than the limit allowed; the list is then incomplete and the filter should be narrowed rather than the result treated as final"`
+
+	// Note explains a truncation in words, so the model reacts to it even if it ignores the boolean.
+	Note string `json:"note,omitempty" desc:"present only when truncated, explaining what to do about it"`
+}
+
+// seqLimitInput carries the limit the model may choose. It is decoded from the same argument object as the
+// caller's filter type, which keeps the advertised schema flat: the model sees the filter fields and the
+// limit side by side, exactly as it would expect from a listing.
+type seqLimitInput struct {
+	Limit int `json:"limit,omitempty" desc:"maximum number of entries to return; defaults to 200, at most 1000. Narrow the other filters instead of raising this."`
+}
+
+// NewSeqTool exposes a listing use case of the form func(auth.Subject, Filter) iter.Seq2[T, error] as a tool.
+//
+// This is the second shape nago use cases come in, and it needs more than a signature adapter: the result is
+// bounded (see [DefaultSeqToolLimit]) and the model is told when it was cut short, so it narrows its filter
+// rather than reasoning from a silently partial list.
+//
+//	tool := completion.NewSeqTool("list_employees",
+//		"Lists employee profiles with their teams, units and roles.",
+//		peopleUseCases.ListEmployees)
+//
+// The advertised input schema is the filter type plus a `limit` property.
+func NewSeqTool[In, T any](name, description string, uc func(auth.Subject, In) iter.Seq2[T, error]) Tool {
+	mustValidateTool(name, description)
+
+	var zeroOut SeqToolResult[T]
+
+	return Tool{
+		Def:       newSeqToolDef[In](name, description),
+		resultDoc: renderResultDoc(reflect.TypeOf(&zeroOut).Elem()),
+		Invoke: func(subject auth.Subject, args json.RawMessage) (json.RawMessage, error) {
+			filter, err := decodeToolArgs[In](name, args)
+			if err != nil {
+				return nil, err
+			}
+
+			bounds, err := decodeToolArgs[seqLimitInput](name, args)
+			if err != nil {
+				return nil, err
+			}
+
+			limit := bounds.Limit
+			if limit <= 0 {
+				limit = DefaultSeqToolLimit
+			}
+			if limit > MaxSeqToolLimit {
+				limit = MaxSeqToolLimit
+			}
+
+			res := SeqToolResult[T]{Items: make([]T, 0, min(limit, 64))}
+
+			for item, err := range uc(subject, filter) {
+				if err != nil {
+					return nil, err
+				}
+
+				// Stop at the limit and remember that there was more, so truncation is a fact rather than a
+				// guess: a listing of exactly limit elements is complete and must not be reported as cut short.
+				if len(res.Items) == limit {
+					res.Truncated = true
+					break
+				}
+
+				res.Items = append(res.Items, item)
+			}
+
+			res.Count = len(res.Items)
+
+			if res.Truncated {
+				res.Note = fmt.Sprintf("Only the first %d entries are shown; there are more. Narrow the filter instead of assuming this is the complete list.", limit)
+			}
+
+			raw, err := json.Marshal(res)
+			if err != nil {
+				return nil, fmt.Errorf("cannot encode result of tool %q: %w", name, err)
+			}
+
+			return raw, nil
+		},
+	}
+}
+
+// NewSliceTool exposes a listing use case of the form func(auth.Subject, Filter) ([]T, error) as a tool.
+//
+// It is [NewSeqTool] for the other shape a listing comes in, and it exists for the same reason: the result is
+// bounded (see [DefaultSeqToolLimit]) and the model is told when it was cut short. A use case that reads
+// everything into a slice is if anything more dangerous than an iterator, because the cost is already paid by
+// the time the tool sees it - the only thing left to protect is the model's context window.
+//
+//	tool := completion.NewSliceTool("list_employees",
+//		"Lists employee profiles with their teams, units and roles.",
+//		peopleUseCases.ListEmployees)
+//
+// The advertised input schema is the filter type plus a `limit` property.
+func NewSliceTool[In, T any](name, description string, uc func(auth.Subject, In) ([]T, error)) Tool {
+	return NewSeqTool(name, description, func(subject auth.Subject, in In) iter.Seq2[T, error] {
+		return func(yield func(T, error) bool) {
+			items, err := uc(subject, in)
+			if err != nil {
+				var zero T
+				yield(zero, err)
+				return
+			}
+
+			for _, item := range items {
+				if !yield(item, nil) {
+					return
+				}
+			}
+		}
+	})
+}
+
+// newSeqToolDef reflects the filter type and merges in the limit property.
+func newSeqToolDef[In any](name, description string) ToolDef {
+	var zeroIn In
+	schema := reflectSchema(reflect.TypeOf(&zeroIn).Elem())
+
+	props, ok := schema["properties"].(map[string]any)
+	if !ok {
+		// The filter is not an object (e.g. a bare string). Advertise the reflected schema unchanged rather
+		// than forcing a limit into something that cannot carry it.
+		return newToolDefFromSchema(name, description, schema)
+	}
+
+	limitSchema := reflectSchema(reflect.TypeOf(seqLimitInput{}))
+	if limitProps, ok := limitSchema["properties"].(map[string]any); ok {
+		for k, v := range limitProps {
+			// A filter that already defines "limit" wins; it presumably means something specific.
+			if _, taken := props[k]; !taken {
+				props[k] = v
+			}
+		}
+	}
+
+	return newToolDefFromSchema(name, description, schema)
 }

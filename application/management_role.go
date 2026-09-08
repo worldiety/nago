@@ -10,6 +10,7 @@ package application
 import (
 	"fmt"
 	"iter"
+	"strings"
 
 	"go.wdy.de/nago/application/migration"
 	"go.wdy.de/nago/application/permission"
@@ -109,4 +110,68 @@ func (c *Configurator) RoleManagement() (RoleManagement, error) {
 	}
 
 	return *c.roleManagement, nil
+}
+
+// DeclareSystemRole ensures that the given role exists, is marked as a system role and holds at least the
+// given permissions. It is the way a module ships the authorization its feature needs: instead of documenting
+// "grant these three permissions to somebody", the module declares one role and an operator only has to
+// assign it.
+//
+// The declaration is authoritative for what makes the role work - its existence, the System flag and the
+// listed permissions - and for nothing else:
+//
+//   - Name and description are written only when the role is created. Afterwards they belong to the operator,
+//     who may adapt the wording to their organisation without a restart undoing it.
+//   - Permissions granted in addition are kept, because the declaration states a minimum, not a set
+//     (see [role.UpsertPermissions]).
+//
+// When the role already exists and already holds the permissions, no write is performed at all, so this is
+// cheap enough to call unconditionally on every start.
+//
+// A system role is protected: it can neither be deleted nor have its permissions replaced through the admin
+// UI, since both would be undone here on the next start. Assigning members - the entire point of the role -
+// is unaffected.
+//
+// Call it after the permissions in question have been declared, which for package level [permission.Declare]
+// variables is always the case. It is idempotent, so calling it repeatedly is harmless.
+func (c *Configurator) DeclareSystemRole(r role.Role, permissions ...permission.ID) error {
+	if strings.TrimSpace(string(r.ID)) == "" {
+		return fmt.Errorf("a system role must have a stable id")
+	}
+
+	roles, err := c.RoleManagement()
+	if err != nil {
+		return fmt.Errorf("cannot get role management: %w", err)
+	}
+
+	sys := c.SysUser()
+
+	optExisting, err := roles.UseCases.FindByID(sys, r.ID)
+	if err != nil {
+		return fmt.Errorf("cannot look up system role %q: %w", r.ID, err)
+	}
+
+	if existing := optExisting.UnwrapOr(role.Role{}); optExisting.IsSome() {
+		// Keep whatever the operator made of the wording; only re-assert the flag, and only if it is missing.
+		if existing.IsSystem() {
+			r = existing
+		} else {
+			r = existing
+			r.System = true
+			if _, err := roles.UseCases.Upsert(sys, r); err != nil {
+				return fmt.Errorf("cannot mark role %q as a system role: %w", r.ID, err)
+			}
+		}
+	} else {
+		r.System = true
+		if _, err := roles.UseCases.Upsert(sys, r); err != nil {
+			return fmt.Errorf("cannot create system role %q: %w", r.ID, err)
+		}
+	}
+
+	if err := roles.UseCases.UpsertPermissions(sys, r.ID, permissions); err != nil {
+		return fmt.Errorf("cannot grant permissions to system role %q: %w", r.ID, err)
+	}
+
+	return nil
 }

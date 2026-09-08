@@ -45,6 +45,31 @@ import (
 	"go.wdy.de/nago/presentation/ui/alert"
 )
 
+// RootViewMeta is the descriptive metadata attached to a root view at registration time. See [Purpose].
+type RootViewMeta struct {
+	// Purpose describes, in one sentence and in the user's terms, what a person does on this screen. Empty
+	// when the registration did not state one.
+	Purpose string
+}
+
+// RootViewOption augments a root view registration with metadata. See [Purpose].
+type RootViewOption func(*RootViewMeta)
+
+// Purpose states, in one sentence, what a user does on this screen - "review and settle open invoices", not
+// "invoice list component".
+//
+// It is attached to the registration rather than to a menu entry because the registration is the only
+// declaration every root view has: not every screen appears in a menu, and menus are rearranged freely.
+//
+// Its first consumer is the AI assistant, which tells the model where the user currently stands (see
+// uicompletion.WindowContext). Applications that describe their screens here get that for free instead of
+// maintaining a second, hand-written map of routes that inevitably drifts from the real ones.
+func Purpose(text string) RootViewOption {
+	return func(m *RootViewMeta) {
+		m.Purpose = text
+	}
+}
+
 // RootView registers a factory to create a [core.View] within a [core.Scope].
 // For example, a web browser will create at least a single ViewRoot for each open tab.
 // Note, that leading or succeeding slashes in the factory ids are not allowed, otherwise you can
@@ -54,7 +79,9 @@ import (
 //
 // You cannot use path variables. Instead, use [core.Values] to transport a state from one ViewRoot
 // (or window) to another.
-func (c *Configurator) RootView(viewRootID core.NavigationPath, factory func(wnd core.Window) core.View) {
+//
+// Optional [RootViewOption]s describe the view; see [Purpose].
+func (c *Configurator) RootView(viewRootID core.NavigationPath, factory func(wnd core.Window) core.View, opts ...RootViewOption) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -68,10 +95,40 @@ func (c *Configurator) RootView(viewRootID core.NavigationPath, factory func(wnd
 	}
 
 	c.factories[id] = factory
+
+	if len(opts) > 0 {
+		var meta RootViewMeta
+		for _, opt := range opts {
+			opt(&meta)
+		}
+
+		if c.rootViewMeta == nil {
+			c.rootViewMeta = map[proto.RootViewID]RootViewMeta{}
+		}
+
+		c.rootViewMeta[id] = meta
+	}
 }
 
-func (c *Configurator) RootViewWithDecoration(viewRootID core.NavigationPath, factory func(wnd core.Window) core.View) {
-	c.RootView(viewRootID, c.DecorateRootView(factory))
+func (c *Configurator) RootViewWithDecoration(viewRootID core.NavigationPath, factory func(wnd core.Window) core.View, opts ...RootViewOption) {
+	c.RootView(viewRootID, c.DecorateRootView(factory), opts...)
+}
+
+// RootViewMetaOf returns the metadata registered for the given root view. The zero value is returned for a
+// view that was registered without any [RootViewOption], which is the normal case.
+func (c *Configurator) RootViewMetaOf(viewRootID core.NavigationPath) RootViewMeta {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	return c.rootViewMeta[proto.RootViewID(viewRootID)]
+}
+
+// RootViewMetas returns the metadata of all root views that were registered with one.
+func (c *Configurator) RootViewMetas() map[proto.RootViewID]RootViewMeta {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	return maps.Clone(c.rootViewMeta)
 }
 
 // RootViews returns the list of registered root views.
@@ -656,4 +713,22 @@ func (c *Configurator) newHandler() http.Handler {
 	}
 
 	return r
+}
+
+// CtxRootViewPurpose is the context value under which a lookup of registered [RootViewMeta] is published.
+//
+// It exists so that packages which must not import this one - the AI assistant UI, for instance - can still
+// ask what a route is for, using core.FromContext[RootViewPurposeLookup](wnd.Context(), CtxRootViewPurpose).
+const CtxRootViewPurpose = "nago.rootview.purpose"
+
+// RootViewPurposeLookup answers what the given route is for. The second result is false for routes that were
+// registered without a [Purpose], which is the normal case.
+type RootViewPurposeLookup func(path core.NavigationPath) (string, bool)
+
+// publishRootViewPurposes makes the registered purposes readable through the window context.
+func (c *Configurator) publishRootViewPurposes() {
+	c.AddContextValue(core.ContextValue(CtxRootViewPurpose, RootViewPurposeLookup(func(path core.NavigationPath) (string, bool) {
+		meta := c.RootViewMetaOf(path)
+		return meta.Purpose, meta.Purpose != ""
+	})))
 }

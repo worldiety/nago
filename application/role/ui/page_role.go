@@ -61,6 +61,7 @@ func PageRole(wnd core.Window, pages Pages, uc role.UseCases) core.View {
 
 	return ui.VStack(
 		ui.H1(uRole.Name),
+		systemRoleHint(wnd, uRole),
 		form.Card(
 			ui.TextField(rstring.LabelIdentifier.Get(wnd), string(uRole.ID)).
 				FullWidth().
@@ -74,6 +75,7 @@ func PageRole(wnd core.Window, pages Pages, uc role.UseCases) core.View {
 				InputValue(stateDesc),
 			picker.Picker[permission.Permission](rstring.LabelPermission.Get(wnd), slices.Collect(permission.All()), statePerms).
 				MultiSelect(true).
+				Disabled(uRole.IsSystem()).
 				FullWidth(),
 		).Gap(ui.L8),
 		ui.HLine(),
@@ -90,13 +92,17 @@ func PageRole(wnd core.Window, pages Pages, uc role.UseCases) core.View {
 					return
 				}
 
-				var pids []permission.ID
-				for _, perm := range statePerms.Get() {
-					pids = append(pids, perm.ID)
-				}
-				if err := uc.UpdatePermissions(wnd.Subject(), uRole.ID, pids); err != nil {
-					alert.ShowBannerError(wnd, err)
-					return
+				// A system role owns its permissions; only name and description are editable here, so the
+				// call is skipped rather than issued and refused.
+				if !uRole.IsSystem() {
+					var pids []permission.ID
+					for _, perm := range statePerms.Get() {
+						pids = append(pids, perm.ID)
+					}
+					if err := uc.UpdatePermissions(wnd.Subject(), uRole.ID, pids); err != nil {
+						alert.ShowBannerError(wnd, err)
+						return
+					}
 				}
 
 				wnd.Navigation().BackwardTo(pages.Roles, wnd.Values())
@@ -104,4 +110,14 @@ func PageRole(wnd core.Window, pages Pages, uc role.UseCases) core.View {
 		).FullWidth().Alignment(ui.Trailing).Gap(ui.L8),
 	).Alignment(ui.Leading).
 		Frame(ui.Frame{}.Larger())
+}
+
+// systemRoleHint explains why the permissions of this role cannot be edited. Without it the disabled picker
+// looks like a defect rather than a decision.
+func systemRoleHint(wnd core.Window, r role.Role) core.View {
+	if !r.IsSystem() {
+		return nil
+	}
+
+	return alert.Banner(role.StrLabelSystem.Get(wnd), StrSystemRoleHint.Get(wnd))
 }

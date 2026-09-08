@@ -23,6 +23,8 @@ import (
 var (
 	StrResName = i18n.MustString("nago.role.resources.name", i18n.Values{language.German: "Rollen", language.English: "Roles"})
 	StrResDesc = i18n.MustString("nago.role.resources.desc", i18n.Values{language.German: "Rollen und assoziierte Berechtigungen.", language.English: "Roles and associated permissions."})
+
+	StrLabelSystem = i18n.MustString("nago.role.label.system", i18n.Values{language.German: "Systemrolle", language.English: "System role"})
 )
 
 const Namespace rebac.Namespace = "nago.iam.role"
@@ -33,6 +35,21 @@ type Role struct {
 	ID          ID     `json:"id,omitempty" label:"nago.common.label.identifier"`
 	Name        string `json:"name,omitempty" label:"nago.common.label.name"`
 	Description string `json:"description,omitempty" label:"nago.common.label.description" lines:"3"`
+
+	// System marks a role that is owned and maintained by the application itself, declared through
+	// [Configurator.DeclareSystemRole]. Such a role exists so that an operator only has to assign it: its
+	// permission set is part of the feature it belongs to, not a configuration decision.
+	//
+	// It may therefore neither be deleted nor have its permissions replaced (see [Delete] and
+	// [UpdatePermissions]); assigning members is unaffected, since that is the entire point of the role.
+	// The flag itself is owned by the declaration and cannot be set or cleared through [Update].
+	System bool `json:"system,omitempty" label:"nago.role.label.system"`
+}
+
+// IsSystem reports whether this role is maintained by the application and thus protected against deletion and
+// permission edits.
+func (r Role) IsSystem() bool {
+	return r.System
 }
 
 func (r Role) String() string {
@@ -69,6 +86,14 @@ type ListPermissions func(subject permission.Auditable, id ID) iter.Seq2[permiss
 // UpdatePermissions replaces all permissions assigned to the given role.
 type UpdatePermissions func(subject permission.Auditable, id ID, permissions []permission.ID) error
 
+// UpsertPermissions ensures that at least the given permissions are assigned to the role. Permissions the
+// role already holds beyond the given ones are kept; nothing is ever revoked. When every given permission is
+// already granted, no write is performed at all, which makes it cheap to call on every application start.
+//
+// This is the use case behind [Configurator.DeclareSystemRole]: a module declares the permissions its feature
+// needs and stays indifferent to whatever else an operator has put into the role.
+type UpsertPermissions func(subject permission.Auditable, id ID, permissions []permission.ID) error
+
 type UseCases struct {
 	FindByID          FindByID
 	FindAll           FindAll
@@ -79,6 +104,7 @@ type UseCases struct {
 	FindMyRoles       FindMyRoles
 	ListPermissions   ListPermissions
 	UpdatePermissions UpdatePermissions
+	UpsertPermissions UpsertPermissions
 	Resources         rebac.Resources
 }
 
@@ -102,7 +128,8 @@ func NewUseCases(repo Repository, bus events.Bus, rdb *rebac.DB) UseCases {
 		Delete:            deleteFn,
 		FindMyRoles:       findMyRolesFn,
 		ListPermissions:   NewListPermissions(rdb),
-		UpdatePermissions: NewUpdatePermissions(rdb),
+		UpdatePermissions: NewUpdatePermissions(repo, rdb),
+		UpsertPermissions: NewUpsertPermissions(rdb),
 		Resources:         rebac.NewRepositoryResources(StrResName, StrResDesc, repo),
 	}
 }

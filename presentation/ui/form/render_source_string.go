@@ -28,18 +28,9 @@ func RenderSourceString(ctx FieldContext) core.View {
 		return nil
 	}
 
-	var values []Entity
-	for id, err := range source.FindAll(ctx.Subject()) {
-		if err != nil {
-			return alert.BannerError(err)
-		}
-
-		optE, err := source.FindByID(ctx.Subject(), id)
-		if err != nil {
-			return alert.BannerError(err)
-		}
-
-		values = append(values, optE.Unwrap())
+	values, err := collectSourceEntities(source, ctx.Subject())
+	if err != nil {
+		return alert.BannerError(err)
 	}
 
 	strState := core.DerivedState[[]Entity](ctx.State(), field.Name).Init(func() []Entity {

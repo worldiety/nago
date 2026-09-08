@@ -28,6 +28,21 @@ func NewUpdate(mutex *sync.Mutex, repo Repository, bus events.Bus) Update {
 			return std.NewLocalizedError("Ungültige EID", "Eine leere Gruppen EID ist nicht zulässig.")
 		}
 
+		// The System flag is owned by the declaring module (see [Configurator.DeclareSystemRole]), never by
+		// the caller of Update: otherwise the editing UI, which round-trips the whole aggregate, could turn a
+		// protected role into an ordinary one and delete it right afterwards. Name and description stay
+		// editable, so an operator may still clarify the wording for their organisation.
+		optExisting, err := repo.FindByID(role.ID)
+		if err != nil {
+			return err
+		}
+
+		if optExisting.IsSome() {
+			role.System = optExisting.Unwrap().System
+		} else {
+			role.System = false
+		}
+
 		if err := repo.Save(role); err != nil {
 			return err
 		}

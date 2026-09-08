@@ -65,6 +65,7 @@ type Configurator struct {
 	pwaIcon                    core.URI
 	dataDir                    string
 	factories                  map[proto.RootViewID]func(wnd core.Window) core.View
+	rootViewMeta               map[proto.RootViewID]RootViewMeta
 	onWindowCreatedObservers   []core.OnWindowCreatedObserver
 	destructors                []func()
 	app                        *core.Application // may be nil
@@ -149,6 +150,7 @@ func NewConfigurator() *Configurator {
 	cfg.hasSSL = cfg.determineSecureCookie()
 
 	cfg.AddContextValue(core.ContextValue("", cfg.eventBus))
+	cfg.publishRootViewPurposes()
 
 	return cfg
 }

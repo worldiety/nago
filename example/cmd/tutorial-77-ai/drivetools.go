@@ -50,9 +50,7 @@ func driveToolsChat(wnd core.Window, uc ai.UseCases, sessions session.UseCases, 
 		FileUpload:  true,
 		Agents: []uicompletion.Agent{{
 			SystemPrompt: "You are a helpful assistant with access to a file drive. Use list_drive_files to discover files and open_drive_file to read a specific file before answering. Answer based on the file content.",
-			Tools: func(subject auth.Subject) []completion.Tool {
-				return driveTools(subject, drives)
-			},
+			Tools:        driveTools(drives),
 		}},
 	})
 
@@ -66,9 +64,11 @@ func driveToolsChat(wnd core.Window, uc ai.UseCases, sessions session.UseCases, 
 		Padding(ui.Padding{}.All(ui.L16))
 }
 
-// driveTools builds the two drive-backed tools offered to the model. Both are bound to the current subject so
-// the drive's per-file permissions are enforced.
-func driveTools(subject auth.Subject, drives drive.UseCases) []completion.Tool {
+// driveTools builds the two drive-backed tools offered to the model.
+//
+// Both receive the acting subject per call rather than closing over it, so the drive's per-file permissions
+// are enforced for whoever is actually asking - and the tools can be built once and shared by every window.
+func driveTools(drives drive.UseCases) []completion.Tool {
 	type listIn struct{}
 	type driveFile struct {
 		FID  string `json:"fid"`
@@ -80,9 +80,9 @@ func driveTools(subject auth.Subject, drives drive.UseCases) []completion.Tool {
 		Files []driveFile `json:"files"`
 	}
 
-	list := completion.NewTool("list_drive_files",
+	list := completion.NewSubjectTool("list_drive_files",
 		"lists the files available in the drive with their id, name, mime type and size",
-		func(in listIn) (listOut, error) {
+		func(subject auth.Subject, in listIn) (listOut, error) {
 			var out listOut
 			for d, err := range drives.ReadDrives(subject, subject.ID()) {
 				if err != nil {
@@ -119,9 +119,9 @@ func driveTools(subject auth.Subject, drives drive.UseCases) []completion.Tool {
 		FID string `json:"fid" desc:"the id of the drive file to open, as returned by list_drive_files"`
 	}
 
-	open := completion.NewOpenFileTool("open_drive_file",
+	open := completion.NewSubjectOpenFileTool("open_drive_file",
 		"opens a drive file by its id and makes its content available to the conversation. Text files (e.g. .md, .txt, .csv, .json, source code) are injected inline as text; images and PDFs are attached as media.",
-		func(in openFileIn) (completion.OpenedFile, error) {
+		func(subject auth.Subject, in openFileIn) (completion.OpenedFile, error) {
 			optFile, err := drives.Get(subject, drive.FID(in.FID), "")
 			if err != nil {
 				return completion.OpenedFile{}, err

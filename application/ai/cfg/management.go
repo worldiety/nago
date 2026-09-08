@@ -8,6 +8,7 @@
 package cfgai
 
 import (
+	"fmt"
 	"log/slog"
 
 	"github.com/worldiety/i18n"
@@ -15,6 +16,7 @@ import (
 	"go.wdy.de/nago/application/admin"
 	"go.wdy.de/nago/application/ai"
 	"go.wdy.de/nago/application/ai/agent"
+	uicompletion "go.wdy.de/nago/application/ai/completion/ui"
 	"go.wdy.de/nago/application/ai/conversation"
 	"go.wdy.de/nago/application/ai/document"
 	"go.wdy.de/nago/application/ai/file"
@@ -30,10 +32,15 @@ import (
 	cfgdrive "go.wdy.de/nago/application/drive/cfg"
 	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/application/role"
+	"go.wdy.de/nago/application/secret"
+	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ui/form"
 	"go.wdy.de/nago/presentation/ui/layout"
 	"golang.org/x/text/language"
 )
@@ -43,13 +50,33 @@ var (
 
 	StrResSessions = i18n.MustString("nago.ai.session.resources.name", i18n.Values{language.English: "AI Sessions", language.German: "KI Sitzungen"})
 	StrResSessDesc = i18n.MustString("nago.ai.session.resources.desc", i18n.Values{language.English: "Persisted, provider-independent AI chat sessions with their full message history.", language.German: "Persistierte, providerunabhängige KI-Chat-Sitzungen mit vollständigem Nachrichtenverlauf."})
+
+	StrRoleAssistantUserName = i18n.MustString("nago.ai.role.assistant_user.name", i18n.Values{
+		language.English: "AI Assistant User",
+		language.German:  "KI-Assistent Nutzer",
+	})
+	StrRoleAssistantUserDesc = i18n.MustString("nago.ai.role.assistant_user.desc", i18n.Values{
+		language.English: "Allows using the AI assistant. It grants no access to any business data: the assistant always acts with the permissions of the user operating it.",
+		language.German:  "Erlaubt die Nutzung des KI-Assistenten. Sie gewährt keinerlei Zugriff auf Fachdaten: Der Assistent handelt immer mit den Berechtigungen des Nutzers, der ihn bedient.",
+	})
 )
+
+// RoleAssistantUser is the system role that makes the AI assistant available to a user. Assign it and the
+// chat button appears; the assistant can then use exactly those use cases the user could reach by hand.
+//
+// It is declared by [Enable] and protected against deletion and permission edits (see
+// [application.Configurator.DeclareSystemRole]).
+const RoleAssistantUser role.ID = "nago.ai.assistant.user"
 
 type Management struct {
 	UseCases        ai.UseCases
 	LibSyncUseCases libsync.UseCases
 	SessionUseCases session.UseCases
 	Pages           uiai.Pages
+
+	// Assistant is the ready-to-use chat assistant: provider lookup, model resolution, operator settings and
+	// the floating button. See [Assistant.Decorate].
+	Assistant *Assistant
 }
 
 func Enable(cfg *application.Configurator) (Management, error) {
@@ -231,10 +258,28 @@ func Enable(cfg *application.Configurator) (Management, error) {
 
 	ucSession := session.NewUseCases(repoSessions, rdb)
 
+	// Ship the authorization for the assistant as one assignable role instead of a list of permissions an
+	// operator has to reproduce by hand. Without this, the failure mode is silent: the chat button simply
+	// does not render for anybody, which is exactly what happened in production before this existed.
+	//
+	// The wording is resolved against the system user (English) because it is written once at creation and
+	// then belongs to the operator; see [application.Configurator.DeclareSystemRole].
+	sys := cfg.SysUser()
+	if err := cfg.DeclareSystemRole(role.Role{
+		ID:          RoleAssistantUser,
+		Name:        StrRoleAssistantUserName.Get(sys),
+		Description: StrRoleAssistantUserDesc.Get(sys),
+	}, uicompletion.RequiredPermissions()...); err != nil {
+		return Management{}, fmt.Errorf("cannot declare the assistant user role: %w", err)
+	}
+
+	assistant := &Assistant{useCases: ucAI, sessions: ucSession}
+
 	management = Management{
 		LibSyncUseCases: ucLibSync,
 		UseCases:        ucAI,
 		SessionUseCases: ucSession,
+		Assistant:       assistant,
 		Pages: uiai.Pages{
 			Maintenance:  "admin/ai/maintenance",
 			Provider:     "admin/ai/provider",
@@ -245,6 +290,44 @@ func Enable(cfg *application.Configurator) (Management, error) {
 			Agent:        "admin/ai/agent",
 		},
 	}
+
+	// Make the assistant's model picker resolvable and keep it fresh. Both events that can invalidate the
+	// cached list are subscribed to, because both are things an administrator does while wondering why the
+	// list is empty: fixing the token, and saving the settings.
+	if _, err := cfg.SettingsManagement(); err != nil {
+		return Management{}, fmt.Errorf("cannot enable settings management for the assistant: %w", err)
+	}
+
+	events.SubscribeFor(cfg.EventBus(), func(evt settings.GlobalSettingsUpdated) {
+		if _, ours := evt.Settings.(AssistantSettings); ours {
+			assistant.Forget()
+		}
+	})
+
+	events.SubscribeFor(cfg.EventBus(), func(secret.Updated) { assistant.Forget() })
+	events.SubscribeFor(cfg.EventBus(), func(secret.Created) { assistant.Forget() })
+
+	cfg.AddContextValue(core.ContextValue(SourceAssistantModels, form.NewQuerySource(
+		func(subject user.Subject) ([]model.Model, error) {
+			_, comps, err := assistant.Provider(subject)
+			if err != nil {
+				// An empty picker with a log line beats an error banner on the settings page: the operator is
+				// most likely on their way to configure the very provider that is missing.
+				assistant.complain("models", fmt.Sprintf("the assistant model picker stays empty: %v", err))
+				return nil, nil
+			}
+
+			models, err := assistant.Models(subject, comps)
+			if err != nil {
+				assistant.complain("models", fmt.Sprintf("the assistant model picker stays empty: %v", err))
+				return nil, nil
+			}
+
+			return models, nil
+		},
+		func(m model.Model) string { return string(m.ID) },
+		func(m model.Model) string { return m.Name },
+	)))
 
 	cfg.RootViewWithDecoration(management.Pages.Provider, func(wnd core.Window) core.View {
 		return layout.WithBackButton(wnd, uiai.PageProvider(wnd, management.UseCases))

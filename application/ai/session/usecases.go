@@ -183,6 +183,10 @@ type AppendOptions struct {
 	// MaxTurns bounds the agentic loop (see [completion.RunOptions.MaxTurns]). Ignored without tools.
 	// Optional.
 	MaxTurns int
+
+	// OnBeforeToolCall is forwarded to [completion.Run] and may refuse individual tool calls, e.g. to ask
+	// the user for confirmation before a mutating tool runs. Ignored without tools. Optional.
+	OnBeforeToolCall completion.BeforeToolCallFunc
 }
 
 // Create persists a new, optionally pre-seeded [Session].

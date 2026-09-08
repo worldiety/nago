@@ -64,11 +64,11 @@ func TestNewTool_Schema(t *testing.T) {
 }
 
 func TestNewTool_Invoke(t *testing.T) {
-	tool := NewTool("add", "", func(in addIn) (addOut, error) {
+	tool := NewTool("add", "adds two integers", func(in addIn) (addOut, error) {
 		return addOut{Sum: in.A + in.B}, nil
 	})
 
-	out, err := tool.Invoke(json.RawMessage(`{"a":2,"b":40}`))
+	out, err := tool.Invoke(nil, json.RawMessage(`{"a":2,"b":40}`))
 	if err != nil {
 		t.Fatalf("invoke failed: %v", err)
 	}
@@ -96,7 +96,7 @@ func (f *fakeCompletions) Complete(_ auth.Subject, _ Options) (Result, error) {
 func (f *fakeCompletions) Stream(auth.Subject, Options) iter.Seq2[Delta, error] { return nil }
 
 func TestRun_ExecutesToolLoop(t *testing.T) {
-	tool := NewTool("add", "", func(in addIn) (addOut, error) {
+	tool := NewTool("add", "adds two integers", func(in addIn) (addOut, error) {
 		return addOut{Sum: in.A + in.B}, nil
 	})
 
@@ -182,7 +182,7 @@ func hasDanglingToolUse(history []Message) bool {
 // TestRun_DropsTruncatedToolUse reproduces the 400 from the bug report: the model emitted tool_use blocks
 // but the turn was cut off (stop_reason == max_tokens). The loop must not persist a dangling tool_use.
 func TestRun_DropsTruncatedToolUse(t *testing.T) {
-	tool := NewTool("add", "", func(in addIn) (addOut, error) {
+	tool := NewTool("add", "adds two integers", func(in addIn) (addOut, error) {
 		return addOut{Sum: in.A + in.B}, nil
 	})
 
@@ -234,7 +234,7 @@ func TestRun_DropsTruncatedToolUse(t *testing.T) {
 // TestRun_TruncatedToolUseOnlyDropsMessage verifies that an aborted turn consisting solely of tool_use
 // blocks (no text/thinking) is dropped entirely rather than persisted as an empty assistant message.
 func TestRun_TruncatedToolUseOnlyDropsMessage(t *testing.T) {
-	tool := NewTool("add", "", func(in addIn) (addOut, error) {
+	tool := NewTool("add", "adds two integers", func(in addIn) (addOut, error) {
 		return addOut{Sum: in.A + in.B}, nil
 	})
 
@@ -389,7 +389,7 @@ func TestRun_OpenFileTool_AttachesMediaOnUserTurn(t *testing.T) {
 // an error tool_result and no media is attached.
 func TestRun_OpenFileTool_NoUploaderIsError(t *testing.T) {
 	opened := false
-	tool := NewOpenFileTool("open_drive_file", "", func(in openIn) (OpenedFile, error) {
+	tool := NewOpenFileTool("open_drive_file", "opens a drive file", func(in openIn) (OpenedFile, error) {
 		opened = true
 		return OpenedFile{Name: "x.pdf", MimeType: file.PDF, Open: func() (io.ReadCloser, error) {
 			return io.NopCloser(strings.NewReader("data")), nil
@@ -433,7 +433,7 @@ func TestRun_OpenFileTool_NoUploaderIsError(t *testing.T) {
 // TestRun_OpenFileTool_ToolErrorIsReported verifies that an error from the OpenFile function is reported as an
 // error tool_result and no upload happens.
 func TestRun_OpenFileTool_ToolErrorIsReported(t *testing.T) {
-	tool := NewOpenFileTool("open_drive_file", "", func(in openIn) (OpenedFile, error) {
+	tool := NewOpenFileTool("open_drive_file", "opens a drive file", func(in openIn) (OpenedFile, error) {
 		return OpenedFile{}, io.ErrUnexpectedEOF
 	})
 
@@ -552,7 +552,7 @@ func TestRun_OpenFileTool_TextInjectedInline(t *testing.T) {
 
 // TestRun_OpenFileTool_TextWithoutUploader verifies a text file is injected even when no FileUploader is set.
 func TestRun_OpenFileTool_TextWithoutUploader(t *testing.T) {
-	tool := NewOpenFileTool("open_drive_file", "", func(in openIn) (OpenedFile, error) {
+	tool := NewOpenFileTool("open_drive_file", "opens a drive file", func(in openIn) (OpenedFile, error) {
 		return OpenedFile{
 			Name:     "notes.txt",
 			MimeType: file.Text,
@@ -597,7 +597,7 @@ func TestRun_OpenFileTool_TextWithoutUploader(t *testing.T) {
 // carries a truncation note.
 func TestExecuteOpenFileCall_TextTruncated(t *testing.T) {
 	big := strings.Repeat("a", maxInlineTextBytes+1000)
-	tool := NewOpenFileTool("open_drive_file", "", func(in openIn) (OpenedFile, error) {
+	tool := NewOpenFileTool("open_drive_file", "opens a drive file", func(in openIn) (OpenedFile, error) {
 		return OpenedFile{
 			Name:     "big.txt",
 			MimeType: file.Text,
@@ -640,7 +640,7 @@ func TestExecuteOpenFileCall_TextTruncated(t *testing.T) {
 // TestExecuteOpenFileCall_ImageStillUploads is a regression guard: a binary (image) file must still go through
 // the uploader and produce a Media block.
 func TestExecuteOpenFileCall_ImageStillUploads(t *testing.T) {
-	tool := NewOpenFileTool("open_drive_file", "", func(in openIn) (OpenedFile, error) {
+	tool := NewOpenFileTool("open_drive_file", "opens a drive file", func(in openIn) (OpenedFile, error) {
 		return OpenedFile{
 			Name:     "pic.png",
 			MimeType: file.PNG,

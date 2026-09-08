@@ -16,7 +16,6 @@ import (
 	"go.wdy.de/nago/application/ai/model"
 	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/application/ai/session"
-	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/xsync"
 	"go.wdy.de/nago/presentation/core"
 	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
@@ -60,10 +59,14 @@ type Agent struct {
 	// used. Optional.
 	MaxTokens int
 
-	// Tools returns the executable tools offered to the model for this agent, resolved per turn against the
-	// acting subject. The built-in ask_user tool and the file-upload wiring are added automatically by
-	// [ChatOptions] flags and must not be returned here. Optional.
-	Tools func(subject auth.Subject) []completion.Tool
+	// Tools are the executable tools offered to the model for this agent. Because a [completion.Tool]
+	// receives the acting subject on every call (see [completion.NewSubjectTool]), the same tool values can
+	// be built once at start-up and shared by every window and every user - there is no need to rebuild them
+	// per turn to bind an actor.
+	//
+	// The built-in ask_user tool and the file-upload wiring are added automatically by [ChatOptions] flags
+	// and must not be listed here. Optional.
+	Tools []completion.Tool
 }
 
 // resolvePrompt returns the effective system prompt for this agent (SystemPromptFunc wins over SystemPrompt).
@@ -116,6 +119,21 @@ type ChatOptions struct {
 	// a question mid-run and block until answered (analogous to FileUpload).
 	AskUser bool
 
+	// ReadOnly removes every tool marked [completion.Tool.Mutating] before the turn starts, so the model is
+	// never even told they exist. Use it for an assistant that may look but not touch.
+	//
+	// This is a filter, not an instruction: a tool that is not advertised cannot be called, whatever the
+	// model decides to do.
+	ReadOnly bool
+
+	// ConfirmMutations asks the user to confirm every call of a tool marked [completion.Tool.Mutating]
+	// before it runs, showing the tool, its stated effect and the arguments the model chose. Declining is
+	// reported back to the model as a tool error, so it can offer an alternative instead of the turn failing.
+	//
+	// Prefer this over instructing the model in the system prompt to ask first. The prompt is a request the
+	// model may ignore; this is a gate it cannot pass.
+	ConfirmMutations bool
+
 	// Agents configures the selectable assistant personas. len==0 falls back to a single default agent (empty
 	// prompt, provider default model, no tools). A picker is shown only when len>1.
 	Agents []Agent
@@ -127,6 +145,31 @@ func (o ChatOptions) effectiveAgents() []Agent {
 		return []Agent{{}}
 	}
 	return o.Agents
+}
+
+// resolveTools returns the tools of the agent, with mutating ones removed when the chat is read-only.
+//
+// Filtering here rather than expecting the caller not to configure them means an application can offer one
+// tool set and let a setting decide whether it may write, without maintaining two lists that drift apart.
+func (o ChatOptions) resolveTools(agent Agent) []completion.Tool {
+	if !o.ReadOnly {
+		return slices.Clone(agent.Tools)
+	}
+
+	tools := make([]completion.Tool, 0, len(agent.Tools))
+	for _, t := range agent.Tools {
+		if t.Mutating {
+			continue
+		}
+		tools = append(tools, t)
+	}
+
+	return tools
+}
+
+// containsMutating reports whether any of the tools changes state.
+func containsMutating(tools []completion.Tool) bool {
+	return slices.ContainsFunc(tools, func(t completion.Tool) bool { return t.Mutating })
 }
 
 // Chat renders an embeddable, code-configured chat view on top of the stateless completion API and the
@@ -163,6 +206,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 	showHistory := core.AutoState[bool](wnd)
 	status := core.AutoState[string](wnd)
 	ask := core.AutoState[*pendingAsk](wnd)
+	confirm := core.AutoState[*pendingConfirm](wnd)
 	selectedAgent := core.AutoState[string](wnd).Init(func() string { return agentsList[0].ID })
 
 	// staged holds files the user picked but has not sent yet (only when FileUpload is enabled and the
@@ -297,31 +341,37 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 				inputContent = append(inputContent, completion.Text{Text: question})
 			}
 
-			var tools []completion.Tool
-			if agent.Tools != nil {
-				tools = agent.Tools(subject)
-			}
+			tools := opts.resolveTools(agent)
 			if opts.AskUser {
 				tools = append(tools, askUserTool(wnd, ask))
 			}
 
+			// The confirmation gate is wired only when there is something to gate, so a purely reading
+			// assistant never pays for it.
+			var beforeToolCall completion.BeforeToolCallFunc
+			if opts.ConfirmMutations && containsMutating(tools) {
+				beforeToolCall = confirmMutationGate(wnd, confirm)
+			}
+
 			if opts.History {
 				updated, err := opts.Sessions.Append(subject, sid, session.AppendOptions{
-					Completions:  comps,
-					Input:        inputContent,
-					Model:        modelID,
-					System:       system,
-					Tools:        tools,
-					MaxTokens:    maxTokens,
-					MaxTurns:     opts.MaxTurns,
-					OnProgress:   onProgress,
-					FileUploader: fileUploader,
+					Completions:      comps,
+					Input:            inputContent,
+					Model:            modelID,
+					System:           system,
+					Tools:            tools,
+					MaxTokens:        maxTokens,
+					MaxTurns:         opts.MaxTurns,
+					OnProgress:       onProgress,
+					FileUploader:     fileUploader,
+					OnBeforeToolCall: beforeToolCall,
 				})
 
 				wnd.Post(func() {
 					busy.Set(false)
 					status.Set("")
 					ask.Set(nil)
+					confirm.Set(nil)
 					if err != nil {
 						history.Set(prevHistory)
 						if prompt.Get() == "" {
@@ -358,16 +408,18 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 					MaxTokens: maxTokens,
 					Messages:  runMessages,
 				},
-				Tools:        tools,
-				MaxTurns:     opts.MaxTurns,
-				OnProgress:   onProgress,
-				FileUploader: fileUploader,
+				Tools:            tools,
+				MaxTurns:         opts.MaxTurns,
+				OnProgress:       onProgress,
+				FileUploader:     fileUploader,
+				OnBeforeToolCall: beforeToolCall,
 			})
 
 			wnd.Post(func() {
 				busy.Set(false)
 				status.Set("")
 				ask.Set(nil)
+				confirm.Set(nil)
 				if err != nil {
 					history.Set(prevHistory)
 					if prompt.Get() == "" {
@@ -400,7 +452,11 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		"Stell mir eine Frage, um die Unterhaltung zu beginnen.", height)
 
 	var footer core.View
-	if pa := ask.Get(); pa != nil {
+	// A pending confirmation takes precedence over everything else: the run is blocked on it, so offering the
+	// input field instead would look like the assistant had simply stopped responding.
+	if pc := confirm.Get(); pc != nil {
+		footer = renderConfirm(wnd, confirm, pc)
+	} else if pa := ask.Get(); pa != nil {
 		footer = renderAsk(wnd, ask, pa)
 	} else {
 		busyLabel := status.Get()
@@ -470,6 +526,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 				history.Set(nil)
 				status.Set("")
 				ask.Set(nil)
+				confirm.Set(nil)
 			}).PreIcon(icons.Edit).Title("Neuer Chat").Enabled(!busy.Get() && (sessionID.Get() != "" || len(history.Get()) > 0)),
 			ui.Spacer(),
 		).Gap(ui.L4).FullWidth().Alignment(ui.Center)
