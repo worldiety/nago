@@ -20,8 +20,10 @@ app/library/                  der Bounded Context — was das System tut
   uc_find_all_books.go        ein Use Case je Datei, Typ und Konstruktor zusammen
   uc_lend_book.go
   uc_return_book.go
+  knowledge.go                die Begründungen: warum die Bibliothek so funktioniert
   ui/page_books.go            package uilibrary — die Ansicht für Menschen
   ai/tools.go                 package ailibrary — die Ansicht für ein Modell
+  ai/knowledge.go             die Werkzeuge für „warum ist das so?"
   cfg/cfg.go                  package cfglibrary — die einzige Stelle, an der sich beides trifft
 ```
 
@@ -213,6 +215,129 @@ SystemPromptFunc: func() string {
 }
 ```
 
+## Anforderungen als Werkzeug: „warum ist das so?"
+
+Jedes Fachwerkzeug beantwortet eine Frage über **Daten**. Keines beantwortet die Frage, die jemand tatsächlich hat, wenn das System etwas ablehnt, das er für zulässig hielt:
+
+> „Von *Der Prozess* ist derzeit kein Exemplar frei."
+> — *Warum kann ich mich dann nicht vormerken lassen?*
+
+Das ist keine Datenfrage. Ohne ein Werkzeug dafür verweigert das Modell nicht etwa die Antwort — es **erfindet eine Begründung**, flüssig und plausibel, weil es genau dafür gebaut ist. Eine erfundene Regel ist schlimmer als Schweigen: Sie klingt wie das System, das über sich selbst spricht.
+
+### Der Schnitt: Index in den Prompt, Volltext hinter das Werkzeug
+
+```go
+func SystemPrompt() string {
+    return domainPrompt + "\n\n--- Aufgezeichnete Entscheidungen ---\n" +
+        library.DecisionIndex()
+}
+```
+
+Der Prompt trägt nur je eine Zeile pro Entscheidung — genug, damit das Modell *weiß, was es nachschlagen kann*. Begründung und Preis holt es bei Bedarf über `read_decision`. Andernfalls wächst der Prompt mit jeder Entscheidung, die das Projekt ansammelt, bis er das Gespräch verdrängt.
+
+Und der Index wird **abgeleitet**, nicht abgeschrieben. Eine handkopierte Liste im Prompttext wäre exakt die zweite Liste, die abdriftet.
+
+### Entscheidungen tragen drei Felder, nicht zwei
+
+```go
+type Decision struct {
+    ID           string
+    Title        string
+    Text         string
+    Rationale    string  // warum so entschieden
+    Consequences string  // was es kostet
+}
+```
+
+`Consequences` ist der Teil, den niemand ungefragt aufschreibt. Eine Begründung schreibt sich angenehm und ausführlich; zuzugeben, was die Entscheidung *verschlechtert*, nicht. Fehlt das Feld, verteidigt der Assistent das System, statt es zu erklären — und in drei Jahren beginnt jemand eine Verbesserung, die längst erwogen und bezahlt wurde.
+
+speclink erzwingt beides: eine `Kind: Decision` ohne `Rationale` **und** `Consequences` bricht den Build.
+
+### Auch die Use Cases gehören hinterlegt
+
+`read_capabilities` beantwortet „was kann das hier eigentlich" — und verbindet es mit dem Warum:
+
+```go
+{
+    UseCase:   "LendBook",
+    Tool:      "lend_book",
+    Help:      "Gibt ein Exemplar an eine Person heraus. Ist keines frei, wird die Ausleihe abgelehnt …",
+    Decisions: []string{"DEC-AVAILABILITY-DERIVED", "DEC-BORROWER-IS-A-NAME"},
+}
+```
+
+Von dort geht das Modell auf `read_decision` weiter. Orientierung und Begründung sind zwei Hälften einer Antwort; getrennt nützt keine von beiden.
+
+### Diese Werkzeuge bekommen kein Subject
+
+```go
+completion.NewTool("read_decision", "…", func(i in) (library.Decision, error) { … })
+```
+
+Eine Entscheidung sind nicht die Daten von jemandem, also wäre ein durchgereichtes Subject eine Prüfung, die gar nicht stattfindet. Regel 1 gilt unverändert für alles, was Datensätze berührt.
+
+Ob die Begründungen selbst geschützt gehören, ist eine **echte Frage mit einer Entscheidung als Antwort**, kein Versehen. Hier sind sie öffentlich: Die Regeln einer Bibliothek sind nicht vertraulich. Nennt die Begründung dagegen Kunden, Verträge oder Schwellenwerte, die jemand ausnutzen könnte, gehört sie hinter einen Use Case wie alles andere.
+
+### Die Schwäche dieses Beispiels — und wie ein echtes Projekt sie vermeidet
+
+Die Entscheidungen in `app/library/knowledge.go` sind **von Hand gepflegt**, und genau das verrottet. Nichts bricht, wenn jemand `Available()` ändert und `DEC-AVAILABILITY-DERIVED` das alte Verhalten weiterbeschreibt. Der Assistent erklärt dann eine Regel, die es nicht mehr gibt — mit der vollen Autorität dessen, der nachgeschlagen hat.
+
+Zwei Tests im Beispiel fangen wenigstens die groben Fälle ab (`TestCapabilitiesReferenceRealDecisions`, `TestCapabilitiesMatchTheOfferedTools`). Ein Projekt mit [speclink](https://github.com/worldiety/speclink) braucht sie nicht, weil die Begründung dort **keine Kopie** ist:
+
+```go
+// requirements/dec/R-DEC-AVAILABILITY.spec.go
+var RDecAvailability = spec.Requirement{
+    ID:           "R-DEC-AVAILABILITY",
+    Kind:         spec.Decision,
+    Status:       spec.Normative,
+    Title:        "Verfügbarkeit wird berechnet, nicht gespeichert",
+    Text:         "Die Zahl der freien Exemplare ergibt sich aus Copies minus LentTo.",
+    Rationale:    "Ein abgeleiteter Wert, der zusätzlich gespeichert wird, kann sich mit sich selbst widersprechen.",
+    Consequences: "Jede Anzeige rechnet neu; eine Auswertung über zehntausend Titel geht nicht über einen Index.",
+    Sources:      []spec.Source{{Doc: "requirements/_sources/library.md", Anchor: "3-ausleihe"}},
+}
+
+// app/library/uc_lend_book.annotation.go
+var _ = spec.For[LendBook](
+    spec.Satisfies(dec.RDecAvailability),
+    spec.Help("Gibt ein Exemplar an eine Person heraus. Ist keines frei, wird die Ausleihe abgelehnt."),
+)
+```
+
+Beides steht im **normalen Build**. Verschwindet `LendBook`, kompiliert die Annotationsdatei nicht mehr. `spec.Satisfies` referenziert die Anforderung über ihren Go-Bezeichner, eine gelöschte Anforderung ist also ein Compilerfehler statt eines toten Strings.
+
+Zur Laufzeit liest man beides zurück und die Werkzeuge sehen genauso aus wie hier — nur die Quelle ändert sich:
+
+```go
+// Anforderungsbaum einbetten und parsen; all: holt auch _sources,
+// weil das Go-Tool Verzeichnisse mit Unterstrich sonst überspringt.
+//go:embed all:_sources dec fun nfr cst
+var tree embed.FS
+
+// Annotationen zur Laufzeit: Help und Satisfies an den Konstrukten selbst.
+for _, e := range spec.Entries() {
+    for _, a := range e.Assertions {
+        switch a.Kind {
+        case "satisfies": // a.Requirements
+        case "help":      // a.Text
+        case "rationale": // a.Text
+        }
+    }
+}
+```
+
+Drei Werkzeuge lohnen sich dann:
+
+| Werkzeug | Quelle | Beantwortet |
+|---|---|---|
+| `read_requirement` | eingebetteter `.spec.go`-Baum | „Was genau ist gefordert und warum?" |
+| `read_brief` | `requirements/_sources/*.md` | „Was hat der Besteller wörtlich gesagt?" |
+| `read_feature_help` | `spec.Entries()` | „Was kann das System und worauf beruht es?" |
+
+`read_brief` ist dabei oft die bessere Antwort auf „warum": Es sind die Worte dessen, der die Anwendung bestellt hat, nicht die daraus destillierte Regel.
+
+**Der Index gehört auch hier in den Prompt** — `requirements.Index()` rendert je eine Zeile mit Kennung, Art, Status und normativem Satz. Alles Weitere holt das Modell selbst.
+
 ## Der Knopf
 
 Provider-Auflösung, Modellwahl, Einstellungen, Cache und Diagnose liefert `cfgai` mit:
@@ -234,6 +359,8 @@ Fragen zum Testen:
 - „Was ist von Kafka da?" — eine Leseabfrage
 - „Leih Die Verwandlung an Bernd aus." — der Bestätigungsdialog erscheint; einmal ablehnen und beobachten, dass das Modell die Absage aufgreift statt abzustürzen
 - In den Einstellungen *Nur lesender Zugriff* setzen und erneut ausleihen lassen — das Modell kennt das Werkzeug dann nicht mehr
+- „Warum steht bei den Ausleihern nur ein Name und kein Benutzerkonto?" — das Modell schlägt die Entscheidung nach und nennt auch, was sie kostet, statt sich etwas auszudenken
+- „Was kann ich hier eigentlich machen?" — Orientierung über `read_capabilities`
 
 ## Example
 
@@ -244,9 +371,11 @@ Die Domäne — Aggregat, Berechtigungen, ein Use Case und das Bündel:
 {{< include-code "app/library/uc_lend_book.go" >}}
 {{< include-code "app/library/usecases.go" >}}
 
-Die Ansicht für ein Modell:
+Die Ansicht für ein Modell — die Fachwerkzeuge und die Begründungen:
 
 {{< include-code "app/library/ai/tools.go" >}}
+{{< include-code "app/library/knowledge.go" >}}
+{{< include-code "app/library/ai/knowledge.go" >}}
 
 Die Verdrahtung und der Einstiegspunkt:
 

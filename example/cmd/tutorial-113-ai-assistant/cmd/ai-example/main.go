@@ -68,9 +68,10 @@ func main() {
 					ID:    "librarian",
 					Name:  "Bibliotheks-Assistent",
 					Tools: tools,
-					// Rebuilt on every question, because the situational half changes with every navigation.
+					// Rebuilt on every question, because both halves move: the decision index grows with the
+					// project, and the situational half changes with every navigation.
 					SystemPromptFunc: func() string {
-						return ailibrary.SystemPrompt + "\n\n" + uicompletion.WindowContext(wnd)
+						return ailibrary.SystemPrompt() + "\n\n" + uicompletion.WindowContext(wnd)
 					},
 				}},
 			})

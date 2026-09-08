@@ -63,7 +63,10 @@ func Tools(uc library.UseCases) []completion.Tool {
 		uc.ReturnBook).
 		AsMutating("nimmt ein Exemplar zurück und entfernt die Person aus der Ausleihliste")
 
-	return []completion.Tool{list, lend, ret}
+	// The knowledge tools are appended rather than listed above because they are a different kind of thing:
+	// the three above read and change records, these two explain why the records behave as they do. See
+	// knowledge.go.
+	return append([]completion.Tool{list, lend, ret}, knowledgeTools()...)
 }
 
 // SystemPrompt is the domain half of what the model is told.
@@ -73,12 +76,32 @@ func Tools(uc library.UseCases) []completion.Tool {
 // this text is about the library and changes when the library changes, while the situational half is derived
 // from the framework and never goes stale.
 //
-// What is deliberately absent here is any instruction about asking before writing. That is enforced
-// structurally by ConfirmMutations, and repeating it in the prompt would suggest it were the prompt's job.
-const SystemPrompt = `Du hilfst beim Betrieb einer kleinen Bibliothek.
+// It is a function rather than a constant because it carries the index of the recorded decisions, and that
+// index is derived rather than written here. Copying the titles into the text would create the second list
+// that drifts - the one thing this whole arrangement exists to avoid.
+//
+// Only the index goes in. The full text of a decision stays behind read_decision, so the prompt does not grow
+// with the number of decisions the project accumulates.
+//
+// What is deliberately absent is any instruction about asking before writing. That is enforced structurally
+// by ConfirmMutations, and repeating it here would suggest it were the prompt's job.
+func SystemPrompt() string {
+	return domainPrompt + "\n\n--- Aufgezeichnete Entscheidungen ---\n" +
+		"Kennung — Titel: was entschieden wurde. Begründung und Preis über read_decision.\n\n" +
+		library.DecisionIndex()
+}
+
+const domainPrompt = `Du hilfst beim Betrieb einer kleinen Bibliothek.
 
 Arbeitsweise:
 - Rate nicht. Alles Fachliche steht hinter Werkzeugen; wenn du etwas nicht weißt, hole es dir.
 - Antworte knapp und in ganzen Sätzen. Nenne Bücher mit Titel und Autor, nicht mit ihrer Kennung.
 - Wenn ein Werkzeug meldet, dass die Liste gekürzt wurde, sage das dazu und grenze die Suche ein, statt so zu tun, als wäre sie vollständig.
-- Ein Berechtigungsfehler ist ein erwartetes Ergebnis, keine Störung. Sage dann, dass dem Nutzer die Berechtigung fehlt.`
+- Ein Berechtigungsfehler ist ein erwartetes Ergebnis, keine Störung. Sage dann, dass dem Nutzer die Berechtigung fehlt.
+
+Fragt jemand, WARUM sich das System so verhält oder warum es etwas ablehnt, lies die zugehörige
+Entscheidung mit read_decision und antworte daraus. Erfinde keine Begründung — eine erfundene Regel klingt
+wie das System, das über sich selbst spricht, und ist schlimmer als keine Antwort. Nenne dabei auch, was die
+Entscheidung kostet, wenn jemand sie in Frage stellt.
+
+Für Orientierungsfragen („was kann das hier eigentlich") nimm read_capabilities.`

@@ -74,7 +74,7 @@ func TestMutatingToolsAreMarked(t *testing.T) {
 		t.Errorf("mutating tools are %v, want %v", mutating, want)
 	}
 
-	if want := []string{"list_books"}; !slices.Equal(reading, want) {
+	if want := []string{"list_books", "read_capabilities", "read_decision"}; !slices.Equal(reading, want) {
 		t.Errorf("read-only tools are %v, want %v", reading, want)
 	}
 }
