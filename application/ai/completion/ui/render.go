@@ -57,6 +57,7 @@ func conversationView(history []completion.Message, emptyHint string, height ui.
 		).FullWidth().Alignment(ui.Leading),
 	).Axis(ui.ScrollViewAxisVertical).
 		ScrollToView(scrollAnchorID, ui.ScrollAnimationSmooth).
+		ScrollBehavior(ui.ScrollBehaviorAuto).
 		Frame(ui.Frame{Height: height, Width: ui.Full})
 }
 

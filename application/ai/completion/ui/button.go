@@ -104,7 +104,7 @@ func (b TChatButton) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	return ui.VStack(
-		ui.If(panel != nil, panel),
+		panel,
 		btn,
 	).Gap(ui.L8).
 		Alignment(alignment).

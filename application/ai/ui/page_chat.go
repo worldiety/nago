@@ -113,7 +113,7 @@ func PageChat(wnd core.Window, uc ai.UseCases) core.View {
 			large,
 			ui.ScrollView(
 				Chats(prov, conv).Frame(ui.Frame{Width: ui.Full, MinHeight: innerFullHeight}),
-			).Axis(ui.ScrollViewAxisVertical).Frame(ui.Frame{Height: ui.Full, Width: ui.L320}),
+			).ScrollBehavior(ui.ScrollBehaviorAuto).Axis(ui.ScrollViewAxisVertical).Frame(ui.Frame{Height: ui.Full, Width: ui.L320}),
 		),
 
 		ui.ScrollView(
@@ -132,8 +132,8 @@ func PageChat(wnd core.Window, uc ai.UseCases) core.View {
 				).
 				Padding(ui.Padding{}.All(ui.L16)).
 				Frame(ui.Frame{Width: ui.Full, Height: ui.Full, MinHeight: innerFullHeight}),
-		).ScrollToView("end-of-chat", ui.ScrollAnimationSmooth).
-			Axis(ui.ScrollViewAxisVertical).Frame(ui.Frame{Height: ui.Full, Width: ui.Full}),
+		).ScrollBehavior(ui.ScrollBehaviorAuto). //ScrollToView("end-of-chat", ui.ScrollAnimationSmooth).
+								Axis(ui.ScrollViewAxisVertical).Frame(ui.Frame{Height: ui.Full, Width: ui.Full}),
 	).Alignment(ui.Top).Frame(ui.Frame{Width: ui.Full, Height: innerFullHeight})
 }
 
