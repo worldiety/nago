@@ -67,6 +67,8 @@ github.com/worldiety/material-color-utilities v0.0.0-20250324124753-a84b74640c16
 github.com/worldiety/material-color-utilities v0.0.0-20250324124753-a84b74640c16/go.mod h1:UX8Sb7OvGA+gh+NSJKqUsslZ7Ao7ftYVzutt70hcL9g=
 github.com/worldiety/option v0.0.0-20251007074526-863facc0bc83 h1:rJCMfQMxHh0R68EfoRG2SXyBXEKkDLRpnvGdwstsStA=
 github.com/worldiety/option v0.0.0-20251007074526-863facc0bc83/go.mod h1:teHsHBcwKGhykKggie4/SdJ+jLM6WlVt37dSP0lT7bU=
+github.com/worldiety/speclink/spec v0.0.0-20260909124605-a91968ddccb4 h1:/aOiJp5Wuw2D14t4/QS4XR1b+lrxQ7OiuXliFe1Jcwo=
+github.com/worldiety/speclink/spec v0.0.0-20260909124605-a91968ddccb4/go.mod h1:h9mLi9nTLpapd/oBvr9KFWcSgIcGyuglOcPWClSKKl4=
 github.com/worldiety/xtractdoc v0.0.0-20250708133307-e081ccca7cf6 h1:UFgcobtfAJZdDmg+PHdI7WWOltrlh9RNB7hQkwBld3Q=
 github.com/worldiety/xtractdoc v0.0.0-20250708133307-e081ccca7cf6/go.mod h1:pprkXrL/8PKcyFLAI/P9ogK5T6rM8gtjxUnBDCQjnXQ=
 github.com/yuin/goldmark v1.7.13 h1:GPddIs617DnBLFFVJFgpo1aBfe/4xcvMc3SB5t/D0pA=

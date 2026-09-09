@@ -21,6 +21,8 @@ import (
 	_ "go.wdy.de/nago/application/ai/provider/anthropic"
 	_ "go.wdy.de/nago/application/ai/provider/mistralai"
 	_ "go.wdy.de/nago/application/ai/provider/openai"
+	aispeclink "go.wdy.de/nago/application/speclink/ai"
+	cfgspeclink "go.wdy.de/nago/application/speclink/cfg"
 	ailibrary "go.wdy.de/nago/example/cmd/tutorial-113-ai-assistant/app/library/ai"
 	cfglibrary "go.wdy.de/nago/example/cmd/tutorial-113-ai-assistant/app/library/cfg"
 	"go.wdy.de/nago/presentation/core"
@@ -41,9 +43,14 @@ func main() {
 
 		modAI := option.Must(cfgai.Enable(cfg))
 
+		// The requirement catalogue of this binary, with ready-made tools on top. Nothing about the library
+		// is repeated here: spec.Declare filled the catalogue during package initialisation, and the tools
+		// read it through use cases that audit the acting subject like every other one.
+		specMod := option.Must(cfgspeclink.Enable(cfg))
+
 		// Build the tools once. They receive the acting subject per call, so there is nothing per-user about
 		// them and nothing to rebuild per turn.
-		tools := ailibrary.Tools(lib.UseCases)
+		tools := append(ailibrary.Tools(lib.UseCases), aispeclink.Tools(specMod.UseCases)...)
 
 		scaffold := cfg.NewScaffold().
 			Login(true).
@@ -68,10 +75,13 @@ func main() {
 					ID:    "librarian",
 					Name:  "Bibliotheks-Assistent",
 					Tools: tools,
-					// Rebuilt on every question, because both halves move: the decision index grows with the
-					// project, and the situational half changes with every navigation.
+					// Rebuilt on every question, because both derived halves move: the requirement index grows
+					// with the project, and the situational half changes with every navigation. Only the
+					// domain half is a constant, and it is the only one written by hand.
 					SystemPromptFunc: func() string {
-						return ailibrary.SystemPrompt() + "\n\n" + uicompletion.WindowContext(wnd)
+						return ailibrary.SystemPrompt + "\n\n" +
+							aispeclink.Index(wnd.Subject(), specMod.UseCases) + "\n" +
+							uicompletion.WindowContext(wnd)
 					},
 				}},
 			})

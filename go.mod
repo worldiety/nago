@@ -1,6 +1,6 @@
 module go.wdy.de/nago
 
-go 1.26.0
+go 1.27.0
 
 require (
 	github.com/dave/jennifer v1.7.1
@@ -41,6 +41,7 @@ require (
 	github.com/gosimple/slug v1.15.0 // indirect
 	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/jupiterrider/ffi v0.5.1 // indirect
+	github.com/worldiety/speclink/spec v0.0.0-20260909124605-a91968ddccb4 // indirect
 	golang.org/x/exp v0.0.0-20251113190631-e25ba8c21ef6 // indirect
 	golang.org/x/mod v0.30.0 // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.77 // indirect

@@ -63,35 +63,18 @@ func Tools(uc library.UseCases) []completion.Tool {
 		uc.ReturnBook).
 		AsMutating("nimmt ein Exemplar zurück und entfernt die Person aus der Ausleihliste")
 
-	// The knowledge tools are appended rather than listed above because they are a different kind of thing:
-	// the three above read and change records, these two explain why the records behave as they do. See
-	// knowledge.go.
-	return append([]completion.Tool{list, lend, ret}, knowledgeTools()...)
+	return []completion.Tool{list, lend, ret}
 }
 
 // SystemPrompt is the domain half of what the model is told.
 //
-// The other half - where the user stands, who they are and what they may do - comes from
-// uicompletion.WindowContext and is assembled where the assistant is built. Keeping the two apart matters:
-// this text is about the library and changes when the library changes, while the situational half is derived
-// from the framework and never goes stale.
-//
-// It is a function rather than a constant because it carries the index of the recorded decisions, and that
-// index is derived rather than written here. Copying the titles into the text would create the second list
-// that drifts - the one thing this whole arrangement exists to avoid.
-//
-// Only the index goes in. The full text of a decision stays behind read_decision, so the prompt does not grow
-// with the number of decisions the project accumulates.
+// It carries no requirement index and no list of decisions. Both come from the framework: aispeclink.Index
+// renders the catalogue, and uicompletion.WindowContext renders where the user stands. Writing either of
+// them here would be a copy of something already recorded, and the copy is the one that rots.
 //
 // What is deliberately absent is any instruction about asking before writing. That is enforced structurally
 // by ConfirmMutations, and repeating it here would suggest it were the prompt's job.
-func SystemPrompt() string {
-	return domainPrompt + "\n\n--- Aufgezeichnete Entscheidungen ---\n" +
-		"Kennung — Titel: was entschieden wurde. Begründung und Preis über read_decision.\n\n" +
-		library.DecisionIndex()
-}
-
-const domainPrompt = `Du hilfst beim Betrieb einer kleinen Bibliothek.
+const SystemPrompt = `Du hilfst beim Betrieb einer kleinen Bibliothek.
 
 Arbeitsweise:
 - Rate nicht. Alles Fachliche steht hinter Werkzeugen; wenn du etwas nicht weißt, hole es dir.
@@ -99,9 +82,12 @@ Arbeitsweise:
 - Wenn ein Werkzeug meldet, dass die Liste gekürzt wurde, sage das dazu und grenze die Suche ein, statt so zu tun, als wäre sie vollständig.
 - Ein Berechtigungsfehler ist ein erwartetes Ergebnis, keine Störung. Sage dann, dass dem Nutzer die Berechtigung fehlt.
 
-Fragt jemand, WARUM sich das System so verhält oder warum es etwas ablehnt, lies die zugehörige
-Entscheidung mit read_decision und antworte daraus. Erfinde keine Begründung — eine erfundene Regel klingt
-wie das System, das über sich selbst spricht, und ist schlimmer als keine Antwort. Nenne dabei auch, was die
-Entscheidung kostet, wenn jemand sie in Frage stellt.
+Fragt jemand, WARUM sich das System so verhält oder warum es etwas ablehnt, lies die zugehörige Anforderung
+mit read_requirement und antworte daraus. Erfinde keine Begründung — eine erfundene Regel klingt wie das
+System, das über sich selbst spricht, und ist schlimmer als keine Antwort. Bei Entscheidungen nenne auch,
+was sie kostet, wenn jemand sie in Frage stellt.
+
+Achte auf den Zustand einer Anforderung: „planned" heißt, dass etwas bewusst noch nicht umgesetzt ist. Das
+ist etwas anderes als „gibt es nicht", und der Unterschied ist für den Fragenden der ganze Punkt.
 
 Für Orientierungsfragen („was kann das hier eigentlich") nimm read_capabilities.`
