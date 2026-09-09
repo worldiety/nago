@@ -57,11 +57,26 @@ func NewFindSourceDocument(sources fs.FS) FindSourceDocument {
 			return "", fmt.Errorf("ungültiger Pfad %q", path)
 		}
 
-		buf, err := fs.ReadFile(sources, clean)
-		if err != nil {
-			return "", fmt.Errorf("kein Quelldokument %q; die Pfade stehen im Feld sources einer Anforderung", clean)
+		// A source is recorded repository-relative ("requirements/_sources/brief.md"), while an embed.FS is
+		// rooted at the package that declares it ("_sources/brief.md"). Neither end is wrong and neither can
+		// be changed: go:embed cannot reach above its own directory, and a requirement must name a path a
+		// human can find in the repository. So the recorded prefix is peeled off until the file appears.
+		//
+		// This cannot escape the tree: fs.ValidPath already rejected traversal, and removing leading
+		// segments only ever looks further inside whatever was embedded.
+		for candidate := clean; candidate != ""; {
+			if buf, err := fs.ReadFile(sources, candidate); err == nil {
+				return string(buf), nil
+			}
+
+			i := strings.IndexByte(candidate, '/')
+			if i < 0 {
+				break
+			}
+
+			candidate = candidate[i+1:]
 		}
 
-		return string(buf), nil
+		return "", fmt.Errorf("kein Quelldokument %q; die Pfade stehen im Feld sources einer Anforderung", clean)
 	}
 }

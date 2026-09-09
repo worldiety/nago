@@ -352,3 +352,40 @@ func TestSourceDocumentWithoutAnyEmbedded(t *testing.T) {
 		t.Error("reading from an application without sources succeeded")
 	}
 }
+
+// TestSourceDocumentToleratesTheRecordedPrefix covers the mismatch that is nobody's fault and cannot be
+// fixed at either end: a requirement records a repository-relative path, while an embed.FS is rooted at the
+// package that declares it.
+func TestSourceDocumentToleratesTheRecordedPrefix(t *testing.T) {
+	// Rooted as go:embed would produce it inside the requirements package.
+	packageRooted := fstest.MapFS{
+		"_sources/library.md": &fstest.MapFile{Data: []byte("Die Bibliothek soll ausleihen können.")},
+	}
+
+	uc := NewUseCases(packageRooted)
+
+	// The path as a requirement records it, one segment deeper than the embed.
+	got, err := uc.FindSourceDocument(reader(), "requirements/_sources/library.md#irgendein-anker")
+	if err != nil {
+		t.Fatalf("the recorded prefix was not tolerated: %v", err)
+	}
+
+	if !strings.Contains(got, "ausleihen") {
+		t.Errorf("unexpected content: %q", got)
+	}
+}
+
+// TestCapabilitiesExcludeBareTraceability keeps the orientation answer usable. Most bindings in a well
+// annotated project say only that a construct serves a requirement, very many of them on struct fields, and
+// listing those would bury the entries that actually describe what the system does.
+func TestCapabilitiesExcludeBareTraceability(t *testing.T) {
+	for c, err := range NewUseCases(nil).FindAllCapabilities(reader(), CapabilityFilter{}) {
+		if err != nil {
+			t.Fatalf("listing failed: %v", err)
+		}
+
+		if c.Help == "" && c.Rationale == "" {
+			t.Errorf("capability %q has nothing written for a human; it is traceability, not a capability", c.Construct)
+		}
+	}
+}

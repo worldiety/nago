@@ -71,9 +71,15 @@ func visibleTitles(ceiling spec.Disclosure) map[ID]string {
 // toCapability folds one registry entry into a capability, reporting false when there is nothing worth
 // showing.
 //
-// An entry that carries neither a help text nor a rationale nor a requirement is a binding that states
-// something else entirely - a lifecycle transition, a stored shape, a waiver - and has no place in a list
-// meant to explain the system to a person.
+// # Why a bare Satisfies is not a capability
+//
+// Most bindings in a well annotated project say only that a construct serves a requirement, and very many
+// of those sit on individual struct fields. That is traceability, and it is what the requirement tools are
+// for. A capability is something the system *does*, described for a person - which is precisely what
+// spec.Help is documented to carry: "the end user instruction for documentation, help system and assistant".
+//
+// Listing the rest would bury the dozen entries that answer "was kann das hier" under a few hundred that
+// answer nothing, and a model asked for orientation would spend its context on field names.
 func toCapability(e spec.Entry, titles map[ID]string) (Capability, bool) {
 	cap := Capability{Construct: e.Target}
 
@@ -101,7 +107,7 @@ func toCapability(e spec.Entry, titles map[ID]string) (Capability, bool) {
 		}
 	}
 
-	if cap.Help == "" && cap.Rationale == "" && len(cap.Requirements) == 0 {
+	if cap.Help == "" && cap.Rationale == "" {
 		return Capability{}, false
 	}
 
