@@ -19,7 +19,10 @@
 		<VueFlow
 			ref="flowChart"
 			class="ui-flow-chart__canvas"
-			:class="{ dark: themeManager.getActiveThemeKey() === ThemeKey.DARK }"
+			:class="{
+				dark: themeManager.getActiveThemeKey() === ThemeKey.DARK,
+				ungrabbable: ui.readOnly || !ui.nodesDraggable,
+			}"
 			:nodes="nodes"
 			:edges="edges"
 			:nodes-draggable="!ui.readOnly && !!ui.nodesDraggable"
