@@ -33,6 +33,7 @@ By default, it is single-line and uncontrolled until InputValue is set.
 | `AccessibilityLabel(label string)` | AccessibilityLabel is a placeholder implementation. |
 | `Autocomplete(tags string)` | Autocomplete defines the autocomplete tags of the input |
 | `Border(border Border)` | Border is a placeholder implementation. |
+| `ClearButton(clearButton bool)` | ClearButton defines whether the text field should show a clear button. This only shows, if no trailing component is set, and the text field is not empty. |
 | `Debounce(enabled bool)` | Debounce is enabled by default. See also DebounceTime. |
 | `DebounceTime(d time.Duration)` | DebounceTime sets a custom debouncing time when entering text. By default, this is 500ms and always applied. You can disable debouncing, but be very careful with that, as it may break your server, the client or network. |
 | `Disabled(disabled bool)` | Disabled disables or enables the field. When disabled, the user cannot interact with the field. |

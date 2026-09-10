@@ -7608,6 +7608,8 @@ export class TextView implements Writeable, Readable, Component {
 
 	public whiteSpace?: WhiteSpace;
 
+	public ellipsis?: Bool;
+
 	constructor(
 		value: Str | undefined = undefined,
 		color: Color | undefined = undefined,
@@ -7635,7 +7637,8 @@ export class TextView implements Writeable, Readable, Component {
 		labelFor: Str | undefined = undefined,
 		wordBreak: Str | undefined = undefined,
 		link: Link | undefined = undefined,
-		whiteSpace: WhiteSpace | undefined = undefined
+		whiteSpace: WhiteSpace | undefined = undefined,
+		ellipsis: Bool | undefined = undefined
 	) {
 		this.value = value;
 		this.color = color;
@@ -7664,6 +7667,7 @@ export class TextView implements Writeable, Readable, Component {
 		this.wordBreak = wordBreak;
 		this.link = link;
 		this.whiteSpace = whiteSpace;
+		this.ellipsis = ellipsis;
 	}
 
 	read(reader: BinaryReader): void {
@@ -7788,6 +7792,10 @@ export class TextView implements Writeable, Readable, Component {
 					this.whiteSpace = readInt(reader);
 					break;
 				}
+				case 28: {
+					this.ellipsis = readBool(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -7824,6 +7832,7 @@ export class TextView implements Writeable, Readable, Component {
 			this.wordBreak !== undefined,
 			this.link !== undefined && !this.link.isZero(),
 			this.whiteSpace !== undefined,
+			this.ellipsis !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -7935,6 +7944,10 @@ export class TextView implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.UVARINT, 27);
 			writeInt(writer, this.whiteSpace!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[28]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 28);
+			writeBool(writer, this.ellipsis!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -7965,7 +7978,8 @@ export class TextView implements Writeable, Readable, Component {
 			this.labelFor === undefined &&
 			this.wordBreak === undefined &&
 			(this.link === undefined || this.link.isZero()) &&
-			this.whiteSpace === undefined
+			this.whiteSpace === undefined &&
+			this.ellipsis === undefined
 		);
 	}
 
@@ -7997,6 +8011,7 @@ export class TextView implements Writeable, Readable, Component {
 		this.wordBreak = undefined;
 		this.link = undefined;
 		this.whiteSpace = undefined;
+		this.ellipsis = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
