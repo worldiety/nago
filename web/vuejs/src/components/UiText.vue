@@ -78,6 +78,10 @@ const styles = computed<string>(() => {
 		styles.push(`word-break: ${props.ui.wordBreak}`);
 	}
 
+	if (props.ui.ellipsis) {
+		styles.push('overflow: hidden', 'text-overflow: ellipsis');
+	}
+
 	return styles.join(';');
 });
 

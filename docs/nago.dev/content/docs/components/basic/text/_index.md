@@ -68,6 +68,7 @@ func main() {
 | `BackgroundColor(backgroundColor Color)` | BackgroundColor sets the color of the background. |
 | `Border(border Border)` | Border draws a Border around the component. It's used to set the Border width, color and radius. Fore more information also have a look at the Border component. |
 | `Color(color Color)` | Color sets the Color of the font. |
+| `Ellipsis(ellipsis bool)` | Ellipsis sets the flag to cut of text overflow with ellipsis |
 | `FocusedBorder(border Border)` | FocusedBorder sets the Border width, color and radius when the component is focused. |
 | `Font(font Font)` | Font sets the size, style and width of the Text. For more information also have a look at Font. |
 | `Frame(frame Frame)` | Frame sets the width, minWidth, maxWidth, height, minHeight and maxHeight. |

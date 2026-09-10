@@ -17,7 +17,6 @@ import (
 	"go.wdy.de/nago/application/ai/completion"
 	uicompletion "go.wdy.de/nago/application/ai/completion/ui"
 	"go.wdy.de/nago/application/ai/session"
-	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
@@ -92,7 +91,7 @@ func agenticChat(wnd core.Window, uc ai.UseCases, sessions session.UseCases) cor
 		return alert.BannerError(err)
 	}
 
-	tools := func(auth.Subject) []completion.Tool { return agenticTools() }
+	tools := agenticTools()
 
 	chat := uicompletion.Chat(wnd, uicompletion.ChatOptions{
 		Sessions:    sessions,

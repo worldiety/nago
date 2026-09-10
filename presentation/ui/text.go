@@ -87,6 +87,7 @@ type TText struct {
 	url                string
 	target             string
 	whiteSpace         WhiteSpace
+	ellipsis           bool // Cuts of the text with ellipsis if set to true
 }
 
 // MailTo creates a mailto: link text component.
@@ -281,6 +282,12 @@ func (c TText) WhiteSpace(whiteSpace WhiteSpace) TText {
 	return c
 }
 
+// Ellipsis sets the flag to cut of text overflow with ellipsis
+func (c TText) Ellipsis(ellipsis bool) TText {
+	c.ellipsis = ellipsis
+	return c
+}
+
 func (c TText) Render(ctx core.RenderContext) core.RenderNode {
 
 	value := c.content
@@ -335,6 +342,7 @@ func (c TText) Render(ctx core.RenderContext) core.RenderNode {
 		LabelFor:               proto.Str(c.labelFor),
 		WordBreak:              wordBreak,
 		WhiteSpace:             proto.WhiteSpace(c.whiteSpace),
+		Ellipsis:               proto.Bool(c.ellipsis),
 		Link: proto.Link{
 			Url:    proto.URI(c.url),
 			Target: proto.Str(c.target),

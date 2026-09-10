@@ -111,6 +111,10 @@
     "27": {
       "name": "WhiteSpace",
       "type": "WhiteSpace"
+    },
+    "28": {
+      "name": "Ellipsis",
+      "type": "Bool"
     }
   }
 }
