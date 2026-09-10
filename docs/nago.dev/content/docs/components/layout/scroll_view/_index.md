@@ -25,7 +25,7 @@ A ScrollView can either be horizontal or vertical. By default, it is vertical.
 | `ScrollAlignment(alignment ScrollAlignment)` | ScrollAlignment defines how the component should align the scroll target when scrolling into view |
 | `ScrollBehavior(behavior ScrollBehavior)` | ScrollBehavior defines how the component should behave when the scrollable content grows |
 | `ScrollButtonLabel(label string)` | ScrollButtonLabel sets the label of scroll button when the component asks whether to scroll |
-| `ScrollToView(scrollToView string, animation ScrollAnimation)` |  |
+| `ScrollToView(animation ScrollAnimation, scrollToView string)` |  |
 ---
 
 ## Related

@@ -31,7 +31,7 @@ ImageIconAdaptive renders default with L24/L24 size and is invisible if svg is e
 | `Padding(padding Padding)` | Padding sets the inner spacing around the image. |
 | `StrokeColor(color Color)` | StrokeColor set the internal stroke color value and is only applicable for embedded SVG images, which use fill=strokeColor. Otherwise, a broken or no effect will be seen. |
 | `URI(uri core.URI)` | URI can be used for static image resources which are not provided by the ui component itself. The source may be a hand written REST endpoint or even any third-party resource from a different domain. If you need optimized data access and caching policies, you have to use this way. See also [core.Window.AsURI] for an uncached dynamically delivered image resource. |
-| `URIAdaptive(light core.URI, dark core.URI)` | URIAdaptive is like [TImage.Embed] but picks whatever fits best. |
+| `URIAdaptive(dark core.URI, light core.URI)` | URIAdaptive is like [TImage.Embed] but picks whatever fits best. |
 | `Visible(b bool)` | Visible controls the visibility of the image; setting false hides it. |
 | `WithFrame(fn func(Frame) Frame)` | WithFrame applies a transformation function to the image's frame and returns the updated component. |
 ---

@@ -224,13 +224,20 @@ const inputStyle = computed<string>(() => {
 		return styles.join(';');
 	}
 
-	const paddingLeft = leadingWidth.value ? `calc(${leadingWidth.value}px + 0.5rem)` : 'auto';
+	const paddingLeft = leadingWidth.value ? `calc(${leadingWidth.value}px + 0.5rem)` : props.ui.padding?.left;
 	const paddingRight = trailingWidth.value
 		? `calc(${trailingWidth.value}px + 0.5rem)`
 		: clearButtonVisible.value
 			? '2.5rem'
-			: 'auto';
-	styles.push('padding-left:' + paddingLeft, 'padding-right:' + paddingRight);
+			: props.ui.padding?.right;
+	const paddingTop = props.ui.padding?.top;
+	const paddingBottom = props.ui.padding?.bottom;
+	styles.push(
+		'padding-left:' + paddingLeft,
+		'padding-right:' + paddingRight,
+		'padding-top:' + paddingTop,
+		'padding-bottom:' + paddingBottom
+	);
 
 	if (props.ui.lines) {
 		styles.push(`height: ${textareaHeight.value}`);

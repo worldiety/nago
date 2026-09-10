@@ -44,12 +44,14 @@ func main() {
 
 					TextField("hello world", firstname.Get()).
 						InputValue(firstname).
+						Placeholder("Placeholder blib").
 						Leading(ImageIcon(heroOutline.UserCircle)).
 						Trailing(ImageIcon(heroOutline.UserCircle)).
 						FullWidth(),
 
 					TextField("hello world", firstname.Get()).
 						InputValue(firstname).
+						Placeholder("Placeholder blab").
 						Optional(true).
 						Leading(ImageIcon(heroOutline.UserCircle)).
 						Trailing(ImageIcon(heroOutline.UserCircle)).
@@ -57,6 +59,7 @@ func main() {
 
 					TextField("hello world", firstname.Get()).
 						InputValue(firstname).
+						Placeholder("Placeholder blub").
 						Leading(ImageIcon(heroOutline.UserCircle)).
 						Trailing(ImageIcon(heroOutline.UserCircle)).
 						ErrorText("this is an error").

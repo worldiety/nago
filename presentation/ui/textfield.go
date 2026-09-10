@@ -69,6 +69,7 @@ type TTextField struct {
 	optional        bool    // whether the field is optional
 	clearButton     bool    // whether to show a clear button for the field
 	placeholder     string  // placeholder of the input field
+	padding         Padding // padding of the text field (overwrites defaults)
 }
 
 // TextField creates a new text field with the given label and initial value.
@@ -80,12 +81,6 @@ func TextField(label string, value string) TTextField {
 		clearButton: true,
 	}
 
-	return c
-}
-
-// Padding is a placeholder implementation.
-func (c TTextField) Padding(padding Padding) DecoredView {
-	// TODO implement me or reduce interface
 	return c
 }
 
@@ -380,9 +375,14 @@ func (c TTextField) Placeholder(placeholder string) TTextField {
 	return c
 }
 
+// Padding sets the input field's padding
+func (c TTextField) Padding(padding Padding) DecoredView {
+	c.padding = padding
+	return c
+}
+
 // Render builds and returns the protocol representation of the text field.
 func (c TTextField) Render(ctx core.RenderContext) core.RenderNode {
-
 	return &proto.TextField{
 		Label:           proto.Str(c.label),
 		SupportingText:  proto.Str(c.supportingText),
@@ -410,5 +410,6 @@ func (c TTextField) Render(ctx core.RenderContext) core.RenderNode {
 		Optional:        proto.Bool(c.optional),
 		ClearButton:     proto.Bool(c.clearButton),
 		Placeholder:     proto.Str(c.placeholder),
+		Padding:         c.padding.ora(),
 	}
 }
