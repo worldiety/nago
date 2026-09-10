@@ -73,6 +73,8 @@ const inputFieldWrapperClasses = computed((): string | null => {
 		classes.push('input-field-wrapper-reduced');
 	} else if (props.wrapperStyle === InputWrapperStyle.BASIC) {
 		classes.push('input-field-wrapper-basic');
+	} else if (props.wrapperStyle === InputWrapperStyle.FILLED) {
+		classes.push('input-field-wrapper-filled');
 	} else {
 		classes.push('input-field-wrapper-detailed');
 	}
@@ -119,18 +121,18 @@ const inputFieldWrapperClasses = computed((): string | null => {
 			}
 		}
 
-		&.input-field-wrapper-reduced {
+		&.input-field-wrapper-filled {
 			.input-field {
-				outline: none !important;
-				@apply border-b border-transparent !rounded-none;
-				@apply focus:border-b-2 focus:-mb-px focus:border-I0;
+				@apply outline outline-1 -outline-offset-1 outline-M5 bg-M2 rounded-lg px-3;
+				@apply focus:outline-2 focus:-outline-offset-2 focus:outline-I0;
 			}
 		}
 
 		&.input-field-wrapper-reduced {
 			.input-field {
-				@apply border-b-current;
-				@apply focus:border-b-2 focus:-mb-px;
+				outline: none !important;
+				@apply border-b border-b-current !rounded-none;
+				@apply focus:border-b-2 focus:-mb-px focus:border-I0;
 			}
 		}
 

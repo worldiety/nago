@@ -3,6 +3,7 @@ import { TextFieldStyleValues } from '@/shared/proto/nprotoc_gen';
 export enum InputWrapperStyle {
 	REDUCED,
 	BASIC,
+	FILLED,
 }
 
 export function inputWrapperStyleFrom(textFieldStyle?: TextFieldStyleValues): InputWrapperStyle | undefined {
@@ -11,5 +12,8 @@ export function inputWrapperStyleFrom(textFieldStyle?: TextFieldStyleValues): In
 	}
 	if (textFieldStyle === TextFieldStyleValues.TextFieldBasic) {
 		return InputWrapperStyle.BASIC;
+	}
+	if (textFieldStyle === TextFieldStyleValues.TextFieldFilled) {
+		return InputWrapperStyle.FILLED;
 	}
 }
