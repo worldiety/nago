@@ -34,6 +34,9 @@ const (
 	// Note, that an implementation is allowed to ignore leading, trailing, supporting and errorText for this mode.
 	// It may serve as a building-block for custom fields.
 	TextFieldBasic TextFieldStyle = TextFieldStyle(proto.TextFieldBasic)
+
+	// TextFieldFilled has more subtle outlines and a filled background color.
+	TextFieldFilled TextFieldStyle = TextFieldStyle(proto.TextFieldFilled)
 )
 
 // TTextField is a basic component (Text Field).

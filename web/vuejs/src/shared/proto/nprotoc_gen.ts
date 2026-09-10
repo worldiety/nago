@@ -5409,6 +5409,8 @@ export enum TextFieldStyleValues {
 	TextFieldReduced = 1,
 	// TextFieldBasic removes as much as decorations as possible. There may be limitations based on the platform. Note, that an implementation is allowed to ignore leading, trailing, supporting and errorText for this mode. It may serve as a building-block for custom fields.
 	TextFieldBasic = 2,
+	// TextFieldFilled has more subtle outlines and a filled background color.
+	TextFieldFilled = 3,
 }
 
 // Ping is usually send by the frontend to the backend to keep the websocket alive for all intermediate proxies or other underlying channel implementations.

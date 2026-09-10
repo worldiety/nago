@@ -51,7 +51,7 @@ By default, it is single-line and uncontrolled until InputValue is set.
 | `Max(max float64)` | Max defines the max value of number fields |
 | `Min(min float64)` | Min defines the min value of number fields |
 | `Optional(optional bool)` | Optional defines whether the text field is optional. |
-| `Padding(padding Padding)` | Padding is a placeholder implementation. |
+| `Padding(padding Padding)` | Padding sets the input field's padding |
 | `Placeholder(placeholder string)` | Placeholder sets the input's placeholder text |
 | `ShowZero(showZero bool)` | ShowZero defines wheter the '0' character should be displayed for empty/zero values in number fields. |
 | `Step(step int)` | Step defines the step size to increase/decrease number values stepwise |
