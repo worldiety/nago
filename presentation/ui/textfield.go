@@ -68,6 +68,7 @@ type TTextField struct {
 	autocomplete    string  // autocomplete tags of the input
 	optional        bool    // whether the field is optional
 	clearButton     bool    // whether to show a clear button for the field
+	placeholder     string  // placeholder of the input field
 }
 
 // TextField creates a new text field with the given label and initial value.
@@ -373,6 +374,12 @@ func (c TTextField) ClearButton(clearButton bool) TTextField {
 	return c
 }
 
+// Placeholder sets the input's placeholder text
+func (c TTextField) Placeholder(placeholder string) TTextField {
+	c.placeholder = placeholder
+	return c
+}
+
 // Render builds and returns the protocol representation of the text field.
 func (c TTextField) Render(ctx core.RenderContext) core.RenderNode {
 
@@ -402,5 +409,6 @@ func (c TTextField) Render(ctx core.RenderContext) core.RenderNode {
 		Autocomplete:    proto.Str(c.autocomplete),
 		Optional:        proto.Bool(c.optional),
 		ClearButton:     proto.Bool(c.clearButton),
+		Placeholder:     proto.Str(c.placeholder),
 	}
 }

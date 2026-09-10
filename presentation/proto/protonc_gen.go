@@ -7807,10 +7807,11 @@ type TextField struct {
 	Optional     Bool
 	// ClearButton defines whether a clear button should be displayed for the text field. This only shows, if no trailing component is set, and the text field is not empty.
 	ClearButton Bool
+	Placeholder Str
 }
 
 func (v *TextField) write(w *BinaryWriter) error {
-	var fields [28]bool
+	var fields [29]bool
 	fields[1] = !v.Label.IsZero()
 	fields[2] = !v.SupportingText.IsZero()
 	fields[3] = !v.ErrorText.IsZero()
@@ -7838,6 +7839,7 @@ func (v *TextField) write(w *BinaryWriter) error {
 	fields[25] = !v.Autocomplete.IsZero()
 	fields[26] = !v.Optional.IsZero()
 	fields[27] = !v.ClearButton.IsZero()
+	fields[28] = !v.Placeholder.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -8078,6 +8080,14 @@ func (v *TextField) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[28] {
+		if err := w.writeFieldHeader(byteSlice, 28); err != nil {
+			return err
+		}
+		if err := v.Placeholder.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -8243,6 +8253,11 @@ func (v *TextField) read(r *BinaryReader) error {
 			}
 		case 27:
 			err := v.ClearButton.read(r)
+			if err != nil {
+				return err
+			}
+		case 28:
+			err := v.Placeholder.read(r)
 			if err != nil {
 				return err
 			}
@@ -25355,13 +25370,14 @@ func (v *TextField) reset() {
 	v.Autocomplete.reset()
 	v.Optional.reset()
 	v.ClearButton.reset()
+	v.Placeholder.reset()
 }
 
 func (v *TextField) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && isZeroComponent(v.Leading) && isZeroComponent(v.Trailing) && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.KeyboardOptions.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero() && v.KeydownEnter.IsZero() && v.TextAlignment.IsZero() && v.ShowZero.IsZero() && v.Step.IsZero() && v.Max.IsZero() && v.Min.IsZero() && v.Autocomplete.IsZero() && v.Optional.IsZero() && v.ClearButton.IsZero()
+	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && isZeroComponent(v.Leading) && isZeroComponent(v.Trailing) && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.KeyboardOptions.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero() && v.KeydownEnter.IsZero() && v.TextAlignment.IsZero() && v.ShowZero.IsZero() && v.Step.IsZero() && v.Max.IsZero() && v.Min.IsZero() && v.Autocomplete.IsZero() && v.Optional.IsZero() && v.ClearButton.IsZero() && v.Placeholder.IsZero()
 }
 
 func (v *Toggle) reset() {

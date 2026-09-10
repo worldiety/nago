@@ -8106,6 +8106,8 @@ export class TextField implements Writeable, Readable, Component {
 	// ClearButton defines whether a clear button should be displayed for the text field. This only shows, if no trailing component is set, and the text field is not empty.
 	public clearButton?: Bool;
 
+	public placeholder?: Str;
+
 	constructor(
 		label: Str | undefined = undefined,
 		supportingText: Str | undefined = undefined,
@@ -8133,7 +8135,8 @@ export class TextField implements Writeable, Readable, Component {
 		min: Float | undefined = undefined,
 		autocomplete: Str | undefined = undefined,
 		optional: Bool | undefined = undefined,
-		clearButton: Bool | undefined = undefined
+		clearButton: Bool | undefined = undefined,
+		placeholder: Str | undefined = undefined
 	) {
 		this.label = label;
 		this.supportingText = supportingText;
@@ -8162,6 +8165,7 @@ export class TextField implements Writeable, Readable, Component {
 		this.autocomplete = autocomplete;
 		this.optional = optional;
 		this.clearButton = clearButton;
+		this.placeholder = placeholder;
 	}
 
 	read(reader: BinaryReader): void {
@@ -8290,6 +8294,10 @@ export class TextField implements Writeable, Readable, Component {
 					this.clearButton = readBool(reader);
 					break;
 				}
+				case 28: {
+					this.placeholder = readString(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -8326,6 +8334,7 @@ export class TextField implements Writeable, Readable, Component {
 			this.autocomplete !== undefined,
 			this.optional !== undefined,
 			this.clearButton !== undefined,
+			this.placeholder !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -8443,6 +8452,10 @@ export class TextField implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.UVARINT, 27);
 			writeBool(writer, this.clearButton!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[28]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 28);
+			writeString(writer, this.placeholder!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -8473,7 +8486,8 @@ export class TextField implements Writeable, Readable, Component {
 			this.min === undefined &&
 			this.autocomplete === undefined &&
 			this.optional === undefined &&
-			this.clearButton === undefined
+			this.clearButton === undefined &&
+			this.placeholder === undefined
 		);
 	}
 
@@ -8505,6 +8519,7 @@ export class TextField implements Writeable, Readable, Component {
 		this.autocomplete = undefined;
 		this.optional = undefined;
 		this.clearButton = undefined;
+		this.placeholder = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

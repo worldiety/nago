@@ -109,7 +109,7 @@ const inputFieldWrapperClasses = computed((): string | null => {
 		}
 
 		.input-field {
-			@apply relative bg-transparent w-full py-2;
+			@apply relative bg-transparent w-full py-2 placeholder:text-sm placeholder:text-M7;
 		}
 
 		&.input-field-wrapper-detailed {
