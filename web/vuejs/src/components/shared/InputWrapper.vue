@@ -119,7 +119,6 @@ const inputFieldWrapperClasses = computed((): string | null => {
 			}
 		}
 
-		&.input-field-wrapper-basic,
 		&.input-field-wrapper-reduced {
 			.input-field {
 				outline: none !important;
@@ -135,7 +134,7 @@ const inputFieldWrapperClasses = computed((): string | null => {
 			}
 		}
 
-		&:not(.input-field-wrapper-no-hover, .input-field-wrapper-disabled) {
+		&:not(.input-field-wrapper-no-hover, .input-field-wrapper-basic, .input-field-wrapper-disabled) {
 			.input-field {
 				@apply hover:border-I0 hover:outline-I0;
 			}
@@ -184,9 +183,6 @@ const inputFieldWrapperClasses = computed((): string | null => {
 
 	.input-field-wrapper:not(.input-field-wrapper-detailed) .input-field:focus {
 		@apply outline-none ring-0;
-	}
-
-	.input-field-wrapper.input-field-wrapper-detailed .input-field:focus {
 	}
 
 	.input-field-wrapper.input-field-wrapper-disabled .input-field {
