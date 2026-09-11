@@ -23,7 +23,11 @@ type DB struct {
 	dir  string
 	opts Options
 
-	nextSeq atomic.Uint64 // next sequence ID to assign (atomic for lock-free allocation)
+	nextSeq atomic.Uint64 // next sequence ID to assign; only ever read/advanced via inflight.allocate
+
+	// inflight tracks allocated-but-not-yet-durable sequence numbers so that
+	// CommittedSeq can tell a pending write from a permanent hole.
+	inflight inflightSet
 
 	typesMu sync.RWMutex          // protects the types map
 	types   map[TypeID]*typeState // per event-type state
@@ -45,6 +49,7 @@ var (
 	_ ndb.TimeLookup = (*DB)(nil)
 	_ ndb.Pruner     = (*DB)(nil)
 	_ ndb.Notifier   = (*DB)(nil)
+	_ ndb.Watermark  = (*DB)(nil)
 )
 
 // typeState tracks the pending segment for a single event type.
@@ -132,6 +137,9 @@ func (db *DB) bootstrap(eventsDir string) error {
 	}
 
 	db.nextSeq.Store(globalMax + 1)
+	// nothing is in flight after a bootstrap, so everything ever allocated is
+	// resolved: either readable on disk or permanently gone
+	db.inflight.maxEnded = globalMax
 	slog.Info("msgstore: bootstrap complete", "nextSeq", db.nextSeq.Load())
 	return nil
 }
@@ -228,8 +236,9 @@ func (db *DB) getTypeState(typeID TypeID) (*typeState, error) {
 // strictly monotonic [Seq]. Returns the assigned sequence number.
 //
 // Concurrent appends to different event types proceed in parallel – only
-// appends to the same type are serialized via the per-type mutex. The global
-// sequence counter is allocated lock-free via atomic increment.
+// appends to the same type are serialized via the per-type mutex. The Seq is
+// assigned while that mutex is held, so that within one type the order in which
+// sequence numbers are handed out matches the order in which they are written.
 //
 // This implements [ndb.History].
 func (db *DB) Append(typeID TypeID, traceID TraceID, payload []byte) (Seq, error) {
@@ -242,13 +251,40 @@ func (db *DB) Append(typeID TypeID, traceID TraceID, payload []byte) (Seq, error
 		return 0, err
 	}
 
-	// allocate sequence ID atomically (lock-free)
-	seqID := db.nextSeq.Add(1) - 1
+	// compress before taking the per-type lock: compression is CPU-bound and
+	// must not extend a critical section that already spans a write syscall
+	enc, compressed := db.opts.Compress(typeID, payload)
+
+	// per-type lock: allocate, marshal, write, update segment info
+	ts.mu.Lock()
+
+	// check split condition before writing
+	if ts.seg.info.MessageCount > 0 && db.opts.ShouldSplit(ts.seg.info) {
+		if err := db.splitSegment(ts); err != nil {
+			ts.mu.Unlock()
+			return 0, fmt.Errorf("msgstore: split segment: %w", err)
+		}
+	}
+
+	// Allocate the sequence ID while holding the per-type lock, NOT before it.
+	//
+	// The counter itself is global and atomic, so allocation order is a global
+	// total order either way. What the lock adds is that, within one type,
+	// allocation order equals write order. Allocating outside the lock would
+	// let two writers on the same type take their sequence numbers in one order
+	// and win the mutex in the other, appending a lower Seq behind a higher one.
+	// That breaks the ascending-order assumption three separate readers rely on:
+	// replayType returns early once it passes maxSeq, the k-way merge heap in
+	// Replay requires every cursor to be ascending, and finalize() records
+	// lastSeq as the segment's maxSeq in the file name — so a single reordering
+	// makes shouldSkipSegment discard a whole segment, permanently and across
+	// reopens.
+	//
+	// The cost is one atomic increment inside a section that already performs a
+	// pwrite, which is several orders of magnitude more expensive.
+	seqID := db.inflight.allocate(&db.nextSeq)
 
 	now := time.Now().UnixNano()
-
-	// compress based on type
-	enc, compressed := db.opts.Compress(typeID, payload)
 
 	msg := Message{
 		Type:            typeID,
@@ -260,17 +296,6 @@ func (db *DB) Append(typeID TypeID, traceID TraceID, payload []byte) (Seq, error
 		Payload:         compressed,
 	}
 
-	// per-type lock: marshal, write, update segment info
-	ts.mu.Lock()
-
-	// check split condition before writing
-	if ts.seg.info.MessageCount > 0 && db.opts.ShouldSplit(ts.seg.info) {
-		if err := db.splitSegment(ts); err != nil {
-			ts.mu.Unlock()
-			return 0, fmt.Errorf("msgstore: split segment: %w", err)
-		}
-	}
-
 	data := MarshalInto(&msg, ts.writeBuf)
 	ts.writeBuf = data // keep for reuse on next append
 
@@ -278,6 +303,10 @@ func (db *DB) Append(typeID TypeID, traceID TraceID, payload []byte) (Seq, error
 	n, err := db.pool.WriteAt(ts.seg.path, data, ts.writeOffset)
 	if err != nil {
 		ts.mu.Unlock()
+		// the sequence number is burned: it is never reissued, and the gap it
+		// leaves is permanent. Retiring it advances the watermark so followers
+		// skip it instead of waiting for a write that will never come.
+		db.inflight.end(seqID)
 		return 0, fmt.Errorf("msgstore: write message: %w", err)
 	}
 
@@ -293,6 +322,11 @@ func (db *DB) Append(typeID TypeID, traceID TraceID, payload []byte) (Seq, error
 	ts.lastSeq = seqID
 
 	ts.mu.Unlock()
+
+	// The message is durable and therefore visible to Replay from here on.
+	// Retire it from the in-flight set BEFORE notifying, so that a subscriber
+	// which immediately re-drains already sees a watermark that covers it.
+	db.inflight.end(seqID)
 
 	// update time index (has its own internal mutex)
 	if err := db.tindex.Append(now, seqID); err != nil {
@@ -443,6 +477,22 @@ func (db *DB) SeqForTime(tsNano int64) (Seq, error) {
 	return Seq(s), err
 }
 
+// CommittedSeq returns the highest [Seq] for which no allocation is still
+// outstanding: every Seq at or below it is either durably readable via Replay
+// or permanently gone (tombstoned by [DB.DeleteSeq], superseded by [DB.Put], or
+// removed by [DB.DeleteType]). No future write can fill a hole at or below it.
+//
+// This is what lets a follower distinguish the two reasons a Seq can be missing
+// from a replay. Above the watermark a gap may still be a write in progress and
+// must be waited for; at or below it the gap is final and must be stepped over.
+// See [inflightSet] for why the writer has to publish this rather than the
+// reader infer it.
+//
+// This implements [ndb.Watermark].
+func (db *DB) CommittedSeq() Seq {
+	return Seq(db.inflight.committed())
+}
+
 // Put writes or overwrites the single retained event for the given type.
 // It behaves like MQTT retained messages: only the latest value is kept,
 // previous values are physically overwritten.
@@ -473,13 +523,20 @@ func (db *DB) Put(typeID TypeID, traceID TraceID, payload []byte) (Seq, error) {
 		return 0, err
 	}
 
-	// allocate sequence ID atomically (lock-free)
-	seqID := db.nextSeq.Add(1) - 1
+	// compress before taking the per-type lock (see Append)
+	enc, compressed := db.opts.Compress(typeID, payload)
+
+	// per-type lock: allocate, marshal, overwrite at fixed offset, update info
+	ts.mu.Lock()
+
+	// Allocate under the lock, for the same reason as Append: allocation order
+	// and write order must agree within a type. Put additionally overwrites the
+	// previous value, so the superseded Seq is gone for good — retiring this
+	// Seq from the in-flight set is what later lets a follower step over that
+	// permanent hole instead of waiting on it.
+	seqID := db.inflight.allocate(&db.nextSeq)
 
 	now := time.Now().UnixNano()
-
-	// compress based on type
-	enc, compressed := db.opts.Compress(typeID, payload)
 
 	msg := Message{
 		Type:            typeID,
@@ -491,9 +548,6 @@ func (db *DB) Put(typeID TypeID, traceID TraceID, payload []byte) (Seq, error) {
 		Payload:         compressed,
 	}
 
-	// per-type lock: marshal, overwrite at fixed offset, update segment info
-	ts.mu.Lock()
-
 	data := MarshalInto(&msg, ts.writeBuf)
 	ts.writeBuf = data // keep for reuse
 
@@ -501,6 +555,7 @@ func (db *DB) Put(typeID TypeID, traceID TraceID, payload []byte) (Seq, error) {
 	n, err := db.pool.WriteAt(ts.seg.path, data, segHeaderSize)
 	if err != nil {
 		ts.mu.Unlock()
+		db.inflight.end(seqID)
 		return 0, fmt.Errorf("msgstore: put message: %w", err)
 	}
 
@@ -514,6 +569,9 @@ func (db *DB) Put(typeID TypeID, traceID TraceID, payload []byte) (Seq, error) {
 	ts.lastSeq = seqID
 
 	ts.mu.Unlock()
+
+	// durable and visible: retire before notifying (see Append)
+	db.inflight.end(seqID)
 
 	// deliberately no time index update – Put types have no history
 

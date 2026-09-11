@@ -52,15 +52,27 @@ type TailOptions struct {
 // a slow consumer of the Tail stream never stalls the writer.
 //
 // Messages are yielded in strict ascending global Seq order, exactly like
-// [History.Replay]. types selects the event types (empty = all). To uphold that
-// order together with completeness, Tail only delivers a Seq once every smaller
-// Seq is accounted for, so it briefly waits (until the next write) rather than
-// deliver out of order when an event is allocated but not yet durable.
+// [History.Replay]. types selects the event types (empty = all).
 //
-// Limitation: because Tail waits for missing sequence numbers, a tombstoned
-// range (deleted via [Pruner]) that falls on the live edge can pause delivery
-// until the next append advances the log past it. Tombstones in already-replayed
-// history are handled normally.
+// Ordering and completeness are the guarantees; a gap-free run of sequence
+// numbers is not. Sequence numbers are allowed to have permanent holes, because
+// a message can be tombstoned via [Pruner.DeleteSeq], superseded by a later
+// [Retained.Put] on the same type, or removed wholesale by [Pruner.DeleteType],
+// and the Seq it occupied is never reissued. Tail delivers every message that
+// exists, in order, and steps over the numbers of those that do not. (The same
+// applies to Kafka offsets under log compaction, and for the same reason.)
+//
+// Telling a permanent hole from a write that is merely still in progress is not
+// possible from a replay alone: both simply show up as a missing Seq. Tail
+// therefore asks the engine, via the optional [Watermark] capability. At or
+// below [Watermark.CommittedSeq] a gap is settled and is skipped; above it a
+// gap may still be filled by an in-flight write, so Tail waits for the next
+// write rather than delivering out of order or dropping the message.
+//
+// If the engine does not implement [Watermark], Tail cannot make that
+// distinction and falls back to waiting on every gap. That is still safe — no
+// message is lost or reordered — but a permanent hole then pauses delivery
+// until a later append advances the log past it.
 //
 // Cancellation is done — as with Replay — by breaking out of the range loop; no
 // context.Context is required for that, consistent with the rest of the ndb API.
@@ -111,27 +123,55 @@ func Tail(m Followable, types []TypeID, opts TailOptions) iter.Seq2[TypeID, Mess
 			return len(wantedSet) == 0 || wantedSet[t]
 		}
 
+		// watermarkOf reports the engine's committed Seq and whether the engine
+		// can supply one at all. Engines without the capability get a false,
+		// which keeps the conservative wait-on-every-gap behaviour.
+		wm, hasWatermark := m.(Watermark)
+		watermarkOf := func() (Seq, bool) {
+			if !hasWatermark {
+				return 0, false
+			}
+			return wm.CommittedSeq(), true
+		}
+
 		// lastSeq is the global watermark: the highest Seq up to which everything
-		// has been delivered (for the selected types) or skipped as not selected.
+		// has been delivered (for the selected types), skipped as not selected, or
+		// skipped as permanently absent.
 		//
 		// Strict global ordering plus completeness across late-appearing or
 		// filtered-out types cannot both be decided from a filtered replay alone:
 		// a gap might be a non-selected type (skip it) or a not-yet-visible event
 		// of a selected type (must wait for it). To tell them apart, drain replays
-		// ALL types and advances lastSeq only across a CONTIGUOUS Seq run from
-		// lastSeq+1, yielding just the selected ones. The non-selected messages
-		// serve purely as proof that the sequence advanced without a hole. A real
-		// hole (a Seq that no type produces yet) stops the pass; the next wake
-		// retries once the missing event becomes durable.
+		// ALL types and advances lastSeq across a Seq run from lastSeq+1, yielding
+		// just the selected ones. The non-selected messages serve purely as proof
+		// that the sequence advanced.
+		//
+		// A Seq that no type produces is either still being written or gone for
+		// good; only the engine's committed watermark separates those two, see
+		// [Watermark].
 		var lastSeq Seq
 		if opts.FromSeq > 0 {
 			lastSeq = opts.FromSeq - 1
 		}
 
-		// drain yields all newly available SELECTED messages whose Seq forms a
-		// contiguous run from lastSeq+1, in strict ascending global Seq order.
-		// Returns false if the consumer asked to stop.
+		// drain yields all newly available SELECTED messages from lastSeq+1 up,
+		// in strict ascending global Seq order, stepping over settled holes and
+		// stopping at unsettled ones. Returns false if the consumer asked to stop.
 		drain := func() bool {
+			// Sample the watermark BEFORE starting the replay, and use that one
+			// sample for the whole pass.
+			//
+			// The ordering is load-bearing. A replay observes the store as of the
+			// moment it starts; the watermark keeps advancing as writers finish.
+			// Reading it afterwards would let it cover a message that became
+			// durable after this replay was already under way — a Seq reported as
+			// settled that this pass genuinely cannot see. Tail would then class a
+			// live write as a permanent hole and drop it. Sampling first makes the
+			// watermark conservative by construction: anything at or below it was
+			// durable before the replay began, so the replay must contain it, and
+			// its absence really does mean it is gone.
+			committed, hasCommitted := watermarkOf()
+
 			expected := lastSeq + 1
 			for typeID, msg := range m.Replay(nil, lastSeq+1, Seq(math.MaxUint64)) {
 				if msg.Seq < expected {
@@ -139,10 +179,31 @@ func Tail(m Followable, types []TypeID, opts TailOptions) iter.Seq2[TypeID, Mess
 				}
 				if msg.Seq > expected {
 					// Hole at [expected, msg.Seq-1]: those sequence numbers are
-					// allocated but not visible here. We cannot tell a tombstone
-					// from a not-yet-durable write, so stop conservatively and let
-					// the next wake resume from expected once it appears.
-					break
+					// allocated but not visible here.
+					if !hasCommitted || committed < expected {
+						// Either the engine cannot tell us, or the hole starts
+						// above the committed boundary and may still be filled by
+						// an in-flight write. Stop and let the next wake resume
+						// from expected once it appears.
+						break
+					}
+
+					// Everything up to committed is settled, so the hole from
+					// expected onwards is permanent as far as committed reaches.
+					// Skip only that far: the remainder, if any, is still
+					// undecided and must be re-examined on the next pass.
+					skipTo := msg.Seq - 1
+					if committed < skipTo {
+						skipTo = committed
+					}
+					lastSeq = skipTo
+					expected = skipTo + 1
+
+					if msg.Seq > expected {
+						// the hole extends past the committed boundary; the rest
+						// of it is not settled yet, so stop here
+						break
+					}
 				}
 
 				// in-order at expected

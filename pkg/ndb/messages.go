@@ -238,6 +238,36 @@ type Pruner interface {
 	DeleteSeq(typeID TypeID, seq Seq) error
 }
 
+// Watermark is the optional committed-sequence capability. It reports the
+// boundary below which the sequence space has settled: every [Seq] at or below
+// [Watermark.CommittedSeq] is either durably readable via [History.Replay] or
+// permanently gone, and no future write will ever fill a hole at or below it.
+//
+// It exists because a Seq missing from a replay is ambiguous on its own. An
+// engine assigns a Seq when a write starts and makes it readable when the write
+// completes; in between, the Seq is absent. A deleted, superseded, or pruned
+// Seq is absent too — and stays that way. Those two look identical to a reader,
+// yet demand opposite reactions: a pending write must be waited for, a
+// permanent hole must be stepped over. Only the engine knows which is which,
+// so the engine publishes the boundary instead of leaving the reader to guess.
+//
+// [Tail] uses this to follow a log across holes without either losing a
+// concurrent write or stalling on a deletion. Engines that do not implement it
+// still work, but [Tail] then has to fall back on waiting, and a permanent hole
+// pauses delivery until an unrelated append advances the log past it.
+//
+// The same mechanism appears throughout the field under other names: the last
+// stable offset a Kafka broker returns alongside fetched records, the
+// xmin/xip_list pair in a PostgreSQL snapshot, the resolved timestamp of a
+// CockroachDB changefeed, and getHighestPublishedSequence in the LMAX
+// Disruptor. In each case the write side reports the boundary and the read side
+// never derives it from gaps in the data.
+type Watermark interface {
+	// CommittedSeq returns the highest Seq with no allocation outstanding
+	// below or at it. It is monotonically non-decreasing.
+	CommittedSeq() Seq
+}
+
 // Notification is the live signal that a message was written. It deliberately
 // carries no payload: fan-out stays cheap and allocation-light, and the payload
 // lifetime pitfalls of [History.Replay] (a reused-buffer view) do not apply.
@@ -295,5 +325,6 @@ type Messages interface {
 	TimeLookup
 	Pruner
 	Notifier
+	Watermark
 	io.Closer
 }
