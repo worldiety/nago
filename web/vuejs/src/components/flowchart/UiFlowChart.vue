@@ -8,7 +8,7 @@
 -->
 
 <template>
-	<div class="ui-flow-chart" :style="frameStyles">
+	<div ref="flowChartContainer" class="ui-flow-chart" :style="frameStyles">
 		<FlowChartActions
 			v-if="flowChart && ui.toolbar && ui.toolbar.actions"
 			:toolbar="ui.toolbar"
@@ -34,11 +34,14 @@
 			:max-zoom="ui.maxZoom || 2"
 			:default-viewport="{ zoom: 1 }"
 			:fit-view-on-init="nodes.length > 0"
+			:prevent-scrolling="!ui.movable"
 			:pan-on-drag="!!ui.movable"
 			:pan-on-scroll="!!ui.movable"
 			:zoom-on-double-click="!!ui.movable"
 			:zoom-on-scroll="!!ui.movable"
 			:zoom-on-pinch="!!ui.movable"
+			@move="enforceViewportLock"
+			@pane-ready="onPaneReady"
 			@nodes-change="onNodesUpdate"
 			@edges-change="onEdgesUpdate"
 			@connect="onNodesConnect"
@@ -84,7 +87,7 @@
 	</div>
 </template>
 <script lang="ts" setup>
-import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import FlowChartCustomNode from '@/components/flowchart/FlowChartCustomNode.vue';
 import { colorValue } from '@/components/shared/colors';
 import { frameCSS } from '@/components/shared/frame';
@@ -93,7 +96,16 @@ import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
 import { Background } from '@vue-flow/background';
 import type { Connection, EdgeChange, EdgeMouseEvent, NodeChange, NodeMouseEvent, Styles } from '@vue-flow/core';
-import { type Edge, type EdgeMarkerType, MarkerType, type Node, Position, VueFlow, useVueFlow } from '@vue-flow/core';
+import {
+	type Edge,
+	type EdgeMarkerType,
+	MarkerType,
+	type Node,
+	type ViewportTransform,
+	Position,
+	VueFlow,
+	useVueFlow,
+} from '@vue-flow/core';
 import {
 	CallRequested,
 	Component,
@@ -136,9 +148,13 @@ let debounceTimer: number = 0;
 const { layout } = useLayout();
 
 const flowChart = ref<InstanceType<typeof VueFlow>>();
+const flowChartContainer = ref<HTMLElement>();
 
 const nodes = ref<Node[]>([]);
 const edges = ref<Edge[]>([]);
+
+let resizeObserver: ResizeObserver | undefined;
+const lockedViewport = ref<ViewportTransform>();
 
 const currentZoom = computed<number | undefined>(() => {
 	return flowChart.value?.getViewport().zoom;
@@ -159,6 +175,37 @@ const frameStyles = computed<string>(() => {
 
 	return styles.join(';');
 });
+
+function onPaneReady(): void {
+	if (!props.ui.movable && flowChart.value) {
+		lockedViewport.value = flowChart.value.getViewport();
+	}
+}
+
+function enforceViewportLock(): void {
+	if (props.ui.movable || !lockedViewport.value || !flowChart.value) return;
+
+	const currentViewport = flowChart.value.getViewport();
+	const viewport = lockedViewport.value;
+	if (
+		currentViewport.x !== viewport.x ||
+		currentViewport.y !== viewport.y ||
+		currentViewport.zoom !== viewport.zoom
+	) {
+		flowChart.value.setViewport(viewport, { duration: 0 });
+	}
+}
+
+async function fitViewOnResize(): Promise<void> {
+	if (!props.ui.readOnly || props.ui.movable || !flowChart.value) return;
+
+	lockedViewport.value = undefined;
+	await flowChart.value.fitView({ duration: 0 });
+
+	if (!props.ui.movable && flowChart.value) {
+		lockedViewport.value = flowChart.value.getViewport();
+	}
+}
 
 function onUpdateNodes(updated: Node[]): void {
 	nodes.value = updated;
@@ -522,7 +569,29 @@ function init() {
 }
 
 watch(() => props.ui.value, setNodesAndEdges, { deep: true });
-onUnmounted(() => ConnectionHandler.removeEventListener(onNagoEvent));
+watch(
+	() => props.ui.movable,
+	(movable) => {
+		if (movable) {
+			lockedViewport.value = undefined;
+		} else if (flowChart.value) {
+			lockedViewport.value = flowChart.value.getViewport();
+		}
+	},
+	{ immediate: true }
+);
+
+onMounted(() => {
+	if (!flowChartContainer.value) return;
+
+	resizeObserver = new ResizeObserver(fitViewOnResize);
+	resizeObserver.observe(flowChartContainer.value);
+});
+
+onUnmounted(() => {
+	resizeObserver?.disconnect();
+	ConnectionHandler.removeEventListener(onNagoEvent);
+});
 
 init();
 </script>
