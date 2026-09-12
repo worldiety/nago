@@ -8,20 +8,15 @@
 package alert
 
 import (
-	"encoding/hex"
-	"errors"
 	"fmt"
 	"log/slog"
-	"os"
 	"slices"
 	"time"
 
-	"go.wdy.de/nago/application/user"
-	"go.wdy.de/nago/pkg/std"
+	"go.wdy.de/nago/application/xerror"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
 	"go.wdy.de/nago/presentation/ui"
-	"golang.org/x/crypto/sha3"
 )
 
 type Intent int
@@ -130,104 +125,6 @@ func ShowBannerMessage(wnd core.Window, msg Message) {
 	messages.Set(append(messages.Get(), msg))
 }
 
-// makeMessageFromError converts different error types into user-facing Message structs.
-// It checks for known error interfaces (e.g., NotLoggedIn, PermissionDenied, LocalizedError)
-// and standard errors like os.ErrNotExist or password strength errors, returning a
-// localized title and description suitable for display in a banner or snackbar.
-// If the error is not recognized, it returns false so no message is shown.
-func makeMessageFromError(wnd core.Window, err error) (Message, bool) {
-	if err == nil {
-		return Message{}, false
-	}
-
-	var permNotLoggedIn interface {
-		NotLoggedIn() bool
-	}
-
-	if errors.As(err, &permNotLoggedIn) && permNotLoggedIn.NotLoggedIn() {
-
-		return Message{
-			Title:   "Zugriff verweigert",
-			Message: "Diese Funktion steht nur eingeloggten Nutzern zur Verfügung.",
-		}, true
-	}
-
-	var permissionDenied interface {
-		PermissionDenied() bool
-	}
-
-	if errors.As(err, &permissionDenied) && permissionDenied.PermissionDenied() {
-		name := "?"
-		if str, ok := permissionDenied.(user.PermissionDeniedError); ok {
-			localized := wnd.Bundle().Resolve(string(str))
-			if localized == string(user.PermissionDeniedErr) {
-				name = ""
-			} else {
-				name = "'" + localized + "'"
-			}
-		}
-
-		msg := "Es besteht keine Berechtigung, um diese Inhalte oder Funktionen zu verwenden."
-		if name != "" {
-			msg += " Ein übergeordneter Rechteinhaber muss " + name + " zunächst explizit erteilen."
-		}
-
-		return Message{
-			Title:   "Zugriff verweigert",
-			Message: msg,
-		}, true
-	}
-
-	var localError std.LocalizedError
-
-	if errors.As(err, &localError) {
-		return Message{
-			Title:   localError.Title(),
-			Message: localError.Description(),
-		}, true
-	}
-
-	if errors.Is(err, os.ErrNotExist) {
-		return Message{
-			Title:   "Element nicht gefunden",
-			Message: "Der Anwendungsfall konnte nicht ausgeführt werden, da ein Element erwartet aber nicht gefunden wurde.",
-		}, true
-	}
-
-	if errors.Is(err, os.ErrExist) {
-		return Message{
-			Title:   "Element bereits vorhanden",
-			Message: "Der Anwendungsfall konnte nicht ausgeführt werden, da ein Element nicht bereits vorhanden sein darf, aber gefunden wurde.",
-		}, true
-	}
-
-	var passwordStrengthErr user.PasswordStrengthError
-	if errors.As(err, &passwordStrengthErr) {
-		var msg string
-		if passwordStrengthErr.Strength.Complexity < user.Strong {
-			msg = "Die Kennwortkomplexität ist zu niedrig."
-		} else if !passwordStrengthErr.Strength.ContainsUpperAndLowercase {
-			msg = "Das Kennwort muss mindestens einen Groẞ- und einen Kleinbuchstaben enthalten."
-		} else if !passwordStrengthErr.Strength.ContainsMinLength {
-			msg = fmt.Sprintf("Das Kennwort muss mindestens %d Zeichen enthalten.", passwordStrengthErr.Strength.MinLengthRequired)
-		} else if !passwordStrengthErr.Strength.ContainsSpecial {
-			msg = "Das Kennwort muss mindestens ein Sonderzeichen enthalten."
-		} else if !passwordStrengthErr.Strength.ContainsBelowMaxLength {
-			msg = "Das Kennwort ist zu lang."
-		} else if !passwordStrengthErr.Strength.ContainsNumber {
-			msg = "Das Kennwort muss mindestens eine Zahl enthalten."
-		} else {
-			msg = "Das Kennwort kann nicht verwendet werden."
-		}
-		return Message{
-			Title:   "Kennwort zu schwach",
-			Message: msg,
-		}, true
-	}
-
-	return Message{}, false
-}
-
 // TBannerError is a feedback component(Banner Error).
 type TBannerError struct {
 	err error
@@ -240,30 +137,25 @@ func BannerError(err error) TBannerError {
 }
 
 // Render transforms the stored error into a banner message.
-// Known errors are mapped via makeMessageFromError into
-// user-friendly messages. For unknown errors, it shows a
-// generic fallback message with a support token for reference.
+// Known errors are classified via [xerror.Present] into user-friendly,
+// localized messages. For unknown errors, it shows a generic fallback
+// message with a support token for reference.
 func (t TBannerError) Render(ctx core.RenderContext) core.RenderNode {
 	if t.err == nil {
 		return nil
 	}
 
-	tmp := sha3.Sum224([]byte(t.err.Error()))
-	token := hex.EncodeToString(tmp[:16])
+	p := xerror.PresentOrGeneric(ctx.Window(), t.err)
+	token := p.Token()
 
-	if msg, ok := makeMessageFromError(ctx.Window(), t.err); ok {
+	if p.Recognized() {
 		slog.Error("handled customized banner error", "err", t.err.Error(), "token", token)
-		return Banner(msg.Title, msg.Message+" Code: "+token).Render(ctx)
-	}
-
-	msg := Message{
-		Title:   "Fehler",
-		Message: fmt.Sprintf("Ein unerwarteter Fehler ist aufgetreten. Sie können sich mit dem folgenden Code an den Support wenden: %s", token),
+		return Banner(p.Title, p.Message+" Code: "+token).Render(ctx)
 	}
 
 	slog.Error("unexpected banner error", "token", token, "err", t.err.Error())
 
-	return Banner(msg.Title, msg.Message).Render(ctx)
+	return Banner(p.Title, p.Message).Render(ctx)
 }
 
 // ShowBannerError is like ShowBannerMessage but specialized on internal unhandled errors and hides
@@ -275,20 +167,16 @@ func ShowBannerError(wnd core.Window, err error) {
 		return
 	}
 
-	tmp := sha3.Sum224([]byte(err.Error()))
-	token := hex.EncodeToString(tmp[:16])
+	p := xerror.PresentOrGeneric(wnd, err)
+	token := p.Token()
 
-	if msg, ok := makeMessageFromError(wnd, err); ok {
+	if p.Recognized() {
 		slog.Error("handled customized show banner error", "err", err.Error(), "token", token)
-		msg.Message += " Code: " + token
-		ShowBannerMessage(wnd, msg)
+		ShowBannerMessage(wnd, Message{Title: p.Title, Message: p.Message + " Code: " + token})
 		return
 	}
 
-	msg := Message{
-		Title:   "Fehler",
-		Message: fmt.Sprintf("Ein unerwarteter Fehler ist aufgetreten. Sie können sich mit dem folgenden Code an den Support wenden: %s", token),
-	}
+	msg := Message{Title: p.Title, Message: p.Message}
 
 	messages := core.TransientStateOf[[]Message](wnd, ".nago-messages")
 
