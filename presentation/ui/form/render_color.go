@@ -19,11 +19,10 @@ func RenderColor(ctx FieldContext) core.View {
 	if !ctx.IsType(reflect.TypeFor[ui.Color]()) {
 		return nil
 	}
-	
+
 	requiresInit := false
-	colorState := core.DerivedState[ui.Color](ctx.State(), ctx.Field().Name).Init(func() ui.Color {
-		src := ctx.State().Get()
-		str := reflect.ValueOf(src).FieldByName(ctx.Field().Name).String()
+	colorState := core.DerivedState[ui.Color](ctx.State(), ctx.Path()).Init(func() ui.Color {
+		str := ctx.FieldValue().String()
 		if val := ctx.Value(); val != "" && str == "" {
 			requiresInit = true
 			return ui.Color(val)

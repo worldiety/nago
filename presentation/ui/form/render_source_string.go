@@ -33,9 +33,8 @@ func RenderSourceString(ctx FieldContext) core.View {
 		return alert.BannerError(err)
 	}
 
-	strState := core.DerivedState[[]Entity](ctx.State(), field.Name).Init(func() []Entity {
-		src := ctx.State().Get()
-		strID := reflect.ValueOf(src).FieldByName(field.Name).String()
+	strState := core.DerivedState[[]Entity](ctx.State(), ctx.Path()).Init(func() []Entity {
+		strID := ctx.FieldValue().String()
 		if strID == "" {
 			return nil
 		}

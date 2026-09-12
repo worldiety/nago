@@ -32,9 +32,8 @@ func RenderDuration(ctx FieldContext) core.View {
 
 	field := ctx.Field()
 	requiresInit := false
-	intState := core.DerivedState[time.Duration](ctx.State(), field.Name).Init(func() time.Duration {
-		src := ctx.State().Get()
-		v := reflect.ValueOf(src).FieldByName(field.Name).Int()
+	intState := core.DerivedState[time.Duration](ctx.State(), ctx.Path()).Init(func() time.Duration {
+		v := ctx.FieldValue().Int()
 		if val := ctx.Value(); val != "" && v == 0 {
 			p, err := strconv.ParseInt(val, 10, 64)
 			if err == nil {

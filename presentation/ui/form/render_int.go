@@ -23,9 +23,8 @@ func RenderInt(ctx FieldContext) core.View {
 	}
 
 	requiresInit := false
-	intState := core.DerivedState[int64](ctx.State(), ctx.Field().Name).Init(func() int64 {
-		src := ctx.State().Get()
-		v := reflect.ValueOf(src).FieldByName(ctx.Field().Name).Int()
+	intState := core.DerivedState[int64](ctx.State(), ctx.Path()).Init(func() int64 {
+		v := ctx.FieldValue().Int()
 		if val := ctx.Value(); val != "" && v == 0 {
 			p, err := strconv.ParseInt(val, 10, 64)
 			if err == nil {

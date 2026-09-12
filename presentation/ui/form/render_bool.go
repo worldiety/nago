@@ -21,9 +21,8 @@ func RenderBool(ctx FieldContext) core.View {
 	}
 
 	requiresInit := false
-	boolState := core.DerivedState[bool](ctx.State(), ctx.Field().Name).Init(func() bool {
-		src := ctx.State().Get()
-		v := reflect.ValueOf(src).FieldByName(ctx.Field().Name).Bool()
+	boolState := core.DerivedState[bool](ctx.State(), ctx.Path()).Init(func() bool {
+		v := ctx.FieldValue().Bool()
 		if val := ctx.Value(); val != "" && v == false {
 			p, err := strconv.ParseBool(val)
 			if err == nil {
@@ -51,5 +50,5 @@ func RenderBool(ctx FieldContext) core.View {
 		InputValue(boolState).
 		SupportingText(ctx.SupportingText()).
 		Frame(ui.Frame{}.FullWidth())
-	
+
 }

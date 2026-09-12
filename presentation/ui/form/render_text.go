@@ -21,9 +21,8 @@ func RenderText(ctx FieldContext) core.View {
 	}
 
 	requiresInit := false
-	strState := core.DerivedState[string](ctx.State(), ctx.Field().Name).Init(func() string {
-		src := ctx.State().Get()
-		str := reflect.ValueOf(src).FieldByName(ctx.Field().Name).String()
+	strState := core.DerivedState[string](ctx.State(), ctx.Path()).Init(func() string {
+		str := ctx.FieldValue().String()
 		if val := ctx.Value(); val != "" && str == "" {
 			requiresInit = true
 			return ctx.Window().Bundle().Resolve(val)

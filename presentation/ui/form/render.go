@@ -10,13 +10,13 @@ package form
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"iter"
 	"log/slog"
 	"reflect"
 	"slices"
 	"strconv"
+	"sync"
 	"sync/atomic"
 
 	"github.com/worldiety/option"
@@ -67,9 +67,68 @@ type FieldContext struct {
 	ctx            context.Context
 	state          *core.State[any]
 	errorText      string
+
+	// path is the dotted access path of this field from the root model, for example
+	// "Issuer.Seat.Country". For a field of the root model it equals field.Name.
+	path string
+
+	// errKey is the key under which errorText was found, empty if no error matched.
+	errKey string
+
+	// consumed is the shared bookkeeping of the enclosing render pass. It may be nil.
+	consumed *consumedKeys
 }
 
+// consumedKeys records which field error keys were actually picked up by a renderer. It is
+// the mechanism which lets the auto form guarantee that no error disappears silently: a
+// renderer which never calls [FieldContext.ErrorText] simply never marks its key, and the
+// message is then reported in the banner instead.
+type consumedKeys struct {
+	mutex sync.Mutex
+	keys  map[string]bool
+}
+
+func (c *consumedKeys) mark(key string) {
+	if c == nil || key == "" {
+		return
+	}
+
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	if c.keys == nil {
+		c.keys = map[string]bool{}
+	}
+
+	c.keys[key] = true
+}
+
+func (c *consumedKeys) has(key string) bool {
+	if c == nil {
+		return false
+	}
+
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	return c.keys[key]
+}
+
+// NewFieldContext creates a field context for a field of the root model.
+//
+// Prefer letting [TAuto.Render] build the contexts, because only then nested paths and the
+// error accounting are wired up. This constructor remains for external callers which drive
+// the renderers themselves; note that it walks the error tree on every call, so hoist it out
+// of a loop if you build many contexts from the same options.
 func NewFieldContext[T any](wnd core.Window, opts AutoOptions, state *core.State[T], field reflect.StructField) FieldContext {
+	fields, _ := xerrors.Collect(opts.Errors)
+	return newFieldContext(wnd, opts, state, field, field.Name, true, fields.Fields, nil)
+}
+
+// newFieldContext builds the context for one field. allowBareName enables the backwards
+// compatible lookup of an error under the plain field name and must only be set for fields of
+// the root model, see below.
+func newFieldContext[T any](wnd core.Window, opts AutoOptions, state *core.State[T], field reflect.StructField, path string, allowBareName bool, fieldErrors map[string]string, consumed *consumedKeys) FieldContext {
 	disabled := false
 	if flag, ok := field.Tag.Lookup("disabled"); ok && flag == "true" {
 		disabled = true
@@ -124,10 +183,22 @@ func NewFieldContext[T any](wnd core.Window, opts AutoOptions, state *core.State
 		src = wrapStrSlice(values)
 	}
 
-	var errorText string
+	var errorText, errKey string
 
-	if err, ok := errors.AsType[xerrors.ErrorWithFields](opts.Errors); ok {
-		errorText = err.Fields[field.Name]
+	// Match the full path first so that a validation which knows the domain structure can
+	// address "Issuer.Seat.Country".
+	//
+	// The bare field name is only accepted at the root, where path and name are identical
+	// anyway. Accepting it at every depth would make a key like "Country" bind to the root
+	// field and to every nested Country at once, with no way to address just one of them.
+	if msg, ok := fieldErrors[path]; ok {
+		errorText, errKey = msg, path
+	} else if msg, ok := fieldErrors[field.Name]; allowBareName && ok {
+		errorText, errKey = msg, field.Name
+	}
+
+	if errorText != "" {
+		errorText = wnd.Bundle().Resolve(errorText)
 	}
 
 	anyState := core.DerivedState[any](state, "-any").Init(func() any {
@@ -148,6 +219,9 @@ func NewFieldContext[T any](wnd core.Window, opts AutoOptions, state *core.State
 		id:             field.Tag.Get("id"),
 		source:         src,
 		errorText:      errorText,
+		errKey:         errKey,
+		path:           path,
+		consumed:       consumed,
 		state:          anyState,
 		field:          field,
 	}
@@ -211,8 +285,58 @@ func (c FieldContext) State() *core.State[any] {
 	return c.state
 }
 
+// ErrorText returns the validation message bound to this field, or the empty string.
+//
+// This is not a pure getter: calling it marks the message as delivered to the user. A renderer
+// which does not call it leaves the message unclaimed, and [TAuto.Render] then shows it in the
+// banner instead of dropping it, which is how the form guarantees that no error disappears.
+//
+// Renderers must therefore call this only on the path where the text is actually displayed.
+// Calling it and then returning nil, or calling it merely to test for emptiness, marks the
+// message as shown when it was not, and it is then lost.
 func (c FieldContext) ErrorText() string {
+	if c.errorText != "" {
+		c.consumed.mark(c.errKey)
+	}
+
 	return c.errorText
+}
+
+// Path returns the dotted access path of this field from the root model, for example
+// "Issuer.Seat.Country". For a field of the root model it is identical to Field().Name.
+//
+// Use it as the key for derived states: field names alone collide as soon as two nested
+// structs carry a field of the same name.
+func (c FieldContext) Path() string {
+	return c.path
+}
+
+// FieldValue resolves the current value of this field from the bound model.
+//
+// Always prefer this over reflect.ValueOf(State().Get()).FieldByName(Field().Name), which
+// only ever looks at the root struct and therefore reads the wrong field, or panics, for a
+// nested model.
+func (c FieldContext) FieldValue() reflect.Value {
+	v := reflect.ValueOf(c.state.Get())
+
+	for v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
+		if v.IsNil() {
+			return reflect.Zero(c.field.Type)
+		}
+		v = v.Elem()
+	}
+
+	if len(c.field.Index) == 0 {
+		return reflect.Zero(c.field.Type)
+	}
+
+	fv, err := v.FieldByIndexErr(c.field.Index)
+	if err != nil {
+		// a nil pointer somewhere along the path, report the zero value instead of panicking
+		return reflect.Zero(c.field.Type)
+	}
+
+	return fv
 }
 
 func (c FieldContext) Subject() user.Subject {

@@ -9,6 +9,7 @@ package form
 
 import (
 	"fmt"
+	"log/slog"
 	"reflect"
 	"strings"
 
@@ -41,19 +42,22 @@ func GroupsFor[T any]() []Group {
 // - tag `visible:"false"` is set
 // - the field is unexported, unless it starts with "_" and has a label tag
 // - the field name appears in ignoreFields
+//
+// Note that this only flattens embedded structs, because that is what reflect.VisibleFields
+// does. Named nested struct fields are returned as a single field of kind struct; descending
+// into them is the responsibility of the caller, see [TAuto.Render], because only the caller
+// knows whether a renderer already claims that type.
+//
+// If p is not a struct, nil is returned.
 func GroupsOf(p reflect.Type, ignoreFields ...string) []Group {
 	var res []Group
-	//
 
-	if p.Kind() != reflect.Struct {
-		panic(fmt.Errorf("type must be a struct but got %s", p.Kind()))
+	if p == nil || p.Kind() != reflect.Struct {
+		slog.Error("form: cannot introspect non struct type", "type", fmt.Sprintf("%v", p))
+		return nil
 	}
 
-	//typ := reflect.TypeOf(zero)
-	//for i := 0; i < typ.NumField(); i++ {
 	for _, field := range reflect.VisibleFields(p) {
-		//field := typ.Field(i)
-
 		if flag, ok := field.Tag.Lookup("visible"); ok && flag == "false" {
 			continue
 		}

@@ -21,9 +21,8 @@ func RenderFloat(ctx FieldContext) core.View {
 	}
 
 	requiresInit := false
-	floatState := core.DerivedState[float64](ctx.State(), ctx.Field().Name).Init(func() float64 {
-		src := ctx.State().Get()
-		v := reflect.ValueOf(src).FieldByName(ctx.Field().Name).Float()
+	floatState := core.DerivedState[float64](ctx.State(), ctx.Path()).Init(func() float64 {
+		v := ctx.FieldValue().Float()
 		if val := ctx.Value(); val != "" && v == 0 {
 			p, err := strconv.ParseFloat(val, 64)
 			if err == nil {

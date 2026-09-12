@@ -20,9 +20,8 @@ func RenderXTimeDate(ctx FieldContext) core.View {
 		return nil
 	}
 
-	dateState := core.DerivedState[xtime.Date](ctx.State(), ctx.Field().Name).Init(func() xtime.Date {
-		src := ctx.State().Get()
-		v := reflect.ValueOf(src).FieldByName(ctx.Field().Name).Interface()
+	dateState := core.DerivedState[xtime.Date](ctx.State(), ctx.Path()).Init(func() xtime.Date {
+		v := ctx.FieldValue().Interface()
 
 		d := v.(xtime.Date)
 

@@ -23,9 +23,8 @@ func RenderImage(ctx FieldContext) core.View {
 	}
 
 	requiresInit := false
-	imageState := core.DerivedState[image.ID](ctx.State(), ctx.Field().Name).Init(func() image.ID {
-		src := ctx.State().Get()
-		str := reflect.ValueOf(src).FieldByName(ctx.Field().Name).String()
+	imageState := core.DerivedState[image.ID](ctx.State(), ctx.Path()).Init(func() image.ID {
+		str := ctx.FieldValue().String()
 		if val := ctx.Value(); val != "" && str == "" {
 			requiresInit = true
 			return image.ID(val)

@@ -21,9 +21,8 @@ func RenderXTimeTimeFrame(ctx FieldContext) core.View {
 		return nil
 	}
 
-	dateState := core.DerivedState[xtime.TimeFrame](ctx.State(), ctx.Field().Name).Init(func() xtime.TimeFrame {
-		src := ctx.State().Get()
-		v := reflect.ValueOf(src).FieldByName(ctx.Field().Name).Interface()
+	dateState := core.DerivedState[xtime.TimeFrame](ctx.State(), ctx.Path()).Init(func() xtime.TimeFrame {
+		v := ctx.FieldValue().Interface()
 
 		d := v.(xtime.TimeFrame)
 

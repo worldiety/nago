@@ -32,9 +32,8 @@ func RenderSliceText(ctx FieldContext) core.View {
 	}
 
 	requiresInit := false
-	strState := core.DerivedState[string](ctx.State(), field.Name).Init(func() string {
-		src := ctx.State().Get()
-		slice := reflect.ValueOf(src).FieldByName(field.Name)
+	strState := core.DerivedState[string](ctx.State(), ctx.Path()).Init(func() string {
+		slice := ctx.FieldValue()
 		tmp := make([]string, 0, slice.Len())
 		for i := 0; i < slice.Len(); i++ {
 			tmp = append(tmp, slice.Index(i).String())
