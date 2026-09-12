@@ -115,8 +115,9 @@ func BearerAuth[In any](authenticate token.AuthenticateSubject, fn func(dst *In,
 				if authHeader == "" {
 					sub, err := authenticate("")
 					if err != nil {
-						http.Error(w, "authenticate use case does not support anon call", http.StatusInternalServerError)
-						return nil, err
+						// Do not write here: the caller classifies the error and renders a
+						// single problem+json body. Writing twice corrupted the response.
+						return nil, fmt.Errorf("anonymous authentication is not supported: %w", err)
 					}
 
 					subject = sub
@@ -124,14 +125,12 @@ func BearerAuth[In any](authenticate token.AuthenticateSubject, fn func(dst *In,
 					const prefix = "Bearer "
 
 					if !strings.HasPrefix(authHeader, prefix) {
-						http.Error(w, "Invalid auth header format", http.StatusUnauthorized)
 						return nil, user.InvalidSubjectErr
 					}
 
 					tokenStr := strings.TrimPrefix(authHeader, prefix)
 					subj, err := authenticate(token.Plaintext(tokenStr))
 					if err != nil {
-						http.Error(w, "Authorization header missing", http.StatusInternalServerError)
 						return nil, err
 					}
 

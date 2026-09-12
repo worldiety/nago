@@ -8,6 +8,7 @@
 package hapi
 
 import (
+	"errors"
 	"fmt"
 	"go.wdy.de/nago/pkg/oas/v31"
 	"net/http"
@@ -245,7 +246,8 @@ func (b *EndpointBuilder[In]) register(api *API) {
 				if handler.requestDecorator != nil {
 					r, err := handler.requestDecorator(writer, request)
 					if err != nil {
-						writer.WriteHeader(http.StatusForbidden)
+						// classify: a missing authentication is a 401, not a 403
+						WriteError(writer, request, err)
 						return
 					}
 
@@ -262,7 +264,7 @@ func (b *EndpointBuilder[In]) register(api *API) {
 			for _, strHeader := range b.request.inputStrHeaders {
 				if strHeader.IntoModel != nil {
 					if err := strHeader.IntoModel(&input, request.Header.Get(strHeader.Name)); err != nil {
-						writer.WriteHeader(http.StatusBadRequest)
+						WriteError(writer, request, fmt.Errorf("invalid header %q: %w", strHeader.Name, err))
 						return
 					}
 				}
@@ -271,7 +273,7 @@ func (b *EndpointBuilder[In]) register(api *API) {
 			for _, strQuery := range b.request.inputStrQueryParams {
 				if strQuery.IntoModel != nil {
 					if err := strQuery.IntoModel(&input, reqQueryValues.Get(strQuery.Name)); err != nil {
-						writer.WriteHeader(http.StatusBadRequest)
+						WriteError(writer, request, fmt.Errorf("invalid query parameter %q: %w", strQuery.Name, err))
 						return
 					}
 				}
@@ -280,7 +282,13 @@ func (b *EndpointBuilder[In]) register(api *API) {
 			for _, handler := range b.request.handlers {
 				if handler.intoModel != nil {
 					if err := handler.intoModel(&input, writer, request); err != nil {
-						writer.WriteHeader(http.StatusBadRequest)
+						// intoModel already wrote a status and a body in this case, writing
+						// another header here produced a superfluous WriteHeader warning and
+						// overrode the more specific status.
+						if !errors.Is(err, errorAlreadyHandled) {
+							WriteError(writer, request, err)
+						}
+
 						return
 					}
 				}

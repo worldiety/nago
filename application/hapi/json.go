@@ -19,8 +19,9 @@ func ToJSON[In, Out any](fn func(in In) (Out, error)) ResponseOption[In] {
 		r.handler = func(in In, writer http.ResponseWriter, request *http.Request) {
 			out, err := fn(in)
 			if err != nil {
-				writer.WriteHeader(http.StatusBadRequest)
-				slog.Error("failed to handle request", "error", err.Error())
+				// classify instead of answering every business error with a blanket 400:
+				// a denial is a 403, a missing element a 404, a validation failure a 422.
+				WriteError(writer, request, err)
 				return
 			}
 
@@ -74,8 +75,7 @@ func JSONFromBody[In, Model any](fn func(dst *In, model Model) error) RequestOpt
 				}
 
 				if err := fn(dst, model); err != nil {
-					slog.Error("failed to handle request", "error", err.Error())
-					w.WriteHeader(http.StatusBadRequest)
+					WriteError(w, r, err)
 					return errorAlreadyHandled
 				}
 
@@ -178,8 +178,7 @@ func JSONFromFormField[In, Model any](fieldname string, fn func(dst *In, model M
 				}
 
 				if err := fn(dst, model); err != nil {
-					slog.Error("failed to handle request", "error", err.Error())
-					w.WriteHeader(http.StatusBadRequest)
+					WriteError(w, r, err)
 					return errorAlreadyHandled
 				}
 
