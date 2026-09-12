@@ -13,13 +13,16 @@ import (
 	"fmt"
 	"io"
 	"iter"
+	"maps"
 	"reflect"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/file"
+	"go.wdy.de/nago/application/xerror"
 	"go.wdy.de/nago/auth"
 )
 
@@ -631,7 +634,7 @@ func executeToolCall(subject auth.Subject, tools map[string]Tool, call ToolCall,
 		if err := before(subject, tool, call); err != nil {
 			return ToolResult{
 				ToolCallID: call.ID,
-				Content:    []Content{Text{Text: err.Error()}},
+				Content:    []Content{Text{Text: toolErrorText(err)}},
 				IsError:    true,
 			}, nil
 		}
@@ -646,7 +649,7 @@ func executeToolCall(subject auth.Subject, tools map[string]Tool, call ToolCall,
 	if err != nil {
 		return ToolResult{
 			ToolCallID: call.ID,
-			Content:    []Content{Text{Text: err.Error()}},
+			Content:    []Content{Text{Text: toolErrorText(err)}},
 			IsError:    true,
 		}, nil
 	}
@@ -655,6 +658,51 @@ func executeToolCall(subject auth.Subject, tools map[string]Tool, call ToolCall,
 		ToolCallID: call.ID,
 		Content:    []Content{Text{Text: string(out)}},
 	}, nil
+}
+
+// toolErrorText renders a tool failure for the model using the same classifier which drives
+// the user facing banners, see [xerror.Present].
+//
+// A raw err.Error() is a poor signal: a permission denial arrives as a bare permission id with
+// no indication that it is an authorization problem, so the model cannot tell "retry
+// differently" apart from "you are not allowed to do this at all".
+//
+// Note on disclosure: unrecognized errors keep their original message. The tool already ran
+// under the caller's own auth.Subject, so the model operates inside the user's authorization
+// boundary, and withholding the detail would only prevent the model from recovering. Only the
+// classified categories are rewritten, because for those a better phrasing exists.
+func toolErrorText(err error) string {
+	if err == nil {
+		return ""
+	}
+
+	bundler := xerror.BundlerOrDefault(nil)
+
+	p, ok := xerror.Present(bundler, err)
+	if !ok {
+		return err.Error()
+	}
+
+	var sb strings.Builder
+	sb.WriteString(p.Title)
+	sb.WriteString(": ")
+	sb.WriteString(p.Message)
+
+	if p.Denied() {
+		sb.WriteString(" ")
+		sb.WriteString(xerror.StrDeniedRetryHint.Get(bundler))
+	}
+
+	// Field bound validation messages are the actionable part: they tell the model exactly
+	// which argument to correct.
+	for _, key := range slices.Sorted(maps.Keys(p.Fields)) {
+		sb.WriteString("\n- ")
+		sb.WriteString(key)
+		sb.WriteString(": ")
+		sb.WriteString(p.Fields[key])
+	}
+
+	return sb.String()
 }
 
 // executeOpenFileCall handles a [Tool.OpenFile] tool call. Text files (see [file.IsText]) are read and
