@@ -11,6 +11,7 @@ import (
 	"bytes"
 	"io"
 	"math/rand"
+	"os"
 	"path/filepath"
 	"reflect"
 	"slices"
@@ -32,6 +33,8 @@ func TestDB_Bench(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	defer closeDB(&db)
 
 	expectedSet := makeTestSet()
 	start := time.Now()
@@ -65,6 +68,8 @@ func TestDB_Set(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	defer closeDB(&db)
 
 	expectedSet := makeTestSet()
 	for _, entry := range expectedSet {
@@ -176,11 +181,21 @@ func TestDB_Set(t *testing.T) {
 }
 
 func TestDB_5m(t *testing.T) {
+	// Five million writes with a read back after each one takes well over twenty minutes,
+	// which exceeds the default go test timeout and makes a plain "go test ./..." unusable.
+	// It never actually ran before, because a leaked handle panicked the binary long
+	// beforehand. Keep it opt in, following the convention of the other expensive tests.
+	if os.Getenv("NAGO_TDB_STRESS") == "" {
+		t.Skip("set NAGO_TDB_STRESS=1 to run the five million entry stress test")
+	}
+
 	dbdir := filepath.Join(t.TempDir())
 	db, err := Open(dbdir)
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	defer closeDB(&db)
 
 	const maxEntries = 5_000_000
 	bucket := "nums"
@@ -274,6 +289,8 @@ func TestDB_Races(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	defer closeDB(&db)
+
 	expectedSet := makeTestSet()
 
 	const threads = 10
@@ -317,5 +334,20 @@ func TestDB_Races(t *testing.T) {
 
 	if !reflect.DeepEqual(entries, expectedSet) {
 		t.Fatalf("mismatched entries")
+	}
+}
+
+// closeDB closes whichever database the given variable currently refers to.
+//
+// The tests reopen the database several times and only closed some of those handles. An
+// unclosed handle is not merely untidy here: lockedfile installs a finalizer which panics when
+// the file becomes unreachable without a Close, so the leak killed the whole test binary from
+// inside the garbage collector, during whatever unrelated test happened to be running.
+//
+// A close error is deliberately ignored, because on the path where a test already failed the
+// handle may have been closed explicitly beforehand.
+func closeDB(db **DB) {
+	if *db != nil {
+		_ = (*db).Close()
 	}
 }

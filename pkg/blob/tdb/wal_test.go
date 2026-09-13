@@ -20,9 +20,8 @@ func Test_wal_set(t *testing.T) {
 	testfname := filepath.Join(t.TempDir(), "test.WAL")
 	f, err := OpenFile(testfname)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
-	defer f.Close()
 
 	type entryt struct {
 		b, k, v []byte
@@ -30,8 +29,13 @@ func Test_wal_set(t *testing.T) {
 
 	wal, err := NewWAL(f, nil)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
+
+	// closes whichever WAL is current, see the reopen below
+	defer func() {
+		_ = wal.Close()
+	}()
 	rnd := rand.New(rand.NewSource(1234))
 	var testset []entryt
 	for i := range 10_000 {
@@ -52,9 +56,15 @@ func Test_wal_set(t *testing.T) {
 	const reOpenTest = true
 
 	if reOpenTest {
+		// OpenFile takes an exclusive lock, so the current handle has to be released first.
+		// Reopening while still holding it blocked forever, and the test never completed.
+		if err := wal.Close(); err != nil {
+			t.Fatal(err)
+		}
+
 		wal, err = OpenWAL(testfname, nil)
 		if err != nil {
-			t.Error(err)
+			t.Fatal(err)
 		}
 	}
 
