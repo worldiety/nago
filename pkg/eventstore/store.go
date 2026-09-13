@@ -19,7 +19,7 @@ import (
 	"iter"
 	"os"
 	"strconv"
-	"sync/atomic"
+	"sync"
 	"time"
 )
 
@@ -53,8 +53,26 @@ func (id ID) Time(loc *time.Location) (time.Time, error) {
 	return secTime.Add(time.Duration(msp) * time.Millisecond), nil
 }
 
-var lastUnixMilli atomic.Int64
-var lastSeqNo atomic.Int64
+// maxSeqNoPerMilli is the highest sequence number which still renders as a single digit.
+//
+// Every other component of an ID is zero padded, so that the lexicographic order of the ids
+// equals their chronological order. The store depends on that: it locates and replays events
+// with range scans over the raw string keys. The sequence number is not padded, so a tenth
+// event within the same millisecond produced "10", which sorts before "9" and silently broke
+// the replay order.
+//
+// Widening the field would be the direct fix, but it changes the format of every id already
+// written to disk, where the old and the new form would then interleave incorrectly. Instead
+// generation waits for the next millisecond once the current one is exhausted, which keeps the
+// format and the ordering intact at the cost of capping id generation at 10000 per second and
+// process.
+const maxSeqNoPerMilli = 9
+
+var (
+	idMutex       sync.Mutex
+	lastUnixMilli int64
+	lastSeqNo     int64
+)
 
 // instanceName can be influenced from the environment
 var instanceName = os.Getenv("EVENTSTORE_INSTANCE_NAME")
@@ -63,26 +81,63 @@ var instanceName = os.Getenv("EVENTSTORE_INSTANCE_NAME")
 //
 //	<year>/<month>/<day>/<hour>/<min>/<sec>/<milliseconds>/(<EVENTSTORE_INSTANCE_NAME>/)?<seq number in millisecond>
 //
+// The returned ids are strictly monotonic, both as values and as strings, which is what the
+// range scans of the store rely on.
+//
+// Note that generation blocks for the remainder of the current millisecond once more than
+// [maxSeqNoPerMilli]+1 ids were requested within it, so throughput is capped at 10000 ids per
+// second. It also blocks while the wall clock runs behind ids that were already handed out,
+// rather than emitting an id which would sort into the past.
+//
 // Important: this is only suitable for a single machine use case. If you need to distribute across multiple process
 // instances (or machines) you have to set the EVENTSTORE_INSTANCE_NAME environment variable to something unique.
 // If no EVENTSTORE_INSTANCE_NAME is defined, the path segment is omitted.
 func NewID() ID {
-	return timeIntoID(time.Now())
+	for {
+		now := time.Now()
+		if seqNo, ok := reserveSeqNo(now.UnixMilli()); ok {
+			return timeIntoID(now, seqNo)
+		}
+
+		// Yield instead of spinning. The nap is a fraction of a millisecond, so we do not
+		// sleep past the millisecond we are waiting for.
+		time.Sleep(100 * time.Microsecond)
+	}
 }
 
-// timeIntoID expects the given time to be monotonic. Otherwise, the generated IDs may cause collisions and may cause
-// broken ids in the future due to a global state.
-func timeIntoID(now time.Time) ID {
-	nowMilli := now.UnixMilli()
-	var seqNo int64
-	if lastUnixMilli.Load() == nowMilli {
-		seqNo = lastSeqNo.Add(1)
-	} else {
-		lastSeqNo.Store(0)
+// reserveSeqNo hands out the next sequence number within the given millisecond, or reports
+// false if the caller has to wait for the clock to move on.
+func reserveSeqNo(nowMilli int64) (int64, bool) {
+	idMutex.Lock()
+	defer idMutex.Unlock()
+
+	switch {
+	case nowMilli > lastUnixMilli:
+		// A pair of atomics was not sufficient here: two goroutines entering a new
+		// millisecond concurrently both took the reset branch and both received sequence
+		// number zero, which yielded two identical ids and therefore silently overwrote an
+		// event.
+		lastUnixMilli = nowMilli
+		lastSeqNo = 0
+		return 0, true
+
+	case nowMilli < lastUnixMilli:
+		// The wall clock stepped backwards. Emitting an id now would sort before ids already
+		// handed out and could collide with them, so wait until the clock catches up.
+		return 0, false
+
+	case lastSeqNo >= maxSeqNoPerMilli:
+		return 0, false
+
+	default:
+		lastSeqNo++
+		return lastSeqNo, true
 	}
+}
 
-	lastUnixMilli.Store(nowMilli)
-
+// timeIntoID renders the given instant and sequence number into an ID. seqNo must not exceed
+// [maxSeqNoPerMilli], otherwise the result does not sort correctly.
+func timeIntoID(now time.Time, seqNo int64) ID {
 	year, month, day := now.Date()
 	hour := now.Hour()
 	minute := now.Minute()
