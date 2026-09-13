@@ -157,7 +157,7 @@ func (s *Store) Load(id ID) (std.Option[Message], error) {
 		return std.None[Message](), err
 	}
 
-	if !optReader.IsNone() {
+	if optReader.IsNone() {
 		return std.None[Message](), fs.ErrNotExist
 	}
 
