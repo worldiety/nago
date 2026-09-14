@@ -85,12 +85,7 @@ func (s *subject) Audit(perm permission.ID) error {
 	}
 
 	if !s.HasPermission(perm) {
-		var name = string(perm)
-		if p, ok := permission.Find(perm); ok {
-			name = p.Name
-		}
-
-		return user.PermissionDeniedError(name)
+		return user.PermissionDeniedError(perm)
 	}
 
 	return nil
@@ -113,12 +108,7 @@ func (s *subject) AuditResource(name rebac.Namespace, id rebac.Instance, p permi
 	}
 
 	if !s.HasResourcePermission(name, id, p) {
-		var permName = string(p)
-		if perm, ok := permission.Find(p); ok {
-			permName = perm.Name
-		}
-
-		return user.PermissionDeniedError(permName)
+		return user.PermissionDeniedError(p)
 	}
 
 	return nil

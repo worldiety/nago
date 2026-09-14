@@ -243,12 +243,7 @@ func (v *viewImpl) HasResourcePermission(name rebac.Namespace, id rebac.Instance
 
 func (v *viewImpl) AuditResource(name rebac.Namespace, id rebac.Instance, p permission.ID) error {
 	if !v.HasResourcePermission(name, id, p) {
-		var permName = string(p)
-		if perm, ok := permission.Find(p); ok {
-			permName = perm.Name
-		}
-
-		return PermissionDeniedError(permName)
+		return PermissionDeniedError(p)
 	}
 
 	return nil
@@ -270,12 +265,7 @@ func (v *viewImpl) Audit(perm permission.ID) error {
 	}
 
 	if !v.HasPermission(perm) {
-		var name = string(perm)
-		if p, ok := permission.Find(perm); ok {
-			name = p.Name
-		}
-
-		return PermissionDeniedError(name)
+		return PermissionDeniedError(perm)
 	}
 
 	return nil
