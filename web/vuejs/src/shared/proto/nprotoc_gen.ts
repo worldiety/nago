@@ -3979,6 +3979,9 @@ export enum StylePresetValues {
 	StyleButtonPrimary = 1,
 	StyleButtonSecondary = 2,
 	StyleButtonTertiary = 3,
+	StyleButtonPrimaryCritical = 4,
+	StyleButtonSecondaryCritical = 5,
+	StyleButtonTertiaryCritical = 6,
 }
 
 export class Position implements Writeable, Readable {

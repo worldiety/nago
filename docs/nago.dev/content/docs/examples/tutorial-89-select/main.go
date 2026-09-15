@@ -87,6 +87,15 @@ func main() {
 						dropdown.Dropdown("Styled mit Suche", selectOptions, personState.Get()).InputValue(personState).StyledDropdown(true).Searchable(true).Style(ui.TextFieldReduced),
 						dropdown.Dropdown("Styled mit Info", selectOptions, personState.Get()).InputValue(personState).StyledDropdown(true).DropdownInfo("Personen").Style(ui.TextFieldReduced),
 					).Gap(ui.L32).NoClip(true),
+					ui.VStack(
+						dropdown.Dropdown("Default (disabled)", selectOptions, personState.Get()).InputValue(personState).Disabled(true).Style(ui.TextFieldFilled),
+						dropdown.Dropdown("Styled (disabled)", selectOptions, personState.Get()).InputValue(personState).StyledDropdown(true).Disabled(true).Style(ui.TextFieldFilled),
+						dropdown.Dropdown("Default", selectOptions, personState.Get()).InputValue(personState).Style(ui.TextFieldFilled),
+						dropdown.Dropdown("Default (optional)", selectOptions, personState.Get()).Optional(true).InputValue(personState).Style(ui.TextFieldFilled),
+						dropdown.Dropdown("Styled", selectOptions, personState.Get()).InputValue(personState).StyledDropdown(true).Style(ui.TextFieldFilled),
+						dropdown.Dropdown("Styled mit Suche", selectOptions, personState.Get()).InputValue(personState).StyledDropdown(true).Searchable(true).Style(ui.TextFieldFilled),
+						dropdown.Dropdown("Styled mit Info", selectOptions, personState.Get()).InputValue(personState).StyledDropdown(true).DropdownInfo("Personen").Style(ui.TextFieldFilled),
+					).Gap(ui.L32).NoClip(true),
 				).Gap(ui.L64).NoClip(true),
 				ui.Stack(
 					ui.PrimaryButton(func() {

@@ -14,6 +14,15 @@
     },
     "3": {
       "name": "StyleButtonTertiary"
+    },
+    "4": {
+      "name": "StyleButtonPrimaryCritical"
+    },
+    "5": {
+      "name": "StyleButtonSecondaryCritical"
+    },
+    "6": {
+      "name": "StyleButtonTertiaryCritical"
     }
   }
 }

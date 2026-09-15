@@ -3792,10 +3792,13 @@ type StylePreset uint64
 
 const (
 	// Default is that no style preset is applied.
-	StyleNone            StylePreset = 0
-	StyleButtonPrimary   StylePreset = 1
-	StyleButtonSecondary StylePreset = 2
-	StyleButtonTertiary  StylePreset = 3
+	StyleNone                    StylePreset = 0
+	StyleButtonPrimary           StylePreset = 1
+	StyleButtonSecondary         StylePreset = 2
+	StyleButtonTertiary          StylePreset = 3
+	StyleButtonPrimaryCritical   StylePreset = 4
+	StyleButtonSecondaryCritical StylePreset = 5
+	StyleButtonTertiaryCritical  StylePreset = 6
 )
 
 func (v *StylePreset) write(r *BinaryWriter) error {

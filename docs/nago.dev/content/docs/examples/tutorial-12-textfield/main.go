@@ -46,7 +46,6 @@ func main() {
 						InputValue(firstname).
 						Placeholder("Placeholder blib").
 						Leading(ImageIcon(heroOutline.UserCircle)).
-						Trailing(ImageIcon(heroOutline.UserCircle)).
 						FullWidth(),
 
 					TextField("hello world", firstname.Get()).
@@ -71,6 +70,21 @@ func main() {
 						Trailing(ImageIcon(heroOutline.UserCircle)).
 						Disabled(true).
 						FullWidth(),
+
+					TextField("filled field", firstname.Get()).
+						InputValue(firstname).
+						Placeholder("Placeholder blib").
+						Trailing(ImageIcon(heroOutline.UserCircle)).
+						Style(TextFieldFilled).
+						FullWidth(),
+
+					TextField("filled field (disabled)", firstname.Get()).
+						InputValue(firstname).
+						Placeholder("Placeholder blib").
+						Trailing(ImageIcon(heroOutline.UserCircle)).
+						Style(TextFieldFilled).
+						FullWidth().
+						Disabled(true),
 
 					// ================================================================ //
 
@@ -127,6 +141,7 @@ func main() {
 					FloatField("float-field", 42.5, myFloatState).FullWidth(),
 
 					TextField("text area", "hello\nworld").Lines(3).FullWidth(),
+					TextField("text area filled", "hello\nworld").Lines(3).FullWidth().Style(TextFieldFilled),
 					TextField("text area", "hello\nworld").Lines(3).Disabled(true).FullWidth(),
 					TextField("text area", "hello\nworld").Lines(3).ErrorText("this is an error").FullWidth(),
 					PrimaryButton(func() {
@@ -134,6 +149,7 @@ func main() {
 					}).Title("Check"),
 
 					PasswordField("your secret", secret.Get()).InputValue(secret).FullWidth(),
+					PasswordField("your secret filled", secret.Get()).InputValue(secret).FullWidth().Style(TextFieldFilled),
 				).
 					Gap(L16).
 					Padding(Padding{}.Vertical(L32)).

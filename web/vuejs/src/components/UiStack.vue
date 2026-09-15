@@ -232,6 +232,15 @@ function getPresetClasses(): string[] {
 		case StylePresetValues.StyleButtonTertiary:
 			presetClasses.push('button-tertiary');
 			break;
+		case StylePresetValues.StyleButtonPrimaryCritical:
+			presetClasses.push('button-primary', 'critical');
+			break;
+		case StylePresetValues.StyleButtonSecondaryCritical:
+			presetClasses.push('button-secondary', 'critical');
+			break;
+		case StylePresetValues.StyleButtonTertiaryCritical:
+			presetClasses.push('button-tertiary', 'critical');
+			break;
 	}
 
 	if (props.ui.disabled) presetClasses.push('disabled');

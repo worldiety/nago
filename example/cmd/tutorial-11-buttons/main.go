@@ -43,6 +43,14 @@ func defaultButtons() core.View {
 		}).Title("primary button"),
 
 		PrimaryButton(func() {
+			fmt.Println("clicked the real critical primary")
+		}).Title("primary critical").Critical(true),
+
+		PrimaryButton(func() {
+			fmt.Println("clicked the real critical primary")
+		}).Title("primary critical disabled").Critical(true).Disabled(true),
+
+		PrimaryButton(func() {
 			fmt.Println("clicked the real primary")
 		}).Title("primary button with long content primary button with long content primary button with long content primary button with long content"),
 
@@ -68,12 +76,28 @@ func defaultButtons() core.View {
 		}).Title("secondary button"),
 
 		SecondaryButton(func() {
+			fmt.Println("clicked the real critical secondary")
+		}).Title("secondary critical").Critical(true),
+
+		SecondaryButton(func() {
+			fmt.Println("clicked the real critical secondary")
+		}).Title("secondary critical disabled").Critical(true).Disabled(true),
+
+		SecondaryButton(func() {
 			fmt.Println("clicked the real secondary")
 		}).Title("secondary button with long content secondary button with long content secondary button with long content secondary button with long content"),
 
 		TertiaryButton(func() {
 			fmt.Println("clicked the real tertiary")
 		}).Title("tertiary button"),
+
+		TertiaryButton(func() {
+			fmt.Println("clicked the real critical tertiary")
+		}).Title("tertiary critical").Critical(true),
+
+		TertiaryButton(func() {
+			fmt.Println("clicked the real critical tertiary")
+		}).Title("tertiary critical disabled").Critical(true).Disabled(true),
 
 		TertiaryButton(func() {
 			fmt.Println("clicked the real tertiary")

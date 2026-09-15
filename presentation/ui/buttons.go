@@ -60,6 +60,24 @@ func TertiaryButton(action func()) TButton {
 	return initButton(action, ButtonStyleTertiary)
 }
 
+func (c TButton) Critical(critical bool) TButton {
+	switch c.preset {
+	case ButtonStylePrimary:
+		if critical {
+			c.preset = ButtonStylePrimaryCritical
+		}
+	case ButtonStyleSecondary:
+		if critical {
+			c.preset = ButtonStyleSecondaryCritical
+		}
+	case ButtonStyleTertiary:
+		if critical {
+			c.preset = ButtonStyleTertiaryCritical
+		}
+	}
+	return c
+}
+
 func initButton(action func(), preset ButtonStyle) TButton {
 	btn := TButton{action: action, preset: preset}
 	if core.Debug {
