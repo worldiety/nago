@@ -32,6 +32,12 @@ func (p ButtonStyle) String() string {
 		return "secondary"
 	case ButtonStyleTertiary:
 		return "tertiary"
+	case ButtonStylePrimaryCritical:
+		return "primary-critical"
+	case ButtonStyleSecondaryCritical:
+		return "secondary-critical"
+	case ButtonStyleTertiaryCritical:
+		return "tertiary-critical"
 	default:
 		return "unknown"
 	}
@@ -47,9 +53,12 @@ const (
 )
 
 const (
-	ButtonStylePrimary   = ButtonStyle(proto.StyleButtonPrimary)
-	ButtonStyleSecondary = ButtonStyle(proto.StyleButtonSecondary)
-	ButtonStyleTertiary  = ButtonStyle(proto.StyleButtonTertiary)
+	ButtonStylePrimary           = ButtonStyle(proto.StyleButtonPrimary)
+	ButtonStyleSecondary         = ButtonStyle(proto.StyleButtonSecondary)
+	ButtonStyleTertiary          = ButtonStyle(proto.StyleButtonTertiary)
+	ButtonStylePrimaryCritical   = ButtonStyle(proto.StyleButtonPrimaryCritical)
+	ButtonStyleSecondaryCritical = ButtonStyle(proto.StyleButtonSecondaryCritical)
+	ButtonStyleTertiaryCritical  = ButtonStyle(proto.StyleButtonTertiaryCritical)
 )
 
 func ButtonStyles() []ButtonStyle {

@@ -50,5 +50,7 @@ The actual support may vary and depends on [AutoOptions.Renderers].
 | `Padding(padding ui.Padding)` | Padding sets the padding of the auto form. |
 | `Visible(visible bool)` | Visible toggles the visibility of the auto form. |
 | `WithFrame(fn func(ui.Frame) ui.Frame)` | WithFrame updates the frame of the auto form using a transformation function. |
+| `renderFields(depth int, fields []reflect.StructField, p renderPass)` | renderFields renders the given fields, descending into named nested struct fields which no renderer claims.  The descent is decided here and not in [GroupsOf] on purpose: only here is the renderer set known. A type such as time.Time is claimed by a renderer and must never be descended into, and maintaining a list of such types elsewhere would be a permanent source of drift. |
+| `residualError(wnd core.Window, consumed *consumedKeys, fieldErrors map[string]string, modelType reflect.Type)` | residualError returns what still has to be shown as a banner after the field bound messages were rendered on the fields themselves.  The invariant is that nothing the caller passed in disappears. Two things can remain: the non field part of the error tree, and messages addressed to a key that no rendered field claimed. |
 ---
 
