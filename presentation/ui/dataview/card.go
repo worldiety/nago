@@ -254,6 +254,7 @@ func (t TDataView[E, ID]) cardActionBar(wnd core.Window, model pager.Model[E, ID
 	sortReverse := core.StateOf[bool](wnd, t.modelOptions.StatePrefix+"-sortReverse")
 
 	return ui.VStack(
+		ui.If(t.actionBarContent != nil, t.actionBarContent),
 
 		ui.HStack(
 			t.confirmDialog(wnd, confirmPresented, dlgSpec, selected),
@@ -318,5 +319,5 @@ func (t TDataView[E, ID]) cardActionBar(wnd core.Window, model pager.Model[E, ID
 		).FullWidth(),
 
 		ui.HLine().Padding(ui.Padding{}.Vertical(ui.L8)),
-	).FullWidth().Gap(ui.L8)
+	).FullWidth().Gap(ui.L8).Alignment(ui.Leading)
 }
