@@ -139,6 +139,7 @@ type TDataView[E data.Aggregate[ID], ID ~string] struct {
 	modelOptions     pager.ModelOptions
 	model            option.Opt[pager.Model[E, ID]]
 	hideSelection    bool
+	actionBarContent core.View
 	showSearchbar    bool
 	addChevronRight  bool
 	wnd              core.Window
@@ -330,6 +331,12 @@ func (t TDataView[E, ID]) SelectionChanged(fn func([]ID)) TDataView[E, ID] {
 // ModelOptions sets the internal model options used to render directly.
 func (t TDataView[E, ID]) ModelOptions(opts pager.ModelOptions) TDataView[E, ID] {
 	t.modelOptions = opts
+	return t
+}
+
+// ActionBarContent allows the user to set some custom content to be shown in the action bar e.g., a short description.
+func (t TDataView[E, ID]) ActionBarContent(content core.View) TDataView[E, ID] {
+	t.actionBarContent = content
 	return t
 }
 

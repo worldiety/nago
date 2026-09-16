@@ -210,6 +210,11 @@ func (t TDataView[E, ID]) tableActionBar(wnd core.Window, model pager.Model[E, I
 
 	return ui.HStack(
 		t.confirmDialog(wnd, confirmPresented, dlgSpec, selected),
+
+		ui.If(t.actionBarContent != nil, t.actionBarContent),
+
+		ui.Spacer(),
+
 		ui.If(t.showSearchbar, ui.TextField("", model.Query.Get()).InputValue(model.Query).Style(ui.TextFieldReduced).Leading(ui.ImageIcon(icons.Search))),
 
 		ui.TertiaryButton(func() {
@@ -231,6 +236,5 @@ func (t TDataView[E, ID]) tableActionBar(wnd core.Window, model pager.Model[E, I
 	).
 		FullWidth().
 		Gap(ui.L8).
-		Alignment(ui.Trailing).
 		Padding(ui.Padding{Bottom: ui.L16})
 }
