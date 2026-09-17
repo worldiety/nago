@@ -27,6 +27,12 @@ type Mail struct {
 	// [group.System].
 	// If no match was found, the first found mail secret shared with [group.System] is used.
 	SmtpHint string
+
+	// InReplyTo sets the RFC 5322 In-Reply-To header and acts as a thread anchor. If empty, no threading
+	// header is written at all and the resulting mail is byte-identical to the behavior without this field.
+	// References and Message-ID are intentionally not set, because a constant subject together with a
+	// constant In-Reply-To value is sufficient for mail clients to group messages into a conversation.
+	InReplyTo string `visible:"false"`
 }
 
 type Status string

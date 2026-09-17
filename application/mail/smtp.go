@@ -107,6 +107,13 @@ func send(credentials secret.SMTP, m Mail) error {
 	data.writeHeader("Subject", mime.QEncoding.Encode("UTF-8", m.Subject))
 	data.writeHeader("MIME-Version", "1.0")
 	data.writeHeader("Content-Type", "multipart/mixed;  boundary=\""+boundaryMultipartMixed+"\"")
+
+	// Threading header: when InReplyTo is set, write In-Reply-To only. References and Message-ID are
+	// intentionally omitted, see [Mail.InReplyTo].
+	if len(m.InReplyTo) > 0 {
+		data.writeHeader("In-Reply-To", m.InReplyTo)
+	}
+
 	data.rf()
 	data.writeLine(" This is a multi-Part message in MIME format.")
 	data.rf()

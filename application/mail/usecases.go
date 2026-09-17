@@ -93,12 +93,13 @@ func NewUseCases(bus events.Bus, outgoingRepo Repository, ensureBuildIn template
 		}
 
 		_, err := uc.SendMail(user.SU(), Mail{
-			To:       evt.To,
-			CC:       evt.CC,
-			BCC:      evt.BCC,
-			Subject:  evt.Subject,
-			Parts:    parts,
-			SmtpHint: evt.SmtpHint,
+			To:        evt.To,
+			CC:        evt.CC,
+			BCC:       evt.BCC,
+			Subject:   evt.Subject,
+			Parts:     parts,
+			SmtpHint:  evt.SmtpHint,
+			InReplyTo: evt.InReplyTo,
 		})
 
 		if err != nil {

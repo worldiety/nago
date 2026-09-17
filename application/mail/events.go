@@ -26,4 +26,8 @@ type SendMailRequested struct {
 	// [group.System].
 	// If no match was found, the first found mail secret shared with [group.System] is used.
 	SmtpHint string `json:"smtpHint,omitempty"`
+
+	// InReplyTo sets the In-Reply-To header of the outgoing mail and acts as a thread anchor. It can be empty,
+	// in which case no threading header is written. See also [Mail.InReplyTo].
+	InReplyTo string `json:"inReplyTo,omitempty"`
 }
