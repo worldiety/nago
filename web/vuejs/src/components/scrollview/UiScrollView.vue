@@ -20,7 +20,7 @@
 			</div>
 		</div>
 		<div v-if="askForScroll && wantToScroll && !scrolling && contentChanged" class="scroll-action">
-			<button class="button-secondary" @click="scroll(true)">
+			<button class="button-primary" @click="scroll(true)">
 				<IconArrowDown />
 				<span>
 					{{ ui.scrollButtonLabel }}
@@ -262,10 +262,10 @@ onUnmounted(() => {
 	}
 
 	.scroll-action {
-		@apply absolute left-0 bottom-0 w-full px-8 pb-3;
+		@apply absolute left-0 bottom-0 w-full px-8 pb-3 flex justify-center;
 
 		button {
-			@apply w-full bg-I0/15 flex justify-center items-center gap-4;
+			@apply flex justify-center items-center gap-4;
 
 			svg {
 				@apply size-3;
