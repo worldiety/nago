@@ -69,6 +69,7 @@ onUpdated(checkAnchorType);
 				ref="trigger"
 				class="inline-flex w-full justify-center"
 				:as="anchorIsButton ? 'div' : undefined"
+				@click.stop
 			>
 				<ui-generic v-if="props.ui.anchor" :ui="props.ui.anchor" :tabindex="anchorIsButton ? 0 : undefined" />
 			</MenuButton>
@@ -84,7 +85,7 @@ onUpdated(checkAnchorType);
 					<UiGeneric :ui="section.customContent" />
 				</template>
 				<template v-else>
-					<MenuItem v-for="itemUi in section.items?.value" v-slot="{ active }">
+					<MenuItem v-for="itemUi in section.items?.value" v-slot="{ active }" @click.stop>
 						<button
 							:class="[
 								active ? 'bg-I0 bg-opacity-25' : '',
