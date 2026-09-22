@@ -33,17 +33,23 @@ func NewUpdateMySecretOwners(mutex *sync.Mutex, bus events.Bus, repository Repos
 		}
 
 		if optSecret.IsNone() {
-			return std.NewLocalizedError("Secret Gruppen nicht aktualisiert", fmt.Sprintf("Das Secret existiert nicht: %v", id))
-		}
-
-		if !slices.Contains(users, subject.ID()) {
-			// we don't allow the mistake to remove our own ownership. If required, someone else must do that
-			// otherwise we may cause orphaned secrets which can never be recovered, well if the user is removed
-			// we still have that problem
-			users = append(users, subject.ID())
+			return std.NewLocalizedError("Secret Besitzer nicht aktualisiert", fmt.Sprintf("Das Secret existiert nicht: %v", id))
 		}
 
 		secret := optSecret.Unwrap()
+		if !secret.HasAccess(subject) {
+			return AccessDeniedErr
+		}
+
+		if secret.IsOwner(subject) && !slices.Contains(users, subject.ID()) {
+			// we don't allow the mistake to remove our own ownership. If required, someone else must do that
+			// otherwise we may cause orphaned secrets which can never be recovered, well if the user is removed
+			// we still have that problem.
+			// Note, that a subject which only has access through a group membership must not promote itself
+			// to an owner, therefore this only applies to actual owners.
+			users = append(users, subject.ID())
+		}
+
 		secret.Owners = users
 
 		if err := repository.Save(secret); err != nil {

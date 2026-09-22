@@ -10,7 +10,6 @@ package secret
 import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/std"
-	"slices"
 )
 
 func NewFindMySecretByID(repository Repository) FindMySecretByID {
@@ -28,11 +27,10 @@ func NewFindMySecretByID(repository Repository) FindMySecretByID {
 			return optSecret, nil
 		}
 
-		src := optSecret.Unwrap()
-		if slices.Contains(src.Owners, subject.ID()) {
-			return optSecret, nil
+		if !optSecret.Unwrap().HasAccess(subject) {
+			return std.Option[Secret]{}, AccessDeniedErr
 		}
 
-		return std.Option[Secret]{}, std.NewLocalizedError("Zugriff verweigert", "Nur Besitzer des Secrets dürfen das Geheimnis einsehen.")
+		return optSecret, nil
 	}
 }

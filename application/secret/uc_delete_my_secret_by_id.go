@@ -8,6 +8,8 @@
 package secret
 
 import (
+	"fmt"
+
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/events"
 )
@@ -16,6 +18,20 @@ func NewDeleteMySecretByID(bus events.Bus, repository Repository) DeleteMySecret
 	return func(subject auth.Subject, id ID) error {
 		if err := subject.Audit(PermDeleteMySecretByID); err != nil {
 			return err
+		}
+
+		optSecret, err := repository.FindByID(id)
+		if err != nil {
+			return fmt.Errorf("cannot find secret: %w", err)
+		}
+
+		if optSecret.IsNone() {
+			// nothing to do, deleting is idempotent
+			return nil
+		}
+
+		if !optSecret.Unwrap().HasAccess(subject) {
+			return AccessDeniedErr
 		}
 
 		if err := repository.DeleteByID(id); err != nil {

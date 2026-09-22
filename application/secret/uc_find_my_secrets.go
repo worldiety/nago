@@ -8,10 +8,10 @@
 package secret
 
 import (
+	"iter"
+
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/xiter"
-	"iter"
-	"slices"
 )
 
 func NewFindMySecrets(repository Repository) FindMySecrets {
@@ -29,7 +29,7 @@ func NewFindMySecrets(repository Repository) FindMySecrets {
 					continue
 				}
 
-				if slices.Contains(secret.Owners, subject.ID()) {
+				if secret.HasAccess(subject) {
 					if !yield(secret, nil) {
 						return
 					}

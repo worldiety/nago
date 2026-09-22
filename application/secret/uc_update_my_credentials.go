@@ -9,7 +9,6 @@ package secret
 
 import (
 	"fmt"
-	"slices"
 	"sync"
 	"time"
 
@@ -37,11 +36,10 @@ func NewUpdateMyCredentials(mutex *sync.Mutex, bus events.Bus, repository Reposi
 		}
 
 		secret := optSecret.Unwrap()
-		if !slices.Contains(secret.Owners, subject.ID()) {
-			return fmt.Errorf("secret not owned by subject: %v", subject.ID())
+		if !secret.HasAccess(subject) {
+			return AccessDeniedErr
 		}
 
-		// should we check and update group and membership details here?
 		secret.Credentials = credentials
 		secret.LastMod = time.Now()
 

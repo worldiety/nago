@@ -20,24 +20,35 @@ import (
 	"go.wdy.de/nago/pkg/std"
 )
 
-// FindMySecrets returns all entries which are owned by the given subject. Other sharing aspects are not relevant.
-// Especially, the relationship between a group and a secret is not evaluated.
+// FindMySecrets returns all entries which are accessible by the given subject, thus those which it owns and
+// those which have been shared into a group the subject belongs to. See [Secret.HasAccess].
 type FindMySecrets func(subject auth.Subject) iter.Seq2[Secret, error]
 
 // CreateSecret creates a new secret with the given subject as owner.
 type CreateSecret func(subject auth.Subject, credentials Credentials) (ID, error)
 
+// FindMySecretByID returns the secret, if the subject has access to it, see [Secret.HasAccess].
+// Otherwise [AccessDeniedErr] is returned.
 type FindMySecretByID func(subject auth.Subject, id ID) (std.Option[Secret], error)
 
-// UpdateMySecretGroups updates the secret with the given group set. It is only allowed, to add
-// groups, in which the subject is also a member. For sure, the subject must be also the owner.
+// UpdateMySecretGroups updates the secret with the given group set. The subject must have access to the secret,
+// see [Secret.HasAccess]. It is only allowed to add groups in which the subject is also a member. Groups in which
+// the subject is not a member are kept untouched, even if they are not contained in the given set, so that nobody
+// silently revokes the access of others. A subject which only has access through a group membership cannot remove
+// the last group which grants it access.
 type UpdateMySecretGroups func(subject auth.Subject, id ID, groups []group.ID) error
 
+// UpdateMySecretOwners updates the owners of the secret. The subject must have access to the secret,
+// see [Secret.HasAccess]. An owner is always kept as an owner to avoid orphaned secrets, whereas a subject which
+// only has access through a group membership never promotes itself to an owner.
 type UpdateMySecretOwners func(subject auth.Subject, id ID, owners []user.ID) error
 
-// UpdateMyCredentials updates the secret with the given credentials, if the subject is the owner.
+// UpdateMyCredentials updates the secret with the given credentials, if the subject has access to it,
+// see [Secret.HasAccess].
 type UpdateMyCredentials func(subject auth.Subject, id ID, credentials Credentials) error
 
+// DeleteMySecretByID removes the secret, if the subject has access to it, see [Secret.HasAccess].
+// Deleting is idempotent, thus removing an unknown secret is not an error.
 type DeleteMySecretByID func(subject auth.Subject, id ID) error
 
 // FindGroupSecrets returns all those secrets which are associated with the given group and only if
