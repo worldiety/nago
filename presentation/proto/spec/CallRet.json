@@ -6,6 +6,7 @@
     "RetError",
     "RetMediaDevicesEnumerate",
     "RetMediaDevicesPermissionsError",
-    "InputEvent"
+    "InputEvent",
+    "RetScreenshot"
   ]
 }

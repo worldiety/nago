@@ -48,6 +48,7 @@
     "CanvasShadowOffsetY",
     "CanvasShadowColor",
     "CanvasShadowBlur",
-    "FlowChartAutoLayout"
+    "FlowChartAutoLayout",
+    "CallScreenshot"
   ]
 }

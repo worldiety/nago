@@ -79,6 +79,14 @@ type Tool struct {
 	// nil. Create such a tool with [NewOpenFileTool] or [NewSubjectOpenFileTool].
 	OpenFile func(subject auth.Subject, args json.RawMessage) (OpenedFile, error)
 
+	// InvokeContent, when set, lets the tool return content blocks instead of a JSON document. They are placed
+	// verbatim into the tool_result, which is how a tool hands an image to the model: a [Media] block with
+	// inline [Source.Data] of an image type is accepted inside a tool_result by providers with vision support.
+	// Providers which cannot embed media there replace it by a textual note, so a tool should always add a
+	// [Text] block that is useful on its own. When set, InvokeContent takes precedence over [Invoke]; OpenFile
+	// still takes precedence over both. Create such a tool with [NewSubjectContentTool].
+	InvokeContent func(subject auth.Subject, args json.RawMessage) ([]Content, error)
+
 	// Mutating marks a tool that changes state rather than merely reading it. It is a property of the tool,
 	// not a phrase in its description, so it can actually be enforced: [RunOptions.OnBeforeToolCall] sees it
 	// before the call happens, and a UI can refuse or confirm it.
@@ -253,6 +261,31 @@ func NewSubjectOpenFileTool[In any](name, description string, fn func(auth.Subje
 			in, err := decodeToolArgs[In](name, args)
 			if err != nil {
 				return OpenedFile{}, err
+			}
+
+			return fn(subject, in)
+		},
+	}
+}
+
+// NewSubjectContentTool wraps a function returning content blocks into a [Tool], see [Tool.InvokeContent].
+// Use it for tools which must hand something other than JSON to the model, most notably images:
+//
+//	completion.NewSubjectContentTool("look", "…", func(s auth.Subject, in In) ([]completion.Content, error) {
+//		return []completion.Content{
+//			completion.Text{Text: "the current screen"},
+//			completion.Media{MimeType: file.PNG, Source: completion.Source{Data: png}},
+//		}, nil
+//	})
+func NewSubjectContentTool[In any](name, description string, fn func(auth.Subject, In) ([]Content, error)) Tool {
+	mustValidateTool(name, description)
+
+	return Tool{
+		Def: newToolDef[In](name, description),
+		InvokeContent: func(subject auth.Subject, args json.RawMessage) ([]Content, error) {
+			in, err := decodeToolArgs[In](name, args)
+			if err != nil {
+				return nil, err
 			}
 
 			return fn(subject, in)
@@ -643,6 +676,32 @@ func executeToolCall(subject auth.Subject, tools map[string]Tool, call ToolCall,
 	// File-providing tool: inject text files inline or upload binary files and attach them as a Media block.
 	if tool.OpenFile != nil {
 		return executeOpenFileCall(subject, call, tool, uploader)
+	}
+
+	if tool.InvokeContent != nil {
+		content, err := tool.InvokeContent(subject, call.Arguments)
+		if err != nil {
+			return ToolResult{
+				ToolCallID: call.ID,
+				Content:    []Content{Text{Text: toolErrorText(err)}},
+				IsError:    true,
+			}, nil
+		}
+
+		if len(content) == 0 {
+			// an empty tool_result is rejected by some providers and tells the model nothing
+			content = []Content{Text{Text: "(no content)"}}
+		}
+
+		return ToolResult{ToolCallID: call.ID, Content: content}, nil
+	}
+
+	if tool.Invoke == nil {
+		return ToolResult{
+			ToolCallID: call.ID,
+			Content:    []Content{Text{Text: fmt.Sprintf("tool %q cannot be invoked", call.Name)}},
+			IsError:    true,
+		}, nil
 	}
 
 	out, err := tool.Invoke(subject, call.Arguments)

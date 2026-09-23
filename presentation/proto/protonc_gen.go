@@ -301,6 +301,7 @@ func (CanvasShadowOffsetY) isCallArgs()          {}
 func (CanvasShadowColor) isCallArgs()            {}
 func (CanvasShadowBlur) isCallArgs()             {}
 func (FlowChartAutoLayout) isCallArgs()          {}
+func (CallScreenshot) isCallArgs()               {}
 
 // CallRet is the sum type of all declared type safe async method invocations results. See also [CallArgs] for the async invocation calls.
 type CallRet interface {
@@ -317,6 +318,7 @@ func (RetError) isCallRet()                        {}
 func (RetMediaDevicesEnumerate) isCallRet()        {}
 func (RetMediaDevicesPermissionsError) isCallRet() {}
 func (InputEvent) isCallRet()                      {}
+func (RetScreenshot) isCallRet()                   {}
 
 // Component is the building primitive for any widget, behavior or ui element in NAGO.
 type Component interface {
@@ -21690,6 +21692,238 @@ func (v *Fieldset) read(r *BinaryReader) error {
 	return nil
 }
 
+// CallScreenshot asks the frontend to capture its current render state. It is meant as a feedback channel for automated agents (e.g. an LLM operating the UI on behalf of the user) and is answered with a [RetScreenshot].
+type CallScreenshot struct {
+	// Keep is kept to avoid falling back to the zero value which breaks polymorphism at protocol level.
+	Keep Bool
+	// Selector is an optional CSS selector restricting the capture to the first matching element. Empty means the whole page.
+	Selector Str
+	// Image requests a rendered PNG.
+	Image Bool
+	// Snapshot requests a textual accessibility snapshot of the rendered DOM, similar to the aria snapshot of Playwright.
+	Snapshot Bool
+	// MaxEdge limits the longest edge of the PNG in pixels. Zero means the frontend default.
+	MaxEdge Uint
+}
+
+func (v *CallScreenshot) write(w *BinaryWriter) error {
+	var fields [6]bool
+	fields[1] = !v.Keep.IsZero()
+	fields[2] = !v.Selector.IsZero()
+	fields[3] = !v.Image.IsZero()
+	fields[4] = !v.Snapshot.IsZero()
+	fields[5] = !v.MaxEdge.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(uvarint, 1); err != nil {
+			return err
+		}
+		if err := v.Keep.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Selector.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(uvarint, 3); err != nil {
+			return err
+		}
+		if err := v.Image.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(uvarint, 4); err != nil {
+			return err
+		}
+		if err := v.Snapshot.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(uvarint, 5); err != nil {
+			return err
+		}
+		if err := v.MaxEdge.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CallScreenshot) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Keep.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Selector.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Image.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Snapshot.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.MaxEdge.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// RetScreenshot is the result of a [CallScreenshot].
+type RetScreenshot struct {
+	// PngBase64 is the base64 encoded PNG without any data url prefix. Empty if no image was requested.
+	PngBase64 Str
+	// Width of the PNG in pixels.
+	Width Uint
+	// Height of the PNG in pixels.
+	Height Uint
+	// Snapshot is the textual accessibility snapshot. Empty if not requested.
+	Snapshot Str
+	// Keep is kept to avoid falling back to the zero value which breaks polymorphism at protocol level.
+	Keep Bool
+}
+
+func (v *RetScreenshot) write(w *BinaryWriter) error {
+	var fields [6]bool
+	fields[1] = !v.PngBase64.IsZero()
+	fields[2] = !v.Width.IsZero()
+	fields[3] = !v.Height.IsZero()
+	fields[4] = !v.Snapshot.IsZero()
+	fields[5] = !v.Keep.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.PngBase64.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.Width.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(uvarint, 3); err != nil {
+			return err
+		}
+		if err := v.Height.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.Snapshot.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(uvarint, 5); err != nil {
+			return err
+		}
+		if err := v.Keep.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *RetScreenshot) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.PngBase64.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Width.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Height.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Snapshot.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Keep.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -23337,6 +23571,18 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 283:
 		var v Fieldset
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 284:
+		var v CallScreenshot
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 285:
+		var v RetScreenshot
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -27952,6 +28198,36 @@ func (v *Fieldset) IsZero() bool {
 	return v.Children.IsZero() && v.Title.IsZero() && v.Frame.IsZero()
 }
 
+func (v *CallScreenshot) reset() {
+	v.Keep.reset()
+	v.Selector.reset()
+	v.Image.reset()
+	v.Snapshot.reset()
+	v.MaxEdge.reset()
+}
+
+func (v *CallScreenshot) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Keep.IsZero() && v.Selector.IsZero() && v.Image.IsZero() && v.Snapshot.IsZero() && v.MaxEdge.IsZero()
+}
+
+func (v *RetScreenshot) reset() {
+	v.PngBase64.reset()
+	v.Width.reset()
+	v.Height.reset()
+	v.Snapshot.reset()
+	v.Keep.reset()
+}
+
+func (v *RetScreenshot) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.PngBase64.IsZero() && v.Width.IsZero() && v.Height.IsZero() && v.Snapshot.IsZero() && v.Keep.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -29844,6 +30120,20 @@ func (v *ScrollAlignment) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *Fieldset) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 283); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CallScreenshot) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 284); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *RetScreenshot) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 285); err != nil {
 		return err
 	}
 	return nil

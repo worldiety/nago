@@ -22231,6 +22231,248 @@ export class Fieldset implements Writeable, Readable, Component {
 	isComponent(): void {}
 }
 
+// CallScreenshot asks the frontend to capture its current render state. It is meant as a feedback channel for automated agents (e.g. an LLM operating the UI on behalf of the user) and is answered with a [RetScreenshot].
+export class CallScreenshot implements Writeable, Readable, CallArgs {
+	// Keep is kept to avoid falling back to the zero value which breaks polymorphism at protocol level.
+	public keep?: Bool;
+
+	// Selector is an optional CSS selector restricting the capture to the first matching element. Empty means the whole page.
+	public selector?: Str;
+
+	// Image requests a rendered PNG.
+	public image?: Bool;
+
+	// Snapshot requests a textual accessibility snapshot of the rendered DOM, similar to the aria snapshot of Playwright.
+	public snapshot?: Bool;
+
+	// MaxEdge limits the longest edge of the PNG in pixels. Zero means the frontend default.
+	public maxEdge?: Uint;
+
+	constructor(
+		keep: Bool | undefined = undefined,
+		selector: Str | undefined = undefined,
+		image: Bool | undefined = undefined,
+		snapshot: Bool | undefined = undefined,
+		maxEdge: Uint | undefined = undefined
+	) {
+		this.keep = keep;
+		this.selector = selector;
+		this.image = image;
+		this.snapshot = snapshot;
+		this.maxEdge = maxEdge;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.keep = readBool(reader);
+					break;
+				}
+				case 2: {
+					this.selector = readString(reader);
+					break;
+				}
+				case 3: {
+					this.image = readBool(reader);
+					break;
+				}
+				case 4: {
+					this.snapshot = readBool(reader);
+					break;
+				}
+				case 5: {
+					this.maxEdge = readInt(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.keep !== undefined,
+			this.selector !== undefined,
+			this.image !== undefined,
+			this.snapshot !== undefined,
+			this.maxEdge !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 1);
+			writeBool(writer, this.keep!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.selector!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 3);
+			writeBool(writer, this.image!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 4);
+			writeBool(writer, this.snapshot!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 5);
+			writeInt(writer, this.maxEdge!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.keep === undefined &&
+			this.selector === undefined &&
+			this.image === undefined &&
+			this.snapshot === undefined &&
+			this.maxEdge === undefined
+		);
+	}
+
+	reset(): void {
+		this.keep = undefined;
+		this.selector = undefined;
+		this.image = undefined;
+		this.snapshot = undefined;
+		this.maxEdge = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 284);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+// RetScreenshot is the result of a [CallScreenshot].
+export class RetScreenshot implements Writeable, Readable, CallRet {
+	// PngBase64 is the base64 encoded PNG without any data url prefix. Empty if no image was requested.
+	public pngBase64?: Str;
+
+	// Width of the PNG in pixels.
+	public width?: Uint;
+
+	// Height of the PNG in pixels.
+	public height?: Uint;
+
+	// Snapshot is the textual accessibility snapshot. Empty if not requested.
+	public snapshot?: Str;
+
+	// Keep is kept to avoid falling back to the zero value which breaks polymorphism at protocol level.
+	public keep?: Bool;
+
+	constructor(
+		pngBase64: Str | undefined = undefined,
+		width: Uint | undefined = undefined,
+		height: Uint | undefined = undefined,
+		snapshot: Str | undefined = undefined,
+		keep: Bool | undefined = undefined
+	) {
+		this.pngBase64 = pngBase64;
+		this.width = width;
+		this.height = height;
+		this.snapshot = snapshot;
+		this.keep = keep;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.pngBase64 = readString(reader);
+					break;
+				}
+				case 2: {
+					this.width = readInt(reader);
+					break;
+				}
+				case 3: {
+					this.height = readInt(reader);
+					break;
+				}
+				case 4: {
+					this.snapshot = readString(reader);
+					break;
+				}
+				case 5: {
+					this.keep = readBool(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.pngBase64 !== undefined,
+			this.width !== undefined,
+			this.height !== undefined,
+			this.snapshot !== undefined,
+			this.keep !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.pngBase64!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 2);
+			writeInt(writer, this.width!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 3);
+			writeInt(writer, this.height!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
+			writeString(writer, this.snapshot!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 5);
+			writeBool(writer, this.keep!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.pngBase64 === undefined &&
+			this.width === undefined &&
+			this.height === undefined &&
+			this.snapshot === undefined &&
+			this.keep === undefined
+		);
+	}
+
+	reset(): void {
+		this.pngBase64 = undefined;
+		this.width = undefined;
+		this.height = undefined;
+		this.snapshot = undefined;
+		this.keep = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 285);
+		return;
+	}
+	isCallRet(): void {}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -23532,6 +23774,16 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 283: {
 			const v = new Fieldset();
+			v.read(src);
+			return v;
+		}
+		case 284: {
+			const v = new CallScreenshot();
+			v.read(src);
+			return v;
+		}
+		case 285: {
+			const v = new RetScreenshot();
 			v.read(src);
 			return v;
 		}

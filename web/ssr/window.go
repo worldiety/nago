@@ -15,6 +15,7 @@ import (
 	"go.wdy.de/nago/application/session"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/std"
+	"go.wdy.de/nago/pkg/std/async"
 	"go.wdy.de/nago/presentation/core"
 	"golang.org/x/text/language"
 )
@@ -115,9 +116,14 @@ func (w *ssrWindow) Path() core.NavigationPath             { return w.path }
 func (w *ssrWindow) AddDestroyObserver(_ func(), _ ...core.DestroyObserverOption) func() {
 	return func() {}
 }
-func (w *ssrWindow) Clipboard() core.Clipboard             { return ssrClipboard{} }
-func (w *ssrWindow) Logout() error                         { return nil }
-func (w *ssrWindow) MediaDevices() core.MediaDevices       { return core.MediaDevices{} }
+func (w *ssrWindow) Clipboard() core.Clipboard       { return ssrClipboard{} }
+func (w *ssrWindow) Logout() error                   { return nil }
+func (w *ssrWindow) MediaDevices() core.MediaDevices { return core.MediaDevices{} }
+func (w *ssrWindow) Screenshot(_ core.ScreenshotOptions) *async.Future[core.Screenshot] {
+	var fut async.Future[core.Screenshot]
+	fut.Set(core.Screenshot{}, core.ErrScreenshotUnavailable)
+	return &fut
+}
 func (w *ssrWindow) Bundle() *i18n.Bundle                  { return w.bundle }
 func (w *ssrWindow) Post(_ func()) bool                    { return false }
 func (w *ssrWindow) PostDelayed(_ func(), _ time.Duration) {}

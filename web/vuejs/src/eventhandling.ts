@@ -13,6 +13,7 @@ import {
 	CallRequested,
 	CallRequestFocus,
 	CallResolved,
+	CallScreenshot,
 	ClipboardWriteTextRequested,
 	ColorSchemeValues,
 	FileImportRequested,
@@ -28,7 +29,9 @@ import {
 	OpenHttpLink,
 	RegisterInputEventListener,
 	RetMediaDevicesEnumerate,
+	RetError,
 	RetMediaDevicesPermissionsError,
+	RetScreenshot,
 	RID,
 	RootViewAllocationRequested,
 	RootViewID,
@@ -45,6 +48,7 @@ import {
 	WindowSizeClass,
 	WindowSizeClassValues,
 } from '@/shared/proto/nprotoc_gen';
+import { capture } from '@/shared/screenshot';
 import ThemeManager, { ThemeKey } from '@/shared/themeManager';
 
 let nextRequestTracingID: number = 1;
@@ -573,6 +577,32 @@ export async function callRequested(chan: Channel, evt: CallRequested) {
 	if (evt.call instanceof UnregisterInputEventListener) {
 		await unregisterInputEvents(chan, evt, evt.call);
 		return;
+	}
+
+	if (evt.call instanceof CallScreenshot) {
+		await callScreenshot(chan, evt, evt.call);
+		return;
+	}
+}
+
+async function callScreenshot(chan: Channel, evt: CallRequested, args: CallScreenshot) {
+	try {
+		const res = await capture({
+			selector: args.selector,
+			image: args.image ?? false,
+			snapshot: args.snapshot ?? false,
+			maxEdge: args.maxEdge,
+		});
+		chan.sendEvent(
+			new CallResolved(
+				evt.callPtr,
+				new RetScreenshot(res.pngBase64, res.width, res.height, res.snapshot, true),
+				nextRID()
+			)
+		);
+	} catch (e: any) {
+		console.warn('screenshot failed', e);
+		chan.sendEvent(new CallResolved(evt.callPtr, new RetError(String(e?.message ?? e), 500), nextRID()));
 	}
 }
 

@@ -300,6 +300,37 @@ cfg.SetDecorator(func(wnd core.Window, view core.View) core.View {
 
 Am Decorator statt an einzelnen Seiten, damit der Assistent wirklich überall ist — auch auf den Verwaltungsseiten des Frameworks. Kann er nicht laufen (kein Provider, kein Modell, ausgeblendet, Rolle fehlt), kommt die Ansicht unverändert zurück und der Grund landet **einmal** im Log. Ein fehlender Token darf kein Banner werden, das den Nutzer durch die Anwendung verfolgt.
 
+## Der Bildschirm als Rückkanal
+
+Jedes Werkzeug oben sagt dem Modell, was in den **Daten** steht. Keines sagt ihm, was der Nutzer **sieht** — und genau danach fragt er oft: „Was bedeutet die Zahl da rechts?", oder das Modell hat gerade ausgeliehen und nimmt an, dass die Liste sich aktualisiert hat.
+
+`uicompletion.ScreenTool` ist dafür ein fertiges Werkzeug, eine Art eingebautes Playwright:
+
+```go
+Tools: slices.Concat(tools, []completion.Tool{
+    uicompletion.ScreenTool(wnd, uicompletion.ScreenToolOptions{}),
+}),
+```
+
+Es liefert immer einen **Accessibility-Snapshot** des gerade Gerenderten — Rollen, Namen, Werte und Zustände als eingerückter Baum:
+
+```
+- heading "Bestand" [level=1]
+- textbox "Suche": "Kafka"
+- button "Ausleihen"
+- checkbox "Nur verfügbare" [checked]
+```
+
+Auf Wunsch des Modells (`image: true`) kommt ein PNG dazu. Der Text ist die Voreinstellung, weil er genauer und um ein Vielfaches billiger ist: Ein Bild bleibt Teil des Verlaufs und wird bei jeder folgenden Runde erneut abgerechnet.
+
+Drei Dinge daran sind bewusst so:
+
+- **Es hängt am Fenster.** Anders als die Fachwerkzeuge wird es pro Fenster im Decorator gebaut, weil es genau dieses Fenster ansieht. `slices.Concat` kopiert, damit die geteilte Liste nie von mehreren Fenstern gleichzeitig verlängert wird.
+- **Es gibt keine Berechtigung.** Das Modell sieht nur, was dem handelnden Nutzer ohnehin angezeigt wird, und der Entwickler muss das Werkzeug ausdrücklich verdrahten.
+- **Ausstehende Änderungen werden vorher gerendert.** `wnd.Screenshot` schickt erst den letzten Stand und dann die Aufnahme; das Frontend verarbeitet in Reihenfolge. Ein Blick direkt nach `lend_book` zeigt also das Ergebnis und nicht den Zustand davor.
+
+Das PNG wird vom Frontend aus dem DOM nachgerendert, nicht vom Bildschirm abfotografiert. Bilder fremder Domains ohne CORS, iframes und Videos können fehlen. Für die Frage „sieht das richtig aus" reicht das; wer die Aufnahme selbst braucht, ruft `wnd.Screenshot(core.ScreenshotOptions{…})` direkt auf.
+
 ## Ausprobieren
 
 Bootstrap-Admin: das Passwort steht in `cmd/ai-example/main.go`. Danach unter *Verwaltung → Tresor* einen Provider-Token hinterlegen und den Nutzern die Rollen „Bibliothekar" und „AI Assistant User" zuweisen.
@@ -312,6 +343,7 @@ Fragen zum Testen:
 - „Warum steht bei den Ausleihern nur ein Name und kein Benutzerkonto?" — das Modell schlägt `R-DEC-BORROWER` nach und nennt auch, was die Entscheidung kostet, statt sich etwas auszudenken
 - „Kann ich ein ausgeliehenes Buch vormerken?" — die Antwort ist „noch nicht", nicht „gibt es nicht": `R-LIB-RESERVATION` steht auf `planned`
 - „Was kann ich hier eigentlich machen?" — Orientierung über `read_capabilities`
+- „Was steht bei mir gerade auf dem Bildschirm?" — `inspect_screen` liefert den Snapshot; „Wie sieht das aus?" holt zusätzlich das Bild
 
 ## Example
 

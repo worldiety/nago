@@ -1,0 +1,32 @@
+{
+  "doc": "CallScreenshot asks the frontend to capture its current render state. It is meant as a feedback channel for automated agents (e.g. an LLM operating the UI on behalf of the user) and is answered with a [RetScreenshot].",
+  "kind": "Record",
+  "id": 284,
+  "fields": {
+    "1": {
+      "doc": "Keep is kept to avoid falling back to the zero value which breaks polymorphism at protocol level.",
+      "name": "Keep",
+      "type": "Bool"
+    },
+    "2": {
+      "doc": "Selector is an optional CSS selector restricting the capture to the first matching element. Empty means the whole page.",
+      "name": "Selector",
+      "type": "Str"
+    },
+    "3": {
+      "doc": "Image requests a rendered PNG.",
+      "name": "Image",
+      "type": "Bool"
+    },
+    "4": {
+      "doc": "Snapshot requests a textual accessibility snapshot of the rendered DOM, similar to the aria snapshot of Playwright.",
+      "name": "Snapshot",
+      "type": "Bool"
+    },
+    "5": {
+      "doc": "MaxEdge limits the longest edge of the PNG in pixels. Zero means the frontend default.",
+      "name": "MaxEdge",
+      "type": "Uint"
+    }
+  }
+}

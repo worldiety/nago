@@ -16,6 +16,7 @@ import (
 	"go.wdy.de/nago/application/session"
 	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/pkg/std/async"
 	"go.wdy.de/nago/presentation/proto"
 	"golang.org/x/text/language"
 )
@@ -160,6 +161,11 @@ type Window interface {
 
 	// MediaDevices returns an api access to the frontends attached media devices.
 	MediaDevices() MediaDevices
+
+	// Screenshot asks the frontend to capture its current render state as PNG and/or as a textual
+	// accessibility snapshot. It is intended as a feedback channel for automated agents. See
+	// [ScreenshotOptions].
+	Screenshot(opts ScreenshotOptions) *async.Future[Screenshot]
 
 	// Bundle returns the currently localized and resolved resource bundle.
 	Bundle() *i18n.Bundle

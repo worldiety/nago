@@ -1,0 +1,32 @@
+{
+  "doc": "RetScreenshot is the result of a [CallScreenshot].",
+  "kind": "Record",
+  "id": 285,
+  "fields": {
+    "1": {
+      "doc": "PngBase64 is the base64 encoded PNG without any data url prefix. Empty if no image was requested.",
+      "name": "PngBase64",
+      "type": "Str"
+    },
+    "2": {
+      "doc": "Width of the PNG in pixels.",
+      "name": "Width",
+      "type": "Uint"
+    },
+    "3": {
+      "doc": "Height of the PNG in pixels.",
+      "name": "Height",
+      "type": "Uint"
+    },
+    "4": {
+      "doc": "Snapshot is the textual accessibility snapshot. Empty if not requested.",
+      "name": "Snapshot",
+      "type": "Str"
+    },
+    "5": {
+      "doc": "Keep is kept to avoid falling back to the zero value which breaks polymorphism at protocol level.",
+      "name": "Keep",
+      "type": "Bool"
+    }
+  }
+}
