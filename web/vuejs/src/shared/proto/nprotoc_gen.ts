@@ -42,18 +42,28 @@ export class BinaryWriter {
 		this.buffer[this.offset++] = b ? 1 : 0;
 	}
 
+	// writeVarint writes a signed integer zigzag encoded, exactly like Go's binary.PutVarint. Arithmetic is used
+	// instead of bitwise operators, because the latter truncate to 32 bit. Exact for |value| < 2^52.
 	writeVarint(value: number) {
-		this.ensureCapacity(10); // Maximum varint size is 10 bytes
-		let v = value;
-		while (v > 127) {
-			this.buffer[this.offset++] = (v & 0x7f) | 0x80;
-			v >>>= 7;
-		}
-		this.buffer[this.offset++] = v;
+		const v = Math.trunc(value);
+		this.writeUvarint(v >= 0 ? v * 2 : -v * 2 - 1);
 	}
 
+	// writeUvarint writes an unsigned integer like Go's binary.PutUvarint. Exact for value <= 2^53-1.
 	writeUvarint(value: number) {
-		this.writeVarint(value >>> 0);
+		this.ensureCapacity(10); // Maximum varint size is 10 bytes
+		let v = Math.trunc(value);
+		if (!(v >= 0)) {
+			// Previously this was silently masked to 32 bit garbage. Failing the whole message would lose the
+			// event, so this is reported loudly and encoded as zero instead.
+			console.error(`cannot write negative or NaN uvarint, writing 0 instead: ${value}`);
+			v = 0;
+		}
+		while (v >= 0x80) {
+			this.buffer[this.offset++] = (v % 0x80) | 0x80;
+			v = Math.floor(v / 0x80);
+		}
+		this.buffer[this.offset++] = v;
 	}
 
 	writeByte(b: number) {
@@ -131,22 +141,25 @@ export class BinaryReader {
 		return { shape: header.shape, typeId };
 	}
 
+	// readUvarint reads an unsigned integer like Go's binary.ReadUvarint. Values beyond 2^53-1 lose precision.
 	readUvarint(): number {
 		let result = 0;
-		let shift = 0;
-		while (true) {
+		let mul = 1;
+		for (let i = 0; i < 10; i++) {
 			const byte = this.readByte();
-			result |= (byte & 0x7f) << shift;
-			if ((byte & 0x80) === 0) break;
-			shift += 7;
-			if (shift > 35) throw new Error('Varint too long');
+			result += (byte & 0x7f) * mul;
+			if ((byte & 0x80) === 0) {
+				return result;
+			}
+			mul *= 0x80;
 		}
-		return result;
+		throw new Error('Varint too long');
 	}
 
+	// readVarint reads a zigzag encoded signed integer like Go's binary.ReadVarint.
 	readVarint(): number {
-		const uvalue = this.readUvarint();
-		return (uvalue >>> 1) ^ -(uvalue & 1);
+		const u = this.readUvarint();
+		return u % 2 === 0 ? u / 2 : -(u + 1) / 2;
 	}
 
 	readFloat64(): number {
