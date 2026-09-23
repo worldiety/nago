@@ -32,6 +32,9 @@ type Totals struct {
 	Failed     int // failed attempts
 	Retries    int
 	LatencySum time.Duration
+
+	FirstAttempts          int
+	FirstAttemptLatencySum time.Duration
 }
 
 func (t *Totals) add(b StatsBucket) {
@@ -39,6 +42,17 @@ func (t *Totals) add(b StatsBucket) {
 	t.Failed += b.Failed
 	t.Retries += b.Retries
 	t.LatencySum += b.LatencySum
+	t.FirstAttempts += b.FirstAttempts
+	t.FirstAttemptLatencySum += b.FirstAttemptLatencySum
+}
+
+// AvgFirstAttemptLatency returns the average duration from queuing until the first send attempt.
+func (t Totals) AvgFirstAttemptLatency() time.Duration {
+	if t.FirstAttempts == 0 {
+		return 0
+	}
+
+	return t.FirstAttemptLatencySum / time.Duration(t.FirstAttempts)
 }
 
 // ErrorRate returns the ratio of failed attempts to all attempts in [0..1].
@@ -62,15 +76,16 @@ func (t Totals) AvgLatency() time.Duration {
 
 // QueueCounts is a snapshot of the current queue.
 type QueueCounts struct {
-	Queued  int
-	Error   int // temporary errors, will be retried
-	Failed  int // gave up
-	Success int // still kept in queue
-	Stuck   int // unsent and older than [StatisticsOptions.StuckAfter]
+	Queued     int
+	Error      int // temporary errors, will be retried
+	Failed     int // gave up
+	Suppressed int // held back by the spam guard
+	Success    int // still kept in queue
+	Stuck      int // unsent and older than [StatisticsOptions.StuckAfter]
 }
 
 func (q QueueCounts) Total() int {
-	return q.Queued + q.Error + q.Failed + q.Success
+	return q.Queued + q.Error + q.Failed + q.Success + q.Suppressed
 }
 
 // ServerInfo describes a configured smtp server without exposing any credentials.
@@ -79,8 +94,11 @@ type ServerInfo struct {
 	Name     string
 	Host     string
 	Port     int
-	Health   ServerHealth
-	Totals   Totals // within the requested time range
+	// RateLimitPerHour and RateLimitPerDay are the configured limits, 0 means unlimited.
+	RateLimitPerHour int
+	RateLimitPerDay  int
+	Health           ServerHealth
+	Totals           Totals // within the requested time range
 }
 
 // ErrorCount counts equal error messages of mails in the queue.
@@ -167,16 +185,21 @@ func NewStatistics(repo Repository, stats StatsRepository, health HealthReposito
 				res.Queue.Error++
 			case StatusFailed:
 				res.Queue.Failed++
+			case StatusSuppressed:
+				res.Queue.Suppressed++
 			default:
 				res.Queue.Queued++
 			}
 
-			if o.Status != StatusSendSuccess && o.Status != StatusFailed && now.Sub(o.QueuedAt) > opts.StuckAfter {
+			if !o.done() && now.Sub(o.QueuedAt) > opts.StuckAfter {
 				res.Queue.Stuck++
 			}
 
-			if o.Status == StatusError || o.Status == StatusFailed {
+			if o.Status == StatusError || o.Status == StatusFailed || o.Status == StatusSuppressed {
 				failures = append(failures, o)
+			}
+
+			if o.Status == StatusError || o.Status == StatusFailed {
 				ec := ErrorCount{Message: o.LastError}
 				if a, ok := o.LastAttempt(); ok && !a.Success {
 					ec = ErrorCount{Message: a.Message, Phase: a.Phase, Code: a.Code}
@@ -223,7 +246,7 @@ func NewStatistics(repo Repository, stats StatsRepository, health HealthReposito
 					continue
 				}
 
-				info := ServerInfo{SecretID: scr.ID, Name: smtp.Name, Host: smtp.Host, Port: smtp.Port, Totals: perServer[smtp.Name]}
+				info := ServerInfo{SecretID: scr.ID, Name: smtp.Name, Host: smtp.Host, Port: smtp.Port, RateLimitPerHour: smtp.RateLimitPerHour, RateLimitPerDay: smtp.RateLimitPerDay, Totals: perServer[smtp.Name]}
 				if health != nil {
 					optH, err := health.FindByID(smtp.Name)
 					if err != nil {

@@ -131,6 +131,28 @@ func findProblems(wnd core.Window, pages Pages, stats mail.StatisticsResult) []p
 		})
 	}
 
+	if stats.Queue.Suppressed > 0 {
+		res = append(res, problem{
+			severity: ui.SE0,
+			title:    fmt.Sprintf("%d Mails vom Spam-Schutz unterdrückt", stats.Queue.Suppressed),
+			detail:   "Dieselbe Mail wurde auffällig oft an denselben Empfänger versendet. Das deutet auf eine Endlosschleife in der Anwendung hin.",
+			action:   "Anzeigen",
+			fn: func() {
+				wnd.Navigation().ForwardTo(pages.OutgoingMailQueue, core.Values{"status": string(mail.StatusSuppressed)})
+			},
+		})
+	}
+
+	for _, name := range stats.Scheduler.RateLimited {
+		res = append(res, problem{
+			severity: ui.SW0,
+			title:    fmt.Sprintf("SMTP „%s“ – Ratenbegrenzung erreicht", name),
+			detail:   "Weitere Mails werden verzögert, bis wieder Kontingent verfügbar ist.",
+			action:   "Server öffnen",
+			fn:       func() { wnd.Navigation().ForwardTo(pages.SmtpServers, nil) },
+		})
+	}
+
 	if stats.Queue.Failed > 0 {
 		res = append(res, problem{
 			severity: ui.SE0,
@@ -151,7 +173,7 @@ func findProblems(wnd core.Window, pages Pages, stats mail.StatisticsResult) []p
 			detail:   e.Message,
 			action:   "Filtern",
 			fn: func() {
-				wnd.Navigation().ForwardTo(pages.OutgoingMailQueue, core.Values{"status": string(mail.StatusError) + "," + string(mail.StatusFailed)})
+				wnd.Navigation().ForwardTo(pages.OutgoingMailQueue, core.Values{"status": string(mail.StatusError) + "," + string(mail.StatusFailed) + "," + string(mail.StatusSuppressed)})
 			},
 		})
 	}
@@ -264,13 +286,33 @@ func kpiRow(wnd core.Window, pages Pages, stats mail.StatisticsResult) core.View
 		latencyHint = "vorher " + formatDuration(p.AvgLatency())
 	}
 
-	return grid([5]int{2, 3, 6, 6, 6},
+	firstHint := "vom Einreihen bis zum ersten Versuch"
+	firstCol := ui.Color("")
+	if p.AvgFirstAttemptLatency() > 0 && t.AvgFirstAttemptLatency() > 0 {
+		firstHint = "vorher " + formatDuration(p.AvgFirstAttemptLatency())
+		if t.AvgFirstAttemptLatency() > p.AvgFirstAttemptLatency() {
+			firstCol = ui.SE0
+		} else {
+			firstCol = ui.SG0
+		}
+	}
+
+	suppressedColor := ui.Color("")
+	suppressedHint := "Spam-Schutz ohne Befund"
+	if stats.Queue.Suppressed > 0 {
+		suppressedColor = ui.SE0
+		suppressedHint = "mögliche Endlosschleife"
+	}
+
+	return grid([5]int{2, 4, 4, 4, 8},
 		kpi("Versendet", fmt.Sprint(t.Sent), "", sentTrend, sentCol),
 		kpi("Wartend", fmt.Sprint(stats.Queue.Queued+stats.Queue.Error), "", waitingHint, waitingCol),
 		kpi("Fehlversuche", fmt.Sprint(t.Failed), failedColor, failTrend, failCol),
 		kpi("Wiederholungen", fmt.Sprint(t.Retries), "", retryTrend, retryCol),
 		kpi("Fehlerquote", fmt.Sprintf("%.1f %%", t.ErrorRate()*100), "", rateHint, rateCol),
 		kpi("Ø Zustellzeit", formatDuration(t.AvgLatency()), "", latencyHint, ""),
+		kpi("Ø bis 1. Versuch", formatDuration(t.AvgFirstAttemptLatency()), "", firstHint, firstCol),
+		kpi("Unterdrückt", fmt.Sprint(stats.Queue.Suppressed), suppressedColor, suppressedHint, suppressedColor),
 	)
 }
 
@@ -339,7 +381,7 @@ func statusDonut(stats mail.StatisticsResult) core.View {
 
 	return ui.VStack(
 		piechart.PieChart(chart.Chart{
-			Colors: []ui.Color{ui.SG0, ui.SV0, ui.SW0, ui.SE0},
+			Colors: []ui.Color{ui.SG0, ui.SV0, ui.SW0, ui.SE0, ui.ST0},
 			Frame:  ui.Frame{Width: ui.L480, MaxWidth: ui.Full, Height: ui.L320},
 		}).Series([]chart.Series{{
 			Label: "Warteschlange",
@@ -348,6 +390,7 @@ func statusDonut(stats mail.StatisticsResult) core.View {
 				{X: "Wartet", Y: float64(q.Queued)},
 				{X: "Fehler, wird wiederholt", Y: float64(q.Error)},
 				{X: "Endgültig fehlgeschlagen", Y: float64(q.Failed)},
+				{X: "Unterdrückt", Y: float64(q.Suppressed)},
 			},
 		}}).ShowAsDonut(true).ShowAbsoluteValues(true),
 		ui.Text(fmt.Sprintf("%d Mails in der Warteschlange", q.Total())).Font(ui.BodySmall).Color(ui.ST0),
@@ -377,7 +420,7 @@ func recentFailures(wnd core.Window, pages Pages, stats mail.StatisticsResult) c
 			wnd.Navigation().ForwardTo(pages.OutgoingMail, core.Values{"id": string(e.Value.ID)})
 		}).Selection(false).Search(false).Style(dataview.Table),
 		ui.TertiaryButton(func() {
-			wnd.Navigation().ForwardTo(pages.OutgoingMailQueue, core.Values{"status": string(mail.StatusError) + "," + string(mail.StatusFailed)})
+			wnd.Navigation().ForwardTo(pages.OutgoingMailQueue, core.Values{"status": string(mail.StatusError) + "," + string(mail.StatusFailed) + "," + string(mail.StatusSuppressed)})
 		}).Title("Alle Fehler anzeigen"),
 	).Alignment(ui.TopTrailing).Gap(ui.L8).FullWidth()
 }

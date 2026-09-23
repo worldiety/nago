@@ -88,7 +88,8 @@ func (c *Configurator) MailManagement() (MailManagement, error) {
 
 		healthRepo := json.NewSloppyJSONRepository[mail.ServerHealth, string](healthStore)
 
-		mail.StartScheduler(c.Context(), mail.ScheduleOptions{Stats: statsRepo, Health: healthRepo}, outgoingMailRepo, c.SysUser, secrets.UseCases.FindGroupSecrets)
+		notifyScheduler, wakeupScheduler := mail.NewWakeup()
+		mail.StartScheduler(c.Context(), mail.ScheduleOptions{Stats: statsRepo, Health: healthRepo, Wakeup: wakeupScheduler}, outgoingMailRepo, c.SysUser, secrets.UseCases.FindGroupSecrets)
 
 		c.mailManagement.Pages = uimail.Pages{
 			Dashboard:         "admin/mail",
@@ -101,7 +102,7 @@ func (c *Configurator) MailManagement() (MailManagement, error) {
 			SecretEdit:        secrets.Pages.EditSecret,
 		}
 
-		c.mailManagement.UseCases, err = mail.NewUseCasesWithStats(c.EventBus(), outgoingMailRepo, statsRepo, healthRepo, secrets.UseCases.FindGroupSecrets, templates.UseCases.EnsureBuildIn, c.SysUser)
+		c.mailManagement.UseCases, err = mail.NewUseCasesWithStats(c.EventBus(), outgoingMailRepo, statsRepo, healthRepo, secrets.UseCases.FindGroupSecrets, notifyScheduler, templates.UseCases.EnsureBuildIn, c.SysUser)
 		if err != nil {
 			return MailManagement{}, fmt.Errorf("cannot create mail usecases: %w", err)
 		}

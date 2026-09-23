@@ -9,6 +9,7 @@ package uimail
 
 import (
 	"fmt"
+	"slices"
 	"time"
 
 	"go.wdy.de/nago/application/mail"
@@ -35,7 +36,7 @@ func SmtpPage(wnd core.Window, pages Pages, uc mail.UseCases) core.View {
 
 	var cards []core.View
 	for _, srv := range stats.Servers {
-		cards = append(cards, serverCard(wnd, pages, srv))
+		cards = append(cards, serverCard(wnd, pages, srv, slices.Contains(stats.Scheduler.RateLimited, srv.Name)))
 	}
 
 	return ui.VStack(
@@ -48,7 +49,7 @@ func SmtpPage(wnd core.Window, pages Pages, uc mail.UseCases) core.View {
 	).Alignment(ui.TopLeading).Gap(ui.L16).FullWidth()
 }
 
-func serverCard(wnd core.Window, pages Pages, srv mail.ServerInfo) core.View {
+func serverCard(wnd core.Window, pages Pages, srv mail.ServerInfo, rateLimited bool) core.View {
 	h := srv.Health
 	var state core.View
 	switch {
@@ -56,6 +57,8 @@ func serverCard(wnd core.Window, pages Pages, srv mail.ServerInfo) core.View {
 		state = tags.ColoredTextPill(ui.SE0, "Gestört")
 	case h.ConsecutiveFailures > 0:
 		state = tags.ColoredTextPill(ui.SW0, "Fehler")
+	case rateLimited:
+		state = tags.ColoredTextPill(ui.SW0, "Ratenbegrenzt")
 	case h.LastSuccessAt.IsZero():
 		state = tags.ColoredTextPill(ui.ST0, "Unbenutzt")
 	default:
@@ -73,6 +76,7 @@ func serverCard(wnd core.Window, pages Pages, srv mail.ServerInfo) core.View {
 		row("Zuletzt erfolgreich", formatTime(wnd, h.LastSuccessAt)),
 		row("Letzter Fehler", formatTime(wnd, h.LastErrorAt)),
 		row("Fehler in Folge", fmt.Sprint(h.ConsecutiveFailures)),
+		row("Ratenbegrenzung", rateLimitText(srv.RateLimitPerHour, srv.RateLimitPerDay)),
 		ui.IfFunc(h.ConsecutiveFailures > 0 && h.LastError != "", func() core.View {
 			return ui.VStack(
 				ui.Text(fmt.Sprintf("%s: %s", phaseLabel(h.LastErrorPhase), h.LastError)).Font(ui.MonoSmall),
@@ -97,4 +101,17 @@ func serverCard(wnd core.Window, pages Pages, srv mail.ServerInfo) core.View {
 			}),
 		).Gap(ui.L8).Wrap(true),
 	).Frame(ui.Frame{}.FullWidth())
+}
+
+func rateLimitText(perHour, perDay int) string {
+	switch {
+	case perHour <= 0 && perDay <= 0:
+		return "unbegrenzt"
+	case perDay <= 0:
+		return fmt.Sprintf("%d pro Stunde", perHour)
+	case perHour <= 0:
+		return fmt.Sprintf("%d pro Tag", perDay)
+	default:
+		return fmt.Sprintf("%d pro Stunde, %d pro Tag", perHour, perDay)
+	}
 }

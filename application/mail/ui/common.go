@@ -92,6 +92,8 @@ func statusPill(status mail.Status) core.View {
 		return tags.ColoredTextPill(ui.SW0, "Fehler, wird wiederholt")
 	case mail.StatusFailed:
 		return tags.ColoredTextPill(ui.SE0, "Endgültig fehlgeschlagen")
+	case mail.StatusSuppressed:
+		return tags.ColoredTextPill(ui.SE0, "Unterdrückt (Spam-Schutz)")
 	case mail.StatusQueued:
 		return tags.ColoredTextPill(ui.SV0, "Wartet")
 	default:

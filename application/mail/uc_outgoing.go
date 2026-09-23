@@ -43,7 +43,7 @@ func (f OutgoingFilter) matches(o Outgoing, now time.Time) bool {
 	}
 
 	if f.Stuck > 0 {
-		if o.Status == StatusSendSuccess || o.Status == StatusFailed || now.Sub(o.QueuedAt) < f.Stuck {
+		if o.done() || now.Sub(o.QueuedAt) < f.Stuck {
 			return false
 		}
 	}
@@ -150,6 +150,10 @@ func NewRetryOutgoing(mutex *sync.Mutex, repo Repository) RetryOutgoing {
 			out := optOut.Unwrap()
 			if out.Status == StatusSendSuccess {
 				continue // use resend instead
+			}
+
+			if out.Status == StatusSuppressed {
+				out.BypassSpamGuard = true // explicitly requested by an administrator
 			}
 
 			out.Status = StatusQueued

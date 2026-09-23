@@ -82,6 +82,9 @@ func DetailPage(wnd core.Window, pages Pages, uc mail2.UseCases) core.View {
 			wnd.Navigation().ForwardTo(pages.OutgoingMailQueue, nil)
 		})),
 		header(wnd, pages, tabQueue, title, append(crumbs, crumb{title: title}), actions),
+		ui.IfFunc(out.Status == mail2.StatusSuppressed, func() core.View {
+			return alert.Banner("Vom Spam-Schutz unterdrückt", out.LastError+". Prüfen Sie, ob die Anwendung diese Mail in einer Schleife erzeugt. „Erneut versuchen“ versendet die Mail trotzdem.").Intent(alert.IntentError).Frame(ui.Frame{}.FullWidth())
+		}),
 		grid([5]int{1, 1, 2, 2, 2},
 			card("Metadaten", metadata(wnd, out)).Frame(ui.Frame{}.FullWidth()),
 			card("Versuche", attempts(wnd, pages, out)).Frame(ui.Frame{}.FullWidth()),

@@ -30,6 +30,9 @@ type StatsBucket struct {
 	Retries     int           `json:"retries,omitempty"`     // attempts which were not the first attempt
 	LatencySum  time.Duration `json:"latencySum,omitempty"`  // sum of queued-to-sent durations of successful deliveries
 	DurationSum time.Duration `json:"durationSum,omitempty"` // sum of the smtp conversation durations
+
+	FirstAttempts          int           `json:"firstAttempts,omitempty"`          // amount of first send attempts
+	FirstAttemptLatencySum time.Duration `json:"firstAttemptLatencySum,omitempty"` // sum of queued-to-first-attempt durations
 }
 
 func (b StatsBucket) Identity() StatsBucketID {
@@ -71,6 +74,8 @@ type SchedulerStatus struct {
 	LastRunAt      time.Time
 	NoSmtpServer   bool // true, if the last run could not find any smtp credentials
 	LastSmtpErrMsg string
+	// RateLimited contains the names of the smtp servers which reached their configured rate limit in the last run.
+	RateLimited []string
 }
 
 var schedulerStatus atomic.Pointer[SchedulerStatus]
@@ -130,6 +135,11 @@ func (r *statsRecorder) record(out Outgoing, a Attempt) {
 
 			if out.AttemptCount > 1 {
 				b.Retries++
+			}
+
+			if out.AttemptCount == 1 && !out.QueuedAt.IsZero() {
+				b.FirstAttempts++
+				b.FirstAttemptLatencySum += max(a.At.Sub(out.QueuedAt), 0)
 			}
 
 			b.DurationSum += a.Duration

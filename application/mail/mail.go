@@ -47,6 +47,12 @@ const (
 	// retried if explicitly requested, see [RetryOutgoing]. Older framework versions do not know this state
 	// and will just retry it like [StatusError].
 	StatusFailed Status = "send_failed"
+
+	// StatusSuppressed denotes, that the spam guard of the scheduler held back the mail, e.g. because the same
+	// mail has been sent too often to the same recipient in a short time which is typical for runaway loops caused
+	// by programming errors. Such mails are only sent if explicitly requested, see [RetryOutgoing].
+	// Older framework versions do not know this state and will just retry it like [StatusError].
+	StatusSuppressed Status = "send_suppressed"
 )
 
 // Phase describes the step of the SMTP conversation, in which an [Attempt] failed.
@@ -99,6 +105,13 @@ type Outgoing struct {
 	SentAt time.Time `json:",omitzero"`
 	// NextAttemptAt is the earliest time for the next attempt. Zero means as soon as possible.
 	NextAttemptAt time.Time `json:",omitzero"`
+	// BypassSpamGuard is set if an administrator explicitly requested to send a suppressed mail.
+	BypassSpamGuard bool `json:",omitempty"`
+}
+
+// done returns true, if the scheduler will not process the mail anymore without explicit request.
+func (o Outgoing) done() bool {
+	return o.Status == StatusSendSuccess || o.Status == StatusFailed || o.Status == StatusSuppressed
 }
 
 // LastAttempt returns the latest attempt, if any.

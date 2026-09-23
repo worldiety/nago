@@ -34,9 +34,10 @@ type queueFilter struct {
 var queueFilters = []queueFilter{
 	{key: "", title: "Alle"},
 	{key: string(mail.StatusQueued), title: "Wartet", status: []mail.Status{mail.StatusQueued, mail.StatusUndefined}},
-	{key: string(mail.StatusError) + "," + string(mail.StatusFailed), title: "Alle Fehler", status: []mail.Status{mail.StatusError, mail.StatusFailed}},
+	{key: string(mail.StatusError) + "," + string(mail.StatusFailed) + "," + string(mail.StatusSuppressed), title: "Alle Fehler", status: []mail.Status{mail.StatusError, mail.StatusFailed, mail.StatusSuppressed}},
 	{key: string(mail.StatusError), title: "Wird wiederholt", status: []mail.Status{mail.StatusError}},
 	{key: string(mail.StatusFailed), title: "Endgültig fehlgeschlagen", status: []mail.Status{mail.StatusFailed}},
+	{key: string(mail.StatusSuppressed), title: "Unterdrückt", status: []mail.Status{mail.StatusSuppressed}},
 	{key: string(mail.StatusSendSuccess), title: "Versendet", status: []mail.Status{mail.StatusSendSuccess}},
 	{key: "stuck", title: "Hängend", stuck: true},
 }

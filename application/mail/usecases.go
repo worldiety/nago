@@ -64,12 +64,17 @@ type UseCases struct {
 
 // Deprecated: use [NewUseCasesWithStats]. This variant has no statistics and no smtp server information.
 func NewUseCases(bus events.Bus, outgoingRepo Repository, ensureBuildIn template.EnsureBuildIn, sysUser user.SysUser) (UseCases, error) {
-	return NewUseCasesWithStats(bus, outgoingRepo, nil, nil, nil, ensureBuildIn, sysUser)
+	return NewUseCasesWithStats(bus, outgoingRepo, nil, nil, nil, nil, ensureBuildIn, sysUser)
 }
 
-// NewUseCasesWithStats creates the mail use cases. The stats, health and secrets parameters are optional.
-func NewUseCasesWithStats(bus events.Bus, outgoingRepo Repository, stats StatsRepository, health HealthRepository, secrets secret.FindGroupSecrets, ensureBuildIn template.EnsureBuildIn, sysUser user.SysUser) (UseCases, error) {
-	sendMailFn := NewSendMail(outgoingRepo)
+// NewUseCasesWithStats creates the mail use cases. The stats, health, secrets and wakeup parameters are optional.
+// The wakeup function is invoked whenever a mail becomes due, to trigger the scheduler immediately, see [NewWakeup].
+func NewUseCasesWithStats(bus events.Bus, outgoingRepo Repository, stats StatsRepository, health HealthRepository, secrets secret.FindGroupSecrets, wakeup func(), ensureBuildIn template.EnsureBuildIn, sysUser user.SysUser) (UseCases, error) {
+	if wakeup == nil {
+		wakeup = func() {}
+	}
+
+	sendMailFn := SendMail(notifyOnSuccess[Mail](NewSendMail(outgoingRepo), wakeup))
 	var mutex sync.Mutex
 
 	err := ensureBuildIn(sysUser(), template.NewProjectData{
@@ -90,8 +95,15 @@ func NewUseCasesWithStats(bus events.Bus, outgoingRepo Repository, stats StatsRe
 	uc.FindOutgoingIDs = NewFindOutgoingIDs(outgoingRepo)
 	uc.FindOutgoingByID = NewFindOutgoingByID(outgoingRepo)
 	uc.DeleteOutgoingByID = NewDeleteOutgoingByID(&mutex, outgoingRepo)
-	uc.RetryOutgoing = NewRetryOutgoing(&mutex, outgoingRepo)
-	uc.ResendOutgoing = NewResendOutgoing(&mutex, outgoingRepo)
+	retry := NewRetryOutgoing(&mutex, outgoingRepo)
+	uc.RetryOutgoing = func(subject auth.Subject, ids ...ID) error {
+		err := retry(subject, ids...)
+		if err == nil {
+			wakeup()
+		}
+		return err
+	}
+	uc.ResendOutgoing = notifyOnSuccess[ID](NewResendOutgoing(&mutex, outgoingRepo), wakeup)
 	uc.Statistics = NewStatistics(outgoingRepo, stats, health, sysUser, secrets)
 
 	// deprecated compatibility layer
@@ -123,7 +135,12 @@ func NewUseCasesWithStats(bus events.Bus, outgoingRepo Repository, stats StatsRe
 			o.ID = data.RandIdent[ID]()
 		}
 
-		return o.ID, outgoingRepo.Save(o)
+		if err := outgoingRepo.Save(o); err != nil {
+			return "", err
+		}
+
+		wakeup()
+		return o.ID, nil
 	}
 
 	events.SubscribeFor[SendMailRequested](bus, func(evt SendMailRequested) {
@@ -156,4 +173,15 @@ func NewUseCasesWithStats(bus events.Bus, outgoingRepo Repository, stats StatsRe
 		}
 	})
 	return uc, nil
+}
+
+func notifyOnSuccess[T any](fn func(auth.Subject, T) (ID, error), wakeup func()) func(auth.Subject, T) (ID, error) {
+	return func(subject auth.Subject, t T) (ID, error) {
+		id, err := fn(subject, t)
+		if err == nil {
+			wakeup()
+		}
+
+		return id, err
+	}
 }

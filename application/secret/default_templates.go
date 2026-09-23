@@ -14,6 +14,10 @@ type SMTP struct {
 	Username      string
 	Password      string   `style:"secret"`
 	SenderAddress string   `value:"" label:"Absenderadresse" supportingText:"Wenn leer, wird der Username verwendet, ansonsten hat diese Absenderadresse Vorrang."`
+	// RateLimitPerHour limits the amount of send attempts per hour. 0 means unlimited.
+	RateLimitPerHour int `label:"Max. Mails pro Stunde" supportingText:"Optionale Ratenbegrenzung des Anbieters. 0 bedeutet unbegrenzt."`
+	// RateLimitPerDay limits the amount of send attempts within 24 hours. 0 means unlimited.
+	RateLimitPerDay int `label:"Max. Mails pro Tag" supportingText:"Optionale Ratenbegrenzung des Anbieters, z.B. 500. 0 bedeutet unbegrenzt."`
 	_             struct{} `credentialName:"SMTP Postausgangsserver" credentialDescription:"Ein Postausgangsserver wird benötigt, um E-Mails zu verschicken." credentialLogo:"https://www.thunderbird.net/media/img/thunderbird/favicon-196.png"`
 }
 
