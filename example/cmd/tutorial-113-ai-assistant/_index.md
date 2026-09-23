@@ -300,6 +300,12 @@ cfg.SetDecorator(func(wnd core.Window, view core.View) core.View {
 
 Am Decorator statt an einzelnen Seiten, damit der Assistent wirklich überall ist — auch auf den Verwaltungsseiten des Frameworks. Kann er nicht laufen (kein Provider, kein Modell, ausgeblendet, Rolle fehlt), kommt die Ansicht unverändert zurück und der Grund landet **einmal** im Log. Ein fehlender Token darf kein Banner werden, das den Nutzer durch die Anwendung verfolgt.
 
+### Datum und Uhrzeit sind eingebaut
+
+Ein Modell hat keine Uhr. Sein „heute" ist der Stichtag seiner Trainingsdaten, und damit rechnet es flüssig und falsch: „seit gestern überfällig", „nächsten Montag", „in zwei Wochen". Der Assistent bringt deshalb das Werkzeug `current_time` von selbst mit — Datum, Uhrzeit, Wochentag, Kalenderwoche und Zeitzone des Fensters (`wnd.Location()`). Dieses Tutorial muss dafür nichts tun.
+
+Warum ein Werkzeug und nicht eine Zeile im System-Prompt: Ein Prompt, der sich jede Sekunde ändert, trifft nie den Prompt-Cache des Providers. Das Werkzeug kostet nur, wenn das Modell es braucht. Wer eine eigene Uhr hat, liefert ein Werkzeug gleichen Namens — das eingebaute tritt dann zurück; abschalten geht mit `DisableCurrentTime`.
+
 ## Der Bildschirm als Rückkanal
 
 Jedes Werkzeug oben sagt dem Modell, was in den **Daten** steht. Keines sagt ihm, was der Nutzer **sieht** — und genau danach fragt er oft: „Was bedeutet die Zahl da rechts?", oder das Modell hat gerade ausgeliehen und nimmt an, dass die Liste sich aktualisiert hat.
@@ -343,6 +349,7 @@ Fragen zum Testen:
 - „Warum steht bei den Ausleihern nur ein Name und kein Benutzerkonto?" — das Modell schlägt `R-DEC-BORROWER` nach und nennt auch, was die Entscheidung kostet, statt sich etwas auszudenken
 - „Kann ich ein ausgeliehenes Buch vormerken?" — die Antwort ist „noch nicht", nicht „gibt es nicht": `R-LIB-RESERVATION` steht auf `planned`
 - „Was kann ich hier eigentlich machen?" — Orientierung über `read_capabilities`
+- „Welcher Wochentag ist heute, und welche Kalenderwoche?" — `current_time` statt geratenem Datum
 - „Was steht bei mir gerade auf dem Bildschirm?" — `inspect_screen` liefert den Snapshot; „Wie sieht das aus?" holt zusätzlich das Bild
 
 ## Example

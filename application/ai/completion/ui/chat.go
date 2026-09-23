@@ -119,6 +119,10 @@ type ChatOptions struct {
 	// a question mid-run and block until answered (analogous to FileUpload).
 	AskUser bool
 
+	// DisableCurrentTime removes the built-in current_time tool (see [CurrentTimeTool]), which is otherwise
+	// wired into every turn. Without it a model calculates with the date of its training cut-off.
+	DisableCurrentTime bool
+
 	// ReadOnly removes every tool marked [completion.Tool.Mutating] before the turn starts, so the model is
 	// never even told they exist. Use it for an assistant that may look but not touch.
 	//
@@ -344,6 +348,9 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			tools := opts.resolveTools(agent)
 			if opts.AskUser {
 				tools = append(tools, askUserTool(wnd, ask))
+			}
+			if !opts.DisableCurrentTime {
+				tools = withBuiltinTool(tools, CurrentTimeTool(wnd))
 			}
 
 			// The confirmation gate is wired only when there is something to gate, so a purely reading

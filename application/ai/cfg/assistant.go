@@ -67,6 +67,10 @@ type AssistantOptions struct {
 	// AskUser lets the model ask a clarifying question mid-run. Optional.
 	AskUser bool
 
+	// DisableCurrentTime removes the built-in current_time tool, which tells the model today's date and the
+	// current time. Optional; the tool is on by default.
+	DisableCurrentTime bool
+
 	// ConfirmMutations asks the user before any tool marked [completion.Tool.Mutating] runs. Strongly
 	// recommended for any assistant that can change something. Optional.
 	ConfirmMutations bool
@@ -133,18 +137,19 @@ func (a *Assistant) Button(wnd core.Window, opts AssistantOptions) core.View {
 	}
 
 	button := uicompletion.ChatButton(uicompletion.ChatOptions{
-		Sessions:         a.sessions,
-		Completions:      comps,
-		Provider:         prov,
-		Title:            opts.Title,
-		Tags:             opts.Tags,
-		MaxTurns:         opts.MaxTurns,
-		History:          opts.History,
-		FileUpload:       opts.FileUpload,
-		AskUser:          opts.AskUser,
-		ReadOnly:         cfg.ReadOnly,
-		ConfirmMutations: opts.ConfirmMutations,
-		Agents:           agents,
+		Sessions:           a.sessions,
+		Completions:        comps,
+		Provider:           prov,
+		Title:              opts.Title,
+		Tags:               opts.Tags,
+		MaxTurns:           opts.MaxTurns,
+		History:            opts.History,
+		FileUpload:         opts.FileUpload,
+		AskUser:            opts.AskUser,
+		DisableCurrentTime: opts.DisableCurrentTime,
+		ReadOnly:           cfg.ReadOnly,
+		ConfirmMutations:   opts.ConfirmMutations,
+		Agents:             agents,
 	})
 
 	button = button.Corner(opts.Corner)
