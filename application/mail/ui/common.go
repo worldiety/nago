@@ -206,3 +206,35 @@ func grid(cols [5]int, children ...core.View) core.View {
 
 	return l.Frame(ui.Frame{}.FullWidth())
 }
+
+type kv struct {
+	key   string
+	value core.View
+}
+
+func kvText(key, value string) kv {
+	if value == "" {
+		value = "–"
+	}
+
+	return kv{key: key, value: ui.Text(value)}
+}
+
+// kvTable renders key-value pairs as a two column table, so that labels and values are aligned.
+func kvTable(rows ...kv) core.View {
+	var tableRows []ui.TTableRow
+	for _, r := range rows {
+		tableRows = append(tableRows, ui.TableRow(
+			ui.TableCell(ui.Text(r.key).Color(ui.ST0)).Alignment(ui.Leading),
+			ui.TableCell(r.value).Alignment(ui.Leading),
+		))
+	}
+
+	return ui.Table(
+		ui.TableColumn(nil).Width(ui.L160),
+		ui.TableColumn(nil),
+	).Rows(tableRows...).
+		CellPadding(ui.Padding{}.Vertical(ui.L8).Horizontal(ui.L4)).
+		HeaderDividerColor("").
+		Frame(ui.Frame{}.FullWidth())
+}

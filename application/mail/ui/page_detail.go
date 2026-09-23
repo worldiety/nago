@@ -107,17 +107,6 @@ func addresses(list []mail.Address) string {
 }
 
 func metadata(wnd core.Window, out mail2.Outgoing) core.View {
-	row := func(key, value string) core.View {
-		if value == "" {
-			value = "–"
-		}
-
-		return ui.HStack(
-			ui.Text(key).Color(ui.ST0).Frame(ui.Frame{Width: ui.L160}),
-			ui.Text(value),
-		).Alignment(ui.TopLeading).Gap(ui.L8).FullWidth()
-	}
-
 	from := "Standard des SMTP-Servers"
 	if out.Mail.From.Address != "" {
 		from = out.Mail.From.String()
@@ -131,19 +120,19 @@ func metadata(wnd core.Window, out mail2.Outgoing) core.View {
 		}
 	}
 
-	return ui.VStack(
-		row("An", addresses(out.Mail.To)),
-		row("CC", addresses(out.Mail.CC)),
-		row("BCC", addresses(out.Mail.BCC)),
-		row("Von", from),
-		row("Server-Hinweis", out.Mail.SmtpHint),
-		row("Versendet über", out.ServerName),
-		row("Eingereiht", formatTime(wnd, out.QueuedAt)),
-		row("Versendet", formatTime(wnd, out.SentAt)),
-		row("Versuche", fmt.Sprint(out.Attempted())),
-		row("Nächster Versuch", next),
-		row("ID", string(out.ID)),
-	).Gap(ui.L8).FullWidth()
+	return kvTable(
+		kvText("An", addresses(out.Mail.To)),
+		kvText("CC", addresses(out.Mail.CC)),
+		kvText("BCC", addresses(out.Mail.BCC)),
+		kvText("Von", from),
+		kvText("Server-Hinweis", out.Mail.SmtpHint),
+		kvText("Versendet über", out.ServerName),
+		kvText("Eingereiht", formatTime(wnd, out.QueuedAt)),
+		kvText("Versendet", formatTime(wnd, out.SentAt)),
+		kvText("Versuche", fmt.Sprint(out.Attempted())),
+		kvText("Nächster Versuch", next),
+		kvText("ID", string(out.ID)),
+	)
 }
 
 func attempts(wnd core.Window, pages Pages, out mail2.Outgoing) core.View {

@@ -65,18 +65,16 @@ func serverCard(wnd core.Window, pages Pages, srv mail.ServerInfo, rateLimited b
 		state = tags.ColoredTextPill(ui.SG0, "Gesund")
 	}
 
-	row := func(key, value string) core.View {
-		return ui.HStack(ui.Text(key).Color(ui.ST0).Frame(ui.Frame{Width: ui.L160}), ui.Text(value)).Gap(ui.L8).FullWidth()
-	}
-
 	return card("",
 		ui.HStack(ui.Text(srv.Name).Font(ui.TitleLarge), ui.Spacer(), state).FullWidth(),
 		ui.Text(fmt.Sprintf("%s:%d", srv.Host, srv.Port)).Font(ui.MonoSmall).Color(ui.ST0),
-		row("Letzte 24 h", fmt.Sprintf("%d versendet · %d Fehlversuche", srv.Totals.Sent, srv.Totals.Failed)),
-		row("Zuletzt erfolgreich", formatTime(wnd, h.LastSuccessAt)),
-		row("Letzter Fehler", formatTime(wnd, h.LastErrorAt)),
-		row("Fehler in Folge", fmt.Sprint(h.ConsecutiveFailures)),
-		row("Ratenbegrenzung", rateLimitText(srv.RateLimitPerHour, srv.RateLimitPerDay)),
+		kvTable(
+			kvText("Letzte 24 h", fmt.Sprintf("%d versendet · %d Fehlversuche", srv.Totals.Sent, srv.Totals.Failed)),
+			kvText("Zuletzt erfolgreich", formatTime(wnd, h.LastSuccessAt)),
+			kvText("Letzter Fehler", formatTime(wnd, h.LastErrorAt)),
+			kvText("Fehler in Folge", fmt.Sprint(h.ConsecutiveFailures)),
+			kvText("Ratenbegrenzung", rateLimitText(srv.RateLimitPerHour, srv.RateLimitPerDay)),
+		),
 		ui.IfFunc(h.ConsecutiveFailures > 0 && h.LastError != "", func() core.View {
 			return ui.VStack(
 				ui.Text(fmt.Sprintf("%s: %s", phaseLabel(h.LastErrorPhase), h.LastError)).Font(ui.MonoSmall),
