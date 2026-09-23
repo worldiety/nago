@@ -77,10 +77,10 @@ onUpdated(checkAnchorType);
 
 		<MenuItems
 			ref="menu"
-			class="z-40 min-w-56 max-h-screen divide-y divide-M3 rounded-md bg-M1 shadow-lg ring-1 ring-black/5 focus:outline-none border border-M3 overflow-y-auto"
+			class="z-40 min-w-56 max-h-screen divide-y divide-M3 rounded-xl bg-M2 shadow-md overflow-y-auto"
 			:style="floatingStyles"
 		>
-			<div v-for="section in props.ui.groups?.value" class="px-1 py-1">
+			<div v-for="section in props.ui.groups?.value" class="p-2">
 				<template v-if="section.customContent">
 					<UiGeneric :ui="section.customContent" />
 				</template>
@@ -88,8 +88,8 @@ onUpdated(checkAnchorType);
 					<MenuItem v-for="itemUi in section.items?.value" v-slot="{ active }" @click.stop>
 						<button
 							:class="[
-								active ? 'bg-I0 bg-opacity-25' : '',
-								'group flex w-full items-center rounded-md px-2 py-2 text-sm',
+								active ? 'bg-I0 bg-opacity-15' : '',
+								'group flex w-full items-center rounded-lg py-3 px-2 text-sm',
 							]"
 							@click="itemClick(itemUi)"
 						>
