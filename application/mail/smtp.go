@@ -10,11 +10,13 @@ package mail
 import (
 	"bytes"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"mime"
 	"net"
 	"net/mail"
 	"net/smtp"
+	"net/textproto"
 	"strconv"
 	"strings"
 	"time"
@@ -22,7 +24,36 @@ import (
 	"go.wdy.de/nago/application/secret"
 )
 
-func send(credentials secret.SMTP, m Mail) error {
+// SendError is returned by send and describes in which phase of the SMTP conversation the error occurred.
+type SendError struct {
+	Phase Phase
+	Code  int // SMTP reply code or 0
+	Err   error
+}
+
+func (e *SendError) Error() string {
+	return fmt.Sprintf("%s: %v", e.Phase, e.Err)
+}
+
+func (e *SendError) Unwrap() error {
+	return e.Err
+}
+
+func sendErr(phase Phase, err error) error {
+	if err == nil {
+		return nil
+	}
+
+	se := &SendError{Phase: phase, Err: err}
+	var tpErr *textproto.Error
+	if errors.As(err, &tpErr) {
+		se.Code = tpErr.Code
+	}
+
+	return se
+}
+
+func send(credentials secret.SMTP, m Mail) (err error) {
 	// Connect to the SMTP Server
 	servername := credentials.Host + ":" + strconv.Itoa(credentials.Port)
 
@@ -38,22 +69,26 @@ func send(credentials secret.SMTP, m Mail) error {
 
 	conn, err := net.DialTimeout("tcp", servername, 10*time.Second)
 	if err != nil {
-		return err
+		return sendErr(PhaseDial, err)
 	}
+
+	defer conn.Close()
 
 	c, err := smtp.NewClient(conn, host)
 	if err != nil {
-		return err
+		return sendErr(PhaseDial, err)
 	}
+
+	defer c.Close()
 
 	err = c.StartTLS(tlsconfig)
 	if err != nil {
-		return err
+		return sendErr(PhaseTLS, err)
 	}
 
 	// Auth
 	if err = c.Auth(auth); err != nil {
-		return err
+		return sendErr(PhaseAuth, err)
 	}
 	if len(m.From.Address) == 0 {
 		if len(credentials.SenderAddress) != 0 {
@@ -65,37 +100,37 @@ func send(credentials secret.SMTP, m Mail) error {
 
 	// the from address is usually important for authentication
 	if err = c.Mail(m.From.Address); err != nil {
-		return err
+		return sendErr(PhaseMail, err)
 	}
 
 	// add all recipients, which is independent of what is in the actual message
 	for _, adr := range m.To {
 		if err = c.Rcpt(adr.Address); err != nil {
-			return err
+			return sendErr(PhaseRcpt, err)
 		}
 	}
 
 	for _, adr := range m.CC {
 		if err = c.Rcpt(adr.Address); err != nil {
-			return err
+			return sendErr(PhaseRcpt, err)
 		}
 	}
 
 	for _, adr := range m.BCC {
 		if err = c.Rcpt(adr.Address); err != nil {
-			return err
+			return sendErr(PhaseRcpt, err)
 		}
 	}
 
 	// Data
 	w, err := c.Data()
 	if err != nil {
-		return err
+		return sendErr(PhaseData, err)
 	}
 
 	to := recipients(m.To).String()
 	if len(to) == 0 {
-		return fmt.Errorf("recipient list is empty")
+		return sendErr(PhaseRcpt, fmt.Errorf("recipient list is empty"))
 	}
 
 	// Setup data
@@ -125,7 +160,7 @@ func send(credentials secret.SMTP, m Mail) error {
 		data.rf()
 		err = p.write(data.sb)
 		if err != nil {
-			return err
+			return sendErr(PhaseData, err)
 		}
 
 		data.rf()
@@ -138,15 +173,15 @@ func send(credentials secret.SMTP, m Mail) error {
 	//fmt.Println(string(data.sb.Bytes()))
 	_, err = w.Write(data.sb.Bytes())
 	if err != nil {
-		return err
+		return sendErr(PhaseData, err)
 	}
 
 	err = w.Close()
 	if err != nil {
-		return err
+		return sendErr(PhaseData, err)
 	}
 
-	return c.Quit()
+	return sendErr(PhaseQuit, c.Quit())
 }
 
 type recipients []mail.Address

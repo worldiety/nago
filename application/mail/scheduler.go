@@ -9,6 +9,7 @@ package mail
 
 import (
 	"context"
+	"errors"
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/secret"
 	"go.wdy.de/nago/application/user"
@@ -23,6 +24,18 @@ type ScheduleOptions struct {
 	KeepMailAfterSuccess time.Duration // default is 24 hours, if negative unlimited
 	KeepMailAfterError   time.Duration // default is 1 year, if negative unlimited
 	WaitBetweenSends     time.Duration // default is 1 Seconds
+
+	// MaxAttempts is the amount of attempts, before a mail is marked as [StatusFailed]. Default is 12, if negative
+	// unlimited. Permanent SMTP rejections (5xx) of recipients fail immediately.
+	MaxAttempts int
+
+	// MaxBackoff limits the exponential backoff between attempts of the same mail. Default is 1 hour.
+	MaxBackoff time.Duration
+
+	// Stats is optional and receives hourly aggregated statistics.
+	Stats StatsRepository
+	// Health is optional and receives the latest state per smtp server.
+	Health HealthRepository
 }
 
 // StartScheduler starts a new scheduler instance to process the [Outgoing] mails.
@@ -43,18 +56,31 @@ func StartScheduler(ctx context.Context, opts ScheduleOptions, mails Repository,
 		opts.WaitBetweenSends = time.Second * 1
 	}
 
+	if opts.MaxAttempts == 0 {
+		opts.MaxAttempts = 12
+	}
+
+	if opts.MaxBackoff == 0 {
+		opts.MaxBackoff = time.Hour
+	}
+
+	recorder := &statsRecorder{stats: opts.Stats, health: opts.Health}
+	setSchedulerStatus(func(s *SchedulerStatus) { s.Running = true })
+
 	go func() {
 		slog.Info("mail scheduler started")
 		for {
 			select {
 			case <-ctx.Done():
 				slog.Info("mail scheduler stopped")
+				setSchedulerStatus(func(s *SchedulerStatus) { s.Running = false })
 				return
 			default:
 				// continue below
 			}
 
 			time.Sleep(opts.SendInterval)
+			setSchedulerStatus(func(s *SchedulerStatus) { s.LastRunAt = time.Now() })
 
 			if n, err := mails.Count(); err != nil || n == 0 {
 				if err != nil {
@@ -89,42 +115,80 @@ func StartScheduler(ctx context.Context, opts ScheduleOptions, mails Repository,
 
 				keepErrorUnlimited := opts.KeepMailAfterError < 0
 				if !keepErrorUnlimited {
-					if outgoing.Status == StatusError && now.Sub(outgoing.QueuedAt) > opts.KeepMailAfterError {
+					if (outgoing.Status == StatusError || outgoing.Status == StatusFailed) && now.Sub(outgoing.QueuedAt) > opts.KeepMailAfterError {
 						toRemove = append(toRemove, outgoing.ID)
 					}
 				}
 
 				// go next, if nothing to do
-				if outgoing.Status == StatusSendSuccess {
+				if outgoing.Status == StatusSendSuccess || outgoing.Status == StatusFailed {
+					continue
+				}
+
+				if !outgoing.NextAttemptAt.IsZero() && now.Before(outgoing.NextAttemptAt) {
 					continue
 				}
 
 				optSmtp, err := pickMailServerCandidate(sysUser, secrets, outgoing.Mail.SmtpHint)
 				if err != nil {
 					slog.Error("mail scheduler failed to pick mail server", "err", err)
+					setSchedulerStatus(func(s *SchedulerStatus) { s.LastSmtpErrMsg = err.Error() })
 					break
 				}
 
 				if optSmtp.IsNone() {
 					slog.Error("cannot process mail queue, no smtp credentials available in system group")
+					setSchedulerStatus(func(s *SchedulerStatus) { s.NoSmtpServer = true })
 					break
 				}
 
+				setSchedulerStatus(func(s *SchedulerStatus) { s.NoSmtpServer = false; s.LastSmtpErrMsg = "" })
+
 				smtp := optSmtp.Unwrap()
 
-				outgoing.ServerName = smtp.Name
-				outgoing.SendAt = time.Now()
+				start := time.Now()
+				sendErr := send(smtp, outgoing.Mail)
+				attempt := Attempt{
+					At:       start,
+					Server:   smtp.Name,
+					Success:  sendErr == nil,
+					Duration: time.Since(start),
+				}
 
-				if err := send(smtp, outgoing.Mail); err != nil {
-					slog.Error("mail scheduler failed to send mail", "smtp", smtp.Name, "id", outgoing.ID, "subject", outgoing.Mail.Subject, "err", err)
+				if sendErr != nil {
+					attempt.Message = sendErr.Error()
+					var se *SendError
+					if errors.As(sendErr, &se) {
+						attempt.Phase = se.Phase
+						attempt.Code = se.Code
+						attempt.Message = se.Err.Error()
+					}
+				}
+
+				outgoing.addAttempt(attempt)
+
+				if sendErr != nil {
+					slog.Error("mail scheduler failed to send mail", "smtp", smtp.Name, "id", outgoing.ID, "subject", outgoing.Mail.Subject, "err", sendErr)
 
 					outgoing.Status = StatusError
-					outgoing.LastError = err.Error()
+					outgoing.LastError = sendErr.Error()
+
+					permanent := attempt.Phase == PhaseRcpt && attempt.Code >= 500
+					if permanent || (opts.MaxAttempts > 0 && outgoing.AttemptCount >= opts.MaxAttempts) {
+						outgoing.Status = StatusFailed
+						outgoing.NextAttemptAt = time.Time{}
+					} else {
+						outgoing.NextAttemptAt = time.Now().Add(backoff(opts.SendInterval, opts.MaxBackoff, outgoing.AttemptCount))
+					}
 				} else {
 					slog.Info("mail scheduler send mail success", "id", outgoing.ID)
 					outgoing.Status = StatusSendSuccess
 					outgoing.LastError = ""
+					outgoing.SentAt = time.Now()
+					outgoing.NextAttemptAt = time.Time{}
 				}
+
+				recorder.record(outgoing, attempt)
 
 				// this is an anti-spam heuristic
 				time.Sleep(opts.WaitBetweenSends)
@@ -144,6 +208,23 @@ func StartScheduler(ctx context.Context, opts ScheduleOptions, mails Repository,
 
 		}
 	}()
+}
+
+// backoff returns base * 2^(attempts-1) limited to maxBackoff.
+func backoff(base, maxBackoff time.Duration, attempts int) time.Duration {
+	if attempts < 1 {
+		attempts = 1
+	}
+
+	d := base
+	for i := 1; i < attempts; i++ {
+		d *= 2
+		if d >= maxBackoff {
+			return maxBackoff
+		}
+	}
+
+	return min(d, maxBackoff)
 }
 
 func pickMailServerCandidate(sysUser user.SysUser, secrets secret.FindGroupSecrets, idOrNameHint string) (std.Option[secret.SMTP], error) {

@@ -23,7 +23,11 @@ import (
 	"golang.org/x/text/language"
 )
 
-func SendTestMailPage(wnd core.Window, send mail3.SendMail, exec template.Execute) core.View {
+func SendTestMailPage(wnd core.Window, pages Pages, send mail3.SendMail, exec template.Execute) core.View {
+	smtpHint := core.AutoState[string](wnd).Init(func() string {
+		return wnd.Values()["smtp"]
+	})
+
 	mailSubject := core.AutoState[string](wnd).Init(func() string {
 		return "NAGO Mail-Server Testnachricht"
 	})
@@ -59,7 +63,7 @@ func SendTestMailPage(wnd core.Window, send mail3.SendMail, exec template.Execut
 	})
 
 	return ui.VStack(
-		ui.H1("Mailkonfiguration testen"),
+		header(wnd, pages, tabTest, "Mailkonfiguration testen", []crumb{{title: "Test"}}),
 
 		cardlayout.Card("Test Mail verschicken").
 			Body(
@@ -67,6 +71,7 @@ func SendTestMailPage(wnd core.Window, send mail3.SendMail, exec template.Execut
 					ui.TextField("Empfänger", mailRec.Get()).InputValue(mailRec).FullWidth(),
 					ui.TextField("Betreff", mailSubject.Get()).InputValue(mailSubject).FullWidth(),
 					ui.TextField("Nachricht", mailBody.Get()).InputValue(mailBody).Lines(5).FullWidth(),
+					ui.TextField("SMTP-Server (optional)", smtpHint.Get()).InputValue(smtpHint).SupportingText("Name oder ID des SMTP-Servers. Leer verwendet den Standard.").FullWidth(),
 				).FullWidth().Gap(ui.L16),
 			).Footer(
 			ui.PrimaryButton(func() {
@@ -74,8 +79,9 @@ func SendTestMailPage(wnd core.Window, send mail3.SendMail, exec template.Execut
 					To: []mail2.Address{{
 						Address: mailRec.Get(),
 					}},
-					Subject: mailSubject.Get(),
-					Parts:   []mail3.Part{mail3.NewTextPart(mailBody.Get())},
+					Subject:  mailSubject.Get(),
+					Parts:    []mail3.Part{mail3.NewTextPart(mailBody.Get())},
+					SmtpHint: smtpHint.Get(),
 				})
 
 				if err != nil {
@@ -140,8 +146,9 @@ func SendTestMailPage(wnd core.Window, send mail3.SendMail, exec template.Execut
 					To: []mail2.Address{{
 						Address: tplMailRec.Get(),
 					}},
-					Subject: tplMailSubject.Get(),
-					Parts:   parts,
+					Subject:  tplMailSubject.Get(),
+					Parts:    parts,
+					SmtpHint: smtpHint.Get(),
 				})
 
 				if err != nil {
@@ -155,5 +162,5 @@ func SendTestMailPage(wnd core.Window, send mail3.SendMail, exec template.Execut
 				})
 			}).Title("Senden"),
 		).Frame(ui.Frame{MaxWidth: ui.L560, Width: ui.Full}),
-	).Gap(ui.L32).FullWidth()
+	).Alignment(ui.TopLeading).Gap(ui.L32).FullWidth()
 }

@@ -20,7 +20,6 @@ import (
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ui/layout"
 	"golang.org/x/text/language"
 )
 
@@ -75,26 +74,57 @@ func (c *Configurator) MailManagement() (MailManagement, error) {
 			return MailManagement{}, fmt.Errorf("cannot get template management: %w", err)
 		}
 
-		mail.StartScheduler(c.Context(), mail.ScheduleOptions{}, outgoingMailRepo, c.SysUser, secrets.UseCases.FindGroupSecrets)
-
-		c.mailManagement.Pages = uimail.Pages{
-			OutgoingMailQueue: "admin/mail/outgoing",
-			MailScheduler:     "admin/mail/scheduler",
-			SendMailTest:      "admin/mail/test",
+		statsStore, err := c.EntityStore("nago.mail.stats")
+		if err != nil {
+			return MailManagement{}, err
 		}
 
-		c.mailManagement.UseCases, err = mail.NewUseCases(c.EventBus(), outgoingMailRepo, templates.UseCases.EnsureBuildIn, c.SysUser)
+		statsRepo := json.NewSloppyJSONRepository[mail.StatsBucket, mail.StatsBucketID](statsStore)
+
+		healthStore, err := c.EntityStore("nago.mail.smtp_health")
+		if err != nil {
+			return MailManagement{}, err
+		}
+
+		healthRepo := json.NewSloppyJSONRepository[mail.ServerHealth, string](healthStore)
+
+		mail.StartScheduler(c.Context(), mail.ScheduleOptions{Stats: statsRepo, Health: healthRepo}, outgoingMailRepo, c.SysUser, secrets.UseCases.FindGroupSecrets)
+
+		c.mailManagement.Pages = uimail.Pages{
+			Dashboard:         "admin/mail",
+			OutgoingMailQueue: "admin/mail/outgoing",
+			OutgoingMail:      "admin/mail/outgoing/detail",
+			SmtpServers:       "admin/mail/smtp",
+			SendMailTest:      "admin/mail/test",
+			Templates:         templates.Pages.Projects,
+			SecretVault:       secrets.Pages.Vault,
+			SecretEdit:        secrets.Pages.EditSecret,
+		}
+
+		c.mailManagement.UseCases, err = mail.NewUseCasesWithStats(c.EventBus(), outgoingMailRepo, statsRepo, healthRepo, secrets.UseCases.FindGroupSecrets, templates.UseCases.EnsureBuildIn, c.SysUser)
 		if err != nil {
 			return MailManagement{}, fmt.Errorf("cannot create mail usecases: %w", err)
 		}
 
-		c.RootView(c.mailManagement.Pages.SendMailTest, c.DecorateRootView(func(wnd core.Window) core.View {
-			return layout.WithBackButton(wnd, uimail.SendTestMailPage(wnd, c.mailManagement.UseCases.SendMail, templates.UseCases.Execute))
-		}))
+		c.RootViewWithDecoration(c.mailManagement.Pages.Dashboard, func(wnd core.Window) core.View {
+			return uimail.DashboardPage(wnd, c.mailManagement.Pages, c.mailManagement.UseCases)
+		})
 
-		c.RootView(c.mailManagement.Pages.OutgoingMailQueue, c.DecorateRootView(func(wnd core.Window) core.View {
-			return layout.WithBackButton(wnd, uimail.OutgoingQueuePage(wnd, c.mailManagement.UseCases))
-		}))
+		c.RootViewWithDecoration(c.mailManagement.Pages.OutgoingMailQueue, func(wnd core.Window) core.View {
+			return uimail.QueuePage(wnd, c.mailManagement.Pages, c.mailManagement.UseCases)
+		})
+
+		c.RootViewWithDecoration(c.mailManagement.Pages.OutgoingMail, func(wnd core.Window) core.View {
+			return uimail.DetailPage(wnd, c.mailManagement.Pages, c.mailManagement.UseCases)
+		})
+
+		c.RootViewWithDecoration(c.mailManagement.Pages.SmtpServers, func(wnd core.Window) core.View {
+			return uimail.SmtpPage(wnd, c.mailManagement.Pages, c.mailManagement.UseCases)
+		})
+
+		c.RootViewWithDecoration(c.mailManagement.Pages.SendMailTest, func(wnd core.Window) core.View {
+			return uimail.SendTestMailPage(wnd, c.mailManagement.Pages, c.mailManagement.UseCases.SendMail, templates.UseCases.Execute)
+		})
 
 		events.SubscribeFor[user.Created](c.eventBus, func(evt user.Created) {
 			if !evt.NotifyUser {

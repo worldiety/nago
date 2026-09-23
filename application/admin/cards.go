@@ -55,17 +55,23 @@ func DefaultGroups(pages Pages) []Group {
 		Title: "E-Mail und SMTP",
 		Entries: []Card{
 			{
+				Title:      "Übersicht",
+				Text:       "Versandstatistiken, aktuelle Probleme und die letzten Fehler auf einen Blick.",
+				Target:     pages.Mail.Dashboard,
+				Permission: mail.PermStatistics,
+			},
+			{
 				Title:      "Warteschlange",
-				Text:       "E-Mails werden über eine Postausgangs-Warteschlange versendet.",
+				Text:       "E-Mails werden über eine Postausgangs-Warteschlange versendet. Hier können fehlgeschlagene Mails untersucht und erneut versendet werden.",
 				Target:     pages.Mail.OutgoingMailQueue,
 				Permission: mail.PermOutgoingFindAll,
 			},
-			/*	{
-				Title:  "Scheduler",
-				Text:   "Der Mail Scheduler bearbeitet die Warteschlange des Postausgangs und bietet ebenfalls ein paar Einstelloptionen.",
-				Target: pages.Mail.MailScheduler,
-				Permission: mail.PermScheduler,
-			},*/
+			{
+				Title:      "SMTP-Server",
+				Text:       "Zustand und Fehler der konfigurierten SMTP-Server.",
+				Target:     pages.Mail.SmtpServers,
+				Permission: mail.PermStatistics,
+			},
 			{
 				Title:      "Test",
 				Text:       "Hierüber kann die aktuelle Mail-Server Konfiguration inkl. Templating und co. getestet werden.",
