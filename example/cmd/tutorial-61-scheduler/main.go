@@ -9,6 +9,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/scheduler"
@@ -48,6 +49,35 @@ func main() {
 				return nil
 			},
 			Actions: nil,
+		}))
+
+		var n int
+		option.MustZero(schedulers.UseCases.Configure(user.SU(), scheduler.Options{
+			ID:          "test.repeat",
+			Name:        "Wiederholter Job",
+			Description: "Schreibt viele Log-Einträge und schlägt jeden dritten Lauf fehl.",
+			Kind:        scheduler.Schedule,
+			Defaults: scheduler.Settings{
+				PauseTime: 20 * time.Second,
+			},
+			Runner: func(ctx context.Context) error {
+				n++
+				log := logging.FromContext(ctx)
+				for i := range 250 {
+					log.Info("processing item", "item", i)
+					select {
+					case <-ctx.Done():
+						return ctx.Err()
+					case <-time.After(100 * time.Millisecond):
+					}
+				}
+				log.WithGroup("smtp").Warn("slow response", "host", "mail.example.org")
+				if n%3 == 0 {
+					return fmt.Errorf("smtp: dial tcp 10.0.3.12:587: i/o timeout")
+				}
+				return nil
+			},
+			Actions: []scheduler.CustomAction{{Title: "Outbox leeren", Action: func(ctx context.Context) {}}},
 		}))
 
 		cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {

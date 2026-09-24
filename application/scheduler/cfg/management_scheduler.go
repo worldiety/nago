@@ -42,9 +42,16 @@ func Enable(cfg *application.Configurator) (SchedulerManagement, error) {
 
 	settingsRepo := json.NewSloppyJSONRepository[scheduler.Settings, scheduler.ID](settingsStore)
 
+	runStore, err := cfg.EntityStore("nago.scheduler.runs")
+	if err != nil {
+		return SchedulerManagement{}, err
+	}
+
+	runRepo := json.NewSloppyJSONRepository[scheduler.Run, scheduler.RunID](runStore)
+
 	management = SchedulerManagement{
 		settingsRepo: settingsRepo,
-		UseCases:     scheduler.NewUseCases(cfg.Context(), settingsRepo),
+		UseCases:     scheduler.NewUseCasesWithRuns(cfg.Context(), settingsRepo, runRepo, cfg.Directory("log")),
 		Pages: uischeduler.Pages{
 			SchedulerDashboard: "admin/scheduler/overview",
 		},

@@ -10,6 +10,9 @@ package scheduler
 import (
 	"context"
 	"fmt"
+	"go.wdy.de/nago/pkg/blob/mem"
+	"go.wdy.de/nago/pkg/data/json"
+	"iter"
 	"log/slog"
 	"slices"
 	"strings"
@@ -22,10 +25,23 @@ type Manager struct {
 	mutex        sync.Mutex
 	services     map[ID]*Scheduler
 	settingsRepo SettingsRepository
+	runs         *runStore
 }
 
+// NewManager creates a manager which keeps run statistics only in memory and writes no log files.
 func NewManager(ctx context.Context, settingsRepo SettingsRepository) *Manager {
-	return &Manager{ctx: ctx, services: make(map[ID]*Scheduler), settingsRepo: settingsRepo}
+	return NewManagerWithPersistence(ctx, settingsRepo, nil, "")
+}
+
+// NewManagerWithPersistence creates a manager which persists run statistics into the given repository and
+// writes the log of each run into its own file within logDir. If runRepo is nil, an in-memory repository is used.
+// If logDir is empty, no log files are written.
+func NewManagerWithPersistence(ctx context.Context, settingsRepo SettingsRepository, runRepo RunRepository, logDir string) *Manager {
+	if runRepo == nil {
+		runRepo = json.NewSloppyJSONRepository[Run, RunID](mem.NewBlobStore("nago.scheduler.runs"))
+	}
+
+	return &Manager{ctx: ctx, services: make(map[ID]*Scheduler), settingsRepo: settingsRepo, runs: newRunStore(runRepo, logDir)}
 }
 
 func (m *Manager) Configure(opts Options) error {
@@ -41,6 +57,7 @@ func (m *Manager) Configure(opts Options) error {
 	}
 
 	s := NewScheduler(m.ctx, opts, m.settingsRepo)
+	s.runs = m.runs
 	m.services[opts.ID] = s
 	s.Launch()
 
@@ -194,4 +211,64 @@ func (m *Manager) Scheduler() []Options {
 	})
 
 	return tmp
+}
+
+func (m *Manager) scheduler(id ID) (*Scheduler, bool) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+	s, ok := m.services[id]
+	return s, ok
+}
+
+// Runs returns the known runs of the given scheduler, newest first.
+func (m *Manager) Runs(id ID) ([]Run, error) {
+	if _, ok := m.scheduler(id); !ok {
+		return nil, fmt.Errorf("service with id %s not found", id)
+	}
+
+	return m.runs.runs(id)
+}
+
+// Stats aggregates the runs of the last 24 hours.
+func (m *Manager) Stats(id ID) (RunStats, []Run, error) {
+	runs, err := m.Runs(id)
+	if err != nil {
+		return RunStats{}, nil, err
+	}
+
+	return stats(runs, m.runs.now()), runs, nil
+}
+
+// RunLog returns a single page of the log of the given run.
+func (m *Manager) RunLog(id ID, runID RunID, q LogQuery) (LogPage, error) {
+	s, ok := m.scheduler(id)
+	if !ok {
+		return LogPage{}, fmt.Errorf("service with id %s not found", id)
+	}
+
+	optRun, err := m.runs.repo.FindByID(runID)
+	if err != nil {
+		return LogPage{}, err
+	}
+
+	if optRun.IsNone() || optRun.Unwrap().Scheduler != id {
+		return LogPage{}, fmt.Errorf("run %s: %w", runID, ErrRunNotFound)
+	}
+
+	run := optRun.Unwrap()
+
+	// without a log file, only the current run is available from memory
+	if run.LogFile == "" || m.runs.dir == "" {
+		if cur, ok := s.CurrentRun(); ok && cur.ID == run.ID {
+			logs := s.Logs()
+			return pageEntries(func() iter.Seq[LogEntry] { return slices.Values(logs) }, q), nil
+		}
+	}
+
+	entries, err := m.runs.fileEntries(run)
+	if err != nil {
+		return LogPage{}, err
+	}
+
+	return pageEntries(func() iter.Seq[LogEntry] { return entries }, q), nil
 }

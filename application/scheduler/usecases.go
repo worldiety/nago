@@ -56,6 +56,15 @@ type StatusResult struct {
 	NextPlannedAt   time.Time
 	LastError       error
 	Options         Options
+
+	// LastRun is the newest known run, which may still be running.
+	LastRun std.Option[Run]
+	// Stats aggregates the runs of the last 24 hours.
+	Stats RunStats
+	// Settings are the effective settings, i.e. the persisted ones or the defaults.
+	Settings Settings
+	// CustomSettings is true, if persisted settings replace the defaults.
+	CustomSettings bool
 }
 type Status func(subject auth.Subject, id ID) (StatusResult, error)
 
@@ -65,6 +74,13 @@ type Configure func(subject auth.Subject, opts Options) error
 
 type ViewLogs func(subject auth.Subject, id ID) iter.Seq2[LogEntry, error]
 type ExecuteNow func(subject auth.Subject, id ID) error
+
+// ListRuns returns the known runs of a scheduler, newest first. Statistics are kept for [RunRetention],
+// logs only for the newest [KeepRunLogs] runs.
+type ListRuns func(subject auth.Subject, id ID) iter.Seq2[Run, error]
+
+// ViewRunLog returns a single page of at most [MaxLogPageSize] log entries of the given run, newest first.
+type ViewRunLog func(subject auth.Subject, id ID, run RunID, query LogQuery) (LogPage, error)
 
 type ListSchedulers func(subject auth.Subject) iter.Seq2[Options, error]
 
@@ -86,10 +102,19 @@ type UseCases struct {
 	FindSettingsByID   FindSettingsByID
 	UpdateSettings     UpdateSettings
 	DeleteSettingsByID DeleteSettingsByID
+	ListRuns           ListRuns
+	ViewRunLog         ViewRunLog
 }
 
+// NewUseCases creates the use cases without persistent run statistics and without log files.
 func NewUseCases(ctx context.Context, settingsRepo SettingsRepository) UseCases {
-	m := NewManager(ctx, settingsRepo)
+	return NewUseCasesWithRuns(ctx, settingsRepo, nil, "")
+}
+
+// NewUseCasesWithRuns creates the use cases which persist run statistics into runRepo and the log of each
+// run into its own file within logDir, see [NewManagerWithPersistence].
+func NewUseCasesWithRuns(ctx context.Context, settingsRepo SettingsRepository, runRepo RunRepository, logDir string) UseCases {
+	m := NewManagerWithPersistence(ctx, settingsRepo, runRepo, logDir)
 	return UseCases{
 		Configure:          NewConfigure(m),
 		ViewLogs:           NewViewLogs(m),
@@ -101,5 +126,7 @@ func NewUseCases(ctx context.Context, settingsRepo SettingsRepository) UseCases 
 		FindSettingsByID:   NewFindSettingsByID(settingsRepo),
 		UpdateSettings:     NewUpdateSettings(settingsRepo),
 		DeleteSettingsByID: NewDeleteSettingsByID(settingsRepo),
+		ListRuns:           NewListRuns(m),
+		ViewRunLog:         NewViewRunLog(m),
 	}
 }

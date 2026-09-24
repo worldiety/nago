@@ -9,10 +9,12 @@ package scheduler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"runtime/debug"
 	"slices"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -42,7 +44,13 @@ type Scheduler struct {
 	lastCompletedAt atomic.Pointer[time.Time]
 	nextPlannedAt   atomic.Pointer[time.Time]
 	launchMutex     sync.Mutex
+	runs            *runStore
+	sink            atomic.Pointer[runSink]
+	currentRun      atomic.Pointer[Run]
 }
+
+// maxMemoryLogs limits the in-memory log buffer of the current run. The complete log is persisted in the run log file.
+const maxMemoryLogs = 1000
 
 func NewScheduler(ctx context.Context, opts Options, settingsRepo SettingsRepository) *Scheduler {
 	s := &Scheduler{
@@ -147,7 +155,6 @@ func (s *Scheduler) Launch() {
 
 					if err != nil {
 						slog.Error("service looper failed to run", "id", s.opts.ID, "err", err.Error())
-						s.logError(err)
 					}
 				}
 
@@ -205,7 +212,6 @@ func (s *Scheduler) Launch() {
 
 						if err != nil {
 							slog.Error("service looper cron failed to run", "id", s.opts.ID, "err", err.Error())
-							s.logError(err)
 						}
 
 					}
@@ -221,6 +227,20 @@ func (s *Scheduler) Launch() {
 func (s *Scheduler) protectExec(fn func() error) (err error) {
 	s.singleRunMutex.Lock()
 	defer s.singleRunMutex.Unlock()
+
+	s.ClearLogs()
+	run, sink, beginErr := s.beginRun()
+	defer func() {
+		if err != nil {
+			s.logError(err)
+		}
+
+		if beginErr == nil {
+			s.sink.Store(nil)
+			s.currentRun.Store(nil)
+			s.runs.end(run, sink, err)
+		}
+	}()
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -239,7 +259,6 @@ func (s *Scheduler) protectExec(fn func() error) (err error) {
 
 	state := Running
 	s.state.Store(&state)
-	s.ClearLogs()
 
 	err = fn()
 	return
@@ -252,6 +271,36 @@ func (s *Scheduler) ExecuteNow() error {
 	return s.protectExec(func() error {
 		return s.opts.Runner(s.ctx)
 	})
+}
+
+func (s *Scheduler) beginRun() (Run, *runSink, error) {
+	if s.runs == nil {
+		return Run{}, nil, errors.New("no run store")
+	}
+
+	run, sink, err := s.runs.begin(s.opts.ID)
+	if err != nil {
+		slog.Error("cannot begin scheduler run", "id", s.opts.ID, "err", err.Error())
+		return Run{}, nil, err
+	}
+
+	s.currentRun.Store(&run)
+	s.sink.Store(sink)
+	return run, sink, nil
+}
+
+// CurrentRun returns the currently executing run, if any.
+func (s *Scheduler) CurrentRun() (Run, bool) {
+	r := s.currentRun.Load()
+	if r == nil {
+		return Run{}, false
+	}
+
+	return *r, true
+}
+
+func isCanceled(err error) bool {
+	return errors.Is(err, context.Canceled)
 }
 
 func (s *Scheduler) logError(err error) {
@@ -306,37 +355,37 @@ func (s *Scheduler) ClearLogs() {
 }
 
 func (s *Scheduler) logLevel(level slog.Level, msg string, args ...any) {
-	s.logsMutex.Lock()
-	defer s.logsMutex.Unlock()
-
-	// TODO remove this and make me real slog handler
-
 	if len(args)%2 != 0 {
 		slog.Error("invalid arguments in log level")
 		debug.PrintStack()
 		args = nil
 	}
+
 	var tmp map[string]any
 	if len(args) > 0 {
-		tmp = make(map[string]any, len(args))
+		tmp = make(map[string]any, len(args)/2)
 		for i := 0; i < len(args); i += 2 {
-			k := args[i]
-			if v, ok := k.(string); ok && v != "" {
+			if v, ok := args[i].(string); ok && v != "" {
 				tmp[v] = args[i+1]
 			} else {
-				tmp[fmt.Sprint(s.logs[i])] = args[i+1]
+				tmp[fmt.Sprint(args[i])] = args[i+1]
 			}
-
 		}
 	}
 
-	s.logs = append(s.logs, LogEntry{
-		Level:  level,
-		Time:   time.Now(),
-		Msg:    msg,
-		Values: tmp,
-	})
+	s.record(LogEntry{Level: level, Time: time.Now(), Msg: msg, Values: tmp})
+}
 
+// record appends the entry to the in-memory buffer and to the log file of the current run.
+func (s *Scheduler) record(e LogEntry) {
+	s.logsMutex.Lock()
+	if len(s.logs) >= maxMemoryLogs {
+		s.logs = slices.Delete(s.logs, 0, len(s.logs)-maxMemoryLogs+1)
+	}
+	s.logs = append(s.logs, e)
+	s.logsMutex.Unlock()
+
+	s.sink.Load().write(e)
 }
 
 type PanicError struct {
@@ -357,9 +406,9 @@ func LoggerFrom(ctx context.Context) *slog.Logger {
 }
 
 type slogHandler struct {
-	sched *Scheduler
-	attrs []slog.Attr
-	group string
+	sched  *Scheduler
+	attrs  []slog.Attr
+	groups []string
 }
 
 func (s slogHandler) Enabled(ctx context.Context, level slog.Level) bool {
@@ -367,43 +416,83 @@ func (s slogHandler) Enabled(ctx context.Context, level slog.Level) bool {
 }
 
 func (s slogHandler) Handle(ctx context.Context, record slog.Record) error {
-	var allAttr []slog.Attr
+	values := make(map[string]any, len(s.attrs)+record.NumAttrs())
 	for _, attr := range s.attrs {
-		allAttr = append(allAttr, attr)
+		putAttr(values, "", attr)
 	}
 
+	prefix := groupPrefix(s.groups)
 	record.Attrs(func(attr slog.Attr) bool {
-		allAttr = append(allAttr, attr)
+		putAttr(values, prefix, attr)
 		return true
 	})
 
-	// TODO remove me and make a real handler
-	tmp := ""
-	for _, a := range allAttr {
-		tmp = tmp + a.String() + " "
+	if len(values) == 0 {
+		values = nil
 	}
 
-	switch record.Level {
-	case slog.LevelDebug:
-		s.sched.Debug(record.Message, "attr", tmp)
-	case slog.LevelInfo:
-		s.sched.Info(record.Message, "attr", tmp)
-	case slog.LevelWarn:
-		s.sched.Warn(record.Message, "attr", tmp)
-	default:
-		s.sched.Error(record.Message, "attr", tmp)
+	t := record.Time
+	if t.IsZero() {
+		t = time.Now()
+	}
 
+	s.sched.record(LogEntry{Level: record.Level, Time: t, Msg: record.Message, Values: values})
+
+	// keep forwarding into the default logger, as before
+	if def := slog.Default().Handler(); def.Enabled(ctx, record.Level) {
+		r := record.Clone()
+		r.AddAttrs(slog.String("scheduler", string(s.sched.opts.ID)))
+		_ = slog.Default().Handler().WithAttrs(s.attrs).Handle(ctx, r)
 	}
 
 	return nil
 }
 
+func groupPrefix(groups []string) string {
+	if len(groups) == 0 {
+		return ""
+	}
+
+	return strings.Join(groups, ".") + "."
+}
+
+func putAttr(dst map[string]any, prefix string, attr slog.Attr) {
+	attr.Value = attr.Value.Resolve()
+	if attr.Equal(slog.Attr{}) {
+		return
+	}
+
+	if attr.Value.Kind() == slog.KindGroup {
+		p := prefix
+		if attr.Key != "" {
+			p = prefix + attr.Key + "."
+		}
+
+		for _, a := range attr.Value.Group() {
+			putAttr(dst, p, a)
+		}
+
+		return
+	}
+
+	dst[prefix+attr.Key] = attr.Value.Any()
+}
+
 func (s slogHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	s.attrs = append(s.attrs, attrs...)
-	return s
+	prefix := groupPrefix(s.groups)
+	tmp := slices.Clone(s.attrs)
+	for _, a := range attrs {
+		a.Key = prefix + a.Key
+		tmp = append(tmp, a)
+	}
+
+	return slogHandler{sched: s.sched, attrs: tmp, groups: s.groups}
 }
 
 func (s slogHandler) WithGroup(name string) slog.Handler {
-	s.group = name
-	return s
+	if name == "" {
+		return s
+	}
+
+	return slogHandler{sched: s.sched, attrs: s.attrs, groups: append(slices.Clone(s.groups), name)}
 }
