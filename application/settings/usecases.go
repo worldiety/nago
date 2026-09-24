@@ -10,6 +10,7 @@ package settings
 import (
 	"crypto/sha512"
 	"encoding/hex"
+	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/events"
@@ -120,6 +121,29 @@ func ReadMetaData(variant reflect.Type) MetaData {
 		Title:       title,
 		Description: description,
 	}
+}
+
+// Localize resolves Title and Description as i18n keys (e.g. "nago.ai.assistant.settings.title") or
+// @<handle> references through the given bundle. Literal texts which are no known key are returned unchanged.
+func (m MetaData) Localize(b i18n.Bundler) MetaData {
+	if b == nil {
+		return m
+	}
+
+	bnd := b.Bundle()
+	if bnd == nil {
+		return m
+	}
+
+	if m.Title != "" {
+		m.Title = bnd.Resolve(m.Title)
+	}
+
+	if m.Description != "" {
+		m.Description = bnd.Resolve(m.Description)
+	}
+
+	return m
 }
 
 func TypeIdent(t reflect.Type) string {

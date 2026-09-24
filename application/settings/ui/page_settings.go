@@ -37,7 +37,7 @@ func PageSettings(wnd core.Window, load settings.LoadGlobal, store settings.Stor
 		return alert.Banner("Einstellung unbekannt", fmt.Sprintf("Der Typ '%s' ist als Einstellungen nicht registriert.", typeName))
 	}
 
-	meta := settings.ReadMetaData(rType)
+	meta := settings.ReadMetaData(rType).Localize(wnd)
 
 	state := core.AutoState[settings.GlobalSettings](wnd).Init(func() settings.GlobalSettings {
 		s, err := load(wnd.Subject(), rType)

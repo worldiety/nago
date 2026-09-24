@@ -92,7 +92,7 @@ func (c *Configurator) SettingsManagement() (SettingsManagement, error) {
 				Title: "Einstellungen",
 			}
 			for variant := range decl.Variants() {
-				meta := settings.ReadMetaData(variant)
+				meta := settings.ReadMetaData(variant).Localize(subject)
 				grp.Entries = append(grp.Entries, admin.Card{
 					Title:        meta.Title,
 					Text:         meta.Description,
