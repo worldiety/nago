@@ -28,6 +28,7 @@ import (
 	"go.wdy.de/nago/presentation/ui/breadcrumb"
 	"go.wdy.de/nago/presentation/ui/cardlayout"
 	"go.wdy.de/nago/presentation/ui/form"
+	"go.wdy.de/nago/presentation/ui/tags"
 )
 
 func PageOverview(wnd core.Window, scheduleUseCases scheduler.UseCases) core.View {
@@ -70,8 +71,8 @@ func PageOverview(wnd core.Window, scheduleUseCases scheduler.UseCases) core.Vie
 					ui.Text(status.Options.Description).Color(ui.ST0),
 					ui.HStack(
 						statePill(status.State),
-						badge("", kindDetail(status)),
-						badge("", string(status.Options.ID)),
+						tags.StatusBadge("", kindDetail(status)),
+						tags.StatusBadge("", string(status.Options.ID)),
 					).Gap(ui.L8).Wrap(true),
 				).Alignment(ui.Leading).Gap(ui.L4),
 			).Alignment(ui.TopLeading).Gap(ui.L16),
@@ -124,31 +125,14 @@ func PageOverview(wnd core.Window, scheduleUseCases scheduler.UseCases) core.Vie
 func statePill(state scheduler.State) core.View {
 	switch state {
 	case scheduler.Running:
-		return badge(ui.SG0, "in Ausführung")
+		return tags.StatusBadge(ui.SG0, "in Ausführung")
 	case scheduler.Paused:
-		return badge(ui.SV0, "wartet auf nächsten Lauf")
+		return tags.StatusBadge(ui.SV0, "wartet auf nächsten Lauf")
 	case scheduler.Disabled:
-		return badge(ui.SW0, "deaktiviert – nur manuelle Ausführung")
+		return tags.StatusBadge(ui.SW0, "deaktiviert – nur manuelle Ausführung")
 	default:
-		return badge(ui.ST0, stateStr(state))
+		return tags.StatusBadge(ui.ST0, stateStr(state))
 	}
-}
-
-// badge renders a label with the theme text color on the neutral background, so that the contrast is
-// sufficient in light and dark mode. The semantic color is only used for the leading dot.
-func badge(dot ui.Color, text string) core.View {
-	return ui.HStack(
-		ui.IfFunc(dot != "", func() core.View {
-			return ui.VStack().
-				BackgroundColor(dot).
-				Border(ui.Border{}.Circle()).
-				Frame(ui.Frame{}.Size(ui.L8, ui.L8))
-		}),
-		ui.Text(text).Font(ui.BodySmall).Color(ui.M8),
-	).Gap(ui.L4).
-		BackgroundColor(ui.M1).
-		Border(ui.Border{}.Radius(ui.L16).Color(ui.M5).Width(ui.L1)).
-		Padding(ui.Padding{}.Horizontal(ui.L8).Vertical(ui.L2))
 }
 
 func kindDetail(status scheduler.StatusResult) string {
@@ -247,17 +231,17 @@ func lastRunHint(wnd core.Window, status scheduler.StatusResult) string {
 func outcomePill(o scheduler.Outcome) core.View {
 	switch o {
 	case scheduler.OutcomeRunning:
-		return badge(ui.SV0, "läuft")
+		return tags.StatusBadge(ui.SV0, "läuft")
 	case scheduler.OutcomeSucceeded:
-		return badge(ui.SG0, "erfolgreich")
+		return tags.StatusBadge(ui.SG0, "erfolgreich")
 	case scheduler.OutcomeFailed:
-		return badge(ui.SE0, "Fehler")
+		return tags.StatusBadge(ui.SE0, "Fehler")
 	case scheduler.OutcomePanicked:
-		return badge(ui.SE0, "Absturz")
+		return tags.StatusBadge(ui.SE0, "Absturz")
 	case scheduler.OutcomeCanceled:
-		return badge(ui.SW0, "abgebrochen")
+		return tags.StatusBadge(ui.SW0, "abgebrochen")
 	default:
-		return badge(ui.ST0, "unbekannt")
+		return tags.StatusBadge(ui.ST0, "unbekannt")
 	}
 }
 
@@ -332,7 +316,7 @@ func settingsSummary(status scheduler.StatusResult) core.View {
 	s, d := status.Settings, status.Options.Defaults
 	custom := func(changed bool, v string) core.View {
 		if status.CustomSettings && changed {
-			return ui.HStack(ui.Text(v), badge(ui.I0, "angepasst")).Gap(ui.L8)
+			return ui.HStack(ui.Text(v), tags.StatusBadge(ui.I0, "angepasst")).Gap(ui.L8)
 		}
 		return ui.Text(v)
 	}
@@ -666,13 +650,13 @@ func logView(wnd core.Window, id scheduler.ID, uc scheduler.UseCases, runs []sch
 func levelPill(l slog.Level) core.View {
 	switch {
 	case l >= slog.LevelError:
-		return badge(ui.SE0, "Fehler")
+		return tags.StatusBadge(ui.SE0, "Fehler")
 	case l >= slog.LevelWarn:
-		return badge(ui.SW0, "Warnung")
+		return tags.StatusBadge(ui.SW0, "Warnung")
 	case l >= slog.LevelInfo:
-		return badge(ui.ST0, "Info")
+		return tags.StatusBadge(ui.ST0, "Info")
 	default:
-		return badge(ui.ST0, "Debug")
+		return tags.StatusBadge(ui.ST0, "Debug")
 	}
 }
 

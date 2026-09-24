@@ -431,7 +431,7 @@ func errorPill(o mail.Outgoing) core.View {
 		if o.LastError == "" {
 			return ui.Text("–")
 		}
-		return tags.ColoredTextPill(ui.SE0, "Fehler")
+		return tags.StatusBadge(ui.SE0, "Fehler")
 	}
 
 	txt := phaseLabel(a.Phase)
@@ -444,5 +444,5 @@ func errorPill(o mail.Outgoing) core.View {
 		col = ui.SW0
 	}
 
-	return tags.ColoredTextPill(col, txt)
+	return tags.StatusBadge(col, txt)
 }

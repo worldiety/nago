@@ -93,7 +93,7 @@ func QueuePage(wnd core.Window, pages Pages, uc mail.UseCases) core.View {
 
 	if server != "" {
 		filterButtons = append(filterButtons, ui.HStack(
-			tags.ColoredTextPill(ui.SV0, "Server: "+server),
+			tags.StatusBadge(ui.SV0, "Server: "+server),
 			ui.TertiaryButton(func() {
 				values := wnd.Values().Clone().Delete("server")
 				wnd.Navigation().ForwardTo(pages.OutgoingMailQueue, values)

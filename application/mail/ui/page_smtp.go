@@ -54,15 +54,15 @@ func serverCard(wnd core.Window, pages Pages, srv mail.ServerInfo, rateLimited b
 	var state core.View
 	switch {
 	case h.ConsecutiveFailures >= 3:
-		state = tags.ColoredTextPill(ui.SE0, "Gestört")
+		state = tags.StatusBadge(ui.SE0, "Gestört")
 	case h.ConsecutiveFailures > 0:
-		state = tags.ColoredTextPill(ui.SW0, "Fehler")
+		state = tags.StatusBadge(ui.SW0, "Fehler")
 	case rateLimited:
-		state = tags.ColoredTextPill(ui.SW0, "Ratenbegrenzt")
+		state = tags.StatusBadge(ui.SW0, "Ratenbegrenzt")
 	case h.LastSuccessAt.IsZero():
-		state = tags.ColoredTextPill(ui.ST0, "Unbenutzt")
+		state = tags.StatusBadge(ui.ST0, "Unbenutzt")
 	default:
-		state = tags.ColoredTextPill(ui.SG0, "Gesund")
+		state = tags.StatusBadge(ui.SG0, "Gesund")
 	}
 
 	return card("",

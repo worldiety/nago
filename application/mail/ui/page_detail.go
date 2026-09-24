@@ -156,13 +156,13 @@ func attempts(wnd core.Window, pages Pages, out mail2.Outgoing) core.View {
 		nr := offset - i
 		var pill core.View
 		if a.Success {
-			pill = tags.ColoredTextPill(ui.SG0, "Erfolgreich")
+			pill = tags.StatusBadge(ui.SG0, "Erfolgreich")
 		} else {
 			txt := phaseLabel(a.Phase)
 			if a.Code > 0 {
 				txt = fmt.Sprintf("%s · %d", txt, a.Code)
 			}
-			pill = tags.ColoredTextPill(ui.SE0, txt)
+			pill = tags.StatusBadge(ui.SE0, txt)
 		}
 
 		rows = append(rows, ui.VStack(

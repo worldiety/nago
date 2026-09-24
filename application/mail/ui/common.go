@@ -87,17 +87,17 @@ type crumb struct {
 func statusPill(status mail.Status) core.View {
 	switch status {
 	case mail.StatusSendSuccess:
-		return tags.ColoredTextPill(ui.SG0, "Versendet")
+		return tags.StatusBadge(ui.SG0, "Versendet")
 	case mail.StatusError:
-		return tags.ColoredTextPill(ui.SW0, "Fehler, wird wiederholt")
+		return tags.StatusBadge(ui.SW0, "Fehler, wird wiederholt")
 	case mail.StatusFailed:
-		return tags.ColoredTextPill(ui.SE0, "Endgültig fehlgeschlagen")
+		return tags.StatusBadge(ui.SE0, "Endgültig fehlgeschlagen")
 	case mail.StatusSuppressed:
-		return tags.ColoredTextPill(ui.SE0, "Unterdrückt (Spam-Schutz)")
+		return tags.StatusBadge(ui.SE0, "Unterdrückt (Spam-Schutz)")
 	case mail.StatusQueued:
-		return tags.ColoredTextPill(ui.SV0, "Wartet")
+		return tags.StatusBadge(ui.SV0, "Wartet")
 	default:
-		return tags.ColoredTextPill(ui.ST0, "Unbekannt")
+		return tags.StatusBadge(ui.ST0, "Unbekannt")
 	}
 }
 
