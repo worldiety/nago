@@ -68,6 +68,7 @@ func historyCard(wnd core.Window, s session.Session, onPick func()) core.View {
 		ui.Text(s.String()).Font(ui.Title).Frame(ui.Frame{MaxWidth: ui.Full}),
 		ui.HStack(
 			ui.Text(when).Font(ui.Small),
+			ui.If(s.Pending != nil, ui.Text("• wartet auf deine Antwort").Font(ui.Small).Color(ui.I0)),
 			ui.Spacer(),
 			ui.Text(fmt.Sprintf("%d Nachrichten", len(s.Messages))).Font(ui.Small),
 		).FullWidth().Alignment(ui.Center),

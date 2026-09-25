@@ -118,7 +118,8 @@ type ChatOptions struct {
 	FileUpload bool
 
 	// AskUser hooks the built-in ask_user clarification tool into every turn, letting the model ask the user
-	// a question mid-run and block until answered (analogous to FileUpload).
+	// a question mid-run. The run suspends until the user answered; with History the question survives
+	// closing the chat, navigating away and server restarts.
 	AskUser bool
 
 	// DisableCurrentTime removes the built-in current_time tool (see [CurrentTimeTool]), which is otherwise
@@ -193,6 +194,10 @@ func defaultConversationHeightOr(h ui.Length) ui.Length {
 
 // chatBody builds the actual chat body (agent picker, conversation, footer, history dialog). It is shared by
 // the embedded [Chat] and the floating [ChatButton] panel, the latter passing its own height.
+//
+// Nothing here blocks on the user. A clarifying question or an approval suspends the run (see
+// [completion.Start]); with History the suspension is persisted in the session, so the chat may be closed,
+// the user may navigate away and the question is still there when the chat is opened again.
 func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 	comps := opts.Completions
 	prov := opts.Provider
@@ -203,16 +208,48 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		title = prov.Name()
 	}
 
-	history := core.AutoState[[]completion.Message](wnd)
+	// resumed is the session a freshly mounted chat continues because it still waits on the user, e.g. after
+	// the chat was closed to look something up. Evaluated once per mount.
+	resumed := core.AutoState[*session.Session](wnd).Init(func() *session.Session {
+		if !opts.History {
+			return nil
+		}
+		return findResumable(wnd.Subject(), opts.Sessions, opts.Tags, string(prov.Identity()))
+	})
+
+	history := core.AutoState[[]completion.Message](wnd).Init(func() []completion.Message {
+		if r := resumed.Get(); r != nil {
+			return r.Messages
+		}
+		return nil
+	})
 	prompt := core.AutoState[string](wnd)
 	busy := core.AutoState[bool](wnd)
 	// sessionID is the persisted conversation the panel currently continues. Empty for a fresh chat, set on
-	// the first submit (lazy create) or when restoring from history. Only used when History is enabled.
-	sessionID := core.AutoState[session.ID](wnd)
+	// the first submit (lazy create), when restoring from history or when resuming a pending question. Only
+	// used when History is enabled.
+	sessionID := core.AutoState[session.ID](wnd).Init(func() session.ID {
+		if r := resumed.Get(); r != nil {
+			return r.ID
+		}
+		return ""
+	})
+	// pending and pendingRev mirror the suspension of the current run: from the session with History, from
+	// the transient run otherwise.
+	pending := core.AutoState[*completion.Continuation](wnd).Init(func() *completion.Continuation {
+		if r := resumed.Get(); r != nil {
+			return r.Pending
+		}
+		return nil
+	})
+	pendingRev := core.AutoState[int](wnd).Init(func() int {
+		if r := resumed.Get(); r != nil {
+			return r.PendingRevision
+		}
+		return 0
+	})
 	showHistory := core.AutoState[bool](wnd)
 	status := core.AutoState[string](wnd)
-	ask := core.AutoState[*pendingAsk](wnd)
-	confirm := core.AutoState[*pendingConfirm](wnd)
 	selectedAgent := core.AutoState[string](wnd).Init(func() string { return agentsList[0].ID })
 
 	// staged holds files the user picked but has not sent yet (only when FileUpload is enabled and the
@@ -242,70 +279,96 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		fileUploader = ProviderFileUploader(prov)
 	}
 
-	submit := func() {
-		question := strings.TrimSpace(prompt.Get())
-		// A turn needs either text or at least one attached file.
-		stagedFiles := staged.Get()
-		if (question == "" && len(stagedFiles) == 0) || busy.Get() {
-			return
-		}
+	applySession := func(s session.Session) {
+		sessionID.Set(s.ID)
+		history.Set(s.Messages)
+		pending.Set(s.Pending)
+		pendingRev.Set(s.PendingRevision)
+	}
 
+	// turnConfig resolves everything a run of the current agent needs.
+	type turnConfig struct {
+		model     model.ID
+		system    string
+		maxTokens int
+		tools     []completion.Tool
+		confirm   bool
+	}
+	resolveTurn := func() turnConfig {
 		agent := currentAgent()
-
-		modelID := agent.Model
-		if modelID == "" {
-			modelID = firstModelID(wnd, comps)
+		cfg := turnConfig{model: agent.Model, system: agent.resolvePrompt(), maxTokens: agent.MaxTokens}
+		if cfg.model == "" {
+			cfg.model = firstModelID(wnd, comps)
+		}
+		if cfg.maxTokens <= 0 {
+			cfg.maxTokens = defaultMaxTokens
 		}
 
-		maxTokens := agent.MaxTokens
-		if maxTokens <= 0 {
-			maxTokens = defaultMaxTokens
+		cfg.tools = opts.resolveTools(agent)
+		if opts.AskUser {
+			cfg.tools = append(cfg.tools, completion.NewAskUserTool())
 		}
-
-		system := agent.resolvePrompt()
-
-		// Ensure a persisted session exists (History only). Created lazily on the first message and tagged so
-		// the history dialog lists only matching conversations.
-		sid := sessionID.Get()
-		if opts.History && sid == "" {
-			created, err := opts.Sessions.Create(wnd.Subject(), session.CreateOptions{
-				Title:        title,
-				Model:        modelID,
-				System:       system,
-				ProviderHint: string(prov.Identity()),
-				Tags:         opts.Tags,
-			})
-			if err != nil {
-				alert.ShowBannerError(wnd, err)
-				return
-			}
-			sid = created.ID
-			sessionID.Set(sid)
+		if !opts.DisableCurrentTime {
+			cfg.tools = withBuiltinTool(cfg.tools, CurrentTimeTool(wnd))
 		}
+		// Approval is requested only when there is something to approve, so a purely reading assistant
+		// never stops to ask.
+		cfg.confirm = opts.ConfirmMutations && containsMutating(cfg.tools)
+		return cfg
+	}
 
-		// prevHistory is the last consistent view we roll back to should the turn fail.
+	appendOptions := func(cfg turnConfig, onProgress completion.ProgressFunc) session.AppendOptions {
+		return session.AppendOptions{
+			Completions:     comps,
+			Model:           cfg.model,
+			System:          cfg.system,
+			Tools:           cfg.tools,
+			MaxTokens:       cfg.maxTokens,
+			MaxTurns:        opts.MaxTurns,
+			OnProgress:      onProgress,
+			FileUploader:    fileUploader,
+			ConfirmMutating: cfg.confirm,
+		}
+	}
+
+	runOptions := func(cfg turnConfig, messages []completion.Message, onProgress completion.ProgressFunc) completion.RunOptions {
+		return completion.RunOptions{
+			Options: completion.Options{
+				Model:     cfg.model,
+				System:    cfg.system,
+				MaxTokens: cfg.maxTokens,
+				Messages:  messages,
+			},
+			Tools:           cfg.tools,
+			MaxTurns:        opts.MaxTurns,
+			OnProgress:      onProgress,
+			FileUploader:    fileUploader,
+			ConfirmMutating: cfg.confirm,
+		}
+	}
+
+	// turnOutcome is what a background run hands back to the UI.
+	type turnOutcome struct {
+		history  []completion.Message
+		pending  *completion.Continuation
+		revision int
+		usage    completion.Usage
+		// progressed tells a failed run apart from one that changed nothing (roll back the view then).
+		progressed bool
+	}
+
+	// execute shows the optimistic view, runs work off the event loop while mirroring each model turn live,
+	// and applies the outcome. rollback restores the input when a run failed without changing anything.
+	execute := func(optimistic []completion.Message, rollback func(), work func(subject auth.Subject, onProgress completion.ProgressFunc) (turnOutcome, error)) {
 		prevHistory := history.Get()
-		// Optimistic user bubble: the typed text plus a short hint per attached file.
-		optimisticText := question
-		for _, sf := range stagedFiles {
-			optimisticText = strings.TrimSpace(optimisticText + "\n\n📎 " + sf.Name)
-		}
-		msgs := append(slices.Clone(prevHistory), completion.Message{
-			Role:    completion.User,
-			Content: []completion.Content{completion.Text{Text: optimisticText}},
-		})
-		history.Set(msgs)
-		prompt.Set("")
-		staged.Set(nil)
+		history.Set(optimistic)
 		busy.Set(true)
 		status.Set(thinkingLabel(0))
 
 		// live mirrors the growing conversation while the loop runs so each assistant turn appears the moment
-		// it arrives. Every UI mutation is marshalled back onto the event loop via wnd.Post.
-		live := slices.Clone(msgs)
-		// lastStop remembers why the latest model turn ended, so a truncated or refused final answer can be
-		// pointed out instead of looking like the assistant silently stopped. Only touched on the loop's
-		// goroutine and read after the run returned.
+		// it arrives. lastStop remembers why the latest model turn ended, so a truncated or refused final
+		// answer can be pointed out. Both are only touched on the loop's goroutine.
+		live := slices.Clone(optimistic)
 		var lastStop completion.StopReason
 		onProgress := func(p completion.Progress) {
 			switch p.Phase {
@@ -324,14 +387,6 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 				live = append(live, p.Result.Message)
 				snapshot := slices.Clone(live)
 				wnd.Post(func() { history.Set(snapshot) })
-			case completion.PhaseToolCompleted:
-				// Show the user's answer to a clarifying question right away, not only after the run ended.
-				if p.ToolCall == nil || p.ToolResult == nil || p.ToolCall.Name != askUserToolName {
-					return
-				}
-				live = append(live, completion.Message{Role: completion.User, Content: []completion.Content{*p.ToolResult}})
-				snapshot := slices.Clone(live)
-				wnd.Post(func() { history.Set(snapshot) })
 			case completion.PhaseToolStarted:
 				name := ""
 				if p.ToolCall != nil {
@@ -343,132 +398,41 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 
 		xsync.Go(func() error {
 			subject := wnd.Subject()
-
-			// Build the user turn content: any attached files (uploaded/inlined here on the background
-			// goroutine) followed by the typed text. On failure we roll the optimistic view back.
-			inputContent, uploadErr := buildUploadContent(subject, providerFiles, stagedFiles)
-			if uploadErr != nil {
-				wnd.Post(func() {
-					busy.Set(false)
-					status.Set("")
-					history.Set(prevHistory)
-					if prompt.Get() == "" {
-						prompt.Set(question)
-					}
-					staged.Set(stagedFiles)
-					alert.ShowBannerError(wnd, uploadErr)
-				})
-				return nil
-			}
-			if question != "" {
-				inputContent = append(inputContent, completion.Text{Text: question})
-			}
-
-			tools := opts.resolveTools(agent)
-			if opts.AskUser {
-				tools = append(tools, askUserTool(wnd, ask))
-			}
-			if !opts.DisableCurrentTime {
-				tools = withBuiltinTool(tools, CurrentTimeTool(wnd))
-			}
-
-			// The confirmation gate is wired only when there is something to gate, so a purely reading
-			// assistant never pays for it.
-			var beforeToolCall completion.BeforeToolCallFunc
-			if opts.ConfirmMutations && containsMutating(tools) {
-				beforeToolCall = confirmMutationGate(wnd, confirm)
-			}
-
-			if opts.History {
-				updated, err := opts.Sessions.Append(subject, sid, session.AppendOptions{
-					Completions:      comps,
-					Input:            inputContent,
-					Model:            modelID,
-					System:           system,
-					Tools:            tools,
-					MaxTokens:        maxTokens,
-					MaxTurns:         opts.MaxTurns,
-					OnProgress:       onProgress,
-					FileUploader:     fileUploader,
-					OnBeforeToolCall: beforeToolCall,
-				})
-
-				wnd.Post(func() {
-					busy.Set(false)
-					status.Set("")
-					ask.Set(nil)
-					confirm.Set(nil)
-					if err != nil {
-						// A failed run may still have persisted the steps that already happened (tools
-						// with side effects); show those instead of pretending nothing was done.
-						if partial, ok := reloadSession(subject, opts.Sessions, sid); ok && len(partial) > len(prevHistory) {
-							history.Set(partial)
-						} else {
-							history.Set(prevHistory)
-							if prompt.Get() == "" {
-								prompt.Set(question)
-							}
-							staged.Set(stagedFiles)
-						}
-						alert.ShowBannerError(wnd, err)
-						return
-					}
-					showStopHint(wnd, lastStop)
-					u := updated.Usage
-					slog.Info("uicompletion chat usage",
-						slog.String("session", string(sid)),
-						slog.String("model", string(updated.Model)),
-						slog.Int("input_tokens", u.InputTokens),
-						slog.Int("output_tokens", u.OutputTokens),
-						slog.Int("cache_read_tokens", u.CacheReadTokens),
-						slog.Int("cache_write_tokens", u.CacheWriteTokens),
-					)
-					history.Set(updated.Messages)
-				})
-				return nil
-			}
-
-			// Transient chat: run the agentic loop directly over the history plus the real (attachment-aware)
-			// user turn, without persisting anything.
-			runMessages := append(slices.Clone(prevHistory), completion.Message{
-				Role:    completion.User,
-				Content: inputContent,
-			})
-			_, newHistory, err := completion.Run(subject, comps, completion.RunOptions{
-				Options: completion.Options{
-					Model:     modelID,
-					System:    system,
-					MaxTokens: maxTokens,
-					Messages:  runMessages,
-				},
-				Tools:            tools,
-				MaxTurns:         opts.MaxTurns,
-				OnProgress:       onProgress,
-				FileUploader:     fileUploader,
-				OnBeforeToolCall: beforeToolCall,
-			})
+			out, err := work(subject, onProgress)
 
 			wnd.Post(func() {
 				busy.Set(false)
 				status.Set("")
-				ask.Set(nil)
-				confirm.Set(nil)
 				if err != nil {
-					// Keep the steps that already happened (tools with side effects) visible.
-					if len(newHistory) > len(runMessages) {
-						history.Set(newHistory)
+					if out.progressed {
+						// Keep what already happened (tools with side effects) visible.
+						history.Set(out.history)
+						pending.Set(out.pending)
+						pendingRev.Set(out.revision)
 					} else {
 						history.Set(prevHistory)
-						if prompt.Get() == "" {
-							prompt.Set(question)
+						if rollback != nil {
+							rollback()
 						}
-						staged.Set(stagedFiles)
 					}
 					alert.ShowBannerError(wnd, err)
 					return
 				}
-				showStopHint(wnd, lastStop)
-				history.Set(newHistory)
+
+				if out.pending == nil {
+					showStopHint(wnd, lastStop)
+				}
+				u := out.usage
+				slog.Info("uicompletion chat usage",
+					slog.String("session", string(sessionID.Get())),
+					slog.Int("input_tokens", u.InputTokens),
+					slog.Int("output_tokens", u.OutputTokens),
+					slog.Int("cache_read_tokens", u.CacheReadTokens),
+					slog.Int("cache_write_tokens", u.CacheWriteTokens),
+				)
+				history.Set(out.history)
+				pending.Set(out.pending)
+				pendingRev.Set(out.revision)
 			})
 			return nil
 		}, func(err error) {
@@ -477,26 +441,179 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 					busy.Set(false)
 					status.Set("")
 					history.Set(prevHistory)
-					if prompt.Get() == "" {
-						prompt.Set(question)
+					if rollback != nil {
+						rollback()
 					}
-					staged.Set(stagedFiles)
 					alert.ShowBannerError(wnd, err)
 				})
 			}
 		})
 	}
 
+	// fromSession converts a persisted session into a turn outcome; on failure it reloads what the failed
+	// run persisted.
+	fromSession := func(subject auth.Subject, sid session.ID, s session.Session, err error, before int) (turnOutcome, error) {
+		if err != nil {
+			if reloaded, ok := reloadSession(subject, opts.Sessions, sid); ok && len(reloaded.Messages) > before {
+				return turnOutcome{history: reloaded.Messages, pending: reloaded.Pending, revision: reloaded.PendingRevision, progressed: true}, err
+			}
+			return turnOutcome{}, err
+		}
+		return turnOutcome{history: s.Messages, pending: s.Pending, revision: s.PendingRevision, usage: s.Usage}, nil
+	}
+
+	fromOutcome := func(out completion.Outcome, err error) (turnOutcome, error) {
+		return turnOutcome{history: out.History, pending: out.Suspended, usage: out.Result.Usage, progressed: out.Progressed}, err
+	}
+
+	submit := func() {
+		question := strings.TrimSpace(prompt.Get())
+		// A turn needs either text or at least one attached file.
+		stagedFiles := staged.Get()
+		if (question == "" && len(stagedFiles) == 0) || busy.Get() || pending.Get() != nil {
+			return
+		}
+
+		cfg := resolveTurn()
+
+		// Ensure a persisted session exists (History only). Created lazily on the first message and tagged so
+		// the history dialog lists only matching conversations.
+		sid := sessionID.Get()
+		if opts.History && sid == "" {
+			created, err := opts.Sessions.Create(wnd.Subject(), session.CreateOptions{
+				Title:        title,
+				Model:        cfg.model,
+				System:       cfg.system,
+				ProviderHint: string(prov.Identity()),
+				Tags:         opts.Tags,
+			})
+			if err != nil {
+				alert.ShowBannerError(wnd, err)
+				return
+			}
+			sid = created.ID
+			sessionID.Set(sid)
+		}
+
+		prevHistory := history.Get()
+		// Optimistic user bubble: the typed text plus a short hint per attached file.
+		optimisticText := question
+		for _, sf := range stagedFiles {
+			optimisticText = strings.TrimSpace(optimisticText + "\n\n📎 " + sf.Name)
+		}
+		optimistic := append(slices.Clone(prevHistory), completion.Message{
+			Role:    completion.User,
+			Content: []completion.Content{completion.Text{Text: optimisticText}},
+		})
+		prompt.Set("")
+		staged.Set(nil)
+
+		rollback := func() {
+			if prompt.Get() == "" {
+				prompt.Set(question)
+			}
+			staged.Set(stagedFiles)
+		}
+
+		execute(optimistic, rollback, func(subject auth.Subject, onProgress completion.ProgressFunc) (turnOutcome, error) {
+			// Build the user turn content: any attached files (uploaded/inlined here on the background
+			// goroutine) followed by the typed text.
+			input, err := buildUploadContent(subject, providerFiles, stagedFiles)
+			if err != nil {
+				return turnOutcome{}, err
+			}
+			if question != "" {
+				input = append(input, completion.Text{Text: question})
+			}
+
+			if opts.History {
+				ao := appendOptions(cfg, onProgress)
+				ao.Input = input
+				updated, err := opts.Sessions.Append(subject, sid, ao)
+				return fromSession(subject, sid, updated, err, len(prevHistory))
+			}
+
+			// Transient chat: run the agentic loop directly over the history plus the real
+			// (attachment-aware) user turn, without persisting anything.
+			messages := append(slices.Clone(prevHistory), completion.Message{Role: completion.User, Content: input})
+			return fromOutcome(completion.Start(subject, comps, runOptions(cfg, messages, onProgress)))
+		})
+	}
+
+	resolve := func(resolutions []completion.Resolution) {
+		cont := pending.Get()
+		if cont == nil || busy.Get() {
+			return
+		}
+		cfg := resolveTurn()
+		sid := sessionID.Get()
+		rev := pendingRev.Get()
+		prevHistory := history.Get()
+
+		optimistic := slices.Clone(prevHistory)
+		if answers := optimisticAnswers(cont, resolutions); len(answers.Content) > 0 {
+			optimistic = append(optimistic, answers)
+		}
+		pending.Set(nil)
+		rollback := func() {
+			pending.Set(cont)
+			pendingRev.Set(rev)
+		}
+
+		execute(optimistic, rollback, func(subject auth.Subject, onProgress completion.ProgressFunc) (turnOutcome, error) {
+			if opts.History {
+				ao := appendOptions(cfg, onProgress)
+				// The model of a pending run is fixed; the session knows it.
+				ao.Model = ""
+				updated, err := opts.Sessions.Resolve(subject, sid, session.ResolveOptions{
+					Run:         ao,
+					Revision:    rev,
+					Resolutions: resolutions,
+				})
+				return fromSession(subject, sid, updated, err, len(prevHistory))
+			}
+
+			return fromOutcome(completion.Continue(subject, comps, runOptions(cfg, prevHistory, onProgress), *cont, resolutions))
+		})
+	}
+
+	dismiss := func() {
+		cont := pending.Get()
+		if cont == nil || busy.Get() {
+			return
+		}
+
+		if !opts.History {
+			dismissed, err := completion.Dismiss(history.Get(), *cont)
+			if err != nil {
+				alert.ShowBannerError(wnd, err)
+				return
+			}
+			history.Set(dismissed)
+			pending.Set(nil)
+			return
+		}
+
+		updated, err := opts.Sessions.Dismiss(wnd.Subject(), sessionID.Get(), pendingRev.Get())
+		if err != nil {
+			alert.ShowBannerError(wnd, err)
+			// The session may have moved on elsewhere (e.g. another tab); show its current state.
+			if reloaded, ok := reloadSession(wnd.Subject(), opts.Sessions, sessionID.Get()); ok {
+				applySession(reloaded)
+			}
+			return
+		}
+		applySession(updated)
+	}
+
 	conversation := conversationView(wnd, history.Get(),
 		"Stell mir eine Frage, um die Unterhaltung zu beginnen.", height)
 
 	var footer core.View
-	// A pending confirmation takes precedence over everything else: the run is blocked on it, so offering the
-	// input field instead would look like the assistant had simply stopped responding.
-	if pc := confirm.Get(); pc != nil {
-		footer = renderConfirm(wnd, confirm, pc)
-	} else if pa := ask.Get(); pa != nil {
-		footer = renderAsk(wnd, ask, pa)
+	// A pending decision takes precedence over the input: the run waits on it, so offering the input field
+	// instead would look like the assistant had simply stopped responding.
+	if cont := pending.Get(); cont != nil {
+		footer = renderDecisions(wnd, cont, pendingRev.Get(), busy.Get(), resolve, dismiss)
 	} else {
 		busyLabel := status.Get()
 		if busyLabel == "" {
@@ -545,15 +662,13 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 	// History restore dialog and action row (History only): browse/restore a previous conversation and start
 	// a fresh one. Both are disabled while a run is in flight so we never swap the history under a running
 	// loop. "Neuer Chat" just detaches from the current session (and clears the view); the next submit lazily
-	// creates a new one.
+	// creates a new one. A pending question stays in the old session and can be picked up from the history.
 	var restoreDialog core.View
 	var historyActions core.View
 	if opts.History {
 		restoreDialog = historyDialog(wnd, opts.Sessions, opts.Tags, showHistory, func(s session.Session) {
-			sessionID.Set(s.ID)
-			history.Set(s.Messages)
+			applySession(s)
 			status.Set("")
-			ask.Set(nil)
 		})
 
 		historyActions = ui.HStack(
@@ -561,11 +676,8 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 				showHistory.Set(true)
 			}).PreIcon(icons.Clock).Title("Verlauf").Enabled(!busy.Get()),
 			ui.TertiaryButton(func() {
-				sessionID.Set("")
-				history.Set(nil)
+				applySession(session.Session{})
 				status.Set("")
-				ask.Set(nil)
-				confirm.Set(nil)
 			}).PreIcon(icons.Edit).Title("Neuer Chat").Enabled(!busy.Get() && (sessionID.Get() != "" || len(history.Get()) > 0)),
 			ui.Spacer(),
 		).Gap(ui.L4).FullWidth().Alignment(ui.Center)
@@ -580,6 +692,43 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 	).Gap(ui.L8).FullWidth().Alignment(ui.Leading)
 }
 
+// findResumable returns the newest session of the subject which waits on a user decision and belongs to
+// exactly this chat context: created by the subject, same provider and exactly the same tags. Sessions of
+// other contexts are never picked up; the history dialog still offers them.
+func findResumable(subject auth.Subject, sessions session.UseCases, tags []string, providerHint string) *session.Session {
+	if sessions.FindAll == nil || subject == nil || !subject.Valid() {
+		return nil
+	}
+
+	var best *session.Session
+	for s, err := range sessions.FindAll(subject, session.FindAllOptions{Tags: tags}) {
+		if err != nil {
+			return nil
+		}
+		if s.Pending == nil || s.CreatedBy != subject.ID() || s.ProviderHint != providerHint || !sameTags(s.Tags, tags) {
+			continue
+		}
+		if best == nil || s.UpdatedAt > best.UpdatedAt {
+			s := s
+			best = &s
+		}
+	}
+	return best
+}
+
+// sameTags reports set equality of two tag lists.
+func sameTags(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for _, t := range b {
+		if !slices.Contains(a, t) {
+			return false
+		}
+	}
+	return true
+}
+
 // firstModelID returns the id of the first model the completion provider reports.
 func firstModelID(wnd core.Window, comps completion.Completions) model.ID {
 	for m, err := range comps.Models(wnd.Subject()) {
@@ -591,16 +740,16 @@ func firstModelID(wnd core.Window, comps completion.Completions) model.ID {
 	return ""
 }
 
-// reloadSession loads the persisted messages of a session, e.g. after a failed run persisted a partial trace.
-func reloadSession(subject auth.Subject, sessions session.UseCases, id session.ID) ([]completion.Message, bool) {
+// reloadSession loads a session, e.g. after a failed run persisted a partial trace.
+func reloadSession(subject auth.Subject, sessions session.UseCases, id session.ID) (session.Session, bool) {
 	if sessions.FindByID == nil || id == "" {
-		return nil, false
+		return session.Session{}, false
 	}
 	opt, err := sessions.FindByID(subject, id)
 	if err != nil || opt.IsNone() {
-		return nil, false
+		return session.Session{}, false
 	}
-	return opt.Unwrap().Messages, true
+	return opt.Unwrap(), true
 }
 
 // showStopHint tells the user when the final answer did not end regularly, instead of letting it look like the
