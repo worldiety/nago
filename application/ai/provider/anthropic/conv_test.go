@@ -15,6 +15,7 @@ import (
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/completion"
 	"go.wdy.de/nago/application/ai/file"
+	"go.wdy.de/nago/pkg/xhttp"
 )
 
 func baseOpts() completion.Options {
@@ -311,5 +312,126 @@ func TestMarshal_ThinkingDropsCacheControl(t *testing.T) {
 		if strings.Contains(string(b), "cache_control") {
 			t.Errorf("%s: cache_control must not be emitted: %s", typ, b)
 		}
+	}
+}
+
+func TestBuildRequest_Thinking(t *testing.T) {
+	temp := completion.Options{Model: "m", Messages: baseOpts().Messages, Temperature: option.Some(0.2)}
+	forced := completion.Options{Model: "m", Messages: baseOpts().Messages, ToolChoice: completion.ToolChoice{Mode: "any"}}
+	off := completion.Options{Model: "m", Messages: baseOpts().Messages, Thinking: completion.ThinkingOff}
+
+	tests := []struct {
+		name string
+		opts completion.Options
+		want string
+	}{
+		{"auto defaults to adaptive", baseOpts(), "adaptive"},
+		{"auto skips custom temperature", temp, ""},
+		{"auto skips forced tool choice", forced, ""},
+		{"off", off, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := &anthropicProvider{}
+			req, err := p.buildRequest(tt.opts)
+			if err != nil {
+				t.Fatal(err)
+			}
+			got := ""
+			if req.Thinking != nil {
+				got = req.Thinking.Type
+			}
+			if got != tt.want {
+				t.Fatalf("thinking = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestBuildRequest_ThinkingBudgetRaisesMaxTokens(t *testing.T) {
+	opts := baseOpts()
+	opts.Thinking = completion.ThinkingBudgeted
+	opts.ThinkingBudget = 10000
+	opts.MaxTokens = 4096
+
+	req, err := (&anthropicProvider{}).buildRequest(opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if req.Thinking == nil || req.Thinking.Type != "enabled" || req.Thinking.BudgetTokens != 10000 {
+		t.Fatalf("unexpected thinking %+v", req.Thinking)
+	}
+	if req.MaxTokens <= req.Thinking.BudgetTokens {
+		t.Fatalf("max_tokens %d must exceed budget", req.MaxTokens)
+	}
+}
+
+func TestBuildRequest_ModelRejectingAdaptiveIsRemembered(t *testing.T) {
+	p := &anthropicProvider{}
+	p.noAdaptiveThinking.Store("claude-test", true)
+
+	req, err := p.buildRequest(baseOpts())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if req.Thinking != nil {
+		t.Fatalf("expected no thinking for a model that rejected it, got %+v", req.Thinking)
+	}
+}
+
+func TestIsThinkingRejected(t *testing.T) {
+	adaptive := xhttp.UnexpectedStatusCodeError{StatusCode: 400, Body: []byte(`{"error":{"message":"adaptive thinking is not supported on this model"}}`)}
+	other := xhttp.UnexpectedStatusCodeError{StatusCode: 400, Body: []byte(`{"error":{"message":"messages.1.content.0.thinking: invalid signature"}}`)}
+	if !isThinkingRejected(adaptive) {
+		t.Errorf("expected adaptive rejection to be detected")
+	}
+	if isThinkingRejected(other) {
+		t.Errorf("an unrelated thinking error must not disable adaptive thinking")
+	}
+}
+
+func TestBuildRequest_DropsEmptyTextAndMessages(t *testing.T) {
+	opts := completion.Options{Model: "m", Messages: []completion.Message{
+		{Role: completion.User, Content: []completion.Content{completion.Text{Text: "hi"}}},
+		{Role: completion.Assistant, Content: []completion.Content{completion.Text{Text: ""}}},
+		{Role: completion.Assistant, Content: nil},
+		{Role: completion.User, Content: []completion.Content{completion.Text{Text: "  "}, completion.Text{Text: "q"}}},
+	}}
+
+	req, err := (&anthropicProvider{cfg: Settings{DisablePromptCache: true}}).buildRequest(opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(req.Messages) != 2 {
+		t.Fatalf("expected empty messages to be dropped, got %d", len(req.Messages))
+	}
+	if len(req.Messages[1].Content) != 1 || req.Messages[1].Content[0].Text != "q" {
+		t.Fatalf("expected empty text blocks to be dropped, got %+v", req.Messages[1].Content)
+	}
+}
+
+func TestRedactedThinkingRoundTrip(t *testing.T) {
+	out := fromAPIContents([]apiContent{{Type: "redacted_thinking", Data: "enc"}})
+	rt, ok := out[0].(completion.RedactedThinking)
+	if !ok || rt.Data != "enc" {
+		t.Fatalf("redacted thinking not parsed: %+v", out)
+	}
+
+	back, err := toAPIContent(rt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, _ := json.Marshal(back)
+	if string(b) != `{"data":"enc","type":"redacted_thinking"}` {
+		t.Fatalf("unexpected wire form %s", b)
+	}
+}
+
+func TestStopReasonMapping(t *testing.T) {
+	if fromAPIStopReason("pause_turn") != completion.StopPauseTurn {
+		t.Errorf("pause_turn must not be mapped to end_turn")
+	}
+	if fromAPIStopReason("refusal") != completion.StopRefusal {
+		t.Errorf("refusal mapping broken")
 	}
 }

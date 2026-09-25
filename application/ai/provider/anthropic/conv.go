@@ -10,6 +10,7 @@ package anthropic
 import (
 	"encoding/base64"
 	"fmt"
+	"strings"
 
 	"go.wdy.de/nago/application/ai/completion"
 	"go.wdy.de/nago/application/ai/file"
@@ -52,6 +53,11 @@ func (p *anthropicProvider) buildRequest(opts completion.Options) (apiRequest, e
 		if err != nil {
 			return apiRequest{}, err
 		}
+		// A message without content is rejected by the API. Dropping it is safe, because Anthropic merges
+		// consecutive turns of the same role anyway.
+		if len(am.Content) == 0 {
+			continue
+		}
 		req.Messages = append(req.Messages, am)
 	}
 
@@ -67,11 +73,46 @@ func (p *anthropicProvider) buildRequest(opts completion.Options) (apiRequest, e
 		req.ToolChoice = &tc
 	}
 
+	req.Thinking = p.thinking(opts, &req)
+
 	if !p.cfg.DisablePromptCache {
 		p.applyPromptCache(&req)
 	}
 
 	return req, nil
+}
+
+// minThinkingBudget is the smallest budget_tokens value accepted by the API.
+const minThinkingBudget = 1024
+
+// thinking resolves the thinking configuration for the request. For [completion.ThinkingAuto] adaptive
+// thinking is used, unless the request uses options the API does not allow together with thinking (custom
+// temperature/top_p or a forced tool choice) or the model is known to reject adaptive thinking. A budgeted
+// request raises max_tokens if needed, because budget_tokens must be smaller than max_tokens.
+func (p *anthropicProvider) thinking(opts completion.Options, req *apiRequest) *apiThinking {
+	switch opts.Thinking {
+	case completion.ThinkingOff:
+		return nil
+	case completion.ThinkingAdaptive:
+		return &apiThinking{Type: "adaptive"}
+	case completion.ThinkingBudgeted:
+		budget := max(opts.ThinkingBudget, minThinkingBudget)
+		if req.MaxTokens <= budget {
+			req.MaxTokens = budget + defaultMaxTokens
+		}
+		return &apiThinking{Type: "enabled", BudgetTokens: budget}
+	default: // auto
+		if req.Temperature != nil || req.TopP != nil {
+			return nil
+		}
+		if req.ToolChoice != nil && (req.ToolChoice.Type == "any" || req.ToolChoice.Type == "tool") {
+			return nil
+		}
+		if _, rejected := p.noAdaptiveThinking.Load(req.Model); rejected {
+			return nil
+		}
+		return &apiThinking{Type: "adaptive"}
+	}
 }
 
 // applyPromptCache places Anthropic prompt-cache breakpoints on the stable request prefix. Anthropic hashes
@@ -161,6 +202,11 @@ func toAPIMessage(m completion.Message) (apiMessage, error) {
 func toAPIContents(in []completion.Content) ([]apiContent, error) {
 	out := make([]apiContent, 0, len(in))
 	for _, c := range in {
+		// The API rejects empty text blocks ("text content blocks must be non-empty").
+		if t, ok := c.(completion.Text); ok && strings.TrimSpace(t.Text) == "" {
+			continue
+		}
+
 		ac, err := toAPIContent(c)
 		if err != nil {
 			return nil, err
@@ -177,6 +223,9 @@ func toAPIContent(c completion.Content) (apiContent, error) {
 
 	case completion.Thinking:
 		return apiContent{Type: "thinking", Thinking: v.Text, Signature: v.Signature}, nil
+
+	case completion.RedactedThinking:
+		return apiContent{Type: "redacted_thinking", Data: v.Data}, nil
 
 	case completion.Media:
 		src, err := toAPISource(v.MimeType, v.Source)
@@ -294,6 +343,8 @@ func fromAPIContents(in []apiContent) []completion.Content {
 			out = append(out, completion.Text{Text: c.Text})
 		case "thinking":
 			out = append(out, completion.Thinking{Text: c.Thinking, Signature: c.Signature})
+		case "redacted_thinking":
+			out = append(out, completion.RedactedThinking{Data: c.Data})
 		case "tool_use":
 			out = append(out, completion.ToolCall{ID: c.ID, Name: c.Name, Arguments: c.Input})
 		}
@@ -312,8 +363,10 @@ func fromAPIUsage(u apiUsage) completion.Usage {
 
 func fromAPIStopReason(reason string) completion.StopReason {
 	switch reason {
-	case "end_turn", "pause_turn":
+	case "end_turn":
 		return completion.StopEndTurn
+	case "pause_turn":
+		return completion.StopPauseTurn
 	case "max_tokens":
 		return completion.StopMaxTokens
 	case "stop_sequence":

@@ -9,13 +9,17 @@ package anthropic
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"iter"
+	"net/http"
+	"strings"
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/completion"
 	"go.wdy.de/nago/application/ai/model"
 	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/pkg/xhttp"
 )
 
 var _ completion.Completions = (*anthropicCompletions)(nil)
@@ -44,11 +48,28 @@ func (c *anthropicCompletions) Complete(subject auth.Subject, opts completion.Op
 	}
 
 	resp, err := c.client().CreateMessage(req)
+	if err != nil && opts.Thinking == completion.ThinkingAuto && req.Thinking != nil && isThinkingRejected(err) {
+		// Older models do not support adaptive thinking. Remember that and retry without it, so the
+		// automatic default never breaks a model that worked before.
+		c.parent.noAdaptiveThinking.Store(req.Model, true)
+		req.Thinking = nil
+		resp, err = c.client().CreateMessage(req)
+	}
 	if err != nil {
 		return completion.Result{}, err
 	}
 
 	return fromAPIResponse(resp), nil
+}
+
+// isThinkingRejected reports whether err is a 400 invalid_request_error complaining about adaptive thinking,
+// e.g. because the model does not support it.
+func isThinkingRejected(err error) bool {
+	var statusErr xhttp.UnexpectedStatusCodeError
+	if !errors.As(err, &statusErr) || statusErr.StatusCode != http.StatusBadRequest {
+		return false
+	}
+	return strings.Contains(strings.ToLower(string(statusErr.Body)), "adaptive")
 }
 
 func (c *anthropicCompletions) Stream(subject auth.Subject, opts completion.Options) iter.Seq2[completion.Delta, error] {
@@ -212,4 +233,3 @@ type toolAccu struct {
 // errStopStreaming is an internal sentinel used to unwind the SSE callback once the consumer stopped
 // iterating. It is swallowed by the [anthropicCompletions.Stream] implementation.
 var errStopStreaming = fmt.Errorf("stop streaming")
-

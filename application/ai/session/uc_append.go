@@ -101,6 +101,17 @@ func NewAppend(locks *locker, repo Repository) Append {
 				OnBeforeToolCall: opts.OnBeforeToolCall,
 			})
 			if rerr != nil {
+				// Tools that already ran may have had side effects. Persist the trace up to the failure, so
+				// the session reflects what actually happened and a follow-up question builds on it. The
+				// history returned by Run never contains a tool_use without its tool_result.
+				if len(runHistory) > len(history) {
+					session.Messages = runHistory
+					session.Model = mdl
+					session.UpdatedAt = xtime.Now()
+					if err := repo.Save(session); err != nil {
+						return Session{}, fmt.Errorf("completion run failed: %w (and cannot persist partial session: %v)", rerr, err)
+					}
+				}
 				return Session{}, fmt.Errorf("completion run failed: %w", rerr)
 			}
 			result = res
@@ -112,7 +123,10 @@ func NewAppend(locks *locker, repo Repository) Append {
 			}
 			result = res
 			// A single turn: our request history plus the assistant answer.
-			newHistory = append(history, res.Message)
+			newHistory = history
+			if len(res.Message.Content) > 0 {
+				newHistory = append(newHistory, res.Message)
+			}
 		}
 
 		session.Messages = newHistory

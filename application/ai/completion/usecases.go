@@ -75,7 +75,29 @@ type Options struct {
 
 	// Metadata is opaque provider metadata (e.g. Anthropic metadata.user_id). Optional.
 	Metadata map[string]string
+
+	// Thinking controls extended reasoning. The zero value [ThinkingAuto] lets the provider pick its
+	// recommended default (adaptive thinking for Anthropic, where supported).
+	Thinking ThinkingMode
+
+	// ThinkingBudget is the reasoning token budget used with [ThinkingBudgeted]. Ignored otherwise.
+	ThinkingBudget int
 }
+
+// ThinkingMode selects how extended reasoning is requested from the model.
+type ThinkingMode string
+
+const (
+	// ThinkingAuto uses the provider default. For Anthropic this is adaptive thinking, unless the request
+	// uses options that are incompatible with thinking (custom temperature/top_p or a forced tool choice).
+	ThinkingAuto ThinkingMode = ""
+	// ThinkingAdaptive lets the model decide itself whether and how much to think.
+	ThinkingAdaptive ThinkingMode = "adaptive"
+	// ThinkingBudgeted enables thinking with a fixed [Options.ThinkingBudget].
+	ThinkingBudgeted ThinkingMode = "budget"
+	// ThinkingOff disables extended reasoning.
+	ThinkingOff ThinkingMode = "off"
+)
 
 // Message is one turn in the stateless history.
 type Message struct {
@@ -142,6 +164,14 @@ type Thinking struct {
 
 func (Thinking) isContent() {}
 
+// RedactedThinking is an encrypted reasoning block (Anthropic "redacted_thinking"). It carries no readable
+// text but must be sent back unchanged within a tool loop, otherwise the provider rejects the request.
+type RedactedThinking struct {
+	Data string `json:"data"`
+}
+
+func (RedactedThinking) isContent() {}
+
 // ToolDef advertises a callable function tool. Schema is a JSON-Schema object describing the input.
 type ToolDef struct {
 	Name        string          `json:"name"`
@@ -166,6 +196,9 @@ const (
 	StopStopSequence StopReason = "stop_sequence"
 	StopToolUse      StopReason = "tool_use"
 	StopRefusal      StopReason = "refusal"
+	// StopPauseTurn signals that the provider paused a long-running turn. The assistant message must be
+	// sent back as-is so the model can resume; [Run] does this automatically.
+	StopPauseTurn StopReason = "pause_turn"
 )
 
 // Usage reports token accounting. Cache fields are optional and may be zero for providers without prompt

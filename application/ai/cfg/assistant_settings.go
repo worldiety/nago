@@ -23,7 +23,7 @@ import (
 const SourceAssistantModels = "nago.ai.assistant.models"
 
 // DefaultAssistantMaxTokens caps the generated output per answer when the operator did not choose a limit.
-const DefaultAssistantMaxTokens = 4096
+const DefaultAssistantMaxTokens = 32000
 
 var (
 	StrAssistantSettingsTitle = i18n.MustString("nago.ai.assistant.settings.title", i18n.Values{
@@ -52,7 +52,7 @@ type AssistantSettings struct {
 	// cannot be selected by accident.
 	Model model.ID `json:"model" label:"Standardmodell" source:"nago.ai.assistant.models" supportingText:"Wird für alle Unterhaltungen verwendet. Ist nichts gewählt, nimmt der Assistent das erste Modell, das der Provider meldet. Bleibt die Liste leer, ist der Provider nicht erreichbar — meist ein falscher API-Token im Tresor."`
 
-	MaxTokens int `json:"maxTokens" label:"Maximale Antwortlänge" supportingText:"Obergrenze der erzeugten Tokens je Antwort. Null bedeutet den eingebauten Standard von 4096."`
+	MaxTokens int `json:"maxTokens" label:"Maximale Antwortlänge" supportingText:"Obergrenze der erzeugten Tokens je Antwort. Null bedeutet den eingebauten Standard von 32000. Die Denkphase des Modells zählt mit."`
 
 	// ReadOnly is phrased positively rather than as "disable writes" because it describes a state the
 	// operator can reason about, and because the zero value must be the behaviour the application was built

@@ -10,6 +10,7 @@ package completion
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"iter"
 	"strings"
@@ -83,12 +84,16 @@ func TestNewTool_Invoke(t *testing.T) {
 type fakeCompletions struct {
 	results []Result
 	calls   int
+	// reqs records every request, so tests can inspect e.g. the escalated MaxTokens.
+	reqs []Options
 }
 
 func (f *fakeCompletions) Models(auth.Subject) iter.Seq2[model.Model, error] { return nil }
 
-func (f *fakeCompletions) Complete(_ auth.Subject, _ Options) (Result, error) {
-	r := f.results[f.calls]
+// Complete returns the queued results in order and repeats the last one once the queue is exhausted.
+func (f *fakeCompletions) Complete(_ auth.Subject, opts Options) (Result, error) {
+	f.reqs = append(f.reqs, opts)
+	r := f.results[min(f.calls, len(f.results)-1)]
 	f.calls++
 	return r, nil
 }
@@ -215,6 +220,14 @@ func TestRun_DropsTruncatedToolUse(t *testing.T) {
 
 	if hasDanglingToolUse(history) {
 		t.Fatalf("history contains a tool_use without a matching tool_result: %+v", history)
+	}
+
+	// initial attempt + maxTokenRetries escalations with a growing budget
+	if fake.calls != 1+maxTokenRetries {
+		t.Fatalf("expected %d attempts, got %d", 1+maxTokenRetries, fake.calls)
+	}
+	if fake.reqs[1].MaxTokens <= fake.reqs[0].MaxTokens || fake.reqs[2].MaxTokens <= fake.reqs[1].MaxTokens {
+		t.Fatalf("expected escalating budgets, got %d, %d, %d", fake.reqs[0].MaxTokens, fake.reqs[1].MaxTokens, fake.reqs[2].MaxTokens)
 	}
 
 	// user prompt + assistant text (tool_use stripped) = 2 messages; no tool was executed.
@@ -669,5 +682,150 @@ func TestExecuteOpenFileCall_ImageStillUploads(t *testing.T) {
 	m, ok := media[0].(Media)
 	if !ok || m.MimeType != file.PNG || m.Source.FileID.UnwrapOr("") != file.ID("file-png") {
 		t.Fatalf("unexpected media block: %#v", media[0])
+	}
+}
+
+func userMsg(text string) []Message {
+	return []Message{{Role: User, Content: []Content{Text{Text: text}}}}
+}
+
+func assistantText(stop StopReason, blocks ...Content) Result {
+	return Result{Message: Message{Role: Assistant, Content: blocks}, StopReason: stop}
+}
+
+func TestRun_PauseTurnResumes(t *testing.T) {
+	fake := &fakeCompletions{results: []Result{
+		assistantText(StopPauseTurn, Text{Text: "working"}),
+		assistantText(StopEndTurn, Text{Text: "done"}),
+	}}
+
+	res, history, err := Run(nil, fake, RunOptions{Options: Options{Messages: userMsg("go")}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fake.calls != 2 || res.StopReason != StopEndTurn {
+		t.Fatalf("expected the paused turn to be resumed, calls=%d stop=%s", fake.calls, res.StopReason)
+	}
+	// user, paused assistant turn (sent back as-is), final answer
+	if len(history) != 3 || history[1].Role != Assistant {
+		t.Fatalf("unexpected history: %+v", history)
+	}
+}
+
+func TestRun_MaxTokensRetriesWithLargerBudget(t *testing.T) {
+	fake := &fakeCompletions{results: []Result{
+		assistantText(StopMaxTokens, Thinking{Text: "long reasoning"}),
+		assistantText(StopEndTurn, Text{Text: "answer"}),
+	}}
+
+	res, history, err := Run(nil, fake, RunOptions{Options: Options{Messages: userMsg("q"), MaxTokens: 4096}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.StopReason != StopEndTurn {
+		t.Fatalf("unexpected stop reason %s", res.StopReason)
+	}
+	if got := fake.reqs[1].MaxTokens; got != 8192 {
+		t.Fatalf("expected retry with doubled budget, got %d", got)
+	}
+	// the truncated attempt is discarded
+	if len(history) != 2 {
+		t.Fatalf("unexpected history: %+v", history)
+	}
+}
+
+func TestRun_MaxTokensAtCapContinuesText(t *testing.T) {
+	fake := &fakeCompletions{results: []Result{
+		assistantText(StopMaxTokens, Text{Text: "part 1"}),
+		assistantText(StopEndTurn, Text{Text: "part 2"}),
+	}}
+
+	_, history, err := Run(nil, fake, RunOptions{Options: Options{Messages: userMsg("q"), MaxTokens: maxEscalatedTokens}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// user, part 1, injected continue prompt, part 2
+	if len(history) != 4 || !IsLoopPrompt(history[2]) {
+		t.Fatalf("unexpected history: %+v", history)
+	}
+	if IsLoopPrompt(history[0]) {
+		t.Fatalf("a real user message must not count as loop prompt")
+	}
+}
+
+func TestRun_ThinkingOnlyAnswerIsRequested(t *testing.T) {
+	fake := &fakeCompletions{results: []Result{
+		assistantText(StopEndTurn, Thinking{Text: "hmm", Signature: "s"}),
+		assistantText(StopEndTurn, Text{Text: "answer"}),
+	}}
+
+	_, history, err := Run(nil, fake, RunOptions{Options: Options{Messages: userMsg("q")}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// user, thinking-only turn, injected answer prompt, answer
+	if len(history) != 4 || !IsLoopPrompt(history[2]) {
+		t.Fatalf("unexpected history: %+v", history)
+	}
+	if _, ok := history[3].Content[0].(Text); !ok {
+		t.Fatalf("expected a final text answer, got %+v", history[3])
+	}
+}
+
+func TestRun_NeverPersistsEmptyMessages(t *testing.T) {
+	fake := &fakeCompletions{results: []Result{
+		assistantText(StopEndTurn, Text{Text: " "}),
+	}}
+
+	_, history, err := Run(nil, fake, RunOptions{Options: Options{Messages: userMsg("q")}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fake.calls != 1+maxContinuations {
+		t.Fatalf("expected %d attempts, got %d", 1+maxContinuations, fake.calls)
+	}
+	for _, m := range history {
+		if m.Role == Assistant && !hasContent(m) {
+			t.Fatalf("history contains an empty assistant message: %+v", history)
+		}
+	}
+}
+
+func TestRun_TurnLimitKeepsValidHistory(t *testing.T) {
+	tool := NewTool("add", "adds two integers", func(in addIn) (addOut, error) {
+		return addOut{Sum: in.A + in.B}, nil
+	})
+	fake := &fakeCompletions{results: []Result{
+		assistantText(StopToolUse, ToolCall{ID: "1", Name: "add", Arguments: json.RawMessage(`{"a":1,"b":2}`)}),
+	}}
+
+	_, history, err := Run(nil, fake, RunOptions{Options: Options{Messages: userMsg("q")}, Tools: []Tool{tool}, MaxTurns: 3})
+	if !errors.Is(err, TurnLimitExceeded) {
+		t.Fatalf("expected TurnLimitExceeded, got %v", err)
+	}
+	// user + 3 x (tool_use, tool_result)
+	if len(history) != 7 || hasDanglingToolUse(history) {
+		t.Fatalf("unexpected history (%d): %+v", len(history), history)
+	}
+}
+
+func TestRun_DefaultTurnLimit(t *testing.T) {
+	if DefaultMaxToolTurns != 128 {
+		t.Fatalf("unexpected default turn limit %d", DefaultMaxToolTurns)
+	}
+}
+
+func TestMessageJSON_RedactedThinkingRoundTrip(t *testing.T) {
+	in := Message{Role: Assistant, Content: []Content{RedactedThinking{Data: "enc"}, Text{Text: "hi"}}}
+	buf, err := json.Marshal(in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var out Message
+	if err := json.Unmarshal(buf, &out); err != nil {
+		t.Fatal(err)
+	}
+	if rt, ok := out.Content[0].(RedactedThinking); !ok || rt.Data != "enc" {
+		t.Fatalf("redacted thinking lost: %+v", out.Content)
 	}
 }

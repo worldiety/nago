@@ -29,6 +29,7 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/accordion"
 	"go.wdy.de/nago/presentation/ui/markdown"
 )
 
@@ -44,8 +45,8 @@ const scrollAnchorID = "uicompletion-end-of-history"
 // the growing bubble list, Vue would reuse the anchor's instance for new bubbles on every history update,
 // leaking a stale id onto them and breaking the scroll. Keeping the anchor as a stable second child of a
 // two-child stack avoids the instance reuse entirely.
-func conversationView(history []completion.Message, emptyHint string, height ui.Length) core.View {
-	bubbles := renderHistory(history)
+func conversationView(wnd core.Window, history []completion.Message, emptyHint string, height ui.Length) core.View {
+	bubbles := renderHistory(wnd, history)
 	if len(bubbles) == 0 && emptyHint != "" {
 		bubbles = append(bubbles, ui.Text(emptyHint).Font(ui.BodySmall))
 	}
@@ -61,13 +62,22 @@ func conversationView(history []completion.Message, emptyHint string, height ui.
 		Frame(ui.Frame{Height: height, Width: ui.Full})
 }
 
-// renderHistory turns the stateless message history into chat bubbles. Tool calls are shown as muted hints;
-// tool results (which live inside follow-up user messages) are omitted.
-func renderHistory(history []completion.Message) []core.View {
+// renderHistory turns the stateless message history into chat bubbles. Tool calls are shown as muted hints and
+// reasoning as a collapsed section; tool results (which live inside follow-up user messages) and the prompts
+// the loop injects on its own (see [completion.IsLoopPrompt]) are omitted.
+func renderHistory(wnd core.Window, history []completion.Message) []core.View {
 	var views []core.View
-	for _, m := range history {
-		for _, c := range m.Content {
+	for i, m := range history {
+		if completion.IsLoopPrompt(m) {
+			continue
+		}
+		for j, c := range m.Content {
 			switch v := c.(type) {
+			case completion.Thinking:
+				if strings.TrimSpace(v.Text) == "" {
+					continue
+				}
+				views = append(views, thinkingView(wnd, fmt.Sprintf("uicompletion-thinking-%d-%d", i, j), v.Text))
 			case completion.Text:
 				if strings.TrimSpace(v.Text) == "" {
 					continue
@@ -81,6 +91,19 @@ func renderHistory(history []completion.Message) []core.View {
 		}
 	}
 	return views
+}
+
+// thinkingView renders a reasoning block as a collapsed, muted section the user can expand on demand.
+func thinkingView(wnd core.Window, id, text string) core.View {
+	open := core.StateOf[bool](wnd, id)
+	return ui.HStack(
+		accordion.Accordion(
+			ui.Text("Gedankengang").Font(ui.Small),
+			ui.VStack(markdown.RichText(text)).Alignment(ui.Leading).Font(ui.Small),
+			open,
+		).Small().HideSeparator().Frame(ui.Frame{MaxWidth: "85%"}),
+		ui.Spacer(),
+	).FullWidth()
 }
 
 func chatBubble(role completion.Role, text string) core.View {

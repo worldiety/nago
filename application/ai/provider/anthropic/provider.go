@@ -9,6 +9,7 @@ package anthropic
 
 import (
 	"iter"
+	"sync"
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/completion"
@@ -26,6 +27,10 @@ type anthropicProvider struct {
 	models      *anthropicModels
 	completions *anthropicCompletions
 	files       *anthropicFiles
+
+	// noAdaptiveThinking remembers models (model.ID as string) that rejected adaptive thinking, so the
+	// automatic default is not sent to them again.
+	noAdaptiveThinking sync.Map
 }
 
 // NewProvider creates a stateless Anthropic (Claude) provider. Models, Tools, Completions and Files are
@@ -98,4 +103,3 @@ type anthropicTools struct{}
 func (anthropicTools) All(subject auth.Subject) iter.Seq2[tool.Tool, error] {
 	return func(yield func(tool.Tool, error) bool) {}
 }
-

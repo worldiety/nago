@@ -360,7 +360,7 @@ func mustValidateTool(name, description string) {
 
 // DefaultMaxToolTurns bounds the agentic loop in [Run] when [RunOptions.MaxTurns] is zero, protecting against
 // models that keep requesting tools indefinitely.
-const DefaultMaxToolTurns = 16
+const DefaultMaxToolTurns = 128
 
 // DefaultMaxCompactions bounds how often [Run] may invoke the [Compactor] across the whole run when
 // [RunOptions.MaxCompactions] is zero. Each compaction must strictly shrink the history, so a small budget is
@@ -536,6 +536,9 @@ func Run(subject auth.Subject, c Completions, opts RunOptions) (Result, []Messag
 	history := make([]Message, len(req.Messages))
 	copy(history, req.Messages)
 
+	tokenRetries := 0
+	continuations := 0
+
 	for turn := 0; turn < maxTurns; turn++ {
 		req.Messages = history
 
@@ -551,8 +554,12 @@ func Run(subject auth.Subject, c Completions, opts RunOptions) (Result, []Messag
 				break
 			}
 
-			if !errors.Is(err, ContextWindowExceeded) || compactions >= maxCompactions {
+			if !errors.Is(err, ContextWindowExceeded) {
 				return Result{}, history, err
+			}
+
+			if compactions >= maxCompactions {
+				return Result{}, history, fmt.Errorf("context window still exceeded after %d compactions: %w", compactions, err)
 			}
 
 			before := runeLen(history)
@@ -581,28 +588,78 @@ func Run(subject auth.Subject, c Completions, opts RunOptions) (Result, []Messag
 			}
 		}
 
-		if res.StopReason != StopToolUse {
-			// The turn did not (cleanly) request tools. If it nonetheless carries tool_use blocks the
-			// generation was cut off mid tool-call (e.g. stop_reason == max_tokens). Anthropic requires every
-			// tool_use to be followed by a matching tool_result; a truncated call has invalid/partial
-			// arguments and must not be executed. Drop those blocks so the persisted history stays valid.
-			if len(calls) > 0 {
-				cleaned := stripToolCalls(res.Message)
-				if len(cleaned.Content) > 0 {
-					history = append(history, cleaned)
+		switch res.StopReason {
+		case StopToolUse:
+			// handled below
+
+		case StopPauseTurn:
+			// The provider paused a long-running turn. Sending the assistant message back as-is lets the
+			// model resume exactly where it stopped.
+			if hasContent(res.Message) {
+				history = append(history, res.Message)
+			}
+			continue
+
+		case StopMaxTokens:
+			// The output budget was exhausted. A truncated tool_use carries broken arguments and cannot be
+			// resumed, so the robust fix is to repeat the same turn with a larger budget. The truncated
+			// answer is discarded; the history is left untouched.
+			if tokenRetries < maxTokenRetries {
+				if next := escalateMaxTokens(req.MaxTokens); next > req.MaxTokens {
+					tokenRetries++
+					req.MaxTokens = next
+					continue
 				}
-			} else {
+			}
+
+			// The budget cannot grow any further. Drop truncated tool calls (they must never be persisted
+			// without a matching tool_result) and, for plain text, let the model continue in a new turn.
+			cleaned := stripToolCalls(res.Message)
+			if len(calls) == 0 && hasAnswerText(cleaned) && continuations < maxContinuations {
+				continuations++
+				history = append(history, cleaned, Message{Role: User, Content: []Content{Text{Text: continuePrompt}}})
+				continue
+			}
+
+			if hasContent(cleaned) {
+				history = append(history, cleaned)
+			}
+			res.Message = cleaned
+			return res, history, nil
+
+		case StopEndTurn, StopStopSequence, "":
+			// A turn that ended with reasoning only produced no visible answer. Ask once for the answer
+			// instead of silently finishing with an empty reply.
+			if len(calls) == 0 && !hasAnswerText(res.Message) && continuations < maxContinuations {
+				continuations++
+				if hasContent(res.Message) {
+					history = append(history, res.Message)
+				}
+				history = append(history, Message{Role: User, Content: []Content{Text{Text: answerPrompt}}})
+				continue
+			}
+			fallthrough
+
+		default:
+			// Final answer (end_turn, stop_sequence, refusal or an unknown reason). If it nonetheless
+			// carries tool_use blocks, they were not requested cleanly and must not be executed.
+			cleaned := stripToolCalls(res.Message)
+			if hasContent(cleaned) {
+				history = append(history, cleaned)
+			}
+			res.Message = cleaned
+			return res, history, nil
+		}
+
+		if len(calls) == 0 {
+			// The model signalled tool_use but emitted no actual call we understand; stop to avoid looping.
+			if hasContent(res.Message) {
 				history = append(history, res.Message)
 			}
 			return res, history, nil
 		}
 
 		history = append(history, res.Message)
-
-		if len(calls) == 0 {
-			// The model signalled tool_use but emitted no actual call we understand; stop to avoid looping.
-			return res, history, nil
-		}
 
 		results := make([]Content, 0, len(calls))
 		// attachments collects Media blocks contributed by OpenFile tools. They are appended to the SAME user
@@ -626,7 +683,68 @@ func Run(subject auth.Subject, c Completions, opts RunOptions) (Result, []Messag
 		history = append(history, Message{Role: User, Content: content})
 	}
 
-	return Result{}, history, fmt.Errorf("tool loop exceeded %d turns", maxTurns)
+	return Result{}, history, fmt.Errorf("tool loop exceeded %d turns: %w", maxTurns, TurnLimitExceeded)
+}
+
+// TurnLimitExceeded is returned (wrapped) by [Run] when the model keeps requesting tools beyond
+// [RunOptions.MaxTurns]. The returned history is still valid and should be persisted, because the tools
+// already executed may have had side effects.
+var TurnLimitExceeded = errors.New("turn limit exceeded")
+
+const (
+	// maxTokenRetries bounds how often [Run] repeats a turn with a larger output budget after max_tokens.
+	maxTokenRetries = 2
+	// maxEscalatedTokens caps the output budget [Run] escalates to after max_tokens.
+	maxEscalatedTokens = 64000
+	// escalationBase is assumed when the request did not set MaxTokens explicitly.
+	escalationBase = 16000
+	// maxContinuations bounds how often [Run] asks the model to continue a truncated or empty answer.
+	maxContinuations = 2
+
+	continuePrompt = "Your previous answer was cut off because of the output limit. Continue exactly where you stopped, without repeating anything."
+	answerPrompt   = "You did not provide a visible answer. Please give your answer now."
+)
+
+// IsLoopPrompt reports whether msg is a user turn injected by [Run] itself (asking the model to continue a
+// truncated answer or to provide a missing one). UIs should hide such turns, because the user never wrote them.
+func IsLoopPrompt(msg Message) bool {
+	if msg.Role != User || len(msg.Content) != 1 {
+		return false
+	}
+	t, ok := msg.Content[0].(Text)
+	return ok && (t.Text == continuePrompt || t.Text == answerPrompt)
+}
+
+// escalateMaxTokens returns the next larger output budget, or current if it cannot grow any further.
+func escalateMaxTokens(current int) int {
+	if current <= 0 {
+		return escalationBase * 2
+	}
+	if current >= maxEscalatedTokens {
+		return current
+	}
+	return min(current*2, maxEscalatedTokens)
+}
+
+// hasContent reports whether msg carries at least one block that is not an empty text.
+func hasContent(msg Message) bool {
+	for _, c := range msg.Content {
+		if t, ok := c.(Text); ok && strings.TrimSpace(t.Text) == "" {
+			continue
+		}
+		return true
+	}
+	return false
+}
+
+// hasAnswerText reports whether msg contains visible, non-reasoning text.
+func hasAnswerText(msg Message) bool {
+	for _, c := range msg.Content {
+		if t, ok := c.(Text); ok && strings.TrimSpace(t.Text) != "" {
+			return true
+		}
+	}
+	return false
 }
 
 // stripToolCalls returns a copy of msg with all [ToolCall] content blocks removed. It is used to discard

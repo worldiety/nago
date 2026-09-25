@@ -16,6 +16,7 @@ import (
 	"go.wdy.de/nago/application/ai/model"
 	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/application/ai/session"
+	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/xsync"
 	"go.wdy.de/nago/presentation/core"
 	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
@@ -25,8 +26,9 @@ import (
 )
 
 // defaultMaxTokens caps the generated output tokens per turn when neither the chosen [Agent] nor
-// [ChatOptions] specify a value. Anthropic requires a positive limit, so we always send one.
-const defaultMaxTokens = 4096
+// [ChatOptions] specify a value. Anthropic requires a positive limit, so we always send one. Reasoning
+// (thinking) tokens count against it, so it must leave room for thinking plus the actual answer.
+const defaultMaxTokens = 32000
 
 // defaultConversationHeight is the height of the scrollable conversation area of an embedded [Chat] when the
 // caller does not override it via [ChatOptions.Height].
@@ -301,6 +303,10 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		// live mirrors the growing conversation while the loop runs so each assistant turn appears the moment
 		// it arrives. Every UI mutation is marshalled back onto the event loop via wnd.Post.
 		live := slices.Clone(msgs)
+		// lastStop remembers why the latest model turn ended, so a truncated or refused final answer can be
+		// pointed out instead of looking like the assistant silently stopped. Only touched on the loop's
+		// goroutine and read after the run returned.
+		var lastStop completion.StopReason
 		onProgress := func(p completion.Progress) {
 			switch p.Phase {
 			case completion.PhaseTurnStarted:
@@ -308,6 +314,11 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 				wnd.Post(func() { status.Set(thinkingLabel(turn)) })
 			case completion.PhaseModelResponded:
 				if p.Result == nil {
+					return
+				}
+				lastStop = p.Result.StopReason
+				// A truncated turn is repeated or cleaned up by the loop; showing it would only flicker.
+				if p.Result.StopReason == completion.StopMaxTokens || len(p.Result.Message.Content) == 0 {
 					return
 				}
 				live = append(live, p.Result.Message)
@@ -380,14 +391,21 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 					ask.Set(nil)
 					confirm.Set(nil)
 					if err != nil {
-						history.Set(prevHistory)
-						if prompt.Get() == "" {
-							prompt.Set(question)
+						// A failed run may still have persisted the steps that already happened (tools
+						// with side effects); show those instead of pretending nothing was done.
+						if partial, ok := reloadSession(subject, opts.Sessions, sid); ok && len(partial) > len(prevHistory) {
+							history.Set(partial)
+						} else {
+							history.Set(prevHistory)
+							if prompt.Get() == "" {
+								prompt.Set(question)
+							}
+							staged.Set(stagedFiles)
 						}
-						staged.Set(stagedFiles)
 						alert.ShowBannerError(wnd, err)
 						return
 					}
+					showStopHint(wnd, lastStop)
 					u := updated.Usage
 					slog.Info("uicompletion chat usage",
 						slog.String("session", string(sid)),
@@ -428,14 +446,20 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 				ask.Set(nil)
 				confirm.Set(nil)
 				if err != nil {
-					history.Set(prevHistory)
-					if prompt.Get() == "" {
-						prompt.Set(question)
+					// Keep the steps that already happened (tools with side effects) visible.
+					if len(newHistory) > len(runMessages) {
+						history.Set(newHistory)
+					} else {
+						history.Set(prevHistory)
+						if prompt.Get() == "" {
+							prompt.Set(question)
+						}
+						staged.Set(stagedFiles)
 					}
-					staged.Set(stagedFiles)
 					alert.ShowBannerError(wnd, err)
 					return
 				}
+				showStopHint(wnd, lastStop)
 				history.Set(newHistory)
 			})
 			return nil
@@ -455,7 +479,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		})
 	}
 
-	conversation := conversationView(history.Get(),
+	conversation := conversationView(wnd, history.Get(),
 		"Stell mir eine Frage, um die Unterhaltung zu beginnen.", height)
 
 	var footer core.View
@@ -557,4 +581,35 @@ func firstModelID(wnd core.Window, comps completion.Completions) model.ID {
 		return m.ID
 	}
 	return ""
+}
+
+// reloadSession loads the persisted messages of a session, e.g. after a failed run persisted a partial trace.
+func reloadSession(subject auth.Subject, sessions session.UseCases, id session.ID) ([]completion.Message, bool) {
+	if sessions.FindByID == nil || id == "" {
+		return nil, false
+	}
+	opt, err := sessions.FindByID(subject, id)
+	if err != nil || opt.IsNone() {
+		return nil, false
+	}
+	return opt.Unwrap().Messages, true
+}
+
+// showStopHint tells the user when the final answer did not end regularly, instead of letting it look like the
+// assistant simply stopped.
+func showStopHint(wnd core.Window, stop completion.StopReason) {
+	switch stop {
+	case completion.StopMaxTokens:
+		alert.ShowBannerMessage(wnd, alert.Message{
+			Title:   "Antwort abgeschnitten",
+			Message: "Die Antwort hat die maximale Länge erreicht und ist unvollständig. Bitte die Frage enger fassen oder die maximale Antwortlänge erhöhen.",
+			Intent:  alert.IntentWarning,
+		})
+	case completion.StopRefusal:
+		alert.ShowBannerMessage(wnd, alert.Message{
+			Title:   "Anfrage abgelehnt",
+			Message: "Das Modell hat die Beantwortung dieser Anfrage abgelehnt.",
+			Intent:  alert.IntentWarning,
+		})
+	}
 }
