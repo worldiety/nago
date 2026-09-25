@@ -22,6 +22,7 @@
 package uicompletion
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -66,6 +67,9 @@ func conversationView(wnd core.Window, history []completion.Message, emptyHint s
 // reasoning as a collapsed section; tool results (which live inside follow-up user messages) and the prompts
 // the loop injects on its own (see [completion.IsLoopPrompt]) are omitted.
 func renderHistory(wnd core.Window, history []completion.Message) []core.View {
+	// ask_user calls are a dialog with the user, so question and answer are shown as regular bubbles.
+	askCalls := map[string]bool{}
+
 	var views []core.View
 	for i, m := range history {
 		if completion.IsLoopPrompt(m) {
@@ -84,13 +88,55 @@ func renderHistory(wnd core.Window, history []completion.Message) []core.View {
 				}
 				views = append(views, chatBubble(m.Role, v.Text))
 			case completion.ToolCall:
+				if v.Name == askUserToolName {
+					if q, ok := askQuestion(v); ok {
+						askCalls[v.ID] = true
+						views = append(views, chatBubble(completion.Assistant, q))
+						continue
+					}
+				}
 				views = append(views, ui.HStack(
 					ui.Text("→ Tool: "+v.Name).Font(ui.Small),
 				).FullWidth().Alignment(ui.Leading))
+			case completion.ToolResult:
+				if !askCalls[v.ToolCallID] || v.IsError {
+					continue
+				}
+				if a, ok := askAnswer(v); ok {
+					views = append(views, chatBubble(completion.User, a))
+				}
 			}
 		}
 	}
 	return views
+}
+
+// askQuestion extracts the question of an ask_user call.
+func askQuestion(call completion.ToolCall) (string, bool) {
+	var in struct {
+		Question string `json:"question"`
+	}
+	if err := json.Unmarshal(call.Arguments, &in); err != nil || strings.TrimSpace(in.Question) == "" {
+		return "", false
+	}
+	return in.Question, true
+}
+
+// askAnswer extracts the user's answer from an ask_user tool result.
+func askAnswer(res completion.ToolResult) (string, bool) {
+	for _, c := range res.Content {
+		t, ok := c.(completion.Text)
+		if !ok {
+			continue
+		}
+		var out struct {
+			Answer string `json:"answer"`
+		}
+		if err := json.Unmarshal([]byte(t.Text), &out); err == nil && strings.TrimSpace(out.Answer) != "" {
+			return out.Answer, true
+		}
+	}
+	return "", false
 }
 
 // thinkingView renders a reasoning block as a collapsed, muted section the user can expand on demand.

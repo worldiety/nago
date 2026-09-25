@@ -324,6 +324,14 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 				live = append(live, p.Result.Message)
 				snapshot := slices.Clone(live)
 				wnd.Post(func() { history.Set(snapshot) })
+			case completion.PhaseToolCompleted:
+				// Show the user's answer to a clarifying question right away, not only after the run ended.
+				if p.ToolCall == nil || p.ToolResult == nil || p.ToolCall.Name != askUserToolName {
+					return
+				}
+				live = append(live, completion.Message{Role: completion.User, Content: []completion.Content{*p.ToolResult}})
+				snapshot := slices.Clone(live)
+				wnd.Post(func() { history.Set(snapshot) })
 			case completion.PhaseToolStarted:
 				name := ""
 				if p.ToolCall != nil {

@@ -16,6 +16,10 @@ import (
 	"go.wdy.de/nago/presentation/ui/markdown"
 )
 
+// askUserToolName is the name of the built-in clarification tool. The renderer uses it to show the question
+// and the user's answer as regular chat bubbles.
+const askUserToolName = "ask_user"
+
 // pendingAsk holds a clarifying question the model asked back to the user via the ask_user tool. reply is a
 // buffered channel the (background) tool goroutine blocks on until the user answered in the UI.
 type pendingAsk struct {
@@ -36,7 +40,7 @@ func askUserTool(wnd core.Window, ask *core.State[*pendingAsk]) completion.Tool 
 		Answer string `json:"answer"`
 	}
 
-	return completion.NewTool("ask_user",
+	return completion.NewTool(askUserToolName,
 		"asks the user a clarifying question and waits for their answer before continuing. Use this whenever you need a decision or missing information from the user.",
 		func(in askIn) (askOut, error) {
 			ch := make(chan string, 1)
