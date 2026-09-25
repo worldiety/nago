@@ -63,7 +63,7 @@ func main() {
 		// including the administration pages the framework brings along. When it cannot run (no provider, no
 		// model, hidden by the operator, missing role) Decorate returns the view untouched and logs why.
 		cfg.SetDecorator(func(wnd core.Window, view core.View) core.View {
-			return modAI.Assistant.Decorate(wnd, scaffold(wnd, view), cfgai.AssistantOptions{
+			return scaffold(wnd, modAI.Assistant.Decorate(wnd, view, cfgai.AssistantOptions{
 				Title: "Bibliotheks-Assistent",
 				Label: "Assistent",
 				// One tag for the whole application: the assistant follows the user from screen to screen, so
@@ -92,7 +92,8 @@ func main() {
 							uicompletion.WindowContext(wnd)
 					},
 				}},
-			})
+			}),
+			)
 		})
 	}).Run()
 }
