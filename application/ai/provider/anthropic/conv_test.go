@@ -238,3 +238,78 @@ func TestRequestUsesFileSource(t *testing.T) {
 		t.Fatal("expected file source nested in tool_result to be detected")
 	}
 }
+
+func TestApplyPromptCache_SkipsThinkingOnlyMessage(t *testing.T) {
+	p := &anthropicProvider{cfg: Settings{}}
+	req := &apiRequest{Messages: []apiMessage{
+		{Role: "user", Content: []apiContent{{Type: "text", Text: "hi"}}},
+		{Role: "assistant", Content: []apiContent{{Type: "thinking", Thinking: "hmm", Signature: "sig"}}},
+		{Role: "user", Content: []apiContent{{Type: "text", Text: "next"}}},
+	}}
+
+	p.applyPromptCache(req)
+
+	if req.Messages[1].Content[0].CacheControl != nil {
+		t.Errorf("thinking block must not carry cache_control")
+	}
+	if req.Messages[0].Content[0].CacheControl == nil {
+		t.Errorf("expected breakpoint to move back to the earlier cacheable block")
+	}
+	if req.Messages[2].Content[0].CacheControl != nil {
+		t.Errorf("newest message must stay uncached")
+	}
+}
+
+func TestApplyPromptCache_ThinkingThenText(t *testing.T) {
+	p := &anthropicProvider{cfg: Settings{}}
+	req := &apiRequest{Messages: []apiMessage{
+		{Role: "user", Content: []apiContent{{Type: "text", Text: "hi"}}},
+		{Role: "assistant", Content: []apiContent{
+			{Type: "text", Text: "answer"},
+			{Type: "redacted_thinking", Data: "xyz"},
+		}},
+		{Role: "user", Content: []apiContent{{Type: "text", Text: "next"}}},
+	}}
+
+	p.applyPromptCache(req)
+
+	if req.Messages[1].Content[1].CacheControl != nil {
+		t.Errorf("redacted_thinking block must not carry cache_control")
+	}
+	if req.Messages[1].Content[0].CacheControl == nil {
+		t.Errorf("expected breakpoint on the text block")
+	}
+	if req.Messages[0].Content[0].CacheControl != nil {
+		t.Errorf("only one history breakpoint expected")
+	}
+}
+
+func TestApplyPromptCache_NoCacheableBlock(t *testing.T) {
+	p := &anthropicProvider{cfg: Settings{}}
+	req := &apiRequest{Messages: []apiMessage{
+		{Role: "assistant", Content: []apiContent{{Type: "thinking", Thinking: "a", Signature: "s"}}},
+		{Role: "user", Content: []apiContent{{Type: "text", Text: "next"}}},
+	}}
+
+	p.applyPromptCache(req)
+
+	for _, m := range req.Messages {
+		for _, c := range m.Content {
+			if c.CacheControl != nil {
+				t.Errorf("expected no history breakpoint, got one on %s", c.Type)
+			}
+		}
+	}
+}
+
+func TestMarshal_ThinkingDropsCacheControl(t *testing.T) {
+	for _, typ := range []string{"thinking", "redacted_thinking"} {
+		b, err := json.Marshal(apiContent{Type: typ, CacheControl: &apiCacheControl{Type: "ephemeral"}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if strings.Contains(string(b), "cache_control") {
+			t.Errorf("%s: cache_control must not be emitted: %s", typ, b)
+		}
+	}
+}

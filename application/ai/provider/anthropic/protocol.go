@@ -245,7 +245,7 @@ func (c apiContent) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	if c.CacheControl != nil {
+	if c.CacheControl != nil && isCacheableBlock(c.Type) {
 		m["cache_control"] = c.CacheControl
 	}
 

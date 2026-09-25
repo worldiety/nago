@@ -96,13 +96,29 @@ func (p *anthropicProvider) applyPromptCache(req *apiRequest) {
 		req.System[n-1].CacheControl = cc
 	}
 
-	// 3. frozen history boundary: the last block of the second-to-last message. With only a single message
-	// there is no stable prefix to cache yet, so we skip it.
-	if n := len(req.Messages); n >= 2 {
-		prev := req.Messages[n-2]
-		if c := len(prev.Content); c > 0 {
-			prev.Content[c-1].CacheControl = cc
+	// 3. frozen history boundary: the last cacheable block of the second-to-last message. With only a single
+	// message there is no stable prefix to cache yet, so we skip it. Thinking blocks must not carry
+	// cache_control (the API rejects it), so we walk backwards to the nearest cacheable block, possibly into
+	// earlier messages. If none exists, the breakpoint is omitted.
+	for i := len(req.Messages) - 2; i >= 0; i-- {
+		content := req.Messages[i].Content
+		for j := len(content) - 1; j >= 0; j-- {
+			if isCacheableBlock(content[j].Type) {
+				content[j].CacheControl = cc
+				return
+			}
 		}
+	}
+}
+
+// isCacheableBlock reports whether the Anthropic API accepts a cache_control marker on a block of the given
+// type. Thinking and redacted thinking blocks are rejected with "Extra inputs are not permitted".
+func isCacheableBlock(typ string) bool {
+	switch typ {
+	case "thinking", "redacted_thinking":
+		return false
+	default:
+		return true
 	}
 }
 
