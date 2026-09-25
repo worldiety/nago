@@ -22,6 +22,7 @@
 package session
 
 import (
+	"errors"
 	"iter"
 
 	"github.com/worldiety/option"
@@ -79,6 +80,15 @@ type Session struct {
 
 	// Usage accumulates the token usage reported across all turns of the session.
 	Usage completion.Usage `json:"usage,omitempty"`
+
+	// Pending is set while the last run waits on a user decision (a clarifying question or the approval of a
+	// mutating tool). Messages then ends with the assistant turn carrying the pending calls; resolve them with
+	// [Resolve] or [Dismiss]. A session with Pending rejects [Append].
+	Pending *completion.Continuation `json:"pending,omitempty"`
+
+	// PendingRevision increases with every new suspension. [Resolve] and [Dismiss] must name it, so a stale or
+	// duplicate answer (e.g. from a second tab) never lands on a newer question.
+	PendingRevision int `json:"pendingRevision,omitempty"`
 
 	CreatedAt xtime.UnixMilliseconds `json:"createdAt,omitempty"`
 	CreatedBy user.ID                `json:"createdBy,omitempty"`
@@ -187,7 +197,31 @@ type AppendOptions struct {
 	// OnBeforeToolCall is forwarded to [completion.Run] and may refuse individual tool calls, e.g. to ask
 	// the user for confirmation before a mutating tool runs. Ignored without tools. Optional.
 	OnBeforeToolCall completion.BeforeToolCallFunc
+
+	// ConfirmMutating suspends the run before every mutating tool call until the user approved it via
+	// [Resolve] (see [completion.RunOptions.ConfirmMutating]). Ignored without tools. Optional.
+	ConfirmMutating bool
 }
+
+// ResolveOptions carries the user's decisions on a pending run plus the runtime dependencies to continue it.
+type ResolveOptions struct {
+	// Run configures the continued run exactly like an [Append]. Its Input is ignored and Model must be empty
+	// or equal the session model, because a pending run cannot move to another model.
+	Run AppendOptions
+
+	// Revision must equal [Session.PendingRevision].
+	Revision int
+
+	// Resolutions decide every pending call exactly once.
+	Resolutions []completion.Resolution
+}
+
+// ErrNoPendingDecision is returned by [Resolve] and [Dismiss] when the session does not wait on the user (any
+// more), or the revision does not match, e.g. because the question was already answered elsewhere.
+var ErrNoPendingDecision = errors.New("session has no matching pending decision")
+
+// ErrPendingDecision is returned by [Append] while the session waits on a user decision.
+var ErrPendingDecision = errors.New("session waits on a pending decision")
 
 // Create persists a new, optionally pre-seeded [Session].
 type Create func(subject auth.Subject, opts CreateOptions) (Session, error)
@@ -211,6 +245,13 @@ type FindAll func(subject auth.Subject, opts FindAllOptions) iter.Seq2[Session, 
 // appends the produced messages to the history and persists the updated session, which it returns.
 type Append func(subject auth.Subject, id ID, opts AppendOptions) (Session, error)
 
+// Resolve answers the pending decisions of a suspended run and continues it. The run may suspend again.
+type Resolve func(subject auth.Subject, id ID, opts ResolveOptions) (Session, error)
+
+// Dismiss closes the pending decisions without an answer and without asking the model, e.g. when the user moves
+// on to another topic. Already executed calls keep their results.
+type Dismiss func(subject auth.Subject, id ID, revision int) (Session, error)
+
 // Rename changes the human-readable title of a session.
 type Rename func(subject auth.Subject, id ID, title string) error
 
@@ -223,6 +264,8 @@ type UseCases struct {
 	FindByID FindByID
 	FindAll  FindAll
 	Append   Append
+	Resolve  Resolve
+	Dismiss  Dismiss
 	Rename   Rename
 	Delete   Delete
 }
@@ -230,7 +273,7 @@ type UseCases struct {
 // NewUseCases wires the session use cases against the given repository and ReBAC database.
 //
 // Mutating operations on an existing session ([Append], [Rename], [Delete]) serialize per session id via a
-// keyed lock, so a long-running [Append] (e.g. blocking on an agentic ask_user round-trip) only blocks other
+// keyed lock, so a long-running [Append] only blocks other
 // operations on the same session, never on unrelated ones. [Create] needs no lock because it works on a
 // freshly generated, collision-free id.
 //
@@ -247,6 +290,8 @@ func NewUseCases(repo Repository, rdb *rebac.DB) UseCases {
 		FindByID: NewFindByID(repo),
 		FindAll:  NewFindAll(repo),
 		Append:   NewAppend(&locks, repo),
+		Resolve:  NewResolve(&locks, repo),
+		Dismiss:  NewDismiss(&locks, repo),
 		Rename:   NewRename(&locks, repo),
 		Delete:   NewDelete(&locks, repo, rdb),
 	}

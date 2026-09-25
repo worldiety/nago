@@ -15,7 +15,7 @@ import (
 
 // locker hands out one mutex per session id so that mutating operations serialize per session instead of
 // globally. This matters because [Append] holds its lock for the whole (potentially long-running) provider
-// call - including a blocking agentic ask_user round-trip - and must not block operations on unrelated
+// call and must not block operations on unrelated
 // sessions.
 //
 // Entries are created lazily and intentionally never removed: a *sync.Mutex is tiny, and reclaiming a keyed

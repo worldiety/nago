@@ -95,6 +95,10 @@ type Tool struct {
 	// it is a request. Set this flag instead.
 	Mutating bool
 
+	// AwaitsUser marks a tool whose answer comes from the user rather than from Go code, e.g. the clarifying
+	// question of [NewAskUserTool]. Calling it suspends the run instead of invoking anything; see [Start].
+	AwaitsUser bool
+
 	// Confirm is a short, human-readable sentence describing what this tool will change, shown when a
 	// confirmation is requested. Optional; the tool name and its arguments are shown regardless. Only
 	// meaningful together with Mutating.
@@ -477,6 +481,10 @@ type RunOptions struct {
 	// OnBeforeToolCall is consulted before each tool execution and may refuse it. Optional; see
 	// [BeforeToolCallFunc].
 	OnBeforeToolCall BeforeToolCallFunc
+
+	// ConfirmMutating suspends the run before every call of a [Tool.Mutating] tool, so the user can approve or
+	// reject it (see [Start], [Continue]). Only supported by [Start]; [Run] fails on such a suspension.
+	ConfirmMutating bool
 }
 
 // Run drives the full agentic loop on top of [Completions.Complete]:
@@ -489,6 +497,39 @@ type RunOptions struct {
 // It returns the final assistant [Result] together with the complete message history (including all
 // intermediate tool calls and tool results) so callers can inspect or persist the trace.
 func Run(subject auth.Subject, c Completions, opts RunOptions) (Result, []Message, error) {
+	out, err := Start(subject, c, opts)
+	if err == nil && out.Suspended != nil {
+		err = fmt.Errorf("run suspended on a user decision, use Start/Continue instead of Run: %w", ErrSuspendUnsupported)
+	}
+	return out.Result, out.History, err
+}
+
+// Start drives the agentic loop like [Run], but supports suspension: when the model calls a tool marked
+// [Tool.AwaitsUser] or, with [RunOptions.ConfirmMutating], a mutating tool, the loop does not block. It
+// returns an [Outcome] whose Suspended field carries the [Continuation] instead. The caller persists it
+// together with the history and later resumes via [Continue] once the user decided. No goroutine waits in
+// between, so a closed window, a navigation or a server restart loses nothing.
+//
+// On error, the returned Outcome still carries the history built so far; it never contains a tool_use without
+// its tool_result.
+func Start(subject auth.Subject, c Completions, opts RunOptions) (Outcome, error) {
+	return drive(subject, c, opts, nil)
+}
+
+// Continue resumes a run suspended by [Start]. opts.Messages must be the history returned together with the
+// continuation (ending with the assistant turn carrying the pending calls), and resolutions must decide every
+// pending call exactly once. Approved calls are executed now, subject to [RunOptions.OnBeforeToolCall].
+func Continue(subject auth.Subject, c Completions, opts RunOptions, cont Continuation, resolutions []Resolution) (Outcome, error) {
+	return drive(subject, c, opts, &resumeInput{cont: cont, resolutions: resolutions})
+}
+
+// drive is the loop shared by [Start] and [Continue].
+func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeInput) (out Outcome, err error) {
+	// progressed records whether the history moved beyond the caller's input, so a caller knows whether a
+	// failed run left something worth persisting.
+	progressed := false
+	defer func() { out.Progressed = progressed }()
+
 	maxTurns := opts.MaxTurns
 	if maxTurns <= 0 {
 		maxTurns = DefaultMaxToolTurns
@@ -522,7 +563,7 @@ func Run(subject auth.Subject, c Completions, opts RunOptions) (Result, []Messag
 		// Two tools under one name means one of them is unreachable, and which one depends on slice order.
 		// That is a wiring mistake worth reporting rather than a situation to silently pick a winner in.
 		if _, dup := tools[t.Def.Name]; dup {
-			return Result{}, opts.Messages, fmt.Errorf("duplicate tool name %q", t.Def.Name)
+			return Outcome{History: opts.Messages}, fmt.Errorf("duplicate tool name %q", t.Def.Name)
 		}
 
 		tools[t.Def.Name] = t
@@ -535,6 +576,15 @@ func Run(subject auth.Subject, c Completions, opts RunOptions) (Result, []Messag
 	// copy the initial history so we never mutate the caller's slice
 	history := make([]Message, len(req.Messages))
 	copy(history, req.Messages)
+
+	if resume != nil {
+		msg, err := resumeMessage(subject, tools, opts, history, resume.cont, resume.resolutions)
+		if err != nil {
+			return Outcome{History: history}, err
+		}
+		history = append(history, msg)
+		progressed = true
+	}
 
 	tokenRetries := 0
 	continuations := 0
@@ -555,26 +605,27 @@ func Run(subject auth.Subject, c Completions, opts RunOptions) (Result, []Messag
 			}
 
 			if !errors.Is(err, ContextWindowExceeded) {
-				return Result{}, history, err
+				return Outcome{Result: Result{}, History: history}, err
 			}
 
 			if compactions >= maxCompactions {
-				return Result{}, history, fmt.Errorf("context window still exceeded after %d compactions: %w", compactions, err)
+				return Outcome{Result: Result{}, History: history}, fmt.Errorf("context window still exceeded after %d compactions: %w", compactions, err)
 			}
 
 			before := runeLen(history)
 			compacted, cerr := compactor(subject, c, req, history)
 			if cerr != nil {
-				return Result{}, history, fmt.Errorf("compaction failed: %w", cerr)
+				return Outcome{Result: Result{}, History: history}, fmt.Errorf("compaction failed: %w", cerr)
 			}
 			compactions++
 
 			// A compactor must make progress; otherwise we would loop forever on the same overflow.
 			if runeLen(compacted) >= before {
-				return Result{}, history, fmt.Errorf("compaction did not shrink history (%d runes): %w", before, err)
+				return Outcome{Result: Result{}, History: history}, fmt.Errorf("compaction did not shrink history (%d runes): %w", before, err)
 			}
 
 			history = compacted
+			progressed = true
 			req.Messages = history
 		}
 
@@ -597,6 +648,7 @@ func Run(subject auth.Subject, c Completions, opts RunOptions) (Result, []Messag
 			// model resume exactly where it stopped.
 			if hasContent(res.Message) {
 				history = append(history, res.Message)
+				progressed = true
 			}
 			continue
 
@@ -618,14 +670,16 @@ func Run(subject auth.Subject, c Completions, opts RunOptions) (Result, []Messag
 			if len(calls) == 0 && hasAnswerText(cleaned) && continuations < maxContinuations {
 				continuations++
 				history = append(history, cleaned, Message{Role: User, Content: []Content{Text{Text: continuePrompt}}})
+				progressed = true
 				continue
 			}
 
 			if hasContent(cleaned) {
 				history = append(history, cleaned)
+				progressed = true
 			}
 			res.Message = cleaned
-			return res, history, nil
+			return Outcome{Result: res, History: history}, nil
 
 		case StopEndTurn, StopStopSequence, "":
 			// A turn that ended with reasoning only produced no visible answer. Ask once for the answer
@@ -634,8 +688,10 @@ func Run(subject auth.Subject, c Completions, opts RunOptions) (Result, []Messag
 				continuations++
 				if hasContent(res.Message) {
 					history = append(history, res.Message)
+					progressed = true
 				}
 				history = append(history, Message{Role: User, Content: []Content{Text{Text: answerPrompt}}})
+				progressed = true
 				continue
 			}
 			fallthrough
@@ -646,20 +702,23 @@ func Run(subject auth.Subject, c Completions, opts RunOptions) (Result, []Messag
 			cleaned := stripToolCalls(res.Message)
 			if hasContent(cleaned) {
 				history = append(history, cleaned)
+				progressed = true
 			}
 			res.Message = cleaned
-			return res, history, nil
+			return Outcome{Result: res, History: history}, nil
 		}
 
 		if len(calls) == 0 {
 			// The model signalled tool_use but emitted no actual call we understand; stop to avoid looping.
 			if hasContent(res.Message) {
 				history = append(history, res.Message)
+				progressed = true
 			}
-			return res, history, nil
+			return Outcome{Result: res, History: history}, nil
 		}
 
 		history = append(history, res.Message)
+		progressed = true
 
 		results := make([]Content, 0, len(calls))
 		// attachments collects Media blocks contributed by OpenFile tools. They are appended to the SAME user
@@ -667,8 +726,34 @@ func Run(subject auth.Subject, c Completions, opts RunOptions) (Result, []Messag
 		// source is not valid inside a tool_result). Keeping them on the tool-result turn keeps the history
 		// valid and lets the model see the file on the next turn.
 		var attachments []Content
+		var pending []PendingCall
+
+		// A clarifying question means the model is not sure yet. Changing state in the same turn would act
+		// before the answer is known, so mutating calls of such a turn are deferred, never executed.
+		asksUser := slices.ContainsFunc(calls, func(call ToolCall) bool { return tools[call.Name].AwaitsUser })
+
 		for _, call := range calls {
 			call := call
+			tool, known := tools[call.Name]
+
+			switch {
+			case known && tool.AwaitsUser:
+				if pc, ok := questionOf(call); ok {
+					pending = append(pending, pc)
+					continue
+				}
+				results = append(results, ToolResult{ToolCallID: call.ID, IsError: true, Content: []Content{Text{Text: "the question must not be empty"}}})
+				continue
+
+			case known && tool.Mutating && asksUser:
+				results = append(results, ToolResult{ToolCallID: call.ID, IsError: true, Content: []Content{Text{Text: deferredText}}})
+				continue
+
+			case known && tool.Mutating && opts.ConfirmMutating:
+				pending = append(pending, PendingCall{Kind: PendingApproval, Call: call, Effect: tool.Confirm})
+				continue
+			}
+
 			notify(Progress{Phase: PhaseToolStarted, Turn: turn, ToolCall: &call})
 
 			result, media := executeToolCall(subject, tools, call, opts.FileUploader, opts.OnBeforeToolCall)
@@ -679,11 +764,24 @@ func Run(subject auth.Subject, c Completions, opts RunOptions) (Result, []Messag
 			attachments = append(attachments, media...)
 		}
 
+		if len(pending) > 0 {
+			completed := make([]ToolResult, 0, len(results))
+			for _, r := range results {
+				completed = append(completed, r.(ToolResult))
+			}
+			return Outcome{Result: res, History: history, Suspended: &Continuation{
+				Pending:     pending,
+				Completed:   completed,
+				Attachments: attachments,
+			}}, nil
+		}
+
 		content := append(results, attachments...)
 		history = append(history, Message{Role: User, Content: content})
+		progressed = true
 	}
 
-	return Result{}, history, fmt.Errorf("tool loop exceeded %d turns: %w", maxTurns, TurnLimitExceeded)
+	return Outcome{Result: Result{}, History: history}, fmt.Errorf("tool loop exceeded %d turns: %w", maxTurns, TurnLimitExceeded)
 }
 
 // TurnLimitExceeded is returned (wrapped) by [Run] when the model keeps requesting tools beyond

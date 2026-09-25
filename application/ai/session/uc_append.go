@@ -11,6 +11,7 @@ import (
 	"fmt"
 
 	"go.wdy.de/nago/application/ai/completion"
+	"go.wdy.de/nago/application/ai/model"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/xtime"
 )
@@ -84,62 +85,82 @@ func NewAppend(locks *locker, repo Repository) Append {
 			Temperature: opts.Temperature,
 		}
 
-		var (
-			result     completion.Result
-			newHistory []completion.Message
-		)
+		if session.Pending != nil {
+			return Session{}, ErrPendingDecision
+		}
 
-		if len(opts.Tools) > 0 {
-			// Agentic loop: completion.Run returns the full trace (starting from our history) including all
-			// intermediate tool calls and tool results.
-			res, runHistory, rerr := completion.Run(subject, opts.Completions, completion.RunOptions{
-				Options:          baseOpts,
-				Tools:            opts.Tools,
-				MaxTurns:         opts.MaxTurns,
-				OnProgress:       opts.OnProgress,
-				FileUploader:     opts.FileUploader,
-				OnBeforeToolCall: opts.OnBeforeToolCall,
-			})
-			if rerr != nil {
-				// Tools that already ran may have had side effects. Persist the trace up to the failure, so
-				// the session reflects what actually happened and a follow-up question builds on it. The
-				// history returned by Run never contains a tool_use without its tool_result.
-				if len(runHistory) > len(history) {
-					session.Messages = runHistory
-					session.Model = mdl
-					session.UpdatedAt = xtime.Now()
-					if err := repo.Save(session); err != nil {
-						return Session{}, fmt.Errorf("completion run failed: %w (and cannot persist partial session: %v)", rerr, err)
-					}
-				}
-				return Session{}, fmt.Errorf("completion run failed: %w", rerr)
-			}
-			result = res
-			newHistory = runHistory
-		} else {
+		if len(opts.Tools) == 0 {
 			res, cerr := opts.Completions.Complete(subject, baseOpts)
 			if cerr != nil {
 				return Session{}, fmt.Errorf("completion failed: %w", cerr)
 			}
-			result = res
 			// A single turn: our request history plus the assistant answer.
-			newHistory = history
+			newHistory := history
 			if len(res.Message.Content) > 0 {
 				newHistory = append(newHistory, res.Message)
 			}
+			return saveOutcome(repo, session, mdl, completion.Outcome{Result: res, History: newHistory})
 		}
 
-		session.Messages = newHistory
-		session.Model = mdl
-		session.Usage = addUsage(session.Usage, result.Usage)
-		session.UpdatedAt = xtime.Now()
-
-		if err := repo.Save(session); err != nil {
-			return Session{}, fmt.Errorf("cannot persist session: %w", err)
+		// Agentic loop: the outcome carries the full trace (starting from our history) including all
+		// intermediate tool calls and tool results, and possibly a suspension on a user decision.
+		out, rerr := completion.Start(subject, opts.Completions, runOptions(baseOpts, opts))
+		if rerr != nil {
+			return Session{}, persistFailure(repo, session, mdl, out, rerr)
 		}
 
-		return session, nil
+		return saveOutcome(repo, session, mdl, out)
 	}
+}
+
+// runOptions builds the agentic run configuration of an [Append] or [Resolve].
+func runOptions(base completion.Options, opts AppendOptions) completion.RunOptions {
+	return completion.RunOptions{
+		Options:          base,
+		Tools:            opts.Tools,
+		MaxTurns:         opts.MaxTurns,
+		OnProgress:       opts.OnProgress,
+		FileUploader:     opts.FileUploader,
+		OnBeforeToolCall: opts.OnBeforeToolCall,
+		ConfirmMutating:  opts.ConfirmMutating,
+	}
+}
+
+// saveOutcome stores the history of a finished or suspended run.
+func saveOutcome(repo Repository, session Session, mdl model.ID, out completion.Outcome) (Session, error) {
+	session.Messages = out.History
+	session.Model = mdl
+	session.Usage = addUsage(session.Usage, out.Result.Usage)
+	session.UpdatedAt = xtime.Now()
+	session.Pending = out.Suspended
+	if out.Suspended != nil {
+		session.PendingRevision++
+	}
+
+	if err := repo.Save(session); err != nil {
+		return Session{}, fmt.Errorf("cannot persist session: %w", err)
+	}
+
+	return session, nil
+}
+
+// persistFailure keeps what a failed run already did. Tools that ran may have had side effects, so the
+// session must reflect them and a follow-up question builds on them. The history of a failed run never
+// contains a tool_use without its tool_result.
+func persistFailure(repo Repository, session Session, mdl model.ID, out completion.Outcome, runErr error) error {
+	if !out.Progressed {
+		return fmt.Errorf("completion run failed: %w", runErr)
+	}
+
+	session.Messages = out.History
+	session.Model = mdl
+	session.Pending = nil
+	session.UpdatedAt = xtime.Now()
+	if err := repo.Save(session); err != nil {
+		return fmt.Errorf("completion run failed: %w (and cannot persist partial session: %v)", runErr, err)
+	}
+
+	return fmt.Errorf("completion run failed: %w", runErr)
 }
 
 // addUsage accumulates token usage across turns.
