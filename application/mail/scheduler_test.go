@@ -140,6 +140,39 @@ func TestSchedulerFreshMailsFirstAndBrokenServer(t *testing.T) {
 	}
 }
 
+func TestSchedulerMissingSenderIsVisibleError(t *testing.T) {
+	s, repo, _ := newTestScheduler(t, ScheduleOptions{SendInterval: time.Minute}, secret.SMTP{Name: "mj", Host: "invalid.invalid", Port: 587, Username: "apikey"})
+	s.send = send
+	now := time.Now()
+	fresh := queue(t, repo, "fresh", "a@example.com", now)
+	retry := queue(t, repo, "retry", "b@example.com", now.Add(-time.Hour))
+	retry.Status = StatusError
+	retry.addAttempt(Attempt{At: now.Add(-time.Minute), Server: "mj", Phase: PhaseConfig})
+	if err := repo.Save(retry); err != nil {
+		t.Fatal(err)
+	}
+
+	s.runOnce(context.Background())
+
+	o, err := repo.FindByID(fresh.ID)
+	if err != nil || !o.IsSome() {
+		t.Fatal(err)
+	}
+	got := o.Unwrap()
+	a, _ := got.LastAttempt()
+	if got.Status != StatusError || a.Phase != PhaseConfig || a.Success || got.LastError == "" || got.NextAttemptAt.IsZero() {
+		t.Fatalf("expected visible, retryable config error, got status=%v phase=%v err=%q", got.Status, a.Phase, got.LastError)
+	}
+
+	o, err = repo.FindByID(retry.ID)
+	if err != nil || !o.IsSome() {
+		t.Fatal(err)
+	}
+	if n := o.Unwrap().Attempted(); n != 1 {
+		t.Fatalf("expected retry to be skipped on server with config error, got %d attempts", n)
+	}
+}
+
 func TestSchedulerRateLimit(t *testing.T) {
 	s, repo, log := newTestScheduler(t, ScheduleOptions{}, secret.SMTP{Name: "a", Host: "h", RateLimitPerHour: 2})
 	now := time.Now()

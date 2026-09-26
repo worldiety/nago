@@ -288,7 +288,7 @@ func (s *scheduler) runOnce(ctx context.Context) (more bool) {
 		if attempt.Success {
 			s.guard.record(outgoing, attempt.At)
 			sentInRun = true
-		} else if attempt.Phase == PhaseDial || attempt.Phase == PhaseTLS || attempt.Phase == PhaseAuth {
+		} else if attempt.Phase == PhaseConfig || attempt.Phase == PhaseDial || attempt.Phase == PhaseTLS || attempt.Phase == PhaseAuth {
 			broken[smtp.Name] = true
 		}
 

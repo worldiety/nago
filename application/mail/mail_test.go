@@ -10,9 +10,12 @@ package mail
 import (
 	"encoding/json"
 	"errors"
+	"net/mail"
 	"net/textproto"
 	"testing"
 	"time"
+
+	"go.wdy.de/nago/application/secret"
 )
 
 // legacyOutgoing is the persisted format before attempts and statistics have been introduced.
@@ -100,6 +103,56 @@ func TestBackoff(t *testing.T) {
 		if got := backoff(base, time.Hour, n); got != want {
 			t.Errorf("attempt %d: want %v got %v", n, want, got)
 		}
+	}
+}
+
+func TestResolveSender(t *testing.T) {
+	const apiKey = "3f1c9a7e0b2d4e6f8a1b3c5d7e9f0a2b"
+	cases := []struct {
+		name     string
+		from     mail.Address
+		sender   string
+		username string
+		want     mail.Address
+		wantErr  bool
+	}{
+		{name: "explicit from wins", from: mail.Address{Address: "caller@example.com"}, sender: "settings@example.com", username: "login@example.com", want: mail.Address{Address: "caller@example.com"}},
+		{name: "invalid from falls back to sender, keeps name", from: mail.Address{Name: "Team", Address: "not a mail"}, sender: "settings@example.com", username: apiKey, want: mail.Address{Name: "Team", Address: "settings@example.com"}},
+		{name: "sender setting", sender: " settings@example.com ", username: apiKey, want: mail.Address{Address: "settings@example.com"}},
+		{name: "empty sender uses login", username: "login@example.com", want: mail.Address{Address: "login@example.com"}},
+		{name: "invalid sender uses login", sender: "Team <x@example.com>", username: "login@example.com", want: mail.Address{Address: "login@example.com"}},
+		{name: "mailjet api key without sender", username: apiKey, wantErr: true},
+		{name: "invalid everything", from: mail.Address{Address: "x"}, sender: "y", username: apiKey, wantErr: true},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got, err := resolveSender(secret.SMTP{Name: "mj", SenderAddress: c.sender, Username: c.username}, c.from)
+			if c.wantErr {
+				var se *SendError
+				if !errors.As(err, &se) || se.Phase != PhaseConfig {
+					t.Fatalf("expected config SendError, got %v", err)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if got != c.want {
+				t.Fatalf("want %+v got %+v", c.want, got)
+			}
+		})
+	}
+}
+
+func TestSendWithoutValidSenderFailsBeforeDial(t *testing.T) {
+	// host is unreachable: a dial attempt would yield PhaseDial instead of PhaseConfig
+	err := send(secret.SMTP{Name: "mj", Host: "invalid.invalid", Port: 587, Username: "apikey"}, Mail{To: []mail.Address{{Address: "a@example.com"}}})
+	var se *SendError
+	if !errors.As(err, &se) || se.Phase != PhaseConfig {
+		t.Fatalf("expected config SendError, got %v", err)
 	}
 }
 

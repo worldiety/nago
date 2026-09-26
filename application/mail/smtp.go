@@ -53,7 +53,46 @@ func sendErr(phase Phase, err error) error {
 	return se
 }
 
+// validSenderAddress returns the trimmed address and true, if s is a single bare mail address like
+// "info@example.com". Display names, lists or strings like API keys are rejected.
+func validSenderAddress(s string) (string, bool) {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return "", false
+	}
+
+	adr, err := mail.ParseAddress(s)
+	if err != nil || adr.Address != s {
+		return "", false
+	}
+
+	return s, true
+}
+
+// resolveSender determines the envelope and header sender. The first valid mail address of the given from
+// address, the configured sender address and the login username wins. A display name of from is kept.
+// If none of them is a valid mail address, a [SendError] with [PhaseConfig] is returned, so that the mail
+// is not sent without a proper sender and the failure becomes visible.
+func resolveSender(credentials secret.SMTP, from mail.Address) (mail.Address, error) {
+	for _, candidate := range []string{from.Address, credentials.SenderAddress, credentials.Username} {
+		if adr, ok := validSenderAddress(candidate); ok {
+			return mail.Address{Name: from.Name, Address: adr}, nil
+		}
+	}
+
+	return mail.Address{}, &SendError{
+		Phase: PhaseConfig,
+		Err:   fmt.Errorf("no valid sender address: neither the mail sender, the sender address setting of smtp server '%s' nor its username is a valid mail address", credentials.Name),
+	}
+}
+
 func send(credentials secret.SMTP, m Mail) (err error) {
+	from, err := resolveSender(credentials, m.From)
+	if err != nil {
+		return err
+	}
+	m.From = from
+
 	// Connect to the SMTP Server
 	servername := credentials.Host + ":" + strconv.Itoa(credentials.Port)
 
@@ -90,14 +129,6 @@ func send(credentials secret.SMTP, m Mail) (err error) {
 	if err = c.Auth(auth); err != nil {
 		return sendErr(PhaseAuth, err)
 	}
-	if len(m.From.Address) == 0 {
-		if len(credentials.SenderAddress) != 0 {
-			m.From.Address = credentials.SenderAddress
-		} else {
-			m.From.Address = credentials.Username
-		}
-	}
-
 	// the from address is usually important for authentication
 	if err = c.Mail(m.From.Address); err != nil {
 		return sendErr(PhaseMail, err)
