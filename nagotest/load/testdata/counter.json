@@ -1,0 +1,25 @@
+{
+  "users": 4,
+  "iterations": 3,
+  "thresholds": {"maxErrorRate": 0.01, "p95": "5s"},
+  "data": [{"name": "alice"}, {"name": "bob"}],
+  "scenarios": [
+    {
+      "name": "counter",
+      "path": "counter",
+      "steps": [
+        {"expect": {"text": "count: 0"}},
+        {"type": {"label": "Name"}, "value": "${data.name} ${user}"},
+        {"enter": {"type": "TextField"}},
+        {"expect": {"textContains": "hello "}, "count": 1},
+        {"click": {"text": "increment"}},
+        {"expect": {"text": "count: 1"}},
+        {"waitFor": {"text": "loaded"}, "timeout": "5s"},
+        {"absent": {"text": "count: 0"}},
+        {"think": "10ms"},
+        {"reload": true},
+        {"expect": {"text": "count: 0"}}
+      ]
+    }
+  ]
+}

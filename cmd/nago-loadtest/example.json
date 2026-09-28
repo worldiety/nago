@@ -1,0 +1,38 @@
+{
+  "url": "http://localhost:3000",
+  "users": 50,
+  "rampUp": "30s",
+  "duration": "5m",
+  "thinkTime": "2s",
+  "thresholds": {
+    "maxErrorRate": 0.01,
+    "p95": "500ms"
+  },
+  "data": [
+    {"mail": "loadtest-1@example.com", "password": "change-me"},
+    {"mail": "loadtest-2@example.com", "password": "change-me"}
+  ],
+  "scenarios": [
+    {
+      "name": "browse",
+      "weight": 3,
+      "path": ".",
+      "steps": [
+        {"absent": {"textContains": "panic during"}},
+        {"think": "1s"},
+        {"reload": true}
+      ]
+    },
+    {
+      "name": "login",
+      "weight": 1,
+      "path": "account/login",
+      "steps": [
+        {"type": {"label": "E-Mail Adresse"}, "value": "${data.mail}"},
+        {"type": {"label": "Kennwort"}, "value": "${data.password}"},
+        {"click": {"id": "nago-action-login"}},
+        {"absent": {"id": "nago-action-login"}}
+      ]
+    }
+  ]
+}
