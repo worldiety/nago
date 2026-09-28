@@ -66,7 +66,7 @@ type scopeWindow struct {
 	mutex              sync.Mutex
 	clipboard          *clipboardController
 	lastAsyncInvokePtr atomic.Int64
-	asyncCallbacks     concurrent.RWMap[proto.Ptr, func(ret proto.CallRet)]
+	asyncCallbacks     concurrent.RWMap[proto.Ptr, asyncCallback]
 }
 
 func (s *scopeWindow) Clipboard() Clipboard {
@@ -498,7 +498,7 @@ func (s *scopeWindow) AddInputListener(elemID string, fn func(evt InputEvent), o
 		}
 	}
 
-	AsyncCall(
+	cancel := asyncCall(
 		s,
 		&proto.RegisterInputEventListener{
 			Id:     proto.Str(elemID),
@@ -515,11 +515,12 @@ func (s *scopeWindow) AddInputListener(elemID string, fn func(evt InputEvent), o
 				})
 			}
 		},
+		true,
 	)
 
 	closer := func() {
 		AsyncCall(s, &proto.UnregisterInputEventListener{Handle: proto.Uint(hnd)}, nil)
-		s.asyncCallbacks.Delete(proto.Ptr(hnd))
+		cancel()
 	}
 
 	s.AddDestroyObserver(closer, destroyOpt)

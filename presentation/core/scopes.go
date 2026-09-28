@@ -30,6 +30,7 @@ func NewScopes(fps int) *Scopes {
 		eolTicker:    time.NewTicker(time.Minute),
 		eolDone:      make(chan bool),
 		updateTicker: time.NewTicker(time.Duration(1000/fps) * time.Millisecond),
+		updateDone:   make(chan bool),
 	}
 	go func() {
 		for {
@@ -96,6 +97,8 @@ func (s *Scopes) Destroy() {
 
 	s.eolTicker.Stop()
 	s.updateTicker.Stop()
+	close(s.eolDone)
+	close(s.updateDone)
 
 	s.scopes.Each(func(key proto.ScopeID, scope *Scope) bool {
 		scope.Destroy()

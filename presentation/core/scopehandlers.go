@@ -74,7 +74,12 @@ func (s *Scope) handleCallResolved(evt *proto.CallResolved) {
 		return
 	}
 
-	fn, ok := alloc.asyncCallbacks.Get(evt.CallPtr)
+	cb, ok := alloc.asyncCallbacks.Get(evt.CallPtr)
+	if _, isInput := evt.Ret.(*proto.InputEvent); !ok && isInput {
+		// input events which were already in flight while the listener has been removed, which is expected
+		return
+	}
+
 	if !ok {
 		slog.Error("async callback not found", slog.Any("evt", evt))
 		s.Publish(&proto.ErrorOccurred{
@@ -83,8 +88,11 @@ func (s *Scope) handleCallResolved(evt *proto.CallResolved) {
 		return
 	}
 
-	// TODO why are we not clearing the asyncCallbacks here?
-	fn(evt.Ret)
+	if !cb.repeatable {
+		alloc.asyncCallbacks.Delete(evt.CallPtr)
+	}
+
+	cb.fn(evt.Ret)
 }
 
 func (s *Scope) handleScopeDestructionRequested(evt *proto.ScopeDestructionRequested) {
