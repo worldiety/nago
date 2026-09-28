@@ -60,3 +60,27 @@ func TestUnmarshal2(t *testing.T) {
 		t.Errorf("expected: %v, actual: %v", t0, obj)
 	}
 }
+
+// TestUnmarshalPointerField ensures that optional pointer fields decode both when absent (nil) and when present.
+func TestUnmarshalPointerField(t *testing.T) {
+	for _, stack := range []*Stack{
+		{Gap: "1rem"},
+		{Gap: "1rem", Background: &Background{Repeat: "repeat", Size: "cover"}},
+	} {
+		t0 := &RootViewInvalidated{RID: 1, Root: stack}
+
+		var buf bytes.Buffer
+		if err := Marshal(NewBinaryWriter(&buf), t0); err != nil {
+			t.Fatal(err)
+		}
+
+		obj, err := Unmarshal(NewBinaryReader(bytes.NewBuffer(buf.Bytes())))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !reflect.DeepEqual(obj, t0) {
+			t.Errorf("expected: %#v, actual: %#v", t0, obj)
+		}
+	}
+}

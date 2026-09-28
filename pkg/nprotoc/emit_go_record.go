@@ -114,6 +114,10 @@ for _,present:= range fields {
 			buf.WriteString(fmt.Sprintf("v.%s=obj.(%s)\n", field.Name, field.Type))
 		default:
 			buf.WriteString(fmt.Sprintf("\tcase %d:\n", fid))
+			if field.Pointer {
+				// reset has cleared the pointer, thus allocate a fresh value to decode into
+				buf.WriteString(fmt.Sprintf("v.%s=new(%s)\n", field.Name, field.Type))
+			}
 			buf.WriteString(fmt.Sprintf("err:=v.%s.read(r)\n", field.Name))
 			buf.WriteString("if err!=nil{\nreturn err\n}\n")
 		}
@@ -153,7 +157,7 @@ func (c *Compiler) goEmitRecordReset(t Typename, decl Record) error {
 			return err
 		}
 
-		if sh == xobjectAsArray {
+		if sh == xobjectAsArray || field.Pointer {
 			c.pf("v.%s=nil\n", goFieldName(field.Name))
 		} else {
 			c.pf("v.%s.reset()\n", goFieldName(field.Name))

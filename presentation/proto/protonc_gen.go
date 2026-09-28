@@ -14004,6 +14004,7 @@ func (v *Stack) read(r *BinaryReader) error {
 				return err
 			}
 		case 24:
+			v.Background = new(Background)
 			err := v.Background.read(r)
 			if err != nil {
 				return err
@@ -26813,7 +26814,7 @@ func (v *Stack) reset() {
 	v.Animation.reset()
 	v.Transformation.reset()
 	v.Opacity.reset()
-	v.Background.reset()
+	v.Background = nil
 	v.Url.reset()
 	v.Target.reset()
 	v.Orientation.reset()
