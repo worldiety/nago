@@ -200,6 +200,22 @@ func (c *Configurator) NewInProcessApplication() (*core.Application, error) {
 	return app, nil
 }
 
+// NewHTTPHandler applies the configured migrations and creates the HTTP handler of the application including all
+// endpoints and the websocket, without starting a server. This is intended for embedding or tests, e.g. using
+// httptest. The returned application must be released using [core.Application.Destroy], which also releases
+// this Configurator.
+func (c *Configurator) NewHTTPHandler() (http.Handler, *core.Application, error) {
+	if mg := c.migrations; mg != nil {
+		if err := mg.Apply(c.Context()); err != nil {
+			return nil, nil, fmt.Errorf("cannot apply migrations: %w", err)
+		}
+	}
+
+	handler := c.newHandler()
+	c.app.AddDestructor(c.done)
+	return handler, c.app, nil
+}
+
 // newCoreApplication creates the transport independent core application and assigns it to c.app.
 func (c *Configurator) newCoreApplication() *core.Application {
 	if _, ok := c.factories["_"]; !ok {
@@ -719,7 +735,7 @@ func (c *Configurator) newHandler() http.Handler {
 
 		if err := channel.Loop(); err != nil {
 			//slog.Error("websocket channel loop failed", slog.Any("err", err), "id", scopeID)
-			scope.Connect(nil) // we cannot use that anymore, so clean it up
+			scope.Disconnect(channel) // we cannot use that anymore, so clean it up, unless the client already reconnected
 			return
 		}
 

@@ -6,7 +6,8 @@
     "1": {
       "doc": "RID may be 0, if it is an proactive rendering.",
       "name": "RID",
-      "type": "RID"
+      "type": "RID",
+      "getter": true
     },
     "2": {
       "doc": "The Root component to display.",

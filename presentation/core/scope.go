@@ -52,6 +52,7 @@ type Scope struct {
 	allocatedRootView option.Opt[*scopeWindow]
 	lifetime          time.Duration
 	endOfLifeAt       atomic.Pointer[time.Time]
+	channelMutex      sync.Mutex
 	channel           concurrent.Value[Channel]
 	chanDestructor    concurrent.Value[func()]
 	destroyed         atomic.Bool
@@ -245,6 +246,9 @@ func (s *Scope) updateLanguage(locale string) {
 // Note, that this is free of technical data races, however it may suffer from logical races, so do not connect
 // concurrently, because things like destructor invocations and updates will logically race.
 func (s *Scope) Connect(c Channel) {
+	s.channelMutex.Lock()
+	defer s.channelMutex.Unlock()
+
 	if c == nil {
 		c = NopChannel{}
 	}
@@ -260,6 +264,18 @@ func (s *Scope) Connect(c Channel) {
 		defer s.eventLoop.Tick()
 		return s.handleMessage(msg)
 	}))
+}
+
+// Disconnect detaches the given channel, but only if it is still connected. A channel which has been replaced
+// by a newer connection, e.g. due to a reconnect, does not affect the newer one.
+func (s *Scope) Disconnect(c Channel) {
+	s.channelMutex.Lock()
+	connected := s.channel.Value() == c
+	s.channelMutex.Unlock()
+
+	if connected {
+		s.Connect(nil)
+	}
 }
 
 func (s *Scope) handleMessage(buf []byte) error {

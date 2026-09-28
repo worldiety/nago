@@ -23639,6 +23639,10 @@ func (v *FunctionCallRequested) IsZero() bool {
 	return v.Ptr.IsZero() && v.RID.IsZero()
 }
 
+func (v *FunctionCallRequested) GetRID() RID {
+	return v.RID
+}
+
 // Color specifies either a hex color like #rrggbb or #rrggbbaa or an internal custom color name.
 type Color string
 
@@ -23944,6 +23948,10 @@ func (v *ErrorOccurred) IsZero() bool {
 	return v.Message.IsZero() && v.RID.IsZero()
 }
 
+func (v *ErrorOccurred) GetRID() RID {
+	return v.RID
+}
+
 // Locale represents a BCP47 tag like de or de_DE.
 type Locale string
 
@@ -24149,6 +24157,9 @@ func (v *RootViewInvalidated) IsZero() bool {
 	return v.RID.IsZero() && isZeroComponent(v.Root)
 }
 
+func (v *RootViewInvalidated) GetRID() RID {
+	return v.RID
+}
 func (v *ErrorRootViewAllocationRequired) reset() {
 	v.RID.reset()
 }
@@ -24160,6 +24171,9 @@ func (v *ErrorRootViewAllocationRequired) IsZero() bool {
 	return v.RID.IsZero()
 }
 
+func (v *ErrorRootViewAllocationRequired) GetRID() RID {
+	return v.RID
+}
 func (v *RootViewAllocationRequested) reset() {
 	v.Locale.reset()
 	v.Factory.reset()
@@ -24276,6 +24290,10 @@ func (v *ScopeConfigurationChanged) IsZero() bool {
 		return true
 	}
 	return v.ApplicationID.IsZero() && v.ApplicationName.IsZero() && v.ApplicationVersion.IsZero() && v.AvailableLocales.IsZero() && v.AppIcon.IsZero() && v.ActiveLocale.IsZero() && v.Themes.IsZero() && v.RID.IsZero() && v.Fonts.IsZero() && v.Instance.IsZero()
+}
+
+func (v *ScopeConfigurationChanged) GetRID() RID {
+	return v.RID
 }
 
 // Locales is just a bunch of locales.

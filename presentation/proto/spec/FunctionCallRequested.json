@@ -11,7 +11,8 @@
     "2": {
       "doc": "RID is used to trace a request-response cycle.",
       "name": "RID",
-      "type": "RID"
+      "type": "RID",
+      "getter": true
     }
   }
 }

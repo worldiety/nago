@@ -32,7 +32,8 @@
     },
     "8": {
       "name": "RID",
-      "type": "RID"
+      "type": "RID",
+      "getter": true
     },
     "9": {
       "name": "Fonts",
