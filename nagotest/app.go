@@ -10,6 +10,7 @@ package nagotest
 import (
 	"fmt"
 	"io"
+	"net/http/httptest"
 	"sync"
 	"testing"
 
@@ -126,4 +127,29 @@ func (a *App) Shared(uri core.URI) (io.Reader, error) {
 	}
 
 	return open()
+}
+
+// Serve configures a nago application like [New], but serves it through a real HTTP server on a random local
+// port and returns its base URL. Connect windows using [Dial]. This is useful to test the websocket path or
+// load scenarios. The server and the application are released automatically at the end of the test.
+func Serve(t testing.TB, configure func(cfg *application.Configurator)) string {
+	t.Helper()
+
+	cfg := application.NewConfigurator()
+	cfg.SetDataDir(t.TempDir())
+	configure(cfg)
+
+	handler, app, err := cfg.NewHTTPHandler()
+	if err != nil {
+		t.Fatalf("nagotest: cannot create application: %v", err)
+	}
+
+	srv := httptest.NewServer(handler)
+	t.Cleanup(func() {
+		srv.CloseClientConnections()
+		srv.Close()
+		app.Destroy()
+	})
+
+	return srv.URL
 }

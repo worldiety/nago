@@ -7,8 +7,10 @@
 
 // Package nagotest runs a nago application within the test process and drives its windows like a user.
 //
-// There is no HTTP server, no websocket and no protocol decoding involved: each [Window] is connected directly
-// to the scope of the application and receives the rendered trees as Go values. The window emulates the
+// Windows opened by [App.Open] involve no HTTP server, no websocket and no protocol decoding: each [Window] is
+// connected directly to the scope of the application and receives the rendered trees as Go values.
+// Alternatively, [Dial] connects a Window through a websocket to a running server, e.g. one started by
+// [Serve], using the identical API. The load package builds upon that to put a server under load. The window emulates the
 // frontend, thus it follows navigation requests and records side effects like downloads, file import
 // requests, focus requests and asynchronous frontend calls.
 //

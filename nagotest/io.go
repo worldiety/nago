@@ -13,6 +13,7 @@ import (
 	"reflect"
 	"slices"
 	"strings"
+	"time"
 
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
@@ -32,18 +33,21 @@ func File(name string, buf []byte) core.File {
 func (w *Window) Upload(id string, files ...core.File) {
 	w.t.Helper()
 
-	opts, ok := w.scope.ImportFilesOptions(id)
-	if !ok {
-		w.t.Fatalf("nagotest: no file import requested with id %q", id)
+	start := time.Now()
+	for _, req := range w.Imports() {
+		if string(req.ID) == id && !bool(req.Multiple) && len(files) > 1 {
+			w.t.Fatalf("nagotest: file import %q accepts only a single file", id)
+		}
 	}
 
-	if !opts.Multiple && len(files) > 1 {
-		w.t.Fatalf("nagotest: file import %q accepts only a single file", id)
+	if err := w.tr.upload(w, id, files); err != nil {
+		w.t.Fatalf("nagotest: cannot upload: %v", err)
 	}
 
-	// like the HTTP upload handler, the completion is invoked outside the event loop
-	opts.OnCompletion(files)
+	// the completion ran outside the event loop, thus request a render to receive its effects
+	w.dispatch(&proto.RootViewRenderingRequested{RID: w.nextRID()})
 	w.Settle()
+	w.observe("upload", id, start)
 }
 
 type listener struct {
@@ -56,6 +60,7 @@ type listener struct {
 func (w *Window) Input(elemID string, evt core.InputEvent) {
 	w.t.Helper()
 
+	start := time.Now()
 	w.mutex.Lock()
 	var targets []listener
 	for _, l := range w.listeners {
@@ -85,6 +90,7 @@ func (w *Window) Input(elemID string, evt core.InputEvent) {
 	}
 
 	w.Settle()
+	w.observe("input", elemID, start)
 }
 
 // A Canvas gives access to the drawing commands of a canvas element, see the ui/canvas package.

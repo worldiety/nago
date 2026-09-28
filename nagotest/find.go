@@ -78,6 +78,14 @@ func Type[T proto.Component]() Matcher {
 	})
 }
 
+// TypeName matches all components whose protocol type has the given name, e.g. "TextField". This is intended
+// for declarative scenarios, prefer [Type] in Go.
+func TypeName(name string) Matcher {
+	return Where(fmt.Sprintf("TypeName(%q)", name), func(n Node) bool {
+		return reflect.Indirect(reflect.ValueOf(n.Component)).Type().Name() == name
+	})
+}
+
 // And matches if all given matchers match.
 func And(matchers ...Matcher) Matcher {
 	var desc []string

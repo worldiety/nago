@@ -8,6 +8,8 @@
 package nagotest
 
 import (
+	"time"
+
 	"go.wdy.de/nago/presentation/proto"
 )
 
@@ -20,6 +22,7 @@ var clickFields = []string{"Action", "OnClick"}
 func (w *Window) Click(s Selection) {
 	w.t.Helper()
 
+	start := time.Now()
 	n := s.Node()
 	ptr, target := callbackOf(n, clickFields...)
 	if ptr == 0 {
@@ -29,12 +32,14 @@ func (w *Window) Click(s Selection) {
 	w.assertInteractive(s, target)
 	w.dispatch(&proto.FunctionCallRequested{Ptr: ptr, RID: w.nextRID()})
 	w.Settle()
+	w.observe("click", s.matcher.desc, start)
 }
 
 // PressEnter presses the enter key within the single selected text or password field.
 func (w *Window) PressEnter(s Selection) {
 	w.t.Helper()
 
+	start := time.Now()
 	n := s.Node()
 	ptr := ptrField(n.Component, "KeydownEnter")
 	if ptr == 0 {
@@ -44,6 +49,7 @@ func (w *Window) PressEnter(s Selection) {
 	w.assertInteractive(s, n)
 	w.dispatch(&proto.FunctionCallRequested{Ptr: ptr, RID: w.nextRID()})
 	w.Settle()
+	w.observe("enter", s.matcher.desc, start)
 }
 
 // Type sets the value of the single selected input component, e.g. a text field. Other inputs use the
@@ -51,6 +57,7 @@ func (w *Window) PressEnter(s Selection) {
 func (w *Window) Type(s Selection, value string) {
 	w.t.Helper()
 
+	start := time.Now()
 	n := s.Node()
 	ptr := ptrField(n.Component, "InputValue")
 	if ptr == 0 {
@@ -60,6 +67,7 @@ func (w *Window) Type(s Selection, value string) {
 	w.assertInteractive(s, n)
 	w.dispatch(&proto.UpdateStateValueRequested{StatePointer: ptr, Value: proto.Str(value), RID: w.nextRID()})
 	w.Settle()
+	w.observe("type", s.matcher.desc, start)
 }
 
 func (w *Window) assertInteractive(s Selection, n Node) {

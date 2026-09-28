@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/user"
@@ -295,4 +296,51 @@ func TestUploadInputCanvas(t *testing.T) {
 		t.Fatalf("expected a redraw after mount but got %v", cmds)
 	}
 	w.Find(nagotest.Text("clicks: 1"))
+}
+
+func TestDial(t *testing.T) {
+	url := nagotest.Serve(t, configure)
+
+	var actions []nagotest.Action
+	w := nagotest.Dial(t, url, "counter", nagotest.Observe(func(a nagotest.Action) {
+		actions = append(actions, a)
+	}))
+
+	w.Find(nagotest.Text("count: 0"))
+	w.WaitFor(nagotest.Text("loaded"), 5*time.Second)
+
+	w.Click(w.Find(nagotest.Text("increment")))
+	w.Find(nagotest.Text("count: 1"))
+
+	w.Type(w.Find(nagotest.Label("Name")), "Torben")
+	w.PressEnter(w.Find(nagotest.Label("Name")))
+	w.Find(nagotest.Text("hello Torben"))
+
+	// focus changes no state, thus the window must request a barrier render by itself
+	w.Click(w.Find(nagotest.Text("focus")))
+	if w.Focused() != "name" {
+		t.Fatalf("unexpected focus %q", w.Focused())
+	}
+
+	w.Click(w.Find(nagotest.Text("details")))
+	w.Find(nagotest.Text("details of 42"))
+	w.Click(w.Find(nagotest.Text("back")))
+	w.Find(nagotest.Text("count: 0"))
+	w.Click(w.Find(nagotest.Text("increment")))
+
+	w.Click(w.Find(nagotest.Text("download")))
+	if r := w.Resources(); len(r) != 1 || r[0].Name != "a.txt" {
+		t.Fatalf("unexpected resources %v", r)
+	}
+
+	w.Reconnect()
+	w.Find(nagotest.Text("count: 1"))
+
+	for _, a := range actions {
+		t.Logf("%s %s %v", a.Kind, a.Target, a.Duration)
+	}
+
+	if len(actions) < 10 || actions[0].Kind != "open" {
+		t.Fatalf("unexpected actions %v", actions)
+	}
 }
