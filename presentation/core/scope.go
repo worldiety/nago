@@ -76,6 +76,8 @@ type Scope struct {
 	virtualSession         atomic.Pointer[session.UserSession]
 	ignoreNextInvalidation atomic.Bool
 	dirty                  bool
+	// background counts running goroutines started on behalf of this scope, e.g. by [OnAppear].
+	background atomic.Int64
 }
 
 func NewScope(ctx context.Context, app *Application, tempRootDir string, id proto.ScopeID, lifetime time.Duration, factories map[proto.RootViewID]ComponentFactory, sessionByID session.FindUserSessionByID) *Scope {
@@ -273,6 +275,15 @@ func (s *Scope) handleMessage(buf []byte) error {
 		return fmt.Errorf("protocol error while handle message: %T is not a proto.NagoEvent", t)
 	}
 
+	return s.Dispatch(nagoEvt)
+}
+
+// Dispatch processes the given event as if it has been received from the connected [Channel]. The event is
+// handled asynchronously by the event loop of this scope. This is intended for transports within the same
+// process, see also [EventChannel].
+func (s *Scope) Dispatch(nagoEvt proto.NagoEvent) error {
+	s.Tick()
+
 	if s.destroyed.Load() {
 		slog.Error("scope is already destroyed but received a message", "sid", s.id, "what", fmt.Sprintf("%T", nagoEvt))
 		return fmt.Errorf("scope already destroyed")
@@ -324,6 +335,15 @@ func (s *Scope) Publish(evt proto.NagoEvent) {
 		s.lastMessageType = ""*/
 	//}
 
+	channel := s.channel.Value()
+	if evtChan, ok := channel.(EventChannel); ok {
+		if err := evtChan.PublishEvent(evt); err != nil {
+			slog.Error("cannot publish event", "err", err, "scope", s.id, "destroyed", s.destroyed.Load())
+		}
+
+		return
+	}
+
 	buf := bytes.NewBuffer(make([]byte, 0, 4096))
 	tmp := proto.NewBinaryWriter(buf)
 	if err := proto.Marshal(tmp, evt); err != nil {
@@ -331,9 +351,47 @@ func (s *Scope) Publish(evt proto.NagoEvent) {
 		return
 	}
 
-	if err := s.channel.Value().Publish(buf.Bytes()); err != nil {
+	if err := channel.Publish(buf.Bytes()); err != nil {
 		slog.Error("cannot publish websocket message", "err", err, "scope", s.id, "destroyed", s.destroyed.Load())
 	}
+}
+
+// Flush blocks until all functions posted to the event loop so far have been processed. If any state is dirty
+// afterward, a render is published. It returns true, if the scope is idle, which means that nothing else
+// has been posted in the meantime and no background work (see [OnAppear]) is running. A destroyed scope is
+// always idle. Note that delayed functions (see [Window.PostDelayed]) are not considered.
+// Flush must never be called from the event loop, because that would deadlock.
+func (s *Scope) Flush() (idle bool) {
+	done := make(chan bool, 1)
+	posted := s.eventLoop.Post(func() {
+		if s.dirty || s.hasDirtyStates() {
+			s.forceRender(0)
+			s.dirty = false
+		}
+
+		// the currently executed function is still pending
+		done <- s.eventLoop.Pending() <= 1 && s.background.Load() == 0
+	})
+
+	if !posted {
+		return true
+	}
+
+	select {
+	case idle = <-s.eventLoop.done:
+		return true
+	case idle = <-done:
+		return idle
+	}
+}
+
+// goBackground runs fn in a new goroutine and accounts it as background work of this scope, see [Scope.Flush].
+func (s *Scope) goBackground(fn func()) {
+	s.background.Add(1)
+	go func() {
+		defer s.background.Add(-1)
+		fn()
+	}()
 }
 
 // Tick marks this scope as used and moves the EOL forward.
@@ -430,7 +488,6 @@ func (s *Scope) render(requestId proto.RID, scopeWnd *scopeWindow) *proto.RootVi
 // Do never call this from the event loop.
 // Note, that this may race logically when called concurrently.
 func (s *Scope) Destroy() {
-	fmt.Println("scope.Destroy")
 	if !s.destroyed.CompareAndSwap(false, true) {
 		return
 	}

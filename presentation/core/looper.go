@@ -45,6 +45,8 @@ type EventLoop struct {
 	destroyed atomic.Bool
 	onPanic   concurrent.Value[func(p any)]
 	reloop    concurrent.Value[bool]
+	// pending counts posted but not yet completed functions.
+	pending atomic.Int64
 }
 
 func NewEventLoop() *EventLoop {
@@ -61,6 +63,7 @@ func NewEventLoop() *EventLoop {
 			case batch := <-l.batchChan:
 				for _, m := range batch {
 					l.saveExec(m.fn)
+					l.pending.Add(-1)
 				}
 			}
 
@@ -110,8 +113,15 @@ func (l *EventLoop) Post(f func()) bool {
 			typ: msgFunc,
 			fn:  f,
 		})*/
+	l.pending.Add(1)
 	l.batchChan <- []msg{msg{msgFunc, f}}
 	return true
+}
+
+// Pending returns the amount of posted functions which have not been completed yet. A function which is
+// currently executed is included.
+func (l *EventLoop) Pending() int64 {
+	return l.pending.Load()
 }
 
 // pull allocates a copy of the queue and returns it. The original queue is cleared.

@@ -481,6 +481,12 @@ func AutoState[T any](wnd Window) *State[T] {
 //
 // It follows the identical lifecycle rules as State. See also [OnAsyncDisappear].
 func OnAppear(wnd Window, id string, fn func(ctx context.Context)) {
+	onAppear(wnd, id, fn, true)
+}
+
+// onAppear implements [OnAppear]. If background is true, the goroutine is accounted as background work of the
+// scope (see [Scope.Flush]), which must be avoided for endless tasks.
+func onAppear(wnd Window, id string, fn func(ctx context.Context), background bool) {
 	var state *State[bool]
 	if id == "" {
 		state = AutoState[bool](wnd)
@@ -496,12 +502,18 @@ func OnAppear(wnd Window, id string, fn func(ctx context.Context)) {
 			cancel()
 		})
 
-		go func() {
+		task := func() {
 			// not sure what to do here: this may mean, that the ctx escaped to another go-routine in fn
 			defer cancel()
 			fn(ctx)
 			//wnd.Invalidate()
-		}()
+		}
+
+		if background {
+			goBackground(wnd, task)
+		} else {
+			go task()
+		}
 
 		return true
 	})
@@ -510,7 +522,7 @@ func OnAppear(wnd Window, id string, fn func(ctx context.Context)) {
 // OnFrame tries to run a fixed frame counter with the given fps target within the lifecycle of the window.
 // The given function callback is posted to the main looper which may introduce additional jitter.
 func OnFrame(wnd Window, id string, fps int, fn func(ctx context.Context)) {
-	OnAppear(wnd, id, func(ctx context.Context) {
+	onAppear(wnd, id, func(ctx context.Context) {
 
 		for ctx.Err() == nil {
 			time.Sleep(time.Second / time.Duration(fps))
@@ -518,7 +530,7 @@ func OnFrame(wnd Window, id string, fps int, fn func(ctx context.Context)) {
 				fn(ctx)
 			})
 		}
-	})
+	}, false)
 }
 
 // OnDisappear is executed, once the identified state goes out of scope. Otherwise, the rules of [OnAsyncAppear]
@@ -534,13 +546,23 @@ func OnDisappear(wnd Window, id string, fn func(ctx context.Context)) {
 		ctx, cancel := context.WithCancel(wnd.Context())
 
 		state.AddDestroyObserver(func() {
-			go func() {
+			goBackground(wnd, func() {
 				defer cancel()
 				fn(ctx)
 				//wnd.Invalidate()
-			}()
+			})
 		})
 
 		return true
 	})
+}
+
+// goBackground runs fn in a new goroutine which is accounted as background work of the window's scope, if possible.
+func goBackground(wnd Window, fn func()) {
+	if w, ok := wnd.(*scopeWindow); ok && w.parent != nil {
+		w.parent.goBackground(fn)
+		return
+	}
+
+	go fn()
 }

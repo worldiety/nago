@@ -183,7 +183,25 @@ func nameAndMime(options core.ExportFilesOptions) (name, mimetype string) {
 	return
 }
 
-func (c *Configurator) newHandler() http.Handler {
+// NewInProcessApplication applies the configured migrations and creates the core application without any HTTP
+// server or websocket endpoints. Windows are connected directly using [core.Application.Connect] and an
+// in-process [core.EventChannel]. This is intended for in-process drivers like the nagotest package.
+// The returned application must be released using [core.Application.Destroy], which also releases this
+// Configurator.
+func (c *Configurator) NewInProcessApplication() (*core.Application, error) {
+	if mg := c.migrations; mg != nil {
+		if err := mg.Apply(c.Context()); err != nil {
+			return nil, fmt.Errorf("cannot apply migrations: %w", err)
+		}
+	}
+
+	app := c.newCoreApplication()
+	app.AddDestructor(c.done)
+	return app, nil
+}
+
+// newCoreApplication creates the transport independent core application and assigns it to c.app.
+func (c *Configurator) newCoreApplication() *core.Application {
 	if _, ok := c.factories["_"]; !ok {
 		c.RootView("_", func(wnd core.Window) core.View {
 			return c.DecorateRootView(func(wnd core.Window) core.View {
@@ -198,9 +216,6 @@ func (c *Configurator) newHandler() http.Handler {
 			return f(scope)
 		}
 	}
-
-	downloadStreams := map[string]func() (io.Reader, error){}
-	var downloadFilesMutex sync.Mutex
 
 	sessionMgmt, err := c.SessionManagement()
 	if err != nil {
@@ -257,6 +272,16 @@ func (c *Configurator) newHandler() http.Handler {
 	for _, destructor := range c.destructors {
 		app2.AddDestructor(destructor)
 	}
+
+	return app2
+}
+
+func (c *Configurator) newHandler() http.Handler {
+	app2 := c.newCoreApplication()
+
+	downloadStreams := map[string]func() (io.Reader, error){}
+	var downloadFilesMutex sync.Mutex
+
 	r := chi.NewRouter()
 
 	app2.SetOnSendFiles(func(scope *core.Scope, options core.ExportFilesOptions) error {

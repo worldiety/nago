@@ -194,6 +194,12 @@ func (a *Application) SetOnShareStream(onShareStream func(*Scope, func() (io.Rea
 	a.onShareStream = onShareStream
 }
 
+// AddOnWindowCreatedObserver appends the observer, which is called after the already configured observers
+// whenever a window is created. It must be called before any scope has been connected.
+func (a *Application) AddOnWindowCreatedObserver(observer OnWindowCreatedObserver) {
+	a.onWindowCreatedObservers = append(a.onWindowCreatedObservers, observer)
+}
+
 func (a *Application) Scope(id proto.ScopeID) (*Scope, bool) {
 	return a.scopes.Get(id)
 }
