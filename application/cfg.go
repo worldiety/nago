@@ -157,8 +157,29 @@ func NewConfigurator() *Configurator {
 
 func printEnv() {
 	for _, s := range os.Environ() {
-		slog.Info(s)
+		slog.Info(maskEnv(s))
 	}
+}
+
+// secretEnvHints are case-insensitive parts of environment variable names, whose values must not be logged.
+// Harmless names like KEYBOARD_LAYOUT are masked as well, which only hides their value.
+var secretEnvHints = []string{"secret", "token", "key", "password", "passwd", "credential"}
+
+// maskEnv hides the value of an environment variable in the form KEY=VALUE, if its key hints at a secret.
+func maskEnv(kv string) string {
+	key, value, ok := strings.Cut(kv, "=")
+	if !ok || value == "" {
+		return kv
+	}
+
+	lower := strings.ToLower(key)
+	for _, hint := range secretEnvHints {
+		if strings.Contains(lower, hint) {
+			return key + "=***"
+		}
+	}
+
+	return kv
 }
 
 func (c *Configurator) determineSecureCookie() bool {
