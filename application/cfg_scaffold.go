@@ -104,6 +104,27 @@ func (b *MenuEntryBuilder) Action(fn func(wnd core.Window)) *MenuEntryBuilder {
 	return b
 }
 
+// menuEntryVisible applies the visibility rules of a menu entry or sub menu entry for the given subject.
+func menuEntryVisible(subject auth.Subject, justAuthenticated, onlyPublic bool, oneOfPerms []permission.ID, oneOfRoles []role.ID) bool {
+	if justAuthenticated && !subject.Valid() {
+		return false
+	}
+
+	if onlyPublic && subject.Valid() {
+		return false
+	}
+
+	if len(oneOfPerms) > 0 && !auth.OneOf(subject, oneOfPerms...) {
+		return false
+	}
+
+	if len(oneOfRoles) > 0 && !slices.ContainsFunc(oneOfRoles, subject.HasRole) {
+		return false
+	}
+
+	return true
+}
+
 type SubMenuBuilder struct {
 	parent  *MenuEntryBuilder
 	entries []*SubMenuEntryBuilder
@@ -352,27 +373,8 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 				entry.dyn(wnd, entry)
 			}
 
-			if entry.justAuthenticated && !wnd.Subject().Valid() {
+			if !menuEntryVisible(wnd.Subject(), entry.justAuthenticated, entry.onlyPublic, entry.oneOfAuthorizedPerms, entry.oneOfRoles) {
 				continue
-			}
-
-			if wnd.Subject().Valid() && entry.onlyPublic {
-				continue
-			}
-
-			if len(entry.oneOfAuthorizedPerms) > 0 {
-				if !auth.OneOf(wnd.Subject(), entry.oneOfAuthorizedPerms...) {
-					continue
-				}
-			}
-
-			if len(entry.oneOfRoles) > 0 {
-				hasRole := slices.ContainsFunc(entry.oneOfRoles, wnd.Subject().HasRole)
-
-				if !hasRole {
-					continue
-				}
-
 			}
 
 			icoSize := ui.L24
@@ -407,30 +409,9 @@ func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core
 			if entry.submenu != nil {
 				sentry.Action = nil
 				for _, subentry := range entry.submenu.entries {
-					// TODO this is a duplicate
-					if subentry.justAuthenticated && !wnd.Subject().Valid() {
+					if !menuEntryVisible(wnd.Subject(), subentry.justAuthenticated, subentry.onlyPublic, subentry.oneOfAuthorizedPerms, subentry.oneOfRoles) {
 						continue
 					}
-
-					if wnd.Subject().Valid() && entry.onlyPublic {
-						continue
-					}
-
-					if len(subentry.oneOfAuthorizedPerms) > 0 {
-						if !auth.OneOf(wnd.Subject(), entry.oneOfAuthorizedPerms...) {
-							continue
-						}
-					}
-
-					if len(subentry.oneOfRoles) > 0 {
-						hasRole := slices.ContainsFunc(subentry.oneOfRoles, wnd.Subject().HasRole)
-
-						if !hasRole {
-							continue
-						}
-
-					}
-					// TODO snap duplicate
 
 					sentry.Menu = append(sentry.Menu, ui.ScaffoldMenuEntry{
 						Title: subentry.title,
