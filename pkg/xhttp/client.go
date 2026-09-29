@@ -401,6 +401,11 @@ func (r *Request) Do(method string) error {
 			}
 
 			if err != nil {
+				// A cancelled or expired context fails every further attempt the same way.
+				if ctx.Err() != nil {
+					break
+				}
+
 				if r.retry > 0 {
 					slog.Warn("request failed, wait and retry", "try", try, "wait", waitTime, "err", err.Error())
 					time.Sleep(waitTime)

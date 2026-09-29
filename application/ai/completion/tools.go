@@ -8,6 +8,7 @@
 package completion
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -18,6 +19,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/worldiety/option"
@@ -103,6 +105,24 @@ type Tool struct {
 	// confirmation is requested. Optional; the tool name and its arguments are shown regardless. Only
 	// meaningful together with Mutating.
 	Confirm string
+
+	// NoDelegate keeps this tool away from sub-agents started by [NewDelegateTool] and [NewTaskTools]. Set it on
+	// tools which only make sense in the conversation with the user, typically everything bound to a window
+	// (a screen inspection, a navigation, a dialog): a sub-agent runs detached, possibly in parallel to other
+	// sub-agents and possibly after the parent run already ended, so such a tool would act on a screen nobody
+	// looks at. Tools with [Tool.AwaitsUser] are never delegated, regardless of this flag.
+	NoDelegate bool
+
+	// run, when set, executes the call with access to the calling run (its context, provider and options). It is
+	// how the built-in delegation tools of this package inherit the model, the system prompt and the tools of
+	// the run which calls them. It takes precedence over every other invocation. Unexported, because the shape
+	// of toolEnv is an implementation detail.
+	run func(env toolEnv, call ToolCall) ToolResult
+
+	// indirectMutating marks a tool which does not change anything itself but may let a sub-agent do so, see
+	// [DelegateConfig.AllowMutating]. It is treated like [Tool.Mutating] for the deferral of calls requested in
+	// the same turn as a clarifying question, but never for confirmation or read-only filtering.
+	indirectMutating bool
 
 	// resultDoc is the rendered description of the return type, filled in by the constructors and moved into
 	// the advertised description by [Tool.WithResultDoc]. It is unexported because it is derived, not
@@ -376,12 +396,13 @@ const DefaultMaxCompactions = 4
 // history replaces the previous one and the failed turn is retried.
 //
 // A Compactor receives everything it needs to perform its own completion requests (e.g. to summarize older
-// turns): the subject, the [Completions] capability and the in-flight [Options] (which carries the active
-// model and system prompt). Implementations MUST return a history that is strictly smaller than the input
-// (fewer runes), otherwise [Run] aborts to avoid an infinite loop.
+// turns): the context of the run, the subject, the [Completions] capability and the in-flight [Options] (which
+// carries the active model and system prompt). Implementations MUST return a history that is strictly smaller
+// than the input (fewer runes), otherwise [Run] aborts to avoid an infinite loop. Completions issued through c
+// are accounted in [Outcome.Usage].
 //
 // See [NewSummaryCompactor] for the default summarizing implementation.
-type Compactor func(subject auth.Subject, c Completions, opts Options, history []Message) ([]Message, error)
+type Compactor func(ctx context.Context, subject auth.Subject, c Completions, opts Options, history []Message) ([]Message, error)
 
 // ProgressPhase classifies a [Progress] event emitted during the agentic loop in [Run].
 type ProgressPhase string
@@ -485,6 +506,73 @@ type RunOptions struct {
 	// ConfirmMutating suspends the run before every call of a [Tool.Mutating] tool, so the user can approve or
 	// reject it (see [Start], [Continue]). Only supported by [Start]; [Run] fails on such a suspension.
 	ConfirmMutating bool
+
+	// Context bounds the run. It is checked before every model turn and before every tool call, and it is
+	// passed to [Completions.Complete], so cancelling it aborts an in-flight provider request as well. A
+	// cancelled run returns an error satisfying errors.Is(err, context.Canceled) (or DeadlineExceeded) together
+	// with a valid history: tool calls which were not executed any more are answered as cancelled. Nil means
+	// [context.Background].
+	Context context.Context
+
+	// OnUsage is called with the token usage of every single completion the run performs, including the ones of
+	// a [Compactor]. It may be called from any goroutine and must therefore be goroutine-safe. The sum is
+	// also returned as [Outcome.Usage]. Optional.
+	OnUsage func(Usage)
+
+	// BeforeFinish is consulted when the model produced its final answer. A non-empty return value is injected
+	// as a hidden user turn (see [IsLoopPrompt]) and the loop continues, so the model can take it into
+	// account. [TaskGroup.BeforeFinish] uses this to join background tasks the model started but never awaited.
+	// It runs on the loop's goroutine and may block. Optional.
+	BeforeFinish func(ctx context.Context) string
+}
+
+// toolEnv is what a built-in tool (see [Tool].run) sees of the run which calls it.
+type toolEnv struct {
+	ctx     context.Context
+	subject auth.Subject
+	// completions is the provider of the calling run, without usage metering, so a sub-agent's usage is not
+	// accounted twice.
+	completions Completions
+	// opts are the effective options of the calling run.
+	opts *RunOptions
+}
+
+// meteredCompletions sums the usage of every completion issued through it and reports each one to onUsage.
+type meteredCompletions struct {
+	Completions
+	onUsage func(Usage)
+
+	mu    sync.Mutex
+	total Usage
+}
+
+func (m *meteredCompletions) Complete(ctx context.Context, subject auth.Subject, opts Options) (Result, error) {
+	res, err := m.Completions.Complete(ctx, subject, opts)
+	if err == nil && !res.Usage.IsZero() {
+		m.mu.Lock()
+		m.total = m.total.Add(res.Usage)
+		m.mu.Unlock()
+
+		if m.onUsage != nil {
+			m.onUsage(res.Usage)
+		}
+	}
+
+	return res, err
+}
+
+func (m *meteredCompletions) sum() Usage {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.total
+}
+
+// cancelledText is the tool result of a call which was not executed any more because the run was cancelled.
+const cancelledText = "not executed: the run was cancelled before this call could run."
+
+// runCancelled wraps the context error of a cancelled run.
+func runCancelled(err error) error {
+	return fmt.Errorf("run cancelled: %w", err)
 }
 
 // Run drives the full agentic loop on top of [Completions.Complete]:
@@ -525,10 +613,23 @@ func Continue(subject auth.Subject, c Completions, opts RunOptions, cont Continu
 
 // drive is the loop shared by [Start] and [Continue].
 func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeInput) (out Outcome, err error) {
+	ctx := opts.Context
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	opts.Context = ctx
+
+	// Every completion of this run - including the ones of a compactor - goes through the meter, so the
+	// outcome reports what the run actually cost and not only its last turn.
+	metered := &meteredCompletions{Completions: c, onUsage: opts.OnUsage}
+
 	// progressed records whether the history moved beyond the caller's input, so a caller knows whether a
 	// failed run left something worth persisting.
 	progressed := false
-	defer func() { out.Progressed = progressed }()
+	defer func() {
+		out.Progressed = progressed
+		out.Usage = metered.sum()
+	}()
 
 	maxTurns := opts.MaxTurns
 	if maxTurns <= 0 {
@@ -573,12 +674,18 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 	req := opts.Options
 	req.Tools = defs
 
+	env := toolEnv{ctx: ctx, subject: subject, completions: c, opts: &opts}
+
 	// copy the initial history so we never mutate the caller's slice
 	history := make([]Message, len(req.Messages))
 	copy(history, req.Messages)
 
 	if resume != nil {
-		msg, err := resumeMessage(subject, tools, opts, history, resume.cont, resume.resolutions)
+		if cerr := ctx.Err(); cerr != nil {
+			return Outcome{History: history}, runCancelled(cerr)
+		}
+
+		msg, err := resumeMessage(env, tools, history, resume.cont, resume.resolutions)
 		if err != nil {
 			return Outcome{History: history}, err
 		}
@@ -588,8 +695,14 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 
 	tokenRetries := 0
 	continuations := 0
+	finishHooks := 0
 
 	for turn := 0; turn < maxTurns; turn++ {
+		// A cancelled run stops between turns. The history is valid here: every tool call is answered.
+		if cerr := ctx.Err(); cerr != nil {
+			return Outcome{History: history}, runCancelled(cerr)
+		}
+
 		req.Messages = history
 
 		notify(Progress{Phase: PhaseTurnStarted, Turn: turn})
@@ -599,9 +712,14 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 		var res Result
 		for {
 			var err error
-			res, err = c.Complete(subject, req)
+			res, err = metered.Complete(ctx, subject, req)
 			if err == nil {
 				break
+			}
+
+			// A cancelled context is the cause, whatever the provider made of it.
+			if cerr := ctx.Err(); cerr != nil {
+				return Outcome{Result: Result{}, History: history}, runCancelled(cerr)
 			}
 
 			if !errors.Is(err, ContextWindowExceeded) {
@@ -613,7 +731,7 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 			}
 
 			before := runeLen(history)
-			compacted, cerr := compactor(subject, c, req, history)
+			compacted, cerr := compactor(ctx, subject, metered, req, history)
 			if cerr != nil {
 				return Outcome{Result: Result{}, History: history}, fmt.Errorf("compaction failed: %w", cerr)
 			}
@@ -705,6 +823,19 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 				progressed = true
 			}
 			res.Message = cleaned
+
+			// Give the caller a last word, e.g. to hand over the results of background tasks the model never
+			// awaited. The model then continues with them instead of the run ending on an answer that ignores
+			// work which was already paid for.
+			if opts.BeforeFinish != nil && res.StopReason != StopRefusal && finishHooks < maxFinishHooks {
+				if extra := strings.TrimSpace(opts.BeforeFinish(ctx)); extra != "" {
+					finishHooks++
+					history = append(history, Message{Role: User, Content: []Content{Text{Text: finishPromptMarker + extra}}})
+					progressed = true
+					continue
+				}
+			}
+
 			return Outcome{Result: res, History: history}, nil
 		}
 
@@ -732,9 +863,17 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 		// before the answer is known, so mutating calls of such a turn are deferred, never executed.
 		asksUser := slices.ContainsFunc(calls, func(call ToolCall) bool { return tools[call.Name].AwaitsUser })
 
-		for _, call := range calls {
+		for i, call := range calls {
 			call := call
 			tool, known := tools[call.Name]
+
+			// A cancelled run executes nothing more. Every call of this turn still needs an answer, otherwise
+			// the history would carry a tool_use without its tool_result and could never be continued.
+			if cerr := ctx.Err(); cerr != nil {
+				history = append(history, cancelledTurn(calls[i:], results, pending, attachments))
+				progressed = true
+				return Outcome{Result: res, History: history}, runCancelled(cerr)
+			}
 
 			switch {
 			case known && tool.AwaitsUser:
@@ -745,7 +884,7 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 				results = append(results, ToolResult{ToolCallID: call.ID, IsError: true, Content: []Content{Text{Text: "the question must not be empty"}}})
 				continue
 
-			case known && tool.Mutating && asksUser:
+			case known && (tool.Mutating || tool.indirectMutating) && asksUser:
 				results = append(results, ToolResult{ToolCallID: call.ID, IsError: true, Content: []Content{Text{Text: deferredText}}})
 				continue
 
@@ -756,7 +895,7 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 
 			notify(Progress{Phase: PhaseToolStarted, Turn: turn, ToolCall: &call})
 
-			result, media := executeToolCall(subject, tools, call, opts.FileUploader, opts.OnBeforeToolCall)
+			result, media := executeToolCall(env, tools, call)
 
 			notify(Progress{Phase: PhaseToolCompleted, Turn: turn, ToolCall: &call, ToolResult: &result})
 
@@ -784,6 +923,25 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 	return Outcome{Result: Result{}, History: history}, fmt.Errorf("tool loop exceeded %d turns: %w", maxTurns, TurnLimitExceeded)
 }
 
+// cancelledTurn builds the tool-result turn of a turn interrupted by cancellation: the results which already
+// exist, every pending decision and every call not reached yet answered as cancelled, plus the attachments.
+func cancelledTurn(rest []ToolCall, results []Content, pending []PendingCall, attachments []Content) Message {
+	content := slices.Clone(results)
+	cancelled := func(id string) {
+		content = append(content, ToolResult{ToolCallID: id, IsError: true, Content: []Content{Text{Text: cancelledText}}})
+	}
+
+	for _, pc := range pending {
+		cancelled(pc.Call.ID)
+	}
+
+	for _, call := range rest {
+		cancelled(call.ID)
+	}
+
+	return Message{Role: User, Content: append(content, attachments...)}
+}
+
 // TurnLimitExceeded is returned (wrapped) by [Run] when the model keeps requesting tools beyond
 // [RunOptions.MaxTurns]. The returned history is still valid and should be persisted, because the tools
 // already executed may have had side effects.
@@ -798,19 +956,26 @@ const (
 	escalationBase = 16000
 	// maxContinuations bounds how often [Run] asks the model to continue a truncated or empty answer.
 	maxContinuations = 2
+	// maxFinishHooks bounds how often [RunOptions.BeforeFinish] may extend a run which already had its final
+	// answer, so a hook which keeps returning something cannot keep the loop alive forever.
+	maxFinishHooks = 4
+	// finishPromptMarker prefixes the hidden user turn built from [RunOptions.BeforeFinish], so [IsLoopPrompt]
+	// recognizes it.
+	finishPromptMarker = "[system note, not written by the user]\n"
 
 	continuePrompt = "Your previous answer was cut off because of the output limit. Continue exactly where you stopped, without repeating anything."
 	answerPrompt   = "You did not provide a visible answer. Please give your answer now."
 )
 
 // IsLoopPrompt reports whether msg is a user turn injected by [Run] itself (asking the model to continue a
-// truncated answer or to provide a missing one). UIs should hide such turns, because the user never wrote them.
+// truncated answer or to provide a missing one, or handing over what [RunOptions.BeforeFinish] returned). UIs
+// should hide such turns, because the user never wrote them.
 func IsLoopPrompt(msg Message) bool {
 	if msg.Role != User || len(msg.Content) != 1 {
 		return false
 	}
 	t, ok := msg.Content[0].(Text)
-	return ok && (t.Text == continuePrompt || t.Text == answerPrompt)
+	return ok && (t.Text == continuePrompt || t.Text == answerPrompt || strings.HasPrefix(t.Text, finishPromptMarker))
 }
 
 // escalateMaxTokens returns the next larger output budget, or current if it cannot grow any further.
@@ -866,7 +1031,15 @@ func stripToolCalls(msg Message) Message {
 // returns the resulting [Media] block(s) to be attached to the user turn (never inside the tool_result). The
 // tool_result itself is then a short textual confirmation. The returned media slice is empty for regular
 // tools or when the file could not be provided/uploaded.
-func executeToolCall(subject auth.Subject, tools map[string]Tool, call ToolCall, uploader FileUploader, before BeforeToolCallFunc) (ToolResult, []Content) {
+func executeToolCall(env toolEnv, tools map[string]Tool, call ToolCall) (ToolResult, []Content) {
+	subject := env.subject
+	var uploader FileUploader
+	var before BeforeToolCallFunc
+	if env.opts != nil {
+		uploader = env.opts.FileUploader
+		before = env.opts.OnBeforeToolCall
+	}
+
 	tool, ok := tools[call.Name]
 	if !ok {
 		return ToolResult{
@@ -887,6 +1060,16 @@ func executeToolCall(subject auth.Subject, tools map[string]Tool, call ToolCall,
 				IsError:    true,
 			}, nil
 		}
+	}
+
+	// A built-in tool which needs the calling run itself.
+	if tool.run != nil {
+		res := tool.run(env, call)
+		res.ToolCallID = call.ID
+		if len(res.Content) == 0 {
+			res.Content = []Content{Text{Text: "(no content)"}}
+		}
+		return res, nil
 	}
 
 	// File-providing tool: inject text files inline or upload binary files and attach them as a Media block.

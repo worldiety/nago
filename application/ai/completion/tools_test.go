@@ -9,6 +9,7 @@ package completion
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -91,14 +92,16 @@ type fakeCompletions struct {
 func (f *fakeCompletions) Models(auth.Subject) iter.Seq2[model.Model, error] { return nil }
 
 // Complete returns the queued results in order and repeats the last one once the queue is exhausted.
-func (f *fakeCompletions) Complete(_ auth.Subject, opts Options) (Result, error) {
+func (f *fakeCompletions) Complete(_ context.Context, _ auth.Subject, opts Options) (Result, error) {
 	f.reqs = append(f.reqs, opts)
 	r := f.results[min(f.calls, len(f.results)-1)]
 	f.calls++
 	return r, nil
 }
 
-func (f *fakeCompletions) Stream(auth.Subject, Options) iter.Seq2[Delta, error] { return nil }
+func (f *fakeCompletions) Stream(context.Context, auth.Subject, Options) iter.Seq2[Delta, error] {
+	return nil
+}
 
 func TestRun_ExecutesToolLoop(t *testing.T) {
 	tool := NewTool("add", "adds two integers", func(in addIn) (addOut, error) {

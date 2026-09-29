@@ -30,7 +30,7 @@ func askHistory(args, answer string) []completion.Message {
 // TestRenderHistory_AskUserStaysVisible: after answering, the clarifying question and the answer must remain
 // part of the visible conversation instead of collapsing into a tool hint.
 func TestRenderHistory_AskUserStaysVisible(t *testing.T) {
-	views := renderHistory(nil, askHistory(`{"question":"where to?","options":["Berlin","Rome"]}`, `{"answer":"Berlin"}`))
+	views := renderHistory(nil, askHistory(`{"question":"where to?","options":["Berlin","Rome"]}`, `{"answer":"Berlin"}`), historyView{})
 	// user prompt, question, answer, final reply
 	if len(views) != 4 {
 		t.Fatalf("expected 4 bubbles, got %d", len(views))
@@ -38,7 +38,7 @@ func TestRenderHistory_AskUserStaysVisible(t *testing.T) {
 }
 
 func TestRenderHistory_AskUserFallsBackOnBrokenPayload(t *testing.T) {
-	views := renderHistory(nil, askHistory(`not json`, `{"answer":"Berlin"}`))
+	views := renderHistory(nil, askHistory(`not json`, `{"answer":"Berlin"}`), historyView{})
 	// user prompt, tool hint, final reply; the answer of an unrecognised call stays hidden
 	if len(views) != 3 {
 		t.Fatalf("expected 3 views, got %d", len(views))
@@ -48,7 +48,7 @@ func TestRenderHistory_AskUserFallsBackOnBrokenPayload(t *testing.T) {
 func TestRenderHistory_OtherToolResultsStayHidden(t *testing.T) {
 	h := askHistory(`{"question":"q"}`, `{"answer":"a"}`)
 	h[1].Content[0] = completion.ToolCall{ID: "a1", Name: "search", Arguments: json.RawMessage(`{}`)}
-	views := renderHistory(nil, h)
+	views := renderHistory(nil, h, historyView{})
 	// user prompt, tool hint, final reply
 	if len(views) != 3 {
 		t.Fatalf("expected 3 views, got %d", len(views))

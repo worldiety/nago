@@ -8,6 +8,7 @@
 package completion
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"iter"
@@ -29,7 +30,7 @@ type compactFake struct {
 
 func (f *compactFake) Models(auth.Subject) iter.Seq2[model.Model, error] { return nil }
 
-func (f *compactFake) Complete(_ auth.Subject, opts Options) (Result, error) {
+func (f *compactFake) Complete(_ context.Context, _ auth.Subject, opts Options) (Result, error) {
 	if opts.System == defaultSummaryPrompt {
 		f.summaryCalls++
 		return Result{
@@ -49,7 +50,9 @@ func (f *compactFake) Complete(_ auth.Subject, opts Options) (Result, error) {
 	}, nil
 }
 
-func (f *compactFake) Stream(auth.Subject, Options) iter.Seq2[Delta, error] { return nil }
+func (f *compactFake) Stream(context.Context, auth.Subject, Options) iter.Seq2[Delta, error] {
+	return nil
+}
 
 func longHistory(n int) []Message {
 	out := make([]Message, 0, n)
@@ -156,7 +159,7 @@ func TestSummaryCompactor_TruncatesWhenNoPrefix(t *testing.T) {
 	before := runeLen(history)
 
 	fake := &compactFake{}
-	out, err := NewSummaryCompactor(SummaryCompactorConfig{})(nil, fake, Options{}, history)
+	out, err := NewSummaryCompactor(SummaryCompactorConfig{})(context.Background(), nil, fake, Options{}, history)
 	if err != nil {
 		t.Fatalf("compaction failed: %v", err)
 	}
@@ -168,4 +171,3 @@ func TestSummaryCompactor_TruncatesWhenNoPrefix(t *testing.T) {
 		t.Fatalf("did not expect a summarization call for a single oversized message")
 	}
 }
-

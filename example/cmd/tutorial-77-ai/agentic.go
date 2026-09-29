@@ -85,6 +85,10 @@ func agenticTools() []completion.Tool {
 // configures TWO agents so the component renders an agent picker: a general assistant with the calculator/
 // sqrt/time tools and a math specialist that additionally asks the user for confirmation via the built-in
 // ask_user tool (enabled through ChatOptions.AskUser). History is off here, so this chat is transient.
+//
+// ChatOptions.Delegation additionally lets the model hand independent sub-problems to sub-agents working in
+// parallel: synchronously via the delegate tool, or in the background via start_tasks/await_tasks while it
+// continues itself. Try e.g. "Berechne unabhängig voneinander die Wurzeln von 2, 3, 5 und 7 und addiere sie".
 func agenticChat(wnd core.Window, uc ai.UseCases, sessions session.UseCases) core.View {
 	prov, comps, err := firstCompletionProvider(wnd.Subject(), uc, false)
 	if err != nil {
@@ -99,12 +103,17 @@ func agenticChat(wnd core.Window, uc ai.UseCases, sessions session.UseCases) cor
 		Provider:    prov,
 		Title:       "Agentic Tool-Loop",
 		AskUser:     true,
+		Delegation: &uicompletion.DelegationOptions{
+			BackgroundTasks: true,
+			MaxParallel:     4,
+		},
 		Agents: []uicompletion.Agent{
 			{
-				ID:           "assistant",
-				Name:         "Allrounder",
-				SystemPrompt: "You are a helpful assistant. Use the provided tools to compute results instead of guessing.",
-				Tools:        tools,
+				ID:   "assistant",
+				Name: "Allrounder",
+				SystemPrompt: "You are a helpful assistant. Use the provided tools to compute results instead of guessing. " +
+					"Delegate independent sub-problems to sub-agents to finish faster.",
+				Tools: tools,
 			},
 			{
 				ID:           "math",
@@ -116,8 +125,9 @@ func agenticChat(wnd core.Window, uc ai.UseCases, sessions session.UseCases) cor
 	})
 
 	return ui.VStack(
-		ui.Text("Agentic Tool-Loop (uicompletion.Chat mit Agent-Auswahl + ask_user)").Font(ui.Title),
-		ui.Text("Zwei Agenten stehen zur Auswahl. Beide nutzen dieselben Rechen-Tools; der Mathe-Spezialist fragt bei Bedarf per ask_user nach."),
+		ui.Text("Agentic Tool-Loop (uicompletion.Chat mit Agent-Auswahl, ask_user und Teilaufgaben)").Font(ui.Title),
+		ui.Text("Zwei Agenten stehen zur Auswahl. Beide nutzen dieselben Rechen-Tools; der Mathe-Spezialist fragt bei Bedarf per ask_user nach. "+
+			"Unabhängige Teilaufgaben kann die KI an parallel arbeitende Sub-Agenten delegieren."),
 		chat,
 	).Alignment(ui.Leading).
 		Gap(ui.L16).

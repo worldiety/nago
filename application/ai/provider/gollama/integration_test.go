@@ -8,6 +8,7 @@
 package gollama
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"strings"
@@ -98,7 +99,7 @@ func TestIntegrationChat(t *testing.T) {
 	t.Logf("prompt:\n%s", prompt)
 
 	nCtx := e.effectiveCtx(catalogEntry{}, lm.meta)
-	out, err := e.generate(lm, prompt, lm.adapter.stopStrings(), lm.adapter.toolMarkers(), opts.MaxTokens, nCtx, nil)
+	out, err := e.generate(context.Background(), lm, prompt, lm.adapter.stopStrings(), lm.adapter.toolMarkers(), opts.MaxTokens, nCtx, nil)
 	if err != nil {
 		t.Fatalf("generate: %v", err)
 	}
@@ -150,7 +151,7 @@ func TestIntegrationStreaming(t *testing.T) {
 	}
 
 	nCtx := e.effectiveCtx(catalogEntry{}, lm.meta)
-	out, err := e.generate(lm, prompt, lm.adapter.stopStrings(), lm.adapter.toolMarkers(), opts.MaxTokens, nCtx, emit)
+	out, err := e.generate(context.Background(), lm, prompt, lm.adapter.stopStrings(), lm.adapter.toolMarkers(), opts.MaxTokens, nCtx, emit)
 	if err != nil {
 		t.Fatalf("generate: %v", err)
 	}
@@ -202,7 +203,7 @@ func TestIntegrationToolCall(t *testing.T) {
 	t.Logf("prompt:\n%s", prompt)
 
 	nCtx := e.effectiveCtx(catalogEntry{}, lm.meta)
-	out, err := e.generate(lm, prompt, lm.adapter.stopStrings(), lm.adapter.toolMarkers(), opts.MaxTokens, nCtx, nil)
+	out, err := e.generate(context.Background(), lm, prompt, lm.adapter.stopStrings(), lm.adapter.toolMarkers(), opts.MaxTokens, nCtx, nil)
 	if err != nil {
 		t.Fatalf("generate: %v", err)
 	}

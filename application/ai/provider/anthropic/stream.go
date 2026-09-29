@@ -9,17 +9,20 @@ package anthropic
 
 import (
 	"bufio"
+	"context"
 	"io"
 	"strings"
 )
 
 // CreateMessageStream performs a streaming Messages API call. onEvent is invoked synchronously for every
-// server-sent event (SSE) with the raw event name and the associated JSON data payload.
-func (c *Client) CreateMessageStream(req apiRequest, onEvent func(event string, data []byte) error) error {
+// server-sent event (SSE) with the raw event name and the associated JSON data payload. Cancelling ctx aborts the
+// request, including a response which is still streaming.
+func (c *Client) CreateMessageStream(ctx context.Context, req apiRequest, onEvent func(event string, data []byte) error) error {
 	req.Stream = true
 
 	var cbErr error
 	r := c.newReq().
+		Context(ctx).
 		URL("messages").
 		Assert2xx(true).
 		BodyJSON(req).

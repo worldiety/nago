@@ -40,7 +40,8 @@ func NewFindByID(repo Repository) FindByID {
 
 // NewFindAll returns a [FindAll] use case yielding the sessions the subject may see: those granted per
 // instance (its own) plus all sessions if the subject holds PermFindAll globally. When [FindAllOptions.Tags]
-// is set, only sessions carrying all of those tags are yielded. The (cheap) tag filter is applied before the
+// is set, only sessions carrying all of those tags are yielded. Child sessions are skipped unless
+// [FindAllOptions.IncludeChildren] is set. The (cheap) tag filter is applied before the
 // (potentially more expensive) ReBAC audit.
 func NewFindAll(repo Repository) FindAll {
 	return func(subject auth.Subject, opts FindAllOptions) iter.Seq2[Session, error] {
@@ -50,6 +51,10 @@ func NewFindAll(repo Repository) FindAll {
 					if !yield(Session{}, err) {
 						return
 					}
+					continue
+				}
+
+				if session.ParentID != "" && !opts.IncludeChildren {
 					continue
 				}
 

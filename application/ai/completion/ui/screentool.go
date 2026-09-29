@@ -85,17 +85,23 @@ func ScreenTool(wnd core.Window, opts ScreenToolOptions) completion.Tool {
 		"and whenever the user refers to something on the screen. " +
 		"The snapshot also contains the assistant chat itself; ignore that part."
 
+	// The tool is bound to the window of the user, so it is never handed to a sub-agent (see
+	// [completion.Tool.NoDelegate]): that one works detached, possibly after the user moved on.
 	if opts.DisableImage {
-		return completion.NewSubjectContentTool(name, desc, func(_ auth.Subject, in screenToolInNoImage) ([]completion.Content, error) {
+		tool := completion.NewSubjectContentTool(name, desc, func(_ auth.Subject, in screenToolInNoImage) ([]completion.Content, error) {
 			return inspectScreen(wnd, screenToolIn{Selector: in.Selector}, opts.MaxEdge, timeout)
 		})
+		tool.NoDelegate = true
+		return tool
 	}
 
 	desc += " Set image to true to additionally receive a PNG, but only when the visual appearance matters."
 
-	return completion.NewSubjectContentTool(name, desc, func(_ auth.Subject, in screenToolIn) ([]completion.Content, error) {
+	tool := completion.NewSubjectContentTool(name, desc, func(_ auth.Subject, in screenToolIn) ([]completion.Content, error) {
 		return inspectScreen(wnd, in, opts.MaxEdge, timeout)
 	})
+	tool.NoDelegate = true
+	return tool
 }
 
 func inspectScreen(wnd core.Window, in screenToolIn, maxEdge int, timeout time.Duration) ([]completion.Content, error) {

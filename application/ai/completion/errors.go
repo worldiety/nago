@@ -12,6 +12,13 @@ import (
 	"fmt"
 )
 
+// TooManyRequests is the sentinel reported by a [Completions] provider when a rate limit kicked in, either
+// client side or as an HTTP 429 of the provider. It is the very same value as provider.TooManyRequests (which is
+// declared as an alias of this one), so errors.Is works with either name. It lives here because the provider
+// package imports this one and not the other way round, and the agentic helpers of this package (see
+// [NewDelegateTool]) must be able to tell a rate limit apart from other failures to retry it.
+var TooManyRequests = errors.New("too many requests")
+
 // ContextWindowExceeded is the sentinel reported by a [Completions] provider when the request (the full
 // history plus system prompt and tool definitions) does not fit into the model's context window. Use
 // errors.Is(err, ContextWindowExceeded) to detect it. A provider should additionally wrap a
@@ -45,4 +52,3 @@ func (e ContextWindowError) Is(target error) bool {
 func (e ContextWindowError) Unwrap() error {
 	return ContextWindowExceeded
 }
-

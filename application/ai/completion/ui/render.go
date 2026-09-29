@@ -27,6 +27,7 @@ import (
 	"strings"
 
 	"go.wdy.de/nago/application/ai/completion"
+	"go.wdy.de/nago/application/ai/session"
 	"go.wdy.de/nago/presentation/core"
 	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	"go.wdy.de/nago/presentation/ui"
@@ -46,8 +47,8 @@ const scrollAnchorID = "uicompletion-end-of-history"
 // the growing bubble list, Vue would reuse the anchor's instance for new bubbles on every history update,
 // leaking a stale id onto them and breaking the scroll. Keeping the anchor as a stable second child of a
 // two-child stack avoids the instance reuse entirely.
-func conversationView(wnd core.Window, history []completion.Message, emptyHint string, height ui.Length) core.View {
-	bubbles := renderHistory(wnd, history)
+func conversationView(wnd core.Window, history []completion.Message, emptyHint string, height ui.Length, hv historyView) core.View {
+	bubbles := renderHistory(wnd, history, hv)
 	if len(bubbles) == 0 && emptyHint != "" {
 		bubbles = append(bubbles, ui.Text(emptyHint).Font(ui.BodySmall))
 	}
@@ -55,20 +56,41 @@ func conversationView(wnd core.Window, history []completion.Message, emptyHint s
 	return ui.ScrollView(
 		ui.VStack(
 			ui.VStack(bubbles...).Gap(ui.L8).FullWidth().Alignment(ui.Leading),
-			ui.VStack().ID(scrollAnchorID).Frame(ui.Frame{}.Size(ui.L2, ui.L2)),
+			ui.VStack().ID(hv.idPrefix+scrollAnchorID).Frame(ui.Frame{}.Size(ui.L2, ui.L2)),
 		).FullWidth().Alignment(ui.Leading),
 	).Axis(ui.ScrollViewAxisVertical).
-		ScrollToView(scrollAnchorID, ui.ScrollAnimationSmooth).
+		ScrollToView(hv.idPrefix+scrollAnchorID, ui.ScrollAnimationSmooth).
 		ScrollBehavior(ui.ScrollBehaviorAuto).
 		Frame(ui.Frame{Height: height, Width: ui.Full})
 }
 
+// historyView configures [renderHistory].
+type historyView struct {
+	// idPrefix keeps the ids of stateful elements unique when a second conversation (a sub-agent transcript) is
+	// rendered in the same window.
+	idPrefix string
+
+	// openChild, when set, offers to open the persisted transcript of a sub-agent.
+	openChild func(id session.ID)
+}
+
 // renderHistory turns the stateless message history into chat bubbles. Tool calls are shown as muted hints and
 // reasoning as a collapsed section; tool results (which live inside follow-up user messages) and the prompts
-// the loop injects on its own (see [completion.IsLoopPrompt]) are omitted.
-func renderHistory(wnd core.Window, history []completion.Message) []core.View {
+// the loop injects on its own (see [completion.IsLoopPrompt]) are omitted. Calls of the delegation tools are
+// shown as a collapsible list of their sub tasks.
+func renderHistory(wnd core.Window, history []completion.Message, hv historyView) []core.View {
 	// ask_user calls are a dialog with the user, so question and answer are shown as regular bubbles.
 	askCalls := map[string]bool{}
+
+	// Delegation calls are rendered together with their results, which live in a later message.
+	results := map[string]completion.ToolResult{}
+	for _, m := range history {
+		for _, c := range m.Content {
+			if r, ok := c.(completion.ToolResult); ok {
+				results[r.ToolCallID] = r
+			}
+		}
+	}
 
 	var views []core.View
 	for i, m := range history {
@@ -81,7 +103,7 @@ func renderHistory(wnd core.Window, history []completion.Message) []core.View {
 				if strings.TrimSpace(v.Text) == "" {
 					continue
 				}
-				views = append(views, thinkingView(wnd, fmt.Sprintf("uicompletion-thinking-%d-%d", i, j), v.Text))
+				views = append(views, thinkingView(wnd, fmt.Sprintf("%suicompletion-thinking-%d-%d", hv.idPrefix, i, j), v.Text))
 			case completion.Text:
 				if strings.TrimSpace(v.Text) == "" {
 					continue
@@ -92,6 +114,13 @@ func renderHistory(wnd core.Window, history []completion.Message) []core.View {
 					if q, ok := askQuestion(v); ok {
 						askCalls[v.ID] = true
 						views = append(views, chatBubble(completion.Assistant, q))
+						continue
+					}
+				}
+				if completion.IsDelegationTool(v.Name) {
+					res, done := results[v.ID]
+					if view := tasksView(wnd, hv, v, res, done); view != nil {
+						views = append(views, view)
 						continue
 					}
 				}

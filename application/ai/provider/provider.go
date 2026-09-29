@@ -8,7 +8,6 @@
 package provider
 
 import (
-	"errors"
 	"io"
 	"iter"
 
@@ -26,7 +25,9 @@ import (
 )
 
 var (
-	TooManyRequests = errors.New("too many requests") // TooManyRequests tells you that the rate limiter has kicked in
+	// TooManyRequests tells you that the rate limiter has kicked in. It is the same value as
+	// [completion.TooManyRequests], so the agentic helpers of the completion package can recognize it.
+	TooManyRequests = completion.TooManyRequests
 )
 
 type ID string

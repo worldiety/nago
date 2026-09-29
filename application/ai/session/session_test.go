@@ -8,6 +8,7 @@
 package session
 
 import (
+	"context"
 	"iter"
 	"testing"
 	"time"
@@ -34,7 +35,7 @@ func (f *fakeCompletions) Models(subject auth.Subject) iter.Seq2[model.Model, er
 	}
 }
 
-func (f *fakeCompletions) Complete(subject auth.Subject, opts completion.Options) (completion.Result, error) {
+func (f *fakeCompletions) Complete(_ context.Context, subject auth.Subject, opts completion.Options) (completion.Result, error) {
 	f.lastOptions = opts
 	reply := f.reply
 	if reply == "" {
@@ -51,7 +52,7 @@ func (f *fakeCompletions) Complete(subject auth.Subject, opts completion.Options
 	}, nil
 }
 
-func (f *fakeCompletions) Stream(subject auth.Subject, opts completion.Options) iter.Seq2[completion.Delta, error] {
+func (f *fakeCompletions) Stream(_ context.Context, subject auth.Subject, opts completion.Options) iter.Seq2[completion.Delta, error] {
 	return func(yield func(completion.Delta, error) bool) {}
 }
 
@@ -362,7 +363,7 @@ func (b *blockingCompletions) Models(subject auth.Subject) iter.Seq2[model.Model
 	return func(yield func(model.Model, error) bool) { yield(model.Model{ID: "fake-model"}, nil) }
 }
 
-func (b *blockingCompletions) Complete(subject auth.Subject, opts completion.Options) (completion.Result, error) {
+func (b *blockingCompletions) Complete(_ context.Context, subject auth.Subject, opts completion.Options) (completion.Result, error) {
 	close(b.started)
 	<-b.release
 	return completion.Result{
@@ -372,7 +373,7 @@ func (b *blockingCompletions) Complete(subject auth.Subject, opts completion.Opt
 	}, nil
 }
 
-func (b *blockingCompletions) Stream(subject auth.Subject, opts completion.Options) iter.Seq2[completion.Delta, error] {
+func (b *blockingCompletions) Stream(_ context.Context, subject auth.Subject, opts completion.Options) iter.Seq2[completion.Delta, error] {
 	return func(yield func(completion.Delta, error) bool) {}
 }
 

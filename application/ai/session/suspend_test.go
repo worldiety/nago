@@ -8,6 +8,7 @@
 package session
 
 import (
+	"context"
 	stdjson "encoding/json"
 	"errors"
 	"iter"
@@ -28,7 +29,7 @@ type scriptedCompletions struct {
 
 func (s *scriptedCompletions) Models(auth.Subject) iter.Seq2[model.Model, error] { return nil }
 
-func (s *scriptedCompletions) Complete(_ auth.Subject, _ completion.Options) (completion.Result, error) {
+func (s *scriptedCompletions) Complete(_ context.Context, _ auth.Subject, _ completion.Options) (completion.Result, error) {
 	if s.fail != nil {
 		return completion.Result{}, s.fail
 	}
@@ -37,7 +38,7 @@ func (s *scriptedCompletions) Complete(_ auth.Subject, _ completion.Options) (co
 	return r, nil
 }
 
-func (s *scriptedCompletions) Stream(auth.Subject, completion.Options) iter.Seq2[completion.Delta, error] {
+func (s *scriptedCompletions) Stream(context.Context, auth.Subject, completion.Options) iter.Seq2[completion.Delta, error] {
 	return nil
 }
 

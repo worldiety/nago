@@ -22,6 +22,7 @@
 package completion
 
 import (
+	"context"
 	"encoding/json"
 	"iter"
 
@@ -210,6 +211,21 @@ type Usage struct {
 	CacheWriteTokens int `json:"cacheWriteTokens,omitzero"`
 }
 
+// Add returns the sum of both usages.
+func (u Usage) Add(o Usage) Usage {
+	return Usage{
+		InputTokens:      u.InputTokens + o.InputTokens,
+		OutputTokens:     u.OutputTokens + o.OutputTokens,
+		CacheReadTokens:  u.CacheReadTokens + o.CacheReadTokens,
+		CacheWriteTokens: u.CacheWriteTokens + o.CacheWriteTokens,
+	}
+}
+
+// IsZero reports whether no tokens were accounted at all.
+func (u Usage) IsZero() bool {
+	return u == Usage{}
+}
+
 // Result is the single assistant turn returned by a completion.
 type Result struct {
 	// Message is the generated assistant message. Its Content may contain Text, Thinking and/or ToolCall
@@ -233,16 +249,23 @@ type Delta struct {
 }
 
 // Completions is the stateless capability surface a Provider may expose.
+//
+// Complete and Stream take a [context.Context] as their first argument. Implementations must bind every
+// outgoing request to it (e.g. via http.NewRequestWithContext), so that cancelling the context - a user
+// pressing stop, a timeout of a sub task, a closed window - aborts an in-flight call instead of letting it run
+// (and bill) to its end. A cancelled call returns an error satisfying errors.Is(err, ctx.Err()).
 type Completions interface {
 	// Models lists the models usable for stateless completions.
 	Models(subject auth.Subject) iter.Seq2[model.Model, error]
 
 	// Complete runs a single, blocking, stateless turn over the supplied history.
 	// Defined errors:
-	//   - provider.TooManyRequests if the rate limiter kicked in.
-	Complete(subject auth.Subject, opts Options) (Result, error)
+	//   - [TooManyRequests] (identical to provider.TooManyRequests) if the rate limiter kicked in.
+	//   - [ContextWindowExceeded] if the request does not fit into the context window.
+	//   - the context error, if ctx was cancelled or its deadline passed.
+	Complete(ctx context.Context, subject auth.Subject, opts Options) (Result, error)
 
 	// Stream runs the same request but yields incremental [Delta] chunks. Providers that cannot stream may
 	// return option.None for [Streaming].
-	Stream(subject auth.Subject, opts Options) iter.Seq2[Delta, error]
+	Stream(ctx context.Context, subject auth.Subject, opts Options) iter.Seq2[Delta, error]
 }

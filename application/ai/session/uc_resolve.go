@@ -20,7 +20,7 @@ import (
 // It runs under the session's keyed lock like [Append]. The lock is only held while the continued run is
 // actually working; a run that suspends again is persisted and releases it, so no goroutine ever waits for a
 // user.
-func NewResolve(locks *locker, repo Repository) Resolve {
+func NewResolve(locks *locker, repo Repository, ledger *usageLedger) Resolve {
 	return func(subject auth.Subject, id ID, opts ResolveOptions) (Session, error) {
 		if opts.Run.Completions == nil {
 			return Session{}, fmt.Errorf("session: ResolveOptions.Run.Completions must not be nil")
@@ -54,15 +54,16 @@ func NewResolve(locks *locker, repo Repository) Resolve {
 		if rerr != nil {
 			// A mismatching decision changed nothing; everything else may already have executed an approved
 			// call, which must be kept.
-			return Session{}, persistFailure(repo, session, session.Model, out, rerr)
+			return Session{}, persistFailure(repo, ledger, session, session.Model, out, rerr)
 		}
 
-		return saveOutcome(repo, session, session.Model, out)
+		return saveOutcome(repo, ledger, session, session.Model, out)
 	}
 }
 
-// NewDismiss returns a [Dismiss] use case.
-func NewDismiss(locks *locker, repo Repository) Dismiss {
+// NewDismiss returns a [Dismiss] use case. The background tasks of the session in tasks are cancelled, because
+// the user moved on; tasks may be nil.
+func NewDismiss(locks *locker, repo Repository, tasks *completion.TaskRegistry) Dismiss {
 	return func(subject auth.Subject, id ID, revision int) (Session, error) {
 		defer locks.lock(id)()
 
@@ -81,6 +82,10 @@ func NewDismiss(locks *locker, repo Repository) Dismiss {
 		session.UpdatedAt = xtime.Now()
 		if err := repo.Save(session); err != nil {
 			return Session{}, fmt.Errorf("cannot persist session: %w", err)
+		}
+
+		if tasks != nil {
+			tasks.Cancel(string(id))
 		}
 
 		return session, nil

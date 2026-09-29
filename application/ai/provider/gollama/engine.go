@@ -8,6 +8,7 @@
 package gollama
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"sync"
@@ -168,7 +169,11 @@ type genOutput struct {
 // text segments as they become safe to surface (stop strings and tool-call markers are held back); it returns
 // false to abort generation early. The returned text is the full assistant output with any trailing stop
 // string removed.
-func (e *engine) generate(lm *loadedModel, prompt string, stops, toolMarkers []string, maxTokens, nCtx int, emit func(string) bool) (genOutput, error) {
+func (e *engine) generate(ctx context.Context, lm *loadedModel, prompt string, stops, toolMarkers []string, maxTokens, nCtx int, emit func(string) bool) (genOutput, error) {
+	if err := ctx.Err(); err != nil {
+		return genOutput{}, err
+	}
+
 	promptTokens, err := gollama.Tokenize(lm.handle, prompt, true, true)
 	if err != nil {
 		return genOutput{}, fmt.Errorf("tokenize prompt: %w", err)
@@ -227,6 +232,11 @@ func (e *engine) generate(lm *loadedModel, prompt string, stops, toolMarkers []s
 
 	var produced int
 	for produced = 0; produced < limit; produced++ {
+		// A local model has no connection to drop, so cancellation is checked per token.
+		if err := ctx.Err(); err != nil {
+			return genOutput{}, err
+		}
+
 		tok := gollama.Sampler_sample(e.sampler, cctx, -1)
 		if tok == gollama.LLAMA_TOKEN_NULL {
 			stop = completion.StopEndTurn

@@ -8,6 +8,7 @@
 package anthropic
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -36,7 +37,7 @@ func (c *anthropicCompletions) Models(subject auth.Subject) iter.Seq2[model.Mode
 	return c.parent.listModels(subject)
 }
 
-func (c *anthropicCompletions) Complete(subject auth.Subject, opts completion.Options) (completion.Result, error) {
+func (c *anthropicCompletions) Complete(ctx context.Context, subject auth.Subject, opts completion.Options) (completion.Result, error) {
 
 	if len(opts.Messages) == 0 {
 		return completion.Result{}, fmt.Errorf("messages must not be empty")
@@ -47,13 +48,13 @@ func (c *anthropicCompletions) Complete(subject auth.Subject, opts completion.Op
 		return completion.Result{}, err
 	}
 
-	resp, err := c.client().CreateMessage(req)
+	resp, err := c.client().CreateMessage(ctx, req)
 	if err != nil && opts.Thinking == completion.ThinkingAuto && req.Thinking != nil && isThinkingRejected(err) {
 		// Older models do not support adaptive thinking. Remember that and retry without it, so the
 		// automatic default never breaks a model that worked before.
 		c.parent.noAdaptiveThinking.Store(req.Model, true)
 		req.Thinking = nil
-		resp, err = c.client().CreateMessage(req)
+		resp, err = c.client().CreateMessage(ctx, req)
 	}
 	if err != nil {
 		return completion.Result{}, err
@@ -72,7 +73,7 @@ func isThinkingRejected(err error) bool {
 	return strings.Contains(strings.ToLower(string(statusErr.Body)), "adaptive")
 }
 
-func (c *anthropicCompletions) Stream(subject auth.Subject, opts completion.Options) iter.Seq2[completion.Delta, error] {
+func (c *anthropicCompletions) Stream(ctx context.Context, subject auth.Subject, opts completion.Options) iter.Seq2[completion.Delta, error] {
 	return func(yield func(completion.Delta, error) bool) {
 		if len(opts.Messages) == 0 {
 			yield(completion.Delta{}, fmt.Errorf("messages must not be empty"))
@@ -102,7 +103,7 @@ func (c *anthropicCompletions) Stream(subject auth.Subject, opts completion.Opti
 			return true
 		}
 
-		err = c.client().CreateMessageStream(req, func(event string, data []byte) error {
+		err = c.client().CreateMessageStream(ctx, req, func(event string, data []byte) error {
 			if aborted {
 				return errStopStreaming
 			}

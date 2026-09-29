@@ -22,6 +22,7 @@
 package session
 
 import (
+	"context"
 	"errors"
 	"iter"
 
@@ -78,8 +79,22 @@ type Session struct {
 	// the slice that would be fed back into [completion.Completions.Complete] to continue the session.
 	Messages []completion.Message `json:"messages,omitempty"`
 
-	// Usage accumulates the token usage reported across all turns of the session.
+	// Usage accumulates the token usage reported across all turns of the session: every completion of every
+	// run, not only the last turn of each.
 	Usage completion.Usage `json:"usage,omitempty"`
+
+	// SubUsage accumulates the token usage of the sub-agents this session delegated to (see [NewSubRunner]).
+	// It is booked with the next save of this session after a sub-agent finished, so the usage of a background
+	// task still running is not included yet. The child sessions carry their own Usage as well.
+	SubUsage completion.Usage `json:"subUsage,omitzero"`
+
+	// ParentID is set on a child session, which holds the transcript of a sub-agent the parent session
+	// delegated a task to (see [NewSubRunner]). Child sessions are hidden from [FindAll] unless
+	// [FindAllOptions.IncludeChildren] is set, and deleted together with their parent.
+	ParentID ID `json:"parentId,omitempty"`
+
+	// ParentCallID is the id of the tool call of the parent session which started this child session.
+	ParentCallID string `json:"parentCallId,omitempty"`
 
 	// Pending is set while the last run waits on a user decision (a clarifying question or the approval of a
 	// mutating tool). Messages then ends with the assistant turn carrying the pending calls; resolve them with
@@ -149,6 +164,12 @@ type CreateOptions struct {
 	// Input is an optional first user turn. When set, it is stored as the initial history entry but NOT yet
 	// completed - call [Append] to obtain an assistant answer. Leave empty to create an empty session.
 	Input []completion.Content
+
+	// ParentID makes the new session a child session of the given one, see [Session.ParentID]. Optional.
+	ParentID ID
+
+	// ParentCallID records the tool call of the parent which started the child session. Optional.
+	ParentCallID string
 }
 
 // AppendOptions carries a new user turn plus the runtime-only dependencies required to produce an assistant
@@ -201,6 +222,18 @@ type AppendOptions struct {
 	// ConfirmMutating suspends the run before every mutating tool call until the user approved it via
 	// [Resolve] (see [completion.RunOptions.ConfirmMutating]). Ignored without tools. Optional.
 	ConfirmMutating bool
+
+	// Context bounds the run: cancelling it aborts the in-flight provider request and stops the loop (see
+	// [completion.RunOptions.Context]). What the run did until then is persisted, and the use case returns an
+	// error satisfying errors.Is(err, context.Canceled). Nil means [context.Background]. Optional.
+	Context context.Context
+
+	// OnUsage is forwarded to [completion.RunOptions.OnUsage]. Optional.
+	OnUsage func(completion.Usage)
+
+	// BeforeFinish is forwarded to [completion.RunOptions.BeforeFinish], e.g. to join background tasks with
+	// [completion.TaskGroup.BeforeFinish]. Ignored without tools. Optional.
+	BeforeFinish func(ctx context.Context) string
 }
 
 // ResolveOptions carries the user's decisions on a pending run plus the runtime dependencies to continue it.
@@ -236,6 +269,10 @@ type FindAllOptions struct {
 	// semantics). An empty slice means "no tag filter". This is how a caller scopes sessions to an
 	// application context, e.g. Tags: []string{"ctx:invoice/42"}.
 	Tags []string
+
+	// IncludeChildren also yields child sessions (see [Session.ParentID]). They hold the transcripts of
+	// sub-agents and are hidden by default, because nobody continues them.
+	IncludeChildren bool
 }
 
 // FindAll yields the sessions the subject may see (per ReBAC), optionally narrowed by [FindAllOptions].
@@ -249,13 +286,15 @@ type Append func(subject auth.Subject, id ID, opts AppendOptions) (Session, erro
 type Resolve func(subject auth.Subject, id ID, opts ResolveOptions) (Session, error)
 
 // Dismiss closes the pending decisions without an answer and without asking the model, e.g. when the user moves
-// on to another topic. Already executed calls keep their results.
+// on to another topic. Already executed calls keep their results. Background tasks of the session (see
+// [UseCases.Tasks]) are cancelled.
 type Dismiss func(subject auth.Subject, id ID, revision int) (Session, error)
 
 // Rename changes the human-readable title of a session.
 type Rename func(subject auth.Subject, id ID, title string) error
 
-// Delete removes a session and its embedded history.
+// Delete removes a session and its embedded history, together with its child sessions (see [Session.ParentID]).
+// Background tasks of the session (see [UseCases.Tasks]) are cancelled.
 type Delete func(subject auth.Subject, id ID) error
 
 // UseCases bundles all session use cases. Construct it with [NewUseCases].
@@ -268,6 +307,14 @@ type UseCases struct {
 	Dismiss  Dismiss
 	Rename   Rename
 	Delete   Delete
+
+	// Tasks keeps the background tasks of running conversations, keyed by session id (see
+	// [completion.NewTaskTools]). [Dismiss] and [Delete] cancel the tasks of their session.
+	Tasks *completion.TaskRegistry
+
+	// subUsage collects the usage of sub-agents until their parent session is saved next, see
+	// [Session.SubUsage].
+	subUsage *usageLedger
 }
 
 // NewUseCases wires the session use cases against the given repository and ReBAC database.
@@ -284,15 +331,19 @@ type UseCases struct {
 // access.
 func NewUseCases(repo Repository, rdb *rebac.DB) UseCases {
 	var locks locker
+	tasks := completion.NewTaskRegistry()
+	ledger := &usageLedger{}
 
 	return UseCases{
 		Create:   NewCreate(repo, rdb),
 		FindByID: NewFindByID(repo),
 		FindAll:  NewFindAll(repo),
-		Append:   NewAppend(&locks, repo),
-		Resolve:  NewResolve(&locks, repo),
-		Dismiss:  NewDismiss(&locks, repo),
+		Append:   NewAppend(&locks, repo, ledger),
+		Resolve:  NewResolve(&locks, repo, ledger),
+		Dismiss:  NewDismiss(&locks, repo, tasks),
 		Rename:   NewRename(&locks, repo),
-		Delete:   NewDelete(&locks, repo, rdb),
+		Delete:   NewDelete(&locks, repo, rdb, tasks),
+		Tasks:    tasks,
+		subUsage: ledger,
 	}
 }

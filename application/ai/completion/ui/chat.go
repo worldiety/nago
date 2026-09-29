@@ -8,15 +8,19 @@
 package uicompletion
 
 import (
+	"context"
+	"errors"
 	"log/slog"
 	"slices"
 	"strings"
+	"sync/atomic"
 
 	"go.wdy.de/nago/application/ai/completion"
 	"go.wdy.de/nago/application/ai/model"
 	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/application/ai/session"
 	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/xsync"
 	"go.wdy.de/nago/presentation/core"
 	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
@@ -144,6 +148,10 @@ type ChatOptions struct {
 	// Agents configures the selectable assistant personas. len==0 falls back to a single default agent (empty
 	// prompt, provider default model, no tools). A picker is shown only when len>1.
 	Agents []Agent
+
+	// Delegation lets the model hand independent tasks to sub-agents working in parallel, see
+	// [DelegationOptions]. Nil disables it.
+	Delegation *DelegationOptions
 }
 
 // effectiveAgents returns the configured agents, or a single default agent when none are configured.
@@ -250,6 +258,16 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 	})
 	showHistory := core.AutoState[bool](wnd)
 	status := core.AutoState[string](wnd)
+	// cancelRun stops the run in flight (the stop button); runGen tells the events of an earlier run apart from
+	// the current one, because background tasks may still report after their run ended.
+	cancelRun := core.AutoState[context.CancelFunc](wnd)
+	runGen := core.AutoState[int](wnd)
+	// transientKey groups the background tasks of a chat without History, which has no session id for that.
+	transientKey := core.AutoState[string](wnd).Init(func() string { return data.RandIdent[string]() })
+	// childID and showChild drive the read-only dialog with the transcript of a sub-agent.
+	childID := core.AutoState[session.ID](wnd)
+	showChild := core.AutoState[bool](wnd)
+	registry := taskRegistry(opts.Sessions)
 	selectedAgent := core.AutoState[string](wnd).Init(func() string { return agentsList[0].ID })
 
 	// staged holds files the user picked but has not sent yet (only when FileUpload is enabled and the
@@ -317,21 +335,66 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		return cfg
 	}
 
-	appendOptions := func(cfg turnConfig, onProgress completion.ProgressFunc) session.AppendOptions {
+	// taskKey is the key of the background tasks of the conversation, see [completion.TaskRegistry].
+	taskKey := func(sid session.ID) string {
+		if opts.History && sid != "" {
+			return string(sid)
+		}
+		return transientKey.Get()
+	}
+
+	// runEnv is what a background run gets from [execute].
+	type runEnv struct {
+		subject    auth.Subject
+		ctx        context.Context
+		onProgress completion.ProgressFunc
+		onEvent    func(completion.SubEvent)
+	}
+
+	// runTools completes the tools of a run with the delegation tools, which are bound to the run: its session,
+	// its task budget and its progress display.
+	runTools := func(cfg turnConfig, sid session.ID, key string, run runEnv) ([]completion.Tool, func(context.Context) string) {
+		var group *completion.TaskGroup
+		if opts.Delegation != nil && opts.Delegation.BackgroundTasks {
+			group = registry.Group(key)
+		}
+
+		extra, beforeFinish := delegationTools(delegationRun{
+			opts:         opts,
+			model:        cfg.model,
+			system:       cfg.system,
+			tools:        cfg.tools,
+			confirm:      cfg.confirm,
+			fileUploader: fileUploader,
+			sessionID:    sid,
+			group:        group,
+			onEvent:      run.onEvent,
+		})
+
+		tools := slices.Clone(cfg.tools)
+		for _, t := range extra {
+			tools = withBuiltinTool(tools, t)
+		}
+		return tools, beforeFinish
+	}
+
+	appendOptions := func(cfg turnConfig, run runEnv, tools []completion.Tool, beforeFinish func(context.Context) string) session.AppendOptions {
 		return session.AppendOptions{
 			Completions:     comps,
 			Model:           cfg.model,
 			System:          cfg.system,
-			Tools:           cfg.tools,
+			Tools:           tools,
 			MaxTokens:       cfg.maxTokens,
 			MaxTurns:        opts.MaxTurns,
-			OnProgress:      onProgress,
+			OnProgress:      run.onProgress,
 			FileUploader:    fileUploader,
 			ConfirmMutating: cfg.confirm,
+			Context:         run.ctx,
+			BeforeFinish:    beforeFinish,
 		}
 	}
 
-	runOptions := func(cfg turnConfig, messages []completion.Message, onProgress completion.ProgressFunc) completion.RunOptions {
+	runOptions := func(cfg turnConfig, messages []completion.Message, run runEnv, tools []completion.Tool, beforeFinish func(context.Context) string) completion.RunOptions {
 		return completion.RunOptions{
 			Options: completion.Options{
 				Model:     cfg.model,
@@ -339,11 +402,13 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 				MaxTokens: cfg.maxTokens,
 				Messages:  messages,
 			},
-			Tools:           cfg.tools,
+			Tools:           tools,
 			MaxTurns:        opts.MaxTurns,
-			OnProgress:      onProgress,
+			OnProgress:      run.onProgress,
 			FileUploader:    fileUploader,
 			ConfirmMutating: cfg.confirm,
+			Context:         run.ctx,
+			BeforeFinish:    beforeFinish,
 		}
 	}
 
@@ -358,12 +423,42 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 	}
 
 	// execute shows the optimistic view, runs work off the event loop while mirroring each model turn live,
-	// and applies the outcome. rollback restores the input when a run failed without changing anything.
-	execute := func(optimistic []completion.Message, rollback func(), work func(subject auth.Subject, onProgress completion.ProgressFunc) (turnOutcome, error)) {
+	// and applies the outcome. rollback restores the input when a run failed without changing anything. The
+	// run can be stopped via cancelRun.
+	execute := func(optimistic []completion.Message, rollback func(), work func(run runEnv) (turnOutcome, error)) {
 		prevHistory := history.Get()
 		history.Set(optimistic)
 		busy.Set(true)
 		status.Set(thinkingLabel(0))
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancelRun.Set(cancel)
+		gen := runGen.Get() + 1
+		runGen.Set(gen)
+
+		// setStatus updates the progress line, unless the run it belongs to is already over.
+		setStatus := func(label string) {
+			wnd.Post(func() {
+				if busy.Get() && runGen.Get() == gen {
+					status.Set(label)
+				}
+			})
+		}
+
+		// Sub-agents report from their own goroutines, and never through onProgress: their turns and tools
+		// are not the ones of this conversation.
+		var started, finished atomic.Int64
+		onEvent := func(e completion.SubEvent) {
+			switch e.Kind {
+			case completion.SubStarted:
+				started.Add(1)
+			case completion.SubFinished:
+				finished.Add(1)
+			default:
+				return
+			}
+			setStatus(taskProgressLabel(int(finished.Load()), int(started.Load())))
+		}
 
 		// live mirrors the growing conversation while the loop runs so each assistant turn appears the moment
 		// it arrives. lastStop remembers why the latest model turn ended, so a truncated or refused final
@@ -373,8 +468,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		onProgress := func(p completion.Progress) {
 			switch p.Phase {
 			case completion.PhaseTurnStarted:
-				turn := p.Turn
-				wnd.Post(func() { status.Set(thinkingLabel(turn)) })
+				setStatus(thinkingLabel(p.Turn))
 			case completion.PhaseModelResponded:
 				if p.Result == nil {
 					return
@@ -392,17 +486,20 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 				if p.ToolCall != nil {
 					name = p.ToolCall.Name
 				}
-				wnd.Post(func() { status.Set(toolLabel(name)) })
+				setStatus(toolLabel(name))
 			}
 		}
 
 		xsync.Go(func() error {
-			subject := wnd.Subject()
-			out, err := work(subject, onProgress)
+			defer cancel()
+
+			out, err := work(runEnv{subject: wnd.Subject(), ctx: ctx, onProgress: onProgress, onEvent: onEvent})
+			stopped := err != nil && (errors.Is(err, context.Canceled) || ctx.Err() != nil)
 
 			wnd.Post(func() {
 				busy.Set(false)
 				status.Set("")
+				cancelRun.Set(nil)
 				if err != nil {
 					if out.progressed {
 						// Keep what already happened (tools with side effects) visible.
@@ -415,6 +512,16 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 							rollback()
 						}
 					}
+
+					if stopped {
+						alert.ShowBannerMessage(wnd, alert.Message{
+							Title:   "Angehalten",
+							Message: "Die KI wurde angehalten. Was bis dahin erledigt war, bleibt erhalten.",
+							Intent:  alert.IntentWarning,
+						})
+						return
+					}
+
 					alert.ShowBannerError(wnd, err)
 					return
 				}
@@ -440,6 +547,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 				wnd.Post(func() {
 					busy.Set(false)
 					status.Set("")
+					cancelRun.Set(nil)
 					history.Set(prevHistory)
 					if rollback != nil {
 						rollback()
@@ -463,7 +571,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 	}
 
 	fromOutcome := func(out completion.Outcome, err error) (turnOutcome, error) {
-		return turnOutcome{history: out.History, pending: out.Suspended, usage: out.Result.Usage, progressed: out.Progressed}, err
+		return turnOutcome{history: out.History, pending: out.Suspended, usage: out.Usage, progressed: out.Progressed}, err
 	}
 
 	submit := func() {
@@ -515,7 +623,11 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			staged.Set(stagedFiles)
 		}
 
-		execute(optimistic, rollback, func(subject auth.Subject, onProgress completion.ProgressFunc) (turnOutcome, error) {
+		key := taskKey(sid)
+		execute(optimistic, rollback, func(run runEnv) (turnOutcome, error) {
+			subject := run.subject
+			tools, beforeFinish := runTools(cfg, sid, key, run)
+
 			// Build the user turn content: any attached files (uploaded/inlined here on the background
 			// goroutine) followed by the typed text.
 			input, err := buildUploadContent(subject, providerFiles, stagedFiles)
@@ -527,7 +639,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			}
 
 			if opts.History {
-				ao := appendOptions(cfg, onProgress)
+				ao := appendOptions(cfg, run, tools, beforeFinish)
 				ao.Input = input
 				updated, err := opts.Sessions.Append(subject, sid, ao)
 				return fromSession(subject, sid, updated, err, len(prevHistory))
@@ -536,7 +648,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			// Transient chat: run the agentic loop directly over the history plus the real
 			// (attachment-aware) user turn, without persisting anything.
 			messages := append(slices.Clone(prevHistory), completion.Message{Role: completion.User, Content: input})
-			return fromOutcome(completion.Start(subject, comps, runOptions(cfg, messages, onProgress)))
+			return fromOutcome(completion.Start(subject, comps, runOptions(cfg, messages, run, tools, beforeFinish)))
 		})
 	}
 
@@ -560,9 +672,13 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			pendingRev.Set(rev)
 		}
 
-		execute(optimistic, rollback, func(subject auth.Subject, onProgress completion.ProgressFunc) (turnOutcome, error) {
+		key := taskKey(sid)
+		execute(optimistic, rollback, func(run runEnv) (turnOutcome, error) {
+			subject := run.subject
+			tools, beforeFinish := runTools(cfg, sid, key, run)
+
 			if opts.History {
-				ao := appendOptions(cfg, onProgress)
+				ao := appendOptions(cfg, run, tools, beforeFinish)
 				// The model of a pending run is fixed; the session knows it.
 				ao.Model = ""
 				updated, err := opts.Sessions.Resolve(subject, sid, session.ResolveOptions{
@@ -573,7 +689,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 				return fromSession(subject, sid, updated, err, len(prevHistory))
 			}
 
-			return fromOutcome(completion.Continue(subject, comps, runOptions(cfg, prevHistory, onProgress), *cont, resolutions))
+			return fromOutcome(completion.Continue(subject, comps, runOptions(cfg, prevHistory, run, tools, beforeFinish), *cont, resolutions))
 		})
 	}
 
@@ -591,6 +707,8 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			}
 			history.Set(dismissed)
 			pending.Set(nil)
+			// The user moved on; background tasks of the abandoned question are of no use any more.
+			registry.Cancel(taskKey(""))
 			return
 		}
 
@@ -606,8 +724,28 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		applySession(updated)
 	}
 
+	// stop cancels the run in flight, including the provider request, and the background tasks of the
+	// conversation. What already happened is kept.
+	stop := func() {
+		if c := cancelRun.Get(); c != nil {
+			c()
+		}
+		if opts.Delegation != nil && opts.Delegation.BackgroundTasks {
+			registry.Cancel(taskKey(sessionID.Get()))
+		}
+		status.Set("… die KI wird angehalten")
+	}
+
+	var hv historyView
+	if opts.History {
+		hv.openChild = func(id session.ID) {
+			childID.Set(id)
+			showChild.Set(true)
+		}
+	}
+
 	conversation := conversationView(wnd, history.Get(),
-		"Stell mir eine Frage, um die Unterhaltung zu beginnen.", height)
+		"Stell mir eine Frage, um die Unterhaltung zu beginnen.", height, hv)
 
 	var footer core.View
 	// A pending decision takes precedence over the input: the run waits on it, so offering the input field
@@ -636,7 +774,10 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			ui.HStack(
 				ui.If(uploadEnabled, uploadButton(wnd, staged, busy.Get())),
 				ui.Spacer(),
-				ui.SecondaryButton(submit).PreIcon(icons.PaperPlane).Title("Senden").Enabled(!busy.Get()),
+				ui.IfElse(busy.Get(),
+					ui.SecondaryButton(stop).PreIcon(icons.Stop).Title("Stopp").Enabled(cancelRun.Get() != nil),
+					ui.SecondaryButton(submit).PreIcon(icons.PaperPlane).Title("Senden"),
+				),
 			).Gap(ui.L8).FullWidth().Alignment(ui.Center),
 		).Gap(ui.L8).FullWidth().Alignment(ui.Leading)
 	}
@@ -683,8 +824,14 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		).Gap(ui.L4).FullWidth().Alignment(ui.Center)
 	}
 
+	var subDialog core.View
+	if opts.History {
+		subDialog = childDialog(wnd, opts.Sessions, childID, showChild)
+	}
+
 	return ui.VStack(
 		ui.If(restoreDialog != nil, restoreDialog),
+		ui.If(subDialog != nil, subDialog),
 		ui.If(historyActions != nil, historyActions),
 		ui.If(picker != nil, picker),
 		conversation,
@@ -705,7 +852,8 @@ func findResumable(subject auth.Subject, sessions session.UseCases, tags []strin
 		if err != nil {
 			return nil
 		}
-		if s.Pending == nil || s.CreatedBy != subject.ID() || s.ProviderHint != providerHint || !sameTags(s.Tags, tags) {
+		// Child sessions hold sub-agent transcripts; nobody continues them.
+		if s.Pending == nil || s.ParentID != "" || s.CreatedBy != subject.ID() || s.ProviderHint != providerHint || !sameTags(s.Tags, tags) {
 			continue
 		}
 		if best == nil || s.UpdatedAt > best.UpdatedAt {

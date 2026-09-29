@@ -49,6 +49,8 @@ func NewCreate(repo Repository, rdb *rebac.DB) Create {
 			ProviderHint: opts.ProviderHint,
 			Tags:         opts.Tags,
 			Messages:     messages,
+			ParentID:     opts.ParentID,
+			ParentCallID: opts.ParentCallID,
 			CreatedAt:    now,
 			CreatedBy:    subject.ID(),
 			UpdatedAt:    now,

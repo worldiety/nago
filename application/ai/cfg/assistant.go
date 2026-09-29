@@ -75,6 +75,11 @@ type AssistantOptions struct {
 	// before it runs. Optional; the zero value follows the operator's [AssistantSettings.SkipConfirmation].
 	Confirmation Confirmation
 
+	// Delegation lets the model hand independent tasks to sub-agents which work on them in parallel, see
+	// [uicompletion.DelegationOptions]. Sub-agents are read-only whenever changes must be confirmed (see
+	// Confirmation) or the operator's read-only setting is active. Optional; nil disables it.
+	Delegation *uicompletion.DelegationOptions
+
 	// Corner places the floating button. Optional; defaults to the bottom right.
 	Corner uicompletion.Corner
 
@@ -174,6 +179,7 @@ func (a *Assistant) Button(wnd core.Window, opts AssistantOptions) core.View {
 		ReadOnly:           cfg.ReadOnly,
 		ConfirmMutations:   opts.Confirmation.confirm(cfg),
 		Agents:             agents,
+		Delegation:         opts.Delegation,
 	})
 
 	button = button.Corner(opts.Corner)

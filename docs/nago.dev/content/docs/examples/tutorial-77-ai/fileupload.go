@@ -9,6 +9,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"strings"
@@ -192,7 +193,7 @@ func fileUploadChat(wnd core.Window, uc ai.UseCases) core.View {
 				return nil
 			}
 
-			res, err := comps.Complete(wnd.Subject(), completion.Options{
+			res, err := comps.Complete(context.Background(), wnd.Subject(), completion.Options{
 				Model:     selectedModel.Get(),
 				System:    "You are a helpful assistant. Answer strictly based on the attached file. If the file does not contain the answer, say so.",
 				MaxTokens: 1024,

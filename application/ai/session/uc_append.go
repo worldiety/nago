@@ -8,6 +8,7 @@
 package session
 
 import (
+	"context"
 	"fmt"
 
 	"go.wdy.de/nago/application/ai/completion"
@@ -26,7 +27,7 @@ import (
 // The potentially long-running provider call happens while the per-session lock is held so that a concurrent
 // Append on the SAME session cannot build on a stale history; operations on other sessions are unaffected.
 // Callers should run Append off the UI thread.
-func NewAppend(locks *locker, repo Repository) Append {
+func NewAppend(locks *locker, repo Repository, ledger *usageLedger) Append {
 	return func(subject auth.Subject, id ID, opts AppendOptions) (Session, error) {
 		if opts.Completions == nil {
 			return Session{}, fmt.Errorf("session: AppendOptions.Completions must not be nil")
@@ -90,26 +91,34 @@ func NewAppend(locks *locker, repo Repository) Append {
 		}
 
 		if len(opts.Tools) == 0 {
-			res, cerr := opts.Completions.Complete(subject, baseOpts)
+			ctx := opts.Context
+			if ctx == nil {
+				ctx = context.Background()
+			}
+
+			res, cerr := opts.Completions.Complete(ctx, subject, baseOpts)
 			if cerr != nil {
 				return Session{}, fmt.Errorf("completion failed: %w", cerr)
+			}
+			if opts.OnUsage != nil {
+				opts.OnUsage(res.Usage)
 			}
 			// A single turn: our request history plus the assistant answer.
 			newHistory := history
 			if len(res.Message.Content) > 0 {
 				newHistory = append(newHistory, res.Message)
 			}
-			return saveOutcome(repo, session, mdl, completion.Outcome{Result: res, History: newHistory})
+			return saveOutcome(repo, ledger, session, mdl, completion.Outcome{Result: res, History: newHistory, Usage: res.Usage})
 		}
 
 		// Agentic loop: the outcome carries the full trace (starting from our history) including all
 		// intermediate tool calls and tool results, and possibly a suspension on a user decision.
 		out, rerr := completion.Start(subject, opts.Completions, runOptions(baseOpts, opts))
 		if rerr != nil {
-			return Session{}, persistFailure(repo, session, mdl, out, rerr)
+			return Session{}, persistFailure(repo, ledger, session, mdl, out, rerr)
 		}
 
-		return saveOutcome(repo, session, mdl, out)
+		return saveOutcome(repo, ledger, session, mdl, out)
 	}
 }
 
@@ -123,14 +132,18 @@ func runOptions(base completion.Options, opts AppendOptions) completion.RunOptio
 		FileUploader:     opts.FileUploader,
 		OnBeforeToolCall: opts.OnBeforeToolCall,
 		ConfirmMutating:  opts.ConfirmMutating,
+		Context:          opts.Context,
+		OnUsage:          opts.OnUsage,
+		BeforeFinish:     opts.BeforeFinish,
 	}
 }
 
 // saveOutcome stores the history of a finished or suspended run.
-func saveOutcome(repo Repository, session Session, mdl model.ID, out completion.Outcome) (Session, error) {
+func saveOutcome(repo Repository, ledger *usageLedger, session Session, mdl model.ID, out completion.Outcome) (Session, error) {
 	session.Messages = out.History
 	session.Model = mdl
-	session.Usage = addUsage(session.Usage, out.Result.Usage)
+	session.Usage = session.Usage.Add(out.Usage)
+	session.SubUsage = session.SubUsage.Add(ledger.drain(session.ID))
 	session.UpdatedAt = xtime.Now()
 	session.Pending = out.Suspended
 	if out.Suspended != nil {
@@ -147,13 +160,15 @@ func saveOutcome(repo Repository, session Session, mdl model.ID, out completion.
 // persistFailure keeps what a failed run already did. Tools that ran may have had side effects, so the
 // session must reflect them and a follow-up question builds on them. The history of a failed run never
 // contains a tool_use without its tool_result.
-func persistFailure(repo Repository, session Session, mdl model.ID, out completion.Outcome, runErr error) error {
+func persistFailure(repo Repository, ledger *usageLedger, session Session, mdl model.ID, out completion.Outcome, runErr error) error {
 	if !out.Progressed {
 		return fmt.Errorf("completion run failed: %w", runErr)
 	}
 
 	session.Messages = out.History
 	session.Model = mdl
+	session.Usage = session.Usage.Add(out.Usage)
+	session.SubUsage = session.SubUsage.Add(ledger.drain(session.ID))
 	session.Pending = nil
 	session.UpdatedAt = xtime.Now()
 	if err := repo.Save(session); err != nil {
@@ -161,14 +176,4 @@ func persistFailure(repo Repository, session Session, mdl model.ID, out completi
 	}
 
 	return fmt.Errorf("completion run failed: %w", runErr)
-}
-
-// addUsage accumulates token usage across turns.
-func addUsage(a, b completion.Usage) completion.Usage {
-	return completion.Usage{
-		InputTokens:      a.InputTokens + b.InputTokens,
-		OutputTokens:     a.OutputTokens + b.OutputTokens,
-		CacheReadTokens:  a.CacheReadTokens + b.CacheReadTokens,
-		CacheWriteTokens: a.CacheWriteTokens + b.CacheWriteTokens,
-	}
 }

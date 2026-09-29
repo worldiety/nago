@@ -8,12 +8,11 @@
 package completion
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
-
-	"go.wdy.de/nago/auth"
 )
 
 // AskUserToolName is the name of the built-in clarification tool created by [NewAskUserTool].
@@ -95,6 +94,10 @@ type Outcome struct {
 	// Progressed reports whether History moved beyond the input (model turns, tool results, a resumed
 	// decision or a compaction). A failed run with Progressed set left a history worth persisting.
 	Progressed bool
+	// Usage is the token usage summed over every completion of the run, including the ones of a [Compactor],
+	// and also set when the run failed or was cancelled. [Outcome.Result] only carries the usage of the last
+	// turn. Sub-agents started by delegation tools are not included; see [DelegateConfig.OnUsage].
+	Usage Usage
 }
 
 type resumeInput struct {
@@ -138,7 +141,7 @@ func answerResult(callID, answer string) ToolResult {
 
 // resumeMessage builds the user turn which answers every tool call of the last assistant message: the
 // already completed results plus the resolved pending calls, in call order, followed by attachments.
-func resumeMessage(subject auth.Subject, tools map[string]Tool, opts RunOptions, history []Message, cont Continuation, resolutions []Resolution) (Message, error) {
+func resumeMessage(env toolEnv, tools map[string]Tool, history []Message, cont Continuation, resolutions []Resolution) (Message, error) {
 	if len(history) == 0 || history[len(history)-1].Role != Assistant {
 		return Message{}, fmt.Errorf("history does not end with the suspended assistant turn: %w", ErrContinuationMismatch)
 	}
@@ -197,7 +200,7 @@ func resumeMessage(subject auth.Subject, tools map[string]Tool, opts RunOptions,
 			results = append(results, answerResult(call.ID, r.Answer))
 		case r.Approved:
 			// Execute exactly the arguments the user approved, not whatever the model might send later.
-			result, media := executeToolCall(subject, tools, pc.Call, opts.FileUploader, opts.OnBeforeToolCall)
+			result, media := executeToolCall(env, tools, pc.Call)
 			results = append(results, result)
 			attachments = append(attachments, media...)
 		default:
@@ -224,7 +227,7 @@ func Dismiss(history []Message, cont Continuation) ([]Message, error) {
 		resolutions = append(resolutions, Resolution{CallID: pc.Call.ID, Dismissed: true})
 	}
 
-	msg, err := resumeMessage(nil, nil, RunOptions{}, history, cont, resolutions)
+	msg, err := resumeMessage(toolEnv{ctx: context.Background(), opts: &RunOptions{}}, nil, history, cont, resolutions)
 	if err != nil {
 		return nil, err
 	}

@@ -9,6 +9,7 @@ package anthropic
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -304,12 +305,13 @@ type apiModel struct {
 	CreatedAt   string `json:"created_at"`
 }
 
-// CreateMessage performs a blocking, stateless Messages API call.
-func (c *Client) CreateMessage(req apiRequest) (apiResponse, error) {
+// CreateMessage performs a blocking, stateless Messages API call. Cancelling ctx aborts the request.
+func (c *Client) CreateMessage(ctx context.Context, req apiRequest) (apiResponse, error) {
 	req.Stream = false
 
 	var resp apiResponse
 	r := c.newReq().
+		Context(ctx).
 		URL("messages").
 		Assert2xx(true).
 		BodyJSON(req).

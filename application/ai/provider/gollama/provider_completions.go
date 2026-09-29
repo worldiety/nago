@@ -8,6 +8,7 @@
 package gollama
 
 import (
+	"context"
 	"fmt"
 	"iter"
 
@@ -27,7 +28,7 @@ func (c *gollamaCompletions) Models(subject auth.Subject) iter.Seq2[model.Model,
 	return listModels()
 }
 
-func (c *gollamaCompletions) Complete(subject auth.Subject, opts completion.Options) (completion.Result, error) {
+func (c *gollamaCompletions) Complete(ctx context.Context, subject auth.Subject, opts completion.Options) (completion.Result, error) {
 	lm, nCtx, err := c.prepare(opts)
 	if err != nil {
 		return completion.Result{}, err
@@ -38,7 +39,7 @@ func (c *gollamaCompletions) Complete(subject auth.Subject, opts completion.Opti
 		return completion.Result{}, fmt.Errorf("render prompt: %w", err)
 	}
 
-	out, err := c.parent.eng.generate(lm, prompt, lm.adapter.stopStrings(), lm.adapter.toolMarkers(), opts.MaxTokens, nCtx, nil)
+	out, err := c.parent.eng.generate(ctx, lm, prompt, lm.adapter.stopStrings(), lm.adapter.toolMarkers(), opts.MaxTokens, nCtx, nil)
 	if err != nil {
 		return completion.Result{}, err
 	}
@@ -59,7 +60,7 @@ func (c *gollamaCompletions) Complete(subject auth.Subject, opts completion.Opti
 	}, nil
 }
 
-func (c *gollamaCompletions) Stream(subject auth.Subject, opts completion.Options) iter.Seq2[completion.Delta, error] {
+func (c *gollamaCompletions) Stream(ctx context.Context, subject auth.Subject, opts completion.Options) iter.Seq2[completion.Delta, error] {
 	return func(yield func(completion.Delta, error) bool) {
 		lm, nCtx, err := c.prepare(opts)
 		if err != nil {
@@ -82,7 +83,7 @@ func (c *gollamaCompletions) Stream(subject auth.Subject, opts completion.Option
 			return true
 		}
 
-		out, err := c.parent.eng.generate(lm, prompt, lm.adapter.stopStrings(), lm.adapter.toolMarkers(), opts.MaxTokens, nCtx, emit)
+		out, err := c.parent.eng.generate(ctx, lm, prompt, lm.adapter.stopStrings(), lm.adapter.toolMarkers(), opts.MaxTokens, nCtx, emit)
 		if aborted {
 			return
 		}

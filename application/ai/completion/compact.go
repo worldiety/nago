@@ -8,6 +8,7 @@
 package completion
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -88,7 +89,7 @@ func NewSummaryCompactor(cfg SummaryCompactorConfig) Compactor {
 		prompt = defaultSummaryPrompt
 	}
 
-	return func(subject auth.Subject, c Completions, opts Options, history []Message) ([]Message, error) {
+	return func(ctx context.Context, subject auth.Subject, c Completions, opts Options, history []Message) ([]Message, error) {
 		if len(history) == 0 {
 			return history, nil
 		}
@@ -104,7 +105,7 @@ func NewSummaryCompactor(cfg SummaryCompactorConfig) Compactor {
 		}
 
 		transcript := renderTranscript(prefix)
-		summary := summarizeText(subject, c, opts, prompt, maxSummaryTokens, transcript, 0)
+		summary := summarizeText(ctx, subject, c, opts, prompt, maxSummaryTokens, transcript, 0)
 
 		summaryMsg := Message{
 			Role:    User,
@@ -142,8 +143,8 @@ func splitIndex(history []Message, keepLastN int) int {
 // summarizeText asks the model to summarize transcript. If the request overflows the context window it
 // recursively splits the transcript in half (on rune boundaries) and summarizes both halves, joining the
 // partial summaries. As a guaranteed fallback it rune-truncates the text without calling the model.
-func summarizeText(subject auth.Subject, c Completions, opts Options, prompt string, maxSummaryTokens int, transcript string, depth int) string {
-	res, err := c.Complete(subject, Options{
+func summarizeText(ctx context.Context, subject auth.Subject, c Completions, opts Options, prompt string, maxSummaryTokens int, transcript string, depth int) string {
+	res, err := c.Complete(ctx, subject, Options{
 		Model:     opts.Model,
 		System:    prompt,
 		MaxTokens: maxSummaryTokens,
@@ -172,8 +173,8 @@ func summarizeText(subject auth.Subject, c Completions, opts Options, prompt str
 	}
 
 	left, right := splitRunes(transcript)
-	ls := summarizeText(subject, c, opts, prompt, maxSummaryTokens, left, depth+1)
-	rs := summarizeText(subject, c, opts, prompt, maxSummaryTokens, right, depth+1)
+	ls := summarizeText(ctx, subject, c, opts, prompt, maxSummaryTokens, left, depth+1)
+	rs := summarizeText(ctx, subject, c, opts, prompt, maxSummaryTokens, right, depth+1)
 	return ls + "\n" + rs
 }
 
@@ -299,5 +300,3 @@ func runeLenMsg(m Message) int {
 	}
 	return total
 }
-
-

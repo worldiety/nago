@@ -8,6 +8,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -103,7 +104,6 @@ func statelessChat(wnd core.Window, uc ai.UseCases) core.View {
 		})
 	}
 
-
 	submit := func() {
 		question := strings.TrimSpace(prompt.Get())
 		if question == "" || busy.Get() {
@@ -114,7 +114,7 @@ func statelessChat(wnd core.Window, uc ai.UseCases) core.View {
 		answer.Set("")
 
 		xsync.Go(func() error {
-			res, err := comps.Complete(wnd.Subject(), completion.Options{
+			res, err := comps.Complete(context.Background(), wnd.Subject(), completion.Options{
 				Model: selectedModel.Get(),
 				Messages: []completion.Message{
 					{
@@ -187,4 +187,3 @@ func statelessChat(wnd core.Window, uc ai.UseCases) core.View {
 		FullWidth().
 		Padding(ui.Padding{}.All(ui.L16))
 }
-
