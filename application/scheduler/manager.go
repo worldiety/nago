@@ -64,6 +64,72 @@ func (m *Manager) Configure(opts Options) error {
 	return nil
 }
 
+// Remove stops the scheduler and removes it, so that its ID can be configured again. Its persisted settings are
+// deleted as well, while the history of its runs is kept. A run in progress is cancelled but not awaited.
+func (m *Manager) Remove(id ID) error {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	s, ok := m.services[id]
+	if !ok {
+		return fmt.Errorf("service with id %s not found", id)
+	}
+
+	s.Destroy()
+	delete(m.services, id)
+
+	if err := m.settingsRepo.DeleteByID(id); err != nil {
+		return fmt.Errorf("cannot delete settings of %s: %w", id, err)
+	}
+
+	return nil
+}
+
+// Reconfigure replaces the options of an existing scheduler, e.g. its runner, and launches it again. Its persisted
+// settings are kept. A run in progress is cancelled but not awaited.
+func (m *Manager) Reconfigure(opts Options) error {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	old, ok := m.services[opts.ID]
+	if !ok {
+		return fmt.Errorf("service with id %s not found", opts.ID)
+	}
+
+	if opts.Runner == nil {
+		return fmt.Errorf("runner is required")
+	}
+
+	old.Destroy()
+
+	s := NewScheduler(m.ctx, opts, m.settingsRepo)
+	s.runs = m.runs
+	m.services[opts.ID] = s
+	s.Launch()
+
+	return nil
+}
+
+// Has returns true, if a scheduler with the given id has been configured.
+func (m *Manager) Has(id ID) bool {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	_, ok := m.services[id]
+	return ok
+}
+
+// Wake makes the scheduler apply its changed settings immediately instead of after its current delay.
+func (m *Manager) Wake(id ID) {
+	m.mutex.Lock()
+	s, ok := m.services[id]
+	m.mutex.Unlock()
+
+	if ok {
+		s.Wake()
+	}
+}
+
 func (m *Manager) Start(id ID) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -73,7 +139,7 @@ func (m *Manager) Start(id ID) error {
 		return fmt.Errorf("service with id %s not found", id)
 	}
 
-	if s.State() == Running {
+	if s.Looping() {
 		slog.Info("service already started")
 		return nil
 	}
@@ -91,7 +157,7 @@ func (m *Manager) Stop(id ID) error {
 		return fmt.Errorf("service with id %s not found", id)
 	}
 
-	if s.State() == Stopped {
+	if !s.Looping() {
 		slog.Info("service already stopped")
 		return nil
 	}

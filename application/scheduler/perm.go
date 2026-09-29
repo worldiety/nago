@@ -16,6 +16,7 @@ var (
 	PermExecuteNow         = permission.Declare[ExecuteNow]("nago.scheduler.executenow", "Scheduler direkt ausführen", "Träger dieser Berechtigung können den Scheduler Job manuell ausführen.")
 	PermListSchedulers     = permission.Declare[ListSchedulers]("nago.scheduler.listall", "Scheduler auflisten", "Träger dieser Berechtigung können alle Scheduler Jobs auflisten.")
 	PermStart              = permission.Declare[Start]("nago.scheduler.start", "Scheduler starten", "Träger dieser Berechtigung können einen Scheduler per ID starten bzw. händisch ausführen.")
+	PermRemove             = permission.Declare[Remove]("nago.scheduler.remove", "Scheduler entfernen", "Träger dieser Berechtigung können beliebige Scheduler samt ihrer Einstellungen entfernen.")
 	PermStop               = permission.Declare[Stop]("nago.scheduler.stop", "Scheduler beenden", "Träger dieser Berechtigung können einen Scheduler per ID bis zum nächsten Systemstart beenden.")
 	PermUpdateSettingsByID = permission.Declare[UpdateSettings]("nago.scheduler.settings_update", "Scheduler Settings aktualisieren", "Träger dieser Berechtigung können die Scheduler Settings per ID ändern.")
 	PermDeleteSettingsByID = permission.Declare[DeleteSettingsByID]("nago.scheduler.settings.delete_by_id", "Scheduler Settings löschen", "Träger dieser Berechtigung können die Scheduler Settings löschen und zurücksetzen.")

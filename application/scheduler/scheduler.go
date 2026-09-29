@@ -44,6 +44,8 @@ type Scheduler struct {
 	lastCompletedAt atomic.Pointer[time.Time]
 	nextPlannedAt   atomic.Pointer[time.Time]
 	launchMutex     sync.Mutex
+	looping         atomic.Bool   // true while the loop goroutine of Launch is alive
+	wake            chan struct{} // signals changed settings to the loop
 	runs            *runStore
 	sink            atomic.Pointer[runSink]
 	currentRun      atomic.Pointer[Run]
@@ -59,6 +61,7 @@ func NewScheduler(ctx context.Context, opts Options, settingsRepo SettingsReposi
 		cancel:       func() {},
 		opts:         opts,
 		settingsRepo: settingsRepo,
+		wake:         make(chan struct{}, 1),
 	}
 
 	var zeroTime time.Time
@@ -103,125 +106,185 @@ func (s *Scheduler) ResetContext() {
 
 func (s *Scheduler) Launch() {
 	s.ResetContext()
+	s.looping.Store(true)
+
+	// the loop keeps its own context, so that a later ResetContext, e.g. by ExecuteNow on a stopped scheduler,
+	// cannot revive a cancelled loop
+	ctx := s.ctx
 
 	go func() {
 		defer func() {
+			s.looping.Store(false)
 			state := Stopped
 			s.state.Store(&state)
 		}()
 
+	loop:
 		for {
-			optSettings, err := s.settingsRepo.FindByID(s.opts.ID)
+			settings, err := s.loadSettings()
 			if err != nil {
 				slog.Error("service looper failed to load settings", "id", s.opts.ID, "err", err.Error())
 				return
 			}
 
-			settings := s.opts.Defaults
-			if optSettings.IsSome() {
-				settings = optSettings.Unwrap()
-			}
-
 			if settings.Disabled || s.opts.Kind == Manual {
 				state := Disabled
 				s.state.Store(&state)
-				// wait the config-reload time or exit early on cancel
-				select {
-				case <-s.ctx.Done():
+				// wait the config-reload time or until the settings have been changed or exit early on cancel
+				if _, alive := s.sleep(ctx, time.Minute); !alive {
 					slog.Info("service shutdown due to context signal")
 					return
-				case <-time.After(time.Minute):
-					continue
-				}
-			} else {
-				state := Paused
-				s.state.Store(&state)
-				// wait the start-delay or exit early on cancel
-				select {
-				case <-s.ctx.Done():
-					slog.Info("service shutdown due to context signal")
-					return
-				case <-time.After(settings.StartDelay):
 				}
 
-				// perform the actual work execution
+				continue
+			}
 
-				if s.opts.Kind != Cron {
-					startedAt := time.Now()
-					s.lastStartedAt.Store(&startedAt)
-					err := s.protectExec(func() error {
-						return s.opts.Runner(s.ctx)
-					})
+			state := Paused
+			s.state.Store(&state)
+			// wait the start-delay or exit early on cancel. Changed settings restart the delay.
+			woken, alive := s.sleep(ctx, settings.StartDelay)
+			if !alive {
+				slog.Info("service shutdown due to context signal")
+				return
+			}
 
-					if err != nil {
-						slog.Error("service looper failed to run", "id", s.opts.ID, "err", err.Error())
-					}
-				}
+			if woken {
+				continue
+			}
 
-				pauseTime := settings.PauseTime
+			// perform the actual work execution
 
-				switch s.opts.Kind {
-				case OneShot, Manual:
-					var zeroT time.Time
-					s.nextPlannedAt.Store(&zeroT)
-					return
-				case Schedule:
-					// do nothing, go ahead and sleep
-					nextPlannedAt := time.Now().Add(settings.PauseTime)
-					s.nextPlannedAt.Store(&nextPlannedAt)
-				case Cron:
-					now := time.Now()
-					startOfDay := time.Date(
-						now.Year(), now.Month(), now.Day(),
-						0, 0, 0, 0,
-						now.Location(),
-					)
-
-					nextPlannedAt := startOfDay.
-						Add(time.Duration(settings.CronHour) * time.Hour).
-						Add(time.Duration(settings.CronMinute) * time.Minute)
-
-					if settings.PauseTime > 0 {
-						for !nextPlannedAt.After(now) {
-							nextPlannedAt = nextPlannedAt.Add(settings.PauseTime)
-						}
-					} else if nextPlannedAt.Before(now) {
-						nextPlannedAt = nextPlannedAt.Add(24 * time.Hour)
-					}
-
-					pauseTime = nextPlannedAt.Sub(now)
-					s.nextPlannedAt.Store(&nextPlannedAt)
-				}
-
-				// wait the pause-delay or exit early on cancel
-				state = Paused
-				s.state.Store(&state)
-				select {
-				case <-s.ctx.Done():
-					slog.Info("service shutdown due to context signal", "id", s.opts.ID)
-					return
-					// do not schedule faster than 1 second, everything else is probably a configuration mistake
-				case <-time.After(max(pauseTime, time.Second)):
-
-					if s.opts.Kind == Cron {
-						startedAt := time.Now()
-						s.lastStartedAt.Store(&startedAt)
-						err := s.protectExec(func() error {
-							return s.opts.Runner(s.ctx)
-						})
-
-						if err != nil {
-							slog.Error("service looper cron failed to run", "id", s.opts.ID, "err", err.Error())
-						}
-
-					}
-
-					continue
+			if s.opts.Kind != Cron {
+				if err := s.execute(); err != nil {
+					slog.Error("service looper failed to run", "id", s.opts.ID, "err", err.Error())
 				}
 			}
 
+			pauseTime := settings.PauseTime
+
+			switch s.opts.Kind {
+			case OneShot, Manual:
+				var zeroT time.Time
+				s.nextPlannedAt.Store(&zeroT)
+				return
+			case Schedule:
+				// do nothing, go ahead and sleep
+				nextPlannedAt := time.Now().Add(settings.PauseTime)
+				s.nextPlannedAt.Store(&nextPlannedAt)
+			case Cron:
+				nextPlannedAt := nextCronAt(time.Now(), settings)
+				pauseTime = time.Until(nextPlannedAt)
+				s.nextPlannedAt.Store(&nextPlannedAt)
+			}
+
+			// wait the pause-delay or exit early on cancel
+			state = Paused
+			s.state.Store(&state)
+			// do not schedule faster than 1 second, everything else is probably a configuration mistake
+			deadline := time.Now().Add(max(pauseTime, time.Second))
+			for {
+				woken, alive := s.sleep(ctx, time.Until(deadline))
+				if !alive {
+					slog.Info("service shutdown due to context signal", "id", s.opts.ID)
+					return
+				}
+
+				if !woken {
+					break
+				}
+
+				// the settings have been changed while pausing
+				if s.opts.Kind != Schedule {
+					continue loop // a cron plan is recalculated from scratch
+				}
+
+				settings, err = s.loadSettings()
+				if err != nil || settings.Disabled {
+					continue loop
+				}
+
+				// keep the distance to the last run, but with the new pause time
+				deadline = s.LastCompletedAt().Add(max(settings.PauseTime, time.Second))
+				s.nextPlannedAt.Store(&deadline)
+			}
+
+			if s.opts.Kind == Cron {
+				if err := s.execute(); err != nil {
+					slog.Error("service looper cron failed to run", "id", s.opts.ID, "err", err.Error())
+				}
+			}
 		}
 	}()
+}
+
+// nextCronAt returns the next planned execution after now.
+func nextCronAt(now time.Time, settings Settings) time.Time {
+	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	nextPlannedAt := startOfDay.
+		Add(time.Duration(settings.CronHour) * time.Hour).
+		Add(time.Duration(settings.CronMinute) * time.Minute)
+
+	if settings.PauseTime > 0 {
+		for !nextPlannedAt.After(now) {
+			nextPlannedAt = nextPlannedAt.Add(settings.PauseTime)
+		}
+	} else if nextPlannedAt.Before(now) {
+		nextPlannedAt = nextPlannedAt.Add(24 * time.Hour)
+	}
+
+	return nextPlannedAt
+}
+
+// loadSettings returns the persisted settings or the defaults.
+func (s *Scheduler) loadSettings() (Settings, error) {
+	optSettings, err := s.settingsRepo.FindByID(s.opts.ID)
+	if err != nil {
+		return Settings{}, err
+	}
+
+	if optSettings.IsSome() {
+		return optSettings.Unwrap(), nil
+	}
+
+	return s.opts.Defaults, nil
+}
+
+// sleep waits for d. It returns woken=true, if the settings have been changed in the meantime (see [Scheduler.Wake])
+// and alive=false, if the scheduler has been cancelled.
+func (s *Scheduler) sleep(ctx context.Context, d time.Duration) (woken, alive bool) {
+	timer := time.NewTimer(max(d, 0))
+	defer timer.Stop()
+
+	select {
+	case <-ctx.Done():
+		return false, false
+	case <-s.wake:
+		return true, true
+	case <-timer.C:
+		return false, true
+	}
+}
+
+// Looping returns true, if the loop of the scheduler has been launched and not yet stopped. In contrast, the
+// [State] may be Stopped or Running while a stopped scheduler is executed manually.
+func (s *Scheduler) Looping() bool {
+	return s.looping.Load()
+}
+
+// Wake makes the loop reload its settings immediately instead of after the current delay.
+func (s *Scheduler) Wake() {
+	select {
+	case s.wake <- struct{}{}:
+	default:
+		// a wake up is already pending
+	}
+}
+
+// execute runs the runner once and tracks its start.
+func (s *Scheduler) execute() error {
+	return s.protectExec(func() error {
+		return s.opts.Runner(s.ctx)
+	})
 }
 
 func (s *Scheduler) protectExec(fn func() error) (err error) {
@@ -250,13 +313,19 @@ func (s *Scheduler) protectExec(fn func() error) (err error) {
 	}()
 
 	defer func() {
-		state := Paused
+		// without a loop, e.g. a stopped scheduler executed manually, nothing is paused
+		state := Stopped
+		if s.looping.Load() {
+			state = Paused
+		}
 		s.state.Store(&state)
 
 		doneAt := time.Now()
 		s.lastCompletedAt.Store(&doneAt)
 	}()
 
+	startedAt := time.Now()
+	s.lastStartedAt.Store(&startedAt)
 	state := Running
 	s.state.Store(&state)
 
@@ -264,13 +333,13 @@ func (s *Scheduler) protectExec(fn func() error) (err error) {
 	return
 }
 
+// ExecuteNow runs the runner immediately and blocks until it completes. It waits for a run of the loop which is
+// in progress.
 func (s *Scheduler) ExecuteNow() error {
 	if s.ctx.Err() != nil {
 		s.ResetContext()
 	}
-	return s.protectExec(func() error {
-		return s.opts.Runner(s.ctx)
-	})
+	return s.execute()
 }
 
 func (s *Scheduler) beginRun() (Run, *runSink, error) {

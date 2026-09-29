@@ -11,18 +11,22 @@ import (
 	"go.wdy.de/nago/auth"
 )
 
-func NewDeleteSettingsByID(m *Manager, repo SettingsRepository) DeleteSettingsByID {
+func NewRemove(m *Manager) Remove {
 	return func(subject auth.Subject, id ID) error {
-		if err := subject.Audit(PermDeleteSettingsByID); err != nil {
+		if err := subject.Audit(PermRemove); err != nil {
 			return err
 		}
 
-		if err := repo.DeleteByID(id); err != nil {
+		return m.Remove(id)
+	}
+}
+
+func NewReconfigure(m *Manager) Reconfigure {
+	return func(subject auth.Subject, opts Options) error {
+		if err := subject.Audit(PermConfigure); err != nil {
 			return err
 		}
 
-		// the defaults apply immediately
-		m.Wake(id)
-		return nil
+		return m.Reconfigure(opts)
 	}
 }

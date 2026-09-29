@@ -85,14 +85,25 @@ type ViewRunLog func(subject auth.Subject, id ID, run RunID, query LogQuery) (Lo
 type ListSchedulers func(subject auth.Subject) iter.Seq2[Options, error]
 
 type Stop func(subject auth.Subject, id ID) error
+
+// Remove stops and removes a scheduler together with its settings, so that its ID can be configured again,
+// e.g. for schedulers which belong to dynamically created entities. See [Manager.Remove].
+type Remove func(subject auth.Subject, id ID) error
+
+// Reconfigure replaces the options of an existing scheduler and keeps its settings. See [Manager.Reconfigure].
+type Reconfigure func(subject auth.Subject, opts Options) error
 type Start func(subject auth.Subject, id ID) error
 
 type FindSettingsByID func(subject auth.Subject, id ID) (std.Option[Settings], error)
+
+// UpdateSettings persists the settings of a configured scheduler, which apply immediately.
 type UpdateSettings func(subject auth.Subject, settings Settings) error
 type DeleteSettingsByID func(subject auth.Subject, id ID) error
 
 type UseCases struct {
 	Configure          Configure
+	Reconfigure        Reconfigure
+	Remove             Remove
 	ViewLogs           ViewLogs
 	Status             Status
 	ExecuteNow         ExecuteNow
@@ -117,6 +128,8 @@ func NewUseCasesWithRuns(ctx context.Context, settingsRepo SettingsRepository, r
 	m := NewManagerWithPersistence(ctx, settingsRepo, runRepo, logDir)
 	return UseCases{
 		Configure:          NewConfigure(m),
+		Reconfigure:        NewReconfigure(m),
+		Remove:             NewRemove(m),
 		ViewLogs:           NewViewLogs(m),
 		Status:             NewStatus(m),
 		ExecuteNow:         NewExecuteNow(m),
@@ -124,8 +137,8 @@ func NewUseCasesWithRuns(ctx context.Context, settingsRepo SettingsRepository, r
 		Stop:               NewStop(m),
 		Start:              NewStart(m),
 		FindSettingsByID:   NewFindSettingsByID(settingsRepo),
-		UpdateSettings:     NewUpdateSettings(settingsRepo),
-		DeleteSettingsByID: NewDeleteSettingsByID(settingsRepo),
+		UpdateSettings:     NewUpdateSettings(m, settingsRepo),
+		DeleteSettingsByID: NewDeleteSettingsByID(m, settingsRepo),
 		ListRuns:           NewListRuns(m),
 		ViewRunLog:         NewViewRunLog(m),
 	}

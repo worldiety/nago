@@ -8,15 +8,26 @@
 package scheduler
 
 import (
+	"fmt"
+
 	"go.wdy.de/nago/auth"
 )
 
-func NewUpdateSettings(repo SettingsRepository) UpdateSettings {
+func NewUpdateSettings(m *Manager, repo SettingsRepository) UpdateSettings {
 	return func(subject auth.Subject, settings Settings) error {
 		if err := subject.Audit(PermUpdateSettingsByID); err != nil {
 			return err
 		}
 
-		return repo.Save(settings)
+		if !m.Has(settings.ID) {
+			return fmt.Errorf("service with id %s not found", settings.ID)
+		}
+
+		if err := repo.Save(settings); err != nil {
+			return err
+		}
+
+		m.Wake(settings.ID)
+		return nil
 	}
 }
