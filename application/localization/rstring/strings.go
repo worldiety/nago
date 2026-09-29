@@ -94,6 +94,15 @@ var (
 		i18n.LocalizationHint("This text is usually used on buttons and is displayed where space must be minified. So keep it as short and generic as possible."),
 	)
 
+	ActionContinue = i18n.MustString(
+		"nago.common.action.continue",
+		i18n.Values{
+			language.English: "Continue",
+			language.German:  "Weiter",
+		},
+		i18n.LocalizationHint("This text is usually used on buttons to proceed to the next step of a process, e.g. of a wizard. So keep it as short and generic as possible."),
+	)
+
 	ActionBack = i18n.MustString(
 		"nago.common.action.back",
 		i18n.Values{
