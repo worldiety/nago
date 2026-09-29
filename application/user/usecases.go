@@ -42,6 +42,8 @@ type FindAll func(subject permission.Auditable) iter.Seq2[User, error]
 type FindAllIdentifiers func(subject permission.Auditable) iter.Seq2[ID, error]
 type ChangeOtherPassword func(subject AuditableUser, uid ID, pwd Password, pwdRepeated Password) error
 type ChangeMyPassword func(subject AuditableUser, oldPassword, newPassword, newRepeated Password) error
+
+// Delete removes the user account and publishes [Deleted], so that modules can remove their personal data.
 type Delete func(subject permission.Auditable, id ID) error
 type UpdateMyContact func(subject AuditableUser, contact Contact) error
 type UpdateOtherContact func(subject AuditableUser, id ID, contact Contact) error
@@ -269,7 +271,7 @@ func NewUseCases(ctx func() context.Context, eventBus events.EventBus, rdb *reba
 	changeMyPasswordFn := NewChangeMyPassword(&globalLock, users)
 	changeOtherPasswordFn := NewChangeOtherPassword(&globalLock, users)
 	changePasswordWithCodeFn := NewChangePasswordWithCode(&globalLock, systemFn, users, changeOtherPasswordFn)
-	deleteFn := NewDelete(users)
+	deleteFn := NewDelete(eventBus, users)
 
 	authenticateByPasswordFn := NewAuthenticatesByPassword(findByMailFn, systemFn)
 	subjectFromUserFn := NewViewOf(ctx, eventBus, users, rdb)

@@ -25,6 +25,15 @@ type Created struct {
 	CreatedAt         time.Time
 }
 
+// Deleted is published after a user account has been deleted, see [Delete]. Modules subscribe to it to remove
+// their personal data of that user, e.g. favorites or settings. The event is delivered asynchronously, thus the
+// account does not exist anymore when a subscriber runs.
+type Deleted struct {
+	ID        ID
+	Email     Email
+	DeletedAt time.Time
+}
+
 type MFACodeCreated struct {
 	ID                ID
 	Firstname         string

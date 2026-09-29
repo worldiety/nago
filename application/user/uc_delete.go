@@ -8,15 +8,36 @@
 package user
 
 import (
+	"time"
+
 	"go.wdy.de/nago/application/permission"
+	"go.wdy.de/nago/pkg/events"
 )
 
-func NewDelete(repository Repository) Delete {
+func NewDelete(eventBus events.Bus, repository Repository) Delete {
 	return func(subject permission.Auditable, id ID) error {
 		if err := subject.Audit(PermDelete); err != nil {
 			return err
 		}
 
-		return repository.DeleteByID(id)
+		optUsr, err := repository.FindByID(id)
+		if err != nil {
+			return err
+		}
+
+		if err := repository.DeleteByID(id); err != nil {
+			return err
+		}
+
+		// deleting is idempotent, but only an actual deletion is announced
+		if optUsr.IsSome() {
+			eventBus.Publish(Deleted{
+				ID:        id,
+				Email:     optUsr.Unwrap().Email,
+				DeletedAt: time.Now(),
+			})
+		}
+
+		return nil
 	}
 }
