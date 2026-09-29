@@ -24,6 +24,13 @@ type ID string
 // the secret has been shared into. See also [Secret.HasAccess].
 var AccessDeniedErr = std.NewLocalizedError("Zugriff verweigert", "Nur Besitzer des Secrets oder Mitglieder der zugeordneten Gruppen dürfen darauf zugreifen.")
 
+// Credentials is the open sum type of all secret variants. A variant describes itself for the user interface by
+// struct tags on a blank field:
+//
+//	_ struct{} `credentialName:"..." credentialDescription:"..." credentialLogo:"https://..." credentialHidden:"true"`
+//
+// credentialHidden excludes the variant from the types a user can create manually, e.g. because it is only
+// created and managed by a module.
 type Credentials interface {
 	GetName() string
 	Credentials() bool // open sum type which can be extended by anyone

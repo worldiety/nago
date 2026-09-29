@@ -63,7 +63,7 @@ type MatchOptions struct {
 }
 
 // Match searches for the given credential type and applies the given MatchOptions to eventually return the best
-// match to use.
+// match to use. Only secrets are considered, which the subject may access, see [Secret.HasAccess].
 type Match func(subject auth.Subject, typ reflect.Type, opts MatchOptions) (option.Opt[Credentials], error)
 
 // FindGroupCredentialsForType asserts a distinct

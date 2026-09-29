@@ -11,6 +11,7 @@ import (
 	"encoding/hex"
 	"reflect"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/worldiety/enum"
@@ -46,6 +47,7 @@ type credentialTypeSpec struct {
 	name        string
 	description string
 	logo        string
+	hidden      bool
 	refType     reflect.Type
 }
 
@@ -76,11 +78,13 @@ func newCredentialTypeSpec(rtype reflect.Type) credentialTypeSpec {
 	var name string
 	var description string
 	var logoUrl string
+	var hidden bool
 	field, ok := rtype.FieldByName("_")
 	if ok {
 		description = field.Tag.Get("credentialDescription")
 		name = field.Tag.Get("credentialName")
 		logoUrl = field.Tag.Get("credentialLogo")
+		hidden, _ = strconv.ParseBool(field.Tag.Get("credentialHidden"))
 	}
 
 	if name == "" {
@@ -91,6 +95,7 @@ func newCredentialTypeSpec(rtype reflect.Type) credentialTypeSpec {
 		name:        name,
 		description: description,
 		logo:        logoUrl,
+		hidden:      hidden,
 		refType:     rtype,
 	}
 }
@@ -103,8 +108,12 @@ func getGlobalCredentialTypeSpecs() []credentialTypeSpec {
 
 	var res []credentialTypeSpec
 	for rtype := range decl.Variants() {
+		spec := newCredentialTypeSpec(rtype)
+		if spec.hidden {
+			continue
+		}
 
-		res = append(res, newCredentialTypeSpec(rtype))
+		res = append(res, spec)
 	}
 
 	slices.SortFunc(res, func(a, b credentialTypeSpec) int {

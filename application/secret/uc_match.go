@@ -28,10 +28,12 @@ func NewMatch(repo Repository) Match {
 				continue
 			}
 
-			if opts.Group != "" {
-				if !slices.Contains(secret.Groups, opts.Group) {
-					return option.None[Credentials](), nil
-				}
+			if !secret.HasAccess(subject) {
+				continue
+			}
+
+			if opts.Group != "" && !slices.Contains(secret.Groups, opts.Group) {
+				continue
 			}
 
 			if best == nil {
