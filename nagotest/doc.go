@@ -33,7 +33,8 @@
 // (see [core.Window.PostDelayed]) are not awaited.
 //
 // Beyond clicking and typing, a window can complete file imports ([Window.Upload]), deliver input events
-// to listeners ([Window.Input]) and inspect or remount canvas elements ([Window.Canvas]).
+// to listeners ([Window.Input]), inspect or remount canvas elements ([Window.Canvas]) and act on flow charts
+// ([Window.ClickFlowChartNode], [Window.FlowChartAction]).
 //
 // Dialogs and notifications are part of the rendered tree, e.g. [proto.Modal] or [proto.AlertNotifications],
 // and are found like any other component.

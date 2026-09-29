@@ -22,6 +22,7 @@ import (
 	"go.wdy.de/nago/presentation/proto"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/canvas"
+	"go.wdy.de/nago/presentation/ui/flowchart"
 	"go.wdy.de/nago/presentation/ui/form"
 )
 
@@ -493,4 +494,41 @@ func TestMultiSteps(t *testing.T) {
 
 	w.Click(w.Find(nagotest.Text("Zurück")))
 	w.Find(nagotest.Text("body 1"))
+}
+
+func TestFlowChartActions(t *testing.T) {
+	app := nagotest.New(t, func(cfg *application.Configurator) {
+		cfg.SetApplicationID("de.worldiety.nagotest")
+		cfg.RootView("graph", func(wnd core.Window) core.View {
+			action := core.AutoState[flowchart.FlowChartActionData](wnd)
+			return ui.VStack(
+				flowchart.FlowChart(flowchart.Model{
+					Nodes: []flowchart.Node{{ID: "a", Label: "A"}, {ID: "b", Label: "B"}},
+					Edges: []flowchart.Edge{{ID: "a-b", SourceNodeID: "a", TargetNodeID: "b"}},
+				}).ActionValue(action),
+				ui.Text(fmt.Sprintf("node: %s edge: %s right: %v", action.Get().Node.ID, action.Get().Edge.ID, action.Get().RightClick)),
+			)
+		})
+	}, nagotest.WithRoundTrip())
+
+	w := app.Open(t, nil, "graph")
+	chart := w.Find(nagotest.Type[*proto.FlowChart]())
+
+	w.ClickFlowChartNode(chart, "b")
+	w.Find(nagotest.Text("node: b edge:  right: false"))
+
+	w.ClickFlowChartEdge(chart, "a-b")
+	w.Find(nagotest.Text("node:  edge: a-b right: false"))
+
+	// the payload of the browser uses lower case keys, see UiFlowChart.vue
+	ptr := chart.Node().Component.(*proto.FlowChart).ActionValue
+	if err := w.Scope().Dispatch(&proto.UpdateStateValueRequested{
+		StatePointer: ptr,
+		RID:          900,
+		Value:        `{"node":{"id":"a","label":"A"},"paneX":1,"selectedNodes":["a"],"rightClick":true}`,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	w.Settle()
+	w.Find(nagotest.Text("node: a edge:  right: true"))
 }
