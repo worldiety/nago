@@ -270,15 +270,10 @@ func (db *DB) All(bucket string) iter.Seq[IndexEntry] {
 	return db.Ascend(bucket)
 }
 func (db *DB) Ascend(bucket string) iter.Seq[IndexEntry] {
-	db.btreeSnapshotLock.RLock()
-	tree, ok := db.buckets.Load(bucket)
-	db.btreeSnapshotLock.RUnlock()
-
+	snapshot, ok := db.snapshot(bucket)
 	if !ok {
 		return func(yield func(IndexEntry) bool) {}
 	}
-
-	snapshot := tree.Clone()
 
 	return func(yield func(IndexEntry) bool) {
 		snapshot.Ascend(yield)
@@ -286,15 +281,10 @@ func (db *DB) Ascend(bucket string) iter.Seq[IndexEntry] {
 }
 
 func (db *DB) Descend(bucket string) iter.Seq[IndexEntry] {
-	db.btreeSnapshotLock.RLock()
-	tree, ok := db.buckets.Load(bucket)
-	db.btreeSnapshotLock.RUnlock()
-
+	snapshot, ok := db.snapshot(bucket)
 	if !ok {
 		return func(yield func(IndexEntry) bool) {}
 	}
-
-	snapshot := tree.Clone()
 
 	return func(yield func(IndexEntry) bool) {
 		snapshot.Descend(yield)
@@ -306,15 +296,10 @@ func (db *DB) AscendRange(bucket, minKey, maxKey string) iter.Seq[IndexEntry] {
 		return db.Ascend(bucket)
 	}
 
-	db.btreeSnapshotLock.RLock()
-	tree, ok := db.buckets.Load(bucket)
-	db.btreeSnapshotLock.RUnlock()
-
+	snapshot, ok := db.snapshot(bucket)
 	if !ok {
 		return func(yield func(IndexEntry) bool) {}
 	}
-
-	snapshot := tree.Clone()
 
 	return func(yield func(IndexEntry) bool) {
 		snapshot.AscendRange(IndexEntry{key: minKey}, IndexEntry{key: maxKey}, yield)
@@ -326,15 +311,10 @@ func (db *DB) DescendRange(bucket, minKey, maxKey string) iter.Seq[IndexEntry] {
 		return db.Descend(bucket)
 	}
 
-	db.btreeSnapshotLock.RLock()
-	tree, ok := db.buckets.Load(bucket)
-	db.btreeSnapshotLock.RUnlock()
-
+	snapshot, ok := db.snapshot(bucket)
 	if !ok {
 		return func(yield func(IndexEntry) bool) {}
 	}
-
-	snapshot := tree.Clone()
 
 	return func(yield func(IndexEntry) bool) {
 		snapshot.DescendRange(IndexEntry{key: maxKey}, IndexEntry{key: minKey}, yield)
@@ -467,6 +447,21 @@ func (db *DB) Compact() error {
 	db.strDedupTable = db2.strDedupTable
 
 	return err
+}
+
+// snapshot returns a lazy copy-on-write clone of the bucket tree, which can be iterated without further locking.
+// Clone mutates the copy-on-write context of the original tree, thus it must be exclusive to all writers and other
+// clones, see also [btree.BTreeG.Clone].
+func (db *DB) snapshot(bucket string) (*btree.BTreeG[IndexEntry], bool) {
+	db.btreeSnapshotLock.Lock()
+	defer db.btreeSnapshotLock.Unlock()
+
+	tree, ok := db.buckets.Load(bucket)
+	if !ok {
+		return nil, false
+	}
+
+	return tree.Clone(), true
 }
 
 func (db *DB) snapshotTrees() (map[string]*btree.BTreeG[IndexEntry], uint64) {

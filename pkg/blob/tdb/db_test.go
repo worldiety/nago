@@ -9,6 +9,7 @@ package tdb
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"math/rand"
 	"os"
@@ -350,4 +351,51 @@ func closeDB(db **DB) {
 	if *db != nil {
 		_ = (*db).Close()
 	}
+}
+
+// TestDB_ConcurrentReadWrite must be run with the race detector: snapshots of the iterators must not race with
+// writers or with other snapshots of the same bucket.
+func TestDB_ConcurrentReadWrite(t *testing.T) {
+	db, err := Open(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer closeDB(&db)
+
+	const n = 200
+	var wg sync.WaitGroup
+	wg.Go(func() {
+		for i := range n {
+			key := fmt.Sprintf("k%04d", i)
+			if err := db.Set("runs", key, []byte("v")); err != nil {
+				t.Error(err)
+				return
+			}
+
+			if i%3 == 0 {
+				if err := db.Delete("runs", key); err != nil {
+					t.Error(err)
+					return
+				}
+			}
+		}
+	})
+
+	for range 4 {
+		wg.Go(func() {
+			for range n {
+				for range db.Ascend("runs") {
+				}
+				for range db.Descend("runs") {
+				}
+				for range db.AscendRange("runs", "k0000", "k0100") {
+				}
+				for range db.DescendRange("runs", "k0000", "k0100") {
+				}
+			}
+		})
+	}
+
+	wg.Wait()
 }
