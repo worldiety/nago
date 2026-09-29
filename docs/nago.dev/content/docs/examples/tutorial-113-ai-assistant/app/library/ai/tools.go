@@ -73,7 +73,7 @@ func Tools(uc library.UseCases) []completion.Tool {
 // them here would be a copy of something already recorded, and the copy is the one that rots.
 //
 // What is deliberately absent is any instruction about asking before writing. That is enforced structurally
-// by ConfirmMutations, and repeating it here would suggest it were the prompt's job.
+// by the confirmation of the assistant, and repeating it here would suggest it were the prompt's job.
 const SystemPrompt = `Du hilfst beim Betrieb einer kleinen Bibliothek.
 
 Arbeitsweise:

@@ -71,15 +71,39 @@ type AssistantOptions struct {
 	// current time. Optional; the tool is on by default.
 	DisableCurrentTime bool
 
-	// ConfirmMutations asks the user before any tool marked [completion.Tool.Mutating] runs. Strongly
-	// recommended for any assistant that can change something. Optional.
-	ConfirmMutations bool
+	// Confirmation decides whether the user approves each call of a tool marked [completion.Tool.Mutating]
+	// before it runs. Optional; the zero value follows the operator's [AssistantSettings.SkipConfirmation].
+	Confirmation Confirmation
 
 	// Corner places the floating button. Optional; defaults to the bottom right.
 	Corner uicompletion.Corner
 
 	// Label is the button caption. Optional.
 	Label string
+}
+
+// Confirmation decides whether the user approves changes of the assistant, see [AssistantOptions.Confirmation].
+type Confirmation int
+
+const (
+	// ConfirmationGlobal follows the operator's [AssistantSettings.SkipConfirmation], which asks by default.
+	ConfirmationGlobal Confirmation = iota
+	// ConfirmationAlways asks before every change, regardless of the global settings.
+	ConfirmationAlways
+	// ConfirmationNever runs changes without asking, regardless of the global settings.
+	ConfirmationNever
+)
+
+// confirm resolves the effective behaviour.
+func (c Confirmation) confirm(cfg AssistantSettings) bool {
+	switch c {
+	case ConfirmationAlways:
+		return true
+	case ConfirmationNever:
+		return false
+	default:
+		return !cfg.SkipConfirmation
+	}
 }
 
 // Button returns the floating assistant button, or nil when the assistant cannot or should not run right now:
@@ -148,7 +172,7 @@ func (a *Assistant) Button(wnd core.Window, opts AssistantOptions) core.View {
 		AskUser:            opts.AskUser,
 		DisableCurrentTime: opts.DisableCurrentTime,
 		ReadOnly:           cfg.ReadOnly,
-		ConfirmMutations:   opts.ConfirmMutations,
+		ConfirmMutations:   opts.Confirmation.confirm(cfg),
 		Agents:             agents,
 	})
 

@@ -68,11 +68,10 @@ func main() {
 				Label: "Assistent",
 				// One tag for the whole application: the assistant follows the user from screen to screen, so
 				// a conversation started on one page and continued on another is one conversation.
-				Tags:             []string{"tutorial113:assistant"},
-				History:          true,
-				AskUser:          true,
-				ConfirmMutations: true,
-				MaxTurns:         32,
+				Tags:     []string{"tutorial113:assistant"},
+				History:  true,
+				AskUser:  true,
+				MaxTurns: 32,
 				Agents: []uicompletion.Agent{{
 					ID:   "librarian",
 					Name: "Bibliotheks-Assistent",

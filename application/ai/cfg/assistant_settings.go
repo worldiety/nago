@@ -59,6 +59,11 @@ type AssistantSettings struct {
 	// for. An application that ships no mutating tools is unaffected either way.
 	ReadOnly bool `json:"readOnly" label:"Nur lesender Zugriff" section:"Sicherheit" supportingText:"Der Assistent kann dann nur noch lesen und erklären. Schreibende Werkzeuge werden gar nicht erst angeboten, das Modell erfährt nichts von ihnen."`
 
+	// SkipConfirmation is phrased so that its zero value is the safe behaviour: unless an operator decides
+	// otherwise, the user approves every change before it happens. An assistant button may still override this
+	// through [AssistantOptions.Confirmation].
+	SkipConfirmation bool `json:"skipConfirmation" label:"Änderungen ohne Rückfrage ausführen" section:"Sicherheit" supportingText:"Schreibende Werkzeuge laufen dann ohne Bestätigung. Ist die Option aus, muss jede Änderung einzeln freigegeben werden. Einzelne Assistenten einer Anwendung können davon abweichen."`
+
 	// Hidden removes the button without removing the provider, which is what an operator wants while
 	// investigating something rather than while decommissioning it.
 	Hidden bool `json:"hidden" label:"Assistent ausblenden" section:"Sicherheit" supportingText:"Blendet den Knopf auf allen Seiten aus, ohne den Provider zu entfernen."`
