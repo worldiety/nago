@@ -123,8 +123,31 @@ func (c TScaffold) Footer(view core.View) TScaffold {
 	return c
 }
 
-// Breakpoint sets the responsive breakpoint at which the scaffold layout
-// may adapt (e.g., switch between drawer and permanent menu).
+// DefaultScaffoldBreakpoint is the window width, from which the web frontend shows the navigation bar or the
+// sidebar of a scaffold instead of the burger menu, unless [TScaffold.Breakpoint] sets another one. It is
+// measured like [core.WindowInfo.Width] and equals the lower bound of [core.SizeClassMedium].
+const DefaultScaffoldBreakpoint = 768
+
+// ScaffoldBreakpoint is the context value, which tells pages the breakpoint of the scaffold decorating them.
+// See [ScaffoldMenuBarVisible].
+type ScaffoldBreakpoint int
+
+// ScaffoldMenuBarVisible reports whether the scaffold around the current page shows its navigation bar or
+// sidebar, and false if it shows the burger menu. Use it to adapt a page to the space the menu takes, instead
+// of guessing from size classes. The breakpoint is taken from the [ScaffoldBreakpoint] context value, which
+// the scaffold builder of the application registers, or defaults to [DefaultScaffoldBreakpoint].
+func ScaffoldMenuBarVisible(wnd core.Window) bool {
+	breakpoint := DefaultScaffoldBreakpoint
+	if bp, ok := core.FromContext[ScaffoldBreakpoint](wnd.Context(), ""); ok && bp > 0 {
+		breakpoint = int(bp)
+	}
+
+	return int(wnd.Info().Width) >= breakpoint
+}
+
+// Breakpoint sets the window width, from which the scaffold shows its navigation bar or sidebar instead of the
+// burger menu. It is measured like [core.WindowInfo.Width]. Zero means [DefaultScaffoldBreakpoint]. See also
+// [ScaffoldMenuBarVisible].
 func (c TScaffold) Breakpoint(breakpoint int) TScaffold {
 	c.breakpoint = breakpoint
 	return c

@@ -105,19 +105,19 @@ func Lean() OpenOption {
 	}
 }
 
+// sizeClassOf maps the width like the web frontend, see core.WindowSizeClass and eventhandling.ts.
 func sizeClassOf(width int) proto.WindowSizeClass {
-	// see core.WindowSizeClass breakpoints
 	switch {
-	case width < 640:
-		return proto.SizeClassSmall
-	case width < 768:
-		return proto.SizeClassMedium
-	case width < 1024:
-		return proto.SizeClassLarge
-	case width < 1280:
-		return proto.SizeClassXL
-	default:
+	case width >= 1536:
 		return proto.SizeClass2XL
+	case width >= 1280:
+		return proto.SizeClassXL
+	case width >= 1024:
+		return proto.SizeClassLarge
+	case width >= 768:
+		return proto.SizeClassMedium
+	default:
+		return proto.SizeClassSmall
 	}
 }
 

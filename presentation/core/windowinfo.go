@@ -119,15 +119,17 @@ func (w WindowSizeClass) Valid() bool {
 	return w.Ordinal() != 0
 }
 
+// The size classes follow the minimum widths of the tailwind breakpoints md, lg, xl and 2xl, as the web frontend
+// determines them from the window width (see [WindowInfo.Width]). There is no size class for the sm breakpoint.
 const (
-	// SizeClassSmall are devices below 640 dp screen width.
+	// SizeClassSmall are windows below 768dp width.
 	SizeClassSmall WindowSizeClass = WindowSizeClass(proto.SizeClassSmall)
-	// SizeClassMedium are devices below 768dp screen width.
+	// SizeClassMedium are windows from 768dp up to below 1024dp width.
 	SizeClassMedium WindowSizeClass = WindowSizeClass(proto.SizeClassMedium)
-	// SizeClassLarge are devices below 1024dp screen width.
+	// SizeClassLarge are windows from 1024dp up to below 1280dp width.
 	SizeClassLarge WindowSizeClass = WindowSizeClass(proto.SizeClassLarge)
-	// SizeClassXL are devices below 1280dp screen width.
+	// SizeClassXL are windows from 1280dp up to below 1536dp width.
 	SizeClassXL WindowSizeClass = WindowSizeClass(proto.SizeClassXL)
-	// SizeClass2XL are devices below 1536dp screen width.
+	// SizeClass2XL are windows from 1536dp width.
 	SizeClass2XL WindowSizeClass = WindowSizeClass(proto.SizeClass2XL)
 )

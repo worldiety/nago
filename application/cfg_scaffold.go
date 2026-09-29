@@ -258,6 +258,8 @@ func (c *Configurator) NewScaffold() *ScaffoldBuilder {
 	}
 }
 
+// Breakpoint sets the window width, from which the scaffold shows its navigation bar or sidebar instead of the
+// burger menu, see [ui.TScaffold.Breakpoint]. Pages ask for it using [ui.ScaffoldMenuBarVisible].
 func (b *ScaffoldBuilder) Breakpoint(breakpoint int) *ScaffoldBuilder {
 	b.breakpoint = &breakpoint
 	return b
@@ -353,8 +355,15 @@ func (b *ScaffoldBuilder) name() string {
 	return b.cfg.applicationName
 }
 
-// Decorator is a builder terminal and returns a decorator-like function.
+// Decorator is a builder terminal and returns a decorator-like function. A custom breakpoint is registered as
+// [ui.ScaffoldBreakpoint], so that pages can ask for it with [ui.ScaffoldMenuBarVisible] already while their view
+// is built, which happens before the decorator runs.
 func (b *ScaffoldBuilder) Decorator() func(wnd core.Window, view core.View) core.View {
+	// without a custom breakpoint, ui.ScaffoldMenuBarVisible falls back to the default by itself
+	if b.breakpoint != nil && *b.breakpoint > 0 {
+		b.cfg.AddContextValue(core.ContextValue("", ui.ScaffoldBreakpoint(*b.breakpoint)))
+	}
+
 	return func(wnd core.Window, view core.View) core.View {
 		themeCfg := core.GlobalSettings[theme.Settings](wnd)
 
