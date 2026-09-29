@@ -10,6 +10,7 @@ package nagotest_test
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -21,6 +22,7 @@ import (
 	"go.wdy.de/nago/presentation/proto"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/canvas"
+	"go.wdy.de/nago/presentation/ui/form"
 )
 
 func configure(cfg *application.Configurator) {
@@ -326,6 +328,8 @@ func TestDial(t *testing.T) {
 	w.Find(nagotest.Text("details of 42"))
 	w.Click(w.Find(nagotest.Text("back")))
 	w.Find(nagotest.Text("count: 0"))
+	// the new page loads in the background: a click on the tree before that render arrives would be stale
+	w.WaitFor(nagotest.Text("loaded"), 5*time.Second)
 	w.Click(w.Find(nagotest.Text("increment")))
 
 	w.Click(w.Find(nagotest.Text("download")))
@@ -343,4 +347,150 @@ func TestDial(t *testing.T) {
 	if len(actions) < 10 || actions[0].Kind != "open" {
 		t.Fatalf("unexpected actions %v", actions)
 	}
+}
+
+// TestStaleCallbacks reproduces the double click of a browser: the second click still carries the callback
+// pointer of the old tree, which must never be redirected to the callback at the same position of the new tree.
+func TestStaleCallbacks(t *testing.T) {
+	app := nagotest.New(t, func(cfg *application.Configurator) {
+		cfg.SetApplicationID("de.worldiety.nagotest")
+		cfg.RootView("stale", func(wnd core.Window) core.View {
+			paused := core.AutoState[bool](wnd)
+			toggles := core.AutoState[int](wnd)
+			rows := core.AutoState[[]string](wnd).Init(func() []string { return []string{"a", "b", "c"} })
+
+			var list []core.View
+			for _, row := range rows.Get() {
+				list = append(list, ui.HStack(
+					ui.Text("row "+row),
+					ui.SecondaryButton(func() {
+						rows.Set(slices.DeleteFunc(slices.Clone(rows.Get()), func(s string) bool { return s == row }))
+					}).Title("remove "+row).AccessibilityLabel("remove"),
+				))
+			}
+
+			toggle := ui.PrimaryButton(func() {
+				paused.Set(true)
+				toggles.Set(toggles.Get() + 1)
+			}).Title("pause")
+			if paused.Get() {
+				toggle = ui.PrimaryButton(func() {
+					paused.Set(false)
+					toggles.Set(toggles.Get() + 1)
+				}).Title("resume")
+			}
+
+			return ui.VStack(
+				toggle,
+				ui.Text(fmt.Sprintf("paused: %v toggles: %d", paused.Get(), toggles.Get())),
+				ui.VStack(list...),
+			)
+		})
+	})
+
+	w := app.Open(t, nil, "stale")
+
+	// doubleClick sends two clicks of the same tree without waiting for the render in between
+	doubleClick := func(sel nagotest.Selection) {
+		t.Helper()
+		ptr := sel.Node().Parents[len(sel.Node().Parents)-1].(*proto.Stack).Action
+		for rid := range 2 {
+			if err := w.Scope().Dispatch(&proto.FunctionCallRequested{Ptr: ptr, RID: proto.RID(1000 + rid)}); err != nil {
+				t.Fatal(err)
+			}
+		}
+		w.Settle()
+	}
+
+	doubleClick(w.Find(nagotest.Text("pause")))
+	w.Find(nagotest.Text("paused: true toggles: 1"))
+	w.Find(nagotest.Text("resume"))
+
+	// the first remove of row a moves row b to its position
+	doubleClick(w.Find(nagotest.Text("remove a")))
+	w.FindAll(nagotest.Text("row a")).None()
+	w.Find(nagotest.Text("row b"))
+	w.Find(nagotest.Text("row c"))
+
+	// the stale call has been answered with a render, so the frontend catches up
+	var last *proto.RootViewInvalidated
+	for _, evt := range w.Events() {
+		if r, ok := evt.(*proto.RootViewInvalidated); ok {
+			last = r
+		}
+	}
+	if last == nil || last.RID != 1001 {
+		t.Fatalf("expected a render for the stale call, got %v", last)
+	}
+}
+
+func TestCallbackPointersAreNeverReused(t *testing.T) {
+	app := nagotest.New(t, configure)
+	w := app.Open(t, nil, "counter")
+
+	pointers := func() map[proto.Ptr]bool {
+		res := map[proto.Ptr]bool{}
+		for _, n := range w.FindAll(nagotest.Type[*proto.Stack]()).Nodes() {
+			if ptr := n.Component.(*proto.Stack).Action; ptr != 0 {
+				res[ptr] = true
+			}
+		}
+		return res
+	}
+
+	before := pointers()
+	w.Click(w.Find(nagotest.Text("increment")))
+	after := pointers()
+
+	if len(before) == 0 || len(before) != len(after) {
+		t.Fatalf("unexpected pointers %v %v", before, after)
+	}
+
+	for ptr := range after {
+		if before[ptr] {
+			t.Fatalf("pointer %d has been reused", ptr)
+		}
+	}
+}
+
+func TestMultiSteps(t *testing.T) {
+	app := nagotest.New(t, func(cfg *application.Configurator) {
+		cfg.SetApplicationID("de.worldiety.nagotest")
+		cfg.RootView("wizard", func(wnd core.Window) core.View {
+			valid := core.AutoState[bool](wnd)
+			return ui.VStack(
+				ui.Toggle(valid.Get()).InputChecked(valid).ID("valid"),
+				form.MultiSteps(
+					form.Step(ui.Text("body 1")).Headline("one"),
+					form.Step(ui.Text("body 2")).Headline("two"),
+					form.Step(ui.Text("body 3")).Headline("three"),
+				).OnStepChange(func(from, to int) bool {
+					return to < from || valid.Get()
+				}),
+			)
+		})
+	})
+
+	w := app.Open(t, nil, "wizard", nagotest.Locale("de"))
+	w.Find(nagotest.Text("body 1"))
+
+	// the hook rejects the step change
+	w.Click(w.Find(nagotest.Text("Weiter")))
+	w.Find(nagotest.Text("body 1"))
+
+	w.Type(w.Find(nagotest.ID("valid")), "true")
+
+	// a double click on next must not skip a step
+	next := w.Find(nagotest.Text("Weiter")).Node()
+	ptr := next.Parents[len(next.Parents)-1].(*proto.Stack).Action
+	for rid := range 2 {
+		if err := w.Scope().Dispatch(&proto.FunctionCallRequested{Ptr: ptr, RID: proto.RID(2000 + rid)}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	w.Settle()
+	w.Find(nagotest.Text("body 2"))
+
+	w.Click(w.Find(nagotest.Text("Zurück")))
+	w.Find(nagotest.Text("body 1"))
 }

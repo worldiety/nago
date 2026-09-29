@@ -353,6 +353,12 @@ func (w *Window) WaitFor(m Matcher, timeout time.Duration) Selection {
 		w.t.Fatalf("nagotest: %s: not found within %v", m, timeout)
 	}
 
+	if _, remote := w.tr.(*wsTransport); remote {
+		// A background task may have changed its state while the found tree was rendered, which causes another
+		// render with new callbacks. Request a render as barrier, so that the next action refers to the latest tree.
+		w.dispatch(&proto.RootViewRenderingRequested{RID: w.nextRID()})
+	}
+
 	w.Settle()
 	w.observe("wait", m.desc, start)
 	return w.FindAll(m)

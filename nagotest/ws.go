@@ -37,6 +37,10 @@ const sessionCookie = "wdy-ora-access"
 // http://localhost:3000, and allocates the root view of the given path. It behaves like a browser, thus
 // the window is anonymous until it logs in through the user interface. Use [Session] to share the login
 // state across windows. The window is closed automatically by t.Cleanup.
+//
+// Like a browser, an action refers to the tree received last. If the backend renders proactively in the meantime,
+// e.g. because a background task of [core.OnAppear] completed, the action is stale and discarded by the backend.
+// Use [Window.WaitFor] to await such results before acting.
 func Dial(t TB, baseURL string, path core.NavigationPath, opts ...OpenOption) *Window {
 	t.Helper()
 

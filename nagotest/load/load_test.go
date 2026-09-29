@@ -61,6 +61,8 @@ func TestRun(t *testing.T) {
 		Name: "increment",
 		Path: "counter",
 		Run: func(u *load.User, w *nagotest.Window) {
+			// clicks on a tree which is replaced by the render of OnAppear in the meantime are discarded
+			w.WaitFor(nagotest.Text("loaded"), 5*time.Second)
 			w.Click(w.Find(nagotest.Text("increment")))
 			w.Find(nagotest.Text("count: 1"))
 		},

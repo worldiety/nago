@@ -9,6 +9,8 @@ package core
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/binary"
 	"fmt"
 	"io"
 	"log/slog"
@@ -29,6 +31,13 @@ var _ Window = (*scopeWindow)(nil)
 
 const maxAutoPtr = 10_000
 
+// Callback pointers are random within [minCallbackPtr, maxCallbackPtr), which separates them from the sequential
+// state pointers and keeps them exact within JavaScript numbers (2^53).
+const (
+	minCallbackPtr = 1 << 32
+	maxCallbackPtr = 1 << 53
+)
+
 var globalListenerPtr atomic.Int64
 
 type declaredBufferKey struct {
@@ -41,7 +50,7 @@ type scopeWindow struct {
 	rootFactory   std.Option[ComponentFactory]
 	lastRendering std.Option[proto.Component]
 	destroyed     bool
-	callbackPtr   proto.Ptr
+	autoIDSeq     int
 	callbacks     map[proto.Ptr]func()
 	//lastAutoStatePtr      proto.Ptr
 	lastStatePtrById     proto.Ptr
@@ -111,7 +120,9 @@ func (s *scopeWindow) setFactory(view ComponentFactory) {
 }
 
 func (s *scopeWindow) reset() {
-	s.callbackPtr = 0 // make them stable
+	// callbacks are only valid for the tree which has been rendered last. Their pointers are random and never
+	// reused, so that a stale tree of the frontend can never invoke a callback of a newer tree, e.g. the second
+	// click of a double click which would otherwise hit whatever is at the same position now.
 	//s.lastAutoStatePtr = 0 // make them stable
 	//clear(s.states)
 	clear(s.filesReceiver)
@@ -289,10 +300,23 @@ func (s *scopeWindow) MountCallback(f func()) proto.Ptr {
 	if f == nil {
 		return 0
 	}
-	s.callbackPtr++
-	s.callbacks[s.callbackPtr] = f
 
-	return s.callbackPtr
+	ptr := s.newCallbackPtr()
+	s.callbacks[ptr] = f
+
+	return ptr
+}
+
+// newCallbackPtr returns an unpredictable pointer, which is not in use by the current tree.
+func (s *scopeWindow) newCallbackPtr() proto.Ptr {
+	for {
+		var buf [8]byte
+		_, _ = rand.Read(buf[:]) // never returns an error, see crypto/rand
+		ptr := proto.Ptr(minCallbackPtr + binary.LittleEndian.Uint64(buf[:])%(maxCallbackPtr-minCallbackPtr))
+		if _, used := s.callbacks[ptr]; !used {
+			return ptr
+		}
+	}
 }
 
 func (s *scopeWindow) Application() *Application {
@@ -348,8 +372,8 @@ func (s *scopeWindow) ImportFiles(options ImportFilesOptions) {
 	}
 
 	if options.ID == "" {
-		s.callbackPtr++
-		options.ID = fmt.Sprintf("auto-%d", s.callbackPtr)
+		s.autoIDSeq++
+		options.ID = fmt.Sprintf("auto-%d", s.autoIDSeq)
 	}
 
 	if s.importFilesReceivers == nil {
@@ -381,8 +405,8 @@ func (s *scopeWindow) ExportFiles(options ExportFilesOptions) {
 	}
 
 	if options.ID == "" {
-		s.callbackPtr++
-		options.ID = fmt.Sprintf("auto-%d", s.callbackPtr)
+		s.autoIDSeq++
+		options.ID = fmt.Sprintf("auto-%d", s.autoIDSeq)
 	}
 
 	if s.exportFilesReceivers == nil {

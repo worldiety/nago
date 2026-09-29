@@ -115,10 +115,9 @@ func (s *Scope) handleSetPropertyValueRequested(evt *proto.UpdateStateValueReque
 
 	state, ok := alloc.states[evt.StatePointer]
 	if !ok {
-		slog.Error("property not found", slog.Any("evt", evt))
-		s.Publish(&proto.ErrorOccurred{
-			Message: proto.Str(fmt.Sprintf("cannot set property: no such pointer found: %d", evt.StatePointer)),
-		})
+		// the state has been removed from the tree in the meantime, so the frontend shows a stale tree
+		slog.Debug("discarded update of unknown state", "ptr", evt.StatePointer, "rid", evt.RID)
+		s.dirty = true // render with the RID of this request, so that the frontend catches up
 		return
 	}
 
@@ -216,10 +215,11 @@ func (s *Scope) handleFunctionCallRequested(evt *proto.FunctionCallRequested) {
 	alloc := s.allocatedRootView.Unwrap()
 	fn := alloc.callbacks[evt.Ptr]
 	if fn == nil {
-		s.Publish(&proto.ErrorOccurred{
-			RID:     evt.RID,
-			Message: proto.Str(fmt.Sprintf("cannot call function: no associated function found: %d", evt.Ptr)),
-		})
+		// Callbacks are only valid for the tree rendered last, so this is a call from a stale tree, e.g. the
+		// second click of a double click. It must never be redirected to another callback. The frontend may
+		// even have discarded our last render, thus render again with the RID of this request.
+		slog.Debug("discarded call of stale callback", "ptr", evt.Ptr, "rid", evt.RID)
+		s.dirty = true
 		return
 	}
 
