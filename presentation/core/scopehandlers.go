@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/proto"
@@ -96,9 +97,14 @@ func (s *Scope) handleCallResolved(evt *proto.CallResolved) {
 }
 
 func (s *Scope) handleScopeDestructionRequested(evt *proto.ScopeDestructionRequested) {
-	//s.destroy()
-	//s.eventLoop.Destroy() // discards everything else queued
-	s.Destroy()
+	// a repeated request must not remove a newer scope of the same id
+	if s.destroyed.Load() {
+		return
+	}
+
+	if s.app == nil || !s.app.DestroyScope(s.id) {
+		s.Destroy()
+	}
 }
 
 func (s *Scope) handleSetPropertyValueRequested(evt *proto.UpdateStateValueRequested) {
@@ -116,8 +122,7 @@ func (s *Scope) handleSetPropertyValueRequested(evt *proto.UpdateStateValueReque
 	state, ok := alloc.states[evt.StatePointer]
 	if !ok {
 		// the state has been removed from the tree in the meantime, so the frontend shows a stale tree
-		slog.Debug("discarded update of unknown state", "ptr", evt.StatePointer, "rid", evt.RID)
-		s.dirty = true // render with the RID of this request, so that the frontend catches up
+		s.discardStale("state", evt.StatePointer, evt.RID)
 		return
 	}
 
@@ -174,16 +179,21 @@ func (s *Scope) handleSetPropertyValues2Requested(evt *proto.UpdateStateValues2R
 		return
 	}
 
+	// resolve all states first, so that a stale request changes nothing at all
+	properties := make([]Property, len(states))
 	for idx, stateHolder := range states {
 		state, ok := alloc.states[stateHolder.ptr]
 		if !ok {
-			slog.Error("property 0 not found", slog.Any("evt", evt))
-			s.Publish(&proto.ErrorOccurred{
-				Message: proto.Str(fmt.Sprintf("cannot set property %d: no such pointer found: %d", idx, &stateHolder.ptr)),
-			})
+			// the state has been removed from the tree in the meantime, so the frontend shows a stale tree
+			s.discardStale("state", stateHolder.ptr, evt.RID)
 			return
 		}
 
+		properties[idx] = state
+	}
+
+	for idx, stateHolder := range states {
+		state := properties[idx]
 		if err := state.parse(string(stateHolder.val)); err != nil {
 			slog.Error("invalid property0 value", slog.Any("evt", evt), slog.String("property-type", fmt.Sprintf("%T", state)))
 			s.Publish(&proto.ErrorOccurred{
@@ -216,14 +226,48 @@ func (s *Scope) handleFunctionCallRequested(evt *proto.FunctionCallRequested) {
 	fn := alloc.callbacks[evt.Ptr]
 	if fn == nil {
 		// Callbacks are only valid for the tree rendered last, so this is a call from a stale tree, e.g. the
-		// second click of a double click. It must never be redirected to another callback. The frontend may
-		// even have discarded our last render, thus render again with the RID of this request.
-		slog.Debug("discarded call of stale callback", "ptr", evt.Ptr, "rid", evt.RID)
-		s.dirty = true
+		// second click of a double click. It must never be redirected to another callback.
+		s.discardStale("callback", evt.Ptr, evt.RID)
 		return
 	}
 
 	fn()
+}
+
+// staleWarnCount is the amount of stale requests within staleWarnInterval, which causes a warning.
+const (
+	staleWarnCount    = 3
+	staleWarnInterval = 10 * time.Second
+)
+
+// discardStale accounts a request which refers to a callback or state of an outdated tree. A single stale
+// request is normal, e.g. the second click of a double click. However, if they pile up, the window likely
+// renders all the time, so that the user cannot hit anything. The frontend may even have discarded our last
+// render, thus render again with the RID of this request, so that it catches up.
+// Only for the event loop.
+func (s *Scope) discardStale(kind string, ptr proto.Ptr, rid proto.RID) {
+	s.dirty = true
+	s.staleCalls.Add(1)
+
+	now := time.Now()
+	if now.Sub(s.staleSince) > staleWarnInterval {
+		s.staleSince = now
+		s.staleCount = 0
+	}
+
+	s.staleCount++
+	if s.staleCount == staleWarnCount {
+		slog.Warn("discarded repeated requests of stale trees, the window renders too often, e.g. because a view changes a state during each render", "scope", s.id, "kind", kind, "ptr", ptr, "rid", rid, "count", s.staleCount, "within", staleWarnInterval)
+		return
+	}
+
+	slog.Debug("discarded request of stale tree", "scope", s.id, "kind", kind, "ptr", ptr, "rid", rid)
+}
+
+// StaleCalls returns the amount of requests which have been discarded, because they referred to a callback or
+// state of an outdated tree. See also [State.Set].
+func (s *Scope) StaleCalls() int64 {
+	return s.staleCalls.Load()
 }
 
 func (s *Scope) handleNewComponentRequested(evt *proto.RootViewAllocationRequested) {
@@ -289,7 +333,7 @@ func (s *Scope) handleComponentInvalidationRequested(evt *proto.RootViewRenderin
 
 	alloc := s.allocatedRootView.Unwrap()
 
-	if alloc.destroyed {
+	if alloc.destroyed.Load() {
 		return
 	}
 
@@ -398,4 +442,5 @@ func (s *Scope) destroyView() {
 	alloc := s.allocatedRootView.Unwrap()
 	alloc.destroy()
 	s.allocatedRootView = std.None[*scopeWindow]()
+	s.clearFiles()
 }

@@ -81,6 +81,13 @@ func (s *scopeWindow) Screenshot(opts ScreenshotOptions) *async.Future[Screensho
 	}
 
 	posted := s.Post(func() {
+		// The window may have gone away in the meantime, e.g. by a navigation. A capture would then be taken of
+		// another page, and nobody would answer this one.
+		if s.destroyed.Load() {
+			fut.Set(Screenshot{}, ErrScreenshotUnavailable)
+			return
+		}
+
 		// Flush pending state changes first. The frontend processes messages in order, so the capture then
 		// sees the DOM of the latest render and not the one before it.
 		if p := s.parent; p != nil && (p.dirty || p.hasDirtyStates()) {
@@ -88,11 +95,20 @@ func (s *scopeWindow) Screenshot(opts ScreenshotOptions) *async.Future[Screensho
 			p.dirty = false
 		}
 
+		// the frontend may never answer, if the window goes away before
+		removeObserver := s.AddDestroyObserver(func() {
+			if !fut.Done() {
+				fut.Set(Screenshot{}, ErrScreenshotUnavailable)
+			}
+		}, DestroyOnClose)
+
 		var cancel func()
 		cancel = AsyncCall(s, call, func(ret proto.CallRet) {
 			if cancel != nil {
 				cancel()
 			}
+
+			removeObserver()
 
 			switch ret := ret.(type) {
 			case *proto.RetScreenshot:

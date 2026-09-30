@@ -84,13 +84,15 @@ func TransientStateOf[T any](wnd Window, id string) *TransientState[T] {
 			generation: 0,
 		}
 	}
-	w.mutex.Lock()
-	defer w.mutex.Unlock()
-
 	if id == "" {
 		panic("empty id is not allowed, consider using AutoState instead")
 	}
-	some, ok := w.parent.statesById[id]
+
+	scope := w.parent
+	scope.statesMutex.Lock()
+	defer scope.statesMutex.Unlock()
+
+	some, ok := scope.statesById[id]
 	if ok {
 		if found, ok := some.(*TransientState[T]); ok {
 			return found
@@ -99,13 +101,15 @@ func TransientStateOf[T any](wnd Window, id string) *TransientState[T] {
 		slog.Error("restored transient state does not match expected state type", "expected", fmt.Sprintf("%T", zero), "got", fmt.Sprintf("%T", some))
 	}
 
+	// a new state is not dirty, until it is set
 	state := &TransientState[T]{
-		id:         id,
-		valid:      false,
-		generation: 0,
+		id:                    id,
+		valid:                 false,
+		generation:            scope.transientGeneration,
+		lastChangedGeneration: -1,
 	}
 
-	w.parent.statesById[id] = state
+	scope.statesById[id] = state
 
 	return state
 }

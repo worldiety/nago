@@ -8,6 +8,7 @@
 package core
 
 import (
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -23,6 +24,8 @@ type Scopes struct {
 	updateDone   chan bool
 	scopes       concurrent.CoWMap[proto.ScopeID, *Scope]
 	destroyed    atomic.Bool
+	// mutex serializes the structural changes, so that a scope which is connected is never reaped at the same time.
+	mutex sync.Mutex
 }
 
 func NewScopes(fps int) *Scopes {
@@ -63,22 +66,60 @@ func (s *Scopes) Get(id proto.ScopeID) (*Scope, bool) {
 	return scope, ok
 }
 
-func (s *Scopes) Put(scope *Scope) {
+// getOrCreate returns the living scope of the given id and keeps it alive. Otherwise, a new scope is created
+// and put.
+func (s *Scopes) getOrCreate(id proto.ScopeID, create func() *Scope) *Scope {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	if scope, ok := s.scopes.Get(id); ok && !scope.destroyed.Load() {
+		scope.Tick()
+		return scope
+	}
+
+	scope := create()
 	s.scopes.Put(scope.id, scope)
+	return scope
+}
+
+// Remove removes and destroys the scope of the given id. It returns false, if no such scope exists.
+func (s *Scopes) Remove(id proto.ScopeID) bool {
+	s.mutex.Lock()
+	scope, ok := s.scopes.Get(id)
+	if ok {
+		s.scopes.Delete(id)
+	}
+	s.mutex.Unlock()
+
+	if ok {
+		scope.Destroy()
+	}
+
+	return ok
 }
 
 // tick checks all scopes and destroys all scopes which reached EOL.
 func (s *Scopes) tick(now time.Time) {
 	s.scopes.Each(func(key proto.ScopeID, scope *Scope) bool {
-		if now.After(scope.EOL()) {
-			//slog.Info("scope is end of life and now destroyed", slog.String("id", string(scope.id)))
-			s.scopes.Delete(scope.id)
+		if !now.After(scope.EOL()) {
+			return true
+		}
+
+		// check again under lock, because the scope may have been connected in the meantime
+		s.mutex.Lock()
+		current, ok := s.scopes.Get(key)
+		expired := ok && current == scope && now.After(scope.EOL())
+		if expired {
+			s.scopes.Delete(key)
+		}
+		s.mutex.Unlock()
+
+		if expired {
 			scope.Destroy()
 		}
 
 		return true
 	})
-
 }
 
 func (s *Scopes) updateTick(now time.Time) {

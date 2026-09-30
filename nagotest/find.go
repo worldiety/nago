@@ -126,6 +126,8 @@ type Selection struct {
 	w       *Window
 	matcher Matcher
 	nodes   []Node
+	// resolve selects the nodes again within the given tree, see [Selection.refresh].
+	resolve func(tree proto.Component) []Node
 }
 
 // Find selects exactly one node matching m and fails the test otherwise.
@@ -137,7 +139,11 @@ func (w *Window) Find(m Matcher) Selection {
 
 // FindAll selects all nodes matching m in document order.
 func (w *Window) FindAll(m Matcher) Selection {
-	return Selection{w: w, matcher: m, nodes: find(w.Tree(), nil, m)}
+	resolve := func(tree proto.Component) []Node {
+		return find(tree, nil, m)
+	}
+
+	return Selection{w: w, matcher: m, nodes: resolve(w.Tree()), resolve: resolve}
 }
 
 // Find selects exactly one node matching m within the subtrees of this selection.
@@ -149,8 +155,17 @@ func (s Selection) Find(m Matcher) Selection {
 
 // FindAll selects all nodes matching m within the subtrees of this selection.
 func (s Selection) FindAll(m Matcher) Selection {
+	parent := s.resolve
+	resolve := func(tree proto.Component) []Node {
+		return findWithin(parent(tree), m)
+	}
+
+	return Selection{w: s.w, matcher: Where(s.matcher.desc+" > "+m.desc, m.match), nodes: findWithin(s.nodes, m), resolve: resolve}
+}
+
+func findWithin(parents []Node, m Matcher) []Node {
 	var nodes []Node
-	for _, n := range s.nodes {
+	for _, n := range parents {
 		for _, c := range find(n.Component, n.Parents, m) {
 			if c.Component != n.Component {
 				nodes = append(nodes, c)
@@ -158,7 +173,14 @@ func (s Selection) FindAll(m Matcher) Selection {
 		}
 	}
 
-	return Selection{w: s.w, matcher: Where(s.matcher.desc+" > "+m.desc, m.match), nodes: nodes}
+	return nodes
+}
+
+// refresh selects the nodes again within the latest tree of the window, e.g. after the tree has been rendered
+// again with new callbacks.
+func (s Selection) refresh() Selection {
+	s.nodes = s.resolve(s.w.Tree())
+	return s
 }
 
 // Exactly asserts that n nodes have been selected.
@@ -197,7 +219,16 @@ func (s Selection) At(i int) Selection {
 		s.w.t.Fatalf("nagotest: %s: index %d out of range, found %d nodes", s.matcher, i, len(s.nodes))
 	}
 
-	return Selection{w: s.w, matcher: s.matcher, nodes: s.nodes[i : i+1]}
+	parent := s.resolve
+	resolve := func(tree proto.Component) []Node {
+		if nodes := parent(tree); i < len(nodes) {
+			return nodes[i : i+1]
+		}
+
+		return nil
+	}
+
+	return Selection{w: s.w, matcher: s.matcher, nodes: s.nodes[i : i+1], resolve: resolve}
 }
 
 // Node returns the single selected node and fails the test otherwise.

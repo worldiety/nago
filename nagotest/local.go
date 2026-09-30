@@ -58,9 +58,14 @@ func (l *localTransport) send(w *Window, evt proto.NagoEvent) error {
 
 func (l *localTransport) settle(w *Window) error {
 	deadline := time.Now().Add(SettleTimeout)
-	for !l.scope.Flush() {
-		if time.Now().After(deadline) {
-			return fmt.Errorf("window did not settle within %v", SettleTimeout)
+	for {
+		idle, ok := l.scope.FlushTimeout(max(time.Until(deadline), time.Millisecond))
+		if idle {
+			break
+		}
+
+		if !ok || time.Now().After(deadline) {
+			return fmt.Errorf("window did not settle within %v: the event loop stays busy or blocks, a background task is still running or a view changes a state during each render", SettleTimeout)
 		}
 
 		// only background goroutines can keep us busy without posting to the event loop, thus don't spin
@@ -83,8 +88,15 @@ func (l *localTransport) upload(w *Window, id string, files []core.File) error {
 
 func (l *localTransport) close(w *Window) {
 	if w.closed {
-		l.scope.Destroy()
-		l.scope.Flush()
+		// also remove the scope from the application, otherwise its update ticker keeps posting to it
+		if !l.app.core.DestroyScope(l.scope.ID()) {
+			l.scope.Destroy()
+		}
+
+		// wait for the destruction, but never hang the cleanup of a test on a blocked event loop
+		if _, ok := l.scope.FlushTimeout(SettleTimeout); !ok {
+			w.t.Logf("nagotest: the event loop of the closed window did not finish within %v", SettleTimeout)
+		}
 		l.app.windows.Delete(w.scopeID)
 		return
 	}

@@ -56,6 +56,8 @@ type openOptions struct {
 	sessionID  string
 	observer   func(Action)
 	lean       bool
+	// staleRetries is the amount of repetitions of an action, which has been discarded as stale.
+	staleRetries int
 }
 
 // Values sets the query values of the initial route.
@@ -93,6 +95,22 @@ func Session(id string) OpenOption {
 func Observe(fn func(Action)) OpenOption {
 	return func(o *openOptions) {
 		o.observer = fn
+	}
+}
+
+// StaleRetries sets how often an action is repeated, if the backend discarded it as stale. The default is 3.
+//
+// An action refers to the callbacks and states of the tree, which the window has received last. If the
+// application renders again in between, e.g. due to [core.OnFrame], a delayed function or a domain event, the
+// backend discards the action without executing it, like the second click of a double click. The window then
+// finds the selection again within the new tree and repeats the action. If that is still stale after the given
+// amount of retries, the test fails, which usually means that a view changes a state during each render and
+// thus renders in an endless loop. Use 0 to fail on the first stale action.
+//
+// Stale actions are only detected within the same process, not through a websocket (see [Dial]).
+func StaleRetries(n int) OpenOption {
+	return func(o *openOptions) {
+		o.staleRetries = max(n, 0)
 	}
 }
 
@@ -173,6 +191,7 @@ func newWindow(t TB, tr transport, path core.NavigationPath, opts []OpenOption) 
 	w := &Window{t: t, tr: tr, scopeID: proto.NewScopeID(), changed: make(chan struct{})}
 	w.opts.locale = "de"
 	w.opts.windowInfo = proto.WindowInfo{Density: 2, ColorScheme: proto.Light}
+	w.opts.staleRetries = 3
 	Size(1280, 800)(&w.opts)
 	for _, opt := range opts {
 		opt(&w.opts)
@@ -343,10 +362,8 @@ func (w *Window) WaitFor(m Matcher, timeout time.Duration) Selection {
 	w.t.Helper()
 
 	start := time.Now()
-	var sel Selection
 	ok := w.waitUntil(timeout, func() bool {
-		sel = Selection{w: w, matcher: m, nodes: find(w.tree, nil, m)}
-		return len(sel.nodes) > 0
+		return len(find(w.tree, nil, m)) > 0
 	})
 
 	if !ok {

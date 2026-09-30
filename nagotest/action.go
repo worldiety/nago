@@ -23,15 +23,16 @@ func (w *Window) Click(s Selection) {
 	w.t.Helper()
 
 	start := time.Now()
-	n := s.Node()
-	ptr, target := callbackOf(n, clickFields...)
-	if ptr == 0 {
-		w.t.Fatalf("nagotest: %s: %T is not clickable", s.matcher, n.Component)
-	}
+	w.act(s, func(s Selection) proto.NagoEvent {
+		n := s.Node()
+		ptr, target := callbackOf(n, clickFields...)
+		if ptr == 0 {
+			w.t.Fatalf("nagotest: %s: %T is not clickable", s.matcher, n.Component)
+		}
 
-	w.assertInteractive(s, target)
-	w.dispatch(&proto.FunctionCallRequested{Ptr: ptr, RID: w.nextRID()})
-	w.Settle()
+		w.assertInteractive(s, target)
+		return &proto.FunctionCallRequested{Ptr: ptr, RID: w.nextRID()}
+	})
 	w.observe("click", s.matcher.desc, start)
 }
 
@@ -40,15 +41,16 @@ func (w *Window) PressEnter(s Selection) {
 	w.t.Helper()
 
 	start := time.Now()
-	n := s.Node()
-	ptr := ptrField(n.Component, "KeydownEnter")
-	if ptr == 0 {
-		w.t.Fatalf("nagotest: %s: %T has no enter key handler", s.matcher, n.Component)
-	}
+	w.act(s, func(s Selection) proto.NagoEvent {
+		n := s.Node()
+		ptr := ptrField(n.Component, "KeydownEnter")
+		if ptr == 0 {
+			w.t.Fatalf("nagotest: %s: %T has no enter key handler", s.matcher, n.Component)
+		}
 
-	w.assertInteractive(s, n)
-	w.dispatch(&proto.FunctionCallRequested{Ptr: ptr, RID: w.nextRID()})
-	w.Settle()
+		w.assertInteractive(s, n)
+		return &proto.FunctionCallRequested{Ptr: ptr, RID: w.nextRID()}
+	})
 	w.observe("enter", s.matcher.desc, start)
 }
 
@@ -58,16 +60,51 @@ func (w *Window) Type(s Selection, value string) {
 	w.t.Helper()
 
 	start := time.Now()
-	n := s.Node()
-	ptr := ptrField(n.Component, "InputValue")
-	if ptr == 0 {
-		w.t.Fatalf("nagotest: %s: %T has no input binding", s.matcher, n.Component)
+	w.act(s, func(s Selection) proto.NagoEvent {
+		n := s.Node()
+		ptr := ptrField(n.Component, "InputValue")
+		if ptr == 0 {
+			w.t.Fatalf("nagotest: %s: %T has no input binding", s.matcher, n.Component)
+		}
+
+		w.assertInteractive(s, n)
+		return &proto.UpdateStateValueRequested{StatePointer: ptr, Value: proto.Str(value), RID: w.nextRID()}
+	})
+	w.observe("type", s.matcher.desc, start)
+}
+
+// act sends the event for the single selected node and settles. If the backend discarded the event, because
+// the window rendered a newer tree in the meantime, the selection is resolved again within the latest tree and
+// the event is sent again, see [StaleRetries]. A stale event is never executed, so repeating it is safe.
+func (w *Window) act(s Selection, event func(s Selection) proto.NagoEvent) {
+	w.t.Helper()
+
+	for attempt := 0; ; attempt++ {
+		evt := event(s)
+		before := w.staleCalls()
+		w.dispatch(evt)
+		w.Settle()
+
+		if w.staleCalls() == before {
+			return
+		}
+
+		if attempt >= w.opts.staleRetries {
+			w.t.Fatalf("nagotest: %s: the backend discarded the action %d times as stale, because the window rendered again in between. Does a view change a state during each render?", s.matcher, attempt+1)
+		}
+
+		s = s.refresh()
+	}
+}
+
+// staleCalls returns the amount of stale requests discarded by the backend. Through a websocket, they cannot be
+// detected and 0 is returned.
+func (w *Window) staleCalls() int64 {
+	if tr, ok := w.tr.(*localTransport); ok && tr.scope != nil {
+		return tr.scope.StaleCalls()
 	}
 
-	w.assertInteractive(s, n)
-	w.dispatch(&proto.UpdateStateValueRequested{StatePointer: ptr, Value: proto.Str(value), RID: w.nextRID()})
-	w.Settle()
-	w.observe("type", s.matcher.desc, start)
+	return 0
 }
 
 func (w *Window) assertInteractive(s Selection, n Node) {

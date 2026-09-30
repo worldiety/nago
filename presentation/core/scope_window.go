@@ -49,29 +49,34 @@ type scopeWindow struct {
 	parent        *Scope
 	rootFactory   std.Option[ComponentFactory]
 	lastRendering std.Option[proto.Component]
-	destroyed     bool
-	autoIDSeq     int
-	callbacks     map[proto.Ptr]func()
+	// destroyed is written by the event loop but read from any goroutine, e.g. by Invalidate.
+	destroyed atomic.Bool
+	autoIDSeq int
+	callbacks map[proto.Ptr]func()
 	//lastAutoStatePtr      proto.Ptr
-	lastStatePtrById     proto.Ptr
-	states               map[proto.Ptr]Property
-	statesById           map[string]Property
-	filesReceiver        map[proto.Ptr]FilesReceiver
-	resetObservers       map[int]func()
-	destroyObservers     map[int]func()
-	importFilesReceivers map[string]ImportFilesOptions
-	exportFilesReceivers map[string]ExportFilesOptions
-	hnd                  int
-	factory              proto.RootViewID
-	navController        *navigationController
-	values               atomic.Pointer[Values]
-	isRendering          bool
-	generation           int64
+	lastStatePtrById proto.Ptr
+	states           map[proto.Ptr]Property
+	statesById       map[string]Property
+	filesReceiver    map[proto.Ptr]FilesReceiver
+	resetObservers   map[int]func()
+	destroyObservers map[int]func()
+	hnd              int
+	factory          proto.RootViewID
+	navController    *navigationController
+	values           atomic.Pointer[Values]
+	isRendering      bool
+	generation       int64
 	// dirtyGeneration is set to the current generation whenever any [State] which belongs to this window
 	// is mutated (see markStateDirty). It allows the frame ticker to decide in O(1) whether a re-render is
 	// required, instead of iterating over all states. It is accessed atomically because the frame ticker reads
 	// it concurrently to the render loop.
-	dirtyGeneration    int64
+	dirtyGeneration int64
+	// lastDirtyState is the ID of the state which has been marked dirty last, see checkRenderLoop.
+	lastDirtyState atomic.Pointer[string]
+	// the render loop detection, only for the event loop
+	renderLoopCount    int
+	renderLoopSince    time.Time
+	renderLoopWarned   bool
 	mutex              sync.Mutex
 	clipboard          *clipboardController
 	lastAsyncInvokePtr atomic.Int64
@@ -88,8 +93,13 @@ func newScopeWindow(parent *Scope, factory proto.RootViewID, values Values) *sco
 	s.factory = factory
 	s.states = map[proto.Ptr]Property{}
 	s.statesById = map[string]Property{}
-	s.lastStatePtrById = maxAutoPtr
-	s.generation = 0
+	// State pointers are unique within the scope and never reused by a later window, so that an update which
+	// the frontend sends for a former page cannot hit a state of the current one, see discardStale.
+	s.lastStatePtrById = max(parent.lastStatePtr, maxAutoPtr)
+	// continue with the generation of the scope, otherwise the transient states of the scope, which carry the
+	// generation of the former window, would be considered dirty until this window has caught up.
+	s.generation = parent.generation.Load()
+	s.dirtyGeneration = -1
 
 	if values == nil {
 		values = Values{}
@@ -162,8 +172,55 @@ func (s *scopeWindow) generationOf() int64 {
 // generation. This is the O(1) replacement for iterating over all states in the frame ticker.
 // After the next render increments the generation, dirtyGeneration is implicitly older than the generation
 // again, thus the window is considered clean until the next mutation.
-func (s *scopeWindow) markStateDirty() {
-	atomic.StoreInt64(&s.dirtyGeneration, atomic.LoadInt64(&s.generation))
+func (s *scopeWindow) markStateDirty(id *string) {
+	s.lastDirtyState.Store(id)
+
+	// the marker must never move backwards: another goroutine may have loaded an older generation before a
+	// render started and would otherwise overwrite a mutation which happened during that render.
+	generation := atomic.LoadInt64(&s.generation)
+	for {
+		marked := atomic.LoadInt64(&s.dirtyGeneration)
+		if marked >= generation || atomic.CompareAndSwapInt64(&s.dirtyGeneration, marked, generation) {
+			return
+		}
+	}
+}
+
+// A render loop is reported, if a state has been changed during each render for at least renderLoopCount
+// renders and renderLoopDuration.
+const (
+	renderLoopCount    = 50
+	renderLoopDuration = 5 * time.Second
+)
+
+// checkRenderLoop is called after each render with the information, whether any state is dirty again. If
+// that is always the case, a view changes a state during its render, which causes the next render and so
+// on. Such a window renders at the rate of the frame ticker and discards the actions of the user, because they
+// refer to callbacks of outdated trees. A goroutine which changes a state while a render is running may
+// cause the same observation by chance, but not for such a long streak.
+// Only for the event loop.
+func (s *scopeWindow) checkRenderLoop(dirty bool) {
+	if !dirty {
+		s.renderLoopCount = 0
+		return
+	}
+
+	if s.renderLoopCount == 0 {
+		s.renderLoopSince = time.Now()
+	}
+
+	s.renderLoopCount++
+	if s.renderLoopWarned || s.renderLoopCount < renderLoopCount || time.Since(s.renderLoopSince) < renderLoopDuration {
+		return
+	}
+
+	s.renderLoopWarned = true
+	var state string
+	if id := s.lastDirtyState.Load(); id != nil {
+		state = *id
+	}
+
+	slog.Warn("window renders in an endless loop, because a state changes during each render, e.g. by setting a changing value or by Invalidate within a render", "scope", s.parent.id, "view", s.factory, "renders", s.renderLoopCount, "since", s.renderLoopSince, "lastChangedState", state)
 }
 
 // hasDirtyStates reports in O(1) whether any [State] of this window has been mutated since the last render.
@@ -174,7 +231,8 @@ func (s *scopeWindow) hasDirtyStates() bool {
 
 func (s *scopeWindow) render() proto.Component {
 	s.isRendering = true
-	generation := atomic.AddInt64(&s.generation, 1)
+	generation := s.parent.generation.Add(1)
+	atomic.StoreInt64(&s.generation, generation)
 	defer func() {
 		s.isRendering = false
 		s.removeDetachedStates(generation)
@@ -193,11 +251,11 @@ func (s *scopeWindow) render() proto.Component {
 
 	tree := component.Render(s)
 
-	// update global scope transient states with the latest render generation.
-	// this is used by the ticker to check, if a re-render is required
-	for _, property := range s.parent.statesById {
-		property.setGeneration(generation)
-	}
+	// Mark the transient states as rendered only now, thus a change during the render does not cause another
+	// render. This is intentional, because a transient state has no equality check, and it is set e.g. by a
+	// banner which shows a message within its render. Note that for the same reason, a change from another
+	// goroutine during the render is not rendered until the next render, see [State.Set].
+	s.parent.setTransientGeneration(generation)
 
 	return tree
 }
@@ -267,7 +325,7 @@ func (s *scopeWindow) AddDestroyObserver(fn func(), opts ...DestroyObserverOptio
 
 func (s *scopeWindow) Invalidate() {
 	s.Execute(func() {
-		if s.destroyed {
+		if s.destroyed.Load() {
 			return
 		}
 		s.parent.forceRender(0)
@@ -276,7 +334,7 @@ func (s *scopeWindow) Invalidate() {
 }
 
 func (s *scopeWindow) destroy() {
-	s.destroyed = true
+	s.destroyed.Store(true)
 
 	for _, property := range s.states {
 		property.clearObservers()
@@ -347,7 +405,7 @@ func (s *scopeWindow) Logout() error {
 }
 
 func (s *scopeWindow) AsURI(open func() (io.Reader, error)) (URI, error) {
-	if s.destroyed {
+	if s.destroyed.Load() {
 		return "", nil
 	}
 
@@ -359,7 +417,7 @@ func (s *scopeWindow) AsURI(open func() (io.Reader, error)) (URI, error) {
 }
 
 func (s *scopeWindow) ImportFiles(options ImportFilesOptions) {
-	if s.destroyed {
+	if s.destroyed.Load() {
 		return
 	}
 
@@ -376,15 +434,11 @@ func (s *scopeWindow) ImportFiles(options ImportFilesOptions) {
 		options.ID = fmt.Sprintf("auto-%d", s.autoIDSeq)
 	}
 
-	if s.importFilesReceivers == nil {
-		s.importFilesReceivers = map[string]ImportFilesOptions{}
-	}
-
 	if options.MaxBytes == 0 {
 		options.MaxBytes = 1024 * 1024 * 512 // defaults to 512MiB
 	}
 
-	s.importFilesReceivers[options.ID] = options
+	s.parent.putImportFiles(options)
 
 	s.parent.Publish(&proto.FileImportRequested{
 		ID:               proto.Str(options.ID),
@@ -396,7 +450,7 @@ func (s *scopeWindow) ImportFiles(options ImportFilesOptions) {
 }
 
 func (s *scopeWindow) ExportFiles(options ExportFilesOptions) {
-	if s.destroyed {
+	if s.destroyed.Load() {
 		return
 	}
 
@@ -409,11 +463,7 @@ func (s *scopeWindow) ExportFiles(options ExportFilesOptions) {
 		options.ID = fmt.Sprintf("auto-%d", s.autoIDSeq)
 	}
 
-	if s.exportFilesReceivers == nil {
-		s.exportFilesReceivers = map[string]ExportFilesOptions{}
-	}
-
-	s.exportFilesReceivers[options.ID] = options
+	s.parent.putExportFiles(options)
 
 	if callback := s.parent.app.onSendFiles; callback != nil {
 		if err := callback(s.parent, options); err != nil {
@@ -427,12 +477,11 @@ func (s *scopeWindow) ExportFiles(options ExportFilesOptions) {
 }
 
 func (s *scopeWindow) Execute(task func()) {
-	if s.destroyed {
+	if s.destroyed.Load() {
 		return
 	}
 
 	s.parent.eventLoop.Post(task)
-	s.parent.eventLoop.Tick()
 }
 
 func (s *scopeWindow) Info() WindowInfo {

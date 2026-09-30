@@ -22,24 +22,25 @@ func (w *Window) FlowChartAction(s Selection, action flowchart.FlowChartActionDa
 	w.t.Helper()
 
 	start := time.Now()
-	n := s.Node()
-	chart, ok := n.Component.(*proto.FlowChart)
-	if !ok {
-		w.t.Fatalf("nagotest: %s: %T is not a flow chart", s.matcher, n.Component)
-	}
-
-	if chart.ActionValue == 0 {
-		w.t.Fatalf("nagotest: %s: the flow chart has no action binding", s.matcher)
-	}
-
 	buf, err := json.Marshal(action)
 	if err != nil {
 		w.t.Fatalf("nagotest: cannot encode flow chart action: %v", err)
 	}
 
-	w.assertInteractive(s, n)
-	w.dispatch(&proto.UpdateStateValueRequested{StatePointer: chart.ActionValue, Value: proto.Str(buf), RID: w.nextRID()})
-	w.Settle()
+	w.act(s, func(s Selection) proto.NagoEvent {
+		n := s.Node()
+		chart, ok := n.Component.(*proto.FlowChart)
+		if !ok {
+			w.t.Fatalf("nagotest: %s: %T is not a flow chart", s.matcher, n.Component)
+		}
+
+		if chart.ActionValue == 0 {
+			w.t.Fatalf("nagotest: %s: the flow chart has no action binding", s.matcher)
+		}
+
+		w.assertInteractive(s, n)
+		return &proto.UpdateStateValueRequested{StatePointer: chart.ActionValue, Value: proto.Str(buf), RID: w.nextRID()}
+	})
 	w.observe("flowchart", s.matcher.desc, start)
 }
 

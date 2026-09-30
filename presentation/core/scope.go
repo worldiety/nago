@@ -70,7 +70,17 @@ type Scope struct {
 	subject            concurrent.Value[auth.Subject]
 	locale             language.Tag
 	bundle             *i18n.Bundle
-	statesById         map[string]TransientProperty
+	// statesById holds the transient states, see [TransientStateOf]. They may be allocated from any goroutine,
+	// thus the map is protected by statesMutex.
+	statesById  map[string]TransientProperty
+	statesMutex sync.Mutex
+	// transientGeneration is the generation of the last render which marked the transient states as rendered.
+	transientGeneration int64
+	// lastStatePtr is the last state pointer allocated by any window of this scope, only for the event loop.
+	lastStatePtr proto.Ptr
+	// generation is the render generation of this scope. It is monotonic across all windows of this scope,
+	// because the transient states outlive a window.
+	generation atomic.Int64
 
 	sessionID              session.ID
 	sessionByID            session.FindUserSessionByID
@@ -79,6 +89,17 @@ type Scope struct {
 	dirty                  bool
 	// background counts running goroutines started on behalf of this scope, e.g. by [OnAppear].
 	background atomic.Int64
+	// the uploads and downloads of the current window, which are looked up by HTTP handlers
+	filesMutex  sync.Mutex
+	importFiles map[string]ImportFilesOptions
+	exportFiles map[string]ExportFilesOptions
+
+	// tickQueued is true, while a function of the update ticker is posted but not yet executed.
+	tickQueued atomic.Bool
+	// staleCalls counts the discarded requests of stale trees, see discardStale.
+	staleCalls atomic.Int64
+	staleSince time.Time
+	staleCount int
 }
 
 func NewScope(ctx context.Context, app *Application, tempRootDir string, id proto.ScopeID, lifetime time.Duration, factories map[proto.RootViewID]ComponentFactory, sessionByID session.FindUserSessionByID) *Scope {
@@ -148,40 +169,69 @@ func (s *Scope) ID() proto.ScopeID {
 	return s.id
 }
 
+// ExportFilesOptions returns the download of the current window with the given id. It may be called from any
+// goroutine, e.g. by an HTTP handler.
 func (s *Scope) ExportFilesOptions(id string) (ExportFilesOptions, bool) {
 	s.Tick() // keep this scope alive
-	if s.allocatedRootView.IsNone() {
-		slog.Error("no such rootview allocated")
-		return ExportFilesOptions{}, false
-	}
 
-	root := s.allocatedRootView.Unwrap()
+	s.filesMutex.Lock()
+	files, ok := s.exportFiles[id]
+	s.filesMutex.Unlock()
 
-	files, ok := root.exportFilesReceivers[id]
 	if !ok {
-		slog.Error("unknown import file", slog.Any("id", id))
+		slog.Error("unknown export file", slog.Any("id", id))
 		return ExportFilesOptions{}, false
 	}
 
 	return files, true
 }
 
+// ImportFilesOptions returns the upload of the current window with the given id. It may be called from any
+// goroutine, e.g. by an HTTP handler.
 func (s *Scope) ImportFilesOptions(id string) (ImportFilesOptions, bool) {
 	s.Tick() // keep this scope alive
-	if s.allocatedRootView.IsNone() {
-		slog.Error("no such rootview allocated")
-		return ImportFilesOptions{}, false
-	}
 
-	root := s.allocatedRootView.Unwrap()
+	s.filesMutex.Lock()
+	files, ok := s.importFiles[id]
+	s.filesMutex.Unlock()
 
-	files, ok := root.importFilesReceivers[id]
 	if !ok {
 		slog.Error("unknown import file", slog.Any("id", id))
 		return ImportFilesOptions{}, false
 	}
 
 	return files, true
+}
+
+func (s *Scope) putImportFiles(options ImportFilesOptions) {
+	s.filesMutex.Lock()
+	defer s.filesMutex.Unlock()
+
+	if s.importFiles == nil {
+		s.importFiles = map[string]ImportFilesOptions{}
+	}
+
+	s.importFiles[options.ID] = options
+}
+
+func (s *Scope) putExportFiles(options ExportFilesOptions) {
+	s.filesMutex.Lock()
+	defer s.filesMutex.Unlock()
+
+	if s.exportFiles == nil {
+		s.exportFiles = map[string]ExportFilesOptions{}
+	}
+
+	s.exportFiles[options.ID] = options
+}
+
+// clearFiles forgets the uploads and downloads, when their window goes away.
+func (s *Scope) clearFiles() {
+	s.filesMutex.Lock()
+	defer s.filesMutex.Unlock()
+
+	s.importFiles = nil
+	s.exportFiles = nil
 }
 
 func (s *Scope) getTempDir() (string, error) {
@@ -261,7 +311,6 @@ func (s *Scope) Connect(c Channel) {
 	s.channel.SetValue(c)
 
 	s.chanDestructor.SetValue(c.Subscribe(func(msg []byte) error {
-		defer s.eventLoop.Tick()
 		return s.handleMessage(msg)
 	}))
 }
@@ -300,12 +349,7 @@ func (s *Scope) handleMessage(buf []byte) error {
 func (s *Scope) Dispatch(nagoEvt proto.NagoEvent) error {
 	s.Tick()
 
-	if s.destroyed.Load() {
-		slog.Error("scope is already destroyed but received a message", "sid", s.id, "what", fmt.Sprintf("%T", nagoEvt))
-		return fmt.Errorf("scope already destroyed")
-	}
-
-	s.eventLoop.Post(func() {
+	posted := s.eventLoop.Post(func() {
 		s.handleEvent(nagoEvt)
 
 		var rid proto.RID
@@ -330,6 +374,11 @@ func (s *Scope) Dispatch(nagoEvt proto.NagoEvent) error {
 			s.dirty = false
 		}
 	})
+
+	if !posted {
+		slog.Error("scope is already destroyed but received a message", "sid", s.id, "what", fmt.Sprintf("%T", nagoEvt))
+		return fmt.Errorf("scope already destroyed")
+	}
 
 	return nil
 }
@@ -374,10 +423,27 @@ func (s *Scope) Publish(evt proto.NagoEvent) {
 
 // Flush blocks until all functions posted to the event loop so far have been processed. If any state is dirty
 // afterward, a render is published. It returns true, if the scope is idle, which means that nothing else
-// has been posted in the meantime and no background work (see [OnAppear]) is running. A destroyed scope is
-// always idle. Note that delayed functions (see [Window.PostDelayed]) are not considered.
+// has been posted in the meantime, no background work (see [OnAppear]) is running and no state has been changed
+// since the render. A destroyed scope is always idle, after its event loop has executed the remaining
+// functions and exited. Note that delayed functions (see [Window.PostDelayed]), [OnFrame] and goroutines which
+// are not started by nago are not considered.
+// A state which is changed by each render, keeps the scope busy forever, see also [State.Set].
 // Flush must never be called from the event loop, because that would deadlock.
 func (s *Scope) Flush() (idle bool) {
+	idle, _ = s.FlushTimeout(0)
+	return idle
+}
+
+// FlushTimeout is like [Scope.Flush] but waits at most for the given timeout, e.g. because a function blocks
+// the event loop. A timeout <= 0 waits forever. It returns false, if the timeout elapsed.
+func (s *Scope) FlushTimeout(timeout time.Duration) (idle, ok bool) {
+	var expired <-chan time.Time
+	if timeout > 0 {
+		timer := time.NewTimer(timeout)
+		defer timer.Stop()
+		expired = timer.C
+	}
+
 	done := make(chan bool, 1)
 	posted := s.eventLoop.Post(func() {
 		if s.dirty || s.hasDirtyStates() {
@@ -385,19 +451,31 @@ func (s *Scope) Flush() (idle bool) {
 			s.dirty = false
 		}
 
+		// The order of the following checks is important. A background goroutine applies its state changes and
+		// posts before it is counted as done. Thus, if no background work is left, all of its effects are
+		// visible to the checks below, including those of goroutines started by the render above.
+		background := s.background.Load()
+		dirty := s.dirty || s.hasDirtyStates()
 		// the currently executed function is still pending
-		done <- s.eventLoop.Pending() <= 1 && s.background.Load() == 0
+		done <- background == 0 && !dirty && s.eventLoop.Pending() <= 1
 	})
 
 	if !posted {
-		return true
+		select {
+		case <-s.eventLoop.Done():
+			return true, true
+		case <-expired:
+			return false, false
+		}
 	}
 
 	select {
-	case idle = <-s.eventLoop.done:
-		return true
+	case <-s.eventLoop.Done():
+		return true, true
 	case idle = <-done:
-		return idle
+		return idle, true
+	case <-expired:
+		return false, false
 	}
 }
 
@@ -434,15 +512,22 @@ func (s *Scope) forceRender(reqId proto.RID) {
 }
 
 // updateTick is called with a fixed rate. There is one application wide update ticker, thus this must not block at
-// all.
+// all. At most one tick is queued per scope, so that a busy or hanging event loop does not accumulate ticks.
 func (s *Scope) updateTick(now time.Time) {
-	s.eventLoop.Post(func() {
-		// I can't estimate how expensive this becomes, to post for thousands of scopes at once. However, the updater
-		// will throttle automatically, if it becomes to slow.
+	if !s.tickQueued.CompareAndSwap(false, true) {
+		return
+	}
+
+	posted := s.eventLoop.Post(func() {
+		s.tickQueued.Store(false)
 		if s.hasDirtyStates() {
 			s.forceRender(0)
 		}
 	})
+
+	if !posted {
+		s.tickQueued.Store(false)
+	}
 }
 
 func (s *Scope) hasDirtyStates() bool {
@@ -459,6 +544,9 @@ func (s *Scope) hasDirtyStates() bool {
 
 	// transient (scope/session level) states are not attached to a window and are therefore still checked
 	// individually. Their amount is expected to be small.
+	s.statesMutex.Lock()
+	defer s.statesMutex.Unlock()
+
 	for _, property := range s.statesById {
 		if property.dirty() {
 			return true
@@ -466,6 +554,17 @@ func (s *Scope) hasDirtyStates() bool {
 	}
 
 	return false
+}
+
+// setTransientGeneration marks all transient states as rendered by the given generation, see [scopeWindow.render].
+func (s *Scope) setTransientGeneration(generation int64) {
+	s.statesMutex.Lock()
+	defer s.statesMutex.Unlock()
+
+	s.transientGeneration = generation
+	for _, property := range s.statesById {
+		property.setGeneration(generation)
+	}
 }
 
 // only for event loop
@@ -493,6 +592,8 @@ func (s *Scope) render(requestId proto.RID, scopeWnd *scopeWindow) *proto.RootVi
 		return scopeWnd.render()
 	}()
 
+	scopeWnd.checkRenderLoop(s.hasDirtyStates())
+
 	return &proto.RootViewInvalidated{
 		RID:  requestId,
 		Root: renderResult,
@@ -500,26 +601,25 @@ func (s *Scope) render(requestId proto.RID, scopeWnd *scopeWindow) *proto.RootVi
 }
 
 // Destroy frees all allocated components and removes factory pointers.
-// The scope is of no use afterward.
-// Do never call this from the event loop.
-// Note, that this may race logically when called concurrently.
+// The scope is of no use afterward. Functions which have already been posted to the event loop are still
+// executed before, but any later post is rejected. Destroy does not block and may also be called from the
+// event loop. See also [Application.DestroyScope] which also removes the scope from the application.
 func (s *Scope) Destroy() {
 	if !s.destroyed.CompareAndSwap(false, true) {
 		return
 	}
 
-	s.eventLoop.Post(func() {
-		// the event loop is panic protected, thus separate the observer execution
-		for _, f := range s.onDestroyObservers.PopAll() {
-			f()
-		}
-	})
-	s.eventLoop.Post(func() {
-		s.destroy()
-	})
-
-	s.eventLoop.Destroy()
-
+	s.eventLoop.Destroy(
+		func() {
+			// the event loop is panic protected, thus separate the observer execution
+			for _, f := range s.onDestroyObservers.PopAll() {
+				f()
+			}
+		},
+		func() {
+			s.destroy()
+		},
+	)
 }
 
 func (s *Scope) AddOnDestroyObserver(f func()) {
@@ -551,6 +651,7 @@ func (s *Scope) destroy() {
 
 	alloc := s.allocatedRootView.Unwrap()
 	alloc.destroy()
+	s.clearFiles()
 }
 
 // only for event loop

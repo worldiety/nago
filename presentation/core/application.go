@@ -204,6 +204,11 @@ func (a *Application) Scope(id proto.ScopeID) (*Scope, bool) {
 	return a.scopes.Get(id)
 }
 
+// DestroyScope removes the scope of the given id and destroys it. It returns false, if no such scope exists.
+func (a *Application) DestroyScope(id proto.ScopeID) bool {
+	return a.scopes.Remove(id)
+}
+
 // Connect either connects an existing scope with the channel or creates a new scope with the given id.
 func (a *Application) Connect(channel Channel, id proto.ScopeID) *Scope {
 	a.mutex.Lock()
@@ -214,11 +219,9 @@ func (a *Application) Connect(channel Channel, id proto.ScopeID) *Scope {
 		id = proto.NewScopeID()
 	}
 
-	scope, _ := a.scopes.Get(id)
-	if scope == nil {
-		scope = NewScope(a.ctx, a, filepath.Join(a.tmpDir, string(id)), id, time.Minute, a.factories, a.findVirtualSession)
-	}
-	a.scopes.Put(scope)
+	scope := a.scopes.getOrCreate(id, func() *Scope {
+		return NewScope(a.ctx, a, filepath.Join(a.tmpDir, string(id)), id, time.Minute, a.factories, a.findVirtualSession)
+	})
 
 	a.mutex.Unlock()
 
@@ -229,7 +232,7 @@ func (a *Application) Connect(channel Channel, id proto.ScopeID) *Scope {
 func (a *Application) ImportFilesOptions(scopeId proto.ScopeID, uploadId string) (ImportFilesOptions, bool) {
 	scope, ok := a.scopes.Get(scopeId)
 	if !ok {
-		slog.Error("no such scope to import files", "scope", scope.id)
+		slog.Error("no such scope to import files", "scope", scopeId)
 		return ImportFilesOptions{}, false
 	}
 
@@ -239,7 +242,7 @@ func (a *Application) ImportFilesOptions(scopeId proto.ScopeID, uploadId string)
 func (a *Application) ExportFilesOptions(scopeId proto.ScopeID, downloadId string) (ExportFilesOptions, bool) {
 	scope, ok := a.scopes.Get(scopeId)
 	if !ok {
-		slog.Error("no such scope to export files", "scope", scope.id)
+		slog.Error("no such scope to export files", "scope", scopeId)
 		return ExportFilesOptions{}, false
 	}
 

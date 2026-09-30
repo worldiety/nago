@@ -16,13 +16,13 @@ import (
 	"log/slog"
 	"reflect"
 	"runtime"
+	"runtime/debug"
 	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
 	"unsafe"
 
-	"go.wdy.de/nago/pkg/xsync"
 	"go.wdy.de/nago/pkg/xtime"
 	"go.wdy.de/nago/presentation/proto"
 )
@@ -226,6 +226,12 @@ func (s *State[T]) Notify() {
 //
 // Important: this does not trigger any registered observer. Observers are triggers by the frontend.
 // See also [State.SetObservable].
+//
+// Setting a different value during a render causes another render. Thus, a view which sets a changing value
+// in each render, e.g. a timestamp, or which flips between values, renders in an endless loop at the rate of
+// the frame ticker. The same applies to [State.Invalidate] and [State.Reset] within a render. Such a window
+// discards the actions of the user, because they refer to callbacks of an outdated tree, and nago logs a
+// warning.
 func (s *State[T]) Set(v T) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -307,7 +313,7 @@ func (s *State[T]) Invalidate() {
 	// re-render in O(1) instead of iterating over all states. States allocated without a proper scope window
 	// (see the fallback in StateOf) simply skip this, which is fine because they cannot be rendered anyway.
 	if w, ok := s.wnd.(*scopeWindow); ok {
-		w.markStateDirty()
+		w.markStateDirty(&s.id)
 	}
 }
 
@@ -351,24 +357,34 @@ func (s *State[T]) AsyncInit(fn func() T) *State[T] {
 
 	s.asyncPending = true
 
-	xsync.Go(func() error {
+	// this is background work of the scope, so that e.g. nagotest waits for it
+	goBackground(s.wnd, func() {
+		posted := false
 		defer func() {
-			s.mutex.Lock()
-			defer s.mutex.Unlock()
-			s.asyncPending = false
+			if r := recover(); r != nil {
+				slog.Error(fmt.Sprintf("AsyncInit: %v", r), slog.String("stack", string(debug.Stack())))
+			}
+
+			// allow another attempt, if the value never arrives
+			if !posted {
+				s.mutex.Lock()
+				s.asyncPending = false
+				s.mutex.Unlock()
+			}
 		}()
 
 		v := fn()
-		if wnd := s.wnd; wnd != nil {
-			// post this, to ensure that we are logically race free, even though updating a state is always free
-			// of technical data races.
-			wnd.(*scopeWindow).parent.eventLoop.Post(func() {
-				s.Set(v)
-				s.Invalidate() // ensure that even equal states like zero or nil values will trigger a redraw
-			})
-		}
-		return nil
-	}, nil)
+		// post this, to ensure that we are logically race free, even though updating a state is always free
+		// of technical data races. The initialization is pending until the value has been set, otherwise a
+		// render in between would start it again.
+		posted = s.wnd.(*scopeWindow).parent.eventLoop.Post(func() {
+			s.Set(v)
+			s.mutex.Lock()
+			s.asyncPending = false
+			s.mutex.Unlock()
+			s.Invalidate() // ensure that even equal states like zero or nil values will trigger a redraw
+		})
+	})
 
 	return s
 }
@@ -406,6 +422,7 @@ func StateOf[T any](wnd Window, id string) *State[T] {
 	}
 
 	w.lastStatePtrById++
+	w.parent.lastStatePtr = w.lastStatePtrById
 	state := &State[T]{
 		wnd:        wnd,
 		id:         id,

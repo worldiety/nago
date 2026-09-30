@@ -119,13 +119,9 @@ func (c TMultiSteps) Render(ctx core.RenderContext) core.RenderNode {
 		c.activeIndex = core.AutoState[int](ctx.Window())
 	}
 
-	if c.activeIndex.Get() < 0 {
-		c.activeIndex.Set(0)
-		c.activeIndex.Notify()
-	}
-
-	if c.activeIndex.Get() >= len(c.steps) {
-		c.activeIndex.Set(len(c.steps) - 1)
+	// clamp in a single step, otherwise an empty wizard would flip between -1 and 0 on each render forever
+	if idx := min(max(c.activeIndex.Get(), 0), max(len(c.steps)-1, 0)); idx != c.activeIndex.Get() {
+		c.activeIndex.Set(idx)
 		c.activeIndex.Notify()
 	}
 
