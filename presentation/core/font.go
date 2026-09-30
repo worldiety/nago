@@ -33,6 +33,6 @@ func (ff Fonts) Contains(family string) bool {
 			return true
 		}
 	}
-	
+
 	return false
 }

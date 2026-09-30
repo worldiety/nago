@@ -29,7 +29,7 @@ func (c *clipboardController) SetText(text string) error {
 	c.wnd.parent.Publish(&proto.ClipboardWriteTextRequested{
 		Text: proto.Str(text),
 	})
-	
+
 	return nil
 }
 
