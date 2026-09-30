@@ -15,6 +15,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"runtime/debug"
 	"strconv"
@@ -162,10 +163,15 @@ func printEnv() {
 }
 
 // secretEnvHints are case-insensitive parts of environment variable names, whose values must not be logged.
-// Harmless names like KEYBOARD_LAYOUT are masked as well, which only hides their value.
-var secretEnvHints = []string{"secret", "token", "key", "password", "passwd", "credential"}
+// Harmless names like KEYBOARD_LAYOUT or PWD are masked as well, which only hides their value.
+var secretEnvHints = []string{"secret", "token", "key", "pass", "pw", "credential", "auth", "dsn", "cert", "private", "cookie", "session"}
+
+// envURLCredentials matches the credentials of a URL or DSN, like postgres://user:pass@host or
+// user:pass@tcp(host)/db, whose password must not be logged, whatever the name of the variable is.
+var envURLCredentials = regexp.MustCompile(`([A-Za-z][A-Za-z0-9+.-]*://)?([^\s:@/]+):([^\s@/]+)@`)
 
 // maskEnv hides the value of an environment variable in the form KEY=VALUE, if its key hints at a secret.
+// Otherwise, only passwords within URLs are hidden.
 func maskEnv(kv string) string {
 	key, value, ok := strings.Cut(kv, "=")
 	if !ok || value == "" {
@@ -179,7 +185,7 @@ func maskEnv(kv string) string {
 		}
 	}
 
-	return kv
+	return key + "=" + envURLCredentials.ReplaceAllString(value, "${1}${2}:***@")
 }
 
 func (c *Configurator) determineSecureCookie() bool {
