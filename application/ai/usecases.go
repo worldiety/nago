@@ -12,6 +12,7 @@ import (
 	"log/slog"
 
 	"github.com/worldiety/option"
+	"go.wdy.de/nago/application/ai/model"
 	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/application/secret"
 	"go.wdy.de/nago/application/user"
@@ -27,20 +28,19 @@ type FindAllProvider func(subject auth.Subject) iter.Seq2[provider.Provider, err
 
 type FindProviderByID func(subject auth.Subject, id provider.ID) (option.Opt[provider.Provider], error)
 
-type ReloadProviderOptions struct {
-	// LoadAll indicates if the entire provider should be scraped and stored into the cache (if configured).
-	LoadAll bool
-}
-type ReloadProvider func(subject auth.Subject, opts ReloadProviderOptions) error
+// ReloadProvider instantiates the providers again from the credentials in the vault. This happens
+// automatically whenever a secret is created, updated or deleted.
+type ReloadProvider func(subject auth.Subject) error
 
-type ClearCache func(subject auth.Subject) error
+// FindAllModels lists the models of a provider, see [completion.Completions.Models]. It exists only to declare
+// [PermFindAllModel].
+type FindAllModels func(subject auth.Subject) iter.Seq2[model.Model, error]
 
 type UseCases struct {
 	FindProviderByName FindProviderByName
 	FindAllProvider    FindAllProvider
 	FindProviderByID   FindProviderByID
 	ReloadProvider     ReloadProvider
-	ClearCache         ClearCache
 }
 
 func NewUseCases(bus events.Bus, findSecrets secret.FindGroupSecrets, decorator func(provider provider.Provider) (provider.Provider, error)) UseCases {
@@ -48,7 +48,7 @@ func NewUseCases(bus events.Bus, findSecrets secret.FindGroupSecrets, decorator 
 	fnReload := NewReloadProvider(&providers, findSecrets, decorator)
 
 	fnInvokeReload := func() {
-		if err := fnReload(user.SU(), ReloadProviderOptions{}); err != nil {
+		if err := fnReload(user.SU()); err != nil {
 			slog.Error("failed to reload providers", "err", err.Error())
 		}
 	}
@@ -72,6 +72,5 @@ func NewUseCases(bus events.Bus, findSecrets secret.FindGroupSecrets, decorator 
 		FindProviderByName: NewFindProviderByName(&providers),
 		FindAllProvider:    NewFindAllProvider(&providers),
 		FindProviderByID:   NewFindProviderByID(&providers),
-		ClearCache:         NewClearCache(decorator),
 	}
 }

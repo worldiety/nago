@@ -21,8 +21,6 @@ import (
 	"go.wdy.de/nago/application/ai/completion"
 	uicompletion "go.wdy.de/nago/application/ai/completion/ui"
 	_ "go.wdy.de/nago/application/ai/provider/anthropic"
-	_ "go.wdy.de/nago/application/ai/provider/mistralai"
-	_ "go.wdy.de/nago/application/ai/provider/openai"
 	aispeclink "go.wdy.de/nago/application/speclink/ai"
 	cfgspeclink "go.wdy.de/nago/application/speclink/cfg"
 	ailibrary "go.wdy.de/nago/example/cmd/tutorial-113-ai-assistant/app/library/ai"

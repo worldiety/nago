@@ -7,9 +7,8 @@
 
 // Package completion is a PROPOSAL for a stateless message API for the nago ai abstraction.
 //
-// In contrast to [conversation.Conversation], which models a server-side stored chat (Mistral/OpenAI
-// "conversations", Anthropic does not store anything), a completion is fully stateless: the caller
-// always submits the entire history and receives a single assistant turn back. This maps 1:1 to:
+// A completion is fully stateless: the provider stores nothing, the caller always submits the entire history
+// and receives a single assistant turn back. This maps 1:1 to:
 //
 //   - Anthropic "Messages" API   -> POST /v1/messages
 //   - OpenAI "Chat Completions"  -> POST /v1/chat/completions

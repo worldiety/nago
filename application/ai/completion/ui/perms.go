@@ -9,7 +9,6 @@ package uicompletion
 
 import (
 	"go.wdy.de/nago/application/ai"
-	"go.wdy.de/nago/application/ai/provider/cache"
 	"go.wdy.de/nago/application/ai/session"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/auth"
@@ -28,7 +27,7 @@ import (
 func RequiredPermissions() []permission.ID {
 	return []permission.ID{
 		ai.PermFindAllProvider,
-		cache.PermFindAllModel,
+		ai.PermFindAllModel,
 		session.PermCreate,
 	}
 }

@@ -11,7 +11,6 @@ import (
 	"log/slog"
 
 	"go.wdy.de/nago/application/ai/provider"
-	"go.wdy.de/nago/application/ai/provider/cache"
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/secret"
 	"go.wdy.de/nago/application/user"
@@ -20,7 +19,7 @@ import (
 )
 
 func NewReloadProvider(m *concurrent.RWMap[provider.ID, provider.Provider], findSecrets secret.FindGroupSecrets, decorator func(provider provider.Provider) (provider.Provider, error)) ReloadProvider {
-	return func(subject auth.Subject, opts ReloadProviderOptions) error {
+	return func(subject auth.Subject) error {
 		if err := subject.Audit(PermReloadProvider); err != nil {
 			return err
 		}
@@ -46,14 +45,6 @@ func NewReloadProvider(m *concurrent.RWMap[provider.ID, provider.Provider], find
 				if err != nil {
 					slog.Error("failed to decorate provider", "provider", prov.Identity(), "err", err.Error())
 					continue
-				}
-
-				if opts.LoadAll {
-					if c, ok := prov.(*cache.Provider); ok {
-						if err := c.LoadAll(); err != nil {
-							slog.Error("failed to load cache", "err", err.Error())
-						}
-					}
 				}
 			}
 

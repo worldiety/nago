@@ -18,15 +18,12 @@
 package gollama
 
 import (
-	"iter"
 	"os"
 	"path/filepath"
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/completion"
 	"go.wdy.de/nago/application/ai/provider"
-	"go.wdy.de/nago/application/ai/tool"
-	"go.wdy.de/nago/auth"
 )
 
 var _ provider.Provider = (*gollamaProvider)(nil)
@@ -35,7 +32,6 @@ type gollamaProvider struct {
 	id          provider.ID
 	cfg         Settings
 	eng         *engine
-	models      *gollamaModels
 	completions *gollamaCompletions
 }
 
@@ -49,7 +45,6 @@ func NewProvider(id provider.ID, cfg Settings) provider.Provider {
 		eng: newEngine(cfg),
 	}
 
-	p.models = &gollamaModels{parent: p}
 	p.completions = &gollamaCompletions{parent: p}
 
 	return p
@@ -67,42 +62,12 @@ func (p *gollamaProvider) Description() string {
 	return p.cfg.Description
 }
 
-func (p *gollamaProvider) Models() provider.Models {
-	return p.models
-}
-
-func (p *gollamaProvider) Tools() provider.Tools {
-	return gollamaTools{}
-}
-
 func (p *gollamaProvider) Completions() option.Opt[completion.Completions] {
 	return option.Some[completion.Completions](p.completions)
 }
 
-// ----- intentionally unsupported stateful capabilities -----
-
-func (p *gollamaProvider) Libraries() option.Opt[provider.Libraries] {
-	return option.None[provider.Libraries]()
-}
-
-func (p *gollamaProvider) Agents() option.Opt[provider.Agents] {
-	return option.None[provider.Agents]()
-}
-
-func (p *gollamaProvider) Conversations() option.Opt[provider.Conversations] {
-	return option.None[provider.Conversations]()
-}
-
 func (p *gollamaProvider) Files() option.Opt[provider.Files] {
 	return option.None[provider.Files]()
-}
-
-// gollamaTools reports no parameterless built-in tools. Function tools are supplied per request via
-// completion.Options.Tools instead.
-type gollamaTools struct{}
-
-func (gollamaTools) All(subject auth.Subject) iter.Seq2[tool.Tool, error] {
-	return func(yield func(tool.Tool, error) bool) {}
 }
 
 // searchDir resolves the effective folder scanned for existing models.

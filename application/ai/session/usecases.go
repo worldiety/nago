@@ -8,9 +8,8 @@
 // Package session models a persistable, provider-independent chat session on top of the stateless
 // [completion] API.
 //
-// In contrast to [conversation.Conversation], which delegates storage to the provider (Mistral/OpenAI
-// "conversations"; Anthropic stores nothing), a session stores the full, rich [completion.Message] history
-// locally in a [data.Repository]. Because the history is embedded verbatim (including Text, Media, ToolCall,
+// Because the completion API is stateless and the provider stores nothing, a session stores the full, rich
+// [completion.Message] history locally in a [data.Repository]. Because the history is embedded verbatim (including Text, Media, ToolCall,
 // ToolResult and Thinking blocks, made JSON-safe by application/ai/completion/json.go), a session works with
 // ANY provider that exposes [completion.Completions] - the caller simply passes the desired Completions to
 // [Append] at runtime.
@@ -61,11 +60,10 @@ type Session struct {
 
 	// ProviderHint records which provider originally served this session (its provider.ID as a string).
 	//
-	// It is intentionally a plain string, not a provider.ID: this package is a leaf on top of [completion]
-	// and, like [conversation.Conversation] (which also stores only agent.ID/model.ID), it must not import
-	// the provider package. provider already imports the leaf packages (completion, conversation, message,
-	// model, ...) to aggregate their capabilities, so importing provider here would invert that layering and
-	// risk an import cycle. A caller resolves the hint back to a provider at runtime (e.g. to preselect the
+	// It is intentionally a plain string, not a provider.ID: this package is a leaf on top of [completion] and
+	// must not import the provider package. provider already imports the leaf packages (completion, file) to
+	// aggregate their capabilities, so importing provider here would invert that layering and risk an import
+	// cycle. A caller resolves the hint back to a provider at runtime (e.g. to preselect the
 	// matching provider when continuing a session). Optional.
 	ProviderHint string `json:"providerHint,omitempty"`
 

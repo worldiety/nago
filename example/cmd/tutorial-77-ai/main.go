@@ -15,9 +15,6 @@ import (
 	cfgai "go.wdy.de/nago/application/ai/cfg"
 	_ "go.wdy.de/nago/application/ai/provider/anthropic"
 	_ "go.wdy.de/nago/application/ai/provider/gollama"
-	_ "go.wdy.de/nago/application/ai/provider/mistralai"
-	_ "go.wdy.de/nago/application/ai/provider/openai"
-	uiai "go.wdy.de/nago/application/ai/ui"
 	"go.wdy.de/nago/application/drive"
 	cfgdrive "go.wdy.de/nago/application/drive/cfg"
 	uidrive "go.wdy.de/nago/application/drive/ui"
@@ -67,7 +64,7 @@ func main() {
 		}))
 
 		cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {
-			return uiai.PageChat(wnd, modAi.UseCases)
+			return sessionChat(wnd, modAi.UseCases, modAi.SessionUseCases)
 		})
 		cfg.RootViewWithDecoration("drive", func(wnd core.Window) core.View {
 			return uidrive.PageDrive(wnd, drives.UseCases)

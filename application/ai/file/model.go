@@ -14,7 +14,6 @@ import (
 	"strings"
 
 	"go.wdy.de/nago/application/user"
-	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/xtime"
 )
 
@@ -148,5 +147,3 @@ func (f File) FilenameWithExt() string {
 
 	return f.Name + f.MimeType.Ext()
 }
-
-type Repository data.Repository[File, ID]

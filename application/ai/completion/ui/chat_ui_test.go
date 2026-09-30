@@ -143,8 +143,10 @@ func TestChat_DelegationShowsSubTasks(t *testing.T) {
 }
 
 func TestChat_StopCancelsTheRun(t *testing.T) {
+	requested := make(chan struct{})
 	cancelled := make(chan struct{})
 	fake := &chatFake{parent: func(ctx context.Context, opts completion.Options) (completion.Result, error) {
+		close(requested)
 		<-ctx.Done()
 		close(cancelled)
 		return completion.Result{}, ctx.Err()
@@ -153,6 +155,13 @@ func TestChat_StopCancelsTheRun(t *testing.T) {
 	w := openChat(t, fake)
 	w.Type(w.Find(nagotest.Label("Nachricht")), "Das dauert")
 	w.Click(w.Find(nagotest.Text("Senden")))
+
+	// stop while the provider request is in flight; a stop before it would end the run without any request
+	select {
+	case <-requested:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the provider has not been requested")
+	}
 
 	w.WaitFor(nagotest.Text("Stopp"), 5*time.Second)
 	w.Click(w.Find(nagotest.Text("Stopp")))

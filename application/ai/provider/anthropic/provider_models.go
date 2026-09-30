@@ -11,21 +11,10 @@ import (
 	"iter"
 
 	"go.wdy.de/nago/application/ai/model"
-	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/auth"
 )
 
-var _ provider.Models = (*anthropicModels)(nil)
-
-type anthropicModels struct {
-	parent *anthropicProvider
-}
-
-func (m *anthropicModels) All(subject auth.Subject) iter.Seq2[model.Model, error] {
-	return m.parent.listModels(subject)
-}
-
-// listModels is the shared implementation used by both provider.Models and completion.Completions.Models.
+// listModels is the implementation of completion.Completions.Models.
 func (p *anthropicProvider) listModels(subject auth.Subject) iter.Seq2[model.Model, error] {
 	return func(yield func(model.Model, error) bool) {
 		models, err := p.client().ListModels()
@@ -46,4 +35,3 @@ func (p *anthropicProvider) listModels(subject auth.Subject) iter.Seq2[model.Mod
 		}
 	}
 }
-

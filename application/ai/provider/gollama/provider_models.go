@@ -11,11 +11,8 @@ import (
 	"iter"
 
 	"go.wdy.de/nago/application/ai/model"
-	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/auth"
 )
-
-var _ provider.Models = (*gollamaModels)(nil)
 
 type gollamaModels struct {
 	parent *gollamaProvider

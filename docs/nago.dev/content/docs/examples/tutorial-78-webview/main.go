@@ -10,8 +10,6 @@ package main
 import (
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application"
-	_ "go.wdy.de/nago/application/ai/provider/mistralai"
-	_ "go.wdy.de/nago/application/ai/provider/openai"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/webview"
