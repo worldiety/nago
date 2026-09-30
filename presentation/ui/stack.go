@@ -34,6 +34,7 @@ type TVStack = TStack
 // TStack is a layout component(Stack).
 // It is responsive and can switch between [HStack] and [VStack] during rendering.
 type TStack struct {
+	key                    core.CallbackKey
 	children               []core.View
 	alignment              Alignment
 	backgroundColor        Color
@@ -138,6 +139,14 @@ func (c TStack) Visible(visible bool) DecoredView {
 // Action sets the callback function to be invoked when the stack is clicked or tapped.
 func (c TStack) Action(f func()) TStack {
 	c.action = f
+	return c
+}
+
+// Key identifies the action across renders by what it acts on, e.g. ("remove", rowID), so that a click on a
+// former tree is not lost but redirected to the action of the current tree with the same key, see
+// [core.MountKeyedCallback]. Without a key, a stack with an [TStack.ID] uses ("action", id).
+func (c TStack) Key(name, id string) TStack {
+	c.key = core.CallbackKey{Name: name, ID: id}
 	return c
 }
 
@@ -373,7 +382,17 @@ func (c TStack) Render(ctx core.RenderContext) core.RenderNode {
 		orientation = proto.Horizontal
 	}
 
-	ptr := ctx.MountCallback(c.action)
+	// A key redirects a call of a former tree to this action, see [core.MountKeyedCallback]. An action which
+	// cannot be triggered in this tree must not be reachable that way either.
+	key := c.key
+	if key.IsZero() && c.id != "" {
+		key = core.CallbackKey{Name: "action", ID: c.id}
+	}
+	if c.disabled || c.invisible {
+		key = core.CallbackKey{}
+	}
+
+	ptr := core.MountKeyedCallback(ctx, key, c.action)
 	if core.Debug {
 		fmt.Printf("stack got %d @%s\n", ptr, c.originTrace)
 	}

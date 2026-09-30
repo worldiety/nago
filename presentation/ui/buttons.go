@@ -19,6 +19,7 @@ import (
 // A basic clickable UI component used to trigger actions or events. There are three different kinds of Buttons:
 // PrimaryButton, SecondaryButton & TertiaryButton.
 type TButton struct {
+	key                core.CallbackKey
 	title              string
 	accessibilityLabel string
 	preIcon            proto.SVG
@@ -174,6 +175,13 @@ func (c TButton) ID(id string) TButton {
 	return c
 }
 
+// Key identifies the action across renders by what it acts on, so that a click on a former tree is not lost,
+// see [TStack.Key].
+func (c TButton) Key(name, id string) TButton {
+	c.key = core.CallbackKey{Name: name, ID: id}
+	return c
+}
+
 // Alignment sets the button's content alignment
 func (c TButton) Alignment(alignment Alignment) TButton {
 	c.alignment = alignment
@@ -210,6 +218,7 @@ func (c TButton) Render(context core.RenderContext) proto.Component {
 		If(len(c.postIcon) != 0, Image().Embed(c.postIcon).Frame(Frame{}.Size(L16, L16))),
 	).Gap(L4).
 		ID(c.id).
+		Key(c.key.Name, c.key.ID).
 		HRef(c.url).
 		Target(c.target).
 		Enabled(!c.disabled).

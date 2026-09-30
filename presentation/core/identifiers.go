@@ -10,7 +10,9 @@ package core
 import (
 	"crypto/rand"
 	"encoding/binary"
+	"slices"
 	"sync/atomic"
+	"time"
 
 	"go.wdy.de/nago/presentation/proto"
 )
@@ -20,7 +22,7 @@ import (
 // when debugging. Each space starts at a random base within the lower part of its range, see identifiers.
 const (
 	minStatePtr     = 1 << 16
-	maxStateBase    = 1 << 24
+	maxStateBase    = 1 << 27
 	maxStatePtr     = 1 << 32
 	minCallbackPtr  = 1 << 32
 	maxCallbackBase = 1 << 40
@@ -79,19 +81,67 @@ func (ids *identifiers) nextFile() int64 {
 type callbackSegment struct {
 	base proto.Ptr
 	fns  []func()
+	// keys is parallel to fns, once any callback has a key, see [MountKeyedCallback]. Otherwise it is empty,
+	// so a tree without keys costs nothing.
+	keys    []CallbackKey
+	hasKeys bool
+	// byKey finds the pointer of a key; 0 marks a key which is used more than once.
+	byKey map[CallbackKey]proto.Ptr
+	// calledAt is when a callback of this tree was called last.
+	calledAt time.Time
 }
 
 // restart empties the segment and continues at the next free pointer of the scope.
 func (c *callbackSegment) restart(next proto.Ptr) {
 	clear(c.fns) // release the closures, the backing array is reused
 	c.fns = c.fns[:0]
+	clear(c.keys)
+	c.keys = c.keys[:0]
+	c.hasKeys = false
+	clear(c.byKey)
+	c.calledAt = time.Time{}
 	c.base = next
+}
+
+// dropKeys forgets the keys of the segment, so that none of its callbacks is redirected once it is superseded.
+func (c *callbackSegment) dropKeys() {
+	clear(c.keys)
+	c.keys = c.keys[:0]
+	c.hasKeys = false
+	clear(c.byKey)
 }
 
 // mount appends f and returns its pointer.
 func (c *callbackSegment) mount(f func()) proto.Ptr {
 	ptr := c.base + proto.Ptr(len(c.fns))
 	c.fns = append(c.fns, f)
+	if c.hasKeys {
+		c.keys = append(c.keys, CallbackKey{})
+	}
+	return ptr
+}
+
+// mountKeyed appends f under key and returns its pointer.
+func (c *callbackSegment) mountKeyed(key CallbackKey, f func()) proto.Ptr {
+	if !c.hasKeys {
+		// the callbacks so far have no key
+		c.hasKeys = true
+		c.keys = slices.Grow(c.keys[:0], len(c.fns)+1)[:len(c.fns)]
+	}
+
+	ptr := c.mount(f)
+	c.keys[len(c.keys)-1] = key
+
+	if c.byKey == nil {
+		c.byKey = map[CallbackKey]proto.Ptr{}
+	}
+
+	if _, used := c.byKey[key]; used {
+		c.byKey[key] = 0 // ambiguous
+	} else {
+		c.byKey[key] = ptr
+	}
+
 	return ptr
 }
 

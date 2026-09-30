@@ -41,7 +41,11 @@ type scopeWindow struct {
 	// destroyed is written by the event loop but read from any goroutine, e.g. by Invalidate.
 	destroyed atomic.Bool
 	// callbacks holds the callbacks of the tree rendered last, see MountCallback.
-	callbacks        callbackSegment
+	callbacks callbackSegment
+	// former holds the keys of recently superseded trees, oldest first, see [MountKeyedCallback].
+	former []formerSegment
+	// spareKeys is a released key slice of a former tree, reused by the next tree.
+	spareKeys        []CallbackKey
 	states           map[proto.Ptr]Property
 	statesById       map[string]Property
 	resetObservers   map[int]func()
@@ -115,7 +119,8 @@ func (s *scopeWindow) reset() {
 	// Callbacks are only valid for the tree which has been rendered last. Their pointers are unique within the
 	// scope and never reused, so that a stale tree of the frontend can never invoke a callback of a newer tree,
 	// e.g. the second click of a double click which would otherwise hit whatever is at the same position now.
-	s.dropCallbacks()
+	// Only a call with a key may be redirected, see [MountKeyedCallback].
+	s.supersedeCallbacks(time.Now())
 
 	// note that we are not clearing the async callbacks here to survive any render cycle.
 	// see also the core.DestroyObserverOption to distinguish between reset and destroy life cycle states.
@@ -314,6 +319,7 @@ func (s *scopeWindow) Invalidate() {
 
 func (s *scopeWindow) destroy() {
 	s.destroyed.Store(true)
+	s.forgetFormer()
 
 	for _, property := range s.states {
 		property.clearObservers()
@@ -366,6 +372,9 @@ func (s *scopeWindow) UpdateSubject(subject auth.Subject) {
 	if subject == nil {
 		subject = s.parent.app.getAnonUser()
 	}
+
+	// nothing rendered for the former subject may be redirected any more
+	s.discardKeys()
 
 	if setter, ok := subject.(subjectLanguageSetter); ok {
 		setter.SetBundle(s.Bundle())

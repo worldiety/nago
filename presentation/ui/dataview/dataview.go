@@ -149,6 +149,9 @@ type TDataView[E data.Aggregate[ID], ID ~string] struct {
 	listOptions      ListOptions[ID]
 	createMenuGroup  *ui.TMenuGroup
 	selectionChanged func([]ID)
+	// positional is set, if the identities are positions within a slice rather than stable ids, see FromSlice.
+	// Such an identity must not serve as key of a callback, see [core.MountKeyedCallback].
+	positional bool
 }
 
 type Idx string
@@ -176,7 +179,7 @@ func FromSlice[T any](wnd core.Window, slice []T, fields []Field[Element[T]]) TD
 		idents = append(idents, Idx(strconv.Itoa(i)))
 	}
 
-	return FromData[Element[T], Idx](wnd, Data[Element[T], Idx]{
+	t := FromData[Element[T], Idx](wnd, Data[Element[T], Idx]{
 		FindAll: xslices.ValuesWithError(idents, nil),
 		FindByID: func(id Idx) (option.Opt[Element[T]], error) {
 			i, err := strconv.Atoi(string(id))
@@ -192,6 +195,19 @@ func FromSlice[T any](wnd core.Window, slice []T, fields []Field[Element[T]]) TD
 		},
 		Fields: fields,
 	})
+	t.positional = true
+
+	return t
+}
+
+// itemKey returns the key of a callback which acts on the item with the given identity, see
+// [core.MountKeyedCallback]. It is empty for positional identities, which would name a position instead.
+func (t TDataView[E, ID]) itemKey(name string, id ID) (string, string) {
+	if t.positional {
+		return "", ""
+	}
+
+	return name, string(id)
 }
 
 func FromData[E data.Aggregate[ID], ID ~string](wnd core.Window, data Data[E, ID]) TDataView[E, ID] {

@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"math/rand/v2"
 	"runtime"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -580,5 +581,189 @@ func TestCallbackPointersAreIntervals(t *testing.T) {
 
 	if first[0] < 1<<32 || second[0] <= first[len(first)-1] {
 		t.Fatalf("expected ascending callback pointers above 2^32, got %v %v", first, second)
+	}
+}
+
+// slowStep is how long the next button of the keyed app takes.
+var slowStep time.Duration
+
+// rowRemover changes the rows of the keyed app from outside, see keyedApp.
+type rowRemover struct {
+	wnd  core.Window
+	rows *core.State[[]string]
+}
+
+func (r *rowRemover) remove(id string) {
+	r.wnd.Post(func() {
+		r.rows.Set(slices.DeleteFunc(slices.Clone(r.rows.Get()), func(s string) bool { return s == id }))
+	})
+}
+
+// keyedApp has a text field which is saved by a keyed button, a keyed wizard and a keyed list.
+func keyedApp(t *testing.T, remove *rowRemover) *nagotest.App {
+	return nagotest.New(t, func(cfg *application.Configurator) {
+		cfg.SetApplicationID("de.worldiety.nagotest")
+		cfg.RootView("form", func(wnd core.Window) core.View {
+			name := core.AutoState[string](wnd)
+			saved := core.AutoState[string](wnd)
+			step := core.AutoState[int](wnd)
+			return ui.VStack(
+				ui.TextField("Name", name.Get()).InputValue(name),
+				ui.PrimaryButton(func() { saved.Set(name.Get()) }).Title("save").Key("save", "").Enabled(name.Get() != "invalid"),
+				ui.PrimaryButton(func() { saved.Set("id:" + name.Get()) }).Title("save by id").ID("save-by-id"),
+				ui.Text("saved: "+saved.Get()),
+				ui.PrimaryButton(func() {
+					time.Sleep(slowStep)
+					step.Set(step.Get() + 1)
+				}).Title("next").Key("next", ""),
+				ui.Text(fmt.Sprintf("step: %d", step.Get())),
+				ui.Text("item: "+wnd.Values()["item"]),
+				ui.PrimaryButton(func() { saved.Set("deleted " + wnd.Values()["item"]) }).Title("delete").Key("delete", ""),
+			)
+		})
+		cfg.RootView("rows", func(wnd core.Window) core.View {
+			rows := core.AutoState[[]string](wnd).Init(func() []string { return []string{"a", "b", "c"} })
+			// lets the test change the rows from outside, like a domain event would
+			remove.wnd, remove.rows = wnd, rows
+
+			var list []core.View
+			for _, row := range rows.Get() {
+				list = append(list, ui.HStack(
+					ui.Text("row "+row),
+					ui.SecondaryButton(func() {
+						rows.Set(slices.DeleteFunc(slices.Clone(rows.Get()), func(s string) bool { return s == row }))
+					}).Title("remove "+row).Key("remove", row),
+				))
+			}
+			return ui.VStack(list...)
+		})
+	})
+}
+
+func actionOf(t *testing.T, w *nagotest.Window, text string) proto.Ptr {
+	t.Helper()
+	n := w.Find(nagotest.Text(text)).Node()
+	return n.Parents[len(n.Parents)-1].(*proto.Stack).Action
+}
+
+func call(t *testing.T, w *nagotest.Window, ptr proto.Ptr) {
+	t.Helper()
+	if err := w.Scope().Dispatch(&proto.FunctionCallRequested{Ptr: ptr, RID: 500}); err != nil {
+		t.Fatal(err)
+	}
+	w.Settle()
+}
+
+// The value of a text field is sent when it loses its focus, right before the click on save: the click refers
+// to the tree before the value, but its key redirects it to the current save, which reads the new value.
+func TestKeyedClickAfterInputIsNotLost(t *testing.T) {
+	w := keyedApp(t, nil).Open(t, nil, "form")
+
+	save := actionOf(t, w, "save")
+	var saveByID proto.Ptr
+	before := w.Scope().StaleCalls()
+
+	w.Type(w.Find(nagotest.Label("Name")), "Alice")
+	call(t, w, save)
+	w.Find(nagotest.Text("saved: Alice"))
+
+	// the same with a key derived from the id of the button
+	saveByID = actionOf(t, w, "save by id")
+	w.Type(w.Find(nagotest.Label("Name")), "Bob")
+	call(t, w, saveByID)
+	w.Find(nagotest.Text("saved: id:Bob"))
+
+	if n := w.Scope().StaleCalls() - before; n != 0 {
+		t.Fatalf("expected no stale calls, got %d", n)
+	}
+}
+
+func TestKeyedDoubleClickAdvancesOnce(t *testing.T) {
+	for _, slow := range []time.Duration{0, 700 * time.Millisecond} {
+		slowStep = slow
+		w := keyedApp(t, nil).Open(t, nil, "form")
+
+		next := actionOf(t, w, "next")
+		before := w.Scope().StaleCalls()
+		call(t, w, next)
+		call(t, w, next)
+
+		w.Find(nagotest.Text("step: 1"))
+		if n := w.Scope().StaleCalls() - before; n != 1 {
+			t.Fatalf("expected the second click to be stale with a %v callback, got %d", slow, n)
+		}
+		w.Close()
+	}
+	slowStep = 0
+}
+
+// A call is not redirected to an action which the current tree disables or hides.
+func TestKeyedClickIsNotRedirectedToDisabledButton(t *testing.T) {
+	w := keyedApp(t, nil).Open(t, nil, "form")
+
+	save := actionOf(t, w, "save")
+	before := w.Scope().StaleCalls()
+	w.Type(w.Find(nagotest.Label("Name")), "invalid")
+	call(t, w, save)
+
+	w.FindAll(nagotest.Text("saved: invalid")).None()
+	if n := w.Scope().StaleCalls() - before; n != 1 {
+		t.Fatalf("expected a stale click, got %d", n)
+	}
+}
+
+// The same route may show another item after a navigation, so a key like ("delete", "") means something else.
+func TestKeyedClickIsNotRedirectedAcrossValues(t *testing.T) {
+	w := keyedApp(t, nil).Open(t, nil, "form", nagotest.Values(core.Values{"item": "1"}))
+	w.Find(nagotest.Text("item: 1"))
+
+	del := actionOf(t, w, "delete")
+	before := w.Scope().StaleCalls()
+
+	// a navigation to item 2 within the same route reuses the window
+	if err := w.Scope().Dispatch(&proto.RootViewAllocationRequested{Factory: "form", Values: proto.RootViewParameters{"item": "2"}, RID: 600}); err != nil {
+		t.Fatal(err)
+	}
+	w.Settle()
+	w.Find(nagotest.Text("item: 2"))
+
+	call(t, w, del)
+	w.FindAll(nagotest.TextContains("deleted")).None()
+	if n := w.Scope().StaleCalls() - before; n != 1 {
+		t.Fatalf("expected a stale click, got %d", n)
+	}
+}
+
+// A keyed click on a row hits that row even after the rows have been rendered again, and never another one.
+func TestKeyedClickHitsTheRow(t *testing.T) {
+	var remove rowRemover
+	w := keyedApp(t, &remove).Open(t, nil, "rows")
+
+	removeA := actionOf(t, w, "remove a")
+	removeB := actionOf(t, w, "remove b")
+	removeC := actionOf(t, w, "remove c")
+
+	// a background change removes b and renders again
+	remove.remove("b")
+	w.Settle()
+	w.FindAll(nagotest.Text("row b")).None()
+
+	before := w.Scope().StaleCalls()
+	call(t, w, removeB) // gone
+	w.Find(nagotest.Text("row a"))
+	w.Find(nagotest.Text("row c"))
+	if n := w.Scope().StaleCalls() - before; n != 1 {
+		t.Fatalf("expected a stale click on the removed row, got %d", n)
+	}
+
+	call(t, w, removeC) // moved up, still hit
+	w.Find(nagotest.Text("row a"))
+	w.FindAll(nagotest.Text("row c")).None()
+
+	// the former tree has been used, so its other clicks are stale
+	call(t, w, removeA)
+	w.Find(nagotest.Text("row a"))
+	if n := w.Scope().StaleCalls() - before; n != 2 {
+		t.Fatalf("expected two stale clicks, got %d", n)
 	}
 }

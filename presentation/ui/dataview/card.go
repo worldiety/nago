@@ -191,7 +191,7 @@ func (t TDataView[E, ID]) renderCards(ctx core.RenderContext) core.RenderNode {
 							ui.IfFunc(t.addChevronRight, func() core.View {
 								return ui.VStack(ui.ImageIcon(icons.ChevronRight).Frame(ui.Frame{MaxWidth: ui.L32, MinWidth: ui.L32}))
 							}),
-						).Alignment(ui.Stretch).FullWidth().Action(t.wrappedAction(u)),
+						).Alignment(ui.Stretch).FullWidth().Key(t.itemKey("item", u.Identity())).Action(t.wrappedAction(u)),
 					).
 					Append(ui.Space(ui.L4)).
 					FullWidth().

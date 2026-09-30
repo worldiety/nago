@@ -102,10 +102,11 @@ func Observe(fn func(Action)) OpenOption {
 //
 // An action refers to the callbacks and states of the tree, which the window has received last. If the
 // application renders again in between, e.g. due to [core.OnFrame], a delayed function or a domain event, the
-// backend discards the action without executing it, like the second click of a double click. The window then
-// finds the selection again within the new tree and repeats the action. If that is still stale after the given
-// amount of retries, the test fails, which usually means that a view changes a state during each render and
-// thus renders in an endless loop. Use 0 to fail on the first stale action.
+// backend discards the action without executing it, like the second click of a double click, unless the
+// callback has a key (see [core.MountKeyedCallback]). The window then finds the selection again within the new
+// tree and repeats the action. If that is still stale after the given amount of retries, the test fails, which
+// usually means that a view changes a state during each render and thus renders in an endless loop. Use 0 to
+// fail on the first stale action.
 //
 // Stale actions are only detected within the same process, not through a websocket (see [Dial]).
 func StaleRetries(n int) OpenOption {

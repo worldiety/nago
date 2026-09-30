@@ -37,8 +37,8 @@
 // ([Window.ClickFlowChartNode], [Window.FlowChartAction]).
 //
 // An action refers to the callbacks of the latest tree. If the application renders again in between, the
-// backend discards the action as stale, so the window finds the selection again and repeats it, see
-// [StaleRetries]. A view which changes a state during each render renders endlessly, thus the window does not
+// backend discards the action as stale, unless the callback has a key (see [core.MountKeyedCallback]), so the
+// window finds the selection again and repeats it, see [StaleRetries]. A view which changes a state during each render renders endlessly, thus the window does not
 // settle and the test fails.
 //
 // Dialogs and notifications are part of the rendered tree, e.g. [proto.Modal] or [proto.AlertNotifications],

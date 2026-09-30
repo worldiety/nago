@@ -523,6 +523,9 @@ func (s *Scope) updateTick(now time.Time) {
 		s.tickQueued.Store(false)
 		if s.hasDirtyStates() {
 			s.forceRender(0)
+		} else if s.allocatedRootView.IsSome() {
+			// an idle window must not keep the keys of its former trees
+			s.allocatedRootView.Unwrap().pruneFormer(now)
 		}
 	})
 

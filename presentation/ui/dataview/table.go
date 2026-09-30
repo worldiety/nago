@@ -119,7 +119,7 @@ func (t TDataView[E, ID]) renderTable(ctx core.RenderContext) core.RenderNode {
 				} else {
 					sortReverse.Set(!sortReverse.Get())
 				}
-			}).PreIcon(ico),
+			}).PreIcon(ico).Key("sort", string(field.ID)),
 		)).Width(t.tableOptions.ColumnWidths[field.ID]))
 	}
 
@@ -158,7 +158,7 @@ func (t TDataView[E, ID]) renderTable(ctx core.RenderContext) core.RenderNode {
 					cells = append(cells, ui.TableCell(ui.HStack(ui.ImageIcon(icons.ChevronRight))).Alignment(ui.Trailing))
 				}
 
-				return ui.TableRow(cells...).Action(t.wrappedAction(u)).HoveredBackgroundColor(ui.ColorCardFooter)
+				return ui.TableRow(cells...).Key(t.itemKey("row", u.Identity())).Action(t.wrappedAction(u)).HoveredBackgroundColor(ui.ColorCardFooter)
 			})...,
 		).Rows(
 			ui.TableRow(

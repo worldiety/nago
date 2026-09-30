@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"maps"
 	"time"
 
 	"go.wdy.de/nago/pkg/std"
@@ -222,15 +223,19 @@ func (s *Scope) handleFunctionCallRequested(evt *proto.FunctionCallRequested) {
 	}
 
 	alloc := s.allocatedRootView.Unwrap()
-	fn := alloc.callbacks.lookup(evt.Ptr)
+	fn := alloc.resolveCallback(evt.Ptr, time.Now())
 	if fn == nil {
 		// Callbacks are only valid for the tree rendered last, so this is a call from a stale tree, e.g. the
-		// second click of a double click. It must never be redirected to another callback.
+		// second click of a double click. It is never redirected to whatever is at the same position now,
+		// see [MountKeyedCallback] for the only exception.
 		s.discardStale("callback", evt.Ptr, evt.RID)
 		return
 	}
 
 	fn()
+	// The render which this call causes follows right now, thus the tree is superseded by its own call, whatever
+	// the call took. A further call of the tree is then the second click of a double click.
+	alloc.callbacks.calledAt = time.Now()
 }
 
 // staleWarnCount is the amount of stale requests within staleWarnInterval, which causes a warning.
@@ -277,6 +282,10 @@ func (s *Scope) handleNewComponentRequested(evt *proto.RootViewAllocationRequest
 		if rv.factory == evt.Factory {
 			//fmt.Println("reuse existing root view")
 			values := newValuesFromProto(evt.Values)
+			if old := rv.values.Load(); old == nil || !maps.Equal(*old, values) {
+				// the same route shows another item now, so a key like ("delete", "") means something else
+				rv.discardKeys()
+			}
 			rv.values.Store(&values)
 			s.updateWindowInfo(s.windowInfo)
 			s.updateLanguage(string(evt.Locale))

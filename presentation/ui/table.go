@@ -17,6 +17,7 @@ import (
 // Columns can define width, alignment, background color, padding, borders,
 // and cell-specific actions (e.g., sorting).
 type TTableColumn struct {
+	key                    core.CallbackKey
 	content                core.View       // header content
 	colSpan                int             // number of columns to span
 	width                  proto.Length    // column width
@@ -44,6 +45,13 @@ func (c TTableColumn) Content(content core.View) TTableColumn {
 // Action sets an optional click/tap action for the column's cells.
 func (c TTableColumn) Action(action func()) TTableColumn {
 	c.action = action
+	return c
+}
+
+// Key identifies the action across renders by what it acts on, e.g. ("sort", column), so that a click on a
+// former tree is not lost, see [TStack.Key].
+func (c TTableColumn) Key(name, id string) TTableColumn {
+	c.key = core.CallbackKey{Name: name, ID: id}
 	return c
 }
 
@@ -95,6 +103,7 @@ func (c TTableColumn) Span(span int) TTableColumn {
 // Represents an individual cell inside a table row with optional spanning,
 // alignment, background, padding, border, and actions.
 type TTableCell struct {
+	key                    core.CallbackKey
 	content                core.View
 	colSpan                int
 	rowSpan                int
@@ -125,6 +134,13 @@ func (c TTableCell) ColSpan(colSpan int) TTableCell {
 // Action sets an optional click/tap action for the cell.
 func (c TTableCell) Action(action func()) TTableCell {
 	c.action = action
+	return c
+}
+
+// Key identifies the action across renders by what it acts on, e.g. (column, rowID), so that a click on a
+// former tree is not lost, see [TStack.Key].
+func (c TTableCell) Key(name, id string) TTableCell {
+	c.key = core.CallbackKey{Name: name, ID: id}
 	return c
 }
 
@@ -169,6 +185,7 @@ func (c TTableCell) Border(border Border) TTableCell {
 // TTableRow is a layout component (Table Row).
 // It groups a collection of cells and defines row-level styling and actions.
 type TTableRow struct {
+	key                    core.CallbackKey
 	cells                  []TTableCell
 	height                 proto.Length
 	backgroundColor        Color
@@ -189,6 +206,13 @@ func (r TTableRow) Append(cells ...TTableCell) TTableRow {
 // Action sets a click/tap action for the entire row.
 func (r TTableRow) Action(action func()) TTableRow {
 	r.action = action
+	return r
+}
+
+// Key identifies the action across renders by what it acts on, e.g. ("row", rowID), so that a click on a
+// former tree is not lost, see [TStack.Key].
+func (r TTableRow) Key(name, id string) TTableRow {
+	r.key = core.CallbackKey{Name: name, ID: id}
 	return r
 }
 
@@ -294,7 +318,7 @@ func (c TTable) Render(ctx core.RenderContext) core.RenderNode {
 			Width:                      column.width,
 			Alignment:                  column.alignment,
 			CellBackgroundColor:        proto.Color(column.backgroundColor),
-			CellAction:                 ctx.MountCallback(column.action),
+			CellAction:                 core.MountKeyedCallback(ctx, column.key, column.action),
 			CellPadding:                column.padding,
 			CellBorder:                 column.border,
 			CellHoveredBackgroundColor: proto.Color(column.hoveredBackgroundColor),
@@ -312,7 +336,7 @@ func (c TTable) Render(ctx core.RenderContext) core.RenderNode {
 				Alignment:              cell.alignment,
 				BackgroundColor:        proto.Color(cell.backgroundColor),
 				Border:                 cell.border,
-				Action:                 ctx.MountCallback(cell.action),
+				Action:                 core.MountKeyedCallback(ctx, cell.key, cell.action),
 				HoveredBackgroundColor: proto.Color(cell.hoveredBackgroundColor),
 			})
 		}
@@ -322,7 +346,7 @@ func (c TTable) Render(ctx core.RenderContext) core.RenderNode {
 			Height:                 row.height,
 			BackgroundColor:        proto.Color(row.backgroundColor),
 			HoveredBackgroundColor: proto.Color(row.hoveredBackgroundColor),
-			Action:                 ctx.MountCallback(row.action),
+			Action:                 core.MountKeyedCallback(ctx, row.key, row.action),
 		})
 	}
 
