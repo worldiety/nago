@@ -134,3 +134,101 @@ func TestExecuteNowTracksStartAndState(t *testing.T) {
 		t.Fatalf("a stopped job must stay stopped, got %v", m.State("job"))
 	}
 }
+
+// configureHourly configures a job which runs immediately and then pauses for an hour.
+func configureHourly(t *testing.T, m *Manager, id ID, runner func(ctx context.Context) error) *Scheduler {
+	t.Helper()
+	if err := m.Configure(Options{ID: id, Kind: Schedule, Defaults: Settings{ID: id, PauseTime: time.Hour}, Runner: runner}); err != nil {
+		t.Fatal(err)
+	}
+
+	s, _ := m.scheduler(id)
+	return s
+}
+
+// A Start directly after a Stop must launch the loop again, even if the old loop has not yet noticed its
+// cancellation.
+func TestStopThenStartRunsAgain(t *testing.T) {
+	m, _ := newTestManager(t, "")
+	var calls atomic.Int32
+	s := configureHourly(t, m, "job", func(ctx context.Context) error {
+		calls.Add(1)
+		return nil
+	})
+
+	eventually(t, 5*time.Second, func() bool { return calls.Load() == 1 && m.State("job") == Paused })
+
+	if err := m.Stop("job"); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := m.Start("job"); err != nil {
+		t.Fatal(err)
+	}
+
+	eventually(t, 5*time.Second, func() bool { return calls.Load() == 2 && m.State("job") == Paused })
+
+	// give the old loop time to exit, it must neither stop nor mark the new one
+	time.Sleep(50 * time.Millisecond)
+	if !s.Looping() || m.State("job") != Paused {
+		t.Fatalf("the new loop must still be looping, got %v", m.State("job"))
+	}
+}
+
+// Stop must take effect immediately, without waiting for the loop to notice its cancellation.
+func TestStopIsImmediate(t *testing.T) {
+	m, _ := newTestManager(t, "")
+	configureManual(t, m, "job", func(ctx context.Context) error { return nil })
+	s, _ := m.scheduler("job")
+	if !s.Looping() {
+		t.Fatal("a configured job must be looping")
+	}
+
+	if err := m.Stop("job"); err != nil {
+		t.Fatal(err)
+	}
+
+	if s.Looping() {
+		t.Fatal("a stopped job must not be looping")
+	}
+
+	eventually(t, 5*time.Second, func() bool { return s.State() == Stopped })
+}
+
+// An old loop which ends only after a new Launch must not mark the new loop as not looping or stopped.
+func TestOldLoopExitDoesNotAffectNewLoop(t *testing.T) {
+	m, _ := newTestManager(t, "")
+	release := make(chan struct{})
+	var calls atomic.Int32
+	s := configureHourly(t, m, "job", func(ctx context.Context) error {
+		// the first run ignores its cancellation, so that its loop ends only after the new Launch
+		if calls.Add(1) == 1 {
+			<-release
+		}
+		return nil
+	})
+
+	eventually(t, 5*time.Second, func() bool { return calls.Load() == 1 })
+
+	// the new loop waits for the run of the old loop to complete
+	s.Launch()
+	close(release)
+
+	eventually(t, 5*time.Second, func() bool { return calls.Load() == 2 && s.State() == Paused })
+
+	// give the old loop time to exit
+	time.Sleep(50 * time.Millisecond)
+	if !s.Looping() {
+		t.Fatal("the new loop must still be looping")
+	}
+
+	if s.State() != Paused {
+		t.Fatalf("the new loop must still be paused, got %v", s.State())
+	}
+
+	if err := m.Stop("job"); err != nil {
+		t.Fatal(err)
+	}
+
+	eventually(t, 5*time.Second, func() bool { return s.State() == Stopped })
+}

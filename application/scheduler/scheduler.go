@@ -43,9 +43,9 @@ type Scheduler struct {
 	lastStartedAt   atomic.Pointer[time.Time]
 	lastCompletedAt atomic.Pointer[time.Time]
 	nextPlannedAt   atomic.Pointer[time.Time]
-	launchMutex     sync.Mutex
-	looping         atomic.Bool   // true while the loop goroutine of Launch is alive
-	wake            chan struct{} // signals changed settings to the loop
+	launchMutex     sync.Mutex                 // protects ctx and cancel and serializes the (re)launch of the loop
+	loop            atomic.Pointer[loopHandle] // the current loop of Launch or nil
+	wake            chan struct{}              // signals changed settings to the loop
 	runs            *runStore
 	sink            atomic.Pointer[runSink]
 	currentRun      atomic.Pointer[Run]
@@ -53,6 +53,18 @@ type Scheduler struct {
 
 // maxMemoryLogs limits the in-memory log buffer of the current run. The complete log is persisted in the run log file.
 const maxMemoryLogs = 1000
+
+// loopHandle identifies a single loop started by [Scheduler.Launch]. The loop is alive, as long as its context
+// has not been cancelled. Each Launch creates a new handle, so that an old loop which ends late cannot affect a
+// newer one.
+type loopHandle struct {
+	ctx context.Context
+}
+
+// alive returns true, if the loop exists and has not been cancelled.
+func (h *loopHandle) alive() bool {
+	return h != nil && h.ctx.Err() == nil
+}
 
 func NewScheduler(ctx context.Context, opts Options, settingsRepo SettingsRepository) *Scheduler {
 	s := &Scheduler{
@@ -87,14 +99,25 @@ func (s *Scheduler) State() State {
 	return *s.state.Load()
 }
 
+// Destroy cancels the current context, which stops the loop and cancels a run in progress. It does not wait for
+// the loop or the run to end, but [Scheduler.Looping] returns false immediately.
 func (s *Scheduler) Destroy() {
+	s.launchMutex.Lock()
+	defer s.launchMutex.Unlock()
+
 	s.cancel()
 }
 
+// ResetContext cancels the current context, including a running loop, and replaces it with a new one.
 func (s *Scheduler) ResetContext() {
 	s.launchMutex.Lock()
 	defer s.launchMutex.Unlock()
 
+	s.resetContext()
+}
+
+// resetContext requires the launchMutex.
+func (s *Scheduler) resetContext() {
 	s.cancel()
 
 	ctx := logging.WithContext(s.externalCtx, slog.New(slogHandler{sched: s}))
@@ -104,19 +127,39 @@ func (s *Scheduler) ResetContext() {
 	s.ctx = myCtx
 }
 
+// Launch starts a new loop. A previous loop is cancelled but not awaited and its late end does not affect the new
+// loop.
 func (s *Scheduler) Launch() {
-	s.ResetContext()
-	s.looping.Store(true)
+	s.launchMutex.Lock()
+	s.resetContext()
 
 	// the loop keeps its own context, so that a later ResetContext, e.g. by ExecuteNow on a stopped scheduler,
 	// cannot revive a cancelled loop
 	ctx := s.ctx
+	h := &loopHandle{ctx: ctx}
+	s.loop.Store(h)
+	s.launchMutex.Unlock()
+
+	// setState changes the state only while this loop is the current one, so that a cancelled loop which still
+	// completes its run does not overwrite the state of a newer loop
+	setState := func(state State) {
+		if s.loop.Load() == h && h.alive() {
+			s.state.Store(&state)
+		}
+	}
 
 	go func() {
 		defer func() {
-			s.looping.Store(false)
-			state := Stopped
-			s.state.Store(&state)
+			// Only the current loop clears the handle and sets the state. The mutex ensures that a concurrent Launch
+			// happens either before, so that the CompareAndSwap fails, or afterward, so that the new loop sets its
+			// state later.
+			s.launchMutex.Lock()
+			defer s.launchMutex.Unlock()
+
+			if s.loop.CompareAndSwap(h, nil) {
+				state := Stopped
+				s.state.Store(&state)
+			}
 		}()
 
 	loop:
@@ -128,8 +171,7 @@ func (s *Scheduler) Launch() {
 			}
 
 			if settings.Disabled || s.opts.Kind == Manual {
-				state := Disabled
-				s.state.Store(&state)
+				setState(Disabled)
 				// wait the config-reload time or until the settings have been changed or exit early on cancel
 				if _, alive := s.sleep(ctx, time.Minute); !alive {
 					slog.Info("service shutdown due to context signal")
@@ -139,8 +181,7 @@ func (s *Scheduler) Launch() {
 				continue
 			}
 
-			state := Paused
-			s.state.Store(&state)
+			setState(Paused)
 			// wait the start-delay or exit early on cancel. Changed settings restart the delay.
 			woken, alive := s.sleep(ctx, settings.StartDelay)
 			if !alive {
@@ -155,7 +196,7 @@ func (s *Scheduler) Launch() {
 			// perform the actual work execution
 
 			if s.opts.Kind != Cron {
-				if err := s.execute(); err != nil {
+				if err := s.execute(ctx); err != nil {
 					slog.Error("service looper failed to run", "id", s.opts.ID, "err", err.Error())
 				}
 			}
@@ -178,8 +219,7 @@ func (s *Scheduler) Launch() {
 			}
 
 			// wait the pause-delay or exit early on cancel
-			state = Paused
-			s.state.Store(&state)
+			setState(Paused)
 			// do not schedule faster than 1 second, everything else is probably a configuration mistake
 			deadline := time.Now().Add(max(pauseTime, time.Second))
 			for {
@@ -209,7 +249,7 @@ func (s *Scheduler) Launch() {
 			}
 
 			if s.opts.Kind == Cron {
-				if err := s.execute(); err != nil {
+				if err := s.execute(ctx); err != nil {
 					slog.Error("service looper cron failed to run", "id", s.opts.ID, "err", err.Error())
 				}
 			}
@@ -265,10 +305,11 @@ func (s *Scheduler) sleep(ctx context.Context, d time.Duration) (woken, alive bo
 	}
 }
 
-// Looping returns true, if the loop of the scheduler has been launched and not yet stopped. In contrast, the
-// [State] may be Stopped or Running while a stopped scheduler is executed manually.
+// Looping returns true, if the loop of the scheduler has been launched and not yet stopped. A stopped loop is not
+// looping anymore, even if its goroutine has not yet noticed its cancellation. In contrast, the [State] may be
+// Stopped or Running while a stopped scheduler is executed manually.
 func (s *Scheduler) Looping() bool {
-	return s.looping.Load()
+	return s.loop.Load().alive()
 }
 
 // Wake makes the loop reload its settings immediately instead of after the current delay.
@@ -280,10 +321,15 @@ func (s *Scheduler) Wake() {
 	}
 }
 
-// execute runs the runner once and tracks its start.
-func (s *Scheduler) execute() error {
+// execute runs the runner once with the given context and tracks its start. A cancelled context, e.g. of a loop
+// which has been stopped while its timer fired, is not executed at all.
+func (s *Scheduler) execute(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	return s.protectExec(func() error {
-		return s.opts.Runner(s.ctx)
+		return s.opts.Runner(ctx)
 	})
 }
 
@@ -315,7 +361,7 @@ func (s *Scheduler) protectExec(fn func() error) (err error) {
 	defer func() {
 		// without a loop, e.g. a stopped scheduler executed manually, nothing is paused
 		state := Stopped
-		if s.looping.Load() {
+		if s.Looping() {
 			state = Paused
 		}
 		s.state.Store(&state)
@@ -336,10 +382,14 @@ func (s *Scheduler) protectExec(fn func() error) (err error) {
 // ExecuteNow runs the runner immediately and blocks until it completes. It waits for a run of the loop which is
 // in progress.
 func (s *Scheduler) ExecuteNow() error {
+	s.launchMutex.Lock()
 	if s.ctx.Err() != nil {
-		s.ResetContext()
+		s.resetContext()
 	}
-	return s.execute()
+	ctx := s.ctx
+	s.launchMutex.Unlock()
+
+	return s.execute(ctx)
 }
 
 func (s *Scheduler) beginRun() (Run, *runSink, error) {
