@@ -9,8 +9,6 @@ package core
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/binary"
 	"fmt"
 	"io"
 	"log/slog"
@@ -29,15 +27,6 @@ import (
 
 var _ Window = (*scopeWindow)(nil)
 
-const maxAutoPtr = 10_000
-
-// Callback pointers are random within [minCallbackPtr, maxCallbackPtr), which separates them from the sequential
-// state pointers and keeps them exact within JavaScript numbers (2^53).
-const (
-	minCallbackPtr = 1 << 32
-	maxCallbackPtr = 1 << 53
-)
-
 var globalListenerPtr atomic.Int64
 
 type declaredBufferKey struct {
@@ -51,13 +40,10 @@ type scopeWindow struct {
 	lastRendering std.Option[proto.Component]
 	// destroyed is written by the event loop but read from any goroutine, e.g. by Invalidate.
 	destroyed atomic.Bool
-	autoIDSeq int
-	callbacks map[proto.Ptr]func()
-	//lastAutoStatePtr      proto.Ptr
-	lastStatePtrById proto.Ptr
+	// callbacks holds the callbacks of the tree rendered last, see MountCallback.
+	callbacks        callbackSegment
 	states           map[proto.Ptr]Property
 	statesById       map[string]Property
-	filesReceiver    map[proto.Ptr]FilesReceiver
 	resetObservers   map[int]func()
 	destroyObservers map[int]func()
 	hnd              int
@@ -74,13 +60,12 @@ type scopeWindow struct {
 	// lastDirtyState is the ID of the state which has been marked dirty last, see checkRenderLoop.
 	lastDirtyState atomic.Pointer[string]
 	// the render loop detection, only for the event loop
-	renderLoopCount    int
-	renderLoopSince    time.Time
-	renderLoopWarned   bool
-	mutex              sync.Mutex
-	clipboard          *clipboardController
-	lastAsyncInvokePtr atomic.Int64
-	asyncCallbacks     concurrent.RWMap[proto.Ptr, asyncCallback]
+	renderLoopCount  int
+	renderLoopSince  time.Time
+	renderLoopWarned bool
+	mutex            sync.Mutex
+	clipboard        *clipboardController
+	asyncCallbacks   concurrent.RWMap[proto.Ptr, asyncCallback]
 }
 
 func (s *scopeWindow) Clipboard() Clipboard {
@@ -89,13 +74,10 @@ func (s *scopeWindow) Clipboard() Clipboard {
 
 func newScopeWindow(parent *Scope, factory proto.RootViewID, values Values) *scopeWindow {
 	s := &scopeWindow{parent: parent}
-	s.callbacks = map[proto.Ptr]func(){}
+	s.callbacks.restart(parent.ids.callback)
 	s.factory = factory
 	s.states = map[proto.Ptr]Property{}
 	s.statesById = map[string]Property{}
-	// State pointers are unique within the scope and never reused by a later window, so that an update which
-	// the frontend sends for a former page cannot hit a state of the current one, see discardStale.
-	s.lastStatePtrById = max(parent.lastStatePtr, maxAutoPtr)
 	// continue with the generation of the scope, otherwise the transient states of the scope, which carry the
 	// generation of the former window, would be considered dirty until this window has caught up.
 	s.generation = parent.generation.Load()
@@ -130,13 +112,10 @@ func (s *scopeWindow) setFactory(view ComponentFactory) {
 }
 
 func (s *scopeWindow) reset() {
-	// callbacks are only valid for the tree which has been rendered last. Their pointers are random and never
-	// reused, so that a stale tree of the frontend can never invoke a callback of a newer tree, e.g. the second
-	// click of a double click which would otherwise hit whatever is at the same position now.
-	//s.lastAutoStatePtr = 0 // make them stable
-	//clear(s.states)
-	clear(s.filesReceiver)
-	clear(s.callbacks)
+	// Callbacks are only valid for the tree which has been rendered last. Their pointers are unique within the
+	// scope and never reused, so that a stale tree of the frontend can never invoke a callback of a newer tree,
+	// e.g. the second click of a double click which would otherwise hit whatever is at the same position now.
+	s.dropCallbacks()
 
 	// note that we are not clearing the async callbacks here to survive any render cycle.
 	// see also the core.DestroyObserverOption to distinguish between reset and destroy life cycle states.
@@ -359,22 +338,24 @@ func (s *scopeWindow) MountCallback(f func()) proto.Ptr {
 		return 0
 	}
 
-	ptr := s.newCallbackPtr()
-	s.callbacks[ptr] = f
+	ptr := s.callbacks.mount(f)
+	s.parent.ids.callback = s.callbacks.next()
 
 	return ptr
 }
 
-// newCallbackPtr returns an unpredictable pointer, which is not in use by the current tree.
-func (s *scopeWindow) newCallbackPtr() proto.Ptr {
-	for {
-		var buf [8]byte
-		_, _ = rand.Read(buf[:]) // never returns an error, see crypto/rand
-		ptr := proto.Ptr(minCallbackPtr + binary.LittleEndian.Uint64(buf[:])%(maxCallbackPtr-minCallbackPtr))
-		if _, used := s.callbacks[ptr]; !used {
-			return ptr
-		}
+// dropCallbacks releases the callbacks of the current tree. The next tree continues with the pointers after
+// them.
+func (s *scopeWindow) dropCallbacks() {
+	next := s.callbacks.next()
+	if next >= maxCallbackPtr {
+		// practically unreachable: at a million callbacks per second, this takes centuries
+		slog.Error("the callback pointers of the scope are exhausted, destroying the scope", "scope", s.parent.id)
+		s.parent.Destroy()
 	}
+
+	s.callbacks.restart(next)
+	s.parent.ids.callback = next
 }
 
 func (s *scopeWindow) Application() *Application {
@@ -430,8 +411,7 @@ func (s *scopeWindow) ImportFiles(options ImportFilesOptions) {
 	}
 
 	if options.ID == "" {
-		s.autoIDSeq++
-		options.ID = fmt.Sprintf("auto-%d", s.autoIDSeq)
+		options.ID = fmt.Sprintf("auto-%d", s.parent.ids.nextFile())
 	}
 
 	if options.MaxBytes == 0 {
@@ -459,8 +439,7 @@ func (s *scopeWindow) ExportFiles(options ExportFilesOptions) {
 	}
 
 	if options.ID == "" {
-		s.autoIDSeq++
-		options.ID = fmt.Sprintf("auto-%d", s.autoIDSeq)
+		options.ID = fmt.Sprintf("auto-%d", s.parent.ids.nextFile())
 	}
 
 	s.parent.putExportFiles(options)

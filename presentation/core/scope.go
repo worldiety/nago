@@ -76,8 +76,8 @@ type Scope struct {
 	statesMutex sync.Mutex
 	// transientGeneration is the generation of the last render which marked the transient states as rendered.
 	transientGeneration int64
-	// lastStatePtr is the last state pointer allocated by any window of this scope, only for the event loop.
-	lastStatePtr proto.Ptr
+	// ids hands out the pointers and ids of this scope, see identifiers.
+	ids identifiers
 	// generation is the render generation of this scope. It is monotonic across all windows of this scope,
 	// because the transient states outlive a window.
 	generation atomic.Int64
@@ -131,6 +131,7 @@ func NewScope(ctx context.Context, app *Application, tempRootDir string, id prot
 		statesById:  make(map[string]TransientProperty),
 		sessionByID: sessionByID,
 	}
+	s.ids.init()
 
 	loc, err := time.LoadLocation("Europe/Berlin") // TODO implement me
 	if err != nil {
@@ -587,6 +588,8 @@ func (s *Scope) render(requestId proto.RID, scopeWnd *scopeWindow) *proto.RootVi
 					Frame: proto.Frame{Width: "100%", Height: "100dvh"},
 				}
 
+				// the client never receives the callbacks of the failed tree, so nothing may call them
+				scopeWnd.dropCallbacks()
 			}
 		}()
 		return scopeWnd.render()

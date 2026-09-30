@@ -421,16 +421,24 @@ func StateOf[T any](wnd Window, id string) *State[T] {
 		slog.Error("restored view state does not match expected state type", "expected", fmt.Sprintf("%T", zero), "got", fmt.Sprintf("%T", some))
 	}
 
-	w.lastStatePtrById++
-	w.parent.lastStatePtr = w.lastStatePtrById
+	// State pointers are unique within the scope and never reused by a later window, so that an update which
+	// the frontend sends for a former page cannot hit a state of the current one, see discardStale.
+	ptr := w.parent.ids.state
+	if ptr >= maxStatePtr {
+		// practically unreachable, see dropCallbacks
+		slog.Error("the state pointers of the scope are exhausted, destroying the scope", "scope", w.parent.id)
+		w.parent.Destroy()
+	}
+	w.parent.ids.state++
+
 	state := &State[T]{
 		wnd:        wnd,
 		id:         id,
-		ptr:        w.lastStatePtrById,
+		ptr:        ptr,
 		valid:      false,
 		generation: w.generationOf(),
 	}
-	w.states[w.lastStatePtrById] = state
+	w.states[ptr] = state
 	w.statesById[id] = state
 
 	return state

@@ -17,11 +17,10 @@ type RenderContext interface {
 	// Window returns the associated Window instance.
 	Window() Window
 
-	// MountCallback returns for non-nil funcs a pointer. This pointer is only unique for the current render state.
-	// This means, that subsequent calls which result in the same structural ora tree, will have the same
-	// pointers. This allows more efficient model deltas. The largest downside is, that an outdated frontend
-	// may invoke the wrong callbacks.
-	// All callbacks are removed between render calls.
+	// MountCallback returns for non-nil funcs a pointer, which is unique within the scope and never reused. The
+	// callback is only valid for the tree which is rendered right now: all callbacks are removed between render
+	// calls, and a call with a pointer of a former tree is discarded, e.g. the second click of a double click.
+	// It is never redirected to whatever is at the same position now.
 	MountCallback(func()) proto.Ptr
 }
 

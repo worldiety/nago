@@ -82,10 +82,9 @@ func (s *Scope) handleCallResolved(evt *proto.CallResolved) {
 	}
 
 	if !ok {
-		slog.Error("async callback not found", slog.Any("evt", evt))
-		s.Publish(&proto.ErrorOccurred{
-			Message: proto.Str(fmt.Sprintf("cannot call async: no such pointer found: %d", evt.CallPtr)),
-		})
+		// e.g. a late answer for a call of a former window or a call which has been resolved already. The
+		// pointers are unique within the scope, thus it can never hit a call of the current window.
+		slog.Debug("async callback not found", slog.Any("evt", evt))
 		return
 	}
 
@@ -223,7 +222,7 @@ func (s *Scope) handleFunctionCallRequested(evt *proto.FunctionCallRequested) {
 	}
 
 	alloc := s.allocatedRootView.Unwrap()
-	fn := alloc.callbacks[evt.Ptr]
+	fn := alloc.callbacks.lookup(evt.Ptr)
 	if fn == nil {
 		// Callbacks are only valid for the tree rendered last, so this is a call from a stale tree, e.g. the
 		// second click of a double click. It must never be redirected to another callback.

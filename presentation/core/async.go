@@ -41,7 +41,7 @@ func asyncCall(wnd Window, args proto.CallArgs, fn func(ret proto.CallRet), repe
 		slog.Error("AsyncCall: invalid window type", "wnd", fmt.Errorf("%T", wnd))
 		return func() {}
 	}
-	ptr := proto.Ptr(w.lastAsyncInvokePtr.Add(1))
+	ptr := w.parent.ids.nextAsync()
 	if fn != nil {
 		w.asyncCallbacks.Put(ptr, asyncCallback{fn: fn, repeatable: repeatable})
 	}

@@ -463,3 +463,122 @@ func TestSettleTimesOutOnBlockedLoop(t *testing.T) {
 		t.Fatalf("settle took %v", d)
 	}
 }
+
+// A browser keeps its scope id across a reconnect, thus it may end up with a new scope of the same id while
+// it still shows the tree of the former one, e.g. after the former scope has been reaped. Nothing of that tree
+// may hit the new scope.
+func TestFormerScopeOfSameIDIsStale(t *testing.T) {
+	var hits atomic.Int32
+	app := nagotest.New(t, func(cfg *application.Configurator) {
+		cfg.SetApplicationID("de.worldiety.nagotest")
+		cfg.RootView("page", func(wnd core.Window) core.View {
+			name := core.AutoState[string](wnd).Init(func() string { return "unchanged" })
+			return ui.VStack(
+				ui.PrimaryButton(func() { hits.Add(1) }).Title("hit"),
+				ui.Text("name: "+name.Get()),
+				ui.TextField("Name", name.Get()).InputValue(name),
+			)
+		})
+	})
+
+	w := app.Open(t, nil, "page")
+	action := w.Find(nagotest.Text("hit")).Node()
+	callback := action.Parents[len(action.Parents)-1].(*proto.Stack).Action
+	state := w.Find(nagotest.Label("Name")).Node().Component.(*proto.TextField).InputValue
+
+	// the scope is reaped, and the reconnect creates a new one of the same id
+	former := w.Scope()
+	if !app.Core().DestroyScope(former.ID()) {
+		t.Fatal("cannot destroy the scope")
+	}
+	w.Reconnect()
+	if w.Scope() == former || w.Scope().ID() != former.ID() {
+		t.Fatal("expected a new scope of the same id")
+	}
+
+	before := w.Scope().StaleCalls()
+	if err := w.Scope().Dispatch(&proto.FunctionCallRequested{Ptr: callback, RID: 100}); err != nil {
+		t.Fatal(err)
+	}
+	if err := w.Scope().Dispatch(&proto.UpdateStateValueRequested{StatePointer: state, Value: "hacked", RID: 101}); err != nil {
+		t.Fatal(err)
+	}
+	w.Settle()
+
+	if hits.Load() != 0 {
+		t.Fatal("a callback of the former scope has been called")
+	}
+	w.Find(nagotest.Text("name: unchanged"))
+	if n := w.Scope().StaleCalls() - before; n != 2 {
+		t.Fatalf("expected two stale requests, got %d", n)
+	}
+}
+
+// A late answer of the frontend for a call of a former page must not hit a call of the current one.
+func TestAsyncAnswerOfFormerPageIsIgnored(t *testing.T) {
+	var answered atomic.Int32
+	app := nagotest.New(t, func(cfg *application.Configurator) {
+		cfg.SetApplicationID("de.worldiety.nagotest")
+		cfg.RootView("a", func(wnd core.Window) core.View {
+			return ui.PrimaryButton(func() {
+				core.AsyncCall(wnd, &proto.CallRequestFocus{ID: "x"}, func(ret proto.CallRet) {})
+				wnd.Navigation().ForwardTo("b", nil)
+			}).Title("go")
+		})
+		cfg.RootView("b", func(wnd core.Window) core.View {
+			core.OnAppear(wnd, "", func(ctx context.Context) {
+				wnd.Post(func() {
+					core.AsyncCall(wnd, &proto.CallRequestFocus{ID: "y"}, func(ret proto.CallRet) { answered.Add(1) })
+				})
+			})
+			return ui.Text("page b")
+		})
+	})
+
+	w := app.Open(t, nil, "a")
+	w.Click(w.Find(nagotest.Text("go")))
+	w.Find(nagotest.Text("page b"))
+	w.Settle()
+
+	calls := w.AsyncCalls()
+	if len(calls) != 2 {
+		t.Fatalf("expected the calls of both pages, got %d", len(calls))
+	}
+
+	// the answer for page a arrives late
+	if err := w.Scope().Dispatch(&proto.CallResolved{CallPtr: calls[0].CallPtr, Ret: &proto.RetError{}}); err != nil {
+		t.Fatal(err)
+	}
+	w.Settle()
+
+	if answered.Load() != 0 {
+		t.Fatal("the answer for page a has been delivered to page b")
+	}
+}
+
+// The callback pointers of consecutive trees form disjoint, ascending intervals.
+func TestCallbackPointersAreIntervals(t *testing.T) {
+	w := counterApp(t).Open(t, nil, "counter")
+
+	pointers := func() []proto.Ptr {
+		var res []proto.Ptr
+		for _, n := range w.FindAll(nagotest.Type[*proto.Stack]()).Nodes() {
+			if ptr := n.Component.(*proto.Stack).Action; ptr != 0 {
+				res = append(res, ptr)
+			}
+		}
+		return res
+	}
+
+	first := pointers()
+	w.Click(w.Find(nagotest.Text("increment")))
+	second := pointers()
+
+	if len(first) == 0 || len(first) != len(second) {
+		t.Fatalf("unexpected pointers %v %v", first, second)
+	}
+
+	if first[0] < 1<<32 || second[0] <= first[len(first)-1] {
+		t.Fatalf("expected ascending callback pointers above 2^32, got %v %v", first, second)
+	}
+}
