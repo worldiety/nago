@@ -16,6 +16,7 @@ import (
 	"go.wdy.de/nago/application/ai"
 	uicompletion "go.wdy.de/nago/application/ai/completion/ui"
 	"go.wdy.de/nago/application/ai/model"
+	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/application/ai/session"
 	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/role"
@@ -145,8 +146,8 @@ func Enable(cfg *application.Configurator) (Management, error) {
 	events.SubscribeFor(cfg.EventBus(), func(secret.Created) { assistant.Forget() })
 
 	cfg.AddContextValue(core.ContextValue(SourceAssistantModels, form.NewQuerySource(
-		func(subject user.Subject) ([]model.Model, error) {
-			_, comps, err := assistant.Provider(subject)
+		func(subject user.Subject) ([]modelOption, error) {
+			candidates, err := assistant.Providers(subject)
 			if err != nil {
 				// An empty picker with a log line beats an error banner on the settings page: the operator is
 				// most likely on their way to configure the very provider that is missing.
@@ -154,18 +155,25 @@ func Enable(cfg *application.Configurator) (Management, error) {
 				return nil, nil
 			}
 
-			models, err := assistant.Models(subject, comps)
-			if err != nil {
-				assistant.complain("models", fmt.Sprintf("the assistant model picker stays empty: %v", err))
-				return nil, nil
+			var options []modelOption
+			for _, c := range candidates {
+				models, err := assistant.Models(subject, c)
+				if err != nil {
+					// one broken token must not hide the models of the other providers
+					assistant.complain("models:"+string(c.Provider.Identity()), fmt.Sprintf("the assistant model picker misses a provider: %v", err))
+					continue
+				}
+
+				for _, m := range models {
+					options = append(options, modelOption{provider: c.Provider, model: m, qualified: len(candidates) > 1})
+				}
 			}
 
-			return models, nil
+			return options, nil
 		},
-		func(m model.Model) string { return string(m.ID) },
-		func(m model.Model) string { return m.Name },
+		func(o modelOption) string { return string(NewModelChoice(o.provider.Identity(), o.model.ID)) },
+		func(o modelOption) string { return o.label() },
 	)))
-
 	cfg.AddContextValue(core.ContextValue("nago.ai", management))
 
 	cfg.AddContextValue(core.ContextValue("", management.UseCases.FindProviderByID))
@@ -173,4 +181,25 @@ func Enable(cfg *application.Configurator) (Management, error) {
 
 	slog.Info("installed AI module")
 	return management, nil
+}
+
+// modelOption is an entry of the model picker of [AssistantSettings].
+type modelOption struct {
+	provider provider.Provider
+	model    model.Model
+	// qualified prefixes the provider name, which is only helpful with several providers
+	qualified bool
+}
+
+func (o modelOption) label() string {
+	name := o.model.Name
+	if name == "" {
+		name = string(o.model.ID)
+	}
+
+	if o.qualified {
+		return o.provider.Name() + " · " + name
+	}
+
+	return name
 }

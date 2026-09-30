@@ -8,18 +8,20 @@
 package cfgai
 
 import (
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/worldiety/enum"
 	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application/ai/model"
+	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/application/settings"
 	"golang.org/x/text/language"
 )
 
 // SourceAssistantModels is the context name the model picker of [AssistantSettings] resolves through. It is
-// registered by [Enable] and lists the models the configured provider actually offers.
+// registered by [Enable] and lists the models all configured providers actually offer.
 const SourceAssistantModels = "nago.ai.assistant.models"
 
 // DefaultAssistantMaxTokens caps the generated output per answer when the operator did not choose a limit.
@@ -48,9 +50,10 @@ var (
 type AssistantSettings struct {
 	_ any `title:"nago.ai.assistant.settings.title" description:"nago.ai.assistant.settings.desc"`
 
-	// Model is picked from what the configured provider actually offers, so a model that has been retired
-	// cannot be selected by accident.
-	Model model.ID `json:"model" label:"Standardmodell" source:"nago.ai.assistant.models" supportingText:"Wird für alle Unterhaltungen verwendet. Ist nichts gewählt, nimmt der Assistent das erste Modell, das der Provider meldet. Bleibt die Liste leer, ist der Provider nicht erreichbar — meist ein falscher API-Token im Tresor."`
+	// Model is picked from what the configured providers actually offer, so a model that has been retired
+	// cannot be selected by accident. It names the provider as well, because with several providers a model
+	// id alone does not tell which one to ask.
+	Model ModelChoice `json:"model" label:"Standardmodell" source:"nago.ai.assistant.models" supportingText:"Provider und Modell für alle Unterhaltungen. Ist nichts gewählt, nimmt der Assistent den ersten Provider und dessen erstes Modell. Fehlt ein Provider in der Liste, ist er nicht erreichbar — meist ein falscher API-Token im Tresor."`
 
 	MaxTokens int `json:"maxTokens" label:"Maximale Antwortlänge" supportingText:"Obergrenze der erzeugten Tokens je Antwort. Null bedeutet den eingebauten Standard von 32000. Die Denkphase des Modells zählt mit."`
 
@@ -67,6 +70,46 @@ type AssistantSettings struct {
 	// Hidden removes the button without removing the provider, which is what an operator wants while
 	// investigating something rather than while decommissioning it.
 	Hidden bool `json:"hidden" label:"Assistent ausblenden" section:"Sicherheit" supportingText:"Blendet den Knopf auf allen Seiten aus, ohne den Provider zu entfernen."`
+}
+
+// ModelChoice identifies a model of a specific provider as "<provider id>/<model id>", see [NewModelChoice].
+//
+// A value which does not start with a provider id is a bare model id, as stored before a provider could be
+// chosen. It is used unchanged by whichever provider offers that model, see [Assistant.Resolve].
+type ModelChoice string
+
+// NewModelChoice combines a provider and one of its models. Provider ids are secret ids and never contain a
+// slash, while model ids may, e.g. "openai/gpt-4o" at OpenRouter.
+func NewModelChoice(p provider.ID, m model.ID) ModelChoice {
+	return ModelChoice(string(p) + "/" + string(m))
+}
+
+// split separates the provider and the model, if the prefix is a provider for which known returns true.
+func (c ModelChoice) split(known func(provider.ID) bool) (provider.ID, model.ID, bool) {
+	p, m, ok := strings.Cut(string(c), "/")
+	if !ok || p == "" || m == "" || !known(provider.ID(p)) {
+		return "", "", false
+	}
+
+	return provider.ID(p), model.ID(m), true
+}
+
+// namesProvider reports whether the choice starts with something formatted like a provider id, which is a
+// secret id of 32 hex digits. It tells a choice whose provider has been deleted apart from a bare model id
+// like "openai/gpt-4o", which never starts like that.
+func (c ModelChoice) namesProvider() bool {
+	p, _, ok := strings.Cut(string(c), "/")
+	if !ok || len(p) != 32 {
+		return false
+	}
+
+	for _, r := range p {
+		if !(r >= '0' && r <= '9' || r >= 'a' && r <= 'f') {
+			return false
+		}
+	}
+
+	return true
 }
 
 // GlobalSettings marks this as an application-wide setting.

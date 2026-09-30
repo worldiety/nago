@@ -10,6 +10,7 @@ package cfgai
 import (
 	"fmt"
 	"log/slog"
+	"slices"
 	"sync"
 
 	"go.wdy.de/nago/application/ai"
@@ -31,7 +32,8 @@ type Assistant struct {
 	useCases ai.UseCases
 	sessions session.UseCases
 
-	models modelCache
+	// models holds a *modelCache per provider.ID.
+	models sync.Map
 
 	// complained remembers which kind of problem has already been logged. A missing token must not become a
 	// log line per page render, nor a banner that follows the user around the application.
@@ -138,18 +140,14 @@ func (a *Assistant) Button(wnd core.Window, opts AssistantOptions) core.View {
 		return nil
 	}
 
-	prov, comps, err := a.Provider(wnd.Subject())
+	chosen, modelID, err := a.Resolve(wnd.Subject(), cfg)
 	if err != nil {
-		a.complain("provider", fmt.Sprintf("the AI assistant stays hidden: %v", err))
+		a.complain("model", fmt.Sprintf(
+			"the AI assistant stays hidden because no provider and model could be determined: %v; check the vault and the global settings", err))
 		return nil
 	}
 
-	modelID, err := a.ResolveModel(wnd.Subject(), cfg, comps)
-	if err != nil {
-		a.complain("model", fmt.Sprintf(
-			"the AI assistant stays hidden because no model could be determined: %v; pick one in the global settings", err))
-		return nil
-	}
+	prov, comps := chosen.Provider, chosen.Completions
 
 	agents := make([]uicompletion.Agent, len(opts.Agents))
 	copy(agents, opts.Agents)
@@ -208,70 +206,126 @@ func (a *Assistant) Decorate(wnd core.Window, view core.View, opts AssistantOpti
 	return ui.VStack(view, button).FullWidth()
 }
 
-// Provider picks the first configured provider that can run a completion.
-//
-// There is no provider dropdown on purpose: the assistant is a fixture of the application, not a place to
-// experiment. Which provider is configured is an operator decision and belongs in the administration.
+// Candidate is a configured provider which can run a completion.
+type Candidate struct {
+	Provider    provider.Provider
+	Completions completion.Completions
+}
+
+// Providers lists the configured providers which can run a completion, sorted by name.
 //
 // The ways this can fail are told apart deliberately. They were once one silent "no" whose message named the
 // vault - so the first person to debug a missing assistant went looking at the secret while the actual cause
 // was a role holding no framework permission. A diagnosis that points at the wrong place costs more than none.
-func (a *Assistant) Provider(subject auth.Subject) (provider.Provider, completion.Completions, error) {
+func (a *Assistant) Providers(subject auth.Subject) ([]Candidate, error) {
 	configured := 0
+	var res []Candidate
 
 	for p, err := range a.useCases.FindAllProvider(subject) {
 		if err != nil {
-			return nil, nil, fmt.Errorf("the acting role may not list AI providers (%s): %w", ai.PermFindAllProvider, err)
+			return nil, fmt.Errorf("the acting role may not list AI providers (%s): %w", ai.PermFindAllProvider, err)
 		}
 
 		configured++
 
 		if c := p.Completions(); c.IsSome() {
-			return p, c.Unwrap(), nil
+			res = append(res, Candidate{Provider: p, Completions: c.Unwrap()})
 		}
 	}
 
-	if configured == 0 {
-		return nil, nil, fmt.Errorf("no AI provider is configured; add a provider token in the vault")
+	if len(res) > 0 {
+		return res, nil
 	}
 
-	return nil, nil, fmt.Errorf("%d AI provider(s) are configured, but none of them offers completions", configured)
+	if configured == 0 {
+		return nil, fmt.Errorf("no AI provider is configured; add a provider token in the vault")
+	}
+
+	return nil, fmt.Errorf("%d AI provider(s) are configured, but none of them offers completions", configured)
 }
 
-// ResolveModel decides which model answers.
+// Resolve decides which provider and which model answer.
 //
-// The configured one wins and costs nothing at all. Without it the first the provider reports is used, which
-// is a network call - hence the cache behind it. A failure is returned rather than swallowed: silently
-// falling back turns an unreachable provider into "no model set", which again sends whoever has to fix it
-// looking in the wrong place.
-func (a *Assistant) ResolveModel(subject auth.Subject, cfg AssistantSettings, comps completion.Completions) (model.ID, error) {
-	if cfg.Model != "" {
-		return cfg.Model, nil
+// There is no provider dropdown in the chat on purpose: the assistant is a fixture of the application, not a
+// place to experiment. The operator picks provider and model together in [AssistantSettings.Model]:
+//   - A choice naming a configured provider costs nothing at all.
+//   - A bare model id, stored before providers could be chosen, is never replaced, because an API may accept
+//     ids its model list does not show, e.g. aliases. It goes to the first provider offering it, otherwise to
+//     the first provider, just like before providers could be chosen.
+//   - Without a choice, or if the chosen provider is gone, the first provider with its first model is used.
+//
+// Looking at the offered models is a network call, hence the cache behind [Assistant.Models]. A failure is
+// returned rather than swallowed: silently falling back turns an unreachable provider into "no model set",
+// which again sends whoever has to fix it looking in the wrong place.
+func (a *Assistant) Resolve(subject auth.Subject, cfg AssistantSettings) (Candidate, model.ID, error) {
+	candidates, err := a.Providers(subject)
+	if err != nil {
+		return Candidate{}, "", err
 	}
 
-	models, err := a.Models(subject, comps)
+	byID := func(id provider.ID) (Candidate, bool) {
+		for _, c := range candidates {
+			if c.Provider.Identity() == id {
+				return c, true
+			}
+		}
+
+		return Candidate{}, false
+	}
+
+	if pid, mid, ok := cfg.Model.split(func(id provider.ID) bool { _, ok := byID(id); return ok }); ok {
+		c, _ := byID(pid)
+		return c, mid, nil
+	}
+
+	if cfg.Model != "" && !cfg.Model.namesProvider() {
+		// A bare model id, stored before a provider could be chosen. It is never replaced, because the API may
+		// accept ids its model list does not show, e.g. aliases. Only the provider offering it is looked up.
+		wanted := model.ID(cfg.Model)
+		for _, c := range candidates {
+			models, err := a.Models(subject, c)
+			if err != nil {
+				continue
+			}
+
+			if slices.ContainsFunc(models, func(m model.Model) bool { return m.ID == wanted }) {
+				return c, wanted, nil
+			}
+		}
+
+		// like before providers could be chosen, the first provider is asked
+		return candidates[0], wanted, nil
+	}
+
+	if cfg.Model != "" {
+		a.complain("choice", fmt.Sprintf("the provider of the configured assistant model %q is gone, the default is used instead; pick one in the global settings", cfg.Model))
+	}
+
+	models, err := a.Models(subject, candidates[0])
 	if err != nil {
-		return "", err
+		return Candidate{}, "", err
 	}
 
 	if len(models) == 0 {
-		return "", fmt.Errorf("the provider reports no models")
+		return Candidate{}, "", fmt.Errorf("the provider %q reports no models", candidates[0].Provider.Name())
 	}
 
-	return models[0].ID, nil
+	return candidates[0], models[0].ID, nil
 }
 
-// Models lists what the provider offers, at most once per cache interval.
+// Models lists what the provider offers, at most once per cache interval and provider.
 //
 // It is the one place that asks. The button needs it to pick a default and the settings picker needs it to
 // offer a choice, and both are rendered often enough that asking twice would be twice too many.
-func (a *Assistant) Models(subject auth.Subject, comps completion.Completions) ([]model.Model, error) {
-	return a.models.list(func() ([]model.Model, error) {
+func (a *Assistant) Models(subject auth.Subject, c Candidate) ([]model.Model, error) {
+	cache, _ := a.models.LoadOrStore(c.Provider.Identity(), &modelCache{})
+
+	return cache.(*modelCache).list(func() ([]model.Model, error) {
 		var out []model.Model
 
-		for m, err := range comps.Models(subject) {
+		for m, err := range c.Completions.Models(subject) {
 			if err != nil {
-				return nil, fmt.Errorf("the provider's model list is unreachable, which usually means the API token is wrong: %w", err)
+				return nil, fmt.Errorf("the model list of %q is unreachable, which usually means the API token is wrong: %w", c.Provider.Name(), err)
 			}
 
 			out = append(out, m)
@@ -281,10 +335,10 @@ func (a *Assistant) Models(subject auth.Subject, comps completion.Completions) (
 	})
 }
 
-// Forget drops the cached model list so the next caller asks the provider again. Called automatically when
+// Forget drops the cached model lists so the next caller asks the providers again. Called automatically when
 // the settings or a secret change.
 func (a *Assistant) Forget() {
-	a.models.forget()
+	a.models.Clear()
 }
 
 // complain logs a problem once per kind.
