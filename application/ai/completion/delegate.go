@@ -250,6 +250,11 @@ func (l *Limiter) reserve(n int) bool {
 
 // acquire waits for a free slot.
 func (l *Limiter) acquire(ctx context.Context) error {
+	// a select picks randomly among ready cases, so a cancelled context must win explicitly
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	select {
 	case l.sem <- struct{}{}:
 		return nil
@@ -260,6 +265,17 @@ func (l *Limiter) acquire(ctx context.Context) error {
 
 func (l *Limiter) release() {
 	<-l.sem
+}
+
+// renewed returns a limiter with a fresh task budget which shares the slots of l.
+func (l *Limiter) renewed(maxTasks int) *Limiter {
+	if maxTasks <= 0 {
+		maxTasks = DefaultDelegateMaxTasksPerRun
+	}
+
+	budget := &atomic.Int64{}
+	budget.Store(int64(maxTasks))
+	return &Limiter{sem: l.sem, budget: budget}
 }
 
 // nested returns a limiter for the sub-agents of a sub-agent. It shares the task budget but has its own slots:
@@ -327,7 +343,7 @@ type DelegateConfig struct {
 	SubTimeout      time.Duration
 
 	// Limiter shares the limits between the delegate tool and the task tools of one run. Nil creates one per
-	// constructed tool set.
+	// constructed tool set. With background tasks, use [TaskGroup.Limiter], because the tasks outlive the run.
 	Limiter *Limiter
 
 	// Context additionally cancels the sub-agents of the synchronous delegate tool, besides the context of the
@@ -579,6 +595,10 @@ func (d *delegator) plan(env toolEnv, in delegateTaskIn, callID string, index in
 		for _, name := range in.Tools {
 			idx := slices.IndexFunc(tools, func(t Tool) bool { return t.Def.Name == name })
 			if idx < 0 {
+				// the tool description is static, so it may offer a mutating tool which this run withholds
+				if confirm && slices.ContainsFunc(subTools(base, cfg.AllowedTools, cfg.AllowMutating), func(t Tool) bool { return t.Def.Name == name }) {
+					return fail("tool %q changes data and is not available to sub-agents in this conversation, because changes need the approval of the user; do it yourself", name)
+				}
 				return fail("tool %q is not available to sub-agents", name)
 			}
 			if !slices.ContainsFunc(requested, func(t Tool) bool { return t.Def.Name == name }) {
@@ -775,10 +795,20 @@ func (d *delegator) execute(parent context.Context, subject auth.Subject, p task
 	return result
 }
 
+// emit reports e to [DelegateConfig.OnEvent]. The callback belongs to the caller, e.g. a UI, and runs on the
+// goroutine of a sub-agent, where a panic would crash the whole process. Thus, it is recovered and logged.
 func (d *delegator) emit(e SubEvent) {
-	if d.cfg.OnEvent != nil {
-		d.cfg.OnEvent(e)
+	if d.cfg.OnEvent == nil {
+		return
 	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			slog.Error("OnEvent of a sub-agent panicked", "task", e.TaskID, "kind", e.Kind, "panic", r, "stack", string(debug.Stack()))
+		}
+	}()
+
+	d.cfg.OnEvent(e)
 }
 
 // errorResult is a tool error with the given cause.

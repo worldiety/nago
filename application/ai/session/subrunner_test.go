@@ -280,3 +280,58 @@ func TestDismissCancelsBackgroundTasks(t *testing.T) {
 		t.Fatalf("dismiss did not cancel the task: %+v %+v", finished, running)
 	}
 }
+
+// A sub-agent which is cancelled before or while its first request runs leaves no empty child session behind.
+func TestSubRunnerCancelledLeavesNoEmptyChild(t *testing.T) {
+	uc, repo, _ := newTestUseCases(t)
+	subject := user.SU()
+
+	parent, err := uc.Create(subject, CreateOptions{Model: "fake-model"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	children := func() int {
+		n := 0
+		for s, err := range repo.All() {
+			if err != nil {
+				t.Fatal(err)
+			}
+			if s.ParentID == parent.ID {
+				n++
+			}
+		}
+		return n
+	}
+
+	runner := NewSubRunner(uc, parent.ID)
+	req := completion.SubRunRequest{
+		Title:   "cancelled",
+		Options: completion.Options{Model: "fake-model", System: "You are a sub-agent. test"},
+		Input:   []completion.Content{completion.Text{Text: "A"}},
+	}
+
+	// before the start
+	cancelled, cancel := context.WithCancel(context.Background())
+	cancel()
+	req.Completions = &agentFake{sub: func(ctx context.Context, opts completion.Options) (completion.Result, error) {
+		return answerResult("never"), nil
+	}}
+	if res, err := runner(cancelled, subject, req); err == nil || res.SessionID != "" {
+		t.Fatalf("expected a cancelled run without a child: %+v %v", res, err)
+	}
+
+	// during the first request
+	ctx, stop := context.WithCancel(context.Background())
+	req.Completions = &agentFake{sub: func(ctx context.Context, opts completion.Options) (completion.Result, error) {
+		stop()
+		return completion.Result{}, ctx.Err()
+	}}
+	if res, err := runner(ctx, subject, req); err == nil || res.SessionID != "" {
+		t.Fatalf("expected a cancelled run without a child: %+v %v", res, err)
+	}
+
+	if n := children(); n != 0 {
+		t.Fatalf("%d empty child sessions are left behind", n)
+	}
+}

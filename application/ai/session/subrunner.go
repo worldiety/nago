@@ -60,6 +60,11 @@ func (l *usageLedger) drain(id ID) completion.Usage {
 // parent itself is never written by a sub-agent.
 func NewSubRunner(uc UseCases, parentID ID) completion.SubRunner {
 	return func(ctx context.Context, subject auth.Subject, req completion.SubRunRequest) (completion.SubRunResult, error) {
+		// a sub-agent cancelled before it started must not leave an empty child session behind
+		if err := ctx.Err(); err != nil {
+			return completion.SubRunResult{}, err
+		}
+
 		child, err := uc.Create(subject, CreateOptions{
 			Title:        req.Title,
 			Model:        req.Options.Model,
@@ -105,6 +110,13 @@ func NewSubRunner(uc UseCases, parentID ID) completion.SubRunner {
 		if err != nil {
 			if reloaded, ok, _ := findChild(uc, subject, child.ID); ok {
 				res.History = reloaded.Messages
+
+				// stopped or timed out during the first request: an empty child has nothing to inspect
+				if ctx.Err() != nil && len(reloaded.Messages) == 0 && uc.Delete != nil {
+					if derr := uc.Delete(subject, child.ID); derr == nil {
+						res.SessionID = ""
+					}
+				}
 			}
 			return res, err
 		}

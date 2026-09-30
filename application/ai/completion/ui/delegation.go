@@ -86,7 +86,10 @@ type delegationRun struct {
 	fileUploader completion.FileUploader
 	sessionID    session.ID
 	group        *completion.TaskGroup
-	onEvent      func(completion.SubEvent)
+	// renew states that this is a new run rather than the continuation of a suspended one, see
+	// [completion.TaskGroup.Limiter].
+	renew   bool
+	onEvent func(completion.SubEvent)
 }
 
 // delegationTools builds the delegation tools of one run and, with background tasks, the hook which joins
@@ -113,8 +116,15 @@ func delegationTools(r delegationRun) ([]completion.Tool, func(ctx context.Conte
 		MaxTasksPerRun:  d.MaxTasksPerRun,
 		SubMaxTurns:     d.SubMaxTurns,
 		SubTimeout:      d.SubTimeout,
-		Limiter:         completion.NewLimiter(d.MaxParallel, d.MaxTasksPerRun),
 		OnEvent:         r.onEvent,
+	}
+
+	// The limits hold for the whole run, even across a suspension, and background tasks even outlive the run,
+	// thus they are kept by the group of the conversation.
+	if r.group != nil {
+		cfg.Limiter = r.group.Limiter(d.MaxParallel, d.MaxTasksPerRun, r.renew)
+	} else {
+		cfg.Limiter = completion.NewLimiter(d.MaxParallel, d.MaxTasksPerRun)
 	}
 
 	if r.opts.History && r.sessionID != "" {

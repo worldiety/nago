@@ -182,9 +182,9 @@ func (o ChatOptions) resolveTools(agent Agent) []completion.Tool {
 	return tools
 }
 
-// containsMutating reports whether any of the tools changes state.
+// containsMutating reports whether any of the tools may change state, see [completion.Tool.MayMutate].
 func containsMutating(tools []completion.Tool) bool {
-	return slices.ContainsFunc(tools, func(t completion.Tool) bool { return t.Mutating })
+	return slices.ContainsFunc(tools, completion.Tool.MayMutate)
 }
 
 // Chat renders an embeddable, code-configured chat view on top of the stateless completion API and the
@@ -330,8 +330,10 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			cfg.tools = withBuiltinTool(cfg.tools, CurrentTimeTool(wnd))
 		}
 		// Approval is requested only when there is something to approve, so a purely reading assistant
-		// never stops to ask.
-		cfg.confirm = opts.ConfirmMutations && containsMutating(cfg.tools)
+		// never stops to ask. A tool which may only mutate through sub-agents, e.g. a custom delegation tool,
+		// also requires it: sub-agents cannot ask anyone and therefore stay read-only then. For the same
+		// reason, a read-only chat sets it, which never asks, because its mutating tools have been removed.
+		cfg.confirm = (opts.ConfirmMutations || opts.ReadOnly) && containsMutating(cfg.tools)
 		return cfg
 	}
 
@@ -353,13 +355,17 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 
 	// runTools completes the tools of a run with the delegation tools, which are bound to the run: its session,
 	// its task budget and its progress display.
-	runTools := func(cfg turnConfig, sid session.ID, key string, run runEnv) ([]completion.Tool, func(context.Context) string) {
+	// The returned release must be called, when the run is over.
+	runTools := func(cfg turnConfig, sid session.ID, key string, run runEnv, renew bool) (tools []completion.Tool, beforeFinish func(context.Context) string, release func()) {
+		release = func() {}
 		var group *completion.TaskGroup
-		if opts.Delegation != nil && opts.Delegation.BackgroundTasks {
+		if opts.Delegation != nil {
 			group = registry.Group(key)
+			release = group.Hold()
 		}
 
-		extra, beforeFinish := delegationTools(delegationRun{
+		var extra []completion.Tool
+		extra, beforeFinish = delegationTools(delegationRun{
 			opts:         opts,
 			model:        cfg.model,
 			system:       cfg.system,
@@ -368,14 +374,15 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			fileUploader: fileUploader,
 			sessionID:    sid,
 			group:        group,
+			renew:        renew,
 			onEvent:      run.onEvent,
 		})
 
-		tools := slices.Clone(cfg.tools)
+		tools = slices.Clone(cfg.tools)
 		for _, t := range extra {
 			tools = withBuiltinTool(tools, t)
 		}
-		return tools, beforeFinish
+		return tools, beforeFinish, release
 	}
 
 	appendOptions := func(cfg turnConfig, run runEnv, tools []completion.Tool, beforeFinish func(context.Context) string) session.AppendOptions {
@@ -422,10 +429,20 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		progressed bool
 	}
 
+	// cancelTasks cancels the background tasks of the conversation of key which are still running, once a run
+	// is over, whether it failed, the model refused or it gave its answer without awaiting them: the chat
+	// neither shows them nor offers to stop them any more. The results of finished tasks are kept, so a retry
+	// still receives them.
+	cancelTasks := func(key string) {
+		if opts.Delegation != nil && opts.Delegation.BackgroundTasks {
+			registry.Group(key).CancelRunning()
+		}
+	}
+
 	// execute shows the optimistic view, runs work off the event loop while mirroring each model turn live,
 	// and applies the outcome. rollback restores the input when a run failed without changing anything. The
-	// run can be stopped via cancelRun.
-	execute := func(optimistic []completion.Message, rollback func(), work func(run runEnv) (turnOutcome, error)) {
+	// run can be stopped via cancelRun. key identifies the background tasks of the conversation.
+	execute := func(key string, optimistic []completion.Message, rollback func(), work func(run runEnv) (turnOutcome, error)) {
 		prevHistory := history.Get()
 		history.Set(optimistic)
 		busy.Set(true)
@@ -495,6 +512,9 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 
 			out, err := work(runEnv{subject: wnd.Subject(), ctx: ctx, onProgress: onProgress, onEvent: onEvent})
 			stopped := err != nil && (errors.Is(err, context.Canceled) || ctx.Err() != nil)
+			if out.pending == nil {
+				cancelTasks(key)
+			}
 
 			wnd.Post(func() {
 				busy.Set(false)
@@ -544,6 +564,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			return nil
 		}, func(err error) {
 			if err != nil {
+				cancelTasks(key)
 				wnd.Post(func() {
 					busy.Set(false)
 					status.Set("")
@@ -624,9 +645,10 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		}
 
 		key := taskKey(sid)
-		execute(optimistic, rollback, func(run runEnv) (turnOutcome, error) {
+		execute(key, optimistic, rollback, func(run runEnv) (turnOutcome, error) {
 			subject := run.subject
-			tools, beforeFinish := runTools(cfg, sid, key, run)
+			tools, beforeFinish, release := runTools(cfg, sid, key, run, true)
+			defer release()
 
 			// Build the user turn content: any attached files (uploaded/inlined here on the background
 			// goroutine) followed by the typed text.
@@ -673,9 +695,10 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		}
 
 		key := taskKey(sid)
-		execute(optimistic, rollback, func(run runEnv) (turnOutcome, error) {
+		execute(key, optimistic, rollback, func(run runEnv) (turnOutcome, error) {
 			subject := run.subject
-			tools, beforeFinish := runTools(cfg, sid, key, run)
+			tools, beforeFinish, release := runTools(cfg, sid, key, run, false)
+			defer release()
 
 			if opts.History {
 				ao := appendOptions(cfg, run, tools, beforeFinish)

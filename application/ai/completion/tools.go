@@ -120,14 +120,22 @@ type Tool struct {
 	run func(env toolEnv, call ToolCall) ToolResult
 
 	// indirectMutating marks a tool which does not change anything itself but may let a sub-agent do so, see
-	// [DelegateConfig.AllowMutating]. It is treated like [Tool.Mutating] for the deferral of calls requested in
-	// the same turn as a clarifying question, but never for confirmation or read-only filtering.
+	// [DelegateConfig.AllowMutating] and [Tool.MayMutate]. It is treated like [Tool.Mutating] for the deferral of
+	// calls requested in the same turn as a clarifying question, but a call is never held for confirmation.
 	indirectMutating bool
 
 	// resultDoc is the rendered description of the return type, filled in by the constructors and moved into
 	// the advertised description by [Tool.WithResultDoc]. It is unexported because it is derived, not
 	// configured; a Tool built as a struct literal simply has none and WithResultDoc then does nothing.
 	resultDoc string
+}
+
+// MayMutate reports whether calling the tool may change state, either by itself ([Tool.Mutating]) or through
+// sub-agents, like a delegation tool with [DelegateConfig.AllowMutating]. The latter keeps its sub-agents
+// read-only, when the run confirms mutations ([RunOptions.ConfirmMutating]). Thus, a caller which must not
+// change anything or which confirms mutations has to set ConfirmMutating, whenever any tool may mutate.
+func (t Tool) MayMutate() bool {
+	return t.Mutating || t.indirectMutating
 }
 
 // AsMutating marks the tool as state-changing and attaches a human-readable description of the effect. See
@@ -519,10 +527,13 @@ type RunOptions struct {
 	// also returned as [Outcome.Usage]. Optional.
 	OnUsage func(Usage)
 
-	// BeforeFinish is consulted when the model produced its final answer. A non-empty return value is injected
-	// as a hidden user turn (see [IsLoopPrompt]) and the loop continues, so the model can take it into
-	// account. [TaskGroup.BeforeFinish] uses this to join background tasks the model started but never awaited.
-	// It runs on the loop's goroutine and may block. Optional.
+	// BeforeFinish is consulted whenever the run is about to end with an answer of the model, even a truncated
+	// one, but not after a refusal, an error or a suspension. A non-empty return value is injected as a hidden
+	// user turn (see [IsLoopPrompt]) and the loop continues, so the model can take it into account.
+	// [TaskGroup.BeforeFinish] uses this to join background tasks the model started but never awaited. Once the
+	// run is over without a suspension, a caller should cancel the tasks which are still running, see
+	// [TaskGroup.CancelRunning], because nobody observes them any more. It runs on the loop's goroutine and may
+	// block. Optional.
 	BeforeFinish func(ctx context.Context) string
 }
 
@@ -697,6 +708,25 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 	continuations := 0
 	finishHooks := 0
 
+	// finish gives the caller a last word before the run ends with an answer, e.g. to hand over the results of
+	// background tasks the model never awaited. The model then continues with them instead of the run ending
+	// on an answer that ignores work which was already paid for. It reports whether the loop continues.
+	finish := func(res Result) bool {
+		if opts.BeforeFinish == nil || res.StopReason == StopRefusal || finishHooks >= maxFinishHooks {
+			return false
+		}
+
+		extra := strings.TrimSpace(opts.BeforeFinish(ctx))
+		if extra == "" {
+			return false
+		}
+
+		finishHooks++
+		history = append(history, Message{Role: User, Content: []Content{Text{Text: finishPromptMarker + extra}}})
+		progressed = true
+		return true
+	}
+
 	for turn := 0; turn < maxTurns; turn++ {
 		// A cancelled run stops between turns. The history is valid here: every tool call is answered.
 		if cerr := ctx.Err(); cerr != nil {
@@ -732,6 +762,13 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 
 			before := runeLen(history)
 			compacted, cerr := compactor(ctx, subject, metered, req, history)
+
+			// A compaction of a cancelled run must never replace the history: a compactor may have degraded to
+			// an excerpt, which would then be persisted for good.
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return Outcome{Result: Result{}, History: history}, runCancelled(ctxErr)
+			}
+
 			if cerr != nil {
 				return Outcome{Result: Result{}, History: history}, fmt.Errorf("compaction failed: %w", cerr)
 			}
@@ -797,6 +834,9 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 				progressed = true
 			}
 			res.Message = cleaned
+			if finish(res) {
+				continue
+			}
 			return Outcome{Result: res, History: history}, nil
 
 		case StopEndTurn, StopStopSequence, "":
@@ -823,17 +863,8 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 				progressed = true
 			}
 			res.Message = cleaned
-
-			// Give the caller a last word, e.g. to hand over the results of background tasks the model never
-			// awaited. The model then continues with them instead of the run ending on an answer that ignores
-			// work which was already paid for.
-			if opts.BeforeFinish != nil && res.StopReason != StopRefusal && finishHooks < maxFinishHooks {
-				if extra := strings.TrimSpace(opts.BeforeFinish(ctx)); extra != "" {
-					finishHooks++
-					history = append(history, Message{Role: User, Content: []Content{Text{Text: finishPromptMarker + extra}}})
-					progressed = true
-					continue
-				}
+			if finish(res) {
+				continue
 			}
 
 			return Outcome{Result: res, History: history}, nil
@@ -844,6 +875,9 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 			if hasContent(res.Message) {
 				history = append(history, res.Message)
 				progressed = true
+			}
+			if finish(res) {
+				continue
 			}
 			return Outcome{Result: res, History: history}, nil
 		}

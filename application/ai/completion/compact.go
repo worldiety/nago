@@ -105,7 +105,10 @@ func NewSummaryCompactor(cfg SummaryCompactorConfig) Compactor {
 		}
 
 		transcript := renderTranscript(prefix)
-		summary := summarizeText(ctx, subject, c, opts, prompt, maxSummaryTokens, transcript, 0)
+		summary, err := summarizeText(ctx, subject, c, opts, prompt, maxSummaryTokens, transcript, 0)
+		if err != nil {
+			return history, err
+		}
 
 		summaryMsg := Message{
 			Role:    User,
@@ -142,8 +145,14 @@ func splitIndex(history []Message, keepLastN int) int {
 
 // summarizeText asks the model to summarize transcript. If the request overflows the context window it
 // recursively splits the transcript in half (on rune boundaries) and summarizes both halves, joining the
-// partial summaries. As a guaranteed fallback it rune-truncates the text without calling the model.
-func summarizeText(ctx context.Context, subject auth.Subject, c Completions, opts Options, prompt string, maxSummaryTokens int, transcript string, depth int) string {
+// partial summaries. As a guaranteed fallback it rune-truncates the text without calling the model. However,
+// a cancelled context is returned as error, because an excerpt would replace the history for good although
+// nobody asked for a compaction anymore.
+func summarizeText(ctx context.Context, subject auth.Subject, c Completions, opts Options, prompt string, maxSummaryTokens int, transcript string, depth int) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+
 	res, err := c.Complete(ctx, subject, Options{
 		Model:     opts.Model,
 		System:    prompt,
@@ -154,28 +163,41 @@ func summarizeText(ctx context.Context, subject auth.Subject, c Completions, opt
 	})
 	if err == nil {
 		if s := strings.TrimSpace(extractText(res.Message)); s != "" {
-			return s
+			return s, nil
 		}
 		// The model returned nothing usable; degrade to a rune-safe excerpt.
-		return xstrings.EllipsisEnd(transcript, minChunkRunes)
+		return xstrings.EllipsisEnd(transcript, minChunkRunes), nil
+	}
+
+	// whatever the provider made of it, a cancelled context is the cause
+	if cerr := ctx.Err(); cerr != nil {
+		return "", cerr
 	}
 
 	if !errors.Is(err, ContextWindowExceeded) {
 		// A non-overflow error (rate limit, transport, ...) cannot be fixed by splitting; degrade gracefully
 		// to a rune-safe excerpt so the overall compaction still makes progress.
-		return xstrings.EllipsisEnd(transcript, minChunkRunes)
+		return xstrings.EllipsisEnd(transcript, minChunkRunes), nil
 	}
 
 	// The transcript itself does not fit. Stop recursing once it is small enough or too deep and fall back to
 	// a plain rune-safe truncation that cannot fail.
 	if depth >= maxSummaryDepth || utf8.RuneCountInString(transcript) <= minChunkRunes {
-		return xstrings.EllipsisEnd(transcript, minChunkRunes)
+		return xstrings.EllipsisEnd(transcript, minChunkRunes), nil
 	}
 
 	left, right := splitRunes(transcript)
-	ls := summarizeText(ctx, subject, c, opts, prompt, maxSummaryTokens, left, depth+1)
-	rs := summarizeText(ctx, subject, c, opts, prompt, maxSummaryTokens, right, depth+1)
-	return ls + "\n" + rs
+	ls, err := summarizeText(ctx, subject, c, opts, prompt, maxSummaryTokens, left, depth+1)
+	if err != nil {
+		return "", err
+	}
+
+	rs, err := summarizeText(ctx, subject, c, opts, prompt, maxSummaryTokens, right, depth+1)
+	if err != nil {
+		return "", err
+	}
+
+	return ls + "\n" + rs, nil
 }
 
 // splitRunes splits s into two halves on a rune boundary, never cutting a multi-byte codepoint.

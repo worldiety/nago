@@ -96,13 +96,18 @@ type TaskGroup struct {
 	tasks    map[string]*bgTask
 	order    []string
 	lastUsed time.Time
+	limiter  *Limiter
+	// holds counts the runs which use the group, see Hold.
+	holds int
 }
 
 type bgTask struct {
-	result     TaskResult
-	cancel     context.CancelFunc
-	done       chan struct{}
-	consumed   bool
+	result   TaskResult
+	cancel   context.CancelFunc
+	done     chan struct{}
+	consumed bool
+	// abandoned is set by CancelTasks: nobody waits for the result any more.
+	abandoned  bool
 	finishedAt time.Time
 }
 
@@ -127,19 +132,89 @@ func (g *TaskGroup) sweep(now time.Time, ttl time.Duration) bool {
 		if t.result.Status == TaskRunning {
 			return false
 		}
-		if t.consumed || now.Sub(t.finishedAt) > ttl {
+
+		// A result expires after the TTL, but not while a run holds the group: it may still pick it up. The
+		// TTL restarts when the run releases the group, e.g. on a suspension.
+		expired := g.holds == 0 && now.Sub(later(t.finishedAt, g.lastUsed)) > ttl
+		if t.consumed || expired {
 			delete(g.tasks, id)
 			return true
 		}
 		return false
 	})
 
-	return len(g.tasks) == 0 && now.Sub(g.lastUsed) > ttl
+	return len(g.tasks) == 0 && g.holds == 0 && now.Sub(g.lastUsed) > ttl
+}
+
+func later(a, b time.Time) time.Time {
+	if a.After(b) {
+		return a
+	}
+	return b
+}
+
+// Hold marks the group as used by a run until release is called, so that it is not dropped as idle while the
+// run works on something else for longer than the TTL of the registry. Otherwise, the run would start its
+// tasks within a cancelled group which the registry does not know any more.
+func (g *TaskGroup) Hold() (release func()) {
+	g.mu.Lock()
+	g.holds++
+	g.lastUsed = g.now()
+	g.mu.Unlock()
+
+	var once sync.Once
+	return func() {
+		once.Do(func() {
+			g.mu.Lock()
+			g.holds--
+			g.lastUsed = g.now()
+			g.mu.Unlock()
+		})
+	}
+}
+
+// Limiter returns the limiter of the group for [DelegateConfig.Limiter]. Background tasks outlive the run which
+// started them, e.g. while it is suspended on a question to the user, thus the limit of concurrent sub-agents
+// must hold for the whole conversation instead of each run. With renew, the task budget starts again, e.g. for a
+// new question of the user, while the slots of still running tasks remain occupied. Without, e.g. to continue a
+// suspended run, the budget carries on. The limits only apply when the limiter is created, see [NewLimiter].
+func (g *TaskGroup) Limiter(maxParallel, maxTasks int, renew bool) *Limiter {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
+	switch {
+	case g.limiter == nil:
+		g.limiter = NewLimiter(maxParallel, maxTasks)
+	case renew:
+		g.limiter = g.limiter.renewed(maxTasks)
+	}
+
+	return g.limiter
 }
 
 // Cancel cancels every running task of the group. Their results report [TaskCancelled].
 func (g *TaskGroup) Cancel() {
 	g.cancel()
+}
+
+// CancelRunning cancels every task which is still running and returns their number. Nobody waits for them any
+// more, see [TaskGroup.CancelTasks]. In contrast to [TaskGroup.Cancel], the group stays usable and keeps the
+// results of the finished tasks, so a later run can still pick them up. Use it when a run ended, so that
+// nothing keeps working unobserved.
+func (g *TaskGroup) CancelRunning() int {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
+	n := 0
+	for _, t := range g.tasks {
+		if t.result.Status == TaskRunning && !t.abandoned {
+			t.abandoned = true
+			t.cancel()
+			n++
+		}
+	}
+
+	return n
 }
 
 // Running returns the number of tasks which have not finished yet.
@@ -173,8 +248,9 @@ func (g *TaskGroup) spawn(title string, run func(ctx context.Context, id string)
 	id := newTaskID()
 	ctx, cancel := context.WithCancel(g.ctx)
 
+	initial := TaskResult{ID: id, Title: title, Status: TaskRunning}
 	t := &bgTask{
-		result: TaskResult{ID: id, Title: title, Status: TaskRunning},
+		result: initial,
 		cancel: cancel,
 		done:   make(chan struct{}),
 	}
@@ -211,18 +287,19 @@ func (g *TaskGroup) spawn(title string, run func(ctx context.Context, id string)
 		close(t.done)
 	}()
 
-	return t.result
+	// t.result belongs to the goroutine now, which may already have finished
+	return initial
 }
 
-// pick resolves ids to tasks. An empty ids selects every task not delivered yet. Unknown ids are returned
-// separately.
+// pick resolves ids to tasks. An empty ids selects every task not delivered or cancelled yet. Unknown ids are
+// returned separately.
 func (g *TaskGroup) pick(ids []string) (known []*bgTask, lost []string) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
 	if len(ids) == 0 {
 		for _, id := range g.order {
-			if t := g.tasks[id]; !t.consumed {
+			if t := g.tasks[id]; !t.consumed && !t.abandoned {
 				known = append(known, t)
 			}
 		}
@@ -294,6 +371,8 @@ func (g *TaskGroup) Await(ctx context.Context, ids []string, timeout time.Durati
 }
 
 // CancelTasks cancels the given tasks and returns their current state. Unknown ids are reported as [TaskLost].
+// The caller does not wait for them any more, thus they are only returned by [TaskGroup.Await] when asked for
+// explicitly, and [TaskGroup.BeforeFinish] does not hand them over.
 func (g *TaskGroup) CancelTasks(ids []string) []TaskResult {
 	known, lost := g.pick(ids)
 	for _, t := range known {
@@ -302,7 +381,9 @@ func (g *TaskGroup) CancelTasks(ids []string) []TaskResult {
 
 	out := make([]TaskResult, 0, len(ids))
 	g.mu.Lock()
+	g.lastUsed = g.now()
 	for _, t := range known {
+		t.abandoned = true
 		r := t.result
 		if r.Status == TaskRunning {
 			r.Status = TaskCancelled
