@@ -15,6 +15,7 @@ import (
 	cfgai "go.wdy.de/nago/application/ai/cfg"
 	_ "go.wdy.de/nago/application/ai/provider/anthropic"
 	_ "go.wdy.de/nago/application/ai/provider/gollama"
+	_ "go.wdy.de/nago/application/ai/provider/openai"
 	"go.wdy.de/nago/application/drive"
 	cfgdrive "go.wdy.de/nago/application/drive/cfg"
 	uidrive "go.wdy.de/nago/application/drive/ui"
