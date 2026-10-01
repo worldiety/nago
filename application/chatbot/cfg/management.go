@@ -71,7 +71,10 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		return grp
 	})
 
-	//	cfg.AddContextValue(core.ContextValue("nago.ai", management))
+	// Register the Management under its own type so a repeated Enable() short-circuits at the top (the
+	// idempotency check reads core.FromContext[Management], which matches by type when the name is empty).
+	// Without this, a second Enable would call RootViewWithDecoration again and panic on the duplicate id.
+	cfg.AddContextValue(core.ContextValue("nago.chatbot.management", management))
 
 	slog.Info("installed chatbot module")
 	return management, nil
