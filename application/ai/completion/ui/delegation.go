@@ -90,6 +90,9 @@ type delegationRun struct {
 	// [completion.TaskGroup.Limiter].
 	renew   bool
 	onEvent func(completion.SubEvent)
+	// onUsage receives the usage of every sub-agent, see [completion.DelegateConfig.OnUsage]. Nil with
+	// History, because the session books it then.
+	onUsage func(completion.Usage)
 }
 
 // delegationTools builds the delegation tools of one run and, with background tasks, the hook which joins
@@ -117,6 +120,7 @@ func delegationTools(r delegationRun) ([]completion.Tool, func(ctx context.Conte
 		SubMaxTurns:     d.SubMaxTurns,
 		SubTimeout:      d.SubTimeout,
 		OnEvent:         r.onEvent,
+		OnUsage:         r.onUsage,
 	}
 
 	// The limits hold for the whole run, even across a suspension, and background tasks even outlive the run,
@@ -146,32 +150,106 @@ func taskProgressLabel(finished, started int) string {
 }
 
 // tasksOf returns the tasks of a delegation call: the results once they exist, otherwise the tasks the model
-// asked for, still running.
-func tasksOf(call completion.ToolCall, res completion.ToolResult, done bool) []completion.TaskResult {
+// asked for, still running. A call which failed as a whole, e.g. because the budget was exhausted, shows its
+// tasks as failed with the reason. latest holds the newest known state of the background tasks by id, see
+// latestTasks, which replaces the state a task had when it was started.
+func tasksOf(call completion.ToolCall, res completion.ToolResult, done bool, latest map[string]completion.TaskResult) []completion.TaskResult {
+	var tasks []completion.TaskResult
 	if done {
-		if tasks, ok := completion.ParseTaskResults(res); ok {
-			return tasks
+		if parsed, ok := completion.ParseTaskResults(res); ok {
+			tasks = parsed
 		}
 	}
 
-	var in struct {
-		Tasks []struct {
-			Title string `json:"title"`
-		} `json:"tasks"`
-		IDs []string `json:"ids"`
-	}
-	if err := json.Unmarshal(call.Arguments, &in); err != nil {
-		return nil
+	if tasks == nil {
+		var in struct {
+			Tasks []struct {
+				Title string `json:"title"`
+			} `json:"tasks"`
+			IDs []string `json:"ids"`
+		}
+		if err := json.Unmarshal(call.Arguments, &in); err != nil {
+			return nil
+		}
+
+		status := completion.TaskRunning
+		reason := ""
+		if done {
+			// the call is over, but it produced no tasks: it has been refused as a whole
+			status = completion.TaskFailed
+			reason = strings.TrimSpace(extractText(res.Content))
+		}
+
+		for _, t := range in.Tasks {
+			tasks = append(tasks, completion.TaskResult{Title: t.Title, Status: status, Error: reason})
+		}
+		for _, id := range in.IDs {
+			tasks = append(tasks, completion.TaskResult{ID: id, Status: status, Error: reason})
+		}
 	}
 
-	var out []completion.TaskResult
-	for _, t := range in.Tasks {
-		out = append(out, completion.TaskResult{Title: t.Title, Status: completion.TaskRunning})
+	for i, t := range tasks {
+		if l, ok := latest[t.ID]; ok && t.ID != "" && t.Status == completion.TaskRunning {
+			if l.Title == "" {
+				l.Title = t.Title
+			}
+			tasks[i] = l
+		}
 	}
-	for _, id := range in.IDs {
-		out = append(out, completion.TaskResult{ID: id, Status: completion.TaskRunning})
+
+	return tasks
+}
+
+// extractText joins the texts of the given contents.
+func extractText(contents []completion.Content) string {
+	var sb strings.Builder
+	for _, c := range contents {
+		if t, ok := c.(completion.Text); ok {
+			sb.WriteString(t.Text)
+		}
 	}
-	return out
+	return sb.String()
+}
+
+// latestTasks collects the newest known state of every background task of the history by id: from the results
+// of start_tasks, await_tasks and cancel_tasks, and from the results which [completion.TaskGroup.BeforeFinish]
+// handed over in a hidden prompt. Without that, a task which the model never awaited would stay "running"
+// forever, and its transcript could not be opened.
+func latestTasks(history []completion.Message) map[string]completion.TaskResult {
+	latest := map[string]completion.TaskResult{}
+	for _, m := range history {
+		if tasks, ok := completion.HandedOverTasks(m); ok {
+			for _, t := range tasks {
+				if t.ID != "" {
+					latest[t.ID] = t
+				}
+			}
+			continue
+		}
+
+		for _, c := range m.Content {
+			r, ok := c.(completion.ToolResult)
+			if !ok {
+				continue
+			}
+			tasks, ok := completion.ParseTaskResults(r)
+			if !ok {
+				continue
+			}
+			for _, t := range tasks {
+				if t.ID == "" {
+					continue
+				}
+				// a lost task tells nothing new about its state
+				if cur, known := latest[t.ID]; known && t.Status == completion.TaskLost && cur.Status != completion.TaskRunning {
+					continue
+				}
+				latest[t.ID] = t
+			}
+		}
+	}
+
+	return latest
 }
 
 // tasksHeading is the label of the sub task list of a delegation call.
@@ -227,8 +305,8 @@ func taskStatusIcon(s completion.TaskStatus) core.SVG {
 
 // tasksView renders a delegation call as a collapsible list of its sub tasks. Returns nil when the call carries
 // no recognizable tasks, so the caller falls back to a plain tool hint.
-func tasksView(wnd core.Window, hv historyView, call completion.ToolCall, res completion.ToolResult, done bool) core.View {
-	tasks := tasksOf(call, res, done)
+func tasksView(wnd core.Window, hv historyView, call completion.ToolCall, res completion.ToolResult, done bool, latest map[string]completion.TaskResult) core.View {
+	tasks := tasksOf(call, res, done, latest)
 	if len(tasks) == 0 {
 		return nil
 	}

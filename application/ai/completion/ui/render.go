@@ -82,7 +82,8 @@ func renderHistory(wnd core.Window, history []completion.Message, hv historyView
 	// ask_user calls are a dialog with the user, so question and answer are shown as regular bubbles.
 	askCalls := map[string]bool{}
 
-	// Delegation calls are rendered together with their results, which live in a later message.
+	// Delegation calls are rendered together with their results, which live in a later message, and with the
+	// newest state of their background tasks.
 	results := map[string]completion.ToolResult{}
 	for _, m := range history {
 		for _, c := range m.Content {
@@ -91,6 +92,7 @@ func renderHistory(wnd core.Window, history []completion.Message, hv historyView
 			}
 		}
 	}
+	latest := latestTasks(history)
 
 	var views []core.View
 	for i, m := range history {
@@ -119,7 +121,7 @@ func renderHistory(wnd core.Window, history []completion.Message, hv historyView
 				}
 				if completion.IsDelegationTool(v.Name) {
 					res, done := results[v.ID]
-					if view := tasksView(wnd, hv, v, res, done); view != nil {
+					if view := tasksView(wnd, hv, v, res, done, latest); view != nil {
 						views = append(views, view)
 						continue
 					}

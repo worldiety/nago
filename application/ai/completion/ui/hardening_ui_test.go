@@ -27,6 +27,7 @@ import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/nagotest"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ui"
 )
 
 // scripted is a provider whose parent and sub-agent answers are scripted independently.
@@ -278,4 +279,150 @@ func TestChat_RefusalCancelsBackgroundTasks(t *testing.T) {
 	case <-time.After(10 * time.Second):
 		t.Fatal("the background task of the refused run is still running")
 	}
+}
+
+// Without History, a run is cancelled together with the chat, because nobody receives its answer any more.
+func TestChat_TransientRunIsCancelledWithTheChat(t *testing.T) {
+	requested := make(chan struct{})
+	cancelled := make(chan struct{})
+	fake := &scripted{parent: func(ctx context.Context, opts completion.Options) (completion.Result, error) {
+		close(requested)
+		<-ctx.Done()
+		close(cancelled)
+		return completion.Result{}, ctx.Err()
+	}}
+
+	w := openChatOptions(t, uicompletion.ChatOptions{
+		Completions:        fake,
+		Provider:           echo.New("p", "p"),
+		DisableCurrentTime: true,
+	})
+
+	w.Type(w.Find(nagotest.Label("Nachricht")), "Das dauert")
+	w.Click(w.Find(nagotest.Text("Senden")))
+	select {
+	case <-requested:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the provider has not been requested")
+	}
+
+	// the user closes the tab
+	w.Close()
+
+	select {
+	case <-cancelled:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the run of the closed chat is still working")
+	}
+}
+
+// Tasks the model never awaited show the result BeforeFinish handed over, including their transcript.
+func TestChat_ForgottenTasksShowTheirResult(t *testing.T) {
+	var calls atomic.Int32
+	fake := &scripted{
+		parent: func(ctx context.Context, opts completion.Options) (completion.Result, error) {
+			switch calls.Add(1) {
+			case 1:
+				return call("s1", completion.StartTasksToolName, `{"tasks":[{"title":"Rechnen","task":"6*7"}]}`), nil
+			case 2:
+				return text("Ich antworte, ohne zu warten."), nil
+			default:
+				return text("Nachtrag: 42."), nil
+			}
+		},
+		sub: func(ctx context.Context, opts completion.Options) (completion.Result, error) {
+			return text("42"), nil
+		},
+	}
+
+	w := openChatOptions(t, uicompletion.ChatOptions{
+		Sessions:           testSessions(t),
+		History:            true,
+		Completions:        fake,
+		Provider:           echo.New("p", "p"),
+		DisableCurrentTime: true,
+		Delegation:         &uicompletion.DelegationOptions{BackgroundTasks: true},
+	})
+
+	w.Type(w.Find(nagotest.Label("Nachricht")), "Rechne im Hintergrund")
+	w.Click(w.Find(nagotest.Text("Senden")))
+	w.WaitFor(richText("Nachtrag: 42."), 10*time.Second)
+
+	// the start block shows the final state and offers the transcript
+	w.Find(nagotest.TextContains("erledigt"))
+	w.FindAll(nagotest.Label("Verlauf der Teilaufgabe anzeigen")).Exactly(1)
+}
+
+// Hiding a chat without History destroys its states, which cancels the run and must not block the window.
+func TestChat_TransientRunIsCancelledWhenChatIsHidden(t *testing.T) {
+	requested := make(chan struct{})
+	cancelled := make(chan struct{})
+	fake := &scripted{parent: func(ctx context.Context, opts completion.Options) (completion.Result, error) {
+		close(requested)
+		<-ctx.Done()
+		close(cancelled)
+		return completion.Result{}, ctx.Err()
+	}}
+
+	app := nagotest.New(t, func(cfg *application.Configurator) {
+		cfg.SetApplicationID("de.worldiety.uicompletion.test")
+		cfg.RootView("page", func(wnd core.Window) core.View {
+			show := core.StateOf[bool](wnd, "show").Init(func() bool { return true })
+			return ui.VStack(
+				ui.PrimaryButton(func() { show.Set(false) }).Title("hide"),
+				ui.Text("page"),
+				ui.IfFunc(show.Get(), func() core.View {
+					return uicompletion.Chat(wnd, uicompletion.ChatOptions{
+						Completions:        fake,
+						Provider:           echo.New("p", "p"),
+						DisableCurrentTime: true,
+					})
+				}),
+			)
+		})
+	})
+
+	w := app.Open(t, user.SU(), "page")
+	w.Type(w.Find(nagotest.Label("Nachricht")), "Das dauert")
+	w.Click(w.Find(nagotest.Text("Senden")))
+	select {
+	case <-requested:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the provider has not been requested")
+	}
+
+	// settles only if destroying the states does not block the window
+	w.Click(w.Find(nagotest.Text("hide")))
+	w.FindAll(nagotest.Text("Senden")).None()
+
+	select {
+	case <-cancelled:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the run of the hidden chat is still working")
+	}
+
+	// the window still works
+	w.Find(nagotest.Text("page"))
+}
+
+// A panic in a run of a persisted conversation is reported, and the chat is ready again.
+func TestChat_PanickingRunIsReported(t *testing.T) {
+	fake := &scripted{parent: func(ctx context.Context, opts completion.Options) (completion.Result, error) {
+		panic("boom")
+	}}
+
+	w := openChatOptions(t, uicompletion.ChatOptions{
+		Sessions:           testSessions(t),
+		History:            true,
+		Completions:        fake,
+		Provider:           echo.New("p", "p"),
+		DisableCurrentTime: true,
+	})
+
+	w.Type(w.Find(nagotest.Label("Nachricht")), "Bitte stürze ab")
+	w.Click(w.Find(nagotest.Text("Senden")))
+
+	// the process survives, the run is over and the chat is ready again
+	w.WaitFor(nagotest.Text("Senden"), 10*time.Second)
+	w.FindAll(nagotest.Text("Stopp")).None()
 }

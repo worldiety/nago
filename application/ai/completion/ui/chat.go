@@ -10,17 +10,21 @@ package uicompletion
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"slices"
 	"strings"
+	"sync"
 	"sync/atomic"
 
 	"go.wdy.de/nago/application/ai/completion"
 	"go.wdy.de/nago/application/ai/model"
 	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/application/ai/session"
+	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/std/concurrent"
 	"go.wdy.de/nago/pkg/xsync"
 	"go.wdy.de/nago/presentation/core"
 	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
@@ -264,10 +268,26 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 	runGen := core.AutoState[int](wnd)
 	// transientKey groups the background tasks of a chat without History, which has no session id for that.
 	transientKey := core.AutoState[string](wnd).Init(func() string { return data.RandIdent[string]() })
+	registry := taskRegistry(opts.Sessions)
+	if !opts.History {
+		// Without History, nobody receives the answer of a run once the chat is gone, e.g. because the panel was
+		// closed or the page reloaded. Its sub-agents would work on unobserved, so the run is cancelled together
+		// with the states of the chat. Init registers the observer once.
+		core.AutoState[bool](wnd).Init(func() bool {
+			// the observer must not touch the state it belongs to, which is locked while it is destroyed
+			key := transientKey.Get()
+			transientKey.AddDestroyObserver(func() {
+				if c := cancelRun.Get(); c != nil {
+					c()
+				}
+				registry.Cancel(key)
+			})
+			return true
+		})
+	}
 	// childID and showChild drive the read-only dialog with the transcript of a sub-agent.
 	childID := core.AutoState[session.ID](wnd)
 	showChild := core.AutoState[bool](wnd)
-	registry := taskRegistry(opts.Sessions)
 	selectedAgent := core.AutoState[string](wnd).Init(func() string { return agentsList[0].ID })
 
 	// staged holds files the user picked but has not sent yet (only when FileUpload is enabled and the
@@ -302,6 +322,43 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		history.Set(s.Messages)
 		pending.Set(s.Pending)
 		pendingRev.Set(s.PendingRevision)
+	}
+
+	// With History, a run keeps working when the chat is closed, because its answer is persisted anyway. A chat
+	// which shows the conversation while such a run still works, e.g. after a reload or in another tab, shows
+	// it as busy and lets the user stop it. The run itself belongs to the chat which started it.
+	attached := core.AutoState[*activeRun](wnd)
+	if opts.History {
+		if sid := sessionID.Get(); sid != "" && cancelRun.Get() == nil {
+			// only whoever may continue the conversation may stop its run
+			if run, ok := activeRuns.Get(sid); ok && attached.Get() == nil && wnd.Subject().AuditResource(session.Namespace, rebac.Instance(sid), session.PermAppend) == nil {
+				attached.Set(run)
+				busy.Set(true)
+				status.Set("… die KI arbeitet in einem anderen Fenster")
+			}
+		}
+
+		if run := attached.Get(); run != nil {
+			core.OnAppear(wnd, fmt.Sprintf("attached-%s-%d", run.id, run.seq), func(ctx context.Context) {
+				select {
+				case <-run.done:
+				case <-ctx.Done():
+					return
+				}
+
+				wnd.Post(func() {
+					if attached.Get() != run {
+						return
+					}
+					attached.Set(nil)
+					busy.Set(false)
+					status.Set("")
+					if reloaded, ok := reloadSession(wnd.Subject(), opts.Sessions, run.id); ok {
+						applySession(reloaded)
+					}
+				})
+			})
+		}
 	}
 
 	// turnConfig resolves everything a run of the current agent needs.
@@ -351,6 +408,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		ctx        context.Context
 		onProgress completion.ProgressFunc
 		onEvent    func(completion.SubEvent)
+		onUsage    func(completion.Usage)
 	}
 
 	// runTools completes the tools of a run with the delegation tools, which are bound to the run: its session,
@@ -376,6 +434,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			group:        group,
 			renew:        renew,
 			onEvent:      run.onEvent,
+			onUsage:      run.onUsage,
 		})
 
 		tools = slices.Clone(cfg.tools)
@@ -453,6 +512,25 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		gen := runGen.Get() + 1
 		runGen.Set(gen)
 
+		// other chats of the same conversation see the run and can stop it, see attached
+		var active *activeRun
+		if sid := sessionID.Get(); opts.History && sid != "" {
+			active = &activeRun{id: sid, seq: activeRunSeq.Add(1), cancel: cancel, done: make(chan struct{})}
+			activeRuns.Put(sid, active)
+		}
+		// finishActive is called on every exit path and may run twice, e.g. after a panic
+		var finishOnce sync.Once
+		finishActive := func() {
+			finishOnce.Do(func() {
+				if active != nil {
+					if cur, ok := activeRuns.Get(active.id); ok && cur == active {
+						activeRuns.Delete(active.id)
+					}
+					close(active.done)
+				}
+			})
+		}
+
 		// setStatus updates the progress line, unless the run it belongs to is already over.
 		setStatus := func(label string) {
 			wnd.Post(func() {
@@ -460,6 +538,19 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 					status.Set(label)
 				}
 			})
+		}
+
+		// Without History, nothing books the usage of the sub-agents, so the run sums it up for the log. The
+		// session does that with History, see session.Session.SubUsage.
+		var subMu sync.Mutex
+		var subUsage completion.Usage
+		var onUsage func(completion.Usage)
+		if !opts.History {
+			onUsage = func(u completion.Usage) {
+				subMu.Lock()
+				subUsage = subUsage.Add(u)
+				subMu.Unlock()
+			}
 		}
 
 		// Sub-agents report from their own goroutines, and never through onProgress: their turns and tools
@@ -509,12 +600,16 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 
 		xsync.Go(func() error {
 			defer cancel()
+			defer finishActive()
 
-			out, err := work(runEnv{subject: wnd.Subject(), ctx: ctx, onProgress: onProgress, onEvent: onEvent})
+			out, err := work(runEnv{subject: wnd.Subject(), ctx: ctx, onProgress: onProgress, onEvent: onEvent, onUsage: onUsage})
 			stopped := err != nil && (errors.Is(err, context.Canceled) || ctx.Err() != nil)
 			if out.pending == nil {
 				cancelTasks(key)
 			}
+
+			// before the chat forgets the run, otherwise it would attach to its own finished run for a moment
+			finishActive()
 
 			wnd.Post(func() {
 				busy.Set(false)
@@ -550,12 +645,17 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 					showStopHint(wnd, lastStop)
 				}
 				u := out.usage
+				subMu.Lock()
+				sub := subUsage
+				subMu.Unlock()
 				slog.Info("uicompletion chat usage",
 					slog.String("session", string(sessionID.Get())),
 					slog.Int("input_tokens", u.InputTokens),
 					slog.Int("output_tokens", u.OutputTokens),
 					slog.Int("cache_read_tokens", u.CacheReadTokens),
 					slog.Int("cache_write_tokens", u.CacheWriteTokens),
+					slog.Int("sub_input_tokens", sub.InputTokens),
+					slog.Int("sub_output_tokens", sub.OutputTokens),
 				)
 				history.Set(out.history)
 				pending.Set(out.pending)
@@ -565,6 +665,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		}, func(err error) {
 			if err != nil {
 				cancelTasks(key)
+				finishActive()
 				wnd.Post(func() {
 					busy.Set(false)
 					status.Set("")
@@ -735,23 +836,41 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			return
 		}
 
-		updated, err := opts.Sessions.Dismiss(wnd.Subject(), sessionID.Get(), pendingRev.Get())
-		if err != nil {
-			alert.ShowBannerError(wnd, err)
-			// The session may have moved on elsewhere (e.g. another tab); show its current state.
-			if reloaded, ok := reloadSession(wnd.Subject(), opts.Sessions, sessionID.Get()); ok {
-				applySession(reloaded)
-			}
-			return
-		}
-		applySession(updated)
+		// Dismiss waits for the lock of the session, which a run in another window may hold for long, so it
+		// must not block the event loop of this window.
+		subject := wnd.Subject()
+		sid := sessionID.Get()
+		rev := pendingRev.Get()
+		busy.Set(true)
+		status.Set("… die Rückfrage wird verworfen")
+		xsync.Go(func() error {
+			updated, err := opts.Sessions.Dismiss(subject, sid, rev)
+			wnd.Post(func() {
+				busy.Set(false)
+				status.Set("")
+				if err != nil {
+					alert.ShowBannerError(wnd, err)
+					// The session may have moved on elsewhere (e.g. another tab); show its current state.
+					if reloaded, ok := reloadSession(subject, opts.Sessions, sid); ok {
+						applySession(reloaded)
+					}
+					return
+				}
+				applySession(updated)
+			})
+			return nil
+		}, nil)
 	}
 
 	// stop cancels the run in flight, including the provider request, and the background tasks of the
-	// conversation. What already happened is kept.
+	// conversation. What already happened is kept. It also stops a run of this conversation which another chat
+	// started, see attached.
 	stop := func() {
 		if c := cancelRun.Get(); c != nil {
 			c()
+		}
+		if run := attached.Get(); run != nil {
+			run.cancel()
 		}
 		if opts.Delegation != nil && opts.Delegation.BackgroundTasks {
 			registry.Cancel(taskKey(sessionID.Get()))
@@ -798,7 +917,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 				ui.If(uploadEnabled, uploadButton(wnd, staged, busy.Get())),
 				ui.Spacer(),
 				ui.IfElse(busy.Get(),
-					ui.SecondaryButton(stop).PreIcon(icons.Stop).Title("Stopp").Enabled(cancelRun.Get() != nil),
+					ui.SecondaryButton(stop).PreIcon(icons.Stop).Title("Stopp").Enabled(cancelRun.Get() != nil || attached.Get() != nil),
 					ui.SecondaryButton(submit).PreIcon(icons.PaperPlane).Title("Senden"),
 				),
 			).Gap(ui.L8).FullWidth().Alignment(ui.Center),
@@ -861,6 +980,22 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		footer,
 	).Gap(ui.L8).FullWidth().Alignment(ui.Leading)
 }
+
+// activeRun is a run of a persisted conversation which still works, see activeRuns.
+type activeRun struct {
+	id session.ID
+	// seq tells the runs of one session apart
+	seq    uint64
+	cancel context.CancelFunc
+	// done is closed when the run is over
+	done chan struct{}
+}
+
+var activeRunSeq atomic.Uint64
+
+// activeRuns holds the runs of persisted conversations which still work, by session id. A chat which shows
+// such a conversation, e.g. after a reload or in another tab, shows the run as busy and can stop it.
+var activeRuns concurrent.RWMap[session.ID, *activeRun]
 
 // findResumable returns the newest session of the subject which waits on a user decision and belongs to
 // exactly this chat context: created by the subject, same provider and exactly the same tags. Sessions of
