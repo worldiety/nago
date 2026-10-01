@@ -9,9 +9,11 @@ package user
 
 import (
 	"fmt"
+	"sync"
+	"time"
+
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/pkg/std"
-	"sync"
 )
 
 func NewUpdateVerification(mutex *sync.Mutex, repo Repository) UpdateVerification {
@@ -34,8 +36,21 @@ func NewUpdateVerification(mutex *sync.Mutex, repo Repository) UpdateVerificatio
 		}
 
 		usr := optUsr.Unwrap()
-		usr.VerificationCode = Code{}
-		usr.EMailVerified = true
+		setVerified(&usr, verified)
 		return repo.Save(usr)
+	}
+}
+
+// setVerified applies the verification state. A verified user needs no code anymore. An unverified user keeps a
+// still valid code or gets a fresh one, so that the verification mail can be sent again.
+func setVerified(usr *User, verified bool) {
+	usr.EMailVerified = verified
+	if verified {
+		usr.VerificationCode = Code{}
+		return
+	}
+
+	if usr.VerificationCode.Value == "" || time.Now().After(usr.VerificationCode.ValidUntil) {
+		usr.VerificationCode = NewCode(DefaultVerificationLifeTime)
 	}
 }

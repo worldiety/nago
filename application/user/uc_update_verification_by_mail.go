@@ -34,8 +34,7 @@ func NewUpdateVerificationByMail(mutex *sync.Mutex, repo Repository, byMail Find
 		}
 
 		usr := optUsr.Unwrap()
-		usr.VerificationCode = Code{}
-		usr.EMailVerified = true
+		setVerified(&usr, verified)
 		return repo.Save(usr)
 	}
 }
