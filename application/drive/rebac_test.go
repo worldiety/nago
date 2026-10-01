@@ -63,6 +63,10 @@ func newTestUseCases(t *testing.T) (UseCases, Repository, *rebac.DB) {
 	if err != nil {
 		t.Fatalf("cannot create fs blob store: %v", err)
 	}
+	// The store keeps its tdb WAL open through lockedfile, which installs a finalizer that panics once the file
+	// becomes unreachable without a Close. Left open, the GC killed the whole test binary at a random point in
+	// whatever test happened to run next. Registered after t.TempDir, so it runs before the directory is removed.
+	t.Cleanup(func() { _ = blobs.Close() })
 	rdb := newTestRDB(t)
 	uc := NewUseCases(events.NewEventBus(), repo, globalRoots, userRoots, blobs, rdb)
 	return uc, repo, rdb
