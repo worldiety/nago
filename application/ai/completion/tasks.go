@@ -429,6 +429,33 @@ func (g *TaskGroup) BeforeFinish(maxWait time.Duration) func(ctx context.Context
 	}
 }
 
+// HandedOverTasks extracts the task results which [TaskGroup.BeforeFinish] handed over to the model within the
+// given message, see [IsLoopPrompt]. It returns false for any other message. UIs use it to show the final state
+// of tasks the model never awaited.
+func HandedOverTasks(msg Message) ([]TaskResult, bool) {
+	if !IsLoopPrompt(msg) {
+		return nil, false
+	}
+
+	text := extractText(msg)
+	if !strings.HasPrefix(text, finishPromptMarker) {
+		return nil, false
+	}
+
+	start := strings.Index(text, "{")
+	if start < 0 {
+		return nil, false
+	}
+
+	var out awaitOut
+	if err := json.Unmarshal([]byte(text[start:]), &out); err != nil {
+		return nil, false
+	}
+
+	all := slices.Concat(out.Finished, out.Running)
+	return all, len(all) > 0
+}
+
 func newTaskID() string {
 	var b [8]byte
 	_, _ = rand.Read(b[:])

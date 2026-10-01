@@ -13,12 +13,14 @@ import (
 	"slices"
 
 	"github.com/worldiety/option"
+	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/auth"
 )
 
 // NewFindByID returns a [FindByID] use case. Access is resource-scoped: the subject must hold PermFindByID
 // either globally or as an instance grant on this session. Otherwise the session is reported as non-existent
-// (option.None) so its existence is not leaked.
+// (option.None) so its existence is not leaked. A child session (see [Session.ParentID]) is also readable by
+// whoever may read its parent: a sub-agent transcript belongs to the conversation, whoever continued it.
 func NewFindByID(repo Repository) FindByID {
 	return func(subject auth.Subject, id ID) (option.Opt[Session], error) {
 		optSession, err := repo.FindByID(id)
@@ -30,12 +32,21 @@ func NewFindByID(repo Repository) FindByID {
 			return option.None[Session](), nil
 		}
 
-		if err := subject.AuditResource(Namespace, rebacInstance(id), PermFindByID); err != nil {
+		if !mayRead(subject, optSession.Unwrap(), PermFindByID) {
 			return option.None[Session](), nil
 		}
 
 		return optSession, nil
 	}
+}
+
+// mayRead reports whether the subject holds perm on the session or, for a child session, on its parent.
+func mayRead(subject auth.Subject, s Session, perm permission.ID) bool {
+	if subject.AuditResource(Namespace, rebacInstance(s.ID), perm) == nil {
+		return true
+	}
+
+	return s.ParentID != "" && subject.AuditResource(Namespace, rebacInstance(s.ParentID), perm) == nil
 }
 
 // NewFindAll returns a [FindAll] use case yielding the sessions the subject may see: those granted per
@@ -62,7 +73,7 @@ func NewFindAll(repo Repository) FindAll {
 					continue
 				}
 
-				if err := subject.AuditResource(Namespace, rebacInstance(session.ID), PermFindAll); err != nil {
+				if !mayRead(subject, session, PermFindAll) {
 					continue
 				}
 

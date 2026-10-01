@@ -8,6 +8,7 @@
 package gollama
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -15,8 +16,8 @@ import (
 
 // resolveModel returns the on-disk path of the GGUF file for a catalog entry. It first looks in the configured
 // search and storage folders; if the file is absent it is downloaded from HuggingFace into the storage folder.
-// Downloads are serialised so two concurrent requests never fetch the same file twice.
-func (e *engine) resolveModel(entry catalogEntry) (string, error) {
+// A file is downloaded once, however many requests wait for it, see awaitDownload.
+func (e *engine) resolveModel(ctx context.Context, entry catalogEntry) (string, error) {
 	storage := e.cfg.storageDir()
 	target := filepath.Join(storage, entry.File)
 
@@ -26,19 +27,11 @@ func (e *engine) resolveModel(entry catalogEntry) (string, error) {
 		}
 	}
 
-	e.dlMu.Lock()
-	defer e.dlMu.Unlock()
-
-	// Another goroutine may have completed the download while we waited for the lock.
-	if isRegularFile(target) {
-		return target, nil
-	}
-
 	if entry.HFRepo == "" {
 		return "", fmt.Errorf("model %q not found in %v and no HuggingFace repository configured", entry.File, e.candidatePaths(entry))
 	}
 
-	if err := downloadModel(entry, storage, e.cfg.HFToken); err != nil {
+	if err := e.awaitDownload(ctx, entry, storage); err != nil {
 		return "", fmt.Errorf("download model %q: %w", entry.ID, err)
 	}
 

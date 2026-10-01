@@ -18,7 +18,11 @@ import (
 // as an instance grant on the session. Serializes with other mutations of the same session via its keyed lock.
 func NewRename(locks *locker, repo Repository) Rename {
 	return func(subject auth.Subject, id ID, title string) error {
-		defer locks.lock(id)()
+		release, err := locks.lock(nil, id)
+		if err != nil {
+			return err
+		}
+		defer release()
 
 		optSession, err := repo.FindByID(id)
 		if err != nil {

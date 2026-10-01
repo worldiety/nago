@@ -32,6 +32,19 @@ func NewCreate(repo Repository, rdb *rebac.DB) Create {
 			return Session{}, err
 		}
 
+		// A child belongs to a conversation the subject continues, so the parent must exist and be writable.
+		// Otherwise a background task could leave a child of a deleted conversation behind.
+		if opts.ParentID != "" {
+			parent, err := repo.FindByID(opts.ParentID)
+			if err != nil {
+				return Session{}, fmt.Errorf("cannot load parent session: %w", err)
+			}
+
+			if parent.IsNone() || subject.AuditResource(Namespace, rebacInstance(opts.ParentID), PermAppend) != nil {
+				return Session{}, fmt.Errorf("session %q does not exist", opts.ParentID)
+			}
+		}
+
 		now := xtime.Now()
 
 		var messages []completion.Message

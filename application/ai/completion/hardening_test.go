@@ -10,12 +10,15 @@ package completion
 import (
 	"context"
 	"errors"
+	"iter"
 	"slices"
 	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/worldiety/option"
+	"go.wdy.de/nago/application/ai/model"
 	"go.wdy.de/nago/auth"
 )
 
@@ -360,5 +363,110 @@ func TestSummaryCompactor_ReturnsCancellation(t *testing.T) {
 	out, err := NewSummaryCompactor(SummaryCompactorConfig{})(ctx, nil, fake, Options{}, history)
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("expected a cancellation, got %v with %d messages", err, len(out))
+	}
+}
+
+// streamFake streams a fixed answer and reports its usage with the final delta.
+type streamFake struct {
+	fail  error
+	usage Usage
+}
+
+func (f *streamFake) Models(auth.Subject) iter.Seq2[model.Model, error] { return nil }
+
+func (f *streamFake) Complete(ctx context.Context, _ auth.Subject, opts Options) (Result, error) {
+	if f.fail != nil {
+		return Result{}, f.fail
+	}
+	return textResult("ok", f.usage), nil
+}
+
+func (f *streamFake) Stream(ctx context.Context, _ auth.Subject, opts Options) iter.Seq2[Delta, error] {
+	return func(yield func(Delta, error) bool) {
+		if f.fail != nil {
+			yield(Delta{}, f.fail)
+			return
+		}
+		if !yield(Delta{TextDelta: "ok"}, nil) {
+			return
+		}
+		yield(Delta{Done: true, StopReason: StopEndTurn, Usage: option.Some(f.usage)}, nil)
+	}
+}
+
+// A retry which is cancelled while it waits reports the cancellation, not the rate limit.
+func TestRetry_CancelledWhileWaiting(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		time.Sleep(50 * time.Millisecond)
+		cancel()
+	}()
+
+	r := &retryCompletions{Completions: &streamFake{fail: TooManyRequests}, backoff: []time.Duration{time.Minute}}
+	if _, err := r.Complete(ctx, nil, Options{}); !errors.Is(err, context.Canceled) {
+		t.Fatalf("expected a cancellation, got %v", err)
+	}
+
+	ctx, cancel = context.WithCancel(context.Background())
+	go func() {
+		time.Sleep(50 * time.Millisecond)
+		cancel()
+	}()
+	var last error
+	for _, err := range r.Stream(ctx, nil, Options{}) {
+		last = err
+	}
+	if !errors.Is(last, context.Canceled) {
+		t.Fatalf("expected a cancelled stream, got %v", last)
+	}
+}
+
+// The usage of a streamed completion is accounted like a completed one.
+func TestMetered_Stream(t *testing.T) {
+	var reported Usage
+	m := &meteredCompletions{Completions: &streamFake{usage: Usage{InputTokens: 3, OutputTokens: 4}}, onUsage: func(u Usage) { reported = reported.Add(u) }}
+
+	for _, err := range m.Stream(context.Background(), nil, Options{}) {
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if m.sum() != (Usage{InputTokens: 3, OutputTokens: 4}) || reported != m.sum() {
+		t.Fatalf("stream usage not accounted: %+v %+v", m.sum(), reported)
+	}
+}
+
+// The result of a task covers the usage of its own sub-agents, which is reported once.
+func TestDelegate_NestedUsageIsAccountedOnce(t *testing.T) {
+	fake := &scriptFake{respond: func(ctx context.Context, opts Options) (Result, error) {
+		if !isSub(opts) {
+			return parentScript(delegateCall("c1", delegateTaskIn{Title: "child", Task: "A"}))(opts), nil
+		}
+		if strings.HasPrefix(firstUserText(opts), "B") {
+			return textResult("grandchild", Usage{InputTokens: 100, OutputTokens: 50}), nil
+		}
+		if _, ok := lastToolResult(opts); ok {
+			return textResult("child", Usage{InputTokens: 10, OutputTokens: 5}), nil
+		}
+		return Result{Message: Message{Role: Assistant, Content: []Content{delegateCall("c2", delegateTaskIn{Title: "grandchild", Task: "B"})}}, StopReason: StopToolUse, Usage: Usage{InputTokens: 10, OutputTokens: 5}}, nil
+	}}
+
+	var reported []Usage
+	out, _, _, err := runDelegation(t, fake, RunOptions{
+		Options: Options{Messages: userMsg("go")},
+		Tools:   []Tool{NewDelegateTool(DelegateConfig{MaxDepth: 2, OnUsage: func(u Usage) { reported = append(reported, u) }})},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := Usage{InputTokens: 120, OutputTokens: 60}
+	if len(out.Results) != 1 || out.Results[0].Usage != want {
+		t.Fatalf("expected the usage of child and grandchild, got %+v", out.Results)
+	}
+
+	if len(reported) != 1 || reported[0] != want {
+		t.Fatalf("expected a single report of the full usage, got %+v", reported)
 	}
 }

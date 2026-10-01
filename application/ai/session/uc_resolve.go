@@ -26,7 +26,11 @@ func NewResolve(locks *locker, repo Repository, ledger *usageLedger) Resolve {
 			return Session{}, fmt.Errorf("session: ResolveOptions.Run.Completions must not be nil")
 		}
 
-		defer locks.lock(id)()
+		release, err := locks.lock(opts.Run.Context, id)
+		if err != nil {
+			return Session{}, fmt.Errorf("run cancelled: %w", err)
+		}
+		defer release()
 
 		session, err := loadPending(subject, repo, id, opts.Revision)
 		if err != nil {
@@ -62,10 +66,14 @@ func NewResolve(locks *locker, repo Repository, ledger *usageLedger) Resolve {
 }
 
 // NewDismiss returns a [Dismiss] use case. The background tasks of the session in tasks are cancelled, because
-// the user moved on; tasks may be nil.
-func NewDismiss(locks *locker, repo Repository, tasks *completion.TaskRegistry) Dismiss {
+// the user moved on; tasks may be nil. The usage of sub-agents which finished meanwhile is booked.
+func NewDismiss(locks *locker, repo Repository, ledger *usageLedger, tasks *completion.TaskRegistry) Dismiss {
 	return func(subject auth.Subject, id ID, revision int) (Session, error) {
-		defer locks.lock(id)()
+		release, err := locks.lock(nil, id)
+		if err != nil {
+			return Session{}, err
+		}
+		defer release()
 
 		session, err := loadPending(subject, repo, id, revision)
 		if err != nil {
@@ -79,6 +87,7 @@ func NewDismiss(locks *locker, repo Repository, tasks *completion.TaskRegistry) 
 
 		session.Messages = history
 		session.Pending = nil
+		session.SubUsage = session.SubUsage.Add(ledger.drain(id))
 		session.UpdatedAt = xtime.Now()
 		if err := repo.Save(session); err != nil {
 			return Session{}, fmt.Errorf("cannot persist session: %w", err)

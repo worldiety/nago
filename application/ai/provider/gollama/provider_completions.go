@@ -29,7 +29,7 @@ func (c *gollamaCompletions) Models(subject auth.Subject) iter.Seq2[model.Model,
 }
 
 func (c *gollamaCompletions) Complete(ctx context.Context, subject auth.Subject, opts completion.Options) (completion.Result, error) {
-	lm, nCtx, err := c.prepare(opts)
+	lm, nCtx, err := c.prepare(ctx, opts)
 	if err != nil {
 		return completion.Result{}, err
 	}
@@ -62,7 +62,7 @@ func (c *gollamaCompletions) Complete(ctx context.Context, subject auth.Subject,
 
 func (c *gollamaCompletions) Stream(ctx context.Context, subject auth.Subject, opts completion.Options) iter.Seq2[completion.Delta, error] {
 	return func(yield func(completion.Delta, error) bool) {
-		lm, nCtx, err := c.prepare(opts)
+		lm, nCtx, err := c.prepare(ctx, opts)
 		if err != nil {
 			yield(completion.Delta{}, err)
 			return
@@ -124,7 +124,7 @@ func (c *gollamaCompletions) Stream(ctx context.Context, subject auth.Subject, o
 }
 
 // prepare validates the request, resolves and loads the model and computes the effective context window.
-func (c *gollamaCompletions) prepare(opts completion.Options) (*loadedModel, int, error) {
+func (c *gollamaCompletions) prepare(ctx context.Context, opts completion.Options) (*loadedModel, int, error) {
 	if len(opts.Messages) == 0 {
 		return nil, 0, fmt.Errorf("messages must not be empty")
 	}
@@ -134,7 +134,7 @@ func (c *gollamaCompletions) prepare(opts completion.Options) (*loadedModel, int
 		return nil, 0, fmt.Errorf("unknown model %q", opts.Model)
 	}
 
-	lm, err := c.parent.eng.load(entry)
+	lm, err := c.parent.eng.load(ctx, entry)
 	if err != nil {
 		return nil, 0, err
 	}

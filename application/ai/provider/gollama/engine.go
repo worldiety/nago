@@ -10,6 +10,7 @@ package gollama
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -36,10 +37,41 @@ type engine struct {
 	initErr  error
 	sampler  gollama.LlamaSampler
 
-	mu     sync.Mutex // guards models and serialises model loading
+	mu     ctxMutex // guards models and serialises model loading
 	models map[string]*loadedModel
 
-	dlMu sync.Mutex // serialises downloads so two requests never fetch the same file twice
+	// downloads holds the running downloads by target path, see awaitDownload.
+	dlMu      sync.Mutex
+	downloads map[string]*download
+	// download fetches the file of a model. Tests replace it.
+	download func(ctx context.Context, entry catalogEntry, storageDir, token string) error
+}
+
+// download is a running download, see awaitDownload.
+type download struct {
+	done chan struct{}
+	err  error
+}
+
+// ctxMutex is a mutex whose lock gives up when the context is done. Loading or downloading a model takes
+// long, and a stopped request must not wait for it.
+type ctxMutex struct {
+	once sync.Once
+	sem  chan struct{}
+}
+
+func (m *ctxMutex) lock(ctx context.Context) error {
+	m.once.Do(func() { m.sem = make(chan struct{}, 1) })
+	select {
+	case m.sem <- struct{}{}:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+func (m *ctxMutex) unlock() {
+	<-m.sem
 }
 
 // loadedModel is a model held in memory together with the metadata-derived family adapter.
@@ -51,7 +83,47 @@ type loadedModel struct {
 }
 
 func newEngine(cfg Settings) *engine {
-	return &engine{cfg: cfg, models: map[string]*loadedModel{}}
+	return &engine{cfg: cfg, models: map[string]*loadedModel{}, download: downloadModel}
+}
+
+// awaitDownload downloads the file of entry into storage once, however many requests wait for it. The download
+// runs on its own, without the cancellation of the request which started it: it is expensive, and a stopped
+// request must neither cancel it for the others nor wait for it. Only the waiting gives up with ctx.
+func (e *engine) awaitDownload(ctx context.Context, entry catalogEntry, storage string) error {
+	target := filepath.Join(storage, entry.File)
+
+	e.dlMu.Lock()
+	dl, running := e.downloads[target]
+	if !running {
+		// another request may have completed the download while this one looked for the file
+		if isRegularFile(target) {
+			e.dlMu.Unlock()
+			return nil
+		}
+
+		dl = &download{done: make(chan struct{})}
+		if e.downloads == nil {
+			e.downloads = map[string]*download{}
+		}
+		e.downloads[target] = dl
+
+		go func() {
+			dl.err = e.download(context.WithoutCancel(ctx), entry, storage, e.cfg.HFToken)
+
+			e.dlMu.Lock()
+			delete(e.downloads, target)
+			e.dlMu.Unlock()
+			close(dl.done)
+		}()
+	}
+	e.dlMu.Unlock()
+
+	select {
+	case <-dl.done:
+		return dl.err
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 // ensureBackend initialises the llama.cpp backend and the shared greedy sampler exactly once. The greedy
@@ -83,22 +155,30 @@ func (e *engine) ensureBackend() error {
 }
 
 // load resolves the model file for a catalog entry (downloading it if necessary), loads it into memory once
-// and returns the cached handle.
-func (e *engine) load(entry catalogEntry) (*loadedModel, error) {
+// and returns the cached handle. It gives up as soon as ctx is done, e.g. because the user stopped the run
+// which needs the model.
+func (e *engine) load(ctx context.Context, entry catalogEntry) (*loadedModel, error) {
 	if err := e.ensureBackend(); err != nil {
 		return nil, err
 	}
 
-	path, err := e.resolveModel(entry)
+	path, err := e.resolveModel(ctx, entry)
 	if err != nil {
 		return nil, err
 	}
 
-	e.mu.Lock()
-	defer e.mu.Unlock()
+	if err := e.mu.lock(ctx); err != nil {
+		return nil, err
+	}
+	defer e.mu.unlock()
 
 	if lm, ok := e.models[path]; ok {
 		return lm, nil
+	}
+
+	// the model is not loaded for a request which nobody waits for any more
+	if err := ctx.Err(); err != nil {
+		return nil, err
 	}
 
 	meta, err := readGGUFMetadata(path)

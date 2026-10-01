@@ -190,9 +190,14 @@ type AppendOptions struct {
 	System string
 
 	// Tools are the executable tools offered to the model for this turn. When non-empty, [Append] drives the
-	// full agentic loop via [completion.Run]; otherwise a single [completion.Completions.Complete] is used.
-	// Tools are never persisted.
+	// full agentic loop via [completion.Run]; otherwise a single [completion.Completions.Complete] is used,
+	// unless Agentic is set. Tools are never persisted.
 	Tools []completion.Tool
+
+	// Agentic drives the agentic loop even without Tools, so that a truncated answer is continued, a turn
+	// with reasoning only is asked for its answer and the history is compacted on overflow. Sub-agents use
+	// it, see [NewSubRunner]. Optional.
+	Agentic bool
 
 	// FileUploader is required only when [Tools] contains file-providing tools (see
 	// [completion.NewOpenFileTool]); it uploads a file to the active provider so it can be attached to the
@@ -313,6 +318,9 @@ type UseCases struct {
 	// subUsage collects the usage of sub-agents until their parent session is saved next, see
 	// [Session.SubUsage].
 	subUsage *usageLedger
+	// repo and locks let [NewSubRunner] keep the task of a sub-agent which failed before its first turn.
+	repo  Repository
+	locks *locker
 }
 
 // NewUseCases wires the session use cases against the given repository and ReBAC database.
@@ -338,10 +346,12 @@ func NewUseCases(repo Repository, rdb *rebac.DB) UseCases {
 		FindAll:  NewFindAll(repo),
 		Append:   NewAppend(&locks, repo, ledger),
 		Resolve:  NewResolve(&locks, repo, ledger),
-		Dismiss:  NewDismiss(&locks, repo, tasks),
+		Dismiss:  NewDismiss(&locks, repo, ledger, tasks),
 		Rename:   NewRename(&locks, repo),
-		Delete:   NewDelete(&locks, repo, rdb, tasks),
+		Delete:   NewDelete(&locks, repo, rdb, tasks, ledger),
 		Tasks:    tasks,
 		subUsage: ledger,
+		repo:     repo,
+		locks:    &locks,
 	}
 }

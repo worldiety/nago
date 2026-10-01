@@ -15,6 +15,7 @@ import (
 
 	"go.wdy.de/nago/application/ai/completion"
 	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/pkg/xtime"
 )
 
 // usageLedger collects the usage of sub-agents per parent session until the parent is saved next. It exists so
@@ -89,6 +90,7 @@ func NewSubRunner(uc UseCases, parentID ID) completion.SubRunner {
 		}
 
 		updated, err := uc.Append(subject, child.ID, AppendOptions{
+			Agentic:          true,
 			Completions:      req.Completions,
 			Input:            req.Input,
 			Model:            req.Options.Model,
@@ -111,10 +113,29 @@ func NewSubRunner(uc UseCases, parentID ID) completion.SubRunner {
 			if reloaded, ok, _ := findChild(uc, subject, child.ID); ok {
 				res.History = reloaded.Messages
 
-				// stopped or timed out during the first request: an empty child has nothing to inspect
-				if ctx.Err() != nil && len(reloaded.Messages) == 0 && uc.Delete != nil {
-					if derr := uc.Delete(subject, child.ID); derr == nil {
-						res.SessionID = ""
+				switch {
+				case len(reloaded.Messages) > 0:
+					// the run kept what it did
+				case ctx.Err() != nil:
+					// stopped or timed out during the first request: an empty child has nothing to inspect
+					if uc.Delete != nil {
+						if derr := uc.Delete(subject, child.ID); derr == nil {
+							res.SessionID = ""
+						}
+					}
+				case uc.repo != nil && uc.locks != nil:
+					// Failed before its first turn: at least the task stays inspectable. The child is written under
+					// its lock and only if it still exists, so a deletion meanwhile is not undone.
+					if release, lerr := uc.locks.lock(ctx, child.ID); lerr == nil {
+						if cur, ferr := uc.repo.FindByID(child.ID); ferr == nil && cur.IsSome() {
+							c := cur.Unwrap()
+							c.Messages = []completion.Message{{Role: completion.User, Content: req.Input}}
+							c.UpdatedAt = xtime.Now()
+							if serr := uc.repo.Save(c); serr == nil {
+								res.History = c.Messages
+							}
+						}
+						release()
 					}
 				}
 			}

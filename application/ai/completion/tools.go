@@ -559,17 +559,40 @@ type meteredCompletions struct {
 
 func (m *meteredCompletions) Complete(ctx context.Context, subject auth.Subject, opts Options) (Result, error) {
 	res, err := m.Completions.Complete(ctx, subject, opts)
-	if err == nil && !res.Usage.IsZero() {
-		m.mu.Lock()
-		m.total = m.total.Add(res.Usage)
-		m.mu.Unlock()
-
-		if m.onUsage != nil {
-			m.onUsage(res.Usage)
-		}
+	if err == nil {
+		m.account(res.Usage)
 	}
 
 	return res, err
+}
+
+// Stream accounts the usage which the final delta reports.
+func (m *meteredCompletions) Stream(ctx context.Context, subject auth.Subject, opts Options) iter.Seq2[Delta, error] {
+	return func(yield func(Delta, error) bool) {
+		for d, err := range m.Completions.Stream(ctx, subject, opts) {
+			if err == nil && d.Done && d.Usage.IsSome() {
+				m.account(d.Usage.Unwrap())
+			}
+
+			if !yield(d, err) {
+				return
+			}
+		}
+	}
+}
+
+func (m *meteredCompletions) account(u Usage) {
+	if u.IsZero() {
+		return
+	}
+
+	m.mu.Lock()
+	m.total = m.total.Add(u)
+	m.mu.Unlock()
+
+	if m.onUsage != nil {
+		m.onUsage(u)
+	}
 }
 
 func (m *meteredCompletions) sum() Usage {

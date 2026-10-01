@@ -8,6 +8,7 @@
 package gollama
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log/slog"
@@ -29,7 +30,7 @@ const downloadTimeout = 24 * time.Hour
 // downloadModel fetches the catalog entry's GGUF file from HuggingFace into storageDir. The body is streamed to
 // a temporary file in the same directory and atomically renamed on success, so an interrupted download never
 // leaves a partial file under the final name. An optional token authenticates gated/private repositories.
-func downloadModel(entry catalogEntry, storageDir, token string) error {
+func downloadModel(ctx context.Context, entry catalogEntry, storageDir, token string) error {
 	if err := os.MkdirAll(storageDir, 0o755); err != nil {
 		return fmt.Errorf("create storage dir: %w", err)
 	}
@@ -52,6 +53,7 @@ func downloadModel(entry catalogEntry, storageDir, token string) error {
 	slog.Info("downloading gguf model", "model", entry.ID, "url", rawURL, "target", target)
 
 	req := xhttp.NewRequest().
+		Context(ctx).
 		URL(rawURL).
 		Query("download", "true").
 		Assert2xx(true).

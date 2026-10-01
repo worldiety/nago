@@ -37,7 +37,11 @@ func NewAppend(locks *locker, repo Repository, ledger *usageLedger) Append {
 			return Session{}, fmt.Errorf("session: AppendOptions.Input must not be empty")
 		}
 
-		defer locks.lock(id)()
+		release, err := locks.lock(opts.Context, id)
+		if err != nil {
+			return Session{}, fmt.Errorf("run cancelled: %w", err)
+		}
+		defer release()
 
 		optSession, err := repo.FindByID(id)
 		if err != nil {
@@ -90,7 +94,7 @@ func NewAppend(locks *locker, repo Repository, ledger *usageLedger) Append {
 			return Session{}, ErrPendingDecision
 		}
 
-		if len(opts.Tools) == 0 {
+		if len(opts.Tools) == 0 && !opts.Agentic {
 			ctx := opts.Context
 			if ctx == nil {
 				ctx = context.Background()
@@ -159,9 +163,20 @@ func saveOutcome(repo Repository, ledger *usageLedger, session Session, mdl mode
 
 // persistFailure keeps what a failed run already did. Tools that ran may have had side effects, so the
 // session must reflect them and a follow-up question builds on them. The history of a failed run never
-// contains a tool_use without its tool_result.
+// contains a tool_use without its tool_result. A run which failed without any progress still books the
+// usage of the completions it paid for, e.g. a truncated answer whose repetition was stopped.
 func persistFailure(repo Repository, ledger *usageLedger, session Session, mdl model.ID, out completion.Outcome, runErr error) error {
 	if !out.Progressed {
+		sub := ledger.drain(session.ID)
+		if !out.Usage.IsZero() || !sub.IsZero() {
+			session.Usage = session.Usage.Add(out.Usage)
+			session.SubUsage = session.SubUsage.Add(sub)
+			session.UpdatedAt = xtime.Now()
+			if err := repo.Save(session); err != nil {
+				return fmt.Errorf("completion run failed: %w (and cannot persist its usage: %v)", runErr, err)
+			}
+		}
+
 		return fmt.Errorf("completion run failed: %w", runErr)
 	}
 

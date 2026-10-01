@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"iter"
 	"log/slog"
 	"runtime/debug"
 	"slices"
@@ -148,13 +149,29 @@ type SubRunResult struct {
 // SubRunner runs one sub-agent to its end. ctx carries the timeout of the task and the cancellation of the
 // parent. The default is [DefaultSubRunner], which keeps nothing; session.NewSubRunner persists every
 // sub-agent as a child session of the parent session instead.
+//
+// A runner accounts the usage of the sub-agent through [RunOptions.OnUsage] of the run it starts: besides
+// every completion of the sub-agent itself, the sub-agents it delegates to report their usage there, so
+// [SubRunResult.Usage] covers the whole cost of the task.
 type SubRunner func(ctx context.Context, subject auth.Subject, req SubRunRequest) (SubRunResult, error)
 
 // DefaultSubRunner runs the sub-agent transiently via [Start]. A suspension is reported as
 // [ErrSubRunSuspended].
 func DefaultSubRunner(ctx context.Context, subject auth.Subject, req SubRunRequest) (SubRunResult, error) {
-	out, err := Start(subject, req.Completions, req.RunOptions(ctx))
-	res := SubRunResult{History: out.History, Usage: out.Usage}
+	var mu sync.Mutex
+	var usage Usage
+	opts := req.RunOptions(ctx)
+	opts.OnUsage = func(u Usage) {
+		mu.Lock()
+		usage = usage.Add(u)
+		mu.Unlock()
+	}
+
+	out, err := Start(subject, req.Completions, opts)
+
+	mu.Lock()
+	res := SubRunResult{History: out.History, Usage: usage}
+	mu.Unlock()
 	if err != nil {
 		return res, err
 	}
@@ -532,6 +549,8 @@ type taskPlan struct {
 	title string
 	req   SubRunRequest
 	err   error
+	// reportUsage accounts the usage of the task to the run which delegates it, see [SubRunner].
+	reportUsage func(Usage)
 }
 
 // plan validates one task of the model and assembles its sub-agent.
@@ -609,7 +628,8 @@ func (d *delegator) plan(env toolEnv, in delegateTaskIn, callID string, index in
 	}
 
 	// A sub-agent may delegate on its own only while it is above the depth limit. Its sub-agents are
-	// transient and not observed by the parent's UI; their usage is still reported.
+	// transient and not observed by the parent's UI. Their usage is accounted to the run of the sub-agent,
+	// see reportUsage, which is why the nested tool reports nothing on its own.
 	if d.cfg.depth+1 < cfg.MaxDepth {
 		nested := cfg
 		nested.depth = cfg.depth + 1
@@ -620,7 +640,15 @@ func (d *delegator) plan(env toolEnv, in delegateTaskIn, callID string, index in
 		nested.Limiter = cfg.Limiter.nested()
 		nested.Runner = DefaultSubRunner
 		nested.OnEvent = nil
+		nested.OnUsage = nil
 		tools = append(tools, NewDelegateTool(nested))
+	}
+
+	// The usage of a nested sub-agent belongs to the run of the sub-agent which delegates it, see [SubRunner].
+	// A top level run accounts its sub-agents through [DelegateConfig.OnUsage] instead, because
+	// [RunOptions.OnUsage] of a conversation only covers its own completions, like [Outcome.Usage].
+	if d.cfg.depth > 0 {
+		p.reportUsage = parent.OnUsage
 	}
 
 	uploader := cfg.FileUploader
@@ -770,8 +798,13 @@ func (d *delegator) execute(parent context.Context, subject auth.Subject, p task
 	res, err := d.cfg.Runner(ctx, subject, req)
 	result.Usage = res.Usage
 	result.SessionID = res.SessionID
-	if d.cfg.OnUsage != nil && !res.Usage.IsZero() {
-		d.cfg.OnUsage(res.Usage)
+	if !res.Usage.IsZero() {
+		if d.cfg.OnUsage != nil {
+			d.cfg.OnUsage(res.Usage)
+		}
+		if p.reportUsage != nil {
+			p.reportUsage(res.Usage)
+		}
 	}
 
 	switch {
@@ -834,12 +867,51 @@ func (r *retryCompletions) Complete(ctx context.Context, subject auth.Subject, o
 			return res, err
 		}
 
-		timer := time.NewTimer(r.backoff[attempt])
-		select {
-		case <-timer.C:
-		case <-ctx.Done():
-			timer.Stop()
+		if err := r.wait(ctx, attempt, err); err != nil {
 			return res, err
 		}
+	}
+}
+
+// Stream retries like Complete, but only as long as nothing has been delivered yet.
+func (r *retryCompletions) Stream(ctx context.Context, subject auth.Subject, opts Options) iter.Seq2[Delta, error] {
+	return func(yield func(Delta, error) bool) {
+		for attempt := 0; ; attempt++ {
+			delivered := false
+			var retry error
+			for d, err := range r.Completions.Stream(ctx, subject, opts) {
+				if err != nil && !delivered && errors.Is(err, TooManyRequests) && attempt < len(r.backoff) {
+					retry = err
+					break
+				}
+
+				delivered = true
+				if !yield(d, err) {
+					return
+				}
+			}
+
+			if retry == nil {
+				return
+			}
+
+			if err := r.wait(ctx, attempt, retry); err != nil {
+				yield(Delta{}, err)
+				return
+			}
+		}
+	}
+}
+
+// wait pauses before the next attempt. A cancelled context is reported as such, not as the rate limit.
+func (r *retryCompletions) wait(ctx context.Context, attempt int, cause error) error {
+	timer := time.NewTimer(r.backoff[attempt])
+	defer timer.Stop()
+
+	select {
+	case <-timer.C:
+		return nil
+	case <-ctx.Done():
+		return fmt.Errorf("%w (while waiting to retry: %w)", ctx.Err(), cause)
 	}
 }
