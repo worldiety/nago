@@ -375,30 +375,21 @@ export async function triggerFileUpload(uploadRepository: UploadRepository, evt:
  * @param replace
  */
 export function navigateForward(chan: Channel, evt: NavigationForwardToRequested, replace = false): void {
-	let url = `/${evt.rootView!}`;
+	const query = new URLSearchParams();
 	let anchorValue = ``;
-	if (evt.values) {
-		url += '?';
-		let idx = 0;
-		evt.values.value.forEach((value, key) => {
-			if (!evt.values?.value.size) {
-				return;
-			}
-			if (key === `#`) {
-				anchorValue = value;
-				return;
-			}
+	evt.values?.value.forEach((value, key) => {
+		if (key === `#`) {
+			anchorValue = value;
+			return;
+		}
 
-			url += `${key}=${value}`;
-			if (idx < evt.values.value.size - 1) {
-				url += '&';
-			}
-			idx++;
-		});
-	}
+		query.append(key, value);
+	});
 
-	if (url.endsWith('?')) {
-		url = url.substring(0, url.length - 1);
+	let url = `/${evt.rootView!}`;
+	const queryString = query.toString();
+	if (queryString !== ``) {
+		url += '?' + queryString;
 	}
 
 	if (anchorValue !== ``) {
@@ -423,6 +414,74 @@ export function navigateForward(chan: Channel, evt: NavigationForwardToRequested
 	} else {
 		history.pushState(evt, '', url);
 	}
+}
+
+/**
+ * routeLinkClick turns a click on a same-origin anchor into a local root view navigation instead of a full page
+ * reload, which would also tear down the websocket. Everything the browser must handle itself is left alone:
+ * modified or non-primary clicks (new tab or window), downloads, foreign targets and origins, http endpoints of the
+ * backend and pure anchor jumps within the current page. Use a target like _top to opt out explicitly.
+ * @param chan
+ * @param event the click event, whose currentTarget must be the anchor element
+ */
+export function routeLinkClick(chan: Channel, event: MouseEvent): void {
+	if (
+		event.defaultPrevented ||
+		event.button !== 0 ||
+		event.metaKey ||
+		event.ctrlKey ||
+		event.shiftKey ||
+		event.altKey
+	) {
+		return;
+	}
+
+	const a = event.currentTarget as HTMLAnchorElement;
+	if (a.hasAttribute('download') || (a.target !== '' && a.target !== '_self')) {
+		return;
+	}
+
+	const url = new URL(a.href);
+	if (url.origin !== window.location.origin || isHttpEndpoint(url.pathname)) {
+		return;
+	}
+
+	if (url.hash !== '' && url.pathname === window.location.pathname && url.search === window.location.search) {
+		return;
+	}
+
+	event.preventDefault();
+
+	const values = new RootViewParameters();
+	url.searchParams.forEach((value, key) => {
+		values.value.set(key, value);
+	});
+
+	if (url.hash !== '') {
+		values.value.set('#', url.hash.substring(1));
+	}
+
+	let rootViewID = url.pathname.substring(1);
+	if (rootViewID.length === 0) {
+		rootViewID = '.'; // this is by ora definition the root page
+	}
+
+	navigateForward(chan, new NavigationForwardToRequested(rootViewID, values));
+}
+
+/**
+ * isHttpEndpoint tells if the path belongs to a plain http handler of the backend instead of a root view.
+ * By convention, custom handlers are registered below /api/, see also the dev server proxy in vite.config.ts.
+ */
+function isHttpEndpoint(path: string): boolean {
+	return (
+		path.startsWith('/api/') ||
+		path.startsWith('/modern/') ||
+		path.startsWith('/legacy/') ||
+		path === '/wire' ||
+		path === '/sitemap.xml' ||
+		path.startsWith('/favicon.')
+	);
 }
 
 // nextInvalidationScrollsTop is set by navigation events and tells if a redraw must trigger a scroll to top,

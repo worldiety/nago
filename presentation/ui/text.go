@@ -8,7 +8,6 @@
 package ui
 
 import (
-	"fmt"
 	"net/url"
 	"strings"
 
@@ -103,36 +102,31 @@ func LinkWithAction(text string, action func()) TText {
 }
 
 // Link performs a best guess based on the given href. If the href starts with http or https
-// the window will perform an Open call. Otherwise, a local forward navigation is applied.
+// the browser opens it as usual. Otherwise, the frontend applies a local forward navigation without reloading
+// the page, unless the path belongs to a plain http handler below /api/ or the target is neither empty nor _self.
 func Link(_ core.Window, text string, href string, target string) TText {
-	var linkHref, linkTarget string
+	var linkHref string
 
 	if strings.HasPrefix(href, "http://") || strings.HasPrefix(href, "https://") || strings.HasPrefix(href, "mailto:") || strings.HasPrefix(href, "tel:") {
 		linkHref = href
-		linkTarget = target
 	} else {
 		u, err := url.Parse(href)
 		if err != nil {
 			return Text(text)
 		}
 
-		linkHref = u.Path
-		linkTarget = target
-
-		q := u.Query()
-		if len(q) > 0 {
-			tmp := make([]string, 0)
-			for k, v := range q {
-				if len(v) > 0 {
-					tmp = append(tmp, fmt.Sprintf("%s=%s", k, url.QueryEscape(v[0])))
-				}
+		// root view parameters are unique by key, thus keep only the first value of each one
+		q := url.Values{}
+		for k, v := range u.Query() {
+			if len(v) > 0 {
+				q.Set(k, v[0])
 			}
-
-			linkHref = fmt.Sprintf("%s?%s", linkTarget, strings.Join(tmp, "&"))
 		}
+
+		linkHref = (&url.URL{Path: u.Path, RawQuery: q.Encode(), Fragment: u.Fragment}).String()
 	}
 
-	return Text(text).Link(linkHref, linkTarget)
+	return Text(text).Link(linkHref, target)
 }
 
 func Text(content string) TText {

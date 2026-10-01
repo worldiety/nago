@@ -21,7 +21,7 @@ import { positionCSS } from '@/components/shared/position';
 import { transformationCSS } from '@/components/shared/transformation';
 import { randomStr } from '@/components/shared/util';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
-import { nextRID } from '@/eventhandling';
+import { nextRID, routeLinkClick } from '@/eventhandling';
 import { CssClasses } from '@/shared/cssClasses';
 import type { Stack } from '@/shared/proto/nprotoc_gen';
 import {
@@ -305,6 +305,7 @@ function onKeydown(event: KeyboardEvent) {
 		:target="props.ui.target"
 		:title="props.ui.accessibilityLabel"
 		:tabindex="ui.disabled ? -1 : 0"
+		@click="(event: MouseEvent) => routeLinkClick(serviceAdapter, event)"
 	>
 		<ui-generic v-for="childUi in props.ui.children?.value" :ui="childUi" />
 	</a>

@@ -15,7 +15,7 @@ import { fontCSS } from '@/components/shared/font';
 import { frameCSS } from '@/components/shared/frame';
 import { paddingCSS } from '@/components/shared/padding';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
-import { nextRID } from '@/eventhandling';
+import { nextRID, routeLinkClick } from '@/eventhandling';
 import type { TextView } from '@/shared/proto/nprotoc_gen';
 import { FunctionCallRequested, TextAlignmentValues } from '@/shared/proto/nprotoc_gen';
 import { whiteSpaceCSS } from '@/components/shared/whiteSpace';
@@ -30,6 +30,11 @@ function onClick() {
 	if (props.ui.action) {
 		serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.action, nextRID()));
 	}
+}
+
+function onLinkClick(event: MouseEvent) {
+	routeLinkClick(serviceAdapter, event);
+	onClick();
 }
 
 const styles = computed<string>(() => {
@@ -101,7 +106,7 @@ const textValue = computed<string>(() => {
 		:target="ui.link.target"
 		:style="styles"
 		:title="props.ui.accessibilityLabel"
-		@click="onClick"
+		@click="onLinkClick"
 	>
 		{{ textValue }}<br v-if="!ui.invisible && ui.lineBreak" />
 	</a>
