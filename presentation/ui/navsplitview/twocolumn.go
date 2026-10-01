@@ -159,9 +159,9 @@ func (c TTwoColumn) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	return ui.Grid(
-		ui.GridCell(contentView).BackgroundColor(c.bgContent),
+		paneCell(contentView, ui.Center).BackgroundColor(c.bgContent),
 		ui.GridCell(ui.Text("").Underline(true)).BackgroundColor(ui.ColorIconsMuted),
-		ui.GridCell(detailView).BackgroundColor(c.bgDetail),
+		paneCell(detailView, ui.Center).BackgroundColor(c.bgDetail),
 	).Columns(3).
 		Gap(ui.L8).
 		Widths(c.contentWidth, "1px", c.detailWidth).
