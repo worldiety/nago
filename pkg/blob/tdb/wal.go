@@ -9,6 +9,7 @@ package tdb
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"github.com/rogpeppe/go-internal/lockedfile"
 	"go.wdy.de/nago/pkg/xbytes"
@@ -47,11 +48,18 @@ func OpenWAL(path string, replay func(entry *Node)) (*WAL, error) {
 		return nil, err
 	}
 
-	return NewWAL(f, replay)
+	w, err := NewWAL(f, replay)
+	if err != nil {
+		// lockedfile panics from a finalizer when an open file becomes unreachable
+		_ = f.Close()
+		return nil, err
+	}
+
+	return w, nil
 }
 
 // NewWAL creates a new WAL instance based on the given file. Note, that you must not issue any read/write calls from
-// the replay func.
+// the replay func. On error, the file is left open and closing it is up to the caller.
 func NewWAL(f *lockedfile.File, replay func(entry *Node)) (*WAL, error) {
 	w := &WAL{
 		f:              f,
@@ -261,9 +269,8 @@ func (w *WAL) DeleteWithTx(bucket, key []byte, tx uint64) error {
 }
 
 func (w *WAL) Close() error {
-	if err := w.f.Sync(); err != nil {
-		return err
-	}
-
-	return w.f.Close()
+	// close the file even if the sync failed: lockedfile panics from a finalizer when an open file becomes
+	// unreachable, and its flock blocks every later open of the same file
+	syncErr := w.f.Sync()
+	return errors.Join(syncErr, w.f.Close())
 }

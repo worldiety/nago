@@ -11,6 +11,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"iter"
@@ -58,6 +59,35 @@ func Open(dir string) (*DB, error) {
 		return nil, fmt.Errorf("tdb directory is already opened by another instance: %s", dir)
 	}
 
+	db, err := load(dir)
+	if err != nil {
+		mutex.Unlock()
+		return nil, err
+	}
+
+	requiresCompaction := false
+	if info, err := os.Stat(db.walFile); err == nil {
+		requiresCompaction = info.Size() > 1024*1024*128 // 128mib
+	}
+
+	if requiresCompaction {
+		slog.Info("tdb WAL reached threshold, starting compaction", "path", db.dir)
+		start := time.Now()
+		if err := db.Compact(); err != nil {
+			// closes whatever files the failed compaction left open and releases the directory
+			_ = db.Close()
+			return nil, err
+		}
+
+		slog.Info("tdb compaction complete", "path", db.dir, "duration", time.Since(start))
+	}
+
+	return db, nil
+}
+
+// load reads the compacted file and replays the WAL of the given directory, whose lock the caller must hold. On
+// error, no file is left open.
+func load(dir string) (*DB, error) {
 	db := &DB{
 		buckets:       xmaps.NewConcurrentMap[string, *btree.BTreeG[IndexEntry]](),
 		strDedupTable: xmaps.NewConcurrentMap[string, string](),
@@ -127,27 +157,14 @@ func Open(dir string) (*DB, error) {
 	})
 
 	if err != nil {
+		// lockedfile panics from a finalizer when an open file becomes unreachable
+		_ = db.compacted.Close()
 		return nil, err
 	}
 
 	db.wal = waldb
 
 	db.tx.Store(actualTx)
-
-	requiresCompaction := false
-	if info, err := os.Stat(db.walFile); err == nil {
-		requiresCompaction = info.Size() > 1024*1024*128 // 128mib
-	}
-
-	if requiresCompaction {
-		slog.Info("tdb WAL reached threshold, starting compaction", "path", db.dir)
-		start := time.Now()
-		if err := db.Compact(); err != nil {
-			return nil, err
-		}
-
-		slog.Info("tdb compaction complete", "path", db.dir, "duration", time.Since(start))
-	}
 
 	return db, nil
 }
@@ -373,6 +390,7 @@ func (db *DB) Compact() error {
 	tmpFile := filepath.Join(db.dir, hex.EncodeToString(tmp[:])+".compact.tmp")
 	compactWal, err := OpenWAL(tmpFile, nil)
 	if err != nil {
+		_ = os.Remove(tmpFile)
 		return fmt.Errorf("cannot open WAL for compacted snapshot: %w", err)
 	}
 
@@ -401,10 +419,15 @@ func (db *DB) Compact() error {
 	}
 
 	if err != nil {
+		// abandon the snapshot: lockedfile panics from a finalizer when an open file becomes unreachable, and nothing
+		// else would ever remove the file
+		_ = compactWal.Close()
+		_ = os.Remove(tmpFile)
 		return fmt.Errorf("cannot compact TDB: %w", err)
 	}
 
 	if err := compactWal.Close(); err != nil {
+		_ = os.Remove(tmpFile)
 		return fmt.Errorf("cannot close compact WAL: %w", err)
 	}
 
@@ -412,6 +435,7 @@ func (db *DB) Compact() error {
 	_ = db.compacted.Close()
 
 	if err := os.Rename(tmpFile, db.compactFile); err != nil {
+		_ = os.Remove(tmpFile)
 		return fmt.Errorf("cannot atomic rename TDB compaction file: %w", err)
 	}
 
@@ -421,22 +445,25 @@ func (db *DB) Compact() error {
 	db.btreeSnapshotLock.Lock()
 	defer db.btreeSnapshotLock.Unlock()
 
+	// close the WAL in any case, because re-opening it below while this handle is still open would block forever:
+	// the exclusive flock of lockedfile belongs to the open file description and not to the process
+	if err := db.wal.Close(); err != nil {
+		return fmt.Errorf("cannot close WAL: %w", err)
+	}
+
 	if db.tx.Load() == tx {
 		// nothing changed, thus no other appends have happened. we just can clean up the wal
-		_ = db.wal.Close()
 		if err := os.Remove(db.walFile); err != nil {
 			return fmt.Errorf("cannot remove WAL file: %w", err)
 		}
 
 	}
 
-	// otherwise the old WAL obviously was appended, thus don't touch it. Next time we are started, older tx entries are ignored during replay
+	// otherwise the old WAL obviously was appended, thus don't delete it. The re-open below and every later start ignore its older tx entries during replay
 
-	// either compact file or also the wal file changed, thus our index value offsets are now illegal, we need to reload everything again
-	// release write lock
-	mutex, _ := globalDirLocks.Load(db.dir)
-	mutex.Unlock()
-	db2, err := Open(db.dir)
+	// either compact file or also the wal file changed, thus our index value offsets are now illegal, we need to reload everything again.
+	// We keep holding the lock of the directory, so no other instance can open it in between.
+	db2, err := load(db.dir)
 	if err != nil {
 		return fmt.Errorf("cannot re-open TDB: %w", err)
 	}
@@ -495,23 +522,23 @@ func (db *DB) Close() error {
 	db.btreeSnapshotLock.Lock()
 	defer db.btreeSnapshotLock.Unlock()
 
+	// close both files, even if one of them fails: lockedfile panics from a finalizer when an open file becomes
+	// unreachable. WAL.Close syncs before it closes.
+	var errs []error
+	if err := db.wal.Close(); err != nil {
+		errs = append(errs, fmt.Errorf("cannot close WAL: %w", err))
+	}
+
+	if err := db.compacted.Close(); err != nil {
+		errs = append(errs, fmt.Errorf("cannot close compacted: %w", err))
+	}
+
+	// release the directory only now, otherwise another Open could succeed and then block on the flock of our files
 	if lock, ok := globalDirLocks.Load(db.dir); ok {
 		lock.Unlock()
 	}
 
-	if err := db.Sync(); err != nil {
-		return err
-	}
-
-	if err := db.wal.Close(); err != nil {
-		return fmt.Errorf("cannot close WAL: %w", err)
-	}
-
-	if err := db.compacted.Close(); err != nil {
-		return fmt.Errorf("cannot close compacted: %w", err)
-	}
-
-	return nil
+	return errors.Join(errs...)
 }
 
 func unsafeStr(str string) []byte {
