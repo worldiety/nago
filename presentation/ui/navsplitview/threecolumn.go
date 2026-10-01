@@ -220,14 +220,14 @@ func (c TThreeColumn) Render(ctx core.RenderContext) core.RenderNode {
 				).Alignment(ui.Top).FullWidth(),
 			).BackgroundColor(c.bgSidebar),
 			ui.GridCell(ui.Text("").Underline(true)).BackgroundColor(ui.ColorIconsMuted),
-			ui.GridCell(contentView).BackgroundColor(c.bgContent),
+			paneCell(contentView, ui.Center).BackgroundColor(c.bgContent),
 			ui.GridCell(ui.Text("").Underline(true)).BackgroundColor(ui.ColorIconsMuted),
-			ui.GridCell(ui.VStack(
+			paneCell(ui.VStack(
 				ui.If(collapsedLeft.Get(), detailView),
 				ui.If(!collapsedLeft.Get(), ui.TertiaryButton(func() {
 					collapsedLeft.Set(!collapsedLeft.Get())
 				}).PreIcon(icons.ChevronLeft)),
-			)).BackgroundColor(c.bgDetail),
+			), ui.Center).BackgroundColor(c.bgDetail),
 		).Columns(5).
 			Gap(ui.L8).
 			Widths(collapsedSize, "1px", contentWidth, "1px", detailWidth).
@@ -237,11 +237,11 @@ func (c TThreeColumn) Render(ctx core.RenderContext) core.RenderNode {
 
 	// enough space for all
 	return ui.Grid(
-		ui.GridCell(sidebarView).BackgroundColor(c.bgSidebar).Alignment(c.alignmentSidebar),
+		paneCell(sidebarView, c.alignmentSidebar).BackgroundColor(c.bgSidebar),
 		ui.GridCell(ui.Text("").Underline(true)).BackgroundColor(ui.ColorIconsMuted),
-		ui.GridCell(contentView).BackgroundColor(c.bgContent).Alignment(c.alignmentContent),
+		paneCell(contentView, c.alignmentContent).BackgroundColor(c.bgContent),
 		ui.GridCell(ui.Text("").Underline(true)).BackgroundColor(ui.ColorIconsMuted),
-		ui.GridCell(detailView).BackgroundColor(c.bgDetail).Alignment(c.alignmentDetail),
+		paneCell(detailView, c.alignmentDetail).BackgroundColor(c.bgDetail),
 	).Columns(5).
 		Gap(ui.L8).
 		Widths(c.sidebarWidth, "1px", c.contentWidth, "1px", c.detailWidth).
