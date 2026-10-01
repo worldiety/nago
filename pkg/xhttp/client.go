@@ -12,6 +12,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -25,12 +26,16 @@ import (
 )
 
 type RequestGroup struct {
-	rpsMutex  sync.Mutex
-	rps       int
-	lastReqAt atomic.Int64
+	// rpsSem serializes the throttled requests, so that the waiting time is computed correctly. A channel
+	// instead of a mutex lets a cancelled request give up waiting.
+	rpsSem  chan struct{}
+	semOnce sync.Once
+	rps     int
+	// lastReqAt is when the last request has been released, guarded by rpsSem. The monotonic clock of a
+	// time.Time keeps a stepped wall clock from stalling or bursting the group.
+	lastReqAt time.Time
 	debugLog  bool
 	debugCtr  atomic.Int64
-	leakBody  bool
 }
 
 func NewRequestGroup() *RequestGroup {
@@ -45,6 +50,53 @@ func (r *RequestGroup) DebugLog(debugLog bool) *RequestGroup {
 func (r *RequestGroup) RateLimit(rps int) *RequestGroup {
 	r.rps = rps
 	return r
+}
+
+// throttle waits until the next request may be sent according to the rate limit. A cancelled context gives up
+// waiting and does not consume a slot, so that e.g. stopped sub-agents do not delay the others.
+func (r *RequestGroup) throttle(ctx context.Context) error {
+	r.semOnce.Do(func() { r.rpsSem = make(chan struct{}, 1) })
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	// A done context must win deterministically, otherwise a dead request would take a slot by chance and delay
+	// the next living one by a whole interval.
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	// all goroutines are serialized into a sequence, so that the waiting time is computed correctly
+	select {
+	case r.rpsSem <- struct{}{}:
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+	defer func() { <-r.rpsSem }()
+
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	betweenRequest := time.Second / time.Duration(r.rps)
+	if !r.lastReqAt.IsZero() {
+		if waitTime := betweenRequest - time.Since(r.lastReqAt); waitTime > 0 {
+			if r.debugLog {
+				slog.Info("xhttp.Do throttle", "wait", waitTime, "rps", r.rps)
+			}
+
+			timer := time.NewTimer(waitTime)
+			defer timer.Stop()
+			select {
+			case <-timer.C:
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+		}
+	}
+
+	r.lastReqAt = time.Now()
+	return nil
 }
 
 type Request struct {
@@ -91,14 +143,19 @@ func (r *Request) Client(c *http.Client) *Request {
 	return r
 }
 
-// Timeout sets the timeout to use. By default, the timeout is
+// Timeout bounds the whole request including reading the response, by default 60 seconds. For a response
+// which is handed over to the caller (see [Request.ToCloser]) it only bounds the arrival of the response:
+// the body is read for as long as the caller likes, bounded by the context and by the timeout of an
+// [http.Client] the caller sets.
 func (r *Request) Timeout(timeout time.Duration) *Request {
 	r.timeout = timeout
 	return r
 }
 
-// Retry enables an internal retry-mechanics which is used to retry on connection errors, not higher level
-// protocol errors. The retry sleep time uses exponential backoff. See also [Request.RetryWait].
+// Retry enables an internal retry-mechanics which is used to retry on connection errors and a 503 status
+// (with [Request.Assert2xx]), not on other protocol errors. The retry sleep time uses exponential backoff, see
+// also [Request.RetryWait]. Each attempt counts against the rate limit of the [RequestGroup]. Negative values
+// mean no retry.
 func (r *Request) Retry(retry int) *Request {
 	r.retry = retry
 	return r
@@ -183,23 +240,17 @@ func (r *Request) Body(fn func() (io.Reader, error)) *Request {
 	return r
 }
 
+// To processes the response body. A limit set by [Request.ToLimit] applies, in whatever order both are called.
 func (r *Request) To(fn func(r io.Reader) error) *Request {
-	if r.respLimit == 0 {
-		r.respBody = func(closer io.ReadCloser) error {
-			return fn(closer)
-		}
-	} else {
-		r.respBody = func(body io.ReadCloser) error {
-			lr := io.LimitReader(body, r.respLimit)
-			return fn(lr)
-		}
+	r.respBody = func(body io.ReadCloser) error {
+		return fn(body)
 	}
 
 	return r
 }
 
-// ToCloser keeps the body open and leaks the entire returned response reader. The caller is responsible for closing
-// and releasing the associated resources.
+// ToCloser hands the response body over to the caller, e.g. to read a stream of events. The caller must close
+// it, which also releases the request and its connection. The request is not bounded by [Request.Timeout].
 func (r *Request) ToCloser(body func(readCloser io.ReadCloser)) *Request {
 	r.leakResponse = true
 	r.respBody = func(closer io.ReadCloser) error {
@@ -210,7 +261,8 @@ func (r *Request) ToCloser(body func(readCloser io.ReadCloser)) *Request {
 	return r
 }
 
-// ToLimit installs a limited reader when processing with any To* response.
+// ToLimit limits the response body read by any To* method to the given amount of bytes. A longer body is cut
+// off silently; [Request.ToJSON] mentions the limit, when the cut body does not decode.
 func (r *Request) ToLimit(limit int64) *Request {
 	r.respLimit = limit
 	return r
@@ -241,6 +293,9 @@ func (r *Request) ToJSON(v any) *Request {
 
 			err = json.Unmarshal(buf, v)
 			if err != nil {
+				if int64(len(buf)) >= r.respLimit {
+					err = fmt.Errorf("%w (the response body reached the limit of %d bytes and may be cut off)", err, r.respLimit)
+				}
 				return ErrorWithBody{
 					Cause: err,
 					Body:  buf,
@@ -299,8 +354,10 @@ func (r *Request) Do(method string) error {
 
 	client := r.client
 	if client == nil {
-		client = &http.Client{
-			Timeout: timeout,
+		client = &http.Client{}
+		if !r.leakResponse {
+			// a handed over body is read for as long as the caller likes
+			client.Timeout = timeout
 		}
 	}
 
@@ -338,97 +395,113 @@ func (r *Request) Do(method string) error {
 			}()
 		}
 
-		if grp.rps > 0 {
-			// we must serialize all goroutines into a sequence so that waiting duration calculation is correct
-			grp.rpsMutex.Lock()
-
-			delta := time.Duration(time.Now().UnixMilli()-grp.lastReqAt.Load()) * 1000 * 1000
-			betweenRequest := time.Second / time.Duration(grp.rps)
-			if delta < betweenRequest {
-				waitTime := betweenRequest - delta
-				if grp.debugLog {
-					slog.Info("xhttp.Do throttle", "wait", waitTime, "rps", grp.rps)
-				}
-
-				time.Sleep(waitTime)
-			}
-
-			grp.lastReqAt.Store(time.Now().UnixMilli())
-
-			grp.rpsMutex.Unlock()
-		}
-
 	}
 
-	var body io.Reader
-	if r.body != nil {
-		b, err := r.body()
-		if err != nil {
-			return fmt.Errorf("failed to create request body: %w", err)
+	throttle := func(ctx context.Context) error {
+		if grp := r.group; grp != nil && grp.rps > 0 {
+			return grp.throttle(ctx)
 		}
-
-		body = b
+		return nil
 	}
-	if !r.leakResponse {
-		// TODO it is unclear, how this should behave. We must actually couple the close of the leaked reader with this cancel to release earlier
-		// this way we don't have forced timeouts at all
-		c, cancel := context.WithTimeout(ctx, timeout)
-		ctx = c
+	if err := throttle(ctx); err != nil {
+		return err
+	}
+
+	// A response which is handed over to the caller is read for as long as the caller likes, e.g. a stream of
+	// events, so only its arrival is bounded by the timeout. Its context is cancelled when the caller closes
+	// the body, which releases the connection.
+	var release context.CancelFunc
+	var arrival *time.Timer
+	var timedOut atomic.Bool
+	if r.leakResponse {
+		ctx, release = context.WithCancel(ctx)
+		arrival = time.AfterFunc(timeout, func() {
+			timedOut.Store(true)
+			release()
+		})
+	} else {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, timeout)
 		defer cancel()
 	}
 
-	req, err := http.NewRequestWithContext(ctx, method, reqUrl, body)
-	if err != nil {
-		return fmt.Errorf("invalid request: %w", err)
+	fail := func(err error) error {
+		if arrival != nil {
+			arrival.Stop()
+		}
+		if release != nil {
+			release()
+		}
+		return err
 	}
 
-	for k, v := range r.headers {
-		req.Header.Set(k, v)
-	}
-
+	// An error of the request construction cannot be fixed by a retry, so the first request is built in
+	// advance. Every further attempt builds its own request with a fresh body, because a body reader cannot be
+	// rewound in general, and counts against the rate limit like any other request. The wait between the
+	// attempts grows and gives up with the context.
+	retry := max(r.retry, 0)
 	waitTime := r.retryWaitDuration()
-	try := time.Duration(0)
-	doFn := func() (*http.Response, error) {
-		var resp *http.Response
-		var err error
-		for range r.retry + 1 {
-			try++
-			resp, err = client.Do(req)
-			if r.assert2xx && err == nil && resp.StatusCode == http.StatusServiceUnavailable {
-				// try work against unreliable services
-				_ = resp.Body.Close()
-				err = fmt.Errorf("request failed with status code %v", resp.StatusCode)
+	req, err := r.newRequest(ctx, method, reqUrl)
+	if err != nil {
+		return fail(err)
+	}
+
+	var resp *http.Response
+	for attempt := range retry + 1 {
+		if attempt > 0 {
+			if err = throttle(ctx); err != nil {
+				break
 			}
-
-			if err != nil {
-				// A cancelled or expired context fails every further attempt the same way.
-				if ctx.Err() != nil {
-					break
-				}
-
-				if r.retry > 0 {
-					slog.Warn("request failed, wait and retry", "try", try, "wait", waitTime, "err", err.Error())
-					time.Sleep(waitTime)
-					waitTime = waitTime + waitTime*try
-				} else {
-					break
-				}
-
-				continue
+			if req, err = r.newRequest(ctx, method, reqUrl); err != nil {
+				return fail(err)
 			}
+		}
 
+		resp, err = client.Do(req)
+		if err == nil && r.assert2xx && resp.StatusCode == http.StatusServiceUnavailable {
+			// try to work against unreliable services, but report status and body like for any other status
+			buf, _ := io.ReadAll(io.LimitReader(resp.Body, 1024*1024))
+			_ = resp.Body.Close()
+			err = UnexpectedStatusCodeError{resp.StatusCode, buf}
+		}
+
+		if err == nil {
 			break
 		}
 
-		return resp, err
+		// A cancelled or expired context fails every further attempt the same way.
+		if ctx.Err() != nil || attempt == retry {
+			break
+		}
+
+		slog.Warn("request failed, wait and retry", "try", attempt+1, "wait", waitTime, "err", err.Error())
+		if werr := sleepContext(ctx, waitTime); werr != nil {
+			err = werr
+			break
+		}
+
+		waitTime += waitTime * time.Duration(attempt+1)
 	}
 
-	resp, err := doFn()
+	if arrival != nil {
+		arrival.Stop()
+	}
+
 	if err != nil {
-		return fmt.Errorf("request failed: %w", err)
+		if timedOut.Load() {
+			err = context.DeadlineExceeded
+		}
+		var status UnexpectedStatusCodeError
+		if errors.As(err, &status) {
+			return fail(status)
+		}
+		return fail(fmt.Errorf("request failed: %w", err))
 	}
 
-	if !r.leakResponse {
+	body := resp.Body
+	if r.leakResponse {
+		body = &releasingBody{ReadCloser: body, release: release}
+	} else {
 		defer resp.Body.Close()
 	}
 
@@ -436,6 +509,7 @@ func (r *Request) Do(method string) error {
 		if resp.StatusCode < 200 || resp.StatusCode > 299 {
 			lr := io.LimitReader(resp.Body, 1024*1024)
 			buf, _ := io.ReadAll(lr)
+			_ = body.Close()
 
 			if grp := r.group; grp != nil {
 				if grp.debugLog && DevelopmentBuild() {
@@ -447,13 +521,79 @@ func (r *Request) Do(method string) error {
 		}
 	}
 
-	if r.respBody != nil {
-		if err := r.respBody(resp.Body); err != nil {
-			return fmt.Errorf("failed to parse response body: %w", err)
+	if r.respBody == nil {
+		// nobody reads the body, so a handed over one is released right away
+		if r.leakResponse {
+			_ = body.Close()
 		}
+		return nil
+	}
+
+	if r.respLimit > 0 {
+		body = &limitedBody{Reader: io.LimitReader(body, r.respLimit), Closer: body}
+	}
+
+	if err := r.respBody(body); err != nil {
+		return fail(fmt.Errorf("failed to parse response body: %w", err))
 	}
 
 	return nil
+}
+
+// newRequest builds the request of one attempt.
+func (r *Request) newRequest(ctx context.Context, method, reqUrl string) (*http.Request, error) {
+	var body io.Reader
+	if r.body != nil {
+		b, err := r.body()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create request body: %w", err)
+		}
+
+		body = b
+	}
+
+	req, err := http.NewRequestWithContext(ctx, method, reqUrl, body)
+	if err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	for k, v := range r.headers {
+		req.Header.Set(k, v)
+	}
+
+	return req, nil
+}
+
+// sleepContext waits for d or until ctx is done, whichever comes first.
+func sleepContext(ctx context.Context, d time.Duration) error {
+	timer := time.NewTimer(d)
+	defer timer.Stop()
+
+	select {
+	case <-timer.C:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+// releasingBody is a handed over response body, which releases the request when it is closed.
+type releasingBody struct {
+	io.ReadCloser
+	release context.CancelFunc
+	once    sync.Once
+}
+
+func (b *releasingBody) Close() error {
+	err := b.ReadCloser.Close()
+	b.once.Do(b.release)
+	return err
+}
+
+// limitedBody reads at most a limit of bytes, but closes the whole body.
+type limitedBody struct {
+	io.Reader
+	io.Closer
 }
 
 type UnexpectedStatusCodeError struct {
@@ -462,7 +602,7 @@ type UnexpectedStatusCodeError struct {
 }
 
 func (e UnexpectedStatusCodeError) Error() string {
-	return fmt.Sprintf("unexpected status code: %d: %s", e.StatusCode, string(e.Body))
+	return fmt.Sprintf("unexpected status code: %d: %s", e.StatusCode, excerpt(e.Body))
 }
 
 type ErrorWithBody struct {
@@ -471,7 +611,16 @@ type ErrorWithBody struct {
 }
 
 func (e ErrorWithBody) Error() string {
-	return fmt.Sprintf("%s: %s", e.Cause.Error(), string(e.Body))
+	return fmt.Sprintf("%s: %s", e.Cause.Error(), excerpt(e.Body))
+}
+
+// excerpt keeps error messages readable. The Body fields of the errors stay complete for the callers.
+func excerpt(b []byte) string {
+	const limit = 4 * 1024
+	if len(b) <= limit {
+		return string(b)
+	}
+	return fmt.Sprintf("%s... (%d bytes)", b[:limit], len(b))
 }
 
 func (e ErrorWithBody) Unwrap() error {
