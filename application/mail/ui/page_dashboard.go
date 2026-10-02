@@ -100,7 +100,7 @@ func findProblems(wnd core.Window, pages Pages, stats mail.StatisticsResult) []p
 	}
 
 	if stats.Scheduler.NoSmtpServer || (len(stats.Servers) == 0 && stats.Queue.Queued+stats.Queue.Error > 0) {
-		res = append(res, problem{severity: ui.SE0, title: "Kein SMTP-Server konfiguriert", detail: "Es ist kein SMTP-Server mit der Systemgruppe geteilt.", action: "SMTP-Server", fn: func() {
+		res = append(res, problem{severity: ui.SE0, title: "Kein SMTP-Server konfiguriert", detail: "Es ist kein SMTP-Server mit der Systemgruppe geteilt und der Nago Mail Service ist nicht verfügbar.", action: "SMTP-Server", fn: func() {
 			wnd.Navigation().ForwardTo(pages.SmtpServers, nil)
 		}})
 	}

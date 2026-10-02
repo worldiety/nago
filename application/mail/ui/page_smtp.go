@@ -10,6 +10,7 @@ package uimail
 import (
 	"fmt"
 	"slices"
+	"strings"
 	"time"
 
 	"go.wdy.de/nago/application/mail"
@@ -44,7 +45,7 @@ func SmtpPage(wnd core.Window, pages Pages, uc mail.UseCases) core.View {
 		ui.IfFunc(len(stats.Servers) == 0, func() core.View {
 			return alert.Banner("Kein SMTP-Server", "Es ist kein SMTP-Server mit der Systemgruppe geteilt. Legen Sie im Tresor ein SMTP-Secret an und teilen Sie es mit der Gruppe System.").Intent(alert.IntentError).Frame(ui.Frame{}.FullWidth())
 		}),
-		ui.Text("Der Scheduler verwendet den Server, dessen Name oder ID dem Server-Hinweis der Mail entspricht, ansonsten den ersten gefundenen Server.").Font(ui.BodySmall).Color(ui.ST0),
+		ui.Text("Der Scheduler verwendet den Server, dessen Name oder ID dem Server-Hinweis der Mail entspricht, ansonsten den ersten gefundenen SMTP-Server. Der Nago Mail Service wird nur verwendet, wenn kein SMTP-Server mit der Gruppe System geteilt ist oder die Mail ihn ausdrücklich verlangt.").Font(ui.BodySmall).Color(ui.ST0),
 		grid([5]int{1, 2, 2, 3, 3}, cards...),
 	).Alignment(ui.TopLeading).Gap(ui.L16).FullWidth()
 }
@@ -65,9 +66,34 @@ func serverCard(wnd core.Window, pages Pages, srv mail.ServerInfo, rateLimited b
 		state = tags.StatusBadge(ui.SG0, "Gesund")
 	}
 
+	address := fmt.Sprintf("%s:%d", srv.Host, srv.Port)
+	var service []kv
+	if st := srv.Service; st != nil {
+		address = st.Endpoint
+		enrollment := "nicht angemeldet"
+		if st.Enrolled {
+			enrollment = "angemeldet seit " + formatTime(wnd, st.EnrolledAt)
+		}
+
+		service = append(service,
+			kvText("Anmeldung", enrollment),
+			kvText("Mandant", st.Tenant),
+			kvText("Absenderdomänen", strings.Join(st.SenderDomains, ", ")),
+		)
+
+		if st.LastError != "" {
+			service = append(service, kvText("Letzter Dienstfehler", st.LastError))
+		}
+
+		if !st.Enrolled && h.LastSuccessAt.IsZero() && h.ConsecutiveFailures == 0 {
+			state = tags.StatusBadge(ui.ST0, "Nicht angemeldet")
+		}
+	}
+
 	return card("",
 		ui.HStack(ui.Text(srv.Name).Font(ui.TitleLarge), ui.Spacer(), state).FullWidth(),
-		ui.Text(fmt.Sprintf("%s:%d", srv.Host, srv.Port)).Font(ui.MonoSmall).Color(ui.ST0),
+		ui.Text(address).Font(ui.MonoSmall).Color(ui.ST0),
+		kvTable(service...),
 		kvTable(
 			kvText("Letzte 24 h", fmt.Sprintf("%d versendet · %d Fehlversuche", srv.Totals.Sent, srv.Totals.Failed)),
 			kvText("Zuletzt erfolgreich", formatTime(wnd, h.LastSuccessAt)),
@@ -84,7 +110,7 @@ func serverCard(wnd core.Window, pages Pages, srv mail.ServerInfo, rateLimited b
 			).Alignment(ui.Leading).Gap(ui.L4).BackgroundColor(ui.M1).Border(ui.Border{}.Radius(ui.L8)).Padding(ui.Padding{}.All(ui.L8))
 		}),
 		ui.HStack(
-			ui.IfFunc(pages.SecretEdit != "", func() core.View {
+			ui.IfFunc(pages.SecretEdit != "" && srv.Service == nil, func() core.View {
 				return ui.SecondaryButton(func() {
 					wnd.Navigation().ForwardTo(pages.SecretEdit, core.Values{"id": string(srv.SecretID)})
 				}).Title("Bearbeiten")

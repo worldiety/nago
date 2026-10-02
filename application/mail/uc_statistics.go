@@ -9,6 +9,7 @@ package mail
 
 import (
 	"cmp"
+	"go.wdy.de/nago/application/mail/nms"
 	"slices"
 	"time"
 
@@ -99,6 +100,8 @@ type ServerInfo struct {
 	RateLimitPerDay  int
 	Health           ServerHealth
 	Totals           Totals // within the requested time range
+	// Service is set, if this is the Nago Mail Service and not an SMTP server.
+	Service *nms.Status
 }
 
 // ErrorCount counts equal error messages of mails in the queue.
@@ -126,7 +129,7 @@ type StatisticsResult struct {
 // Statistics aggregates statistics, problems and server health of the mail system.
 type Statistics func(subject auth.Subject, opts StatisticsOptions) (StatisticsResult, error)
 
-func NewStatistics(repo Repository, stats StatsRepository, health HealthRepository, sysUser user.SysUser, secrets secret.FindGroupSecrets) Statistics {
+func NewStatistics(repo Repository, stats StatsRepository, health HealthRepository, sysUser user.SysUser, secrets secret.FindGroupSecrets, service MailService) Statistics {
 	return func(subject auth.Subject, opts StatisticsOptions) (StatisticsResult, error) {
 		if err := subject.Audit(PermStatistics); err != nil {
 			return StatisticsResult{}, err
@@ -254,6 +257,23 @@ func NewStatistics(repo Repository, stats StatsRepository, health HealthReposito
 					}
 
 					info.Health = optH.UnwrapOr(ServerHealth{ID: smtp.Name})
+				}
+
+				res.Servers = append(res.Servers, info)
+			}
+		}
+
+		if service != nil {
+			st := service.Status()
+			if st.Enabled {
+				info := ServerInfo{Name: MailServiceName, Host: st.Endpoint, RateLimitPerHour: st.Limits.PerHour, RateLimitPerDay: st.Limits.PerDay, Totals: perServer[MailServiceName], Service: &st}
+				if health != nil {
+					optH, err := health.FindByID(MailServiceName)
+					if err != nil {
+						return res, err
+					}
+
+					info.Health = optH.UnwrapOr(ServerHealth{ID: MailServiceName})
 				}
 
 				res.Servers = append(res.Servers, info)
