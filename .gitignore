@@ -6,3 +6,9 @@ serve
 .hugo_build.lock
 /debug/
 .playwright-mcp
+
+# hugo build output
+/public/
+/docs/nago.dev/public/
+/docs/nago.dev/resources/_gen/
+/docs/serve

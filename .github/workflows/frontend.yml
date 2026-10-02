@@ -1,0 +1,22 @@
+name: Frontend Checks
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ 'web/vuejs/**', '.github/workflows/frontend.yml' ]
+  pull_request:
+    paths: [ 'web/vuejs/**', '.github/workflows/frontend.yml' ]
+
+jobs:
+  audit-and-lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Frontend audit high severity
+        run: cd web/vuejs/ && npm audit --audit-level=high
+
+      - name: Frontend lint
+        run: cd web/vuejs/ && npm install && npm run lint

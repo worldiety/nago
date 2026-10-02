@@ -18,4 +18,19 @@
   {{- $output = $output | merge (dict $pageLink (dict "title" $pageTitle "data" $data)) -}}
 {{- end -}}
 
+{{/* Extract glossary data entries */}}
+{{- $glossaryEntries := dict -}}
+{{- $siteData := partial "utils/hugo-compat/site-data.html" . -}}
+{{- with (index $siteData .Site.Language.Lang "termbase") -}}
+  {{- range . -}}
+    {{- $entry := cond (.abbr) (printf "%s %s %s" .abbr .term .definition) (printf "%s %s" .term .definition) -}}
+    {{- $glossaryEntries = $glossaryEntries | merge (dict .term $entry) -}}
+  {{- end -}}
+{{- end -}}
+
+{{- with site.GetPage "/glossary" -}}
+  {{- $pageTitle := .LinkTitle | default .Title | default "Glossary" -}}
+  {{- $output = $output | merge (dict .RelPermalink (dict "title" $pageTitle "data" $glossaryEntries)) -}}
+{{- end -}}
+
 {{- $output | jsonify -}}

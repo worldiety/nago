@@ -1,10 +1,7 @@
 baseURL = "/"
-languageCode = "en"
+locale = "en"
 title = "Nago Docs"
 defaultContentLanguage = "en"
-
-[pagination]
-  pagerSize = 21 # Number of entries in e.g. changelog before pagination
 
 [module]
   [[module.imports]]
@@ -16,74 +13,34 @@ defaultContentLanguage = "en"
    pageRef = "/docs/getting-started"
    weight = 1
 
- #[[menu.main]]
- #  name = "Examples"
- #  pageRef = "/docs/examples"
- #  weight = 2
-
- [[menu.main]]
-   name = "Playground ↗"
-   url = "https://www.worldiety.de"
-   weight = 3
-
  [[menu.main]]
    name = "Showcase"
    pageRef = "/showcase"
-   weight = 4
-
- [[menu.main]]
-   name = "News"
-   pageRef = "/blog"
-   weight = 5
-
- [[menu.main]]
-   name = "Changelog"
-   pageRef = "/changelog"
-   weight = 6
-
- [[menu.main]]
-   name = "Pricing Plans ↗"
-   url = "https://www.worldiety.de"
-   weight = 7
+   weight = 2
 
  [[menu.main]]
    name = "Search"
-   weight = 8
+   weight = 3
    [menu.main.params]
      type = "search"
 
  [[menu.main]]
-   name = "Github"
+   name = "GitHub"
    url = "https://github.com/worldiety/nago"
-   weight = 9
+   weight = 4
    [menu.main.params]
      icon = "github"
 
  [[menu.sidebar]]
    name = "More"
-   weight = 7
+   weight = 1
    [menu.sidebar.params]
      type = "separator"
 
  [[menu.sidebar]]
-   name = "Testimonials"
-   pageRef = "/testimonials"
-   weight = 8
-
- [[menu.sidebar]]
-   name = "Deployment ↗"
-   url = "https://www.worldiety.de"
-   weight = 9
-
- [[menu.sidebar]]
-   name = "Pricing Plans ↗"
-   url = "https://www.worldiety.de"
-   weight = 10
-
- [[menu.sidebar]]
    name = "worldiety GmbH ↗"
    url = "https://www.worldiety.de"
-   weight = 11
+   weight = 2
 
 [params]
   description = "Documentation for Nago"
@@ -104,8 +61,6 @@ defaultContentLanguage = "en"
     displayPoweredBy = false
     height = "auto"
 
-  [params.sidebar]
-    section = "testimonials"
 
 [markup]
   [markup.goldmark]
