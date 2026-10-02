@@ -1,101 +1,66 @@
 ---
-# Content is auto generated
-# Manual changes will be overwritten!
 title: Text
 ---
-This component displays text with customizable styling and interaction options. It supports colors, background states, padding, borders, accessibility labels,
-text alignment, and interaction callbacks. It can be used for labels, inline text, or as an interactive element (e. g. links).
+
+Text displays a string. It is used for headlines, paragraphs, labels and inline links. Set a `Font` for the
+typographic role, e.g. `Title`, and a `Color` for emphasis. A text with an `Action` or a link becomes interactive.
+For formatted HTML content, use [Rich Text](../rich_text/).
+
+![Text](text.webp)
+
+```go
+VStack(
+	Text("Hello Nago").Font(Title),
+	Text("A plain paragraph of text."),
+	Text("Colored and underlined").Color(SE0).Underline(true),
+	Link(wnd, "A link to nago.dev", "https://www.nago.dev", "_blank"),
+	MailTo(wnd, "Write us a mail", "info@example.com"),
+).Alignment(Leading).Gap(L8)
+```
 
 ## Constructors
-### Link
-Link performs a best guess based on the given href. If the href starts with http or https
-the window will perform an Open call. Otherwise, a local forward navigation is applied.
-```go
-	Link(nil, "Nago Docs", "https://www.nago-docs.com", "_blank")
-```
 
-![](/images/components/basic/text/link-example.png)
+| Constructor | Description |
+|---|---|
+| `func Text(content string) TText` | Creates a text with the given content. |
+| `func Link(_ core.Window, text string, href string, target string) TText` | Creates a link. An `http` or `https` href opens as usual, other paths navigate inside the app without reloading the page. |
+| `func LinkWithAction(text string, action func()) TText` | Creates an underlined, interactive text which calls the action when clicked. |
+| `func MailTo(wnd core.Window, name string, email string) TText` | Creates a `mailto:` link which opens the email client of the user. |
 
-### LinkWithAction
-LinkWithAction creates an interactive link-like text component.
-It applies underline styling, interactive color, and attaches an action callback.
-```go
-	LinkWithAction("Nago Docs", func() {
-		fmt.Printf("Nago is easy to use")
-	})
-```
-
-![](/images/components/basic/text/link-example.png)
-
-### MailTo
-MailTo creates a mailto: link text component.
-When clicked, it opens the user's email client with the given email address.
-```go
-	MailTo(nil, "Worldiety", "info@worldiety.de")
-```
-
-![](/images/components/basic/text/mail-to-example.png)
-
-### Text
-```go
-package main
-
-import (
-	"fmt"
-	"go.wdy.de/nago/presentation/ui"
-)
-
-func main() {
-	ui.Text("hello world").
-		Action(func() {
-			fmt.Print("Nago is easy to use")
-		}).
-		Underline(true).
-		Color("#eb4034").
-		Border(ui.Border{}.Width("2px").Color("#4287f5"))
-}
-
-```
-
-![](/images/components/basic/text/text-with-methods-example.png)
-
----
 ## Methods
+
+Some setters return `DecoredView` instead of `TText`. Call them last in the chain or call the `TText` setters first.
+
 | Method | Description |
-|--------| ------------|
-| `AccessibilityLabel(label string)` | AccessibilityLabel sets the label of the text. The content of the label is also displayed in the tooltip that appears when you hover over the Text. |
-| `Action(f func())` | Action executes the function when the component is clicked. |
-| `BackgroundColor(backgroundColor Color)` | BackgroundColor sets the color of the background. |
-| `Border(border Border)` | Border draws a Border around the component. It's used to set the Border width, color and radius. Fore more information also have a look at the Border component. |
-| `Color(color Color)` | Color sets the Color of the font. |
-| `Ellipsis(ellipsis bool)` | Ellipsis sets the flag to cut of text overflow with ellipsis |
-| `FocusedBorder(border Border)` | FocusedBorder sets the Border width, color and radius when the component is focused. |
-| `Font(font Font)` | Font sets the size, style and width of the Text. For more information also have a look at Font. |
-| `Frame(frame Frame)` | Frame sets the width, minWidth, maxWidth, height, minHeight and maxHeight. |
-| `FullWidth()` | FullWidth sets the width to 100%. |
-| `HoveredBorder(border Border)` | HoveredBorder sets the Border width, color and radius when component is hovered. |
-| `Hyphens(h Hyphens)` |  |
-| `LabelFor(id string)` |  |
-| `LineBreak(lb bool)` | LineBreak de-/activates line breaking in between the Text. |
-| `Link(target string, url string)` |  |
-| `Padding(padding Padding)` | Padding sets a top, right, bottom and left spacing. |
-| `PressedBorder(border Border)` | PressedBorder sets the Border width, color and radius when the component is clicked. |
-| `Resolve(b bool)` | Resolve tries to resolve the current text content against the window bundle at render time to translate its contents. This may cause a lot of redundant or wrong lookups and therefore it is disabled by default. |
-| `Text(content string)` | Text is a convenience property setter method to set the content for a zero-value Text. |
-| `TextAlignment(align TextAlignment)` | TextAlignment sets the position of the Text. For more information also have a look at TextAlignment. |
-| `Underline(b bool)` | Underline underlines the Text. |
-| `Visible(visible bool)` | Visible decides whether a text is shown. |
-| `WhiteSpace(whiteSpace WhiteSpace)` |  |
-| `WithFrame(fn func(Frame) Frame)` | WithFrame sets width, minWidth, maxWidth, height, minHeight and maxHeight using a function. |
-| `WordBreak(wordBreak WordBreak)` |  |
----
+|---|---|
+| `AccessibilityLabel(label string) DecoredView` | AccessibilityLabel sets the label of the text. |
+| `Action(f func()) TText` | Action executes the function when the component is clicked. |
+| `BackgroundColor(backgroundColor Color) DecoredView` | BackgroundColor sets the color of the background. |
+| `Border(border Border) DecoredView` | Border draws a Border around the component. |
+| `Color(color Color) TText` | Color sets the Color of the font. |
+| `Ellipsis(ellipsis bool) TText` | Ellipsis sets the flag to cut of text overflow with ellipsis. |
+| `FocusedBorder(border Border) TText` | FocusedBorder sets the Border width, color and radius when the component is focused. |
+| `Font(font Font) TText` | Font sets the size, style and width of the Text. |
+| `Frame(frame Frame) DecoredView` | Frame sets the width, minWidth, maxWidth, height, minHeight and maxHeight. |
+| `FullWidth() TText` | FullWidth sets the width to 100%. |
+| `HoveredBorder(border Border) TText` | HoveredBorder sets the Border width, color and radius when component is hovered. |
+| `Hyphens(h Hyphens) TText` | Sets the hyphenation mode, e.g. `HyphensAuto`. |
+| `LabelFor(id string) DecoredView` | Makes the text the label of the input element with the given id. |
+| `LineBreak(lb bool) TText` | LineBreak de-/activates line breaking in between the Text. |
+| `Link(url, target string) TText` | Turns the text into a link to the url, opened in the given browsing context. |
+| `Padding(padding Padding) DecoredView` | Padding sets a top, right, bottom and left spacing. |
+| `PressedBorder(border Border) TText` | PressedBorder sets the Border width, color and radius when the component is clicked. |
+| `Resolve(b bool) TText` | Resolve tries to resolve the current text content against the window bundle at render time to translate its contents. |
+| `Text(content string) TText` | Text is a convenience property setter method to set the content for a zero-value Text. |
+| `TextAlignment(align TextAlignment) TText` | TextAlignment sets the position of the Text. |
+| `Underline(b bool) TText` | Underline underlines the Text. |
+| `Visible(visible bool) DecoredView` | Visible decides whether a text is shown. |
+| `WhiteSpace(whiteSpace WhiteSpace) TText` | Sets how white space inside the text is handled. |
+| `WithFrame(fn func(Frame) Frame) DecoredView` | WithFrame sets width, minWidth, maxWidth, height, minHeight and maxHeight using a function. |
+| `WordBreak(wordBreak WordBreak) TText` | Sets where lines may break inside words. |
 
 ## Related
-- [Border](../../utility/border/)
-- [Frame](../../layout/frame/)
-- [Padding](../../utility/padding/)
 
-## Tutorials
-- [tutorial-01-helloworld](../../../examples/tutorial-01-helloworld)
-- [tutorial-02-combining-views](../../../examples/tutorial-02-combining-views)
-- [tutorial-54-codeeditor](../../../examples/tutorial-54-codeeditor)
+- [Rich Text](../rich_text/)
+- [Button](../button/)
+- Tutorials: [Hello World](/docs/examples/tutorial-01-helloworld/), [Typography](/docs/examples/tutorial-111-typography/), [List](/docs/examples/tutorial-36-list/)

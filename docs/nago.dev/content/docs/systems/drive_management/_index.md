@@ -1,106 +1,75 @@
 ---
 title: Drive Management
-galleryOverview:
-  - src: "/images/systems/drive_management/galleries/overview/files.png"
-  - src: "/images/systems/drive_management/galleries/overview/create_folder.png"
-  - src: "/images/systems/drive_management/galleries/overview/options.png"
 ---
 
-Drive Management provides a file storage and file management system for Nago applications.  
-It offers a user-facing file browser (UI) and a backend API to upload, download, rename and delete files and folders.  
-Think of it as an integrated file-share similar in concept to SharePoint/OneDrive — but tailored to the Nago ecosystem and its permission model.
+Drive Management is a file storage with folders, versions and access control, comparable to a network share.
+Your code works with files through use cases; the UI component `uidrive.Drive` and the page
+`uidrive.PageDrive` add a file browser with upload, download, preview, rename and move.
 
-{{< swiper name="galleryOverview" loop="false" >}}
+## Enable
 
-{{< callout type="info" >}}
-Drive can be interacted with from both frontend (embedded UI components) and backend (use-case API). The UI component `uidrive.PageDrive` / `TDrive` is available to embed a file browser into application pages.
+```go
+import cfgdrive "go.wdy.de/nago/application/drive/cfg"
+
+drives := std.Must(cfgdrive.Enable(cfg)) // cfgdrive.Management
+```
+
+`cfgdrive.Management` has the fields `UseCases drive.UseCases` and `Pages uidrive.Pages`. The system registers
+no page and no admin card; mount the file browser yourself:
+
+```go
+cfg.RootViewWithDecoration("files", func(wnd core.Window) core.View {
+	return uidrive.PageDrive(wnd, drives.UseCases)
+})
+```
+
+`PageDrive` opens the drive `nago.drive` of the current user, or the folder given by the query parameter
+`fid`.
+
+## Drives and access control
+
+A drive is a named root folder. `OpenDrive` opens or creates it, either private to a user
+(`drive.NamespacePrivate`) or global (`drive.NamespaceGlobal`). Every file has an owner, a group and a
+Unix-like file mode (`drive.OtherRead`, `drive.OtherWrite`, ...). In addition, `GrantFileAccess` grants single
+users or groups access to a file; these grants are stored in [ReBAC](../rebac_management/) and drive files
+show up as a resource in its editor.
+
+## Use cases
+
+| Use case           | Description                                                                    |
+|--------------------|--------------------------------------------------------------------------------|
+| `OpenDrive`        | Opens or creates a drive.                                                      |
+| `ReadDrives`       | Lists the drives visible to a user.                                            |
+| `FindDrive`        | Finds the drive of a file.                                                     |
+| `Stat`             | Reads the metadata of a file.                                                  |
+| `MkDir`            | Creates a folder, or returns an existing one.                                  |
+| `Put`              | Creates a file or adds a new version.                                          |
+| `Get`              | Opens a version of a file, the latest by default.                              |
+| `Zip`              | Zips files on the fly.                                                         |
+| `WalkDir`          | Walks a folder tree.                                                           |
+| `Rename`           | Renames a file.                                                                |
+| `Move`             | Moves a file into another folder and keeps its ID, history and grants.         |
+| `Delete`           | Deletes a file, optionally recursive.                                          |
+| `GrantFileAccess`, `RevokeFileAccess`, `ReadFileGrants` | Manage the access grants of a file.       |
+
+Files are downloaded through `/api/nago/v1/drive/file?fid=<id>`, which checks the read permission.
+
+## Permissions
+
+| Permission            | Allows to                       |
+|-----------------------|---------------------------------|
+| `nago.drive.open_file`| open files                      |
+| `nago.drive.mkdir`    | create folders                  |
+| `nago.drive.put`      | create or update files          |
+| `nago.drive.rename`   | rename files                    |
+| `nago.drive.delete`   | delete files and folders        |
+
+{{< callout type="warning" >}}
+These permissions apply to all drives when granted globally, which equals root access. Prefer the owner,
+group and file mode, or grant them per file.
 {{< /callout >}}
 
-## Functional areas
-Drive Management offers the following key functions:
+## Related
 
-### File browsing and basic operations
-- Browse folders and files with a simple file table (name, last modified, last-modifying user, size).
-- Create directories and upload files from the UI or programmatically.
-- Rename files and delete files or directories (delete supports recursive deletes).
-
-### Versioning
-- The implementation records version events (`VersionAdded`) when new content versions are written.
-- `Put` supports a `KeepVersion` option to keep previous versions in the file's audit log; these events are accessible via the file's `AuditLog` and `Versions()` helper.
-
-### Ownership and access control
-- Files have `Owner`, `Group` and `FileMode` fields. Permission checks (`CanRead`, `CanWrite`, `CanDelete`, `CanRename`) use:
-    - world-permission bits (`OtherRead`, `OtherWrite`),
-    - group membership + group permission bits,
-    - resource-level permissions via `subject.HasResourcePermission(repo.Name(), fileID, Perm*)`,
-    - explicit shares (share objects listing allowed users and write flag).
-
-#### Restricting access to Drives, folders, or files
-  Access can be limited to certain users or groups using the Unix-style file mode (`FileMode`) and `Group` field.  
-  Examples:
-  - `0770` → owner and group have full access, others no access
-  - `0755` → owner full access, group and others can only read & execute
-    The system checks both group membership and the corresponding permission bits to enforce restrictions.
-
-- Permissions can be applied at:
-  - **Drive root level**: restricting who can upload or delete files in the Drive.
-  - **Individual folders or files**: allowing fine-grained control within a Drive.
-
-### Frontend and backend usage
-- Frontend: `uidrive.PageDrive` and `TDrive` provide UI components to render a file browser, upload dialogs, create folder dialogs, rename/delete dialogs and breadcrumb navigation.
-- Backend: Use cases (constructed by `drive.NewUseCases`) expose `OpenRoot`, `Stat`, `Put`, `MkDir`, `Delete`, `Zip`, `Get`, `Rename`, and other operations that can be used programmatically.
-
-## Examples
-
-### Restrict upload/delete to members of a specific group
-
-```go
-root, err := useCases.OpenRoot(user.SU(), drive.OpenRootOptions{
-    Name:   "finance",
-    Create: true,
-    Group:  "finance", // group ID
-    Mode:   0740,      // unix-style permission bits; group write enabled, others not
-})
-```
-
-### Upload a file programmatically
-
-```go
-err := useCases.Put(wnd.Subject(), parentFID, "report.pdf", fileReader, drive.PutOptions{
-    OriginalFilename: "report.pdf",
-    KeepVersion:      true, // previous version is preserved in the audit log
-    Owner:            "",   // leave empty to inherit parent owner
-    Group:            "",   // leave empty to inherit parent group
-})
-```
-
-## Dependencies
-Drive Management does not depend on other systems directly, nor is it required by other systems.
-Implicit dependencies exist on User Management and Role Management to enforce permissions and group-based access restrictions.
-
-## Activation
-This system is activated via:
-
-```go
-driveManagement := std.Must(cfgdrive.Enable(cfg))
-
-std.Must(driveManagement.UseCases.OpenRoot(user.SU(), drive.OpenRootOptions{
-    // Open or create the root drive.
-    // Options:
-    // - User: If set, this user becomes the owner of the root drive (private drive). 
-    //         If empty, a global/default lookup is used.
-    // - Group: If set and Create=true, this group is assigned to the root.
-    //          Combined with Mode bits, this controls which group members can access the drive.
-    // - Name: Optional name of the drive; defaults to [FSDrive] if empty.
-    // - Create: If true, creates the root automatically. If false and the root does not exist, returns os.ErrNotExists.
-    // - Mode: Unix-style permission bits for the root element (only relevant when Create=true).
-    //         Only the permission bits are used (owner/group/other read/write/execute). Examples:
-    //           0750 - owner rwx, group r-x, others ---
-    //           0740 - owner rwx, group r--, others ---
-    Create: true,
-	Name:   "Nago devs drive",                  // example name
-    User:   "ce38e2949843419baeaced9dad7151a3", // example owner
-    Group:  "group.nago.devs",                  // example group
-    Mode:   0740,                               // restrict access: owner full, group read, others none
-}))
-```
+- [Tutorial: drive](/docs/examples/tutorial-76-drive/)
+- [Tutorial: AI](/docs/examples/tutorial-77-ai/) gives the assistant access to a drive.

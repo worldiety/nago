@@ -1,98 +1,73 @@
 ---
 title: Role Management
-galleryOverview:
-  - src: "/images/systems/shared/admin_center.png"
-  - src: "/images/systems/user_management/galleries/admin_center.png"
-  - src: "/images/systems/role_management/galleries/overview.png"
-galleryCreateRole:
-  - src: "/images/systems/role_management/galleries/create.png"
-galleryAssignRole:
-  - src: "/images/systems/role_management/galleries/assign_role.png"
 ---
-The Role Management system provides functionality to create, manage, and assign roles.  
-Roles are collections of permissions and are the recommended way to assign multiple permissions to individual users.  
-Roles can be created, edited, and deleted either through the UI or programmatically in the code.
 
-Roles can only be assigned to individual users. Assigning roles to groups is not supported. Users can hold multiple roles simultaneously.
+Role Management creates and maintains roles. A role bundles [permissions](../permission_management/); users
+which are members of a role get all of its permissions. Role memberships are managed in
+[User Management](../user_management/).
 
-{{< swiper name="galleryOverview" loop="false" >}}
+![Roles](roles.webp)
 
-## Functional areas
-Role Management offers the following key functions:
-
-### Role creation and editing
-- Create new roles with a title, description, and assigned permissions
-- Edit existing roles to update metadata or permissions
-- Delete roles that are no longer needed
-
-{{< swiper name="galleryCreateRole" loop="false" >}}
-
-### Role assignment
-- Assign one or more roles to individual users
-- Remove roles from users as needed
-- Membership is managed via [User Management](../user_management/)
-
-{{< swiper name="galleryAssignRole" loop="false" >}}
-
-## Code usage
-```go
-package main
-
-import (
-	"go.wdy.de/nago/application"
-	"go.wdy.de/nago/application/permission"
-	"go.wdy.de/nago/application/role"
-	"go.wdy.de/nago/application/user"
-	"go.wdy.de/nago/pkg/std"
-	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ui"
-	"go.wdy.de/nago/presentation/ui/alert"
-)
-
-const (
-	adminRole = role.ID("nago.admin")
-)
-
-func main() {
-	application.Configure(func(cfg *application.Configurator) {
-		cfg.SetApplicationID("de.create.role")
-
-		roleManagement := std.Must(cfg.RoleManagement())
-
-		std.Must(roleManagement.UseCases.Upsert(user.SU(), role.Role{
-			ID:          adminRole,
-			Name:        "Administrator",
-			Description: "Full access to all features.",
-			Permissions: []permission.ID{"user.PermCreate", "user.PermDelte", "user.PermFindAll"},
-		}))
-
-		cfg.RootViewWithDecoration("admin_secrets", func(wnd core.Window) core.View {
-			if !wnd.Subject().HasRole(adminRole) {
-				return alert.Banner("Error", "Access only for admins")
-			}
-
-			return ui.Text("Welcome, Admin! You have full access to the system.")
-		})
-	
-	}).Run()
-}
-```
-
-## Dependencies
-**Requires:**
-- None
-
-**Is required by:**
-- [User Management](../user_management/)
-- [Token Management](../token_management/)
-- [UserCircle Management](../usercircle_management/)
-
-## Activation
-This system is activated via:
-```go
-std.Must(cfg.RoleManagement())
-```
+## Enable
 
 ```go
-roleManagement := std.Must(cfg.RoleManagement())
+roles := std.Must(cfg.RoleManagement()) // application.RoleManagement
 ```
+
+Role Management is always enabled, because User Management depends on it. It has the fields
+`UseCases role.UseCases` and `Pages uirole.Pages` with the paths `Roles` and `Role`.
+
+## System roles
+
+Declare roles which your application needs with `DeclareSystemRole`:
+
+```go
+err := cfg.DeclareSystemRole(role.Role{
+	ID:          "my.app.librarian",
+	Name:        "Librarian",
+	Description: "Manages the book inventory.",
+}, PermCreateBook, PermDeleteBook)
+```
+
+The call is idempotent and needs a stable ID. Name and description are only written when the role is created,
+afterwards they belong to the operator. The permissions are a minimum: permissions which an administrator adds
+are kept. A system role cannot be deleted and its permissions cannot be replaced in the UI, but users can be
+assigned to it as usual.
+
+## Use cases
+
+| Use case            | Description                                                                   |
+|---------------------|-------------------------------------------------------------------------------|
+| `FindByID`          | Loads a role.                                                                 |
+| `FindAll`           | Lists all roles.                                                              |
+| `Create`            | Creates a role.                                                               |
+| `Update`            | Updates a role, the system flag cannot be changed.                            |
+| `Upsert`            | Creates or updates a role by its ID.                                          |
+| `Delete`            | Deletes a role, system roles are refused.                                     |
+| `FindMyRoles`       | Lists the roles the subject is a member of.                                   |
+| `ListPermissions`   | Lists the permissions of a role.                                              |
+| `UpdatePermissions` | Replaces the permissions of a role, refused for system roles.                 |
+| `UpsertPermissions` | Adds permissions to a role and never removes any.                             |
+
+The events `role.Updated` and `role.Deleted` are published.
+
+## Permissions
+
+| Permission            | Allows to       |
+|-----------------------|-----------------|
+| `nago.role.find_by_id`| view a role     |
+| `nago.role.find_all`  | list all roles  |
+| `nago.role.create`    | create roles    |
+| `nago.role.update`    | update roles    |
+| `nago.role.delete`    | delete roles    |
+
+## UI
+
+`admin/iam/roles` lists the roles, `admin/iam/roles/role?role=<id>` edits a role and its permissions. The
+admin center shows the card *Rollen* in the group *Nutzerverwaltung*.
+
+## Related
+
+- [Tutorial: AI assistant](/docs/examples/tutorial-113-ai-assistant/) declares a system role.
+- The user settings `DefaultRoles`, `AnonRoles` and `DefaultSSORoles` assign roles automatically, see
+  [User Management](../user_management/).

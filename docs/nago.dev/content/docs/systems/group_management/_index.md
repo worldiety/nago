@@ -1,111 +1,57 @@
 ---
 title: Group Management
-galleryOverview:
-  - src: "/images/systems/shared/admin_center.png"
-  - src: "/images/systems/user_management/galleries/admin_center.png"
-  - src: "/images/systems/group_management/galleries/overview.png"
-galleryCreateGroup:
-  - src: "/images/systems/group_management/galleries/create.png"
-galleryAssignGroup:
-  - src: "/images/systems/group_management/galleries/assign_group.png"
 ---
-The Group Management system provides functionality for creating and managing user groups.  
-Groups are used to organize users and control access to certain pages or resources across the platform.  
-Groups can be created, edited, and deleted either through the UI or programmatically in the code.
 
-A special **System group** is created automatically.  
-It is reserved for internal services such as initializing the SMTP server.
+Group Management creates and maintains user groups. A group bundles users, for example a department, and is
+used to share resources such as [secrets](../secret_management/) or drive files with all of its members.
+Unlike a [role](../role_management/), a group carries no permissions of its own. Memberships are managed in
+[User Management](../user_management/).
 
-{{< swiper name="galleryOverview" loop="false" >}}
+![Groups](groups.webp)
 
-## Functional areas
-Group Management offers the following key functions:
-
-### Group creation and editing
-- Create new groups with a name and description
-- Edit existing groups to update metadata
-- Delete groups that are no longer needed
-
-{{< swiper name="galleryCreateGroup" loop="false" >}}
-
-### Group membership
-- Users can be assigned to groups or removed from them
-- Membership is managed via [User Management](../user_management/)
-- Groups appear in the User Management interface once created
-
-{{< swiper name="galleryAssignGroup" loop="false" >}}
-
-### Permissions and access control
-- Groups are containers for organizing users
-- They can be used to control visibility of certain pages or resources
-- Common use case: making certain sections of the platform visible only to specific groups
-
-{{< callout type="info" >}}
-Groups do not define permissions. Functional access rights are managed via [Role Management](../role_management/).
-{{< /callout >}}
-
-### System group
-- Automatically created when Group Management is initialized
-- Used by system-relevant services such as the SMTP server
-- Not intended for real users
-
-## Code usage
-```go
-package main
-
-import (
-	"go.wdy.de/nago/application"
-	"go.wdy.de/nago/application/group"
-	"go.wdy.de/nago/application/user"
-	"go.wdy.de/nago/pkg/std"
-	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ui"
-	"go.wdy.de/nago/presentation/ui/alert"
-)
-
-const (
-	nagoDevs = group.ID("nago.devs")
-)
-
-func main() {
-    application.Configure(func(cfg *application.Configurator) {
-		cfg.SetApplicationID("de.create.group")
-
-		groupManagement := std.Must(cfg.GroupManagement())
-		std.Must(groupManagement.UseCases.Upsert(user.SU(), group.Group{
-			ID:          nagoDevs,
-			Name:        "Nago Developer",
-			Description: "Devs in this project.",
-		}))
-
-		cfg.RootViewWithDecoration("dev_secrets", func(wnd core.Window) core.View {
-			if !wnd.Subject().HasGroup(nagoDevs) {
-				return alert.Banner("Error", "You are not a member of the group: nago devs")
-			}
-
-			return ui.Text("Welcome to the group of nago devs.")
-		})
-		
-	}).Run()
-}
-```
-
-## Dependencies
-**Requires:**
-- None
-
-**Is required by:**
-- [User Management](../user_management/)
-- [Secret Management](../secret_management/)
-- [Token Management](../token_management/)
-- [UserCircle Management](../usercircle_management/)
-
-## Activation
-This system is activated via:
-```go
-std.Must(cfg.GroupManagement())
-```
+## Enable
 
 ```go
-groupManagement := std.Must(cfg.GroupManagement())
+groups := std.Must(cfg.GroupManagement()) // application.GroupManagement
 ```
+
+Group Management is always enabled, because User Management depends on it. It has the fields
+`UseCases group.UseCases` and `Pages uigroup.Pages` with the path `Groups`.
+
+On every start the system group `group.System` (`nago.group.system`) is created or updated. It is meant for
+internal services, not for real users: for example, an SMTP server secret must be shared with it to be used
+by [Mail Management](../mail_management/).
+
+## Use cases
+
+| Use case       | Description                                        |
+|----------------|----------------------------------------------------|
+| `FindByID`     | Loads a group.                                     |
+| `FindAll`      | Lists all groups.                                  |
+| `Create`       | Creates a group.                                   |
+| `Update`       | Updates a group.                                   |
+| `Upsert`       | Creates or updates a group by its ID.              |
+| `Delete`       | Deletes a group.                                   |
+| `FindMyGroups` | Lists the groups the subject is a member of.       |
+
+The events `group.Updated` and `group.Deleted` are published.
+
+## Permissions
+
+| Permission            | Allows to        |
+|-----------------------|------------------|
+| `nago.group.find_by_id` | view a group   |
+| `nago.group.find_all` | list all groups  |
+| `nago.group.create`   | create groups    |
+| `nago.group.update`   | update groups    |
+| `nago.group.delete`   | delete groups    |
+
+## UI
+
+The page `admin/groups` lists, creates, edits and deletes groups. The admin center shows the card *Gruppen*
+in the group *Nutzerverwaltung*.
+
+## Related
+
+- [User Management](../user_management/) assigns users to groups.
+- [ReBAC](../rebac_management/) lists groups as a resource.

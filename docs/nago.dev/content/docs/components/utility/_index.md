@@ -1,26 +1,18 @@
 ---
-# Content must be changed manually
 title: Utility
 weight: 5
-prev: /docs/components/feedback-and-overlay
 sidebar:
   open: false
 ---
 
+Utility pages describe the values and helpers you pass to components rather than components you see on their own:
 
-Utility components provide supporting functionality, styling, or configuration for other components. They are often used to apply design tokens, manage behavior, or enhance developer experience.
-
-This category also includes **conditional rendering utilities** that control the visibility and repetition of UI elements based on logic or data.
-
-## Examples
-- Style presets and color sets
-- Keyboard helpers and redraw triggers
-- Window title and document metadata
-- Conditional rendering: `ui.if`, `ui.ifelse`, `ui.foreach`
-
-
-These are essential for maintaining consistency and control across your UI system.
-
----
-
-➡️ See also: [Basic](../basic), [Composite](../composite), [Layout](../layout), [Feedback & Overlays](../feedback-and-overlay)
+- styling values: [Length](length/), [Padding](padding/), [Border](border/), [Shadow](shadow/), [Outline](outline/),
+  [Color](color/), [Colors](colorset/), [Font](font/), [Background](background/),
+  [Transformation](transformation/) and [Animation](animation/),
+- control flow: [Conditional rendering](conditionals/), [View That Matches](view_that_matches/) and
+  [Redraw](redraw/),
+- small building blocks: [Divider](divider/), [Tabs](tabs/) with their [Pages](page/), [Pager](pager/),
+  [Content](content/), [Window Title](window_title/), [Keyboard Options](keyboard_options/) and the
+  [Theme Switcher](theme_switcher/),
+- drawing: [Canvas](canvas/) for free-form graphics.

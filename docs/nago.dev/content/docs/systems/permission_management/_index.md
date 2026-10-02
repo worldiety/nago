@@ -1,104 +1,69 @@
 ---
 title: Permission Management
-galleryOverview:
-  - src: "/images/systems/shared/admin_center.png"
-  - src: "/images/systems/user_management/galleries/admin_center.png"
-  - src: "/images/systems/permission_management/galleries/overview.png"
-galleryAssignPermissions:
-  - src: "/images/systems/permission_management/galleries/assign_permissions.png"
-  - src: "/images/systems/permission_management/galleries/assign_permissions_to_role.png"
 ---
 
-The Permission Management system manages all available permissions across the platform.  
-Permissions are the most fine-grained unit of access control and can be used for specific use cases in the domain.
+A permission is the most fine-grained unit of access control. Permissions are declared in code at development
+time and cannot be created or changed at runtime. You grant them to [roles](../role_management/) or directly
+to [users](../user_management/). Permission Management lists all declared permissions.
 
-Each application use case defines its own permissions **at development time**.  
-Permissions cannot be created or modified at runtime, but they can be **viewed** and **assigned** to users.
+![Permissions](permissions.webp)
 
-{{< swiper name="galleryOverview" loop="false" >}}
+## Declare a permission
 
-## Functional areas
-Permission Management offers the following key functions:
-
-### Permission lifecycle
-- Permissions are defined in code at development time
-- Default permissions are automatically created when a system is activated
-- New permissions can be declared programmatically via the `permission.Declare` function
-- Permissions **cannot** be created or edited in the UI
-
-### Permission assignment
-- Permissions **cannot** be assigned directly to groups
-- Instead, permissions can be grouped into [Roles](../role_management/) which then can be assigned to users
-- Permissions can also be assigned directly to users via [User Management](../user_management/)
-
-{{< swiper name="galleryAssignPermissions" loop="false" >}}
-
-### Default permissions
-- Each system provides its own default permissions when activated
-- Example (from Mail Management):
-```go
-var (
-    PermSendMail             = permission.Declare[SendMail]("nago.mail.send", "Send Mail", "Holders of this authorization can send emails.")
-    PermInitDefaultTemplates = permission.Declare[SendMail]("nago.mail.init_default_templates", "Standard Templates", "Holders of this authorization can activate the standard mail templates.")
-)
-
-type SendMail func(subject auth.Subject, mail Mail) (ID, error)
-```
-
-### Example: Declare and use custom permissions
+Declare one permission per use case, usually as a package variable next to it, and check it with `Audit`:
 
 ```go
-package main
+var PermSayHello = permission.Declare[SayHello]("de.worldiety.tutorial.say_hello", "Say hello", "Allows to greet everyone.")
 
-import (
-	"go.wdy.de/nago/application"
-	"go.wdy.de/nago/application/permission"
-	"go.wdy.de/nago/auth"
-	"go.wdy.de/nago/pkg/std"
-	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ui"
-	"go.wdy.de/nago/presentation/ui/alert"
+type SayHello func(subject auth.Subject) string
 
-	"fmt"
-	"time"
-)
+func NewSayHello() SayHello {
+	return func(subject auth.Subject) string {
+		if err := subject.Audit(PermSayHello); err != nil {
+			return err.Error()
+		}
 
-var PermGetCurrentTime = permission.Declare[GetCurrentTime]("nago.current.time", "Get current time", "Holders of this permissions can retrieve the current time.")
-
-type GetCurrentTime func(subject auth.Subject) time.Time
-
-func main() {
-	application.Configure(func(cfg *application.Configurator) {
-		cfg.SetApplicationID("de.create.permission")
-		
-		std.Must(cfg.PermissionManagement())
-
-		cfg.RootViewWithDecoration("current_time", func(wnd core.Window) core.View {
-			if err := wnd.Subject().Audit(PermGetCurrentTime); err != nil {
-				return alert.Banner("Error", "You are not allowed to see the current time")
-			}
-
-			return ui.Text(fmt.Sprintf("%s", time.Now()))
-		})
-
-	}).Run()
+		return "hello " + subject.Name()
+	}
 }
 ```
 
-## Dependencies
-**Requires:**
-- None
+- The ID must be lower case and dot separated, e.g. `my.app.book.create`. Declaring an ID twice panics.
+- The type parameter is the use case type and must be a named function type.
+- `permission.DeclareCreate`, `DeclareFindByID`, `DeclareFindAll`, `DeclareUpdate`, `DeclareDeleteByID` and
+  similar helpers derive English and German names from an entity name.
+- `permission.All()` and `permission.Find(id)` look up declared permissions.
 
-**Is required by:**
-- [User Management](../user_management/)
-- [Session Management](../session_management/)
+The [bootstrap admin](../user_management/#bootstrap-admin) only gets the `nago.*` permissions, so grant your
+own permissions through a role.
 
-## Activation
-This system is activated via:
-```go
-std.Must(cfg.PermissionManagement())
-```
+## Enable
 
 ```go
-permissionManagement := std.Must(cfg.PermissionManagement())
+perms := std.Must(cfg.PermissionManagement()) // application.PermissionManagement
 ```
+
+Permission Management is always enabled. It has the fields `UseCases permission.UseCases` and
+`Pages uipermission.Pages` with the path `Permissions`.
+
+## Use cases
+
+| Use case  | Description                                       |
+|-----------|---------------------------------------------------|
+| `FindAll` | Lists all declared permissions, sorted by name.   |
+
+## Permissions
+
+| Permission                 | Allows to                 |
+|----------------------------|---------------------------|
+| `nago.permission.find_all` | list all permissions      |
+
+## UI
+
+The read-only list `admin/permissions` shows all permissions. The admin center shows the card
+*Berechtigungen* in the group *Nutzerverwaltung*.
+
+## Related
+
+- [Tutorial: built-in IAM](/docs/examples/tutorial-26-buildin-iam/) declares and checks a permission.
+- [ReBAC](../rebac_management/) grants permissions on single resources.

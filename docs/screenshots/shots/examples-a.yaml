@@ -1,0 +1,189 @@
+# Screenshots of the example pages for the tutorials 01-59. Paths in "out" are relative to docs/nago.dev.
+# Run: cd docs/screenshots && go run . -f shots/examples-a.yaml [-only tutorial-11-buttons]
+#
+# Without a screenshot, because they show no meaningful UI or do not start:
+#   tutorial-23-appear-disappear, tutorial-24-redraw, tutorial-25-blobstore (a single line of text),
+#   tutorial-43-clipboard (a single button), tutorial-22-custom-handler (the SVG is shown clipped),
+#   tutorial-59-cms (the CMS editor is empty), tutorial-40-images (access denied without a custom role),
+#   tutorial-41-absolute, tutorial-42-service, tutorial-50-settings (panic at startup, the hard-coded
+#   bootstrap admin password is rejected as too weak), tutorial-56-rest (the OpenAPI page is not a Nago page).
+defaults:
+  width: 1200
+  height: 800
+  scale: 2
+  crop: auto
+  padding: 24
+  quality: 90
+
+shots:
+  - example: tutorial-01-helloworld
+    out: content/docs/examples/tutorial-01-helloworld/screenshot.webp
+  - example: tutorial-02-combining-views
+    out: content/docs/examples/tutorial-02-combining-views/screenshot.webp
+  - example: tutorial-03-box
+    out: content/docs/examples/tutorial-03-box/screenshot.webp
+  - example: tutorial-04-container
+    out: content/docs/examples/tutorial-04-container/screenshot.webp
+  - example: tutorial-05-gantt-grid
+    out: content/docs/examples/tutorial-05-gantt-grid/screenshot.webp
+  - example: tutorial-06-responsive
+    out: content/docs/examples/tutorial-06-responsive/screenshot.webp
+  - example: tutorial-07-dialog
+    out: content/docs/examples/tutorial-07-dialog/screenshot.webp
+    crop: viewport
+    height: 600
+    steps:
+      - clickText: Show Dialog
+  - example: tutorial-08-colors
+    out: content/docs/examples/tutorial-08-colors/screenshot.webp
+  - example: tutorial-09-custom-button
+    out: content/docs/examples/tutorial-09-custom-button/screenshot.webp
+    width: 480
+    height: 300
+    crop: viewport
+  - example: tutorial-10-icons
+    out: content/docs/examples/tutorial-10-icons/screenshot.webp
+    crop: viewport
+  - example: tutorial-11-buttons
+    out: content/docs/examples/tutorial-11-buttons/screenshot.webp
+  - example: tutorial-12-textfield
+    out: content/docs/examples/tutorial-12-textfield/screenshot.webp
+    width: 900
+    height: 900
+    crop: viewport
+    steps:
+      - wait: 3s # the example adds an artificial latency of 500ms to each render
+  - example: tutorial-13-toggle
+    out: content/docs/examples/tutorial-13-toggle/screenshot.webp
+  - example: tutorial-14-checkbox
+    out: content/docs/examples/tutorial-14-checkbox/screenshot.webp
+  - example: tutorial-15-radiobutton
+    out: content/docs/examples/tutorial-15-radiobutton/screenshot.webp
+  - example: tutorial-16-datepicker
+    out: content/docs/examples/tutorial-16-datepicker/screenshot.webp
+  - example: tutorial-17-scaffold
+    out: content/docs/examples/tutorial-17-scaffold/screenshot.webp
+    crop: viewport
+  - example: tutorial-18-table
+    out: content/docs/examples/tutorial-18-table/screenshot.webp
+  - example: tutorial-19-download-file
+    out: content/docs/examples/tutorial-19-download-file/screenshot.webp
+  - example: tutorial-20-upload-file
+    out: content/docs/examples/tutorial-20-upload-file/screenshot.webp
+    width: 480
+    height: 240
+    crop: viewport
+  - example: tutorial-21-entities
+    out: content/docs/examples/tutorial-21-entities/screenshot.webp
+    admin: true
+    crop: viewport
+    steps:
+      - login: true
+      - goto: /admin
+  - example: tutorial-26-buildin-iam
+    out: content/docs/examples/tutorial-26-buildin-iam/screenshot.webp
+    admin: true
+    width: 1000
+    height: 400
+    crop: viewport
+    steps:
+      - login: true
+      - goto: /
+  - example: tutorial-27-picker
+    out: content/docs/examples/tutorial-27-picker/screenshot.webp
+  - example: tutorial-28-scrollview
+    out: content/docs/examples/tutorial-28-scrollview/screenshot.webp
+  - example: tutorial-29-timepicker
+    out: content/docs/examples/tutorial-29-timepicker/screenshot.webp
+  - example: tutorial-30-grid
+    out: content/docs/examples/tutorial-30-grid/screenshot.webp
+  - example: tutorial-33-colorpicker
+    out: content/docs/examples/tutorial-33-colorpicker/screenshot.webp
+  - example: tutorial-35-httpflow
+    out: content/docs/examples/tutorial-35-httpflow/screenshot.webp
+    # clicking the button leaves the page, which aborts the capture, so open the receiving page directly
+    path: /api/v1/oauth2/login?redirect_uri=/redirect&state=xyz
+  - example: tutorial-36-list
+    out: content/docs/examples/tutorial-36-list/screenshot.webp
+  - example: tutorial-37-template
+    out: content/docs/examples/tutorial-37-template/screenshot.webp
+    admin: true
+    height: 600
+    crop: viewport
+    steps:
+      - login: true
+      - goto: /admin/template/projects
+  - example: tutorial-38-crudcalc
+    out: content/docs/examples/tutorial-38-crudcalc/screenshot.webp
+    width: 600
+  - example: tutorial-44-stretch
+    out: content/docs/examples/tutorial-44-stretch/screenshot.webp
+    width: 800
+    height: 400
+    crop: viewport
+  - example: tutorial-45-benchmark
+    out: content/docs/examples/tutorial-45-benchmark/screenshot.webp
+    height: 600
+    crop: viewport
+  - example: tutorial-46-rootviews
+    out: content/docs/examples/tutorial-46-rootviews/screenshot.webp
+    width: 800
+    height: 400
+    crop: viewport
+    steps:
+      - clickText: go to hello
+  - example: tutorial-47-eventbus
+    out: content/docs/examples/tutorial-47-eventbus/screenshot.webp
+    width: 800
+    height: 400
+    crop: viewport
+    steps:
+      - clickText: send message
+  - example: tutorial-48-form-auto
+    out: content/docs/examples/tutorial-48-form-auto/screenshot.webp
+    admin: true
+    crop: page
+    steps:
+      - login: true
+      - goto: /
+  - example: tutorial-49-svg
+    out: content/docs/examples/tutorial-49-svg/screenshot.webp
+    width: 1000
+    height: 700
+    crop: viewport
+  - example: tutorial-51-progress
+    out: content/docs/examples/tutorial-51-progress/screenshot.webp
+    height: 600
+    crop: viewport
+    steps:
+      - type: { selector: "input", text: "Nago-2024!" }
+      - wait: 1s
+      - clickText: hello world
+      - wait: 1s
+  - example: tutorial-52-scaffoldbuilder
+    out: content/docs/examples/tutorial-52-scaffoldbuilder/screenshot.webp
+    width: 1000
+    height: 300
+    crop: viewport
+  - example: tutorial-53-countdown
+    out: content/docs/examples/tutorial-53-countdown/screenshot.webp
+    height: 600
+    crop: viewport
+  - example: tutorial-54-codeeditor
+    out: content/docs/examples/tutorial-54-codeeditor/screenshot.webp
+    height: 600
+    crop: viewport
+  - example: tutorial-55-theme
+    out: content/docs/examples/tutorial-55-theme/screenshot.webp
+    crop: viewport
+  - example: tutorial-57-adm-stores
+    out: content/docs/examples/tutorial-57-adm-stores/screenshot.webp
+    admin: true
+    crop: viewport
+    steps:
+      - login: true
+      - goto: /admin/inspector
+      - clickText: Person
+  - example: tutorial-58-richtext
+    out: content/docs/examples/tutorial-58-richtext/screenshot.webp
+    crop: viewport

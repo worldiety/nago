@@ -1,81 +1,69 @@
 ---
 title: Token Management
-galleryOverview:
-  - src: "/images/systems/shared/admin_center.png"
-  - src: "/images/systems/token_management/galleries/overview/admin_center.png"
-  - src: "/images/systems/token_management/galleries/overview/overview.png"
-  - src: "/images/systems/token_management/galleries/overview/create.png"
-  - src: "/images/systems/token_management/galleries/overview/create_2.png"
-  - src: "/images/systems/token_management/galleries/overview/access_rights.png"
-  - src: "/images/systems/token_management/galleries/overview/rotate.png"
 ---
 
-Token Management provides the ability to create and manage API access tokens.  
-Tokens act like users: they can have groups, roles, permissions, and licenses assigned.  
-This allows external applications or users to authenticate against the system and gain access to defined resources.
+Token Management issues API access tokens. Other applications use a token to call your REST endpoints as an
+authenticated subject. Like a user, a token can carry roles, groups and permissions.
 
-{{< callout type="info" >}}
-Tokens are primarily intended to be used with [HAPI Management](../hapi_management/).  
-While APIs can also be exposed without authentication, Token Management enables secure and fine-grained access control.
-{{< /callout >}}
+![Access tokens](tokens.webp)
 
-## Functional areas
-Token Management provides the following key functions:
-
-### Token creation and editing
-- Create, rotate, and delete tokens
-- Assign groups, roles, permissions, and licenses
-- Define token validity (expiration date)
-
-{{< callout type="warning" >}}
-The plaintext token is only **shown once** during creation!  
-Make sure to copy and securely store it immediately.  
-After closing the dialog, the token **cannot** be viewed again – only rotated or deleted.
-{{< /callout >}}
-
-{{< swiper name="galleryOverview" loop="false" >}}
-
-### Example: API Authentication
-The most common integration is authenticating API calls with a bearer token.
+## Enable
 
 ```go
-hapi.Get[SomeRequest](api, hapi.Operation{Path: "/api/v1/protected"}).
-    Request(
-        hapi.BearerAuth[SomeRequest](tokens.UseCases.AuthenticateSubject, func(dst *SomeRequest, subject auth.Subject) error {
-            dst.Subject = subject
-            return nil
-        }),
-    ).
-    Response(
-        hapi.ToJSON[SomeRequest, SomeResponse](func(in SomeRequest) (SomeResponse, error) {
-            return SomeResponse{Message: "Access granted for " + in.Subject.ID()}, nil
-        }),
-    )
+tokens := std.Must(cfg.TokenManagement()) // application.TokenManagement
 ```
 
-With this setup:
-- A client includes the token in the Authorization: Bearer <token> header
-- Token Management validates the token and injects the authenticated auth.Subject
-- The API can enforce access control based on the subject's roles, groups, and permissions
+Token Management is not part of `StandardSystems`. It enables User, Group and Role Management and registers
+tokens as a [ReBAC](../rebac_management/) resource. `application.TokenManagement` has the fields
+`UseCases token.UseCases` and `Pages uitoken.Pages` with the path `Tokens`.
 
-## Dependencies
-**Requires:**
-- [Group Management](../group_management/)
-- [License Management](../license_management/)
-- [Role Management](../role_management/)
-- [User Management](../user_management/)
+## Protect an endpoint
 
-If these are not already active, they will be enabled automatically when Token Management is activated.
-
-**Is required by:**
-- none
-
-## Activation
-This system is activated via:
-```go
-std.Must(cfg.TokenManagement())
-```
+Use `AuthenticateSubject` with `hapi.BearerAuth` to resolve the bearer token of a request into a subject, see
+[REST APIs](../hapi_management/):
 
 ```go
-tokenManagement := std.Must(cfg.TokenManagement())
+hapi.Post[Request](api, hapi.Operation{Path: "/api/v1/events"}).
+	Request(
+		hapi.BearerAuth[Request](tokens.UseCases.AuthenticateSubject, func(dst *Request, subject auth.Subject) error {
+			dst.Subject = subject
+			return nil
+		}),
+	).
+	Response(hapi.ToJSON[Request, Response](handleEvent))
 ```
+
+`handleEvent` checks the permissions of `in.Subject` like any other use case. A request without an
+`Authorization` header gets an anonymous subject.
+
+## Use cases
+
+| Use case              | Description                                                                          |
+|-----------------------|--------------------------------------------------------------------------------------|
+| `Create`              | Creates a token. The plaintext is returned once and never stored.                    |
+| `Rotate`              | Issues a new secret for a token and keeps its settings.                              |
+| `Delete`              | Deletes a token; a subject can always delete its own tokens.                         |
+| `FindAll`             | Lists the visible tokens.                                                            |
+| `FindByID`            | Loads a token.                                                                       |
+| `AuthenticateSubject` | Returns the subject of a plaintext token; it is invalid if the token is unknown or expired. |
+
+`ResolveTokenRights` is deprecated, use the ReBAC API.
+
+## Permissions
+
+| Permission                     | Allows to                     |
+|--------------------------------|-------------------------------|
+| `nago.token.create`            | create tokens                 |
+| `nago.token.rotate`            | rotate tokens                 |
+| `nago.token.delete`            | delete tokens                 |
+| `nago.token.find_all`          | list tokens                   |
+| `nago.token.resolve_token_rights` | view the rights of a token |
+
+## UI
+
+The page `admin/iam/tokens` creates, rotates and deletes tokens. The admin center shows the card
+*Access Token* in the group *Access Tokens* to users with `nago.token.find_all`.
+
+## Related
+
+- [Tutorial: REST](/docs/examples/tutorial-56-rest/)

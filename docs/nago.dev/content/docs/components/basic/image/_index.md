@@ -1,45 +1,60 @@
 ---
-# Content is auto generated
-# Manual changes will be overwritten!
 title: Image
 ---
-It displays raster or vector images with support for light/dark mode variants,
-SVG embedding, object fit, custom colors, borders, padding, and accessibility. The component can also be toggled invisible when needed.
+
+Image shows raster or vector graphics. The source can be an embedded byte slice (small SVGs), an URI (static
+resources or external URLs) or an `image.ID` of the image system. `ImageIcon` is a shortcut for icons, e.g. from
+`presentation/icons/hero`. Adaptive variants pick a different source for the light and dark theme.
+
+![Image](image.webp)
+
+```go
+HStack(
+	Image().
+		Embed([]byte(logo)).
+		AccessibilityLabel("A green logo").
+		Frame(Frame{}.Size(L160, L120)),
+	ImageIcon(icons.Heart),
+	ImageIcon(icons.Star).FillColor(SW0),
+	ImageIcon(icons.Bell).Frame(Frame{}.Size(L48, L48)),
+).Gap(L24)
+```
 
 ## Constructors
-### Image
-Image creates a new image with a default frame size of Auto x L160.
 
-### ImageIcon
-ImageIcon renders default with L24/L24 size and is invisible if svg is empty.
+| Constructor | Description |
+|---|---|
+| `func Image() TImage` | Creates an empty image with a default frame of Auto x L160. |
+| `func ImageIcon(svg core.SVG) TImage` | Creates an L24 x L24 icon from an SVG; it is invisible if the SVG is empty. |
+| `func ImageIconAdaptive(onLight, onDark core.SVG) TImage` | Like `ImageIcon`, but with an SVG for each theme. |
 
-### ImageIconAdaptive
-ImageIconAdaptive renders default with L24/L24 size and is invisible if svg is empty.
-
----
 ## Methods
+
+Some setters return `DecoredView` instead of `TImage`. Call them last in the chain.
+
 | Method | Description |
-|--------| ------------|
-| `AccessibilityLabel(label string)` | AccessibilityLabel sets a label for screen readers. See also https://www.w3.org/WAI/tutorials/images/decision-tree/. |
-| `Adaptive(dark image.ID, light image.ID)` | Adaptive sets the image to use different sources for light and dark themes. It generates URIs for both light and dark variants with fixed dimensions (512x512) and no fitting, then applies them to the image. |
-| `Border(border Border)` | Border sets the border styling of the image. |
-| `Embed(buf []byte)` | Embed encodes the given buffer within the components attributes. This may be fine to load small images synchronously, but it may break the channel, the server or the frontend, if too large. Better use [application.Resource] for large static images. Embedding image data in the range of 100-200 byte is totally fine, though. The resource URI alone is already about 100 characters long. Usually, embedding SVGs in the range of 1-2KiB is also fine. To optimize render performance, the system uses a special caching technique. Important: due to caching, do not submit ever-changing SVGs, because the backend and the frontend may suffer from cache overflow. This will half the typical required bandwidth for icon heavy use cases. The larger the SVG, the better the effect. See also [TImage.EmbedAdaptive]. |
-| `EmbedAdaptive(dark []byte, light []byte)` | EmbedAdaptive is like [TImage.Embed] but picks whatever fits best. |
-| `FillColor(color Color)` | FillColor set the internal fill color value and is only applicable for embedded SVG images, which use fill=currentColor. Otherwise, a broken or no effect will be seen. |
-| `Frame(frame Frame)` | Frame sets the layout frame of the image, including size and positioning. |
-| `ObjectFit(fit ObjectFit)` | ObjectFit sets how the image should be resized or scaled inside its frame (e.g., contain, cover, or none). |
-| `Padding(padding Padding)` | Padding sets the inner spacing around the image. |
-| `StrokeColor(color Color)` | StrokeColor set the internal stroke color value and is only applicable for embedded SVG images, which use fill=strokeColor. Otherwise, a broken or no effect will be seen. |
-| `URI(uri core.URI)` | URI can be used for static image resources which are not provided by the ui component itself. The source may be a hand written REST endpoint or even any third-party resource from a different domain. If you need optimized data access and caching policies, you have to use this way. See also [core.Window.AsURI] for an uncached dynamically delivered image resource. |
-| `URIAdaptive(dark core.URI, light core.URI)` | URIAdaptive is like [TImage.Embed] but picks whatever fits best. |
-| `Visible(b bool)` | Visible controls the visibility of the image; setting false hides it. |
-| `WithFrame(fn func(Frame) Frame)` | WithFrame applies a transformation function to the image's frame and returns the updated component. |
----
+|---|---|
+| `AccessibilityLabel(label string) DecoredView` | AccessibilityLabel sets a label for screen readers. |
+| `Adaptive(light, dark image.ID) TImage` | Adaptive sets the image to use different sources for light and dark themes. |
+| `Border(border Border) DecoredView` | Border sets the border styling of the image. |
+| `Embed(buf []byte) TImage` | Embed encodes the given buffer within the components attributes. |
+| `EmbedAdaptive(light, dark []byte) TImage` | EmbedAdaptive is like TImage.Embed but picks whatever fits best. |
+| `FillColor(color Color) TImage` | FillColor set the internal fill color value and is only applicable for embedded SVG images, which use fill=currentColor. |
+| `Frame(frame Frame) DecoredView` | Frame sets the layout frame of the image, including size and positioning. |
+| `ObjectFit(fit ObjectFit) TImage` | ObjectFit sets how the image should be resized or scaled inside its frame (e.g., contain, cover, or none). |
+| `Padding(padding Padding) DecoredView` | Padding sets the inner spacing around the image. |
+| `StrokeColor(color Color) TImage` | StrokeColor set the internal stroke color value and is only applicable for embedded SVG images, which use fill=strokeColor. |
+| `URI(uri core.URI) TImage` | URI can be used for static image resources which are not provided by the ui component itself. |
+| `URIAdaptive(light, dark core.URI) TImage` | URIAdaptive is like TImage.Embed but picks whatever fits best. |
+| `Visible(b bool) DecoredView` | Visible controls the visibility of the image; setting false hides it. |
+| `WithFrame(fn func(Frame) Frame) DecoredView` | WithFrame applies a transformation function to the image's frame and returns the updated component. |
+
+{{< callout type="info" >}}
+Embed only small images, e.g. icons of 1-2 KiB. Serve larger images as a resource (`cfg.Resource`) and set them
+with `URI`.
+{{< /callout >}}
 
 ## Related
-- [Border](../../utility/border/)
-- [Frame](../../layout/frame/)
-- [Padding](../../utility/padding/)
 
-## Tutorials
-- [tutorial-02-combining-views](../../../examples/tutorial-02-combining-views)
+- [QR Code](../qr_code/)
+- Tutorials: [Images](/docs/examples/tutorial-40-images/), [Icons](/docs/examples/tutorial-10-icons/), [SVG](/docs/examples/tutorial-49-svg/)

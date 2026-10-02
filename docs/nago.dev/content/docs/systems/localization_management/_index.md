@@ -1,117 +1,51 @@
 ---
 title: Localization Management
-galleryOverview:
-  - src: "/images/systems/shared/admin_center.png"
-  - src: "/images/systems/localization_management/galleries/overview/admin_center.png"
-galleryEdit:
-  - src: "/images/systems/localization_management/galleries/edit/admin_center.png"
-  - src: "/images/systems/localization_management/galleries/edit/nago_domain.png"
-  - src: "/images/systems/localization_management/galleries/edit/common_overview.png"
-  - src: "/images/systems/localization_management/galleries/edit/action_overview.png"
-  - src: "/images/systems/localization_management/galleries/edit/add_translation.png"
-galleryLanguages:
-  - src: "/images/systems/localization_management/galleries/languages/admin_center.png"
-  - src: "/images/systems/localization_management/galleries/languages/add.png"
 ---
 
-The Localization Management system provides **internationalization (i18n)** capabilities for Nago-based applications.  
-It enables multilingual support by allowing both developers and users to define and manage translations for UI texts, messages, and labels.  
-The system is built on top of [github.com/worldiety/i18n](https://github.com/worldiety/i18n), which offers a fast, developer-centric localization API optimized for runtime translation management.
+Localization Management lets administrators translate the texts of the application at runtime. It shows all
+localizable strings of Nago and of your application, grouped by their key, and how many are not translated
+yet. Translations are stored and loaded into the global i18n resources at startup.
 
-## Functional areas
-Localization Management provides the following core functions:
+![Localization](localization.webp)
 
-### Translation directory
-- View and navigate the hierarchy of translation keys based on their logical namespaces (e.g. `mydomain.example`)
-- Overview of total and missing translations per section
-- Direct access to localized message editing
-
-{{< swiper name="galleryOverview" loop="false" >}}
-
-### Editing translations
-- View and edit translations for all supported languages directly in the Admin Center
-- Update existing messages or add missing translations without redeploying the application
-- Changes are stored persistently and immediately reflected in the running app
-
-{{< swiper name="galleryEdit" loop="false" >}}
-
-### Language management
-- Add new languages dynamically through the Admin Center UI
-- Default languages: **English** and **German** (preloaded for all standard systems and components)
-- Additional languages are added at runtime and initialized automatically in the i18n resource bundles
-
-{{< swiper name="galleryLanguages" loop="false" >}}
-
-### Developer integration
-Developers define all translatable strings in Go code using the `i18n API`. 
-
-#### Example: Must String
-```go
-var StrHelloWorld = i18n.MustString(
-	"mydomain.example.hello_world",
-	i18n.Values{
-		language.English: "Hello World",
-		language.German:  "Hallo Welt",
-	},
-)
-```
+## Enable
 
 ```go
-cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {
-    return ui.VStack(
-		ui.Text(StrHelloWorld.Get(wnd)), 
-	).FullWidth()
-})
+import cfglocalization "go.wdy.de/nago/application/localization/cfg"
+
+loc := std.Must(cfglocalization.Enable(cfg)) // cfglocalization.Management
 ```
 
-#### Example: Must Quantity String
-```go
-var LabelXItems = i18n.MustQuantityString(
-    "nago.common.label.x_items",
-	i18n.QValues{
-        language.English: i18n.Quantities{
-            One:   "{x} item",
-			Other: "{x} items",
-		},
-        language.German: i18n.Quantities{
-			One:   "{x} Element", 
-			Other: "{x} Elemente",
-		},
-	},
-	i18n.LocalizationHint("Shown when listing items, e.g. '3 items'"), 
-)
-```
-  
-```go
-cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {
-    return ui.VStack(
-	    ui.Text(LabelXItems.Get(wnd, 7,  i18n.String("x", "seven"))),
-    ).FullWidth()
-})
-```
+`cfglocalization.Management` has the fields `UseCases localization.UseCases` and `Pages uilocalization.Pages`
+with the paths `PageDirectory`, `PageMessage` and `PageLanguage`.
 
-- The Admin Center automatically exposes these keys for translation and correction
-- Translations are cached and loaded **efficiently** for **O(1) lookup performance**
+How to declare localizable strings in code is described in the localization concept; see the tutorial below.
 
-{{< callout type="info" >}}
-Localization Management is designed to empower end users to fix or extend translations directly —
-reducing dependency on professional translation workflows and speeding up internationalization cycles.
-{{< /callout >}}
+## Use cases
 
-## Dependencies
-**Requires:**
-- None
+| Use case         | Description                                                                         |
+|------------------|-------------------------------------------------------------------------------------|
+| `ReadDir`        | Returns a level of the key hierarchy with the number of total and missing translations. |
+| `ReadStringKeys` | Lists the string keys, i.e. keys which are their own default text.                  |
+| `FindResources`  | Returns the underlying i18n resources.                                              |
+| `UpdateMessage`  | Stores the translation of a message for a language.                                 |
+| `Flush`          | Applies updated translations to the running application.                            |
+| `AddLanguage`    | Adds a target language.                                                             |
 
-**Is required by:**
-- None
+## Permissions
 
-## Activation
-This system is activated via:
+| Permission                         | Allows to                   |
+|------------------------------------|-----------------------------|
+| `nago.localization.readdir`        | browse localizable texts    |
+| `nago.localization.updatemessage`  | update translations         |
+| `nago.localization.addlanguage`    | add languages               |
 
-```go
-std.Must(cfglocalization.Enable(cfg))
-```
-```go
-localizationManagement := std.Must(cfglocalization.Enable(cfg))
-```
+## UI
 
+`admin/localization/directory` browses the keys, `admin/localization/message` edits a translation and
+`admin/localization/language` adds a language. The admin center group *Translations* has a card per top-level
+key, a card for the string keys and a card for the languages.
+
+## Related
+
+- [Tutorial: localization](/docs/examples/tutorial-74-localization/)

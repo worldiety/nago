@@ -1,53 +1,65 @@
 ---
-# Content is auto generated
-# Manual changes will be overwritten!
 title: Time Picker
 ---
-It lets users choose a duration with optional granularity for days,
-hours, minutes, and seconds. The picker can be shown in a dialog,
-bind to external state, and format its value either as a clock or
-as decomposed units.
+
+`timepicker.Picker` edits a `time.Duration`, either as a clock time (`ClockFormat`, e.g. 06:45) or
+decomposed into days, hours, minutes and seconds (`DecomposedFormat`). Choose the visible units with
+`Days`, `Hours`, `Minutes` and `Seconds`.
+
+![Time Picker](time_picker.webp)
+
+```go
+func view(wnd core.Window) core.View {
+    alarm := core.AutoState[time.Duration](wnd).Init(func() time.Duration {
+        return 6*time.Hour + 45*time.Minute
+    })
+    timeout := core.AutoState[time.Duration](wnd).Init(func() time.Duration {
+        return 1*time.Hour + 30*time.Minute
+    })
+
+    return VStack(
+        timepicker.Picker("Alarm", alarm).
+            Format(timepicker.ClockFormat).
+            Frame(Frame{}.FullWidth()),
+        timepicker.Picker("Session timeout", timeout).
+            Format(timepicker.DecomposedFormat).
+            Days(false).Seconds(false).
+            SupportingText("Hours and minutes").
+            Frame(Frame{}.FullWidth()),
+    ).Gap(L16).Frame(Frame{Width: L320})
+}
+```
 
 ## Constructors
-### Picker
+
+```go
+func Picker(label string, selectedState *core.State[time.Duration]) TPicker
+```
+
 Picker renders a time.Duration either in clock time format or in decomposed format.
-Default is [ClockFormat]. By default, the Picker shows hours and minutes,
-but you can be specific by setting the according flags.
-Keep in mind, that the picker also clamps to the natural limits, e.g. you cannot set
-25 hours, instead you must enable the day flag, so that the user can configure 1 day and 1 hour.
 
----
 ## Methods
-| Method | Description |
-|--------| ------------|
-| `AccessibilityLabel(label string)` | AccessibilityLabel sets a label used by screen readers for accessibility. (currently not implemented) |
-| `Border(border ui.Border)` | Border sets the border style of the time picker. (currently not implemented) |
-| `Days(showDays bool)` | Days toggles whether the picker allows selecting days. |
-| `Disabled(disabled bool)` | Disabled enables or disables user interaction with the time picker. |
-| `ErrorText(text string)` | ErrorText sets the validation or error message displayed below the picker. |
-| `Format(format PickerFormat)` | Format sets the display format for the duration value (clock or decomposed). |
-| `Frame(frame ui.Frame)` | Frame sets the layout frame of the time picker, including size and positioning. |
-| `Hours(showHours bool)` | Hours toggles whether the picker allows selecting hours. |
-| `Minutes(showMinutes bool)` | Minutes toggles whether the picker allows selecting minutes. |
-| `Padding(padding ui.Padding)` | Padding sets the inner spacing around the time picker content. (currently not implemented) |
-| `Seconds(showSeconds bool)` | Seconds toggles whether the picker allows selecting seconds. |
-| `SupportingText(text string)` | SupportingText sets helper or secondary text displayed below the picker label. |
-| `Title(title string)` | Title sets the title of the picker, typically shown in dialogs. |
-| `Visible(visible bool)` | Visible controls the visibility of the time picker; setting false hides it. (currently not implemented) |
-| `WithFrame(fn func(ui.Frame) ui.Frame)` | WithFrame applies a transformation function to the picker's frame and returns the updated component. |
-| `dayDown()` | dayDown decreases the number of days in the current selection, wrapping around to 99 if it goes below 0. |
-| `dayUp()` | dayUp increases the number of days in the current selection, wrapping back to 0 if it exceeds 99. |
-| `hourDown()` | hourDown decreases the hours in the current selection, wrapping around to 23 if it goes below 0. |
-| `hourUp()` | hourUp increases the hours in the current selection, wrapping back to 0 if it reaches 24. |
-| `minDown()` | minDown decreases the minutes in the current selection, wrapping around to 59 if it goes below 0. |
-| `minUp()` | minUp increases the minutes in the current selection, wrapping back to 0 if it exceeds 59. |
-| `renderPicker()` | renderPicker builds the interactive picker view for adjusting the duration. It shows increment and decrement buttons with numeric labels for each enabled unit (days, hours, minutes, seconds). If no units are explicitly enabled, the picker automatically decides which units to display based on the current duration. |
-| `round(d time.Duration)` | round normalizes the given duration based on the picker's configuration. If seconds are not displayed, the duration is truncated to the nearest minute; otherwise, it is returned unchanged. |
-| `secDown()` | secDown decreases the seconds in the current selection, wrapping around to 59 if it goes below 0. |
-| `secUp()` | secUp increases the seconds in the current selection, wrapping back to 0 if it exceeds 59. |
-| `setDay(days int)` |  |
-| `setHour(hours int)` |  |
-| `setMin(minutes int)` |  |
-| `setSec(seconds int)` |  |
----
 
+| Method | Description |
+|--------|-------------|
+| `AccessibilityLabel(label string) ui.DecoredView` | AccessibilityLabel sets a label used by screen readers for accessibility. |
+| `Border(border ui.Border) ui.DecoredView` | Border sets the border style of the time picker. |
+| `Days(showDays bool) TPicker` | Days toggles whether the picker allows selecting days. |
+| `Disabled(disabled bool) TPicker` | Disabled enables or disables user interaction with the time picker. |
+| `ErrorText(text string) TPicker` | ErrorText sets the validation or error message displayed below the picker. |
+| `Format(format PickerFormat) TPicker` | Format sets the display format for the duration value (clock or decomposed). |
+| `Frame(frame ui.Frame) ui.DecoredView` | Frame sets the layout frame of the time picker, including size and positioning. |
+| `Hours(showHours bool) TPicker` | Hours toggles whether the picker allows selecting hours. |
+| `Minutes(showMinutes bool) TPicker` | Minutes toggles whether the picker allows selecting minutes. |
+| `Padding(padding ui.Padding) ui.DecoredView` | Padding sets the inner spacing around the time picker content. |
+| `Seconds(showSeconds bool) TPicker` | Seconds toggles whether the picker allows selecting seconds. |
+| `SupportingText(text string) TPicker` | SupportingText sets helper or secondary text displayed below the picker label. |
+| `Title(title string) TPicker` | Title sets the title of the picker, typically shown in dialogs. |
+| `Visible(visible bool) ui.DecoredView` | Visible controls the visibility of the time picker; setting false hides it. |
+| `WithFrame(fn func(ui.Frame) ui.Frame) ui.DecoredView` | WithFrame applies a transformation function to the picker's frame and returns the updated component. |
+
+## Related
+
+- [Date Picker](../date_picker/)
+- [Time Frame Picker](../time_frame_picker/)
+- Tutorial [tutorial-29-timepicker](/docs/examples/tutorial-29-timepicker/)

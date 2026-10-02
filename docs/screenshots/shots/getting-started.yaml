@@ -1,0 +1,21 @@
+# Screenshots of the getting started and concepts pages. Paths in "out" are relative to docs/nago.dev.
+# Run: cd docs/screenshots && go run . -f shots/getting-started.yaml
+defaults:
+  width: 1200
+  height: 800
+  scale: 2
+  quality: 90
+
+shots:
+  # the first app, the whole viewport shows that the text is centered on the screen
+  - example: tutorial-01-helloworld
+    out: content/docs/getting-started/first-app/hello-world.webp
+    width: 800
+    height: 400
+    crop: viewport
+  # a decorated root view within the scaffold
+  - example: tutorial-46-rootviews
+    out: content/docs/concepts/navigation/scaffold.webp
+    width: 1200
+    height: 600
+    crop: viewport

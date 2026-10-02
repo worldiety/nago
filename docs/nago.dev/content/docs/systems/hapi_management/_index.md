@@ -1,144 +1,71 @@
 ---
-title: HAPI Management
-galleryToken:
-  - src: "/images/systems/shared/admin_center.png"
-  - src: "/images/systems/hapi_management/galleries/overview/admin_center.png"
-  - src: "/images/systems/hapi_management/galleries/token/create.png"
-  - src: "/images/systems/hapi_management/galleries/token/value.png"
-  - src: "/images/systems/hapi_management/galleries/token/infos.png"
-  - src: "/images/systems/hapi_management/galleries/token/rotate.png"
-galleryDocumentation:
-  - src: "/images/systems/hapi_management/galleries/documentation/api_spec.png"
+title: REST APIs (HAPI)
+linkTitle: REST APIs
 ---
 
-HAPI Management provides the ability to define and serve RESTful APIs directly from within the application code.  
-APIs can be declared programmatically, including request/response structures, authentication, and OpenAPI documentation.  
-Once activated, the system automatically generates and serves an OpenAPI specification that can be visualized using different documentation frontends.
+HAPI defines REST endpoints in Go and generates an OpenAPI 3.1 specification from them. You describe how a
+request is read into a Go struct and how the response is written; HAPI registers the handler, documents the
+types and maps errors to RFC 9457 problem responses. Together with [Token Management](../token_management/),
+endpoints are protected with bearer tokens.
 
-{{< callout type="info" >}}
-HAPI Management enables full control over how APIs are exposed — including schema documentation and authentication behavior.    
-It integrates seamlessly with **Token Management** when bearer token authentication is required.
-{{< /callout >}}
+## Enable
 
-## Functional areas
-HAPI Management provides the following core functions:
-
-### API definition
-- Define REST endpoints (`GET`, `POST`, `PUT`, `DELETE`, …) programmatically
-- Specify request and response structures using Go generics
-- Automatically generate OpenAPI documentation (`spec.json`)
-
-### Request/Response mapping
-- Map headers, query parameters, form data, and JSON bodies to Go structs
-- Support for file uploads (`multipart/form-data`)
-- Define typed response outputs as JSON or binary data
-
-### Authentication
-- Optional integration with [Token Management](../token_management/) via `hapi.BearerAuth`
-- When activated, an **API Access Tokens** UI appears in the Admin Center
-- Tokens allow external clients or users to authenticate and access protected endpoints
-- Without Token Management, open APIs can still be defined, but access is unauthenticated
-
-{{< swiper name="galleryToken" loop="false" >}}
-
-{{< callout type="warning" >}}
-While it is technically possible to expose open APIs (without authentication), this should only be done in controlled environments.  
-In most cases, integrating **Token Management** for secure access control is strongly recommended.
-{{< /callout >}}
-
-### API documentation
-- Serve interactive OpenAPI documentation under `/api/doc/spec.json`
-- Choose between built-in frontends: **Stoplight**, **Swagger**, or **Redocly**
-- The preferred frontend can be configured in the application code
-
-{{< swiper name="galleryDocumentation" loop="false" >}}
-
-{{< callout type="warning" >}}
-While it is technically possible to activate multiple API documentation frontends only one will be selected at runtime.  
-This behaviour is **undefined** and may lead to inconsistent results.  
-It is therefore strongly recommended to activate **only one** frontend.
-{{< /callout >}}
-
-### Example: Simple API endpoint
 ```go
-api := std.Must(cfghapi.Enable(cfg)).API
-tokens := std.Must(cfg.TokenManagement())
-usecases := myUsecases()
+import cfghapi "go.wdy.de/nago/application/hapi/cfg"
 
-func configureMyAPI(
-	api *hapi.API,
-	tokens application.TokenManagement,
-	usecases myUsecases) {
-	type UploadRequest struct {
-		TestHeader string
-		TestQuery  string
-		Files      []*multipart.FileHeader
-		Subject    auth.Subject
-	}
+api := std.Must(cfghapi.Enable(cfg)).API // *hapi.API
+```
 
-	type UploadResponse struct {
-		ID   string
-		When time.Time
-	}
+`cfghapi.Management` has the single field `API *hapi.API`. The title and version of the specification come
+from `cfg.Name()` and the application version, the contact from the [theme settings](../theme_management/).
 
-	hapi.Post[UploadRequest](api, hapi.Operation{
-		Path:        "/api/v1/events",
-		Summary:     "Create a new event",
-		Description: "Accepts metadata and files, returning a tracking ID.",
-	}).
+## Define an endpoint
+
+```go
+type HelloRequest struct {
+	Name string
+}
+
+type HelloResponse struct {
+	Greeting string `json:"greeting" doc:"The greeting."`
+}
+
+hapi.Get[HelloRequest](api, hapi.Operation{Path: "/api/v1/hello", Summary: "Say hello"}).
 	Request(
-		hapi.BearerAuth[UploadRequest](tokens.UseCases.AuthenticateSubject, func(dst *UploadRequest, subject auth.Subject) error {
-			dst.Subject = subject
-			return nil
-		}),
-		hapi.StrFromHeader(hapi.StrParam[UploadRequest]{Name: "test-header", IntoModel: func(dst *UploadRequest, value string) error {
-			dst.TestHeader = value
+		hapi.StrFromQuery(hapi.StrParam[HelloRequest]{Name: "name", IntoModel: func(dst *HelloRequest, value string) error {
+			dst.Name = value
 			return nil
 		}}),
-        hapi.FilesFromFormField("files", func(dst *UploadRequest, files []*multipart.FileHeader) error {
-            dst.Files = files
-            return nil
-        }),
 	).
-	Response(
-		hapi.ToJSON[UploadRequest, UploadResponse](func(in UploadRequest) (UploadResponse, error) {
-			if !in.Subject.HasRole("nago.dev") {
-				return UploadRespone{}, errors.New("invalid user")
-            }      
-			
-			// Run your use cases 
-			id, err := usecases.Save(in.Files[0])
-			if err != nil {
-			    return UploadResponse{}, err	
-            }       
-			
-			return UploadResponse{ID: id + "-" + in.TestHeader, When: time.Now()}, nil
-		}),
-	)
-}
+	Response(hapi.ToJSON[HelloRequest, HelloResponse](func(in HelloRequest) (HelloResponse, error) {
+		return HelloResponse{Greeting: "hello " + in.Name}, nil
+	}))
 ```
 
-This example defines a simple authenticated `POST` endpoint that:
-- Requires a bearer token for authentication
-- Reads a header value from the request
-- Stores the first file of the upload sent via a save use case
-- Returns a JSON response with an ID and timestamp
+- `hapi.Get`, `Post`, `Put` and `Delete` start an endpoint; `Response` registers it.
+- Request options: `StrFromHeader`, `StrFromQuery`, `JSONFromBody`, `JSONFromFormField`, `FilesFromFormField`,
+  `FromBinary`, `RawRequest` and `BearerAuth`.
+- Response options: `ToJSON` and `ToBinary`.
+- The struct tags `json`, `doc`, `required`, `example` and `supportingText` document the schema.
+- `hapi.Doc(api, func(*oas.OpenAPI))` changes the generated specification directly.
 
-## Dependencies
-**Requires:**
-- [Settings Management](../settings_management/)
-- (Optional) [Token Management](../settings_management/) required when bearer authentication is used
+## Documentation frontend
 
-**Is required by:**
-- None
-
-## Activation
-This system is activated via:
+The specification is served at `/api/doc/spec.json`. Serve one of the bundled frontends to browse it at
+`/api/doc/index.html`:
 
 ```go
-std.Must(cfghapi.Enable(cfg))
-```
-```go
-hapiManagement := std.Must(cfghapi.Enable(cfg))
+cfg.Serve(stoplight.Dist()) // go.wdy.de/nago/pkg/stoplight, or pkg/swagger, pkg/redocly
 ```
 
+Serve only one of them; with several, it is undefined which one is used.
+
+## Permissions
+
+HAPI declares no permissions and has no admin UI. Check the permissions in your handlers, for example with
+the subject from `BearerAuth`.
+
+## Related
+
+- [Tutorial: REST](/docs/examples/tutorial-56-rest/)
+- [Token Management](../token_management/)

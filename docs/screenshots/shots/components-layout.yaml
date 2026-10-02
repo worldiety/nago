@@ -1,0 +1,148 @@
+# Screenshots of the layout and utility component pages, rendered from example/gallery/layout.
+shots:
+  # layout
+  - example: example/gallery/layout
+    path: /alignment
+    out: content/docs/components/layout/alignment/alignment.webp
+  - example: example/gallery/layout
+    path: /back-button
+    out: content/docs/components/layout/back_button/back-button.webp
+  - example: example/gallery/layout
+    path: /box
+    out: content/docs/components/layout/box/box.webp
+  - example: example/gallery/layout
+    path: /card-layout
+    out: content/docs/components/layout/card_layout/card-layout.webp
+  - example: example/gallery/layout
+    path: /footer
+    out: content/docs/components/layout/footer/footer.webp
+  - example: example/gallery/layout
+    path: /frame
+    out: content/docs/components/layout/frame/frame.webp
+  - example: example/gallery/layout
+    path: /grid
+    out: content/docs/components/layout/grid/grid.webp
+  - example: example/gallery/layout
+    path: /grid-cell
+    out: content/docs/components/layout/grid_cell/grid-cell.webp
+  - example: example/gallery/layout
+    path: /hstack
+    out: content/docs/components/layout/hstack/hstack.webp
+  - example: example/gallery/layout
+    path: /position
+    out: content/docs/components/layout/position/position.webp
+  - example: example/gallery/layout
+    path: /scroll-view
+    width: 640
+    out: content/docs/components/layout/scroll_view/scroll-view.webp
+  - example: example/gallery/layout
+    path: /space
+    out: content/docs/components/layout/space/space.webp
+  - example: example/gallery/layout
+    path: /spacer
+    out: content/docs/components/layout/spacer/spacer.webp
+  - example: example/gallery/layout
+    path: /split-view
+    out: content/docs/components/layout/split_view/split-view.webp
+  - example: example/gallery/layout
+    path: /stack
+    out: content/docs/components/layout/stack/stack.webp
+  - example: example/gallery/layout
+    path: /stack
+    width: 400
+    out: content/docs/components/layout/stack/stack-small.webp
+  - example: example/gallery/layout
+    path: /switcher
+    out: content/docs/components/layout/switcher/switcher.webp
+  - example: example/gallery/layout
+    path: /table-parts
+    out: content/docs/components/layout/table_cell/table.webp
+  - example: example/gallery/layout
+    path: /table-parts
+    out: content/docs/components/layout/table_column/table.webp
+  - example: example/gallery/layout
+    path: /table-parts
+    out: content/docs/components/layout/table_row/table.webp
+  - example: example/gallery/layout
+    path: /text-layout
+    out: content/docs/components/layout/text_layout/text-layout.webp
+  - example: example/gallery/layout
+    path: /three-column
+    width: 1300
+    out: content/docs/components/layout/threecolumn/three-column.webp
+  - example: example/gallery/layout
+    path: /two-column
+    out: content/docs/components/layout/twocolumn/two-column.webp
+  - example: example/gallery/layout
+    path: /vstack
+    out: content/docs/components/layout/vstack/vstack.webp
+  - example: example/gallery/layout
+    path: /dnd
+    out: content/docs/components/layout/dnd/dnd.webp
+  - example: example/gallery/layout
+    path: /hover-group
+    out: content/docs/components/layout/hover_group/hover-group.webp
+    steps:
+      - hover: .group
+      - wait: 500ms
+
+  # utility
+  - example: example/gallery/layout
+    path: /canvas
+    out: content/docs/components/utility/canvas/canvas.webp
+    steps:
+      - click: canvas
+      - wait: 1s
+  - example: example/gallery/layout
+    path: /theme-switcher
+    out: content/docs/components/utility/theme_switcher/theme-switcher.webp
+    steps:
+      - clickText: Theme
+      - wait: 500ms
+  - example: example/gallery/layout
+    path: /background
+    out: content/docs/components/utility/background/background.webp
+  - example: example/gallery/layout
+    path: /border
+    out: content/docs/components/utility/border/border.webp
+  - example: example/gallery/layout
+    path: /color
+    out: content/docs/components/utility/color/color.webp
+  - example: example/gallery/layout
+    path: /divider
+    out: content/docs/components/utility/divider/divider.webp
+  - example: example/gallery/layout
+    path: /font
+    out: content/docs/components/utility/font/font.webp
+  - example: example/gallery/layout
+    path: /length
+    out: content/docs/components/utility/length/length.webp
+  - example: example/gallery/layout
+    path: /outline
+    out: content/docs/components/utility/outline/outline.webp
+  - example: example/gallery/layout
+    path: /padding
+    out: content/docs/components/utility/padding/padding.webp
+  - example: example/gallery/layout
+    path: /pager
+    out: content/docs/components/utility/pager/pager.webp
+  - example: example/gallery/layout
+    path: /shadow
+    padding: 40
+    out: content/docs/components/utility/shadow/shadow.webp
+  - example: example/gallery/layout
+    path: /tabs
+    out: content/docs/components/utility/tabs/tabs.webp
+  - example: example/gallery/layout
+    path: /tabs
+    out: content/docs/components/utility/page/tabs.webp
+  - example: example/gallery/layout
+    path: /transformation
+    out: content/docs/components/utility/transformation/transformation.webp
+  - example: example/gallery/layout
+    path: /view-that-matches
+    out: content/docs/components/utility/view_that_matches/view-that-matches.webp
+  - example: example/gallery/layout
+    path: /view-that-matches
+    width: 400
+    out: content/docs/components/utility/view_that_matches/view-that-matches-small.webp

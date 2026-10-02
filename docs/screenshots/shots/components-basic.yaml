@@ -1,0 +1,121 @@
+# Screenshots of the component pages of the groups basic and feedback-and-overlay,
+# rendered from example/gallery/basic.
+shots:
+  # basic
+  - example: example/gallery/basic
+    path: /button
+    out: content/docs/components/basic/button/button.webp
+  - example: example/gallery/basic
+    path: /filled-button
+    out: content/docs/components/basic/filled_button/filled_button.webp
+  - example: example/gallery/basic
+    path: /text
+    out: content/docs/components/basic/text/text.webp
+  - example: example/gallery/basic
+    path: /rich-text
+    out: content/docs/components/basic/rich_text/rich_text.webp
+  - example: example/gallery/basic
+    path: /image
+    out: content/docs/components/basic/image/image.webp
+  - example: example/gallery/basic
+    path: /qr-code
+    out: content/docs/components/basic/qr_code/qr_code.webp
+  - example: example/gallery/basic
+    path: /checkbox
+    out: content/docs/components/basic/checkbox/checkbox.webp
+  - example: example/gallery/basic
+    path: /checkbox-field
+    out: content/docs/components/basic/checkbox_field/checkbox_field.webp
+  - example: example/gallery/basic
+    path: /radio-button
+    out: content/docs/components/basic/radio_button/radio_button.webp
+  - example: example/gallery/basic
+    path: /radio-button-field
+    out: content/docs/components/basic/radiobutton_field/radiobutton_field.webp
+  - example: example/gallery/basic
+    path: /toggle
+    out: content/docs/components/basic/toggle/toggle.webp
+  - example: example/gallery/basic
+    path: /text-field
+    out: content/docs/components/basic/text_field/text_field.webp
+  - example: example/gallery/basic
+    path: /select
+    out: content/docs/components/basic/select/select.webp
+  - example: example/gallery/basic
+    path: /slider
+    out: content/docs/components/basic/slider/slider.webp
+  - example: example/gallery/basic
+    path: /colored-text-pill
+    out: content/docs/components/basic/colored_text_pill/colored_text_pill.webp
+  - example: example/gallery/basic
+    path: /card
+    out: content/docs/components/basic/card/card.webp
+  - example: example/gallery/basic
+    path: /webview
+    out: content/docs/components/basic/webview/webview.webp
+
+  # feedback and overlay
+  - example: example/gallery/basic
+    path: /banner
+    out: content/docs/components/feedback-and-overlay/banner/banner.webp
+  - example: example/gallery/basic
+    path: /banner-error
+    out: content/docs/components/feedback-and-overlay/banner_error/banner_error.webp
+  - example: example/gallery/basic
+    path: /banner-messages
+    out: content/docs/components/feedback-and-overlay/banner_messages/banner_messages.webp
+    width: 900
+    height: 400
+    # only the message, the "close all" button above is not translated to English yet
+    crop: "#banner-0"
+    steps:
+      - clickText: Save
+      - wait: 500ms
+  - example: example/gallery/basic
+    path: /dialog
+    out: content/docs/components/feedback-and-overlay/dialog/dialog.webp
+    width: 900
+    height: 500
+    crop: viewport
+    steps:
+      - clickText: Delete project
+      - wait: 500ms
+  - example: example/gallery/basic
+    path: /custom-dialog
+    out: content/docs/components/feedback-and-overlay/custom_dialog/custom_dialog.webp
+    width: 900
+    height: 500
+    crop: viewport
+    steps:
+      - clickText: Open dialog
+      - wait: 500ms
+  - example: example/gallery/basic
+    path: /modal
+    out: content/docs/components/feedback-and-overlay/modal/modal.webp
+    width: 900
+    height: 400
+    crop: viewport
+    steps:
+      - clickText: Show hint
+      - wait: 500ms
+  - example: example/gallery/basic
+    path: /dialog-create
+    out: content/docs/components/feedback-and-overlay/dialog_create/dialog_create.webp
+    width: 900
+    height: 700
+    crop: viewport
+    steps:
+      - clickText: New contact
+      - wait: 500ms
+  - example: example/gallery/basic
+    path: /dialog-edit
+    out: content/docs/components/feedback-and-overlay/dialog_edit/dialog_edit.webp
+    width: 900
+    height: 700
+    crop: viewport
+    steps:
+      - clickText: Edit contact
+      - wait: 500ms
+  - example: example/gallery/basic
+    path: /breadcrumbs
+    out: content/docs/components/feedback-and-overlay/breadcrumbs/breadcrumbs.webp

@@ -1,42 +1,54 @@
 ---
-# Content is auto generated
-# Manual changes will be overwritten!
 title: Box
 ---
-It lays out its children according to BoxLayout rules. By definition,
-the container clips its children. This makes it suitable for overlapping
-layouts, but usually requires absolute height and width. Shadows may require
-extra padding since clipped children cannot extend beyond the container.
+
+A box places up to nine children at fixed positions: the four corners, the four edges and the center. Children may
+overlap, which makes the box useful for badges, captions on images or controls on top of other content. A box
+clips its children and does not size itself by its content, so give it an explicit width and height.
+
+![Box](box.webp)
+
+```go
+return HStack(
+	Box(BoxLayout{
+		TopLeading:     Text("TopLeading"),
+		Center:         Text("Center"),
+		BottomTrailing: Text("BottomTrailing"),
+	}).BackgroundColor("#C9E7F8").
+		Padding(Padding{}.All(L8)).
+		Frame(Frame{}.Size(L320, L160)),
+
+	BoxAlign(BottomTrailing, Text("BoxAlign")).
+		BackgroundColor("#FDE2C4").
+		Padding(Padding{}.All(L8)).
+		Frame(Frame{}.Size(L200, L160)),
+).Gap(L16)
+```
 
 ## Constructors
-### Box
-Box is a container, in which the given children will be layout to the according BoxLayout
-rules. Note, that per definition the container clips its children. Thus, if working with shadows,
-you need to apply additional padding. Important: this container requires usually absolute height and width
-attributes and cannot work properly using wrap content semantics, because it intentionally allows overlapping.
 
-### BoxAlign
-BoxAlign creates a new Box with a single child aligned according to
-the given alignment position (e.g., Top, Center, Bottom, etc.).
+| Constructor | Description |
+|-------------|-------------|
+| `Box(layout BoxLayout) TBox` | Creates a box from a `BoxLayout`, whose fields `Top`, `Center`, `Bottom`, `Leading`, `Trailing`, `TopLeading`, `TopTrailing`, `BottomLeading` and `BottomTrailing` take the child for that position. |
+| `BoxAlign(alignment Alignment, child core.View) TBox` | Creates a box with a single child at the given [alignment](../alignment/). |
 
----
 ## Methods
+
 | Method | Description |
-|--------| ------------|
-| `AccessibilityLabel(label string)` | AccessibilityLabel sets a label used by screen readers for accessibility. |
-| `BackgroundColor(backgroundColor Color)` | BackgroundColor sets the background color of the box. |
-| `Border(border Border)` | Border sets the border styling of the box. |
-| `DisableOutsidePointerEvents(disable bool)` | DisableOutsidePointerEvents controls whether pointer events are disabled outside the box's content. |
-| `Font(font Font)` | Font sets the font style for text content inside the box. |
-| `Frame(fr Frame)` | Frame sets the layout frame of the box, including size and positioning. |
-| `FullWidth()` | FullWidth sets the box to span the full available width. |
-| `Padding(p Padding)` | Padding sets the inner spacing around the box's children. |
-| `Visible(visible bool)` | Visible controls the visibility of the box; setting false hides it. |
-| `WithFrame(fn func(Frame) Frame)` | WithFrame applies a transformation function to the box's frame and returns the updated component. |
----
+|--------|-------------|
+| `AccessibilityLabel(label string) DecoredView` | Sets a label used by screen readers for accessibility. |
+| `BackgroundColor(backgroundColor Color) DecoredView` | Sets the background color of the box. |
+| `Border(border Border) DecoredView` | Sets the border styling of the box. |
+| `DisableOutsidePointerEvents(disable bool) TBox` | Controls whether pointer events are disabled outside the box's content. |
+| `Font(font Font) DecoredView` | Sets the font style for text content inside the box. |
+| `Frame(fr Frame) DecoredView` | Sets the layout frame of the box, including size and positioning. |
+| `FullWidth() TBox` | Sets the box to span the full available width. |
+| `Padding(p Padding) DecoredView` | Sets the inner spacing around the box's children. |
+| `Visible(visible bool) DecoredView` | Controls the visibility of the box; setting false hides it. |
+| `WithFrame(fn func(Frame) Frame) DecoredView` | Applies a transformation function to the box's frame and returns the updated component. |
 
 ## Related
-- [Border](../../utility/border/)
-- [Frame](../../layout/frame/)
-- [Padding](../../utility/padding/)
 
+- [Alignment](../alignment/), [Frame](../frame/), [Position](../position/), [Grid](../grid/)
+- Tutorials: [Box](/docs/examples/tutorial-03-box/), [Container](/docs/examples/tutorial-04-container/),
+  [Gantt grid](/docs/examples/tutorial-05-gantt-grid/)

@@ -1,134 +1,68 @@
 ---
 title: Theme Management
-galleryOverview:
-  - src: "/images/systems/shared/admin_center.png"
-  - src: "/images/systems/settings_management/galleries/theme_settings/overview.png"
-galleryEdit:
-  - src: "/images/systems/settings_management/galleries/theme_settings/edit.png"
-  - src: "/images/systems/theme_management/galleries/edit.png"
 ---
 
-The Theme Management system is responsible for **theme and Corporate Identity settings**.  
-It allows configuration of logos, app icons, fonts, and color schemes, as well as legal and provider information.
+Theme Management holds the corporate identity of the application: the colors for light and dark mode, the
+fonts, logos and app icons, legal links (imprint, privacy policy, terms) and the provider contact. Colors and
+fonts are applied to all windows, changes made through the use cases are applied live.
 
-{{< swiper name="galleryOverview" loop="false" >}}
+![Theme settings](theme.webp)
 
-## Functional areas
-Theme Management offers the following key functions:
+## Enable
 
-### Corporate Identity
-- Define a **navigation bar logo** and an **app icon** (both for light and dark mode)
-- Add a **slogan** or mission statement
-- Configure **API contact information** (responsible provider, contact email, API documentation URL)
-
-### Legal information
-- Set external URLs or internal pages for:
-    - Impressum
-      Example `https://www.worldiety.de/impressum`
-    - Privacy Policy
-    - Terms & Conditions
-    - User Agreement  
-      Example: `http://localhost:3000/page/impressum`
-
-{{< swiper name="galleryEdit" loop="false" >}}
-
-### Visual customization
-- Define **fonts** and **base colors** (main, interactive, accent) via code
-- Separate colors for **light mode** and **dark mode**
-- The system derives all additional color shades automatically from the base colors
-
-### Example: Define base colors
 ```go
-import (
-    "log/slog"
-    
-	"go.wdy.de/nago/application/theme"
-	"go.wdy.de/nago/application/user"
-    "go.wdy.de/nago/pkg/std"
-)
+themes := std.Must(cfg.ThemeManagement()) // application.ThemeManagement
+```
 
-themeManagement := std.Must(cfg.ThemeManagement())
+Theme Management is always enabled when the application starts; call it only to get its use cases.
+`application.ThemeManagement` has the single field `UseCases theme.UseCases`. The data is stored as the global
+settings type `theme.Settings`, see [Settings Management](../settings_management/).
 
-// Read current colors
-colors, err := themeManagement.UseCases.ReadColors(user.SU())
-if err != nil {
-    slog.Error("failed to read theme colors", slog.Any("error", err))
-}
+## Set the colors
 
-// Update base colors
-err = themeManagement.UseCases.UpdateColors(user.SU(), theme.Colors{
-    Dark: theme.BaseColors{
-        Main:        ui.Color("#222222"),
-        Interactive: ui.Color("#0055ff"),
-        Accent:      ui.Color("#ff6600"),
-    },
-})
-if err != nil {
-    slog.Error("failed to update theme colors", slog.Any("error", err))
+Derive full color sets from three base colors and store them once:
+
+```go
+themes := std.Must(cfg.ThemeManagement())
+if !std.Must(themes.UseCases.HasColors(user.SU())) {
+	base := theme.BaseColors{Main: "#1B8C30", Interactive: "#F7A823", Accent: "#03613D"}
+	option.MustZero(themes.UseCases.UpdateColors(user.SU(), theme.Colors{
+		Dark:  themes.UseCases.Calculations.DarkMode(base),
+		Light: themes.UseCases.Calculations.LightMode(base),
+	}))
 }
 ```
 
-### Example: Define custom fonts
-```go
-import (
-    _ "embed"
-	
-    "go.wdy.de/nago/application"
-    "go.wdy.de/nago/application/settings"
-    "go.wdy.de/nago/application/theme"
-    "go.wdy.de/nago/pkg/std"
-    "go.wdy.de/nago/presentation/ui"
-)
+Without stored colors, Nago derives them from `theme.DefaultBaseColors`. The stored theme colors override the
+core color set registered with `cfg.ColorSet`; use `cfg.ColorSet` for your own color namespaces.
 
-//go:embed font/GloriaHallelujah-Regular.ttf
-var fntGloria application.StaticBytes
+## Use cases
 
-//go:embed font/Silkscreen-Bold.ttf
-var fntSilkscreenBold application.StaticBytes
+| Use case       | Description                                                                         |
+|----------------|-------------------------------------------------------------------------------------|
+| `Calculations` | Functions which derive color sets (`DarkMode`, `LightMode`, `TrueDarkMode`, `TrueLightMode`) from base colors. |
+| `UpdateColors` | Stores the colors for dark and light mode and applies them.                         |
+| `ReadColors`   | Returns the stored colors or the default ones.                                      |
+| `HasColors`    | Reports whether valid colors are stored.                                            |
+| `ResetColors`  | Removes the stored colors; takes effect after a restart.                            |
+| `UpdateFonts`  | Stores the global fonts and applies them.                                           |
+| `ReadFonts`    | Returns the global fonts.                                                           |
 
-uriGloria := cfg.Resource(fntGloria)
-uriSilkBold := cfg.Resource(fntSilkscreenRegular)
+## Permissions
 
-cfgTheme := settings.ReadGlobal[theme.Settings](std.Must(cfg.SettingsManagement()).UseCases.LoadGlobal)
-cfgTheme.Fonts.DefaultFont = "Gloria"
-cfgTheme.Fonts.Faces = nil // clear whatever has been defined in the past
-cfgTheme.Fonts.Faces = append(cfgTheme.Fonts.Faces,
-    core.FontFace{
-        Family: "Gloria",
-        Source: uriGloria,
-    },
-    core.FontFace{
-        Family: "Silk",
-        Source: uriSilkBold,
-        Weight: "bold",
-    },
-)
-settings.WriteGlobal(std.Must(cfg.SettingsManagement()).UseCases.StoreGlobal, cfgTheme)
+| Permission                 | Allows to           |
+|----------------------------|---------------------|
+| `nago.theme.colors.read`   | read the colors     |
+| `nago.theme.colors.update` | update the colors   |
 
-ui.Text("Default text in Gloria")
-ui.Text("Custom text in Silk").Font(ui.Font{Name: "Silk"})
-```
+## UI
 
-## Dependencies
-**Requires:**
-- [Settings Management](../settings_management/) for storing global theme configurations
+Logos, legal links, provider data and slogan are edited in the admin center under *Einstellungen* → *Theme*.
+Colors and fonts have no form yet, set them in code. Changes made in the settings form take effect after a
+restart.
 
-If this is not already active, it will be enabled automatically when Theme Management is activated.
+## Related
 
-**Is required by:**
-- none
-
-{{< callout type="info" >}}
-Theme Management is applied automatically on application startup via `Run()`
-{{< /callout >}}
-
-## Activation
-This system is activated via:
-
-```go
-std.Must(cfg.ThemeManagement())
-```
-```go
-themeManagement := std.Must(cfg.ThemeManagement())
-```
-
+- [Tutorial: theme](/docs/examples/tutorial-55-theme/) sets and resets the colors.
+- [Tutorial: custom font](/docs/examples/tutorial-60-customfont/) sets the fonts.
+- [Tutorial: colors](/docs/examples/tutorial-08-colors/) registers a custom color namespace.

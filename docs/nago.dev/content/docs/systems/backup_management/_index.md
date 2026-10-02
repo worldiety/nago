@@ -1,62 +1,49 @@
 ---
-title: "Backup Management"
-galleryOverview:
-  - src: "/images/systems/shared/admin_center.png"
-  - src: "/images/systems/backup_management/galleries/overview/overview.png"
-  - src: "/images/systems/backup_management/galleries/overview/backup.png"
-  - src: "/images/systems/backup_management/galleries/overview/recovery.png"
-  - src: "/images/systems/backup_management/galleries/overview/export_master_key.png"
-  - src: "/images/systems/backup_management/galleries/overview/new_master_key.png"
+title: Backup Management
 ---
 
-The Backup Management system provides full backup and restore capabilities for the application. It also allows management of the Nago master key, which is used for encrypting sensitive stores (e.g., sessions, secrets).
+Backup Management saves the complete data of the application into a zip file and restores it. It also
+exports and replaces the master key, which encrypts sensitive stores such as sessions and secrets.
 
-## Functional areas
-Backup Management provides the following key functions:
+![Backup and restore](backup.webp)
 
-### Backup
-Creates a complete backup of the application data. **Encrypted stores** remain encrypted and cannot be restored without the **master key**. The backup file is downloaded as a ZIP.
-
-{{< callout type="warning" >}}
-Ensure that no operations are performed in parallel to maintain a consistent backup.
-{{< /callout >}}
-
-### Restore
-Restores the application state from a backup file. All existing data in the restored stores will be overwritten. Only backup files from **trusted sources** should be used.
-
-{{< callout type="warning" >}}
-Encrypted stores require the master key to be restored correctly.
-{{< /callout >}}
-
-### Export Master Key
-Allows the export of the **Nago master key**. This key is required to decrypt encrypted stores in backups (e.g., sessions or secrets).
-
-{{< callout type="warning" >}}
-Handle the key securely. If exposed, all encrypted data is considered compromised.
-{{< /callout >}}
-
-### Replace Master Key
-Allows replacing the current **Nago master key** with a new one. All encrypted stores will then require the new key for decryption.
-
-{{< callout type="info" >}}
-The service must be restarted for the new key to take effect.
-{{< /callout >}}
-
-{{< swiper name="galleryOverview" loop="false" >}}
-
-## Dependencies
-**Requires:**
-- No other systems
-
-**Is required by:**
-- none
-
-## Activation
-This system is activated via:
-```go
-std.Must(cfg.BackupManagement())
-```
+## Enable
 
 ```go
-backupManagement := std.Must(cfg.BackupManagement())
+backups := std.Must(cfg.BackupManagement()) // application.BackupManagement
 ```
+
+`cfg.StandardSystems()` enables Backup Management. It has the fields `UseCases backup.UseCases` and
+`Pages uibackup.Pages` with the path `BackupAndRestore`.
+
+## Master key
+
+The master key is read from the environment variable `NAGO_MASTER_KEY` (64 hex characters). Without it, Nago
+generates a key and stores it in the file `.masterkey` in the data directory. A backup does not contain the
+master key: encrypted stores stay encrypted and can only be restored with the same key. Keep the key in a
+safe place, separate from the backups.
+
+## Use cases
+
+| Use case           | Description                                                                          |
+|--------------------|--------------------------------------------------------------------------------------|
+| `Backup`           | Writes a zip with all stores. Encrypted stores stay encrypted.                        |
+| `Restore`          | Restores the stores from a backup and overwrites existing data. Stores which are not in the backup stay unchanged. |
+| `ExportMasterKey`  | Returns the master key as hex.                                                       |
+| `ReplaceMasterKey` | Writes a new master key into `.masterkey`; it takes effect after a restart.          |
+
+`backup.AsBackupFile` wraps `Backup` into a downloadable file named `backup_<time>.zip`.
+
+## Permissions
+
+| Permission                      | Allows to                  |
+|---------------------------------|----------------------------|
+| `nago.backup.backup`            | create backups             |
+| `nago.backup.restore`           | restore backups            |
+| `nago.backup.masterkey.export`  | export the master key      |
+| `nago.backup.masterkey.replace` | replace the master key     |
+
+## UI
+
+The page `admin/backup-and-restore` creates and restores backups and manages the master key. The admin center
+shows the card *Backup und Wiederherstellung* in the group *System*.

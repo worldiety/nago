@@ -1,0 +1,237 @@
+# Screenshots of the example pages for the tutorials 60 and above. Paths in "out" are relative to docs/nago.dev.
+# Run: cd docs/screenshots && go run . -f shots/examples-b.yaml [-only tutorial-60-customfont]
+defaults:
+  width: 1200
+  height: 800
+  scale: 2
+  crop: auto
+  padding: 24
+  quality: 90
+
+shots:
+  - example: tutorial-60-customfont
+    out: content/docs/examples/tutorial-60-customfont/screenshot.webp
+
+  - example: tutorial-61-scheduler
+    out: content/docs/examples/tutorial-61-scheduler/screenshot.webp
+    admin: true
+    steps:
+      - login: true
+      - goto: /admin/scheduler/overview
+      - wait: 1s
+
+  - example: tutorial-62-qrcode
+    out: content/docs/examples/tutorial-62-qrcode/screenshot.webp
+
+  - example: tutorial-65-bar-chart
+    out: content/docs/examples/tutorial-65-bar-chart/screenshot.webp
+    steps:
+      - wait: 1s
+
+  - example: tutorial-65-font-variations
+    out: content/docs/examples/tutorial-65-font-variations/screenshot.webp
+    width: 1400
+
+  - example: tutorial-66-line-chart
+    out: content/docs/examples/tutorial-66-line-chart/screenshot.webp
+    steps:
+      - wait: 1s
+
+  - example: tutorial-68-document
+    out: content/docs/examples/tutorial-68-document/screenshot.webp
+
+  - example: tutorial-69-esignature
+    out: content/docs/examples/tutorial-69-esignature/screenshot.webp
+    admin: true
+    steps:
+      - login: true
+      - goto: /
+      - wait: 1s
+
+  - example: tutorial-70-calendar
+    out: content/docs/examples/tutorial-70-calendar/screenshot.webp
+
+  - example: tutorial-72-video
+    out: content/docs/examples/tutorial-72-video/screenshot.webp
+    steps:
+      - wait: 2s
+
+  - example: tutorial-73-animation
+    out: content/docs/examples/tutorial-73-animation/screenshot.webp
+    steps:
+      - clickText: none
+      - wait: 500ms
+
+  - example: tutorial-74-localization
+    out: content/docs/examples/tutorial-74-localization/screenshot.webp
+
+  - example: tutorial-75-sso
+    out: content/docs/examples/tutorial-75-sso/screenshot.webp
+    admin: true
+    crop: viewport
+    steps:
+      - login: true
+      # the type is settings.TypeIdent of user.Settings
+      - goto: /admin/settings/global?type=2f503f6894af16bc3aadd0ed454fe86ff1d6bf6a459ae5ae3e0607b4
+      - wait: 1s
+      - js: "[...document.querySelectorAll('*')].filter(e => e.children.length === 0 && e.textContent.includes('Sign On')).pop()?.scrollIntoView({block: 'center'})"
+      - wait: 500ms
+
+  - example: tutorial-78-webview
+    out: content/docs/examples/tutorial-78-webview/screenshot.webp
+    steps:
+      - wait: 2s
+
+  - example: tutorial-79-pie-chart
+    out: content/docs/examples/tutorial-79-pie-chart/screenshot.webp
+    steps:
+      - wait: 1s
+
+  - example: tutorial-80-drag-and-drop
+    out: content/docs/examples/tutorial-80-drag-and-drop/screenshot.webp
+
+  - example: tutorial-81-sms
+    out: content/docs/examples/tutorial-81-sms/screenshot.webp
+    admin: true
+    steps:
+      - login: true
+      - goto: /
+      - wait: 1s
+
+  - example: tutorial-82-chatbot
+    out: content/docs/examples/tutorial-82-chatbot/screenshot.webp
+    admin: true
+    steps:
+      - login: true
+      - goto: /
+      - wait: 1s
+
+  - example: tutorial-83-background
+    out: content/docs/examples/tutorial-83-background/screenshot.webp
+    crop: viewport
+
+  - example: tutorial-84-multiline-textfield
+    out: content/docs/examples/tutorial-84-multiline-textfield/screenshot.webp
+
+  - example: tutorial-85-eventsourcing-decide-evolve
+    out: content/docs/examples/tutorial-85-eventsourcing-decide-evolve/screenshot.webp
+
+  - example: tutorial-86-flow
+    out: content/docs/examples/tutorial-86-flow/screenshot.webp
+    admin: true
+    steps:
+      - login: true
+      - goto: /admin/nago-flow/workspaces
+      - wait: 1s
+
+  - example: tutorial-87-navsplitview
+    out: content/docs/examples/tutorial-87-navsplitview/screenshot.webp
+
+  - example: tutorial-88-filtered-list
+    out: content/docs/examples/tutorial-88-filtered-list/screenshot.webp
+    steps:
+      - type: { selector: "input", text: "an" }
+      - wait: 500ms
+
+  - example: tutorial-89-select
+    out: content/docs/examples/tutorial-89-select/screenshot.webp
+
+  - example: tutorial-90-long-list
+    out: content/docs/examples/tutorial-90-long-list/screenshot.webp
+    crop: viewport
+
+  - example: tutorial-91-hydration
+    out: content/docs/examples/tutorial-91-hydration/screenshot.webp
+    path: /test/example
+
+  - example: tutorial-92-raw-html
+    out: content/docs/examples/tutorial-92-raw-html/screenshot.webp
+
+  - example: tutorial-93-canvas
+    out: content/docs/examples/tutorial-93-canvas/screenshot.webp
+    steps:
+      - wait: 1s
+      # the canvas only draws on pointer events, the image loads with the first one
+      - js: &pointer "(() => { const c = document.querySelector('canvas'); const r = c.getBoundingClientRect(); for (const t of ['pointerdown', 'pointermove', 'pointermove', 'pointerup']) c.dispatchEvent(new PointerEvent(t, {bubbles: true, pointerId: 1, isPrimary: true, clientX: r.left + 180, clientY: r.top + 140})) })()"
+      - wait: 1s
+      - js: *pointer
+      - wait: 1s
+
+  - example: tutorial-94-canvas-editor
+    out: content/docs/examples/tutorial-94-canvas-editor/screenshot.webp
+    steps:
+      - wait: 1s
+      - js: *pointer
+      - wait: 1s
+      - js: *pointer
+      - wait: 1s
+
+  - example: tutorial-95-accordion
+    out: content/docs/examples/tutorial-95-accordion/screenshot.webp
+    steps:
+      - clickText: Accordion 1
+      - wait: 500ms
+
+  - example: tutorial-96-switcher
+    out: content/docs/examples/tutorial-96-switcher/screenshot.webp
+    crop: viewport
+    steps:
+      # the images come from picsum.photos
+      - wait: 6s
+      # the first switcher shows no image, the second one does
+      - js: "[...document.querySelectorAll('*')].filter(e => e.children.length === 0 && e.textContent.includes('Object')).pop()?.scrollIntoView({block: 'start'})"
+      - wait: 500ms
+
+  - example: tutorial-97-stepper
+    out: content/docs/examples/tutorial-97-stepper/screenshot.webp
+
+  - example: tutorial-98-flow-chart
+    out: content/docs/examples/tutorial-98-flow-chart/screenshot.webp
+    crop: viewport
+    steps:
+      - wait: 1s
+
+  - example: tutorial-99-split-view
+    out: content/docs/examples/tutorial-99-split-view/screenshot.webp
+
+  - example: tutorial-99-timeframe
+    out: content/docs/examples/tutorial-99-timeframe/screenshot.webp
+
+  - example: tutorial-100-timeframe
+    out: content/docs/examples/tutorial-100-timeframe/screenshot.webp
+
+  - example: tutorial-101-slider
+    out: content/docs/examples/tutorial-101-slider/screenshot.webp
+
+  - example: tutorial-103-ndb
+    out: content/docs/examples/tutorial-103-ndb/screenshot.webp
+
+  - example: tutorial-104-sandbox-exec
+    out: content/docs/examples/tutorial-104-sandbox-exec/screenshot.webp
+
+  - example: tutorial-106-pdf-viewer
+    out: content/docs/examples/tutorial-106-pdf-viewer/screenshot.webp
+    steps:
+      - wait: 2s
+
+  - example: tutorial-107-signature-field
+    out: content/docs/examples/tutorial-107-signature-field/screenshot.webp
+
+  - example: tutorial-108-hero
+    out: content/docs/examples/tutorial-108-hero/screenshot.webp
+    crop: viewport
+
+  - example: tutorial-109-alert-banner
+    out: content/docs/examples/tutorial-109-alert-banner/screenshot.webp
+
+  - example: tutorial-110-dialog-and-alerts
+    out: content/docs/examples/tutorial-110-dialog-and-alerts/screenshot.webp
+    steps:
+      - clickText: Show Dialog
+      - wait: 500ms
+
+  - example: tutorial-111-typography
+    out: content/docs/examples/tutorial-111-typography/screenshot.webp
+
+  - example: tutorial-112-form
+    out: content/docs/examples/tutorial-112-form/screenshot.webp

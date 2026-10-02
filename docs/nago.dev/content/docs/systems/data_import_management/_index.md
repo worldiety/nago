@@ -1,113 +1,86 @@
 ---
 title: Data Import Management
-galleryOverview:
-- src: "/images/systems/shared/admin_center.png"
-- src: "/images/systems/data_import_management/galleries/overview/admin_center.png"
-- src: "/images/systems/data_import_management/galleries/overview/user_importer.png"
-galleryWorkflow:
-- src: "/images/systems/data_import_management/galleries/workflow/new_user_import.png"
-- src: "/images/systems/data_import_management/galleries/workflow/data_uploaded.png"
-- src: "/images/systems/data_import_management/galleries/workflow/mapping_schema_1.png"
-- src: "/images/systems/data_import_management/galleries/workflow/mapping_schema_2.png"
-- src: "/images/systems/data_import_management/galleries/workflow/mapped_data.png"
-- src: "/images/systems/data_import_management/galleries/workflow/validation_and_transformation.png"
-- src: "/images/systems/data_import_management/galleries/workflow/import_options.png"
-- src: "/images/systems/data_import_management/galleries/workflow/import_status.png"
 ---
 
+Data Import Management imports external data, such as CSV, JSON or PDF forms, into your application. A
+*parser* reads the raw data into entries of a *staging*, a draft batch. In the admin UI an administrator maps
+the source fields to the target fields, reviews, corrects, confirms or ignores single entries and finally
+starts the import. An *importer* writes the entries into your domain.
 
-**Data Import Management** provides tools to import structured and semi-structured data into the Nago ecosystem.  
-It allows mapping uploaded data to existing internal entities, such as users, enabling data reuse and synchronization across systems.  
-Therefore, it supports multiple data formats such as **CSV**, **JSON** and **PDF AcroForms**, and provides interactive tools for reviewing, transforming and importing data. 
+![Data import](importers.webp)
 
-Data Import Management is designed for administrators and power users who need to import, validate, and align data with the internal structures of the Nago application.
+## Enable
 
-{{< swiper name="galleryOverview" loop="false" >}}
-
-## Functional areas
-Data Import Management provides the following key functions:
-
-### Data staging and review
-- Upload and stage data from supported formats
-- Preview parsed records before importing
-- Identify and resolve potential validation issues early
-- Available data formats depend on which **parsers** are activated in the configuration
-
-{{< callout type="info" >}}
-Parsers are modular components that must be explicitly enabled by the developer.  
-This allows the application to control which input formats (e.g., CSV, JSON, PDF AcroForms) are supported.
-{{< /callout >}}
-
-Parsers can be activated via:
 ```go
+import cfgdataimport "go.wdy.de/nago/application/dataimport/cfg"
+
+imports := std.Must(cfgdataimport.Enable(cfg)) // cfgdataimport.Management
+```
+
+`cfgdataimport.Management` has the fields `UseCases dataimport.UseCases` and `Pages uidataimport.Pages`.
+
+Parsers and importers are not registered automatically. Register the built-in ones and your own at startup:
+
+```go
+import (
+	"go.wdy.de/nago/application/dataimport/importer/userimporter"
+	"go.wdy.de/nago/application/dataimport/parser/csv"
+)
+
 option.MustZero(imports.UseCases.RegisterParser(user.SU(), csv.NewParser()))
+option.MustZero(imports.UseCases.RegisterImporter(user.SU(), userimporter.NewImporter(std.Must(cfg.UserManagement()).UseCases)))
 ```
 
-### Field mapping
-- Define a dedicated import schema for each uploaded file
-- Map imported data fields to existing entity attributes
-- Automatically detect matching fields based on header names or structure
+Built-in parsers: `csv.NewParser()`, `json.NewParser()` (also JSON lines) and `pdf.NewParser()` (PDF
+AcroForms), in `go.wdy.de/nago/application/dataimport/parser/...`. The built-in importer
+`userimporter.NewImporter` creates users. Implement `parser.Parser` or `importer.Importer` for your own
+formats and targets.
 
-### Validation and transformation
-- Perform manual validation of imported data
-- Apply custom transformation logic to adapt input before importing
-- Detect conflicts (e.g., duplicates or missing required fields)
-- Track import progress
+## Use cases
 
-### Import execution
-- Execute imports into existing repositories
-- Review imported entities or error logs directly within the Admin Center
+| Use case                       | Description                                                       |
+|--------------------------------|-------------------------------------------------------------------|
+| `RegisterParser`, `RegisterImporter` | Register a parser or importer.                              |
+| `FindParsers`, `FindImporters`, `FindImporterByID` | List the registered parsers and importers.    |
+| `CreateStaging`                | Creates a staging for an importer.                                |
+| `FindStagingByID`, `FindStagingsForImporter` | Load stagings.                                      |
+| `DeleteStaging`                | Deletes a staging and its entries.                                |
+| `Parse`                        | Parses raw data into entries of a staging.                        |
+| `FilterEntries`, `FindEntryByID` | Load entries of a staging.                                      |
+| `UpdateStagingTransformation`  | Sets the mapping from source fields to target fields.             |
+| `UpdateEntryConfirmation`      | Marks an entry as reviewed.                                       |
+| `UpdateEntryIgnored`           | Excludes an entry from the import.                                |
+| `UpdateEntryTransformed`       | Overrides the transformed result of an entry.                     |
+| `CalculateStagingReviewStatus` | Counts total, confirmed, ignored and imported entries.            |
+| `Import`                       | Runs the importer for a staging.                                  |
 
-## Functional Flow
-1. **Select Importer and Format**  
-   Users choose the import type (e.g., user import) and file format (CSV, JSON, PDF).
+## Permissions
 
-2. **Upload File**  
-   Depending on the parser configuration, supported file types can be uploaded directly.
+| Permission                                      | Allows to                         |
+|-------------------------------------------------|-----------------------------------|
+| `nago.dataimport.parser.register`               | register parsers                  |
+| `nago.dataimport.importer.register`             | register importers                |
+| `nago.dataimport.findparsers`                   | list parsers                      |
+| `nago.dataimport.findimporter`                  | list importers                    |
+| `nago.dataimport.createstaging`                 | create stagings                   |
+| `nago.dataimport.findstaging`                   | view stagings                     |
+| `nago.dataimport.deletestaging`                 | delete stagings                   |
+| `nago.dataimport.parse`                         | parse data                        |
+| `nago.dataimport.filterentries`                 | list entries                      |
+| `nago.dataimport.findentrybyid`                 | view an entry                     |
+| `nago.dataimport.updatestagingtransformation`   | change the field mapping          |
+| `nago.dataimport.entry.updateconfirmation`      | confirm entries                   |
+| `nago.dataimport.entry.updateignored`           | ignore entries                    |
+| `nago.dataimport.entry.updatetransformed`       | override entries                  |
+| `nago.dataimport.entry.calculatestagingstatus`  | calculate the review status       |
+| `nago.dataimport.import`                        | run the import                    |
 
-3. **Field Mapping**  
-   The uploaded data is automatically mapped to existing entity structures.
-   Mappings can be reviewed, adjusted, or manually filled in for missing fields.
+## UI
 
-4. **Review Entries**  
-   Each imported entry can be viewed side by side:
-   - Raw input data
-   - Transformed application entity  
-     Users can confirm or reject entries, navigate through records, and monitor progress.
+The admin center shows a card per registered importer in the group *Daten Importe*. It leads to
+`admin/data/stagings?importer=<id>`; the other pages are `admin/data/select-parser`, `admin/data/staging`
+and `admin/data/entry`.
 
-5. **Import Execution**  
-   Confirmed entries are imported into the system.  
-   Options include continuing on errors and merging duplicates.  
-   Merge behavior can be customized (e.g., whether new values override existing ones).
+## Related
 
-{{< swiper name="galleryWorkflow" loop="false" >}}
-
-## Extensibility
-{{< callout type="info" >}}
-The system is **extensible** — developers can register custom parsers and importers  
-by implementing the `parser.Parser` and `importer.Importer` interfaces.
-{{< /callout >}}
-
-- **Importer Interface** — Defines how parsed data is imported into specific domain entities.
-- **Parser Interface** — Defines how raw file content (CSV, JSON, etc.) is parsed into structured objects.
-
-
-
-## Dependencies
-Data Import Management operates independently and does not depend on other systems.
-
-## Activation
-This system is activated via:
-```go
-importManagement := std.Must(cfgdataimport.Enable(cfg))
-```
-
-The importer for user entities is activated via:
-```go
-userManagementUCs := std.Must(cfg.UserManagement()).UseCases
-
-option.MustZero(imports.UseCases.RegisterImporter(user.SU(), userimporter.NewImporter(userManagementUCs)))
-option.MustZero(imports.UseCases.RegisterParser(user.SU(), csv.NewParser()))
-option.MustZero(imports.UseCases.RegisterParser(user.SU(), pdf.NewParser()))
-option.MustZero(imports.UseCases.RegisterParser(user.SU(), json.NewParser()))
-```
+- [Tutorial: data importer](/docs/examples/tutorial-62-dataimporter/)

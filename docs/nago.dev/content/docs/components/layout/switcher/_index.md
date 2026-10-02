@@ -1,69 +1,73 @@
 ---
-# Content is auto generated
-# Manual changes will be overwritten!
 title: Switcher
 ---
-It is responsive and can switch between [HStack] and [VStack] during rendering.
+
+The switcher of package [`switcher`](https://github.com/worldiety/nago/tree/main/presentation/ui/switcher) shows
+one of several pages and a bar of icon buttons to switch between them. Each page has an ID, a title, an icon, its
+content and an optional banner image. By default the bar is vertical on wide windows and horizontal on small ones.
+
+![Switcher](switcher.webp)
+
+```go
+pages := []switcher.TSwitcherPage{
+	switcher.SwitcherPage("billing", "Billing", icons.Banknotes,
+		VStack(
+			Text("Billing").Font(HeadlineSmall),
+			Text("Invoices, payment methods and your billing address."),
+		).Alignment(Leading).Gap(L8),
+	),
+	switcher.SwitcherPage("favorites", "Favorites", icons.Heart,
+		Text("Everything you marked as favorite."),
+	),
+	switcher.SwitcherPage("documents", "Documents", icons.DocumentText,
+		Text("Contracts and other documents."),
+	),
+}
+
+return switcher.Switcher(pages, core.AutoState[string](wnd)).
+	Frame(Frame{Width: L880})
+```
+
+The state holds the ID of the active page; if it is empty, the first page is shown. The constructors panic if
+`pages` is empty or if the page IDs are empty or not unique.
 
 ## Constructors
-### HStack
-HStack is a container, in which the given children will be layout in a row according to the applied
-alignment rules. Note, that per definition the container clips its children. Thus, if working with shadows,
-you need to apply additional padding.
 
-### Stack
-Stack is a responsive variant which decides between [VStack] and [HStack].
+| Constructor | Description |
+|-------------|-------------|
+| `switcher.Switcher(pages []TSwitcherPage, state *core.State[string]) TSwitcher` | Responsive variant which decides between a horizontal and a vertical layout. |
+| `switcher.HSwitcher(pages []TSwitcherPage, state *core.State[string]) TSwitcher` | Fixed horizontal variant of Switcher. |
+| `switcher.VSwitcher(pages []TSwitcherPage, state *core.State[string]) TSwitcher` | Fixed vertical variant of Switcher. |
+| `switcher.SwitcherPage(id, title string, icon core.SVG, content core.View) TSwitcherPage` | Creates a page to be used in a TSwitcher. |
 
-### VStack
-VStack is a container, in which the given children will be layout in a column according to the applied
-alignment rules. Note, that per definition the container clips its children. Thus, if working with shadows,
-you need to apply additional padding.
-
----
 ## Methods
+
+`TSwitcher`:
+
 | Method | Description |
-|--------| ------------|
-| `AccessibilityLabel(label string)` | AccessibilityLabel sets the label used by screen readers for accessibility. |
-| `Action(f func())` | Action sets the callback function to be invoked when the stack is clicked or tapped. |
-| `Alignment(alignment Alignment)` |  |
-| `Animation(animation Animation)` |  |
-| `Append(children ...)` |  |
-| `Background(bg Background)` |  |
-| `BackgroundColor(color Color)` |  |
-| `Border(border Border)` |  |
-| `Enabled(enabled bool)` | Enabled has only an effect if StylePreset is applied, otherwise it is ignored. |
-| `FocusedBackgroundColor(backgroundColor Color)` | FocusedBackgroundColor sets the background color of the stack when it is focused (e.g., via keyboard navigation). |
-| `FocusedBorder(border Border)` | FocusedBorder sets the border styling when the stack is focused. |
-| `Font(font Font)` | Font sets the font style applied to text content inside the stack. |
-| `Frame(frame Frame)` |  |
-| `FullWidth()` |  |
-| `Gap(gap Length)` |  |
-| `HRef(url core.URI)` | HRef sets the URL that the button navigates to when clicked if no action is specified. If both URL and Action are set, the URL takes precedence. This avoids another render cycle if the only goal is to navigate to a different page. It also avoids issues with browser which block async browser interactions like Safari. In fact, the [core.Navigation.Open] does not work properly on Safari. See also [TButton.Target]. |
-| `HoveredBackgroundColor(backgroundColor Color)` | HoveredBackgroundColor sets the background color of the stack when the user hovers over it. |
-| `HoveredBorder(border Border)` | HoveredBorder sets the border styling when the stack is hovered. |
-| `ID(id string)` | ID assigns a unique identifier to the stack, useful for testing or referencing. |
-| `Layout(layout StackLayout)` |  |
-| `NoClip(b bool)` |  |
-| `Opacity(opacity float64)` | Opacity sets the visibility of this component. The range is [0..1] where 0 means fully transparent and 1 means fully visible. This also affects all contained children. |
-| `Padding(padding Padding)` |  |
-| `Position(position Position)` | Position sets the position of the horizontal stack within its parent layout. |
-| `PressedBackgroundColor(backgroundColor Color)` | PressedBackgroundColor sets the background color of the stack when it is pressed or clicked. |
-| `PressedBorder(border Border)` | PressedBorder sets the border styling when the stack is pressed or clicked. |
-| `Responsive(fn func(wnd core.Windowstack TSwitcher) TSwitcher)` |  |
-| `StylePreset(preset StylePreset)` | StylePreset applies a predefined style preset to the stack, controlling its appearance. |
-| `Target(target string)` | Target sets the name of the browsing context, like _self, _blank, _ parent, _top. |
-| `TextColor(textColor Color)` | TextColor sets the color of text content inside the stack. |
-| `Transformation(transformation Transformation)` |  |
-| `Visible(visible bool)` | Visible controls the visibility of the stack; setting false hides it. |
-| `With(fn func(stack TSwitcher) TSwitcher)` | With applies a transformation function to the stack itself and returns the result. Useful for chaining configuration in a functional style. |
-| `WithFrame(fn func(Frame) Frame)` | WithFrame applies a transformation function to the stack's frame and returns the updated component. |
-| `WithPadding(padding Padding)` |  |
-| `Wrap(wrap bool)` | Wrap tries to reproduce the flex-box wrap behavior. This means, that if the HStack has a limited width, it must create multiple rows to place its children. Note, that the text layout behavior is unspecified (it may layout without word-wrap or use some sensible defaults). Each row and each element may have its own custom size, so this must not use a grid-like layouting. |
----
+|--------|-------------|
+| `Append(pages ...TSwitcherPage) TSwitcher` | Adds more pages to the switcher. |
+| `ContentNoPadding() TSwitcher` | Removes the predefined padding of the content part. |
+| `DynamicHeight() TSwitcher` | Sets the switcher to dynamically change its height by the active page. |
+| `Frame(frame ui.Frame) TSwitcher` | Sets the switcher's frame. |
+| `FullWidth() TSwitcher` | Sets the switcher's frame to full width. |
+| `ID(id string) TSwitcher` | Assigns a unique identifier to the switcher. |
+| `ImageObjectFit(objectFit ui.ObjectFit) TSwitcher` | Sets how the banner images of the pages are fitted. |
+| `InputValue(input *core.State[string]) TSwitcher` | Binds the switcher to an external string state, allowing it to be controlled from outside the component. |
+| `Layout(layout SwitcherLayout) TSwitcher` | Sets the layout: `SwitcherLayoutAuto`, `SwitcherLayoutVertical` or `SwitcherLayoutHorizontal`. |
+| `With(fn func(switcher TSwitcher) TSwitcher) TSwitcher` | Applies a transformation function to the switcher itself and returns the result. |
+
+`TSwitcherPage`:
+
+| Method | Description |
+|--------|-------------|
+| `Content(content core.View) TSwitcherPage` | Sets the content of a switcher page. |
+| `Icon(icon core.SVG) TSwitcherPage` | Sets the toggle icon of a switcher page. |
+| `Img(imgUri core.URI) TSwitcherPage` | Sets an optional banner image uri. |
+| `ImgAdaptive(light, dark core.URI) TSwitcherPage` | Sets an optional banner image uri by light/dark mode. |
+| `Title(title string) TSwitcherPage` | Sets the title of a switcher page. |
 
 ## Related
-- [Alignment](../../layout/alignment/)
-- [Border](../../utility/border/)
-- [Frame](../../layout/frame/)
-- [Padding](../../utility/padding/)
 
+- [Tabs](../../utility/tabs/), [Stack](../stack/)
+- Tutorials: [Switcher](/docs/examples/tutorial-96-switcher/)

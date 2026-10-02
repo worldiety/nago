@@ -1,85 +1,68 @@
 ---
 title: User Circle Management
-galleryOverview:
-  - src: "/images/systems/shared/admin_center.png"
-  - src: "/images/systems/user_circle_management/galleries/overview/admin_center.png"
-  - src: "/images/systems/user_circle_management/galleries/overview/create_1.png"
-  - src: "/images/systems/user_circle_management/galleries/overview/create_2.png"
-  - src: "/images/systems/user_circle_management/galleries/overview/create_3.png"
-  - src: "/images/systems/user_circle_management/galleries/overview/create_4.png"
-galleryManageCircle:
-  - src: "/images/systems/shared/admin_center.png"
-  - src: "/images/systems/user_circle_management/galleries/manage_circle/admin_center.png"
-  - src: "/images/systems/user_circle_management/galleries/manage_circle/user.png"
-  - src: "/images/systems/user_circle_management/galleries/manage_circle/user_overview.png"
-  - src: "/images/systems/user_circle_management/galleries/manage_circle/user_actions.png"
-  - src: "/images/systems/user_circle_management/galleries/manage_circle/roles.png"
-  - src: "/images/systems/user_circle_management/galleries/manage_circle/roles_overview.png"
-  - src: "/images/systems/user_circle_management/galleries/manage_circle/groups.png"
-  - src: "/images/systems/user_circle_management/galleries/manage_circle/groups_overview.png"
-  - src: "/images/systems/user_circle_management/galleries/manage_circle/groups_actions.png"
 ---
 
-User Circle Management allows you to create and manage **user circles** — subsets of users that can be administered independently by delegated users.  
-This enables decentralized administration, e.g., department heads or customer administrators can manage users, assign licenses, or adjust roles and groups without requiring backend access.
+User circles delegate user administration. A circle is a subset of users, defined by rules such as mail
+domains, roles or groups. Its administrators can manage the members of the circle without being global
+administrators: assign the roles and groups the circle allows, enable, disable or verify accounts, or delete
+them.
 
-{{< callout type="info" >}}
-User circles are ideal when parts of the user base should be managed independently, such as in multi-tenant, customer, or department-based environments.
-{{< /callout >}}
+![Creating a user circle](circles.webp)
 
-## Functional areas
-User Circle Management provides the following key functions:
-
-### Circle creation and management
-- Create, edit, and delete user circles
-- Define administrators who can manage users within the circle
-- Specify which roles, groups, and licenses can be managed within each circle
-- Set membership rules (e.g., by user, email domain, group, or role)
-
-{{< swiper name="galleryOverview" loop="false" >}}
-
-### Circle administration by delegated users
-For each created circle, the system automatically provides a dedicated administration section in the Admin Center.  
-Administrators of a circle can:
-- View and manage users within their circle
-- Assign or revoke roles, groups, or licenses (as permitted by the circle configuration)
-- Activate, deactivate, or verify users
-- Remove users from the circle
-  
-{{< swiper name="galleryManageCircle" loop="false" >}}
-
-{{< callout type="info" >}}
-Only users designated as **administrators** of a circle will see its card in the Admin Center.
-{{< /callout >}}
-
-## Example: Delegated license administration
-A company administrator could create a circle for "Department A" and assign the department head as an administrator.  
-That person can then:
-- See all members of Department A
-- Assign or remove licenses
-- Deactivate users who leave the department
-- Manage access without involving system-wide administrators 
- 
-This allows operational teams or customers to self-manage users within defined boundaries while preserving global control and auditability.
-
-## Dependencies
-**Requires:**
-- [User Management](../user_management/)
-- [Group Management](../group_management/)
-- [Role Management](../role_management/)
-- [License Management](../license_management/)
-
-If these systems are not already active, they will be enabled automatically when User Circle Management is activated.
-
-**Is required by:**
-- none
-
-## Activation
-This system is activated via:
-```go
-std.Must(cfgusercircle.Enable(cfg))
-```
+## Enable
 
 ```go
-userCircleManagement := std.Must(cfgusercircle.Enable(cfg))
+import cfgusercircle "go.wdy.de/nago/application/usercircle/cfg"
+
+circles := std.Must(cfgusercircle.Enable(cfg)) // cfgusercircle.Management
 ```
+
+User circles enable User, Role and Group Management. `cfgusercircle.Management` has the fields
+`UseCases usercircle.UseCases` and `Pages uiusercircles.Pages`.
+
+## Circles
+
+A circle (`usercircle.Circle`) has a name, description and avatar, and:
+
+- `Administrators`: the users who manage the circle,
+- `Roles`, `Groups`: the roles and groups the administrators may assign,
+- `CanDelete`, `CanDisable`, `CanEnable`, `CanVerify`: what the administrators may do with accounts,
+- member rules: `MemberRuleUsers`, `MemberRuleDomains` (e.g. `@example.com`), `MemberRuleRoles`,
+  `MemberRuleGroups` and `MemberRuleUsersBlacklist`.
+
+## Use cases
+
+| Use case                         | Description                                                    |
+|----------------------------------|----------------------------------------------------------------|
+| `Create`, `Update`, `DeleteByID` | Manage circles.                                                |
+| `FindAll`, `FindByID`            | Load circles.                                                  |
+| `MyCircles`                      | Lists the circles the subject administers.                     |
+| `MyCircleMembers`                | Lists the members of a circle.                                 |
+| `IsMyCircleMember`, `IsCircleAdmin` | Check membership and administration.                        |
+| `MyRoles`, `MyGroups`            | List the roles and groups a circle may assign.                 |
+| `MyCircleRolesAdd`, `MyCircleRolesRemove` | Assign or remove roles of a member.                   |
+| `MyCircleGroupsAdd`, `MyCircleGroupsRemove` | Assign or remove groups of a member.                |
+| `MyCircleUserUpdateStatus`       | Enables or disables a member.                                  |
+| `MyCircleUserVerified`           | Marks the mail address of a member as verified.                |
+| `MyCircleUserRemove`             | Deletes a member.                                              |
+
+## Permissions
+
+| Permission                  | Allows to          |
+|-----------------------------|--------------------|
+| `nago.usercircle.create`    | create circles     |
+| `nago.usercircle.update`    | update circles     |
+| `nago.usercircle.find_by_id`| view a circle      |
+| `nago.usercircle.find_all`  | list all circles   |
+| `nago.usercircle.delete`    | delete circles     |
+
+The `MyCircle*` use cases need no permission; they check that the subject is an administrator of the circle.
+
+## UI
+
+`admin/user/circles` manages the circles. Circle administrators get a card per circle in the admin center
+group *Nutzerkreise*, which leads to `admin/user/my-circle` and its pages for users, roles and groups.
+
+## Related
+
+- [Tutorial: built-in IAM](/docs/examples/tutorial-26-buildin-iam/)

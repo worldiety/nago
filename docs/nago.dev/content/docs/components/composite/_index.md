@@ -1,23 +1,15 @@
 ---
-# Content must be changed manually
 title: Composite
 weight: 2
-prev: /docs/components/basic
-next: /docs/components/layout
 sidebar:
   open: false
 ---
 
+Composite components combine several basic components into a self-contained unit with its own behavior:
+pickers with dialogs, editors, charts, tables and lists, forms and the frame of an application.
 
-Composite components are made up of multiple basic elements and encapsulate more complex behavior or structure. They often represent self-contained UI units with specific functionality.
+Many of them live in their own package below `presentation/ui`, e.g. `presentation/ui/picker` or
+`presentation/ui/form`. The snippets import `go.wdy.de/nago/presentation/ui` with a dot, like the
+[gallery](https://github.com/worldiety/nago/tree/main/example/gallery/composite) they are taken from.
 
-## Examples
-- Date pickers and color pickers
-- Multi-step forms
-- Rich text editors
-
-Use these when simple elements aren't enough, and more behavior or structure is required.
-
----
-
-➡️ See also: [Basic](../basic), [Layout](../layout), [Feedback & Overlays](../feedback-and-overlay), [Utility](../utility)
+See also [Basic](../basic/), [Layout](../layout/) and [Feedback & Overlays](../feedback-and-overlay/).

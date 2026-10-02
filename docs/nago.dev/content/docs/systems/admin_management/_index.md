@@ -1,107 +1,65 @@
 ---
 title: Admin Management
-galleryNewAdminCenterGroup:
-  - src: "/images/systems/shared/admin_center.png"
-  - src: "/images/systems/admin_management/galleries/admin_center_group/create.png"
 ---
 
-The Admin Management system provides the **Admin Center** – a central entry point for managing and configuring all available subsystems.  
-It aggregates the administration pages of all connected systems (e.g., User, Role, Session, Permission, Billing, Backup, Secret, Template) and makes them accessible in a unified interface.
+Admin Management provides the admin center at `/admin`. It collects the administration pages of all enabled
+systems as cards, grouped by topic, and shows each user only the cards they have the permission for. A search
+field filters the cards by title and text. Users reach the admin center from the account menu.
 
-## Functional areas
-Admin Management provides the following key functions:
+![Admin center](admin-center.webp)
 
-### Central administration hub
-- Provides the **Admin Center** as a unified entry point for administrators
-- Integrates all connected subsystems automatically
-- Groups systems into categories and displays them as cards
-
-### Access control
-- Each card can be associated with a **Role** or **Permission**
-- Ensures that only authorized users can access specific admin functions
-- Enforces subject validation (no access without valid user context)
-
-### Extensibility
-- Developers can register their own admin groups and cards
-- Allows integration of custom systems into the Admin Center
-
-### Example: Registering a custom admin group - with restricted access
+## Enable
 
 ```go
-import (
-	"go.wdy.de/nago/application/admin"
-    "go.wdy.de/nago/application/permission"
-    "go.wdy.de/nago/auth"
-	"go.wdy.de/nago/presentation/core"
-)
+admin := std.Must(cfg.AdminManagement()) // application.AdminManagement
+```
 
-var PermFindDashboards = permission.Declare[FindDashboards]("nago.analytics.dashboards", "Get access to all analytic dashboards", "Holders of this permissions can find all analytic dashboards.")
+Admin Management is always enabled, because [Session Management](../session_management/) depends on it.
 
-type FindDashboards func(subject auth.Subject) error
+`application.AdminManagement` has the fields:
 
-// Example: add a custom "Analytics" section to the Admin Center
+- `FindAll admin.FindAllGroups`: all groups and cards which are visible to a subject.
+- `QueryGroups admin.QueryGroups`: like `FindAll`, but filtered by a search text.
+- `Pages uiadmin.Pages` with the path `AdminCenter` (`admin`).
+
+## Add your own cards
+
+Register a callback with `AddAdminCenterGroup`. It is called for each request with the current subject:
+
+```go
 cfg.AddAdminCenterGroup(func(subject auth.Subject) admin.Group {
-	if !subject.Valid() {
-		return admin.Group{}
-	}
-
 	return admin.Group{
-		Title: "Analytics",
+		Title: "Library",
 		Entries: []admin.Card{
 			{
-				Title:      "Reports",
-				Text:       "View and generate custom reports",
-				Target:     "analytics/reports",
-				Permission: PermFindDashboards,
-			},
-			{
-				Title:  "Dashboards",
-				Text:   "Manage and customize dashboards",
-				Target: "analytics/dashboards",
-				Role:   "nago.admin",
+				Title:      "Books",
+				Text:       "Manage the book inventory.",
+				Target:     "admin/books",
+				Permission: PermFindAllBooks,
 			},
 		},
 	}
 })
 ```
 
-{{< swiper name="galleryNewAdminCenterGroup" loop="false" >}}
+If a card sets a `Role` or a `Permission`, the subject must have it; a card without both is shown to every
+signed-in user. Cards with an empty `Target` are dropped. Groups with the same title returned by different callbacks are
+merged, groups and cards are sorted by title. Return an empty `admin.Group` to hide a group.
 
-{{< callout type="info" >}}
-By adding groups via AddAdminCenterGroup, custom systems can seamlessly integrate into the Admin Center alongside built-in ones.
-{{< /callout >}}
-
-## Dependencies
-**Requires:**
-- [Billing Management](../billing_management/)
-
-If this is not already active, it will be enabled automatically when Admin Management is activated.
-
-**Optionally integrates with (if present):**
-- [Backup Management](../backup_management/)
-- [Group Management](../group_management/)
-- [License Management](../license_management/)
-- [Mail Management](../mail_management/)
-- [Permission Management](../permission_management/)
-- [Role Management](../role_management/)
-- [Secret Management](../secret_management/)
-- [Session Management](../session_management/)
-- [Template Management](../template_management/)
-- [User Management](../user_management/)
-
-**Is required by:**
-- [Session Management](../session_management/)
-
-{{< callout type="info" >}}
-Furthermore, it serves as the **UI entry point** for most other systems.
-{{< /callout >}}
-
-## Activation
-This system is activated via:
-```go
-std.Must(cfg.AdminManagement())
-```
+To replace the default behavior, mutate the system with `WithAdminManagement`:
 
 ```go
-adminManagement := std.Must(cfg.AdminManagement())
+cfg.WithAdminManagement(func(m *application.AdminManagement) {
+	// replace m.FindAll, m.QueryGroups or m.Pages
+})
 ```
+
+## Permissions
+
+Admin Management declares no permissions. Opening `/admin` only requires a signed-in user, the visibility of
+each card is controlled by its own permission.
+
+## Related
+
+Every tutorial which calls `cfg.StandardSystems()` has an admin center, for example
+[built-in IAM](/docs/examples/tutorial-26-buildin-iam/).

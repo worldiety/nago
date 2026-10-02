@@ -1,90 +1,59 @@
 ---
-# Content is auto generated
-# Manual changes will be overwritten!
 title: Button
 ---
-A basic clickable UI component used to trigger actions or events. There are three different kinds of Buttons:
-PrimaryButton, SecondaryButton & TertiaryButton.
+
+A button triggers an action when the user clicks it. Use `PrimaryButton` for the main action of a view,
+`SecondaryButton` for alternatives and `TertiaryButton` for low-emphasis actions like "Cancel" or toolbar
+icons. For a button with a custom background color, see [Filled Button](../filled_button/).
+
+![Button](button.webp)
+
+```go
+HStack(
+	PrimaryButton(func() {}).Title("Primary"),
+	SecondaryButton(func() {}).Title("Secondary"),
+	TertiaryButton(func() {}).Title("Tertiary"),
+	PrimaryButton(func() {}).Title("With icon").PreIcon(icons.SpeakerWave),
+).Gap(L16)
+```
 
 ## Constructors
-### Button
-Button creates a new Button with the given style preset.
 
-### PrimaryButton
-PrimaryButton uses an internal preset to represent a primary button. See also FilledButton for a custom-colored
-Button. This may behave slightly different (but more correctly), due to optimizations of the frontend renderer.
-```go
-	PrimaryButton(func() {
-		fmt.Println("Hello World")
-	}).Title("Hello World")
-```
+| Constructor | Description |
+|---|---|
+| `func Button(style ButtonStyle, action func()) TButton` | Creates a button with the given style preset. |
+| `func PrimaryButton(action func()) TButton` | Creates a button with the primary preset. |
+| `func SecondaryButton(action func()) TButton` | Creates a button with the secondary preset. |
+| `func TertiaryButton(action func()) TButton` | Creates a button with the tertiary preset. |
 
-![](/images/components/basic/buttons/primary-button.png)
-```go
-package main
+If you only want to navigate, set `HRef` instead of an action. This avoids a render cycle and works with browsers
+that block asynchronous navigation, like Safari.
 
-import (
-	"fmt"
-	icons "go.wdy.de/nago/presentation/icons/hero/solid"
-	"go.wdy.de/nago/presentation/ui"
-)
-
-func main() {
-	ui.PrimaryButton(func() {
-		fmt.Println("Hello World")
-	}).Title("Hello World").PreIcon(icons.SpeakerWave)
-
-}
-
-```
-
-![](/images/components/basic/buttons/primary-button-with-pre-icon.png)
-
-### SecondaryButton
-SecondaryButton uses an internal preset to represent a secondary button. See also FilledButton for a custom-colored
-Button. This may behave slightly different (but more correctly), due to optimizations of the frontend renderer.
-```go
-	SecondaryButton(func() {
-		fmt.Println("Hello World")
-	}).Title("Hello World")
-```
-
-![](/images/components/basic/buttons/secondary-button.png)
-
-### TertiaryButton
-TertiaryButton uses an internal preset to represent a tertiary button. See also FilledButton for a custom-colored
-Button. This may behave slightly different (but more correctly), due to optimizations of the frontend renderer.
-```go
-	TertiaryButton(func() {
-		fmt.Println("Hello World")
-	}).Title("Hello World")
-```
-
-![](/images/components/basic/buttons/tertiary-button.png)
-
----
 ## Methods
+
 | Method | Description |
-|--------| ------------|
-| `AccessibilityLabel(label string)` | AccessibilityLabel sets a label used by screen readers for accessibility. |
-| `Alignment(alignment Alignment)` | Alignment sets the button's content alignment |
-| `Disabled(b bool)` |  |
-| `Enabled(b bool)` | Enabled toggles whether the button is interactive. This has an effect only if a StylePreset is applied; otherwise it is ignored. |
-| `Font(font Font)` | Font sets the font style for the button's text label. |
-| `Frame(frame Frame)` | Frame sets the layout frame of the button, including size and positioning. |
-| `FullWidth()` |  |
-| `HRef(url core.URI)` | HRef sets the URL that the button navigates to when clicked if no action is specified. If both URL and Action are set, the URL takes precedence. This avoids another render cycle if the only goal is to navigate to a different page. It also avoids issues with browser which block async browser interactions like Safari. In fact, the [core.Navigation.Open] does not work properly on Safari. See also [TButton.Target]. |
-| `ID(id string)` | ID assigns a unique identifier to the button, useful for testing or referencing. |
-| `NoWrap()` | NoWrap sets a flag to set the button's text to not wrap at white spaces |
-| `PostIcon(svg core.SVG)` | PostIcon sets the icon displayed after the text label. |
-| `PreIcon(svg core.SVG)` | PreIcon sets the icon displayed before the text label. |
-| `Preset(preset ButtonStyle)` | Preset applies a style preset to the button, controlling its appearance and behavior. |
-| `Target(target string)` | Target sets the name of the browsing context, like _self, _blank, _ parent, _top. |
-| `Title(text string)` | Title sets the text label displayed on the button. |
-| `Visible(b bool)` | Visible controls the visibility of the button; setting false hides it. |
----
+|---|---|
+| `AccessibilityLabel(label string) TButton` | AccessibilityLabel sets a label used by screen readers for accessibility. |
+| `Alignment(alignment Alignment) TButton` | Alignment sets the button's content alignment. |
+| `Critical(critical bool) TButton` | Switches a primary, secondary or tertiary preset to its critical variant, e.g. for destructive actions. |
+| `Disabled(b bool) TButton` | Disables the button, the inverse of `Enabled`. |
+| `Enabled(b bool) TButton` | Enabled toggles whether the button is interactive. |
+| `Font(font Font) TButton` | Font sets the font style for the button's text label. |
+| `Frame(frame Frame) TButton` | Frame sets the layout frame of the button, including size and positioning. |
+| `FullWidth() TButton` | Makes the button take the full available width. |
+| `HRef(url core.URI) TButton` | HRef sets the URL that the button navigates to when clicked if no action is specified. |
+| `ID(id string) TButton` | ID assigns a unique identifier to the button, useful for testing or referencing. |
+| `Key(name, id string) TButton` | Key identifies the action across renders by what it acts on, so that a click on a former tree is not lost, see TStack.Key. |
+| `NoWrap() TButton` | NoWrap sets a flag to set the button's text to not wrap at white spaces. |
+| `PostIcon(svg core.SVG) TButton` | PostIcon sets the icon displayed after the text label. |
+| `PreIcon(svg core.SVG) TButton` | PreIcon sets the icon displayed before the text label. |
+| `Preset(preset ButtonStyle) TButton` | Preset applies a style preset to the button, controlling its appearance and behavior. |
+| `Target(target string) TButton` | Target sets the name of the browsing context, like _self, _blank, _ parent, _top. |
+| `Title(text string) TButton` | Title sets the text label displayed on the button. |
+| `Visible(b bool) TButton` | Visible controls the visibility of the button; setting false hides it. |
 
 ## Related
-- [Alignment](../../layout/alignment/)
-- [Frame](../../layout/frame/)
 
+- [Filled Button](../filled_button/)
+- [Text](../text/) for inline links
+- Tutorials: [Buttons](/docs/examples/tutorial-11-buttons/), [Custom button](/docs/examples/tutorial-09-custom-button/)

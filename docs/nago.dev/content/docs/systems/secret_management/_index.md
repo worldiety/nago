@@ -1,136 +1,83 @@
 ---
 title: Secret Management
-galleryOverview:
-  - src: "/images/systems/shared/admin_center.png"
-  - src: "/images/systems/secret_management/galleries/overview/admin_center.png"
-  - src: "/images/systems/secret_management/galleries/overview/secret_vault_overview.png"
-  - src: "/images/systems/secret_management/galleries/overview/create_secret.png"
-  - src: "/images/systems/secret_management/galleries/overview/edit_secret.png"
-galleryNewSecret:
-  - src: "/images/systems/secret_management/galleries/new_secret/create_secret.png"
-  - src: "/images/systems/secret_management/galleries/new_secret/edit_secret.png"
 ---
 
-The Secret Management system is responsible for storing, managing, and controlling access to sensitive data such as passwords, API keys, and configuration details for external systems (e.g., SMTP servers).  
-It ensures that all stored information is encrypted and can be shared securely with other users or groups within the platform.
+Secret Management stores credentials such as passwords, API tokens and server configurations in an encrypted
+vault. A secret belongs to its owners and can be shared with groups. Other systems look up their credentials
+here: [Mail](../mail_management/) uses SMTP secrets, [AI](../ai_management/), [SMS](../sms_management/) and
+[Chatbot](../chatbot_management/) use the secrets of their providers.
 
-Typical workflows include:
-- Creating new secrets
-- Updating existing secrets
-- Deleting secrets
-- Sharing secrets with specific users or groups
+![Creating a secret](vault.webp)
 
-## SMTP server
-{{< swiper name="galleryOverview" loop="false" >}}
-
-{{< callout type="info" >}}
-All secrets are stored in an encrypted blob storage.  
-{{< /callout >}}
-
-## Functional areas
-Secret Management operates within a single interface displaying all stored secrets.  
-Each secret is defined by its **type** in the source code, which determines its fields and behavior.
-To add a new secret type, a developer must implement the `secret.Credentials` interface and add it to the `Enum declaration`.
+## Enable
 
 ```go
-package secret
-
-type Credentials interface {
-	GetName() string
-	Credentials() bool
-	IsZero() bool
-}
+secrets := std.Must(cfg.SecretManagement()) // application.SecretManagement
 ```
+
+Secret Management is always enabled, because Mail Management depends on it. It enables User and Group
+Management and loads the master key. The vault is encrypted with this key, see
+[Backup Management](../backup_management/).
+
+`application.SecretManagement` has the fields `UseCases secret.UseCases` and `Pages uisecret.Pages` with the
+paths `Vault`, `CreateSecret` and `EditSecret`.
+
+## Sharing with the system
+
+Systems which run in the background read secrets as the system user from the group *System*
+(`group.System`). To let a system use a secret, share the secret with that group.
+
+## Custom secret types
+
+A secret type is a struct which implements `secret.Credentials` and is registered as an enum variant. Its
+exported fields become the form fields:
 
 ```go
-var _ = enum.Variant[Credentials, MySecret]()
+type MyAPI struct {
+	_     struct{} `credentialName:"My API" credentialDescription:"Access to my API."`
+	Name  string
+	Token string
+}
+
+func (MyAPI) Credentials() bool    { return true }
+func (m MyAPI) GetName() string    { return m.Name }
+func (m MyAPI) IsZero() bool       { return m == MyAPI{} }
+
+var _ = enum.Variant[secret.Credentials, MyAPI]()
 ```
 
-Examples:
-- **SMTP Server** – Required for sending emails. It must be associated with the `system` group, and the user creating it must also belong to this group.
+The tag can also set `credentialLogo` (an image URL) and `credentialHidden:"true"`. Find the best matching
+secret of a type with the use case `Match`.
 
-```go
-package secret
+## Use cases
 
-var _ = enum.Variant[Credentials, SMTP]()
+| Use case               | Description                                                                   |
+|------------------------|-------------------------------------------------------------------------------|
+| `FindMySecrets`        | Lists the secrets the subject owns or which are shared with its groups.       |
+| `FindMySecretByID`     | Loads an accessible secret.                                                   |
+| `CreateSecret`         | Creates a secret owned by the subject.                                        |
+| `UpdateMyCredentials`  | Replaces the credentials of an accessible secret.                             |
+| `UpdateMySecretGroups` | Sets the groups a secret is shared with.                                      |
+| `UpdateMySecretOwners` | Changes the owners of a secret.                                               |
+| `DeleteMySecretByID`   | Deletes an accessible secret.                                                 |
+| `FindGroupSecrets`     | Lists all secrets of a group the subject belongs to.                          |
+| `Match`                | Finds the best accessible secret of a credentials type.                       |
 
-type SMTP struct {
-	Name     string `value:"Mein SMTP Server"`
-	Host     string
-	Port     int `value:"587"`
-	Username string
-	Password string `style:"secret"`
-	_        string `credentialName:"SMTP Postausgangsserver" credentialDescription:"Ein Postausgangsserver wird benötigt, um E-Mails zu verschicken." credentialLogo:"https://www.thunderbird.net/media/img/thunderbird/favicon-196.png"`
-}
+Owners and group members have full access; there is no read-only sharing.
 
-func (SMTP) Credentials() bool {
-	return true
-}
+## Permissions
 
-func (s SMTP) GetName() string {
-	return s.Name
-}
+| Permission                       | Allows to                         |
+|----------------------------------|-----------------------------------|
+| `nago.secret.find_my_secrets`    | list own and shared secrets       |
+| `nago.secret.create`             | create secrets                    |
+| `nago.secret.credentials.update` | update credentials                |
+| `nago.secret.groups.update`      | share secrets with groups         |
+| `nago.secret.owners.update`      | change owners                     |
+| `nago.secret.delete`             | delete secrets                    |
 
-func (s SMTP) IsZero() bool {
-	return s == SMTP{}
-}
-```
-- **Jira API Token** – Used to integrate with Jira Cloud via email and token.
-```go
-package secret
+## UI
 
-var _ = enum.Variant[Credentials, Jira]()
-
-type Jira struct {
-	Name  string `value:"Meine Jira Instanz"`
-	EMail string
-	Token string `style:"secret"`
-	_     string `credentialName:"Jira API" credentialDescription:"E-Mail und Token zur API Anbindung einer Jira Cloud Instanz definieren." credentialLogo:"https://wac-cdn.atlassian.com/assets/img/favicons/atlassian/mstile-144x144.png"`
-}
-
-func (Jira) Credentials() bool {
-	return true
-}
-
-func (s Jira) GetName() string {
-	return s.Name
-}
-
-func (s Jira) IsZero() bool {
-	return s == Jira{}
-}
-```
-
-{{< swiper name="galleryNewSecret" loop="false" >}}
-
-Each struct field leads to an input field. Developers can use tags to define special UI behaviour e.g. **value**, **style** etc.
-
-{{< callout type="warning" >}}
-It's recommended to use an empty string field with the tags **credentialName**, **credentialDescription** & **credentialLogo**,
-as these are used for rendering the UI of the secret.
-{{< /callout >}}
-
-## Special characteristics
-- Secrets can be shared to specific users and groups
-- Secrets shared to users making them available in their secret store
-- Secrets shared in groups making them available to all members of those groups for relevant use cases but **not** visible in their secret store
-- The SMTP secret type is implemented by default and already available after activating the Secret Management
-
-## Dependencies
-**Requires:**
-- [User Management](../user_management/)
-- [Group Management](../group_management/)  
-
-If these are not already active, they will be enabled automatically when Secret Management is activated.
-
-**Is required by:**
-- [Mail Management](../mail_management/) – for storing SMTP configuration.
-
-## Activation
-This system is activated via the configurator:
-```go
-std.Must(cfg.SecretManagement())
-```
-```go
-secretManagement := std.Must(cfg.SecretManagement())
-```
+`admin/secret/vault` lists the secrets, `admin/secret/create` offers the available secret types and
+`admin/secret/edit` edits a secret. The admin center shows the card *Tresor und Geheimnisverwaltung* in the
+group *Tresor & Fremdsysteme*.

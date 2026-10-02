@@ -1,22 +1,30 @@
 ---
-# Content is auto generated
-# Manual changes will be overwritten!
 title: Window Title
 ---
-This component sets the browser or application window title,
-which is also displayed in the browser tab.
 
-## Constructors
-### WindowTitle
-WindowTitle creates a new TWindowTitle with the given title text.
+A window title sets the title of the browser tab. It renders nothing visible, so place it anywhere in your view.
+The headings `H1` and `Heading(1, ...)` set the window title automatically.
+
 ```go
-	WindowTitle("Nago")
+return VStack(
+	WindowTitle("Orders"),
+	Text("All your orders"),
+)
 ```
 
----
-## Methods
-| Method | Description |
-|--------| ------------|
-| `Title(title string)` |  |
----
+## Constructors
 
+| Constructor | Description |
+|-------------|-------------|
+| `WindowTitle(title string) TWindowTitle` | Creates a new TWindowTitle with the given title text. |
+
+## Methods
+
+| Method | Description |
+|--------|-------------|
+| `Title(title string) TWindowTitle` | Changes the title text. |
+
+## Related
+
+- [Text](../../basic/text/)
+- Tutorials: [Scaffold](/docs/examples/tutorial-17-scaffold/), [Hydration](/docs/examples/tutorial-91-hydration/)

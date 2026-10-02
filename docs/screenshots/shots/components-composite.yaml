@@ -1,0 +1,132 @@
+# Screenshots of the composite component pages, rendered from example/gallery/composite.
+shots:
+  - example: example/gallery/composite
+    path: /bar-chart
+    out: content/docs/components/composite/bar_chart/bar_chart.webp
+    steps:
+      - wait: 1s
+  - example: example/gallery/composite
+    path: /line-chart
+    out: content/docs/components/composite/line_chart/line_chart.webp
+    steps:
+      - wait: 1s
+  - example: example/gallery/composite
+    path: /pie-chart
+    out: content/docs/components/composite/pie_chart/pie_chart.webp
+    steps:
+      - wait: 1s
+  - example: example/gallery/composite
+    path: /calendar
+    out: content/docs/components/composite/calendar/calendar.webp
+    width: 1400
+  - example: example/gallery/composite
+    path: /countdown
+    out: content/docs/components/composite/countdown/countdown.webp
+  - example: example/gallery/composite
+    path: /code-editor
+    out: content/docs/components/composite/code_editor/code_editor.webp
+    steps:
+      - wait: 1s
+  - example: example/gallery/composite
+    path: /date-picker
+    out: content/docs/components/composite/date_picker/date_picker.webp
+  - example: example/gallery/composite
+    path: /form
+    out: content/docs/components/composite/form/form.webp
+  - example: example/gallery/composite
+    path: /password-field
+    out: content/docs/components/composite/password_field/password_field.webp
+  - example: example/gallery/composite
+    path: /toggle-field
+    out: content/docs/components/composite/toggle_field/toggle_field.webp
+  - example: example/gallery/composite
+    path: /rich-text-editor
+    out: content/docs/components/composite/rich_text_editor/rich_text_editor.webp
+    steps:
+      - wait: 1s
+  - example: example/gallery/composite
+    path: /hero
+    out: content/docs/components/composite/hero/hero.webp
+  - example: example/gallery/composite
+    path: /list
+    out: content/docs/components/composite/list/list.webp
+  - example: example/gallery/composite
+    path: /menu
+    out: content/docs/components/composite/menu/menu.webp
+    steps:
+      - clickText: Actions
+      - wait: 500ms
+  - example: example/gallery/composite
+    path: /progress
+    out: content/docs/components/composite/progress/progress.webp
+  - example: example/gallery/composite
+    path: /table
+    out: content/docs/components/composite/table/table.webp
+  - example: example/gallery/composite
+    path: /avatar
+    out: content/docs/components/composite/avatar/avatar.webp
+  - example: example/gallery/composite
+    path: /avatar-picker
+    out: content/docs/components/composite/avatar_picker/avatar_picker.webp
+  - example: example/gallery/composite
+    path: /single-image-picker
+    out: content/docs/components/composite/single_image_picker/single_image_picker.webp
+  - example: example/gallery/composite
+    path: /auto-form
+    out: content/docs/components/composite/auto_form/auto_form.webp
+  - example: example/gallery/composite
+    path: /multi-steps
+    out: content/docs/components/composite/multi_steps/multi_steps.webp
+  - example: example/gallery/composite
+    path: /signature
+    out: content/docs/components/composite/signature/signature.webp
+  - example: example/gallery/composite
+    path: /stepper
+    out: content/docs/components/composite/stepper/stepper.webp
+  - example: example/gallery/composite
+    path: /time-frame-picker
+    out: content/docs/components/composite/time_frame_picker/time_frame_picker.webp
+  - example: example/gallery/composite
+    path: /time-picker
+    out: content/docs/components/composite/time_picker/time_picker.webp
+  - example: example/gallery/composite
+    path: /palette-picker
+    out: content/docs/components/composite/palette_picker/palette_picker.webp
+  - example: example/gallery/composite
+    path: /picker
+    out: content/docs/components/composite/picker/picker.webp
+    crop: viewport
+    height: 700
+    steps:
+      - wait: 500ms
+  - example: example/gallery/composite
+    path: /scaffold
+    out: content/docs/components/composite/scaffold/scaffold.webp
+    crop: viewport
+    height: 700
+  - example: example/gallery/composite
+    path: /flow-chart
+    out: content/docs/components/composite/flow_chart/flow_chart.webp
+    steps:
+      - wait: 1s
+  - example: example/gallery/composite
+    path: /data-view
+    out: content/docs/components/composite/data_view/data_view.webp
+  - example: example/gallery/composite
+    path: /tree-view
+    out: content/docs/components/composite/tree_view/tree_view.webp
+  - example: example/gallery/composite
+    path: /screen
+    out: content/docs/components/composite/screen/screen.webp
+    crop: viewport
+    height: 700
+  - example: example/gallery/composite
+    path: /accordion
+    out: content/docs/components/composite/accordion/accordion.webp
+  - example: example/gallery/composite
+    path: /document
+    out: content/docs/components/composite/document/document.webp
+    width: 1400
+  - example: example/gallery/composite
+    path: /markdown
+    out: content/docs/components/composite/markdown/markdown.webp

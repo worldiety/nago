@@ -1,83 +1,94 @@
 ---
-# Content is auto generated
-# Manual changes will be overwritten!
 title: Picker
 ---
-It displays a list of values and lets users choose one or multiple items,
-with optional "Select all" and quick-filtering support. Rendering of both the
-selected summary and the selectable rows is customizable via callbacks. The picker can bind to external selection state or manage its own, and it
-can be presented in a dialog with configurable options.
 
-## Constructors
-### FromData
-FromData is similar to the dataview package. However, the picker is used in the dataview package itself
-and therefore we cannot depend on it without an import cycle. The current implementation does not yet
-benefit from the potential performance improvements and instead wrap the legacy api which will switch in the
-future.
+The picker selects one or more values from a slice. The field shows the current selection, a click
+opens a dialog with all values. With more than 10 values, the dialog shows a quick filter. Values are
+shown by `Stringer`, by their `String` method or by `ItemRenderer2`.
 
-### Picker
-Picker takes the given slice and state to represent the selection. Internally, it uses deep equals, to determine
-the unique set of selected elements and coordinate that with the UI state.
+![Picker](picker.webp)
+
 ```go
-package main
-
-import (
-	"go.wdy.de/nago/presentation/core"
-	"go.wdy.de/nago/presentation/ui/picker"
-)
-
-func main() {
-	type Person struct {
-		Name string
-		Age  int
-	}
-
-	persons := []Person{
-		{
-			Name: "John",
-			Age:  20,
-		},
-		{
-			Name: "Jane",
-			Age:  30,
-		},
-	}
-
-	selected := core.AutoState[[]Person](nil)
-	picker.Picker[Person]("Ich bin ein picker", persons, selected)
+type person struct {
+    Name string
+    Team string
 }
 
+func (p person) String() string {
+    return p.Name
+}
+
+func view(wnd core.Window) core.View {
+    people := []person{
+        {"Ada Lovelace", "Engineering"},
+        {"Grace Hopper", "Operations"},
+        {"Alan Turing", "Research"},
+        {"Margaret Hamilton", "Engineering"},
+    }
+
+    selected := core.AutoState[[]person](wnd).Init(func() []person {
+        return []person{people[0], people[2]}
+    })
+
+    // open the dialog right away, as if the user had clicked the field
+    presented := core.AutoState[bool](wnd).Init(func() bool { return true })
+
+    return picker.Picker[person]("Reviewers", people, selected).
+        WithDialogPresented(presented).
+        MultiSelect(true).
+        Title("Choose reviewers").
+        SupportingText("At least one reviewer is required").
+        Frame(Frame{Width: L320})
+}
 ```
 
----
-## Methods
-| Method | Description |
-|--------| ------------|
-| `AccessibilityLabel(label string)` |  |
-| `Border(border ui.Border)` |  |
-| `DetailView(detailView core.View)` | DetailView is optional and placed between the picker section and the button footer. |
-| `Dialog()` | Dialog returns the dialog view as if pressed on the actual button. |
-| `DialogOptions(opts ...)` |  |
-| `DialogPresented()` |  |
-| `Disabled(disabled bool)` |  |
-| `ErrorText(text string)` |  |
-| `Frame(frame ui.Frame)` |  |
-| `FullWidth()` |  |
-| `ItemPickedRenderer(fn func([]T) core.View)` | ItemPickedRenderer can be customized to return a non-text view for the given T. This is shown within the selected window for the currently selected items. |
-| `ItemRenderer(fn func(T) core.View)` | Deprecated: use ItemRenderer2 ItemRenderer can be customized to return a non-text view for the given T. This is shown within the picker popup. If fn is nil, the default fallback rendering will be applied. |
-| `ItemRenderer2(fn func(wnd core.Windowitem Tstate *core.State[bool]) core.View)` | ItemRenderer2 can be customized to return a non-text view for the given T. This is shown within the picker popup. If fn is nil, the default fallback rendering will be applied. |
-| `MultiSelect(mv bool)` | MultiSelect is by default false. |
-| `Padding(padding ui.Padding)` |  |
-| `QuickFilterSupported(flag bool)` | QuickFilterSupported sets the quick-filter-support and if true and values contains more than 10 items, the quick filter is shown. Default is true. |
-| `SelectAllSupported(flag bool)` | SelectAllSupported sets the select-all-support and if true and multiSelect is enabled, a checkbox to select all is shown. Default is true. |
-| `Stringer(stringer func(T) string)` |  |
-| `SupportingText(text string)` |  |
-| `Title(title string)` |  |
-| `Visible(visible bool)` |  |
-| `WithDialogPresented(state *core.State[bool])` |  |
-| `WithFrame(fn func(ui.Frame) ui.Frame)` |  |
-| `pickerTable(wnd core.Window)` |  |
-| `syncCheckboxStates(state *core.State[[]T])` |  |
-| `syncCurrentSelectedState()` |  |
----
+The example opens the dialog right away. Usually, you just pass the selection state and the user opens
+the dialog by clicking the field.
 
+## Constructors
+
+```go
+func FromData[E data.Aggregate[ID], ID ~string](label string, selectedState *core.State[[]E], data Data[E, ID]) TPicker[E]
+```
+
+FromData is similar to the dataview package.
+
+```go
+func Picker[T any](label string, values []T, selectedState *core.State[[]T]) TPicker[T]
+```
+
+Picker takes the given slice and state to represent the selection.
+
+## Methods
+
+| Method | Description |
+|--------|-------------|
+| `AccessibilityLabel(label string) ui.DecoredView` | AccessibilityLabel sets the label for screen readers. |
+| `Border(border ui.Border) ui.DecoredView` | Border sets the border. |
+| `DetailView(detailView core.View) TPicker[T]` | DetailView is optional and placed between the picker section and the button footer. |
+| `Dialog() core.View` | Dialog returns the dialog view as if pressed on the actual button. |
+| `DialogOptions(opts ...alert.Option) TPicker[T]` | DialogOptions passes options like the height to the selection dialog. |
+| `DialogPresented() *core.State[bool]` | DialogPresented returns the state which controls whether the dialog is shown. |
+| `Disabled(disabled bool) TPicker[T]` | Disabled disables the user interaction. |
+| `ErrorText(text string) TPicker[T]` | ErrorText sets a validation message below the field. |
+| `Frame(frame ui.Frame) ui.DecoredView` | Frame sets the layout frame. |
+| `FullWidth() TPicker[T]` | FullWidth expands the component to the full available width. |
+| `ItemPickedRenderer(fn func([]T) core.View) TPicker[T]` | ItemPickedRenderer can be customized to return a non-text view for the given T. This is shown within the selected window for the currently selected items. |
+| `ItemRenderer(fn func(T) core.View) TPicker[T]` | Deprecated: use ItemRenderer2 ItemRenderer can be customized to return a non-text view for the given T. This is shown within the picker popup. |
+| `ItemRenderer2(fn func(wnd core.Window, item T, state *core.State[bool]) core.View) TPicker[T]` | ItemRenderer2 can be customized to return a non-text view for the given T. This is shown within the picker popup. |
+| `MultiSelect(mv bool) TPicker[T]` | MultiSelect is by default false. |
+| `Padding(padding ui.Padding) ui.DecoredView` | Padding sets the inner padding. |
+| `QuickFilterSupported(flag bool) TPicker[T]` | QuickFilterSupported sets the quick-filter-support and if true and values contains more than 10 items, the quick filter is shown. |
+| `SelectAllSupported(flag bool) TPicker[T]` | SelectAllSupported sets the select-all-support and if true and multiSelect is enabled, a checkbox to select all is shown. |
+| `Stringer(stringer func(T) string) TPicker[T]` | Stringer sets the function which converts a value into its display text. |
+| `SupportingText(text string) TPicker[T]` | SupportingText sets a hint below the field. |
+| `Title(title string) TPicker[T]` | Title sets the title of the selection dialog. |
+| `Visible(visible bool) ui.DecoredView` | Visible shows or hides the component. |
+| `WithDialogPresented(state *core.State[bool]) TPicker[T]` | WithDialogPresented uses the given state to show or hide the dialog. |
+| `WithFrame(fn func(ui.Frame) ui.Frame) ui.DecoredView` | WithFrame transforms the current frame with the given function. |
+
+## Related
+
+- [Data View](../data_view/)
+- [Palette Picker](../palette_picker/)
+- Tutorial [tutorial-27-picker](/docs/examples/tutorial-27-picker/)

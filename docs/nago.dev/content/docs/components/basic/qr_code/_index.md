@@ -1,22 +1,32 @@
 ---
-# Content is auto generated
-# Manual changes will be overwritten!
 title: QR Code
 ---
-It generates and displays a QR code based on a given value (string). The component supports accessibility labeling and can be styled using a frame.
+
+A QR code encodes a string, e.g. a URL, as an image which a phone camera can scan. To scan codes instead, use the
+[QR Code Reader](/docs/components/composite/qr_code_reader/).
+
+![QR Code](qr_code.webp)
+
+```go
+QrCode("https://www.nago.dev").
+	AccessibilityLabel("QR code linking to nago.dev").
+	Frame(Frame{}.Size(L200, L200))
+```
 
 ## Constructors
-### QrCode
-QrCode creates a new QR code with the provided value.
 
----
+| Constructor | Description |
+|---|---|
+| `func QrCode(value string) TQrCode` | Creates a QR code for the given value. |
+
 ## Methods
+
 | Method | Description |
-|--------| ------------|
-| `AccessibilityLabel(label string)` | AccessibilityLabel sets a label for screen readers, improving accessibility. See: https://www.w3.org/WAI/tutorials/images/decision-tree/ |
-| `Frame(frame Frame)` | Frame sets the layout frame for the QR code. |
----
+|---|---|
+| `AccessibilityLabel(label string) TQrCode` | AccessibilityLabel sets a label for screen readers, improving accessibility. |
+| `Frame(frame Frame) TQrCode` | Frame sets the layout frame for the QR code. |
 
 ## Related
-- [Frame](../../layout/frame/)
 
+- [Image](../image/)
+- Tutorials: [QR code](/docs/examples/tutorial-62-qrcode/)

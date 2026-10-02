@@ -1,22 +1,41 @@
 ---
-# Content is auto generated
-# Manual changes will be overwritten!
 title: Keyboard Options
 ---
-Keyboard Options defines configuration options for virtual keyboard behavior. It allows customization of capitalization, auto-correction, and keyboard type hints. These options are primarily used in text input components to enhance user experience.
 
-## Constructors
-### KeyboardOptions
+Keyboard options are hints for the virtual keyboard of mobile devices: which keyboard type to show and whether to
+capitalize and auto-correct. Pass them to a [text field](../../basic/text_field/) with its `KeyboardOptions`
+method.
+
 ```go
-	KeyboardOptions()
+TextField("E-mail", email.Get()).
+	InputValue(email).
+	KeyboardOptions(KeyboardOptions().
+		KeyboardType(KeyboardEMail).
+		Capitalization(false).
+		AutoCorrectEnabled(false))
 ```
 
----
-## Methods
-| Method | Description |
-|--------| ------------|
-| `AutoCorrectEnabled(autoCorrectEnabled bool)` | AutoCorrectEnabled enables or disables auto-correction. |
-| `Capitalization(capitalization bool)` | Capitalization enables or disables automatic capitalization. |
-| `KeyboardType(keyboardType KeyboardType)` | KeyboardType is a hint to the frontend. Technically, it is impossible to actually guarantee anything, and you have always to considers bugs and hacks:   - a malicious user may send you anything, which would otherwise not be possible (e.g. text instead of numbers)   - Android IME hints or keyboard types are never guaranteed. A user may install third-party keyboards which just ignore anything   - a user may inject anything using wrong autocompletion or the clipboard |
----
+Keyboard types are hints only. Users may use other keyboards, paste text or send anything to your server, so
+always validate the input.
 
+## Constructors
+
+| Constructor | Description |
+|-------------|-------------|
+| `KeyboardOptions() TKeyboardOptions` | Creates options without any hints. |
+
+The keyboard types are `KeyboardDefault`, `KeyboardAscii`, `KeyboardInteger`, `KeyboardFloat`, `KeyboardEMail`,
+`KeyboardPhone`, `KeyboardSearch` and `KeyboardURL`.
+
+## Methods
+
+| Method | Description |
+|--------|-------------|
+| `AutoCorrectEnabled(autoCorrectEnabled bool) TKeyboardOptions` | Enables or disables auto-correction. |
+| `Capitalization(capitalization bool) TKeyboardOptions` | Enables or disables automatic capitalization. |
+| `KeyboardType(keyboardType KeyboardType) TKeyboardOptions` | Sets a hint for the keyboard type to show. |
+
+## Related
+
+- [Text Field](../../basic/text_field/)
+- Tutorials: [Text field](/docs/examples/tutorial-12-textfield/)

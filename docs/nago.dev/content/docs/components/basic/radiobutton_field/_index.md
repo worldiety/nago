@@ -1,24 +1,44 @@
 ---
-# Content is auto generated
-# Manual changes will be overwritten!
-title: RadioButton Field
+title: Radio Button Field
 ---
-It combines a radio button with a label
-The field can be bound to external state and visibility controls.
+
+A radio button field combines a [Radio Button](../radio_button/) with a label. It takes the `RadioStateGroup` and
+the index of its option, so you do not need to bind the state yourself.
+
+![Radio Button Field](radiobutton_field.webp)
+
+```go
+group := AutoRadioStateGroup(wnd, "sizes", 3).InitIndex(1)
+labels := []string{"Small", "Medium", "Large"}
+
+VStack(
+	Each2(group.All(), func(idx int, checked *core.State[bool]) core.View {
+		return RadioButtonField(labels[idx], &group, idx)
+	})...,
+).Alignment(Leading).Gap(L8)
+```
+
+Read the selection with `group.SelectedIndex()` or register a callback with `group.Observe`.
 
 ## Constructors
-### RadioButtonField
-RadioButtonField combines a RadioButton with a label
 
----
+| Constructor | Description |
+|---|---|
+| `func RadioButtonField(label string, stateGroup *RadioStateGroup, index int) TRadioButtonField` | Creates a labeled radio button for the option at index of the group. |
+
 ## Methods
-| Method | Description |
-|--------| ------------|
-| `Disabled(disabled bool)` | Disabled disables the radio button when set to true, preventing user interaction. |
-| `ID(id string)` |  |
-| `InputChecked(input *core.State[bool])` | InputChecked binds the radio button to the given state, enabling two-way data binding so that the selected state is synchronized with external logic. |
-| `Label(label string)` | Label sets the label of the radio button field |
-| `Name(name string)` | Name assigns a name to the checkbox field, useful for autocomplete |
-| `Visible(v bool)` | Visible controls the visibility of the radio button. Passing false will hide the component from the UI. |
----
 
+| Method | Description |
+|---|---|
+| `Disabled(disabled bool) TRadioButtonField` | Disabled disables the radio button when set to true, preventing user interaction. |
+| `ID(id string) TRadioButtonField` | Assigns a unique identifier to the field. |
+| `InputChecked(input *core.State[bool]) TRadioButtonField` | InputChecked binds the radio button to the given state, enabling two-way data binding so that the selected state is synchronized with external logic. |
+| `Label(label string) TRadioButtonField` | Label sets the label of the radio button field. |
+| `Name(name string) TRadioButtonField` | Name assigns a name to the checkbox field, useful for autocomplete. |
+| `Visible(v bool) TRadioButtonField` | Visible controls the visibility of the radio button. |
+
+## Related
+
+- [Radio Button](../radio_button/) and `RadioStateGroup`
+- [Checkbox Field](../checkbox_field/)
+- Tutorials: [Radio button](/docs/examples/tutorial-15-radiobutton/)

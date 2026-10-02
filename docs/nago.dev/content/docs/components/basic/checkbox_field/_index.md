@@ -1,39 +1,60 @@
 ---
-# Content is auto generated
-# Manual changes will be overwritten!
 title: Checkbox Field
 ---
-It combines a checkbox with a label, supporting text, and optional
-error messages. The field can be bound to external state and styled
-with padding, frame, and border. It also supports accessibility,
-keyboard options, and visibility controls.
+
+A checkbox field combines a [Checkbox](../checkbox/) with a label, a supporting text and an error text. Use it in
+forms. Clicking the label toggles the checkbox.
+
+![Checkbox Field](checkbox_field.webp)
+
+```go
+accepted := core.AutoState[bool](wnd)
+newsletter := core.AutoState[bool](wnd)
+
+VStack(
+	CheckboxField("I accept the terms of use", accepted.Get()).
+		InputValue(accepted).
+		SupportingText("You can revoke your consent at any time."),
+	CheckboxField("Subscribe to the newsletter", newsletter.Get()).
+		InputValue(newsletter).
+		ErrorText("Please confirm your email address first."),
+).Alignment(Leading).Gap(L16)
+```
+
+{{< callout type="warning" >}}
+Without `InputValue` the field renders as a read-only checkmark with its label, and the supporting and error
+texts are not shown.
+{{< /callout >}}
 
 ## Constructors
-### CheckboxField
-A CheckboxField aggregates a checkbox together with form field typical labels, hints and error texts.
 
----
+| Constructor | Description |
+|---|---|
+| `func CheckboxField(label string, value bool) TCheckboxField` | Creates a checkbox field with the given label and value. |
+
 ## Methods
+
+Some setters return `DecoredView` instead of `TCheckboxField`. Call them last in the chain.
+
 | Method | Description |
-|--------| ------------|
-| `AccessibilityLabel(label string)` | AccessibilityLabel sets the label used for accessibility purposes. |
-| `Border(border Border)` | Border sets the border styling of the checkbox field. |
-| `Disabled(b bool)` | Disabled enables or disables user interaction with the checkbox field. |
-| `Enabled(b bool)` | Enabled sets whether the checkbox field is interactive. Equivalent to Disabled(!b). |
-| `ErrorText(text string)` | ErrorText sets the validation or error message displayed below the field. |
-| `Frame(frame Frame)` | Frame sets the layout frame of the checkbox field, including size and positioning. |
-| `ID(id string)` | ID assigns a unique identifier to the checkbox field, useful for testing or referencing. |
-| `InputValue(inputValue *core.State[bool])` | InputValue binds the checkbox field to an external boolean state. |
-| `Name(name string)` | Name assigns a name to the checkbox field, useful for autocomplete |
-| `Padding(padding Padding)` | Padding sets the inner spacing around the checkbox field. |
-| `SupportingText(text string)` | SupportingText sets helper or secondary text shown below the label. |
-| `Visible(visible bool)` | Visible controls the visibility of the checkbox field; setting false hides it. |
-| `WithFrame(fn func(Frame) Frame)` | WithFrame applies a transformation function to the field's frame and returns the updated component. |
-| `checkedLabel(checked bool, label string)` | checkedLabel is a helper function, which renders a standardized passive checkbox element. This is required because the style of a disabled checkbox does not show the actual checked state and the current frontend implementation captures all events independent if it actually should do so. We also don't have a proper spec for this situation, thus lets pretend something more reasonable.  At least this fixes interactive issues when used in TMenuItem. |
----
+|---|---|
+| `AccessibilityLabel(label string) DecoredView` | AccessibilityLabel sets the label used for accessibility purposes. |
+| `Border(border Border) DecoredView` | Border sets the border styling of the checkbox field. |
+| `Disabled(b bool) TCheckboxField` | Disabled enables or disables user interaction with the checkbox field. |
+| `Enabled(b bool) TCheckboxField` | Enabled sets whether the checkbox field is interactive. |
+| `ErrorText(text string) TCheckboxField` | ErrorText sets the validation or error message displayed below the field. |
+| `Frame(frame Frame) DecoredView` | Frame sets the layout frame of the checkbox field, including size and positioning. |
+| `ID(id string) TCheckboxField` | ID assigns a unique identifier to the checkbox field, useful for testing or referencing. |
+| `InputValue(inputValue *core.State[bool]) TCheckboxField` | InputValue binds the checkbox field to an external boolean state. |
+| `Name(name string) TCheckboxField` | Name assigns a name to the checkbox field, useful for autocomplete. |
+| `Padding(padding Padding) DecoredView` | Padding sets the inner spacing around the checkbox field. |
+| `SupportingText(text string) TCheckboxField` | SupportingText sets helper or secondary text shown below the label. |
+| `Visible(visible bool) DecoredView` | Visible controls the visibility of the checkbox field; setting false hides it. |
+| `WithFrame(fn func(Frame) Frame) DecoredView` | WithFrame applies a transformation function to the field's frame and returns the updated component. |
 
 ## Related
-- [Border](../../utility/border/)
-- [Frame](../../layout/frame/)
-- [Padding](../../utility/padding/)
 
+- [Checkbox](../checkbox/)
+- [Toggle Field](/docs/components/composite/toggle_field/)
+- [Radio Button Field](../radiobutton_field/)
+- Tutorials: [Checkbox](/docs/examples/tutorial-14-checkbox/)

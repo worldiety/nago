@@ -1,24 +1,37 @@
 ---
-# Content must be changed manually
 title: Basic
 weight: 1
-next: /docs/components/composite
 sidebar:
   open: false
 ---
 
-Basic components are the fundamental building blocks of the user interface. They are simple, reusable, and commonly used across many parts of the application.
+Basic components are the small building blocks of a view: they display content or take a single input. Most of
+them live in package `presentation/ui`; a few have their own package below it.
 
-## Examples
-- Buttons
-- Checkboxes
-- Radio buttons
-- Text fields
-- Labels
-- Avatars
+**Actions**
 
-These components typically have minimal internal logic and are designed for composition into more complex structures.
+- [Button](button/): primary, secondary and tertiary buttons
+- [Filled Button](filled_button/): a button with a custom background color
 
----
+**Content**
 
-➡️ See also: [Composite](../composite), [Layout](../layout), [Feedback & Overlays](../feedback-and-overlay), [Utility](../utility)
+- [Text](text/): headlines, paragraphs and links
+- [Rich Text](rich_text/): formatted HTML content
+- [Image](image/): images and icons
+- [QR Code](qr_code/): a scannable code for a string
+- [Colored Text Pill](colored_text_pill/): tags and status badges
+- [Card](card/): a titled block of content
+- [WebView](webview/), [Video](video/) and [PDF](pdf/): embedded media
+
+**Inputs**
+
+- [Text Field](text_field/): text and number input
+- [Checkbox](checkbox/) and [Checkbox Field](checkbox_field/)
+- [Radio Button](radio_button/) and [Radio Button Field](radiobutton_field/)
+- [Toggle](toggle/): a switch with immediate effect
+- [Select](select/): a single choice from a list
+- [Slider](slider/): a number or a range
+
+Inputs bind to a `*core.State`, see the setters `InputValue` or `InputChecked`. Also pass the current value of the
+state to the constructor, e.g. `Checkbox(checked.Get()).InputValue(checked)`: most inputs display the constructor
+value, not the state.

@@ -1,0 +1,29 @@
+{{- /*
+  Renders all pages of the current section as a card grid, sorted by weight. A card shows the title and
+  a thumbnail of the bundle's screenshot.webp, if the bundle has one.
+
+  {{< example-gallery >}}
+  {{< example-gallery cols="4" >}}
+*/ -}}
+{{- $cols := .Get "cols" | default 3 -}}
+{{- $cards := slice -}}
+{{- range .Page.Pages.ByWeight -}}
+  {{- $image := "" -}}
+  {{- $width := "" -}}
+  {{- $height := "" -}}
+  {{- with .Resources.Get "screenshot.webp" -}}
+    {{- $thumb := .Fill "600x375 Top webp q80" -}}
+    {{- $image = $thumb.RelPermalink -}}
+    {{- $width = $thumb.Width -}}
+    {{- $height = $thumb.Height -}}
+  {{- end -}}
+  {{- $cards = $cards | append (partial "shortcodes/card.html" (dict
+    "link" .RelPermalink
+    "title" .LinkTitle
+    "image" $image
+    "width" $width
+    "height" $height
+    "imageStyle" "aspect-ratio: 16 / 10; object-fit: cover; object-position: top;"
+  )) -}}
+{{- end -}}
+{{- partial "shortcodes/cards.html" (dict "cols" $cols "content" (delimit $cards "" | safeHTML)) -}}

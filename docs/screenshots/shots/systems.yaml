@@ -1,0 +1,204 @@
+# Screenshots of the system pages. Paths in "out" are relative to docs/nago.dev.
+# Run: cd docs/screenshots && go run . -f shots/systems.yaml
+#
+# Admin pages are captured with the bootstrap admin (admin: true, login step). Shots of one example run in
+# the same tab, so only the first one needs the login step.
+defaults:
+  width: 1200
+  height: 700
+  scale: 2
+  crop: viewport
+  quality: 85
+
+shots:
+  # tutorial-26 enables the standard systems and user circles
+  - example: tutorial-26-buildin-iam
+    out: content/docs/systems/session_management/login.webp
+    path: /account/login
+    admin: true
+  - example: tutorial-26-buildin-iam
+    out: content/docs/systems/admin_management/admin-center.webp
+    height: 800
+    steps:
+      - login: true
+      - goto: /admin
+      - wait: 800ms
+  - example: tutorial-26-buildin-iam
+    out: content/docs/systems/user_management/users.webp
+    steps:
+      - goto: /admin/accounts
+      - wait: 800ms
+  - example: tutorial-26-buildin-iam
+    out: content/docs/systems/group_management/groups.webp
+    steps:
+      - goto: /admin/groups
+      - wait: 800ms
+  - example: tutorial-26-buildin-iam
+    out: content/docs/systems/permission_management/permissions.webp
+    steps:
+      - goto: /admin/permissions
+      - wait: 800ms
+  - example: tutorial-26-buildin-iam
+    out: content/docs/systems/secret_management/vault.webp
+    steps:
+      - goto: /admin/secret/vault
+      - wait: 800ms
+      - clickText: Secret hinzufügen
+      - wait: 800ms
+  - example: tutorial-26-buildin-iam
+    out: content/docs/systems/template_management/projects.webp
+    height: 600
+    steps:
+      - goto: /admin/template/projects
+      - wait: 800ms
+  - example: tutorial-26-buildin-iam
+    out: content/docs/systems/mail_management/dashboard.webp
+    steps:
+      - goto: /admin/mail
+      - wait: 800ms
+  - example: tutorial-26-buildin-iam
+    out: content/docs/systems/backup_management/backup.webp
+    steps:
+      - goto: /admin/backup-and-restore
+      - wait: 800ms
+  - example: tutorial-26-buildin-iam
+    out: content/docs/systems/user_circle_management/circles.webp
+    steps:
+      - goto: /admin/user/circles
+      - wait: 800ms
+      - clickText: Eintrag hinzufügen
+      - wait: 800ms
+
+  - example: tutorial-26-buildin-iam
+    out: content/docs/systems/settings_management/user-settings.webp
+    height: 800
+    steps:
+      - goto: /admin
+      - wait: 800ms
+      - type: { selector: "input", text: "Allgemeine Vorgaben" }
+      - wait: 800ms
+      - clickText: Select
+      - wait: 800ms
+
+  # tutorial-113 declares system roles and enables the AI assistant and speclink
+  - example: example/cmd/tutorial-113-ai-assistant/cmd/ai-example
+    out: content/docs/systems/role_management/roles.webp
+    admin: true
+    height: 600
+    steps:
+      - login: true
+      - goto: /admin/iam/roles
+      - wait: 800ms
+  - example: example/cmd/tutorial-113-ai-assistant/cmd/ai-example
+    out: content/docs/systems/speclink_management/requirements.webp
+    steps:
+      - goto: /admin/speclink/requirements
+      - wait: 800ms
+  - example: example/cmd/tutorial-113-ai-assistant/cmd/ai-example
+    out: content/docs/systems/ai_management/settings.webp
+    steps:
+      - goto: /admin
+      - wait: 800ms
+      - type: { selector: "input", text: "AI Assistant" }
+      - wait: 800ms
+      - clickText: Select
+      - wait: 800ms
+
+  - example: tutorial-55-theme
+    out: content/docs/systems/theme_management/theme.webp
+    admin: true
+    steps:
+      - login: true
+      - goto: /admin
+      - wait: 800ms
+      - type: { selector: "input", text: "Corporate" }
+      - wait: 800ms
+      - clickText: Select
+      - wait: 800ms
+
+  - example: tutorial-56-rest
+    out: content/docs/systems/token_management/tokens.webp
+    admin: true
+    height: 600
+    steps:
+      - login: true
+      - goto: /admin/iam/tokens
+      - wait: 800ms
+  - example: tutorial-57-adm-stores
+    out: content/docs/systems/inspector_management/inspector.webp
+    admin: true
+    steps:
+      - login: true
+      - goto: /admin/inspector
+      - wait: 800ms
+      - clickText: rebac
+      - wait: 800ms
+
+  - example: tutorial-61-scheduler
+    out: content/docs/systems/scheduler_management/scheduler.webp
+    admin: true
+    height: 800
+    steps:
+      - login: true
+      - goto: /admin/scheduler/overview?id=test.repeat
+      - wait: 3s
+
+  - example: tutorial-62-dataimporter
+    out: content/docs/systems/data_import_management/importers.webp
+    admin: true
+    height: 600
+    steps:
+      - login: true
+      - goto: /admin
+      - wait: 800ms
+      - type: { selector: "input", text: "Nutzer aus externen" }
+      - wait: 800ms
+      - clickText: Select
+      - wait: 800ms
+
+  - example: tutorial-69-esignature
+    out: content/docs/systems/signature_management/signature.webp
+    admin: true
+    width: 800
+    height: 520
+    steps:
+      - login: true
+      - goto: /
+      - wait: 800ms
+
+  - example: tutorial-74-localization
+    out: content/docs/systems/localization_management/localization.webp
+    admin: true
+    height: 600
+    steps:
+      - login: true
+      - goto: /admin/localization/directory
+      - wait: 800ms
+
+  - example: tutorial-81-sms
+    out: content/docs/systems/sms_management/send.webp
+    admin: true
+    height: 600
+    steps:
+      - login: true
+      - goto: /admin/sms/send
+      - wait: 800ms
+
+  - example: tutorial-82-chatbot
+    out: content/docs/systems/chatbot_management/send.webp
+    admin: true
+    height: 600
+    steps:
+      - login: true
+      - goto: /admin/chatbot/send
+      - wait: 800ms
+
+  - example: tutorial-88-resource-based-access
+    out: content/docs/systems/migration_management/migrations.webp
+    admin: true
+    width: 1500
+    height: 600
+    steps:
+      - login: true
+      - goto: /admin/migration/overview
+      - wait: 800ms

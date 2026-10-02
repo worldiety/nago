@@ -1,24 +1,42 @@
 ---
-# Content is auto generated
-# Manual changes will be overwritten!
 title: Rich Text Editor
 ---
-It provides an interactive editor for creating and modifying rich text content. The editor supports two-way data binding, read-only and disabled states,
-and layout configuration via frame settings.
+
+The rich text editor edits formatted text with a toolbar for headings, lists, links, colors and more.
+The value is HTML. Show the result with `RichText`.
+
+![Rich Text Editor](rich_text_editor.webp)
+
+```go
+func view(wnd core.Window) core.View {
+    html := core.AutoState[string](wnd).Init(func() string {
+        return "<h2>Release notes</h2><p>This release brings <b>faster</b> start-up and a new <i>dark mode</i>.</p><ul><li>Improved search</li><li>New export</li></ul>"
+    })
+
+    return RichTextEditor(html.Get()).
+        InputValue(html).
+        Frame(Frame{Width: L560})
+}
+```
 
 ## Constructors
-### RichTextEditor
+
+```go
+func RichTextEditor(value string) TRichTextEditor
+```
+
 RichTextEditor creates a new rich text editor with the given initial value.
 
----
 ## Methods
+
 | Method | Description |
-|--------| ------------|
-| `Frame(frame Frame)` | Frame sets the layout frame of the editor. |
-| `FullWidth()` | FullWidth expands the editor to take the full available width. |
-| `InputValue(state *core.State[string])` | InputValue binds the editor's content to a state, enabling two-way data binding. |
----
+|--------|-------------|
+| `Frame(frame Frame) TRichTextEditor` | Frame sets the layout frame of the editor. |
+| `FullWidth() TRichTextEditor` | FullWidth expands the editor to take the full available width. |
+| `InputValue(state *core.State[string]) TRichTextEditor` | InputValue binds the editor's content to a state, enabling two-way data binding. |
 
 ## Related
-- [Frame](../../layout/frame/)
 
+- [Rich Text](../../basic/rich_text/)
+- [Code Editor](../code_editor/)
+- Tutorial [tutorial-58-richtext](/docs/examples/tutorial-58-richtext/)

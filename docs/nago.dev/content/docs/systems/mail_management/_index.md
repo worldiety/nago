@@ -1,97 +1,102 @@
 ---
 title: Mail Management
-galleryOverview:
-  - src: "/images/systems/shared/admin_center.png"
-  - src: "/images/systems/mail_management/galleries/overview/overview.png"
-galleryTestMail:
-  - src: "/images/systems/mail_management/galleries/mail_config/test_mail.png"
-  - src: "/images/systems/mail_management/galleries/mail_config/test_mail_with_template.png"
-galleryLogs:
-  - src: "/images/systems/mail_management/galleries/logs/overview.png"
-galleryTemplates:
-  - src: "/images/systems/shared/admin_center.png"
-  - src: "/images/systems/template_management/galleries/overview.png"
-  - src: "/images/systems/template_management/galleries/email_templates/projects.png"
-  - src: "/images/systems/template_management/galleries/email_templates/edit.png"
 ---
-The Mail Management system handles the sending of emails within the platform.
-It requires an SMTP secret created in [Secret Management](../secret_management/).
-It also integrates with [Template Management](../template_management/) to use customizable email templates for common workflows.
 
-{{< swiper name="galleryOverview" loop="false" >}}
+Mail Management sends e-mails, for example the verification and password reset mails of
+[User Management](../user_management/). Mails are put into an outgoing queue and delivered by a background
+scheduler through an SMTP server, failed deliveries are retried. The admin UI shows statistics, the queue, the
+health of the SMTP servers and a test form.
 
-## Functional areas
-Mail Management offers the following key functions:
+![Mail dashboard](dashboard.webp)
 
-### Outgoing email handling
-- Test your email configurations
-- Send default test emails
-- Send emails that use a template
+## Enable
 
-{{< swiper name="galleryTestMail" loop="false" >}}
+```go
+mails := std.Must(cfg.MailManagement()) // application.MailManagement
+```
 
-### Mail logs
-- Keep a record of sent emails
-- View message status, timestamp, and recipient
-- Search and filter logs for troubleshooting
+Mail Management is always enabled, because [Session Management](../session_management/) depends on it. It
+enables [Secret](../secret_management/) and [Template](../template_management/) Management and installs the
+built-in mail templates as a template project.
 
-{{< swiper name="galleryLogs" loop="false" >}}
+`application.MailManagement` has the fields `UseCases mail.UseCases` and `Pages uimail.Pages`.
 
-### Email templates
-- Uses predefined templates from Template Management for standard messages
-- Templates include registration confirmation, password reset, and various notifications
-- Templates can be edited in Template Management without code changes
+## Configure an SMTP server
 
-{{< swiper name="galleryTemplates" loop="false" >}}
+1. Open the vault in the admin center (*Tresor & Fremdsysteme*) and create a secret of the type
+   *SMTP Postausgangsserver* with host, port, user, password and sender address.
+2. Share the secret with the group *System* (`group.System`).
 
-## Code usage
+Without a shared SMTP secret, mails stay in the queue. If several SMTP secrets are shared, `Mail.SmtpHint`
+selects one by name or secret ID; otherwise the first one is used.
 
-In addition to the UI workflows, Mail Management can also be used directly in code.  
-The following example demonstrates how to send a simple text email via the `SendMail` use case:
-
-{{< callout type="warning" >}}
-An SMTP server must be configured, otherwise sending emails will fail.  
-See [Secret Management](../secret_management/) for configuration details.
-{{< /callout >}}
+## Send a mail
 
 ```go
 import (
-    "go.wdy.de/nago/application/mail"
-    "go.wdy.de/nago/application/user"
-    "go.wdy.de/nago/pkg/std"
-    netmail "net/mail"
+	netmail "net/mail"
+
+	"go.wdy.de/nago/application/mail"
 )
 
-mailManagement := std.Must(cfg.MailManagement())
-
-_, err := mailManagement.UseCases.SendMail(user.SU(), mail.Mail {
-	To:       []netmail.Address{{Address: "nago@dev.com"}},
-	CC:       nil,
-	BCC:      nil,
-	From:     netmail.Address{},
-	Subject:  "Test Mail",
-	Parts:    []mail.Part{mail.NewTextPart("This mail was sent via the SendMail usecase.")},
-	SmtpHint: "",
+_, err := mails.UseCases.SendMail(subject, mail.Mail{
+	To:      []netmail.Address{{Address: "jane@example.com"}},
+	Subject: "Hello",
+	Parts:   []mail.Part{mail.NewTextPart("Hello Jane")},
 })
+if err != nil {
+	return err
+}
 ```
 
-## Dependencies
-**Requires:**
-- [Secret Management](../secret_management/) for storing SMTP credentials
-- [Template Management](../template_management/) for email templates
-- [User Management](../user_management/) for workflows such as password resets
+`mail.NewHtmlPart` and `mail.NewAttachmentPart` add HTML and attachments. Code which runs without a subject
+can publish a `mail.SendMailRequested` event on the event bus instead; it is sent as the system user.
 
-If these are not already active, they will be enabled automatically when Mail Management is activated.
+The configurator has helpers for the built-in flows: `cfg.SendVerificationMail(uid)`,
+`cfg.SendPasswordResetMail(mail)` and `cfg.SendMailTemplate(to, tpl, subjectName, bodyName, model)`, which
+renders a [template](../template_management/) and sends it.
 
-**Is required by:**
-- [Session Management](../session_management/)
+## Use cases
 
-## Activation
-This system is activated via:
-```go
-std.Must(cfg.MailManagement())
-```
+| Use case             | Description                                                              |
+|----------------------|--------------------------------------------------------------------------|
+| `SendMail`           | Puts a mail into the outgoing queue.                                     |
+| `FindOutgoingIDs`    | Lists the IDs of outgoing mails, latest first, with an optional filter. |
+| `FindOutgoingByID`   | Loads an outgoing mail with content and delivery attempts.               |
+| `DeleteOutgoingByID` | Removes a mail from the queue.                                           |
+| `RetryOutgoing`      | Puts mails back into the queue and keeps their attempt history.          |
+| `ResendOutgoing`     | Queues a new copy of a mail.                                             |
+| `Statistics`         | Aggregates delivery statistics, problems and SMTP server health.         |
 
-```go
-mailManagement := std.Must(cfg.MailManagement())
-```
+`Outgoing` is deprecated, use the use cases above.
+
+## Permissions
+
+| Permission                       | Allows to                       |
+|----------------------------------|---------------------------------|
+| `nago.mail.send`                 | send mails                      |
+| `nago.mail.outgoing.find_all`    | view the outgoing queue         |
+| `nago.mail.outgoing.find_by_id`  | view an outgoing mail           |
+| `nago.mail.outgoing.delete_by_id`| delete an outgoing mail         |
+| `nago.mail.outgoing.update`      | update an outgoing mail         |
+| `nago.mail.outgoing.retry`       | retry a failed delivery         |
+| `nago.mail.outgoing.resend`      | resend a mail                   |
+| `nago.mail.statistics`           | view statistics and SMTP health |
+| `nago.mail.init_default_templates` | set the default templates     |
+
+## UI
+
+| Path                    | Page                          |
+|-------------------------|-------------------------------|
+| `admin/mail`            | dashboard with statistics     |
+| `admin/mail/outgoing`   | outgoing queue                |
+| `admin/mail/outgoing/detail` | a single mail            |
+| `admin/mail/smtp`       | SMTP servers and their health |
+| `admin/mail/test`       | send a test mail              |
+
+The admin center shows them in the group *E-Mail und SMTP*.
+
+## Related
+
+- [Secret Management](../secret_management/) stores the SMTP credentials.
+- [Template Management](../template_management/) holds the mail templates.

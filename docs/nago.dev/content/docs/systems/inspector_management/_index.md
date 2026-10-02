@@ -1,60 +1,61 @@
 ---
 title: Inspector Management
-galleryOverview:
-  - src: "/images/systems/shared/admin_center.png"
-  - src: "/images/systems/inspector_management/galleries/overview/admin_center.png"
-  - src: "/images/systems/inspector_management/galleries/overview/list.png"
-galleryEntities:
-  - src: "/images/systems/inspector_management/galleries/entities/edit.png"
-  - src: "/images/systems/inspector_management/galleries/entities/delete.png"
-galleryBlobs:
-  - src: "/images/systems/inspector_management/galleries/blobs/actions.png"
 ---
 
-Inspector Management provides a user interface to inspect and manage **entity and blob stores**.  
-Stores form the foundation for repositories, and this system allows users to view, edit, download, and delete application data.  
-It integrates seamlessly into the Admin Center for centralized store inspection and management.
+The inspector is a maintenance tool for administrators and developers. It browses all entity and blob stores of
+the application, shows, edits, downloads and deletes entries. If an ndb database is configured, it also
+inspects its message streams and time series.
+
+![Inspector](inspector.webp)
+
+## Enable
+
+```go
+import cfginspector "go.wdy.de/nago/application/inspector/cfg"
+
+inspector := std.Must(cfginspector.Enable(cfg)) // cfginspector.Management
+```
+
+`cfginspector.Management` has the fields:
+
+- `UseCases inspector.UseCases` and `Pages uiinspector.Pages` for the stores,
+- `NDBUseCases inspectorndb.UseCases` and `NDBPages uindbinspector.Pages` for ndb databases.
+
+## Use cases
+
+| Use case  | Description                                                                 |
+|-----------|-----------------------------------------------------------------------------|
+| `FindAll` | Lists all stores with their name and kind (entity or blob store).           |
+| `Filter`  | Lists the entries of a store page by page, optionally with content preview. |
+
+The ndb use cases list databases, message types and time series, read windows of messages or data points and
+offer maintenance operations like deleting messages or rebuilding the time index.
+
+Stores can be downloaded as JSON or zip through `/api/nago/v1/inspector/download/...`.
+
+## Permissions
+
+| Permission            | Allows to                                         |
+|-----------------------|---------------------------------------------------|
+| `nago.data.inspector` | view, edit and delete the data of all stores      |
+| `nago.ndb.inspector`  | inspect and maintain ndb databases                |
 
 {{< callout type="warning" >}}
-Inspector Management is mainly intended for administrators.  
-Be careful when using this system — deleted data **cannot be recovered**, and incorrect edits may lead to **corrupted or unusable data**.
+`nago.data.inspector` bypasses every other permission of the application. Grant it only for maintenance.
 {{< /callout >}}
 
-## Functional areas
-Inspector Management provides the following key functions:
+## UI
 
-### Store inspection
-- Lists all available stores (entity stores and blob stores)
-- Displays store information and type (document/blob)
-- Select a store to view its entries
+| Path                             | Page                  |
+|----------------------------------|-----------------------|
+| `admin/inspector`                | stores                |
+| `admin/inspector/ndb/messages`   | ndb message streams   |
+| `admin/inspector/ndb/timeseries` | ndb time series       |
 
-{{< swiper name="galleryOverview" loop="false" >}}
+The admin center shows the card *Stores* in the group *Inspektor*, and the ndb cards once an ndb database is
+registered.
 
-### Repository entry management
-- List repository entries for the selected store
-- View content of entries with automatic MIME type detection
-- Edit JSON or text entries inline
-- Create new entries for entity stores
-- Delete entries as needed
-- Paginated view for large stores
+## Related
 
-{{< swiper name="galleryEntities" loop="false" >}}
-
-### Blob management
-- Download blob files from blob stores
-- Delete blob files from blob stores
-
-{{< swiper name="galleryBlobs" loop="false" >}}
-
-## Dependencies
-Scheduler Management operates independently and does not depend on other systems.
-
-## Activation
-This system is activated via:
-```go
-std.Must(cfginspector.Enable(cfg))
-```
-
-```go
-inspectorManagement := std.Must(cfginspector.Enable(cfg))
-```
+- [Tutorial: admin stores](/docs/examples/tutorial-57-adm-stores/)
+- [Tutorial: ndb](/docs/examples/tutorial-103-ndb/)

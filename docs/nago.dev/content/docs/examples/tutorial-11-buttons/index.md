@@ -1,5 +1,6 @@
 ---
 title: Buttons
+weight: 11
 ---
 
 The three button presets `PrimaryButton`, `SecondaryButton` and `TertiaryButton` in all their states, and
