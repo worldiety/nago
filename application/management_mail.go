@@ -44,7 +44,8 @@ const (
 	// value or "off" disables the service.
 	EnvMailService = "NAGO_MAIL_SERVICE"
 	// EnvMailServiceToken is an optional refresh token of the Nago Mail Service. Without it, the instance enrolls by
-	// a token exchange, which requires a public https origin, see [Configurator.ContextPath].
+	// a token exchange: a public https origin is called back, any other origin like localhost must call from an
+	// address the service knows, see [mailServiceOrigin].
 	EnvMailServiceToken = "NAGO_MAIL_SERVICE_TOKEN"
 )
 
@@ -127,9 +128,11 @@ func (c *Configurator) MailManagement() (MailManagement, error) {
 		c.mailManagement.MailService = nms.NewService(nms.Options{
 			Endpoint: mailServiceEndpoint(),
 			Token:    strings.TrimSpace(os.Getenv(EnvMailServiceToken)),
-			Origin:   c.ContextPath,
-			Nonces:   nonces,
-			States:   json.NewSloppyJSONRepository[nms.State, string](serviceStore),
+			Origin: func() string {
+				return mailServiceOrigin(c.ContextPath(), c.getPort())
+			},
+			Nonces: nonces,
+			States: json.NewSloppyJSONRepository[nms.State, string](serviceStore),
 		})
 
 		if c.mailManagement.MailService.Enabled() {
@@ -312,4 +315,23 @@ func (c *Configurator) SendMailTemplate(to user.Email, tpl template.ID, subjName
 	})
 
 	return err
+}
+
+// mailServiceOrigin turns the context path into the origin of a token exchange.
+//
+// The context path is not always an origin: without HOSTNAME it is empty until the first window connects, and then
+// it is the bare host of that request, like localhost:3000. The mail scheduler does not wait for a window, so a
+// local instance falls back to http://localhost and its port, and a bare host is taken as http. The mail service
+// decides whether it admits such an origin.
+func mailServiceOrigin(contextPath string, port int) string {
+	origin := strings.TrimSpace(contextPath)
+	if origin == "" {
+		return fmt.Sprintf("http://localhost:%d", port)
+	}
+
+	if !strings.Contains(origin, "://") {
+		origin = "http://" + origin
+	}
+
+	return strings.TrimRight(origin, "/")
 }
