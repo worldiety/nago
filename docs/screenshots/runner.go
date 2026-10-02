@@ -9,6 +9,7 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	_ "embed"
 	"fmt"
 	"log"
@@ -18,6 +19,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"syscall"
 	"time"
@@ -27,6 +29,7 @@ import (
 	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/cdproto/runtime"
 	"github.com/chromedp/chromedp"
+	"go.wdy.de/nago/application/adm"
 )
 
 //go:embed page.js
@@ -40,7 +43,7 @@ type runner struct {
 }
 
 func (r *runner) renderExample(ctx context.Context, example string, shots []Shot) error {
-	tmp, err := os.MkdirTemp("", "nago-shot-"+example+"-")
+	tmp, err := os.MkdirTemp("", "nago-shot-"+filepath.Base(example)+"-")
 	if err != nil {
 		return err
 	}
@@ -48,7 +51,12 @@ func (r *runner) renderExample(ctx context.Context, example string, shots []Shot
 
 	log.Printf("%s: building", example)
 	bin := filepath.Join(tmp, "app")
-	build := exec.CommandContext(ctx, "go", "build", "-o", bin, "./example/cmd/"+example)
+	pkg := "./example/cmd/" + example
+	if strings.Contains(example, "/") {
+		pkg = "./" + example // e.g. example/gallery, relative to the repository root
+	}
+
+	build := exec.CommandContext(ctx, "go", "build", "-o", bin, pkg)
 	build.Dir = r.root
 	if out, err := build.CombinedOutput(); err != nil {
 		return fmt.Errorf("build failed: %w\n%s", err, out)
@@ -62,6 +70,18 @@ func (r *runner) renderExample(ctx context.Context, example string, shots []Shot
 	stateDir := filepath.Join(tmp, "state")
 	if err := os.MkdirAll(stateDir, 0700); err != nil {
 		return err
+	}
+
+	var adminPassword string
+	if slices.ContainsFunc(shots, func(s Shot) bool { return s.Admin }) {
+		adminPassword = "Docs-" + rand.Text()[:12] + "-1a!"
+		err := adm.Write(filepath.Join(stateDir, "adm", "once-after-cfg"), adm.EnableBootstrapAdmin{
+			AliveUntil: time.Now().Add(time.Hour),
+			Password:   adminPassword,
+		})
+		if err != nil {
+			return err
+		}
 	}
 
 	logFile, err := os.Create(filepath.Join(tmp, "app.log"))
@@ -90,18 +110,28 @@ func (r *runner) renderExample(ctx context.Context, example string, shots []Shot
 		chromedp.Flag("hide-scrollbars", true),
 		chromedp.Flag("force-color-profile", "srgb"),
 		chromedp.Flag("font-render-hinting", "none"),
-		// the frontend does not boot for crawlers and the default headless user agent is detected as one
-		chromedp.UserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"),
+		chromedp.Flag("lang", "en-US"),
+		chromedp.UserAgent(userAgent),
 	)
 	allocCtx, cancelAlloc := chromedp.NewExecAllocator(ctx, opts...)
 	defer cancelAlloc()
 
+	// all shots of an example share this tab, because the nago session belongs to it
 	browserCtx, cancelBrowser := chromedp.NewContext(allocCtx)
 	defer cancelBrowser()
 
+	// the docs are english, independent of the machine. The frontend reads navigator.languages.
+	err = chromedp.Run(browserCtx,
+		emulation.SetUserAgentOverride(userAgent).WithAcceptLanguage("en-US"),
+		emulation.SetLocaleOverride().WithLocale("en-US"),
+	)
+	if err != nil {
+		return err
+	}
+
 	for _, shot := range shots {
 		log.Printf("%s: rendering %s", example, shot.Out)
-		if err := r.renderShot(browserCtx, base, shot); err != nil {
+		if err := r.renderShot(browserCtx, base, withPassword(shot, adminPassword), adminPassword); err != nil {
 			return r.withLog(fmt.Errorf("%s: %w", shot.Out, err), logFile)
 		}
 	}
@@ -109,11 +139,8 @@ func (r *runner) renderExample(ctx context.Context, example string, shots []Shot
 	return nil
 }
 
-func (r *runner) renderShot(browserCtx context.Context, base string, shot Shot) error {
-	tabCtx, cancelTab := chromedp.NewContext(browserCtx)
-	defer cancelTab()
-
-	ctx, cancel := context.WithTimeout(tabCtx, 60*time.Second)
+func (r *runner) renderShot(browserCtx context.Context, base string, shot Shot, password string) error {
+	ctx, cancel := context.WithTimeout(browserCtx, 60*time.Second)
 	defer cancel()
 
 	scheme := "light"
@@ -139,7 +166,7 @@ func (r *runner) renderShot(browserCtx context.Context, base string, shot Shot) 
 	}
 
 	for _, step := range shot.Steps {
-		if err := runStep(ctx, base, step); err != nil {
+		if err := runStep(ctx, base, step, password); err != nil {
 			return err
 		}
 
@@ -220,7 +247,24 @@ func cropRect(ctx context.Context, shot Shot) (rect, error) {
 	return rect{X: x0, Y: y0, W: x1 - x0, H: y1 - y0}, nil
 }
 
-func runStep(ctx context.Context, base string, step Step) error {
+// withPassword replaces {{adminPassword}} in the steps of a copy of the shot.
+func withPassword(shot Shot, password string) Shot {
+	steps := slices.Clone(shot.Steps)
+	for i, step := range steps {
+		if step.Type != nil {
+			t := *step.Type
+			t.Text = strings.ReplaceAll(t.Text, "{{adminPassword}}", password)
+			steps[i].Type = &t
+		}
+
+		steps[i].JS = strings.ReplaceAll(step.JS, "{{adminPassword}}", password)
+	}
+
+	shot.Steps = steps
+	return shot
+}
+
+func runStep(ctx context.Context, base string, step Step, password string) error {
 	switch {
 	case step.Click != "":
 		return clickAt(ctx, fmt.Sprintf("window.__nagoShot.centerOf(%q)", step.Click), step.Click)
@@ -243,6 +287,26 @@ func runStep(ctx context.Context, base string, step Step) error {
 		return chromedp.Run(ctx, chromedp.Sleep(d))
 	case step.JS != "":
 		return chromedp.Run(ctx, chromedp.Evaluate(step.JS, nil))
+	case step.Login:
+		var url string
+		err := chromedp.Run(ctx,
+			chromedp.Navigate(base+"/account/login"),
+			chromedp.Evaluate(pageJS, nil),
+			chromedp.WaitVisible("#nago-login", chromedp.ByQuery),
+			chromedp.SendKeys("#nago-login", "admin@localhost", chromedp.ByQuery),
+			chromedp.SendKeys("#nago-password", password+"\r", chromedp.ByQuery),
+			chromedp.Sleep(time.Second),
+			chromedp.Location(&url),
+		)
+		if err != nil {
+			return err
+		}
+
+		if strings.Contains(url, "/account/login") {
+			return fmt.Errorf("login as admin@localhost failed, is admin: true set?")
+		}
+
+		return nil
 	case step.Goto != "":
 		return chromedp.Run(ctx, chromedp.Navigate(base+step.Goto), chromedp.Evaluate(pageJS, nil))
 	default:
@@ -350,3 +414,7 @@ func stop(cmd *exec.Cmd) {
 		<-done
 	}
 }
+
+// userAgent is a regular desktop Chrome, because the frontend does not boot for crawlers and the default
+// headless user agent is detected as one.
+const userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"

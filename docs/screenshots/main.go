@@ -21,14 +21,28 @@ import (
 )
 
 func main() {
-	manifest := flag.String("f", "shots.yaml", "the manifest which declares all screenshots")
+	manifest := flag.String("f", "shots/*.yaml", "glob of the manifests which declare the screenshots")
 	only := flag.String("only", "", "comma separated list of examples to render, e.g. tutorial-11-buttons")
 	headful := flag.Bool("headful", false, "show the browser window, useful to debug steps")
 	flag.Parse()
 
-	m, err := loadManifest(*manifest)
+	files, err := filepath.Glob(*manifest)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	if len(files) == 0 {
+		log.Fatalf("no manifest matches %s", *manifest)
+	}
+
+	var m Manifest
+	for _, file := range files {
+		part, err := loadManifest(file)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		m.Shots = append(m.Shots, part.Shots...)
 	}
 
 	root, err := filepath.Abs("../..")

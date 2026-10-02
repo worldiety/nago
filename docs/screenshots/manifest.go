@@ -22,7 +22,8 @@ type Manifest struct {
 
 // Shot declares a single image. Zero values are taken from the manifest defaults.
 type Shot struct {
-	// Example is the directory name below example/cmd.
+	// Example is the directory name below example/cmd or a package path relative to the repository root,
+	// like example/gallery.
 	Example string `yaml:"example"`
 	// Out is the target file, relative to docs/nago.dev. The extension decides the format (.webp or .png).
 	Out string `yaml:"out"`
@@ -41,6 +42,9 @@ type Shot struct {
 	Padding *int `yaml:"padding"`
 	// Quality for lossy formats, 1-100.
 	Quality int `yaml:"quality"`
+	// Admin enables the bootstrap admin admin@localhost before the example starts. Steps can refer to its
+	// random password as {{adminPassword}}. If any shot of an example sets it, it applies to all of them.
+	Admin bool `yaml:"admin"`
 	// Steps are executed after the page has settled and before the capture.
 	Steps []Step `yaml:"steps"`
 }
@@ -61,6 +65,9 @@ type Step struct {
 	JS string `yaml:"js"`
 	// Goto navigates to another url path of the same example.
 	Goto string `yaml:"goto"`
+	// Login signs in as the bootstrap admin, requires admin: true. The session survives for all following
+	// shots of the same example.
+	Login bool `yaml:"login"`
 }
 
 type TypeStep struct {

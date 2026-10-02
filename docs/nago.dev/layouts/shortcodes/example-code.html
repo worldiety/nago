@@ -1,0 +1,29 @@
+{{- /*
+  Renders the Go sources of an example from example/cmd, straight from the repository.
+
+  {{< example-code >}}                       all files of the example named like the page bundle
+  {{< example-code "tutorial-11-buttons" >}} all files of the given example
+  {{< example-code name="tutorial-11-buttons" file="main.go" >}}
+
+  The license header of each file is stripped, because it is the same everywhere.
+*/ -}}
+{{- $name := .Get "name" | default (.Get 0) | default .Page.File.ContentBaseName -}}
+{{- $file := .Get "file" | default "*.go" -}}
+{{- $files := resources.Match (printf "examples/%s/%s" $name $file) -}}
+{{- if not $files -}}
+  {{- errorf "example-code: no sources found for example %q (%s)" $name .Position -}}
+{{- end -}}
+{{- $multi := gt (len $files) 1 -}}
+{{- range $files -}}
+  {{- $code := .Content | replaceRE `^(//[^\n]*\n)+\s*` "" -}}
+  {{- if $multi }}
+<p class="hx:mt-6 hx:font-mono hx:text-sm hx:text-gray-500 hx:dark:text-gray-400">{{ path.Base .Name }}</p>
+  {{- end }}
+<div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code">
+{{ highlight $code "go" }}
+</div>
+{{- end -}}
+<p class="hx:mt-4 hx:text-sm">
+  <a href="https://github.com/worldiety/nago/tree/main/example/cmd/{{ $name }}" target="_blank" rel="noopener">View on GitHub ↗</a>
+  · run it with <code>go run go.wdy.de/nago/example/cmd/{{ $name }}@latest</code>
+</p>

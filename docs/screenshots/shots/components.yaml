@@ -1,0 +1,5 @@
+# Screenshots of the component pages, rendered from example/gallery.
+shots:
+  - example: example/gallery
+    path: /button
+    out: content/docs/components/basic/button/button.webp

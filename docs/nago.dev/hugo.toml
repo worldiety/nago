@@ -7,6 +7,28 @@ defaultContentLanguage = "en"
   [[module.imports]]
     path = "github.com/imfing/hextra"
 
+  # declaring a mount replaces the defaults, so they are repeated here
+  [[module.mounts]]
+    source = "content"
+    target = "content"
+  [[module.mounts]]
+    source = "static"
+    target = "static"
+  [[module.mounts]]
+    source = "layouts"
+    target = "layouts"
+  [[module.mounts]]
+    source = "assets"
+    target = "assets"
+  [[module.mounts]]
+    source = "i18n"
+    target = "i18n"
+  # the examples are shown as they are in the repository, see the example-code shortcode
+  [[module.mounts]]
+    source = "../../example/cmd"
+    target = "assets/examples"
+    files = ["**/*.go"]
+
 [menu]
  [[menu.main]]
    name = "Documentation"
