@@ -23,7 +23,7 @@ type Manifest struct {
 // Shot declares a single image. Zero values are taken from the manifest defaults.
 type Shot struct {
 	// Example is the directory name below example/cmd or a package path relative to the repository root,
-	// like example/gallery.
+	// like example/gallery/basic.
 	Example string `yaml:"example"`
 	// Out is the target file, relative to docs/nago.dev. The extension decides the format (.webp or .png).
 	Out string `yaml:"out"`

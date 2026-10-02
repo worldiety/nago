@@ -8,13 +8,14 @@
 package main
 
 import (
+	"go.wdy.de/nago/example/gallery/app"
 	"go.wdy.de/nago/presentation/core"
 	icons "go.wdy.de/nago/presentation/icons/hero/solid"
 	. "go.wdy.de/nago/presentation/ui"
 )
 
 func init() {
-	register("button", func(wnd core.Window) core.View {
+	app.Register("button", func(wnd core.Window) core.View {
 		return HStack(
 			PrimaryButton(func() {}).Title("Primary"),
 			SecondaryButton(func() {}).Title("Secondary"),

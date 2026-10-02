@@ -12,3 +12,4 @@ serve
 /docs/nago.dev/public/
 /docs/nago.dev/resources/_gen/
 /docs/serve
+/docs/nago.dev/.build-*/

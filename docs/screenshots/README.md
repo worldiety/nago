@@ -8,14 +8,14 @@ with a headless Chrome in English.
 cd docs/screenshots
 go run .                                     # all shots
 go run . -only tutorial-11-buttons           # a single example
-go run . -only example/gallery               # the component gallery
+go run . -only example/gallery/basic         # a component gallery
 go run . -f shots/systems.yaml               # a single manifest
 go run . -only tutorial-11-buttons -headful  # watch the browser, useful to debug steps
 ```
 
 Requires Go and a local Chrome or Chromium.
 
-There is one manifest per area of the site: `examples.yaml`, `components.yaml` and `systems.yaml`.
+Each area of the site has its own manifests, e.g. `examples-*.yaml`, `components-*.yaml` and `systems.yaml`.
 
 ## Declaring a shot
 
@@ -24,7 +24,7 @@ defaults:                               # optional, per manifest
   width: 1200
 
 shots:
-  - example: tutorial-11-buttons        # directory below example/cmd, or a package like example/gallery
+  - example: tutorial-11-buttons        # directory below example/cmd, or a package like example/gallery/basic
     out: content/docs/examples/tutorial-11-buttons/screenshot.webp  # relative to docs/nago.dev
     path: /                             # optional url path
     width: 1200                         # viewport in CSS pixels, scale 2 by default
@@ -47,5 +47,6 @@ shot is valid for the following ones.
 
 ## Component gallery
 
-`example/gallery` is a small app with one route per component, e.g. `/button`. It exists only to render the
-component screenshots and is not listed as a tutorial.
+`example/gallery/<group>` (basic, layout, composite) are small apps with one route per component, e.g.
+`/button`. A component registers its demo with `app.Register` in its own file. The galleries exist only to
+render the component screenshots and are not listed as tutorials.

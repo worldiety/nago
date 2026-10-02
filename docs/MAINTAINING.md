@@ -13,7 +13,7 @@ the commits since the last review are checked and the docs are updated where nec
 | `docs/screenshots/`            | renders all screenshots, see its README                              |
 | `docs/serve.go`                | tiny server which embeds the built site for deployment on nago.app   |
 | `example/cmd/`                 | the tutorials, mounted into Hugo and shown by `{{< example-code >}}` |
-| `example/gallery/`             | one route per component, only used for the component screenshots    |
+| `example/gallery/<group>/`     | one route per component, only used for the component screenshots    |
 | `docs/.last-reviewed-commit`   | the commit up to which the docs have been reviewed                   |
 
 Sections of `content/docs/`:
@@ -54,7 +54,7 @@ server or the examples. Use the Hugo version pinned there.
 `content/docs/components/<group>/<component>/_index.md`:
 
 1. one paragraph: what it is and when to use it,
-2. a screenshot rendered from `example/gallery` and the matching snippet,
+2. a screenshot rendered from `example/gallery/<group>` and the matching snippet,
 3. **Constructors**: each exported constructor with its signature and a one-line description,
 4. **Methods**: a table of all exported methods of the component type with the first sentence of its godoc,
 5. **Related**: links to related components and tutorials.

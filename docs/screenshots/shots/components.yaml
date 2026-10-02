@@ -1,5 +1,5 @@
-# Screenshots of the component pages, rendered from example/gallery.
+# Screenshots of the component pages, rendered from example/gallery/<group>.
 shots:
-  - example: example/gallery
+  - example: example/gallery/basic
     path: /button
     out: content/docs/components/basic/button/button.webp

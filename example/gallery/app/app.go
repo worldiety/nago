@@ -5,11 +5,12 @@
 //
 // SPDX-License-Identifier: Custom-License
 
-// Command gallery renders each component documented on nago.dev on its own route, e.g. /button. It is used
-// by docs/screenshots to capture the component screenshots and is not a tutorial.
+// Package app is the shared part of the component galleries below example/gallery. Each gallery renders the
+// components of one group of nago.dev on their own routes, e.g. /button. They are used by docs/screenshots to
+// capture the component screenshots and are not tutorials.
 //
 // Keep each demo close to the snippet shown on the component page, so that image and code match.
-package main
+package app
 
 import (
 	"slices"
@@ -27,12 +28,13 @@ type demo struct {
 
 var demos []demo
 
-// register adds a demo for the given route. Call it from an init function of the component file.
-func register(route core.NavigationPath, view func(wnd core.Window) core.View) {
+// Register adds a demo for the given route. Call it from an init function of the component file.
+func Register(route core.NavigationPath, view func(wnd core.Window) core.View) {
 	demos = append(demos, demo{route: route, view: view})
 }
 
-func main() {
+// Run starts the gallery with all registered demos. The index page lists all routes.
+func Run() {
 	application.Configure(func(cfg *application.Configurator) {
 		cfg.SetApplicationID("de.worldiety.nago.gallery")
 		cfg.Serve(vuejs.Dist())

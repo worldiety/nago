@@ -53,7 +53,7 @@ func (r *runner) renderExample(ctx context.Context, example string, shots []Shot
 	bin := filepath.Join(tmp, "app")
 	pkg := "./example/cmd/" + example
 	if strings.Contains(example, "/") {
-		pkg = "./" + example // e.g. example/gallery, relative to the repository root
+		pkg = "./" + example // e.g. example/gallery/basic, relative to the repository root
 	}
 
 	build := exec.CommandContext(ctx, "go", "build", "-o", bin, pkg)
