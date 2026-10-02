@@ -97,22 +97,39 @@ func TestSchedulerPrefersSmtp(t *testing.T) {
 	}
 }
 
-func TestSchedulerWithoutUsableMailService(t *testing.T) {
+// A local instance asks the service once, because the service may know it by its address. If the service refuses,
+// it is not asked again before the exchange interval passed, and the mail waits for a usable transport.
+func TestSchedulerWithLocalInstanceTheServiceRefuses(t *testing.T) {
 	s, repo, srv, _ := newServiceScheduler(t, "http://localhost:3000")
+	srv.VerifyOrigin = func(origin, nonce string) bool { return false }
 	o := queue(t, repo, "hello", "torben@example.com", time.Now())
 
 	s.runOnce(context.Background())
+	s.runOnce(context.Background())
 
-	if st := currentSchedulerStatus(); !st.NoSmtpServer {
-		t.Fatal("a local instance has no usable mail service")
+	if exchanges, _, sends := srv.Calls(); exchanges != 1 || sends != 0 {
+		t.Fatalf("expected exactly one exchange and no send, got %d exchanges and %d sends", exchanges, sends)
 	}
 
-	if got := option.Must(repo.FindByID(o.ID)).Unwrap(); got.Attempted() != 0 {
-		t.Fatal("the mail must wait without an attempt")
+	if s.opts.MailService.Available() {
+		t.Fatal("after a refused exchange, the service is not usable until the exchange interval passed")
 	}
 
-	if exchanges, _, _ := srv.Calls(); exchanges != 0 {
-		t.Fatal("the service has been contacted")
+	got := option.Must(repo.FindByID(o.ID)).Unwrap()
+	if got.Status == StatusFailed || got.Attempted() > 1 {
+		t.Fatalf("the mail must wait, got %s after %d attempts", got.Status, got.Attempted())
+	}
+}
+
+// A local instance the service knows by its address sends like any other.
+func TestSchedulerWithLocalInstanceTheServiceAdmits(t *testing.T) {
+	s, repo, srv, _ := newServiceScheduler(t, "http://localhost:3000")
+	queue(t, repo, "hello", "torben@example.com", time.Now())
+
+	s.runOnce(context.Background())
+
+	if sent := srv.Sent(); len(sent) != 1 {
+		t.Fatalf("expected one message by the service, got %d", len(sent))
 	}
 }
 

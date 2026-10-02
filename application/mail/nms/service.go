@@ -56,8 +56,9 @@ type Options struct {
 	Endpoint string
 	// Token is an optional refresh token configured by the operator. It is taken over once.
 	Token string
-	// Origin returns the public origin of the instance like https://my-app.example.com. A token exchange is only
-	// attempted for https origins.
+	// Origin returns the origin of the instance like https://my-app.example.com or http://localhost:3000. A token
+	// exchange is attempted for any http or https origin without path: whether a public origin is called back or
+	// the instance is admitted by its address is the service's decision, see the package documentation.
 	Origin func() string
 	// Nonces answers the call back of the service. A token exchange is only attempted, if set.
 	Nonces *Nonces
@@ -332,14 +333,14 @@ func (s *Service) exchange(ctx context.Context) error {
 
 	if !s.canExchange() {
 		s.mutex.Unlock()
-		return fmt.Errorf("%w: a token exchange requires a public https origin, got '%s'", ErrNotEnrolled, s.opts.Origin())
+		return fmt.Errorf("%w: a token exchange requires an http or https origin without path, got '%s'", ErrNotEnrolled, s.opts.Origin())
 	}
 
 	s.lastExchangeAt = s.now()
 	s.failedExchange = s.lastExchangeAt // until proven otherwise
 	s.mutex.Unlock()
 
-	origin, _ := publicOrigin(s.opts.Origin())
+	origin, _ := exchangeOrigin(s.opts.Origin())
 	nonce := s.opts.Nonces.Issue()
 	defer s.opts.Nonces.Forget(nonce)
 
@@ -373,7 +374,7 @@ func (s *Service) canExchange() bool {
 		return false
 	}
 
-	_, ok := publicOrigin(s.opts.Origin())
+	_, ok := exchangeOrigin(s.opts.Origin())
 	return ok
 }
 
@@ -443,10 +444,14 @@ func containsFold(list []string, s string) bool {
 	return false
 }
 
-// publicOrigin returns the normalized origin, if it is an https origin of a non-local host.
-func publicOrigin(origin string) (string, bool) {
+// exchangeOrigin returns the normalized origin, if it is an http or https origin without path.
+//
+// A local origin like http://localhost:3000 is deliberately included: it cannot be called back, but the service may
+// admit the instance by the address it calls from. A failed exchange is repeated only after
+// [Options.ExchangeInterval], so an instance the service does not know asks once an hour at most.
+func exchangeOrigin(origin string) (string, bool) {
 	u, err := url.Parse(strings.TrimSpace(origin))
-	if err != nil || u.Scheme != "https" || u.Host == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
+	if err != nil || (u.Scheme != "https" && u.Scheme != "http") || u.Host == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
 		return "", false
 	}
 
@@ -454,10 +459,5 @@ func publicOrigin(origin string) (string, bool) {
 		return "", false
 	}
 
-	host := u.Hostname()
-	if host == "localhost" || strings.HasSuffix(host, ".localhost") || strings.HasSuffix(host, ".local") || !strings.Contains(host, ".") {
-		return "", false
-	}
-
-	return "https://" + u.Host, true
+	return u.Scheme + "://" + u.Host, true
 }

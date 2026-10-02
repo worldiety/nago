@@ -150,9 +150,9 @@ func TestConfiguredTokenIsTakenOverOnce(t *testing.T) {
 	}
 }
 
-func TestNoExchangeWithoutPublicOrigin(t *testing.T) {
+func TestNoExchangeWithoutOrigin(t *testing.T) {
 	srv := nmstest.NewServer(t)
-	for _, o := range []string{"", "http://wokoda.apps.example.com", "https://localhost:3000", "https://app.example.com/sub"} {
+	for _, o := range []string{"", "ftp://app.example.com", "https://app.example.com/sub", "localhost:3000"} {
 		svc := nms.NewService(nms.Options{Endpoint: srv.URL, Origin: func() string { return o }, Nonces: nms.NewNonces()})
 		if svc.Available() {
 			t.Fatalf("%q: the service must not be available", o)
@@ -239,5 +239,29 @@ func TestRevokedRefreshAfterRestartEnrollsAgain(t *testing.T) {
 
 	if exchanges, tokens, _ := srv.Calls(); exchanges != 2 || tokens != 3 {
 		t.Fatalf("expected a second exchange after the rejected refresh, got %d exchanges and %d tokens", exchanges, tokens)
+	}
+}
+
+// A developer on localhost cannot be called back, but the service may admit the instance by its address. The client
+// therefore asks, and leaves the decision to the service.
+func TestLocalOriginAsksForExchange(t *testing.T) {
+	srv := nmstest.NewServer(t)
+	var asked []string
+	srv.VerifyOrigin = func(origin, nonce string) bool {
+		asked = append(asked, origin)
+		return true
+	}
+
+	svc := nms.NewService(nms.Options{Endpoint: srv.URL, Origin: func() string { return "http://localhost:3000/" }, Nonces: nms.NewNonces()})
+	if !svc.Available() {
+		t.Fatal("a local origin may ask for an exchange")
+	}
+
+	if _, err := svc.Send(context.Background(), message()); err != nil {
+		t.Fatal(err)
+	}
+
+	if len(asked) != 1 || asked[0] != "http://localhost:3000" {
+		t.Fatalf("expected one exchange for the normalized origin, got %v", asked)
 	}
 }

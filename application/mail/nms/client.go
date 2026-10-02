@@ -9,9 +9,11 @@
 //
 // A Nago instance gets its credentials in one of two ways:
 //   - a refresh token configured by the operator, see [Options.Token].
-//   - a token exchange: the instance asks the service for a token and proves, that it is reachable under its origin.
-//     The service calls the origin back and expects the nonce of the exchange, see [Nonces]. This only works for
-//     origins the service accepts, typically the wildcard subdomains of a hub.
+//   - a token exchange: the instance asks the service for a token. Either it proves, that it is reachable under its
+//     public https origin, because the service calls the origin back and expects the nonce of the exchange, see
+//     [Nonces]. This works for origins the service accepts, typically the wildcard subdomains of a hub. Or it calls
+//     from an address the service knows, e.g. a developer on localhost from the office network. The service then
+//     admits it by its address and calls nothing back. Which applies is decided by the service alone.
 //
 // The refresh token is exchanged for short-lived access tokens, which authorize sending. The service may revoke
 // any token at any time, the [Service] then enrolls again.
