@@ -288,30 +288,61 @@ func runStep(ctx context.Context, base string, step Step, password string) error
 	case step.JS != "":
 		return chromedp.Run(ctx, chromedp.Evaluate(step.JS, nil))
 	case step.Login:
-		var url string
-		err := chromedp.Run(ctx,
-			chromedp.Navigate(base+"/account/login"),
-			chromedp.Evaluate(pageJS, nil),
-			chromedp.WaitVisible("#nago-login", chromedp.ByQuery),
-			chromedp.SendKeys("#nago-login", "admin@localhost", chromedp.ByQuery),
-			chromedp.SendKeys("#nago-password", password+"\r", chromedp.ByQuery),
-			chromedp.Sleep(time.Second),
-			chromedp.Location(&url),
-		)
-		if err != nil {
-			return err
+		// typing before the frontend has bound the inputs loses keystrokes, so settle first and retry
+		for attempt := 0; attempt < 3; attempt++ {
+			ok, err := login(ctx, base, password)
+			if err != nil {
+				return err
+			}
+
+			if ok {
+				return nil
+			}
 		}
 
-		if strings.Contains(url, "/account/login") {
-			return fmt.Errorf("login as admin@localhost failed, is admin: true set?")
-		}
-
-		return nil
+		return fmt.Errorf("login as admin@localhost failed, is admin: true set?")
 	case step.Goto != "":
 		return chromedp.Run(ctx, chromedp.Navigate(base+step.Goto), chromedp.Evaluate(pageJS, nil))
 	default:
 		return fmt.Errorf("empty step")
 	}
+}
+
+// login signs in as the bootstrap admin and reports whether the frontend left the login page.
+func login(ctx context.Context, base, password string) (bool, error) {
+	err := chromedp.Run(ctx,
+		chromedp.Navigate(base+"/account/login"),
+		chromedp.Evaluate(pageJS, nil),
+		chromedp.WaitVisible("#nago-password", chromedp.ByQuery),
+	)
+	if err != nil {
+		return false, err
+	}
+
+	if err := settle(ctx); err != nil {
+		return false, err
+	}
+
+	err = chromedp.Run(ctx,
+		chromedp.SendKeys("#nago-login", "admin@localhost", chromedp.ByQuery),
+		chromedp.SendKeys("#nago-password", password+"\r", chromedp.ByQuery),
+	)
+	if err != nil {
+		return false, err
+	}
+
+	for i := 0; i < 40; i++ {
+		var url string
+		if err := chromedp.Run(ctx, chromedp.Sleep(250*time.Millisecond), chromedp.Location(&url)); err != nil {
+			return false, err
+		}
+
+		if !strings.Contains(url, "/account/login") {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 type point struct {

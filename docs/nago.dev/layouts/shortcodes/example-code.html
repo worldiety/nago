@@ -5,10 +5,15 @@
   {{< example-code "tutorial-11-buttons" >}} all files of the given example
   {{< example-code name="tutorial-11-buttons" file="main.go" >}}
 
-  The license header of each file is stripped, because it is the same everywhere.
+  The license header of each file is stripped, because it is the same everywhere. A footer links to GitHub and
+  shows how to run the example. When a page uses the shortcode more than once, set footer="false" on all but
+  one of them. Set pkg when the main package is not the example directory itself, e.g.
+  pkg="tutorial-113-ai-assistant/cmd/ai-example".
 */ -}}
 {{- $name := .Get "name" | default (.Get 0) | default .Page.File.ContentBaseName -}}
 {{- $file := .Get "file" | default "*.go" -}}
+{{- $pkg := .Get "pkg" | default $name -}}
+{{- $footer := ne (.Get "footer") "false" -}}
 {{- $files := resources.Match (printf "examples/%s/%s" $name $file) -}}
 {{- if not $files -}}
   {{- errorf "example-code: no sources found for example %q (%s)" $name .Position -}}
@@ -23,7 +28,9 @@
 {{ highlight $code "go" }}
 </div>
 {{- end -}}
+{{- if $footer }}
 <p class="hx:mt-4 hx:text-sm">
   <a href="https://github.com/worldiety/nago/tree/main/example/cmd/{{ $name }}" target="_blank" rel="noopener">View on GitHub ↗</a>
-  · run it with <code>go run go.wdy.de/nago/example/cmd/{{ $name }}@latest</code>
+  · run it with <code>go run go.wdy.de/nago/example/cmd/{{ $pkg }}@latest</code>
 </p>
+{{- end }}
