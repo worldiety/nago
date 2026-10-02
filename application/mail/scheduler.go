@@ -49,6 +49,10 @@ type ScheduleOptions struct {
 	Stats StatsRepository
 	// Health is optional and receives the latest state per smtp server.
 	Health HealthRepository
+
+	// MailService is an optional HTTP transport, which is used if no SMTP server is shared with the system group.
+	// A mail with [Mail.SmtpHint] set to [MailServiceID] always uses it.
+	MailService MailService
 }
 
 // NewWakeup creates a non-blocking notify function and the according channel for [ScheduleOptions.Wakeup].
@@ -173,9 +177,14 @@ type dueEntry struct {
 	attempted int
 }
 
-type smtpCandidate struct {
-	id   secret.ID
-	smtp secret.SMTP
+// transport is either an SMTP server or the mail service.
+type transport struct {
+	id      string
+	name    string
+	perHour int
+	perDay  int
+	smtp    secret.SMTP
+	service bool
 }
 
 // runOnce processes all due mails. It returns true, if the run was interrupted because new mails arrived.
@@ -207,7 +216,7 @@ func (s *scheduler) runOnce(ctx context.Context) (more bool) {
 	}
 
 	if len(candidates) == 0 {
-		slog.Error("cannot process mail queue, no smtp credentials available in system group")
+		slog.Error("cannot process mail queue, neither smtp credentials available in system group nor the nago mail service")
 		setSchedulerStatus(func(st *SchedulerStatus) { st.NoSmtpServer = true })
 		return false
 	}
@@ -236,17 +245,17 @@ func (s *scheduler) runOnce(ctx context.Context) (more bool) {
 			return true
 		}
 
-		smtp := pickCandidate(candidates, entry.smtpHint)
+		tp := pickCandidate(candidates, entry.smtpHint)
 
-		if !entry.fresh && broken[smtp.Name] {
+		if !entry.fresh && broken[tp.name] {
 			continue // don't hammer a broken server with retries, but still try new mails once
 		}
 
-		if rateLimited[smtp.Name] || !s.limiter.allow(smtp.Name, smtp.RateLimitPerHour, smtp.RateLimitPerDay, s.now()) {
-			if !rateLimited[smtp.Name] {
-				slog.Warn("mail scheduler: smtp rate limit reached, postponing mails", "smtp", smtp.Name)
+		if rateLimited[tp.name] || !s.limiter.allow(tp.name, tp.perHour, tp.perDay, s.now()) {
+			if !rateLimited[tp.name] {
+				slog.Warn("mail scheduler: smtp rate limit reached, postponing mails", "smtp", tp.name)
 			}
-			rateLimited[smtp.Name] = true
+			rateLimited[tp.name] = true
 			continue
 		}
 
@@ -281,15 +290,15 @@ func (s *scheduler) runOnce(ctx context.Context) (more bool) {
 			continue
 		}
 
-		attempt := s.deliver(smtp, &outgoing)
-		s.limiter.record(smtp.Name, attempt.At)
+		attempt := s.deliver(ctx, tp, &outgoing)
+		s.limiter.record(tp.name, attempt.At)
 		s.recorder.record(outgoing, attempt)
 
 		if attempt.Success {
 			s.guard.record(outgoing, attempt.At)
 			sentInRun = true
 		} else if attempt.Phase == PhaseConfig || attempt.Phase == PhaseDial || attempt.Phase == PhaseTLS || attempt.Phase == PhaseAuth {
-			broken[smtp.Name] = true
+			broken[tp.name] = true
 		}
 
 		if err := s.mails.Save(outgoing); err != nil {
@@ -311,12 +320,18 @@ func (s *scheduler) wakeupPending() bool {
 }
 
 // deliver performs the send attempt and updates the outgoing state.
-func (s *scheduler) deliver(smtp secret.SMTP, outgoing *Outgoing) Attempt {
+func (s *scheduler) deliver(ctx context.Context, tp transport, outgoing *Outgoing) Attempt {
 	start := s.now()
-	sendErr := s.send(smtp, outgoing.Mail)
+	var sendErr error
+	if tp.service {
+		sendErr = s.sendService(ctx, outgoing.ID, outgoing.Mail)
+	} else {
+		sendErr = s.send(tp.smtp, outgoing.Mail)
+	}
+
 	attempt := Attempt{
 		At:       start,
-		Server:   smtp.Name,
+		Server:   tp.name,
 		Success:  sendErr == nil,
 		Duration: s.now().Sub(start),
 	}
@@ -334,7 +349,7 @@ func (s *scheduler) deliver(smtp secret.SMTP, outgoing *Outgoing) Attempt {
 	outgoing.addAttempt(attempt)
 
 	if sendErr != nil {
-		slog.Error("mail scheduler failed to send mail", "smtp", smtp.Name, "id", outgoing.ID, "subject", outgoing.Mail.Subject, "err", sendErr)
+		slog.Error("mail scheduler failed to send mail", "smtp", tp.name, "id", outgoing.ID, "subject", outgoing.Mail.Subject, "err", sendErr)
 
 		outgoing.Status = StatusError
 		outgoing.LastError = sendErr.Error()
@@ -425,32 +440,39 @@ func (s *scheduler) cleanup(now time.Time) {
 	}
 }
 
-func (s *scheduler) loadCandidates() ([]smtpCandidate, error) {
-	var res []smtpCandidate
+// loadCandidates returns the SMTP servers of the system group followed by the mail service, if it is available.
+func (s *scheduler) loadCandidates() ([]transport, error) {
+	var res []transport
 	for scr, err := range s.secrets(s.sysUser(), group.System) {
 		if err != nil {
 			return nil, err
 		}
 
 		if smtp, ok := scr.Credentials.(secret.SMTP); ok && !smtp.IsZero() {
-			res = append(res, smtpCandidate{id: scr.ID, smtp: smtp})
+			res = append(res, transport{id: string(scr.ID), name: smtp.Name, perHour: smtp.RateLimitPerHour, perDay: smtp.RateLimitPerDay, smtp: smtp})
 		}
+	}
+
+	if svc := s.opts.MailService; svc != nil && svc.Available() {
+		limits := svc.Limits()
+		res = append(res, transport{id: MailServiceID, name: MailServiceName, perHour: limits.PerHour, perDay: limits.PerDay, service: true})
 	}
 
 	return res, nil
 }
 
-// pickCandidate returns the server whose id or name matches the hint or the first one. Candidates must not be empty.
-func pickCandidate(candidates []smtpCandidate, idOrNameHint string) secret.SMTP {
+// pickCandidate returns the transport whose id or name matches the hint or the first one. Candidates must not be
+// empty.
+func pickCandidate(candidates []transport, idOrNameHint string) transport {
 	if idOrNameHint != "" {
 		for _, c := range candidates {
-			if string(c.id) == idOrNameHint || c.smtp.Name == idOrNameHint {
-				return c.smtp
+			if c.id == idOrNameHint || c.name == idOrNameHint {
+				return c
 			}
 		}
 	}
 
-	return candidates[0].smtp
+	return candidates[0]
 }
 
 // backoff returns base * 2^(attempts-1) limited to maxBackoff.

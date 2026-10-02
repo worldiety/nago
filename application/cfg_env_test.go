@@ -25,6 +25,7 @@ func TestMaskEnv(t *testing.T) {
 		"DATABASE_DSN=x":              "DATABASE_DSN=***",
 		"TLS_CERT_FILE=/a/b":          "TLS_CERT_FILE=***",
 		"SESSION_COOKIE=x":            "SESSION_COOKIE=***",
+		"INITIAL_USER_EMAIL=a@b.de":   "INITIAL_USER_EMAIL=***",
 		"HOME=/Users/x":               "HOME=/Users/x",
 		"HTTP_PORT=8080":              "HTTP_PORT=8080",
 		"DATABASE_URL=postgres://user:geheim@db:5432/app?sslmode=off": "DATABASE_URL=postgres://user:***@db:5432/app?sslmode=off",

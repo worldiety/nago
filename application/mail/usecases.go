@@ -64,12 +64,13 @@ type UseCases struct {
 
 // Deprecated: use [NewUseCasesWithStats]. This variant has no statistics and no smtp server information.
 func NewUseCases(bus events.Bus, outgoingRepo Repository, ensureBuildIn template.EnsureBuildIn, sysUser user.SysUser) (UseCases, error) {
-	return NewUseCasesWithStats(bus, outgoingRepo, nil, nil, nil, nil, ensureBuildIn, sysUser)
+	return NewUseCasesWithStats(bus, outgoingRepo, nil, nil, nil, nil, ensureBuildIn, sysUser, nil)
 }
 
-// NewUseCasesWithStats creates the mail use cases. The stats, health, secrets and wakeup parameters are optional.
+// NewUseCasesWithStats creates the mail use cases. The stats, health, secrets, wakeup and service parameters are
+// optional.
 // The wakeup function is invoked whenever a mail becomes due, to trigger the scheduler immediately, see [NewWakeup].
-func NewUseCasesWithStats(bus events.Bus, outgoingRepo Repository, stats StatsRepository, health HealthRepository, secrets secret.FindGroupSecrets, wakeup func(), ensureBuildIn template.EnsureBuildIn, sysUser user.SysUser) (UseCases, error) {
+func NewUseCasesWithStats(bus events.Bus, outgoingRepo Repository, stats StatsRepository, health HealthRepository, secrets secret.FindGroupSecrets, wakeup func(), ensureBuildIn template.EnsureBuildIn, sysUser user.SysUser, service MailService) (UseCases, error) {
 	if wakeup == nil {
 		wakeup = func() {}
 	}
@@ -104,7 +105,7 @@ func NewUseCasesWithStats(bus events.Bus, outgoingRepo Repository, stats StatsRe
 		return err
 	}
 	uc.ResendOutgoing = notifyOnSuccess[ID](NewResendOutgoing(&mutex, outgoingRepo), wakeup)
-	uc.Statistics = NewStatistics(outgoingRepo, stats, health, sysUser, secrets)
+	uc.Statistics = NewStatistics(outgoingRepo, stats, health, sysUser, secrets, service)
 
 	// deprecated compatibility layer
 	uc.Outgoing.FindByID = FindMailByID(uc.FindOutgoingByID)

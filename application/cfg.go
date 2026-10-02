@@ -67,6 +67,7 @@ type Configurator struct {
 	dataDir                    string
 	factories                  map[proto.RootViewID]func(wnd core.Window) core.View
 	rootViewMeta               map[proto.RootViewID]RootViewMeta
+	rootViewInterceptors       []RootViewInterceptor
 	onWindowCreatedObservers   []core.OnWindowCreatedObserver
 	destructors                []func()
 	app                        *core.Application // may be nil
@@ -164,7 +165,7 @@ func printEnv() {
 
 // secretEnvHints are case-insensitive parts of environment variable names, whose values must not be logged.
 // Harmless names like KEYBOARD_LAYOUT or PWD are masked as well, which only hides their value.
-var secretEnvHints = []string{"secret", "token", "key", "pass", "pw", "credential", "auth", "dsn", "cert", "private", "cookie", "session"}
+var secretEnvHints = []string{"secret", "token", "key", "pass", "pw", "credential", "auth", "dsn", "cert", "private", "cookie", "session", "email"}
 
 // envURLCredentials matches the credentials of a URL or DSN, like postgres://user:pass@host or
 // user:pass@tcp(host)/db, whose password must not be logged, whatever the name of the variable is.

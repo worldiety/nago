@@ -20,6 +20,9 @@ const (
 
 	ResetPassword        template.DefinedTemplateName = "ResetPassword"
 	ResetPasswordSubject template.DefinedTemplateName = "ResetPasswordSubject"
+
+	OnboardingCode        template.DefinedTemplateName = "OnboardingCode"
+	OnboardingCodeSubject template.DefinedTemplateName = "OnboardingCodeSubject"
 )
 
 //go:embed *.gohtml

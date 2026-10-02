@@ -36,3 +36,11 @@ type PasswordResetModel struct {
 	ConfirmURL        core.URI
 	ApplicationName   string
 }
+
+// OnboardingCodeModel is the model of the mail with the code, which confirms the first account of an instance.
+type OnboardingCodeModel struct {
+	Email           user.Email
+	Code            string
+	ValidMinutes    int
+	ApplicationName string
+}

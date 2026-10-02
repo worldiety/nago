@@ -10,9 +10,13 @@ package application
 import (
 	"fmt"
 	"log/slog"
+	"net/http"
 	mail2 "net/mail"
+	"os"
+	"strings"
 
 	"go.wdy.de/nago/application/mail"
+	"go.wdy.de/nago/application/mail/nms"
 	uimail "go.wdy.de/nago/application/mail/ui"
 	"go.wdy.de/nago/application/template"
 	"go.wdy.de/nago/application/user"
@@ -26,11 +30,37 @@ import (
 // MailManagement is a nago system (Mail Management).
 // It is responsible for sending emails within the platform,
 // including notifications, password resets, and user registration confirmations.
-// It requires an SMTP secret configured SecretManagement.
+// It requires an SMTP secret shared with the system group or the Nago Mail Service, see [EnvMailService],
 // and uses predefined templates from TemplateManagement, which can be customized as needed.
 type MailManagement struct {
 	UseCases mail.UseCases
 	Pages    uimail.Pages
+	// MailService is the HTTP transport, which is used if no SMTP server is shared with the system group.
+	MailService *nms.Service
+}
+
+const (
+	// EnvMailService is the endpoint of the Nago Mail Service. If not set, [nms.DefaultEndpoint] is used. An empty
+	// value or "off" disables the service.
+	EnvMailService = "NAGO_MAIL_SERVICE"
+	// EnvMailServiceToken is an optional refresh token of the Nago Mail Service. Without it, the instance enrolls by
+	// a token exchange, which requires a public https origin, see [Configurator.ContextPath].
+	EnvMailServiceToken = "NAGO_MAIL_SERVICE_TOKEN"
+)
+
+// mailServiceEndpoint returns the configured endpoint or the default one, an empty string disables the service.
+func mailServiceEndpoint() string {
+	v, ok := os.LookupEnv(EnvMailService)
+	if !ok {
+		return nms.DefaultEndpoint
+	}
+
+	v = strings.TrimSpace(v)
+	if strings.EqualFold(v, "off") {
+		return ""
+	}
+
+	return v
 }
 
 // HasMailManagement returns false, as long as [MailManagement] has not been requested to get initialized.
@@ -88,8 +118,27 @@ func (c *Configurator) MailManagement() (MailManagement, error) {
 
 		healthRepo := json.NewSloppyJSONRepository[mail.ServerHealth, string](healthStore)
 
+		serviceStore, err := c.EntityStore("nago.mail.nms")
+		if err != nil {
+			return MailManagement{}, err
+		}
+
+		nonces := nms.NewNonces()
+		c.mailManagement.MailService = nms.NewService(nms.Options{
+			Endpoint: mailServiceEndpoint(),
+			Token:    strings.TrimSpace(os.Getenv(EnvMailServiceToken)),
+			Origin:   c.ContextPath,
+			Nonces:   nonces,
+			States:   json.NewSloppyJSONRepository[nms.State, string](serviceStore),
+		})
+
+		if c.mailManagement.MailService.Enabled() {
+			c.HandleMethod(http.MethodGet, nms.NoncePath+"{nonce}", nonces.Handler())
+			slog.Info("nago mail service enabled", "endpoint", c.mailManagement.MailService.Status().Endpoint)
+		}
+
 		notifyScheduler, wakeupScheduler := mail.NewWakeup()
-		mail.StartScheduler(c.Context(), mail.ScheduleOptions{Stats: statsRepo, Health: healthRepo, Wakeup: wakeupScheduler}, outgoingMailRepo, c.SysUser, secrets.UseCases.FindGroupSecrets)
+		mail.StartScheduler(c.Context(), mail.ScheduleOptions{Stats: statsRepo, Health: healthRepo, Wakeup: wakeupScheduler, MailService: c.mailManagement.MailService}, outgoingMailRepo, c.SysUser, secrets.UseCases.FindGroupSecrets)
 
 		c.mailManagement.Pages = uimail.Pages{
 			Dashboard:         "admin/mail",
@@ -102,7 +151,7 @@ func (c *Configurator) MailManagement() (MailManagement, error) {
 			SecretEdit:        secrets.Pages.EditSecret,
 		}
 
-		c.mailManagement.UseCases, err = mail.NewUseCasesWithStats(c.EventBus(), outgoingMailRepo, statsRepo, healthRepo, secrets.UseCases.FindGroupSecrets, notifyScheduler, templates.UseCases.EnsureBuildIn, c.SysUser)
+		c.mailManagement.UseCases, err = mail.NewUseCasesWithStats(c.EventBus(), outgoingMailRepo, statsRepo, healthRepo, secrets.UseCases.FindGroupSecrets, notifyScheduler, templates.UseCases.EnsureBuildIn, c.SysUser, c.mailManagement.MailService)
 		if err != nil {
 			return MailManagement{}, fmt.Errorf("cannot create mail usecases: %w", err)
 		}
