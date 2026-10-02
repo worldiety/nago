@@ -114,6 +114,20 @@ func (c *Configurator) RootViewWithDecoration(viewRootID core.NavigationPath, fa
 	c.RootView(viewRootID, c.DecorateRootView(factory), opts...)
 }
 
+// A RootViewInterceptor may replace the view of every root view, e.g. to show a setup page instead of any other
+// page as long as an instance has not been set up. It returns false to render the requested root view. It is
+// invoked on every render, so it must be cheap.
+type RootViewInterceptor func(wnd core.Window) (core.View, bool)
+
+// AddRootViewInterceptor installs an interceptor for all root views. Interceptors are asked in the order of their
+// installation and the first one wins. They must be installed before the application starts.
+func (c *Configurator) AddRootViewInterceptor(interceptor RootViewInterceptor) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	c.rootViewInterceptors = append(c.rootViewInterceptors, interceptor)
+}
+
 // RootViewMetaOf returns the metadata registered for the given root view. The zero value is returned for a
 // view that was registered without any [RootViewOption], which is the normal case.
 func (c *Configurator) RootViewMetaOf(viewRootID core.NavigationPath) RootViewMeta {
@@ -226,9 +240,16 @@ func (c *Configurator) newCoreApplication() *core.Application {
 		})
 	}
 
+	interceptors := slices.Clone(c.rootViewInterceptors)
 	factories := map[proto.RootViewID]core.ComponentFactory{}
 	for id, f := range c.factories {
 		factories[id] = func(scope core.Window) core.View {
+			for _, intercept := range interceptors {
+				if view, ok := intercept(scope); ok {
+					return view
+				}
+			}
+
 			return f(scope)
 		}
 	}
