@@ -15,15 +15,18 @@ the commits since the last review are checked and the docs are updated where nec
 | `example/cmd/`                 | the tutorials, mounted into Hugo and shown by `{{< example-code >}}` |
 | `example/gallery/<group>/`     | one route per component, only used for the component screenshots    |
 | `docs/.last-reviewed-commit`   | the commit up to which the docs have been reviewed                   |
+| `docs/.last-reviewed-speclink` | the speclink version the architecture and speclink pages describe    |
 
 Sections of `content/docs/`:
 
 1. `getting-started/` what Nago is, installation, the first app.
 2. `concepts/` how a Nago application works: configurator, views, state, navigation, use cases and
    permissions, persistence, theming, localization, deployment.
-3. `components/` one page per UI component, grouped into basic, layout, composite and feedback-and-overlay.
-4. `systems/` one page per system (user management, mail, ...).
-5. `examples/` one page per tutorial in `example/cmd`.
+3. `architecture/` the architecture style of the speclink profile `go_nago_ddd1`.
+4. `speclink/` what speclink is for, in plain language, and how to use it in a Nago project.
+5. `components/` one page per UI component, grouped into basic, layout, composite and feedback-and-overlay.
+6. `systems/` one page per system (user management, mail, ...).
+7. `examples/` one page per tutorial in `example/cmd`.
 
 ## Build and preview
 
@@ -99,6 +102,12 @@ longer referenced.
    systems, use cases, configuration, environment variables, new or removed tutorials.
 3. Update the affected pages and method tables, add pages for new tutorials and components, remove pages of
    removed ones.
-4. Re-render the screenshots of everything whose UI changed. When in doubt, re-render all: `go run .`.
-5. `hugo build` must pass without errors or warnings.
-6. Write the reviewed commit into `docs/.last-reviewed-commit` and commit everything together.
+4. Check the commits of [speclink](https://github.com/worldiety/speclink) since the version in
+   `docs/.last-reviewed-speclink` for changes of the `go_nago_ddd1` profile, its rules or the CLI, and update
+   `architecture/` and `speclink/`. Run
+   `speclink verify -profile go_nago_ddd1 ./...` in `example/cmd/tutorial-113-ai-assistant` and update the
+   findings quoted in `speclink/example.md` and `speclink/workflow.md`.
+5. Re-render the screenshots of everything whose UI changed. When in doubt, re-render all: `go run .`.
+6. `hugo build` must pass without errors or warnings.
+7. Write the reviewed commit into `docs/.last-reviewed-commit` and the speclink version into
+   `docs/.last-reviewed-speclink`, and commit everything together.

@@ -57,5 +57,6 @@ group *Specification*.
 
 ## Related
 
+- [speclink](/docs/speclink/) explains the requirement files and the tool which checks them.
 - [Tutorial: AI assistant](/docs/examples/tutorial-113-ai-assistant/) declares requirements and binds them to
   code.

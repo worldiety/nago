@@ -19,7 +19,8 @@ The assistant needs a configured AI provider, e.g. an Anthropic token in the adm
 
 Unlike the other tutorials, which put everything into one `main.go`, this one follows the `go_nago_ddd1` profile
 of [speclink](https://github.com/worldiety/speclink), the traceability tool worldiety uses to check Nago
-projects. This structure is the reason why the assistant below needs no adapter at all.
+projects. This structure is the reason why the assistant below needs no adapter at all. See
+[Architecture](/docs/architecture/) and [speclink](/docs/speclink/) for the style and the tool.
 
 ```
 cmd/ai-example/main.go          entry point: bootstrap and wiring, no business logic

@@ -79,6 +79,9 @@ The second argument is the prefix of the generated permission ids. The entity ad
 generated forms. See [tutorial-21-entities](/docs/examples/tutorial-21-entities/) and the
 [auto form](/docs/components/composite/auto_form/).
 
+Projects in the [architecture style](/docs/architecture/persistence/#why-generic-crud-is-not-available) checked by
+speclink do not use `cfgent`, because generated use cases cannot be traced to requirements.
+
 ## ndb: event streams and time series
 
 `go.wdy.de/nago/pkg/ndb` is Nago's storage engine for append-only data. `cfg.NDB()` opens the shared database at
@@ -102,5 +105,6 @@ encrypted and the master key is not part of the backup, so keep it separately.
 
 ## Related
 
+- [Persistence patterns](/docs/architecture/persistence/) – when to use a repository, event sourcing or projections
 - [tutorial-57-adm-stores](/docs/examples/tutorial-57-adm-stores/) – inspecting stores in the admin center
 - [Inspector](/docs/systems/inspector_management/)

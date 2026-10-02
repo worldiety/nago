@@ -44,6 +44,9 @@ cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {
 })
 ```
 
+For larger applications, the [architecture](/docs/architecture/use-cases/) fixes where use cases live and how they
+are shaped, with one file and one permission per use case.
+
 `alert.BannerError` from `go.wdy.de/nago/presentation/ui/alert` renders an error as a banner. Known errors get a
 localized, user-friendly message; for all others, the user only sees a generic message and a token, while the
 details go to the log.

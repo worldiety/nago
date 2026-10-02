@@ -1,6 +1,6 @@
 ---
 title: Examples
-weight: 5
+weight: 7
 sidebar:
   open: false
 ---
