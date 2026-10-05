@@ -8,6 +8,7 @@
 package cfgai
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"slices"
@@ -113,41 +114,59 @@ func (c Confirmation) confirm(cfg AssistantSettings) bool {
 	}
 }
 
-// Button returns the floating assistant button, or nil when the assistant cannot or should not run right now:
-// nobody is signed in, an operator hid it, no provider is configured, or no model could be determined.
+var (
+	// ErrAssistantNotSignedIn is returned by [Assistant.ChatOptions], if nobody is signed in.
+	ErrAssistantNotSignedIn = errors.New("ai: nobody is signed in")
+	// ErrAssistantHidden is returned by [Assistant.ChatOptions], if an operator hid the assistant, see
+	// [AssistantSettings.Hidden].
+	ErrAssistantHidden = errors.New("ai: an operator hid the assistant")
+)
+
+// assistantProblem is a misconfiguration, which [Assistant.Button] logs once per kind.
+type assistantProblem struct {
+	kind string
+	err  error
+}
+
+func (p assistantProblem) Error() string {
+	return p.err.Error()
+}
+
+func (p assistantProblem) Unwrap() error {
+	return p.err
+}
+
+// ChatOptions resolves the chat options exactly like [Assistant.Button] does, so that a chat embedded into a page
+// by [uicompletion.Chat] runs with the same provider, model and safety settings as the floating one, including
+// the operator's [AssistantSettings.ReadOnly]. [AssistantOptions.Corner] and [AssistantOptions.Label] only apply
+// to the button.
 //
-// Returning nil rather than an error view is deliberate - the button lives in a decorator and appears on every
-// screen, so a misconfiguration must not turn into a banner on every page. The reason is logged instead, once
-// per kind, with enough detail to act on. Use [uicompletion.MissingPermissions] if you want to surface a
-// missing role in your own UI.
-func (a *Assistant) Button(wnd core.Window, opts AssistantOptions) core.View {
+// It fails with [ErrAssistantNotSignedIn] or [ErrAssistantHidden], or with an error naming the missing
+// permissions or the reason why no provider and model could be determined.
+func (a *Assistant) ChatOptions(wnd core.Window, opts AssistantOptions) (uicompletion.ChatOptions, error) {
 	if wnd.Subject() == nil || !wnd.Subject().Valid() {
-		return nil
+		return uicompletion.ChatOptions{}, ErrAssistantNotSignedIn
 	}
 
 	cfg := core.GlobalSettings[AssistantSettings](wnd)
 	if cfg.Hidden {
-		return nil
+		return uicompletion.ChatOptions{}, ErrAssistantHidden
 	}
 
 	// Diagnose the most common cause first and by name, because it is invisible from the UI: without the
 	// framework permissions the provider lookup below simply yields nothing, which looks exactly like "no
 	// provider configured" and sends whoever debugs it to the wrong place.
 	if missing := uicompletion.MissingPermissions(wnd.Subject()); len(missing) > 0 {
-		a.complain("permissions", fmt.Sprintf(
+		return uicompletion.ChatOptions{}, assistantProblem{kind: "permissions", err: fmt.Errorf(
 			"the AI assistant stays hidden because the acting role lacks %v; assign the %q role to the users who should use it",
-			missing, RoleAssistantUser))
-		return nil
+			missing, RoleAssistantUser)}
 	}
 
 	chosen, modelID, err := a.Resolve(wnd.Subject(), cfg)
 	if err != nil {
-		a.complain("model", fmt.Sprintf(
-			"the AI assistant stays hidden because no provider and model could be determined: %v; check the vault and the global settings", err))
-		return nil
+		return uicompletion.ChatOptions{}, assistantProblem{kind: "model", err: fmt.Errorf(
+			"the AI assistant stays hidden because no provider and model could be determined: %w; check the vault and the global settings", err)}
 	}
-
-	prov, comps := chosen.Provider, chosen.Completions
 
 	agents := make([]uicompletion.Agent, len(opts.Agents))
 	copy(agents, opts.Agents)
@@ -163,10 +182,10 @@ func (a *Assistant) Button(wnd core.Window, opts AssistantOptions) core.View {
 		}
 	}
 
-	button := uicompletion.ChatButton(uicompletion.ChatOptions{
+	return uicompletion.ChatOptions{
 		Sessions:           a.sessions,
-		Completions:        comps,
-		Provider:           prov,
+		Completions:        chosen.Completions,
+		Provider:           chosen.Provider,
 		Title:              opts.Title,
 		Tags:               opts.Tags,
 		MaxTurns:           opts.MaxTurns,
@@ -178,8 +197,28 @@ func (a *Assistant) Button(wnd core.Window, opts AssistantOptions) core.View {
 		ConfirmMutations:   opts.Confirmation.confirm(cfg),
 		Agents:             agents,
 		Delegation:         opts.Delegation,
-	})
+	}, nil
+}
 
+// Button returns the floating assistant button, or nil when the assistant cannot or should not run right now:
+// nobody is signed in, an operator hid it, no provider is configured, or no model could be determined.
+//
+// Returning nil rather than an error view is deliberate - the button lives in a decorator and appears on every
+// screen, so a misconfiguration must not turn into a banner on every page. The reason is logged instead, once
+// per kind, with enough detail to act on. Use [uicompletion.MissingPermissions] if you want to surface a
+// missing role in your own UI. See [Assistant.ChatOptions] to embed the chat into a page instead.
+func (a *Assistant) Button(wnd core.Window, opts AssistantOptions) core.View {
+	chatOpts, err := a.ChatOptions(wnd, opts)
+	if err != nil {
+		var problem assistantProblem
+		if errors.As(err, &problem) {
+			a.complain(problem.kind, problem.Error())
+		}
+
+		return nil
+	}
+
+	button := uicompletion.ChatButton(chatOpts)
 	button = button.Corner(opts.Corner)
 
 	if opts.Label != "" {
