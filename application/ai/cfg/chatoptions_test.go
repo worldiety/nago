@@ -87,6 +87,11 @@ func TestChatOptions(t *testing.T) {
 		t.Fatalf("the operator settings are missing: %+v", opts)
 	}
 
+	// an embedded chat keeps its own input field, only the floating assistant follows Assistant.Open
+	if opts.Open != nil || opts.Draft != nil {
+		t.Fatal("ChatOptions must not share the states of the floating assistant")
+	}
+
 	if a := opts.Agents[0]; a.Model != "alpha-1" || a.MaxTokens != DefaultAssistantMaxTokens {
 		t.Fatalf("the agent did not get the operator's model: %+v", a)
 	}

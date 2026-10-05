@@ -218,6 +218,34 @@ func (a *Assistant) ChatOptions(wnd core.Window, opts AssistantOptions) (uicompl
 	}, nil
 }
 
+// The states of the floating assistant of a window, see [Assistant.Open].
+const (
+	assistantOpenState  = "nago.ai.assistant.open"
+	assistantDraftState = "nago.ai.assistant.draft"
+)
+
+// Available reports whether the assistant is shown in the window, e.g. to offer an action which opens it. It is
+// false for the same reasons [Assistant.ChatOptions] fails: nobody is signed in, an operator hid it, the role
+// lacks the permissions, or no provider and model could be determined.
+func (a *Assistant) Available(wnd core.Window) bool {
+	_, err := a.ChatOptions(wnd, AssistantOptions{})
+	return err == nil
+}
+
+// Open opens the floating assistant of the window, see [Assistant.Decorate], and puts the draft into its input
+// field. The user still decides to send it, so a page never starts a model call or a tool by itself. A running
+// conversation is kept; text the user already typed is replaced. Open returns false and does nothing, if the
+// assistant is not available in the window. A window has at most one floating assistant.
+func (a *Assistant) Open(wnd core.Window, draft string) bool {
+	if !a.Available(wnd) {
+		return false
+	}
+
+	core.StateOf[string](wnd, assistantDraftState).Set(draft)
+	core.StateOf[bool](wnd, assistantOpenState).Set(true)
+	return true
+}
+
 // Button returns the floating assistant button, or nil when the assistant cannot or should not run right now:
 // nobody is signed in, an operator hid it, no provider is configured, or no model could be determined.
 //
@@ -235,6 +263,10 @@ func (a *Assistant) Button(wnd core.Window, opts AssistantOptions) core.View {
 
 		return nil
 	}
+
+	// only the floating assistant listens to Open, an embedded chat keeps its own input field
+	chatOpts.Open = core.StateOf[bool](wnd, assistantOpenState)
+	chatOpts.Draft = core.StateOf[string](wnd, assistantDraftState)
 
 	button := uicompletion.ChatButton(chatOpts)
 	button = button.Corner(opts.Corner)

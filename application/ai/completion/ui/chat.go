@@ -163,6 +163,14 @@ type ChatOptions struct {
 	// Delegation lets the model hand independent tasks to sub-agents working in parallel, see
 	// [DelegationOptions]. Nil disables it.
 	Delegation *DelegationOptions
+
+	// Open controls whether the panel of a [ChatButton] is open, so that a page can open or close it. Nil keeps
+	// the state inside the button. Ignored by [Chat].
+	Open *core.State[bool]
+
+	// Draft holds the text of the input field, so that a page can suggest a message. The user still decides to
+	// send it. Nil keeps the state inside the chat.
+	Draft *core.State[string]
 }
 
 // effectiveAgents returns the configured agents, or a single default agent when none are configured.
@@ -242,7 +250,11 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		}
 		return nil
 	})
+	// the own state is always allocated, so the order of the automatic states does not depend on the options
 	prompt := core.AutoState[string](wnd)
+	if opts.Draft != nil {
+		prompt = opts.Draft
+	}
 	busy := core.AutoState[bool](wnd)
 	// sessionID is the persisted conversation the panel currently continues. Empty for a fresh chat, set on
 	// the first submit (lazy create), when restoring from history or when resuming a pending question. Only

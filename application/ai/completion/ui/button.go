@@ -75,6 +75,9 @@ func (b TChatButton) ZIndex(z int) TChatButton {
 func (b TChatButton) Render(ctx core.RenderContext) core.RenderNode {
 	wnd := ctx.Window()
 	open := core.AutoState[bool](wnd)
+	if b.opts.Open != nil {
+		open = b.opts.Open
+	}
 
 	title := b.opts.Title
 	if title == "" {
