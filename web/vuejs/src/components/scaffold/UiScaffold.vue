@@ -12,7 +12,8 @@
 	<Sidebar v-if="sidebarVisible" :ui="props.ui" />
 	<BurgerMenu v-if="burgerMenuVisible" :ui="props.ui" />
 
-	<div class="min-h-full flex flex-col min-h-screen" :class="bodyWrapperClass">
+	<!-- w-full keeps the body at full width, also when a decorator puts the scaffold into a centering stack -->
+	<div class="min-h-full flex flex-col min-h-screen w-full" :class="bodyWrapperClass">
 		<main class="website-content min-h-full flex-grow w-full" :style="contentStyles">
 			<ui-generic v-if="props.ui.body" :ui="props.ui.body" :class="{ grow: ui.bodyFullSize }" />
 		</main>

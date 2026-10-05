@@ -254,13 +254,18 @@ func (a *Assistant) Button(wnd core.Window, opts AssistantOptions) core.View {
 //
 // Attaching it here rather than to each page means it genuinely appears on every screen, including the ones
 // the framework brings along. When the assistant cannot run, the view is returned untouched.
+//
+// The button floats above the page and takes no space. The view is stretched to the full width, so a page
+// looks the same with and without the assistant, whether the scaffold wraps the assistant or the other way
+// round.
 func (a *Assistant) Decorate(wnd core.Window, view core.View, opts AssistantOptions) core.View {
 	button := a.Button(wnd, opts)
 	if button == nil {
 		return view
 	}
 
-	return ui.VStack(view, button).FullWidth()
+	// A stack centers its children by default, which would shrink a scaffold to the width of its content.
+	return ui.VStack(view, button).FullWidth().Alignment(ui.Stretch)
 }
 
 // Candidate is a configured provider which can run a completion.
