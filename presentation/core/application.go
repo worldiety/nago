@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"maps"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -59,6 +60,7 @@ type Application struct {
 	onShareStream            func(*Scope, func() (io.Reader, error)) (URI, error)
 	onWindowCreatedObservers []OnWindowCreatedObserver
 	destructors              *concurrent.LinkedList[func()]
+	colorsMutex              sync.RWMutex // protects colorSets, which windows read while the theme may change
 	colorSets                map[ColorScheme]map[NamespaceName]ColorSet
 
 	findVirtualSession session.FindUserSessionByID
@@ -173,8 +175,47 @@ func (a *Application) SetAppIcon(appIcon URI) {
 	a.appIcon = appIcon
 }
 
+// UpdateColorSet replaces the color set of its namespace for the given scheme. It may be called from any
+// goroutine, also while windows render.
 func (a *Application) UpdateColorSet(scheme ColorScheme, set ColorSet) {
-	a.colorSets[scheme][set.Namespace()] = set
+	a.colorsMutex.Lock()
+	defer a.colorsMutex.Unlock()
+
+	sets, ok := a.colorSets[scheme]
+	if !ok {
+		sets = map[NamespaceName]ColorSet{}
+		a.colorSets[scheme] = sets
+	}
+
+	sets[set.Namespace()] = set
+}
+
+// colorSetsSnapshot returns a copy of all color sets.
+func (a *Application) colorSetsSnapshot() map[ColorScheme]map[NamespaceName]ColorSet {
+	a.colorsMutex.RLock()
+	defer a.colorsMutex.RUnlock()
+
+	res := make(map[ColorScheme]map[NamespaceName]ColorSet, len(a.colorSets))
+	for scheme, sets := range a.colorSets {
+		res[scheme] = maps.Clone(sets)
+	}
+
+	return res
+}
+
+// colorSet returns the color set of the namespace for the given scheme. knownScheme is false, if there is no
+// color set at all for the scheme.
+func (a *Application) colorSet(scheme ColorScheme, ns NamespaceName) (set ColorSet, knownScheme bool, found bool) {
+	a.colorsMutex.RLock()
+	defer a.colorsMutex.RUnlock()
+
+	sets, knownScheme := a.colorSets[scheme]
+	if !knownScheme {
+		return nil, false, false
+	}
+
+	set, found = sets[ns]
+	return set, true, found
 }
 
 func (a *Application) UpdateFonts(fonts Fonts) {

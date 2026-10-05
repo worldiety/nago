@@ -70,7 +70,8 @@ type Configurator struct {
 	rootViewInterceptors       []RootViewInterceptor
 	onWindowCreatedObservers   []core.OnWindowCreatedObserver
 	destructors                []func()
-	app                        *core.Application // may be nil
+	app                        atomic.Pointer[core.Application] // nil until the application has been built
+	themeMutex                 sync.Mutex                       // orders building the application and theme updates
 	rawEndpoint                []rawEndpoint
 	colorSets                  map[core.ColorScheme]map[core.NamespaceName]core.ColorSet
 	appIconUri                 proto.URI
@@ -332,7 +333,7 @@ func (c *Configurator) GetNoFooter() []core.NavigationPath {
 // Warning: Older Safari versions (< 26) don't support .svg files
 func (c *Configurator) AppIcon(ico core.URI) *core.Application {
 	c.appIconUri = proto.URI(ico)
-	return c.app
+	return c.app.Load()
 }
 
 // DataDir returns the most private data directory, which is accessible. If not manually set, initialize as follows:

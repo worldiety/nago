@@ -387,7 +387,7 @@ func (s *Scope) handleConfigurationRequested(evt *proto.ScopeConfigurationChange
 		},
 	}
 
-	for scheme, m := range s.app.colorSets {
+	for scheme, m := range s.app.colorSetsSnapshot() {
 		for name, set := range m {
 			switch scheme {
 			case Dark:

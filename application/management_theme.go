@@ -8,7 +8,10 @@
 package application
 
 import (
+	"log/slog"
+
 	"go.wdy.de/nago/application/theme"
+	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/presentation/core"
 )
@@ -39,13 +42,34 @@ func (c *Configurator) ThemeManagement() (ThemeManagement, error) {
 			sets.UseCases.StoreGlobal,
 		)}
 
-		events.SubscribeFor[theme.SettingsUpdated](c.EventBus(), func(evt theme.SettingsUpdated) {
-			// TODO this entire thing is racy if updated after Configurator.Run
-			if c.app != nil {
-				c.app.UpdateColorSet(core.Dark, evt.Settings.Colors.Dark)
-				c.app.UpdateColorSet(core.Light, evt.Settings.Colors.Light)
-				c.app.UpdateFonts(evt.Settings.Fonts)
+		uc := c.themeManagement.UseCases
+		events.SubscribeFor[theme.SettingsUpdated](c.EventBus(), func(theme.SettingsUpdated) {
+			// The lock orders this update with building the application, see newCoreApplication. The bus delivers
+			// asynchronously, so events may arrive out of order: the stored theme is applied rather than the one of
+			// the event, thus the last update always wins.
+			c.themeMutex.Lock()
+			defer c.themeMutex.Unlock()
+
+			app := c.app.Load()
+			if app == nil {
+				return // the application reads the stored theme when it is built
 			}
+
+			colors, err := uc.ReadColors(user.SU())
+			if err != nil {
+				slog.Error("cannot read the theme colors", "err", err)
+				return
+			}
+
+			fonts, err := uc.ReadFonts(user.SU())
+			if err != nil {
+				slog.Error("cannot read the theme fonts", "err", err)
+				return
+			}
+
+			app.UpdateColorSet(core.Dark, colors.Dark)
+			app.UpdateColorSet(core.Light, colors.Light)
+			app.UpdateFonts(fonts)
 		})
 	}
 

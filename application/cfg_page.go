@@ -226,8 +226,9 @@ func (c *Configurator) NewHTTPHandler() (http.Handler, *core.Application, error)
 	}
 
 	handler := c.newHandler()
-	c.app.AddDestructor(c.done)
-	return handler, c.app, nil
+	app := c.app.Load()
+	app.AddDestructor(c.done)
+	return handler, app, nil
 }
 
 // newCoreApplication creates the transport independent core application and assigns it to c.app.
@@ -287,7 +288,6 @@ func (c *Configurator) newCoreApplication() *core.Application {
 		}
 	})
 
-	c.app = app2
 	app2.SetID(c.applicationID)
 	for scheme, m := range c.colorSets {
 		for _, set := range m {
@@ -298,12 +298,20 @@ func (c *Configurator) newCoreApplication() *core.Application {
 	app2.SetName(c.applicationName)
 	app2.SetVersion(c.applicationVersion)
 	app2.SetAppIcon(core.URI(c.appIconUri))
-	colors := option.Must(option.Must(c.ThemeManagement()).UseCases.ReadColors(user.SU()))
+
+	// Goroutines of the application, e.g. a scheduler, may already update the theme. Publishing the application,
+	// reading the stored theme and applying it happen under the same lock as such an update, so an update is
+	// either read here or applied afterwards, and never lost.
+	themes := option.Must(c.ThemeManagement())
+	c.themeMutex.Lock()
+	c.app.Store(app2)
+	colors := option.Must(themes.UseCases.ReadColors(user.SU()))
 	app2.UpdateColorSet(core.Dark, colors.Dark)
 	app2.UpdateColorSet(core.Light, colors.Light)
 
-	fonts := option.Must(option.Must(c.ThemeManagement()).UseCases.ReadFonts(user.SU()))
+	fonts := option.Must(themes.UseCases.ReadFonts(user.SU()))
 	app2.UpdateFonts(fonts)
+	c.themeMutex.Unlock()
 
 	// TODO we are in a weired order here
 	for _, destructor := range c.destructors {

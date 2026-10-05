@@ -245,13 +245,12 @@ func Colors[CS ColorSet](wnd Window) CS {
 		scheme = scope.parent.windowInfo.SystemColorScheme
 	}
 
-	colors, ok := scope.parent.app.colorSets[scheme]
-	if !ok {
+	set, knownScheme, ok := scope.parent.app.colorSet(scheme, zero.Namespace())
+	if !knownScheme {
 		slog.Error("could not find color set for scheme", "scheme", scheme)
 		return zero.Default(scheme).(CS)
 	}
 
-	set, ok := colors[zero.Namespace()]
 	if !ok {
 		slog.Error("could not find color set for namespace", "scheme", scheme, "namespace", zero.Namespace())
 		return zero.Default(scheme).(CS)

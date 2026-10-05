@@ -87,7 +87,7 @@ func (a *Application) Run() {
 
 	a.cfg.done()
 
-	if app := a.cfg.app; app != nil {
+	if app := a.cfg.app.Load(); app != nil {
 		app.Destroy()
 	}
 
