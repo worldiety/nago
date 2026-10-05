@@ -767,3 +767,35 @@ func TestKeyedClickHitsTheRow(t *testing.T) {
 		t.Fatalf("expected two stale clicks, got %d", n)
 	}
 }
+
+// A click on the save button of a dialog right after typing refers to the tree before the typed value. The
+// predefined dialog buttons are keyed, so the click is not lost.
+func TestDialogSaveAfterInputIsNotLost(t *testing.T) {
+	app := nagotest.New(t, func(cfg *application.Configurator) {
+		cfg.SetApplicationID("de.worldiety.nagotest")
+		cfg.RootView("dialog", func(wnd core.Window) core.View {
+			open := core.AutoState[bool](wnd).Init(func() bool { return true })
+			name := core.AutoState[string](wnd)
+			saved := core.AutoState[string](wnd)
+			return ui.VStack(
+				alert.Dialog("Rename", ui.TextField("Name", name.Get()).InputValue(name), open, alert.Save(func() bool {
+					saved.Set(name.Get())
+					return true
+				}), alert.Cancel(nil)),
+				ui.Text("saved: "+saved.Get()),
+			)
+		})
+	})
+
+	w := app.Open(t, nil, "dialog")
+	save := actionOf(t, w, "Speichern")
+	before := w.Scope().StaleCalls()
+
+	w.Type(w.Find(nagotest.Label("Name")), "Alice")
+	call(t, w, save)
+
+	w.Find(nagotest.Text("saved: Alice"))
+	if n := w.Scope().StaleCalls() - before; n != 0 {
+		t.Fatalf("expected no stale calls, got %d", n)
+	}
+}

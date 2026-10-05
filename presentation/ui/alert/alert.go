@@ -264,6 +264,14 @@ func (t TDialog) Render(ctx core.RenderContext) core.RenderNode {
 		opt.apply(ctx.Window(), &options)
 	}
 
+	// A click right after typing into the dialog refers to the tree before the typed value, because the value is
+	// sent when the field loses its focus. The keys redirect such a click to the current button.
+	options.okBtn = keyed(options.okBtn, "nago.alert.ok", t.title)
+	options.cancelBtn = keyed(options.cancelBtn, "nago.alert.cancel", t.title)
+	options.delBtn = keyed(options.delBtn, "nago.alert.delete", t.title)
+	options.saveBtn = keyed(options.saveBtn, "nago.alert.save", t.title)
+	options.closeable = keyed(options.closeable, "nago.alert.close", t.title)
+
 	var fixHeight ui.Length
 	if options.height == ui.Full {
 		fixHeight = "calc(100dvh - 12rem)"
@@ -328,4 +336,14 @@ func (t TDialog) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	return modal.Render(ctx)
+}
+
+// keyed sets the callback key of a predefined button, see [ui.TButton.Key]. Dialogs with the same title share
+// their keys, which makes them ambiguous, so such clicks are not redirected.
+func keyed(v core.View, name, title string) core.View {
+	if btn, ok := v.(ui.TButton); ok {
+		return btn.Key(name, title)
+	}
+
+	return v
 }
