@@ -8,6 +8,7 @@
 package session
 
 import (
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -168,7 +169,10 @@ func TestUserSessionRefreshesNLSOncePerInterval(t *testing.T) {
 
 // Concurrent first accesses share one instance, so a scope never holds an orphan.
 func TestFindUserSessionSharesInstance(t *testing.T) {
-	_, find, _, _ := newTestSessions(nil)
+	repo, find, _, _ := newTestSessions(nil)
+	if err := repo.Save(Session{ID: "same"}); err != nil {
+		t.Fatal(err)
+	}
 
 	var wg sync.WaitGroup
 	got := make([]UserSession, 16)
@@ -185,5 +189,30 @@ func TestFindUserSessionSharesInstance(t *testing.T) {
 		if s != got[0] {
 			t.Fatal("concurrent first accesses created several instances")
 		}
+	}
+}
+
+// The id comes unchecked from a cookie, so arbitrary ids must not grow the cache, while existing sessions are
+// remembered for the interval of their single sign-on refresh.
+func TestFindUserSessionCachesOnlyExistingSessions(t *testing.T) {
+	repo := &datamem.Repository[Session, ID]{}
+	find, cache := newFindUserSessionByID(repo, func(id ID) error { return nil })
+
+	for i := range 10_000 {
+		if find(ID(fmt.Sprintf("random-%d", i))).User().IsSome() {
+			t.Fatal("an unknown session has no user")
+		}
+	}
+
+	if n := cache.Len(); n != 0 {
+		t.Fatalf("unknown sessions must not be cached, got %d entries", n)
+	}
+
+	if err := repo.Save(Session{ID: "known", User: std.Some[user.ID]("alice"), AuthenticatedAt: time.Now()}); err != nil {
+		t.Fatal(err)
+	}
+
+	if find("known") != find("known") || cache.Len() != 1 {
+		t.Fatalf("an existing session must be cached once, got %d entries", cache.Len())
 	}
 }
