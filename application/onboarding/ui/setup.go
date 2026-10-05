@@ -112,7 +112,7 @@ func Setup(wnd core.Window, flow *Flow) core.View {
 
 		body = ui.TextField(StrCode.Get(wnd), code.Get()).
 			InputValue(code).
-			KeyboardType(ui.KeyboardInteger).
+			KeyboardType(ui.KeyboardPhone). // a numeric keypad, but unlike KeyboardInteger it keeps leading zeros
 			SupportingText(hint).
 			ErrorText(codeErr.Get()).
 			ID("onboarding-code").

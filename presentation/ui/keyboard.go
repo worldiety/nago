@@ -79,6 +79,8 @@ func (k KeyboardType) ora() proto.KeyboardType {
 const (
 	KeyboardDefault KeyboardType = iota
 	KeyboardAscii
+	// KeyboardInteger shows a numeric keypad and formats the input as an integer, which drops leading zeros. Use
+	// [KeyboardPhone] for digit sequences like codes or postal codes.
 	KeyboardInteger
 	KeyboardFloat
 	KeyboardEMail

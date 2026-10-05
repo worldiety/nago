@@ -516,6 +516,9 @@ func (s *setup) configure(su user.Subject, usr user.User) error {
 	return nil
 }
 
+// codeDigits is the length of a code.
+const codeDigits = 6
+
 // newCode returns 6 uniformly distributed digits.
 func newCode() (string, error) {
 	n, err := rand.Int(rand.Reader, big.NewInt(1_000_000))
@@ -523,16 +526,24 @@ func newCode() (string, error) {
 		return "", err
 	}
 
-	return fmt.Sprintf("%06d", n.Int64()), nil
+	return fmt.Sprintf("%0*d", codeDigits, n.Int64()), nil
 }
 
+// normalizeCode removes separators and restores the leading zeros of a purely numeric input, which integer
+// input fields drop, e.g. 031796 becomes 31796.
 func normalizeCode(code string) string {
-	return strings.Map(func(r rune) rune {
+	code = strings.Map(func(r rune) rune {
 		if r == ' ' || r == '-' || r == '\t' {
 			return -1
 		}
 		return r
 	}, code)
+
+	if len(code) > 0 && len(code) < codeDigits && strings.Trim(code, "0123456789") == "" {
+		code = strings.Repeat("0", codeDigits-len(code)) + code
+	}
+
+	return code
 }
 
 func hashCode(salt [16]byte, code string) [32]byte {

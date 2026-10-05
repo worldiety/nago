@@ -299,3 +299,32 @@ func wrong(code string) string {
 
 	return string(code[0]+1) + code[1:]
 }
+
+// An integer input field drops the leading zeros of a code, which must still be accepted.
+func TestCodeWithoutLeadingZeros(t *testing.T) {
+	for _, tc := range []struct{ in, want string }{
+		{"031796", "031796"},
+		{"31796", "031796"},
+		{"796", "000796"},
+		{"0", "000000"},
+		{"31 796", "031796"},
+		{"", ""},
+		{"abc", "abc"},
+		{"1234567", "1234567"},
+	} {
+		if got := normalizeCode(tc.in); got != tc.want {
+			t.Fatalf("normalizeCode(%q) = %q, want %q", tc.in, got, tc.want)
+		}
+	}
+
+	s, _, _ := newTestSetup(t, Options{})
+	if _, err := s.requestCode("s1"); err != nil {
+		t.Fatal(err)
+	}
+
+	// replace the code by one with a leading zero, as an integer field would show it
+	s.current.hash = hashCode(s.current.salt, "031796")
+	if err := s.verifyCode("s1", "31796"); err != nil {
+		t.Fatalf("the code without its leading zero has been rejected: %v", err)
+	}
+}
