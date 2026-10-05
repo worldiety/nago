@@ -106,6 +106,12 @@ type Tool struct {
 	// meaningful together with Mutating.
 	Confirm string
 
+	// RequiresApproval marks a mutating tool whose calls need the approval of the user even when the run confirms
+	// only marked tools ([RunOptions.ConfirmMarked]), e.g. deleting data, dropping a table or granting rights.
+	// Other mutating tools then run without asking. Use [Tool.RequireApproval], which also sets Mutating; the flag
+	// has no effect on a tool which is not Mutating.
+	RequiresApproval bool
+
 	// NoDelegate keeps this tool away from sub-agents started by [NewDelegateTool] and [NewTaskTools]. Set it on
 	// tools which only make sense in the conversation with the user, typically everything bound to a window
 	// (a screen inspection, a navigation, a dialog): a sub-agent runs detached, possibly in parallel to other
@@ -144,6 +150,19 @@ func (t Tool) AsMutating(confirm string) Tool {
 	t.Mutating = true
 	t.Confirm = confirm
 	return t
+}
+
+// RequireApproval marks the tool as state-changing and requiring the approval of the user, see
+// [Tool.RequiresApproval]. Combine it with [Tool.AsMutating] to describe the effect.
+func (t Tool) RequireApproval() Tool {
+	t.Mutating = true
+	t.RequiresApproval = true
+	return t
+}
+
+// needsApproval reports whether a call of the tool must wait for the approval of the user.
+func (o RunOptions) needsApproval(t Tool) bool {
+	return t.Mutating && (o.ConfirmMutating || (o.ConfirmMarked && t.RequiresApproval))
 }
 
 // WithResultDoc appends a description of what the tool returns to its advertised description, so the model
@@ -515,6 +534,10 @@ type RunOptions struct {
 	// reject it (see [Start], [Continue]). Only supported by [Start]; [Run] fails on such a suspension.
 	ConfirmMutating bool
 
+	// ConfirmMarked suspends the run like ConfirmMutating, but only before calls of tools marked
+	// [Tool.RequiresApproval]. Other mutating tools run without asking. ConfirmMutating takes precedence.
+	ConfirmMarked bool
+
 	// Context bounds the run. It is checked before every model turn and before every tool call, and it is
 	// passed to [Completions.Complete], so cancelling it aborts an in-flight provider request as well. A
 	// cancelled run returns an error satisfying errors.Is(err, context.Canceled) (or DeadlineExceeded) together
@@ -627,7 +650,8 @@ func Run(subject auth.Subject, c Completions, opts RunOptions) (Result, []Messag
 }
 
 // Start drives the agentic loop like [Run], but supports suspension: when the model calls a tool marked
-// [Tool.AwaitsUser] or, with [RunOptions.ConfirmMutating], a mutating tool, the loop does not block. It
+// [Tool.AwaitsUser] or a tool which needs approval ([RunOptions.ConfirmMutating], [RunOptions.ConfirmMarked]),
+// the loop does not block. It
 // returns an [Outcome] whose Suspended field carries the [Continuation] instead. The caller persists it
 // together with the history and later resumes via [Continue] once the user decided. No goroutine waits in
 // between, so a closed window, a navigation or a server restart loses nothing.
@@ -945,7 +969,7 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 				results = append(results, ToolResult{ToolCallID: call.ID, IsError: true, Content: []Content{Text{Text: deferredText}}})
 				continue
 
-			case known && tool.Mutating && opts.ConfirmMutating:
+			case known && opts.needsApproval(tool):
 				pending = append(pending, PendingCall{Kind: PendingApproval, Call: call, Effect: tool.Confirm})
 				continue
 			}

@@ -40,6 +40,10 @@ func TestChatOptions(t *testing.T) {
 			})
 			return ui.Text("chat")
 		})
+		c.RootView("marked", func(wnd core.Window) core.View {
+			opts, optsErr = mgmt.Assistant.ChatOptions(wnd, AssistantOptions{Confirmation: ConfirmationMarked})
+			return ui.Text("marked")
+		})
 	})
 
 	cfg := app.Configurator()
@@ -95,6 +99,13 @@ func TestChatOptions(t *testing.T) {
 	app.Open(t, cfg.SysUser(), "chat")
 	if optsErr != nil || opts.ConfirmMutations || opts.ReadOnly {
 		t.Fatalf("the confirmation must follow the operator: %+v %v", opts, optsErr)
+	}
+
+	// an assistant which confirms only marked tools ignores the operator's default of confirming everything
+	store(AssistantSettings{})
+	app.Open(t, cfg.SysUser(), "marked")
+	if optsErr != nil || opts.ConfirmMutations || !opts.ConfirmMarked {
+		t.Fatalf("expected only marked tools to be confirmed: %+v %v", opts, optsErr)
 	}
 
 	store(AssistantSettings{Hidden: true})

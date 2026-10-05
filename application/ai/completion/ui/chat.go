@@ -149,6 +149,12 @@ type ChatOptions struct {
 	// model may ignore; this is a gate it cannot pass.
 	ConfirmMutations bool
 
+	// ConfirmMarked asks the user only before calls of tools marked [completion.Tool.RequiresApproval], e.g.
+	// deleting data or granting rights, while other mutating tools run without asking. With delegation and
+	// [DelegationOptions.AllowMutating], sub-agents get the mutating tools which do not require approval.
+	// ConfirmMutations takes precedence.
+	ConfirmMarked bool
+
 	// Agents configures the selectable assistant personas. len==0 falls back to a single default agent (empty
 	// prompt, provider default model, no tools). A picker is shown only when len>1.
 	Agents []Agent
@@ -368,6 +374,8 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		maxTokens int
 		tools     []completion.Tool
 		confirm   bool
+		// confirmMarked holds calls of tools which require approval, while confirm holds all mutating calls
+		confirmMarked bool
 	}
 	resolveTurn := func() turnConfig {
 		agent := currentAgent()
@@ -391,6 +399,9 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		// also requires it: sub-agents cannot ask anyone and therefore stay read-only then. For the same
 		// reason, a read-only chat sets it, which never asks, because its mutating tools have been removed.
 		cfg.confirm = (opts.ConfirmMutations || opts.ReadOnly) && containsMutating(cfg.tools)
+		cfg.confirmMarked = opts.ConfirmMarked && !cfg.confirm && slices.ContainsFunc(cfg.tools, func(t completion.Tool) bool {
+			return t.Mutating && t.RequiresApproval
+		})
 		return cfg
 	}
 
@@ -424,17 +435,18 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 
 		var extra []completion.Tool
 		extra, beforeFinish = delegationTools(delegationRun{
-			opts:         opts,
-			model:        cfg.model,
-			system:       cfg.system,
-			tools:        cfg.tools,
-			confirm:      cfg.confirm,
-			fileUploader: fileUploader,
-			sessionID:    sid,
-			group:        group,
-			renew:        renew,
-			onEvent:      run.onEvent,
-			onUsage:      run.onUsage,
+			opts:          opts,
+			model:         cfg.model,
+			system:        cfg.system,
+			tools:         cfg.tools,
+			confirm:       cfg.confirm,
+			confirmMarked: cfg.confirmMarked,
+			fileUploader:  fileUploader,
+			sessionID:     sid,
+			group:         group,
+			renew:         renew,
+			onEvent:       run.onEvent,
+			onUsage:       run.onUsage,
 		})
 
 		tools = slices.Clone(cfg.tools)
@@ -455,6 +467,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			OnProgress:      run.onProgress,
 			FileUploader:    fileUploader,
 			ConfirmMutating: cfg.confirm,
+			ConfirmMarked:   cfg.confirmMarked,
 			Context:         run.ctx,
 			BeforeFinish:    beforeFinish,
 		}
@@ -473,6 +486,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			OnProgress:      run.onProgress,
 			FileUploader:    fileUploader,
 			ConfirmMutating: cfg.confirm,
+			ConfirmMarked:   cfg.confirmMarked,
 			Context:         run.ctx,
 			BeforeFinish:    beforeFinish,
 		}

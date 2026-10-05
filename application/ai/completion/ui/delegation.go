@@ -78,14 +78,16 @@ func taskRegistry(sessions session.UseCases) *completion.TaskRegistry {
 
 // delegationRun is what the delegation tools of one run need from the chat.
 type delegationRun struct {
-	opts         ChatOptions
-	model        model.ID
-	system       string
-	tools        []completion.Tool
-	confirm      bool
-	fileUploader completion.FileUploader
-	sessionID    session.ID
-	group        *completion.TaskGroup
+	opts    ChatOptions
+	model   model.ID
+	system  string
+	tools   []completion.Tool
+	confirm bool
+	// confirmMarked states that the run holds the calls of tools which require approval
+	confirmMarked bool
+	fileUploader  completion.FileUploader
+	sessionID     session.ID
+	group         *completion.TaskGroup
 	// renew states that this is a new run rather than the continuation of a suspended one, see
 	// [completion.TaskGroup.Limiter].
 	renew   bool
@@ -112,6 +114,7 @@ func delegationTools(r delegationRun) ([]completion.Tool, func(ctx context.Conte
 		AllowedTools:    d.AllowedTools,
 		AllowMutating:   d.AllowMutating && !r.opts.ReadOnly,
 		ConfirmMutating: r.confirm || r.opts.ConfirmMutations,
+		ConfirmMarked:   r.confirmMarked || r.opts.ConfirmMarked,
 		FileUploader:    r.fileUploader,
 		MaxDepth:        d.MaxDepth,
 		MaxParallel:     d.MaxParallel,

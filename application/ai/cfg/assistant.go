@@ -75,7 +75,8 @@ type AssistantOptions struct {
 	DisableCurrentTime bool
 
 	// Confirmation decides whether the user approves each call of a tool marked [completion.Tool.Mutating]
-	// before it runs. Optional; the zero value follows the operator's [AssistantSettings.SkipConfirmation].
+	// before it runs, or only the calls of tools marked [completion.Tool.RequiresApproval]. Optional; the zero
+	// value follows the operator's [AssistantSettings.SkipConfirmation].
 	Confirmation Confirmation
 
 	// Delegation lets the model hand independent tasks to sub-agents which work on them in parallel, see
@@ -100,6 +101,9 @@ const (
 	ConfirmationAlways
 	// ConfirmationNever runs changes without asking, regardless of the global settings.
 	ConfirmationNever
+	// ConfirmationMarked asks only before calls of tools marked [completion.Tool.RequiresApproval], e.g. deleting
+	// data or granting rights, regardless of the global settings. Other changes run without asking.
+	ConfirmationMarked
 )
 
 // confirm resolves the effective behaviour.
@@ -107,7 +111,7 @@ func (c Confirmation) confirm(cfg AssistantSettings) bool {
 	switch c {
 	case ConfirmationAlways:
 		return true
-	case ConfirmationNever:
+	case ConfirmationNever, ConfirmationMarked: // the latter confirms only marked tools, see ChatOptions
 		return false
 	default:
 		return !cfg.SkipConfirmation
@@ -195,6 +199,7 @@ func (a *Assistant) ChatOptions(wnd core.Window, opts AssistantOptions) (uicompl
 		DisableCurrentTime: opts.DisableCurrentTime,
 		ReadOnly:           cfg.ReadOnly,
 		ConfirmMutations:   opts.Confirmation.confirm(cfg),
+		ConfirmMarked:      opts.Confirmation == ConfirmationMarked,
 		Agents:             agents,
 		Delegation:         opts.Delegation,
 	}, nil

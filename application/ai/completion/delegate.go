@@ -52,7 +52,8 @@ const (
 )
 
 // ErrSubRunSuspended is reported for a sub-agent whose run suspended on a user decision. A sub-agent has no
-// user; it never receives [Tool.AwaitsUser] tools and always runs without [RunOptions.ConfirmMutating], so
+// user; it never receives [Tool.AwaitsUser] tools and always runs without [RunOptions.ConfirmMutating] and
+// [RunOptions.ConfirmMarked], so
 // this only happens with a custom [SubRunner] or a misconfigured tool.
 var ErrSubRunSuspended = errors.New("sub task tried to wait for a user decision")
 
@@ -308,7 +309,8 @@ func (l *Limiter) nested() *Limiter {
 //  1. Tools (or the tools of the calling run when Tools is nil),
 //  2. without tools which await the user ([Tool.AwaitsUser]) or must not be delegated ([Tool.NoDelegate]),
 //  3. without mutating tools, unless AllowMutating is set and neither ConfirmMutating nor the calling run
-//     confirms mutations - a sub-agent would bypass the approval,
+//     confirms mutations - a sub-agent would bypass the approval. If only marked tools are confirmed
+//     (ConfirmMarked), the sub-agent gets the mutating tools which do not require approval,
 //  4. intersected with AllowedTools, if set,
 //  5. intersected with the tools the model requested for the task, if any. Requesting a tool outside of this
 //     set fails the task rather than widening anything.
@@ -334,11 +336,17 @@ type DelegateConfig struct {
 
 	// AllowMutating lets sub-agents use [Tool.Mutating] tools. It has no effect when ConfirmMutating is set or
 	// the calling run confirms mutations ([RunOptions.ConfirmMutating]), because a sub-agent cannot ask anyone
-	// and would bypass the approval. Default is read-only.
+	// and would bypass the approval. When only marked tools are confirmed (ConfirmMarked or
+	// [RunOptions.ConfirmMarked]), the tools marked [Tool.RequiresApproval] stay reserved for the calling run.
+	// Default is read-only.
 	AllowMutating bool
 
 	// ConfirmMutating states that the parent confirms mutations. See AllowMutating.
 	ConfirmMutating bool
+
+	// ConfirmMarked states that the parent confirms the calls of tools marked [Tool.RequiresApproval]. See
+	// AllowMutating.
+	ConfirmMarked bool
 
 	// OnBeforeToolCall is consulted before every tool call of a sub-agent. Nil means the one of the calling run.
 	OnBeforeToolCall BeforeToolCallFunc
@@ -448,17 +456,20 @@ func (d *delegator) mayMutate() bool {
 		// inherited at call time; assume the worst
 		return true
 	}
-	return slices.ContainsFunc(subTools(d.cfg.Tools, d.cfg.AllowedTools, true), func(t Tool) bool { return t.Mutating })
+	return slices.ContainsFunc(subTools(d.cfg.Tools, d.cfg.AllowedTools, true, !d.cfg.ConfirmMarked), func(t Tool) bool { return t.Mutating })
 }
 
-// subTools derives the tool set of a sub-agent, see [DelegateConfig].
-func subTools(base []Tool, allowed []string, allowMutating bool) []Tool {
+// subTools derives the tool set of a sub-agent, see [DelegateConfig]. allowMarked is only considered together
+// with allowMutating and admits the mutating tools marked [Tool.RequiresApproval].
+func subTools(base []Tool, allowed []string, allowMutating, allowMarked bool) []Tool {
 	out := make([]Tool, 0, len(base))
 	for _, t := range base {
 		switch {
 		case t.AwaitsUser, t.NoDelegate:
 			continue
 		case t.Mutating && !allowMutating:
+			continue
+		case t.Mutating && t.RequiresApproval && !allowMarked:
 			continue
 		case len(allowed) > 0 && !slices.Contains(allowed, t.Def.Name):
 			continue
@@ -473,7 +484,7 @@ func (d *delegator) taskSchema() map[string]any {
 	toolsDesc := "optional names of the tools the sub-agent needs; omit to give it all tools available to sub-agents. Tools outside of that set are refused."
 	if d.cfg.Tools != nil {
 		var names []string
-		for _, t := range subTools(d.cfg.Tools, d.cfg.AllowedTools, d.cfg.AllowMutating && !d.cfg.ConfirmMutating) {
+		for _, t := range subTools(d.cfg.Tools, d.cfg.AllowedTools, d.cfg.AllowMutating && !d.cfg.ConfirmMutating, !d.cfg.ConfirmMarked) {
 			names = append(names, t.Def.Name)
 		}
 		if len(names) == 0 {
@@ -607,7 +618,8 @@ func (d *delegator) plan(env toolEnv, in delegateTaskIn, callID string, index in
 		base = parent.Tools
 	}
 	confirm := cfg.ConfirmMutating || parent.ConfirmMutating
-	tools := subTools(base, cfg.AllowedTools, cfg.AllowMutating && !confirm)
+	confirmMarked := cfg.ConfirmMarked || parent.ConfirmMarked
+	tools := subTools(base, cfg.AllowedTools, cfg.AllowMutating && !confirm, !confirmMarked)
 
 	if len(in.Tools) > 0 {
 		requested := make([]Tool, 0, len(in.Tools))
@@ -615,7 +627,7 @@ func (d *delegator) plan(env toolEnv, in delegateTaskIn, callID string, index in
 			idx := slices.IndexFunc(tools, func(t Tool) bool { return t.Def.Name == name })
 			if idx < 0 {
 				// the tool description is static, so it may offer a mutating tool which this run withholds
-				if confirm && slices.ContainsFunc(subTools(base, cfg.AllowedTools, cfg.AllowMutating), func(t Tool) bool { return t.Def.Name == name }) {
+				if (confirm || confirmMarked) && slices.ContainsFunc(subTools(base, cfg.AllowedTools, cfg.AllowMutating, true), func(t Tool) bool { return t.Def.Name == name }) {
 					return fail("tool %q changes data and is not available to sub-agents in this conversation, because changes need the approval of the user; do it yourself", name)
 				}
 				return fail("tool %q is not available to sub-agents", name)

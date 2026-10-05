@@ -39,7 +39,8 @@ type PendingKind string
 const (
 	// PendingQuestion is a clarifying question of a [Tool.AwaitsUser] tool, answered with free text.
 	PendingQuestion PendingKind = "question"
-	// PendingApproval is a mutating call held for the user's approval (see [RunOptions.ConfirmMutating]).
+	// PendingApproval is a mutating call held for the user's approval (see [RunOptions.ConfirmMutating] and
+	// [RunOptions.ConfirmMarked]).
 	PendingApproval PendingKind = "approval"
 )
 

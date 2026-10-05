@@ -226,6 +226,10 @@ type AppendOptions struct {
 	// [Resolve] (see [completion.RunOptions.ConfirmMutating]). Ignored without tools. Optional.
 	ConfirmMutating bool
 
+	// ConfirmMarked suspends the run only before calls of tools marked [completion.Tool.RequiresApproval] (see
+	// [completion.RunOptions.ConfirmMarked]). Ignored without tools. Optional.
+	ConfirmMarked bool
+
 	// Context bounds the run: cancelling it aborts the in-flight provider request and stops the loop (see
 	// [completion.RunOptions.Context]). What the run did until then is persisted, and the use case returns an
 	// error satisfying errors.Is(err, context.Canceled). Nil means [context.Background]. Optional.

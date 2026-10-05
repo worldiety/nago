@@ -136,6 +136,7 @@ func runOptions(base completion.Options, opts AppendOptions) completion.RunOptio
 		FileUploader:     opts.FileUploader,
 		OnBeforeToolCall: opts.OnBeforeToolCall,
 		ConfirmMutating:  opts.ConfirmMutating,
+		ConfirmMarked:    opts.ConfirmMarked,
 		Context:          opts.Context,
 		OnUsage:          opts.OnUsage,
 		BeforeFinish:     opts.BeforeFinish,

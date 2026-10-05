@@ -20,6 +20,7 @@ func TestConfirmation(t *testing.T) {
 		{name: "global skip", button: ConfirmationGlobal, skip: true, want: false},
 		{name: "button always asks despite skip", button: ConfirmationAlways, skip: true, want: true},
 		{name: "button never asks despite default", button: ConfirmationNever, want: false},
+		{name: "marked does not ask for every change", button: ConfirmationMarked, want: false},
 	}
 
 	for _, tt := range tests {
