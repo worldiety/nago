@@ -15,54 +15,67 @@ import (
 
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/std"
-	"go.wdy.de/nago/pkg/std/tick"
 )
 
+// nowFunc is the clock of the single sign-on refresh interval. Tests replace it.
+var nowFunc = time.Now
+
+// nlsRefreshInterval is the time between two single sign-on refreshes of a session.
+const nlsRefreshInterval = 5 * time.Minute
+
+// sessionImpl reads its record from the repository on every access. It deliberately keeps no copy: a login, a
+// logout or a deletion must be visible immediately, also to HTTP handlers, and reading a record costs only a few
+// microseconds. Only the single sign-on refresh, which calls the login service, keeps an interval.
 type sessionImpl struct {
-	id              ID
-	repo            Repository
-	session         Session // cache
-	mutex           sync.RWMutex
-	refreshInterval time.Duration
-	lastRefreshedAt time.Time
-	refreshNLS      RefreshNLS
+	id         ID
+	repo       Repository
+	refreshNLS RefreshNLS
+
+	mutex            sync.Mutex // guards lastNLSRefreshAt and serializes PutString
+	lastNLSRefreshAt time.Time
 }
 
 func newSessionImpl(id ID, repo Repository, refresh RefreshNLS) *sessionImpl {
 	return &sessionImpl{id: id, repo: repo, refreshNLS: refresh}
 }
 
-func (s *sessionImpl) refresh() Session {
-	s.mutex.Lock()
-
-	session := s.session
-	id := s.id
-
-	if s.refreshInterval == 0 {
-		s.refreshInterval = 5 * time.Minute
-	}
-
-	now := tick.Now(tick.Minute)
-	var requiresRefresh bool
-	if now.Sub(s.lastRefreshedAt) >= s.refreshInterval {
-		s.session = s.load()
-		session = s.session
-		requiresRefresh = true
-		s.lastRefreshedAt = now
-	}
-
-	hasNLS := s.session.RefreshToken != ""
-
-	s.mutex.Unlock()
-
-	// execute refresh without locks
-	if requiresRefresh && hasNLS {
-		if err := s.refreshNLS(id); err != nil {
+// current returns the stored record, without a user if it has expired. A due single sign-on refresh runs first,
+// so that a refresh which fails and logs the user out is seen by this very access.
+func (s *sessionImpl) current() Session {
+	session := s.load()
+	if s.nlsRefreshDue(session) {
+		if err := s.refreshNLS(s.id); err != nil {
 			slog.Error("failed to refresh NLS session", "err", err.Error())
 		}
+
+		session = s.load()
+	}
+
+	if expired(session, nowFunc()) {
+		session.User = std.None[user.ID]()
+		session.AuthenticatedAt = time.Time{}
 	}
 
 	return session
+}
+
+// nlsRefreshDue reports whether the single sign-on session must be refreshed now and reserves the refresh, so
+// that concurrent accesses do not refresh twice.
+func (s *sessionImpl) nlsRefreshDue(session Session) bool {
+	if session.RefreshToken == "" {
+		return false
+	}
+
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	now := nowFunc()
+	if !s.lastNLSRefreshAt.IsZero() && now.Sub(s.lastNLSRefreshAt) < nlsRefreshInterval {
+		return false
+	}
+
+	s.lastNLSRefreshAt = now
+	return true
 }
 
 func (s *sessionImpl) load() Session {
@@ -80,21 +93,20 @@ func (s *sessionImpl) ID() ID {
 }
 
 func (s *sessionImpl) User() std.Option[user.ID] {
-	return s.refresh().User
+	return s.current().User
 }
 
 func (s *sessionImpl) CreatedAt() std.Option[time.Time] {
-	v := s.refresh().AuthenticatedAt
-
-	if v.IsZero() {
+	session := s.current()
+	if session.AuthenticatedAt.IsZero() {
 		return std.None[time.Time]()
 	}
 
-	return std.Some(s.session.CreatedAt)
+	return std.Some(session.CreatedAt)
 }
 
 func (s *sessionImpl) AuthenticatedAt() std.Option[time.Time] {
-	v := s.refresh().AuthenticatedAt
+	v := s.current().AuthenticatedAt
 
 	if v.IsZero() {
 		return std.None[time.Time]()
@@ -125,16 +137,10 @@ func (s *sessionImpl) PutString(key string, value string) error {
 
 	session.Values[key] = value
 
-	if err = s.repo.Save(session); err != nil {
-		return err
-	}
-
-	s.session = session
-
-	return nil
+	return s.repo.Save(session)
 }
 
 func (s *sessionImpl) GetString(key string) (string, bool) {
-	v, ok := s.refresh().Values[key]
+	v, ok := s.current().Values[key]
 	return v, ok
 }

@@ -32,9 +32,7 @@ func NewFindByID(sessions Repository) FindByID {
 			return std.None[Session](), nil
 		}
 
-		// TODO make this configurable and perhaps add another deadline for short sessions?
-		const day = 24 * time.Hour
-		if time.Now().Sub(session.AuthenticatedAt) > day*30*3 {
+		if expired(session, time.Now()) {
 			slog.Error("session expired for user", "sessionID", session.ID, "user", session.User)
 			session.User = std.None[user.ID]()
 			session.AuthenticatedAt = time.Time{}
@@ -47,4 +45,13 @@ func NewFindByID(sessions Repository) FindByID {
 
 		return std.Some(session), nil
 	}
+}
+
+// sessionLifetime is the time after the authentication, after which a session loses its user.
+// TODO make this configurable and perhaps add another deadline for short sessions?
+const sessionLifetime = 90 * 24 * time.Hour
+
+// expired reports whether the session has a user whose authentication is too old.
+func expired(session Session, now time.Time) bool {
+	return session.User.IsSome() && now.Sub(session.AuthenticatedAt) > sessionLifetime
 }

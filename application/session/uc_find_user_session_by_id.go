@@ -17,8 +17,8 @@ func NewFindUserSessionByID(repository Repository, refresh RefreshNLS) FindUserS
 			return v
 		}
 
-		v := newSessionImpl(id, repository, refresh)
-		cache.Put(id, v)
+		// concurrent first accesses must share one instance, a scope keeps it for its lifetime
+		v, _ := cache.LoadOrStore(id, newSessionImpl(id, repository, refresh))
 		return v
 	}
 }
