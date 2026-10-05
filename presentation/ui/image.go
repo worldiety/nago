@@ -133,6 +133,9 @@ func (c TImage) StrokeColor(color Color) TImage {
 // the system uses a special caching technique. Important: due to caching, do not submit ever-changing SVGs, because
 // the backend and the frontend may suffer from cache overflow. This will half the typical required bandwidth
 // for icon heavy use cases. The larger the SVG, the better the effect.
+// An embedded SVG becomes part of the page. The web frontend removes everything active from it, like scripts,
+// event handlers, foreignObject and javascript: URLs, before it is inserted. Shapes, styles and currentColor
+// are kept.
 // See also [TImage.EmbedAdaptive].
 func (c TImage) Embed(buf []byte) TImage {
 	c.light = buf

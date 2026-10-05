@@ -3,6 +3,7 @@
 </template>
 <script lang="ts" setup>
 import { onMounted, ref, watch } from 'vue';
+import { sanitizeMarkup } from '@/shared/sanitize';
 
 interface Props {
 	html: string;
@@ -15,14 +16,12 @@ const container = ref<HTMLSpanElement>();
 onMounted(loadSecureHtml);
 watch(() => props.html, loadSecureHtml);
 
-// Removing script tags before inserting html into DOM.
+// Inserts sanitized HTML or SVG into the DOM, see sanitizeMarkup.
 function loadSecureHtml(): void {
-	const elem = document.createElement('span');
-	elem.innerHTML = props.html;
-	const scripts = elem.querySelectorAll('script');
-	scripts.forEach((script) => script.remove());
-	if (container.value) {
-		container.value.innerHTML = elem.innerHTML;
+	if (!container.value) {
+		return;
 	}
+
+	container.value.innerHTML = sanitizeMarkup(props.html);
 }
 </script>
