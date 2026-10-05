@@ -95,7 +95,8 @@ type AssistantOptions struct {
 type Confirmation int
 
 const (
-	// ConfirmationGlobal follows the operator's [AssistantSettings.SkipConfirmation], which asks by default.
+	// ConfirmationGlobal follows the operator's [AssistantSettings.SkipConfirmation] and
+	// [AssistantSettings.ConfirmMarkedOnly], which ask before every change by default.
 	ConfirmationGlobal Confirmation = iota
 	// ConfirmationAlways asks before every change, regardless of the global settings.
 	ConfirmationAlways
@@ -111,10 +112,22 @@ func (c Confirmation) confirm(cfg AssistantSettings) bool {
 	switch c {
 	case ConfirmationAlways:
 		return true
-	case ConfirmationNever, ConfirmationMarked: // the latter confirms only marked tools, see ChatOptions
+	case ConfirmationNever, ConfirmationMarked: // the latter confirms only marked tools, see confirmMarked
 		return false
 	default:
-		return !cfg.SkipConfirmation
+		return !cfg.SkipConfirmation && !cfg.ConfirmMarkedOnly
+	}
+}
+
+// confirmMarked resolves whether only the marked tools are confirmed.
+func (c Confirmation) confirmMarked(cfg AssistantSettings) bool {
+	switch c {
+	case ConfirmationMarked:
+		return true
+	case ConfirmationGlobal:
+		return !cfg.SkipConfirmation && cfg.ConfirmMarkedOnly
+	default:
+		return false
 	}
 }
 
@@ -199,7 +212,7 @@ func (a *Assistant) ChatOptions(wnd core.Window, opts AssistantOptions) (uicompl
 		DisableCurrentTime: opts.DisableCurrentTime,
 		ReadOnly:           cfg.ReadOnly,
 		ConfirmMutations:   opts.Confirmation.confirm(cfg),
-		ConfirmMarked:      opts.Confirmation == ConfirmationMarked,
+		ConfirmMarked:      opts.Confirmation.confirmMarked(cfg),
 		Agents:             agents,
 		Delegation:         opts.Delegation,
 	}, nil

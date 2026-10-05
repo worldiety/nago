@@ -10,9 +10,14 @@ package completion
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
+
+	"go.wdy.de/nago/auth"
 )
 
 // markedFixture has a reading tool, a mutating tool and a mutating tool which requires approval.
@@ -76,7 +81,7 @@ func TestNeedsApproval(t *testing.T) {
 	for _, tc := range cases {
 		var got []string
 		for _, tool := range tools {
-			if tc.opts.needsApproval(tool) {
+			if need, _, _ := tc.opts.approval(nil, tool, ToolCall{}); need {
 				got = append(got, tool.Def.Name)
 			}
 		}
@@ -89,7 +94,7 @@ func TestNeedsApproval(t *testing.T) {
 	// a mark without Mutating has no effect
 	readOnly := tools[0]
 	readOnly.RequiresApproval = true
-	if (RunOptions{ConfirmMarked: true}).needsApproval(readOnly) {
+	if need, _, _ := (RunOptions{ConfirmMarked: true}).approval(nil, readOnly, ToolCall{}); need {
 		t.Fatal("a reading tool must never wait")
 	}
 }
@@ -171,5 +176,154 @@ func TestDelegate_MarkedToolIsReservedForTheCaller(t *testing.T) {
 
 	if res.Results[1].Status != TaskCompleted {
 		t.Fatalf("the unmarked mutating tool must be available: %+v", res.Results[1])
+	}
+}
+
+// conditionalDelete deletes n items and needs approval only for more than one.
+func conditionalDelete(deleted *[]int) Tool {
+	type in struct {
+		N int `json:"n"`
+	}
+
+	t := NewTool("delete", "deletes items", func(args in) (struct{}, error) {
+		*deleted = append(*deleted, args.N)
+		return struct{}{}, nil
+	}).AsMutating("deletes items")
+
+	t.ApprovalFor = func(subject auth.Subject, call ToolCall) (bool, string, error) {
+		var args in
+		if err := json.Unmarshal(call.Arguments, &args); err != nil {
+			return false, "", err
+		}
+
+		if args.N < 0 {
+			return false, "", errors.New("n must not be negative")
+		}
+
+		if args.N > 1 {
+			return true, fmt.Sprintf("deletes %d items", args.N), nil
+		}
+
+		return false, "", nil
+	}
+
+	return t
+}
+
+// ApprovalFor decides per call: a single item is deleted right away, many wait with their own effect, and an
+// error is reported without executing anything.
+func TestStart_ApprovalForDecidesPerCall(t *testing.T) {
+	var deleted []int
+	tools := []Tool{conditionalDelete(&deleted)}
+
+	fake := &fakeCompletions{results: []Result{
+		toolUse(
+			ToolCall{ID: "one", Name: "delete", Arguments: json.RawMessage(`{"n":1}`)},
+			ToolCall{ID: "many", Name: "delete", Arguments: json.RawMessage(`{"n":5}`)},
+			ToolCall{ID: "bad", Name: "delete", Arguments: json.RawMessage(`{"n":-1}`)},
+		),
+		assistantText(StopEndTurn, Text{Text: "done"}),
+	}}
+
+	opts := RunOptions{Options: Options{Messages: userMsg("go")}, Tools: tools, ConfirmMarked: true}
+	out, err := Start(nil, fake, opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if out.Suspended == nil || len(out.Suspended.Pending) != 1 || out.Suspended.Pending[0].Call.ID != "many" || out.Suspended.Pending[0].Effect != "deletes 5 items" {
+		t.Fatalf("expected only the large deletion to wait, got %+v", out.Suspended)
+	}
+
+	if !slices.Equal(deleted, []int{1}) {
+		t.Fatalf("expected only the single deletion, got %v", deleted)
+	}
+
+	opts.Messages = out.History
+	if _, err := Continue(nil, fake, opts, *out.Suspended, []Resolution{{CallID: "many", Approved: true}}); err != nil {
+		t.Fatal(err)
+	}
+
+	if !slices.Equal(deleted, []int{1, 5}) {
+		t.Fatalf("the approved deletion must run once, got %v", deleted)
+	}
+
+	results := lastUserResults(t, fake.reqs[1])
+	if r := results["bad"]; !r.IsError || !strings.Contains(r.Content[0].(Text).Text, "negative") {
+		t.Fatalf("the error of ApprovalFor must be the result, got %+v", r)
+	}
+}
+
+// ApprovalFor is only consulted when the run confirms marked tools.
+func TestApprovalForOnlyInMarkedMode(t *testing.T) {
+	var deleted []int
+	tool := conditionalDelete(&deleted)
+	call := ToolCall{Arguments: json.RawMessage(`{"n":5}`)}
+
+	if need, _, _ := (RunOptions{}).approval(nil, tool, call); need {
+		t.Fatal("a run without confirmation must not ask")
+	}
+
+	if need, effect, _ := (RunOptions{ConfirmMutating: true}).approval(nil, tool, ToolCall{Arguments: json.RawMessage(`{"n":1}`)}); !need || effect != "deletes items" {
+		t.Fatalf("confirming every change must ask with the static effect, got %v %q", need, effect)
+	}
+
+	silent := tool
+	silent.ApprovalFor = func(auth.Subject, ToolCall) (bool, string, error) { return true, "", nil }
+	if need, effect, _ := (RunOptions{ConfirmMarked: true}).approval(nil, silent, call); !need || effect != "deletes items" {
+		t.Fatalf("an empty effect falls back to Confirm, got %v %q", need, effect)
+	}
+
+	marked := tool.RequireApproval()
+	if need, effect, _ := (RunOptions{ConfirmMarked: true}).approval(nil, marked, ToolCall{Arguments: json.RawMessage(`{"n":1}`)}); !need || effect != "deletes items" {
+		t.Fatalf("a marked tool always asks, got %v %q", need, effect)
+	}
+}
+
+// A sub-agent gets a tool with ApprovalFor, but a call which needs approval fails with the hint to report back.
+func TestDelegate_ApprovalForRefusesInSubAgent(t *testing.T) {
+	var deleted []int
+	tools := []Tool{conditionalDelete(&deleted)}
+
+	parent := parentScript(delegateCall("d1", delegateTaskIn{Title: "a", Task: "A"}))
+	var subResults []ToolResult
+	var mutex sync.Mutex
+	fake := &scriptFake{respond: func(ctx context.Context, opts Options) (Result, error) {
+		if !isSub(opts) {
+			return parent(opts), nil
+		}
+
+		if r, ok := lastToolResult(opts); ok {
+			mutex.Lock()
+			subResults = append(subResults, r)
+			mutex.Unlock()
+			if len(subResults) == 1 {
+				return Result{Message: Message{Role: Assistant, Content: []Content{ToolCall{ID: "s2", Name: "delete", Arguments: json.RawMessage(`{"n":1}`)}}}, StopReason: StopToolUse}, nil
+			}
+			return textResult("sub done", Usage{}), nil
+		}
+
+		return Result{Message: Message{Role: Assistant, Content: []Content{ToolCall{ID: "s1", Name: "delete", Arguments: json.RawMessage(`{"n":5}`)}}}, StopReason: StopToolUse}, nil
+	}}
+
+	res, _, _, err := runDelegation(t, fake, RunOptions{
+		Options:       Options{Messages: userMsg("go")},
+		Tools:         append(tools, NewDelegateTool(DelegateConfig{AllowMutating: true})),
+		ConfirmMarked: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if res.Results[0].Status != TaskCompleted {
+		t.Fatalf("task failed: %+v", res.Results[0])
+	}
+
+	if len(subResults) != 2 || !subResults[0].IsError || !strings.Contains(subResults[0].Content[0].(Text).Text, "approval of the user") {
+		t.Fatalf("the large deletion must be refused with the hint, got %+v", subResults)
+	}
+
+	if !slices.Equal(deleted, []int{1}) {
+		t.Fatalf("only the single deletion may run in the sub-agent, got %v", deleted)
 	}
 }

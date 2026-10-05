@@ -108,6 +108,13 @@ func TestChatOptions(t *testing.T) {
 		t.Fatalf("expected only marked tools to be confirmed: %+v %v", opts, optsErr)
 	}
 
+	// the operator may confirm only marked tools for every assistant which follows the global settings
+	store(AssistantSettings{ConfirmMarkedOnly: true})
+	app.Open(t, cfg.SysUser(), "chat")
+	if optsErr != nil || opts.ConfirmMutations || !opts.ConfirmMarked {
+		t.Fatalf("expected the operator's choice of marked tools only: %+v %v", opts, optsErr)
+	}
+
 	store(AssistantSettings{Hidden: true})
 	app.Open(t, cfg.SysUser(), "chat")
 	if !errors.Is(optsErr, ErrAssistantHidden) {

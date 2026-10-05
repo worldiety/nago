@@ -65,7 +65,13 @@ type AssistantSettings struct {
 	// SkipConfirmation is phrased so that its zero value is the safe behaviour: unless an operator decides
 	// otherwise, the user approves every change before it happens. An assistant button may still override this
 	// through [AssistantOptions.Confirmation].
-	SkipConfirmation bool `json:"skipConfirmation" label:"Änderungen ohne Rückfrage ausführen" section:"Sicherheit" supportingText:"Schreibende Werkzeuge laufen dann ohne Bestätigung. Ist die Option aus, muss jede Änderung einzeln freigegeben werden. Einzelne Assistenten einer Anwendung können davon abweichen."`
+	SkipConfirmation bool `json:"skipConfirmation" label:"Änderungen ohne Rückfrage ausführen" section:"Sicherheit" supportingText:"Schreibende Werkzeuge laufen dann ohne Bestätigung. Ist die Option aus, muss jede Änderung einzeln freigegeben werden, oder nur kritische, siehe unten. Einzelne Assistenten einer Anwendung können davon abweichen."`
+
+	// ConfirmMarkedOnly narrows the confirmation to the changes an application marked as requiring approval
+	// ([completion.Tool.RequiresApproval], [completion.Tool.ApprovalFor]), e.g. deleting data or granting rights.
+	// It is a separate flag rather than a third state of SkipConfirmation, so that stored settings keep their
+	// meaning. SkipConfirmation wins.
+	ConfirmMarkedOnly bool `json:"confirmMarkedOnly" label:"Nur bei kritischen Änderungen nachfragen" section:"Sicherheit" supportingText:"Fragt nur vor Änderungen, die die Anwendung als bestätigungspflichtig markiert hat, etwa Löschen oder Rechtevergabe. Andere Änderungen laufen ohne Rückfrage. Ohne Wirkung, wenn Änderungen ohne Rückfrage ausgeführt werden."`
 
 	// Hidden removes the button without removing the provider, which is what an operator wants while
 	// investigating something rather than while decommissioning it.

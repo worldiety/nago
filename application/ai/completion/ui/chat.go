@@ -149,8 +149,9 @@ type ChatOptions struct {
 	// model may ignore; this is a gate it cannot pass.
 	ConfirmMutations bool
 
-	// ConfirmMarked asks the user only before calls of tools marked [completion.Tool.RequiresApproval], e.g.
-	// deleting data or granting rights, while other mutating tools run without asking. With delegation and
+	// ConfirmMarked asks the user only before calls of tools marked [completion.Tool.RequiresApproval] and calls
+	// which [completion.Tool.ApprovalFor] holds, e.g. deleting data or granting rights, while other mutating
+	// calls run without asking. With delegation and
 	// [DelegationOptions.AllowMutating], sub-agents get the mutating tools which do not require approval.
 	// ConfirmMutations takes precedence.
 	ConfirmMarked bool
@@ -400,7 +401,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		// reason, a read-only chat sets it, which never asks, because its mutating tools have been removed.
 		cfg.confirm = (opts.ConfirmMutations || opts.ReadOnly) && containsMutating(cfg.tools)
 		cfg.confirmMarked = opts.ConfirmMarked && !cfg.confirm && slices.ContainsFunc(cfg.tools, func(t completion.Tool) bool {
-			return t.Mutating && t.RequiresApproval
+			return t.Mutating && (t.RequiresApproval || t.ApprovalFor != nil)
 		})
 		return cfg
 	}

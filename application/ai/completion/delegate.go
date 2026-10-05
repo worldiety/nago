@@ -337,7 +337,8 @@ type DelegateConfig struct {
 	// AllowMutating lets sub-agents use [Tool.Mutating] tools. It has no effect when ConfirmMutating is set or
 	// the calling run confirms mutations ([RunOptions.ConfirmMutating]), because a sub-agent cannot ask anyone
 	// and would bypass the approval. When only marked tools are confirmed (ConfirmMarked or
-	// [RunOptions.ConfirmMarked]), the tools marked [Tool.RequiresApproval] stay reserved for the calling run.
+	// [RunOptions.ConfirmMarked]), the tools marked [Tool.RequiresApproval] stay reserved for the calling run,
+	// and a call which [Tool.ApprovalFor] holds fails with the hint to report back to the caller.
 	// Default is read-only.
 	AllowMutating bool
 
@@ -457,6 +458,32 @@ func (d *delegator) mayMutate() bool {
 		return true
 	}
 	return slices.ContainsFunc(subTools(d.cfg.Tools, d.cfg.AllowedTools, true, !d.cfg.ConfirmMarked), func(t Tool) bool { return t.Mutating })
+}
+
+// errSubNeedsApproval is the refusal of a sub-agent's call, which would need the approval of the user.
+var errSubNeedsApproval = errors.New("this call needs the approval of the user, which a sub-agent cannot ask for; do not retry it, report to the caller what you wanted to do instead")
+
+// refuseApprovalFor refuses the calls of a sub-agent which [Tool.ApprovalFor] holds for approval, before it
+// consults the given hook.
+func refuseApprovalFor(next BeforeToolCallFunc) BeforeToolCallFunc {
+	return func(subject auth.Subject, tool Tool, call ToolCall) error {
+		if tool.Mutating && tool.ApprovalFor != nil {
+			need, _, err := tool.ApprovalFor(subject, call)
+			if err != nil {
+				return err
+			}
+
+			if need {
+				return errSubNeedsApproval
+			}
+		}
+
+		if next != nil {
+			return next(subject, tool, call)
+		}
+
+		return nil
+	}
 }
 
 // subTools derives the tool set of a sub-agent, see [DelegateConfig]. allowMarked is only considered together
@@ -670,6 +697,10 @@ func (d *delegator) plan(env toolEnv, in delegateTaskIn, callID string, index in
 	before := cfg.OnBeforeToolCall
 	if before == nil {
 		before = parent.OnBeforeToolCall
+	}
+
+	if confirmMarked && !confirm {
+		before = refuseApprovalFor(before)
 	}
 
 	text := strings.TrimSpace(in.Task)

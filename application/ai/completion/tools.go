@@ -112,6 +112,14 @@ type Tool struct {
 	// has no effect on a tool which is not Mutating.
 	RequiresApproval bool
 
+	// ApprovalFor decides per call whether it needs the approval of the user, e.g. a deletion only when it
+	// affects more than one item. It is consulted when the run confirms marked tools ([RunOptions.ConfirmMarked])
+	// for a tool which is not marked [Tool.RequiresApproval] anyway. need pauses the run, and effect is the
+	// sentence shown to the user; empty means [Tool.Confirm]. An error is reported to the model as the result of
+	// the call, which is not executed. A sub-agent cannot ask anyone, so its call fails with the hint to report
+	// back to the caller. Only meaningful together with Mutating.
+	ApprovalFor func(subject auth.Subject, call ToolCall) (need bool, effect string, err error)
+
 	// NoDelegate keeps this tool away from sub-agents started by [NewDelegateTool] and [NewTaskTools]. Set it on
 	// tools which only make sense in the conversation with the user, typically everything bound to a window
 	// (a screen inspection, a navigation, a dialog): a sub-agent runs detached, possibly in parallel to other
@@ -160,9 +168,27 @@ func (t Tool) RequireApproval() Tool {
 	return t
 }
 
-// needsApproval reports whether a call of the tool must wait for the approval of the user.
-func (o RunOptions) needsApproval(t Tool) bool {
-	return t.Mutating && (o.ConfirmMutating || (o.ConfirmMarked && t.RequiresApproval))
+// approval reports whether a call of the tool must wait for the approval of the user and the effect to show.
+func (o RunOptions) approval(subject auth.Subject, t Tool, call ToolCall) (need bool, effect string, err error) {
+	switch {
+	case !t.Mutating:
+		return false, "", nil
+	case o.ConfirmMutating || (o.ConfirmMarked && t.RequiresApproval):
+		return true, t.Confirm, nil
+	case o.ConfirmMarked && t.ApprovalFor != nil:
+		need, effect, err := t.ApprovalFor(subject, call)
+		if err != nil || !need {
+			return false, "", err
+		}
+
+		if effect == "" {
+			effect = t.Confirm
+		}
+
+		return true, effect, nil
+	default:
+		return false, "", nil
+	}
 }
 
 // WithResultDoc appends a description of what the tool returns to its advertised description, so the model
@@ -535,7 +561,8 @@ type RunOptions struct {
 	ConfirmMutating bool
 
 	// ConfirmMarked suspends the run like ConfirmMutating, but only before calls of tools marked
-	// [Tool.RequiresApproval]. Other mutating tools run without asking. ConfirmMutating takes precedence.
+	// [Tool.RequiresApproval] and calls which [Tool.ApprovalFor] holds. Other mutating calls run without asking.
+	// ConfirmMutating takes precedence.
 	ConfirmMarked bool
 
 	// Context bounds the run. It is checked before every model turn and before every tool call, and it is
@@ -969,9 +996,17 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 				results = append(results, ToolResult{ToolCallID: call.ID, IsError: true, Content: []Content{Text{Text: deferredText}}})
 				continue
 
-			case known && opts.needsApproval(tool):
-				pending = append(pending, PendingCall{Kind: PendingApproval, Call: call, Effect: tool.Confirm})
-				continue
+			case known && tool.Mutating && (opts.ConfirmMutating || opts.ConfirmMarked):
+				need, effect, err := opts.approval(env.subject, tool, call)
+				if err != nil {
+					results = append(results, ToolResult{ToolCallID: call.ID, IsError: true, Content: []Content{Text{Text: err.Error()}}})
+					continue
+				}
+
+				if need {
+					pending = append(pending, PendingCall{Kind: PendingApproval, Call: call, Effect: effect})
+					continue
+				}
 			}
 
 			notify(Progress{Phase: PhaseToolStarted, Turn: turn, ToolCall: &call})

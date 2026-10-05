@@ -10,6 +10,7 @@ package uicompletion_test
 import (
 	"context"
 	"slices"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -19,6 +20,7 @@ import (
 	uicompletion "go.wdy.de/nago/application/ai/completion/ui"
 	"go.wdy.de/nago/application/ai/provider/echo"
 	"go.wdy.de/nago/application/ai/session"
+	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/nagotest"
 	"go.wdy.de/nago/presentation/proto"
 )
@@ -109,5 +111,43 @@ func testConfirmMarked(t *testing.T, history bool) {
 	w.WaitFor(richText("Alles erledigt."), 10*time.Second)
 	if drops.Load() != 1 {
 		t.Fatalf("the approved change must run once, got %d", drops.Load())
+	}
+}
+
+// A chat whose only tool decides per call asks before a call which needs approval.
+func TestChat_ApprovalForAsks(t *testing.T) {
+	var deleted atomic.Int32
+	del := completion.NewTool("delete", "deletes items", func(struct {
+		N int `json:"n"`
+	}) (struct{}, error) {
+		deleted.Add(1)
+		return struct{}{}, nil
+	}).AsMutating("deletes items")
+	del.ApprovalFor = func(subject auth.Subject, call completion.ToolCall) (bool, string, error) {
+		return strings.Contains(string(call.Arguments), `"n":5`), "Fünf Einträge löschen", nil
+	}
+
+	fake := &scripted{
+		parent: func(ctx context.Context, opts completion.Options) (completion.Result, error) {
+			if hasToolResult(opts) {
+				return text("Alles erledigt."), nil
+			}
+			return call("x1", "delete", `{"n":5}`), nil
+		},
+	}
+
+	w := openChatOptions(t, uicompletion.ChatOptions{
+		Completions:        fake,
+		Provider:           echo.New("p", "p"),
+		DisableCurrentTime: true,
+		ConfirmMarked:      true,
+		Agents:             []uicompletion.Agent{{Tools: []completion.Tool{del}}},
+	})
+
+	w.Type(w.Find(nagotest.Label("Nachricht")), "Bitte löschen")
+	w.Click(w.Find(nagotest.Text("Senden")))
+	w.WaitFor(nagotest.Text("Fünf Einträge löschen"), 10*time.Second)
+	if deleted.Load() != 0 {
+		t.Fatal("the deletion must wait for the approval")
 	}
 }
