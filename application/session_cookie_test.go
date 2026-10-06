@@ -52,7 +52,7 @@ func sessionCookie(t *testing.T, base, method string, headers map[string]string)
 	defer res.Body.Close()
 
 	for _, c := range res.Cookies() {
-		if c.Name == "wdy-ora-access" {
+		if c.Name == "wdy-ora-access" || c.Name == "__Host-wdy-ora-access" {
 			return c
 		}
 	}
@@ -68,9 +68,50 @@ func secureFollowsTheRequest(t *testing.T, base string) {
 		t.Fatalf("a plain http page needs a cookie which is not secure, got %+v", c)
 	}
 
-	if c := sessionCookie(t, base, http.MethodGet, map[string]string{"X-Forwarded-Proto": "https"}); c == nil || !c.Secure {
-		t.Fatalf("a page through an https proxy needs a secure cookie, got %+v", c)
+	if c := sessionCookie(t, base, http.MethodGet, nil); c == nil || c.Name != "wdy-ora-access" {
+		t.Fatalf("a plain http page cannot use the __Host- prefix, got %+v", c)
 	}
+
+	if c := sessionCookie(t, base, http.MethodGet, map[string]string{"X-Forwarded-Proto": "https"}); c == nil || !c.Secure || c.Name != "__Host-wdy-ora-access" {
+		t.Fatalf("a page through an https proxy needs a secure __Host- cookie, got %+v", c)
+	}
+}
+
+// Another application of the same site may set a plain cookie for the parent domain, to log the user into a session
+// it knows. Over https, such a cookie is ignored and the page gets its own __Host- cookie, which no sibling can set.
+func tossedCookieIsIgnoredOverHTTPS(t *testing.T, base string) {
+	https := map[string]string{"X-Forwarded-Proto": "https", "Cookie": "wdy-ora-access=" + strings.Repeat("e", 40)}
+	if c := sessionCookie(t, base, http.MethodGet, https); c == nil || c.Name != "__Host-wdy-ora-access" || c.Value == strings.Repeat("e", 40) {
+		t.Fatalf("expected a fresh __Host- cookie, got %+v", c)
+	}
+
+	header := http.Header{}
+	for k, v := range https {
+		header.Set(k, v)
+	}
+
+	conn, res, err := websocket.DefaultDialer.Dial(wireURL(base, strings.Repeat("h", 40)), header)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+
+	var issued *http.Cookie
+	for _, c := range res.Cookies() {
+		issued = c
+	}
+
+	if issued == nil || issued.Name != "__Host-wdy-ora-access" || issued.Value == strings.Repeat("e", 40) || !issued.Secure {
+		t.Fatalf("expected the handshake to issue a fresh __Host- cookie, got %+v", issued)
+	}
+}
+
+func wireURL(base, scopeID string) string {
+	u, _ := url.Parse(base)
+	u.Scheme = "ws"
+	u.Path = "/wire"
+	u.RawQuery = url.Values{"_sid": {scopeID}}.Encode()
+	return u.String()
 }
 
 // A cross-site navigation or the POST of an identity provider may lack the cookie just because of SameSite. A new
@@ -183,6 +224,7 @@ func restoreIsGone(t *testing.T, base string) {
 func TestSessionCookie(t *testing.T) {
 	base := serveSPA(t)
 	t.Run("secure follows the request", func(t *testing.T) { secureFollowsTheRequest(t, base) })
+	t.Run("tossed cookie is ignored over https", func(t *testing.T) { tossedCookieIsIgnoredOverHTTPS(t, base) })
 	t.Run("not issued for cross-site or unsafe requests", func(t *testing.T) { notIssuedForCrossSiteOrUnsafeRequests(t, base) })
 	t.Run("wire issues a missing cookie", func(t *testing.T) { wireIssuesMissingSessionCookie(t, base) })
 	t.Run("restore is gone", func(t *testing.T) { restoreIsGone(t, base) })

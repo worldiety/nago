@@ -16,10 +16,18 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"go.wdy.de/nago/application/session"
 )
 
-// sessionCookieName is the http-only cookie which carries the session id.
+// sessionCookieName is the http-only cookie which carries the session id of a plain http page.
 const sessionCookieName = "wdy-ora-access"
+
+// hostSessionCookieName carries the session id of an https page. A browser accepts a cookie with the __Host- prefix
+// only, if it is Secure, has the path / and no Domain. Thus, an application on a sibling subdomain of the same parent
+// domain, e.g. of the same hosting service, can neither set nor overwrite it. It can do so with a plain cookie for
+// the parent domain (cookie tossing), to log the user into a session it knows (session fixation).
+const hostSessionCookieName = "__Host-" + sessionCookieName
 
 // cookiePolicy decides whether the session cookie is marked as Secure.
 type cookiePolicy int
@@ -108,17 +116,74 @@ func requestIsHTTPS(r *http.Request) bool {
 
 // newSessionCookie creates the session cookie with the given id for the response to the request.
 func (c *Configurator) newSessionCookie(r *http.Request, id string) *http.Cookie {
+	secure := c.secureCookie(r)
+	name := sessionCookieName
+	if secure {
+		name = hostSessionCookieName
+	}
+
 	return &http.Cookie{
-		Name:     sessionCookieName,
+		Name:     name,
 		Value:    id,
 		Expires:  time.Now().Add(365 * 24 * time.Hour),
-		Secure:   c.secureCookie(r),
+		Secure:   secure,
 		HttpOnly: true,
 		// Strict lost the session on the return from an identity provider, see the history of this file. Lax is
 		// sent on top-level navigations with a safe method, like the redirect back from a login service.
 		SameSite: http.SameSiteLaxMode,
 		Path:     "/",
 	}
+}
+
+// expiredPlainSessionCookie removes the plain session cookie, after it has been replaced by the __Host- cookie.
+func expiredPlainSessionCookie() *http.Cookie {
+	return &http.Cookie{Name: sessionCookieName, Path: "/", MaxAge: -1}
+}
+
+// sessionIDOf returns the session id of the request, see [sessionIDFromCookies].
+func (c *Configurator) sessionIDOf(r *http.Request) (id string, migrate bool) {
+	return sessionIDFromCookies(r, c.secureCookie(r), c.sessionLoggedIn)
+}
+
+// sessionLoggedIn reports whether the session has a user.
+func (c *Configurator) sessionLoggedIn(id string) bool {
+	if c.sessionManagement == nil {
+		return false
+	}
+
+	return c.sessionManagement.UseCases.FindUserSessionByID(session.ID(id)).User().IsSome()
+}
+
+// sessionIDFromCookies returns the session id of the request. Over https, only the __Host- cookie counts, because
+// another application of the same site may have set the plain one. Nago up to now issued only the plain cookie, so
+// it is taken over once, if it is the only one and its session is logged in, to keep the user logged in: then the
+// response must issue the __Host- cookie with that id. A tossed cookie next to the own one of the user is ambiguous,
+// and a tossed cookie of an anonymous session, which the attacker waits for the user to log into, is ignored.
+func sessionIDFromCookies(r *http.Request, secure bool, loggedIn func(id string) bool) (id string, migrate bool) {
+	if !secure {
+		if cookie, err := r.Cookie(sessionCookieName); err == nil {
+			return cookie.Value, false
+		}
+
+		return "", false
+	}
+
+	if cookie, err := r.Cookie(hostSessionCookieName); err == nil && cookie.Value != "" {
+		return cookie.Value, false
+	}
+
+	var plain []*http.Cookie
+	for _, cookie := range r.Cookies() {
+		if cookie.Name == sessionCookieName {
+			plain = append(plain, cookie)
+		}
+	}
+
+	if len(plain) == 1 && plain[0].Value != "" && loggedIn(plain[0].Value) {
+		return plain[0].Value, true
+	}
+
+	return "", false
 }
 
 // mayIssueSessionCookie reports whether a response to the request may issue a new session cookie, because the

@@ -75,9 +75,46 @@ func TestCookiePolicy(t *testing.T) {
 			t.Errorf("NO_SSL=%q: policy %v, plain %v, proxied %v", tc.noSSL, c.cookiePolicy, c.secureCookie(plain), c.secureCookie(proxied))
 		}
 
+		wantName := sessionCookieName
+		if tc.proxied {
+			wantName = hostSessionCookieName
+		}
+
 		cookie := c.newSessionCookie(proxied, "id")
-		if cookie.Name != sessionCookieName || !cookie.HttpOnly || cookie.SameSite != http.SameSiteLaxMode || cookie.Path != "/" || cookie.Secure != tc.proxied {
+		if cookie.Name != wantName || !cookie.HttpOnly || cookie.SameSite != http.SameSiteLaxMode || cookie.Path != "/" || cookie.Secure != tc.proxied {
 			t.Errorf("NO_SSL=%q: unexpected cookie %+v", tc.noSSL, cookie)
+		}
+	}
+}
+
+// Another application of the same site can set a plain cookie for the parent domain, but no __Host- cookie. Over
+// https, the plain cookie is taken over only once from an older version, if it is unambiguous and logged in.
+func TestSessionIDFromCookies(t *testing.T) {
+	loggedIn := func(id string) bool { return strings.HasPrefix(id, "user") }
+	for _, tc := range []struct {
+		name        string
+		secure      bool
+		cookies     string
+		wantID      string
+		wantMigrate bool
+	}{
+		{name: "plain http", cookies: "wdy-ora-access=anon", wantID: "anon"},
+		{name: "plain http ignores the https cookie", cookies: "__Host-wdy-ora-access=user1", wantID: ""},
+		{name: "https", secure: true, cookies: "__Host-wdy-ora-access=anon", wantID: "anon"},
+		{name: "https ignores a tossed cookie", secure: true, cookies: "wdy-ora-access=user-evil; __Host-wdy-ora-access=user1", wantID: "user1"},
+		{name: "https takes over a logged in session once", secure: true, cookies: "wdy-ora-access=user1", wantID: "user1", wantMigrate: true},
+		{name: "https ignores an anonymous tossed session", secure: true, cookies: "wdy-ora-access=anon", wantID: ""},
+		{name: "https ignores ambiguous sessions", secure: true, cookies: "wdy-ora-access=user-evil; wdy-ora-access=user1", wantID: ""},
+		{name: "https without cookie", secure: true, wantID: ""},
+	} {
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+		if tc.cookies != "" {
+			r.Header.Set("Cookie", tc.cookies)
+		}
+
+		id, migrate := sessionIDFromCookies(r, tc.secure, loggedIn)
+		if id != tc.wantID || migrate != tc.wantMigrate {
+			t.Errorf("%s: got %q %v, want %q %v", tc.name, id, migrate, tc.wantID, tc.wantMigrate)
 		}
 	}
 }

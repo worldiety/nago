@@ -411,7 +411,11 @@ func (c *Configurator) newHandler() http.Handler {
 		c.defaultLogger().Info("serving fsys assets")
 		assets := statigz.FileServer(mergefs.Merge(c.fsys...).(mergefs.MergedFS), statigz.EncodeOnInit)
 		r.Mount("/", http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-			if _, err := request.Cookie(sessionCookieName); err != nil && mayIssueSessionCookie(request) {
+			switch id, migrate := c.sessionIDOf(request); {
+			case migrate:
+				http.SetCookie(writer, c.newSessionCookie(request, id))
+				http.SetCookie(writer, expiredPlainSessionCookie())
+			case id == "" && mayIssueSessionCookie(request):
 				http.SetCookie(writer, c.newSessionCookie(request, string(proto.NewScopeID())))
 			}
 
@@ -667,10 +671,14 @@ func (c *Configurator) newHandler() http.Handler {
 		// The page normally got its cookie already. If not, e.g. because all assets came from the browser cache after
 		// the page has been reached by a link from another site, the handshake issues it: the wire is always called
 		// by the page itself, so the cookie cannot be missing just due to SameSite.
-		cookie, _ := r.Cookie(sessionCookieName)
+		sessionID, migrate := c.sessionIDOf(r)
 		var responseHeader http.Header
-		if cookie == nil {
-			cookie = c.newSessionCookie(r, string(proto.NewScopeID()))
+		switch {
+		case migrate:
+			responseHeader = http.Header{"Set-Cookie": {c.newSessionCookie(r, sessionID).String(), expiredPlainSessionCookie().String()}}
+		case sessionID == "":
+			cookie := c.newSessionCookie(r, string(proto.NewScopeID()))
+			sessionID = cookie.Value
 			responseHeader = http.Header{"Set-Cookie": {cookie.String()}}
 		}
 
@@ -698,7 +706,7 @@ func (c *Configurator) newHandler() http.Handler {
 		//defer scope.Destroy() we don't want that, the client cannot recover through a new channel otherwise
 
 		// the session comes from the http-only cookie, which the client cannot override over the wire
-		scope.AssignSession(session.ID(cookie.Value))
+		scope.AssignSession(session.ID(sessionID))
 
 		if err := channel.Loop(); err != nil {
 			//slog.Error("websocket channel loop failed", slog.Any("err", err), "id", scopeID)

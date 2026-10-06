@@ -10,6 +10,7 @@ package application
 import (
 	"net/http"
 
+	"go.wdy.de/nago/application/session"
 	http2 "go.wdy.de/nago/presentation/core/http"
 )
 
@@ -59,7 +60,11 @@ func (c *Configurator) HandleFuncSubject(pattern string, handler http2.SubjectHa
 
 	c.rawEndpoint = append(c.rawEndpoint, rawEndpoint{
 		pattern: pattern,
-		handler: http2.NewSubjectHandlerFunc(
+		handler: http2.NewSessionSubjectHandlerFunc(
+			func(r *http.Request) session.ID {
+				id, _ := c.sessionIDOf(r)
+				return session.ID(id)
+			},
 			modSessions.UseCases.FindUserSessionByID,
 			modUsers.UseCases.SubjectFromUser,
 			modUsers.UseCases.GetAnonUser,

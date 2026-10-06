@@ -15,6 +15,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -30,8 +31,9 @@ var RenderTimeout = 2 * time.Second
 // KeepAlive is the interval of pings which a websocket [Window] sends, like the frontend.
 var KeepAlive = 30 * time.Second
 
-// sessionCookie is the name of the http-only cookie which carries the session id.
-const sessionCookie = "wdy-ora-access"
+// sessionCookies are the names of the http-only cookies which carry the session id of plain http and https. A
+// window sends both, because only the server knows whether it is reached through https.
+var sessionCookies = []string{"wdy-ora-access", "__Host-wdy-ora-access"}
 
 // Dial connects a new window through a websocket to a running nago server at baseURL, e.g.
 // http://localhost:3000, and allocates the root view of the given path. It behaves like a browser, thus
@@ -77,7 +79,11 @@ func (c *wsTransport) connect(w *Window) error {
 	u.RawQuery = url.Values{"_sid": {string(w.scopeID)}}.Encode()
 
 	header := http.Header{}
-	header.Set("Cookie", (&http.Cookie{Name: sessionCookie, Value: w.opts.sessionID}).String())
+	var cookies []string
+	for _, name := range sessionCookies {
+		cookies = append(cookies, (&http.Cookie{Name: name, Value: w.opts.sessionID}).String())
+	}
+	header.Set("Cookie", strings.Join(cookies, "; "))
 
 	dialer := websocket.Dialer{EnableCompression: true, HandshakeTimeout: SettleTimeout}
 	conn, resp, err := dialer.Dial(u.String(), header)
@@ -238,7 +244,9 @@ func (c *wsTransport) upload(w *Window, id string, files []core.File) error {
 	req.Header.Set("Content-Type", mw.FormDataContentType())
 	req.Header.Set("x-scope", string(w.scopeID))
 	req.Header.Set("x-receiver", id)
-	req.AddCookie(&http.Cookie{Name: sessionCookie, Value: w.opts.sessionID})
+	for _, name := range sessionCookies {
+		req.AddCookie(&http.Cookie{Name: name, Value: w.opts.sessionID})
+	}
 
 	resp, err := c.client.Do(req)
 	if err != nil {
