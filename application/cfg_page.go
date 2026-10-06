@@ -579,7 +579,7 @@ func (c *Configurator) newHandler() http.Handler {
 		// we support currently only multipart upload forms
 		scopeID := proto.ScopeID(r.Header.Get("x-scope"))
 		if len(scopeID) < 32 {
-			slog.Error("upload request has a weired x-scope id", "id", scopeID)
+			slog.Error("upload request has a weired x-scope id", "id", logging.Secret(string(scopeID)))
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
 		}
@@ -679,7 +679,7 @@ func (c *Configurator) newHandler() http.Handler {
 		conn, err := upgrader.Upgrade(w, r, responseHeader)
 		if err != nil {
 			log.Print("upgrade:", err)
-			slog.Info("http websocket upgrade failed", "err", err, "id", scopeID)
+			slog.Info("http websocket upgrade failed", "err", err, "id", logging.Secret(string(scopeID)))
 			return
 		}
 		defer conn.Close()

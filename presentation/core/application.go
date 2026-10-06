@@ -10,6 +10,7 @@ package core
 import (
 	"context"
 	"fmt"
+	"go.wdy.de/nago/logging"
 	"io"
 	"log/slog"
 	"maps"
@@ -273,7 +274,7 @@ func (a *Application) Connect(channel Channel, id proto.ScopeID) *Scope {
 func (a *Application) ImportFilesOptions(scopeId proto.ScopeID, uploadId string) (ImportFilesOptions, bool) {
 	scope, ok := a.scopes.Get(scopeId)
 	if !ok {
-		slog.Error("no such scope to import files", "scope", scopeId)
+		slog.Error("no such scope to import files", "scope", logging.Secret(string(scopeId)))
 		return ImportFilesOptions{}, false
 	}
 
@@ -283,7 +284,7 @@ func (a *Application) ImportFilesOptions(scopeId proto.ScopeID, uploadId string)
 func (a *Application) ExportFilesOptions(scopeId proto.ScopeID, downloadId string) (ExportFilesOptions, bool) {
 	scope, ok := a.scopes.Get(scopeId)
 	if !ok {
-		slog.Error("no such scope to export files", "scope", scopeId)
+		slog.Error("no such scope to export files", "scope", logging.Secret(string(scopeId)))
 		return ExportFilesOptions{}, false
 	}
 

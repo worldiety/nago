@@ -11,6 +11,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"go.wdy.de/nago/logging"
 	"io"
 	"log/slog"
 	"net/http"
@@ -172,7 +173,7 @@ func NewRefreshNLS(mutex *sync.Mutex, bus events.EventBus, repo Repository, load
 			return fmt.Errorf("failed saving session: %w", err)
 		}
 
-		slog.Info("nls refresh successful", "session", id, "user", uid)
+		slog.Info("nls refresh successful", "session", logging.Secret(string(id)), "user", uid)
 
 		bus.Publish(Authenticated{
 			Session: id,

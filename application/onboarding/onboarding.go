@@ -23,6 +23,7 @@ import (
 	"crypto/subtle"
 	"errors"
 	"fmt"
+	"go.wdy.de/nago/logging"
 	"log/slog"
 	"math/big"
 	"strings"
@@ -349,7 +350,7 @@ func (s *setup) requestCode(sid session.ID) (Code, error) {
 
 	s.current = c
 	s.sent = append(s.sent, now)
-	slog.Info("onboarding: code sent", "session", sid, "validUntil", c.validUntil)
+	slog.Info("onboarding: code sent", "session", logging.Secret(string(sid)), "validUntil", c.validUntil)
 
 	return s.codeLocked(), nil
 }
@@ -405,7 +406,7 @@ func (s *setup) verifyCode(sid session.ID, code string) error {
 
 	s.current = nil // a code confirms a single session
 	s.verified[sid] = s.now()
-	slog.Info("onboarding: session confirmed", "session", sid)
+	slog.Info("onboarding: session confirmed", "session", logging.Secret(string(sid)))
 	return nil
 }
 

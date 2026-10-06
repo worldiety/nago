@@ -8,6 +8,7 @@
 package session
 
 import (
+	"go.wdy.de/nago/logging"
 	"log/slog"
 
 	"go.wdy.de/nago/pkg/std/concurrent"
@@ -32,7 +33,7 @@ func newFindUserSessionByID(repository Repository, refresh RefreshNLS) (FindUser
 		v := newSessionImpl(id, repository, refresh)
 		optSession, err := repository.FindByID(id)
 		if err != nil {
-			slog.Error("failed to find session by id", "err", err, "id", id)
+			slog.Error("failed to find session by id", "err", err, "id", logging.Secret(string(id)))
 			return v
 		}
 

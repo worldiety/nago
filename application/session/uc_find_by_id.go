@@ -10,6 +10,7 @@ package session
 import (
 	"fmt"
 	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/logging"
 	"go.wdy.de/nago/pkg/std"
 	"log/slog"
 	"time"
@@ -33,7 +34,7 @@ func NewFindByID(sessions Repository) FindByID {
 		}
 
 		if expired(session, time.Now()) {
-			slog.Error("session expired for user", "sessionID", session.ID, "user", session.User)
+			slog.Error("session expired for user", "sessionID", logging.Secret(string(session.ID)), "user", session.User)
 			session.User = std.None[user.ID]()
 			session.AuthenticatedAt = time.Time{}
 			if err := sessions.Save(session); err != nil {

@@ -8,6 +8,7 @@
 package core
 
 import (
+	"go.wdy.de/nago/logging"
 	"log/slog"
 	"slices"
 	"time"
@@ -146,7 +147,7 @@ func (s *scopeWindow) resolveCallback(ptr proto.Ptr, now time.Time) func() {
 	// consumed, thus a further call of it is recognized as stale rather than as unknown.
 	s.dropFormer(idx)
 	s.callbacks.calledAt = now
-	slog.Debug("redirected call of a former tree to the current callback of its key", "scope", s.parent.id, "ptr", ptr, "key", key)
+	slog.Debug("redirected call of a former tree to the current callback of its key", "scope", logging.Secret(string(s.parent.id)), "ptr", ptr, "key", key)
 
 	return s.callbacks.lookup(cur)
 }

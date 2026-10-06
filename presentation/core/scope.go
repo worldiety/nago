@@ -11,6 +11,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"go.wdy.de/nago/logging"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -380,7 +381,7 @@ func (s *Scope) Dispatch(nagoEvt proto.NagoEvent) error {
 	})
 
 	if !posted {
-		slog.Error("scope is already destroyed but received a message", "sid", s.id, "what", fmt.Sprintf("%T", nagoEvt))
+		slog.Error("scope is already destroyed but received a message", "sid", logging.Secret(string(s.id)), "what", fmt.Sprintf("%T", nagoEvt))
 		return fmt.Errorf("scope already destroyed")
 	}
 
@@ -407,7 +408,7 @@ func (s *Scope) Publish(evt proto.NagoEvent) {
 	channel := s.channel.Value()
 	if evtChan, ok := channel.(EventChannel); ok {
 		if err := evtChan.PublishEvent(evt); err != nil {
-			slog.Error("cannot publish event", "err", err, "scope", s.id, "destroyed", s.destroyed.Load())
+			slog.Error("cannot publish event", "err", err, "scope", logging.Secret(string(s.id)), "destroyed", s.destroyed.Load())
 		}
 
 		return
@@ -421,7 +422,7 @@ func (s *Scope) Publish(evt proto.NagoEvent) {
 	}
 
 	if err := channel.Publish(buf.Bytes()); err != nil {
-		slog.Error("cannot publish websocket message", "err", err, "scope", s.id, "destroyed", s.destroyed.Load())
+		slog.Error("cannot publish websocket message", "err", err, "scope", logging.Secret(string(s.id)), "destroyed", s.destroyed.Load())
 	}
 }
 

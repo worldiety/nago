@@ -9,6 +9,7 @@ package session
 
 import (
 	"fmt"
+	"go.wdy.de/nago/logging"
 	"log/slog"
 	"sync"
 	"time"
@@ -81,7 +82,7 @@ func (s *sessionImpl) nlsRefreshDue(session Session) bool {
 func (s *sessionImpl) load() Session {
 	optSess, err := s.repo.FindByID(s.id)
 	if err != nil {
-		slog.Error("failed to find session by id", "err", err, "id", s.id)
+		slog.Error("failed to find session by id", "err", err, "id", logging.Secret(string(s.id)))
 		return Session{}
 	}
 

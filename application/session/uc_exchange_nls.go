@@ -11,6 +11,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"go.wdy.de/nago/logging"
 	"log/slog"
 	"net/http"
 	"os"
@@ -96,7 +97,7 @@ func NewExchangeNLS(mutex *sync.Mutex, bus events.Bus, repo NLSNonceRepository, 
 					CreatedAt:       time.Now(),
 					AuthenticatedAt: time.Now(),
 				})
-				slog.Info("created on-the-fly nls session for SSO authentication", "id", entry.Session)
+				slog.Info("created on-the-fly nls session for SSO authentication", "id", logging.Secret(string(entry.Session)))
 			}
 
 			session := optSession.Unwrap()

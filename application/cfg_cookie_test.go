@@ -11,6 +11,8 @@ import (
 	"crypto/tls"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"strings"
 	"testing"
 )
 
@@ -77,5 +79,21 @@ func TestCookiePolicy(t *testing.T) {
 		if cookie.Name != sessionCookieName || !cookie.HttpOnly || cookie.SameSite != http.SameSiteLaxMode || cookie.Path != "/" || cookie.Secure != tc.proxied {
 			t.Errorf("NO_SSL=%q: unexpected cookie %+v", tc.noSSL, cookie)
 		}
+	}
+}
+
+// The scope id of the wire grants access to a window, so the request log shows only its fingerprint.
+func TestRedactURLHidesTheScopeID(t *testing.T) {
+	sid := strings.Repeat("a", 40)
+	u, _ := url.Parse("/wire?_sid=" + sid + "&x=1")
+
+	got := redactURL(u)
+	if strings.Contains(got, sid) || !strings.Contains(got, "x=1") || !strings.Contains(got, "_sid=%23") {
+		t.Fatalf("unexpected redacted url %q", got)
+	}
+
+	plain, _ := url.Parse("/api/doc?x=1")
+	if redactURL(plain) != "/api/doc?x=1" {
+		t.Fatal("an url without scope id must stay unchanged")
 	}
 }

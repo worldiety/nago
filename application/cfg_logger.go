@@ -10,6 +10,7 @@ package application
 import (
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 
 	"go.wdy.de/nago/logging"
@@ -52,8 +53,21 @@ func (c *Configurator) defaultLogger() *slog.Logger {
 
 func (c *Configurator) loggerMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger := c.defaultLogger().With(slog.String("url", r.URL.String()))
+		logger := c.defaultLogger().With(slog.String("url", redactURL(r.URL)))
 		r = r.WithContext(logging.WithContext(r.Context(), logger))
 		h.ServeHTTP(w, r)
 	})
+}
+
+// redactURL replaces the scope id of the wire, which grants access to a window, by its fingerprint.
+func redactURL(u *url.URL) string {
+	q := u.Query()
+	if sid := q.Get("_sid"); sid != "" {
+		c := *u
+		q.Set("_sid", logging.Secret(sid))
+		c.RawQuery = q.Encode()
+		return c.String()
+	}
+
+	return u.String()
 }

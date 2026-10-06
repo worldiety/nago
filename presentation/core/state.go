@@ -13,6 +13,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"go.wdy.de/nago/logging"
 	"log/slog"
 	"reflect"
 	"runtime"
@@ -426,7 +427,7 @@ func StateOf[T any](wnd Window, id string) *State[T] {
 	ptr := w.parent.ids.state
 	if ptr >= maxStatePtr {
 		// practically unreachable, see dropCallbacks
-		slog.Error("the state pointers of the scope are exhausted, destroying the scope", "scope", w.parent.id)
+		slog.Error("the state pointers of the scope are exhausted, destroying the scope", "scope", logging.Secret(string(w.parent.id)))
 		w.parent.Destroy()
 	}
 	w.parent.ids.state++

@@ -10,6 +10,7 @@ package core
 import (
 	"encoding/json"
 	"fmt"
+	"go.wdy.de/nago/logging"
 	"log/slog"
 	"maps"
 	"time"
@@ -261,11 +262,11 @@ func (s *Scope) discardStale(kind string, ptr proto.Ptr, rid proto.RID) {
 
 	s.staleCount++
 	if s.staleCount == staleWarnCount {
-		slog.Warn("discarded repeated requests of stale trees, the window renders too often, e.g. because a view changes a state during each render", "scope", s.id, "kind", kind, "ptr", ptr, "rid", rid, "count", s.staleCount, "within", staleWarnInterval)
+		slog.Warn("discarded repeated requests of stale trees, the window renders too often, e.g. because a view changes a state during each render", "scope", logging.Secret(string(s.id)), "kind", kind, "ptr", ptr, "rid", rid, "count", s.staleCount, "within", staleWarnInterval)
 		return
 	}
 
-	slog.Debug("discarded request of stale tree", "scope", s.id, "kind", kind, "ptr", ptr, "rid", rid)
+	slog.Debug("discarded request of stale tree", "scope", logging.Secret(string(s.id)), "kind", kind, "ptr", ptr, "rid", rid)
 }
 
 // StaleCalls returns the amount of requests which have been discarded, because they referred to a callback or

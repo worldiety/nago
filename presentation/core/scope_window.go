@@ -10,6 +10,7 @@ package core
 import (
 	"context"
 	"fmt"
+	"go.wdy.de/nago/logging"
 	"io"
 	"log/slog"
 	"sync"
@@ -204,7 +205,7 @@ func (s *scopeWindow) checkRenderLoop(dirty bool) {
 		state = *id
 	}
 
-	slog.Warn("window renders in an endless loop, because a state changes during each render, e.g. by setting a changing value or by Invalidate within a render", "scope", s.parent.id, "view", s.factory, "renders", s.renderLoopCount, "since", s.renderLoopSince, "lastChangedState", state)
+	slog.Warn("window renders in an endless loop, because a state changes during each render, e.g. by setting a changing value or by Invalidate within a render", "scope", logging.Secret(string(s.parent.id)), "view", s.factory, "renders", s.renderLoopCount, "since", s.renderLoopSince, "lastChangedState", state)
 }
 
 // hasDirtyStates reports in O(1) whether any [State] of this window has been mutated since the last render.
@@ -356,7 +357,7 @@ func (s *scopeWindow) dropCallbacks() {
 	next := s.callbacks.next()
 	if next >= maxCallbackPtr {
 		// practically unreachable: at a million callbacks per second, this takes centuries
-		slog.Error("the callback pointers of the scope are exhausted, destroying the scope", "scope", s.parent.id)
+		slog.Error("the callback pointers of the scope are exhausted, destroying the scope", "scope", logging.Secret(string(s.parent.id)))
 		s.parent.Destroy()
 	}
 
