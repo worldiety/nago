@@ -8,11 +8,8 @@
 package core
 
 import (
-	"encoding/hex"
-	"fmt"
 	"strings"
 
-	"go.wdy.de/nago/pkg/blob/crypto"
 	"go.wdy.de/nago/presentation/proto"
 )
 
@@ -154,23 +151,16 @@ func (n *navigationController) IgnoreNextInvalidation() {
 //   - _type is hardcoded as "http-flow"
 //   - redirectTarget as declared
 //   - redirectNavigation as declared
+//
+// A web frontend keeps its session, as long as the identity provider redirects back with a GET, because the session
+// cookie is SameSite=Lax. Former versions kept the session id in the local storage of the browser to restore it
+// after the redirect, which is not required anymore and has been removed. An identity provider which posts its
+// result back needs a server route, which takes the POST and redirects to a page by GET.
 func HTTPFlow(nav Navigation, start, redirectTarget URI, redirectNavigation NavigationPath) {
-	var encSid string
-	if wnd, ok := nav.(interface{ Window() Window }); ok && wnd != nil {
-		sid := wnd.Window().Session().ID()
-		buf, err := crypto.Encrypt([]byte(sid), wnd.Window().Application().MasterKey())
-		if err != nil {
-			panic(fmt.Errorf("unreachable: %w", err))
-		}
-
-		encSid = hex.EncodeToString(buf)
-	}
-
 	nav.(*navigationController).IgnoreNextInvalidation()
 
 	nav.(*navigationController).scope.Publish(&proto.OpenHttpFlow{
 		Url:                proto.URI(start),
-		Session:            proto.Str(encSid),
 		RedirectNavigation: proto.Str(redirectNavigation),
 		RedirectTarget:     proto.Str(redirectTarget),
 	})

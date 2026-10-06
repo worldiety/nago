@@ -18,6 +18,7 @@ import (
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/nagotest"
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/proto"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/web/vuejs"
 )
@@ -132,10 +133,51 @@ func wireIssuesMissingSessionCookie(t *testing.T, base string) {
 	}
 }
 
+// The former restore endpoint set the session cookie to any id encrypted with the master key. It is gone, and an
+// http flow does not hand out the session id anymore.
+func restoreIsGone(t *testing.T, base string) {
+
+	res, err := http.Post(base+"/api/nago/v1/session/restore", "text/plain", strings.NewReader("00ff"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+
+	for _, c := range res.Cookies() {
+		if c.Name == "wdy-ora-access" {
+			t.Fatalf("the restore endpoint must not set a cookie, got %+v", c)
+		}
+	}
+
+	app := nagotest.New(t, func(cfg *application.Configurator) {
+		cfg.SetApplicationID("de.worldiety.httpflowtest")
+		cfg.RootView(".", func(wnd core.Window) core.View {
+			return ui.PrimaryButton(func() {
+				core.HTTPFlow(wnd.Navigation(), "https://idp.example.com/authorize", "https://app.example.com/callback", "callback")
+			}).Title("login")
+		})
+	})
+
+	w := app.Open(t, nil, ".")
+	w.Click(w.Find(nagotest.Text("login")))
+
+	var flow *proto.OpenHttpFlow
+	for _, evt := range w.Events() {
+		if f, ok := evt.(*proto.OpenHttpFlow); ok {
+			flow = f
+		}
+	}
+
+	if flow == nil || flow.Url != "https://idp.example.com/authorize" || flow.Session != "" {
+		t.Fatalf("expected a flow without session, got %+v", flow)
+	}
+}
+
 // TestSessionCookie shares one server, because serving the frontend compresses all its assets at start.
 func TestSessionCookie(t *testing.T) {
 	base := serveSPA(t)
 	t.Run("secure follows the request", func(t *testing.T) { secureFollowsTheRequest(t, base) })
 	t.Run("not issued for cross-site or unsafe requests", func(t *testing.T) { notIssuedForCrossSiteOrUnsafeRequests(t, base) })
 	t.Run("wire issues a missing cookie", func(t *testing.T) { wireIssuesMissingSessionCookie(t, base) })
+	t.Run("restore is gone", func(t *testing.T) { restoreIsGone(t, base) })
 }

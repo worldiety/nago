@@ -9,7 +9,6 @@ package application
 
 import (
 	"archive/zip"
-	"encoding/hex"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -37,7 +36,6 @@ import (
 	"go.wdy.de/nago/application/session"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/logging"
-	"go.wdy.de/nago/pkg/blob/crypto"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/core/http/gorilla"
@@ -439,38 +437,10 @@ func (c *Configurator) newHandler() http.Handler {
 
 	}
 
-	masterKey, err := c.MasterKey()
-	if err != nil {
-		slog.Error("error getting master key: %v", "err", err)
-	}
-
-	r.Mount("/api/nago/v1/session/restore", http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		if request.Method != http.MethodPost {
-			writer.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-
-		hexBuf, err := io.ReadAll(request.Body)
-		if err != nil {
-			slog.Error("error reading request body: %v", "err", err)
-			writer.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		buf, err := hex.DecodeString(string(hexBuf))
-		if err != nil {
-			slog.Error("error decoding request body: %v", "err", err)
-			writer.WriteHeader(http.StatusInternalServerError)
-		}
-
-		sidBuf, err := crypto.Decrypt(buf, masterKey)
-		if err != nil {
-			slog.Error("error decrypting request body: %v", "err", err)
-			writer.WriteHeader(http.StatusInternalServerError)
-		}
-
-		http.SetCookie(writer, c.newSessionCookie(request, string(sidBuf)))
-	}))
+	// The former endpoint /api/nago/v1/session/restore set the session cookie to any id encrypted with the master
+	// key, which the frontend kept in its local storage during an http flow. Since the cookie is SameSite=Lax, it is
+	// sent on the redirect back from an identity provider, so the workaround is gone. It undermined the http-only
+	// cookie and accepted ids without expiry.
 
 	r.Mount("/api/nago/v1/manifest.json", http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		type icon struct {

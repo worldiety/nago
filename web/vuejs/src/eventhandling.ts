@@ -568,12 +568,11 @@ export function openHttpLink(evt: OpenHttpLink) {
 }
 
 /**
- * openHttpFlow replaces the current location and saves any http flow session to peek through
- * the CSRF protection for later redirects back.
+ * openHttpFlow replaces the current location. The session cookie is SameSite=Lax, so it is sent on the redirect
+ * back and the session needs no restoration.
  * @param evt
  */
 export function openHttpFlow(evt: OpenHttpFlow) {
-	localStorage.setItem('http-flow-session', evt.session!);
 	window.location.href = evt.url!;
 }
 

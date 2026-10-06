@@ -82,13 +82,10 @@ const connected = ref(true);
 //TODO: Torben baut zukünftig /health ein, der einen 200er und eine json-response zurückgibt, wenn der Service grundsätzlich läuft
 
 async function applyConfiguration(): Promise<void> {
-	// this is part of the (oauth2) security process, which removes our actual session due to strict cookie rules.
-	// thus we saved the end-to-end encrypted cookie in our local storage and ask the server to restore it.
-	let httpFlowSession = localStorage.getItem('http-flow-session');
-	if (httpFlowSession) {
-		await restoreCookie(httpFlowSession);
-		return;
-	}
+	// Former versions kept the session id in the local storage during an http flow and restored the cookie from it.
+	// The session cookie is SameSite=Lax now, so this is gone. Remove a leftover, which would expose the session id
+	// to scripts.
+	localStorage.removeItem('http-flow-session');
 
 	// establish connection, may be to an existing scope (hold in SPAs memory only to avoid n:1 connection
 	// restoration).
@@ -208,24 +205,6 @@ async function applyConfiguration(): Promise<void> {
 	});
 
 	requestRootViewRendering(serviceAdapter);
-}
-
-function restoreCookie(sessionID: string) {
-	return fetch('/api/nago/v1/session/restore', {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'text/plain',
-		},
-		body: sessionID,
-	}).then((response) => {
-		if (response.ok) {
-			localStorage.removeItem('http-flow-session');
-			console.log('completed cookie restoration process');
-			location.reload();
-		} else {
-			console.log('restore cookie: unexpected result', response);
-		}
-	});
 }
 
 function fixHistoryInit() {
