@@ -28,6 +28,7 @@ import (
 
 type nlsFixture struct {
 	uc        UseCases
+	sessions  *datamem.Repository[Session, ID]
 	nonces    *datamem.Repository[NLSNonceEntry, NLSNonce]
 	exchanges *atomic.Int32
 }
@@ -56,8 +57,9 @@ func newNLSFixture(t *testing.T) nlsFixture {
 	})
 
 	nonces := &datamem.Repository[NLSNonceEntry, NLSNonce]{}
-	uc := NewUseCases(events.NewEventBus(), "/account/nls/authentication", load, merge, &datamem.Repository[Session, ID]{}, nonces, nil)
-	return nlsFixture{uc: uc, nonces: nonces, exchanges: &exchanges}
+	sessions := &datamem.Repository[Session, ID]{}
+	uc := NewUseCases(events.NewEventBus(), "/account/nls/authentication", load, merge, sessions, nonces, nil)
+	return nlsFixture{uc: uc, sessions: sessions, nonces: nonces, exchanges: &exchanges}
 }
 
 func (f nlsFixture) start(t *testing.T, sid ID) NLSNonce {
@@ -147,4 +149,50 @@ func TestExchangeNLSRejectsExpiredNonces(t *testing.T) {
 	if f.exchanges.Load() != 0 || f.uc.FindUserSessionByID(victimSession).User().IsSome() {
 		t.Fatal("an expired nonce must not sign in")
 	}
+}
+
+// A refresh every few minutes keeps the time of the sign-in, so a single sign-on session reaches its lifetime like
+// any other session.
+func TestNLSRefreshKeepsTheSignInTime(t *testing.T) {
+	f := newNLSFixture(t)
+	if _, err := f.uc.ExchangeNLS(victimSession, f.start(t, victimSession)); err != nil {
+		t.Fatal(err)
+	}
+
+	signedIn := time.Now().Add(-sessionLifetime + 24*time.Hour)
+	s, _ := f.sessions.FindByID(victimSession)
+	record := s.Unwrap()
+	record.AuthenticatedAt = signedIn
+	if err := f.sessions.Save(record); err != nil {
+		t.Fatal(err)
+	}
+
+	clock := time.Now()
+	nowFunc = func() time.Time { return clock }
+	defer func() { nowFunc = time.Now }()
+
+	us := f.uc.FindUserSessionByID(victimSession)
+	if us.User().IsNone() {
+		t.Fatal("the session must be valid within its lifetime")
+	}
+
+	if got := mustSession(t, f.sessions, victimSession).AuthenticatedAt; !got.Equal(signedIn) {
+		t.Fatalf("the refresh moved the sign-in time from %v to %v", signedIn, got)
+	}
+
+	// two days later, the lifetime is over, although refreshes keep succeeding
+	clock = clock.Add(48 * time.Hour)
+	if us.User().IsSome() {
+		t.Fatal("the session must expire after its lifetime")
+	}
+}
+
+func mustSession(t *testing.T, repo *datamem.Repository[Session, ID], id ID) Session {
+	t.Helper()
+	opt, err := repo.FindByID(id)
+	if err != nil || opt.IsNone() {
+		t.Fatalf("session %s not found: %v", id, err)
+	}
+
+	return opt.Unwrap()
 }

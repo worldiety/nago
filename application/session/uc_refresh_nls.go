@@ -161,7 +161,11 @@ func NewRefreshNLS(mutex *sync.Mutex, bus events.EventBus, repo Repository, load
 			return fmt.Errorf("failed merging user: %w", err)
 		}
 
-		session.AuthenticatedAt = time.Now()
+		// Only the first sign-in sets the time of the authentication. A refresh every few minutes must not move it,
+		// otherwise a single sign-on session would never reach its lifetime, see expired.
+		if session.User.IsNone() || session.AuthenticatedAt.IsZero() {
+			session.AuthenticatedAt = time.Now()
+		}
 		session.User = option.Some(uid)
 
 		if err := repo.Save(session); err != nil {
