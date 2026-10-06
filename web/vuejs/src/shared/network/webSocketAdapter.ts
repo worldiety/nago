@@ -17,6 +17,7 @@ export default class WebSocketAdapter implements ServiceAdapter {
 	private webSocket: WebSocket | null = null;
 	private closedGracefully: boolean = false;
 	private retryTimeout: number | null = null;
+	private pingInterval: number | null = null;
 	private retries: number = 0;
 	private lastEventSendAt: number;
 	private instanceVersion: string = '';
@@ -98,8 +99,10 @@ export default class WebSocketAdapter implements ServiceAdapter {
 				ConnectionHandler.connectionChanged({ connected: true });
 				this.retries = 0;
 
-				// this keeps our connection at least logically alive
-				setInterval(() => {
+				// this keeps our connection at least logically alive, also the server pings, because a browser
+				// throttles this timer in a background tab. Every reconnect replaces the timer of the former one.
+				this.stopPing();
+				this.pingInterval = window.setInterval(() => {
 					if (this.closedGracefully) {
 						return;
 					}
@@ -123,8 +126,16 @@ export default class WebSocketAdapter implements ServiceAdapter {
 	async teardown(): Promise<void> {
 		window.console.log('websocket teardown');
 		this.closedGracefully = true;
+		this.stopPing();
 		this.webSocket?.close();
 		ConnectionHandler.connectionChanged({ connected: false });
+	}
+
+	private stopPing() {
+		if (this.pingInterval !== null) {
+			window.clearInterval(this.pingInterval);
+			this.pingInterval = null;
+		}
 	}
 
 	private retry() {

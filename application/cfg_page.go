@@ -703,6 +703,11 @@ func (c *Configurator) newHandler() http.Handler {
 		}()
 		channel := gorilla.NewWebsocketChannel(conn)
 		scope := app2.Connect(channel, proto.ScopeID(scopeID))
+
+		// a scope expires a minute after the last message, see core.Scope.Tick, and the ping of the frontend is
+		// throttled in a background tab, so the pongs of the browser keep the scope of an open connection alive
+		stopKeepAlive := channel.KeepAlive(wireKeepAlive, scope.Tick)
+		defer stopKeepAlive()
 		//defer scope.Destroy() we don't want that, the client cannot recover through a new channel otherwise
 
 		// the session comes from the http-only cookie, which the client cannot override over the wire
@@ -735,6 +740,10 @@ func (c *Configurator) newHandler() http.Handler {
 //
 // It exists so that packages which must not import this one - the AI assistant UI, for instance - can still
 // ask what a route is for, using core.FromContext[RootViewPurposeLookup](wnd.Context(), CtxRootViewPurpose).
+// wireKeepAlive is the interval of the websocket pings of the server. A scope expires a minute after its last
+// message, so it leaves room for two lost pongs.
+const wireKeepAlive = 20 * time.Second
+
 const CtxRootViewPurpose = "nago.rootview.purpose"
 
 // RootViewPurposeLookup answers what the given route is for. The second result is false for routes that were

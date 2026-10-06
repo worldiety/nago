@@ -9,8 +9,10 @@ package gorilla
 
 import (
 	"fmt"
-	"github.com/gorilla/websocket"
 	"sync"
+	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 type WebsocketChannel struct {
@@ -23,6 +25,38 @@ type WebsocketChannel struct {
 
 func NewWebsocketChannel(conn *websocket.Conn) *WebsocketChannel {
 	return &WebsocketChannel{conn: conn, observers: map[int]func(msg []byte) error{}}
+}
+
+// KeepAlive sends a websocket ping in the given interval and invokes alive for every pong, until stop is called or
+// a ping fails. A browser answers a ping by itself, without any script. Thus, unlike a ping of the frontend, it is
+// not delayed in a background tab, whose timers a browser throttles to once a minute after five minutes. It must be
+// called before [WebsocketChannel.Loop], which reads the pongs.
+func (w *WebsocketChannel) KeepAlive(interval time.Duration, alive func()) (stop func()) {
+	w.conn.SetPongHandler(func(string) error {
+		alive()
+		return nil
+	})
+
+	done := make(chan struct{})
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-done:
+				return
+			case <-ticker.C:
+				// WriteControl may be called concurrently with the other write methods
+				if err := w.conn.WriteControl(websocket.PingMessage, nil, time.Now().Add(interval)); err != nil {
+					return
+				}
+			}
+		}
+	}()
+
+	var once sync.Once
+	return func() { once.Do(func() { close(done) }) }
 }
 
 func (w *WebsocketChannel) Loop() error {
