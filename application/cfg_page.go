@@ -9,7 +9,6 @@ package application
 
 import (
 	"archive/zip"
-	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"encoding/xml"
@@ -35,6 +34,7 @@ import (
 	"github.com/vearutop/statigz"
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/image/http"
+	"go.wdy.de/nago/application/session"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/logging"
 	"go.wdy.de/nago/pkg/blob/crypto"
@@ -738,25 +738,12 @@ func (c *Configurator) newHandler() http.Handler {
 		}()
 		channel := gorilla.NewWebsocketChannel(conn)
 		scope := app2.Connect(channel, proto.ScopeID(scopeID))
-		_ = scope
 		//defer scope.Destroy() we don't want that, the client cannot recover through a new channel otherwise
 
 		cookie, _ := r.Cookie("wdy-ora-access")
 		if cookie != nil {
-			buf := bytes.NewBuffer(make([]byte, 0, 512))
-			dst := proto.NewBinaryWriter(buf)
-			err := proto.Marshal(dst, &proto.SessionAssigned{
-				SessionID: proto.Str(cookie.Value),
-			})
-
-			if err != nil {
-				panic(fmt.Errorf("unreachable: %w", err))
-			}
-
-			if err := channel.PublishLocal(buf.Bytes()); err != nil {
-				slog.Error("cannot publish session assigned to local channel", slog.Any("err", err))
-				return
-			}
+			// the session comes from the http-only cookie, which the client cannot override over the wire
+			scope.AssignSession(session.ID(cookie.Value))
 		} else {
 			// if debug is false (e.g. on a linux) secure will switch to on but without https we will never get that cookie
 			slog.Error("cookie is missing in /wire, maybe missing due to browser security constraints and wrong settings. If you want insecure cookies set env NAGO_COOKIES_INSECURE=true")

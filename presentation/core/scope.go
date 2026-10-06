@@ -82,9 +82,12 @@ type Scope struct {
 	// because the transient states outlive a window.
 	generation atomic.Int64
 
-	sessionID              session.ID
-	sessionByID            session.FindUserSessionByID
-	virtualSession         atomic.Pointer[session.UserSession]
+	sessionID      session.ID
+	sessionByID    session.FindUserSessionByID
+	virtualSession atomic.Pointer[session.UserSession]
+	// sessionFromTransport is set, once the transport assigned the session, e.g. from an http-only cookie. A
+	// client must not choose its session then, see [Scope.AssignSession].
+	sessionFromTransport   atomic.Bool
 	ignoreNextInvalidation atomic.Bool
 	dirty                  bool
 	// background counts running goroutines started on behalf of this scope, e.g. by [OnAppear].
@@ -660,9 +663,31 @@ func (s *Scope) destroy() {
 	s.clearFiles()
 }
 
+// AssignSession binds the scope to the session, which the transport authenticated, e.g. by the http-only cookie
+// of a websocket handshake. From then on, a [proto.SessionAssigned] sent by the client is ignored, because a
+// client could otherwise choose an arbitrary session, bypassing the cookie. Clients without such a transport,
+// like native apps, keep assigning their session by the event.
+func (s *Scope) AssignSession(id session.ID) {
+	s.Tick()
+	s.eventLoop.Post(func() {
+		s.sessionFromTransport.Store(true)
+		s.assignSession(id)
+	})
+}
+
 // only for event loop
 func (s *Scope) handleSessionAssigned(evt *proto.SessionAssigned) {
-	s.sessionID = session.ID(evt.SessionID)
+	if s.sessionFromTransport.Load() {
+		slog.Warn("ignored a session assigned by the client, the transport already assigned it", "scope", s.id)
+		return
+	}
+
+	s.assignSession(session.ID(evt.SessionID))
+}
+
+// only for event loop
+func (s *Scope) assignSession(id session.ID) {
+	s.sessionID = id
 	tmp := s.sessionByID(s.sessionID)
 	_ = tmp.User() //issue a refresh, if required
 	s.virtualSession.Store(&tmp)
