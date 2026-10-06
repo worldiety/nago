@@ -13,3 +13,9 @@ type Authenticated struct {
 	Session ID
 	User    user.ID
 }
+
+// LoggedOut is published, after a session lost its user by a logout, also by a failed single sign-on refresh. The
+// open windows of the session show it as logged out at once.
+type LoggedOut struct {
+	Session ID
+}

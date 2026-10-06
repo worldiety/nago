@@ -686,6 +686,19 @@ func (s *Scope) handleSessionAssigned(evt *proto.SessionAssigned) {
 	s.assignSession(session.ID(evt.SessionID))
 }
 
+// sessionLoggedOut renders the window of the scope as anonymous, if it belongs to the session and still shows a
+// valid subject.
+func (s *Scope) sessionLoggedOut(id session.ID) {
+	s.eventLoop.Post(func() {
+		if s.sessionID != id || s.allocatedRootView.IsNone() || !s.subject.Value().Valid() {
+			return
+		}
+
+		s.allocatedRootView.Unwrap().UpdateSubject(nil)
+		s.forceRender(0)
+	})
+}
+
 // only for event loop
 func (s *Scope) assignSession(id session.ID) {
 	s.sessionID = id

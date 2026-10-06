@@ -110,7 +110,20 @@ func NewApplication(
 		instance:      data.RandIdent[string](),
 	}
 
+	if bus != nil {
+		a.AddDestructor(events.SubscribeFor[session.LoggedOut](bus, a.sessionLoggedOut))
+	}
+
 	return a
+}
+
+// sessionLoggedOut shows the open windows of the session as logged out, e.g. after a logout in another tab or a
+// failed single sign-on refresh in the background. Otherwise, a window keeps its subject until its next navigation.
+func (a *Application) sessionLoggedOut(evt session.LoggedOut) {
+	a.scopes.scopes.Each(func(_ proto.ScopeID, scope *Scope) bool {
+		scope.sessionLoggedOut(evt.Session)
+		return true
+	})
 }
 
 // Instance returns a random identifier for the application instance which is created on application startup

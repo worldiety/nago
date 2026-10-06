@@ -125,7 +125,7 @@ func NewUseCases(bus events.Bus, defaultNLSRedirectURL string, loadGlobal settin
 
 	sessionByIdFn := NewFindByID(repo)
 	loginFn := NewLogin(bus, repo, authByPwd)
-	logoutFn := NewLogout(repo)
+	logoutFn := publishLoggedOut(bus, NewLogout(repo))
 	refreshNLSFn := NewRefreshNLS(&mutex, bus, repo, loadGlobal, mergeSSO, logoutFn)
 	findUserSessionByIDFn := NewFindUserSessionByID(repo, refreshNLSFn)
 
