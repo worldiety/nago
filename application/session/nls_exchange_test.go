@@ -30,19 +30,38 @@ type nlsFixture struct {
 	uc        UseCases
 	sessions  *datamem.Repository[Session, ID]
 	nonces    *datamem.Repository[NLSNonceEntry, NLSNonce]
+	bus       events.EventBus
+	server    *httptest.Server
 	exchanges *atomic.Int32
+	refreshes *atomic.Int32
+	photos    *atomic.Int32
+
+	// refreshStatus is the status of the refresh endpoint, 0 means success
+	refreshStatus *atomic.Int32
+
+	// onMerge is invoked by the merge of the user, which runs outside the mutex
+	onMerge *atomic.Pointer[func()]
 }
 
 // newNLSFixture fakes the login service, which signs in whoever completes the flow as the victim.
 func newNLSFixture(t *testing.T) nlsFixture {
-	var exchanges atomic.Int32
+	var exchanges, refreshes, photos, refreshStatus atomic.Int32
+	var onMerge atomic.Pointer[func()]
 	nls := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/api/nago/v1/exchange":
 			exchanges.Add(1)
 			_ = json.NewEncoder(w).Encode(map[string]string{"refresh": "victim-refresh"})
 		case "/api/nago/v1/refresh":
+			refreshes.Add(1)
+			if status := refreshStatus.Load(); status != 0 {
+				w.WriteHeader(int(status))
+				return
+			}
 			_ = json.NewEncoder(w).Encode(map[string]any{"exp": 0, "user": map[string]string{"id": "v", "mail": "victim@example.com"}})
+		case "/api/nago/v1/photo/me":
+			photos.Add(1)
+			_, _ = w.Write([]byte("png"))
 		default:
 			http.NotFound(w, r)
 		}
@@ -53,13 +72,17 @@ func newNLSFixture(t *testing.T) nlsFixture {
 		return user.Settings{SSONLSServer: nls.URL}, nil
 	})
 	merge := user.MergeSingleSignOnUser(func(u user.SingleSignOnUser, _ []byte) (user.ID, error) {
+		if f := onMerge.Load(); f != nil {
+			(*f)()
+		}
 		return user.ID("uid-" + string(u.Email)), nil
 	})
 
 	nonces := &datamem.Repository[NLSNonceEntry, NLSNonce]{}
 	sessions := &datamem.Repository[Session, ID]{}
-	uc := NewUseCases(events.NewEventBus(), "/account/nls/authentication", load, merge, sessions, nonces, nil)
-	return nlsFixture{uc: uc, sessions: sessions, nonces: nonces, exchanges: &exchanges}
+	bus := events.NewEventBus()
+	uc := NewUseCases(bus, "/account/nls/authentication", load, merge, sessions, nonces, nil)
+	return nlsFixture{uc: uc, sessions: sessions, nonces: nonces, bus: bus, server: nls, exchanges: &exchanges, refreshes: &refreshes, photos: &photos, refreshStatus: &refreshStatus, onMerge: &onMerge}
 }
 
 func (f nlsFixture) start(t *testing.T, sid ID) NLSNonce {

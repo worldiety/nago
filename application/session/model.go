@@ -24,6 +24,11 @@ type Session struct {
 	AuthenticatedAt time.Time           `json:"authenticatedAt,omitempty,omitzero"`
 	Values          map[string]string   `json:"values,omitempty,omitzero"`
 	RefreshToken    NLSRefreshToken     `json:"refreshToken,omitzero"`
+
+	// NLSRefreshedAt is the time of the last successful single sign-on refresh.
+	NLSRefreshedAt time.Time `json:"nlsRefreshedAt,omitzero"`
+	// NLSAvatarAt is the time the avatar has been loaded from the login service the last time.
+	NLSAvatarAt time.Time `json:"nlsAvatarAt,omitzero"`
 }
 
 func (s Session) Identity() ID {

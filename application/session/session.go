@@ -8,13 +8,14 @@
 package session
 
 import (
+	"errors"
 	"fmt"
-	"go.wdy.de/nago/logging"
 	"log/slog"
 	"sync"
 	"time"
 
 	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/logging"
 	"go.wdy.de/nago/pkg/std"
 )
 
@@ -24,6 +25,14 @@ var nowFunc = time.Now
 // nlsRefreshInterval is the time between two single sign-on refreshes of a session.
 const nlsRefreshInterval = 5 * time.Minute
 
+// nlsRetryInterval is the time after which a refresh is retried, which failed because the login service has been
+// unavailable, see [ErrNLSUnavailable].
+const nlsRetryInterval = time.Minute
+
+// startNLSRefresh runs a single sign-on refresh. It runs in the background, because an access happens within the
+// event loop of a window, which must not wait for the login service. Tests replace it.
+var startNLSRefresh = func(refresh func()) { go refresh() }
+
 // sessionImpl reads its record from the repository on every access. It deliberately keeps no copy: a login, a
 // logout or a deletion must be visible immediately, also to HTTP handlers, and reading a record costs only a few
 // microseconds. Only the single sign-on refresh, which calls the login service, keeps an interval.
@@ -32,23 +41,22 @@ type sessionImpl struct {
 	repo       Repository
 	refreshNLS RefreshNLS
 
-	mutex            sync.Mutex // guards lastNLSRefreshAt and serializes PutString
-	lastNLSRefreshAt time.Time
+	mutex            sync.Mutex // guards lastNLSRefreshAt and nlsRefreshing and serializes PutString
+	lastNLSRefreshAt time.Time  // the start of the last refresh, or a time in the past to retry earlier
+	nlsRefreshing    bool
 }
 
 func newSessionImpl(id ID, repo Repository, refresh RefreshNLS) *sessionImpl {
 	return &sessionImpl{id: id, repo: repo, refreshNLS: refresh}
 }
 
-// current returns the stored record, without a user if it has expired. A due single sign-on refresh runs first,
-// so that a refresh which fails and logs the user out is seen by this very access.
+// current returns the stored record, without a user if it has expired. A due single sign-on refresh is started in
+// the background, thus the access never waits for the login service: a refresh which fails and logs the user out
+// takes effect for the next access and publishes [LoggedOut] for the open windows.
 func (s *sessionImpl) current() Session {
 	session := s.load()
 	if s.nlsRefreshDue(session) {
-		if err := s.refreshNLS(s.id); err != nil {
-			slog.Error("failed to refresh NLS session", "err", err.Error())
-		}
-
+		startNLSRefresh(s.refreshInBackground)
 		session = s.load()
 	}
 
@@ -61,7 +69,8 @@ func (s *sessionImpl) current() Session {
 }
 
 // nlsRefreshDue reports whether the single sign-on session must be refreshed now and reserves the refresh, so
-// that concurrent accesses do not refresh twice.
+// that concurrent accesses do not refresh twice. A refresh is due an interval after the last start or the last
+// success, which may have happened in another process before a restart or by the sign-in itself.
 func (s *sessionImpl) nlsRefreshDue(session Session) bool {
 	if session.RefreshToken == "" {
 		return false
@@ -70,13 +79,41 @@ func (s *sessionImpl) nlsRefreshDue(session Session) bool {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
+	if s.nlsRefreshing {
+		return false
+	}
+
 	now := nowFunc()
-	if !s.lastNLSRefreshAt.IsZero() && now.Sub(s.lastNLSRefreshAt) < nlsRefreshInterval {
+	last := s.lastNLSRefreshAt
+	if session.NLSRefreshedAt.After(last) {
+		last = session.NLSRefreshedAt
+	}
+
+	if !last.IsZero() && now.Sub(last) < nlsRefreshInterval {
 		return false
 	}
 
 	s.lastNLSRefreshAt = now
+	s.nlsRefreshing = true
 	return true
+}
+
+func (s *sessionImpl) refreshInBackground() {
+	err := s.refreshNLS(s.id)
+
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	s.nlsRefreshing = false
+	switch {
+	case err == nil:
+	case errors.Is(err, ErrNLSUnavailable):
+		// the session is kept for a while, see NewRefreshNLS, so retry earlier than usual
+		s.lastNLSRefreshAt = nowFunc().Add(nlsRetryInterval - nlsRefreshInterval)
+		slog.Warn("cannot refresh NLS session, will retry", "session", logging.Secret(string(s.id)), "err", err.Error())
+	default:
+		slog.Error("failed to refresh NLS session", "session", logging.Secret(string(s.id)), "err", err.Error())
+	}
 }
 
 func (s *sessionImpl) load() Session {

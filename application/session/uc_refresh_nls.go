@@ -10,8 +10,8 @@ package session
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"go.wdy.de/nago/logging"
 	"io"
 	"log/slog"
 	"net/http"
@@ -22,6 +22,7 @@ import (
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/logging"
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/xhttp"
 )
@@ -90,6 +91,25 @@ func (u nlsUser) intoSSOUser() user.SingleSignOnUser {
 	}
 }
 
+// ErrNLSUnavailable tells that the login service could not be asked or failed itself, e.g. due to a network
+// problem or an outage of the identity provider. Unlike a rejected token, this keeps the session for a while.
+var ErrNLSUnavailable = errors.New("login service unavailable")
+
+const (
+	// nlsGracePeriod is the time after the last successful refresh, for which a session survives an unavailable
+	// login service. Afterward, it is logged out anyway, because a blocked account must not stay logged in.
+	nlsGracePeriod = time.Hour
+
+	// nlsAvatarInterval is the time after which the avatar is loaded again.
+	nlsAvatarInterval = 24 * time.Hour
+
+	nlsRefreshTimeout = 10 * time.Second
+	nlsAvatarTimeout  = 5 * time.Second
+)
+
+// NewRefreshNLS asks the login service for the current user of the session and logs the session out, if the
+// login service rejects its token. If the login service is unavailable, the session is kept for [nlsGracePeriod].
+// Only the update of the session runs under the mutex, never a request.
 func NewRefreshNLS(mutex *sync.Mutex, bus events.EventBus, repo Repository, loadGlobal settings.LoadGlobal, mergeUser user.MergeSingleSignOnUser, logout Logout) RefreshNLS {
 
 	refresh := func(id ID) error {
@@ -101,45 +121,34 @@ func NewRefreshNLS(mutex *sync.Mutex, bus events.EventBus, repo Repository, load
 		}
 
 		if optSession.IsNone() {
-			return fmt.Errorf("session is gone: %s", id)
+			return fmt.Errorf("session is gone: %s", logging.Secret(string(id)))
 		}
 
 		session := optSession.Unwrap()
-
-		if session.RefreshToken == "" {
-			return fmt.Errorf("session has no nls refresh token: %s", id)
+		token := session.RefreshToken
+		if token == "" {
+			return fmt.Errorf("session has no nls refresh token: %s", logging.Secret(string(id)))
 		}
 
-		client := &http.Client{
-			Timeout: 30 * time.Second,
-		}
-
-		type body struct {
-			Refresh NLSRefreshToken `json:"refresh"`
-		}
-
-		url := strings.TrimSuffix(usrSettings.SSONLSServer, "/") + "/api/nago/v1/refresh"
-
-		buf := option.Must(json.Marshal(body{Refresh: session.RefreshToken}))
-		req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(buf))
+		result, err := requestNLSRefresh(usrSettings.SSONLSServer, token)
 		if err != nil {
-			return fmt.Errorf("invalid nls refresh request: %s: %w", url, err)
-		}
-
-		resp, err := client.Do(req)
-		if err != nil {
-			return fmt.Errorf("failed sending refresh request: %s: %w", url, err)
-		}
-
-		defer resp.Body.Close()
-
-		var result nlsJSONAuthenticationDetails
-		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-			return fmt.Errorf("failed decoding refresh response: %s: %w", url, err)
+			return err
 		}
 
 		if !user.Email(result.User.Mail).Valid() {
 			return fmt.Errorf("invalid NLS email: '%s'", result.User.Mail)
+		}
+
+		now := nowFunc()
+		var avatarBuf []byte
+		avatarDue := now.Sub(session.NLSAvatarAt) >= nlsAvatarInterval
+		if avatarDue {
+			avatarBuf = loadAvatar(usrSettings.SSONLSServer, token)
+		}
+
+		uid, err := mergeUser(result.User.intoSSOUser(), avatarBuf)
+		if err != nil {
+			return fmt.Errorf("failed merging user: %w", err)
 		}
 
 		mutex.Lock()
@@ -150,24 +159,22 @@ func NewRefreshNLS(mutex *sync.Mutex, bus events.EventBus, repo Repository, load
 			return fmt.Errorf("failed refreshing session: %w", err)
 		}
 
-		if optSession.IsNone() {
-			return fmt.Errorf("session refresh is gone: %s", id)
-		}
-
-		avatarBuf := loadAvatar(usrSettings.SSONLSServer, session.RefreshToken)
-
-		session = optSession.Unwrap()
-		uid, err := mergeUser(result.User.intoSSOUser(), avatarBuf)
-		if err != nil {
-			return fmt.Errorf("failed merging user: %w", err)
+		session = optSession.UnwrapOr(Session{})
+		if session.RefreshToken != token {
+			// logged out or signed in again in the meantime, which this refresh must not undo
+			return nil
 		}
 
 		// Only the first sign-in sets the time of the authentication. A refresh every few minutes must not move it,
 		// otherwise a single sign-on session would never reach its lifetime, see expired.
 		if session.User.IsNone() || session.AuthenticatedAt.IsZero() {
-			session.AuthenticatedAt = time.Now()
+			session.AuthenticatedAt = now
 		}
 		session.User = option.Some(uid)
+		session.NLSRefreshedAt = now
+		if avatarDue {
+			session.NLSAvatarAt = now
+		}
 
 		if err := repo.Save(session); err != nil {
 			return fmt.Errorf("failed saving session: %w", err)
@@ -183,17 +190,72 @@ func NewRefreshNLS(mutex *sync.Mutex, bus events.EventBus, repo Repository, load
 		return nil
 	}
 
-	return func(id ID) error {
-		if err := refresh(id); err != nil {
-			if _, err2 := logout(id); err2 != nil {
-				return fmt.Errorf("logout failed under failed condition: %w: %w", err2, err)
-			}
-
-			return fmt.Errorf("failed refreshing session: %w", err)
+	// withinGracePeriod reports whether the session survives an unavailable login service. A session of an older
+	// version has never been refreshed successfully, as far as it knows, and is logged out like before.
+	withinGracePeriod := func(id ID) bool {
+		optSession, err := repo.FindByID(id)
+		if err != nil || optSession.IsNone() {
+			return false
 		}
 
-		return nil
+		refreshedAt := optSession.Unwrap().NLSRefreshedAt
+		return !refreshedAt.IsZero() && nowFunc().Sub(refreshedAt) < nlsGracePeriod
 	}
+
+	return func(id ID) error {
+		err := refresh(id)
+		if err == nil {
+			return nil
+		}
+
+		if errors.Is(err, ErrNLSUnavailable) && withinGracePeriod(id) {
+			return err
+		}
+
+		if _, err2 := logout(id); err2 != nil {
+			return fmt.Errorf("logout failed under failed condition: %w: %v", err2, err)
+		}
+
+		// not wrapped, the session is logged out and needs no retry
+		return fmt.Errorf("failed refreshing session, logged out: %v", err)
+	}
+}
+
+// requestNLSRefresh asks the login service for the current user. A rejection is a 4xx status. Everything else, like
+// a network problem or a 5xx status, is [ErrNLSUnavailable].
+func requestNLSRefresh(server string, token NLSRefreshToken) (nlsJSONAuthenticationDetails, error) {
+	type body struct {
+		Refresh NLSRefreshToken `json:"refresh"`
+	}
+
+	url := strings.TrimSuffix(server, "/") + "/api/nago/v1/refresh"
+	buf := option.Must(json.Marshal(body{Refresh: token}))
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(buf))
+	if err != nil {
+		return nlsJSONAuthenticationDetails{}, fmt.Errorf("invalid nls refresh request: %s: %w", url, err)
+	}
+
+	client := &http.Client{Timeout: nlsRefreshTimeout}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nlsJSONAuthenticationDetails{}, fmt.Errorf("failed sending refresh request: %s: %w: %w", url, ErrNLSUnavailable, err)
+	}
+
+	defer resp.Body.Close()
+
+	switch {
+	case resp.StatusCode >= 400 && resp.StatusCode < 500:
+		return nlsJSONAuthenticationDetails{}, fmt.Errorf("nls rejected the refresh: %s: status %d", url, resp.StatusCode)
+	case resp.StatusCode != http.StatusOK:
+		return nlsJSONAuthenticationDetails{}, fmt.Errorf("nls failed to refresh: %s: status %d: %w", url, resp.StatusCode, ErrNLSUnavailable)
+	}
+
+	var result nlsJSONAuthenticationDetails
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nlsJSONAuthenticationDetails{}, fmt.Errorf("failed decoding refresh response: %s: %w: %w", url, ErrNLSUnavailable, err)
+	}
+
+	return result, nil
 }
 
 func loadAvatar(baseUrl string, token NLSRefreshToken) []byte {
@@ -203,6 +265,7 @@ func loadAvatar(baseUrl string, token NLSRefreshToken) []byte {
 		BaseURL(baseUrl).
 		URL("/api/nago/v1/photo/me").
 		BearerAuthentication(string(token)).
+		Timeout(nlsAvatarTimeout).
 		Assert2xx(true).
 		To(func(r io.Reader) error {
 			tmp, err := io.ReadAll(r)

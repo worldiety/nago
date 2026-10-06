@@ -9,6 +9,7 @@ package session
 
 import (
 	"fmt"
+	"os"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -19,6 +20,13 @@ import (
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/pkg/std"
 )
+
+// TestMain refreshes single sign-on sessions synchronously, see TestUserSessionRefreshesInTheBackground for the
+// production behavior.
+func TestMain(m *testing.M) {
+	startNLSRefresh = func(refresh func()) { refresh() }
+	os.Exit(m.Run())
+}
 
 func newTestSessions(refresh RefreshNLS) (Repository, FindUserSessionByID, LoginUser, Logout) {
 	repo := &datamem.Repository[Session, ID]{}
@@ -155,7 +163,7 @@ func TestUserSessionRefreshesNLSOncePerInterval(t *testing.T) {
 		t.Fatalf("expected a refresh after the interval, got %d", got)
 	}
 
-	// a failed refresh logs the user out, which this very access must already see
+	// a failed refresh logs the user out, which this very access sees in tests, where the refresh is synchronous
 	refresh = func(id ID) error {
 		_, err := NewLogout(repo)(id)
 		return err
