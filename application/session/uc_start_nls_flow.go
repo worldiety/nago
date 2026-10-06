@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"sync"
+	"time"
 
 	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/application/user"
@@ -42,8 +43,9 @@ func NewStartNLSFlow(mutex *sync.Mutex, redirect string, repoNonce NLSNonceRepos
 		}
 
 		if err := repoNonce.Save(NLSNonceEntry{
-			ID:      nonce,
-			Session: id,
+			ID:        nonce,
+			Session:   id,
+			CreatedAt: time.Now(),
 		}); err != nil {
 			return "", fmt.Errorf("error saving NLS nonce: %v", err)
 		}

@@ -78,7 +78,13 @@ type NLSNonceEntry struct {
 	ID       NLSNonce `json:"id"`
 	Session  ID       `json:"sid"`
 	Redirect string   `json:"redirect"`
+	// CreatedAt bounds the time to complete the sign-in, see [NLSNonceLifetime]. Entries of older versions have
+	// none and are rejected.
+	CreatedAt time.Time `json:"createdAt,omitzero"`
 }
+
+// NLSNonceLifetime is the time a user has to complete a single sign-on, after the flow has been started.
+const NLSNonceLifetime = 10 * time.Minute
 
 func (e NLSNonceEntry) Identity() NLSNonce {
 	return e.ID
@@ -98,7 +104,9 @@ type StartNLSFlow func(id ID) (uri string, err error)
 // which in turn updates the user.
 type RefreshNLS func(id ID) error
 
-// ExchangeNLS tries to exchange the nonce for a refresh token and stores that for the given session.
+// ExchangeNLS tries to exchange the nonce for a refresh token and stores that for the given session. The nonce is
+// only valid once, for [NLSNonceLifetime] and for the session which started the flow: otherwise an attacker could
+// start a flow, let a victim complete it and own the victim's sign-in.
 type ExchangeNLS func(id ID, nonce NLSNonce) (redirect string, err error)
 
 type UseCases struct {

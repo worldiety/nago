@@ -28,16 +28,23 @@ func NewExchangeNLS(mutex *sync.Mutex, bus events.Bus, repo NLSNonceRepository, 
 	return func(id ID, nonce NLSNonce) (string, error) {
 		usrSettings := settings.ReadGlobal[user.Settings](loadGlobal)
 
-		optEntry, err := repo.FindByID(nonce)
+		entry, err := takeNonce(mutex, repo, nonce)
 		if err != nil {
 			return "", err
 		}
 
-		if optEntry.IsNone() {
-			return "", fmt.Errorf("nonce unknown: %w", os.ErrNotExist)
+		// The flow must be completed by the browser session which started it. Otherwise an attacker starts a flow,
+		// sends the link of the login service to a victim, and the victim's sign-in ends up in the attacker's
+		// session.
+		if entry.Session != id {
+			slog.Warn("rejected a single sign-on completed by another session than the one which started it")
+			return "", fmt.Errorf("the sign-in has been started in another browser session: %w", os.ErrPermission)
 		}
 
-		entry := optEntry.Unwrap()
+		if entry.CreatedAt.IsZero() || time.Since(entry.CreatedAt) > NLSNonceLifetime {
+			return "", fmt.Errorf("the sign-in has expired, please start it again: %w", os.ErrDeadlineExceeded)
+		}
+
 		url := strings.TrimSuffix(usrSettings.SSONLSServer, "/") + "/api/nago/v1/exchange"
 		client := &http.Client{
 			Timeout: 30 * time.Second,
@@ -67,10 +74,6 @@ func NewExchangeNLS(mutex *sync.Mutex, bus events.Bus, repo NLSNonceRepository, 
 		var response responseBody
 		if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 			return "", fmt.Errorf("failed decoding response: %s: %w", url, err)
-		}
-
-		if err := repo.DeleteByID(nonce); err != nil {
-			return "", err
 		}
 
 		if response.Refresh == "" {
@@ -122,4 +125,25 @@ func NewExchangeNLS(mutex *sync.Mutex, bus events.Bus, repo NLSNonceRepository, 
 
 		return entry.Redirect, nil
 	}
+}
+
+// takeNonce loads and removes the nonce at once, so that it is only valid once, also for concurrent requests.
+func takeNonce(mutex *sync.Mutex, repo NLSNonceRepository, nonce NLSNonce) (NLSNonceEntry, error) {
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	optEntry, err := repo.FindByID(nonce)
+	if err != nil {
+		return NLSNonceEntry{}, err
+	}
+
+	if optEntry.IsNone() {
+		return NLSNonceEntry{}, fmt.Errorf("nonce unknown: %w", os.ErrNotExist)
+	}
+
+	if err := repo.DeleteByID(nonce); err != nil {
+		return NLSNonceEntry{}, err
+	}
+
+	return optEntry.Unwrap(), nil
 }
