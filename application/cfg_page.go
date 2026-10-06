@@ -413,20 +413,8 @@ func (c *Configurator) newHandler() http.Handler {
 		c.defaultLogger().Info("serving fsys assets")
 		assets := statigz.FileServer(mergefs.Merge(c.fsys...).(mergefs.MergedFS), statigz.EncodeOnInit)
 		r.Mount("/", http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-			cookie, err := request.Cookie("wdy-ora-access")
-			if err != nil {
-				// TODO move me to the wire, which is called from the JS
-				cookie = &http.Cookie{}
-				cookie.Name = "wdy-ora-access"
-				cookie.Value = string(proto.NewScopeID())
-				cookie.Expires = time.Now().Add(365 * 24 * time.Hour)
-				cookie.Secure = c.secureCookie()
-				cookie.HttpOnly = true
-				// Security note: we used http.SameSiteStrictMode but it is at least broken in firefox as of today, even with our local-storage-restore process (perhaps due to browser bugs)
-				// lets try to decrease security and see what the security review thinks. We could also improve testing and just enable Lax for firefox, if other browser work properly with our workaround.
-				cookie.SameSite = http.SameSiteLaxMode
-				cookie.Path = "/"
-				http.SetCookie(writer, cookie)
+			if _, err := request.Cookie(sessionCookieName); err != nil && mayIssueSessionCookie(request) {
+				http.SetCookie(writer, c.newSessionCookie(request, string(proto.NewScopeID())))
 			}
 
 			if strings.HasPrefix(request.URL.Path, "/api/doc") {
@@ -481,16 +469,7 @@ func (c *Configurator) newHandler() http.Handler {
 			writer.WriteHeader(http.StatusInternalServerError)
 		}
 
-		cookie := &http.Cookie{}
-		cookie.Name = "wdy-ora-access"
-		cookie.Value = string(sidBuf)
-		cookie.Expires = time.Now().Add(365 * 24 * time.Hour)
-		cookie.Secure = c.secureCookie()
-		cookie.HttpOnly = true
-		// Security note: as above, we use the lax mode due to browser bugs and edge cases because our clever restore mechanics just not works reliable enough
-		cookie.SameSite = http.SameSiteLaxMode
-		cookie.Path = "/"
-		http.SetCookie(writer, cookie)
+		http.SetCookie(writer, c.newSessionCookie(request, string(sidBuf)))
 	}))
 
 	r.Mount("/api/nago/v1/manifest.json", http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
@@ -717,7 +696,17 @@ func (c *Configurator) newHandler() http.Handler {
 			},
 			EnableCompression: true,
 		} // use default options
-		conn, err := upgrader.Upgrade(w, r, nil)
+		// The page normally got its cookie already. If not, e.g. because all assets came from the browser cache after
+		// the page has been reached by a link from another site, the handshake issues it: the wire is always called
+		// by the page itself, so the cookie cannot be missing just due to SameSite.
+		cookie, _ := r.Cookie(sessionCookieName)
+		var responseHeader http.Header
+		if cookie == nil {
+			cookie = c.newSessionCookie(r, string(proto.NewScopeID()))
+			responseHeader = http.Header{"Set-Cookie": {cookie.String()}}
+		}
+
+		conn, err := upgrader.Upgrade(w, r, responseHeader)
 		if err != nil {
 			log.Print("upgrade:", err)
 			slog.Info("http websocket upgrade failed", "err", err, "id", scopeID)
@@ -740,14 +729,8 @@ func (c *Configurator) newHandler() http.Handler {
 		scope := app2.Connect(channel, proto.ScopeID(scopeID))
 		//defer scope.Destroy() we don't want that, the client cannot recover through a new channel otherwise
 
-		cookie, _ := r.Cookie("wdy-ora-access")
-		if cookie != nil {
-			// the session comes from the http-only cookie, which the client cannot override over the wire
-			scope.AssignSession(session.ID(cookie.Value))
-		} else {
-			// if debug is false (e.g. on a linux) secure will switch to on but without https we will never get that cookie
-			slog.Error("cookie is missing in /wire, maybe missing due to browser security constraints and wrong settings. If you want insecure cookies set env NAGO_COOKIES_INSECURE=true")
-		}
+		// the session comes from the http-only cookie, which the client cannot override over the wire
+		scope.AssignSession(session.ID(cookie.Value))
 
 		if err := channel.Loop(); err != nil {
 			//slog.Error("websocket channel loop failed", slog.Any("err", err), "id", scopeID)

@@ -100,7 +100,7 @@ type Configurator struct {
 	decorator              Decorator
 	eventBus               events.EventBus
 	contextPath            atomic.Pointer[string]
-	hasSSL                 bool
+	cookiePolicy           cookiePolicy
 	noFooter               []core.NavigationPath
 	bodyFullSize           []core.NavigationPath
 	migrations             *migration.Migrations
@@ -150,7 +150,7 @@ func NewConfigurator() *Configurator {
 
 	cfg.debug.Store(strings.Contains(strings.ToLower(runtime.GOOS), "windows") || strings.Contains(strings.ToLower(runtime.GOOS), "darwin"))
 
-	cfg.hasSSL = cfg.determineSecureCookie()
+	cfg.cookiePolicy = determineCookiePolicy()
 
 	cfg.AddContextValue(core.ContextValue("", cfg.eventBus))
 	cfg.publishRootViewPurposes()
@@ -188,25 +188,6 @@ func maskEnv(kv string) string {
 	}
 
 	return key + "=" + envURLCredentials.ReplaceAllString(value, "${1}${2}:***@")
-}
-
-func (c *Configurator) determineSecureCookie() bool {
-	slog.Info("secure cookie", "NO_SSL", os.Getenv("NO_SSL"), "NAGO_COOKIES_INSECURE", os.Getenv("NAGO_COOKIES_INSECURE"), "debug", c.debug.Load())
-	if strV, ok := os.LookupEnv("NO_SSL"); ok {
-		if ok, _ := strconv.ParseBool(strV); ok {
-			slog.Info("must return insecure cookie")
-			return false
-		}
-
-		slog.Info("must return a secure cookie")
-		return true
-	}
-
-	return !c.IsDebug()
-}
-
-func (c *Configurator) secureCookie() bool {
-	return c.hasSSL
 }
 
 type envVarConfig struct {
