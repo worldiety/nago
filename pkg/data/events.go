@@ -86,12 +86,13 @@ func (e *eventRepository[E, ID]) AddDeletedObserver(fn DeletedObserver[E, ID]) (
 	}
 
 	e.nextObserverHandle++
-	e.observersDeleted[e.nextObserverHandle] = fn
+	handle := e.nextObserverHandle
+	e.observersDeleted[handle] = fn
 
 	return func() {
 		e.observerMutex.Lock()
 		defer e.observerMutex.Unlock()
-		delete(e.observersDeleted, e.nextObserverHandle)
+		delete(e.observersDeleted, handle) // not the latest handle, which may belong to another observer by now
 	}
 }
 
@@ -104,11 +105,12 @@ func (e *eventRepository[E, ID]) AddSavedObserver(fn SavedObserver[E, ID]) (clos
 	}
 
 	e.nextObserverHandle++
-	e.observersSaved[e.nextObserverHandle] = fn
+	handle := e.nextObserverHandle
+	e.observersSaved[handle] = fn
 	return func() {
 		e.observerMutex.Lock()
 		defer e.observerMutex.Unlock()
-		delete(e.observersSaved, e.nextObserverHandle)
+		delete(e.observersSaved, handle) // not the latest handle, which may belong to another observer by now
 	}
 }
 
