@@ -661,9 +661,7 @@ func (c *Configurator) newHandler() http.Handler {
 		scopeID := queryParams.Get("_sid")
 		_ = logger
 		var upgrader = websocket.Upgrader{
-			CheckOrigin: func(r *http.Request) bool {
-				return true //TODO security implications?
-			},
+			CheckOrigin:       c.checkWireOrigin,
 			EnableCompression: true,
 		} // use default options
 		// The page normally got its cookie already. If not, e.g. because all assets came from the browser cache after

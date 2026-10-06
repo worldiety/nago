@@ -9,7 +9,9 @@ package application
 
 import (
 	"log/slog"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -129,4 +131,67 @@ func mayIssueSessionCookie(r *http.Request) bool {
 	}
 
 	return !strings.EqualFold(r.Header.Get("Sec-Fetch-Site"), "cross-site")
+}
+
+// checkWireOrigin accepts the websocket of a page of this application only. A cookie is SameSite=Lax, which a
+// sibling subdomain of the same site passes, so without this check, a page of another application on the same
+// parent domain could open the wire with the cookie of the user and act as the user. Clients without an Origin, like
+// native apps, are accepted, because a browser always sends one.
+func (c *Configurator) checkWireOrigin(r *http.Request) bool {
+	origin := r.Header.Get("Origin")
+	if origin == "" {
+		return true
+	}
+
+	u, err := url.Parse(origin)
+	if err == nil && u.Host != "" {
+		for _, host := range ownHosts(r) {
+			if strings.EqualFold(u.Host, host) {
+				return true
+			}
+		}
+
+		// the development server of the frontend may run on another port of the local machine
+		if c.IsDebug() && isLocalHost(u.Hostname()) && isLocalHost(hostname(r.Host)) {
+			return true
+		}
+	}
+
+	slog.Warn("rejected a websocket of a foreign origin", "origin", origin, "host", r.Host)
+	return false
+}
+
+// ownHosts returns the hosts under which the browser reaches this application: the host of the request and the host
+// a reverse proxy forwarded. The context path is no source, because the wire takes it from the first request, if it
+// has not been configured.
+func ownHosts(r *http.Request) []string {
+	hosts := []string{r.Host}
+	for _, v := range r.Header.Values("X-Forwarded-Host") {
+		for _, h := range strings.Split(v, ",") {
+			hosts = append(hosts, strings.TrimSpace(h))
+		}
+	}
+
+	for _, v := range r.Header.Values("Forwarded") {
+		for _, part := range strings.FieldsFunc(v, func(r rune) bool { return r == ',' || r == ';' }) {
+			if k, val, ok := strings.Cut(strings.TrimSpace(part), "="); ok && strings.EqualFold(k, "host") {
+				hosts = append(hosts, strings.Trim(val, `"`))
+			}
+		}
+	}
+
+	return hosts
+}
+
+func hostname(hostport string) string {
+	if h, _, err := net.SplitHostPort(hostport); err == nil {
+		return h
+	}
+
+	return hostport
+}
+
+func isLocalHost(host string) bool {
+	host = strings.Trim(host, "[]")
+	return host == "localhost" || strings.HasSuffix(host, ".localhost") || host == "127.0.0.1" || host == "::1"
 }

@@ -24,7 +24,13 @@ import (
 )
 
 func serveSPA(t *testing.T) string {
+	return serveSPADebug(t, false)
+}
+
+// serveSPADebug serves the frontend, like production unless debug is set.
+func serveSPADebug(t *testing.T, debug bool) string {
 	return nagotest.Serve(t, func(cfg *application.Configurator) {
+		cfg.Debug(debug)
 		cfg.SetApplicationID("de.worldiety.sessioncookietest")
 		cfg.Serve(vuejs.Dist())
 		cfg.RootView(".", func(wnd core.Window) core.View { return ui.Text("home") })
@@ -180,4 +186,64 @@ func TestSessionCookie(t *testing.T) {
 	t.Run("not issued for cross-site or unsafe requests", func(t *testing.T) { notIssuedForCrossSiteOrUnsafeRequests(t, base) })
 	t.Run("wire issues a missing cookie", func(t *testing.T) { wireIssuesMissingSessionCookie(t, base) })
 	t.Run("restore is gone", func(t *testing.T) { restoreIsGone(t, base) })
+	t.Run("origin of the wire", func(t *testing.T) { originOfTheWire(t, base) })
+}
+
+// wireOrigin dials the wire with the given Origin and reports whether the server accepted the handshake.
+func wireOrigin(t *testing.T, base string, headers map[string]string) bool {
+	t.Helper()
+	u, _ := url.Parse(base)
+	u.Scheme = "ws"
+	u.Path = "/wire"
+	u.RawQuery = url.Values{"_sid": {strings.Repeat("o", 40)}}.Encode()
+
+	header := http.Header{}
+	for k, v := range headers {
+		header.Set(k, v)
+	}
+
+	conn, res, err := websocket.DefaultDialer.Dial(u.String(), header)
+	if err != nil {
+		if res == nil || res.StatusCode != http.StatusForbidden {
+			t.Fatalf("expected a refused handshake, got %v", err)
+		}
+		return false
+	}
+
+	_ = conn.Close()
+	return true
+}
+
+// A page of another application on the same parent domain must not open the wire with the cookie of the user.
+func originOfTheWire(t *testing.T, base string) {
+	host := strings.TrimPrefix(base, "http://")
+	for name, tc := range map[string]struct {
+		headers map[string]string
+		want    bool
+	}{
+		"own page":               {headers: map[string]string{"Origin": base}, want: true},
+		"native client":          {want: true},
+		"sibling subdomain":      {headers: map[string]string{"Origin": "https://evil.apps.example.com"}, want: false},
+		"same host, other port":  {headers: map[string]string{"Origin": "http://" + strings.Split(host, ":")[0] + ":1"}, want: false},
+		"through a proxy":        {headers: map[string]string{"Origin": "https://app.apps.example.com", "X-Forwarded-Host": "app.apps.example.com"}, want: true},
+		"proxy with rfc 7239":    {headers: map[string]string{"Origin": "https://app.apps.example.com", "Forwarded": `host="app.apps.example.com";proto=https`}, want: true},
+		"proxy for another host": {headers: map[string]string{"Origin": "https://evil.apps.example.com", "X-Forwarded-Host": "app.apps.example.com"}, want: false},
+	} {
+		if got := wireOrigin(t, base, tc.headers); got != tc.want {
+			t.Errorf("%s: accepted %v, want %v", name, got, tc.want)
+		}
+	}
+}
+
+// The development server of the frontend may run on another port of the local machine, but only in debug mode.
+func TestWireOriginOfTheDevelopmentServer(t *testing.T) {
+	base := serveSPADebug(t, true)
+	host := strings.Split(strings.TrimPrefix(base, "http://"), ":")[0]
+	if !wireOrigin(t, base, map[string]string{"Origin": "http://" + host + ":8090"}) {
+		t.Fatal("a local development server must be accepted in debug mode")
+	}
+
+	if wireOrigin(t, base, map[string]string{"Origin": "https://evil.apps.example.com"}) {
+		t.Fatal("a foreign origin must be refused also in debug mode")
+	}
 }
