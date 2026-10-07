@@ -116,3 +116,15 @@ func TestAttachmentsAreOwnedByTheSession(t *testing.T) {
 		t.Fatalf("expected the session as owner of the taken attachment, got %q %v", owner, err)
 	}
 }
+
+// A long file name is shortened in the middle, so that a chip keeps its extension visible.
+func TestShortName(t *testing.T) {
+	if got := shortName("probe.xlsx", 32); got != "probe.xlsx" {
+		t.Fatalf("a short name must stay, got %q", got)
+	}
+
+	got := shortName("inventur-lager-hamburg-2026-oktober-final.xlsx", 32)
+	if utf8.RuneCountInString(got) != 32 || !strings.HasSuffix(got, "final.xlsx") || !strings.Contains(got, "…") {
+		t.Fatalf("unexpected short name %q", got)
+	}
+}

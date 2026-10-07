@@ -24,6 +24,7 @@ import (
 	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/std/concurrent"
 	"go.wdy.de/nago/pkg/xsync"
 	"go.wdy.de/nago/presentation/core"
@@ -289,6 +290,18 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 	})
 	showHistory := core.AutoState[bool](wnd)
 	status := core.AutoState[string](wnd)
+	// notice tells the user why a turn has been refused, e.g. an attachment which OnAttach rejected
+	notice := core.AutoState[turnNotice](wnd)
+	showTurnError := func(err error) {
+		var localized std.LocalizedError
+		if errors.As(err, &localized) {
+			// an error of the user is no failure: no support code, no alarm, and the user's own words keep their case
+			notice.Set(turnNotice{Title: localized.Title(), Message: localized.Description()})
+			return
+		}
+
+		alert.ShowBannerError(wnd, err)
+	}
 	// cancelRun stops the run in flight (the stop button); runGen tells the events of an earlier run apart from
 	// the current one, because background tasks may still report after their run ended.
 	cancelRun := core.AutoState[context.CancelFunc](wnd)
@@ -677,7 +690,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 						return
 					}
 
-					alert.ShowBannerError(wnd, err)
+					showTurnError(err)
 					return
 				}
 
@@ -714,7 +727,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 					if rollback != nil {
 						rollback()
 					}
-					alert.ShowBannerError(wnd, err)
+					showTurnError(err)
 				})
 			}
 		})
@@ -749,6 +762,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		// Ensure a persisted session exists (History only). Created lazily on the first message and tagged so
 		// the history dialog lists only matching conversations.
 		sid := sessionID.Get()
+		createdNow := false
 		if opts.History && sid == "" {
 			created, err := opts.Sessions.Create(wnd.Subject(), session.CreateOptions{
 				Title:        title,
@@ -763,6 +777,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			}
 			sid = created.ID
 			sessionID.Set(sid)
+			createdNow = true
 		}
 
 		prevHistory := history.Get()
@@ -777,12 +792,21 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		})
 		prompt.Set("")
 		staged.Set(nil)
+		notice.Set(turnNotice{})
 
 		rollback := func() {
 			if prompt.Get() == "" {
 				prompt.Set(question)
 			}
 			staged.Set(stagedFiles)
+
+			// A conversation whose first turn failed before anything was stored would stay in the history as an
+			// empty one, which nobody can use. It is deleted again, also to release what it uploaded, and the
+			// next send creates a new one.
+			if createdNow && sessionID.Get() == sid {
+				sessionID.Set("")
+				discardEmptySession(wnd.Subject(), opts.Sessions, sid)
+			}
 		}
 
 		key := taskKey(sid)
@@ -946,6 +970,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 
 		footer = ui.VStack(
 			ui.If(busy.Get(), busyLine(busyLabel)),
+			ui.If(notice.Get() != turnNotice{}, noticeView(notice.Get())),
 			ui.If(chips != nil, chips),
 			ui.TextField("Nachricht", prompt.Get()).
 				InputValue(prompt).
@@ -955,13 +980,14 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 				KeydownEnter(submit),
 			ui.HStack(
 				ui.If(uploadEnabled, uploadButton(wnd, staged, busy.Get())),
-				ui.If(uploadEnabled && opts.UploadHint != "", ui.Text(opts.UploadHint).Font(ui.BodySmall)),
 				ui.Spacer(),
 				ui.IfElse(busy.Get(),
 					ui.SecondaryButton(stop).PreIcon(icons.Stop).Title("Stopp").Enabled(cancelRun.Get() != nil || attached.Get() != nil),
 					ui.SecondaryButton(submit).PreIcon(icons.PaperPlane).Title("Senden"),
 				),
 			).Gap(ui.L8).FullWidth().Alignment(ui.Center),
+			// below the buttons, a narrow panel would squeeze it between them
+			ui.If(uploadEnabled && opts.UploadHint != "", ui.Text(opts.UploadHint).Font(ui.Small)),
 		).Gap(ui.L8).FullWidth().Alignment(ui.Leading)
 	}
 
@@ -990,9 +1016,18 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 	var restoreDialog core.View
 	var historyActions core.View
 	if opts.History {
+		// files picked for one conversation must never be sent with another one
 		restoreDialog = historyDialog(wnd, opts.Sessions, opts.Tags, showHistory, func(s session.Session) {
 			applySession(s)
+			staged.Set(nil)
 			status.Set("")
+		}, func(id session.ID) {
+			// the open conversation is gone, so start a new one
+			if sessionID.Get() == id {
+				applySession(session.Session{})
+				staged.Set(nil)
+				status.Set("")
+			}
 		})
 
 		historyActions = ui.HStack(
@@ -1001,6 +1036,8 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			}).PreIcon(icons.Clock).Title("Verlauf").Enabled(!busy.Get()),
 			ui.TertiaryButton(func() {
 				applySession(session.Session{})
+				staged.Set(nil)
+				notice.Set(turnNotice{})
 				status.Set("")
 			}).PreIcon(icons.Edit).Title("Neuer Chat").Enabled(!busy.Get() && (sessionID.Get() != "" || len(history.Get()) > 0)),
 			ui.Spacer(),
@@ -1019,7 +1056,47 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		ui.If(picker != nil, picker),
 		conversation,
 		footer,
-	).Gap(ui.L8).FullWidth().Alignment(ui.Leading)
+	).Gap(ui.L8).
+		Alignment(ui.Leading).
+		// the conversation shrinks, when the floating panel is limited by the height of the screen, see chatFrame
+		Frame(ui.Frame{Width: ui.Full, MinHeight: "0dp"})
+}
+
+// turnNotice is the reason, why a turn has been refused, see noticeView.
+type turnNotice struct {
+	Title   string
+	Message string
+}
+
+// noticeView shows a refused turn as a plain hint above the input, unlike a failure, which is a banner.
+func noticeView(n turnNotice) core.View {
+	return ui.VStack(
+		ui.If(n.Title != "", ui.Text(n.Title).Font(ui.TitleSmall)),
+		ui.If(n.Message != "", ui.Text(n.Message).Font(ui.BodySmall)),
+	).Gap(ui.L4).
+		Alignment(ui.Leading).
+		FullWidth().
+		BackgroundColor(ui.M3).
+		Border(ui.Border{}.Radius(ui.L8)).
+		Padding(ui.Padding{}.All(ui.L8))
+}
+
+// discardEmptySession deletes the session in the background, if it still holds no message.
+func discardEmptySession(subject auth.Subject, sessions session.UseCases, id session.ID) {
+	go func() {
+		optSession, err := sessions.FindByID(subject, id)
+		if err != nil || optSession.IsNone() {
+			return
+		}
+
+		if s := optSession.Unwrap(); len(s.Messages) > 0 || s.Pending != nil {
+			return
+		}
+
+		if err := sessions.Delete(subject, id); err != nil {
+			slog.Error("cannot delete the empty session of a failed turn", "session", id, "err", err)
+		}
+	}()
 }
 
 // activeRun is a run of a persisted conversation which still works, see activeRuns.

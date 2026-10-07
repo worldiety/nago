@@ -61,7 +61,7 @@ func conversationView(wnd core.Window, history []completion.Message, emptyHint s
 	).Axis(ui.ScrollViewAxisVertical).
 		ScrollToView(hv.idPrefix+scrollAnchorID, ui.ScrollAnimationSmooth).
 		ScrollBehavior(ui.ScrollBehaviorAuto).
-		Frame(ui.Frame{Height: height, Width: ui.Full})
+		Frame(ui.Frame{Height: height, Width: ui.Full, MinHeight: "0dp"})
 }
 
 // historyView configures [renderHistory].
@@ -288,8 +288,17 @@ func chatFrame(body core.View, title string, actions core.View, open *core.State
 		BackgroundColor(ui.M1).
 		Border(ui.Border{}.Radius(ui.L16).Color(ui.M4).Width(ui.L1).Shadow(ui.L8)).
 		Padding(ui.Padding{}.All(ui.L16)).
-		Frame(ui.Frame{Width: ui.L560})
+		Frame(ui.Frame{Width: ui.L560, MaxWidth: panelMaxWidth, MaxHeight: panelMaxHeight})
 }
+
+const (
+	// panelMaxWidth keeps the floating panel on a narrow screen, e.g. of a phone, with a gutter on both sides.
+	panelMaxWidth ui.Length = "calc(100vw - 4rem)"
+
+	// panelMaxHeight keeps the floating panel below the app bar and above its button. The conversation shrinks
+	// instead, see conversationView.
+	panelMaxHeight ui.Length = "calc(100dvh - 13rem)"
+)
 
 // busyLine shows the progress of a run behind a small spinning ring, so that a long run visibly keeps working.
 func busyLine(label string) core.View {

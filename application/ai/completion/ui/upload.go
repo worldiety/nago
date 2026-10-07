@@ -109,7 +109,7 @@ func stagedChips(staged *core.State[[]stagedFile], disabled bool) core.View {
 	for i, f := range files {
 		i := i
 		chips = append(chips, ui.HStack(
-			ui.Text(fmt.Sprintf("%s (%d B)", f.Name, len(f.Data))).Font(ui.Small),
+			ui.Text(fmt.Sprintf("%s (%d B)", shortName(f.Name, maxChipName), len(f.Data))).Font(ui.Small),
 			ui.TertiaryButton(func() {
 				cur := staged.Get()
 				if i < 0 || i >= len(cur) {
@@ -123,7 +123,8 @@ func stagedChips(staged *core.State[[]stagedFile], disabled bool) core.View {
 			Padding(ui.Padding{}.Horizontal(ui.L8).Vertical(ui.L4)))
 	}
 
-	return ui.HStack(chips...).Gap(ui.L4).FullWidth().Alignment(ui.Leading)
+	// many files wrap into further rows instead of being clipped
+	return ui.HStack(chips...).Gap(ui.L4).Wrap(true).FullWidth().Alignment(ui.Leading)
 }
 
 // buildUploadContent turns the staged files into leading message content blocks for the next user turn. Images
@@ -191,6 +192,20 @@ func buildUploadContent(subject auth.Subject, files provider.Files, owner file.O
 }
 
 // isImageMime mirrors the provider's image classification for the supported image types.
+// maxChipName is the number of characters of a file name, which a chip shows at most.
+const maxChipName = 32
+
+// shortName shortens a long file name in the middle, so that its extension stays visible.
+func shortName(name string, limit int) string {
+	runes := []rune(name)
+	if len(runes) <= limit {
+		return name
+	}
+
+	tail := limit / 3
+	return string(runes[:limit-tail-1]) + "…" + string(runes[len(runes)-tail:])
+}
+
 // uploadOwner returns the owner of the files a chat uploads: its session, or the transient owner for a chat
 // without History, whose files are deleted a day later.
 func uploadOwner(sid session.ID) file.Owner {
