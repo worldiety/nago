@@ -193,7 +193,8 @@ func (c *mutHeading) Render(wnd core.Window) core.View {
 		}
 	}
 
-	return ui.Heading(c.level, buf.String())
+	// a heading of a document must not rename the browser tab
+	return ui.ContentHeading(c.level, buf.String())
 }
 
 // mutText is a text leaf node with optional hard line break.

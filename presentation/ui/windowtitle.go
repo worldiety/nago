@@ -76,10 +76,24 @@ func H6(title string) TVStack {
 // Heading returns a default formatted heading text. Level 1 is page heading H1 and so forth. H1 levels also
 // set automatically the window title.
 func Heading(level int, title string) TVStack {
+	if level == 1 {
+		return heading(level, title, WindowTitle(title))
+	}
+
+	return heading(level, title, nil)
+}
+
+// ContentHeading is like [Heading], but never sets the window title. It is meant for headings within content,
+// e.g. of a rendered document, which must not rename the browser tab.
+func ContentHeading(level int, title string) TVStack {
+	return heading(level, title, nil)
+}
+
+func heading(level int, title string, windowTitle core.View) TVStack {
 	switch level {
 	case 1:
 		return VStack(
-			WindowTitle(title),
+			windowTitle,
 			Text(title).Font(HeadlineLarge),
 			HLineWithColor(ColorAccent),
 		).
