@@ -23,13 +23,14 @@ import (
 	"crypto/subtle"
 	"errors"
 	"fmt"
-	"go.wdy.de/nago/logging"
 	"log/slog"
 	"math/big"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"go.wdy.de/nago/logging"
 
 	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/permission"
@@ -41,7 +42,7 @@ import (
 )
 
 // EnvInitialUserEmail is the environment variable with the mail address of the first user.
-const EnvInitialUserEmail = "INITIAL_USER_EMAIL"
+const EnvInitialUserEmail = "HUB_ONBOARDING_MAIL"
 
 type Problem string
 
