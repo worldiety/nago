@@ -24,7 +24,7 @@ import (
 // Child sessions (see [Session.ParentID]) are deleted with their parent, whoever created them, and the
 // background tasks of the session in tasks (which may be nil) are cancelled first, so that a running run of
 // the session ends soon and no task creates another child meanwhile.
-func NewDelete(locks *locker, repo Repository, rdb *rebac.DB, tasks *completion.TaskRegistry, ledger *usageLedger) Delete {
+func NewDelete(locks *locker, repo Repository, rdb *rebac.DB, tasks *completion.TaskRegistry, ledger *usageLedger, onDelete func(id ID) error) Delete {
 	return func(subject auth.Subject, id ID) error {
 		// The audit happens before anything else, otherwise anybody could stop the tasks of a foreign session.
 		// It does not need the lock: a run of the session holds that until its tasks are done, and those are
@@ -47,7 +47,7 @@ func NewDelete(locks *locker, repo Repository, rdb *rebac.DB, tasks *completion.
 			tasks.Cancel(string(id))
 		}
 
-		if err := deleteUnchecked(locks, repo, rdb, ledger, id); err != nil {
+		if err := deleteUnchecked(locks, repo, rdb, ledger, onDelete, id); err != nil {
 			return err
 		}
 
@@ -69,7 +69,7 @@ func NewDelete(locks *locker, repo Repository, rdb *rebac.DB, tasks *completion.
 				if tasks != nil {
 					tasks.Cancel(string(child))
 				}
-				if err := deleteUnchecked(locks, repo, rdb, ledger, child); err != nil {
+				if err := deleteUnchecked(locks, repo, rdb, ledger, onDelete, child); err != nil {
 					return err
 				}
 			}
@@ -96,7 +96,7 @@ func childrenOf(repo Repository, id ID) ([]ID, error) {
 }
 
 // deleteUnchecked removes a single session under its lock, see [NewDelete]. The caller has audited the access.
-func deleteUnchecked(locks *locker, repo Repository, rdb *rebac.DB, ledger *usageLedger, id ID) error {
+func deleteUnchecked(locks *locker, repo Repository, rdb *rebac.DB, ledger *usageLedger, onDelete func(id ID) error, id ID) error {
 	release, err := locks.lock(nil, id)
 	if err != nil {
 		return err
@@ -110,6 +110,12 @@ func deleteUnchecked(locks *locker, repo Repository, rdb *rebac.DB, ledger *usag
 
 	if optSession.IsNone() {
 		return nil
+	}
+
+	if onDelete != nil {
+		if err := onDelete(id); err != nil {
+			return fmt.Errorf("cannot delete session: %w", err)
+		}
 	}
 
 	if err := repo.DeleteByID(id); err != nil {

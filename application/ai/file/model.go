@@ -126,7 +126,19 @@ type CreateOptions struct {
 	// Purpose declares the intended use of the file. Optional; when empty the provider chooses a default
 	// (see [Purpose]).
 	Purpose Purpose
+
+	// Owner names what uses the file, e.g. an AI session. The AI module records owned files and deletes them at
+	// the provider, when their owner is released, e.g. when the session is deleted. Optional; without, the
+	// caller is responsible for deleting the file.
+	Owner Owner
 }
+
+// Owner names what uses an uploaded file, usually the id of an AI session, see [CreateOptions.Owner].
+type Owner string
+
+// TransientOwner owns the files of conversations which are not persisted. As nobody releases them, they are
+// deleted a day after their upload.
+const TransientOwner Owner = "nago.ai.transient"
 
 type File struct {
 	ID        ID                     `json:"id,omitempty"`

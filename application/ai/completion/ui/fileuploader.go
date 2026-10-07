@@ -19,6 +19,13 @@ import (
 // returns nil when the provider exposes no Files capability, which makes such tool calls report a friendly
 // error to the model instead of attaching anything.
 func ProviderFileUploader(prov provider.Provider) completion.FileUploader {
+	return ProviderFileUploaderFor(prov, "")
+}
+
+// ProviderFileUploaderFor is like [ProviderFileUploader], but uploads the files on behalf of the owner, usually
+// the session of the run, so that they are deleted at the provider together with the session, see
+// [file.CreateOptions.Owner].
+func ProviderFileUploaderFor(prov provider.Provider, owner file.Owner) completion.FileUploader {
 	optFiles := prov.Files()
 	if optFiles.IsNone() {
 		return nil
@@ -30,6 +37,7 @@ func ProviderFileUploader(prov provider.Provider) completion.FileUploader {
 			MimeType: f.MimeType,
 			Purpose:  file.PurposeUserData,
 			Open:     f.Open,
+			Owner:    owner,
 		})
 		if err != nil {
 			return "", err

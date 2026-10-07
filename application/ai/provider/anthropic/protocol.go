@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"net/textproto"
 	"net/url"
+	"os"
 	"regexp"
 	"strconv"
 	"time"
@@ -459,13 +460,19 @@ func (c *Client) GetFileMetadata(id string) (apiFileMetadata, error) {
 	return resp, mapErr(err)
 }
 
-// DeleteFile removes a file via DELETE /v1/files/{id}.
+// DeleteFile removes a file via DELETE /v1/files/{id}. A file which does not exist (anymore) is reported as
+// [os.ErrNotExist].
 func (c *Client) DeleteFile(id string) error {
 	err := c.newReq().
 		URL("files/"+url.PathEscape(id)).
 		Header("anthropic-beta", filesAPIBeta).
 		Assert2xx(true).
 		Delete()
+
+	var statusErr xhttp.UnexpectedStatusCodeError
+	if errors.As(err, &statusErr) && statusErr.StatusCode == http.StatusNotFound {
+		return fmt.Errorf("file %s: %w", id, os.ErrNotExist)
+	}
 
 	return mapErr(err)
 }

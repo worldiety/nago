@@ -18,6 +18,7 @@ import (
 	"go.wdy.de/nago/application/ai/completion"
 	"go.wdy.de/nago/application/ai/file"
 	"go.wdy.de/nago/application/ai/provider"
+	"go.wdy.de/nago/application/ai/session"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/presentation/core"
 	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
@@ -124,7 +125,7 @@ func stagedChips(staged *core.State[[]stagedFile], disabled bool) core.View {
 // and PDFs are uploaded to the provider and referenced by file id (bytes travel once); text files are inlined
 // so the model can read them directly. Unsupported binary files are rejected with an error. It runs on the
 // background submit goroutine.
-func buildUploadContent(subject auth.Subject, files provider.Files, staged []stagedFile, onAttach OnAttach) ([]completion.Content, error) {
+func buildUploadContent(subject auth.Subject, files provider.Files, owner file.Owner, staged []stagedFile, onAttach OnAttach) ([]completion.Content, error) {
 	var content []completion.Content
 	for _, sf := range staged {
 		if onAttach != nil {
@@ -148,6 +149,7 @@ func buildUploadContent(subject auth.Subject, files provider.Files, staged []sta
 				Name:     sf.Name,
 				MimeType: sf.Mime,
 				Purpose:  file.PurposeUserData,
+				Owner:    owner,
 				Open: func() (io.ReadCloser, error) {
 					return io.NopCloser(bytes.NewReader(data)), nil
 				},
@@ -184,6 +186,16 @@ func buildUploadContent(subject auth.Subject, files provider.Files, staged []sta
 }
 
 // isImageMime mirrors the provider's image classification for the supported image types.
+// uploadOwner returns the owner of the files a chat uploads: its session, or the transient owner for a chat
+// without History, whose files are deleted a day later.
+func uploadOwner(sid session.ID) file.Owner {
+	if sid == "" {
+		return file.TransientOwner
+	}
+
+	return file.Owner(sid)
+}
+
 // truncateUTF8 cuts data to at most limit bytes, without splitting a rune.
 func truncateUTF8(data []byte, limit int) []byte {
 	if len(data) <= limit {

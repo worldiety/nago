@@ -339,10 +339,29 @@ type UseCases struct {
 // is allowed to create/list sessions) or through an instance grant. [Create] writes such an instance grant
 // for the creator, so users can see and continue only their own sessions unless additionally granted global
 // access.
-func NewUseCases(repo Repository, rdb *rebac.DB) UseCases {
+// Option configures [NewUseCases].
+type Option func(o *useCaseOptions)
+
+type useCaseOptions struct {
+	onDelete func(id ID) error
+}
+
+// OnDelete is invoked for every session right before it is deleted, also for each of its child sessions, e.g. to
+// release the files it uploaded to a provider. An error aborts the deletion.
+func OnDelete(fn func(id ID) error) Option {
+	return func(o *useCaseOptions) {
+		o.onDelete = fn
+	}
+}
+
+func NewUseCases(repo Repository, rdb *rebac.DB, opts ...Option) UseCases {
 	var locks locker
 	tasks := completion.NewTaskRegistry()
 	ledger := &usageLedger{}
+	var options useCaseOptions
+	for _, opt := range opts {
+		opt(&options)
+	}
 
 	return UseCases{
 		Create:   NewCreate(repo, rdb),
@@ -352,7 +371,7 @@ func NewUseCases(repo Repository, rdb *rebac.DB) UseCases {
 		Resolve:  NewResolve(&locks, repo, ledger),
 		Dismiss:  NewDismiss(&locks, repo, ledger, tasks),
 		Rename:   NewRename(&locks, repo),
-		Delete:   NewDelete(&locks, repo, rdb, tasks, ledger),
+		Delete:   NewDelete(&locks, repo, rdb, tasks, ledger, options.onDelete),
 		Tasks:    tasks,
 		subUsage: ledger,
 		repo:     repo,

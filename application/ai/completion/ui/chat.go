@@ -339,9 +339,14 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		return agentsList[0]
 	}
 
-	var fileUploader completion.FileUploader
-	if opts.FileUpload {
-		fileUploader = ProviderFileUploader(prov)
+	// uploaderFor uploads the files of the tools of a run on behalf of its session, so that they are deleted at
+	// the provider together with the session.
+	uploaderFor := func(sid session.ID) completion.FileUploader {
+		if !opts.FileUpload {
+			return nil
+		}
+
+		return ProviderFileUploaderFor(prov, uploadOwner(sid))
 	}
 
 	applySession := func(s session.Session) {
@@ -462,7 +467,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			tools:         cfg.tools,
 			confirm:       cfg.confirm,
 			confirmMarked: cfg.confirmMarked,
-			fileUploader:  fileUploader,
+			fileUploader:  uploaderFor(sid),
 			sessionID:     sid,
 			group:         group,
 			renew:         renew,
@@ -477,7 +482,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		return tools, beforeFinish, release
 	}
 
-	appendOptions := func(cfg turnConfig, run runEnv, tools []completion.Tool, beforeFinish func(context.Context) string) session.AppendOptions {
+	appendOptions := func(cfg turnConfig, sid session.ID, run runEnv, tools []completion.Tool, beforeFinish func(context.Context) string) session.AppendOptions {
 		return session.AppendOptions{
 			Completions:     comps,
 			Model:           cfg.model,
@@ -486,7 +491,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			MaxTokens:       cfg.maxTokens,
 			MaxTurns:        opts.MaxTurns,
 			OnProgress:      run.onProgress,
-			FileUploader:    fileUploader,
+			FileUploader:    uploaderFor(sid),
 			ConfirmMutating: cfg.confirm,
 			ConfirmMarked:   cfg.confirmMarked,
 			Context:         run.ctx,
@@ -505,7 +510,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			Tools:           tools,
 			MaxTurns:        opts.MaxTurns,
 			OnProgress:      run.onProgress,
-			FileUploader:    fileUploader,
+			FileUploader:    uploaderFor(""), // a chat without History has no session
 			ConfirmMutating: cfg.confirm,
 			ConfirmMarked:   cfg.confirmMarked,
 			Context:         run.ctx,
@@ -788,7 +793,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 
 			// Build the user turn content: any attached files (uploaded/inlined here on the background
 			// goroutine) followed by the typed text.
-			input, err := buildUploadContent(subject, providerFiles, stagedFiles, opts.OnAttach)
+			input, err := buildUploadContent(subject, providerFiles, uploadOwner(sid), stagedFiles, opts.OnAttach)
 			if err != nil {
 				return turnOutcome{}, err
 			}
@@ -797,7 +802,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			}
 
 			if opts.History {
-				ao := appendOptions(cfg, run, tools, beforeFinish)
+				ao := appendOptions(cfg, sid, run, tools, beforeFinish)
 				ao.Input = input
 				updated, err := opts.Sessions.Append(subject, sid, ao)
 				return fromSession(subject, sid, updated, err, len(prevHistory))
@@ -837,7 +842,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			defer release()
 
 			if opts.History {
-				ao := appendOptions(cfg, run, tools, beforeFinish)
+				ao := appendOptions(cfg, sid, run, tools, beforeFinish)
 				// The model of a pending run is fixed; the session knows it.
 				ao.Model = ""
 				updated, err := opts.Sessions.Resolve(subject, sid, session.ResolveOptions{

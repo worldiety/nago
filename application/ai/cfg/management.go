@@ -12,9 +12,12 @@ import (
 	"log/slog"
 
 	"github.com/worldiety/i18n"
+	"github.com/worldiety/option"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/ai"
 	uicompletion "go.wdy.de/nago/application/ai/completion/ui"
+	"go.wdy.de/nago/application/ai/file"
+	"go.wdy.de/nago/application/ai/filecleanup"
 	"go.wdy.de/nago/application/ai/model"
 	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/application/ai/session"
@@ -70,7 +73,19 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		return Management{}, err
 	}
 
-	ucAI := ai.NewUseCases(cfg.EventBus(), secrets.UseCases.FindGroupSecrets, nil)
+	// Files a conversation uploaded to a provider are recorded and deleted together with the conversation, see
+	// the filecleanup package. The ledger resolves the providers of ucAI, which in turn decorates them with it.
+	repoProviderFiles, err := application.JSONRepository[filecleanup.Entry](cfg, "nago.ai.provider_file")
+	if err != nil {
+		return Management{}, err
+	}
+
+	var ucAI ai.UseCases
+	providerFiles := filecleanup.New(repoProviderFiles, func(id provider.ID) (option.Opt[provider.Provider], error) {
+		return ucAI.FindProviderByID(cfg.SysUser(), id)
+	}, cfg.SysUser)
+	ucAI = ai.NewUseCases(cfg.EventBus(), secrets.UseCases.FindGroupSecrets, providerFiles.Decorate)
+	go providerFiles.Run(cfg.Context())
 
 	// Sessions are provider-independent, locally persisted chats on top of the stateless completion API. The
 	// whole (lossless) history lives in this repository.
@@ -104,7 +119,9 @@ func Enable(cfg *application.Configurator) (Management, error) {
 	// recognizable instance label (title / first-message preview).
 	rdb.RegisterResources(rebac.NewRepositoryResources(StrResSessions, StrResSessDesc, repoSessions))
 
-	ucSession := session.NewUseCases(repoSessions, rdb)
+	ucSession := session.NewUseCases(repoSessions, rdb, session.OnDelete(func(id session.ID) error {
+		return providerFiles.Release(file.Owner(id))
+	}))
 
 	// Ship the authorization for the assistant as one assignable role instead of a list of permissions an
 	// operator has to reproduce by hand. Without this, the failure mode is silent: the chat button simply

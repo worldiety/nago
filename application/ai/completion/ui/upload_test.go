@@ -15,6 +15,7 @@ import (
 
 	"go.wdy.de/nago/application/ai/completion"
 	"go.wdy.de/nago/application/ai/file"
+	"go.wdy.de/nago/application/ai/provider"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 )
@@ -23,7 +24,7 @@ import (
 // within a character.
 func TestTextAttachmentIsCapped(t *testing.T) {
 	big := strings.Repeat("ä", maxInlineUploadTextBytes) // two bytes each
-	content, err := buildUploadContent(user.SU(), nil, []stagedFile{{Name: "big.txt", Mime: file.Type("text/plain"), Data: []byte(big)}}, nil)
+	content, err := buildUploadContent(user.SU(), nil, file.TransientOwner, []stagedFile{{Name: "big.txt", Mime: file.Type("text/plain"), Data: []byte(big)}}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -33,7 +34,7 @@ func TestTextAttachmentIsCapped(t *testing.T) {
 		t.Fatalf("expected a capped text of valid UTF-8 with a note, got %d bytes", len(text))
 	}
 
-	small, err := buildUploadContent(user.SU(), nil, []stagedFile{{Name: "a.txt", Mime: file.Type("text/plain"), Data: []byte("hello")}}, nil)
+	small, err := buildUploadContent(user.SU(), nil, file.TransientOwner, []stagedFile{{Name: "a.txt", Mime: file.Type("text/plain"), Data: []byte("hello")}}, nil)
 	if err != nil || strings.Contains(small[0].(completion.Text).Text, "gekürzt") {
 		t.Fatalf("a small text must stay complete: %v %v", small, err)
 	}
@@ -54,7 +55,7 @@ func TestOnAttachTakesOverAttachments(t *testing.T) {
 		}
 	}
 
-	content, err := buildUploadContent(user.SU(), nil, []stagedFile{
+	content, err := buildUploadContent(user.SU(), nil, file.TransientOwner, []stagedFile{
 		{Name: "inventory.xlsx", Mime: xlsx, Data: []byte{0x50, 0x4b, 0x03, 0x04, 0x00}},
 		{Name: "notes.txt", Mime: file.Type("text/plain"), Data: []byte("hello")},
 	}, onAttach)
@@ -66,12 +67,42 @@ func TestOnAttachTakesOverAttachments(t *testing.T) {
 		t.Fatalf("unexpected content %#v", content)
 	}
 
-	if _, err := buildUploadContent(user.SU(), nil, []stagedFile{{Name: "virus.exe", Mime: file.Type("application/octet-stream"), Data: []byte{0}}}, onAttach); err == nil || err.Error() != "not allowed" {
+	if _, err := buildUploadContent(user.SU(), nil, file.TransientOwner, []stagedFile{{Name: "virus.exe", Mime: file.Type("application/octet-stream"), Data: []byte{0}}}, onAttach); err == nil || err.Error() != "not allowed" {
 		t.Fatalf("expected the error of the application, got %v", err)
 	}
 
 	// without OnAttach, a workbook is still rejected
-	if _, err := buildUploadContent(user.SU(), nil, []stagedFile{{Name: "inventory.xlsx", Mime: xlsx, Data: []byte{0x50, 0x4b, 0x03, 0x04, 0x00}}}, nil); err == nil {
+	if _, err := buildUploadContent(user.SU(), nil, file.TransientOwner, []stagedFile{{Name: "inventory.xlsx", Mime: xlsx, Data: []byte{0x50, 0x4b, 0x03, 0x04, 0x00}}}, nil); err == nil {
 		t.Fatal("expected an unsupported workbook to be rejected without OnAttach")
+	}
+}
+
+// capturingFiles records the options of each upload.
+type capturingFiles struct {
+	provider.Files
+	puts []file.CreateOptions
+}
+
+func (f *capturingFiles) Put(_ auth.Subject, opts file.CreateOptions) (file.File, error) {
+	f.puts = append(f.puts, opts)
+	return file.File{ID: "file-1"}, nil
+}
+
+// The attachments of a chat are uploaded on behalf of its session, so that they are deleted at the provider with
+// the session. A chat without History has no session, its files are transient.
+func TestAttachmentsAreOwnedByTheSession(t *testing.T) {
+	files := &capturingFiles{}
+	pdf := []stagedFile{{Name: "a.pdf", Mime: file.PDF, Data: []byte("%PDF")}}
+
+	if _, err := buildUploadContent(user.SU(), files, uploadOwner("session-1"), pdf, nil); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := buildUploadContent(user.SU(), files, uploadOwner(""), pdf, nil); err != nil {
+		t.Fatal(err)
+	}
+
+	if len(files.puts) != 2 || files.puts[0].Owner != "session-1" || files.puts[1].Owner != file.TransientOwner {
+		t.Fatalf("unexpected owners %+v", files.puts)
 	}
 }
