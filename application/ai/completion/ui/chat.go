@@ -125,6 +125,14 @@ type ChatOptions struct {
 	// attach binaries. Both require and are ignored without a provider Files capability.
 	FileUpload bool
 
+	// UploadHint is a short notice next to the upload button, e.g. that attachments are sent to the AI provider
+	// and deleted there with the conversation. Optional.
+	UploadHint string
+
+	// OnAttach takes over attachments before the built-in handling, which accepts images, PDFs and text only, see
+	// [OnAttach]. With it, the upload button is shown even if the provider has no Files capability. Optional.
+	OnAttach OnAttach
+
 	// AskUser hooks the built-in ask_user clarification tool into every turn, letting the model ask the user
 	// a question mid-run. The run suspends until the user answered; with History the question survives
 	// closing the chat, navigating away and server restarts.
@@ -318,7 +326,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			providerFiles = pf.Unwrap()
 		}
 	}
-	uploadEnabled := opts.FileUpload && providerFiles != nil
+	uploadEnabled := opts.FileUpload && (providerFiles != nil || opts.OnAttach != nil)
 
 	// currentAgent resolves the selected agent, falling back to the first configured one.
 	currentAgent := func() Agent {
@@ -780,7 +788,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 
 			// Build the user turn content: any attached files (uploaded/inlined here on the background
 			// goroutine) followed by the typed text.
-			input, err := buildUploadContent(subject, providerFiles, stagedFiles)
+			input, err := buildUploadContent(subject, providerFiles, stagedFiles, opts.OnAttach)
 			if err != nil {
 				return turnOutcome{}, err
 			}
@@ -942,6 +950,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 				KeydownEnter(submit),
 			ui.HStack(
 				ui.If(uploadEnabled, uploadButton(wnd, staged, busy.Get())),
+				ui.If(uploadEnabled && opts.UploadHint != "", ui.Text(opts.UploadHint).Font(ui.BodySmall)),
 				ui.Spacer(),
 				ui.IfElse(busy.Get(),
 					ui.SecondaryButton(stop).PreIcon(icons.Stop).Title("Stopp").Enabled(cancelRun.Get() != nil || attached.Get() != nil),

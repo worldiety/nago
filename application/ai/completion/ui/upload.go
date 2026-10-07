@@ -28,6 +28,23 @@ import (
 // maxUploadBytes caps the size of a single user-attached file.
 const maxUploadBytes = 32 * 1024 * 1024
 
+// maxInlineUploadTextBytes caps an inlined text attachment, like the text a file-providing tool injects, so that a
+// single attachment cannot blow the context window of the model.
+const maxInlineUploadTextBytes = 256 * 1024
+
+// Attachment is a file the user attached to a message, see [ChatOptions.OnAttach].
+type Attachment struct {
+	Name string
+	Mime file.Type
+	Data []byte
+}
+
+// OnAttach takes over an attachment before the built-in handling, e.g. a workbook which the application stores
+// itself and its tools work on. It runs on the background goroutine of the submit. With handled, content becomes
+// part of the user turn, e.g. a text block telling the model the id of the stored file. Without, the built-in
+// handling applies, which accepts images, PDFs and text only. An error is shown to the user and aborts the turn.
+type OnAttach func(subject auth.Subject, attachment Attachment) (content []completion.Content, handled bool, err error)
+
 // stagedFile is a file the user picked but has not sent yet. The raw bytes are held in memory until the next
 // submit turns them into message content.
 type stagedFile struct {
@@ -107,9 +124,21 @@ func stagedChips(staged *core.State[[]stagedFile], disabled bool) core.View {
 // and PDFs are uploaded to the provider and referenced by file id (bytes travel once); text files are inlined
 // so the model can read them directly. Unsupported binary files are rejected with an error. It runs on the
 // background submit goroutine.
-func buildUploadContent(subject auth.Subject, files provider.Files, staged []stagedFile) ([]completion.Content, error) {
+func buildUploadContent(subject auth.Subject, files provider.Files, staged []stagedFile, onAttach OnAttach) ([]completion.Content, error) {
 	var content []completion.Content
 	for _, sf := range staged {
+		if onAttach != nil {
+			taken, handled, err := onAttach(subject, Attachment{Name: sf.Name, Mime: sf.Mime, Data: sf.Data})
+			if err != nil {
+				return nil, err
+			}
+
+			if handled {
+				content = append(content, taken...)
+				continue
+			}
+		}
+
 		if isImageMime(sf.Mime) || sf.Mime == file.PDF {
 			if files == nil {
 				return nil, fmt.Errorf("Datei %q kann nicht angehängt werden: Provider unterstützt keine Datei-Uploads", sf.Name)
@@ -135,11 +164,15 @@ func buildUploadContent(subject auth.Subject, files provider.Files, staged []sta
 
 		// Text files are inlined directly (no upload needed, works with every provider).
 		if file.IsText(sf.Mime) || isProbablyText(sf.Data) {
+			data := truncateUTF8(sf.Data, maxInlineUploadTextBytes)
 			var sb strings.Builder
 			sb.WriteString("--- Datei: ")
 			sb.WriteString(sf.Name)
 			sb.WriteString(" ---\n")
-			sb.Write(sf.Data)
+			sb.Write(data)
+			if len(data) < len(sf.Data) {
+				fmt.Fprintf(&sb, "\n--- gekürzt: nur die ersten %d KB von %d KB ---", len(data)/1024, len(sf.Data)/1024)
+			}
 			content = append(content, completion.Text{Text: sb.String()})
 			continue
 		}
@@ -151,6 +184,20 @@ func buildUploadContent(subject auth.Subject, files provider.Files, staged []sta
 }
 
 // isImageMime mirrors the provider's image classification for the supported image types.
+// truncateUTF8 cuts data to at most limit bytes, without splitting a rune.
+func truncateUTF8(data []byte, limit int) []byte {
+	if len(data) <= limit {
+		return data
+	}
+
+	n := limit
+	for n > 0 && !utf8.RuneStart(data[n]) {
+		n--
+	}
+
+	return data[:n]
+}
+
 func isImageMime(t file.Type) bool {
 	switch t {
 	case file.PNG, file.JPEG, file.GIF:

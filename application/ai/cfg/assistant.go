@@ -67,6 +67,14 @@ type AssistantOptions struct {
 	// FileUpload lets the user attach files to a message. Optional.
 	FileUpload bool
 
+	// UploadHint is a short notice next to the upload button, see [uicompletion.ChatOptions.UploadHint].
+	// Optional.
+	UploadHint string
+
+	// OnAttach takes over attachments before the built-in handling, see [uicompletion.ChatOptions.OnAttach].
+	// Optional.
+	OnAttach uicompletion.OnAttach
+
 	// AskUser lets the model ask a clarifying question mid-run. Optional.
 	AskUser bool
 
@@ -208,6 +216,8 @@ func (a *Assistant) ChatOptions(wnd core.Window, opts AssistantOptions) (uicompl
 		MaxTurns:           opts.MaxTurns,
 		History:            opts.History,
 		FileUpload:         opts.FileUpload,
+		UploadHint:         opts.UploadHint,
+		OnAttach:           opts.OnAttach,
 		AskUser:            opts.AskUser,
 		DisableCurrentTime: opts.DisableCurrentTime,
 		ReadOnly:           cfg.ReadOnly,
