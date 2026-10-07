@@ -59,6 +59,7 @@ func NewAppend(locks *locker, repo Repository, ledger *usageLedger) Append {
 		}
 
 		session := optSession.Unwrap()
+		subject = withSession(repo, subject, session)
 
 		mdl := opts.Model
 		if mdl == "" {

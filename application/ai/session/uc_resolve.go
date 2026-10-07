@@ -54,7 +54,7 @@ func NewResolve(locks *locker, repo Repository, ledger *usageLedger) Resolve {
 			Temperature: opts.Run.Temperature,
 		}
 
-		out, rerr := completion.Continue(subject, opts.Run.Completions, runOptions(base, opts.Run), *session.Pending, opts.Resolutions)
+		out, rerr := completion.Continue(withSession(repo, subject, session), opts.Run.Completions, runOptions(base, opts.Run), *session.Pending, opts.Resolutions)
 		if rerr != nil {
 			// A mismatching decision changed nothing; everything else may already have executed an approved
 			// call, which must be kept.

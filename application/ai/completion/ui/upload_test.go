@@ -105,4 +105,14 @@ func TestAttachmentsAreOwnedByTheSession(t *testing.T) {
 	if len(files.puts) != 2 || files.puts[0].Owner != "session-1" || files.puts[1].Owner != file.TransientOwner {
 		t.Fatalf("unexpected owners %+v", files.puts)
 	}
+
+	// an application which takes over an attachment learns the conversation as well
+	var owner file.Owner
+	onAttach := func(_ auth.Subject, att Attachment) ([]completion.Content, bool, error) {
+		owner = att.Owner
+		return []completion.Content{completion.Text{Text: "taken"}}, true, nil
+	}
+	if _, err := buildUploadContent(user.SU(), nil, uploadOwner("session-1"), pdf, onAttach); err != nil || owner != "session-1" {
+		t.Fatalf("expected the session as owner of the taken attachment, got %q %v", owner, err)
+	}
 }

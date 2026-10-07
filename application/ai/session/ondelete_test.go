@@ -61,3 +61,26 @@ func TestOnDeleteSeesTheSessionAndItsChildren(t *testing.T) {
 		t.Fatalf("expected the parent and the child, got %v", seen)
 	}
 }
+
+// Several hooks run in the order of their options, and the first error stops the deletion.
+func TestOnDeleteHooksAccumulate(t *testing.T) {
+	var calls []string
+	repo := Repository(json.NewSloppyJSONRepository[Session, ID](mem.NewBlobStore(string(Namespace))))
+	uc := NewUseCases(repo, newTestRDB(t),
+		OnDelete(func(ID) error { calls = append(calls, "app"); return nil }),
+		OnDelete(func(ID) error { calls = append(calls, "nago"); return nil }),
+	)
+
+	s, err := uc.Create(user.SU(), CreateOptions{Model: model.ID("fake-model")})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := uc.Delete(user.SU(), s.ID); err != nil {
+		t.Fatal(err)
+	}
+
+	if !slices.Equal(calls, []string{"app", "nago"}) {
+		t.Fatalf("expected both hooks in order, got %v", calls)
+	}
+}

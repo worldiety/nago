@@ -343,14 +343,32 @@ type UseCases struct {
 type Option func(o *useCaseOptions)
 
 type useCaseOptions struct {
-	onDelete func(id ID) error
+	onDelete []func(id ID) error
 }
 
 // OnDelete is invoked for every session right before it is deleted, also for each of its child sessions, e.g. to
-// release the files it uploaded to a provider. An error aborts the deletion.
+// release the files it uploaded to a provider. An error aborts the deletion. Several hooks run in the order of
+// their options.
 func OnDelete(fn func(id ID) error) Option {
 	return func(o *useCaseOptions) {
-		o.onDelete = fn
+		o.onDelete = append(o.onDelete, fn)
+	}
+}
+
+// deleteHook runs all hooks of [OnDelete], nil without any.
+func (o useCaseOptions) deleteHook() func(id ID) error {
+	if len(o.onDelete) == 0 {
+		return nil
+	}
+
+	return func(id ID) error {
+		for _, fn := range o.onDelete {
+			if err := fn(id); err != nil {
+				return err
+			}
+		}
+
+		return nil
 	}
 }
 
@@ -371,7 +389,7 @@ func NewUseCases(repo Repository, rdb *rebac.DB, opts ...Option) UseCases {
 		Resolve:  NewResolve(&locks, repo, ledger),
 		Dismiss:  NewDismiss(&locks, repo, ledger, tasks),
 		Rename:   NewRename(&locks, repo),
-		Delete:   NewDelete(&locks, repo, rdb, tasks, ledger, options.onDelete),
+		Delete:   NewDelete(&locks, repo, rdb, tasks, ledger, options.deleteHook()),
 		Tasks:    tasks,
 		subUsage: ledger,
 		repo:     repo,

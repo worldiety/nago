@@ -10,6 +10,8 @@ package cfgai
 import (
 	"fmt"
 	"log/slog"
+	"slices"
+	"sync"
 
 	"github.com/worldiety/i18n"
 	"github.com/worldiety/option"
@@ -60,6 +62,39 @@ type Management struct {
 	// Assistant is the ready-to-use chat assistant: provider lookup, model resolution, operator settings and
 	// the floating button. See [Assistant.Decorate].
 	Assistant *Assistant
+
+	sessionDeleteHooks *sessionDeleteHooks
+}
+
+// sessionDeleteHooks are the hooks of [Management.OnSessionDelete].
+type sessionDeleteHooks struct {
+	mutex sync.RWMutex
+	hooks []func(id session.ID) error
+}
+
+func (h *sessionDeleteHooks) run(id session.ID) error {
+	h.mutex.RLock()
+	hooks := slices.Clone(h.hooks)
+	h.mutex.RUnlock()
+
+	for _, fn := range hooks {
+		if err := fn(id); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// OnSessionDelete registers a hook, which is invoked for every session right before it is deleted, also for each
+// of its child sessions, e.g. to delete what an application keeps per conversation, like the attachments it took
+// over with OnAttach. An error aborts the deletion, so that nothing is orphaned. Register it while configuring the
+// application.
+func (m Management) OnSessionDelete(fn func(id session.ID) error) {
+	m.sessionDeleteHooks.mutex.Lock()
+	defer m.sessionDeleteHooks.mutex.Unlock()
+
+	m.sessionDeleteHooks.hooks = append(m.sessionDeleteHooks.hooks, fn)
 }
 
 func Enable(cfg *application.Configurator) (Management, error) {
@@ -119,7 +154,8 @@ func Enable(cfg *application.Configurator) (Management, error) {
 	// recognizable instance label (title / first-message preview).
 	rdb.RegisterResources(rebac.NewRepositoryResources(StrResSessions, StrResSessDesc, repoSessions))
 
-	ucSession := session.NewUseCases(repoSessions, rdb, session.OnDelete(func(id session.ID) error {
+	deleteHooks := &sessionDeleteHooks{}
+	ucSession := session.NewUseCases(repoSessions, rdb, session.OnDelete(deleteHooks.run), session.OnDelete(func(id session.ID) error {
 		return providerFiles.Release(file.Owner(id))
 	}))
 
@@ -141,9 +177,10 @@ func Enable(cfg *application.Configurator) (Management, error) {
 	assistant := &Assistant{useCases: ucAI, sessions: ucSession}
 
 	management = Management{
-		UseCases:        ucAI,
-		SessionUseCases: ucSession,
-		Assistant:       assistant,
+		UseCases:           ucAI,
+		SessionUseCases:    ucSession,
+		Assistant:          assistant,
+		sessionDeleteHooks: deleteHooks,
 	}
 
 	// Make the assistant's model picker resolvable and keep it fresh. Both events that can invalidate the

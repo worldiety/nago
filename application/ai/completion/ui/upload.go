@@ -38,6 +38,11 @@ type Attachment struct {
 	Name string
 	Mime file.Type
 	Data []byte
+
+	// Owner is the conversation the file is attached to: the id of its session, or [file.TransientOwner] for a
+	// chat without history, which has no session. A tool finds the session of its run with [session.IDOf], and
+	// an application deletes what it keeps with the session, see the OnSessionDelete of the AI management.
+	Owner file.Owner
 }
 
 // OnAttach takes over an attachment before the built-in handling, e.g. a workbook which the application stores
@@ -129,7 +134,7 @@ func buildUploadContent(subject auth.Subject, files provider.Files, owner file.O
 	var content []completion.Content
 	for _, sf := range staged {
 		if onAttach != nil {
-			taken, handled, err := onAttach(subject, Attachment{Name: sf.Name, Mime: sf.Mime, Data: sf.Data})
+			taken, handled, err := onAttach(subject, Attachment{Name: sf.Name, Mime: sf.Mime, Data: sf.Data, Owner: owner})
 			if err != nil {
 				return nil, err
 			}
