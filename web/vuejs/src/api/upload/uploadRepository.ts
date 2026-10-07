@@ -60,7 +60,8 @@ export class UploadRepository {
 
 			request.open('POST', '/api/ora/v1/upload');
 			request.setRequestHeader('x-scope', scope);
-			request.setRequestHeader('x-receiver', uploadId);
+			// a header value is sent as Latin-1, so an id with other characters must be encoded
+			request.setRequestHeader('x-receiver', encodeURIComponent(uploadId));
 			request.send(formData);
 			this.uploads.set(uploadId, request);
 		});

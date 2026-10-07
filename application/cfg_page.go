@@ -19,6 +19,7 @@ import (
 	"maps"
 	"mime"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"runtime/debug"
 	"slices"
@@ -588,7 +589,7 @@ func (c *Configurator) newHandler() http.Handler {
 			return
 		}
 
-		uploadId := r.Header.Get("x-receiver")
+		uploadId := uploadReceiver(r)
 		if uploadId == "" {
 			slog.Error("upload request has no parseable x-receiver header")
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
@@ -740,6 +741,18 @@ func (c *Configurator) newHandler() http.Handler {
 //
 // It exists so that packages which must not import this one - the AI assistant UI, for instance - can still
 // ask what a route is for, using core.FromContext[RootViewPurposeLookup](wnd.Context(), CtxRootViewPurpose).
+// uploadReceiver returns the import id of an upload. The frontend percent-encodes it, because a browser sends a
+// header value as Latin-1, which turns an id like "Datei wählen" into invalid UTF-8.
+func uploadReceiver(r *http.Request) string {
+	raw := r.Header.Get("x-receiver")
+	id, err := url.PathUnescape(raw)
+	if err != nil {
+		return raw
+	}
+
+	return id
+}
+
 // wireKeepAlive is the interval of the websocket pings of the server. A scope expires a minute after its last
 // message, so it leaves room for two lost pongs.
 const wireKeepAlive = 20 * time.Second

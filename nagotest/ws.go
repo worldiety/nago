@@ -243,7 +243,7 @@ func (c *wsTransport) upload(w *Window, id string, files []core.File) error {
 
 	req.Header.Set("Content-Type", mw.FormDataContentType())
 	req.Header.Set("x-scope", string(w.scopeID))
-	req.Header.Set("x-receiver", id)
+	req.Header.Set("x-receiver", url.PathEscape(id)) // like encodeURIComponent of the frontend
 	for _, name := range sessionCookies {
 		req.AddCookie(&http.Cookie{Name: name, Value: w.opts.sessionID})
 	}
