@@ -945,7 +945,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		}
 
 		footer = ui.VStack(
-			ui.If(busy.Get(), ui.Text(busyLabel).Font(ui.BodySmall)),
+			ui.If(busy.Get(), busyLine(busyLabel)),
 			ui.If(chips != nil, chips),
 			ui.TextField("Nachricht", prompt.Get()).
 				InputValue(prompt).

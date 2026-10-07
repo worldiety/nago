@@ -68,3 +68,42 @@ func TestAskPayloadParsing(t *testing.T) {
 		t.Fatalf("empty answer must not render")
 	}
 }
+
+// TestRenderHistory_ConsecutiveToolCallsAreGrouped: a long agentic run must not flood the conversation, so
+// consecutive tool calls, including the reasoning between and after them, become one collapsed section, which a
+// visible answer ends. Reasoning without tool calls keeps its own section.
+func TestRenderHistory_ConsecutiveToolCallsAreGrouped(t *testing.T) {
+	call := func(id string) completion.Message {
+		return completion.Message{Role: completion.Assistant, Content: []completion.Content{
+			completion.Thinking{Text: "checking " + id},
+			completion.ToolCall{ID: id, Name: "search", Arguments: json.RawMessage(`{}`)},
+		}}
+	}
+	result := func(id string) completion.Message {
+		return completion.Message{Role: completion.User, Content: []completion.Content{
+			completion.ToolResult{ToolCallID: id, Content: []completion.Content{completion.Text{Text: "ok"}}},
+		}}
+	}
+
+	history := []completion.Message{
+		{Role: completion.User, Content: []completion.Content{completion.Text{Text: "question"}}},
+		call("c1"), result("c1"), call("c2"), result("c2"), call("c3"), result("c3"),
+		{Role: completion.Assistant, Content: []completion.Content{completion.Text{Text: "interim answer"}}},
+		call("c4"), result("c4"),
+		{Role: completion.Assistant, Content: []completion.Content{completion.Thinking{Text: "done"}, completion.Text{Text: "final answer"}}},
+	}
+
+	// question, group of three, interim answer, group of one with the trailing reasoning, final answer
+	if views := renderHistory(nil, history, historyView{}); len(views) != 5 {
+		t.Fatalf("expected 5 views, got %d", len(views))
+	}
+
+	// question, reasoning, answer
+	plain := []completion.Message{
+		history[0],
+		{Role: completion.Assistant, Content: []completion.Content{completion.Thinking{Text: "easy"}, completion.Text{Text: "answer"}}},
+	}
+	if views := renderHistory(nil, plain, historyView{}); len(views) != 3 {
+		t.Fatalf("expected 3 views, got %d", len(views))
+	}
+}

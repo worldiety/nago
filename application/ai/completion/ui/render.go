@@ -74,8 +74,8 @@ type historyView struct {
 	openChild func(id session.ID)
 }
 
-// renderHistory turns the stateless message history into chat bubbles. Tool calls are shown as muted hints and
-// reasoning as a collapsed section; tool results (which live inside follow-up user messages) and the prompts
+// renderHistory turns the stateless message history into chat bubbles. Consecutive tool calls are shown as one
+// collapsed section and reasoning as a collapsed section; tool results (which live inside follow-up user messages) and the prompts
 // the loop injects on its own (see [completion.IsLoopPrompt]) are omitted. Calls of the delegation tools are
 // shown as a collapsible list of their sub tasks.
 func renderHistory(wnd core.Window, history []completion.Message, hv historyView) []core.View {
@@ -94,52 +94,118 @@ func renderHistory(wnd core.Window, history []completion.Message, hv historyView
 	}
 	latest := latestTasks(history)
 
+	// An agentic run may call dozens of tools before it answers. Consecutive tool calls, and the reasoning between
+	// and after them, are therefore folded into one collapsed section, which any other visible message ends.
 	var views []core.View
+	var group []groupItem
+	flush := func() {
+		if len(group) > 0 {
+			views = append(views, groupView(wnd, group)...)
+			group = nil
+		}
+	}
+	add := func(v core.View) {
+		flush()
+		views = append(views, v)
+	}
+
 	for i, m := range history {
 		if completion.IsLoopPrompt(m) {
 			continue
 		}
 		for j, c := range m.Content {
+			id := fmt.Sprintf("%suicompletion-%d-%d", hv.idPrefix, i, j)
 			switch v := c.(type) {
 			case completion.Thinking:
 				if strings.TrimSpace(v.Text) == "" {
 					continue
 				}
-				views = append(views, thinkingView(wnd, fmt.Sprintf("%suicompletion-thinking-%d-%d", hv.idPrefix, i, j), v.Text))
+				group = append(group, groupItem{id: id, thinking: v.Text})
 			case completion.Text:
 				if strings.TrimSpace(v.Text) == "" {
 					continue
 				}
-				views = append(views, chatBubble(m.Role, v.Text))
+				add(chatBubble(m.Role, v.Text))
 			case completion.ToolCall:
 				if v.Name == askUserToolName {
 					if q, ok := askQuestion(v); ok {
 						askCalls[v.ID] = true
-						views = append(views, chatBubble(completion.Assistant, q))
+						add(chatBubble(completion.Assistant, q))
 						continue
 					}
 				}
 				if completion.IsDelegationTool(v.Name) {
 					res, done := results[v.ID]
 					if view := tasksView(wnd, hv, v, res, done, latest); view != nil {
-						views = append(views, view)
+						add(view)
 						continue
 					}
 				}
-				views = append(views, ui.HStack(
-					ui.Text("→ Tool: "+v.Name).Font(ui.Small),
-				).FullWidth().Alignment(ui.Leading))
+				group = append(group, groupItem{id: id, tool: v.Name})
 			case completion.ToolResult:
 				if !askCalls[v.ToolCallID] || v.IsError {
 					continue
 				}
 				if a, ok := askAnswer(v); ok {
-					views = append(views, chatBubble(completion.User, a))
+					add(chatBubble(completion.User, a))
 				}
 			}
 		}
 	}
+
+	flush()
 	return views
+}
+
+// groupItem is a tool call or a reasoning block of a run of consecutive ones, see [groupView].
+type groupItem struct {
+	id       string // stable while the history grows, it keeps the section open or closed
+	tool     string
+	thinking string
+}
+
+// groupView renders consecutive tool calls as a single collapsed section. Reasoning without any tool call keeps
+// its own collapsed section.
+func groupView(wnd core.Window, items []groupItem) []core.View {
+	var tools []string
+	for _, it := range items {
+		if it.tool != "" {
+			tools = append(tools, it.tool)
+		}
+	}
+
+	if len(tools) == 0 {
+		var views []core.View
+		for _, it := range items {
+			views = append(views, thinkingView(wnd, it.id+"-thinking", it.thinking))
+		}
+		return views
+	}
+
+	title := fmt.Sprintf("%d Werkzeugaufrufe", len(tools))
+	if len(tools) == 1 {
+		title = "Werkzeug: " + tools[0]
+	}
+
+	// the section is collapsed already, so the reasoning is shown inline instead of in a nested section
+	body := make([]core.View, 0, len(items))
+	for _, it := range items {
+		if it.tool != "" {
+			body = append(body, ui.Text("→ "+it.tool).Font(ui.Small))
+			continue
+		}
+		body = append(body, ui.Text(strings.TrimSpace(it.thinking)).Font(ui.Small).Color(ui.M8))
+	}
+
+	open := core.StateOf[bool](wnd, items[0].id+"-tools")
+	return []core.View{ui.HStack(
+		accordion.Accordion(
+			ui.Text(title).Font(ui.Small),
+			ui.VStack(body...).Gap(ui.L4).Alignment(ui.Leading).FullWidth(),
+			open,
+		).Small().HideSeparator().Frame(ui.Frame{MaxWidth: "85%"}),
+		ui.Spacer(),
+	).FullWidth()}
 }
 
 // askQuestion extracts the question of an ask_user call.
@@ -223,6 +289,20 @@ func chatFrame(body core.View, title string, actions core.View, open *core.State
 		Border(ui.Border{}.Radius(ui.L16).Color(ui.M4).Width(ui.L1).Shadow(ui.L8)).
 		Padding(ui.Padding{}.All(ui.L16)).
 		Frame(ui.Frame{Width: ui.L560})
+}
+
+// busyLine shows the progress of a run behind a small spinning ring, so that a long run visibly keeps working.
+func busyLine(label string) core.View {
+	ring := ui.Border{}.Circle().Width(ui.L2).Color(ui.M5)
+	ring.TopColor = ui.I0
+
+	return ui.HStack(
+		ui.VStack().
+			Animation(ui.AnimateSpin).
+			Border(ring).
+			Frame(ui.Frame{}.Size(ui.L12, ui.L12)),
+		ui.Text(label).Font(ui.BodySmall),
+	).Gap(ui.L8).Alignment(ui.Center)
 }
 
 // thinkingLabel builds the progress line shown while the model is composing the next turn. From the second
