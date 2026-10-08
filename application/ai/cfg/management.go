@@ -10,6 +10,7 @@ package cfgai
 import (
 	"fmt"
 	"log/slog"
+	"os"
 	"slices"
 	"sync"
 
@@ -115,11 +116,16 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		return Management{}, err
 	}
 
+	services, err := startServices(cfg)
+	if err != nil {
+		return Management{}, err
+	}
+
 	var ucAI ai.UseCases
 	providerFiles := filecleanup.New(repoProviderFiles, func(id provider.ID) (option.Opt[provider.Provider], error) {
 		return ucAI.FindProviderByID(cfg.SysUser(), id)
 	}, cfg.SysUser)
-	ucAI = ai.NewUseCases(cfg.EventBus(), secrets.UseCases.FindGroupSecrets, providerFiles.Decorate)
+	ucAI = ai.NewUseCases(cfg.EventBus(), secrets.UseCases.FindGroupSecrets, providerFiles.Decorate, services...)
 	go providerFiles.Run(cfg.Context())
 
 	// Sessions are provider-independent, locally persisted chats on top of the stateless completion API. The
@@ -235,6 +241,33 @@ func Enable(cfg *application.Configurator) (Management, error) {
 
 	slog.Info("installed AI module")
 	return management, nil
+}
+
+// startServices creates the providers that provision themselves, like the Nago AI Service. They are only there, if
+// the application side-imports their packages, see [provider.RegisterService].
+func startServices(cfg *application.Configurator) ([]provider.Provider, error) {
+	env := provider.ServiceEnv{
+		Context:      cfg.Context(),
+		HandleMethod: cfg.HandleMethod,
+		Origin:       cfg.PublicOrigin,
+		Store:        cfg.EntityStore,
+		Getenv:       os.Getenv,
+		LookupEnv:    os.LookupEnv,
+	}
+
+	var res []provider.Provider
+	for _, factory := range provider.Services() {
+		prov, ok, err := factory(env)
+		if err != nil {
+			return nil, fmt.Errorf("cannot start an ai service: %w", err)
+		}
+
+		if ok {
+			res = append(res, prov)
+		}
+	}
+
+	return res, nil
 }
 
 // modelOption is an entry of the model picker of [AssistantSettings].

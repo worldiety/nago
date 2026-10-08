@@ -40,6 +40,28 @@ role *AI Assistant User*.
 
 Providers are reloaded automatically when a secret changes.
 
+## Nago AI Service
+
+Instead of keeping provider credentials in every instance, an instance can use the Nago AI Service (NAIS), a gateway
+to several providers, which counts the tokens of every instance for the billing. Link its package:
+
+```go
+import _ "go.wdy.de/nago/application/ai/provider/nais"
+```
+
+The provider *Nago AI Service* then appears by itself, no secret is needed: the instance enrolls like with the Nago
+Mail Service. A public https origin is called back under `/api/nago/v1/ai/nonce/`, a local instance like
+`http://localhost:3000` is admitted if it calls from an address the service knows. The service decides which models
+the instance may call and which is its default.
+
+| Variable | Meaning |
+|---|---|
+| `NAGO_AI_SERVICE` | Endpoint of the service, default `https://ai.worldiety.nago.app`. `off` disables it. |
+| `NAGO_AI_SERVICE_TOKEN` | Optional refresh token issued by the operator of the service, for instances that cannot enroll themselves. |
+
+The service speaks the Messages API of Anthropic, so the provider is the Anthropic provider pointed at the service,
+including streaming and files.
+
 ## Add the assistant
 
 Decorate every page with the assistant button:

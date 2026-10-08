@@ -8,6 +8,8 @@
 package anthropic
 
 import (
+	"net/http"
+	"strings"
 	"sync"
 
 	"github.com/worldiety/option"
@@ -67,4 +69,29 @@ func (p *anthropicProvider) Completions() option.Opt[completion.Completions] {
 
 func (p *anthropicProvider) Files() option.Opt[provider.Files] {
 	return option.Some[provider.Files](p.files)
+}
+
+// Endpoint is where a provider speaks the Messages API, if it is not Anthropic itself but a gateway that speaks the
+// same API, like the Nago AI Service.
+type Endpoint struct {
+	// BaseURL is the url the paths of the API are appended to, including the version path, e.g.
+	// https://ai.example.com/v1/.
+	BaseURL string
+	// HTTP authenticates the requests itself, e.g. with a token it renews. The x-api-key of the settings is then
+	// replaced by whatever it sets. Optional.
+	HTTP *http.Client
+}
+
+// NewProviderAt creates a provider like [NewProvider], which speaks to the endpoint instead of Anthropic.
+func NewProviderAt(id provider.ID, cfg Settings, ep Endpoint) provider.Provider {
+	p := NewProvider(id, cfg).(*anthropicProvider)
+	if ep.BaseURL != "" {
+		p.cl.base = strings.TrimRight(ep.BaseURL, "/") + "/"
+	}
+
+	if ep.HTTP != nil {
+		p.cl.c = ep.HTTP
+	}
+
+	return p
 }

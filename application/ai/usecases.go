@@ -43,9 +43,11 @@ type UseCases struct {
 	ReloadProvider     ReloadProvider
 }
 
-func NewUseCases(bus events.Bus, findSecrets secret.FindGroupSecrets, decorator func(provider provider.Provider) (provider.Provider, error)) UseCases {
+// NewUseCases wires the use cases. The providers come from the secrets of the vault and, besides them, from the
+// services, which provision themselves, see [provider.RegisterService].
+func NewUseCases(bus events.Bus, findSecrets secret.FindGroupSecrets, decorator func(provider provider.Provider) (provider.Provider, error), services ...provider.Provider) UseCases {
 	var providers concurrent.RWMap[provider.ID, provider.Provider]
-	fnReload := NewReloadProvider(&providers, findSecrets, decorator)
+	fnReload := NewReloadProvider(&providers, findSecrets, decorator, services...)
 
 	fnInvokeReload := func() {
 		if err := fnReload(user.SU()); err != nil {

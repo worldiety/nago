@@ -129,7 +129,7 @@ func (c *Configurator) MailManagement() (MailManagement, error) {
 			Endpoint: mailServiceEndpoint(),
 			Token:    strings.TrimSpace(os.Getenv(EnvMailServiceToken)),
 			Origin: func() string {
-				return mailServiceOrigin(c.ContextPath(), c.getPort())
+				return c.PublicOrigin()
 			},
 			Nonces: nonces,
 			States: json.NewSloppyJSONRepository[nms.State, string](serviceStore),
@@ -315,6 +315,13 @@ func (c *Configurator) SendMailTemplate(to user.Email, tpl template.ID, subjName
 	})
 
 	return err
+}
+
+// PublicOrigin returns the origin the application is reachable under, like https://my-app.example.com, or
+// http://localhost:<port> as long as nothing else is known. Services that enroll an instance by calling it back, like
+// the Nago Mail Service or the Nago AI Service, announce it.
+func (c *Configurator) PublicOrigin() string {
+	return mailServiceOrigin(c.ContextPath(), c.getPort())
 }
 
 // mailServiceOrigin turns the context path into the origin of a token exchange.

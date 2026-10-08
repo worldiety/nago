@@ -18,13 +18,28 @@ import (
 	"go.wdy.de/nago/pkg/std/concurrent"
 )
 
-func NewReloadProvider(m *concurrent.RWMap[provider.ID, provider.Provider], findSecrets secret.FindGroupSecrets, decorator func(provider provider.Provider) (provider.Provider, error)) ReloadProvider {
+func NewReloadProvider(m *concurrent.RWMap[provider.ID, provider.Provider], findSecrets secret.FindGroupSecrets, decorator func(provider provider.Provider) (provider.Provider, error), services ...provider.Provider) ReloadProvider {
 	return func(subject auth.Subject) error {
 		if err := subject.Audit(PermReloadProvider); err != nil {
 			return err
 		}
 
 		m.Clear()
+
+		// services provision themselves and are there regardless of the vault
+		for _, prov := range services {
+			if decorator != nil {
+				decorated, err := decorator(prov)
+				if err != nil {
+					slog.Error("failed to decorate provider", "provider", prov.Identity(), "err", err.Error())
+					continue
+				}
+
+				prov = decorated
+			}
+
+			m.Put(prov.Identity(), prov)
+		}
 
 		for sec, err := range findSecrets(user.SU(), group.System) {
 			if err != nil {
