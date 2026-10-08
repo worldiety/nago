@@ -65,6 +65,31 @@ type Management struct {
 	Assistant *Assistant
 
 	sessionDeleteHooks *sessionDeleteHooks
+	decorators         *ai.Decorators
+}
+
+// DecorateProviders wraps every provider in fn: those of the secrets in the vault and the services like the Nago AI
+// Service, now and after every reload. It is meant to meter or limit the use of AI per subject, see [ai.Decorator]
+// for what a decorator must keep. Nago's own decoration comes first, the ones of the application around it, in the
+// order of their first registration.
+//
+// The name identifies the decorator: registering it again replaces it, so that it never wraps twice. The providers
+// are reloaded at once, and an error of the decorator is returned, so that an application can refuse to start without
+// it. A later reload leaves out a provider its decorator fails on, and logs it.
+//
+// Call it while configuring the application. Providers are resolved by their id whenever they are used, so that
+// none escapes the decoration.
+func (m Management) DecorateProviders(name string, fn ai.Decorator) error {
+	if m.decorators == nil {
+		return fmt.Errorf("the ai management is not enabled")
+	}
+
+	m.decorators.Set(name, fn)
+	if err := m.UseCases.ReloadProvider(user.SU()); err != nil {
+		return fmt.Errorf("cannot decorate the ai providers with %s: %w", name, err)
+	}
+
+	return nil
 }
 
 // sessionDeleteHooks are the hooks of [Management.OnSessionDelete].
@@ -125,7 +150,19 @@ func Enable(cfg *application.Configurator) (Management, error) {
 	providerFiles := filecleanup.New(repoProviderFiles, func(id provider.ID) (option.Opt[provider.Provider], error) {
 		return ucAI.FindProviderByID(cfg.SysUser(), id)
 	}, cfg.SysUser)
-	ucAI = ai.NewUseCases(cfg.EventBus(), secrets.UseCases.FindGroupSecrets, providerFiles.Decorate, services...)
+
+	// the decorators of the application wrap nago's own, see Management.DecorateProviders
+	decorators := &ai.Decorators{}
+	decorate := func(p provider.Provider) (provider.Provider, error) {
+		p, err := providerFiles.Decorate(p)
+		if err != nil {
+			return nil, err
+		}
+
+		return decorators.Apply(p)
+	}
+
+	ucAI = ai.NewUseCases(cfg.EventBus(), secrets.UseCases.FindGroupSecrets, decorate, services...)
 	go providerFiles.Run(cfg.Context())
 
 	// Sessions are provider-independent, locally persisted chats on top of the stateless completion API. The
@@ -187,6 +224,7 @@ func Enable(cfg *application.Configurator) (Management, error) {
 		SessionUseCases:    ucSession,
 		Assistant:          assistant,
 		sessionDeleteHooks: deleteHooks,
+		decorators:         decorators,
 	}
 
 	// Make the assistant's model picker resolvable and keep it fresh. Both events that can invalidate the
@@ -204,6 +242,7 @@ func Enable(cfg *application.Configurator) (Management, error) {
 
 	events.SubscribeFor(cfg.EventBus(), func(secret.Updated) { assistant.Forget() })
 	events.SubscribeFor(cfg.EventBus(), func(secret.Created) { assistant.Forget() })
+	events.SubscribeFor(cfg.EventBus(), func(secret.Deleted) { assistant.Forget() })
 
 	cfg.AddContextValue(core.ContextValue(SourceAssistantModels, form.NewQuerySource(
 		func(subject user.Subject) ([]modelOption, error) {

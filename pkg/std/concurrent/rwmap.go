@@ -99,6 +99,17 @@ func (c *RWMap[K, V]) Clear() {
 	clear(c.m)
 }
 
+// Replace swaps the whole content for a copy of m at once, so that a reader sees either the former or the new content
+// and never something in between.
+func (c *RWMap[K, V]) Replace(m map[K]V) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	c.m = maps.Clone(m)
+	if c.m == nil {
+		c.m = map[K]V{}
+	}
+}
+
 func (c *RWMap[K, V]) Len() int {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()

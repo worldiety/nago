@@ -62,6 +62,28 @@ the instance may call and which is its default.
 The service speaks the Messages API of Anthropic, so the provider is the Anthropic provider pointed at the service,
 including streaming and files.
 
+## Decorate every provider
+
+An application that meters or limits the use of AI per subject wraps every provider, those of the vault as well as
+services like the Nago AI Service:
+
+```go
+ai, err := cfgai.Enable(cfg)
+// ...
+if err := ai.DecorateProviders("usage", func(p provider.Provider) (provider.Provider, error) {
+	return aiusage.Wrap(store, p), nil
+}); err != nil {
+	return err // refuse to start without metering
+}
+```
+
+The providers are reloaded at once, and an error of the decorator is returned. Registering the same name again
+replaces the decorator instead of wrapping twice. Later reloads, e.g. after a secret changed, decorate again and
+leave out a provider its decorator fails on. A decorator must keep the identity of the provider, must keep its state,
+like counters, outside of the wrapper, and should also account a stream its consumer stops early. Resolve providers
+by their id whenever needed instead of keeping them, and check after configuring with `FindAllProvider` that every
+provider is wrapped, if an unmetered call must never happen.
+
 ## Add the assistant
 
 Decorate every page with the assistant button:
