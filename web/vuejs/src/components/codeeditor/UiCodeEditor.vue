@@ -16,6 +16,7 @@ import { go } from '@codemirror/lang-go';
 import { html } from '@codemirror/lang-html';
 import { javascript } from '@codemirror/lang-javascript';
 import { json } from '@codemirror/lang-json';
+import { markdown } from '@codemirror/lang-markdown';
 import { Extension } from '@codemirror/state';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { Codemirror } from 'vue-codemirror';
@@ -60,7 +61,16 @@ function extensions(): Extension[] {
 	let tmp: Extension[] = [];
 	switch (props.ui.language) {
 		case 'markdown':
+		case 'md':
+			tmp.push(markdown());
+			break;
+		case 'javascript':
+		case 'js':
 			tmp.push(javascript());
+			break;
+		case 'typescript':
+		case 'ts':
+			tmp.push(javascript({ typescript: true }));
 			break;
 		case 'go':
 			tmp.push(go());
