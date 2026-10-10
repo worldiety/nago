@@ -15,8 +15,10 @@ import (
 	"sync"
 	"testing"
 
+	"go.wdy.de/nago/application/group"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/pkg/blob/mem"
 	"go.wdy.de/nago/pkg/data"
@@ -24,6 +26,12 @@ import (
 )
 
 func newMergeFixture(t *testing.T, users ...User) (MergeSingleSignOnUser, *datamem.Repository[User, ID], *UserIndex, *syncBus) {
+	t.Helper()
+	merge, repo, idx, bus, _ := newMergeFixtureWith(t, Settings{}, users...)
+	return merge, repo, idx, bus
+}
+
+func newMergeFixtureWith(t *testing.T, cfg Settings, users ...User) (MergeSingleSignOnUser, *datamem.Repository[User, ID], *UserIndex, *syncBus, *rebac.DB) {
 	t.Helper()
 
 	repo := &datamem.Repository[User, ID]{}
@@ -43,13 +51,13 @@ func newMergeFixture(t *testing.T, users ...User) (MergeSingleSignOnUser, *datam
 	}
 
 	loadGlobal := settings.LoadGlobal(func(subject permission.Auditable, typ reflect.Type) (settings.GlobalSettings, error) {
-		return Settings{}, nil
+		return cfg, nil
 	})
 
 	var mutex sync.Mutex
 	merge := NewMergeSingleSignOnUser(&mutex, bus, notifyRepo, idx, loadGlobal, nil, rdb)
 
-	return merge, repo, idx, bus
+	return merge, repo, idx, bus, rdb
 }
 
 func TestMergeSingleSignOnUser_CreatesUserWithNLSUserID(t *testing.T) {
@@ -216,5 +224,71 @@ func TestMergeSingleSignOnUser_MatchesByIDDespiteOtherMail(t *testing.T) {
 
 	if uid != "1" {
 		t.Fatalf("want the existing user, got %s", uid)
+	}
+}
+
+// A new SSO user gets the default roles and groups of the SSO section, not those of a registration.
+func TestMergeSingleSignOnUser_AssignsSSODefaults(t *testing.T) {
+	merge, _, _, _, rdb := newMergeFixtureWith(t, Settings{
+		DefaultRoles:     []role.ID{"registration-role"},
+		DefaultGroups:    []group.ID{"registration-group"},
+		DefaultSSORoles:  []role.ID{"sso-role"},
+		DefaultSSOGroups: []group.ID{"sso-group"},
+	})
+
+	uid, err := merge(SingleSignOnUser{ID: "entra-1", Email: "a@example.com"}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	member := func(ns rebac.Namespace, id string) bool {
+		t.Helper()
+		ok, err := rdb.Contains(rebac.Triple{
+			Source:   rebac.Entity{Namespace: ns, Instance: rebac.Instance(id)},
+			Relation: rebac.Member,
+			Target:   rebac.Entity{Namespace: Namespace, Instance: rebac.Instance(uid)},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return ok
+	}
+
+	if !member(role.Namespace, "sso-role") || !member(group.Namespace, "sso-group") {
+		t.Fatal("expected the sso default role and group")
+	}
+
+	if member(role.Namespace, "registration-role") || member(group.Namespace, "registration-group") {
+		t.Fatal("the defaults of a registration must not be assigned to an sso user")
+	}
+}
+
+// Only mails matching the allow list may sign in by SSO, new and existing users alike, and an invalid pattern
+// allows nobody.
+func TestMergeSingleSignOnUser_AllowList(t *testing.T) {
+	existing := User{ID: "1", Email: "old@other.com", NLSManagedUser: true, NLSUserID: "entra-old"}
+	merge, repo, _, _, _ := newMergeFixtureWith(t, Settings{SSOAllowList: []string{"^[a-z.-]+@worldiety\\.de$"}}, existing)
+
+	if _, err := merge(SingleSignOnUser{ID: "entra-1", Email: "anna@worldiety.de"}, nil); err != nil {
+		t.Fatalf("a matching mail must be allowed: %v", err)
+	}
+
+	before, _ := repo.Count()
+	if _, err := merge(SingleSignOnUser{ID: "entra-2", Email: "eve@evil.com"}, nil); !errors.Is(err, os.ErrPermission) {
+		t.Fatalf("expected a refused mail, got %v", err)
+	}
+
+	if after, _ := repo.Count(); after != before {
+		t.Fatal("a refused mail must not create a user")
+	}
+
+	if _, err := merge(SingleSignOnUser{ID: "entra-old", Email: "old@other.com"}, nil); !errors.Is(err, os.ErrPermission) {
+		t.Fatalf("an existing user outside of the allow list must be refused, got %v", err)
+	}
+
+	for list, want := range map[string]bool{"": true, "(": false} {
+		if got := ssoAllowed([]string{list}, "anna@worldiety.de"); got != want {
+			t.Errorf("allow list %q: got %v, want %v", list, got, want)
+		}
 	}
 }

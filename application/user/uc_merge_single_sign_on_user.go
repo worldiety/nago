@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -31,6 +33,36 @@ import (
 // The stable subject id of the identity provider is the primary criteria, because in contrast to the mail
 // address it never changes. Only if it is unknown, we fall back to the mail address, which also backfills the
 // subject id for accounts that have been merged before this field existed.
+// ssoAllowed reports whether the mail matches one of the regular expressions of the allow list, see
+// [Settings.SSOAllowList]. An empty list allows everybody. An invalid expression allows nobody, because a typo must
+// not open the instance to everybody.
+func ssoAllowed(allowList []string, mail Email) bool {
+	var patterns []string
+	for _, p := range allowList {
+		if p = strings.TrimSpace(p); p != "" {
+			patterns = append(patterns, p)
+		}
+	}
+
+	if len(patterns) == 0 {
+		return true
+	}
+
+	for _, p := range patterns {
+		re, err := regexp.Compile(p)
+		if err != nil {
+			slog.Error("invalid pattern in the sso allow list", "pattern", p, "err", err)
+			continue
+		}
+
+		if re.MatchString(string(mail)) {
+			return true
+		}
+	}
+
+	return false
+}
+
 func findSingleSignOnUser(repo Repository, idx *UserIndex, createData SingleSignOnUser) (std.Option[User], error) {
 	if id, ok, err := idx.LookupNLSUserID(createData.ID); err != nil {
 		return std.None[User](), fmt.Errorf("cannot lookup nls user id: %w", err)
@@ -95,6 +127,12 @@ func NewMergeSingleSignOnUser(mutex *sync.Mutex, bus events.Bus, repo Repository
 			return "", fmt.Errorf("email is invalid: %s", createData.Email)
 		}
 
+		// checked on every sign-in and refresh, so that narrowing the list also locks out existing users
+		if !ssoAllowed(cfg.SSOAllowList, createData.Email) {
+			slog.Warn("refused nls login, mail does not match the sso allow list", "mail", createData.Email)
+			return "", fmt.Errorf("mail %s is not allowed to sign in by single sign-on: %w", createData.Email, os.ErrPermission)
+		}
+
 		optUser, err := findSingleSignOnUser(repo, idx, createData)
 		if err != nil {
 			return "", err
@@ -140,7 +178,7 @@ func NewMergeSingleSignOnUser(mutex *sync.Mutex, bus events.Bus, repo Repository
 				return "", fmt.Errorf("cannot save user: %w", err)
 			}
 
-			for _, rid := range cfg.DefaultRoles {
+			for _, rid := range cfg.DefaultSSORoles {
 				err := rdb.Put(rebac.Triple{
 					Source: rebac.Entity{
 						Namespace: role.Namespace,
@@ -158,7 +196,7 @@ func NewMergeSingleSignOnUser(mutex *sync.Mutex, bus events.Bus, repo Repository
 				}
 			}
 
-			for _, gid := range cfg.DefaultGroups {
+			for _, gid := range cfg.DefaultSSOGroups {
 				err := rdb.Put(rebac.Triple{
 					Source: rebac.Entity{
 						Namespace: group.Namespace,
