@@ -50,6 +50,9 @@ type WhiteSpace uint
 const (
 	WhiteSpaceNormal WhiteSpace = WhiteSpace(proto.WhiteSpaceNormal)
 	WhiteSpaceNoWrap WhiteSpace = WhiteSpace(proto.WhiteSpaceNoWrap)
+	// WhiteSpacePreWrap keeps line breaks and indentation of the text, e.g. of source code, and still wraps long
+	// lines.
+	WhiteSpacePreWrap WhiteSpace = WhiteSpace(proto.WhiteSpacePreWrap)
 )
 
 // TText is a basic component (Text).

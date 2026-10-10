@@ -22006,6 +22006,7 @@ function writeTypeHeaderWhiteSpace(dst: BinaryWriter): void {
 export enum WhiteSpaceValues {
 	WhiteSpaceNormal = 0,
 	WhiteSpaceNoWrap = 1,
+	WhiteSpacePreWrap = 2,
 }
 
 // FlowChartMenu represents an optional menu to be positioned in a flow chart.

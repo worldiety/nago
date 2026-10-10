@@ -7,6 +7,9 @@
     },
     "1": {
       "name": "WhiteSpaceNoWrap"
+    },
+    "2": {
+      "name": "WhiteSpacePreWrap"
     }
   }
 }

@@ -128,3 +128,17 @@ func TestShortName(t *testing.T) {
 		t.Fatalf("unexpected short name %q", got)
 	}
 }
+
+// A whole script in the arguments of a change is shown with its line breaks, each field on its own line, while
+// the values stay verbatim.
+func TestReadableArguments(t *testing.T) {
+	got := readableArguments([]byte(`{"name":"ideen","script":"function a() {\n  return 1;\n}","n":3}`))
+	want := "name: \"ideen\"\nscript:\nfunction a() {\n  return 1;\n}\n\nn: 3"
+	if got != want {
+		t.Fatalf("unexpected rendering:\n%s", got)
+	}
+
+	if got := readableArguments([]byte(`[1,2]`)); got != "[\n  1,\n  2\n]" {
+		t.Fatalf("a non-object must fall back to the indented json, got %q", got)
+	}
+}

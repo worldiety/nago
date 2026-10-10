@@ -15,6 +15,9 @@ export function whiteSpaceCSS(whiteSpace?: WhiteSpaceValues): string[] {
 		case WhiteSpaceValues.WhiteSpaceNoWrap:
 			css.push(`white-space: nowrap`);
 			break;
+		case WhiteSpaceValues.WhiteSpacePreWrap:
+			css.push(`white-space: pre-wrap`);
+			break;
 		default:
 			css.push(`white-space: normal`);
 	}

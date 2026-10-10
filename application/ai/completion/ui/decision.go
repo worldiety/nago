@@ -133,7 +133,12 @@ func approvalPanel(wnd core.Window, pc completion.PendingCall, busy bool, decide
 		ui.Text(StrConfirmTitle.Get(subject)).Font(ui.TitleSmall),
 		ui.Text(StrConfirmIntro.Get(subject)),
 		ui.Text(effect).Font(ui.BodyMedium),
-		ui.Text(pc.Call.Name+" "+prettyArguments(pc.Call.Arguments)).Font(ui.Monospace),
+		ui.Text(pc.Call.Name).Font(ui.Monospace),
+		// a long change, e.g. a whole script, scrolls, so that the buttons below always stay visible
+		ui.ScrollView(
+			ui.Text(readableArguments(pc.Call.Arguments)).Font(ui.Monospace).WhiteSpace(ui.WhiteSpacePreWrap),
+		).Axis(ui.ScrollViewAxisVertical).
+			Frame(ui.Frame{Width: ui.Full, MaxHeight: ui.L200}),
 		ui.HStack(
 			ui.Spacer(),
 			ui.SecondaryButton(func() {

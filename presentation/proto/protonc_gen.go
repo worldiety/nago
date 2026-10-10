@@ -21401,8 +21401,9 @@ func (v *OutlineStyle) IsZero() bool {
 type WhiteSpace uint64
 
 const (
-	WhiteSpaceNormal WhiteSpace = 0
-	WhiteSpaceNoWrap WhiteSpace = 1
+	WhiteSpaceNormal  WhiteSpace = 0
+	WhiteSpaceNoWrap  WhiteSpace = 1
+	WhiteSpacePreWrap WhiteSpace = 2
 )
 
 func (v *WhiteSpace) write(r *BinaryWriter) error {

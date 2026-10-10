@@ -10,6 +10,7 @@ package uicompletion
 import (
 	"bytes"
 	"encoding/json"
+	"strings"
 
 	"github.com/worldiety/i18n"
 	"golang.org/x/text/language"
@@ -51,4 +52,46 @@ func prettyArguments(raw json.RawMessage) string {
 	}
 
 	return buf.String()
+}
+
+// readableArguments shows the arguments of a call to review them: each field of an object on its own line, and a
+// multi-line string, e.g. a whole script, with its line breaks instead of escaped ones. The values stay verbatim,
+// because an approval executes exactly these. Anything else falls back to [prettyArguments].
+func readableArguments(raw json.RawMessage) string {
+	dec := json.NewDecoder(bytes.NewReader(raw))
+	if tok, err := dec.Token(); err != nil || tok != json.Delim('{') {
+		return prettyArguments(raw)
+	}
+
+	var sb strings.Builder
+	for dec.More() {
+		tok, err := dec.Token()
+		if err != nil {
+			return prettyArguments(raw)
+		}
+
+		key, _ := tok.(string)
+		var value json.RawMessage
+		if err := dec.Decode(&value); err != nil {
+			return prettyArguments(raw)
+		}
+
+		if sb.Len() > 0 {
+			sb.WriteString("\n")
+		}
+
+		var str string
+		if json.Unmarshal(value, &str) == nil && strings.Contains(str, "\n") {
+			sb.WriteString(key + ":\n" + str + "\n")
+			continue
+		}
+
+		sb.WriteString(key + ": " + prettyArguments(value))
+	}
+
+	if sb.Len() == 0 {
+		return "{}"
+	}
+
+	return sb.String()
 }
