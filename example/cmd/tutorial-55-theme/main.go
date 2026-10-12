@@ -8,17 +8,16 @@
 package main
 
 import (
-	"fmt"
+	"time"
+
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/theme"
-	"go.wdy.de/nago/application/user"
+	cfgtheme "go.wdy.de/nago/application/theme/cfg"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
-	"go.wdy.de/nago/presentation/ui/form"
 	"go.wdy.de/nago/web/vuejs"
-	"time"
 )
 
 func main() {
@@ -29,56 +28,29 @@ func main() {
 		cfg.SetDecorator(cfg.NewScaffold().Decorator())
 		option.MustZero(cfg.StandardSystems())
 
-		myTheme := option.Must(cfg.ThemeManagement())
+		// Propose the colors of the application. They apply on the first start and after a reset, but they are
+		// never stored. Once a user saves own colors in the admin center, those always win, also if the proposal
+		// changes with a later release. Do not store the proposal with UpdateColors, because a reset would then
+		// fall back to the defaults of nago instead of your colors.
+		cfg.SetThemeDefaults(theme.ColorsFrom(theme.BaseColors{
+			Main:        "#f12af7",
+			Interactive: "#2af4f7",
+			Accent:      "#5af72a",
+		}))
 
-		if !option.Must(myTheme.UseCases.HasColors(user.SU())) {
-			myBaseColors := theme.BaseColors{
-				Main:        "#f12af7",
-				Interactive: "#2af4f7",
-				Accent:      "#5af72a",
-			}
-
-			myDark := myTheme.UseCases.Calculations.DarkMode(myBaseColors)
-			myLight := myTheme.UseCases.Calculations.LightMode(myBaseColors)
-
-			option.MustZero(myTheme.UseCases.UpdateColors(user.SU(), theme.Colors{
-				Dark:  myDark,
-				Light: myLight,
-			}))
-		}
+		// Optionally, let administrators adjust the colors of the light and the dark mode in the admin center.
+		themes := option.Must(cfgtheme.Enable(cfg))
 
 		std.Must(std.Must(cfg.UserManagement()).UseCases.EnableBootstrapAdmin(time.Now().Add(time.Hour), "%6UbRsCuM8N$auy"))
 
 		cfg.RootViewWithDecoration(".", func(wnd core.Window) core.View {
-
-			colorState := core.AutoState[theme.BaseColors](wnd).Init(func() theme.BaseColors {
-				actual := option.Must(myTheme.UseCases.ReadColors(user.SU()))
-				return theme.BaseColors{
-					Main:        actual.Light.M0,
-					Interactive: actual.Light.I0,
-					Accent:      actual.Light.A0,
-				}
-			})
-
 			return ui.VStack(
-				ui.Text("hello theme"),
-				form.Auto[theme.BaseColors](form.AutoOptions{}, colorState).Frame(ui.Frame{MaxWidth: ui.L560, Width: ui.Full}),
-
+				ui.H1("hello theme"),
+				ui.Text("The colors are proposed by the application, until an administrator chooses own colors."),
 				ui.PrimaryButton(func() {
-					option.MustZero(myTheme.UseCases.ResetColors(user.SU()))
-					fmt.Println("restart server to apply the effect")
-				}).Title("Reset Colors"),
-
-				ui.PrimaryButton(func() {
-					option.MustZero(myTheme.UseCases.UpdateColors(user.SU(), theme.Colors{
-						Dark:  myTheme.UseCases.Calculations.DarkMode(colorState.Get()),
-						Light: myTheme.UseCases.Calculations.LightMode(colorState.Get()),
-					}))
-
-					wnd.Navigation().Reload()
-				}).Title("Apply User Colors"),
+					wnd.Navigation().ForwardTo(themes.Pages.Colors, nil)
+				}).Title("Adjust colors"),
 			).Gap(ui.L16).Frame(ui.Frame{}.MatchScreen())
 		})
-
 	}).Run()
 }
