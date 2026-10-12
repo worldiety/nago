@@ -42,8 +42,13 @@ type Settings struct {
 
 	Slogan string `json:"slogan" section:"Sonstiges" label:"Slogan" supportingText:"Slogan oder Mission des Anbieters."`
 
-	Colors Colors     `json:"colors"` // TODO form.Auto cannot render that today, also this is not wanted from the designers perspective and it affects the global applications
-	Fonts  core.Fonts `json:"fonts"`
+	// Colors are edited with [UpdateCustomization], e.g. on the colors page of cfgtheme, and not in the generic
+	// settings form, because the form would not keep them consistent with the Customization.
+	Colors Colors `json:"colors" visible:"false"`
+	// Customization keeps the choice of the user, from which Colors have been calculated. It is invalid, if the colors
+	// have been set directly, see [UpdateColors].
+	Customization Customization `json:"customization" visible:"false"`
+	Fonts         core.Fonts    `json:"fonts"`
 }
 
 func (s Settings) GlobalSettings() bool {

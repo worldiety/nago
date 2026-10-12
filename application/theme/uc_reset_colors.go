@@ -22,10 +22,15 @@ func NewResetColors(bus events.Bus, loadGlobal settings.LoadGlobal, storeGlobal 
 
 		cfg := settings.ReadGlobal[Settings](loadGlobal)
 		cfg.Colors = Colors{}
+		cfg.Customization = Customization{}
 		err := storeGlobal(user.SU(), cfg)
 		if err != nil {
 			return err
 		}
+
+		bus.Publish(SettingsUpdated{
+			Settings: cfg,
+		})
 
 		return nil
 	}

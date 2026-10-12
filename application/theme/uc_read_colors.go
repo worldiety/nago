@@ -18,7 +18,11 @@ var DefaultBaseColors = BaseColors{
 	Accent:      "#03613D",
 }
 
-func NewReadColors(loadGlobal settings.LoadGlobal) ReadColors {
+// Defaults returns the colors, which an application proposes, as long as the user has not chosen any. Colors which
+// are not valid fall back to [DefaultBaseColors].
+type Defaults func() Colors
+
+func NewReadColors(loadGlobal settings.LoadGlobal, defaults Defaults) ReadColors {
 	return func(subject auth.Subject) (Colors, error) {
 		if err := subject.Audit(PermReadColors); err != nil {
 			return Colors{}, err
@@ -26,14 +30,31 @@ func NewReadColors(loadGlobal settings.LoadGlobal) ReadColors {
 
 		cfg := settings.ReadGlobal[Settings](loadGlobal)
 
-		if !cfg.Colors.Dark.Valid() {
-			cfg.Colors.Dark = DarkMode(DefaultBaseColors)
-		}
-
-		if !cfg.Colors.Light.Valid() {
-			cfg.Colors.Light = LightMode(DefaultBaseColors)
-		}
-
-		return cfg.Colors, nil
+		return withDefaults(cfg.Colors, defaults), nil
 	}
+}
+
+// withDefaults replaces the colors of a mode, which the user has not chosen, by the proposal of the application or
+// by the defaults of nago.
+func withDefaults(colors Colors, defaults Defaults) Colors {
+	var proposed Colors
+	if defaults != nil {
+		proposed = defaults()
+	}
+
+	if !colors.Dark.Valid() {
+		colors.Dark = proposed.Dark
+		if !colors.Dark.Valid() {
+			colors.Dark = DarkMode(DefaultBaseColors)
+		}
+	}
+
+	if !colors.Light.Valid() {
+		colors.Light = proposed.Light
+		if !colors.Light.Valid() {
+			colors.Light = LightMode(DefaultBaseColors)
+		}
+	}
+
+	return colors
 }

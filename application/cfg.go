@@ -27,6 +27,7 @@ import (
 	"go.wdy.de/nago/application/admin"
 	"go.wdy.de/nago/application/migration"
 	"go.wdy.de/nago/application/rebac"
+	"go.wdy.de/nago/application/theme"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/data/json"
@@ -72,6 +73,7 @@ type Configurator struct {
 	destructors                []func()
 	app                        atomic.Pointer[core.Application] // nil until the application has been built
 	themeMutex                 sync.Mutex                       // orders building the application and theme updates
+	themeDefaults              atomic.Pointer[theme.Colors]     // proposal of the application, see SetThemeDefaults
 	rawEndpoint                []rawEndpoint
 	colorSets                  map[core.ColorScheme]map[core.NamespaceName]core.ColorSet
 	appIconUri                 proto.URI

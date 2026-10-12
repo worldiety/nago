@@ -45,18 +45,29 @@ type Calculations struct {
 	TrueLightMode DeriveColors
 }
 
-// HasColors returns true, if [Settings.Colors] Dark and Light [ui.Colors] are both valid. Otherwise, returns false.
-// You can check this to initially apply a theme and [Update] the colors or leave it eventually customized by the user.
+// HasColors returns true, if [Settings.Colors] Dark and Light [ui.Colors] are both valid, i.e. if colors have been
+// stored. Otherwise, returns false. To propose the colors of an application, do not store them, if HasColors returns
+// false, but use [go.wdy.de/nago/application.Configurator.SetThemeDefaults] instead.
 type HasColors func(subject auth.Subject) (bool, error)
 
-// ResetColors replaces the [Settings.Colors] field with its zero value and writes it into the settings.
-// There is no domain event fired, because it is unclear, if the system fallback default or the developers application
-// default must be read. Therefore, you have to restart the process, to execute whatever theme logic needs to be applied.
-// HasColors will return false.
+// ResetColors removes the stored colors and the [Customization], so that the proposal of the application applies
+// again, see [Defaults]. HasColors will return false.
 type ResetColors func(subject auth.Subject) error
 
+// UpdateColors stores the given colors, which win over the proposal of the application. It discards the
+// [Customization]. Use [UpdateCustomization] to store the choice of a user.
 type UpdateColors func(subject auth.Subject, colors Colors) error
+
+// ReadColors returns the stored colors or the proposal of the application, see [Defaults].
 type ReadColors func(subject auth.Subject) (Colors, error)
+
+// ReadCustomization returns the stored choice of the user. If there is none, it is derived from the colors, which
+// [ReadColors] returns, see [CustomizationOf].
+type ReadCustomization func(subject auth.Subject) (Customization, error)
+
+// UpdateCustomization stores the choice of the user and the colors calculated from it, which win over the proposal
+// of the application.
+type UpdateCustomization func(subject auth.Subject, customization Customization) error
 
 type UpdateFonts func(subject auth.Subject, fonts core.Fonts) error
 type ReadFonts func(subject auth.Subject) (core.Fonts, error)
@@ -69,9 +80,13 @@ type UseCases struct {
 	ResetColors  ResetColors
 	UpdateFonts  UpdateFonts
 	ReadFonts    ReadFonts
+
+	ReadCustomization   ReadCustomization
+	UpdateCustomization UpdateCustomization
 }
 
-func NewUseCases(bus events.Bus, loadGlobal settings.LoadGlobal, storeGlobal settings.StoreGlobal) UseCases {
+// NewUseCases creates the use cases. The defaults may be nil and are read, whenever no colors have been stored.
+func NewUseCases(bus events.Bus, loadGlobal settings.LoadGlobal, storeGlobal settings.StoreGlobal, defaults Defaults) UseCases {
 	return UseCases{
 		Calculations: Calculations{
 			DarkMode:      DarkMode,
@@ -80,10 +95,13 @@ func NewUseCases(bus events.Bus, loadGlobal settings.LoadGlobal, storeGlobal set
 			TrueLightMode: TrueLightMode,
 		},
 		UpdateColors: NewUpdateColors(bus, loadGlobal, storeGlobal),
-		ReadColors:   NewReadColors(loadGlobal),
+		ReadColors:   NewReadColors(loadGlobal, defaults),
 		HasColors:    NewHasColors(loadGlobal),
 		ResetColors:  NewResetColors(bus, loadGlobal, storeGlobal),
 		UpdateFonts:  NewUpdateFonts(bus, loadGlobal, storeGlobal),
 		ReadFonts:    NewReadFonts(loadGlobal),
+
+		ReadCustomization:   NewReadCustomization(loadGlobal, defaults),
+		UpdateCustomization: NewUpdateCustomization(bus, loadGlobal, storeGlobal),
 	}
 }

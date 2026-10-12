@@ -22,6 +22,8 @@ func NewUpdateColors(bus events.Bus, loadGlobal settings.LoadGlobal, storeGlobal
 
 		cfg := settings.ReadGlobal[Settings](loadGlobal)
 		cfg.Colors = colors
+		// the colors may differ from what the user has chosen, so that the choice is derived from the colors again
+		cfg.Customization = Customization{}
 		err := storeGlobal(user.SU(), cfg)
 		if err != nil {
 			return err
@@ -30,7 +32,7 @@ func NewUpdateColors(bus events.Bus, loadGlobal settings.LoadGlobal, storeGlobal
 		bus.Publish(SettingsUpdated{
 			Settings: cfg,
 		})
-		
+
 		return nil
 	}
 }

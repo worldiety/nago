@@ -40,6 +40,7 @@ func (c *Configurator) ThemeManagement() (ThemeManagement, error) {
 			c.EventBus(),
 			sets.UseCases.LoadGlobal,
 			sets.UseCases.StoreGlobal,
+			c.themeDefaultColors,
 		)}
 
 		uc := c.themeManagement.UseCases
@@ -70,8 +71,26 @@ func (c *Configurator) ThemeManagement() (ThemeManagement, error) {
 			app.UpdateColorSet(core.Dark, colors.Dark)
 			app.UpdateColorSet(core.Light, colors.Light)
 			app.UpdateFonts(fonts)
+			app.PublishConfiguration()
 		})
 	}
 
 	return *c.themeManagement, nil
+}
+
+// SetThemeDefaults proposes the colors of the application. They apply, as long as no colors have been stored, e.g.
+// on the first start, and after the colors have been reset. Once a user has chosen colors, e.g. in the admin center,
+// those always win. The proposal is never stored, so a changed proposal applies to all installations, which have
+// not been customized. Use [theme.ColorsFrom] to calculate the colors from three base colors.
+func (c *Configurator) SetThemeDefaults(colors theme.Colors) *Configurator {
+	c.themeDefaults.Store(&colors)
+	return c
+}
+
+func (c *Configurator) themeDefaultColors() theme.Colors {
+	if colors := c.themeDefaults.Load(); colors != nil {
+		return *colors
+	}
+
+	return theme.Colors{}
 }
