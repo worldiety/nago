@@ -22,7 +22,7 @@ var (
 
 type Settings struct {
 	Name  string   `value:"nago.sms.spryng.settings_title" json:"name"`
-	Token string   `json:"token"`
+	Token string   `json:"token" style:"secret" credentialWriteOnly:"true"`
 	RPS   int      `json:"rps"` // 20 by default
 	_     struct{} `credentialName:"nago.sms.spryng.settings_name" credentialDescription:"nago.sms.spryng.settings_desc" credentialLogo:"https://www.spryng.de/favicon.png"`
 }

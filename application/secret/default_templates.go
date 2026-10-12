@@ -12,7 +12,7 @@ type SMTP struct {
 	Host          string
 	Port          int `value:"587"`
 	Username      string
-	Password      string   `style:"secret"`
+	Password      string   `style:"secret" credentialWriteOnly:"true"`
 	SenderAddress string   `value:"" label:"Absenderadresse" supportingText:"Muss eine gültige E-Mail-Adresse sein. Wenn leer oder ungültig, wird der Username verwendet, sofern dieser eine gültige E-Mail-Adresse ist."`
 	// RateLimitPerHour limits the amount of send attempts per hour. 0 means unlimited.
 	RateLimitPerHour int `label:"Max. Mails pro Stunde" supportingText:"Optionale Ratenbegrenzung des Anbieters. 0 bedeutet unbegrenzt."`

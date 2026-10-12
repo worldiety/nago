@@ -23,7 +23,7 @@ var (
 type Settings struct {
 	Name  string   `value:"nago.chatbot.mattermost.settings_title" json:"name"`
 	URL   string   `json:"url"`
-	Token string   `json:"token"`
+	Token string   `json:"token" style:"secret" credentialWriteOnly:"true"`
 	RPS   int      `json:"rps"`
 	_     struct{} `credentialName:"nago.chatbot.mattermost.settings_name" credentialDescription:"nago.chatbot.mattermost.settings_desc" credentialLogo:"https://mattermost.worldiety.net/static/images/favicon/favicon-default-32x32.png"`
 }

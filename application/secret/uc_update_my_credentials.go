@@ -40,7 +40,7 @@ func NewUpdateMyCredentials(mutex *sync.Mutex, bus events.Bus, repository Reposi
 			return AccessDeniedErr
 		}
 
-		secret.Credentials = credentials
+		secret.Credentials = keepWriteOnly(secret.Credentials, credentials)
 		secret.LastMod = time.Now()
 
 		if err := repository.Save(secret); err != nil {

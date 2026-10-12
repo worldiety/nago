@@ -64,7 +64,7 @@ type Settings struct {
 	StorageDir string `label:"nago.ai.gollama.settings_storage_dir" supportingText:"nago.ai.gollama.settings_storage_dir_desc" json:"storageDir"`
 
 	// HFToken is the optional HuggingFace access token for gated/private repositories.
-	HFToken string `label:"nago.ai.gollama.settings_hf_token" supportingText:"nago.ai.gollama.settings_hf_token_desc" style:"secret" json:"hfToken"`
+	HFToken string `label:"nago.ai.gollama.settings_hf_token" supportingText:"nago.ai.gollama.settings_hf_token_desc" style:"secret" credentialWriteOnly:"true" json:"hfToken"`
 
 	// CtxSize is the default context window in tokens. 0 derives it from the model. A catalog entry may
 	// override it.

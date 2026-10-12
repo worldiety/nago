@@ -47,7 +47,7 @@ var (
 type Settings struct {
 	Name        string   `value:"nago.ai.anthropic.settings_title"`
 	Description string   `label:"nago.common.label.description" lines:"3"`
-	Token       string   `style:"secret"`
+	Token       string   `style:"secret" credentialWriteOnly:"true"`
 	Version     string   `label:"nago.ai.anthropic.settings_version" supportingText:"nago.ai.anthropic.settings_version_desc" json:"version"`
 	MaxTokens   int      `label:"nago.ai.anthropic.settings_max_tokens" json:"maxTokens"`
 	RPS         int      `label:"nago.ai.anthropic.settings_rps" supportingText:"nago.ai.anthropic.settings_rps_desc" json:"rps"`
