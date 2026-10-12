@@ -31,7 +31,9 @@
 			class="pointer-events-auto fixed"
 			@keydown.tab.exact="moveFocusForward"
 			@keydown.shift.tab="moveFocusBackwards"
-			@click.stop="sendDismissEvent"
+			@pointerdown="pressedOnBackdrop = $event.target === $event.currentTarget"
+			@pointerup="releasedOnBackdrop = $event.target === $event.currentTarget"
+			@click.stop="onBackdropClick"
 		>
 			<UiGeneric v-if="ui.content" :ui="ui.content" class="h-screen w-screen" @click.stop />
 		</div>
@@ -109,6 +111,19 @@ function sendDismissEvent() {
 	if (!props.ui.onDismissRequest) return;
 
 	serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.onDismissRequest, nextRID()));
+}
+
+// Chrome and Safari send a click to the common ancestor, if the button is pressed inside the dialog, e.g. to
+// select text, and released outside of it, or the other way round. That ancestor is the backdrop, so only a click
+// which starts and ends on the backdrop dismisses.
+let pressedOnBackdrop = false;
+let releasedOnBackdrop = false;
+
+function onBackdropClick(e: MouseEvent) {
+	const onBackdrop = pressedOnBackdrop && releasedOnBackdrop && e.target === e.currentTarget;
+	pressedOnBackdrop = false;
+	releasedOnBackdrop = false;
+	if (onBackdrop) sendDismissEvent();
 }
 
 function captureFocusInDialog(): void {
