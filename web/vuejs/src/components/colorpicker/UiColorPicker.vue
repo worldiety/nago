@@ -170,8 +170,8 @@ const props = defineProps<{
 
 const serviceAdapter = useServiceAdapter();
 
-const modes: Mode[] = ['hct', 'hsv'];
-const mode = ref<Mode>(props.ui.mode === ColorPickerModeValues.ColorPickerModeHSV ? 'hsv' : 'hct');
+const modes: Mode[] = ['hsv', 'hct'];
+const mode = ref<Mode>(props.ui.mode === ColorPickerModeValues.ColorPickerModeHCT ? 'hct' : 'hsv');
 
 // The color is kept in the coordinates of the active mode, otherwise the hue would jump for grays. For HCT, the
 // chroma is the requested one, which may be more than the hue and tone can display, so that it comes back, if the

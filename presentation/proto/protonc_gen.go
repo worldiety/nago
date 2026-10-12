@@ -22136,10 +22136,10 @@ func (v *ColorPicker) read(r *BinaryReader) error {
 type ColorPickerMode uint64
 
 const (
-	// ColorPickerModeHCT uses the hue, chroma and tone of the HCT color space, the default.
-	ColorPickerModeHCT ColorPickerMode = 0
-	// ColorPickerModeHSV uses the hue, saturation and value of the HSV color space.
-	ColorPickerModeHSV ColorPickerMode = 1
+	// ColorPickerModeHSV uses the hue, saturation and value of the HSV color space, the default.
+	ColorPickerModeHSV ColorPickerMode = 0
+	// ColorPickerModeHCT uses the hue, chroma and tone of the HCT color space.
+	ColorPickerModeHCT ColorPickerMode = 1
 )
 
 func (v *ColorPickerMode) write(r *BinaryWriter) error {

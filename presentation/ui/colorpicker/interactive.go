@@ -21,15 +21,15 @@ import (
 type Mode int
 
 const (
+	// ModeHSV uses hue, saturation and value of the HSV color space, the default.
+	ModeHSV Mode = iota
 	// ModeHCT uses hue, chroma and tone of the HCT color space, which is also the base of the nago themes.
-	ModeHCT Mode = iota
-	// ModeHSV uses hue, saturation and value of the HSV color space.
-	ModeHSV
+	ModeHCT
 )
 
 // TPicker is a basic component (Color Picker).
 // It lets the user pick a color interactively within a color area, a hue bar and an alpha bar, or by entering it
-// as hex, HCT, RGB, HSV, HSL or CMYK. The area uses the HCT color space by default. The picked color is written
+// as hex, HCT, RGB, HSV, HSL or CMYK. The area uses the HSV color space by default. The picked color is written
 // as hex into the bound state, i.e. #rrggbb for an opaque color and #rrggbbaa otherwise. See also [PickerField]
 // for a field which opens the picker in a dialog.
 type TPicker struct {
@@ -59,7 +59,7 @@ func (c TPicker) InputValue(state *core.State[ui.Color]) TPicker {
 	return c
 }
 
-// Mode selects the color space of the area and the hue bar. The default is [ModeHCT].
+// Mode selects the color space of the area and the hue bar. The default is [ModeHSV].
 func (c TPicker) Mode(mode Mode) TPicker {
 	c.mode = mode
 	return c

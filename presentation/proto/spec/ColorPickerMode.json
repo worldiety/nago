@@ -4,12 +4,12 @@
   "id": 287,
   "const": {
     "0": {
-      "doc": "ColorPickerModeHCT uses the hue, chroma and tone of the HCT color space, the default.",
-      "name": "ColorPickerModeHCT"
+      "doc": "ColorPickerModeHSV uses the hue, saturation and value of the HSV color space, the default.",
+      "name": "ColorPickerModeHSV"
     },
     "1": {
-      "doc": "ColorPickerModeHSV uses the hue, saturation and value of the HSV color space.",
-      "name": "ColorPickerModeHSV"
+      "doc": "ColorPickerModeHCT uses the hue, chroma and tone of the HCT color space.",
+      "name": "ColorPickerModeHCT"
     }
   }
 }

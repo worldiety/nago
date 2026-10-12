@@ -45,7 +45,7 @@ func (c TPickerField) InputValue(state *core.State[ui.Color]) TPickerField {
 	return c
 }
 
-// Mode selects the color space of the picker. The default is [ModeHCT].
+// Mode selects the color space of the picker. The default is [ModeHSV].
 func (c TPickerField) Mode(mode Mode) TPickerField {
 	c.mode = mode
 	return c

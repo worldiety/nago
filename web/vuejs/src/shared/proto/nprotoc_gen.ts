@@ -22706,10 +22706,10 @@ function writeTypeHeaderColorPickerMode(dst: BinaryWriter): void {
 }
 // companion enum containing all defined constants for ColorPickerMode
 export enum ColorPickerModeValues {
-	// ColorPickerModeHCT uses the hue, chroma and tone of the HCT color space, the default.
-	ColorPickerModeHCT = 0,
-	// ColorPickerModeHSV uses the hue, saturation and value of the HSV color space.
-	ColorPickerModeHSV = 1,
+	// ColorPickerModeHSV uses the hue, saturation and value of the HSV color space, the default.
+	ColorPickerModeHSV = 0,
+	// ColorPickerModeHCT uses the hue, chroma and tone of the HCT color space.
+	ColorPickerModeHCT = 1,
 }
 
 // Function to marshal a Writeable object into a BinaryWriter
