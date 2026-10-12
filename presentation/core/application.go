@@ -126,6 +126,18 @@ func (a *Application) sessionLoggedOut(evt session.LoggedOut) {
 	})
 }
 
+// PublishConfiguration sends the current themes and fonts to all open windows, which apply them at once. Call it
+// after changing them with [Application.UpdateColorSet] or [Application.UpdateFonts], otherwise a window shows them
+// only after a reload.
+func (a *Application) PublishConfiguration() {
+	a.scopes.scopes.Each(func(_ proto.ScopeID, scope *Scope) bool {
+		scope.eventLoop.Post(func() {
+			scope.publishConfiguration(0)
+		})
+		return true
+	})
+}
+
 // Instance returns a random identifier for the application instance which is created on application startup
 // and is different for each created instance. It can be used by any client to detect if the service has been
 // restarted, which may also indicate that the protocol may have been changed and any frontend

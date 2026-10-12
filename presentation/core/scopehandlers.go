@@ -378,7 +378,12 @@ func (s *Scope) handleConfigurationRequested(evt *proto.ScopeConfigurationChange
 	}
 	s.updateWindowInfo(s.windowInfo)
 	s.updateLanguage(string(evt.AcceptLanguage))
+	s.publishConfiguration(evt.RID)
+}
 
+// publishConfiguration sends the themes, fonts and other settings of the application, which the frontend applies.
+// Only for the event loop.
+func (s *Scope) publishConfiguration(rid proto.RID) {
 	themes := proto.Themes{
 		Dark: proto.Theme{
 			Colors: proto.NamespacedColors{},
@@ -426,7 +431,7 @@ func (s *Scope) handleConfigurationRequested(evt *proto.ScopeConfigurationChange
 		AvailableLocales:   proto.Locales{"de", "en"}, //TODO
 		ActiveLocale:       proto.Locale(s.locale.String()),
 		Themes:             themes,
-		RID:                evt.RID,
+		RID:                rid,
 		Fonts:              fonts,
 		Instance:           proto.Str(s.app.Instance()),
 	})
