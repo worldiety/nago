@@ -1,0 +1,55 @@
+{
+  "doc": "ColorPicker lets the user pick a color interactively within a color area, a hue bar and an optional alpha bar, or by entering it in one of several notations.",
+  "kind": "Record",
+  "id": 286,
+  "fields": {
+    "1": {
+      "name": "Label",
+      "type": "Str"
+    },
+    "2": {
+      "name": "SupportingText",
+      "type": "Str"
+    },
+    "3": {
+      "name": "ErrorText",
+      "type": "Str"
+    },
+    "4": {
+      "doc": "Value is the current color as hex, either #rrggbb or #rrggbbaa.",
+      "name": "Value",
+      "type": "Str"
+    },
+    "5": {
+      "doc": "InputValue is a binding to a state, into which the picked color is written as hex.",
+      "name": "InputValue",
+      "type": "Ptr"
+    },
+    "6": {
+      "name": "Disabled",
+      "type": "Bool"
+    },
+    "7": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "8": {
+      "name": "Mode",
+      "type": "ColorPickerMode"
+    },
+    "9": {
+      "doc": "DisableAlpha hides the alpha bar, so that only opaque colors can be picked.",
+      "name": "DisableAlpha",
+      "type": "Bool"
+    },
+    "10": {
+      "name": "Invisible",
+      "type": "Bool"
+    },
+    "11": {
+      "doc": "Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.",
+      "name": "Id",
+      "type": "Str"
+    }
+  }
+}

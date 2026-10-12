@@ -22487,6 +22487,231 @@ export class RetScreenshot implements Writeable, Readable, CallRet {
 	isCallRet(): void {}
 }
 
+// ColorPicker lets the user pick a color interactively within a color area, a hue bar and an optional alpha bar, or by entering it in one of several notations.
+export class ColorPicker implements Writeable, Readable, Component {
+	public label?: Str;
+
+	public supportingText?: Str;
+
+	public errorText?: Str;
+
+	// Value is the current color as hex, either #rrggbb or #rrggbbaa.
+	public value?: Str;
+
+	// InputValue is a binding to a state, into which the picked color is written as hex.
+	public inputValue?: Ptr;
+
+	public disabled?: Bool;
+
+	public frame?: Frame;
+
+	public mode?: ColorPickerMode;
+
+	// DisableAlpha hides the alpha bar, so that only opaque colors can be picked.
+	public disableAlpha?: Bool;
+
+	public invisible?: Bool;
+
+	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
+	public id?: Str;
+
+	constructor(
+		label: Str | undefined = undefined,
+		supportingText: Str | undefined = undefined,
+		errorText: Str | undefined = undefined,
+		value: Str | undefined = undefined,
+		inputValue: Ptr | undefined = undefined,
+		disabled: Bool | undefined = undefined,
+		frame: Frame | undefined = undefined,
+		mode: ColorPickerMode | undefined = undefined,
+		disableAlpha: Bool | undefined = undefined,
+		invisible: Bool | undefined = undefined,
+		id: Str | undefined = undefined
+	) {
+		this.label = label;
+		this.supportingText = supportingText;
+		this.errorText = errorText;
+		this.value = value;
+		this.inputValue = inputValue;
+		this.disabled = disabled;
+		this.frame = frame;
+		this.mode = mode;
+		this.disableAlpha = disableAlpha;
+		this.invisible = invisible;
+		this.id = id;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.label = readString(reader);
+					break;
+				}
+				case 2: {
+					this.supportingText = readString(reader);
+					break;
+				}
+				case 3: {
+					this.errorText = readString(reader);
+					break;
+				}
+				case 4: {
+					this.value = readString(reader);
+					break;
+				}
+				case 5: {
+					this.inputValue = readInt(reader);
+					break;
+				}
+				case 6: {
+					this.disabled = readBool(reader);
+					break;
+				}
+				case 7: {
+					this.frame = new Frame();
+					this.frame.read(reader);
+					break;
+				}
+				case 8: {
+					this.mode = readInt(reader);
+					break;
+				}
+				case 9: {
+					this.disableAlpha = readBool(reader);
+					break;
+				}
+				case 10: {
+					this.invisible = readBool(reader);
+					break;
+				}
+				case 11: {
+					this.id = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.label !== undefined,
+			this.supportingText !== undefined,
+			this.errorText !== undefined,
+			this.value !== undefined,
+			this.inputValue !== undefined,
+			this.disabled !== undefined,
+			this.frame !== undefined && !this.frame.isZero(),
+			this.mode !== undefined,
+			this.disableAlpha !== undefined,
+			this.invisible !== undefined,
+			this.id !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.label!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.supportingText!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			writeString(writer, this.errorText!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
+			writeString(writer, this.value!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 5);
+			writeInt(writer, this.inputValue!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 6);
+			writeBool(writer, this.disabled!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.RECORD, 7);
+			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 8);
+			writeInt(writer, this.mode!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[9]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 9);
+			writeBool(writer, this.disableAlpha!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[10]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 10);
+			writeBool(writer, this.invisible!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[11]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 11);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.label === undefined &&
+			this.supportingText === undefined &&
+			this.errorText === undefined &&
+			this.value === undefined &&
+			this.inputValue === undefined &&
+			this.disabled === undefined &&
+			(this.frame === undefined || this.frame.isZero()) &&
+			this.mode === undefined &&
+			this.disableAlpha === undefined &&
+			this.invisible === undefined &&
+			this.id === undefined
+		);
+	}
+
+	reset(): void {
+		this.label = undefined;
+		this.supportingText = undefined;
+		this.errorText = undefined;
+		this.value = undefined;
+		this.inputValue = undefined;
+		this.disabled = undefined;
+		this.frame = undefined;
+		this.mode = undefined;
+		this.disableAlpha = undefined;
+		this.invisible = undefined;
+		this.id = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 286);
+		return;
+	}
+	isComponent(): void {}
+}
+
+// ColorPickerMode selects the color space of the area and the hue bar of a [ColorPicker].
+export type ColorPickerMode = number;
+function writeTypeHeaderColorPickerMode(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 287);
+	return;
+}
+// companion enum containing all defined constants for ColorPickerMode
+export enum ColorPickerModeValues {
+	// ColorPickerModeHCT uses the hue, chroma and tone of the HCT color space, the default.
+	ColorPickerModeHCT = 0,
+	// ColorPickerModeHSV uses the hue, saturation and value of the HSV color space.
+	ColorPickerModeHSV = 1,
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -23799,6 +24024,15 @@ export function unmarshal(src: BinaryReader): any {
 		case 285: {
 			const v = new RetScreenshot();
 			v.read(src);
+			return v;
+		}
+		case 286: {
+			const v = new ColorPicker();
+			v.read(src);
+			return v;
+		}
+		case 287: {
+			const v = readInt(src) as ColorPickerMode;
 			return v;
 		}
 	}

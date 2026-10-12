@@ -1,0 +1,15 @@
+{
+  "doc": "ColorPickerMode selects the color space of the area and the hue bar of a [ColorPicker].",
+  "kind": "Uint",
+  "id": 287,
+  "const": {
+    "0": {
+      "doc": "ColorPickerModeHCT uses the hue, chroma and tone of the HCT color space, the default.",
+      "name": "ColorPickerModeHCT"
+    },
+    "1": {
+      "doc": "ColorPickerModeHSV uses the hue, saturation and value of the HSV color space.",
+      "name": "ColorPickerModeHSV"
+    }
+  }
+}

@@ -337,6 +337,7 @@ func (Box) isComponent()                {}
 func (Canvas) isComponent()             {}
 func (Checkbox) isComponent()           {}
 func (CodeEditor) isComponent()         {}
+func (ColorPicker) isComponent()        {}
 func (CountDown) isComponent()          {}
 func (DatePicker) isComponent()         {}
 func (Divider) isComponent()            {}
@@ -21926,6 +21927,241 @@ func (v *RetScreenshot) read(r *BinaryReader) error {
 	return nil
 }
 
+// ColorPicker lets the user pick a color interactively within a color area, a hue bar and an optional alpha bar, or by entering it in one of several notations.
+type ColorPicker struct {
+	Label          Str
+	SupportingText Str
+	ErrorText      Str
+	// Value is the current color as hex, either #rrggbb or #rrggbbaa.
+	Value Str
+	// InputValue is a binding to a state, into which the picked color is written as hex.
+	InputValue Ptr
+	Disabled   Bool
+	Frame      Frame
+	Mode       ColorPickerMode
+	// DisableAlpha hides the alpha bar, so that only opaque colors can be picked.
+	DisableAlpha Bool
+	Invisible    Bool
+	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
+	Id Str
+}
+
+func (v *ColorPicker) write(w *BinaryWriter) error {
+	var fields [12]bool
+	fields[1] = !v.Label.IsZero()
+	fields[2] = !v.SupportingText.IsZero()
+	fields[3] = !v.ErrorText.IsZero()
+	fields[4] = !v.Value.IsZero()
+	fields[5] = !v.InputValue.IsZero()
+	fields[6] = !v.Disabled.IsZero()
+	fields[7] = !v.Frame.IsZero()
+	fields[8] = !v.Mode.IsZero()
+	fields[9] = !v.DisableAlpha.IsZero()
+	fields[10] = !v.Invisible.IsZero()
+	fields[11] = !v.Id.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Label.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.SupportingText.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.ErrorText.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.Value.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(uvarint, 5); err != nil {
+			return err
+		}
+		if err := v.InputValue.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(uvarint, 6); err != nil {
+			return err
+		}
+		if err := v.Disabled.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(record, 7); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		if err := w.writeFieldHeader(uvarint, 8); err != nil {
+			return err
+		}
+		if err := v.Mode.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[9] {
+		if err := w.writeFieldHeader(uvarint, 9); err != nil {
+			return err
+		}
+		if err := v.DisableAlpha.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[10] {
+		if err := w.writeFieldHeader(uvarint, 10); err != nil {
+			return err
+		}
+		if err := v.Invisible.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[11] {
+		if err := w.writeFieldHeader(byteSlice, 11); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *ColorPicker) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Label.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.SupportingText.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.ErrorText.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Value.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.InputValue.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.Disabled.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.Mode.read(r)
+			if err != nil {
+				return err
+			}
+		case 9:
+			err := v.DisableAlpha.read(r)
+			if err != nil {
+				return err
+			}
+		case 10:
+			err := v.Invisible.read(r)
+			if err != nil {
+				return err
+			}
+		case 11:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// ColorPickerMode selects the color space of the area and the hue bar of a [ColorPicker].
+type ColorPickerMode uint64
+
+const (
+	// ColorPickerModeHCT uses the hue, chroma and tone of the HCT color space, the default.
+	ColorPickerModeHCT ColorPickerMode = 0
+	// ColorPickerModeHSV uses the hue, saturation and value of the HSV color space.
+	ColorPickerModeHSV ColorPickerMode = 1
+)
+
+func (v *ColorPickerMode) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *ColorPickerMode) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = ColorPickerMode(tmp)
+	return nil
+}
+
+func (v *ColorPickerMode) reset() {
+	*v = ColorPickerMode(0)
+}
+func (v *ColorPickerMode) IsZero() bool {
+	return *v == 0
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -23585,6 +23821,18 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 285:
 		var v RetScreenshot
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 286:
+		var v ColorPicker
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 287:
+		var v ColorPickerMode
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -28248,6 +28496,27 @@ func (v *RetScreenshot) IsZero() bool {
 	return v.PngBase64.IsZero() && v.Width.IsZero() && v.Height.IsZero() && v.Snapshot.IsZero() && v.Keep.IsZero()
 }
 
+func (v *ColorPicker) reset() {
+	v.Label.reset()
+	v.SupportingText.reset()
+	v.ErrorText.reset()
+	v.Value.reset()
+	v.InputValue.reset()
+	v.Disabled.reset()
+	v.Frame.reset()
+	v.Mode.reset()
+	v.DisableAlpha.reset()
+	v.Invisible.reset()
+	v.Id.reset()
+}
+
+func (v *ColorPicker) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.InputValue.IsZero() && v.Disabled.IsZero() && v.Frame.IsZero() && v.Mode.IsZero() && v.DisableAlpha.IsZero() && v.Invisible.IsZero() && v.Id.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -30154,6 +30423,20 @@ func (v *CallScreenshot) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *RetScreenshot) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 285); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *ColorPicker) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 286); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *ColorPickerMode) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 287); err != nil {
 		return err
 	}
 	return nil
