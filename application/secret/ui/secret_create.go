@@ -17,6 +17,7 @@ import (
 	"github.com/worldiety/enum"
 	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/application/secret"
+	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/presentation/core"
 	heroOutline "go.wdy.de/nago/presentation/icons/hero/outline"
 	"go.wdy.de/nago/presentation/ui"
@@ -25,15 +26,31 @@ import (
 	"go.wdy.de/nago/presentation/ui/list"
 )
 
-func CreateSecretPage(wnd core.Window, pages Pages, createSecret secret.CreateSecret) core.View {
+// CreateSecretPage lets the user choose the type of a new secret and then fill it in. Nothing is stored, before the
+// user saves it, so that leaving the page does not leave an empty secret behind.
+func CreateSecretPage(wnd core.Window, pages Pages, uc UseCases) core.View {
+	if key := wnd.Values()["type"]; key != "" {
+		spec, ok := credentialTypeSpecByKey(key)
+		if !ok {
+			return alert.Banner("Nicht gefunden", "Diese Art von Secret ist nicht verfügbar.")
+		}
+
+		draft := secret.Secret{
+			Owners:      []user.ID{wnd.Subject().ID()},
+			Credentials: reflect.New(spec.refType).Elem().Interface().(secret.Credentials),
+		}
+
+		return secretEditor(wnd, pages, uc, draft, true)
+	}
+
 	var items []core.View
 	for _, spec := range getGlobalCredentialTypeSpecs() {
-		items = append(items, credentialType(wnd, pages, createSecret, spec))
+		items = append(items, credentialType(wnd, pages, spec))
 	}
 
 	return ui.VStack(
 		ui.H1("Neues Secret anlegen"),
-		list.List(items...).Caption(ui.Text("Verfügbare Geheimnis-Varianten")).Frame(ui.Frame{}.FullWidth()),
+		list.List(items...).Caption(ui.Text("Welche Art von Secret möchten Sie anlegen?")).Frame(ui.Frame{}.FullWidth()),
 		ui.HStack(ui.SecondaryButton(func() {
 			wnd.Navigation().Back()
 		}).Title(rstring.ActionBack.Get(wnd))).
@@ -123,19 +140,28 @@ func getGlobalCredentialTypeSpecs() []credentialTypeSpec {
 	return res
 }
 
-func credentialType(wnd core.Window, pages Pages, createSecret secret.CreateSecret, spec credentialTypeSpec) core.View {
+func credentialType(wnd core.Window, pages Pages, spec credentialTypeSpec) core.View {
 	return list.Entry().
 		Leading(spec.LogoView()).
 		Headline(wnd.Bundle().Resolve(spec.name)).
 		SupportingText(wnd.Bundle().Resolve(spec.description)).
-		Trailing(ui.PrimaryButton(func() {
-			value := reflect.New(spec.refType).Elem().Interface().(secret.Credentials)
-			id, err := createSecret(wnd.Subject(), value)
-			if err != nil {
-				alert.ShowBannerError(wnd, err)
-				return
-			}
+		Trailing(ui.ImageIcon(heroOutline.ChevronRight)).
+		Action(func() {
+			wnd.Navigation().ForwardTo(pages.CreateSecret, core.Values{"type": spec.key()})
+		})
+}
 
-			wnd.Navigation().ForwardTo(pages.EditSecret, core.Values{"id": string(id)})
-		}).PreIcon(heroOutline.Plus).Title(rstring.ActionAdd.Get(wnd)))
+// key identifies the type of credentials, e.g. in a navigation parameter.
+func (s credentialTypeSpec) key() string {
+	return s.refType.PkgPath() + "." + s.refType.Name()
+}
+
+func credentialTypeSpecByKey(key string) (credentialTypeSpec, bool) {
+	for _, spec := range getGlobalCredentialTypeSpecs() {
+		if spec.key() == key {
+			return spec, true
+		}
+	}
+
+	return credentialTypeSpec{}, false
 }

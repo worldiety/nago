@@ -12,6 +12,7 @@ import (
 	"slices"
 
 	"go.wdy.de/nago/application/group"
+	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/application/secret"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/presentation/core"
@@ -24,19 +25,11 @@ import (
 	"go.wdy.de/nago/presentation/ui/picker"
 )
 
-func EditSecretPage(
-	wnd core.Window,
-	pages Pages,
-	deleteSecret secret.DeleteMySecretByID,
-	findSecret secret.FindMySecretByID,
-	updateSecret secret.UpdateMyCredentials,
-	updateSecretGroups secret.UpdateMySecretGroups,
-	updateMySecretOwners secret.UpdateMySecretOwners,
-	findMyGroups group.FindMyGroups,
-	findAllUsers user.FindAll,
-) core.View {
+// EditSecretPage edits an existing secret. The stored values of write-only fields like passwords are never sent
+// to the browser again, see [secret.WithoutWriteOnly].
+func EditSecretPage(wnd core.Window, pages Pages, uc UseCases) core.View {
 	id := secret.ID(wnd.Values()["id"])
-	optScr, err := findSecret(wnd.Subject(), id)
+	optScr, err := uc.Secrets.FindMySecretByID(wnd.Subject(), id)
 	if err != nil {
 		return alert.BannerError(err)
 	}
@@ -45,135 +38,142 @@ func EditSecretPage(
 		return alert.Banner("Nicht gefunden", "Das Secret ist nicht mehr verfügbar.")
 	}
 
-	scr := optScr.Unwrap()
+	return secretEditor(wnd, pages, uc, optScr.Unwrap(), false)
+}
 
-	initialCredentialValue := scr.Credentials
-	state := core.AutoState[secret.Credentials](wnd).Init(func() secret.Credentials {
-		return scr.Credentials
+// secretEditor edits the credentials and the sharing of a secret. A new secret is a draft, which is stored only by
+// saving it.
+func secretEditor(wnd core.Window, pages Pages, uc UseCases, scr secret.Secret, create bool) core.View {
+	initialCredentials := secret.WithoutWriteOnly(scr.Credentials)
+	credentials := core.AutoState[secret.Credentials](wnd).Init(func() secret.Credentials {
+		return initialCredentials
 	})
 
-	// shared groups
+	// groups of the subject, foreign groups of the secret are kept by the use case and only listed
 	var availGroups []group.Group
-	var initalSelected []group.Group
-	for grp, err := range findMyGroups(wnd.Subject()) {
+	var initialGroups []group.Group
+	for grp, err := range uc.FindMyGroups(wnd.Subject()) {
 		if err != nil {
 			return alert.BannerError(err)
 		}
 
 		availGroups = append(availGroups, grp)
 		if slices.Contains(scr.Groups, grp.ID) {
-			initalSelected = append(initalSelected, grp)
+			initialGroups = append(initialGroups, grp)
+		}
+	}
+
+	var foreignGroups []group.ID
+	for _, gid := range scr.Groups {
+		if !slices.ContainsFunc(availGroups, func(g group.Group) bool { return g.ID == gid }) {
+			foreignGroups = append(foreignGroups, gid)
 		}
 	}
 
 	selectedGroups := core.AutoState[[]group.Group](wnd).Init(func() []group.Group {
-		return initalSelected
+		return initialGroups
 	})
 
-	// shared users
 	var availUsers []user.User
-	var initalSelectedUsers []user.User
-	for usr, err := range findAllUsers(user.SU()) {
+	var initialUsers []user.User
+	for usr, err := range uc.FindAllUsers(user.SU()) {
 		if err != nil {
 			return alert.BannerError(err)
 		}
+
 		availUsers = append(availUsers, usr)
 		if slices.Contains(scr.Owners, usr.ID) {
-			initalSelectedUsers = append(initalSelectedUsers, usr)
+			initialUsers = append(initialUsers, usr)
 		}
 	}
 
 	selectedUsers := core.AutoState[[]user.User](wnd).Init(func() []user.User {
-		return initalSelectedUsers
+		return initialUsers
 	})
 
-	spec := newCredentialTypeSpec(reflect.TypeOf(scr.Credentials))
-	logo := spec.LogoView()
-	if avtLogo, ok := logo.(avatar.TAvatar); ok {
-		logo = cardlayout.Card(wnd.Bundle().Resolve(spec.name)).
-			Style(cardlayout.TitleCompact).
-			Body(
-				ui.VStack(
-					avtLogo.Size(ui.L80),
-					ui.Text(wnd.Bundle().Resolve(spec.description)).TextAlignment(ui.TextAlignCenter),
-				).Gap(ui.L16).
-					FullWidth(),
-			).
-			Frame(ui.Frame{}.FullWidth())
+	dirty := create ||
+		!reflect.DeepEqual(credentials.Get(), initialCredentials) ||
+		!sameIDs(groupIDs(selectedGroups.Get()), groupIDs(initialGroups)) ||
+		!sameIDs(userIDs(selectedUsers.Get()), userIDs(initialUsers))
+
+	sharedWith := append(groupNames(wnd.Subject(), uc.FindGroupByID, groupIDs(selectedGroups.Get())), groupNames(wnd.Subject(), uc.FindGroupByID, foreignGroups)...)
+	access := accessSentence(wnd, selectedUsers.Get(), sharedWith)
+
+	title := "Secret bearbeiten"
+	if create {
+		title = "Neues Secret"
 	}
 
-	dlgPresented := core.AutoState[bool](wnd)
+	deletePresented := core.AutoState[bool](wnd)
+
 	return ui.VStack(
-		alert.Dialog("Secret löschen?", ui.Text("Soll das Secret wirklich entfernt werden?"), dlgPresented, alert.Delete(func() {
-			if err := deleteSecret(wnd.Subject(), id); err != nil {
-				alert.ShowBannerError(wnd, err)
-				return
-			}
-
-			wnd.Navigation().ResetTo(pages.Vault, nil)
-		}), alert.Cancel(nil)),
-		ui.H1("Secret bearbeiten"),
-
-		ui.HStack(ui.TertiaryButton(func() {
-			dlgPresented.Set(true)
-		}).PreIcon(heroSolid.Trash).Title("Secret löschen")).
-			FullWidth().
-			Alignment(ui.Trailing),
-
-		logo,
-
-		cardlayout.Card("Credentials").
-			Style(cardlayout.TitleCompact).
-			Body(form.Auto[secret.Credentials](form.AutoOptions{}, state)).
-			Frame(ui.Frame{}.FullWidth()),
-
-		groupEditor(
-			wnd,
-			availGroups,
-			selectedGroups,
-			availUsers,
-			selectedUsers,
-		),
-		ui.HLineWithColor(ui.ColorAccent),
-		ui.HStack(
-			ui.SecondaryButton(func() {
-				if initialCredentialValue.IsZero() {
-					if err := deleteSecret(wnd.Subject(), id); err != nil {
-						alert.ShowBannerError(wnd, err)
-						return
-					}
+		ui.If(!create, alert.Dialog(
+			"Secret löschen?",
+			ui.Text("Das Secret wird für alle entfernt, nicht nur für Sie. "+access),
+			deletePresented,
+			alert.Cancel(nil),
+			alert.Delete(func() {
+				if err := uc.Secrets.DeleteMySecretByID(wnd.Subject(), scr.ID); err != nil {
+					alert.ShowBannerError(wnd, err)
+					return
 				}
 
 				wnd.Navigation().ResetTo(pages.Vault, nil)
-			}).Title("Abbrechen"),
+			}),
+		)),
+		ui.H1(title),
+		ui.If(!create, ui.HStack(ui.TertiaryButton(func() {
+			deletePresented.Set(true)
+		}).PreIcon(heroSolid.Trash).Title("Secret löschen")).
+			FullWidth().
+			Alignment(ui.Trailing)),
+
+		typeCard(wnd, scr),
+
+		cardlayout.Card("Zugangsdaten").
+			Style(cardlayout.TitleCompact).
+			Body(form.Auto[secret.Credentials](credentialsFormOptions(scr, create), credentials)).
+			Frame(ui.Frame{}.FullWidth()),
+
+		accessCard(availGroups, selectedGroups, foreignGroups, availUsers, selectedUsers, access),
+
+		ui.HLineWithColor(ui.ColorAccent),
+		ui.HStack(
+			ui.SecondaryButton(func() {
+				wnd.Navigation().ResetTo(pages.Vault, nil)
+			}).Title(rstring.ActionCancel.Get(wnd)),
 			ui.PrimaryButton(func() {
-				if err := updateSecret(wnd.Subject(), id, state.Get()); err != nil {
+				if create {
+					_, err := uc.Secrets.CreateSecret(wnd.Subject(), credentials.Get(), secret.CreateOptions{
+						Groups: groupIDs(selectedGroups.Get()),
+						Owners: userIDs(selectedUsers.Get()),
+					})
+					if err != nil {
+						alert.ShowBannerError(wnd, err)
+						return
+					}
+
+					wnd.Navigation().ResetTo(pages.Vault, nil)
+					return
+				}
+
+				if err := uc.Secrets.UpdateMyCredentials(wnd.Subject(), scr.ID, credentials.Get()); err != nil {
 					alert.ShowBannerError(wnd, err)
 					return
 				}
 
-				var gids []group.ID
-				for _, grp := range selectedGroups.Get() {
-					gids = append(gids, grp.ID)
-				}
-
-				if err := updateSecretGroups(wnd.Subject(), id, gids); err != nil {
+				if err := uc.Secrets.UpdateMySecretGroups(wnd.Subject(), scr.ID, groupIDs(selectedGroups.Get())); err != nil {
 					alert.ShowBannerError(wnd, err)
 					return
 				}
 
-				var uids []user.ID
-				for _, usr := range selectedUsers.Get() {
-					uids = append(uids, usr.ID)
-				}
-
-				if err := updateMySecretOwners(wnd.Subject(), id, uids); err != nil {
+				if err := uc.Secrets.UpdateMySecretOwners(wnd.Subject(), scr.ID, userIDs(selectedUsers.Get())); err != nil {
 					alert.ShowBannerError(wnd, err)
 					return
 				}
 
-				wnd.Navigation().ForwardTo(pages.Vault, nil)
-			}).Title("Speichern"),
+				wnd.Navigation().ResetTo(pages.Vault, nil)
+			}).Title(rstring.ActionSave.Get(wnd)).Enabled(dirty),
 		).
 			FullWidth().
 			Gap(ui.L8).
@@ -181,23 +181,148 @@ func EditSecretPage(
 	).Gap(ui.L16).Alignment(ui.Leading).Frame(ui.Frame{Width: ui.Full, MaxWidth: ui.L560})
 }
 
-func groupEditor(
-	wnd core.Window,
+func typeCard(wnd core.Window, scr secret.Secret) core.View {
+	spec := newCredentialTypeSpec(reflect.TypeOf(scr.Credentials))
+	logo := spec.LogoView()
+	avtLogo, ok := logo.(avatar.TAvatar)
+	if !ok {
+		return logo
+	}
+
+	return cardlayout.Card(wnd.Bundle().Resolve(spec.name)).
+		Style(cardlayout.TitleCompact).
+		Body(
+			ui.VStack(
+				avtLogo.Size(ui.L80),
+				ui.Text(wnd.Bundle().Resolve(spec.description)).TextAlignment(ui.TextAlignCenter),
+			).Gap(ui.L16).
+				FullWidth(),
+		).
+		Frame(ui.Frame{}.FullWidth())
+}
+
+// credentialsFormOptions renders the write-only fields of an existing secret with a hint, that an empty field keeps
+// the stored value. The other fields are rendered by the default renderers of [form.Auto].
+func credentialsFormOptions(scr secret.Secret, create bool) form.AutoOptions {
+	if create {
+		return form.AutoOptions{}
+	}
+
+	stored := secret.WriteOnlyFields(scr.Credentials)
+	if len(stored) == 0 {
+		return form.AutoOptions{}
+	}
+
+	return form.AutoOptions{
+		Renderers: func(yield func(form.Renderer) bool) {
+			if !yield(writeOnlyRenderer(stored)) {
+				return
+			}
+
+			for r := range form.Renderers {
+				if !yield(r) {
+					return
+				}
+			}
+		},
+	}
+}
+
+// writeOnlyRenderer renders a write-only field like [form.RenderText] renders a secret field, but explains below
+// the field, whether a value is stored and that an empty field keeps it.
+func writeOnlyRenderer(stored map[string]bool) form.Renderer {
+	return func(ctx form.FieldContext) core.View {
+		isStored, ok := stored[ctx.Field().Name]
+		if !ok {
+			return nil
+		}
+
+		strState := core.DerivedState[string](ctx.State(), ctx.Path()).Init(func() string {
+			return ctx.FieldValue().String()
+		})
+
+		strState.Observe(func(newValue string) {
+			ctx.SetValue(newValue)
+		})
+
+		hint := "Es ist noch kein Wert gespeichert."
+		if isStored {
+			hint = "Ein Wert ist gespeichert und wird aus Sicherheitsgründen nicht angezeigt. Bleibt das Feld leer, wird er nicht geändert."
+		}
+
+		if text := ctx.SupportingText(); text != "" {
+			hint = text + " " + hint
+		}
+
+		return ui.PasswordField(ctx.Label(), strState.Get()).
+			InputValue(strState).
+			ID(ctx.ID()).
+			SupportingText(hint).
+			ErrorText(ctx.ErrorText()).
+			Disabled(ctx.Disabled()).
+			AutoComplete(false).
+			FullWidth()
+	}
+}
+
+func accessCard(
 	availGroups []group.Group,
 	selectedGroups *core.State[[]group.Group],
+	foreignGroups []group.ID,
 	availUsers []user.User,
 	selectedUsers *core.State[[]user.User],
+	access string,
 ) core.View {
-	return cardlayout.Card("Veröffentlichungen").
+	var systemHint core.View
+	if slices.ContainsFunc(selectedGroups.Get(), func(g group.Group) bool { return g.ID == group.System }) {
+		systemHint = ui.Text("Secrets in der Systemgruppe nutzt nago selbst, z. B. für den Mailversand. Alle Mitglieder der Systemgruppe erhalten Zugriff.").
+			Font(ui.Font{Size: ui.L14}).
+			Color(ui.SW0)
+	}
+
+	var foreignHint core.View
+	if len(foreignGroups) > 0 {
+		foreignHint = ui.Text("Außerdem in Gruppen geteilt, denen Sie nicht angehören. Diese Freigaben bleiben erhalten.").
+			Font(ui.Font{Size: ui.L14}).
+			Color(ui.ST0)
+	}
+
+	return cardlayout.Card("Wer hat Zugriff?").
 		Body(ui.VStack(
+			ui.Text("Es gibt genau ein Secret. Alle hier genannten Personen und alle Mitglieder der ausgewählten Gruppen können es lesen, ändern und löschen."),
 			picker.Picker[group.Group]("Gruppen", availGroups, selectedGroups).
 				MultiSelect(true).
 				Frame(ui.Frame{}.FullWidth()),
-
-			picker.Picker[user.User]("geteilt mit", availUsers, selectedUsers).
+			systemHint,
+			foreignHint,
+			picker.Picker[user.User]("Personen", availUsers, selectedUsers).
 				MultiSelect(true).
 				Frame(ui.Frame{}.FullWidth()),
-		).FullWidth()).
+			ui.Text(access).Font(ui.Font{Weight: ui.DisplayAndLabelFontWeight}),
+		).Gap(ui.L16).Alignment(ui.Leading).FullWidth()).
 		Style(cardlayout.TitleCompact).
 		Frame(ui.Frame{}.FullWidth())
+}
+
+func groupIDs(groups []group.Group) []group.ID {
+	res := make([]group.ID, 0, len(groups))
+	for _, g := range groups {
+		res = append(res, g.ID)
+	}
+	return res
+}
+
+func userIDs(users []user.User) []user.ID {
+	res := make([]user.ID, 0, len(users))
+	for _, u := range users {
+		res = append(res, u.ID)
+	}
+	return res
+}
+
+func sameIDs[T ~string](a, b []T) bool {
+	a, b = slices.Clone(a), slices.Clone(b)
+	slices.Sort(a)
+	slices.Sort(b)
+	return slices.Equal(a, b)
 }

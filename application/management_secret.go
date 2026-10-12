@@ -66,26 +66,23 @@ func (c *Configurator) SecretManagement() (SecretManagement, error) {
 			},
 		}
 
+		pageUseCases := uisecret.UseCases{
+			Secrets:       uc,
+			FindGroupByID: groups.UseCases.FindByID,
+			FindMyGroups:  groups.UseCases.FindMyGroups,
+			FindAllUsers:  users.UseCases.FindAll,
+		}
+
 		c.RootViewWithDecoration(c.secretManagement.Pages.Vault, func(wnd core.Window) core.View {
-			return layout.WithBackButton(wnd, uisecret.VaultPage(wnd, c.secretManagement.Pages, uc.FindMySecrets, groups.UseCases.FindByID))
+			return layout.WithBackButton(wnd, uisecret.VaultPage(wnd, c.secretManagement.Pages, pageUseCases))
 		})
 
 		c.RootViewWithDecoration(c.secretManagement.Pages.CreateSecret, func(wnd core.Window) core.View {
-			return layout.WithBackButton(wnd, uisecret.CreateSecretPage(wnd, c.secretManagement.Pages, uc.CreateSecret))
+			return layout.WithBackButton(wnd, uisecret.CreateSecretPage(wnd, c.secretManagement.Pages, pageUseCases))
 		})
 
 		c.RootViewWithDecoration(c.secretManagement.Pages.EditSecret, func(wnd core.Window) core.View {
-			return layout.WithBackButton(wnd, uisecret.EditSecretPage(
-				wnd,
-				c.secretManagement.Pages,
-				uc.DeleteMySecretByID,
-				uc.FindMySecretByID,
-				uc.UpdateMyCredentials,
-				uc.UpdateMySecretGroups,
-				uc.UpdateMySecretOwners,
-				groups.UseCases.FindMyGroups,
-				users.UseCases.FindAll,
-			))
+			return layout.WithBackButton(wnd, uisecret.EditSecretPage(wnd, c.secretManagement.Pages, pageUseCases))
 		})
 	}
 
