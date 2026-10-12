@@ -30,6 +30,7 @@
 		"@embedpdf/vue-pdf-viewer": "^2.14.4",
 		"@floating-ui/vue": "^1.1.11",
 		"@headlessui/vue": "^1.7.23",
+		"@material/material-color-utilities": "^0.4.0",
 		"@tiptap/extension-color": "^3.31.0",
 		"@tiptap/extension-link": "^3.31.0",
 		"@tiptap/extension-list-item": "^3.31.0",

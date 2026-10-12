@@ -43,6 +43,14 @@
 			"additionalInformation": "Undefined HTTP Error "
 		}
 	},
+	"colorPicker": {
+		"copy": "Copy",
+		"copied": "Copied",
+		"mode": "Color space",
+		"area": "Color area",
+		"hue": "Hue",
+		"alpha": "Opacity"
+	},
 	"clipboardModal": {
 		"confirm": "Copy",
 		"cancel": "Cancel",

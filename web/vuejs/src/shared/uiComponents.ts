@@ -16,6 +16,7 @@ import {
 	Canvas,
 	Checkbox,
 	CodeEditor,
+	ColorPicker,
 	Component as NagoComponent,
 	CountDown,
 	DatePicker,
@@ -65,6 +66,7 @@ const LazyUiBox = defineAsyncComponent(() => import('@/components/box/UiBox.vue'
 const LazyUiCanvas = defineAsyncComponent(() => import('@/components/canvas/UiCanvas.vue'));
 const LazyUiCheckbox = defineAsyncComponent(() => import('@/components/UiCheckbox.vue'));
 const LazyUiCodeEditor = defineAsyncComponent(() => import('@/components/codeeditor/UiCodeEditor.vue'));
+const LazyUiColorPicker = defineAsyncComponent(() => import('@/components/colorpicker/UiColorPicker.vue'));
 const LazyUiCountDown = defineAsyncComponent(() => import('@/components/countdown/UiCountDown.vue'));
 const LazyUiDatepicker = defineAsyncComponent(() => import('@/components/datepicker/UiDatepicker.vue'));
 const LazyUiDivider = defineAsyncComponent(() => import('@/components/UiDivider.vue'));
@@ -137,6 +139,10 @@ export function vueComponentFor(ngc: NagoComponent): Component {
 
 	if (ngc instanceof CodeEditor) {
 		return LazyUiCodeEditor;
+	}
+
+	if (ngc instanceof ColorPicker) {
+		return LazyUiColorPicker;
 	}
 
 	if (ngc instanceof CountDown) {

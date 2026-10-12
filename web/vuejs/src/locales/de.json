@@ -58,6 +58,14 @@
 			"expand": "Mehr"
 		}
 	},
+	"colorPicker": {
+		"copy": "Kopieren",
+		"copied": "Kopiert",
+		"mode": "Farbraum",
+		"area": "Farbfläche",
+		"hue": "Farbton",
+		"alpha": "Deckkraft"
+	},
 	"clipboardModal": {
 		"confirm": "Kopieren",
 		"cancel": "Abbrechen",

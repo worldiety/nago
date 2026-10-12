@@ -72,6 +72,12 @@ export default defineConfig(({ mode }) => {
 		resolve: {
 			alias: {
 				'@': isModern ? fileURLToPath(new URL('./src', import.meta.url)) : path.resolve(__dirname, 'src'),
+				// the package neither exports its modules nor declares to be free of side effects, so importing its
+				// index would bundle all of its color schemes, while the color picker needs only HCT
+				'@material/material-color-utilities/hct/hct.js': path.resolve(
+					__dirname,
+					'node_modules/@material/material-color-utilities/hct/hct.js'
+				),
 			},
 		},
 		base: isModern ? '/modern/' : '/legacy/',
