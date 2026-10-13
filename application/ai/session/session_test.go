@@ -504,3 +504,38 @@ func TestFindAllTagFilter(t *testing.T) {
 		t.Fatalf("tags not persisted, got %v", got)
 	}
 }
+
+// TestFindAllCreatedBy verifies that a subject holding PermFindAll globally sees the sessions of everyone, but
+// only its own, if FindAllOptions.CreatedBy is set, as a conversation list of a user interface does.
+func TestFindAllCreatedBy(t *testing.T) {
+	uc, repo, _ := newTestUseCases(t)
+	admin := user.SU()
+
+	for _, s := range []Session{
+		{ID: "own", CreatedBy: "me", Model: model.ID("fake-model")},
+		{ID: "foreign", CreatedBy: "someone-else", Model: model.ID("fake-model")},
+	} {
+		if err := repo.Save(s); err != nil {
+			t.Fatalf("save: %v", err)
+		}
+	}
+
+	collect := func(opts FindAllOptions) map[ID]bool {
+		got := map[ID]bool{}
+		for s, err := range uc.FindAll(admin, opts) {
+			if err != nil {
+				t.Fatalf("find all: %v", err)
+			}
+			got[s.ID] = true
+		}
+		return got
+	}
+
+	if all := collect(FindAllOptions{}); len(all) != 2 {
+		t.Fatalf("a global PermFindAll should yield every session, got %v", all)
+	}
+
+	if mine := collect(FindAllOptions{CreatedBy: "me"}); len(mine) != 1 || !mine["own"] {
+		t.Fatalf("CreatedBy should yield only the own session, got %v", mine)
+	}
+}

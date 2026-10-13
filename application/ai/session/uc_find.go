@@ -69,6 +69,10 @@ func NewFindAll(repo Repository) FindAll {
 					continue
 				}
 
+				if opts.CreatedBy != "" && session.CreatedBy != opts.CreatedBy {
+					continue
+				}
+
 				if !hasAllTags(session.Tags, opts.Tags) {
 					continue
 				}

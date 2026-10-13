@@ -119,6 +119,11 @@ func (s Session) String() string {
 		return s.Title
 	}
 
+	return s.Preview()
+}
+
+// Preview returns a short preview of the first user message, ignoring the title.
+func (s Session) Preview() string {
 	for _, msg := range s.Messages {
 		if msg.Role != completion.User {
 			continue
@@ -280,6 +285,11 @@ type FindAllOptions struct {
 	// IncludeChildren also yields child sessions (see [Session.ParentID]). They hold the transcripts of
 	// sub-agents and are hidden by default, because nobody continues them.
 	IncludeChildren bool
+
+	// CreatedBy, when set, restricts the result to the sessions this user has created. A user interface which
+	// lists the conversations of its user must set it, because a subject holding [PermFindAll] globally, e.g.
+	// an administrator, would otherwise see the conversations of everyone.
+	CreatedBy user.ID
 }
 
 // FindAll yields the sessions the subject may see (per ReBAC), optionally narrowed by [FindAllOptions].
