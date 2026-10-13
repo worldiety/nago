@@ -764,8 +764,8 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		sid := sessionID.Get()
 		createdNow := false
 		if opts.History && sid == "" {
+			// no title yet, the first meaningful turn is summarized into one, see autoTitle
 			created, err := opts.Sessions.Create(wnd.Subject(), session.CreateOptions{
-				Title:        title,
 				Model:        cfg.model,
 				System:       cfg.system,
 				ProviderHint: string(prov.Identity()),
@@ -829,6 +829,9 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 				ao := appendOptions(cfg, sid, run, tools, beforeFinish)
 				ao.Input = input
 				updated, err := opts.Sessions.Append(subject, sid, ao)
+				if err == nil {
+					autoTitle(subject, comps, opts.Sessions, updated, title)
+				}
 				return fromSession(subject, sid, updated, err, len(prevHistory))
 			}
 
@@ -874,6 +877,9 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 					Revision:    rev,
 					Resolutions: resolutions,
 				})
+				if err == nil {
+					autoTitle(subject, comps, opts.Sessions, updated, title)
+				}
 				return fromSession(subject, sid, updated, err, len(prevHistory))
 			}
 
@@ -1017,7 +1023,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 	var historyActions core.View
 	if opts.History {
 		// files picked for one conversation must never be sent with another one
-		restoreDialog = historyDialog(wnd, opts.Sessions, opts.Tags, showHistory, func(s session.Session) {
+		restoreDialog = historyDialog(wnd, opts.Sessions, opts.Tags, title, showHistory, func(s session.Session) {
 			applySession(s)
 			staged.Set(nil)
 			status.Set("")

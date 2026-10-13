@@ -23,7 +23,10 @@ import (
 // cards; picking one invokes onPick with the full session so the caller can load its history back into the
 // panel and continue it. The dialog is cancelable and returns nil while not presented. Errors while listing
 // are surfaced inline so the user can still cancel out.
-func historyDialog(wnd core.Window, sessionUC session.UseCases, tags []string, present *core.State[bool], onPick func(session.Session), onDeleted func(session.ID)) core.View {
+// historyDialog lists the conversations of the user. Only the own ones are listed, also for a subject which may
+// read every session, e.g. an administrator. A title equal to legacyTitle is the title of the chat panel, which
+// former versions gave every conversation, so the preview of the first message is shown instead.
+func historyDialog(wnd core.Window, sessionUC session.UseCases, tags []string, legacyTitle string, present *core.State[bool], onPick func(session.Session), onDeleted func(session.ID)) core.View {
 	if !present.Get() {
 		return nil
 	}
@@ -34,11 +37,20 @@ func historyDialog(wnd core.Window, sessionUC session.UseCases, tags []string, p
 	deleting := core.StateOf[bool](wnd, "uicompletion-history-deleting")
 
 	var sessions []session.Session
-	for s, err := range sessionUC.FindAll(wnd.Subject(), session.FindAllOptions{Tags: tags}) {
-		if err != nil {
-			return alert.Dialog("Gespeicherte Verläufe", alert.BannerError(err), present, alert.Closeable())
+	if wnd.Subject().Valid() {
+		uid := wnd.Subject().ID()
+		for s, err := range sessionUC.FindAll(wnd.Subject(), session.FindAllOptions{Tags: tags, CreatedBy: uid}) {
+			if err != nil {
+				return alert.Dialog("Gespeicherte Verläufe", alert.BannerError(err), present, alert.Closeable())
+			}
+
+			// also checked here, because an empty id does not filter in FindAll
+			if s.CreatedBy != uid {
+				continue
+			}
+
+			sessions = append(sessions, s)
 		}
-		sessions = append(sessions, s)
 	}
 
 	// Most recently updated first, so the conversation the user most likely wants to resume is on top.
@@ -55,7 +67,7 @@ func historyDialog(wnd core.Window, sessionUC session.UseCases, tags []string, p
 		for _, s := range sessions {
 			s := s
 			rows = append(rows, ui.HStack(
-				historyCard(wnd, s, func() {
+				historyCard(wnd, s, legacyTitle, func() {
 					present.Set(false)
 					onPick(s)
 				}),
@@ -110,11 +122,16 @@ func deleteDialog(wnd core.Window, sessionUC session.UseCases, toDelete *core.St
 	)
 }
 
-func historyCard(wnd core.Window, s session.Session, onPick func()) core.View {
+func historyCard(wnd core.Window, s session.Session, legacyTitle string, onPick func()) core.View {
 	when := s.UpdatedAt.Time(wnd.Location()).Format("2006-01-02 15:04")
 
+	label := s.Title
+	if label == "" || label == legacyTitle {
+		label = s.Preview()
+	}
+
 	return ui.VStack(
-		ui.Text(s.String()).Font(ui.Title).Frame(ui.Frame{MaxWidth: ui.Full}),
+		ui.Text(label).Font(ui.Title).Frame(ui.Frame{MaxWidth: ui.Full}),
 		ui.HStack(
 			ui.Text(when).Font(ui.Small),
 			ui.If(s.Pending != nil, ui.Text("• wartet auf deine Antwort").Font(ui.Small).Color(ui.I0)),
