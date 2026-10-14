@@ -9,6 +9,12 @@
 // area are rendered, so a sheet with tens of thousands of rows renders as fast as a small one. The data is never
 // kept in a state: the application provides a function which returns a cell on demand, and an edit is an event,
 // which the application handles with its own use cases. See [Sheet].
+//
+// Every change of the window, e.g. while the user scrolls, renders the whole page again, like any other change of
+// a state. On a page with few other views, scrolling is as fluent as in a spreadsheet application. Many other views
+// slow it down in the browser, roughly 0.06 ms per DOM node: with 500 further rows of a form beside the sheet, a
+// jump takes about 100 ms, with 2000 about 500 ms, and placeholders show while scrolling. So a large sheet should
+// rather get a page of its own. See TestHeavyPageScroll to measure it.
 package sheet
 
 import (
