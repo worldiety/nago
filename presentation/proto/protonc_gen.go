@@ -362,6 +362,7 @@ func (RichTextEditor) isComponent()     {}
 func (Scaffold) isComponent()           {}
 func (ScrollView) isComponent()         {}
 func (Select) isComponent()             {}
+func (Sheet) isComponent()              {}
 func (SignatureField) isComponent()     {}
 func (Slider) isComponent()             {}
 func (Spacer) isComponent()             {}
@@ -22162,6 +22163,1238 @@ func (v *ColorPickerMode) IsZero() bool {
 	return *v == 0
 }
 
+// Sheet is a spreadsheet like table, which renders only the cells of a window around the visible area. The client reports the area it needs through Viewport and receives the cells of that window.
+type Sheet struct {
+	// Id identifies the sheet within the view tree and must be unique.
+	Id       Str
+	RowCount Int
+	ColCount Int
+	// FrozenRows are the leading rows, which stay visible while scrolling vertically.
+	FrozenRows Int
+	// FrozenCols are the leading columns, which stay visible while scrolling horizontally.
+	FrozenCols Int
+	// RowHeight is the height of every row in dp.
+	RowHeight Float
+	// ColWidth is the default width of a column in dp.
+	ColWidth Float
+	// ColWidths overrides the width of single columns.
+	ColWidths SheetSizes
+	// HiddenRows are the sorted indices of the hidden rows.
+	HiddenRows Ints
+	// HiddenCols are the sorted indices of the hidden columns.
+	HiddenCols Ints
+	// WindowRow is the first row of the window, whose cells are contained.
+	WindowRow  Int
+	WindowCol  Int
+	WindowRows Int
+	WindowCols Int
+	// Cells of the window and of the frozen rows and columns. Cells which are hidden or covered by a merge are omitted.
+	Cells SheetCells
+	// Styles are referenced by the cells, so that equal styles are transferred once.
+	Styles SheetStyles
+	// Merges which intersect the window or the frozen rows and columns.
+	Merges SheetMerges
+	// Viewport is a state, into which the client writes the window it needs as row,col,rows,cols.
+	Viewport Ptr
+	// Edit is a state, into which the client writes a committed edit as json {seq,row,col,value}.
+	Edit Ptr
+	// EditSeq is the sequence number of the last edit, which has been processed.
+	EditSeq Int
+	// Copy is a state, into which the client writes a range as row,col,rows,cols, whose text the server copies into the clipboard.
+	Copy      Ptr
+	GridColor Color
+	Frame     Frame
+	Disabled  Bool
+	Invisible Bool
+}
+
+func (v *Sheet) write(w *BinaryWriter) error {
+	var fields [26]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.RowCount.IsZero()
+	fields[3] = !v.ColCount.IsZero()
+	fields[4] = !v.FrozenRows.IsZero()
+	fields[5] = !v.FrozenCols.IsZero()
+	fields[6] = !v.RowHeight.IsZero()
+	fields[7] = !v.ColWidth.IsZero()
+	fields[8] = !v.ColWidths.IsZero()
+	fields[9] = !v.HiddenRows.IsZero()
+	fields[10] = !v.HiddenCols.IsZero()
+	fields[11] = !v.WindowRow.IsZero()
+	fields[12] = !v.WindowCol.IsZero()
+	fields[13] = !v.WindowRows.IsZero()
+	fields[14] = !v.WindowCols.IsZero()
+	fields[15] = !v.Cells.IsZero()
+	fields[16] = !v.Styles.IsZero()
+	fields[17] = !v.Merges.IsZero()
+	fields[18] = !v.Viewport.IsZero()
+	fields[19] = !v.Edit.IsZero()
+	fields[20] = !v.EditSeq.IsZero()
+	fields[21] = !v.Copy.IsZero()
+	fields[22] = !v.GridColor.IsZero()
+	fields[23] = !v.Frame.IsZero()
+	fields[24] = !v.Disabled.IsZero()
+	fields[25] = !v.Invisible.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(varint, 2); err != nil {
+			return err
+		}
+		if err := v.RowCount.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(varint, 3); err != nil {
+			return err
+		}
+		if err := v.ColCount.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(varint, 4); err != nil {
+			return err
+		}
+		if err := v.FrozenRows.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(varint, 5); err != nil {
+			return err
+		}
+		if err := v.FrozenCols.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(f64, 6); err != nil {
+			return err
+		}
+		if err := v.RowHeight.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(f64, 7); err != nil {
+			return err
+		}
+		if err := v.ColWidth.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		if err := w.writeFieldHeader(array, 8); err != nil {
+			return err
+		}
+		if err := v.ColWidths.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[9] {
+		if err := w.writeFieldHeader(array, 9); err != nil {
+			return err
+		}
+		if err := v.HiddenRows.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[10] {
+		if err := w.writeFieldHeader(array, 10); err != nil {
+			return err
+		}
+		if err := v.HiddenCols.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[11] {
+		if err := w.writeFieldHeader(varint, 11); err != nil {
+			return err
+		}
+		if err := v.WindowRow.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[12] {
+		if err := w.writeFieldHeader(varint, 12); err != nil {
+			return err
+		}
+		if err := v.WindowCol.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[13] {
+		if err := w.writeFieldHeader(varint, 13); err != nil {
+			return err
+		}
+		if err := v.WindowRows.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[14] {
+		if err := w.writeFieldHeader(varint, 14); err != nil {
+			return err
+		}
+		if err := v.WindowCols.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[15] {
+		if err := w.writeFieldHeader(array, 15); err != nil {
+			return err
+		}
+		if err := v.Cells.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[16] {
+		if err := w.writeFieldHeader(array, 16); err != nil {
+			return err
+		}
+		if err := v.Styles.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[17] {
+		if err := w.writeFieldHeader(array, 17); err != nil {
+			return err
+		}
+		if err := v.Merges.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[18] {
+		if err := w.writeFieldHeader(uvarint, 18); err != nil {
+			return err
+		}
+		if err := v.Viewport.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[19] {
+		if err := w.writeFieldHeader(uvarint, 19); err != nil {
+			return err
+		}
+		if err := v.Edit.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[20] {
+		if err := w.writeFieldHeader(varint, 20); err != nil {
+			return err
+		}
+		if err := v.EditSeq.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[21] {
+		if err := w.writeFieldHeader(uvarint, 21); err != nil {
+			return err
+		}
+		if err := v.Copy.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[22] {
+		if err := w.writeFieldHeader(byteSlice, 22); err != nil {
+			return err
+		}
+		if err := v.GridColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[23] {
+		if err := w.writeFieldHeader(record, 23); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[24] {
+		if err := w.writeFieldHeader(uvarint, 24); err != nil {
+			return err
+		}
+		if err := v.Disabled.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[25] {
+		if err := w.writeFieldHeader(uvarint, 25); err != nil {
+			return err
+		}
+		if err := v.Invisible.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Sheet) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.RowCount.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.ColCount.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.FrozenRows.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.FrozenCols.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.RowHeight.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.ColWidth.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.ColWidths.read(r)
+			if err != nil {
+				return err
+			}
+		case 9:
+			err := v.HiddenRows.read(r)
+			if err != nil {
+				return err
+			}
+		case 10:
+			err := v.HiddenCols.read(r)
+			if err != nil {
+				return err
+			}
+		case 11:
+			err := v.WindowRow.read(r)
+			if err != nil {
+				return err
+			}
+		case 12:
+			err := v.WindowCol.read(r)
+			if err != nil {
+				return err
+			}
+		case 13:
+			err := v.WindowRows.read(r)
+			if err != nil {
+				return err
+			}
+		case 14:
+			err := v.WindowCols.read(r)
+			if err != nil {
+				return err
+			}
+		case 15:
+			err := v.Cells.read(r)
+			if err != nil {
+				return err
+			}
+		case 16:
+			err := v.Styles.read(r)
+			if err != nil {
+				return err
+			}
+		case 17:
+			err := v.Merges.read(r)
+			if err != nil {
+				return err
+			}
+		case 18:
+			err := v.Viewport.read(r)
+			if err != nil {
+				return err
+			}
+		case 19:
+			err := v.Edit.read(r)
+			if err != nil {
+				return err
+			}
+		case 20:
+			err := v.EditSeq.read(r)
+			if err != nil {
+				return err
+			}
+		case 21:
+			err := v.Copy.read(r)
+			if err != nil {
+				return err
+			}
+		case 22:
+			err := v.GridColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 23:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		case 24:
+			err := v.Disabled.read(r)
+			if err != nil {
+				return err
+			}
+		case 25:
+			err := v.Invisible.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// SheetCell is a cell of a Sheet.
+type SheetCell struct {
+	Row Int
+	Col Int
+	// Text is shown.
+	Text Str
+	// Value is the raw value, e.g. a number in machine notation, which is copied. If empty, Text is copied.
+	Value Str
+	Type  SheetValueType
+	// Style is the index of the style plus one, zero is the default style.
+	Style  Int
+	Editor SheetEditor
+	// Options of a select editor.
+	Options Strings
+	// Error is shown at the cell, e.g. because the last edit has been rejected.
+	Error Str
+}
+
+func (v *SheetCell) write(w *BinaryWriter) error {
+	var fields [10]bool
+	fields[1] = !v.Row.IsZero()
+	fields[2] = !v.Col.IsZero()
+	fields[3] = !v.Text.IsZero()
+	fields[4] = !v.Value.IsZero()
+	fields[5] = !v.Type.IsZero()
+	fields[6] = !v.Style.IsZero()
+	fields[7] = !v.Editor.IsZero()
+	fields[8] = !v.Options.IsZero()
+	fields[9] = !v.Error.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(varint, 1); err != nil {
+			return err
+		}
+		if err := v.Row.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(varint, 2); err != nil {
+			return err
+		}
+		if err := v.Col.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.Text.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.Value.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(uvarint, 5); err != nil {
+			return err
+		}
+		if err := v.Type.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(varint, 6); err != nil {
+			return err
+		}
+		if err := v.Style.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(uvarint, 7); err != nil {
+			return err
+		}
+		if err := v.Editor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		if err := w.writeFieldHeader(array, 8); err != nil {
+			return err
+		}
+		if err := v.Options.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[9] {
+		if err := w.writeFieldHeader(byteSlice, 9); err != nil {
+			return err
+		}
+		if err := v.Error.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *SheetCell) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Row.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Col.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Text.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Value.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Type.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.Style.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.Editor.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.Options.read(r)
+			if err != nil {
+				return err
+			}
+		case 9:
+			err := v.Error.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// SheetStyle styles a cell.
+type SheetStyle struct {
+	BackgroundColor Color
+	Color           Color
+	Bold            Bool
+	Italic          Bool
+	Underline       Bool
+	Align           SheetAlign
+	Wrap            SheetWrap
+	BorderTop       SheetBorder
+	BorderRight     SheetBorder
+	BorderBottom    SheetBorder
+	BorderLeft      SheetBorder
+	// PaddingX is the horizontal padding in dp. Zero is the default of the sheet.
+	PaddingX Float
+	// FontSize in dp. Zero is the default.
+	FontSize Float
+}
+
+func (v *SheetStyle) write(w *BinaryWriter) error {
+	var fields [14]bool
+	fields[1] = !v.BackgroundColor.IsZero()
+	fields[2] = !v.Color.IsZero()
+	fields[3] = !v.Bold.IsZero()
+	fields[4] = !v.Italic.IsZero()
+	fields[5] = !v.Underline.IsZero()
+	fields[6] = !v.Align.IsZero()
+	fields[7] = !v.Wrap.IsZero()
+	fields[8] = !v.BorderTop.IsZero()
+	fields[9] = !v.BorderRight.IsZero()
+	fields[10] = !v.BorderBottom.IsZero()
+	fields[11] = !v.BorderLeft.IsZero()
+	fields[12] = !v.PaddingX.IsZero()
+	fields[13] = !v.FontSize.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.BackgroundColor.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Color.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(uvarint, 3); err != nil {
+			return err
+		}
+		if err := v.Bold.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(uvarint, 4); err != nil {
+			return err
+		}
+		if err := v.Italic.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(uvarint, 5); err != nil {
+			return err
+		}
+		if err := v.Underline.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(uvarint, 6); err != nil {
+			return err
+		}
+		if err := v.Align.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(uvarint, 7); err != nil {
+			return err
+		}
+		if err := v.Wrap.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		if err := w.writeFieldHeader(record, 8); err != nil {
+			return err
+		}
+		if err := v.BorderTop.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[9] {
+		if err := w.writeFieldHeader(record, 9); err != nil {
+			return err
+		}
+		if err := v.BorderRight.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[10] {
+		if err := w.writeFieldHeader(record, 10); err != nil {
+			return err
+		}
+		if err := v.BorderBottom.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[11] {
+		if err := w.writeFieldHeader(record, 11); err != nil {
+			return err
+		}
+		if err := v.BorderLeft.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[12] {
+		if err := w.writeFieldHeader(f64, 12); err != nil {
+			return err
+		}
+		if err := v.PaddingX.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[13] {
+		if err := w.writeFieldHeader(f64, 13); err != nil {
+			return err
+		}
+		if err := v.FontSize.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *SheetStyle) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.BackgroundColor.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Color.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Bold.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Italic.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Underline.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.Align.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.Wrap.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.BorderTop.read(r)
+			if err != nil {
+				return err
+			}
+		case 9:
+			err := v.BorderRight.read(r)
+			if err != nil {
+				return err
+			}
+		case 10:
+			err := v.BorderBottom.read(r)
+			if err != nil {
+				return err
+			}
+		case 11:
+			err := v.BorderLeft.read(r)
+			if err != nil {
+				return err
+			}
+		case 12:
+			err := v.PaddingX.read(r)
+			if err != nil {
+				return err
+			}
+		case 13:
+			err := v.FontSize.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// SheetBorder is a line at one side of a cell.
+type SheetBorder struct {
+	Color Color
+	// Width in dp.
+	Width Float
+	Style SheetLineStyle
+}
+
+func (v *SheetBorder) write(w *BinaryWriter) error {
+	var fields [4]bool
+	fields[1] = !v.Color.IsZero()
+	fields[2] = !v.Width.IsZero()
+	fields[3] = !v.Style.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Color.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(f64, 2); err != nil {
+			return err
+		}
+		if err := v.Width.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(uvarint, 3); err != nil {
+			return err
+		}
+		if err := v.Style.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *SheetBorder) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Color.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Width.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Style.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// SheetMerge joins a rectangle of cells into the cell at its top left.
+type SheetMerge struct {
+	Row  Int
+	Col  Int
+	Rows Int
+	Cols Int
+}
+
+func (v *SheetMerge) write(w *BinaryWriter) error {
+	var fields [5]bool
+	fields[1] = !v.Row.IsZero()
+	fields[2] = !v.Col.IsZero()
+	fields[3] = !v.Rows.IsZero()
+	fields[4] = !v.Cols.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(varint, 1); err != nil {
+			return err
+		}
+		if err := v.Row.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(varint, 2); err != nil {
+			return err
+		}
+		if err := v.Col.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(varint, 3); err != nil {
+			return err
+		}
+		if err := v.Rows.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(varint, 4); err != nil {
+			return err
+		}
+		if err := v.Cols.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *SheetMerge) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Row.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Col.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Rows.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Cols.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// SheetSize is the size of a row or column.
+type SheetSize struct {
+	Index Int
+	// Size in dp.
+	Size Float
+}
+
+func (v *SheetSize) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Index.IsZero()
+	fields[2] = !v.Size.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(varint, 1); err != nil {
+			return err
+		}
+		if err := v.Index.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(f64, 2); err != nil {
+			return err
+		}
+		if err := v.Size.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *SheetSize) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Index.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Size.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// SheetEditor is the editor of a cell.
+type SheetEditor uint64
+
+const (
+	SheetEditorNone     SheetEditor = 0
+	SheetEditorText     SheetEditor = 1
+	SheetEditorNumber   SheetEditor = 2
+	SheetEditorSelect   SheetEditor = 3
+	SheetEditorCheckbox SheetEditor = 4
+)
+
+func (v *SheetEditor) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *SheetEditor) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = SheetEditor(tmp)
+	return nil
+}
+
+func (v *SheetEditor) reset() {
+	*v = SheetEditor(0)
+}
+func (v *SheetEditor) IsZero() bool {
+	return *v == 0
+}
+
+// SheetValueType tells how a value is aligned by default and exported.
+type SheetValueType uint64
+
+const (
+	SheetValueText   SheetValueType = 0
+	SheetValueNumber SheetValueType = 1
+	SheetValueBool   SheetValueType = 2
+	SheetValueDate   SheetValueType = 3
+)
+
+func (v *SheetValueType) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *SheetValueType) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = SheetValueType(tmp)
+	return nil
+}
+
+func (v *SheetValueType) reset() {
+	*v = SheetValueType(0)
+}
+func (v *SheetValueType) IsZero() bool {
+	return *v == 0
+}
+
+// SheetAlign aligns the content of a cell horizontally.
+type SheetAlign uint64
+
+const (
+	SheetAlignAuto   SheetAlign = 0
+	SheetAlignStart  SheetAlign = 1
+	SheetAlignCenter SheetAlign = 2
+	SheetAlignEnd    SheetAlign = 3
+)
+
+func (v *SheetAlign) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *SheetAlign) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = SheetAlign(tmp)
+	return nil
+}
+
+func (v *SheetAlign) reset() {
+	*v = SheetAlign(0)
+}
+func (v *SheetAlign) IsZero() bool {
+	return *v == 0
+}
+
+// SheetWrap tells, what happens with text, which does not fit into a cell.
+type SheetWrap uint64
+
+const (
+	SheetWrapClip     SheetWrap = 0
+	SheetWrapEllipsis SheetWrap = 1
+	SheetWrapWrap     SheetWrap = 2
+)
+
+func (v *SheetWrap) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *SheetWrap) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = SheetWrap(tmp)
+	return nil
+}
+
+func (v *SheetWrap) reset() {
+	*v = SheetWrap(0)
+}
+func (v *SheetWrap) IsZero() bool {
+	return *v == 0
+}
+
+// SheetLineStyle is the style of a border line.
+type SheetLineStyle uint64
+
+const (
+	SheetLineNone   SheetLineStyle = 0
+	SheetLineSolid  SheetLineStyle = 1
+	SheetLineDashed SheetLineStyle = 2
+	SheetLineDotted SheetLineStyle = 3
+	SheetLineDouble SheetLineStyle = 4
+)
+
+func (v *SheetLineStyle) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *SheetLineStyle) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = SheetLineStyle(tmp)
+	return nil
+}
+
+func (v *SheetLineStyle) reset() {
+	*v = SheetLineStyle(0)
+}
+func (v *SheetLineStyle) IsZero() bool {
+	return *v == 0
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -23833,6 +25066,102 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 287:
 		var v ColorPickerMode
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 288:
+		var v Sheet
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 289:
+		var v SheetCell
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 290:
+		var v SheetCells
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 291:
+		var v SheetStyle
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 292:
+		var v SheetStyles
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 293:
+		var v SheetBorder
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 294:
+		var v SheetMerge
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 295:
+		var v SheetMerges
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 296:
+		var v SheetSize
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 297:
+		var v SheetSizes
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 298:
+		var v Ints
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 299:
+		var v SheetEditor
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 300:
+		var v SheetValueType
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 301:
+		var v SheetAlign
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 302:
+		var v SheetWrap
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 303:
+		var v SheetLineStyle
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -28517,6 +29846,342 @@ func (v *ColorPicker) IsZero() bool {
 	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.InputValue.IsZero() && v.Disabled.IsZero() && v.Frame.IsZero() && v.Mode.IsZero() && v.DisableAlpha.IsZero() && v.Invisible.IsZero() && v.Id.IsZero()
 }
 
+func (v *Sheet) reset() {
+	v.Id.reset()
+	v.RowCount.reset()
+	v.ColCount.reset()
+	v.FrozenRows.reset()
+	v.FrozenCols.reset()
+	v.RowHeight.reset()
+	v.ColWidth.reset()
+	v.ColWidths.reset()
+	v.HiddenRows.reset()
+	v.HiddenCols.reset()
+	v.WindowRow.reset()
+	v.WindowCol.reset()
+	v.WindowRows.reset()
+	v.WindowCols.reset()
+	v.Cells.reset()
+	v.Styles.reset()
+	v.Merges.reset()
+	v.Viewport.reset()
+	v.Edit.reset()
+	v.EditSeq.reset()
+	v.Copy.reset()
+	v.GridColor.reset()
+	v.Frame.reset()
+	v.Disabled.reset()
+	v.Invisible.reset()
+}
+
+func (v *Sheet) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.RowCount.IsZero() && v.ColCount.IsZero() && v.FrozenRows.IsZero() && v.FrozenCols.IsZero() && v.RowHeight.IsZero() && v.ColWidth.IsZero() && v.ColWidths.IsZero() && v.HiddenRows.IsZero() && v.HiddenCols.IsZero() && v.WindowRow.IsZero() && v.WindowCol.IsZero() && v.WindowRows.IsZero() && v.WindowCols.IsZero() && v.Cells.IsZero() && v.Styles.IsZero() && v.Merges.IsZero() && v.Viewport.IsZero() && v.Edit.IsZero() && v.EditSeq.IsZero() && v.Copy.IsZero() && v.GridColor.IsZero() && v.Frame.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero()
+}
+
+func (v *SheetCell) reset() {
+	v.Row.reset()
+	v.Col.reset()
+	v.Text.reset()
+	v.Value.reset()
+	v.Type.reset()
+	v.Style.reset()
+	v.Editor.reset()
+	v.Options.reset()
+	v.Error.reset()
+}
+
+func (v *SheetCell) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Row.IsZero() && v.Col.IsZero() && v.Text.IsZero() && v.Value.IsZero() && v.Type.IsZero() && v.Style.IsZero() && v.Editor.IsZero() && v.Options.IsZero() && v.Error.IsZero()
+}
+
+type SheetCells []SheetCell
+
+func (v *SheetCells) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *SheetCells) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	slice := make([]SheetCell, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = *obj.(*SheetCell)
+	}
+
+	*v = slice
+	return nil
+}
+
+func (v *SheetCells) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
+}
+
+func (v *SheetCells) reset() {
+	*v = nil
+}
+
+func (v *SheetStyle) reset() {
+	v.BackgroundColor.reset()
+	v.Color.reset()
+	v.Bold.reset()
+	v.Italic.reset()
+	v.Underline.reset()
+	v.Align.reset()
+	v.Wrap.reset()
+	v.BorderTop.reset()
+	v.BorderRight.reset()
+	v.BorderBottom.reset()
+	v.BorderLeft.reset()
+	v.PaddingX.reset()
+	v.FontSize.reset()
+}
+
+func (v *SheetStyle) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.BackgroundColor.IsZero() && v.Color.IsZero() && v.Bold.IsZero() && v.Italic.IsZero() && v.Underline.IsZero() && v.Align.IsZero() && v.Wrap.IsZero() && v.BorderTop.IsZero() && v.BorderRight.IsZero() && v.BorderBottom.IsZero() && v.BorderLeft.IsZero() && v.PaddingX.IsZero() && v.FontSize.IsZero()
+}
+
+type SheetStyles []SheetStyle
+
+func (v *SheetStyles) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *SheetStyles) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	slice := make([]SheetStyle, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = *obj.(*SheetStyle)
+	}
+
+	*v = slice
+	return nil
+}
+
+func (v *SheetStyles) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
+}
+
+func (v *SheetStyles) reset() {
+	*v = nil
+}
+
+func (v *SheetBorder) reset() {
+	v.Color.reset()
+	v.Width.reset()
+	v.Style.reset()
+}
+
+func (v *SheetBorder) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Color.IsZero() && v.Width.IsZero() && v.Style.IsZero()
+}
+
+func (v *SheetMerge) reset() {
+	v.Row.reset()
+	v.Col.reset()
+	v.Rows.reset()
+	v.Cols.reset()
+}
+
+func (v *SheetMerge) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Row.IsZero() && v.Col.IsZero() && v.Rows.IsZero() && v.Cols.IsZero()
+}
+
+type SheetMerges []SheetMerge
+
+func (v *SheetMerges) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *SheetMerges) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	slice := make([]SheetMerge, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = *obj.(*SheetMerge)
+	}
+
+	*v = slice
+	return nil
+}
+
+func (v *SheetMerges) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
+}
+
+func (v *SheetMerges) reset() {
+	*v = nil
+}
+
+func (v *SheetSize) reset() {
+	v.Index.reset()
+	v.Size.reset()
+}
+
+func (v *SheetSize) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Index.IsZero() && v.Size.IsZero()
+}
+
+type SheetSizes []SheetSize
+
+func (v *SheetSizes) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *SheetSizes) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	slice := make([]SheetSize, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = *obj.(*SheetSize)
+	}
+
+	*v = slice
+	return nil
+}
+
+func (v *SheetSizes) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
+}
+
+func (v *SheetSizes) reset() {
+	*v = nil
+}
+
+type Ints []Int
+
+func (v *Ints) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Ints) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	slice := make([]Int, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = *obj.(*Int)
+	}
+
+	*v = slice
+	return nil
+}
+
+func (v *Ints) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
+}
+
+func (v *Ints) reset() {
+	*v = nil
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -30437,6 +32102,118 @@ func (v *ColorPicker) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *ColorPickerMode) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(uvarint, 287); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Sheet) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 288); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *SheetCell) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 289); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *SheetCells) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 290); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *SheetStyle) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 291); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *SheetStyles) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 292); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *SheetBorder) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 293); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *SheetMerge) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 294); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *SheetMerges) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 295); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *SheetSize) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 296); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *SheetSizes) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 297); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Ints) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 298); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *SheetEditor) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 299); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *SheetValueType) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 300); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *SheetAlign) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 301); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *SheetWrap) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 302); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *SheetLineStyle) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 303); err != nil {
 		return err
 	}
 	return nil

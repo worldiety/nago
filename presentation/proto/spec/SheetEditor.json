@@ -1,0 +1,22 @@
+{
+  "doc": "SheetEditor is the editor of a cell.",
+  "kind": "Uint",
+  "id": 299,
+  "const": {
+    "0": {
+      "name": "SheetEditorNone"
+    },
+    "1": {
+      "name": "SheetEditorText"
+    },
+    "2": {
+      "name": "SheetEditorNumber"
+    },
+    "3": {
+      "name": "SheetEditorSelect"
+    },
+    "4": {
+      "name": "SheetEditorCheckbox"
+    }
+  }
+}

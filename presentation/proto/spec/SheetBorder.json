@@ -1,0 +1,20 @@
+{
+  "doc": "SheetBorder is a line at one side of a cell.",
+  "kind": "Record",
+  "id": 293,
+  "fields": {
+    "1": {
+      "name": "Color",
+      "type": "Color"
+    },
+    "2": {
+      "doc": "Width in dp.",
+      "name": "Width",
+      "type": "Float"
+    },
+    "3": {
+      "name": "Style",
+      "type": "SheetLineStyle"
+    }
+  }
+}

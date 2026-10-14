@@ -1,0 +1,48 @@
+{
+  "doc": "SheetCell is a cell of a Sheet.",
+  "kind": "Record",
+  "id": 289,
+  "fields": {
+    "1": {
+      "name": "Row",
+      "type": "Int"
+    },
+    "2": {
+      "name": "Col",
+      "type": "Int"
+    },
+    "3": {
+      "doc": "Text is shown.",
+      "name": "Text",
+      "type": "Str"
+    },
+    "4": {
+      "doc": "Value is the raw value, e.g. a number in machine notation, which is copied. If empty, Text is copied.",
+      "name": "Value",
+      "type": "Str"
+    },
+    "5": {
+      "name": "Type",
+      "type": "SheetValueType"
+    },
+    "6": {
+      "doc": "Style is the index of the style plus one, zero is the default style.",
+      "name": "Style",
+      "type": "Int"
+    },
+    "7": {
+      "name": "Editor",
+      "type": "SheetEditor"
+    },
+    "8": {
+      "doc": "Options of a select editor.",
+      "name": "Options",
+      "type": "Strings"
+    },
+    "9": {
+      "doc": "Error is shown at the cell, e.g. because the last edit has been rejected.",
+      "name": "Error",
+      "type": "Str"
+    }
+  }
+}

@@ -22712,6 +22712,1386 @@ export enum ColorPickerModeValues {
 	ColorPickerModeHCT = 1,
 }
 
+// Sheet is a spreadsheet like table, which renders only the cells of a window around the visible area. The client reports the area it needs through Viewport and receives the cells of that window.
+export class Sheet implements Writeable, Readable, Component {
+	// Id identifies the sheet within the view tree and must be unique.
+	public id?: Str;
+
+	public rowCount?: Int;
+
+	public colCount?: Int;
+
+	// FrozenRows are the leading rows, which stay visible while scrolling vertically.
+	public frozenRows?: Int;
+
+	// FrozenCols are the leading columns, which stay visible while scrolling horizontally.
+	public frozenCols?: Int;
+
+	// RowHeight is the height of every row in dp.
+	public rowHeight?: Float;
+
+	// ColWidth is the default width of a column in dp.
+	public colWidth?: Float;
+
+	// ColWidths overrides the width of single columns.
+	public colWidths?: SheetSizes;
+
+	// HiddenRows are the sorted indices of the hidden rows.
+	public hiddenRows?: Ints;
+
+	// HiddenCols are the sorted indices of the hidden columns.
+	public hiddenCols?: Ints;
+
+	// WindowRow is the first row of the window, whose cells are contained.
+	public windowRow?: Int;
+
+	public windowCol?: Int;
+
+	public windowRows?: Int;
+
+	public windowCols?: Int;
+
+	// Cells of the window and of the frozen rows and columns. Cells which are hidden or covered by a merge are omitted.
+	public cells?: SheetCells;
+
+	// Styles are referenced by the cells, so that equal styles are transferred once.
+	public styles?: SheetStyles;
+
+	// Merges which intersect the window or the frozen rows and columns.
+	public merges?: SheetMerges;
+
+	// Viewport is a state, into which the client writes the window it needs as row,col,rows,cols.
+	public viewport?: Ptr;
+
+	// Edit is a state, into which the client writes a committed edit as json {seq,row,col,value}.
+	public edit?: Ptr;
+
+	// EditSeq is the sequence number of the last edit, which has been processed.
+	public editSeq?: Int;
+
+	// Copy is a state, into which the client writes a range as row,col,rows,cols, whose text the server copies into the clipboard.
+	public copy?: Ptr;
+
+	public gridColor?: Color;
+
+	public frame?: Frame;
+
+	public disabled?: Bool;
+
+	public invisible?: Bool;
+
+	constructor(
+		id: Str | undefined = undefined,
+		rowCount: Int | undefined = undefined,
+		colCount: Int | undefined = undefined,
+		frozenRows: Int | undefined = undefined,
+		frozenCols: Int | undefined = undefined,
+		rowHeight: Float | undefined = undefined,
+		colWidth: Float | undefined = undefined,
+		colWidths: SheetSizes | undefined = undefined,
+		hiddenRows: Ints | undefined = undefined,
+		hiddenCols: Ints | undefined = undefined,
+		windowRow: Int | undefined = undefined,
+		windowCol: Int | undefined = undefined,
+		windowRows: Int | undefined = undefined,
+		windowCols: Int | undefined = undefined,
+		cells: SheetCells | undefined = undefined,
+		styles: SheetStyles | undefined = undefined,
+		merges: SheetMerges | undefined = undefined,
+		viewport: Ptr | undefined = undefined,
+		edit: Ptr | undefined = undefined,
+		editSeq: Int | undefined = undefined,
+		copy: Ptr | undefined = undefined,
+		gridColor: Color | undefined = undefined,
+		frame: Frame | undefined = undefined,
+		disabled: Bool | undefined = undefined,
+		invisible: Bool | undefined = undefined
+	) {
+		this.id = id;
+		this.rowCount = rowCount;
+		this.colCount = colCount;
+		this.frozenRows = frozenRows;
+		this.frozenCols = frozenCols;
+		this.rowHeight = rowHeight;
+		this.colWidth = colWidth;
+		this.colWidths = colWidths;
+		this.hiddenRows = hiddenRows;
+		this.hiddenCols = hiddenCols;
+		this.windowRow = windowRow;
+		this.windowCol = windowCol;
+		this.windowRows = windowRows;
+		this.windowCols = windowCols;
+		this.cells = cells;
+		this.styles = styles;
+		this.merges = merges;
+		this.viewport = viewport;
+		this.edit = edit;
+		this.editSeq = editSeq;
+		this.copy = copy;
+		this.gridColor = gridColor;
+		this.frame = frame;
+		this.disabled = disabled;
+		this.invisible = invisible;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.rowCount = readSint(reader);
+					break;
+				}
+				case 3: {
+					this.colCount = readSint(reader);
+					break;
+				}
+				case 4: {
+					this.frozenRows = readSint(reader);
+					break;
+				}
+				case 5: {
+					this.frozenCols = readSint(reader);
+					break;
+				}
+				case 6: {
+					this.rowHeight = readFloat(reader);
+					break;
+				}
+				case 7: {
+					this.colWidth = readFloat(reader);
+					break;
+				}
+				case 8: {
+					this.colWidths = new SheetSizes();
+					this.colWidths.read(reader);
+					break;
+				}
+				case 9: {
+					this.hiddenRows = new Ints();
+					this.hiddenRows.read(reader);
+					break;
+				}
+				case 10: {
+					this.hiddenCols = new Ints();
+					this.hiddenCols.read(reader);
+					break;
+				}
+				case 11: {
+					this.windowRow = readSint(reader);
+					break;
+				}
+				case 12: {
+					this.windowCol = readSint(reader);
+					break;
+				}
+				case 13: {
+					this.windowRows = readSint(reader);
+					break;
+				}
+				case 14: {
+					this.windowCols = readSint(reader);
+					break;
+				}
+				case 15: {
+					this.cells = new SheetCells();
+					this.cells.read(reader);
+					break;
+				}
+				case 16: {
+					this.styles = new SheetStyles();
+					this.styles.read(reader);
+					break;
+				}
+				case 17: {
+					this.merges = new SheetMerges();
+					this.merges.read(reader);
+					break;
+				}
+				case 18: {
+					this.viewport = readInt(reader);
+					break;
+				}
+				case 19: {
+					this.edit = readInt(reader);
+					break;
+				}
+				case 20: {
+					this.editSeq = readSint(reader);
+					break;
+				}
+				case 21: {
+					this.copy = readInt(reader);
+					break;
+				}
+				case 22: {
+					this.gridColor = readString(reader);
+					break;
+				}
+				case 23: {
+					this.frame = new Frame();
+					this.frame.read(reader);
+					break;
+				}
+				case 24: {
+					this.disabled = readBool(reader);
+					break;
+				}
+				case 25: {
+					this.invisible = readBool(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.id !== undefined,
+			this.rowCount !== undefined,
+			this.colCount !== undefined,
+			this.frozenRows !== undefined,
+			this.frozenCols !== undefined,
+			this.rowHeight !== undefined,
+			this.colWidth !== undefined,
+			this.colWidths !== undefined && !this.colWidths.isZero(),
+			this.hiddenRows !== undefined && !this.hiddenRows.isZero(),
+			this.hiddenCols !== undefined && !this.hiddenCols.isZero(),
+			this.windowRow !== undefined,
+			this.windowCol !== undefined,
+			this.windowRows !== undefined,
+			this.windowCols !== undefined,
+			this.cells !== undefined && !this.cells.isZero(),
+			this.styles !== undefined && !this.styles.isZero(),
+			this.merges !== undefined && !this.merges.isZero(),
+			this.viewport !== undefined,
+			this.edit !== undefined,
+			this.editSeq !== undefined,
+			this.copy !== undefined,
+			this.gridColor !== undefined,
+			this.frame !== undefined && !this.frame.isZero(),
+			this.disabled !== undefined,
+			this.invisible !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.VARINT, 2);
+			writeSint(writer, this.rowCount!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.VARINT, 3);
+			writeSint(writer, this.colCount!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.VARINT, 4);
+			writeSint(writer, this.frozenRows!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.VARINT, 5);
+			writeSint(writer, this.frozenCols!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.F64, 6);
+			writeFloat(writer, this.rowHeight!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.F64, 7);
+			writeFloat(writer, this.colWidth!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 8);
+			this.colWidths!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[9]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 9);
+			this.hiddenRows!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[10]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 10);
+			this.hiddenCols!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[11]) {
+			writer.writeFieldHeader(Shapes.VARINT, 11);
+			writeSint(writer, this.windowRow!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[12]) {
+			writer.writeFieldHeader(Shapes.VARINT, 12);
+			writeSint(writer, this.windowCol!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[13]) {
+			writer.writeFieldHeader(Shapes.VARINT, 13);
+			writeSint(writer, this.windowRows!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[14]) {
+			writer.writeFieldHeader(Shapes.VARINT, 14);
+			writeSint(writer, this.windowCols!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[15]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 15);
+			this.cells!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[16]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 16);
+			this.styles!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[17]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 17);
+			this.merges!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[18]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 18);
+			writeInt(writer, this.viewport!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[19]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 19);
+			writeInt(writer, this.edit!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[20]) {
+			writer.writeFieldHeader(Shapes.VARINT, 20);
+			writeSint(writer, this.editSeq!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[21]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 21);
+			writeInt(writer, this.copy!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[22]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 22);
+			writeString(writer, this.gridColor!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[23]) {
+			writer.writeFieldHeader(Shapes.RECORD, 23);
+			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[24]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 24);
+			writeBool(writer, this.disabled!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[25]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 25);
+			writeBool(writer, this.invisible!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.id === undefined &&
+			this.rowCount === undefined &&
+			this.colCount === undefined &&
+			this.frozenRows === undefined &&
+			this.frozenCols === undefined &&
+			this.rowHeight === undefined &&
+			this.colWidth === undefined &&
+			(this.colWidths === undefined || this.colWidths.isZero()) &&
+			(this.hiddenRows === undefined || this.hiddenRows.isZero()) &&
+			(this.hiddenCols === undefined || this.hiddenCols.isZero()) &&
+			this.windowRow === undefined &&
+			this.windowCol === undefined &&
+			this.windowRows === undefined &&
+			this.windowCols === undefined &&
+			(this.cells === undefined || this.cells.isZero()) &&
+			(this.styles === undefined || this.styles.isZero()) &&
+			(this.merges === undefined || this.merges.isZero()) &&
+			this.viewport === undefined &&
+			this.edit === undefined &&
+			this.editSeq === undefined &&
+			this.copy === undefined &&
+			this.gridColor === undefined &&
+			(this.frame === undefined || this.frame.isZero()) &&
+			this.disabled === undefined &&
+			this.invisible === undefined
+		);
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.rowCount = undefined;
+		this.colCount = undefined;
+		this.frozenRows = undefined;
+		this.frozenCols = undefined;
+		this.rowHeight = undefined;
+		this.colWidth = undefined;
+		this.colWidths = undefined;
+		this.hiddenRows = undefined;
+		this.hiddenCols = undefined;
+		this.windowRow = undefined;
+		this.windowCol = undefined;
+		this.windowRows = undefined;
+		this.windowCols = undefined;
+		this.cells = undefined;
+		this.styles = undefined;
+		this.merges = undefined;
+		this.viewport = undefined;
+		this.edit = undefined;
+		this.editSeq = undefined;
+		this.copy = undefined;
+		this.gridColor = undefined;
+		this.frame = undefined;
+		this.disabled = undefined;
+		this.invisible = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 288);
+		return;
+	}
+	isComponent(): void {}
+}
+
+// SheetCell is a cell of a Sheet.
+export class SheetCell implements Writeable, Readable {
+	public row?: Int;
+
+	public col?: Int;
+
+	// Text is shown.
+	public text?: Str;
+
+	// Value is the raw value, e.g. a number in machine notation, which is copied. If empty, Text is copied.
+	public value?: Str;
+
+	public type?: SheetValueType;
+
+	// Style is the index of the style plus one, zero is the default style.
+	public style?: Int;
+
+	public editor?: SheetEditor;
+
+	// Options of a select editor.
+	public options?: Strings;
+
+	// Error is shown at the cell, e.g. because the last edit has been rejected.
+	public error?: Str;
+
+	constructor(
+		row: Int | undefined = undefined,
+		col: Int | undefined = undefined,
+		text: Str | undefined = undefined,
+		value: Str | undefined = undefined,
+		type: SheetValueType | undefined = undefined,
+		style: Int | undefined = undefined,
+		editor: SheetEditor | undefined = undefined,
+		options: Strings | undefined = undefined,
+		error: Str | undefined = undefined
+	) {
+		this.row = row;
+		this.col = col;
+		this.text = text;
+		this.value = value;
+		this.type = type;
+		this.style = style;
+		this.editor = editor;
+		this.options = options;
+		this.error = error;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.row = readSint(reader);
+					break;
+				}
+				case 2: {
+					this.col = readSint(reader);
+					break;
+				}
+				case 3: {
+					this.text = readString(reader);
+					break;
+				}
+				case 4: {
+					this.value = readString(reader);
+					break;
+				}
+				case 5: {
+					this.type = readInt(reader);
+					break;
+				}
+				case 6: {
+					this.style = readSint(reader);
+					break;
+				}
+				case 7: {
+					this.editor = readInt(reader);
+					break;
+				}
+				case 8: {
+					this.options = new Strings();
+					this.options.read(reader);
+					break;
+				}
+				case 9: {
+					this.error = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.row !== undefined,
+			this.col !== undefined,
+			this.text !== undefined,
+			this.value !== undefined,
+			this.type !== undefined,
+			this.style !== undefined,
+			this.editor !== undefined,
+			this.options !== undefined && !this.options.isZero(),
+			this.error !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.VARINT, 1);
+			writeSint(writer, this.row!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.VARINT, 2);
+			writeSint(writer, this.col!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			writeString(writer, this.text!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
+			writeString(writer, this.value!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 5);
+			writeInt(writer, this.type!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.VARINT, 6);
+			writeSint(writer, this.style!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 7);
+			writeInt(writer, this.editor!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 8);
+			this.options!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[9]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 9);
+			writeString(writer, this.error!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.row === undefined &&
+			this.col === undefined &&
+			this.text === undefined &&
+			this.value === undefined &&
+			this.type === undefined &&
+			this.style === undefined &&
+			this.editor === undefined &&
+			(this.options === undefined || this.options.isZero()) &&
+			this.error === undefined
+		);
+	}
+
+	reset(): void {
+		this.row = undefined;
+		this.col = undefined;
+		this.text = undefined;
+		this.value = undefined;
+		this.type = undefined;
+		this.style = undefined;
+		this.editor = undefined;
+		this.options = undefined;
+		this.error = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 289);
+		return;
+	}
+}
+
+export class SheetCells implements Writeable, Readable {
+	public value: SheetCell[];
+
+	constructor(value: SheetCell[] = []) {
+		this.value = value;
+	}
+
+	isZero(): boolean {
+		return !this.value || this.value.length === 0;
+	}
+
+	reset(): void {
+		this.value = [];
+	}
+
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value.length); // Write the length of the array
+		for (const c of this.value) {
+			c.writeTypeHeader(writer); // Write the type header for each component)
+			c.write(writer); // Write the component data
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
+		}
+	}
+
+	read(reader: BinaryReader): void {
+		const count = reader.readUvarint(); // Read the length of the array
+		const values: SheetCell[] = [];
+
+		for (let i = 0; i < count; i++) {
+			const obj = unmarshal(reader); // Read and unmarshal each component
+			values.push(obj as any as SheetCell); // Cast and add to the array
+		}
+
+		this.value = values;
+	}
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 290);
+		return;
+	}
+}
+
+// SheetStyle styles a cell.
+export class SheetStyle implements Writeable, Readable {
+	public backgroundColor?: Color;
+
+	public color?: Color;
+
+	public bold?: Bool;
+
+	public italic?: Bool;
+
+	public underline?: Bool;
+
+	public align?: SheetAlign;
+
+	public wrap?: SheetWrap;
+
+	public borderTop?: SheetBorder;
+
+	public borderRight?: SheetBorder;
+
+	public borderBottom?: SheetBorder;
+
+	public borderLeft?: SheetBorder;
+
+	// PaddingX is the horizontal padding in dp. Zero is the default of the sheet.
+	public paddingX?: Float;
+
+	// FontSize in dp. Zero is the default.
+	public fontSize?: Float;
+
+	constructor(
+		backgroundColor: Color | undefined = undefined,
+		color: Color | undefined = undefined,
+		bold: Bool | undefined = undefined,
+		italic: Bool | undefined = undefined,
+		underline: Bool | undefined = undefined,
+		align: SheetAlign | undefined = undefined,
+		wrap: SheetWrap | undefined = undefined,
+		borderTop: SheetBorder | undefined = undefined,
+		borderRight: SheetBorder | undefined = undefined,
+		borderBottom: SheetBorder | undefined = undefined,
+		borderLeft: SheetBorder | undefined = undefined,
+		paddingX: Float | undefined = undefined,
+		fontSize: Float | undefined = undefined
+	) {
+		this.backgroundColor = backgroundColor;
+		this.color = color;
+		this.bold = bold;
+		this.italic = italic;
+		this.underline = underline;
+		this.align = align;
+		this.wrap = wrap;
+		this.borderTop = borderTop;
+		this.borderRight = borderRight;
+		this.borderBottom = borderBottom;
+		this.borderLeft = borderLeft;
+		this.paddingX = paddingX;
+		this.fontSize = fontSize;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.backgroundColor = readString(reader);
+					break;
+				}
+				case 2: {
+					this.color = readString(reader);
+					break;
+				}
+				case 3: {
+					this.bold = readBool(reader);
+					break;
+				}
+				case 4: {
+					this.italic = readBool(reader);
+					break;
+				}
+				case 5: {
+					this.underline = readBool(reader);
+					break;
+				}
+				case 6: {
+					this.align = readInt(reader);
+					break;
+				}
+				case 7: {
+					this.wrap = readInt(reader);
+					break;
+				}
+				case 8: {
+					this.borderTop = new SheetBorder();
+					this.borderTop.read(reader);
+					break;
+				}
+				case 9: {
+					this.borderRight = new SheetBorder();
+					this.borderRight.read(reader);
+					break;
+				}
+				case 10: {
+					this.borderBottom = new SheetBorder();
+					this.borderBottom.read(reader);
+					break;
+				}
+				case 11: {
+					this.borderLeft = new SheetBorder();
+					this.borderLeft.read(reader);
+					break;
+				}
+				case 12: {
+					this.paddingX = readFloat(reader);
+					break;
+				}
+				case 13: {
+					this.fontSize = readFloat(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.backgroundColor !== undefined,
+			this.color !== undefined,
+			this.bold !== undefined,
+			this.italic !== undefined,
+			this.underline !== undefined,
+			this.align !== undefined,
+			this.wrap !== undefined,
+			this.borderTop !== undefined && !this.borderTop.isZero(),
+			this.borderRight !== undefined && !this.borderRight.isZero(),
+			this.borderBottom !== undefined && !this.borderBottom.isZero(),
+			this.borderLeft !== undefined && !this.borderLeft.isZero(),
+			this.paddingX !== undefined,
+			this.fontSize !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.backgroundColor!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.color!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 3);
+			writeBool(writer, this.bold!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 4);
+			writeBool(writer, this.italic!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 5);
+			writeBool(writer, this.underline!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 6);
+			writeInt(writer, this.align!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 7);
+			writeInt(writer, this.wrap!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.RECORD, 8);
+			this.borderTop!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[9]) {
+			writer.writeFieldHeader(Shapes.RECORD, 9);
+			this.borderRight!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[10]) {
+			writer.writeFieldHeader(Shapes.RECORD, 10);
+			this.borderBottom!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[11]) {
+			writer.writeFieldHeader(Shapes.RECORD, 11);
+			this.borderLeft!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[12]) {
+			writer.writeFieldHeader(Shapes.F64, 12);
+			writeFloat(writer, this.paddingX!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[13]) {
+			writer.writeFieldHeader(Shapes.F64, 13);
+			writeFloat(writer, this.fontSize!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.backgroundColor === undefined &&
+			this.color === undefined &&
+			this.bold === undefined &&
+			this.italic === undefined &&
+			this.underline === undefined &&
+			this.align === undefined &&
+			this.wrap === undefined &&
+			(this.borderTop === undefined || this.borderTop.isZero()) &&
+			(this.borderRight === undefined || this.borderRight.isZero()) &&
+			(this.borderBottom === undefined || this.borderBottom.isZero()) &&
+			(this.borderLeft === undefined || this.borderLeft.isZero()) &&
+			this.paddingX === undefined &&
+			this.fontSize === undefined
+		);
+	}
+
+	reset(): void {
+		this.backgroundColor = undefined;
+		this.color = undefined;
+		this.bold = undefined;
+		this.italic = undefined;
+		this.underline = undefined;
+		this.align = undefined;
+		this.wrap = undefined;
+		this.borderTop = undefined;
+		this.borderRight = undefined;
+		this.borderBottom = undefined;
+		this.borderLeft = undefined;
+		this.paddingX = undefined;
+		this.fontSize = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 291);
+		return;
+	}
+}
+
+export class SheetStyles implements Writeable, Readable {
+	public value: SheetStyle[];
+
+	constructor(value: SheetStyle[] = []) {
+		this.value = value;
+	}
+
+	isZero(): boolean {
+		return !this.value || this.value.length === 0;
+	}
+
+	reset(): void {
+		this.value = [];
+	}
+
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value.length); // Write the length of the array
+		for (const c of this.value) {
+			c.writeTypeHeader(writer); // Write the type header for each component)
+			c.write(writer); // Write the component data
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
+		}
+	}
+
+	read(reader: BinaryReader): void {
+		const count = reader.readUvarint(); // Read the length of the array
+		const values: SheetStyle[] = [];
+
+		for (let i = 0; i < count; i++) {
+			const obj = unmarshal(reader); // Read and unmarshal each component
+			values.push(obj as any as SheetStyle); // Cast and add to the array
+		}
+
+		this.value = values;
+	}
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 292);
+		return;
+	}
+}
+
+// SheetBorder is a line at one side of a cell.
+export class SheetBorder implements Writeable, Readable {
+	public color?: Color;
+
+	// Width in dp.
+	public width?: Float;
+
+	public style?: SheetLineStyle;
+
+	constructor(
+		color: Color | undefined = undefined,
+		width: Float | undefined = undefined,
+		style: SheetLineStyle | undefined = undefined
+	) {
+		this.color = color;
+		this.width = width;
+		this.style = style;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.color = readString(reader);
+					break;
+				}
+				case 2: {
+					this.width = readFloat(reader);
+					break;
+				}
+				case 3: {
+					this.style = readInt(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.color !== undefined, this.width !== undefined, this.style !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.color!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.F64, 2);
+			writeFloat(writer, this.width!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 3);
+			writeInt(writer, this.style!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.color === undefined && this.width === undefined && this.style === undefined;
+	}
+
+	reset(): void {
+		this.color = undefined;
+		this.width = undefined;
+		this.style = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 293);
+		return;
+	}
+}
+
+// SheetMerge joins a rectangle of cells into the cell at its top left.
+export class SheetMerge implements Writeable, Readable {
+	public row?: Int;
+
+	public col?: Int;
+
+	public rows?: Int;
+
+	public cols?: Int;
+
+	constructor(
+		row: Int | undefined = undefined,
+		col: Int | undefined = undefined,
+		rows: Int | undefined = undefined,
+		cols: Int | undefined = undefined
+	) {
+		this.row = row;
+		this.col = col;
+		this.rows = rows;
+		this.cols = cols;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.row = readSint(reader);
+					break;
+				}
+				case 2: {
+					this.col = readSint(reader);
+					break;
+				}
+				case 3: {
+					this.rows = readSint(reader);
+					break;
+				}
+				case 4: {
+					this.cols = readSint(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.row !== undefined,
+			this.col !== undefined,
+			this.rows !== undefined,
+			this.cols !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.VARINT, 1);
+			writeSint(writer, this.row!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.VARINT, 2);
+			writeSint(writer, this.col!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.VARINT, 3);
+			writeSint(writer, this.rows!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.VARINT, 4);
+			writeSint(writer, this.cols!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.row === undefined && this.col === undefined && this.rows === undefined && this.cols === undefined;
+	}
+
+	reset(): void {
+		this.row = undefined;
+		this.col = undefined;
+		this.rows = undefined;
+		this.cols = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 294);
+		return;
+	}
+}
+
+export class SheetMerges implements Writeable, Readable {
+	public value: SheetMerge[];
+
+	constructor(value: SheetMerge[] = []) {
+		this.value = value;
+	}
+
+	isZero(): boolean {
+		return !this.value || this.value.length === 0;
+	}
+
+	reset(): void {
+		this.value = [];
+	}
+
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value.length); // Write the length of the array
+		for (const c of this.value) {
+			c.writeTypeHeader(writer); // Write the type header for each component)
+			c.write(writer); // Write the component data
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
+		}
+	}
+
+	read(reader: BinaryReader): void {
+		const count = reader.readUvarint(); // Read the length of the array
+		const values: SheetMerge[] = [];
+
+		for (let i = 0; i < count; i++) {
+			const obj = unmarshal(reader); // Read and unmarshal each component
+			values.push(obj as any as SheetMerge); // Cast and add to the array
+		}
+
+		this.value = values;
+	}
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 295);
+		return;
+	}
+}
+
+// SheetSize is the size of a row or column.
+export class SheetSize implements Writeable, Readable {
+	public index?: Int;
+
+	// Size in dp.
+	public size?: Float;
+
+	constructor(index: Int | undefined = undefined, size: Float | undefined = undefined) {
+		this.index = index;
+		this.size = size;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.index = readSint(reader);
+					break;
+				}
+				case 2: {
+					this.size = readFloat(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.index !== undefined, this.size !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.VARINT, 1);
+			writeSint(writer, this.index!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.F64, 2);
+			writeFloat(writer, this.size!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.index === undefined && this.size === undefined;
+	}
+
+	reset(): void {
+		this.index = undefined;
+		this.size = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 296);
+		return;
+	}
+}
+
+export class SheetSizes implements Writeable, Readable {
+	public value: SheetSize[];
+
+	constructor(value: SheetSize[] = []) {
+		this.value = value;
+	}
+
+	isZero(): boolean {
+		return !this.value || this.value.length === 0;
+	}
+
+	reset(): void {
+		this.value = [];
+	}
+
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value.length); // Write the length of the array
+		for (const c of this.value) {
+			c.writeTypeHeader(writer); // Write the type header for each component)
+			c.write(writer); // Write the component data
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
+		}
+	}
+
+	read(reader: BinaryReader): void {
+		const count = reader.readUvarint(); // Read the length of the array
+		const values: SheetSize[] = [];
+
+		for (let i = 0; i < count; i++) {
+			const obj = unmarshal(reader); // Read and unmarshal each component
+			values.push(obj as any as SheetSize); // Cast and add to the array
+		}
+
+		this.value = values;
+	}
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 297);
+		return;
+	}
+}
+
+export class Ints implements Writeable, Readable {
+	public value: Int[];
+
+	constructor(value: Int[] = []) {
+		this.value = value;
+	}
+
+	isZero(): boolean {
+		return !this.value || this.value.length === 0;
+	}
+
+	reset(): void {
+		this.value = [];
+	}
+
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value.length); // Write the length of the array
+		for (const c of this.value) {
+			writeTypeHeaderInt(writer);
+			writeSint(writer, c);
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
+		}
+	}
+
+	read(reader: BinaryReader): void {
+		const count = reader.readUvarint(); // Read the length of the array
+		const values: Int[] = [];
+
+		for (let i = 0; i < count; i++) {
+			const obj = unmarshal(reader); // Read and unmarshal each component
+			values.push(obj as any as Int); // Cast and add to the array
+		}
+
+		this.value = values;
+	}
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 298);
+		return;
+	}
+}
+
+// SheetEditor is the editor of a cell.
+export type SheetEditor = number;
+function writeTypeHeaderSheetEditor(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 299);
+	return;
+}
+// companion enum containing all defined constants for SheetEditor
+export enum SheetEditorValues {
+	SheetEditorNone = 0,
+	SheetEditorText = 1,
+	SheetEditorNumber = 2,
+	SheetEditorSelect = 3,
+	SheetEditorCheckbox = 4,
+}
+
+// SheetValueType tells how a value is aligned by default and exported.
+export type SheetValueType = number;
+function writeTypeHeaderSheetValueType(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 300);
+	return;
+}
+// companion enum containing all defined constants for SheetValueType
+export enum SheetValueTypeValues {
+	SheetValueText = 0,
+	SheetValueNumber = 1,
+	SheetValueBool = 2,
+	SheetValueDate = 3,
+}
+
+// SheetAlign aligns the content of a cell horizontally.
+export type SheetAlign = number;
+function writeTypeHeaderSheetAlign(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 301);
+	return;
+}
+// companion enum containing all defined constants for SheetAlign
+export enum SheetAlignValues {
+	SheetAlignAuto = 0,
+	SheetAlignStart = 1,
+	SheetAlignCenter = 2,
+	SheetAlignEnd = 3,
+}
+
+// SheetWrap tells, what happens with text, which does not fit into a cell.
+export type SheetWrap = number;
+function writeTypeHeaderSheetWrap(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 302);
+	return;
+}
+// companion enum containing all defined constants for SheetWrap
+export enum SheetWrapValues {
+	SheetWrapClip = 0,
+	SheetWrapEllipsis = 1,
+	SheetWrapWrap = 2,
+}
+
+// SheetLineStyle is the style of a border line.
+export type SheetLineStyle = number;
+function writeTypeHeaderSheetLineStyle(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 303);
+	return;
+}
+// companion enum containing all defined constants for SheetLineStyle
+export enum SheetLineStyleValues {
+	SheetLineNone = 0,
+	SheetLineSolid = 1,
+	SheetLineDashed = 2,
+	SheetLineDotted = 3,
+	SheetLineDouble = 4,
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -24033,6 +25413,81 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 287: {
 			const v = readInt(src) as ColorPickerMode;
+			return v;
+		}
+		case 288: {
+			const v = new Sheet();
+			v.read(src);
+			return v;
+		}
+		case 289: {
+			const v = new SheetCell();
+			v.read(src);
+			return v;
+		}
+		case 290: {
+			const v = new SheetCells();
+			v.read(src);
+			return v;
+		}
+		case 291: {
+			const v = new SheetStyle();
+			v.read(src);
+			return v;
+		}
+		case 292: {
+			const v = new SheetStyles();
+			v.read(src);
+			return v;
+		}
+		case 293: {
+			const v = new SheetBorder();
+			v.read(src);
+			return v;
+		}
+		case 294: {
+			const v = new SheetMerge();
+			v.read(src);
+			return v;
+		}
+		case 295: {
+			const v = new SheetMerges();
+			v.read(src);
+			return v;
+		}
+		case 296: {
+			const v = new SheetSize();
+			v.read(src);
+			return v;
+		}
+		case 297: {
+			const v = new SheetSizes();
+			v.read(src);
+			return v;
+		}
+		case 298: {
+			const v = new Ints();
+			v.read(src);
+			return v;
+		}
+		case 299: {
+			const v = readInt(src) as SheetEditor;
+			return v;
+		}
+		case 300: {
+			const v = readInt(src) as SheetValueType;
+			return v;
+		}
+		case 301: {
+			const v = readInt(src) as SheetAlign;
+			return v;
+		}
+		case 302: {
+			const v = readInt(src) as SheetWrap;
+			return v;
+		}
+		case 303: {
+			const v = readInt(src) as SheetLineStyle;
 			return v;
 		}
 	}

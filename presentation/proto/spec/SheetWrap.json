@@ -1,0 +1,16 @@
+{
+  "doc": "SheetWrap tells, what happens with text, which does not fit into a cell.",
+  "kind": "Uint",
+  "id": 302,
+  "const": {
+    "0": {
+      "name": "SheetWrapClip"
+    },
+    "1": {
+      "name": "SheetWrapEllipsis"
+    },
+    "2": {
+      "name": "SheetWrapWrap"
+    }
+  }
+}

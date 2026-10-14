@@ -1,0 +1,19 @@
+{
+  "doc": "SheetValueType tells how a value is aligned by default and exported.",
+  "kind": "Uint",
+  "id": 300,
+  "const": {
+    "0": {
+      "name": "SheetValueText"
+    },
+    "1": {
+      "name": "SheetValueNumber"
+    },
+    "2": {
+      "name": "SheetValueBool"
+    },
+    "3": {
+      "name": "SheetValueDate"
+    }
+  }
+}

@@ -1,0 +1,123 @@
+{
+  "doc": "Sheet is a spreadsheet like table, which renders only the cells of a window around the visible area. The client reports the area it needs through Viewport and receives the cells of that window.",
+  "kind": "Record",
+  "id": 288,
+  "fields": {
+    "1": {
+      "doc": "Id identifies the sheet within the view tree and must be unique.",
+      "name": "Id",
+      "type": "Str"
+    },
+    "2": {
+      "name": "RowCount",
+      "type": "Int"
+    },
+    "3": {
+      "name": "ColCount",
+      "type": "Int"
+    },
+    "4": {
+      "doc": "FrozenRows are the leading rows, which stay visible while scrolling vertically.",
+      "name": "FrozenRows",
+      "type": "Int"
+    },
+    "5": {
+      "doc": "FrozenCols are the leading columns, which stay visible while scrolling horizontally.",
+      "name": "FrozenCols",
+      "type": "Int"
+    },
+    "6": {
+      "doc": "RowHeight is the height of every row in dp.",
+      "name": "RowHeight",
+      "type": "Float"
+    },
+    "7": {
+      "doc": "ColWidth is the default width of a column in dp.",
+      "name": "ColWidth",
+      "type": "Float"
+    },
+    "8": {
+      "doc": "ColWidths overrides the width of single columns.",
+      "name": "ColWidths",
+      "type": "SheetSizes"
+    },
+    "9": {
+      "doc": "HiddenRows are the sorted indices of the hidden rows.",
+      "name": "HiddenRows",
+      "type": "Ints"
+    },
+    "10": {
+      "doc": "HiddenCols are the sorted indices of the hidden columns.",
+      "name": "HiddenCols",
+      "type": "Ints"
+    },
+    "11": {
+      "doc": "WindowRow is the first row of the window, whose cells are contained.",
+      "name": "WindowRow",
+      "type": "Int"
+    },
+    "12": {
+      "name": "WindowCol",
+      "type": "Int"
+    },
+    "13": {
+      "name": "WindowRows",
+      "type": "Int"
+    },
+    "14": {
+      "name": "WindowCols",
+      "type": "Int"
+    },
+    "15": {
+      "doc": "Cells of the window and of the frozen rows and columns. Cells which are hidden or covered by a merge are omitted.",
+      "name": "Cells",
+      "type": "SheetCells"
+    },
+    "16": {
+      "doc": "Styles are referenced by the cells, so that equal styles are transferred once.",
+      "name": "Styles",
+      "type": "SheetStyles"
+    },
+    "17": {
+      "doc": "Merges which intersect the window or the frozen rows and columns.",
+      "name": "Merges",
+      "type": "SheetMerges"
+    },
+    "18": {
+      "doc": "Viewport is a state, into which the client writes the window it needs as row,col,rows,cols.",
+      "name": "Viewport",
+      "type": "Ptr"
+    },
+    "19": {
+      "doc": "Edit is a state, into which the client writes a committed edit as json {seq,row,col,value}.",
+      "name": "Edit",
+      "type": "Ptr"
+    },
+    "20": {
+      "doc": "EditSeq is the sequence number of the last edit, which has been processed.",
+      "name": "EditSeq",
+      "type": "Int"
+    },
+    "21": {
+      "doc": "Copy is a state, into which the client writes a range as row,col,rows,cols, whose text the server copies into the clipboard.",
+      "name": "Copy",
+      "type": "Ptr"
+    },
+    "22": {
+      "name": "GridColor",
+      "type": "Color"
+    },
+    "23": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "24": {
+      "name": "Disabled",
+      "type": "Bool"
+    },
+    "25": {
+      "name": "Invisible",
+      "type": "Bool"
+    }
+  }
+}

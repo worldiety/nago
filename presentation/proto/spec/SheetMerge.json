@@ -1,0 +1,23 @@
+{
+  "doc": "SheetMerge joins a rectangle of cells into the cell at its top left.",
+  "kind": "Record",
+  "id": 294,
+  "fields": {
+    "1": {
+      "name": "Row",
+      "type": "Int"
+    },
+    "2": {
+      "name": "Col",
+      "type": "Int"
+    },
+    "3": {
+      "name": "Rows",
+      "type": "Int"
+    },
+    "4": {
+      "name": "Cols",
+      "type": "Int"
+    }
+  }
+}

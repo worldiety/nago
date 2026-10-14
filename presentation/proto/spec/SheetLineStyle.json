@@ -1,0 +1,22 @@
+{
+  "doc": "SheetLineStyle is the style of a border line.",
+  "kind": "Uint",
+  "id": 303,
+  "const": {
+    "0": {
+      "name": "SheetLineNone"
+    },
+    "1": {
+      "name": "SheetLineSolid"
+    },
+    "2": {
+      "name": "SheetLineDashed"
+    },
+    "3": {
+      "name": "SheetLineDotted"
+    },
+    "4": {
+      "name": "SheetLineDouble"
+    }
+  }
+}

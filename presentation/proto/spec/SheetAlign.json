@@ -1,0 +1,19 @@
+{
+  "doc": "SheetAlign aligns the content of a cell horizontally.",
+  "kind": "Uint",
+  "id": 301,
+  "const": {
+    "0": {
+      "name": "SheetAlignAuto"
+    },
+    "1": {
+      "name": "SheetAlignStart"
+    },
+    "2": {
+      "name": "SheetAlignCenter"
+    },
+    "3": {
+      "name": "SheetAlignEnd"
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "doc": "SheetSize is the size of a row or column.",
+  "kind": "Record",
+  "id": 296,
+  "fields": {
+    "1": {
+      "name": "Index",
+      "type": "Int"
+    },
+    "2": {
+      "doc": "Size in dp.",
+      "name": "Size",
+      "type": "Float"
+    }
+  }
+}

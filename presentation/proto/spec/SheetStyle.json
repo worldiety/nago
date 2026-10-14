@@ -1,0 +1,61 @@
+{
+  "doc": "SheetStyle styles a cell.",
+  "kind": "Record",
+  "id": 291,
+  "fields": {
+    "1": {
+      "name": "BackgroundColor",
+      "type": "Color"
+    },
+    "2": {
+      "name": "Color",
+      "type": "Color"
+    },
+    "3": {
+      "name": "Bold",
+      "type": "Bool"
+    },
+    "4": {
+      "name": "Italic",
+      "type": "Bool"
+    },
+    "5": {
+      "name": "Underline",
+      "type": "Bool"
+    },
+    "6": {
+      "name": "Align",
+      "type": "SheetAlign"
+    },
+    "7": {
+      "name": "Wrap",
+      "type": "SheetWrap"
+    },
+    "8": {
+      "name": "BorderTop",
+      "type": "SheetBorder"
+    },
+    "9": {
+      "name": "BorderRight",
+      "type": "SheetBorder"
+    },
+    "10": {
+      "name": "BorderBottom",
+      "type": "SheetBorder"
+    },
+    "11": {
+      "name": "BorderLeft",
+      "type": "SheetBorder"
+    },
+    "12": {
+      "doc": "PaddingX is the horizontal padding in dp. Zero is the default of the sheet.",
+      "name": "PaddingX",
+      "type": "Float"
+    },
+    "13": {
+      "doc": "FontSize in dp. Zero is the default.",
+      "name": "FontSize",
+      "type": "Float"
+    }
+  }
+}
