@@ -113,3 +113,40 @@ func (w *Window) SheetPaste(s Selection, edits ...sheet.Edit) {
 	})
 	w.observe("sheet-paste", s.matcher.desc, start)
 }
+
+// SheetSort sorts the single selected sheet by a column, like the user does with the arrow in the header. The
+// window settles afterward.
+func (w *Window) SheetSort(s Selection, sorting sheet.Sorting) {
+	w.t.Helper()
+
+	start := time.Now()
+	w.act(s, func(s Selection) proto.NagoEvent {
+		sh := w.sheetOf(s)
+		if sh.Header.Sort == 0 {
+			w.t.Fatalf("nagotest: %s: the sheet offers no sorting", s.matcher)
+		}
+		value := fmt.Sprintf("%d,%d", sorting.Col, sorting.Dir)
+		return &proto.UpdateStateValueRequested{StatePointer: sh.Header.Sort, Value: proto.Str(value), RID: w.nextRID()}
+	})
+	w.observe("sheet-sort", s.matcher.desc, start)
+}
+
+// SheetFilter filters the single selected sheet by the text of a column, like the user does in the header. An
+// empty text removes the filter. The window settles afterward.
+func (w *Window) SheetFilter(s Selection, col int, text string) {
+	w.t.Helper()
+
+	start := time.Now()
+	w.act(s, func(s Selection) proto.NagoEvent {
+		sh := w.sheetOf(s)
+		if sh.Header.Filter == 0 {
+			w.t.Fatalf("nagotest: %s: the sheet offers no filtering", s.matcher)
+		}
+		buf, err := json.Marshal(map[string]any{"col": col, "text": text})
+		if err != nil {
+			w.t.Fatalf("nagotest: cannot encode sheet filter: %v", err)
+		}
+		return &proto.UpdateStateValueRequested{StatePointer: sh.Header.Filter, Value: proto.Str(buf), RID: w.nextRID()}
+	})
+	w.observe("sheet-filter", s.matcher.desc, start)
+}

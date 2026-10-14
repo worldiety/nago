@@ -154,6 +154,21 @@ type Layout struct {
 	HiddenCols []int           `json:"hiddenCols,omitempty"`
 }
 
+// SortDir is the direction, in which the rows are sorted.
+type SortDir int
+
+const (
+	SortNone SortDir = iota
+	SortAsc
+	SortDesc
+)
+
+// Sorting tells, by which column the application has sorted the rows, see [TSheet.OnSort].
+type Sorting struct {
+	Col int
+	Dir SortDir
+}
+
 // Edit is a value, which the user has entered into a cell.
 type Edit struct {
 	Row, Col int

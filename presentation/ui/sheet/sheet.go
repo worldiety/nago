@@ -47,6 +47,12 @@ type TSheet struct {
 	layout     *core.State[Layout]
 	fixed      bool // the user may not change the layout
 	paste      bool
+	sorting    Sorting
+	onSort     func(Sorting)
+	sortable   []int
+	filters    map[int]string
+	onFilter   func(col int, text string)
+	filterable []int
 	disabled   bool
 	invisible  bool
 	frame      ui.Frame
@@ -140,6 +146,47 @@ func (c TSheet) AllowPaste(allow bool) TSheet {
 	return c
 }
 
+// OnSort offers sorting in the header, i.e. in the last frozen row, see [TSheet.Frozen]. A click on the arrow of a
+// column invokes fn, which sorts the rows of the application, so that the cell function returns them in the new
+// order. Pass the sorting back with [TSheet.Sorted], so that the arrow shows it.
+func (c TSheet) OnSort(fn func(Sorting)) TSheet {
+	c.onSort = fn
+	return c
+}
+
+// Sorted shows the sorting of the application in the header, see [TSheet.OnSort].
+func (c TSheet) Sorted(sorting Sorting) TSheet {
+	c.sorting = sorting
+	return c
+}
+
+// SortableColumns restricts sorting to the given columns. All columns can be sorted by default.
+func (c TSheet) SortableColumns(cols ...int) TSheet {
+	c.sortable = cols
+	return c
+}
+
+// OnFilter offers a text filter in the header, i.e. in the last frozen row, see [TSheet.Frozen]. fn is invoked with
+// the text, which the user entered for a column, or an empty text, if the user removed the filter. It filters the
+// rows of the application, so that the sheet gets fewer rows. Pass the filters back with [TSheet.Filtered], so
+// that the header shows them.
+func (c TSheet) OnFilter(fn func(col int, text string)) TSheet {
+	c.onFilter = fn
+	return c
+}
+
+// Filtered shows the filters of the application by their column in the header, see [TSheet.OnFilter].
+func (c TSheet) Filtered(filters map[int]string) TSheet {
+	c.filters = filters
+	return c
+}
+
+// FilterableColumns restricts filtering to the given columns. All columns can be filtered by default.
+func (c TSheet) FilterableColumns(cols ...int) TSheet {
+	c.filterable = cols
+	return c
+}
+
 // GridColor sets the color of the grid lines.
 func (c TSheet) GridColor(color ui.Color) TSheet {
 	c.gridColor = color
@@ -188,7 +235,24 @@ func (c TSheet) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	// the cells depend on the layout of the user, e.g. its hidden columns
+	userHidden := c.userHidden(layout.Get())
 	c = c.withLayout(layout.Get())
+
+	header := proto.SheetHeader{SortCol: proto.Int(c.sorting.Col), SortDir: proto.SheetSortDir(c.sorting.Dir)}
+	if c.onSort != nil {
+		header.Sort = core.StateOf[string](wnd, prefix+".sort").Observe(c.handleSort).Ptr()
+		header.SortableCols = toInts(c.sortable)
+	}
+
+	if c.onFilter != nil {
+		header.Filter = core.StateOf[string](wnd, prefix+".filter").Observe(c.handleFilter).Ptr()
+		header.FilterableCols = toInts(c.filterable)
+		for _, col := range slices.Sorted(maps.Keys(c.filters)) {
+			if text := c.filters[col]; text != "" {
+				header.Filters = append(header.Filters, proto.SheetFilter{Col: proto.Int(col), Text: proto.Str(text)})
+			}
+		}
+	}
 
 	cp := core.StateOf[string](wnd, prefix+".copy").Observe(func(raw string) {
 		c.handleCopy(wnd, raw)
@@ -240,7 +304,17 @@ func (c TSheet) Render(ctx core.RenderContext) core.RenderNode {
 		Invisible:  proto.Bool(c.invisible),
 		Layout:     layoutPtr,
 		Paste:      pastePtr,
+		Header:     header,
+		UserHidden: userHidden,
 	}
+}
+
+func toInts(values []int) proto.Ints {
+	var res proto.Ints
+	for _, v := range values {
+		res = append(res, proto.Int(v))
+	}
+	return res
 }
 
 func sizes(m map[int]float64, count int) proto.SheetSizes {

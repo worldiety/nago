@@ -11,8 +11,11 @@ import (
 	"encoding/json"
 	"maps"
 	"slices"
+	"strconv"
+	"strings"
 
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/proto"
 )
 
 const (
@@ -57,6 +60,64 @@ func union(set map[int]bool, values []int) map[int]bool {
 	return res
 }
 
+// userHidden returns the rows and columns, which only the user has hidden, so that the user may show them again.
+func (c TSheet) userHidden(l Layout) proto.SheetUserHidden {
+	var res proto.SheetUserHidden
+	for _, row := range l.HiddenRows {
+		if row >= 0 && row < c.rows && !c.hiddenRows[row] {
+			res.Rows = append(res.Rows, proto.Int(row))
+		}
+	}
+
+	for _, col := range l.HiddenCols {
+		if col >= 0 && col < c.cols && !c.hiddenCols[col] {
+			res.Cols = append(res.Cols, proto.Int(col))
+		}
+	}
+
+	slices.Sort(res.Rows)
+	slices.Sort(res.Cols)
+	return res
+}
+
+func (c TSheet) handleSort(raw string) {
+	parts := strings.Split(raw, ",")
+	if len(parts) != 2 || c.onSort == nil {
+		return
+	}
+
+	col, err1 := strconv.Atoi(parts[0])
+	dir, err2 := strconv.Atoi(parts[1])
+	if err1 != nil || err2 != nil || col < 0 || col >= c.cols || SortDir(dir) < SortNone || SortDir(dir) > SortDesc {
+		return
+	}
+
+	if len(c.sortable) > 0 && !slices.Contains(c.sortable, col) {
+		return
+	}
+
+	c.onSort(Sorting{Col: col, Dir: SortDir(dir)})
+}
+
+// filterRequest is written by the client into the filter state.
+type filterRequest struct {
+	Col  int    `json:"col"`
+	Text string `json:"text"`
+}
+
+func (c TSheet) handleFilter(raw string) {
+	var req filterRequest
+	if err := json.Unmarshal([]byte(raw), &req); err != nil || c.onFilter == nil || req.Col < 0 || req.Col >= c.cols {
+		return
+	}
+
+	if len(c.filterable) > 0 && !slices.Contains(c.filterable, req.Col) {
+		return
+	}
+
+	c.onFilter(req.Col, strings.TrimSpace(req.Text))
+}
+
 // layoutOp is written by the client into the layout state.
 type layoutOp struct {
 	Op    string  `json:"op"`
@@ -94,6 +155,10 @@ func (c TSheet) handleLayout(raw string, state *core.State[Layout]) {
 	case "showAll":
 		l.HiddenRows = nil
 		l.HiddenCols = nil
+	case "showCol":
+		l.HiddenCols = slices.DeleteFunc(slices.Clone(l.HiddenCols), func(i int) bool { return i == op.Index })
+	case "showRow":
+		l.HiddenRows = slices.DeleteFunc(slices.Clone(l.HiddenRows), func(i int) bool { return i == op.Index })
 	default:
 		return
 	}
