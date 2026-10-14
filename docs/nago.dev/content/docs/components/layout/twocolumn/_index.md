@@ -43,6 +43,8 @@ list items.
 
 | Method | Description |
 |--------|-------------|
+| `AlignmentContent(alignment ui.Alignment) TTwoColumn` | Sets the alignment of the content column, `Center` by default. |
+| `AlignmentDetail(alignment ui.Alignment) TTwoColumn` | Sets the alignment of the detail column, `Top` by default, so the detail does not jump when the selection changes between a long and a short view. |
 | `BackgroundColorContent(bg ui.Color) TTwoColumn` | Sets the background color of the content column. |
 | `BackgroundColorDetail(bg ui.Color) TTwoColumn` | Sets the background color of the detail column. |
 | `Default(content, detail ViewID) TTwoColumn` | Sets the views shown when nothing is selected. |
@@ -51,6 +53,8 @@ list items.
 | `ID(id string) TTwoColumn` | Sets the ID which distinguishes several split views on one page. |
 | `WidthContent(width ui.Length) TTwoColumn` | Sets the width of the content column, 30rem by default. |
 | `WidthDetail(width ui.Length) TTwoColumn` | Sets the width of the detail column, the remaining space by default. |
+
+The alignment setters only take effect on large windows, where both columns are shown side by side.
 
 `TListItem`:
 

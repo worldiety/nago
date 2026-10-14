@@ -65,13 +65,20 @@ type TTwoColumn struct {
 	bgDetail       ui.Color
 	contentWidth   ui.Length
 	detailWidth    ui.Length
+	alignContent   ui.Alignment
+	alignDetail    ui.Alignment
 }
 
+// TwoColumn creates a two-column layout with the given navigation factory. The content column is centered and
+// the detail column starts at the top, so the detail does not jump when the selection changes between a long and
+// a short view.
 func TwoColumn(nav Factory) TTwoColumn {
 	return TTwoColumn{
 		nav:          nav,
 		contentWidth: "30rem",
 		detailWidth:  "1fr",
+		alignContent: ui.Center,
+		alignDetail:  ui.Top,
 	}
 }
 
@@ -117,6 +124,18 @@ func (c TTwoColumn) BackgroundColorDetail(bg ui.Color) TTwoColumn {
 	return c
 }
 
+// AlignmentContent sets the alignment of the content column, [ui.Center] by default.
+func (c TTwoColumn) AlignmentContent(alignment ui.Alignment) TTwoColumn {
+	c.alignContent = alignment
+	return c
+}
+
+// AlignmentDetail sets the alignment of the detail column, [ui.Top] by default.
+func (c TTwoColumn) AlignmentDetail(alignment ui.Alignment) TTwoColumn {
+	c.alignDetail = alignment
+	return c
+}
+
 func (c TTwoColumn) Render(ctx core.RenderContext) core.RenderNode {
 	wnd := ctx.Window()
 	detailKey := KindDetail.QueryKey(c.id)
@@ -159,9 +178,9 @@ func (c TTwoColumn) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	return ui.Grid(
-		paneCell(contentView, ui.Center).BackgroundColor(c.bgContent),
+		paneCell(contentView, c.alignContent).BackgroundColor(c.bgContent),
 		ui.GridCell(ui.Text("").Underline(true)).BackgroundColor(ui.ColorIconsMuted),
-		paneCell(detailView, ui.Center).BackgroundColor(c.bgDetail),
+		paneCell(detailView, c.alignDetail).BackgroundColor(c.bgDetail),
 	).Columns(3).
 		Gap(ui.L8).
 		Widths(c.contentWidth, "1px", c.detailWidth).
