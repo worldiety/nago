@@ -29,6 +29,7 @@ type position struct {
 	Price    float64
 	Approved bool
 	Note     string
+	Checked  bool
 }
 
 var categories = []string{"Material", "Personal", "Reise", "Sonstiges"}
@@ -62,10 +63,11 @@ const (
 	colTotal
 	colApproved
 	colNote
+	colAction
 	colCount
 )
 
-var header = []string{"Bezeichnung", "Kategorie", "Menge", "Preis", "Summe", "Freigabe", "Hinweis"}
+var header = []string{"Bezeichnung", "Kategorie", "Menge", "Preis", "Summe", "Freigabe", "Hinweis", "Aktion"}
 
 var (
 	headerStyle = sheet.Style{Borders: sheet.Borders{Bottom: sheet.Line{Width: 2, Style: sheet.LineSolid}}}
@@ -78,7 +80,8 @@ func money(v float64) string {
 	return strings.ReplaceAll(strconv.FormatFloat(v, 'f', 2, 64), ".", ",") + " €"
 }
 
-func (m *model) cell(row, col int) sheet.Cell {
+// cell returns a cell of the sheet. changed renders the window again after a use case changed the model.
+func (m *model) cell(row, col int, changed func()) sheet.Cell {
 	if row == 0 {
 		return sheet.Cell{Text: header[col], Style: headerStyle}
 	}
@@ -100,6 +103,19 @@ func (m *model) cell(row, col int) sheet.Cell {
 		return sheet.Cell{Text: money(p.Amount * p.Price), Value: strconv.FormatFloat(p.Amount*p.Price, 'f', 2, 64), Type: sheet.ValueNumber, Style: totalStyle}
 	case colApproved:
 		return sheet.Cell{Value: strconv.FormatBool(p.Approved), Type: sheet.ValueBool, Editor: sheet.EditorCheckbox}
+	case colAction:
+		// any view, e.g. a button, which invokes a use case
+		if p.Checked {
+			return sheet.Cell{Text: "Geprüft ✓"}
+		}
+
+		index := row - 1
+		return sheet.Cell{Text: "Prüfen", View: HStack(Text("Prüfen").Color(I0)).Action(func() {
+			m.mutex.Lock()
+			m.positions[index].Checked = true
+			m.mutex.Unlock()
+			changed()
+		})}
 	default:
 		return sheet.Cell{Text: p.Note, Editor: sheet.EditorText, Style: noteStyle}
 	}
@@ -144,12 +160,21 @@ func main() {
 		cfg.Serve(vuejs.Dist())
 
 		cfg.RootView(".", func(wnd core.Window) core.View {
+			// a use case of an action within a cell changes the model, but no state, so a state tells nago to
+			// render again
+			version := core.AutoState[int](wnd)
+			cell := func(row, col int) sheet.Cell {
+				return data.cell(row, col, func() { version.Set(version.Get() + 1) })
+			}
+
 			return VStack(
 				Text("Sheet mit 50.000 Zeilen").Font(Title),
-				Text("Kopfzeile und erste Spalte sind festgepinnt. Pfeiltasten, Enter, Tab, Escape und F2 funktionieren wie in einer Tabellenkalkulation, und markierte Bereiche lassen sich nach Excel kopieren."),
-				sheet.Sheet("positions", len(data.positions)+1, colCount, data.cell).
+				Text("Kopfzeile und erste Spalte sind festgepinnt. Pfeiltasten, Enter, Tab, Escape und F2 funktionieren wie in einer Tabellenkalkulation, und markierte Bereiche lassen sich nach Excel kopieren und aus Excel einfügen. Spaltenbreiten lassen sich am Rand der Kopfzeile ziehen, das Kontextmenü blendet Zeilen und Spalten aus."),
+				sheet.Sheet("positions", len(data.positions)+1, colCount, cell).
 					Frozen(1, 1).
 					ColumnWidths(map[int]float64{colName: 180, colCategory: 120, colNote: 260}).
+					RowHeights(map[int]float64{0: 32}).
+					AllowPaste(true).
 					Merges(sheet.Merge{Row: 1, Col: colNote, Rows: 3, Cols: 1}).
 					OnEdit(data.edit).
 					Frame(Frame{Width: Full, Height: "70dvh"}),
