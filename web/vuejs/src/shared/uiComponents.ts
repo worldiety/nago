@@ -42,6 +42,7 @@ import {
 	Scaffold,
 	ScrollView,
 	Select,
+	Sheet,
 	SignatureField,
 	Slider,
 	Spacer,
@@ -91,6 +92,7 @@ const LazyUiRichTextEditor = defineAsyncComponent(() => import('@/components/ric
 const LazyUiScaffold = defineAsyncComponent(() => import('@/components/scaffold/UiScaffold.vue'));
 const LazyUiScrollView = defineAsyncComponent(() => import('@/components/scrollview/UiScrollView.vue'));
 const LazyUiSelect = defineAsyncComponent(() => import('@/components/select/UiSelect.vue'));
+const LazyUiSheet = defineAsyncComponent(() => import('@/components/sheet/UiSheet.vue'));
 const LazyUiSignatureField = defineAsyncComponent(() => import('@/components/signature/UiSignatureField.vue'));
 const LazyUiSlider = defineAsyncComponent(() => import('@/components/UiSlider.vue'));
 const LazyUiSpacer = defineAsyncComponent(() => import('@/components/spacer/UiSpacer.vue'));
@@ -239,6 +241,10 @@ export function vueComponentFor(ngc: NagoComponent): Component {
 
 	if (ngc instanceof Select) {
 		return LazyUiSelect;
+	}
+
+	if (ngc instanceof Sheet) {
+		return LazyUiSheet;
 	}
 
 	if (ngc instanceof SignatureField) {
