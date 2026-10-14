@@ -8,7 +8,10 @@
 package main
 
 import (
+	"cmp"
 	"fmt"
+	"maps"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -80,15 +83,12 @@ func money(v float64) string {
 	return strings.ReplaceAll(strconv.FormatFloat(v, 'f', 2, 64), ".", ",") + " €"
 }
 
-// cell returns a cell of the sheet. changed renders the window again after a use case changed the model.
-func (m *model) cell(row, col int, changed func()) sheet.Cell {
-	if row == 0 {
-		return sheet.Cell{Text: header[col], Style: headerStyle}
-	}
-
+// cell returns a cell of the position with the given index. changed renders the window again after a use case
+// changed the model.
+func (m *model) cell(index, col int, changed func()) sheet.Cell {
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
-	p := m.positions[row-1]
+	p := m.positions[index]
 	switch col {
 	case colName:
 		return sheet.Cell{Text: p.Name, Editor: sheet.EditorText, Style: nameStyle}
@@ -109,7 +109,6 @@ func (m *model) cell(row, col int, changed func()) sheet.Cell {
 			return sheet.Cell{Text: "Geprüft ✓"}
 		}
 
-		index := row - 1
 		return sheet.Cell{Text: "Prüfen", View: HStack(Text("Prüfen").Color(I0)).Action(func() {
 			m.mutex.Lock()
 			m.positions[index].Checked = true
@@ -121,11 +120,87 @@ func (m *model) cell(row, col int, changed func()) sheet.Cell {
 	}
 }
 
+// text returns the text of a column, by which the positions are filtered and sorted.
+func (p position) text(col int) string {
+	switch col {
+	case colName:
+		return p.Name
+	case colCategory:
+		return p.Category
+	case colNote:
+		return p.Note
+	case colApproved:
+		return strconv.FormatBool(p.Approved)
+	default:
+		return ""
+	}
+}
+
+// number returns the number of a column, by which the positions are sorted.
+func (p position) number(col int) (float64, bool) {
+	switch col {
+	case colAmount:
+		return p.Amount, true
+	case colPrice:
+		return p.Price, true
+	case colTotal:
+		return p.Amount * p.Price, true
+	default:
+		return 0, false
+	}
+}
+
+// order stands for a use case, which filters and sorts the positions. It returns their indices in the order, in
+// which the sheet shows them.
+func (m *model) order(sorting sheet.Sorting, filters map[int]string) []int {
+	m.mutex.RLock()
+	defer m.mutex.RUnlock()
+
+	var res []int
+	for i, p := range m.positions {
+		keep := true
+		for col, text := range filters {
+			value := p.text(col)
+			if v, ok := p.number(col); ok {
+				value = strconv.FormatFloat(v, 'f', -1, 64)
+			}
+			if !strings.Contains(strings.ToLower(value), strings.ToLower(text)) {
+				keep = false
+				break
+			}
+		}
+		if keep {
+			res = append(res, i)
+		}
+	}
+
+	if sorting.Dir == sheet.SortNone {
+		return res
+	}
+
+	slices.SortStableFunc(res, func(a, b int) int {
+		pa, pb := m.positions[a], m.positions[b]
+		var c int
+		if va, ok := pa.number(sorting.Col); ok {
+			vb, _ := pb.number(sorting.Col)
+			c = cmp.Compare(va, vb)
+		} else {
+			c = strings.Compare(strings.ToLower(pa.text(sorting.Col)), strings.ToLower(pb.text(sorting.Col)))
+		}
+		if sorting.Dir == sheet.SortDesc {
+			c = -c
+		}
+		return c
+	})
+
+	return res
+}
+
 // edit stands for any use case, which changes the state of the application.
-func (m *model) edit(e sheet.Edit) error {
+func (m *model) edit(index int, e sheet.Edit) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
-	p := &m.positions[e.Row-1]
+	p := &m.positions[index]
 	switch e.Col {
 	case colName:
 		if strings.TrimSpace(e.Value) == "" {
@@ -163,20 +238,56 @@ func main() {
 			// a use case of an action within a cell changes the model, but no state, so a state tells nago to
 			// render again
 			version := core.AutoState[int](wnd)
+
+			// sorting and filtering are use cases of the application as well, the sheet only shows their result
+			sorting := core.StateOf[sheet.Sorting](wnd, "sorting")
+			filters := core.StateOf[map[int]string](wnd, "filters")
+			order := core.StateOf[[]int](wnd, "order").Init(func() []int { return data.order(sheet.Sorting{}, nil) })
+
 			cell := func(row, col int) sheet.Cell {
-				return data.cell(row, col, func() { version.Set(version.Get() + 1) })
+				if row == 0 {
+					return sheet.Cell{Text: header[col], Style: headerStyle}
+				}
+				return data.cell(order.Get()[row-1], col, func() { version.Set(version.Get() + 1) })
+			}
+
+			// the merge refers to rows, which only stay together, as long as the rows are not reordered
+			var merges []sheet.Merge
+			if sorting.Get().Dir == sheet.SortNone && len(filters.Get()) == 0 {
+				merges = append(merges, sheet.Merge{Row: 1, Col: colNote, Rows: 3, Cols: 1})
 			}
 
 			return VStack(
 				Text("Sheet mit 50.000 Zeilen").Font(Title),
-				Text("Kopfzeile und erste Spalte sind festgepinnt. Pfeiltasten, Enter, Tab, Escape und F2 funktionieren wie in einer Tabellenkalkulation, und markierte Bereiche lassen sich nach Excel kopieren und aus Excel einfügen. Spaltenbreiten lassen sich am Rand der Kopfzeile ziehen, das Kontextmenü blendet Zeilen und Spalten aus."),
-				sheet.Sheet("positions", len(data.positions)+1, colCount, cell).
+				Text("Kopfzeile und erste Spalte sind festgepinnt. Pfeiltasten, Enter, Tab, Escape und F2 funktionieren wie in einer Tabellenkalkulation, und markierte Bereiche lassen sich nach Excel kopieren und aus Excel einfügen. Spaltenbreiten lassen sich am Rand der Kopfzeile ziehen, das Kontextmenü blendet Zeilen und Spalten aus, und die Kopfzeile sortiert und filtert."),
+				sheet.Sheet("positions", len(order.Get())+1, colCount, cell).
 					Frozen(1, 1).
 					ColumnWidths(map[int]float64{colName: 180, colCategory: 120, colNote: 260}).
 					RowHeights(map[int]float64{0: 32}).
 					AllowPaste(true).
-					Merges(sheet.Merge{Row: 1, Col: colNote, Rows: 3, Cols: 1}).
-					OnEdit(data.edit).
+					Merges(merges...).
+					OnEdit(func(e sheet.Edit) error { return data.edit(order.Get()[e.Row-1], e) }).
+					Sorted(sorting.Get()).
+					OnSort(func(s sheet.Sorting) {
+						sorting.Set(s)
+						order.Set(data.order(s, filters.Get()))
+					}).
+					SortableColumns(colName, colCategory, colAmount, colPrice, colTotal, colApproved).
+					Filtered(filters.Get()).
+					OnFilter(func(col int, text string) {
+						f := maps.Clone(filters.Get())
+						if f == nil {
+							f = map[int]string{}
+						}
+						if text == "" {
+							delete(f, col)
+						} else {
+							f[col] = text
+						}
+						filters.Set(f)
+						order.Set(data.order(sorting.Get(), f))
+					}).
+					FilterableColumns(colName, colCategory, colAmount, colPrice, colNote).
 					Frame(Frame{Width: Full, Height: "70dvh"}),
 			).Gap(L16).
 				Alignment(Leading).
