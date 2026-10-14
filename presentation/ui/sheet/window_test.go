@@ -55,7 +55,7 @@ func TestWindow(t *testing.T) {
 func TestCollectRendersOnlyTheWindow(t *testing.T) {
 	calls = 0
 	s := Sheet("s", 50_000, 30, numbers).Frozen(1, 1)
-	got := positions(s.collect(Range{Row: 1000, Col: 10, Rows: 3, Cols: 2}, nil).cells)
+	got := positions(s.collect(nil, Range{Row: 1000, Col: 10, Rows: 3, Cols: 2}, nil).cells)
 
 	// corner, frozen row, frozen column and window
 	for _, want := range []string{"0:0", "0:10", "0:11", "1000:0", "1002:0", "1000:10", "1002:11"} {
@@ -75,7 +75,7 @@ func TestCollectHiddenAndMerged(t *testing.T) {
 		HiddenCols(3).
 		Merges(Merge{Row: 5, Col: 1, Rows: 6, Cols: 2})
 
-	res := s.collect(Range{Row: 10, Col: 0, Rows: 3, Cols: 5}, nil)
+	res := s.collect(nil, Range{Row: 10, Col: 0, Rows: 3, Cols: 5}, nil)
 	got := positions(res.cells)
 
 	if got["11:0"] || got["10:3"] {
@@ -104,7 +104,7 @@ func TestCollectDeduplicatesStyles(t *testing.T) {
 		return Cell{Text: "y"}
 	})
 
-	res := s.collect(Range{Rows: 10, Cols: 10}, nil)
+	res := s.collect(nil, Range{Rows: 10, Cols: 10}, nil)
 	if len(res.styles) != 1 {
 		t.Fatalf("expected one style, got %d", len(res.styles))
 	}
@@ -153,6 +153,6 @@ func BenchmarkCollect(b *testing.B) {
 	win := s.window("25000,1,80,29")
 	b.ReportAllocs()
 	for b.Loop() {
-		s.collect(win, nil)
+		s.collect(nil, win, nil)
 	}
 }

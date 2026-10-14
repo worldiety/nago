@@ -62,3 +62,54 @@ func (w *Window) sheetOf(s Selection) *proto.Sheet {
 
 	return sh
 }
+
+// SheetLayout changes the layout of the single selected sheet, like the user does by dragging the edge of a
+// header cell or by the context menu, e.g. {"op":"resize","index":2,"size":120}, {"op":"hideCol","index":2},
+// {"op":"hideRow","index":5} or {"op":"showAll"}. The window settles afterward.
+func (w *Window) SheetLayout(s Selection, op string) {
+	w.t.Helper()
+
+	start := time.Now()
+	w.act(s, func(s Selection) proto.NagoEvent {
+		sh := w.sheetOf(s)
+		if sh.Layout == 0 {
+			w.t.Fatalf("nagotest: %s: the sheet is not customizable", s.matcher)
+		}
+		return &proto.UpdateStateValueRequested{StatePointer: sh.Layout, Value: proto.Str(op), RID: w.nextRID()}
+	})
+	w.observe("sheet-layout", s.matcher.desc, start)
+}
+
+// SheetPaste pastes values into the single selected sheet, like the frontend does after the user pasted, e.g.
+// from Excel. The window settles afterward.
+func (w *Window) SheetPaste(s Selection, edits ...sheet.Edit) {
+	w.t.Helper()
+
+	start := time.Now()
+	w.act(s, func(s Selection) proto.NagoEvent {
+		sh := w.sheetOf(s)
+		if sh.Paste == 0 {
+			w.t.Fatalf("nagotest: %s: the sheet does not allow pasting", s.matcher)
+		}
+
+		type edit struct {
+			Row   int    `json:"row"`
+			Col   int    `json:"col"`
+			Value string `json:"value"`
+		}
+		req := struct {
+			Seq   int64  `json:"seq"`
+			Edits []edit `json:"edits"`
+		}{Seq: sheetSeq.Add(1)}
+		for _, e := range edits {
+			req.Edits = append(req.Edits, edit{Row: e.Row, Col: e.Col, Value: e.Value})
+		}
+
+		buf, err := json.Marshal(req)
+		if err != nil {
+			w.t.Fatalf("nagotest: cannot encode sheet paste: %v", err)
+		}
+		return &proto.UpdateStateValueRequested{StatePointer: sh.Paste, Value: proto.Str(buf), RID: w.nextRID()}
+	})
+	w.observe("sheet-paste", s.matcher.desc, start)
+}

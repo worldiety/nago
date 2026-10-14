@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 
+	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
 )
 
@@ -89,7 +90,7 @@ type content struct {
 
 // collect renders the cells of the frozen rows and columns and of the window. Hidden cells and cells covered by
 // a merge are omitted, but the top left cell of a merge is included, even if it lies outside.
-func (c TSheet) collect(win Range, errs map[string]string) content {
+func (c TSheet) collect(ctx core.RenderContext, win Range, errs map[string]string) content {
 	rowAreas := []interval{{0, min(c.frozenRows, c.rows)}, {win.Row, win.Row + win.Rows}}
 	colAreas := []interval{{0, min(c.frozenCols, c.cols)}, {win.Col, win.Col + win.Cols}}
 
@@ -135,6 +136,10 @@ func (c TSheet) collect(win Range, errs map[string]string) content {
 
 		if c.disabled {
 			pc.Editor = proto.SheetEditorNone
+		}
+
+		if cell.View != nil && ctx != nil {
+			pc.View = cell.View.Render(ctx)
 		}
 
 		if cell.Style != (Style{}) {

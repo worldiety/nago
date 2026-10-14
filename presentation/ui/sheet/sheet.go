@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"maps"
+	"slices"
 
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
@@ -42,6 +43,10 @@ type TSheet struct {
 	colWidths  map[int]float64
 	gridColor  ui.Color
 	onEdit     func(Edit) error
+	rowHeights map[int]float64
+	layout     *core.State[Layout]
+	fixed      bool // the user may not change the layout
+	paste      bool
 	disabled   bool
 	invisible  bool
 	frame      ui.Frame
@@ -105,6 +110,36 @@ func (c TSheet) ColumnWidths(widths map[int]float64) TSheet {
 	return c
 }
 
+// RowHeights sets the height of single rows in dp, by their index. The other rows have the height of the
+// [Density]. Text, which is wrapped, see [WrapWrap], shows as many lines as fit into the height.
+func (c TSheet) RowHeights(heights map[int]float64) TSheet {
+	c.rowHeights = heights
+	return c
+}
+
+// Customizable lets the user change the width of the columns by dragging the edge of a header cell, i.e. a cell
+// of a frozen row, and hide rows and columns by the context menu. It is enabled by default. See also
+// [TSheet.Layout].
+func (c TSheet) Customizable(customizable bool) TSheet {
+	c.fixed = !customizable
+	return c
+}
+
+// Layout binds the state, which keeps the changes of the user to the layout, e.g. to store them in the settings
+// of the user. Without a bound state, the changes last as long as the window.
+func (c TSheet) Layout(state *core.State[Layout]) TSheet {
+	c.layout = state
+	return c
+}
+
+// AllowPaste lets the user paste values, e.g. copied from Excel, into the cells, starting at the active one.
+// Every value is passed to [TSheet.OnEdit] like an edit, and cells without an editor are left out. Pasting is
+// disabled by default, because it invokes many use cases at once.
+func (c TSheet) AllowPaste(allow bool) TSheet {
+	c.paste = allow
+	return c
+}
+
 // GridColor sets the color of the grid lines.
 func (c TSheet) GridColor(color ui.Color) TSheet {
 	c.gridColor = color
@@ -147,19 +182,34 @@ func (c TSheet) Render(ctx core.RenderContext) core.RenderNode {
 		c.handleEdit(raw, editSeq, errs)
 	})
 
+	layout := c.layout
+	if layout == nil {
+		layout = core.StateOf[Layout](wnd, prefix+".layout")
+	}
+
+	// the cells depend on the layout of the user, e.g. its hidden columns
+	c = c.withLayout(layout.Get())
+
 	cp := core.StateOf[string](wnd, prefix+".copy").Observe(func(raw string) {
 		c.handleCopy(wnd, raw)
 	})
 
-	win := c.window(viewport.Get())
-	content := c.collect(win, errs.Get())
-
-	var colWidths proto.SheetSizes
-	for col, width := range c.colWidths {
-		if col >= 0 && col < c.cols && width > 0 {
-			colWidths = append(colWidths, proto.SheetSize{Index: proto.Int(col), Size: proto.Float(width)})
-		}
+	var layoutPtr proto.Ptr
+	if !c.fixed {
+		layoutPtr = core.StateOf[string](wnd, prefix+".layoutop").Observe(func(raw string) {
+			c.handleLayout(raw, layout)
+		}).Ptr()
 	}
+
+	var pastePtr proto.Ptr
+	if c.paste && !c.disabled && c.onEdit != nil {
+		pastePtr = core.StateOf[string](wnd, prefix+".paste").Observe(func(raw string) {
+			c.handlePaste(raw, editSeq, errs)
+		}).Ptr()
+	}
+
+	win := c.window(viewport.Get())
+	content := c.collect(ctx, win, errs.Get())
 
 	return &proto.Sheet{
 		Id:         proto.Str(c.id),
@@ -169,7 +219,8 @@ func (c TSheet) Render(ctx core.RenderContext) core.RenderNode {
 		FrozenCols: proto.Int(min(c.frozenCols, c.cols)),
 		RowHeight:  proto.Float(c.density.rowHeight()),
 		ColWidth:   proto.Float(c.colWidth),
-		ColWidths:  colWidths,
+		ColWidths:  sizes(c.colWidths, c.cols),
+		RowHeights: sizes(c.rowHeights, c.rows),
 		HiddenRows: ints(c.hiddenRows),
 		HiddenCols: ints(c.hiddenCols),
 		WindowRow:  proto.Int(win.Row),
@@ -187,7 +238,21 @@ func (c TSheet) Render(ctx core.RenderContext) core.RenderNode {
 		Frame:      frameOf(c.frame),
 		Disabled:   proto.Bool(c.disabled),
 		Invisible:  proto.Bool(c.invisible),
+		Layout:     layoutPtr,
+		Paste:      pastePtr,
 	}
+}
+
+func sizes(m map[int]float64, count int) proto.SheetSizes {
+	var res proto.SheetSizes
+	for idx, size := range m {
+		if idx >= 0 && idx < count && size > 0 {
+			res = append(res, proto.SheetSize{Index: proto.Int(idx), Size: proto.Float(size)})
+		}
+	}
+
+	slices.SortFunc(res, func(a, b proto.SheetSize) int { return int(a.Index - b.Index) })
+	return res
 }
 
 // editRequest is written by the client into the edit state.
@@ -214,23 +279,27 @@ func (c TSheet) handleEdit(raw string, editSeq *core.State[int64], errs *core.St
 		return
 	}
 
-	if c.cell(req.Row, req.Col).Editor == EditorNone {
-		return
-	}
-
-	key := cellKey(req.Row, req.Col)
 	updated := maps.Clone(errs.Get())
 	if updated == nil {
 		updated = map[string]string{}
 	}
 
-	if err := c.onEdit(Edit{Row: req.Row, Col: req.Col, Value: req.Value}); err != nil {
-		updated[key] = errorText(err)
-	} else {
-		delete(updated, key)
+	c.apply(Edit{Row: req.Row, Col: req.Col, Value: req.Value}, updated)
+	errs.Set(updated)
+}
+
+// apply passes the edit to OnEdit, if the cell has an editor, and remembers its error.
+func (c TSheet) apply(e Edit, errs map[string]string) {
+	if c.cell(e.Row, e.Col).Editor == EditorNone {
+		return
 	}
 
-	errs.Set(updated)
+	key := cellKey(e.Row, e.Col)
+	if err := c.onEdit(e); err != nil {
+		errs[key] = errorText(err)
+	} else {
+		delete(errs, key)
+	}
 }
 
 func (c TSheet) handleCopy(wnd core.Window, raw string) {

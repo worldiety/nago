@@ -12,6 +12,7 @@
 package sheet
 
 import (
+	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
 )
 
@@ -118,6 +119,14 @@ type Cell struct {
 	// Text if the Value is empty.
 	Editor  Editor
 	Options []string
+
+	// View is shown instead of the Text, e.g. a button or an avatar. It is rendered for the visible cells only, but
+	// still costs more than a text, so it should be used for a few columns. Text and Value are copied. The view
+	// must fit into the height of the row, so a compact view like a text with an action fits better than a
+	// button, which needs a higher row, see [TSheet.RowHeights] and [TSheet.Density]. If an action of the view
+	// changes the model of the application but no state, a state must be set as well, so that the window renders
+	// again. An edit with [TSheet.OnEdit] renders again anyway.
+	View core.View
 }
 
 // Merge joins a rectangle of cells into the cell at its top left, which is shown across the rectangle.
@@ -128,6 +137,15 @@ type Merge struct {
 
 func (m Merge) contains(row, col int) bool {
 	return row >= m.Row && row < m.Row+m.Rows && col >= m.Col && col < m.Col+m.Cols
+}
+
+// Layout is what the user has changed of the layout, see [TSheet.Layout]. It complements the layout of the
+// application: the user may change the width of a column, hide rows and columns and show them again, but not the
+// ones, which the application hides.
+type Layout struct {
+	ColWidths  map[int]float64 `json:"colWidths,omitempty"`
+	HiddenRows []int           `json:"hiddenRows,omitempty"`
+	HiddenCols []int           `json:"hiddenCols,omitempty"`
 }
 
 // Edit is a value, which the user has entered into a cell.
