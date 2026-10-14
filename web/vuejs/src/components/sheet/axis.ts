@@ -7,93 +7,81 @@
  * SPDX-License-Identifier: Custom-License
  */
 
-// Axis maps the indices of rows or columns to positions, skipping hidden ones. Rows have a uniform size, so a sheet
-// with tens of thousands of rows needs no table of positions; columns are few and may have individual sizes.
+// Axis maps the indices of rows or columns to positions. Most indices have the uniform size, only a few have
+// their own size or are hidden, which is a size of zero. So a sheet with tens of thousands of rows needs no table
+// of positions: a position is the uniform one plus the differences of the exceptions before it.
 export class Axis {
 	readonly count: number;
-	private readonly hidden: number[]; // sorted
-	private readonly hiddenSet: Set<number>;
-	private readonly sizes?: number[]; // per index, only for columns
 	private readonly uniform: number;
-	private readonly offsets?: number[]; // start of the visible ordinal, only with sizes
+	private readonly indices: number[]; // sorted indices of the exceptions
+	private readonly sizes: number[]; // size of each exception
+	private readonly deltas: number[]; // sum of (size - uniform) of the exceptions up to and including i
+	private readonly hidden: Set<number>;
 
-	constructor(count: number, hidden: number[], uniform: number, sizes?: Map<number, number>) {
+	constructor(count: number, uniform: number, sizes: Map<number, number>, hidden: number[]) {
 		this.count = count;
-		this.hidden = [...hidden].filter((h) => h >= 0 && h < count).sort((a, b) => a - b);
-		this.hiddenSet = new Set(this.hidden);
 		this.uniform = uniform;
-		if (sizes) {
-			this.sizes = [];
-			this.offsets = [0];
-			for (let i = 0; i < count; i++) {
-				const size = sizes.get(i) ?? uniform;
-				this.sizes.push(size);
-				if (!this.hiddenSet.has(i)) {
-					this.offsets.push(this.offsets[this.offsets.length - 1] + size);
-				}
-			}
+		this.hidden = new Set(hidden.filter((h) => h >= 0 && h < count));
+
+		const exceptions = new Map<number, number>();
+		for (const [i, size] of sizes) {
+			if (i >= 0 && i < count && size !== uniform) exceptions.set(i, size);
+		}
+		for (const h of this.hidden) exceptions.set(h, 0);
+
+		this.indices = [...exceptions.keys()].sort((a, b) => a - b);
+		this.sizes = this.indices.map((i) => exceptions.get(i)!);
+		this.deltas = [];
+		let sum = 0;
+		for (const size of this.sizes) {
+			sum += size - uniform;
+			this.deltas.push(sum);
 		}
 	}
 
 	isHidden(index: number): boolean {
-		return this.hiddenSet.has(index);
-	}
-
-	get visibleCount(): number {
-		return this.count - this.hidden.length;
-	}
-
-	// ordinal returns the position of the index among the visible ones.
-	ordinal(index: number): number {
-		return index - lowerBound(this.hidden, index);
-	}
-
-	// indexAt is the inverse of ordinal.
-	indexAt(ordinal: number): number {
-		let index = ordinal;
-		for (const h of this.hidden) {
-			if (h <= index) index++;
-			else break;
-		}
-		return Math.min(index, this.count);
+		return this.hidden.has(index);
 	}
 
 	size(index: number): number {
-		if (this.isHidden(index)) return 0;
-		return this.sizes ? this.sizes[index] : this.uniform;
+		const k = lowerBound(this.indices, index);
+		return this.indices[k] === index ? this.sizes[k] : this.uniform;
 	}
 
+	// start is the position of the index, which is the end of all indices before it
 	start(index: number): number {
-		const ord = this.ordinal(index);
-		return this.offsets ? this.offsets[ord] : ord * this.uniform;
+		const k = lowerBound(this.indices, index);
+		return index * this.uniform + (k > 0 ? this.deltas[k - 1] : 0);
 	}
 
 	get total(): number {
-		return this.offsets ? this.offsets[this.offsets.length - 1] : this.visibleCount * this.uniform;
+		return this.start(this.count);
 	}
 
-	// span is the size of the visible indices of [from, from+count).
+	// span is the size of the indices [from, from+count).
 	span(from: number, count: number): number {
-		let res = 0;
-		const to = Math.min(this.count, from + count);
-		if (!this.sizes) {
-			return (this.ordinal(to) - this.ordinal(from)) * this.uniform;
-		}
-		for (let i = from; i < to; i++) res += this.size(i);
-		return res;
+		return this.start(Math.min(this.count, from + count)) - this.start(from);
 	}
 
-	// indexAtPosition returns the visible index at the position.
+	// indexAtPosition returns the visible index at the position, or the nearest one.
 	indexAtPosition(pos: number): number {
-		if (this.visibleCount === 0) return 0;
-		let ord: number;
-		if (this.offsets) {
-			ord = Math.max(0, upperBound(this.offsets, pos) - 1);
-		} else {
-			ord = Math.floor(pos / this.uniform);
+		let lo = 0;
+		let hi = this.count - 1;
+		let res = 0;
+		while (lo <= hi) {
+			const mid = (lo + hi) >> 1;
+			if (this.start(mid) <= pos) {
+				res = mid;
+				lo = mid + 1;
+			} else {
+				hi = mid - 1;
+			}
 		}
-		ord = Math.max(0, Math.min(ord, this.visibleCount - 1));
-		return this.indexAt(ord);
+
+		// a hidden index has the start of the next one, so step back to a visible one at the end
+		while (res > 0 && this.size(res) === 0) res--;
+		while (res < this.count - 1 && this.size(res) === 0) res++;
+		return res;
 	}
 
 	// next returns the next visible index in the direction or the given one, if there is none.
@@ -112,11 +100,15 @@ export class Axis {
 	}
 
 	first(): number {
-		return this.indexAt(0);
+		let i = 0;
+		while (i < this.count - 1 && this.isHidden(i)) i++;
+		return i;
 	}
 
 	last(): number {
-		return this.indexAt(Math.max(0, this.visibleCount - 1));
+		let i = this.count - 1;
+		while (i > 0 && this.isHidden(i)) i--;
+		return Math.max(0, i);
 	}
 }
 
@@ -126,17 +118,6 @@ function lowerBound(sorted: number[], value: number): number {
 	while (lo < hi) {
 		const mid = (lo + hi) >> 1;
 		if (sorted[mid] < value) lo = mid + 1;
-		else hi = mid;
-	}
-	return lo;
-}
-
-function upperBound(sorted: number[], value: number): number {
-	let lo = 0;
-	let hi = sorted.length;
-	while (lo < hi) {
-		const mid = (lo + hi) >> 1;
-		if (sorted[mid] <= value) lo = mid + 1;
 		else hi = mid;
 	}
 	return lo;

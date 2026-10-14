@@ -74,7 +74,13 @@
 		"copy": "Kopieren:",
 		"cell": "Zelle",
 		"row": "Zeile",
-		"col": "Spalte"
+		"col": "Spalte",
+		"copySelection": "Kopieren",
+		"hideCol": "Spalte ausblenden",
+		"hideCols": "{n} Spalten ausblenden",
+		"hideRow": "Zeile ausblenden",
+		"hideRows": "{n} Zeilen ausblenden",
+		"showAll": "Alle einblenden"
 	},
 	"clipboardModal": {
 		"confirm": "Kopieren",

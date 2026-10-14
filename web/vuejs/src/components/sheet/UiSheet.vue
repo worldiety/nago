@@ -38,11 +38,18 @@
 						role="gridcell"
 						@pointerdown="onCellPointerDown($event, c.row, c.col)"
 						@dblclick="onCellDblClick(c.row, c.col)"
+						@contextmenu="openMenu($event, c.row, c.col)"
 					>
 						<span v-if="c.checkbox !== undefined" class="checkbox" :class="{ checked: c.checkbox }">
 							<svg v-if="c.checkbox" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" /></svg>
 						</span>
+						<UiGeneric v-else-if="c.view" :ui="c.view" class="view" />
 						<span v-else class="text">{{ c.text }}</span>
+						<div
+							v-if="c.resizeCol !== undefined"
+							class="resize"
+							@pointerdown.stop.prevent="startResize($event, c.resizeCol)"
+						></div>
 					</div>
 
 					<template v-if="editing && editing.layer === layer.name">
@@ -74,6 +81,21 @@
 			</div>
 		</div>
 
+		<div v-if="menu" class="menu" :style="`left:${menu.x}px;top:${menu.y}px`" role="menu" @pointerdown.stop>
+			<button type="button" role="menuitem" @click="menuCopy">{{ $t('sheet.copySelection') }}</button>
+			<template v-if="ui.layout">
+				<button type="button" role="menuitem" @click="menuHide('col')">
+					{{ menu.cols > 1 ? $t('sheet.hideCols', { n: menu.cols }) : $t('sheet.hideCol') }}
+				</button>
+				<button type="button" role="menuitem" @click="menuHide('row')">
+					{{ menu.rows > 1 ? $t('sheet.hideRows', { n: menu.rows }) : $t('sheet.hideRow') }}
+				</button>
+				<button v-if="hasHidden" type="button" role="menuitem" @click="menuShowAll">
+					{{ $t('sheet.showAll') }}
+				</button>
+			</template>
+		</div>
+
 		<!-- the error of the last edit and, on a touch device, copying without a keyboard -->
 		<div v-if="notice || (coarse && focused)" class="footer">
 			<span v-if="notice" class="notice" role="alert">{{ notice }}</span>
@@ -101,6 +123,7 @@
 
 <script lang="ts" setup>
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import UiGeneric from '@/components/UiGeneric.vue';
 import { Axis } from '@/components/sheet/axis';
 import { type CopyCell, decimalSeparator, toHTML, toTSV } from '@/components/sheet/clipboard';
 import { colorValue } from '@/components/shared/colors';
@@ -117,6 +140,7 @@ import {
 	SheetStyle,
 	SheetValueTypeValues,
 	SheetWrapValues,
+	type Component,
 	UpdateStateValueRequested,
 } from '@/shared/proto/nprotoc_gen';
 
@@ -135,19 +159,37 @@ const coarse = window.matchMedia?.('(pointer: coarse)').matches ?? false;
 const rowHeight = computed(() => Math.max(props.ui.rowHeight || 24, coarse ? 40 : 0));
 const fontSize = computed(() => (rowHeight.value <= 24 ? 13 : 14));
 
-const rows = computed(
-	() => new Axis(props.ui.rowCount ?? 0, (props.ui.hiddenRows?.value ?? []).map(Number), rowHeight.value)
-);
+const rows = computed(() => {
+	const sizes = new Map<number, number>();
+	for (const s of props.ui.rowHeights?.value ?? []) {
+		sizes.set(Number(s.index ?? 0), Math.max(s.size ?? 0, coarse ? 40 : 0));
+	}
+	return new Axis(
+		Number(props.ui.rowCount ?? 0),
+		rowHeight.value,
+		sizes,
+		(props.ui.hiddenRows?.value ?? []).map(Number)
+	);
+});
+
+// widths, which the user is dragging right now, before the server has confirmed them
+const draggedWidths = ref(new Map<number, number>());
+
 const cols = computed(() => {
 	const sizes = new Map<number, number>();
 	for (const s of props.ui.colWidths?.value ?? []) sizes.set(Number(s.index ?? 0), s.size ?? 0);
+	for (const [i, w] of draggedWidths.value) sizes.set(i, w);
 	return new Axis(
-		props.ui.colCount ?? 0,
-		(props.ui.hiddenCols?.value ?? []).map(Number),
+		Number(props.ui.colCount ?? 0),
 		props.ui.colWidth || 100,
-		sizes
+		sizes,
+		(props.ui.hiddenCols?.value ?? []).map(Number)
 	);
 });
+
+const hasHidden = computed(
+	() => (props.ui.hiddenRows?.value.length ?? 0) + (props.ui.hiddenCols?.value.length ?? 0) > 0
+);
 
 const viewWidth = ref(0);
 const viewHeight = ref(0);
@@ -248,6 +290,8 @@ interface RenderedCell {
 	col: number;
 	text: string;
 	checkbox?: boolean;
+	view?: Component;
+	resizeCol?: number;
 	error?: string;
 	classes: Record<string, boolean>;
 	style: string;
@@ -328,6 +372,9 @@ function renderCell(row: number, col: number): RenderedCell | null {
 		col,
 		text,
 		checkbox,
+		view: cell?.view,
+		// the edge of a header cell resizes its last column, like in a spreadsheet application
+		resizeCol: props.ui.layout && !coarse && row < frozenRows.value ? lastCol : undefined,
 		error: cell?.error,
 		classes: {
 			loading: !cell,
@@ -337,6 +384,7 @@ function renderCell(row: number, col: number): RenderedCell | null {
 			error: !!cell?.error,
 			pending: !!pending,
 			wrap: style?.wrap === SheetWrapValues.SheetWrapWrap,
+			withView: !!cell?.view,
 			ellipsis: style?.wrap === SheetWrapValues.SheetWrapEllipsis,
 		},
 		style: css.join(';'),
@@ -481,12 +529,16 @@ onMounted(() => {
 		resizeObserver.observe(scroller.value);
 	}
 	document.addEventListener('copy', onCopy);
+	document.addEventListener('paste', onPaste);
+	document.addEventListener('pointerdown', closeMenu);
 	document.addEventListener('pointerup', onPointerUp);
 });
 
 onUnmounted(() => {
 	resizeObserver?.disconnect();
 	document.removeEventListener('copy', onCopy);
+	document.removeEventListener('paste', onPaste);
+	document.removeEventListener('pointerdown', closeMenu);
 	document.removeEventListener('pointerup', onPointerUp);
 	document.removeEventListener('pointermove', onSelectMove);
 	if (frame !== undefined) cancelAnimationFrame(frame);
@@ -499,6 +551,13 @@ let lastTapped = '';
 
 function onCellPointerDown(e: PointerEvent, row: number, col: number) {
 	if (e.button !== 0) return;
+	// a button or a field within a view of a cell, or the view itself if it has an action, gets the pointer
+	const target = e.target as HTMLElement;
+	const view = target.closest('.view');
+	const interactive = target.closest('button, a, input, select, textarea, [tabindex]');
+	if (view && interactive && (view === interactive || view.contains(interactive))) {
+		return;
+	}
 	if (editing.value && !(editing.value.row === row && editing.value.col === col)) commitEditor();
 	scroller.value?.focus({ preventScroll: true });
 
@@ -664,6 +723,7 @@ function onKeydown(e: KeyboardEvent) {
 			startEdit(focusCell.value.row, focusCell.value.col);
 			return;
 		case 'Escape':
+			menu.value = undefined;
 			focus.value = { ...anchor.value };
 			return;
 		case ' ':
@@ -1025,6 +1085,217 @@ function cellName(row: number, col: number): string {
 	const colName = Number(props.ui.frozenRows ?? 0) > 0 && row > 0 ? cellMap.value.get(key(0, col))?.text : '';
 	return `${rowName || row + 1} · ${colName || col + 1}`;
 }
+
+// --- resizing columns ---
+
+function startResize(e: PointerEvent, col: number) {
+	if (!props.ui.layout) return;
+	const startX = e.clientX;
+	const startWidth = cols.value.size(col);
+	const target = e.currentTarget as HTMLElement;
+	target.setPointerCapture(e.pointerId);
+
+	const move = (ev: PointerEvent) => {
+		const widths = new Map(draggedWidths.value);
+		widths.set(col, Math.max(24, startWidth + ev.clientX - startX));
+		draggedWidths.value = widths;
+	};
+
+	const end = () => {
+		target.removeEventListener('pointermove', move);
+		target.removeEventListener('pointerup', end);
+		target.removeEventListener('pointercancel', end);
+		const width = draggedWidths.value.get(col);
+		if (width !== undefined && props.ui.layout) {
+			serviceAdapter.sendEvent(
+				new UpdateStateValueRequested(
+					props.ui.layout,
+					0,
+					nextRID(),
+					JSON.stringify({ op: 'resize', index: col, size: Math.round(width) })
+				)
+			);
+		}
+	};
+
+	target.addEventListener('pointermove', move);
+	target.addEventListener('pointerup', end);
+	target.addEventListener('pointercancel', end);
+}
+
+// the dragged widths are kept, until the server has rendered them
+watch(
+	() => props.ui.colWidths,
+	() => {
+		if (draggedWidths.value.size > 0) draggedWidths.value = new Map();
+	}
+);
+
+// --- context menu ---
+
+interface Menu {
+	x: number;
+	y: number;
+	rows: number;
+	cols: number;
+}
+
+const menu = ref<Menu>();
+
+function openMenu(e: MouseEvent, row: number, col: number) {
+	e.preventDefault();
+	scroller.value?.focus({ preventScroll: true });
+	const sel = selection.value;
+	// a click outside of the selection selects the cell, like in a spreadsheet application
+	if (row < sel.row || row > sel.rowTo || col < sel.col || col > sel.colTo) {
+		anchor.value = { row, col };
+		focus.value = { row, col };
+	}
+
+	const box = (scroller.value?.parentElement as HTMLElement).getBoundingClientRect();
+	const s = selection.value;
+	menu.value = {
+		x: Math.min(e.clientX - box.left, box.width - 200),
+		y: e.clientY - box.top,
+		rows: s.rowTo - s.row + 1,
+		cols: s.colTo - s.col + 1,
+	};
+}
+
+function closeMenu() {
+	menu.value = undefined;
+}
+
+async function menuCopy() {
+	menu.value = undefined;
+	const out = loadedCells(selection.value);
+	if (!out) {
+		copyOnServer(selection.value);
+		return;
+	}
+
+	const data = clipboardData(out);
+	try {
+		await navigator.clipboard.write([
+			new ClipboardItem({
+				'text/plain': new Blob([data.text], { type: 'text/plain' }),
+				'text/html': new Blob([data.html], { type: 'text/html' }),
+			}),
+		]);
+	} catch {
+		await navigator.clipboard?.writeText(data.text);
+	}
+}
+
+function sendLayout(op: object) {
+	if (props.ui.layout) {
+		serviceAdapter.sendEvent(new UpdateStateValueRequested(props.ui.layout, 0, nextRID(), JSON.stringify(op)));
+	}
+}
+
+function menuHide(what: 'row' | 'col') {
+	menu.value = undefined;
+	const sel = selection.value;
+	const [from, to] = what === 'row' ? [sel.row, sel.rowTo] : [sel.col, sel.colTo];
+	for (let i = from; i <= to; i++) {
+		sendLayout({ op: what === 'row' ? 'hideRow' : 'hideCol', index: i });
+	}
+	scroller.value?.focus({ preventScroll: true });
+}
+
+function menuShowAll() {
+	menu.value = undefined;
+	sendLayout({ op: 'showAll' });
+	scroller.value?.focus({ preventScroll: true });
+}
+
+// --- pasting ---
+
+// parseTSV reads tab separated values, as a spreadsheet application copies them, including quoted values with
+// tabs or line breaks.
+function parseTSV(text: string): string[][] {
+	const rows: string[][] = [];
+	let row: string[] = [];
+	let value = '';
+	let quoted = false;
+	for (let i = 0; i < text.length; i++) {
+		const ch = text[i];
+		if (quoted) {
+			if (ch === '"' && text[i + 1] === '"') {
+				value += '"';
+				i++;
+			} else if (ch === '"') {
+				quoted = false;
+			} else {
+				value += ch;
+			}
+		} else if (ch === '"' && value === '') {
+			quoted = true;
+		} else if (ch === '\t') {
+			row.push(value);
+			value = '';
+		} else if (ch === '\n' || ch === '\r') {
+			if (ch === '\r' && text[i + 1] === '\n') i++;
+			row.push(value);
+			rows.push(row);
+			row = [];
+			value = '';
+		} else {
+			value += ch;
+		}
+	}
+
+	if (value !== '' || row.length > 0) {
+		row.push(value);
+		rows.push(row);
+	}
+
+	return rows;
+}
+
+function onPaste(e: ClipboardEvent) {
+	const el = scroller.value;
+	if (!el || editing.value || !props.ui.paste || !el.contains(document.activeElement)) return;
+	const text = e.clipboardData?.getData('text/plain');
+	if (!text) return;
+	e.preventDefault();
+
+	const values = parseTSV(text);
+	const start = { row: selection.value.row, col: selection.value.col };
+	const edits: { row: number; col: number; value: string }[] = [];
+	let row = start.row;
+	let lastRow = row;
+	let lastCol = start.col;
+	for (const line of values) {
+		if (row >= rows.value.count) break;
+		let col = start.col;
+		for (const value of line) {
+			if (col >= cols.value.count) break;
+			edits.push({ row, col, value });
+			lastCol = Math.max(lastCol, col);
+			col = cols.value.next(col, 1) === col ? cols.value.count : cols.value.next(col, 1);
+		}
+		lastRow = row;
+		const next = rows.value.next(row, 1);
+		if (next === row) break;
+		row = next;
+	}
+
+	if (edits.length === 0) return;
+	editSeq = Math.max(editSeq, Number(props.ui.editSeq ?? 0)) + 1;
+	for (const edit of edits) {
+		if (isEditable(edit.row, edit.col)) {
+			optimistic.value.set(key(edit.row, edit.col), { seq: editSeq, value: edit.value });
+		}
+	}
+
+	lastEdit.value = undefined;
+	anchor.value = start;
+	focus.value = { row: lastRow, col: lastCol };
+	serviceAdapter.sendEvent(
+		new UpdateStateValueRequested(props.ui.paste, 0, nextRID(), JSON.stringify({ seq: editSeq, edits }))
+	);
+}
 </script>
 
 <style scoped>
@@ -1181,6 +1452,42 @@ function cellName(row: number, col: number): string {
 		fill: none;
 		stroke: var(--M1);
 		stroke-width: 2;
+	}
+}
+
+.resize {
+	position: absolute;
+	top: 0;
+	right: -3px;
+	width: 7px;
+	height: 100%;
+	cursor: col-resize;
+	z-index: 2;
+
+	&:hover {
+		background: rgb(from var(--I0) r g b / 0.5);
+	}
+}
+
+.cell.withView {
+	white-space: normal;
+}
+
+.cell .view {
+	min-width: 0;
+	max-height: 100%;
+}
+
+.menu {
+	@apply absolute z-10 flex min-w-48 flex-col rounded-md border border-M5 bg-M1 py-1 text-sm shadow-lg;
+
+	button {
+		@apply px-3 py-1.5 text-left;
+
+		&:hover,
+		&:focus-visible {
+			@apply bg-I0 bg-opacity-10 outline-none;
+		}
 	}
 }
 

@@ -59,7 +59,13 @@
 		"copy": "Copy:",
 		"cell": "Cell",
 		"row": "Row",
-		"col": "Column"
+		"col": "Column",
+		"copySelection": "Copy",
+		"hideCol": "Hide column",
+		"hideCols": "Hide {n} columns",
+		"hideRow": "Hide row",
+		"hideRows": "Hide {n} rows",
+		"showAll": "Show all"
 	},
 	"clipboardModal": {
 		"confirm": "Copy",
