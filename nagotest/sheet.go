@@ -1,0 +1,64 @@
+// Copyright (c) 2026 worldiety GmbH
+//
+// This file is part of the NAGO Low-Code Platform.
+// Licensed under the terms specified in the LICENSE file.
+//
+// SPDX-License-Identifier: Custom-License
+
+package nagotest
+
+import (
+	"encoding/json"
+	"fmt"
+	"sync/atomic"
+	"time"
+
+	"go.wdy.de/nago/presentation/proto"
+	"go.wdy.de/nago/presentation/ui/sheet"
+)
+
+// sheetSeq numbers the edits of a sheet, like the frontend does.
+var sheetSeq atomic.Int64
+
+// SheetScroll requests the window of the single selected sheet, like the frontend does while the user scrolls.
+// The window settles afterward.
+func (w *Window) SheetScroll(s Selection, window sheet.Range) {
+	w.t.Helper()
+
+	start := time.Now()
+	w.act(s, func(s Selection) proto.NagoEvent {
+		sh := w.sheetOf(s)
+		value := fmt.Sprintf("%d,%d,%d,%d", window.Row, window.Col, window.Rows, window.Cols)
+		return &proto.UpdateStateValueRequested{StatePointer: sh.Viewport, Value: proto.Str(value), RID: w.nextRID()}
+	})
+	w.observe("sheet-scroll", s.matcher.desc, start)
+}
+
+// SheetEdit commits a value into a cell of the single selected sheet, like the frontend does after the user
+// edited the cell. The window settles afterward.
+func (w *Window) SheetEdit(s Selection, row, col int, value string) {
+	w.t.Helper()
+
+	start := time.Now()
+	w.act(s, func(s Selection) proto.NagoEvent {
+		sh := w.sheetOf(s)
+		w.assertInteractive(s, s.Node())
+		buf, err := json.Marshal(map[string]any{"seq": sheetSeq.Add(1), "row": row, "col": col, "value": value})
+		if err != nil {
+			w.t.Fatalf("nagotest: cannot encode sheet edit: %v", err)
+		}
+		return &proto.UpdateStateValueRequested{StatePointer: sh.Edit, Value: proto.Str(buf), RID: w.nextRID()}
+	})
+	w.observe("sheet-edit", s.matcher.desc, start)
+}
+
+func (w *Window) sheetOf(s Selection) *proto.Sheet {
+	w.t.Helper()
+
+	sh, ok := s.Node().Component.(*proto.Sheet)
+	if !ok {
+		w.t.Fatalf("nagotest: %s: %T is not a sheet", s.matcher, s.Node().Component)
+	}
+
+	return sh
+}
