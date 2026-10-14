@@ -22780,6 +22780,15 @@ export class Sheet implements Writeable, Readable, Component {
 
 	public invisible?: Bool;
 
+	// RowHeights overrides the height of single rows.
+	public rowHeights?: SheetSizes;
+
+	// Layout is a state, into which the client writes a change of the layout by the user as json, e.g. {"op":"resize","index":2,"size":120}, {"op":"hideCol","index":2}, {"op":"hideRow","index":5} or {"op":"showAll"}. It is zero, if the user may not change the layout.
+	public layout?: Ptr;
+
+	// Paste is a state, into which the client writes pasted values as json {seq,edits:[{row,col,value}]}. It is zero, if pasting is not allowed.
+	public paste?: Ptr;
+
 	constructor(
 		id: Str | undefined = undefined,
 		rowCount: Int | undefined = undefined,
@@ -22805,7 +22814,10 @@ export class Sheet implements Writeable, Readable, Component {
 		gridColor: Color | undefined = undefined,
 		frame: Frame | undefined = undefined,
 		disabled: Bool | undefined = undefined,
-		invisible: Bool | undefined = undefined
+		invisible: Bool | undefined = undefined,
+		rowHeights: SheetSizes | undefined = undefined,
+		layout: Ptr | undefined = undefined,
+		paste: Ptr | undefined = undefined
 	) {
 		this.id = id;
 		this.rowCount = rowCount;
@@ -22832,6 +22844,9 @@ export class Sheet implements Writeable, Readable, Component {
 		this.frame = frame;
 		this.disabled = disabled;
 		this.invisible = invisible;
+		this.rowHeights = rowHeights;
+		this.layout = layout;
+		this.paste = paste;
 	}
 
 	read(reader: BinaryReader): void {
@@ -22947,6 +22962,19 @@ export class Sheet implements Writeable, Readable, Component {
 					this.invisible = readBool(reader);
 					break;
 				}
+				case 26: {
+					this.rowHeights = new SheetSizes();
+					this.rowHeights.read(reader);
+					break;
+				}
+				case 27: {
+					this.layout = readInt(reader);
+					break;
+				}
+				case 28: {
+					this.paste = readInt(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -22981,6 +23009,9 @@ export class Sheet implements Writeable, Readable, Component {
 			this.frame !== undefined && !this.frame.isZero(),
 			this.disabled !== undefined,
 			this.invisible !== undefined,
+			this.rowHeights !== undefined && !this.rowHeights.isZero(),
+			this.layout !== undefined,
+			this.paste !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -23084,6 +23115,18 @@ export class Sheet implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.UVARINT, 25);
 			writeBool(writer, this.invisible!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[26]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 26);
+			this.rowHeights!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[27]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 27);
+			writeInt(writer, this.layout!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[28]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 28);
+			writeInt(writer, this.paste!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -23112,7 +23155,10 @@ export class Sheet implements Writeable, Readable, Component {
 			this.gridColor === undefined &&
 			(this.frame === undefined || this.frame.isZero()) &&
 			this.disabled === undefined &&
-			this.invisible === undefined
+			this.invisible === undefined &&
+			(this.rowHeights === undefined || this.rowHeights.isZero()) &&
+			this.layout === undefined &&
+			this.paste === undefined
 		);
 	}
 
@@ -23142,6 +23188,9 @@ export class Sheet implements Writeable, Readable, Component {
 		this.frame = undefined;
 		this.disabled = undefined;
 		this.invisible = undefined;
+		this.rowHeights = undefined;
+		this.layout = undefined;
+		this.paste = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -23176,6 +23225,9 @@ export class SheetCell implements Writeable, Readable {
 	// Error is shown at the cell, e.g. because the last edit has been rejected.
 	public error?: Str;
 
+	// View is shown instead of the text, e.g. a button.
+	public view?: Component;
+
 	constructor(
 		row: Int | undefined = undefined,
 		col: Int | undefined = undefined,
@@ -23185,7 +23237,8 @@ export class SheetCell implements Writeable, Readable {
 		style: Int | undefined = undefined,
 		editor: SheetEditor | undefined = undefined,
 		options: Strings | undefined = undefined,
-		error: Str | undefined = undefined
+		error: Str | undefined = undefined,
+		view: Component | undefined = undefined
 	) {
 		this.row = row;
 		this.col = col;
@@ -23196,6 +23249,7 @@ export class SheetCell implements Writeable, Readable {
 		this.editor = editor;
 		this.options = options;
 		this.error = error;
+		this.view = view;
 	}
 
 	read(reader: BinaryReader): void {
@@ -23241,6 +23295,15 @@ export class SheetCell implements Writeable, Readable {
 					this.error = readString(reader);
 					break;
 				}
+				case 10: {
+					// decode polymorphic field as 1 element array
+					const len = reader.readUvarint();
+					if (len != 1) {
+						throw new Error(`unexpected length: ` + len);
+					}
+					this.view = unmarshal(reader) as Component;
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -23259,6 +23322,7 @@ export class SheetCell implements Writeable, Readable {
 			this.editor !== undefined,
 			this.options !== undefined && !this.options.isZero(),
 			this.error !== undefined,
+			this.view !== undefined && !this.view.isZero(),
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -23298,6 +23362,13 @@ export class SheetCell implements Writeable, Readable {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 9);
 			writeString(writer, this.error!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[10]) {
+			// encode polymorphic enum as 1 element slice
+			writer.writeFieldHeader(Shapes.ARRAY, 10);
+			writer.writeByte(1);
+			this.view.writeTypeHeader(writer);
+			this.view!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -23310,7 +23381,8 @@ export class SheetCell implements Writeable, Readable {
 			this.style === undefined &&
 			this.editor === undefined &&
 			(this.options === undefined || this.options.isZero()) &&
-			this.error === undefined
+			this.error === undefined &&
+			(this.view === undefined || this.view.isZero())
 		);
 	}
 
@@ -23324,6 +23396,7 @@ export class SheetCell implements Writeable, Readable {
 		this.editor = undefined;
 		this.options = undefined;
 		this.error = undefined;
+		this.view = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

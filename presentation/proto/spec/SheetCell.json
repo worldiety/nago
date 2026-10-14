@@ -43,6 +43,11 @@
       "doc": "Error is shown at the cell, e.g. because the last edit has been rejected.",
       "name": "Error",
       "type": "Str"
+    },
+    "10": {
+      "doc": "View is shown instead of the text, e.g. a button.",
+      "name": "View",
+      "type": "Component"
     }
   }
 }

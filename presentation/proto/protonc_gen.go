@@ -22206,10 +22206,16 @@ type Sheet struct {
 	Frame     Frame
 	Disabled  Bool
 	Invisible Bool
+	// RowHeights overrides the height of single rows.
+	RowHeights SheetSizes
+	// Layout is a state, into which the client writes a change of the layout by the user as json, e.g. {"op":"resize","index":2,"size":120}, {"op":"hideCol","index":2}, {"op":"hideRow","index":5} or {"op":"showAll"}. It is zero, if the user may not change the layout.
+	Layout Ptr
+	// Paste is a state, into which the client writes pasted values as json {seq,edits:[{row,col,value}]}. It is zero, if pasting is not allowed.
+	Paste Ptr
 }
 
 func (v *Sheet) write(w *BinaryWriter) error {
-	var fields [26]bool
+	var fields [29]bool
 	fields[1] = !v.Id.IsZero()
 	fields[2] = !v.RowCount.IsZero()
 	fields[3] = !v.ColCount.IsZero()
@@ -22235,6 +22241,9 @@ func (v *Sheet) write(w *BinaryWriter) error {
 	fields[23] = !v.Frame.IsZero()
 	fields[24] = !v.Disabled.IsZero()
 	fields[25] = !v.Invisible.IsZero()
+	fields[26] = !v.RowHeights.IsZero()
+	fields[27] = !v.Layout.IsZero()
+	fields[28] = !v.Paste.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -22445,6 +22454,30 @@ func (v *Sheet) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[26] {
+		if err := w.writeFieldHeader(array, 26); err != nil {
+			return err
+		}
+		if err := v.RowHeights.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[27] {
+		if err := w.writeFieldHeader(uvarint, 27); err != nil {
+			return err
+		}
+		if err := v.Layout.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[28] {
+		if err := w.writeFieldHeader(uvarint, 28); err != nil {
+			return err
+		}
+		if err := v.Paste.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -22585,6 +22618,21 @@ func (v *Sheet) read(r *BinaryReader) error {
 			if err != nil {
 				return err
 			}
+		case 26:
+			err := v.RowHeights.read(r)
+			if err != nil {
+				return err
+			}
+		case 27:
+			err := v.Layout.read(r)
+			if err != nil {
+				return err
+			}
+		case 28:
+			err := v.Paste.read(r)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -22606,10 +22654,12 @@ type SheetCell struct {
 	Options Strings
 	// Error is shown at the cell, e.g. because the last edit has been rejected.
 	Error Str
+	// View is shown instead of the text, e.g. a button.
+	View Component
 }
 
 func (v *SheetCell) write(w *BinaryWriter) error {
-	var fields [10]bool
+	var fields [11]bool
 	fields[1] = !v.Row.IsZero()
 	fields[2] = !v.Col.IsZero()
 	fields[3] = !v.Text.IsZero()
@@ -22619,6 +22669,7 @@ func (v *SheetCell) write(w *BinaryWriter) error {
 	fields[7] = !v.Editor.IsZero()
 	fields[8] = !v.Options.IsZero()
 	fields[9] = !v.Error.IsZero()
+	fields[10] = v.View != nil && !v.View.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -22701,6 +22752,21 @@ func (v *SheetCell) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[10] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 10); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.View.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.View.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -22761,6 +22827,20 @@ func (v *SheetCell) read(r *BinaryReader) error {
 			if err != nil {
 				return err
 			}
+		case 10:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.View = obj.(Component)
 		}
 	}
 	return nil
@@ -29872,13 +29952,16 @@ func (v *Sheet) reset() {
 	v.Frame.reset()
 	v.Disabled.reset()
 	v.Invisible.reset()
+	v.RowHeights.reset()
+	v.Layout.reset()
+	v.Paste.reset()
 }
 
 func (v *Sheet) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Id.IsZero() && v.RowCount.IsZero() && v.ColCount.IsZero() && v.FrozenRows.IsZero() && v.FrozenCols.IsZero() && v.RowHeight.IsZero() && v.ColWidth.IsZero() && v.ColWidths.IsZero() && v.HiddenRows.IsZero() && v.HiddenCols.IsZero() && v.WindowRow.IsZero() && v.WindowCol.IsZero() && v.WindowRows.IsZero() && v.WindowCols.IsZero() && v.Cells.IsZero() && v.Styles.IsZero() && v.Merges.IsZero() && v.Viewport.IsZero() && v.Edit.IsZero() && v.EditSeq.IsZero() && v.Copy.IsZero() && v.GridColor.IsZero() && v.Frame.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero()
+	return v.Id.IsZero() && v.RowCount.IsZero() && v.ColCount.IsZero() && v.FrozenRows.IsZero() && v.FrozenCols.IsZero() && v.RowHeight.IsZero() && v.ColWidth.IsZero() && v.ColWidths.IsZero() && v.HiddenRows.IsZero() && v.HiddenCols.IsZero() && v.WindowRow.IsZero() && v.WindowCol.IsZero() && v.WindowRows.IsZero() && v.WindowCols.IsZero() && v.Cells.IsZero() && v.Styles.IsZero() && v.Merges.IsZero() && v.Viewport.IsZero() && v.Edit.IsZero() && v.EditSeq.IsZero() && v.Copy.IsZero() && v.GridColor.IsZero() && v.Frame.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.RowHeights.IsZero() && v.Layout.IsZero() && v.Paste.IsZero()
 }
 
 func (v *SheetCell) reset() {
@@ -29891,13 +29974,14 @@ func (v *SheetCell) reset() {
 	v.Editor.reset()
 	v.Options.reset()
 	v.Error.reset()
+	v.View = nil
 }
 
 func (v *SheetCell) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Row.IsZero() && v.Col.IsZero() && v.Text.IsZero() && v.Value.IsZero() && v.Type.IsZero() && v.Style.IsZero() && v.Editor.IsZero() && v.Options.IsZero() && v.Error.IsZero()
+	return v.Row.IsZero() && v.Col.IsZero() && v.Text.IsZero() && v.Value.IsZero() && v.Type.IsZero() && v.Style.IsZero() && v.Editor.IsZero() && v.Options.IsZero() && v.Error.IsZero() && isZeroComponent(v.View)
 }
 
 type SheetCells []SheetCell

@@ -118,6 +118,21 @@
     "25": {
       "name": "Invisible",
       "type": "Bool"
+    },
+    "26": {
+      "doc": "RowHeights overrides the height of single rows.",
+      "name": "RowHeights",
+      "type": "SheetSizes"
+    },
+    "27": {
+      "doc": "Layout is a state, into which the client writes a change of the layout by the user as json, e.g. {\"op\":\"resize\",\"index\":2,\"size\":120}, {\"op\":\"hideCol\",\"index\":2}, {\"op\":\"hideRow\",\"index\":5} or {\"op\":\"showAll\"}. It is zero, if the user may not change the layout.",
+      "name": "Layout",
+      "type": "Ptr"
+    },
+    "28": {
+      "doc": "Paste is a state, into which the client writes pasted values as json {seq,edits:[{row,col,value}]}. It is zero, if pasting is not allowed.",
+      "name": "Paste",
+      "type": "Ptr"
     }
   }
 }
