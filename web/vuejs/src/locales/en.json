@@ -51,6 +51,16 @@
 		"hue": "Hue",
 		"alpha": "Opacity"
 	},
+	"sheet": {
+		"copyCell": "Copy cell",
+		"copyRow": "Copy row",
+		"copyCol": "Copy column",
+		"copied": "Copied",
+		"copy": "Copy:",
+		"cell": "Cell",
+		"row": "Row",
+		"col": "Column"
+	},
 	"clipboardModal": {
 		"confirm": "Copy",
 		"cancel": "Cancel",

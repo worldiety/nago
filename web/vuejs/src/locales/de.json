@@ -66,6 +66,16 @@
 		"hue": "Farbton",
 		"alpha": "Deckkraft"
 	},
+	"sheet": {
+		"copyCell": "Zelle kopieren",
+		"copyRow": "Zeile kopieren",
+		"copyCol": "Spalte kopieren",
+		"copied": "Kopiert",
+		"copy": "Kopieren:",
+		"cell": "Zelle",
+		"row": "Zeile",
+		"col": "Spalte"
+	},
 	"clipboardModal": {
 		"confirm": "Kopieren",
 		"cancel": "Abbrechen",

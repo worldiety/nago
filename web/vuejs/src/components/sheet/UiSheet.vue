@@ -37,7 +37,6 @@
 						:title="c.error || undefined"
 						role="gridcell"
 						@pointerdown="onCellPointerDown($event, c.row, c.col)"
-						@pointerenter="onCellPointerEnter(c.row, c.col)"
 						@dblclick="onCellDblClick(c.row, c.col)"
 					>
 						<span v-if="c.checkbox !== undefined" class="checkbox" :class="{ checked: c.checkbox }">
@@ -73,6 +72,29 @@
 					</template>
 				</div>
 			</div>
+		</div>
+
+		<!-- the error of the last edit and, on a touch device, copying without a keyboard -->
+		<div v-if="notice || (coarse && focused)" class="footer">
+			<span v-if="notice" class="notice" role="alert">{{ notice }}</span>
+			<span class="grow"></span>
+			<template v-if="coarse && focused">
+				<span class="copied">{{ copied ? $t('sheet.copied') : $t('sheet.copy') }}</span>
+				<button
+					type="button"
+					:aria-label="$t('sheet.copyCell')"
+					@pointerdown.prevent
+					@click="copyActive('cell')"
+				>
+					{{ $t('sheet.cell') }}
+				</button>
+				<button type="button" :aria-label="$t('sheet.copyRow')" @pointerdown.prevent @click="copyActive('row')">
+					{{ $t('sheet.row') }}
+				</button>
+				<button type="button" :aria-label="$t('sheet.copyCol')" @pointerdown.prevent @click="copyActive('col')">
+					{{ $t('sheet.col') }}
+				</button>
+			</template>
 		</div>
 	</div>
 </template>
@@ -466,7 +488,9 @@ onUnmounted(() => {
 	resizeObserver?.disconnect();
 	document.removeEventListener('copy', onCopy);
 	document.removeEventListener('pointerup', onPointerUp);
+	document.removeEventListener('pointermove', onSelectMove);
 	if (frame !== undefined) cancelAnimationFrame(frame);
+	if (autoScroll !== undefined) cancelAnimationFrame(autoScroll);
 });
 
 // --- pointer ---
@@ -505,6 +529,8 @@ function onCellPointerDown(e: PointerEvent, row: number, col: number) {
 		focus.value = { row, col };
 	}
 	selecting.value = true;
+	pointer = { x: e.clientX, y: e.clientY };
+	document.addEventListener('pointermove', onSelectMove);
 }
 
 // a checkbox toggles on the first click already
@@ -512,12 +538,67 @@ function onCellDblClick(row: number, col: number) {
 	if (!isCheckbox(row, col)) startEdit(row, col);
 }
 
-function onCellPointerEnter(row: number, col: number) {
-	if (selecting.value) focus.value = { row, col };
+// --- selecting by dragging ---
+
+let pointer: { x: number; y: number } | undefined;
+let autoScroll: number | undefined;
+
+// cellAt returns the cell under the point, or the nearest one, if the point lies outside of the sheet
+function cellAt(x: number, y: number) {
+	const el = scroller.value!;
+	const rect = el.getBoundingClientRect();
+	const lx = x - rect.left;
+	const ly = y - rect.top;
+	const posX =
+		lx < frozenWidth.value
+			? Math.max(0, lx)
+			: el.scrollLeft + Math.min(Math.max(lx, frozenWidth.value), el.clientWidth - 1);
+	const posY =
+		ly < frozenHeight.value
+			? Math.max(0, ly)
+			: el.scrollTop + Math.min(Math.max(ly, frozenHeight.value), el.clientHeight - 1);
+	return { row: rows.value.indexAtPosition(posY), col: cols.value.indexAtPosition(posX) };
+}
+
+function onSelectMove(e: PointerEvent) {
+	pointer = { x: e.clientX, y: e.clientY };
+	if (scroller.value) focus.value = cellAt(pointer.x, pointer.y);
+	if (autoScroll === undefined) autoScroll = requestAnimationFrame(scrollWhileSelecting);
+}
+
+// scrollWhileSelecting scrolls, while the pointer is close to or beyond an edge, faster the further it is
+function scrollWhileSelecting() {
+	autoScroll = undefined;
+	const el = scroller.value;
+	if (!selecting.value || !pointer || !el) return;
+
+	const rect = el.getBoundingClientRect();
+	const edge = 24;
+	const speed = (overshoot: number) => Math.min(40, Math.max(4, overshoot / 2));
+	let dx = 0;
+	let dy = 0;
+	if (pointer.x < rect.left + frozenWidth.value + edge) dx = -speed(rect.left + frozenWidth.value + edge - pointer.x);
+	else if (pointer.x > rect.left + el.clientWidth - edge) dx = speed(pointer.x - (rect.left + el.clientWidth - edge));
+	if (pointer.y < rect.top + frozenHeight.value + edge) dy = -speed(rect.top + frozenHeight.value + edge - pointer.y);
+	else if (pointer.y > rect.top + el.clientHeight - edge) dy = speed(pointer.y - (rect.top + el.clientHeight - edge));
+
+	const before = { left: el.scrollLeft, top: el.scrollTop };
+	el.scrollLeft += dx;
+	el.scrollTop += dy;
+	if (el.scrollLeft !== before.left || el.scrollTop !== before.top) {
+		focus.value = cellAt(pointer.x, pointer.y);
+		measure();
+	}
+
+	if (dx || dy) autoScroll = requestAnimationFrame(scrollWhileSelecting);
 }
 
 function onPointerUp() {
 	selecting.value = false;
+	pointer = undefined;
+	document.removeEventListener('pointermove', onSelectMove);
+	if (autoScroll !== undefined) cancelAnimationFrame(autoScroll);
+	autoScroll = undefined;
 }
 
 // --- keyboard ---
@@ -779,6 +860,7 @@ function send(row: number, col: number, value: string) {
 	if (!props.ui.edit) return;
 	editSeq = Math.max(editSeq, Number(props.ui.editSeq ?? 0)) + 1;
 	optimistic.value.set(key(row, col), { seq: editSeq, value });
+	lastEdit.value = { row, col };
 	serviceAdapter.sendEvent(
 		new UpdateStateValueRequested(props.ui.edit, 0, nextRID(), JSON.stringify({ seq: editSeq, row, col, value }))
 	);
@@ -796,35 +878,38 @@ function resolveColor(c?: string): string {
 	return resolved;
 }
 
-function onCopy(e: ClipboardEvent) {
-	const el = scroller.value;
-	if (!el || editing.value || !el.contains(document.activeElement)) return;
-	e.preventDefault();
+interface CellRange {
+	row: number;
+	col: number;
+	rowTo: number;
+	colTo: number;
+}
 
-	const sel = selection.value;
-	const loaded = {
-		row: Number(props.ui.windowRow ?? 0),
-		col: Number(props.ui.windowCol ?? 0),
-		rowTo: Number(props.ui.windowRow ?? 0) + Number(props.ui.windowRows ?? 0),
-		colTo: Number(props.ui.windowCol ?? 0) + Number(props.ui.windowCols ?? 0),
+// loadedCells returns the cells of the range, if all of them have been rendered by the server
+function loadedCells(sel: CellRange): (CopyCell | null)[][] | undefined {
+	// the indices behind the frozen ones must lie within the window
+	const loaded = (from: number, to: number, frozen: number, start: number, count: number) => {
+		const first = Math.max(from, frozen);
+		return first > to || (first >= start && to < start + count);
 	};
 
-	const rowLoaded = (r: number) => r < frozenRows.value || (r >= loaded.row && r < loaded.rowTo);
-	const colLoaded = (c: number) => c < Number(props.ui.frozenCols ?? 0) || (c >= loaded.col && c < loaded.colTo);
-	const fits =
-		rowLoaded(sel.row) &&
-		rowLoaded(sel.rowTo) &&
-		colLoaded(sel.col) &&
-		colLoaded(sel.colTo) &&
-		sel.rowTo - sel.row < frozenRows.value + Number(props.ui.windowRows ?? 0);
-
-	if (!fits) {
-		// the server renders large ranges, which have not been loaded
-		if (props.ui.copy) {
-			const request = `${sel.row},${sel.col},${sel.rowTo - sel.row + 1},${sel.colTo - sel.col + 1}`;
-			serviceAdapter.sendEvent(new UpdateStateValueRequested(props.ui.copy, 0, nextRID(), request));
-		}
-		return;
+	if (
+		!loaded(
+			sel.row,
+			sel.rowTo,
+			Number(props.ui.frozenRows ?? 0),
+			Number(props.ui.windowRow ?? 0),
+			Number(props.ui.windowRows ?? 0)
+		) ||
+		!loaded(
+			sel.col,
+			sel.colTo,
+			Number(props.ui.frozenCols ?? 0),
+			Number(props.ui.windowCol ?? 0),
+			Number(props.ui.windowCols ?? 0)
+		)
+	) {
+		return undefined;
 	}
 
 	const out: (CopyCell | null)[][] = [];
@@ -850,20 +935,126 @@ function onCopy(e: ClipboardEvent) {
 		out.push(line);
 	}
 
+	return out;
+}
+
+// copyOnServer lets the server render a large range, which has not been loaded, into the clipboard
+function copyOnServer(sel: CellRange) {
+	if (!props.ui.copy) return;
+	const request = `${sel.row},${sel.col},${sel.rowTo - sel.row + 1},${sel.colTo - sel.col + 1}`;
+	serviceAdapter.sendEvent(new UpdateStateValueRequested(props.ui.copy, 0, nextRID(), request));
+}
+
+function clipboardData(out: (CopyCell | null)[][]) {
 	const locale = document.documentElement.lang || navigator.language;
-	e.clipboardData?.setData('text/plain', toTSV(out, decimalSeparator(locale)));
-	e.clipboardData?.setData('text/html', toHTML(out, resolveColor));
+	return { text: toTSV(out, decimalSeparator(locale)), html: toHTML(out, resolveColor) };
+}
+
+function onCopy(e: ClipboardEvent) {
+	const el = scroller.value;
+	if (!el || editing.value || !el.contains(document.activeElement)) return;
+	e.preventDefault();
+
+	const out = loadedCells(selection.value);
+	if (!out) {
+		copyOnServer(selection.value);
+		return;
+	}
+
+	const data = clipboardData(out);
+	e.clipboardData?.setData('text/plain', data.text);
+	e.clipboardData?.setData('text/html', data.html);
+}
+
+const copied = ref(false);
+
+// copyActive copies the active cell, its row or its column, e.g. on a touch device without a keyboard
+async function copyActive(what: 'cell' | 'row' | 'col') {
+	const c = focusCell.value;
+	const sel: CellRange = { row: c.row, col: c.col, rowTo: c.row, colTo: c.col };
+	if (what === 'row') {
+		sel.col = 0;
+		sel.colTo = cols.value.count - 1;
+	} else if (what === 'col') {
+		sel.row = 0;
+		sel.rowTo = rows.value.count - 1;
+	}
+
+	anchor.value = { row: sel.row, col: sel.col };
+	focus.value = { row: sel.rowTo, col: sel.colTo };
+
+	const out = loadedCells(sel);
+	if (!out) {
+		copyOnServer(sel);
+		return;
+	}
+
+	const data = clipboardData(out);
+	try {
+		await navigator.clipboard.write([
+			new ClipboardItem({
+				'text/plain': new Blob([data.text], { type: 'text/plain' }),
+				'text/html': new Blob([data.html], { type: 'text/html' }),
+			}),
+		]);
+	} catch {
+		await navigator.clipboard?.writeText(data.text);
+	}
+
+	copied.value = true;
+	setTimeout(() => (copied.value = false), 1500);
+}
+
+// --- notice ---
+
+// lastEdit is the cell of the last edit, whose error stays visible, also after the active cell has moved on
+const lastEdit = ref<{ row: number; col: number }>();
+
+const notice = computed(() => {
+	for (const c of [lastEdit.value, focused.value ? focusCell.value : undefined]) {
+		if (!c) continue;
+		const error = cellMap.value.get(key(c.row, c.col))?.error;
+		if (error) return `${cellName(c.row, c.col)}: ${error}`;
+	}
+	return '';
+});
+
+// cellName names a cell like the user sees it: by the frozen first column and the frozen header row, if any
+function cellName(row: number, col: number): string {
+	const rowName = Number(props.ui.frozenCols ?? 0) > 0 && col > 0 ? cellMap.value.get(key(row, 0))?.text : '';
+	const colName = Number(props.ui.frozenRows ?? 0) > 0 && row > 0 ? cellMap.value.get(key(0, col))?.text : '';
+	return `${rowName || row + 1} · ${colName || col + 1}`;
 }
 </script>
 
 <style scoped>
 .sheet {
 	--sheet-grid: rgb(from var(--M5) r g b / 0.5);
-	@apply relative overflow-hidden rounded-md border border-M5;
+	@apply relative flex flex-col overflow-hidden rounded-md border border-M5;
+}
+
+.footer {
+	@apply flex flex-wrap items-center gap-2 border-t border-M5 px-2 py-1 text-sm;
+
+	.notice {
+		@apply text-SE0;
+	}
+
+	.grow {
+		@apply flex-1;
+	}
+
+	.copied {
+		@apply text-ST0;
+	}
+
+	button {
+		@apply rounded-md border border-M5 px-2 py-1;
+	}
 }
 
 .scroller {
-	@apply size-full overflow-auto outline-none;
+	@apply w-full min-h-0 flex-1 overflow-auto outline-none;
 	overscroll-behavior: contain;
 }
 
