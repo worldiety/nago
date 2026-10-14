@@ -80,7 +80,15 @@
 		"hideCols": "{n} Spalten ausblenden",
 		"hideRow": "Zeile ausblenden",
 		"hideRows": "{n} Zeilen ausblenden",
-		"showAll": "Alle einblenden"
+		"showAll": "Alle einblenden",
+		"sort": "Sortieren",
+		"filter": "Filtern",
+		"filterPlaceholder": "Enthält …",
+		"filterApply": "Anwenden",
+		"filterRemove": "Entfernen",
+		"wider": "Breiter",
+		"narrower": "Schmaler",
+		"showHidden": "Ausgeblendete einblenden"
 	},
 	"clipboardModal": {
 		"confirm": "Kopieren",

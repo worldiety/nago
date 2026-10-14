@@ -12,6 +12,7 @@
 		v-if="!ui.invisible"
 		:id="ui.id"
 		class="sheet"
+		:class="{ touch: coarse }"
 		:style="frameStyles"
 		@focusin="focused = true"
 		@focusout="onFocusOut"
@@ -45,12 +46,53 @@
 						</span>
 						<UiGeneric v-else-if="c.view" :ui="c.view" class="view" />
 						<span v-else class="text">{{ c.text }}</span>
+						<span v-if="c.header" class="header-tools">
+							<button
+								v-if="c.header.filter !== undefined"
+								type="button"
+								class="tool"
+								:class="{ on: c.header.filter }"
+								:aria-label="$t('sheet.filter')"
+								@pointerdown.stop
+								@click.stop="openFilter($event, c.col)"
+							>
+								<svg viewBox="0 0 16 16"><path d="M2 3h12l-4.5 5.5V13l-3-1.5v-3z" /></svg>
+							</button>
+							<button
+								v-if="c.header.sort !== undefined"
+								type="button"
+								class="tool"
+								:class="{ on: c.header.sort > 0 }"
+								:aria-label="$t('sheet.sort')"
+								@pointerdown.stop
+								@click.stop="toggleSort(c.col)"
+							>
+								<svg viewBox="0 0 16 16">
+									<path v-if="c.header.sort === 1" d="M8 3v10M4 7l4-4 4 4" />
+									<path v-else-if="c.header.sort === 2" d="M8 3v10M4 9l4 4 4-4" />
+									<path v-else d="M5 3v10M2 6l3-3 3 3M11 13V3M8 10l3 3 3-3" />
+								</svg>
+							</button>
+						</span>
 						<div
 							v-if="c.resizeCol !== undefined"
 							class="resize"
 							@pointerdown.stop.prevent="startResize($event, c.resizeCol)"
 						></div>
 					</div>
+
+					<button
+						v-for="m in markers[layer.name]"
+						:key="m.key"
+						type="button"
+						class="hidden-marker"
+						:class="m.axis"
+						:style="m.style"
+						:title="$t('sheet.showHidden')"
+						:aria-label="$t('sheet.showHidden')"
+						@pointerdown.stop
+						@click.stop="showHidden(m)"
+					></button>
 
 					<template v-if="editing && editing.layer === layer.name">
 						<select
@@ -84,6 +126,8 @@
 		<div v-if="menu" class="menu" :style="`left:${menu.x}px;top:${menu.y}px`" role="menu" @pointerdown.stop>
 			<button type="button" role="menuitem" @click="menuCopy">{{ $t('sheet.copySelection') }}</button>
 			<template v-if="ui.layout">
+				<button type="button" role="menuitem" @click="menuResize(1.25)">{{ $t('sheet.wider') }}</button>
+				<button type="button" role="menuitem" @click="menuResize(0.8)">{{ $t('sheet.narrower') }}</button>
 				<button type="button" role="menuitem" @click="menuHide('col')">
 					{{ menu.cols > 1 ? $t('sheet.hideCols', { n: menu.cols }) : $t('sheet.hideCol') }}
 				</button>
@@ -94,6 +138,28 @@
 					{{ $t('sheet.showAll') }}
 				</button>
 			</template>
+		</div>
+
+		<div
+			v-if="filterBox"
+			class="menu filter"
+			:style="`left:${filterBox.x}px;top:${filterBox.y}px`"
+			@pointerdown.stop
+		>
+			<input
+				ref="filterInput"
+				class="filter-input"
+				:value="filterBox.text"
+				:placeholder="$t('sheet.filterPlaceholder')"
+				@keydown.enter.prevent="applyFilter(($event.target as HTMLInputElement).value)"
+				@keydown.esc.prevent="filterBox = undefined"
+			/>
+			<div class="filter-actions">
+				<button type="button" @click="applyFilter('')">{{ $t('sheet.filterRemove') }}</button>
+				<button type="button" class="apply" @click="applyFilter(filterInput?.value ?? '')">
+					{{ $t('sheet.filterApply') }}
+				</button>
+			</div>
 		</div>
 
 		<!-- the error of the last edit and, on a touch device, copying without a keyboard -->
@@ -292,6 +358,7 @@ interface RenderedCell {
 	checkbox?: boolean;
 	view?: Component;
 	resizeCol?: number;
+	header?: HeaderTools;
 	error?: string;
 	classes: Record<string, boolean>;
 	style: string;
@@ -373,6 +440,7 @@ function renderCell(row: number, col: number): RenderedCell | null {
 		text,
 		checkbox,
 		view: cell?.view,
+		header: headerTools(row, lastRow, col),
 		// the edge of a header cell resizes its last column, like in a spreadsheet application
 		resizeCol: props.ui.layout && !coarse && row < frozenRows.value ? lastCol : undefined,
 		error: cell?.error,
@@ -563,6 +631,7 @@ function onCellPointerDown(e: PointerEvent, row: number, col: number) {
 
 	const k = key(row, col);
 	if (e.pointerType === 'touch') {
+		startLongPress(e, row, col);
 		// a second tap on the active cell edits it, a finger cannot select a range by dragging
 		if (lastTapped === k && focusCell.value.row === row && focusCell.value.col === col) {
 			startEdit(row, col);
@@ -1164,6 +1233,7 @@ function openMenu(e: MouseEvent, row: number, col: number) {
 
 function closeMenu() {
 	menu.value = undefined;
+	filterBox.value = undefined;
 }
 
 async function menuCopy() {
@@ -1296,6 +1366,182 @@ function onPaste(e: ClipboardEvent) {
 		new UpdateStateValueRequested(props.ui.paste, 0, nextRID(), JSON.stringify({ seq: editSeq, edits }))
 	);
 }
+
+// --- header: sorting and filtering ---
+
+interface HeaderTools {
+	sort?: number; // undefined if the column cannot be sorted, else the direction
+	filter?: boolean; // undefined if the column cannot be filtered, else whether a filter is applied
+}
+
+// headerTools returns the tools of a cell in the header, i.e. in the last frozen row
+function headerTools(row: number, lastRow: number, col: number): HeaderTools | undefined {
+	const hr = frozenRows.value - 1;
+	const h = props.ui.header;
+	if (hr < 0 || !h || row > hr || lastRow < hr) return undefined;
+
+	const sortable = !!h.sort && (!h.sortableCols?.value.length || h.sortableCols.value.map(Number).includes(col));
+	const filterable =
+		!!h.filter && (!h.filterableCols?.value.length || h.filterableCols.value.map(Number).includes(col));
+	if (!sortable && !filterable) return undefined;
+
+	return {
+		sort: sortable ? (Number(h.sortCol ?? 0) === col ? Number(h.sortDir ?? 0) : 0) : undefined,
+		filter: filterable ? (h.filters?.value ?? []).some((f) => Number(f.col ?? 0) === col && !!f.text) : undefined,
+	};
+}
+
+function toggleSort(col: number) {
+	const h = props.ui.header;
+	if (!h?.sort) return;
+	const current = Number(h.sortCol ?? 0) === col ? Number(h.sortDir ?? 0) : 0;
+	const next = current === 1 ? 2 : 1;
+	serviceAdapter.sendEvent(new UpdateStateValueRequested(h.sort, 0, nextRID(), `${col},${next}`));
+}
+
+interface FilterBox {
+	col: number;
+	x: number;
+	y: number;
+	text: string;
+}
+
+const filterBox = ref<FilterBox>();
+const filterInput = ref<HTMLInputElement>();
+
+function openFilter(e: MouseEvent, col: number) {
+	const box = (scroller.value?.parentElement as HTMLElement).getBoundingClientRect();
+	const text = (props.ui.header?.filters?.value ?? []).find((f) => Number(f.col ?? 0) === col)?.text ?? '';
+	menu.value = undefined;
+	filterBox.value = {
+		col,
+		x: Math.max(0, Math.min(e.clientX - box.left - 100, box.width - 240)),
+		y: e.clientY - box.top + 12,
+		text,
+	};
+	nextTick(() => {
+		filterInput.value?.focus();
+		filterInput.value?.select();
+	});
+}
+
+function applyFilter(text: string) {
+	const f = filterBox.value;
+	const ptr = props.ui.header?.filter;
+	filterBox.value = undefined;
+	if (!f || !ptr) return;
+	serviceAdapter.sendEvent(new UpdateStateValueRequested(ptr, 0, nextRID(), JSON.stringify({ col: f.col, text })));
+	scroller.value?.focus({ preventScroll: true });
+}
+
+// --- markers of hidden rows and columns ---
+
+interface Marker {
+	key: string;
+	axis: 'row' | 'col';
+	indices: number[];
+	style: string;
+}
+
+// groups returns the runs of consecutive indices
+function groups(indices: number[]): number[][] {
+	const res: number[][] = [];
+	for (const i of [...indices].sort((a, b) => a - b)) {
+		const last = res[res.length - 1];
+		if (last && last[last.length - 1] === i - 1) last.push(i);
+		else res.push([i]);
+	}
+	return res;
+}
+
+// markers shows, where the user has hidden columns (in the header row) or rows (in the first frozen column), so
+// that a click shows them again
+const markers = computed(() => {
+	const res: Record<string, Marker[]> = { top: [], corner: [], left: [], body: [] };
+	const hr = frozenRows.value - 1;
+	const fc = frozenCols.value - 1;
+	if (!props.ui.layout) return res;
+
+	if (hr >= 0) {
+		for (const g of groups((props.ui.userHidden?.cols?.value ?? []).map(Number))) {
+			const x = cols.value.start(g[0]);
+			const layer = g[0] < frozenCols.value ? 'corner' : 'top';
+			res[layer].push({
+				key: 'c' + g[0],
+				axis: 'col',
+				indices: g,
+				style: `left:${x - 5}px;top:${rows.value.start(hr)}px;width:10px;height:${rows.value.size(hr)}px`,
+			});
+		}
+	}
+
+	if (fc >= 0) {
+		const v = visible.value;
+		for (const g of groups((props.ui.userHidden?.rows?.value ?? []).map(Number))) {
+			if (g[g.length - 1] < v.rowFrom - 1 && g[0] >= frozenRows.value) continue;
+			if (g[0] > v.rowTo) continue;
+			const y = rows.value.start(g[0]);
+			const layer = g[0] < frozenRows.value ? 'corner' : 'left';
+			res[layer].push({
+				key: 'r' + g[0],
+				axis: 'row',
+				indices: g,
+				style: `left:${cols.value.start(fc)}px;top:${y - 5}px;width:${cols.value.size(fc)}px;height:10px`,
+			});
+		}
+	}
+
+	return res;
+});
+
+function showHidden(m: Marker) {
+	for (const i of m.indices) {
+		sendLayout({ op: m.axis === 'row' ? 'showRow' : 'showCol', index: i });
+	}
+}
+
+// --- menu: widths without dragging, e.g. on a touch device ---
+
+function menuResize(factor: number) {
+	menu.value = undefined;
+	const sel = selection.value;
+	for (let col = sel.col; col <= sel.colTo; col++) {
+		if (cols.value.isHidden(col)) continue;
+		sendLayout({ op: 'resize', index: col, size: Math.round(cols.value.size(col) * factor) });
+	}
+	scroller.value?.focus({ preventScroll: true });
+}
+
+// --- long press opens the menu, also where the browser reports no contextmenu, e.g. iOS ---
+
+let longPress: number | undefined;
+
+function startLongPress(e: PointerEvent, row: number, col: number) {
+	cancelLongPress();
+	const x = e.clientX;
+	const y = e.clientY;
+	const cancelOnMove = (ev: PointerEvent) => {
+		if (Math.abs(ev.clientX - x) > 10 || Math.abs(ev.clientY - y) > 10) cancelLongPress();
+	};
+	document.addEventListener('pointermove', cancelOnMove);
+	document.addEventListener('pointerup', cancelLongPress, { once: true });
+	document.addEventListener('pointercancel', cancelLongPress, { once: true });
+	longPressCleanup = () => document.removeEventListener('pointermove', cancelOnMove);
+	longPress = window.setTimeout(() => {
+		longPress = undefined;
+		longPressCleanup?.();
+		openMenu({ clientX: x, clientY: y, preventDefault() {} } as MouseEvent, row, col);
+	}, 500);
+}
+
+let longPressCleanup: (() => void) | undefined;
+
+function cancelLongPress() {
+	if (longPress !== undefined) clearTimeout(longPress);
+	longPress = undefined;
+	longPressCleanup?.();
+	longPressCleanup = undefined;
+}
 </script>
 
 <style scoped>
@@ -1388,6 +1634,7 @@ function onPaste(e: ClipboardEvent) {
 	white-space: nowrap;
 	background-color: var(--M1);
 	user-select: none;
+	-webkit-touch-callout: none;
 	cursor: cell;
 }
 
@@ -1452,6 +1699,89 @@ function onPaste(e: ClipboardEvent) {
 		fill: none;
 		stroke: var(--M1);
 		stroke-width: 2;
+	}
+}
+
+/* inactive tools appear on hover only, so that a narrow header keeps its text, but always on a touch device */
+.sheet:not(.touch) .cell:not(:hover) .header-tools .tool:not(.on) {
+	display: none;
+}
+
+.header-tools {
+	@apply ml-auto flex shrink-0 items-center gap-0.5 pl-1;
+
+	.tool {
+		@apply flex size-5 items-center justify-center rounded opacity-40;
+
+		&:hover,
+		&.on {
+			@apply opacity-100;
+		}
+
+		&.on {
+			@apply text-I0;
+		}
+
+		svg {
+			@apply size-3.5;
+			fill: none;
+			stroke: currentColor;
+			stroke-width: 1.5;
+			stroke-linecap: round;
+			stroke-linejoin: round;
+		}
+	}
+}
+
+.hidden-marker {
+	position: absolute;
+	z-index: 3;
+	pointer-events: auto;
+	cursor: pointer;
+
+	&.col {
+		border-left: 2px solid var(--I0);
+		border-right: 2px solid var(--I0);
+		width: 6px !important;
+		margin-left: 2px;
+		background: var(--M1);
+	}
+
+	&.row {
+		border-top: 2px solid var(--I0);
+		border-bottom: 2px solid var(--I0);
+		height: 6px !important;
+		margin-top: 2px;
+		background: var(--M1);
+	}
+
+	&:hover {
+		background: rgb(from var(--I0) r g b / 0.4);
+	}
+}
+
+.menu.filter {
+	@apply gap-2 p-2;
+	min-width: 15rem;
+
+	.filter-input {
+		@apply w-full rounded-md border border-M5 bg-transparent px-2 py-1;
+
+		&:focus {
+			@apply border-I0 outline-none;
+		}
+	}
+
+	.filter-actions {
+		@apply flex justify-end gap-2;
+
+		button {
+			@apply rounded-md border border-M5 px-2 py-1;
+		}
+
+		.apply {
+			@apply border-I0 bg-I0 text-M1;
+		}
 	}
 }
 

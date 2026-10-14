@@ -65,7 +65,15 @@
 		"hideCols": "Hide {n} columns",
 		"hideRow": "Hide row",
 		"hideRows": "Hide {n} rows",
-		"showAll": "Show all"
+		"showAll": "Show all",
+		"sort": "Sort",
+		"filter": "Filter",
+		"filterPlaceholder": "Contains …",
+		"filterApply": "Apply",
+		"filterRemove": "Remove",
+		"wider": "Wider",
+		"narrower": "Narrower",
+		"showHidden": "Show hidden"
 	},
 	"clipboardModal": {
 		"confirm": "Copy",
