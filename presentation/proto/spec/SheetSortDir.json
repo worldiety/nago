@@ -1,0 +1,16 @@
+{
+  "doc": "SheetSortDir is the direction, in which the rows are sorted.",
+  "kind": "Uint",
+  "id": 304,
+  "const": {
+    "0": {
+      "name": "SheetSortNone"
+    },
+    "1": {
+      "name": "SheetSortAsc"
+    },
+    "2": {
+      "name": "SheetSortDesc"
+    }
+  }
+}

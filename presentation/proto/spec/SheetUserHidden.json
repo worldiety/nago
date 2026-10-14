@@ -1,0 +1,15 @@
+{
+  "doc": "SheetUserHidden are the rows and columns, which the user has hidden.",
+  "kind": "Record",
+  "id": 308,
+  "fields": {
+    "1": {
+      "name": "Rows",
+      "type": "Ints"
+    },
+    "2": {
+      "name": "Cols",
+      "type": "Ints"
+    }
+  }
+}

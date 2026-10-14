@@ -1,0 +1,41 @@
+{
+  "doc": "SheetHeader offers sorting and filtering in the last frozen row of a Sheet.",
+  "kind": "Record",
+  "id": 307,
+  "fields": {
+    "1": {
+      "doc": "SortCol is the column, by which the application has sorted the rows, if SortDir is set.",
+      "name": "SortCol",
+      "type": "Int"
+    },
+    "2": {
+      "name": "SortDir",
+      "type": "SheetSortDir"
+    },
+    "3": {
+      "doc": "Sort is a state, into which the client writes col,dir, when the user sorts by a column. It is zero, if sorting is not offered.",
+      "name": "Sort",
+      "type": "Ptr"
+    },
+    "4": {
+      "doc": "SortableCols are the columns, which can be sorted. All columns, if empty.",
+      "name": "SortableCols",
+      "type": "Ints"
+    },
+    "5": {
+      "doc": "Filters are the filters, which the application has applied.",
+      "name": "Filters",
+      "type": "SheetFilters"
+    },
+    "6": {
+      "doc": "Filter is a state, into which the client writes json {col,text}, when the user filters a column. An empty text removes the filter. It is zero, if filtering is not offered.",
+      "name": "Filter",
+      "type": "Ptr"
+    },
+    "7": {
+      "doc": "FilterableCols are the columns, which can be filtered. All columns, if empty.",
+      "name": "FilterableCols",
+      "type": "Ints"
+    }
+  }
+}

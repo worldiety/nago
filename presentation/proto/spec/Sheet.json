@@ -133,6 +133,16 @@
       "doc": "Paste is a state, into which the client writes pasted values as json {seq,edits:[{row,col,value}]}. It is zero, if pasting is not allowed.",
       "name": "Paste",
       "type": "Ptr"
+    },
+    "29": {
+      "doc": "Header offers sorting and filtering in the last frozen row.",
+      "name": "Header",
+      "type": "SheetHeader"
+    },
+    "30": {
+      "doc": "UserHidden are the hidden rows and columns, which the user has hidden and may show again.",
+      "name": "UserHidden",
+      "type": "SheetUserHidden"
     }
   }
 }

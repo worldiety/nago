@@ -1,0 +1,15 @@
+{
+  "doc": "SheetFilter filters the rows by the text of a column.",
+  "kind": "Record",
+  "id": 305,
+  "fields": {
+    "1": {
+      "name": "Col",
+      "type": "Int"
+    },
+    "2": {
+      "name": "Text",
+      "type": "Str"
+    }
+  }
+}

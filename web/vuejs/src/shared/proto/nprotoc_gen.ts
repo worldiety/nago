@@ -22789,6 +22789,12 @@ export class Sheet implements Writeable, Readable, Component {
 	// Paste is a state, into which the client writes pasted values as json {seq,edits:[{row,col,value}]}. It is zero, if pasting is not allowed.
 	public paste?: Ptr;
 
+	// Header offers sorting and filtering in the last frozen row.
+	public header?: SheetHeader;
+
+	// UserHidden are the hidden rows and columns, which the user has hidden and may show again.
+	public userHidden?: SheetUserHidden;
+
 	constructor(
 		id: Str | undefined = undefined,
 		rowCount: Int | undefined = undefined,
@@ -22817,7 +22823,9 @@ export class Sheet implements Writeable, Readable, Component {
 		invisible: Bool | undefined = undefined,
 		rowHeights: SheetSizes | undefined = undefined,
 		layout: Ptr | undefined = undefined,
-		paste: Ptr | undefined = undefined
+		paste: Ptr | undefined = undefined,
+		header: SheetHeader | undefined = undefined,
+		userHidden: SheetUserHidden | undefined = undefined
 	) {
 		this.id = id;
 		this.rowCount = rowCount;
@@ -22847,6 +22855,8 @@ export class Sheet implements Writeable, Readable, Component {
 		this.rowHeights = rowHeights;
 		this.layout = layout;
 		this.paste = paste;
+		this.header = header;
+		this.userHidden = userHidden;
 	}
 
 	read(reader: BinaryReader): void {
@@ -22975,6 +22985,16 @@ export class Sheet implements Writeable, Readable, Component {
 					this.paste = readInt(reader);
 					break;
 				}
+				case 29: {
+					this.header = new SheetHeader();
+					this.header.read(reader);
+					break;
+				}
+				case 30: {
+					this.userHidden = new SheetUserHidden();
+					this.userHidden.read(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -23012,6 +23032,8 @@ export class Sheet implements Writeable, Readable, Component {
 			this.rowHeights !== undefined && !this.rowHeights.isZero(),
 			this.layout !== undefined,
 			this.paste !== undefined,
+			this.header !== undefined && !this.header.isZero(),
+			this.userHidden !== undefined && !this.userHidden.isZero(),
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -23127,6 +23149,14 @@ export class Sheet implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.UVARINT, 28);
 			writeInt(writer, this.paste!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[29]) {
+			writer.writeFieldHeader(Shapes.RECORD, 29);
+			this.header!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[30]) {
+			writer.writeFieldHeader(Shapes.RECORD, 30);
+			this.userHidden!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -23158,7 +23188,9 @@ export class Sheet implements Writeable, Readable, Component {
 			this.invisible === undefined &&
 			(this.rowHeights === undefined || this.rowHeights.isZero()) &&
 			this.layout === undefined &&
-			this.paste === undefined
+			this.paste === undefined &&
+			(this.header === undefined || this.header.isZero()) &&
+			(this.userHidden === undefined || this.userHidden.isZero())
 		);
 	}
 
@@ -23191,6 +23223,8 @@ export class Sheet implements Writeable, Readable, Component {
 		this.rowHeights = undefined;
 		this.layout = undefined;
 		this.paste = undefined;
+		this.header = undefined;
+		this.userHidden = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -24163,6 +24197,342 @@ export enum SheetLineStyleValues {
 	SheetLineDashed = 2,
 	SheetLineDotted = 3,
 	SheetLineDouble = 4,
+}
+
+// SheetSortDir is the direction, in which the rows are sorted.
+export type SheetSortDir = number;
+function writeTypeHeaderSheetSortDir(dst: BinaryWriter): void {
+	dst.writeTypeHeader(Shapes.UVARINT, 304);
+	return;
+}
+// companion enum containing all defined constants for SheetSortDir
+export enum SheetSortDirValues {
+	SheetSortNone = 0,
+	SheetSortAsc = 1,
+	SheetSortDesc = 2,
+}
+
+// SheetFilter filters the rows by the text of a column.
+export class SheetFilter implements Writeable, Readable {
+	public col?: Int;
+
+	public text?: Str;
+
+	constructor(col: Int | undefined = undefined, text: Str | undefined = undefined) {
+		this.col = col;
+		this.text = text;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.col = readSint(reader);
+					break;
+				}
+				case 2: {
+					this.text = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.col !== undefined, this.text !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.VARINT, 1);
+			writeSint(writer, this.col!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.text!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.col === undefined && this.text === undefined;
+	}
+
+	reset(): void {
+		this.col = undefined;
+		this.text = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 305);
+		return;
+	}
+}
+
+export class SheetFilters implements Writeable, Readable {
+	public value: SheetFilter[];
+
+	constructor(value: SheetFilter[] = []) {
+		this.value = value;
+	}
+
+	isZero(): boolean {
+		return !this.value || this.value.length === 0;
+	}
+
+	reset(): void {
+		this.value = [];
+	}
+
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value.length); // Write the length of the array
+		for (const c of this.value) {
+			c.writeTypeHeader(writer); // Write the type header for each component)
+			c.write(writer); // Write the component data
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
+		}
+	}
+
+	read(reader: BinaryReader): void {
+		const count = reader.readUvarint(); // Read the length of the array
+		const values: SheetFilter[] = [];
+
+		for (let i = 0; i < count; i++) {
+			const obj = unmarshal(reader); // Read and unmarshal each component
+			values.push(obj as any as SheetFilter); // Cast and add to the array
+		}
+
+		this.value = values;
+	}
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 306);
+		return;
+	}
+}
+
+// SheetHeader offers sorting and filtering in the last frozen row of a Sheet.
+export class SheetHeader implements Writeable, Readable {
+	// SortCol is the column, by which the application has sorted the rows, if SortDir is set.
+	public sortCol?: Int;
+
+	public sortDir?: SheetSortDir;
+
+	// Sort is a state, into which the client writes col,dir, when the user sorts by a column. It is zero, if sorting is not offered.
+	public sort?: Ptr;
+
+	// SortableCols are the columns, which can be sorted. All columns, if empty.
+	public sortableCols?: Ints;
+
+	// Filters are the filters, which the application has applied.
+	public filters?: SheetFilters;
+
+	// Filter is a state, into which the client writes json {col,text}, when the user filters a column. An empty text removes the filter. It is zero, if filtering is not offered.
+	public filter?: Ptr;
+
+	// FilterableCols are the columns, which can be filtered. All columns, if empty.
+	public filterableCols?: Ints;
+
+	constructor(
+		sortCol: Int | undefined = undefined,
+		sortDir: SheetSortDir | undefined = undefined,
+		sort: Ptr | undefined = undefined,
+		sortableCols: Ints | undefined = undefined,
+		filters: SheetFilters | undefined = undefined,
+		filter: Ptr | undefined = undefined,
+		filterableCols: Ints | undefined = undefined
+	) {
+		this.sortCol = sortCol;
+		this.sortDir = sortDir;
+		this.sort = sort;
+		this.sortableCols = sortableCols;
+		this.filters = filters;
+		this.filter = filter;
+		this.filterableCols = filterableCols;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.sortCol = readSint(reader);
+					break;
+				}
+				case 2: {
+					this.sortDir = readInt(reader);
+					break;
+				}
+				case 3: {
+					this.sort = readInt(reader);
+					break;
+				}
+				case 4: {
+					this.sortableCols = new Ints();
+					this.sortableCols.read(reader);
+					break;
+				}
+				case 5: {
+					this.filters = new SheetFilters();
+					this.filters.read(reader);
+					break;
+				}
+				case 6: {
+					this.filter = readInt(reader);
+					break;
+				}
+				case 7: {
+					this.filterableCols = new Ints();
+					this.filterableCols.read(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.sortCol !== undefined,
+			this.sortDir !== undefined,
+			this.sort !== undefined,
+			this.sortableCols !== undefined && !this.sortableCols.isZero(),
+			this.filters !== undefined && !this.filters.isZero(),
+			this.filter !== undefined,
+			this.filterableCols !== undefined && !this.filterableCols.isZero(),
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.VARINT, 1);
+			writeSint(writer, this.sortCol!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 2);
+			writeInt(writer, this.sortDir!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 3);
+			writeInt(writer, this.sort!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 4);
+			this.sortableCols!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 5);
+			this.filters!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 6);
+			writeInt(writer, this.filter!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 7);
+			this.filterableCols!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.sortCol === undefined &&
+			this.sortDir === undefined &&
+			this.sort === undefined &&
+			(this.sortableCols === undefined || this.sortableCols.isZero()) &&
+			(this.filters === undefined || this.filters.isZero()) &&
+			this.filter === undefined &&
+			(this.filterableCols === undefined || this.filterableCols.isZero())
+		);
+	}
+
+	reset(): void {
+		this.sortCol = undefined;
+		this.sortDir = undefined;
+		this.sort = undefined;
+		this.sortableCols = undefined;
+		this.filters = undefined;
+		this.filter = undefined;
+		this.filterableCols = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 307);
+		return;
+	}
+}
+
+// SheetUserHidden are the rows and columns, which the user has hidden.
+export class SheetUserHidden implements Writeable, Readable {
+	public rows?: Ints;
+
+	public cols?: Ints;
+
+	constructor(rows: Ints | undefined = undefined, cols: Ints | undefined = undefined) {
+		this.rows = rows;
+		this.cols = cols;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.rows = new Ints();
+					this.rows.read(reader);
+					break;
+				}
+				case 2: {
+					this.cols = new Ints();
+					this.cols.read(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.rows !== undefined && !this.rows.isZero(),
+			this.cols !== undefined && !this.cols.isZero(),
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 1);
+			this.rows!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 2);
+			this.cols!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (this.rows === undefined || this.rows.isZero()) && (this.cols === undefined || this.cols.isZero());
+	}
+
+	reset(): void {
+		this.rows = undefined;
+		this.cols = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 308);
+		return;
+	}
 }
 
 // Function to marshal a Writeable object into a BinaryWriter
@@ -25561,6 +25931,30 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 303: {
 			const v = readInt(src) as SheetLineStyle;
+			return v;
+		}
+		case 304: {
+			const v = readInt(src) as SheetSortDir;
+			return v;
+		}
+		case 305: {
+			const v = new SheetFilter();
+			v.read(src);
+			return v;
+		}
+		case 306: {
+			const v = new SheetFilters();
+			v.read(src);
+			return v;
+		}
+		case 307: {
+			const v = new SheetHeader();
+			v.read(src);
+			return v;
+		}
+		case 308: {
+			const v = new SheetUserHidden();
+			v.read(src);
 			return v;
 		}
 	}

@@ -22212,10 +22212,14 @@ type Sheet struct {
 	Layout Ptr
 	// Paste is a state, into which the client writes pasted values as json {seq,edits:[{row,col,value}]}. It is zero, if pasting is not allowed.
 	Paste Ptr
+	// Header offers sorting and filtering in the last frozen row.
+	Header SheetHeader
+	// UserHidden are the hidden rows and columns, which the user has hidden and may show again.
+	UserHidden SheetUserHidden
 }
 
 func (v *Sheet) write(w *BinaryWriter) error {
-	var fields [29]bool
+	var fields [31]bool
 	fields[1] = !v.Id.IsZero()
 	fields[2] = !v.RowCount.IsZero()
 	fields[3] = !v.ColCount.IsZero()
@@ -22244,6 +22248,8 @@ func (v *Sheet) write(w *BinaryWriter) error {
 	fields[26] = !v.RowHeights.IsZero()
 	fields[27] = !v.Layout.IsZero()
 	fields[28] = !v.Paste.IsZero()
+	fields[29] = !v.Header.IsZero()
+	fields[30] = !v.UserHidden.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -22478,6 +22484,22 @@ func (v *Sheet) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[29] {
+		if err := w.writeFieldHeader(record, 29); err != nil {
+			return err
+		}
+		if err := v.Header.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[30] {
+		if err := w.writeFieldHeader(record, 30); err != nil {
+			return err
+		}
+		if err := v.UserHidden.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -22630,6 +22652,16 @@ func (v *Sheet) read(r *BinaryReader) error {
 			}
 		case 28:
 			err := v.Paste.read(r)
+			if err != nil {
+				return err
+			}
+		case 29:
+			err := v.Header.read(r)
+			if err != nil {
+				return err
+			}
+		case 30:
+			err := v.UserHidden.read(r)
 			if err != nil {
 				return err
 			}
@@ -23473,6 +23505,314 @@ func (v *SheetLineStyle) reset() {
 }
 func (v *SheetLineStyle) IsZero() bool {
 	return *v == 0
+}
+
+// SheetSortDir is the direction, in which the rows are sorted.
+type SheetSortDir uint64
+
+const (
+	SheetSortNone SheetSortDir = 0
+	SheetSortAsc  SheetSortDir = 1
+	SheetSortDesc SheetSortDir = 2
+)
+
+func (v *SheetSortDir) write(r *BinaryWriter) error {
+	return r.writeUvarint(uint64(*v))
+}
+
+func (v *SheetSortDir) read(r *BinaryReader) error {
+	tmp, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+	*v = SheetSortDir(tmp)
+	return nil
+}
+
+func (v *SheetSortDir) reset() {
+	*v = SheetSortDir(0)
+}
+func (v *SheetSortDir) IsZero() bool {
+	return *v == 0
+}
+
+// SheetFilter filters the rows by the text of a column.
+type SheetFilter struct {
+	Col  Int
+	Text Str
+}
+
+func (v *SheetFilter) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Col.IsZero()
+	fields[2] = !v.Text.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(varint, 1); err != nil {
+			return err
+		}
+		if err := v.Col.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Text.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *SheetFilter) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Col.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Text.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// SheetHeader offers sorting and filtering in the last frozen row of a Sheet.
+type SheetHeader struct {
+	// SortCol is the column, by which the application has sorted the rows, if SortDir is set.
+	SortCol Int
+	SortDir SheetSortDir
+	// Sort is a state, into which the client writes col,dir, when the user sorts by a column. It is zero, if sorting is not offered.
+	Sort Ptr
+	// SortableCols are the columns, which can be sorted. All columns, if empty.
+	SortableCols Ints
+	// Filters are the filters, which the application has applied.
+	Filters SheetFilters
+	// Filter is a state, into which the client writes json {col,text}, when the user filters a column. An empty text removes the filter. It is zero, if filtering is not offered.
+	Filter Ptr
+	// FilterableCols are the columns, which can be filtered. All columns, if empty.
+	FilterableCols Ints
+}
+
+func (v *SheetHeader) write(w *BinaryWriter) error {
+	var fields [8]bool
+	fields[1] = !v.SortCol.IsZero()
+	fields[2] = !v.SortDir.IsZero()
+	fields[3] = !v.Sort.IsZero()
+	fields[4] = !v.SortableCols.IsZero()
+	fields[5] = !v.Filters.IsZero()
+	fields[6] = !v.Filter.IsZero()
+	fields[7] = !v.FilterableCols.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(varint, 1); err != nil {
+			return err
+		}
+		if err := v.SortCol.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.SortDir.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(uvarint, 3); err != nil {
+			return err
+		}
+		if err := v.Sort.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(array, 4); err != nil {
+			return err
+		}
+		if err := v.SortableCols.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(array, 5); err != nil {
+			return err
+		}
+		if err := v.Filters.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(uvarint, 6); err != nil {
+			return err
+		}
+		if err := v.Filter.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(array, 7); err != nil {
+			return err
+		}
+		if err := v.FilterableCols.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *SheetHeader) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.SortCol.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.SortDir.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Sort.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.SortableCols.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Filters.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.Filter.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.FilterableCols.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// SheetUserHidden are the rows and columns, which the user has hidden.
+type SheetUserHidden struct {
+	Rows Ints
+	Cols Ints
+}
+
+func (v *SheetUserHidden) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Rows.IsZero()
+	fields[2] = !v.Cols.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(array, 1); err != nil {
+			return err
+		}
+		if err := v.Rows.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(array, 2); err != nil {
+			return err
+		}
+		if err := v.Cols.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *SheetUserHidden) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Rows.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Cols.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 type Writeable interface {
@@ -25242,6 +25582,36 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 303:
 		var v SheetLineStyle
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 304:
+		var v SheetSortDir
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 305:
+		var v SheetFilter
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 306:
+		var v SheetFilters
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 307:
+		var v SheetHeader
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 308:
+		var v SheetUserHidden
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -29955,13 +30325,15 @@ func (v *Sheet) reset() {
 	v.RowHeights.reset()
 	v.Layout.reset()
 	v.Paste.reset()
+	v.Header.reset()
+	v.UserHidden.reset()
 }
 
 func (v *Sheet) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Id.IsZero() && v.RowCount.IsZero() && v.ColCount.IsZero() && v.FrozenRows.IsZero() && v.FrozenCols.IsZero() && v.RowHeight.IsZero() && v.ColWidth.IsZero() && v.ColWidths.IsZero() && v.HiddenRows.IsZero() && v.HiddenCols.IsZero() && v.WindowRow.IsZero() && v.WindowCol.IsZero() && v.WindowRows.IsZero() && v.WindowCols.IsZero() && v.Cells.IsZero() && v.Styles.IsZero() && v.Merges.IsZero() && v.Viewport.IsZero() && v.Edit.IsZero() && v.EditSeq.IsZero() && v.Copy.IsZero() && v.GridColor.IsZero() && v.Frame.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.RowHeights.IsZero() && v.Layout.IsZero() && v.Paste.IsZero()
+	return v.Id.IsZero() && v.RowCount.IsZero() && v.ColCount.IsZero() && v.FrozenRows.IsZero() && v.FrozenCols.IsZero() && v.RowHeight.IsZero() && v.ColWidth.IsZero() && v.ColWidths.IsZero() && v.HiddenRows.IsZero() && v.HiddenCols.IsZero() && v.WindowRow.IsZero() && v.WindowCol.IsZero() && v.WindowRows.IsZero() && v.WindowCols.IsZero() && v.Cells.IsZero() && v.Styles.IsZero() && v.Merges.IsZero() && v.Viewport.IsZero() && v.Edit.IsZero() && v.EditSeq.IsZero() && v.Copy.IsZero() && v.GridColor.IsZero() && v.Frame.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.RowHeights.IsZero() && v.Layout.IsZero() && v.Paste.IsZero() && v.Header.IsZero() && v.UserHidden.IsZero()
 }
 
 func (v *SheetCell) reset() {
@@ -30264,6 +30636,91 @@ func (v *Ints) IsZero() bool {
 
 func (v *Ints) reset() {
 	*v = nil
+}
+
+func (v *SheetFilter) reset() {
+	v.Col.reset()
+	v.Text.reset()
+}
+
+func (v *SheetFilter) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Col.IsZero() && v.Text.IsZero()
+}
+
+type SheetFilters []SheetFilter
+
+func (v *SheetFilters) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *SheetFilters) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	slice := make([]SheetFilter, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = *obj.(*SheetFilter)
+	}
+
+	*v = slice
+	return nil
+}
+
+func (v *SheetFilters) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
+}
+
+func (v *SheetFilters) reset() {
+	*v = nil
+}
+
+func (v *SheetHeader) reset() {
+	v.SortCol.reset()
+	v.SortDir.reset()
+	v.Sort.reset()
+	v.SortableCols.reset()
+	v.Filters.reset()
+	v.Filter.reset()
+	v.FilterableCols.reset()
+}
+
+func (v *SheetHeader) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.SortCol.IsZero() && v.SortDir.IsZero() && v.Sort.IsZero() && v.SortableCols.IsZero() && v.Filters.IsZero() && v.Filter.IsZero() && v.FilterableCols.IsZero()
+}
+
+func (v *SheetUserHidden) reset() {
+	v.Rows.reset()
+	v.Cols.reset()
+}
+
+func (v *SheetUserHidden) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Rows.IsZero() && v.Cols.IsZero()
 }
 
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
@@ -32298,6 +32755,41 @@ func (v *SheetWrap) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *SheetLineStyle) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(uvarint, 303); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *SheetSortDir) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(uvarint, 304); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *SheetFilter) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 305); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *SheetFilters) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 306); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *SheetHeader) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 307); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *SheetUserHidden) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 308); err != nil {
 		return err
 	}
 	return nil
