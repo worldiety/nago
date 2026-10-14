@@ -37,7 +37,18 @@ func TestTwoColumnPanesMayShrinkBelowTheirContent(t *testing.T) {
 	ctx := testRenderContext{wnd: testWindow{sizeClass: core.SizeClassLarge}}
 	node := navsplitview.TwoColumn(navsplitview.NavFn(testNav)).Default("content", "detail").Render(ctx)
 
-	assertPanes(t, node, map[int]ui.Alignment{0: ui.Center, 2: ui.Center})
+	assertPanes(t, node, map[int]ui.Alignment{0: ui.Center, 2: ui.Top})
+}
+
+func TestTwoColumnAlignmentsCanBeChanged(t *testing.T) {
+	ctx := testRenderContext{wnd: testWindow{sizeClass: core.SizeClassLarge}}
+	node := navsplitview.TwoColumn(navsplitview.NavFn(testNav)).
+		Default("content", "detail").
+		AlignmentContent(ui.TopLeading).
+		AlignmentDetail(ui.Center).
+		Render(ctx)
+
+	assertPanes(t, node, map[int]ui.Alignment{0: ui.TopLeading, 2: ui.Center})
 }
 
 func TestThreeColumnPanesMayShrinkBelowTheirContent(t *testing.T) {
