@@ -56,3 +56,4 @@ BarChart creates a new bar chart with default (vertical, non-stacked) configurat
 - [Line Chart](../line_chart/)
 - [Pie Chart](../pie_chart/)
 - Tutorial [tutorial-65-bar-chart](/docs/examples/tutorial-65-bar-chart/)
+- [SVG Chart](../svg_chart/) renders the same data as a static SVG without a charting library

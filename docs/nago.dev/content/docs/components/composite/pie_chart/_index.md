@@ -50,3 +50,4 @@ PieChart creates a pie chart with the given chart configuration. Add the data wi
 - [Bar Chart](../bar_chart/)
 - [Line Chart](../line_chart/)
 - Tutorial [tutorial-79-pie-chart](/docs/examples/tutorial-79-pie-chart/)
+- [SVG Chart](../svg_chart/) renders the same data as a static SVG without a charting library

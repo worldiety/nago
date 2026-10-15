@@ -16,6 +16,15 @@ shots:
     steps:
       - wait: 1s
   - example: example/gallery/composite
+    path: /svg-bar-chart
+    out: content/docs/components/composite/svg_chart/svg_bar_chart.webp
+  - example: example/gallery/composite
+    path: /svg-line-chart
+    out: content/docs/components/composite/svg_chart/svg_line_chart.webp
+  - example: example/gallery/composite
+    path: /svg-pie-chart
+    out: content/docs/components/composite/svg_chart/svg_pie_chart.webp
+  - example: example/gallery/composite
     path: /calendar
     out: content/docs/components/composite/calendar/calendar.webp
     width: 1400
