@@ -19,7 +19,7 @@ import (
 )
 
 // Version changes, whenever the translation changes, so that a cache does not return an outdated bundle.
-const Version = "gostrict/1"
+const Version = "gostrict/2"
 
 // Cache compiles programs and keeps the most recently used bundles and diagnostics by the hash of their sources,
 // so that a program, e.g. a script of an application, is checked and translated only once per version.

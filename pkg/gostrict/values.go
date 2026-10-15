@@ -31,6 +31,11 @@ type (
 		HostString() string
 		HostFromString(s string) any
 	}
+	// hostHandle is a handle of a header package, which a server returns from a program, e.g. a view of nago
+	hostHandle interface {
+		HostRef() js.Ref
+		HostFromRef(ref js.Ref) any
+	}
 	hostMap interface {
 		HostEntries() [][2]any
 		HostFromEntries(entries [][2]any) any
@@ -50,6 +55,7 @@ var (
 	tokenType      = reflect.TypeFor[Token]()
 	hostSeqType    = reflect.TypeFor[hostSeq]()
 	hostBigType    = reflect.TypeFor[hostBig]()
+	hostHandleType = reflect.TypeFor[hostHandle]()
 	hostMapType    = reflect.TypeFor[hostMap]()
 	typedStateType = reflect.TypeFor[typedState]()
 )
@@ -122,6 +128,8 @@ func toNeutral(v reflect.Value) (any, error) {
 		return v.Interface().(typedState).token(), nil
 	case t.Implements(hostBigType):
 		return v.Interface().(hostBig).HostString(), nil
+	case t.Implements(hostHandleType):
+		return v.Interface().(hostHandle).HostRef(), nil
 	case t.Implements(hostSeqType):
 		seq := v.Interface().(hostSeq)
 		elems := seq.HostValues()
@@ -238,6 +246,12 @@ func fromNeutral(n any, t reflect.Type) (reflect.Value, error) {
 			return zero, fmt.Errorf("%T is no decimal of a big.Int", n)
 		}
 		return reflect.ValueOf(zero.Interface().(hostBig).HostFromString(s)), nil
+	case t.Implements(hostHandleType):
+		ref, ok := n.(js.Ref)
+		if !ok {
+			return zero, fmt.Errorf("%T is no handle", n)
+		}
+		return reflect.ValueOf(zero.Interface().(hostHandle).HostFromRef(ref)), nil
 	case t.Implements(hostSeqType):
 		elems, _ := n.([]any)
 		seq := zero.Interface().(hostSeq)

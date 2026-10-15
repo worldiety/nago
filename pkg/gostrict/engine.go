@@ -51,6 +51,9 @@ const (
 	ValueUnion
 	// ValueBig is a big.Int of package std/big, an integer of any size, whose value in Go is its decimal string.
 	ValueBig
+	// ValueFunc is a function of the program, which a function of a header package takes, e.g. the callback, which
+	// renders a cell of a table. Its value in Go is a [Callback], its signature is [Type.Func].
+	ValueFunc
 )
 
 func (k ValueKind) String() string {
@@ -83,6 +86,8 @@ func (k ValueKind) String() string {
 		return "union"
 	case ValueBig:
 		return "big.Int"
+	case ValueFunc:
+		return "func"
 	}
 	return "invalid"
 }
@@ -96,6 +101,8 @@ type Type struct {
 	Elem *Type
 	// Key is the type of the keys of a map.
 	Key *Type
+	// Func is the signature of a function, without a name.
+	Func *Func
 }
 
 // The types of the basic values.
@@ -120,6 +127,8 @@ func (t Type) String() string {
 		return t.Name
 	case ValueState:
 		return "*" + t.Name
+	case ValueFunc:
+		return t.Func.String()
 	}
 	return t.Kind.String()
 }
@@ -129,7 +138,26 @@ func (t Type) Equal(o Type) bool {
 	if t.Kind != o.Kind || t.Name != o.Name {
 		return false
 	}
-	return equalPtr(t.Elem, o.Elem) && equalPtr(t.Key, o.Key)
+	return equalPtr(t.Elem, o.Elem) && equalPtr(t.Key, o.Key) && equalFunc(t.Func, o.Func)
+}
+
+func equalFunc(a, b *Func) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+	return a.Name == b.Name && equalTypes(a.Params, b.Params) && equalTypes(a.Results, b.Results)
+}
+
+func equalTypes(a, b []Type) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if !a[i].Equal(b[i]) {
+			return false
+		}
+	}
+	return true
 }
 
 func equalPtr(a, b *Type) bool {
@@ -163,13 +191,21 @@ func (f Func) String() string {
 	if res != "" {
 		res = " " + res
 	}
-	return "func " + f.Name + "(" + join(f.Params) + ")" + res
+	name := f.Name
+	if name != "" {
+		name = " " + name
+	}
+	return "func" + name + "(" + join(f.Params) + ")" + res
 }
 
 // Record describes a struct, which crosses the boundary as a record.
 type Record struct {
 	Name   string
 	Fields []Field
+	// Immutable is set, if the program never changes a value of the record, also not through a list or map of
+	// it. Then the translated program shares its values, e.g. a style, which many cells refer to, and an engine may
+	// convert a value once.
+	Immutable bool
 }
 
 // Field is a field of a record.
@@ -286,6 +322,8 @@ func checkValue(t Type, v any) error {
 		if s, ok = v.(string); ok && !isDecimal(s) {
 			return fmt.Errorf("%q is no decimal integer", s)
 		}
+	case ValueFunc:
+		_, ok = v.(Callback)
 	case ValueRecord:
 		// the fields are checked by the engine, which knows the record
 		_, ok = v.([]any)
@@ -367,6 +405,33 @@ func compareValues(a, b []any, floats func(x, y float64) bool) bool {
 
 // Fn is a function, which takes and returns values of the types of its [Func].
 type Fn func(args []any) []any
+
+// Callback is the value of a [ValueFunc]: a function of the program, which the host calls with values of the types of
+// its signature, see [Type.Func], e.g. a host function, which renders a table, calls it for each visible cell. A
+// callback is valid as long as its instance. The host calls it on the goroutine, which uses the instance, e.g. the
+// event loop of a window: during a call of the instance, e.g. in the host function itself, or between two calls,
+// e.g. when the window renders the table later.
+//
+// A checked program does not fail, but an engine may, e.g. if the instance is closed. Then Call returns the error
+// and the instance returns it once more from its next call, so that the host learns about it, even if a generated
+// adapter, which turns the callback into a Go function, has to drop it and returns zero values.
+type Callback interface {
+	Call(args ...any) ([]any, error)
+}
+
+// ErrorOf returns the error of the neutral value of an error, which may be nil.
+func ErrorOf(v any) error {
+	err, _ := v.(error)
+	return err
+}
+
+// CallbackFunc is a [Callback] of a Go function, e.g. for a test.
+type CallbackFunc func(args ...any) ([]any, error)
+
+// Call calls the function.
+func (f CallbackFunc) Call(args ...any) ([]any, error) {
+	return f(args...)
+}
 
 // Funcs maps functions by name, see [Func.Name]. The generator writes the functions of a package as Funcs, see
 // [Generate].

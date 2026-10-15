@@ -9,6 +9,8 @@
 package hostuse
 
 import (
+	"errors"
+
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/geom"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/host"
 	"go.wdy.de/nago/pkg/gostrict/std/list"
@@ -32,4 +34,24 @@ func Records(d float64) (string, float64, int32) {
 		return st.Label, st.Sum, st.Count
 	}
 	return st.Label + " " + text.FromFloat(first.X, 2), st.Sum, st.Parts.Len()
+}
+
+// Callbacks passes functions to the header package: two, which it calls during the call, and one, which it keeps.
+func Callbacks(n int32, limit float64) (list.List[geom.Rect], float64, string) {
+	rs := host.Tabulate(n, func(i int32) geom.Rect {
+		return geom.Rect{X: float64(i), W: float64(i) * 2, H: 1}
+	})
+	sum, err := host.Fold(rs, func(acc float64, r geom.Rect) (float64, error) {
+		if r.W > limit {
+			return acc, errors.New("too wide: " + text.FromFloat(r.W, 0))
+		}
+		return acc + r.W*r.H, nil
+	})
+	_ = host.Keep(func(x float64) float64 {
+		return x * float64(n)
+	})
+	if err != nil {
+		return rs, sum, err.Error()
+	}
+	return rs, sum, "ok"
 }

@@ -113,38 +113,54 @@ func (g *generator) header() ([]byte, error) {
 
 			var args, results, values []string
 			for i := 0; i < sig.Params().Len(); i++ {
-				t := sig.Params().At(i).Type()
-				arg := fmt.Sprintf("args[%d]", i)
-				if f := handleField(t); f != nil && !isBig(t) {
-					if f.Pkg() != p.Types {
-						return nil, fmt.Errorf("%s takes the handle %s of another package", name, t)
-					}
-					g.imports[jsPath] = "js"
-					args = append(args, fmt.Sprintf("%s{%s: %s.(js.Ref)}", g.typeString(t), f.Name(), arg))
-					continue
+				arg, err := g.fromBoundary(fmt.Sprintf("args[%d]", i), sig.Params().At(i).Type())
+				if err != nil {
+					return nil, fmt.Errorf("%s: %w", name, err)
 				}
-				args = append(args, g.fromNeutral(arg, t))
+				args = append(args, arg)
 			}
 			for i := 0; i < sig.Results().Len(); i++ {
 				r := fmt.Sprintf("r%d", i)
 				results = append(results, r)
-				if f := handleField(sig.Results().At(i).Type()); f != nil && !isBig(sig.Results().At(i).Type()) {
-					if f.Pkg() != p.Types {
-						return nil, fmt.Errorf("%s returns the handle of another package", name)
-					}
-					r += "." + f.Name()
-				} else {
-					r = g.toNeutral(r, sig.Results().At(i).Type())
+				v, err := g.toBoundary(r, sig.Results().At(i).Type())
+				if err != nil {
+					return nil, fmt.Errorf("%s: %w", name, err)
 				}
-				values = append(values, r)
+				values = append(values, v)
 			}
 			writeAdapter(&body, externKey(fn, targs), call, args, results, values)
 		}
 	}
 	body.WriteString("\t}\n}\n")
-	g.writeHelpers()
+	if err := g.writeHelpers(); err != nil {
+		return nil, err
+	}
 	body.Write(g.code.Bytes())
 	return g.file(body.String())
+}
+
+// fromBoundary converts the neutral value expr of a parameter of a header function into t, also a handle of the
+// package, which only it can construct.
+func (g *generator) fromBoundary(expr string, t types.Type) (string, error) {
+	if f := handleField(t); f != nil && !isBig(t) {
+		if f.Pkg() != g.pkg.Types {
+			return "", fmt.Errorf("the handle %s belongs to another package", t)
+		}
+		g.imports[jsPath] = "js"
+		return fmt.Sprintf("%s{%s: %s.(js.Ref)}", g.typeString(t), f.Name(), expr), nil
+	}
+	return g.fromNeutral(expr, t), nil
+}
+
+// toBoundary converts expr of type t, also a handle of the package, into its neutral value.
+func (g *generator) toBoundary(expr string, t types.Type) (string, error) {
+	if f := handleField(t); f != nil && !isBig(t) {
+		if f.Pkg() != g.pkg.Types {
+			return "", fmt.Errorf("the handle %s belongs to another package", t)
+		}
+		return expr + "." + f.Name(), nil
+	}
+	return g.toNeutral(expr, t), nil
 }
 
 func writeAdapter(buf *bytes.Buffer, key, call string, args, results, values []string) {
@@ -171,6 +187,9 @@ func stateElem(t types.Type) (types.Type, bool) {
 
 // fromNeutral converts the neutral value expr, see [ValueKind], into a value of t.
 func (g *generator) fromNeutral(expr string, t types.Type) string {
+	if _, ok := t.Underlying().(*types.Signature); ok {
+		return fmt.Sprintf("gostrictFunc%d(%s.(gostrict.Callback))", g.helper(t), expr)
+	}
 	if isBig(t) {
 		ts := g.typeString(t)
 		return fmt.Sprintf("%s{}.HostFromString(%s.(string)).(%s)", ts, expr, ts)
@@ -183,7 +202,7 @@ func (g *generator) fromNeutral(expr string, t types.Type) string {
 	}
 	switch {
 	case isError(t):
-		return "gostrictErrorOf(" + expr + ")"
+		return "gostrict.ErrorOf(" + expr + ")"
 	case isOpaque(t), isStruct(t):
 		return fmt.Sprintf("gostrictFrom%d(%s.([]any))", g.helper(t), expr)
 	}
@@ -229,12 +248,19 @@ func (g *generator) helper(t types.Type) int {
 	return n
 }
 
-func (g *generator) writeHelpers() {
+func (g *generator) writeHelpers() error {
 	for len(g.pending) > 0 {
 		t := g.pending[0]
 		g.pending = g.pending[1:]
 		n := g.helpers[typeKey(t)]
 		ts := g.typeString(t)
+
+		if fs, ok := t.Underlying().(*types.Signature); ok {
+			if err := g.writeCallback(n, ts, fs); err != nil {
+				return err
+			}
+			continue
+		}
 
 		if n := types.Unalias(t).(*types.Named); isOpaque(t) && n.Obj().Name() == "Out" {
 			elem := n.TypeArgs().At(0)
@@ -281,6 +307,56 @@ func (g *generator) writeHelpers() {
 		fmt.Fprintf(&g.code, "\nfunc gostrictFrom%d(v []any) %s {\n\treturn %s{%s}\n}\n", n, ts, ts, strings.Join(fields, ", "))
 		fmt.Fprintf(&g.code, "\nfunc gostrictTo%d(x %s) []any {\n\treturn []any{%s}\n}\n", n, ts, strings.Join(values, ", "))
 	}
+	return nil
+}
+
+// writeCallback writes the function, which turns a callback into a Go function of the signature. If the engine
+// fails, the function returns zero values or the error, if a result is an error, and the instance reports the
+// error, see [Callback].
+func (g *generator) writeCallback(n int, ts string, fs *types.Signature) error {
+	var params, args, zeros, results, rtypes []string
+	for i := 0; i < fs.Params().Len(); i++ {
+		pt := fs.Params().At(i).Type()
+		a := fmt.Sprintf("a%d", i)
+		params = append(params, a+" "+g.typeString(pt))
+		v, err := g.toBoundary(a, pt)
+		if err != nil {
+			return err
+		}
+		args = append(args, v)
+	}
+	for i := 0; i < fs.Results().Len(); i++ {
+		rt := fs.Results().At(i).Type()
+		zeros = append(zeros, fmt.Sprintf("z%d", i))
+		rtypes = append(rtypes, g.typeString(rt))
+		r, err := g.fromBoundary(fmt.Sprintf("res[%d]", i), rt)
+		if err != nil {
+			return err
+		}
+		results = append(results, r)
+	}
+
+	ret := strings.Join(rtypes, ", ")
+	if len(rtypes) > 1 {
+		ret = "(" + ret + ")"
+	}
+	fmt.Fprintf(&g.code, "\nfunc gostrictFunc%d(cb gostrict.Callback) %s {\n\treturn func(%s) %s {\n", n, ts, strings.Join(params, ", "), ret)
+	call := fmt.Sprintf("cb.Call(%s)", strings.Join(args, ", "))
+	if len(results) == 0 {
+		fmt.Fprintf(&g.code, "\t\t_, _ = %s\n\t}\n}\n", call)
+		return nil
+	}
+	fmt.Fprintf(&g.code, "\t\tres, err := %s\n\t\tif err != nil {\n", call)
+	for i, z := range zeros {
+		if isError(fs.Results().At(i).Type()) {
+			// the program could not return its error, so the error of the engine replaces it
+			zeros[i] = "err"
+			continue
+		}
+		fmt.Fprintf(&g.code, "\t\t\tvar %s %s\n", z, g.typeString(fs.Results().At(i).Type()))
+	}
+	fmt.Fprintf(&g.code, "\t\t\treturn %s\n\t\t}\n\t\treturn %s\n\t}\n}\n", strings.Join(zeros, ", "), strings.Join(results, ", "))
+	return nil
 }
 
 // GenerateTS returns a TypeScript declaration of the functions of a header package, which a JavaScript host
@@ -364,6 +440,23 @@ func tsTypeOf(t Type) string {
 		return tsTypeOf(*t.Elem) + "[]"
 	case ValueMap:
 		return "Map<" + tsTypeOf(*t.Key) + ", " + tsTypeOf(*t.Elem) + ">"
+	case ValueFunc:
+		var params, results []string
+		for i, p := range t.Func.Params {
+			params = append(params, fmt.Sprintf("a%d: %s", i, tsTypeOf(p)))
+		}
+		for _, r := range t.Func.Results {
+			results = append(results, tsTypeOf(r))
+		}
+		result := "void"
+		switch len(results) {
+		case 0:
+		case 1:
+			result = results[0]
+		default:
+			result = "[" + strings.Join(results, ", ") + "]"
+		}
+		return "((" + strings.Join(params, ", ") + ") => " + result + ")"
 	}
 	return tsType(t.Kind)
 }

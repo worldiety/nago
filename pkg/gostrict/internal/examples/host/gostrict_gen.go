@@ -17,9 +17,17 @@ func Host() gostrict.Funcs {
 			r0 := Clamp(args[0].(float64), args[1].(float64), args[2].(float64))
 			return []any{r0}
 		},
+		"go.wdy.de/nago/pkg/gostrict/internal/examples/host.Fold": func(args []any) []any {
+			r0, r1 := Fold(gostrictFrom1(args[0].([]any)), gostrictFunc2(args[1].(gostrict.Callback)))
+			return []any{r0, r1}
+		},
 		"go.wdy.de/nago/pkg/gostrict/internal/examples/host.Grow": func(args []any) []any {
-			r0 := Grow(gostrictFrom1(args[0].([]any)), args[1].(float64))
-			return []any{gostrictTo1(r0)}
+			r0 := Grow(gostrictFrom3(args[0].([]any)), args[1].(float64))
+			return []any{gostrictTo3(r0)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/internal/examples/host.Keep": func(args []any) []any {
+			r0 := Keep(gostrictFunc4(args[0].(gostrict.Callback)))
+			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/internal/examples/host.Label": func(args []any) []any {
 			r0 := Label(args[0].(int32))
@@ -34,40 +42,77 @@ func Host() gostrict.Funcs {
 			return []any{r0, r1}
 		},
 		"go.wdy.de/nago/pkg/gostrict/internal/examples/host.Summarize": func(args []any) []any {
-			r0 := Summarize(gostrictFrom2(args[0].([]any)), args[1].(string))
-			return []any{gostrictTo3(r0)}
+			r0 := Summarize(gostrictFrom1(args[0].([]any)), args[1].(string))
+			return []any{gostrictTo5(r0)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/internal/examples/host.Tabulate": func(args []any) []any {
+			r0 := Tabulate(args[0].(int32), gostrictFunc6(args[1].(gostrict.Callback)))
+			return []any{gostrictTo1(r0)}
 		},
 	}
 }
 
-func gostrictFrom1(v []any) geom.Rect {
-	return geom.Rect{X: v[0].(float64), Y: v[1].(float64), W: v[2].(float64), H: v[3].(float64)}
-}
-
-func gostrictTo1(x geom.Rect) []any {
-	return []any{x.X, x.Y, x.W, x.H}
-}
-
-func gostrictFrom2(v []any) list.List[geom.Rect] {
+func gostrictFrom1(v []any) list.List[geom.Rect] {
 	l := list.New[geom.Rect]()
 	for _, e := range v {
-		l.Append(gostrictFrom1(e.([]any)))
+		l.Append(gostrictFrom3(e.([]any)))
 	}
 	return l
 }
 
-func gostrictTo2(l list.List[geom.Rect]) []any {
+func gostrictTo1(l list.List[geom.Rect]) []any {
 	res := make([]any, 0, l.Len())
 	for e := range l.Values() {
-		res = append(res, gostrictTo1(e))
+		res = append(res, gostrictTo3(e))
 	}
 	return res
 }
 
-func gostrictFrom3(v []any) geom.Stats {
-	return geom.Stats{Count: v[0].(int32), Sum: v[1].(float64), Label: v[2].(string), Parts: gostrictFrom2(v[3].([]any))}
+func gostrictFunc2(cb gostrict.Callback) func(acc float64, r geom.Rect) (float64, error) {
+	return func(a0 float64, a1 geom.Rect) (float64, error) {
+		res, err := cb.Call(a0, gostrictTo3(a1))
+		if err != nil {
+			var z0 float64
+			return z0, err
+		}
+		return res[0].(float64), gostrict.ErrorOf(res[1])
+	}
 }
 
-func gostrictTo3(x geom.Stats) []any {
-	return []any{x.Count, x.Sum, x.Label, gostrictTo2(x.Parts)}
+func gostrictFrom3(v []any) geom.Rect {
+	return geom.Rect{X: v[0].(float64), Y: v[1].(float64), W: v[2].(float64), H: v[3].(float64)}
+}
+
+func gostrictTo3(x geom.Rect) []any {
+	return []any{x.X, x.Y, x.W, x.H}
+}
+
+func gostrictFunc4(cb gostrict.Callback) func(x float64) float64 {
+	return func(a0 float64) float64 {
+		res, err := cb.Call(a0)
+		if err != nil {
+			var z0 float64
+			return z0
+		}
+		return res[0].(float64)
+	}
+}
+
+func gostrictFrom5(v []any) geom.Stats {
+	return geom.Stats{Count: v[0].(int32), Sum: v[1].(float64), Label: v[2].(string), Parts: gostrictFrom1(v[3].([]any))}
+}
+
+func gostrictTo5(x geom.Stats) []any {
+	return []any{x.Count, x.Sum, x.Label, gostrictTo1(x.Parts)}
+}
+
+func gostrictFunc6(cb gostrict.Callback) func(i int32) geom.Rect {
+	return func(a0 int32) geom.Rect {
+		res, err := cb.Call(a0)
+		if err != nil {
+			var z0 geom.Rect
+			return z0
+		}
+		return gostrictFrom3(res[0].([]any))
+	}
 }

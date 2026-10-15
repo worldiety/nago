@@ -32,6 +32,9 @@ Ziele in dieser Reihenfolge: keine Laufzeitfehler (statisch bewiesen), LLM-taugl
 | Transport | Nago-Protokoll trägt nur Komponenten-ID, Typname und JSON (`GostrictMessage.Json`, `GostrictProgram.Args`, `GostrictCall.Args`, `GostrictReturn.Values`). Records sind Objekte mit Go-Feldnamen, Listen Arrays; Sonderfälle mit `$`-Schlüssel: `$m` Map, `$` Variante, `$f` NaN/±Inf/-0, `$b` big.Int als Dezimalstring, `$e` Fehler, `$r` Zustand der Browser-Engine. Im Browser Reviver/Replacer ohne Schema. Keine anwendungsspezifischen Typen im nago-Protokoll. |
 | Nachrichten | Programme senden über `msg.Out[T]`-Rückgaben, Handler sind Exporte `func(s *State, m Record\|Union)`. Nachrichtenpakete heißen `messages`, nicht `proto`. Zustellung höchstens einmal, FIFO je Richtung; Programme fragen ihren Zustand im `Init` an. |
 | Vertrauen | Header-Pakete nur aus vertrauenswürdigen Modulen (GS039); Programme von Nutzern oder LLMs nie. |
+| Callbacks | Header-Funktionen nehmen Funktionen des Programms (`ValueFunc`, in Go ein `gostrict.Callback`, generierter Code macht daraus eine Go-Funktion). Aufruf während eines Aufrufs (Host-Funktion) oder später zwischen zwei Aufrufen (Fenster rendert), immer auf der Goroutine der Instanz (Event-Loop des Fensters); innerhalb eines Aufrufs ohne erneutes Sperren. Fehler der Engine: Nullwerte bzw. der Fehler als `error`-Ergebnis, die Instanz liefert ihn beim nächsten Aufruf einmal. Keine Bereichs-Callbacks: in goja ist eine Schleife in JS langsamer als Aufrufe aus Go. |
+| Server-Header | `//gostrict:host` statt `//gostrict:js`: nur ein Go-Host implementiert die Funktion (`lib/ui`), Engines laden das Bundle sonst nicht, der Browser nie. Exporte dürfen Handles direkt nehmen und zurückgeben (`func View() ui.View`), nicht in Records, Listen oder Maps. |
+| Werte teilen | Struct-Typen, deren Werte das ganze Programm nie verändert (Feldzuweisung, auch über Ketten und Zeiger, `*p = v`), sind unveränderlich: keine Kopien, ein gemeinsamer Nullwert, Zuweisungen ersetzen statt kopieren (`emit_mut.go`). `Record.Immutable` zusätzlich ohne Listen/Maps; goja konvertiert solche Objekte einmal (Identitäts-Cache, je Aufruf geleert, max. 4096). Records sind Objektliterale statt Klassen (goja: Klasse 1,4 µs, Literal 0,6 µs je Objekt); Felder werden in Quellreihenfolge ausgewertet. |
 
 ## Aufbau
 
@@ -40,7 +43,8 @@ pkg/gostrict/            Compiler (load, check*, emit*, runtime.js), Grenze (bou
                          Session, Cache, Pool, Generator (nur Header), fix, sourcemap, reload
 pkg/gostrict/std/        list, dict, opt, text, num, msg, fuel, js, big, decimal; host.go mit //go:build !gostrict
                          für Reflection
-pkg/gostrict/lib/        three, canvas (Header), input, asset (Records)
+pkg/gostrict/lib/        three, canvas (Header), input, asset (Records), ui (Server-Header, bisher nur Sheet),
+                         ui/sheet (Records wie presentation/ui/sheet)
 pkg/gostrict/engine/     gojaengine (inkl. CheckBindings), native (Reflect)
 presentation/ui/program  Bundle-Endpunkt, Channel, JSON-Codec, Browser-Engine
 presentation/ui/{threejs,canvas2}, web/vuejs/src/components/{gostrict,threejs,canvas2}
@@ -56,12 +60,31 @@ cd ../.. && go test -race ./presentation/ui/program/ ./example/cmd/tutorial-11{8
 cd web/vuejs && npx vue-tsc --noEmit -p tsconfig.json --composite false   # Fehler in nprotoc_gen.ts sind Altlasten
 ```
 
+## Messungen
+
+`go test -bench . ./lib/ui/` (Apple M-Serie): Fensterwechsel einer Tabelle mit 90 × 29 Zellen und Kopfzeile, also rund
+2700 Aufrufe der Zellfunktion, ganz durch nago (`nagotest`):
+
+| Quelle | je Fensterwechsel | je 1000 Zellen |
+|---|---|---|
+| Go direkt | 0,38 ms | 0,15 ms |
+| gostrict nativ | 0,47 ms | 0,18 ms |
+| gostrict in goja | 4,8 ms | 1,8 ms |
+
+Ein Callback in goja kostet rund 1,7 µs, davon etwa zwei Drittel für JS selbst (Objekt anlegen, Zahl zu Text) und ein
+Drittel für die Umwandlung. Unter 1 ms je 1000 Zellen geht nur mit einer schnelleren Engine (I.12, eigener
+Interpreter), eine direkte Umwandlung goja → Go-Struct spart höchstens ein Viertel und lohnt den Aufwand nicht.
+
 ## Offen
 
 - **Use-Case-Vertrag für wokoda (G):** typisierte DB-Zeilen über generische Header-Funktionen mit Record-Typen und
   ein Kontext pro Aufruf (Nutzer, Transaktion), der bei geteilten Runtimes nicht in Package-Variablen liegen darf.
   Nur in nago entwerfen.
-- **`ui`-Header für nago-Views (H):** erst nach Abstimmung.
+- **`ui`-Header für nago-Views (H):** `lib/ui` hat bisher nur `Sheet` und `View`. Offen ist das Muster für alle Views:
+  Builder (Methoden auf Handles in Header-Paketen?), Container mit Listen von Views (Listen von Handles fehlen an der
+  Grenze), optionale Eigenschaften.
+- **`opt.Option` an der Grenze:** fehlt, deshalb hat `sheet.Cell` keine `Options` (Select-Editor) und keine `View`
+  (Handles in Records).
 - **`go/analysis`-Analyzer (I.6):** neue Abhängigkeit `golang.org/x/tools`, abstimmen.
 - **Verträge und Wertebereiche (I.8, I.9):** Sprachdesign offen.
 - **QuickJS über wazero (I.12):** Engine mit Speicherlimit, neue Abhängigkeiten.

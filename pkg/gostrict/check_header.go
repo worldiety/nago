@@ -48,7 +48,7 @@ func checkHeaderFunc(p *Package, d *diagnoser, decls map[*types.Func]funcSrc, de
 		return
 	}
 
-	const why = "only bool, int32, uint32, float64, string, handles, records without handles and lists and maps of them cross the boundary as parameters, and error as a result"
+	const why = "only bool, int32, uint32, float64, string, big.Int, handles, records without handles and lists and maps of them cross the boundary, error only as a result, and functions of such values as parameters"
 	if decl.Recv != nil {
 		d.report(decl.Name.Pos(), decl.Name.End(), CodeBridge, "header packages can not declare methods", why, "declare a function, which takes the handle as its first parameter")
 		return
@@ -76,8 +76,14 @@ func checkHeaderFunc(p *Package, d *diagnoser, decls map[*types.Func]funcSrc, de
 	}
 
 	js := decls[fn].js
+	if decls[fn].host {
+		if js != "" {
+			d.report(decl.Name.Pos(), decl.Name.End(), CodeHeader, fn.Name()+" has a JavaScript binding and "+hostDirective, hostDirective+" declares, that only the host implements the function", "remove one of the directives")
+		}
+		return
+	}
 	if js == "" {
-		d.report(decl.Name.Pos(), decl.Name.End(), CodeHeader, fn.Name()+" has no JavaScript binding", "a function of a header package needs a //gostrict:js directive", "add //gostrict:js (a, b) => ... to the documentation of the function")
+		d.report(decl.Name.Pos(), decl.Name.End(), CodeHeader, fn.Name()+" has no JavaScript binding", "a function of a header package needs a //gostrict:js directive, or "+hostDirective+", if only a host in Go implements it", "add //gostrict:js (a, b) => ... to the documentation of the function")
 		return
 	}
 

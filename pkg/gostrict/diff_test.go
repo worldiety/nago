@@ -18,6 +18,7 @@ import (
 	"go.wdy.de/nago/pkg/gostrict"
 	"go.wdy.de/nago/pkg/gostrict/engine/gojaengine"
 	"go.wdy.de/nago/pkg/gostrict/engine/native"
+	"go.wdy.de/nago/pkg/gostrict/internal/examples/alias"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/arena"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/draw"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/errs"
@@ -48,11 +49,12 @@ var goEngine = &gojaengine.Engine{}
 
 // exports are the exported functions of the examples for the native engine.
 var exports = map[string]gostrict.Funcs{
+	"alias":    native.Reflect(map[string]any{"Order": alias.Order, "Run": alias.Run}),
 	"arena":    native.Reflect(map[string]any{"Frame": arena.Frame, "NewClient": arena.NewClient, "OnHit": arena.OnHit, "OnWorld": arena.OnWorld, "Status": arena.Status}),
 	"draw":     native.Reflect(map[string]any{"Frame": draw.Frame, "New": draw.New}),
 	"errs":     native.Reflect(map[string]any{"Average": errs.Average, "Run": errs.Run}),
 	"generics": native.Reflect(map[string]any{"Run": generics.Run, "SumFloats": generics.SumFloats}),
-	"hostuse":  native.Reflect(map[string]any{"Records": hostuse.Records, "Run": hostuse.Run}),
+	"hostuse":  native.Reflect(map[string]any{"Callbacks": hostuse.Callbacks, "Records": hostuse.Records, "Run": hostuse.Run}),
 	"ints":     native.Reflect(map[string]any{"Bits": ints.Bits, "Conv": ints.Conv, "Div": ints.Div, "DivU": ints.DivU, "Hash": ints.Hash, "Wrap": ints.Wrap, "Xorshift": ints.Xorshift}),
 	"iters":    native.Reflect(map[string]any{"FirstOver": iters.FirstOver, "Live": iters.Live, "Nested": iters.Nested, "Sum": iters.Sum, "Switch": iters.Switch}),
 	"money":    native.Reflect(map[string]any{"Calc": money.Calc, "Factorial": money.Factorial, "Ints": money.Ints, "Invoice": money.Invoice, "Limits": money.Limits, "Parse": money.Parse, "Round": money.Round}),
@@ -115,6 +117,10 @@ func TestDifferential(t *testing.T) {
 		{"trees", "Run", []any{int32(0)}},
 		{"trees", "Run", []any{int32(200)}},
 		{"trees", "Values", nil},
+		{"hostuse", "Callbacks", []any{int32(5), 100.0}},
+		{"hostuse", "Callbacks", []any{int32(5), 3.0}},
+		{"alias", "Run", nil},
+		{"alias", "Order", nil},
 		{"money", "Ints", []any{"123456789012345678901234567890", "-987654321"}},
 		{"money", "Ints", []any{"-7", "2"}},
 		{"money", "Ints", []any{"5", "0"}},
@@ -195,6 +201,53 @@ func TestHost(t *testing.T) {
 	}
 	if calls == 0 {
 		t.Fatal("the host functions were not called")
+	}
+
+	// the callbacks are called during the call and the kept one later, between two calls
+	var kept gostrict.Callback
+	keep := "go.wdy.de/nago/pkg/gostrict/internal/examples/host.Keep"
+	withKeep := gostrict.Funcs{}
+	for name, f := range h {
+		withKeep[name] = f
+	}
+	withKeep[keep] = func(args []any) []any {
+		kept = args[0].(gostrict.Callback)
+		return h[keep](args)
+	}
+	in, err := goEngine.Load(context.Background(), b, withKeep)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer in.Close()
+	for _, limit := range []float64{100, 5} {
+		w1, w2, w3 := hostuse.Callbacks(6, limit)
+		rects, err := gostrict.ToNeutral(w1)
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := []any{rects, w2, w3}
+		viaHost, err := in.Call(context.Background(), "Callbacks", int32(6), limit)
+		if err != nil {
+			t.Fatal(err)
+		}
+		viaJS := call(t, goEngine, b, nil, "Callbacks", []any{int32(6), limit})
+		if !gostrict.SameValues(viaHost, want) || !gostrict.SameValues(viaJS, want) {
+			t.Fatalf("callbacks %v: host %v, bindings %v, want %v", limit, viaHost, viaJS, want)
+		}
+	}
+	if got, err := kept.Call(1.5); err != nil || got[0] != 9.0 {
+		t.Fatalf("the kept callback returned %v, %v", got, err)
+	}
+
+	// an error of a callback is reported by the next call
+	if _, err := kept.Call("x"); err == nil {
+		t.Fatal("a callback took a wrong argument")
+	}
+	if _, err := in.Call(context.Background(), "Callbacks", int32(1), 1.0); err == nil || !strings.Contains(err.Error(), "callback") {
+		t.Fatalf("the error of the callback was not reported: %v", err)
+	}
+	if _, err := in.Call(context.Background(), "Callbacks", int32(1), 1.0); err != nil {
+		t.Fatalf("the error of the callback was reported twice: %v", err)
 	}
 
 	mismatches, err := gojaengine.CheckBindings(context.Background(), b, host.Host(), 200)

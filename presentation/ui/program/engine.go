@@ -38,6 +38,9 @@ func (e Engine) Load(ctx context.Context, b *gostrict.Bundle, host gostrict.Func
 	if len(host) > 0 {
 		return nil, errors.New("the browser runs the bindings of header packages and no functions of the host")
 	}
+	if name, ok := b.MissingHost(nil); ok {
+		return nil, fmt.Errorf("%s has no JavaScript binding, so the program runs only on a server", name)
+	}
 	id := "engine-" + strconv.FormatInt(instanceIDs.Add(1), 10)
 	return &browserInstance{wnd: e.Window, b: b, uri: Register(b), id: id}, nil
 }

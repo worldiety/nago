@@ -44,47 +44,65 @@ func signature(name string, sig *types.Signature) (Func, bool) {
 }
 
 // headerSignature returns the types of a function of a header package or false, if a parameter or result is not a
-// basic value, a handle, a record, a list or a map of them, or an error as a result. It collects the records, so
-// that an engine converts them. A record of a header package has no handles, because a native host could not
-// create them in another engine.
+// basic value, a handle, a record, a list or a map of them, or an error as a result, or a parameter, which is a
+// function of such values, see [ValueFunc]. It collects the records, so that an engine converts them. A record of a
+// header package has no handles, because a native host could not create them in another engine.
 func (b *boundary) headerSignature(name string, sig *types.Signature) (Func, bool) {
-	f := Func{Name: name}
+	f, ok := b.headerFunc(sig, true)
+	f.Name = name
+	return f, ok
+}
+
+// headerFunc returns the types of the signature of a header function or, if callbacks is false, of a callback,
+// which takes no callbacks itself.
+func (b *boundary) headerFunc(sig *types.Signature, callbacks bool) (Func, bool) {
+	var f Func
 	if sig.Variadic() || sig.TypeParams().Len() > 0 || sig.Recv() != nil {
 		return f, false
 	}
-	typeOf := func(t types.Type, result bool) (Type, bool) {
-		k := valueKind(t)
-		switch {
-		case k == ValueError:
-			return Type{Kind: k}, result
-		case k != ValueInvalid:
-			return Type{Kind: k}, true
-		}
-		bt, ok := b.typeOf(t)
-		if !ok {
-			return bt, false
-		}
-		switch bt.Kind {
-		case ValueRecord, ValueList, ValueMap:
-			return bt, true
-		}
-		return bt, false
-	}
 	for v := range sig.Params().Variables() {
-		t, ok := typeOf(v.Type(), false)
+		if fs, ok := v.Type().Underlying().(*types.Signature); ok {
+			cb, ok := b.headerFunc(fs, false)
+			if !ok || !callbacks {
+				return f, false
+			}
+			f.Params = append(f.Params, Type{Kind: ValueFunc, Func: &cb})
+			continue
+		}
+		t, ok := b.headerType(v.Type(), false)
 		if !ok {
 			return f, false
 		}
 		f.Params = append(f.Params, t)
 	}
 	for v := range sig.Results().Variables() {
-		t, ok := typeOf(v.Type(), true)
+		t, ok := b.headerType(v.Type(), true)
 		if !ok {
 			return f, false
 		}
 		f.Results = append(f.Results, t)
 	}
 	return f, true
+}
+
+// headerType returns the type of a parameter or result of a header function.
+func (b *boundary) headerType(t types.Type, result bool) (Type, bool) {
+	k := valueKind(t)
+	switch {
+	case k == ValueError:
+		return Type{Kind: k}, result
+	case k != ValueInvalid:
+		return Type{Kind: k}, true
+	}
+	bt, ok := b.typeOf(t)
+	if !ok {
+		return bt, false
+	}
+	switch bt.Kind {
+	case ValueRecord, ValueList, ValueMap:
+		return bt, true
+	}
+	return bt, false
 }
 
 // boundary maps the types of exported functions to the types of the boundary and collects their records.
@@ -100,22 +118,29 @@ func newBoundary() *boundary {
 }
 
 // exportSignature returns the types of an exported function of the main package or false, if a parameter or
-// result can not cross the boundary. Exports take records, lists and states but no handles, which only a header
-// package creates.
+// result can not cross the boundary. Exports take and return records, lists and states. A handle, which only a header
+// package creates, crosses only as a parameter or result itself, e.g. the view of nago, which a program on a server
+// returns, but not in a record, list or map, which the protocol of a browser transports.
 func (b *boundary) exportSignature(name string, sig *types.Signature) (Func, bool) {
 	f := Func{Name: name}
 	if sig.Variadic() || sig.TypeParams().Len() > 0 || sig.Recv() != nil {
 		return f, false
 	}
+	typeOf := func(t types.Type) (Type, bool) {
+		if valueKind(t) == ValueHandle {
+			return Type{Kind: ValueHandle}, true
+		}
+		return b.typeOf(t)
+	}
 	for v := range sig.Params().Variables() {
-		t, ok := b.typeOf(v.Type())
+		t, ok := typeOf(v.Type())
 		if !ok || t.Kind == ValueError {
 			return f, false
 		}
 		f.Params = append(f.Params, t)
 	}
 	for v := range sig.Results().Variables() {
-		t, ok := b.typeOf(v.Type())
+		t, ok := typeOf(v.Type())
 		if !ok {
 			return f, false
 		}

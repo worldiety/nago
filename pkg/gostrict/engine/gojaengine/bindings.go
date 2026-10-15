@@ -40,7 +40,14 @@ func (m Mismatch) String() string {
 // results differ, floats beyond the [Tolerance]. The bodies of header packages are trusted, so this is the test, that the two implementations
 // of a function agree.
 func CheckBindings(ctx context.Context, b *gostrict.Bundle, host gostrict.Funcs, n int) ([]Mismatch, error) {
-	inst, err := new(Engine).Load(ctx, b, nil)
+	// the bindings run, but a function without a binding comes from the host
+	only := gostrict.Funcs{}
+	for _, x := range b.Externs {
+		if f, ok := host[x.Name]; ok && x.JS == "" {
+			only[x.Name] = f
+		}
+	}
+	inst, err := new(Engine).Load(ctx, b, only)
 	if err != nil {
 		return nil, err
 	}
@@ -51,8 +58,7 @@ func CheckBindings(ctx context.Context, b *gostrict.Bundle, host gostrict.Funcs,
 	rnd := rand.New(rand.NewPCG(1, 2))
 	for _, x := range b.Externs {
 		native, ok := host[x.Name]
-		if !ok || hasHandle(x.Func) {
-			// a handle refers to an object of one implementation, which the other one can not compare
+		if !ok || x.JS == "" || hasHandle(x.Func) {
 			continue
 		}
 		for i := 0; i < n+len(edges); i++ {
@@ -163,9 +169,11 @@ func sample(rnd *rand.Rand, k gostrict.ValueKind, i int) any {
 	return nil
 }
 
+// hasHandle tells, whether a value of f refers to an object of one implementation, which the other one can not
+// compare, or whether f takes a callback, which can not be sampled.
 func hasHandle(f gostrict.Func) bool {
 	for _, t := range append(append([]gostrict.Type{}, f.Params...), f.Results...) {
-		if t.Kind == gostrict.ValueHandle {
+		if t.Kind == gostrict.ValueHandle || t.Kind == gostrict.ValueFunc {
 			return true
 		}
 	}

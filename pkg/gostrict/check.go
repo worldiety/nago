@@ -553,7 +553,7 @@ func (c *checker) checkSelector(n *ast.SelectorExpr) {
 	if !ok || isStdPath(imported) || strings.HasPrefix(imported, stdPrefix) {
 		return
 	}
-	if src, ok := c.decls[fn]; ok && src.pkg.Kind == KindHeader && src.js == "" {
+	if src, ok := c.decls[fn]; ok && src.pkg.Kind == KindHeader && src.js == "" && !src.host {
 		c.report(n, CodeHeader, imported+"."+n.Sel.Name+" has no JavaScript binding", "a function of a header package needs a //gostrict:js directive", "add //gostrict:js <expression> to the documentation of the function")
 	}
 }

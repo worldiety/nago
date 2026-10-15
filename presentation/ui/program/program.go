@@ -113,6 +113,10 @@ func (s Spec) Render(wnd core.Window, id string) proto.GostrictProgram {
 		slog.Error("the component has no program", "id", id)
 		return proto.GostrictProgram{}
 	}
+	if name, ok := s.Bundle.MissingHost(nil); ok {
+		slog.Error("the program uses a function, which only a server implements", "id", id, "func", name)
+		return proto.GostrictProgram{}
+	}
 
 	res := proto.GostrictProgram{
 		Bundle: proto.URI(Register(s.Bundle)),

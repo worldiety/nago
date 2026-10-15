@@ -51,8 +51,20 @@ type Bundle struct {
 // Extern is a function of a header package.
 type Extern struct {
 	Func
-	// JS is the JavaScript binding, a function expression.
+	// JS is the JavaScript binding, a function expression, or empty, if only the host implements the function, see
+	// the directive //gostrict:host. Then an engine needs the function of the host.
 	JS string
+}
+
+// MissingHost returns the first function of a header package, which has no JavaScript binding and which the host
+// does not implement, or false.
+func (b *Bundle) MissingHost(host Funcs) (string, bool) {
+	for _, x := range b.Externs {
+		if _, ok := host[x.Name]; !ok && x.JS == "" {
+			return x.Name, true
+		}
+	}
+	return "", false
 }
 
 // Compile loads, checks and translates the package in dir. If the package is not in the subset, it returns the
@@ -83,6 +95,7 @@ func Emit(prog *Program) (b *Bundle, diags Diagnostics) {
 		prefix:  map[*types.Package]string{},
 		globals: map[*types.Var]string{},
 		diag:    &diagnoser{fset: prog.Fset, sources: prog.sources},
+		mut:     analyzeMutation(prog),
 	}
 
 	defer func() {
@@ -127,6 +140,8 @@ type emitter struct {
 	readonlyCache map[*types.Func]readonlyInfo
 	// positions are the positions of the marks of the source map, see mark
 	positions []token.Pos
+	// mut tells, which struct types the program never changes, so that their values need no copy
+	mut *mutation
 }
 
 func (e *emitter) emit() (*Bundle, Diagnostics) {
@@ -214,7 +229,7 @@ func (e *emitter) emit() (*Bundle, Diagnostics) {
 	sb.WriteString("\t$new: {\n")
 	for _, name := range sortedNames(bnd.records) {
 		cls := e.structName(bnd.structs[name])
-		fmt.Fprintf(&sb, "\t\t%s: (...f) => new %s(...f),\n", jsString(name), cls)
+		fmt.Fprintf(&sb, "\t\t%s: %s,\n", jsString(name), cls)
 	}
 	sb.WriteString("\t},\n")
 	sb.WriteString("\t$unions: {\n")
@@ -222,7 +237,7 @@ func (e *emitter) emit() (*Bundle, Diagnostics) {
 		fmt.Fprintf(&sb, "\t\t%s: {\n", jsString(name))
 		for _, v := range bnd.unions[name].Variants {
 			mt := e.methodTable(bnd.structs[v])
-			fmt.Fprintf(&sb, "\t\t\t%s: [%s, (...f) => $box(new %s(...f), %s)],\n", jsString(v), mt, e.structName(bnd.structs[v]), mt)
+			fmt.Fprintf(&sb, "\t\t\t%s: [%s, (...f) => $box(%s(...f), %s)],\n", jsString(v), mt, e.structName(bnd.structs[v]), mt)
 		}
 		sb.WriteString("\t\t},\n")
 	}
@@ -234,6 +249,10 @@ func (e *emitter) emit() (*Bundle, Diagnostics) {
 	sb.WriteString("\t},\n};\n})")
 
 	slices.SortFunc(e.extern, func(a, b Extern) int { return strings.Compare(a.Name, b.Name) })
+	for name, rec := range bnd.records {
+		rec.Immutable = e.frozen(bnd.structs[name], bnd.records, map[string]bool{})
+		bnd.records[name] = rec
+	}
 	js, sourceMap := e.stripMarks(sb.String())
 	sum := sha256.Sum256([]byte(js))
 	states := map[string]string{}
@@ -245,6 +264,32 @@ func (e *emitter) emit() (*Bundle, Diagnostics) {
 		}
 	}
 	return &Bundle{JS: js, SourceMap: sourceMap, Hash: hex.EncodeToString(sum[:16]), Exports: exports, Records: bnd.records, Unions: bnd.unions, Handlers: handlers(exports, bnd.unions), Externs: e.extern, States: states}, nil
+}
+
+// frozen tells, whether the values of the record t never change: its type is immutable and its fields hold only
+// basic values and such records, but no list or map, which the program may change through any copy.
+func (e *emitter) frozen(t types.Type, records map[string]Record, seen map[string]bool) bool {
+	name := typeKey(t)
+	if seen[name] {
+		return true
+	}
+	seen[name] = true
+	if !e.mut.immutable(t) {
+		return false
+	}
+	for _, f := range records[name].Fields {
+		switch f.Type.Kind {
+		case ValueRecord:
+			ft, ok := e.bnd.structs[f.Type.Name]
+			if !ok || !e.frozen(ft, records, seen) {
+				return false
+			}
+		case ValueBool, ValueInt32, ValueUint32, ValueFloat64, ValueString, ValueBig:
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 // ident returns a unique identifier of the bundle based on base.
@@ -369,7 +414,7 @@ func (e *emitter) externName(fn *types.Func, targs []types.Type, src funcSrc, po
 	if n, ok := e.names[key]; ok {
 		return n
 	}
-	if src.js == "" {
+	if src.js == "" && !src.host {
 		fail(pos, "%s has no //gostrict:js binding", fn.FullName())
 	}
 	fsig := fn.Signature()
@@ -392,6 +437,11 @@ func (e *emitter) externName(fn *types.Func, targs []types.Type, src funcSrc, po
 	name := e.ident(base)
 	e.names[key] = name
 	e.extern = append(e.extern, Extern{Func: sig, JS: src.js})
+	if src.host {
+		// an engine refuses a host, which does not implement it
+		fmt.Fprintf(&e.externs, "const %s = $host[%s];\n", name, jsString(full))
+		return name
+	}
 	fmt.Fprintf(&e.externs, "const %s = $host[%s] !== void 0 ? $host[%s] : (%s\n);\n", name, jsString(full), jsString(full), src.js)
 	return name
 }
@@ -449,9 +499,10 @@ func (e *emitter) structName(t types.Type) string {
 		fields = append(fields, fn)
 		zeros = append(zeros, e.zero(ft))
 		clones = append(clones, e.clone("x."+fn, ft))
-		if isStruct(ft) {
+		if isStruct(ft) && !e.mut.immutable(ft) {
 			sets = append(sets, fmt.Sprintf("%s$s(d.%s, x.%s);", e.structName(ft), fn, fn))
 		} else {
+			// a value of an immutable type may be shared, so it is replaced and not changed
 			sets = append(sets, fmt.Sprintf("d.%s = x.%s;", fn, fn))
 		}
 		eqs = append(eqs, e.eq("x."+fn, "y."+fn, ft))
@@ -462,14 +513,19 @@ func (e *emitter) structName(t types.Type) string {
 		eq = strings.Join(eqs, " && ")
 	}
 
-	var ctor strings.Builder
-	for _, f := range fields {
-		fmt.Fprintf(&ctor, "this.%s = %s; ", f, f)
+	// the record is an object, which the function of its name creates from the fields in their order
+	params := make([]string, len(fields))
+	for i := range params {
+		params[i] = fmt.Sprintf("a%d", i)
 	}
-
-	fmt.Fprintf(&e.out, "class %s { constructor(%s) { %s} }\n", name, strings.Join(fields, ", "), ctor.String())
-	fmt.Fprintf(&e.out, "function %s$z() { return new %s(%s); }\n", name, name, strings.Join(zeros, ", "))
-	fmt.Fprintf(&e.out, "function %s$c(x) { return new %s(%s); }\n", name, name, strings.Join(clones, ", "))
+	fmt.Fprintf(&e.out, "function %s(%s) { return %s; }\n", name, strings.Join(params, ", "), objectLit(st, params))
+	if e.mut.immutable(n) {
+		// the program never changes a value of the type, so all zero values are the same
+		fmt.Fprintf(&e.out, "let %s$Z;\nfunction %s$z() { return %s$Z || (%s$Z = %s); }\n", name, name, name, name, objectLit(st, zeros))
+	} else {
+		fmt.Fprintf(&e.out, "function %s$z() { return %s; }\n", name, objectLit(st, zeros))
+	}
+	fmt.Fprintf(&e.out, "function %s$c(x) { return %s; }\n", name, objectLit(st, clones))
 	fmt.Fprintf(&e.out, "function %s$s(d, x) { %s return d; }\n", name, strings.Join(sets, " "))
 	fmt.Fprintf(&e.out, "function %s$e(x, y) { return %s; }\n", name, eq)
 	return name
@@ -514,14 +570,14 @@ func (e *emitter) zeroFn(t types.Type) string {
 
 // clone returns an expression, which copies the value of x, if t has value semantics.
 func (e *emitter) clone(x string, t types.Type) string {
-	if isStruct(t) {
+	if isStruct(t) && !e.mut.immutable(t) {
 		return e.structName(t) + "$c(" + x + ")"
 	}
 	return x
 }
 
 func (e *emitter) cloneFn(t types.Type) string {
-	if isStruct(t) {
+	if isStruct(t) && !e.mut.immutable(t) {
 		return e.structName(t) + "$c"
 	}
 	return "$id"

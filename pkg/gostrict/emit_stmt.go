@@ -531,7 +531,7 @@ func (c *fnCtx) target(lhs ast.Expr, define bool) func(js string) {
 	field := obj + "." + c.fieldName(se)
 	t := c.typeOf(lhs)
 	return func(js string) {
-		if isStruct(t) {
+		if isStruct(t) && !c.e.mut.immutable(t) {
 			c.line("%s$s(%s, %s);", c.e.structName(t), field, js)
 			return
 		}
@@ -540,7 +540,8 @@ func (c *fnCtx) target(lhs ast.Expr, define bool) func(js string) {
 }
 
 // store assigns the value js to lhs. A struct is copied into the existing value, so that a pointer to it sees
-// the new value, as in Go.
+// the new value, as in Go, unless its type is immutable, see [mutation]: then its value may be shared and is
+// replaced.
 func (c *fnCtx) store(lhs ast.Expr, js string, define bool) {
 	if id, ok := lhs.(*ast.Ident); ok {
 		if id.Name == "_" {
@@ -554,7 +555,7 @@ func (c *fnCtx) store(lhs ast.Expr, js string, define bool) {
 	}
 
 	t := c.typeOf(lhs)
-	if isStruct(t) {
+	if isStruct(t) && !c.e.mut.immutable(t) {
 		c.line("%s$s(%s, %s);", c.e.structName(t), c.expr(lhs), js)
 		return
 	}

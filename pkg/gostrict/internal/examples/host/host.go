@@ -15,6 +15,7 @@ import (
 	"strconv"
 
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/geom"
+	"go.wdy.de/nago/pkg/gostrict/std/js"
 	"go.wdy.de/nago/pkg/gostrict/std/list"
 )
 
@@ -61,4 +62,41 @@ func Summarize(rs list.List[geom.Rect], label string) geom.Stats {
 		}
 	}
 	return st
+}
+
+// Tabulate returns f of each index from 0 to n, which shows a callback, which the host calls during the call.
+//
+//gostrict:js (n, f) => { const out = []; for (let i = 0; i < n; i++) out.push(f(i)); return out; }
+func Tabulate(n int32, f func(i int32) geom.Rect) list.List[geom.Rect] {
+	res := list.New[geom.Rect]()
+	for i := range n {
+		res.Append(f(i))
+	}
+	return res
+}
+
+// Fold folds the rectangles with f and stops at its first error, which shows a callback with several results.
+//
+//gostrict:js (rs, f) => { let acc = 0; for (const r of rs) { const [v, err] = f(acc, r); if (err !== null) return [acc, err]; acc = v; } return [acc, null]; }
+func Fold(rs list.List[geom.Rect], f func(acc float64, r geom.Rect) (float64, error)) (float64, error) {
+	acc := 0.0
+	for r := range rs.Values() {
+		v, err := f(acc, r)
+		if err != nil {
+			return acc, err
+		}
+		acc = v
+	}
+	return acc, nil
+}
+
+// Later is a function of the program, which the host keeps and calls after the call, like a window, which renders
+// a table, which a program has created.
+type Later struct{ ref js.Ref }
+
+// Keep keeps f.
+//
+//gostrict:js (f) => ({ f })
+func Keep(f func(x float64) float64) Later {
+	return Later{ref: js.NewRef(f)}
 }

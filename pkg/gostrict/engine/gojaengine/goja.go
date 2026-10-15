@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"strconv"
 	"sync"
+	"sync/atomic"
 
 	"github.com/dop251/goja"
 	"go.wdy.de/nago/pkg/gostrict"
@@ -83,7 +84,7 @@ func (e *Engine) NewRuntime() *Runtime {
 	}
 	rt.SetMaxCallStackSize(size)
 
-	r := &Runtime{engine: e, rt: rt}
+	r := &Runtime{engine: e, rt: rt, frozen: map[*goja.Object]any{}}
 	r.newMap = r.helper(`(entries) => new Map(entries)`)
 	r.newBig = r.helper(`(s) => BigInt(s)`)
 	r.mapEntries = r.helper(`(m) => Array.from(m.entries())`)
@@ -95,10 +96,18 @@ func (e *Engine) NewRuntime() *Runtime {
 	return r
 }
 
+// maxFrozen limits the converted values of immutable records, which a runtime keeps.
+const maxFrozen = 4096
+
 // Runtime is a goja runtime, which holds instances of bundles.
 type Runtime struct {
-	engine     *Engine
-	mu         sync.Mutex
+	engine *Engine
+	mu     sync.Mutex
+	// depth counts the calls, which hold mu, so that a callback within a call runs without locking again
+	depth atomic.Int32
+	// frozen are the converted values of immutable records by their object, see [gostrict.Record.Immutable], e.g.
+	// a style, which the cells of a table share
+	frozen     map[*goja.Object]any
 	rt         *goja.Runtime
 	newErr     goja.Callable
 	newMap     goja.Callable
@@ -118,13 +127,16 @@ func (r *Runtime) helper(src string) goja.Callable {
 
 // Load evaluates the bundle in the runtime.
 func (r *Runtime) Load(ctx context.Context, b *gostrict.Bundle, host gostrict.Funcs) (gostrict.Instance, error) {
+	if name, ok := b.MissingHost(host); ok {
+		return nil, fmt.Errorf("the host does not implement %s, which has no JavaScript binding", name)
+	}
 	prog, err := r.engine.program(b)
 	if err != nil {
 		return nil, err
 	}
 
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	r.lock()
+	defer r.unlock()
 
 	in := &instance{rt: r, bundle: b, exports: map[string]goja.Callable{}, externs: map[string]goja.Callable{}, records: map[string]goja.Callable{}}
 	v, err := r.run(ctx, func() (goja.Value, error) { return r.rt.RunProgram(prog) })
@@ -139,7 +151,7 @@ func (r *Runtime) Load(ctx context.Context, b *gostrict.Bundle, host gostrict.Fu
 	h := r.rt.NewObject()
 	for _, x := range b.Externs {
 		if f, ok := host[x.Name]; ok {
-			if err := h.Set(x.Name, r.hostFunc(b, x.Func, f)); err != nil {
+			if err := h.Set(x.Name, r.hostFunc(in, x.Func, f)); err != nil {
 				return nil, err
 			}
 		}
@@ -181,7 +193,9 @@ type nativeRef struct {
 }
 
 type instance struct {
-	rt      *Runtime
+	rt *Runtime
+	// err is the first error of a callback since the last call, see [gostrict.Callback]
+	err     error
 	bundle  *gostrict.Bundle
 	exports map[string]goja.Callable
 	externs map[string]goja.Callable
@@ -233,9 +247,37 @@ func (in *instance) Call(ctx context.Context, name string, args ...any) ([]any, 
 		return nil, err
 	}
 
-	in.rt.mu.Lock()
-	defer in.rt.mu.Unlock()
-	return in.callJS(ctx, in.exports[name], sig, args)
+	in.rt.lock()
+	defer in.rt.unlock()
+	if err := in.callbackErr(); err != nil {
+		return nil, err
+	}
+	clear(in.rt.frozen)
+	res, err := in.callJS(ctx, in.exports[name], sig, args)
+	if err == nil {
+		err = in.callbackErr()
+	}
+	return res, err
+}
+
+// callbackErr returns and clears the error of a callback.
+func (in *instance) callbackErr() error {
+	err := in.err
+	in.err = nil
+	if err != nil {
+		return fmt.Errorf("a callback of the program failed: %w", err)
+	}
+	return nil
+}
+
+func (r *Runtime) lock() {
+	r.mu.Lock()
+	r.depth.Add(1)
+}
+
+func (r *Runtime) unlock() {
+	r.depth.Add(-1)
+	r.mu.Unlock()
 }
 
 // CallExtern calls the function of a header package, as the program calls it: the host function or the binding.
@@ -245,8 +287,8 @@ func (in *instance) CallExtern(ctx context.Context, x gostrict.Func, args ...any
 		return nil, fmt.Errorf("%s is not a function of a header package of the bundle", x.Name)
 	}
 
-	in.rt.mu.Lock()
-	defer in.rt.mu.Unlock()
+	in.rt.lock()
+	defer in.rt.unlock()
 	return in.callJS(ctx, fn, x, args)
 }
 
@@ -265,18 +307,22 @@ func (in *instance) callJS(ctx context.Context, fn goja.Callable, sig gostrict.F
 	if err != nil {
 		return nil, err
 	}
+	return c.results(v, sig.Results)
+}
 
+// results converts the result of a function of the bundle: several results are an array.
+func (c converter) results(v goja.Value, types []gostrict.Type) ([]any, error) {
 	values := []goja.Value{v}
-	if len(sig.Results) > 1 {
-		arr := v.ToObject(in.rt.rt)
+	if len(types) > 1 {
+		arr := v.ToObject(c.r.rt)
 		values = values[:0]
-		for i := range sig.Results {
+		for i := range types {
 			values = append(values, arr.Get(strconv.Itoa(i)))
 		}
 	}
 
-	res := make([]any, len(sig.Results))
-	for i, t := range sig.Results {
+	res := make([]any, len(types))
+	for i, t := range types {
 		r, err := c.toGo(values[i], t)
 		if err != nil {
 			return nil, err
@@ -284,6 +330,51 @@ func (in *instance) callJS(ctx context.Context, fn goja.Callable, sig gostrict.F
 		res[i] = r
 	}
 	return res, nil
+}
+
+// callback is a function of the program, which a host function has received.
+type callback struct {
+	in  *instance
+	fn  goja.Callable
+	sig gostrict.Func
+}
+
+func (cb *callback) Call(args ...any) ([]any, error) {
+	r := cb.in.rt
+	if r.depth.Load() == 0 {
+		// between two calls, e.g. when a window renders, what a call has created
+		r.lock()
+		defer r.unlock()
+	}
+	res, err := cb.call(args)
+	if err != nil && cb.in.err == nil {
+		cb.in.err = err
+	}
+	return res, err
+}
+
+func (cb *callback) call(args []any) ([]any, error) {
+	if err := gostrict.CheckArgs("callback", cb.sig.Params, args); err != nil {
+		return nil, err
+	}
+	c := converter{r: cb.in.rt, b: cb.in.bundle, owner: cb.in}
+	jsArgs := make([]goja.Value, len(args))
+	for i, a := range args {
+		v, err := c.toJS(a, cb.sig.Params[i])
+		if err != nil {
+			return nil, err
+		}
+		jsArgs[i] = v
+	}
+	v, err := cb.fn(goja.Undefined(), jsArgs...)
+	if err != nil {
+		var ex *goja.Exception
+		if errors.As(err, &ex) {
+			return nil, &Error{Msg: ex.Value().String()}
+		}
+		return nil, err
+	}
+	return c.results(v, cb.sig.Results)
 }
 
 // converter converts between the neutral values of Go and JavaScript with the schema of the bundle. A record,
@@ -294,6 +385,8 @@ type converter struct {
 	r  *Runtime
 	b  *gostrict.Bundle
 	in *instance
+	// owner is the instance, which a callback belongs to, also while the instance of in is not known
+	owner *instance
 }
 
 func (c converter) toGo(v goja.Value, t gostrict.Type) (any, error) {
@@ -321,6 +414,12 @@ func (c converter) toGo(v goja.Value, t gostrict.Type) (any, error) {
 	case gostrict.ValueBig:
 		// a BigInt formats as its decimal
 		return v.String(), nil
+	case gostrict.ValueFunc:
+		fn, ok := goja.AssertFunction(v)
+		if !ok || c.owner == nil {
+			return nil, fmt.Errorf("expected a function of the program, got %s", v)
+		}
+		return &callback{in: c.owner, fn: fn, sig: *t.Func}, nil
 	case gostrict.ValueMap:
 		entries, err := c.r.mapEntries(goja.Undefined(), v)
 		if err != nil {
@@ -376,6 +475,11 @@ func (c converter) toGo(v goja.Value, t gostrict.Type) (any, error) {
 			return nil, err
 		}
 		obj := v.ToObject(rt)
+		if rec.Immutable {
+			if res, ok := c.r.frozen[obj]; ok {
+				return res, nil
+			}
+		}
 		res := make([]any, len(rec.Fields))
 		for i, f := range rec.Fields {
 			fv, err := c.toGo(obj.Get(f.JS), f.Type)
@@ -383,6 +487,12 @@ func (c converter) toGo(v goja.Value, t gostrict.Type) (any, error) {
 				return nil, fmt.Errorf("field %s: %w", f.Name, err)
 			}
 			res[i] = fv
+		}
+		if rec.Immutable {
+			if len(c.r.frozen) >= maxFrozen {
+				clear(c.r.frozen)
+			}
+			c.r.frozen[obj] = res
 		}
 		return res, nil
 	case gostrict.ValueError:
@@ -520,8 +630,8 @@ func (c converter) toJS(v any, t gostrict.Type) (goja.Value, error) {
 }
 
 // hostFunc adapts a Go function to the calling convention of the bundle: several results are an array.
-func (r *Runtime) hostFunc(b *gostrict.Bundle, sig gostrict.Func, f gostrict.Fn) func(goja.FunctionCall) goja.Value {
-	c := converter{r: r, b: b}
+func (r *Runtime) hostFunc(in *instance, sig gostrict.Func, f gostrict.Fn) func(goja.FunctionCall) goja.Value {
+	c := converter{r: r, b: in.bundle, owner: in}
 	return func(call goja.FunctionCall) goja.Value {
 		args := make([]any, len(sig.Params))
 		for i, k := range sig.Params {

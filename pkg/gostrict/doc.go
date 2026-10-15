@@ -106,7 +106,10 @@
 // Every function is translated once for each combination of type arguments, so the translated code knows the
 // type of every value. Structs are JavaScript objects, which are copied on assignment like in Go. An assignment
 // to an existing struct copies the fields into it, so that a pointer to it sees the change. Interfaces box the
-// value with the methods of its type.
+// value with the methods of its type. A struct type, whose values the whole program never changes in place, is
+// immutable: its values are shared instead of copied and all its zero values are one object, e.g. a style in a
+// package variable, which many cells of a table refer to. So it is cheap to write sheet.Cell{Text: t, Style: header}
+// for each cell.
 //
 // # Loading
 //
@@ -120,10 +123,11 @@
 // A package with the directive //gostrict:header in its documentation is trusted: its bodies are not checked and
 // run natively in Go, the loader uses only its declarations. Only a trusted module may contain header packages,
 // see [Module.Trusted], so a program, which a language model writes, uses the built-in libraries, e.g.
-// go.wdy.de/nago/pkg/gostrict/lib/three, and can not bind JavaScript itself. Its boundary is checked: it exports only functions,
-// whose parameters are bool, int32, uint32, float64 or string, records of another package, lists and maps of them,
-// and whose results may also be an error, and each declares its JavaScript binding as a function expression with
-// the same number of parameters. A record is a plain object with its fields in JavaScript:
+// go.wdy.de/nago/pkg/gostrict/lib/three, and can not bind JavaScript itself. Its boundary is checked: it exports
+// only functions, whose parameters are bool, int32, uint32, float64, string, big.Int, records of another package,
+// lists and maps of them or functions of such values, and whose results may also be an error, and each declares
+// its JavaScript binding as a function expression with the same number of parameters. A record is a plain object
+// with its fields in JavaScript:
 //
 //	//gostrict:js (a, b) => a * b + 1
 //	func Mix(a, b float64) float64 { return float64(a*b) + 1 }
@@ -139,6 +143,14 @@
 // TypeScript declaration for a JavaScript host. Only header packages need generated code, because reflection can
 // neither instantiate their generic functions nor construct their handles; a program never does. gojaengine.CheckBindings calls both implementations with edge
 // cases and random values and reports, where they differ.
+//
+// A function of a header package may take a function of the program, e.g. the function, which renders a cell of a
+// sheet. A binding receives the JavaScript function, a host in Go a [Callback], which the generated code turns into
+// a Go function. The host may call it during the call, e.g. in the host function, or later between two calls of the
+// instance, e.g. when a window renders the sheet, but always on the goroutine, which uses the instance. A function
+// with the directive //gostrict:host instead of a binding is implemented only by a host in Go, e.g. the views of
+// nago in lib/ui, so its program runs only on a server, whose engine refuses to load the bundle without it. Such a
+// program may return a handle from an exported function, e.g. the ui.View, which the server renders.
 //
 // # Messages
 //

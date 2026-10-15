@@ -14,6 +14,7 @@ import (
 	"go/constant"
 	"go/token"
 	"go/types"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -227,25 +228,52 @@ func (c *fnCtx) composite(lit *ast.CompositeLit) string {
 	if !ok || isOpaque(t) {
 		fail(lit.Pos(), "composite literal of %s is not supported", t)
 	}
-	cls := c.e.structName(t)
+	c.e.structName(t)
 
+	// JavaScript evaluates the properties in their order, so the values follow the source like in Go, and the
+	// omitted fields come last
+	var order []int
 	vals := make([]string, st.NumFields())
-	for i := range vals {
-		vals[i] = c.e.zero(st.Field(i).Type())
-	}
 	for i, el := range lit.Elts {
 		if kv, ok := el.(*ast.KeyValueExpr); ok {
 			name := kv.Key.(*ast.Ident).Name
 			for j := 0; j < st.NumFields(); j++ {
 				if st.Field(j).Name() == name {
 					vals[j] = c.val(kv.Value, st.Field(j).Type())
+					order = append(order, j)
 				}
 			}
 			continue
 		}
 		vals[i] = c.val(el, st.Field(i).Type())
+		order = append(order, i)
 	}
-	return "new " + cls + "(" + strings.Join(vals, ", ") + ")"
+	for i := range vals {
+		if !slices.Contains(order, i) {
+			vals[i] = c.e.zero(st.Field(i).Type())
+			order = append(order, i)
+		}
+	}
+	return objectLitOrder(st, vals, order)
+}
+
+// objectLit returns the object of a struct with the values of its fields. An object literal is faster than a
+// class, e.g. in goja, and in a browser the objects of a type share their shape anyway.
+func objectLit(st *types.Struct, vals []string) string {
+	order := make([]int, len(vals))
+	for i := range order {
+		order[i] = i
+	}
+	return objectLitOrder(st, vals, order)
+}
+
+// objectLitOrder returns the object with the fields in the order, in which their values are evaluated.
+func objectLitOrder(st *types.Struct, vals []string, order []int) string {
+	parts := make([]string, len(order))
+	for k, i := range order {
+		parts[k] = fieldName(st.Field(i), i) + ": " + vals[i]
+	}
+	return "({ " + strings.Join(parts, ", ") + " })"
 }
 
 func (c *fnCtx) fieldName(se *ast.SelectorExpr) string {
