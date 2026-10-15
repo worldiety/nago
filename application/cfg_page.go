@@ -42,6 +42,7 @@ import (
 	"go.wdy.de/nago/presentation/core/http/gorilla"
 	"go.wdy.de/nago/presentation/proto"
 	"go.wdy.de/nago/presentation/ui/alert"
+	"go.wdy.de/nago/presentation/ui/program"
 )
 
 // RootViewMeta is the descriptive metadata attached to a root view at registration time. See [Purpose].
@@ -395,6 +396,9 @@ func (c *Configurator) newHandler() http.Handler {
 		}
 
 	}))
+
+	// the translated programs of components like threejs and canvas2, see package program
+	r.Mount(program.BundlePath, program.Handler())
 
 	// Serve the configured application icon under the static favicon paths referenced by index.html.
 	faviconHandler := http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
