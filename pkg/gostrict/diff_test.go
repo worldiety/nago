@@ -26,6 +26,7 @@ import (
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/hostuse"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/ints"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/iters"
+	"go.wdy.de/nago/pkg/gostrict/internal/examples/money"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/orders"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/physics"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/shapes"
@@ -33,6 +34,7 @@ import (
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/texts"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/trees"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/values"
+	"go.wdy.de/nago/pkg/gostrict/std/big"
 )
 
 type diffCase struct {
@@ -53,6 +55,7 @@ var exports = map[string]gostrict.Funcs{
 	"hostuse":  native.Reflect(map[string]any{"Records": hostuse.Records, "Run": hostuse.Run}),
 	"ints":     native.Reflect(map[string]any{"Bits": ints.Bits, "Conv": ints.Conv, "Div": ints.Div, "DivU": ints.DivU, "Hash": ints.Hash, "Wrap": ints.Wrap, "Xorshift": ints.Xorshift}),
 	"iters":    native.Reflect(map[string]any{"FirstOver": iters.FirstOver, "Live": iters.Live, "Nested": iters.Nested, "Sum": iters.Sum, "Switch": iters.Switch}),
+	"money":    native.Reflect(map[string]any{"Calc": money.Calc, "Factorial": money.Factorial, "Ints": money.Ints, "Invoice": money.Invoice, "Limits": money.Limits, "Parse": money.Parse, "Round": money.Round}),
 	"orders":   native.Reflect(map[string]any{"NewGame": orders.NewGame, "Snapshot": orders.Snapshot, "Step": orders.Step, "Summarize": orders.Summarize}),
 	"physics":  native.Reflect(map[string]any{"Simulate": physics.Simulate, "Speed": physics.Speed}),
 	"shapes":   native.Reflect(map[string]any{"Area": shapes.Area, "ColorName": shapes.ColorName, "Largest": shapes.Largest, "NewCanvas": shapes.NewCanvas, "OnEvent": shapes.OnEvent, "Scale": shapes.Scale, "Summary": shapes.Summary}),
@@ -112,6 +115,36 @@ func TestDifferential(t *testing.T) {
 		{"trees", "Run", []any{int32(0)}},
 		{"trees", "Run", []any{int32(200)}},
 		{"trees", "Values", nil},
+		{"money", "Ints", []any{"123456789012345678901234567890", "-987654321"}},
+		{"money", "Ints", []any{"-7", "2"}},
+		{"money", "Ints", []any{"5", "0"}},
+		{"money", "Factorial", []any{int32(0)}},
+		{"money", "Factorial", []any{int32(40)}},
+		{"money", "Parse", []any{"-0012.3400"}},
+		{"money", "Parse", []any{"+7"}},
+		{"money", "Parse", []any{"1e3"}},
+		{"money", "Parse", []any{".5"}},
+		{"money", "Parse", []any{"5."}},
+		{"money", "Parse", []any{"--1"}},
+		{"money", "Parse", []any{"1.2.3"}},
+		{"money", "Parse", []any{" 1"}},
+		{"money", "Parse", []any{""}},
+		{"money", "Calc", []any{"10", "3", int32(4), int32(0)}},
+		{"money", "Calc", []any{"-10", "3", int32(2), int32(1)}},
+		{"money", "Calc", []any{"0.1", "0.2", int32(10), int32(2)}},
+		{"money", "Calc", []any{"1.005", "0.001", int32(0), int32(3)}},
+		{"money", "Calc", []any{"1", "0", int32(2), int32(0)}},
+		{"money", "Calc", []any{"1.00", "1", int32(-3), int32(0)}},
+		{"money", "Round", []any{[]any{"2.5", "-2.5", "3.5", "-3.5", "2.51", "-2.49", "0.004", "-0.005", "12.345", "7"}, int32(0)}},
+		{"money", "Round", []any{[]any{"12.345", "-12.345", "12.355", "0.005", "x"}, int32(2)}},
+		{"money", "Invoice", []any{[]any{"19.99", "0.333", "1234567890.12"}, "19"}},
+		{"money", "Invoice", []any{[]any{"0.10", "0.10", "0.10"}, "7"}},
+		{"money", "Limits", []any{"-2147483648", uint32(4294967295), int32(-5)}},
+		{"money", "Limits", []any{"2147483648", uint32(0), int32(30)}},
+		{"money", "Limits", []any{"9007199254740993", uint32(7), int32(5000)}},
+		{"money", "Limits", []any{"-" + strings.Repeat("9", 400), uint32(1), int32(0)}},
+		{"money", "Limits", []any{"18446744073709553664", uint32(1), int32(0)}},
+		{"money", "Limits", []any{"-" + strings.Repeat("7", 300), uint32(1), int32(0)}},
 	}
 
 	ctx := context.Background()
@@ -170,6 +203,27 @@ func TestHost(t *testing.T) {
 	}
 	for _, m := range mismatches {
 		t.Error(m)
+	}
+}
+
+// TestBigBindings checks the bindings of std/big, which the money example uses, against math/big.
+func TestBigBindings(t *testing.T) {
+	b := compile(t, "internal/examples/money")
+	mismatches, err := gojaengine.CheckBindings(context.Background(), b, big.Host(), 500)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range mismatches {
+		t.Error(m)
+	}
+	checked := 0
+	for _, x := range b.Externs {
+		if _, ok := big.Host()[x.Name]; ok {
+			checked++
+		}
+	}
+	if checked < 10 {
+		t.Fatalf("only %d functions of std/big were checked", checked)
 	}
 }
 

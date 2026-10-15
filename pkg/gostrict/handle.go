@@ -35,6 +35,13 @@ func isHandle(t types.Type) bool {
 	return handleField(t) != nil
 }
 
+// isBig tells, whether t is the big.Int of package std/big, a handle, which is a BigInt in JavaScript and crosses
+// the boundary as a value.
+func isBig(t types.Type) bool {
+	n, ok := types.Unalias(t).(*types.Named)
+	return ok && n.Obj().Pkg() != nil && n.Obj().Pkg().Path() == bigPath && n.Obj().Name() == "Int"
+}
+
 // boundaryTerms returns the types of the constraint of a type parameter of a header function, which must be a
 // union of types, which cross the boundary, or false.
 func boundaryTerms(tp *types.TypeParam) ([]types.Type, bool) {

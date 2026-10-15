@@ -88,6 +88,53 @@ func TestCodec(t *testing.T) {
 	}
 }
 
+// TestCodecBig converts a big.Int and a decimal.Dec, which holds one, into JSON and back and rejects other digits.
+func TestCodecBig(t *testing.T) {
+	src := `package app
+
+import (
+	"go.wdy.de/nago/pkg/gostrict/std/big"
+	"go.wdy.de/nago/pkg/gostrict/std/decimal"
+)
+
+type Line struct {
+	Amount decimal.Dec
+	Count  big.Int
+}
+
+func Total(l Line) Line { return l }
+`
+	b, diags, err := Compile("llm.local/app", gostrict.Module{Path: "llm.local/app", FS: fstest.MapFS{"app.go": {Data: []byte(src)}}})
+	if err != nil || len(diags) > 0 {
+		t.Fatal(err, diags)
+	}
+	f := b.Exports["Total"]
+	c := codec{b: b}
+
+	line := []any{[]any{"-123456789012345678901234567890", int32(2)}, "7"}
+	js, err := c.encode([]any{line}, f.Params)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := `[{"Amount":{"M":{"$b":"-123456789012345678901234567890"},"S":2},"Count":{"$b":"7"}}]`
+	if js != want {
+		t.Fatalf("unexpected JSON\n got: %s\nwant: %s", js, want)
+	}
+	back, err := c.decode(js, f.Params)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !gostrict.SameValues(back, []any{line}) {
+		t.Fatalf("unexpected values %#v", back)
+	}
+
+	for _, bad := range []string{`{"$b":"1.5"}`, `{"$b":""}`, `{"$b":7}`, `7`, `{"$b":"1e3"}`, `{"$b":"-+5"}`, `{"$b":"+"}`} {
+		if _, err := c.decode(`[{"Amount":{"M":{"$b":"1"},"S":0},"Count":`+bad+`}]`, f.Params); err == nil {
+			t.Errorf("%s was accepted as big.Int", bad)
+		}
+	}
+}
+
 // TestCompileFS derives the module path from the import of the package of messages.
 func TestCompileFS(t *testing.T) {
 	fsys := fstest.MapFS{

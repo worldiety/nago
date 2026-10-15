@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"math"
 	"math/rand/v2"
+	"strconv"
+	"strings"
 
 	"go.wdy.de/nago/pkg/gostrict"
 )
@@ -134,6 +136,19 @@ func sample(rnd *rand.Rand, k gostrict.ValueKind, i int) any {
 			return []float64{0, math.Copysign(0, -1), 0.5, -2.5, math.NaN(), math.Inf(1), math.Inf(-1), math.MaxFloat64}[i]
 		}
 		return (rnd.Float64() - 0.5) * math.Pow(10, float64(rnd.IntN(20)-10))
+	case gostrict.ValueBig:
+		if edge {
+			return []string{"0", "1", "-1", "2147483648", "-9223372036854775809", "18446744073709551616", "-" + strings.Repeat("7", 320), "1" + strings.Repeat("0", 40)}[i]
+		}
+		var sb strings.Builder
+		if rnd.IntN(2) == 0 {
+			sb.WriteString("-")
+		}
+		sb.WriteString(strconv.Itoa(1 + rnd.IntN(9)))
+		for range rnd.IntN(60) {
+			sb.WriteString(strconv.Itoa(rnd.IntN(10)))
+		}
+		return sb.String()
 	case gostrict.ValueString:
 		if edge {
 			return []string{"", "a", "Grüße", "😀", " x ", "\u0085", "�", "a,b"}[i]

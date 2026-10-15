@@ -33,6 +33,13 @@
 //     assertions are not allowed.
 //   - enums: a named int32, uint32 or string type with constants of it. A switch over it must cover all constants
 //     or have a default case.
+//   - big.Int of go.wdy.de/nago/pkg/gostrict/std/big for integers of any size and decimal.Dec of std/decimal for
+//     exact decimals, e.g. amounts of money. Both never change, functions return new values, and == is not
+//     allowed for them, compare with big.Cmp(a, b) == 0 or decimal.Cmp(a, b) == 0. Create them with
+//     big.FromInt32, big.Parse, decimal.FromInt32 or decimal.Parse("19.99"). Addition, subtraction and
+//     multiplication of decimals are exact, a division and rounding take the scale and an explicit rounding:
+//     decimal.Quo(net, decimal.FromInt32(3), 2, decimal.HalfUp) and decimal.Round(d, 2, decimal.HalfEven).
+//     Format them with big.String and decimal.String, never through float64.
 //
 // There is no nil except for error. Every variable, field and element must have a value, unless it is an
 // opt.Option: var p *T without a value, a struct literal without its pointer, function, interface, list or map
@@ -78,7 +85,7 @@
 // Packages of the standard library: math (without Frexp, Ldexp and the functions of int; a constant argument like
 // the sign of math.IsInf(x, 0) is fine), strings (Contains, HasPrefix, HasSuffix, ReplaceAll, TrimPrefix,
 // TrimSpace, TrimSuffix), errors (New) and iter. Anything else comes from the packages list, dict, opt, text,
-// num and fuel of go.wdy.de/nago/pkg/gostrict/std, whose functions never panic.
+// num, fuel, big and decimal of go.wdy.de/nago/pkg/gostrict/std, whose functions never panic.
 //
 // # Terminating profile
 //

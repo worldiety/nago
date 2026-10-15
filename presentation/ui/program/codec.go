@@ -23,6 +23,7 @@ import (
 //	{"$m": [[k, v], ...]}       a map in the order of its entries
 //	{"$": "pkg.Circle", ...}    a variant of a sealed interface with the fields of its record
 //	{"$f": "NaN"}               NaN, "Inf" or "-Inf"
+//	{"$b": "-1234"}             a big.Int, which is a BigInt in the browser
 //	{"$e": "message"}           an error, which is not nil
 //	{"$r": 7}                   a state, which the program in the browser holds
 //
@@ -82,6 +83,8 @@ func (c codec) tree(v any, t gostrict.Type) (any, error) {
 			return nil, nil
 		}
 		return map[string]any{"$e": v.(error).Error()}, nil
+	case gostrict.ValueBig:
+		return map[string]any{"$b": v}, nil
 	case gostrict.ValueState:
 		if c.state == nil {
 			return nil, errors.New("a state can not cross the protocol")
@@ -195,6 +198,13 @@ func (c codec) value(x any, t gostrict.Type) (any, error) {
 		return float(x), nil
 	case gostrict.ValueString:
 		s, _ := x.(string)
+		return s, nil
+	case gostrict.ValueBig:
+		m, _ := x.(map[string]any)
+		s, _ := m["$b"].(string)
+		if err := gostrict.CheckArgs("big.Int", []gostrict.Type{t}, []any{s}); err != nil {
+			return nil, err
+		}
 		return s, nil
 	case gostrict.ValueError:
 		if m, ok := x.(map[string]any); ok {

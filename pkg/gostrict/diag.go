@@ -60,6 +60,7 @@ const (
 	CodeExhaustive      Code = "GS038" // switches, which miss variants or constants
 	CodeUntrusted       Code = "GS039" // header packages in modules, which are not trusted
 	CodeTermination     Code = "GS040" // loops and recursion, which may not end, in the terminating profile
+	CodeBigEqual        Code = "GS041" // == on values, which contain a big.Int
 	CodeInternal        Code = "GS099" // the compiler can not translate a valid construct
 )
 

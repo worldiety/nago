@@ -24,6 +24,8 @@ func TestGenerated(t *testing.T) {
 	}
 	libs, _ := filepath.Glob("lib/*")
 	dirs = append(dirs, libs...)
+	// std/big is natively implemented as well, so that its bindings are checked against math/big
+	dirs = append(dirs, "std/big")
 	for _, dir := range dirs {
 		prog, err := Load(dir)
 		if err != nil {

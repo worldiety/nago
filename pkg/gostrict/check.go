@@ -410,6 +410,14 @@ func (c *checker) checkBinary(n *ast.BinaryExpr) {
 		if isInterface(c.info.TypeOf(n.Y)) {
 			t = c.info.TypeOf(n.Y)
 		}
+		if containsBig(t, map[types.Type]bool{}) {
+			fix := "compare with big.Cmp(a, b) == 0, and compare the other fields of a struct one by one"
+			if named, ok := types.Unalias(t).(*types.Named); ok && named.Obj().Pkg() != nil && named.Obj().Pkg().Path() == decimalPath {
+				fix = "compare with decimal.Cmp(a, b) == 0, which also treats 1.0 and 1.00 as equal"
+			}
+			c.report(n, CodeBigEqual, "== is not allowed for "+typeBase(t)+", which holds a big.Int", "a big.Int is a BigInt in JavaScript, but a pointer in Go, so == would compare differently", fix)
+			return
+		}
 		if containsInterface(t) && !unionComparable(t, map[types.Type]bool{}) {
 			c.report(n, CodeInterfaceEqual, "comparing interface values is not allowed", "the subset compares interfaces only with nil and sealed interfaces, whose variants are all comparable, like the union types of golang/go#76920", "compare a distinct value, e.g. the result of a method, or compare with nil")
 		}
@@ -794,4 +802,23 @@ func (c *checker) isForbiddenStdCall(call *ast.CallExpr) bool {
 	}
 	funcs, ok := stdAllowed[pkgName.Imported().Path()]
 	return !ok || !funcs[se.Sel.Name]
+}
+
+// containsBig tells, whether a value of t holds a big.Int, which == compares differently in Go and JavaScript.
+func containsBig(t types.Type, seen map[types.Type]bool) bool {
+	if t == nil || seen[t] {
+		return false
+	}
+	seen[t] = true
+	if isBig(t) {
+		return true
+	}
+	if st, ok := t.Underlying().(*types.Struct); ok && !isOpaque(t) {
+		for f := range st.Fields() {
+			if containsBig(f.Type(), seen) {
+				return true
+			}
+		}
+	}
+	return false
 }

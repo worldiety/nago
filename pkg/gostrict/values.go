@@ -27,6 +27,10 @@ type (
 		HostFromValues(values []any) any
 		HostElem() reflect.Type
 	}
+	hostBig interface {
+		HostString() string
+		HostFromString(s string) any
+	}
 	hostMap interface {
 		HostEntries() [][2]any
 		HostFromEntries(entries [][2]any) any
@@ -45,6 +49,7 @@ var (
 	refType        = reflect.TypeFor[js.Ref]()
 	tokenType      = reflect.TypeFor[Token]()
 	hostSeqType    = reflect.TypeFor[hostSeq]()
+	hostBigType    = reflect.TypeFor[hostBig]()
 	hostMapType    = reflect.TypeFor[hostMap]()
 	typedStateType = reflect.TypeFor[typedState]()
 )
@@ -115,6 +120,8 @@ func toNeutral(v reflect.Value) (any, error) {
 		return v.Interface(), nil
 	case t.Implements(typedStateType):
 		return v.Interface().(typedState).token(), nil
+	case t.Implements(hostBigType):
+		return v.Interface().(hostBig).HostString(), nil
 	case t.Implements(hostSeqType):
 		seq := v.Interface().(hostSeq)
 		elems := seq.HostValues()
@@ -225,6 +232,12 @@ func fromNeutral(n any, t reflect.Type) (reflect.Value, error) {
 		res := reflect.New(t).Elem()
 		res.Field(0).Set(reflect.ValueOf(tok))
 		return res, nil
+	case t.Implements(hostBigType):
+		s, ok := n.(string)
+		if !ok {
+			return zero, fmt.Errorf("%T is no decimal of a big.Int", n)
+		}
+		return reflect.ValueOf(zero.Interface().(hostBig).HostFromString(s)), nil
 	case t.Implements(hostSeqType):
 		elems, _ := n.([]any)
 		seq := zero.Interface().(hostSeq)

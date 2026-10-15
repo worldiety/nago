@@ -16,6 +16,9 @@ func valueKind(t types.Type) ValueKind {
 	if isError(t) {
 		return ValueError
 	}
+	if isBig(t) {
+		return ValueBig
+	}
 	if isHandle(t) {
 		return ValueHandle
 	}

@@ -19,7 +19,8 @@ import { GostrictMessage, GostrictProgram, InputEventTypeValues } from '@/shared
  * The values cross the protocol as JSON, see package presentation/ui/program: a record is an object with the
  * names of its fields, which the translated program reads as they are, a list is an array, and the values, which
  * JSON can not express, are objects with a key starting with $: {"$m": entries} for a map, {"$": tag, ...fields}
- * for a variant of a sealed interface, {"$f": "NaN"} for NaN, the infinities and -0, {"$e": message} for an error
+ * for a variant of a sealed interface, {"$f": "NaN"} for NaN, the infinities and -0, {"$b": "123"} for a big.Int,
+ * {"$e": message} for an error
  * and {"$r": ref} for a state of the engine of the browser. So a reviver of JSON.parse and a replacer of
  * JSON.stringify convert all values without a schema.
  */
@@ -488,6 +489,7 @@ export class Session {
 		return JSON.parse(json, (_key, v) => {
 			if (v === null || typeof v !== 'object' || Array.isArray(v)) return v;
 			if ('$f' in v) return special[v.$f as string] ?? 0;
+			if ('$b' in v) return BigInt(v.$b);
 			if ('$m' in v) return new Map(v.$m);
 			if ('$r' in v && state) return state(v.$r);
 			if ('$' in v) {
@@ -505,6 +507,7 @@ export class Session {
 	encode(value: unknown): string {
 		const tags = this.tags;
 		return JSON.stringify(value, (_key, v) => {
+			if (typeof v === 'bigint') return { $b: v.toString() };
 			if (typeof v === 'number') {
 				if (v !== v) return { $f: 'NaN' };
 				if (v === Infinity) return { $f: 'Inf' };

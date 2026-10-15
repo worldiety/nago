@@ -85,6 +85,7 @@ func (e *Engine) NewRuntime() *Runtime {
 
 	r := &Runtime{engine: e, rt: rt}
 	r.newMap = r.helper(`(entries) => new Map(entries)`)
+	r.newBig = r.helper(`(s) => BigInt(s)`)
 	r.mapEntries = r.helper(`(m) => Array.from(m.entries())`)
 	errFn, err := rt.RunString(`(s) => ({ v: { s: s }, m: { Error: (e) => e.s } })`)
 	if err != nil {
@@ -101,6 +102,7 @@ type Runtime struct {
 	rt         *goja.Runtime
 	newErr     goja.Callable
 	newMap     goja.Callable
+	newBig     goja.Callable
 	mapEntries goja.Callable
 }
 
@@ -316,6 +318,9 @@ func (c converter) toGo(v goja.Value, t gostrict.Type) (any, error) {
 		return js.NewRef(v), nil
 	case gostrict.ValueState:
 		return gostrict.NewToken(t.Name, v), nil
+	case gostrict.ValueBig:
+		// a BigInt formats as its decimal
+		return v.String(), nil
 	case gostrict.ValueMap:
 		entries, err := c.r.mapEntries(goja.Undefined(), v)
 		if err != nil {
@@ -422,6 +427,8 @@ func (c converter) toJS(v any, t gostrict.Type) (goja.Value, error) {
 			return goja.Null(), nil
 		}
 		return c.r.newErr(goja.Undefined(), rt.ToValue(v.(error).Error()))
+	case gostrict.ValueBig:
+		return c.r.newBig(goja.Undefined(), rt.ToValue(v.(string)))
 	case gostrict.ValueState:
 		tok := v.(gostrict.Token)
 		gv, ok := tok.Value().(goja.Value)

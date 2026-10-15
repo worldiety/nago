@@ -166,10 +166,15 @@ func (c *fnCtx) funcRef(fn *types.Func, targs []types.Type, pos token.Pos) strin
 	if _, ok := stdAllowed[p]; ok || p == textPath || p == numPath {
 		return "$" + fn.Pkg().Name() + "_" + fn.Name()
 	}
-	if strings.HasPrefix(p, stdPrefix) {
+	src, ok := c.e.decls[fn.Origin()]
+	if ok && src.pkg.Kind == KindHeader && src.js != "" {
+		// a function of the library with a binding, e.g. of std/big, is called like any other header function
+		return c.e.externName(fn, targs, src, pos)
+	}
+	if strings.HasPrefix(p, stdPrefix) && (!ok || src.pkg.Kind != KindUser) {
+		// the built in functions of the library, e.g. list.New, have no function value
 		fail(pos, "%s can only be called", fn.FullName())
 	}
-	src, ok := c.e.decls[fn.Origin()]
 	if ok && src.pkg.Kind == KindHeader {
 		return c.e.externName(fn, targs, src, pos)
 	}
@@ -584,7 +589,7 @@ func (c *fnCtx) funcCall(fn *types.Func, id *ast.Ident, call *ast.CallExpr, sig 
 		}
 	}
 
-	if src, ok := c.e.decls[fn.Origin()]; ok && src.pkg.Kind == KindHeader && !strings.HasPrefix(p, stdPrefix) {
+	if src, ok := c.e.decls[fn.Origin()]; ok && src.pkg.Kind == KindHeader && (!strings.HasPrefix(p, stdPrefix) || src.js != "") {
 		return c.e.externName(fn, targs, src, id.Pos()) + "(" + c.args(call, sig) + ")"
 	}
 

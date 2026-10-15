@@ -8,14 +8,16 @@
 package gostrict
 
 const (
-	stdPrefix = "go.wdy.de/nago/pkg/gostrict/std/"
-	listPath  = stdPrefix + "list"
-	dictPath  = stdPrefix + "dict"
-	textPath  = stdPrefix + "text"
-	numPath   = stdPrefix + "num"
-	jsPath    = stdPrefix + "js"
-	msgPath   = stdPrefix + "msg"
-	optPath   = stdPrefix + "opt"
+	stdPrefix   = "go.wdy.de/nago/pkg/gostrict/std/"
+	listPath    = stdPrefix + "list"
+	dictPath    = stdPrefix + "dict"
+	textPath    = stdPrefix + "text"
+	numPath     = stdPrefix + "num"
+	jsPath      = stdPrefix + "js"
+	msgPath     = stdPrefix + "msg"
+	optPath     = stdPrefix + "opt"
+	bigPath     = stdPrefix + "big"
+	decimalPath = stdPrefix + "decimal"
 )
 
 // stdAllowed contains the packages of the standard library, which the subset allows, with the functions, which

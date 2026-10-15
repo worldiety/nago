@@ -49,6 +49,8 @@ const (
 	// ValueUnion is a sealed interface of the program, whose variants are records, see [Union]. Its value in Go is
 	// a [Variant].
 	ValueUnion
+	// ValueBig is a big.Int of package std/big, an integer of any size, whose value in Go is its decimal string.
+	ValueBig
 )
 
 func (k ValueKind) String() string {
@@ -79,6 +81,8 @@ func (k ValueKind) String() string {
 		return "map"
 	case ValueUnion:
 		return "union"
+	case ValueBig:
+		return "big.Int"
 	}
 	return "invalid"
 }
@@ -277,6 +281,11 @@ func checkValue(t Type, v any) error {
 		}
 	case ValueUnion:
 		_, ok = v.(Variant)
+	case ValueBig:
+		var s string
+		if s, ok = v.(string); ok && !isDecimal(s) {
+			return fmt.Errorf("%q is no decimal integer", s)
+		}
 	case ValueRecord:
 		// the fields are checked by the engine, which knows the record
 		_, ok = v.([]any)
@@ -376,4 +385,20 @@ type Instance interface {
 	// Call calls an exported function of the main package with values of its types, see [Bundle.Exports].
 	Call(ctx context.Context, name string, args ...any) ([]any, error)
 	Close() error
+}
+
+// isDecimal tells, whether s is a decimal integer with an optional sign, the neutral value of a big.Int.
+func isDecimal(s string) bool {
+	if strings.HasPrefix(s, "-") || strings.HasPrefix(s, "+") {
+		s = s[1:]
+	}
+	if s == "" {
+		return false
+	}
+	for _, c := range s {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
 }

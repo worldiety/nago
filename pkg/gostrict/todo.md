@@ -23,13 +23,13 @@ Ziele in dieser Reihenfolge: keine Laufzeitfehler (statisch bewiesen), LLM-taugl
 | Thema | Entscheidung |
 |---|---|
 | Sprache | Go-Subset statt TypeScript, Prüfung per Whitelist auf `go/ast`/`go/types`. |
-| Zahlen | Kein `int`; `int32`/`uint32` mit Wrap-around, sonst `float64`. Floats sind über Engines nur ungefähr gleich (FMA, GPU). |
+| Zahlen | Kein `int`; `int32`/`uint32` mit Wrap-around, sonst `float64`. Floats sind über Engines nur ungefähr gleich (FMA, GPU). Exakt: `std/big.Int` (Header, BigInt bzw. `math/big`, `==` verboten mit GS041) und `std/decimal.Dec{M big.Int; S int32}` (Subset-Code, Skala 0..`MaxScale` = 1000, Rundung explizit: HalfUp, HalfEven, Down, Up, Floor, Ceiling). |
 | Totalität | Guards statt Laufzeitprüfungen, nur `error` darf nil sein, kein `panic`, Package-Variablen unveränderlich. |
 | Typen | `list`/`dict`/`opt` statt Slices/Maps/nil; Summentypen als versiegelte Interfaces (Semantik nach golang/go#76920); erschöpfende Enums. |
 | Engine | Blackbox `gostrict.Engine`/`Instance`: goja, nativ, Browser. |
 | Generierung | Nur Header-Pakete (`lib/three`, `lib/canvas`, Beispiel `host`) haben ein `gostrict_gen.go` mit `Host()`, weil Reflection weder generische Header-Funktionen instanziieren noch Handles bauen kann. Programme und Anwendungen brauchen keinen generierten Code. |
 | Go-Seite | Reflection: `gostrict.ToNeutral`/`FromNeutral`, `gostrict.Call` (typisierte Aufrufe), `native.Reflect` (native Engine), `gostrict.Router` + `Handle[T]` (Empfang), `Session.Send`/`Channel.Send` (Senden). Unions, die Go dekodiert, einmal mit `gostrict.Variants[T](...)` registrieren. Eingebettete Programme kompiliert `program.MustCompileFS(sources, "dir")`, das den Modulpfad aus den Imports (`gostrict.InferModulePath`) oder dem `main`-Paket ableitet; er muss dem Go-Importpfad entsprechen, weil Nachrichten nach Go-Typnamen zugeordnet werden. |
-| Transport | Nago-Protokoll trägt nur Komponenten-ID, Typname und JSON (`GostrictMessage.Json`, `GostrictProgram.Args`, `GostrictCall.Args`, `GostrictReturn.Values`). Records sind Objekte mit Go-Feldnamen, Listen Arrays; Sonderfälle mit `$`-Schlüssel: `$m` Map, `$` Variante, `$f` NaN/±Inf/-0, `$e` Fehler, `$r` Zustand der Browser-Engine. Im Browser Reviver/Replacer ohne Schema. Keine anwendungsspezifischen Typen im nago-Protokoll. |
+| Transport | Nago-Protokoll trägt nur Komponenten-ID, Typname und JSON (`GostrictMessage.Json`, `GostrictProgram.Args`, `GostrictCall.Args`, `GostrictReturn.Values`). Records sind Objekte mit Go-Feldnamen, Listen Arrays; Sonderfälle mit `$`-Schlüssel: `$m` Map, `$` Variante, `$f` NaN/±Inf/-0, `$b` big.Int als Dezimalstring, `$e` Fehler, `$r` Zustand der Browser-Engine. Im Browser Reviver/Replacer ohne Schema. Keine anwendungsspezifischen Typen im nago-Protokoll. |
 | Nachrichten | Programme senden über `msg.Out[T]`-Rückgaben, Handler sind Exporte `func(s *State, m Record\|Union)`. Nachrichtenpakete heißen `messages`, nicht `proto`. Zustellung höchstens einmal, FIFO je Richtung; Programme fragen ihren Zustand im `Init` an. |
 | Vertrauen | Header-Pakete nur aus vertrauenswürdigen Modulen (GS039); Programme von Nutzern oder LLMs nie. |
 
@@ -38,7 +38,8 @@ Ziele in dieser Reihenfolge: keine Laufzeitfehler (statisch bewiesen), LLM-taugl
 ```
 pkg/gostrict/            Compiler (load, check*, emit*, runtime.js), Grenze (boundary, engine, values, router),
                          Session, Cache, Pool, Generator (nur Header), fix, sourcemap, reload
-pkg/gostrict/std/        list, dict, opt, text, num, msg, fuel, js; host.go mit //go:build !gostrict für Reflection
+pkg/gostrict/std/        list, dict, opt, text, num, msg, fuel, js, big, decimal; host.go mit //go:build !gostrict
+                         für Reflection
 pkg/gostrict/lib/        three, canvas (Header), input, asset (Records)
 pkg/gostrict/engine/     gojaengine (inkl. CheckBindings), native (Reflect)
 presentation/ui/program  Bundle-Endpunkt, Channel, JSON-Codec, Browser-Engine
@@ -69,6 +70,9 @@ cd web/vuejs && npx vue-tsc --noEmit -p tsconfig.json --composite false   # Fehl
   geprüft, ein Tutorial mit Union-Nachrichten fehlt.
 
 ## Pflege
+
+- goja wandelt BigInt über int64 in Number (`Number(2n**64n)` ist 0); die Bindung von `big.Float64` parst deshalb
+  außerhalb von int64 die Ziffern. Neue BigInt-Bindungen mit Werten über 2^64 im Differenztest (`money`) prüfen.
 
 - `doc.go` bei jeder Spracherweiterung aktualisieren.
 - Neue Diagnosen mit Testfall in `testdata/bad/*` (`// want GSxxx`) und konkretem `fix`, wo möglich mit Edits.

@@ -115,7 +115,7 @@ func (g *generator) header() ([]byte, error) {
 			for i := 0; i < sig.Params().Len(); i++ {
 				t := sig.Params().At(i).Type()
 				arg := fmt.Sprintf("args[%d]", i)
-				if f := handleField(t); f != nil {
+				if f := handleField(t); f != nil && !isBig(t) {
 					if f.Pkg() != p.Types {
 						return nil, fmt.Errorf("%s takes the handle %s of another package", name, t)
 					}
@@ -128,7 +128,7 @@ func (g *generator) header() ([]byte, error) {
 			for i := 0; i < sig.Results().Len(); i++ {
 				r := fmt.Sprintf("r%d", i)
 				results = append(results, r)
-				if f := handleField(sig.Results().At(i).Type()); f != nil {
+				if f := handleField(sig.Results().At(i).Type()); f != nil && !isBig(sig.Results().At(i).Type()) {
 					if f.Pkg() != p.Types {
 						return nil, fmt.Errorf("%s returns the handle of another package", name)
 					}
@@ -171,6 +171,10 @@ func stateElem(t types.Type) (types.Type, bool) {
 
 // fromNeutral converts the neutral value expr, see [ValueKind], into a value of t.
 func (g *generator) fromNeutral(expr string, t types.Type) string {
+	if isBig(t) {
+		ts := g.typeString(t)
+		return fmt.Sprintf("%s{}.HostFromString(%s.(string)).(%s)", ts, expr, ts)
+	}
 	if isSealed(t) {
 		return fmt.Sprintf("gostrictFrom%d(%s.(gostrict.Variant))", g.helper(t), expr)
 	}
@@ -192,6 +196,9 @@ func (g *generator) fromNeutral(expr string, t types.Type) string {
 
 // toNeutral converts expr of type t into its neutral value.
 func (g *generator) toNeutral(expr string, t types.Type) string {
+	if isBig(t) {
+		return expr + ".HostString()"
+	}
 	if isSealed(t) {
 		return fmt.Sprintf("gostrictTo%d(%s)", g.helper(t), expr)
 	}
@@ -381,6 +388,8 @@ func tsType(k ValueKind) string {
 		return "string"
 	case ValueError:
 		return "GoError"
+	case ValueBig:
+		return "bigint"
 	}
 	return "number"
 }
