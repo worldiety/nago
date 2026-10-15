@@ -1,0 +1,12 @@
+{
+  "doc": "GostrictListen opens the channel of the messages, which the gostrict program of the component with the id sends to its backend. The frontend resolves the call with GostrictReceived for each batch of messages, until the window ends.",
+  "kind": "Record",
+  "id": 320,
+  "fields": {
+    "1": {
+      "doc": "Id is the id of the component, which runs the program.",
+      "name": "Id",
+      "type": "Str"
+    }
+  }
+}

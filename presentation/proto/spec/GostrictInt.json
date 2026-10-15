@@ -1,0 +1,11 @@
+{
+  "doc": "GostrictInt is an int32 or uint32 of a gostrict program.",
+  "kind": "Record",
+  "id": 310,
+  "fields": {
+    "1": {
+      "name": "V",
+      "type": "Int"
+    }
+  }
+}

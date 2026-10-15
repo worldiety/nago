@@ -78,9 +78,12 @@ func (s *Scope) handleCallResolved(evt *proto.CallResolved) {
 	}
 
 	cb, ok := alloc.asyncCallbacks.Get(evt.CallPtr)
-	if _, isInput := evt.Ret.(*proto.InputEvent); !ok && isInput {
-		// input events which were already in flight while the listener has been removed, which is expected
-		return
+	switch evt.Ret.(type) {
+	case *proto.InputEvent, *proto.GostrictReceived:
+		if !ok {
+			// events which were already in flight while the listener has been removed, which is expected
+			return
+		}
 	}
 
 	if !ok {

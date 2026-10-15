@@ -570,10 +570,22 @@ func (s *scopeWindow) AddInputListener(elemID string, fn func(evt InputEvent), o
 		func(ret proto.CallRet) {
 			if evt, ok := ret.(*proto.InputEvent); ok {
 				fn(InputEvent{
-					Type: InputEventType(evt.Type),
-					X:    float64(evt.X),
-					Y:    float64(evt.Y),
-					Code: string(evt.Code),
+					Type:      InputEventType(evt.Type),
+					X:         float64(evt.X),
+					Y:         float64(evt.Y),
+					Code:      string(evt.Code),
+					PointerID: int32(evt.PointerId),
+					Buttons:   uint32(evt.Buttons),
+					Pressure:  float64(evt.Pressure),
+					Shift:     bool(evt.Shift),
+					Ctrl:      bool(evt.Ctrl),
+					Alt:       bool(evt.Alt),
+					Meta:      bool(evt.Meta),
+					DeltaX:    float64(evt.DeltaX),
+					DeltaY:    float64(evt.DeltaY),
+					DeltaZ:    float64(evt.DeltaZ),
+					Key:       string(evt.Key),
+					Repeat:    bool(evt.Repeat),
 				})
 			}
 		},

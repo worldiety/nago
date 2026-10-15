@@ -49,6 +49,9 @@
     "CanvasShadowColor",
     "CanvasShadowBlur",
     "FlowChartAutoLayout",
-    "CallScreenshot"
+    "CallScreenshot",
+    "GostrictDeliver",
+    "GostrictListen",
+    "GostrictCall"
   ]
 }

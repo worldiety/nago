@@ -1,0 +1,6 @@
+{
+  "doc": "GostrictValues is a list of values of a gostrict program.",
+  "kind": "Array",
+  "id": 316,
+  "type": "GostrictValue"
+}

@@ -1,0 +1,11 @@
+{
+  "doc": "GostrictReceived holds the messages, which a gostrict program has returned, see GostrictListen.",
+  "kind": "Record",
+  "id": 321,
+  "fields": {
+    "1": {
+      "name": "Messages",
+      "type": "GostrictMessages"
+    }
+  }
+}

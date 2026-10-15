@@ -1,0 +1,11 @@
+{
+  "doc": "GostrictBool is a bool of a gostrict program.",
+  "kind": "Record",
+  "id": 309,
+  "fields": {
+    "1": {
+      "name": "V",
+      "type": "Bool"
+    }
+  }
+}
