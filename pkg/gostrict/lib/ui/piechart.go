@@ -22,19 +22,19 @@ func (TPieChart) isView() {}
 //
 //gostrict:host
 func (c TPieChart) ShowAsDonut(showAsDonut bool) TPieChart {
-	return TPieChart{ref: wrap(get[piechart.TPieChart](c.ref).ShowAsDonut(showAsDonut))}
+	return c.with(func(v piechart.TPieChart) piechart.TPieChart { return v.ShowAsDonut(showAsDonut) })
 }
 
 // ShowDataLabels shows the labels of the slices.
 //
 //gostrict:host
 func (c TPieChart) ShowDataLabels(showDataLabels bool) TPieChart {
-	return TPieChart{ref: wrap(get[piechart.TPieChart](c.ref).ShowDataLabels(showDataLabels))}
+	return c.with(func(v piechart.TPieChart) piechart.TPieChart { return v.ShowDataLabels(showDataLabels) })
 }
 
 // ShowAbsoluteValues shows the absolute values instead of the percentages.
 //
 //gostrict:host
 func (c TPieChart) ShowAbsoluteValues(showAbsoluteValues bool) TPieChart {
-	return TPieChart{ref: wrap(get[piechart.TPieChart](c.ref).ShowAbsoluteValues(showAbsoluteValues))}
+	return c.with(func(v piechart.TPieChart) piechart.TPieChart { return v.ShowAbsoluteValues(showAbsoluteValues) })
 }

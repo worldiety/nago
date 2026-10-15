@@ -22,12 +22,12 @@ func (TLineChart) isView() {}
 //
 //gostrict:host
 func (c TLineChart) Markers(markers LineChartMarkers) TLineChart {
-	return TLineChart{ref: wrap(get[linechart.TLineChart](c.ref).Markers(markers.nago()))}
+	return c.with(func(v linechart.TLineChart) linechart.TLineChart { return v.Markers(markers.nago()) })
 }
 
 // Curve sets the curve style, which connects the data points.
 //
 //gostrict:host
 func (c TLineChart) Curve(curve LineChartCurve) TLineChart {
-	return TLineChart{ref: wrap(get[linechart.TLineChart](c.ref).Curve(linechart.Curve(curve)))}
+	return c.with(func(v linechart.TLineChart) linechart.TLineChart { return v.Curve(linechart.Curve(curve)) })
 }

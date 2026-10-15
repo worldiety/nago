@@ -11,7 +11,10 @@ package ui
 import (
 	"go.wdy.de/nago/presentation/core"
 	nui "go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/barchart"
 	"go.wdy.de/nago/presentation/ui/chart"
+	"go.wdy.de/nago/presentation/ui/linechart"
+	"go.wdy.de/nago/presentation/ui/piechart"
 )
 
 func (s IndexState) nago() *core.State[int] {
@@ -48,4 +51,72 @@ func chartSeriesList(series []TChartSeries) []chart.Series {
 		res = append(res, get[chart.Series](s.ref))
 	}
 	return res
+}
+
+// chartHolder keeps the chart of nago beside its view, so that a method like Colors changes the chart, which the
+// view of nago does not reveal.
+type chartHolder[T interface {
+	Chart(chart.Chart) T
+	Render(core.RenderContext) core.RenderNode
+}] struct {
+	v T
+	c chart.Chart
+}
+
+func newChartHolder[T interface {
+	Chart(chart.Chart) T
+	Render(core.RenderContext) core.RenderNode
+}](v T, c chart.Chart) chartHolder[T] {
+	return chartHolder[T]{v: v, c: c}
+}
+
+func (h chartHolder[T]) Render(ctx core.RenderContext) core.RenderNode {
+	return h.v.Render(ctx)
+}
+
+func colorsOf(colors []Color) []nui.Color {
+	res := make([]nui.Color, 0, len(colors))
+	for _, c := range colors {
+		res = append(res, nui.Color(c))
+	}
+	return res
+}
+
+func (c TBarChart) with(fn func(v barchart.TBarChart) barchart.TBarChart) TBarChart {
+	h := get[chartHolder[barchart.TBarChart]](c.ref)
+	h.v = fn(h.v)
+	return TBarChart{ref: wrap(h)}
+}
+
+func (c TBarChart) withChart(fn func(ch *chart.Chart)) TBarChart {
+	h := get[chartHolder[barchart.TBarChart]](c.ref)
+	fn(&h.c)
+	h.v = h.v.Chart(h.c)
+	return TBarChart{ref: wrap(h)}
+}
+
+func (c TLineChart) with(fn func(v linechart.TLineChart) linechart.TLineChart) TLineChart {
+	h := get[chartHolder[linechart.TLineChart]](c.ref)
+	h.v = fn(h.v)
+	return TLineChart{ref: wrap(h)}
+}
+
+func (c TLineChart) withChart(fn func(ch *chart.Chart)) TLineChart {
+	h := get[chartHolder[linechart.TLineChart]](c.ref)
+	fn(&h.c)
+	h.v = h.v.Chart(h.c)
+	return TLineChart{ref: wrap(h)}
+}
+
+func (c TPieChart) with(fn func(v piechart.TPieChart) piechart.TPieChart) TPieChart {
+	h := get[chartHolder[piechart.TPieChart]](c.ref)
+	h.v = fn(h.v)
+	return TPieChart{ref: wrap(h)}
+}
+
+func (c TPieChart) withChart(fn func(ch *chart.Chart)) TPieChart {
+	h := get[chartHolder[piechart.TPieChart]](c.ref)
+	fn(&h.c)
+	h.v = h.v.Chart(h.c)
+	return TPieChart{ref: wrap(h)}
 }

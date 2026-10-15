@@ -138,6 +138,10 @@ func Host() gostrict.Funcs {
 			r0 := AvatarURI(URI(args[0].(string)))
 			return []any{r0.ref}
 		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Background": func(args []any) []any {
+			r0 := Background()
+			return []any{r0.ref}
+		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.BarChart": func(args []any) []any {
 			r0 := BarChart(gostrictFrom7(args[0].([]any)), gostrictFrom8(args[1].([]any))...)
 			return []any{r0.ref}
@@ -658,6 +662,22 @@ func Host() gostrict.Funcs {
 			r0 := IndexStateOf(Window{ref: args[0].(js.Ref)}, args[1].(string))
 			return []any{r0.ref}
 		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.IndicesState.Get": func(args []any) []any {
+			r0 := IndicesState{ref: args[0].(js.Ref)}.Get()
+			return []any{gostrictTo44(r0)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.IndicesState.Set": func(args []any) []any {
+			IndicesState{ref: args[0].(js.Ref)}.Set(gostrictFrom44(args[1].([]any)))
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.IndicesState.Observe": func(args []any) []any {
+			r0 := IndicesState{ref: args[0].(js.Ref)}.Observe(gostrictFunc45(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.IndicesStateOf": func(args []any) []any {
+			r0 := IndicesStateOf(Window{ref: args[0].(js.Ref)}, args[1].(string))
+			return []any{r0.ref}
+		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.IntField": func(args []any) []any {
 			r0 := IntField(args[0].(string), args[1].(int32), IntState{ref: args[2].(js.Ref)})
 			return []any{r0.ref}
@@ -719,11 +739,11 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.Menu": func(args []any) []any {
-			r0 := Menu(gostrictFrom1(args[0].(gostrict.Variant)), gostrictFrom44(args[1].([]any))...)
+			r0 := Menu(gostrictFrom1(args[0].(gostrict.Variant)), gostrictFrom46(args[1].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.MenuGroup": func(args []any) []any {
-			r0 := MenuGroup(gostrictFrom45(args[0].([]any))...)
+			r0 := MenuGroup(gostrictFrom47(args[0].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.MenuItem": func(args []any) []any {
@@ -755,11 +775,11 @@ func Host() gostrict.Funcs {
 			return []any{r0}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.NavsplitviewThreeColumn": func(args []any) []any {
-			r0 := NavsplitviewThreeColumn(gostrictFunc46(args[0].(gostrict.Callback)))
+			r0 := NavsplitviewThreeColumn(gostrictFunc48(args[0].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.NavsplitviewTwoColumn": func(args []any) []any {
-			r0 := NavsplitviewTwoColumn(gostrictFunc46(args[0].(gostrict.Callback)))
+			r0 := NavsplitviewTwoColumn(gostrictFunc48(args[0].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.NotificationsOverlay": func(args []any) []any {
@@ -795,7 +815,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.ParentScaffoldMenuEntry": func(args []any) []any {
-			r0 := ParentScaffoldMenuEntry(Window{ref: args[0].(js.Ref)}, SVG(args[1].(string)), args[2].(string), gostrictFrom47(args[3].([]any))...)
+			r0 := ParentScaffoldMenuEntry(Window{ref: args[0].(js.Ref)}, SVG(args[1].(string)), args[2].(string), gostrictFrom49(args[3].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.PasswordField": func(args []any) []any {
@@ -804,6 +824,10 @@ func Host() gostrict.Funcs {
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.PickerButton": func(args []any) []any {
 			r0 := PickerButton(gostrictFunc3(args[0].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.PickerFromSlice": func(args []any) []any {
+			r0 := PickerFromSlice(args[0].(string), args[1].(int32), IndicesState{ref: args[2].(js.Ref)})
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.PieChart": func(args []any) []any {
@@ -835,7 +859,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.RadioStateGroup.Observe": func(args []any) []any {
-			RadioStateGroup{ref: args[0].(js.Ref)}.Observe(gostrictFunc48(args[1].(gostrict.Callback)))
+			RadioStateGroup{ref: args[0].(js.Ref)}.Observe(gostrictFunc50(args[1].(gostrict.Callback)))
 			return nil
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.RadioStateGroup.SetSelectedIndex": func(args []any) []any {
@@ -883,7 +907,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.Sheet": func(args []any) []any {
-			r0 := Sheet(args[0].(string), args[1].(int32), args[2].(int32), gostrictFunc49(args[3].(gostrict.Callback)))
+			r0 := Sheet(args[0].(string), args[1].(int32), args[2].(int32), gostrictFunc51(args[3].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.SingleDatePicker": func(args []any) []any {
@@ -919,7 +943,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.Stepper": func(args []any) []any {
-			r0 := Stepper(gostrictFrom50(args[0].([]any))...)
+			r0 := Stepper(gostrictFrom52(args[0].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.StepperStep": func(args []any) []any {
@@ -935,11 +959,11 @@ func Host() gostrict.Funcs {
 			return nil
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.StringState.Init": func(args []any) []any {
-			r0 := StringState{ref: args[0].(js.Ref)}.Init(gostrictFunc51(args[1].(gostrict.Callback)))
+			r0 := StringState{ref: args[0].(js.Ref)}.Init(gostrictFunc53(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.StringState.Observe": func(args []any) []any {
-			r0 := StringState{ref: args[0].(js.Ref)}.Observe(gostrictFunc52(args[1].(gostrict.Callback)))
+			r0 := StringState{ref: args[0].(js.Ref)}.Observe(gostrictFunc54(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.StringStateOf": func(args []any) []any {
@@ -1014,6 +1038,18 @@ func Host() gostrict.Funcs {
 			r0 := TAvatar{ref: args[0].(js.Ref)}.Style(AvatarStyle(args[1].(int32)))
 			return []any{r0.ref}
 		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TBackground.Fit": func(args []any) []any {
+			r0 := TBackground{ref: args[0].(js.Ref)}.Fit(ObjectFit(args[1].(int32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TBackground.AppendURI": func(args []any) []any {
+			r0 := TBackground{ref: args[0].(js.Ref)}.AppendURI(URI(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TBackground.AppendLinearGradient": func(args []any) []any {
+			r0 := TBackground{ref: args[0].(js.Ref)}.AppendLinearGradient(gostrictFrom55(args[1].([]any))...)
+			return []any{r0.ref}
+		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TBarChart.Horizontal": func(args []any) []any {
 			r0 := TBarChart{ref: args[0].(js.Ref)}.Horizontal(args[1].(bool))
 			return []any{r0.ref}
@@ -1023,11 +1059,15 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TBarChart.Markers": func(args []any) []any {
-			r0 := TBarChart{ref: args[0].(js.Ref)}.Markers(gostrictFrom53(args[1].([]any))...)
+			r0 := TBarChart{ref: args[0].(js.Ref)}.Markers(gostrictFrom56(args[1].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TBarChart.Series": func(args []any) []any {
-			r0 := TBarChart{ref: args[0].(js.Ref)}.Series(gostrictFrom54(args[1].([]any))...)
+			r0 := TBarChart{ref: args[0].(js.Ref)}.Series(gostrictFrom57(args[1].([]any))...)
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TBarChart.Colors": func(args []any) []any {
+			r0 := TBarChart{ref: args[0].(js.Ref)}.Colors(gostrictFrom55(args[1].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TBox.Padding": func(args []any) []any {
@@ -1043,7 +1083,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TBox.WithFrame": func(args []any) []any {
-			r0 := TBox{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc55(args[1].(gostrict.Callback)))
+			r0 := TBox{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc58(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TBox.FullWidth": func(args []any) []any {
@@ -1051,7 +1091,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TBox.Font": func(args []any) []any {
-			r0 := TBox{ref: args[0].(js.Ref)}.Font(gostrictFrom56(args[1].([]any)))
+			r0 := TBox{ref: args[0].(js.Ref)}.Font(gostrictFrom59(args[1].([]any)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TBox.Border": func(args []any) []any {
@@ -1119,7 +1159,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TButton.Font": func(args []any) []any {
-			r0 := TButton{ref: args[0].(js.Ref)}.Font(gostrictFrom56(args[1].([]any)))
+			r0 := TButton{ref: args[0].(js.Ref)}.Font(gostrictFrom59(args[1].([]any)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TButton.AccessibilityLabel": func(args []any) []any {
@@ -1195,27 +1235,27 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCalendarEvent.FromOffset": func(args []any) []any {
-			r0 := TCalendarEvent{ref: args[0].(js.Ref)}.FromOffset(gostrictFrom57(args[1].([]any)))
+			r0 := TCalendarEvent{ref: args[0].(js.Ref)}.FromOffset(gostrictFrom60(args[1].([]any)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCalendarEvent.ToOffset": func(args []any) []any {
-			r0 := TCalendarEvent{ref: args[0].(js.Ref)}.ToOffset(gostrictFrom57(args[1].([]any)))
+			r0 := TCalendarEvent{ref: args[0].(js.Ref)}.ToOffset(gostrictFrom60(args[1].([]any)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCalendarEvent.Categories": func(args []any) []any {
-			r0 := TCalendarEvent{ref: args[0].(js.Ref)}.Categories(gostrictFrom58(args[1].([]any))...)
+			r0 := TCalendarEvent{ref: args[0].(js.Ref)}.Categories(gostrictFrom61(args[1].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCalendarEvent.Pillar": func(args []any) []any {
-			r0 := TCalendarEvent{ref: args[0].(js.Ref)}.Pillar(gostrictFrom59(args[1].([]any)))
+			r0 := TCalendarEvent{ref: args[0].(js.Ref)}.Pillar(gostrictFrom62(args[1].([]any)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCalendarEvent.Lane": func(args []any) []any {
-			r0 := TCalendarEvent{ref: args[0].(js.Ref)}.Lane(gostrictFrom60(args[1].([]any)))
+			r0 := TCalendarEvent{ref: args[0].(js.Ref)}.Lane(gostrictFrom63(args[1].([]any)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCalendarEvent.Chips": func(args []any) []any {
-			r0 := TCalendarEvent{ref: args[0].(js.Ref)}.Chips(gostrictFrom61(args[1].([]any))...)
+			r0 := TCalendarEvent{ref: args[0].(js.Ref)}.Chips(gostrictFrom64(args[1].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCalendarEvent.Organiser": func(args []any) []any {
@@ -1231,7 +1271,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCalendarEvent.Render": func(args []any) []any {
-			r0 := TCalendarEvent{ref: args[0].(js.Ref)}.Render(gostrictFunc62(args[1].(gostrict.Callback)))
+			r0 := TCalendarEvent{ref: args[0].(js.Ref)}.Render(gostrictFunc65(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCalendarViewPort.From": func(args []any) []any {
@@ -1243,7 +1283,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCalendarViewPort.Columns": func(args []any) []any {
-			r0 := TCalendarViewPort{ref: args[0].(js.Ref)}.Columns(gostrictFrom63(args[1].([]any))...)
+			r0 := TCalendarViewPort{ref: args[0].(js.Ref)}.Columns(gostrictFrom66(args[1].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCalendarViewPort.LaneWidth": func(args []any) []any {
@@ -1335,7 +1375,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCheckboxField.WithFrame": func(args []any) []any {
-			r0 := TCheckboxField{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc55(args[1].(gostrict.Callback)))
+			r0 := TCheckboxField{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc58(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCheckboxField.Border": func(args []any) []any {
@@ -1519,7 +1559,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDataView.Action": func(args []any) []any {
-			r0 := TDataView{ref: args[0].(js.Ref)}.Action(gostrictFunc64(args[1].(gostrict.Callback)))
+			r0 := TDataView{ref: args[0].(js.Ref)}.Action(gostrictFunc67(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDataView.NextActionIndicator": func(args []any) []any {
@@ -1531,7 +1571,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDataView.CreateOptions": func(args []any) []any {
-			r0 := TDataView{ref: args[0].(js.Ref)}.CreateOptions(gostrictFrom65(args[1].([]any))...)
+			r0 := TDataView{ref: args[0].(js.Ref)}.CreateOptions(gostrictFrom68(args[1].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDataView.CreateActionView": func(args []any) []any {
@@ -1543,11 +1583,11 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDataView.SelectOptions": func(args []any) []any {
-			r0 := TDataView{ref: args[0].(js.Ref)}.SelectOptions(gostrictFrom66(args[1].([]any))...)
+			r0 := TDataView{ref: args[0].(js.Ref)}.SelectOptions(gostrictFrom69(args[1].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDataView.SelectionChanged": func(args []any) []any {
-			r0 := TDataView{ref: args[0].(js.Ref)}.SelectionChanged(gostrictFunc67(args[1].(gostrict.Callback)))
+			r0 := TDataView{ref: args[0].(js.Ref)}.SelectionChanged(gostrictFunc70(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDataView.Style": func(args []any) []any {
@@ -1595,7 +1635,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDataViewField.Comparator": func(args []any) []any {
-			r0 := TDataViewField{ref: args[0].(js.Ref)}.Comparator(gostrictFunc68(args[1].(gostrict.Callback)))
+			r0 := TDataViewField{ref: args[0].(js.Ref)}.Comparator(gostrictFunc71(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDataViewField.MinSize": func(args []any) []any {
@@ -1603,7 +1643,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDataViewSelectOption.Visible": func(args []any) []any {
-			r0 := TDataViewSelectOption{ref: args[0].(js.Ref)}.Visible(gostrictFunc69(args[1].(gostrict.Callback)))
+			r0 := TDataViewSelectOption{ref: args[0].(js.Ref)}.Visible(gostrictFunc72(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDataViewSelectOption.ConfirmDialog": func(args []any) []any {
@@ -1619,7 +1659,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDatePicker.WithFrame": func(args []any) []any {
-			r0 := TDatePicker{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc55(args[1].(gostrict.Callback)))
+			r0 := TDatePicker{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc58(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDatePicker.Border": func(args []any) []any {
@@ -1683,7 +1723,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDialog.WithFrame": func(args []any) []any {
-			r0 := TDialog{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc55(args[1].(gostrict.Callback)))
+			r0 := TDialog{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc58(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDialog.DisableBoxLayout": func(args []any) []any {
@@ -1775,7 +1815,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDocumentPage.Size": func(args []any) []any {
-			r0 := TDocumentPage{ref: args[0].(js.Ref)}.Size(gostrictFrom70(args[1].([]any)))
+			r0 := TDocumentPage{ref: args[0].(js.Ref)}.Size(gostrictFrom73(args[1].([]any)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDocumentPage.Alignment": func(args []any) []any {
@@ -1795,7 +1835,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDocumentPage.Comment": func(args []any) []any {
-			r0 := TDocumentPage{ref: args[0].(js.Ref)}.Comment(gostrictFrom71(args[1].([]any))...)
+			r0 := TDocumentPage{ref: args[0].(js.Ref)}.Comment(gostrictFrom74(args[1].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDocumentPage.Append": func(args []any) []any {
@@ -1895,7 +1935,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TEditorScreen.LeadingToolWindows": func(args []any) []any {
-			r0 := TEditorScreen{ref: args[0].(js.Ref)}.LeadingToolWindows(gostrictFrom72(args[1].([]any))...)
+			r0 := TEditorScreen{ref: args[0].(js.Ref)}.LeadingToolWindows(gostrictFrom75(args[1].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TEditorScreen.TrailingToolWindow": func(args []any) []any {
@@ -1979,7 +2019,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TFlowChart.WithFrame": func(args []any) []any {
-			r0 := TFlowChart{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc55(args[1].(gostrict.Callback)))
+			r0 := TFlowChart{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc58(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TFlowChart.FullWidth": func(args []any) []any {
@@ -1987,7 +2027,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TFlowChart.Background": func(args []any) []any {
-			r0 := TFlowChart{ref: args[0].(js.Ref)}.Background(gostrictFrom73(args[1].([]any)))
+			r0 := TFlowChart{ref: args[0].(js.Ref)}.Background(gostrictFrom76(args[1].([]any)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TFlowChart.NodesDraggable": func(args []any) []any {
@@ -2011,7 +2051,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TFlowChart.CustomContents": func(args []any) []any {
-			r0 := TFlowChart{ref: args[0].(js.Ref)}.CustomContents(gostrictFrom74(args[1].([]any))...)
+			r0 := TFlowChart{ref: args[0].(js.Ref)}.CustomContents(gostrictFrom77(args[1].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TFlowChart.AppendCustomContent": func(args []any) []any {
@@ -2027,7 +2067,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TFlowChart.Toolbar": func(args []any) []any {
-			r0 := TFlowChart{ref: args[0].(js.Ref)}.Toolbar(gostrictFrom75(args[1].([]any)))
+			r0 := TFlowChart{ref: args[0].(js.Ref)}.Toolbar(gostrictFrom78(args[1].([]any)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TFlowChart.Menu": func(args []any) []any {
@@ -2111,7 +2151,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGrid.Heights": func(args []any) []any {
-			r0 := TGrid{ref: args[0].(js.Ref)}.Heights(gostrictFrom76(args[1].([]any))...)
+			r0 := TGrid{ref: args[0].(js.Ref)}.Heights(gostrictFrom79(args[1].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGrid.Gap": func(args []any) []any {
@@ -2131,7 +2171,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGrid.Widths": func(args []any) []any {
-			r0 := TGrid{ref: args[0].(js.Ref)}.Widths(gostrictFrom76(args[1].([]any))...)
+			r0 := TGrid{ref: args[0].(js.Ref)}.Widths(gostrictFrom79(args[1].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGrid.BackgroundColor": func(args []any) []any {
@@ -2143,7 +2183,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGrid.WithFrame": func(args []any) []any {
-			r0 := TGrid{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc55(args[1].(gostrict.Callback)))
+			r0 := TGrid{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc58(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGrid.FullWidth": func(args []any) []any {
@@ -2151,7 +2191,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGrid.Font": func(args []any) []any {
-			r0 := TGrid{ref: args[0].(js.Ref)}.Font(gostrictFrom56(args[1].([]any)))
+			r0 := TGrid{ref: args[0].(js.Ref)}.Font(gostrictFrom59(args[1].([]any)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGrid.Border": func(args []any) []any {
@@ -2267,7 +2307,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.THoverGroup.Position": func(args []any) []any {
-			r0 := THoverGroup{ref: args[0].(js.Ref)}.Position(gostrictFrom77(args[1].([]any)))
+			r0 := THoverGroup{ref: args[0].(js.Ref)}.Position(gostrictFrom80(args[1].([]any)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.THoverGroup.Border": func(args []any) []any {
@@ -2280,6 +2320,18 @@ func Host() gostrict.Funcs {
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.THoverGroup.BackgroundColor": func(args []any) []any {
 			r0 := THoverGroup{ref: args[0].(js.Ref)}.BackgroundColor(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TImage.Embed": func(args []any) []any {
+			r0 := TImage{ref: args[0].(js.Ref)}.Embed(SVG(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TImage.EmbedAdaptive": func(args []any) []any {
+			r0 := TImage{ref: args[0].(js.Ref)}.EmbedAdaptive(SVG(args[1].(string)), SVG(args[2].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TImage.Adaptive": func(args []any) []any {
+			r0 := TImage{ref: args[0].(js.Ref)}.Adaptive(ImageID(args[1].(string)), ImageID(args[2].(string)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TImage.URI": func(args []any) []any {
@@ -2319,7 +2371,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TImage.WithFrame": func(args []any) []any {
-			r0 := TImage{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc55(args[1].(gostrict.Callback)))
+			r0 := TImage{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc58(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TImage.ObjectFit": func(args []any) []any {
@@ -2339,11 +2391,15 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TLineChart.Series": func(args []any) []any {
-			r0 := TLineChart{ref: args[0].(js.Ref)}.Series(gostrictFrom54(args[1].([]any))...)
+			r0 := TLineChart{ref: args[0].(js.Ref)}.Series(gostrictFrom57(args[1].([]any))...)
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TLineChart.Colors": func(args []any) []any {
+			r0 := TLineChart{ref: args[0].(js.Ref)}.Colors(gostrictFrom55(args[1].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TLineChart.Markers": func(args []any) []any {
-			r0 := TLineChart{ref: args[0].(js.Ref)}.Markers(gostrictFrom78(args[1].([]any)))
+			r0 := TLineChart{ref: args[0].(js.Ref)}.Markers(gostrictFrom81(args[1].([]any)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TLineChart.Curve": func(args []any) []any {
@@ -2387,15 +2443,15 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TList.OnEntryClicked": func(args []any) []any {
-			r0 := TList{ref: args[0].(js.Ref)}.OnEntryClicked(gostrictFunc79(args[1].(gostrict.Callback)))
+			r0 := TList{ref: args[0].(js.Ref)}.OnEntryClicked(gostrictFunc82(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TList.OnHighlighted": func(args []any) []any {
-			r0 := TList{ref: args[0].(js.Ref)}.OnHighlighted(gostrictFunc80(args[1].(gostrict.Callback)))
+			r0 := TList{ref: args[0].(js.Ref)}.OnHighlighted(gostrictFunc83(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TList.With": func(args []any) []any {
-			r0 := TList{ref: args[0].(js.Ref)}.With(gostrictFunc81(args[1].(gostrict.Callback)))
+			r0 := TList{ref: args[0].(js.Ref)}.With(gostrictFunc84(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TListEntry.Headline": func(args []any) []any {
@@ -2643,7 +2699,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPasswordField.WithFrame": func(args []any) []any {
-			r0 := TPasswordField{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc55(args[1].(gostrict.Callback)))
+			r0 := TPasswordField{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc58(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPasswordField.Lines": func(args []any) []any {
@@ -2670,6 +2726,94 @@ func Host() gostrict.Funcs {
 			r0 := TPasswordField{ref: args[0].(js.Ref)}.FullWidth()
 			return []any{r0.ref}
 		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPicker.DialogPresented": func(args []any) []any {
+			r0 := TPicker{ref: args[0].(js.Ref)}.DialogPresented()
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPicker.Title": func(args []any) []any {
+			r0 := TPicker{ref: args[0].(js.Ref)}.Title(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPicker.SupportingText": func(args []any) []any {
+			r0 := TPicker{ref: args[0].(js.Ref)}.SupportingText(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPicker.ErrorText": func(args []any) []any {
+			r0 := TPicker{ref: args[0].(js.Ref)}.ErrorText(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPicker.MultiSelect": func(args []any) []any {
+			r0 := TPicker{ref: args[0].(js.Ref)}.MultiSelect(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPicker.SelectAllSupported": func(args []any) []any {
+			r0 := TPicker{ref: args[0].(js.Ref)}.SelectAllSupported(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPicker.QuickFilterSupported": func(args []any) []any {
+			r0 := TPicker{ref: args[0].(js.Ref)}.QuickFilterSupported(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPicker.Disabled": func(args []any) []any {
+			r0 := TPicker{ref: args[0].(js.Ref)}.Disabled(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPicker.FullWidth": func(args []any) []any {
+			r0 := TPicker{ref: args[0].(js.Ref)}.FullWidth()
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPicker.DetailView": func(args []any) []any {
+			r0 := TPicker{ref: args[0].(js.Ref)}.DetailView(gostrictFrom1(args[1].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPicker.WithDialogPresented": func(args []any) []any {
+			r0 := TPicker{ref: args[0].(js.Ref)}.WithDialogPresented(BoolState{ref: args[1].(js.Ref)})
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPicker.DialogOptions": func(args []any) []any {
+			r0 := TPicker{ref: args[0].(js.Ref)}.DialogOptions(gostrictFrom4(args[1].([]any))...)
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPicker.Stringer": func(args []any) []any {
+			r0 := TPicker{ref: args[0].(js.Ref)}.Stringer(gostrictFunc85(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPicker.ItemRenderer": func(args []any) []any {
+			r0 := TPicker{ref: args[0].(js.Ref)}.ItemRenderer(gostrictFunc18(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPicker.ItemPickedRenderer": func(args []any) []any {
+			r0 := TPicker{ref: args[0].(js.Ref)}.ItemPickedRenderer(gostrictFunc86(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPicker.ItemRenderer2": func(args []any) []any {
+			r0 := TPicker{ref: args[0].(js.Ref)}.ItemRenderer2(gostrictFunc87(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPicker.Padding": func(args []any) []any {
+			r0 := TPicker{ref: args[0].(js.Ref)}.Padding(gostrictFrom5(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPicker.Frame": func(args []any) []any {
+			r0 := TPicker{ref: args[0].(js.Ref)}.Frame(gostrictFrom39(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPicker.WithFrame": func(args []any) []any {
+			r0 := TPicker{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc58(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPicker.Border": func(args []any) []any {
+			r0 := TPicker{ref: args[0].(js.Ref)}.Border(gostrictFrom10(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPicker.Visible": func(args []any) []any {
+			r0 := TPicker{ref: args[0].(js.Ref)}.Visible(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPicker.AccessibilityLabel": func(args []any) []any {
+			r0 := TPicker{ref: args[0].(js.Ref)}.AccessibilityLabel(args[1].(string))
+			return []any{r0.ref}
+		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPickerButton.Content": func(args []any) []any {
 			r0 := TPickerButton{ref: args[0].(js.Ref)}.Content(gostrictFrom1(args[1].(gostrict.Variant)))
 			return []any{r0.ref}
@@ -2687,7 +2831,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPickerButton.WithFrame": func(args []any) []any {
-			r0 := TPickerButton{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc55(args[1].(gostrict.Callback)))
+			r0 := TPickerButton{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc58(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPickerButton.Border": func(args []any) []any {
@@ -2703,7 +2847,11 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPieChart.Series": func(args []any) []any {
-			r0 := TPieChart{ref: args[0].(js.Ref)}.Series(gostrictFrom54(args[1].([]any))...)
+			r0 := TPieChart{ref: args[0].(js.Ref)}.Series(gostrictFrom57(args[1].([]any))...)
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPieChart.Colors": func(args []any) []any {
+			r0 := TPieChart{ref: args[0].(js.Ref)}.Colors(gostrictFrom55(args[1].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPieChart.ShowAsDonut": func(args []any) []any {
@@ -2835,7 +2983,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TScaffold.Menu": func(args []any) []any {
-			r0 := TScaffold{ref: args[0].(js.Ref)}.Menu(gostrictFrom47(args[1].([]any))...)
+			r0 := TScaffold{ref: args[0].(js.Ref)}.Menu(gostrictFrom49(args[1].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TScaffold.BottomView": func(args []any) []any {
@@ -2871,7 +3019,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TScrollView.Position": func(args []any) []any {
-			r0 := TScrollView{ref: args[0].(js.Ref)}.Position(gostrictFrom77(args[1].([]any)))
+			r0 := TScrollView{ref: args[0].(js.Ref)}.Position(gostrictFrom80(args[1].([]any)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TScrollView.ScrollToView": func(args []any) []any {
@@ -2923,7 +3071,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TSheet.OnEdit": func(args []any) []any {
-			r0 := TSheet{ref: args[0].(js.Ref)}.OnEdit(gostrictFunc82(args[1].(gostrict.Callback)))
+			r0 := TSheet{ref: args[0].(js.Ref)}.OnEdit(gostrictFunc88(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TSlider.Value": func(args []any) []any {
@@ -2975,7 +3123,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TSliderRangeSlider.Value": func(args []any) []any {
-			r0 := TSliderRangeSlider{ref: args[0].(js.Ref)}.Value(gostrictFrom83(args[1].([]any)))
+			r0 := TSliderRangeSlider{ref: args[0].(js.Ref)}.Value(gostrictFrom89(args[1].([]any)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TSliderRangeSlider.SupportingText": func(args []any) []any {
@@ -3062,12 +3210,16 @@ func Host() gostrict.Funcs {
 			r0 := TSplitView{ref: args[0].(js.Ref)}.MaxRatio(args[1].(float64))
 			return []any{r0.ref}
 		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.Background": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.Background(TBackground{ref: args[1].(js.Ref)})
+			return []any{r0.ref}
+		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.Responsive": func(args []any) []any {
-			r0 := TStack{ref: args[0].(js.Ref)}.Responsive(gostrictFunc84(args[1].(gostrict.Callback)))
+			r0 := TStack{ref: args[0].(js.Ref)}.Responsive(gostrictFunc90(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.With": func(args []any) []any {
-			r0 := TStack{ref: args[0].(js.Ref)}.With(gostrictFunc85(args[1].(gostrict.Callback)))
+			r0 := TStack{ref: args[0].(js.Ref)}.With(gostrictFunc91(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.NoClip": func(args []any) []any {
@@ -3075,7 +3227,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.Font": func(args []any) []any {
-			r0 := TStack{ref: args[0].(js.Ref)}.Font(gostrictFrom56(args[1].([]any)))
+			r0 := TStack{ref: args[0].(js.Ref)}.Font(gostrictFrom59(args[1].([]any)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.AccessibilityLabel": func(args []any) []any {
@@ -3151,7 +3303,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.WithFrame": func(args []any) []any {
-			r0 := TStack{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc55(args[1].(gostrict.Callback)))
+			r0 := TStack{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc58(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.Gap": func(args []any) []any {
@@ -3195,7 +3347,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.Position": func(args []any) []any {
-			r0 := TStack{ref: args[0].(js.Ref)}.Position(gostrictFrom77(args[1].([]any)))
+			r0 := TStack{ref: args[0].(js.Ref)}.Position(gostrictFrom80(args[1].([]any)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.Animation": func(args []any) []any {
@@ -3203,23 +3355,23 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.Transformation": func(args []any) []any {
-			r0 := TStack{ref: args[0].(js.Ref)}.Transformation(gostrictFrom86(args[1].([]any)))
+			r0 := TStack{ref: args[0].(js.Ref)}.Transformation(gostrictFrom92(args[1].([]any)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.Outline": func(args []any) []any {
-			r0 := TStack{ref: args[0].(js.Ref)}.Outline(gostrictFrom87(args[1].([]any)))
+			r0 := TStack{ref: args[0].(js.Ref)}.Outline(gostrictFrom93(args[1].([]any)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.HoveredOutline": func(args []any) []any {
-			r0 := TStack{ref: args[0].(js.Ref)}.HoveredOutline(gostrictFrom87(args[1].([]any)))
+			r0 := TStack{ref: args[0].(js.Ref)}.HoveredOutline(gostrictFrom93(args[1].([]any)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.PressedOutline": func(args []any) []any {
-			r0 := TStack{ref: args[0].(js.Ref)}.PressedOutline(gostrictFrom87(args[1].([]any)))
+			r0 := TStack{ref: args[0].(js.Ref)}.PressedOutline(gostrictFrom93(args[1].([]any)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.FocusedOutline": func(args []any) []any {
-			r0 := TStack{ref: args[0].(js.Ref)}.FocusedOutline(gostrictFrom87(args[1].([]any)))
+			r0 := TStack{ref: args[0].(js.Ref)}.FocusedOutline(gostrictFrom93(args[1].([]any)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.Layout": func(args []any) []any {
@@ -3239,7 +3391,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStepper.Steps": func(args []any) []any {
-			r0 := TStepper{ref: args[0].(js.Ref)}.Steps(gostrictFrom50(args[1].([]any))...)
+			r0 := TStepper{ref: args[0].(js.Ref)}.Steps(gostrictFrom52(args[1].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStepper.SimpleTextPattern": func(args []any) []any {
@@ -3295,7 +3447,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TSwitcher.With": func(args []any) []any {
-			r0 := TSwitcher{ref: args[0].(js.Ref)}.With(gostrictFunc88(args[1].(gostrict.Callback)))
+			r0 := TSwitcher{ref: args[0].(js.Ref)}.With(gostrictFunc94(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TSwitcher.Layout": func(args []any) []any {
@@ -3327,7 +3479,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTable.Columns": func(args []any) []any {
-			r0 := TTable{ref: args[0].(js.Ref)}.Columns(gostrictFrom89(args[1].([]any))...)
+			r0 := TTable{ref: args[0].(js.Ref)}.Columns(gostrictFrom95(args[1].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTable.BackgroundColor": func(args []any) []any {
@@ -3351,7 +3503,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTable.Rows": func(args []any) []any {
-			r0 := TTable{ref: args[0].(js.Ref)}.Rows(gostrictFrom90(args[1].([]any))...)
+			r0 := TTable{ref: args[0].(js.Ref)}.Rows(gostrictFrom96(args[1].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTable.CellPadding": func(args []any) []any {
@@ -3439,7 +3591,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTableRow.Append": func(args []any) []any {
-			r0 := TTableRow{ref: args[0].(js.Ref)}.Append(gostrictFrom91(args[1].([]any))...)
+			r0 := TTableRow{ref: args[0].(js.Ref)}.Append(gostrictFrom97(args[1].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTableRow.Action": func(args []any) []any {
@@ -3483,7 +3635,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTabs.Position": func(args []any) []any {
-			r0 := TTabs{ref: args[0].(js.Ref)}.Position(gostrictFrom77(args[1].([]any)))
+			r0 := TTabs{ref: args[0].(js.Ref)}.Position(gostrictFrom80(args[1].([]any)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTabsPage.Icon": func(args []any) []any {
@@ -3499,7 +3651,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTagsColoredTextPill.WithFrame": func(args []any) []any {
-			r0 := TTagsColoredTextPill{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc55(args[1].(gostrict.Callback)))
+			r0 := TTagsColoredTextPill{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc58(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTagsColoredTextPill.Frame": func(args []any) []any {
@@ -3539,7 +3691,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TText.WithFrame": func(args []any) []any {
-			r0 := TText{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc55(args[1].(gostrict.Callback)))
+			r0 := TText{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc58(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TText.FullWidth": func(args []any) []any {
@@ -3587,7 +3739,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TText.Font": func(args []any) []any {
-			r0 := TText{ref: args[0].(js.Ref)}.Font(gostrictFrom56(args[1].([]any)))
+			r0 := TText{ref: args[0].(js.Ref)}.Font(gostrictFrom59(args[1].([]any)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TText.Color": func(args []any) []any {
@@ -3675,7 +3827,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.WithFrame": func(args []any) []any {
-			r0 := TTextField{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc55(args[1].(gostrict.Callback)))
+			r0 := TTextField{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc58(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.FullWidth": func(args []any) []any {
@@ -3755,7 +3907,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextLayout.Font": func(args []any) []any {
-			r0 := TTextLayout{ref: args[0].(js.Ref)}.Font(gostrictFrom56(args[1].([]any)))
+			r0 := TTextLayout{ref: args[0].(js.Ref)}.Font(gostrictFrom59(args[1].([]any)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextLayout.Frame": func(args []any) []any {
@@ -3763,7 +3915,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextLayout.WithFrame": func(args []any) []any {
-			r0 := TTextLayout{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc55(args[1].(gostrict.Callback)))
+			r0 := TTextLayout{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc58(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextLayout.FullWidth": func(args []any) []any {
@@ -3803,7 +3955,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTimeframePicker.WithFrame": func(args []any) []any {
-			r0 := TTimeframePicker{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc55(args[1].(gostrict.Callback)))
+			r0 := TTimeframePicker{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc58(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTimeframePicker.Border": func(args []any) []any {
@@ -3847,7 +3999,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTimepickerPicker.WithFrame": func(args []any) []any {
-			r0 := TTimepickerPicker{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc55(args[1].(gostrict.Callback)))
+			r0 := TTimepickerPicker{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc58(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTimepickerPicker.Border": func(args []any) []any {
@@ -3935,7 +4087,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TToggleField.WithFrame": func(args []any) []any {
-			r0 := TToggleField{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc55(args[1].(gostrict.Callback)))
+			r0 := TToggleField{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc58(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TToggleField.Border": func(args []any) []any {
@@ -4027,7 +4179,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.Table": func(args []any) []any {
-			r0 := Table(gostrictFrom89(args[0].([]any))...)
+			r0 := Table(gostrictFrom95(args[0].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TableCell": func(args []any) []any {
@@ -4039,11 +4191,11 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TableRow": func(args []any) []any {
-			r0 := TableRow(gostrictFrom91(args[0].([]any))...)
+			r0 := TableRow(gostrictFrom97(args[0].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.Tabs": func(args []any) []any {
-			r0 := Tabs(gostrictFrom92(args[0].([]any))...)
+			r0 := Tabs(gostrictFrom98(args[0].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TabsPage": func(args []any) []any {
@@ -4108,18 +4260,18 @@ func Host() gostrict.Funcs {
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TimeFrameState.Get": func(args []any) []any {
 			r0 := TimeFrameState{ref: args[0].(js.Ref)}.Get()
-			return []any{gostrictTo93(r0)}
+			return []any{gostrictTo99(r0)}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TimeFrameState.Set": func(args []any) []any {
-			TimeFrameState{ref: args[0].(js.Ref)}.Set(gostrictFrom93(args[1].([]any)))
+			TimeFrameState{ref: args[0].(js.Ref)}.Set(gostrictFrom99(args[1].([]any)))
 			return nil
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TimeFrameState.Init": func(args []any) []any {
-			r0 := TimeFrameState{ref: args[0].(js.Ref)}.Init(gostrictFunc94(args[1].(gostrict.Callback)))
+			r0 := TimeFrameState{ref: args[0].(js.Ref)}.Init(gostrictFunc100(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TimeFrameState.Observe": func(args []any) []any {
-			r0 := TimeFrameState{ref: args[0].(js.Ref)}.Observe(gostrictFunc95(args[1].(gostrict.Callback)))
+			r0 := TimeFrameState{ref: args[0].(js.Ref)}.Observe(gostrictFunc101(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TimeFrameStateOf": func(args []any) []any {
@@ -4191,7 +4343,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.ViewThatMatches": func(args []any) []any {
-			r0 := ViewThatMatches(Window{ref: args[0].(js.Ref)}, gostrictFrom96(args[1].([]any))...)
+			r0 := ViewThatMatches(Window{ref: args[0].(js.Ref)}, gostrictFrom102(args[1].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.WebView": func(args []any) []any {
@@ -4208,42 +4360,42 @@ func Host() gostrict.Funcs {
 // HostVars returns the values of the variables of this header package, which their bindings must equal.
 func HostVars() map[string]any {
 	return map[string]any{
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.BodyLarge":        gostrictTo56(BodyLarge),
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.BodyMedium":       gostrictTo56(BodyMedium),
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.BodySmall":        gostrictTo56(BodySmall),
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.DisplayLarge":     gostrictTo56(DisplayLarge),
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.DisplayMedium":    gostrictTo56(DisplayMedium),
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.DisplaySmall":     gostrictTo56(DisplaySmall),
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.DocumentDinA4":    gostrictTo70(DocumentDinA4),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.BodyLarge":        gostrictTo59(BodyLarge),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.BodyMedium":       gostrictTo59(BodyMedium),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.BodySmall":        gostrictTo59(BodySmall),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.DisplayLarge":     gostrictTo59(DisplayLarge),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.DisplayMedium":    gostrictTo59(DisplayMedium),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.DisplaySmall":     gostrictTo59(DisplaySmall),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.DocumentDinA4":    gostrictTo73(DocumentDinA4),
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.Full":             string(Full),
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.HeadlineLarge":    gostrictTo56(HeadlineLarge),
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.HeadlineMedium":   gostrictTo56(HeadlineMedium),
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.HeadlineSmall":    gostrictTo56(HeadlineSmall),
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.LabelLarge":       gostrictTo56(LabelLarge),
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.LabelMedium":      gostrictTo56(LabelMedium),
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.LabelSmall":       gostrictTo56(LabelSmall),
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.Large":            gostrictTo56(Large),
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoBoldLarge":    gostrictTo56(MonoBoldLarge),
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoBoldMedium":   gostrictTo56(MonoBoldMedium),
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoBoldSmall":    gostrictTo56(MonoBoldSmall),
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoItalicLarge":  gostrictTo56(MonoItalicLarge),
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoItalicMedium": gostrictTo56(MonoItalicMedium),
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoItalicSmall":  gostrictTo56(MonoItalicSmall),
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoLarge":        gostrictTo56(MonoLarge),
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoMedium":       gostrictTo56(MonoMedium),
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoSmall":        gostrictTo56(MonoSmall),
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.Monospace":        gostrictTo56(Monospace),
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.Small":            gostrictTo56(Small),
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.SubTitle":         gostrictTo56(SubTitle),
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.Title":            gostrictTo56(Title),
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.TitleLarge":       gostrictTo56(TitleLarge),
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.TitleMedium":      gostrictTo56(TitleMedium),
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.TitleSmall":       gostrictTo56(TitleSmall),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.HeadlineLarge":    gostrictTo59(HeadlineLarge),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.HeadlineMedium":   gostrictTo59(HeadlineMedium),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.HeadlineSmall":    gostrictTo59(HeadlineSmall),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.LabelLarge":       gostrictTo59(LabelLarge),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.LabelMedium":      gostrictTo59(LabelMedium),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.LabelSmall":       gostrictTo59(LabelSmall),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Large":            gostrictTo59(Large),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoBoldLarge":    gostrictTo59(MonoBoldLarge),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoBoldMedium":   gostrictTo59(MonoBoldMedium),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoBoldSmall":    gostrictTo59(MonoBoldSmall),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoItalicLarge":  gostrictTo59(MonoItalicLarge),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoItalicMedium": gostrictTo59(MonoItalicMedium),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoItalicSmall":  gostrictTo59(MonoItalicSmall),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoLarge":        gostrictTo59(MonoLarge),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoMedium":       gostrictTo59(MonoMedium),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoSmall":        gostrictTo59(MonoSmall),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Monospace":        gostrictTo59(Monospace),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Small":            gostrictTo59(Small),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.SubTitle":         gostrictTo59(SubTitle),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Title":            gostrictTo59(Title),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TitleLarge":       gostrictTo59(TitleLarge),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TitleMedium":      gostrictTo59(TitleMedium),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TitleSmall":       gostrictTo59(TitleSmall),
 	}
 }
 
 func init() {
-	gostrict.Variants[View](TAccordion{}, TAlertDialog{}, TAlertBanner{}, TAlertBannerMessages{}, TAvatar{}, TBarChart{}, TBox{}, TBreadcrumbs{}, TFilledButton{}, TButton{}, TCalendar{}, TCardLayout{}, TCard{}, TCheckbox{}, TCheckboxField{}, TCodeEditor{}, TColorpickerColor{}, TColorpickerPickerField{}, TColorpickerPicker{}, TCountDown{}, TDataView{}, TDatePicker{}, TDialog{}, TDivider{}, TDnDArea{}, TDocumentComment{}, TDocumentEditable{}, TDocumentPage{}, TDropdown{}, TEditorContent{}, TEditorHeader{}, TEditorNavbar{}, TEditorVToolWindow{}, TEditorScreen{}, TEsignatureSignature{}, TFlowChart{}, TFooter{}, TForm{}, TPager{}, TGrid{}, THero{}, THoverGroup{}, TImage{}, TLineChart{}, TListEntry{}, TList{}, TMenu{}, TModal{}, TNavsplitviewListItem{}, TNavsplitviewTwoColumn{}, TNavsplitviewThreeColumn{}, TPasswordField{}, TPDF{}, TPickerButton{}, TPieChart{}, TProgress{}, TQrCode{}, TRadioButton{}, TRadioButtonField{}, TRichText{}, TRichTextEditor{}, TScaffold{}, TScrollView{}, TSheet{}, TSlider{}, TSliderRangeSlider{}, TSpace{}, TSpacer{}, TSplitView{}, TStack{}, TStepper{}, TSwitcher{}, TTable{}, TTabs{}, TTagsColoredTextPill{}, TText{}, TTextField{}, TTextLayout{}, TThemeSwitcher{}, TTimeframePicker{}, TTimepickerPicker{}, TToggle{}, TToggleField{}, TTrackingSupportRequestDialog{}, TVideo{}, TViewThatMatches{}, TWebView{}, TWindowTitle{})
+	gostrict.Variants[View](TAccordion{}, TAlertDialog{}, TAlertBanner{}, TAlertBannerMessages{}, TAvatar{}, TBarChart{}, TBox{}, TBreadcrumbs{}, TFilledButton{}, TButton{}, TCalendar{}, TCardLayout{}, TCard{}, TCheckbox{}, TCheckboxField{}, TCodeEditor{}, TColorpickerColor{}, TColorpickerPickerField{}, TColorpickerPicker{}, TCountDown{}, TDataView{}, TDatePicker{}, TDialog{}, TDivider{}, TDnDArea{}, TDocumentComment{}, TDocumentEditable{}, TDocumentPage{}, TDropdown{}, TEditorContent{}, TEditorHeader{}, TEditorNavbar{}, TEditorVToolWindow{}, TEditorScreen{}, TEsignatureSignature{}, TPicker{}, TFlowChart{}, TFooter{}, TForm{}, TPager{}, TGrid{}, THero{}, THoverGroup{}, TImage{}, TLineChart{}, TListEntry{}, TList{}, TMenu{}, TModal{}, TNavsplitviewListItem{}, TNavsplitviewTwoColumn{}, TNavsplitviewThreeColumn{}, TPasswordField{}, TPDF{}, TPickerButton{}, TPieChart{}, TProgress{}, TQrCode{}, TRadioButton{}, TRadioButtonField{}, TRichText{}, TRichTextEditor{}, TScaffold{}, TScrollView{}, TSheet{}, TSlider{}, TSliderRangeSlider{}, TSpace{}, TSpacer{}, TSplitView{}, TStack{}, TStepper{}, TSwitcher{}, TTable{}, TTabs{}, TTagsColoredTextPill{}, TText{}, TTextField{}, TTextLayout{}, TThemeSwitcher{}, TTimeframePicker{}, TTimepickerPicker{}, TToggle{}, TToggleField{}, TTrackingSupportRequestDialog{}, TVideo{}, TViewThatMatches{}, TWebView{}, TWindowTitle{})
 }
 
 // HostRef returns the reference of the handle.
@@ -4337,6 +4489,16 @@ func (IndexState) HostFromRef(ref js.Ref) any {
 }
 
 // HostRef returns the reference of the handle.
+func (h IndicesState) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (IndicesState) HostFromRef(ref js.Ref) any {
+	return IndicesState{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
 func (h IntState) HostRef() js.Ref {
 	return h.ref
 }
@@ -4424,6 +4586,16 @@ func (h TAvatar) HostRef() js.Ref {
 // HostFromRef returns the handle of a reference.
 func (TAvatar) HostFromRef(ref js.Ref) any {
 	return TAvatar{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TBackground) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TBackground) HostFromRef(ref js.Ref) any {
+	return TBackground{ref: ref}
 }
 
 // HostRef returns the reference of the handle.
@@ -5027,6 +5199,16 @@ func (TPasswordField) HostFromRef(ref js.Ref) any {
 }
 
 // HostRef returns the reference of the handle.
+func (h TPicker) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TPicker) HostFromRef(ref js.Ref) any {
+	return TPicker{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
 func (h TPickerButton) HostRef() js.Ref {
 	return h.ref
 }
@@ -5538,6 +5720,8 @@ func gostrictFrom1(x gostrict.Variant) View {
 		return TEditorScreen{ref: x.Fields[0].(js.Ref)}
 	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TEsignatureSignature":
 		return TEsignatureSignature{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TPicker":
+		return TPicker{ref: x.Fields[0].(js.Ref)}
 	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TFlowChart":
 		return TFlowChart{ref: x.Fields[0].(js.Ref)}
 	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TFooter":
@@ -5720,6 +5904,8 @@ func gostrictTo1(v View) gostrict.Variant {
 		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TEditorScreen", Fields: []any{x.ref}}
 	case TEsignatureSignature:
 		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TEsignatureSignature", Fields: []any{x.ref}}
+	case TPicker:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TPicker", Fields: []any{x.ref}}
 	case TFlowChart:
 		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TFlowChart", Fields: []any{x.ref}}
 	case TFooter:
@@ -5894,11 +6080,11 @@ func gostrictFunc9(cb gostrict.Callback) func(v bool) {
 }
 
 func gostrictFrom10(v []any) Border {
-	return Border{TopLeftRadius: Length(v[0].(string)), TopRightRadius: Length(v[1].(string)), BottomLeftRadius: Length(v[2].(string)), BottomRightRadius: Length(v[3].(string)), LeftWidth: Length(v[4].(string)), TopWidth: Length(v[5].(string)), RightWidth: Length(v[6].(string)), BottomWidth: Length(v[7].(string)), LeftColor: Color(v[8].(string)), TopColor: Color(v[9].(string)), RightColor: Color(v[10].(string)), BottomColor: Color(v[11].(string)), BoxShadow: gostrictFrom97(v[12].([]any)), BorderStyle: BorderStyle(v[13].(int32))}
+	return Border{TopLeftRadius: Length(v[0].(string)), TopRightRadius: Length(v[1].(string)), BottomLeftRadius: Length(v[2].(string)), BottomRightRadius: Length(v[3].(string)), LeftWidth: Length(v[4].(string)), TopWidth: Length(v[5].(string)), RightWidth: Length(v[6].(string)), BottomWidth: Length(v[7].(string)), LeftColor: Color(v[8].(string)), TopColor: Color(v[9].(string)), RightColor: Color(v[10].(string)), BottomColor: Color(v[11].(string)), BoxShadow: gostrictFrom103(v[12].([]any)), BorderStyle: BorderStyle(v[13].(int32))}
 }
 
 func gostrictTo10(x Border) []any {
-	return []any{string(x.TopLeftRadius), string(x.TopRightRadius), string(x.BottomLeftRadius), string(x.BottomRightRadius), string(x.LeftWidth), string(x.TopWidth), string(x.RightWidth), string(x.BottomWidth), string(x.LeftColor), string(x.TopColor), string(x.RightColor), string(x.BottomColor), gostrictTo97(x.BoxShadow), int32(x.BorderStyle)}
+	return []any{string(x.TopLeftRadius), string(x.TopRightRadius), string(x.BottomLeftRadius), string(x.BottomRightRadius), string(x.LeftWidth), string(x.TopWidth), string(x.RightWidth), string(x.BottomWidth), string(x.LeftColor), string(x.TopColor), string(x.RightColor), string(x.BottomColor), gostrictTo103(x.BoxShadow), int32(x.BorderStyle)}
 }
 
 func gostrictFrom11(v []any) []View {
@@ -5928,7 +6114,7 @@ func gostrictTo13(x CalendarColors) []any {
 func gostrictFrom14(v []any) []ChartDataPoint {
 	res := make([]ChartDataPoint, len(v))
 	for i, e := range v {
-		res[i] = gostrictFrom98(e.([]any))
+		res[i] = gostrictFrom104(e.([]any))
 	}
 	return res
 }
@@ -5981,7 +6167,7 @@ func gostrictFrom19(v []any) []TDataViewField {
 
 func gostrictFunc20(cb gostrict.Callback) func(rows list.List[int32]) error {
 	return func(a0 list.List[int32]) error {
-		res, err := cb.Call(gostrictTo99(a0))
+		res, err := cb.Call(gostrictTo44(a0))
 		if err != nil {
 			return err
 		}
@@ -6028,7 +6214,7 @@ func gostrictFunc24(cb gostrict.Callback) func() View {
 func gostrictFrom25(v []any) []DropdownOption {
 	res := make([]DropdownOption, len(v))
 	for i, e := range v {
-		res[i] = gostrictFrom100(e.([]any))
+		res[i] = gostrictFrom105(e.([]any))
 	}
 	return res
 }
@@ -6068,19 +6254,19 @@ func gostrictFunc29(cb gostrict.Callback) func(v float64) {
 }
 
 func gostrictFrom30(v []any) FlowchartModel {
-	return FlowchartModel{Nodes: gostrictFrom101(v[0].([]any)), Edges: gostrictFrom102(v[1].([]any))}
+	return FlowchartModel{Nodes: gostrictFrom106(v[0].([]any)), Edges: gostrictFrom107(v[1].([]any))}
 }
 
 func gostrictTo30(x FlowchartModel) []any {
-	return []any{gostrictTo101(x.Nodes), gostrictTo102(x.Edges)}
+	return []any{gostrictTo106(x.Nodes), gostrictTo107(x.Edges)}
 }
 
 func gostrictFrom31(v []any) FlowChartActionData {
-	return FlowChartActionData{Node: gostrictFrom103(v[0].([]any)), Edge: gostrictFrom104(v[1].([]any)), ViewX: v[2].(float64), ViewY: v[3].(float64), PaneX: v[4].(float64), PaneY: v[5].(float64), SelectedNodes: gostrictFrom105(v[6].([]any)), SelectedEdges: gostrictFrom105(v[7].([]any)), RightClick: v[8].(bool)}
+	return FlowChartActionData{Node: gostrictFrom108(v[0].([]any)), Edge: gostrictFrom109(v[1].([]any)), ViewX: v[2].(float64), ViewY: v[3].(float64), PaneX: v[4].(float64), PaneY: v[5].(float64), SelectedNodes: gostrictFrom110(v[6].([]any)), SelectedEdges: gostrictFrom110(v[7].([]any)), RightClick: v[8].(bool)}
 }
 
 func gostrictTo31(x FlowChartActionData) []any {
-	return []any{gostrictTo103(x.Node), gostrictTo104(x.Edge), x.ViewX, x.ViewY, x.PaneX, x.PaneY, gostrictTo105(x.SelectedNodes), gostrictTo105(x.SelectedEdges), x.RightClick}
+	return []any{gostrictTo108(x.Node), gostrictTo109(x.Edge), x.ViewX, x.ViewY, x.PaneX, x.PaneY, gostrictTo110(x.SelectedNodes), gostrictTo110(x.SelectedEdges), x.RightClick}
 }
 
 func gostrictFunc32(cb gostrict.Callback) func() FlowChartActionData {
@@ -6111,7 +6297,7 @@ func gostrictTo34(x FlowchartPoint) []any {
 func gostrictFrom35(v []any) []FlowchartNode {
 	res := make([]FlowchartNode, len(v))
 	for i, e := range v {
-		res[i] = gostrictFrom103(e.([]any))
+		res[i] = gostrictFrom108(e.([]any))
 	}
 	return res
 }
@@ -6119,7 +6305,7 @@ func gostrictFrom35(v []any) []FlowchartNode {
 func gostrictFrom36(v []any) []FlowchartEdge {
 	res := make([]FlowchartEdge, len(v))
 	for i, e := range v {
-		res[i] = gostrictFrom104(e.([]any))
+		res[i] = gostrictFrom109(e.([]any))
 	}
 	return res
 }
@@ -6182,7 +6368,29 @@ func gostrictFunc43(cb gostrict.Callback) func(v int32) {
 	}
 }
 
-func gostrictFrom44(v []any) []TMenuGroup {
+func gostrictFrom44(v []any) list.List[int32] {
+	l := list.New[int32]()
+	for _, e := range v {
+		l.Append(e.(int32))
+	}
+	return l
+}
+
+func gostrictTo44(l list.List[int32]) []any {
+	res := make([]any, 0, l.Len())
+	for e := range l.Values() {
+		res = append(res, e)
+	}
+	return res
+}
+
+func gostrictFunc45(cb gostrict.Callback) func(v list.List[int32]) {
+	return func(a0 list.List[int32]) {
+		_, _ = cb.Call(gostrictTo44(a0))
+	}
+}
+
+func gostrictFrom46(v []any) []TMenuGroup {
 	res := make([]TMenuGroup, len(v))
 	for i, e := range v {
 		res[i] = TMenuGroup{ref: e.(js.Ref)}
@@ -6190,7 +6398,7 @@ func gostrictFrom44(v []any) []TMenuGroup {
 	return res
 }
 
-func gostrictFrom45(v []any) []TMenuItem {
+func gostrictFrom47(v []any) []TMenuItem {
 	res := make([]TMenuItem, len(v))
 	for i, e := range v {
 		res[i] = TMenuItem{ref: e.(js.Ref)}
@@ -6198,7 +6406,7 @@ func gostrictFrom45(v []any) []TMenuItem {
 	return res
 }
 
-func gostrictFunc46(cb gostrict.Callback) func(id NavsplitviewViewID) View {
+func gostrictFunc48(cb gostrict.Callback) func(id NavsplitviewViewID) View {
 	return func(a0 NavsplitviewViewID) View {
 		res, err := cb.Call(string(a0))
 		if err != nil {
@@ -6209,7 +6417,7 @@ func gostrictFunc46(cb gostrict.Callback) func(id NavsplitviewViewID) View {
 	}
 }
 
-func gostrictFrom47(v []any) []ScaffoldMenuEntry {
+func gostrictFrom49(v []any) []ScaffoldMenuEntry {
 	res := make([]ScaffoldMenuEntry, len(v))
 	for i, e := range v {
 		res[i] = ScaffoldMenuEntry{ref: e.(js.Ref)}
@@ -6217,24 +6425,24 @@ func gostrictFrom47(v []any) []ScaffoldMenuEntry {
 	return res
 }
 
-func gostrictFunc48(cb gostrict.Callback) func(newIdx int32) {
+func gostrictFunc50(cb gostrict.Callback) func(newIdx int32) {
 	return func(a0 int32) {
 		_, _ = cb.Call(a0)
 	}
 }
 
-func gostrictFunc49(cb gostrict.Callback) func(row int32, col int32) sheet.Cell {
+func gostrictFunc51(cb gostrict.Callback) func(row int32, col int32) sheet.Cell {
 	return func(a0 int32, a1 int32) sheet.Cell {
 		res, err := cb.Call(a0, a1)
 		if err != nil {
 			var z0 sheet.Cell
 			return z0
 		}
-		return gostrictFrom106(res[0].([]any))
+		return gostrictFrom111(res[0].([]any))
 	}
 }
 
-func gostrictFrom50(v []any) []TStepperStep {
+func gostrictFrom52(v []any) []TStepperStep {
 	res := make([]TStepperStep, len(v))
 	for i, e := range v {
 		res[i] = TStepperStep{ref: e.(js.Ref)}
@@ -6242,7 +6450,7 @@ func gostrictFrom50(v []any) []TStepperStep {
 	return res
 }
 
-func gostrictFunc51(cb gostrict.Callback) func() string {
+func gostrictFunc53(cb gostrict.Callback) func() string {
 	return func() string {
 		res, err := cb.Call()
 		if err != nil {
@@ -6253,21 +6461,29 @@ func gostrictFunc51(cb gostrict.Callback) func() string {
 	}
 }
 
-func gostrictFunc52(cb gostrict.Callback) func(v string) {
+func gostrictFunc54(cb gostrict.Callback) func(v string) {
 	return func(a0 string) {
 		_, _ = cb.Call(a0)
 	}
 }
 
-func gostrictFrom53(v []any) []BarChartMarker {
-	res := make([]BarChartMarker, len(v))
+func gostrictFrom55(v []any) []Color {
+	res := make([]Color, len(v))
 	for i, e := range v {
-		res[i] = gostrictFrom107(e.([]any))
+		res[i] = Color(e.(string))
 	}
 	return res
 }
 
-func gostrictFrom54(v []any) []TChartSeries {
+func gostrictFrom56(v []any) []BarChartMarker {
+	res := make([]BarChartMarker, len(v))
+	for i, e := range v {
+		res[i] = gostrictFrom112(e.([]any))
+	}
+	return res
+}
+
+func gostrictFrom57(v []any) []TChartSeries {
 	res := make([]TChartSeries, len(v))
 	for i, e := range v {
 		res[i] = TChartSeries{ref: e.(js.Ref)}
@@ -6275,7 +6491,7 @@ func gostrictFrom54(v []any) []TChartSeries {
 	return res
 }
 
-func gostrictFunc55(cb gostrict.Callback) func(Frame) Frame {
+func gostrictFunc58(cb gostrict.Callback) func(Frame) Frame {
 	return func(a0 Frame) Frame {
 		res, err := cb.Call(gostrictTo39(a0))
 		if err != nil {
@@ -6286,55 +6502,55 @@ func gostrictFunc55(cb gostrict.Callback) func(Frame) Frame {
 	}
 }
 
-func gostrictFrom56(v []any) Font {
+func gostrictFrom59(v []any) Font {
 	return Font{Name: FontName(v[0].(string)), Size: Length(v[1].(string)), Style: FontStyle(v[2].(uint32)), Weight: FontWeight(v[3].(int32)), LineHeight: LineHeight(v[4].(string))}
 }
 
-func gostrictTo56(x Font) []any {
+func gostrictTo59(x Font) []any {
 	return []any{string(x.Name), string(x.Size), uint32(x.Style), int32(x.Weight), string(x.LineHeight)}
 }
 
-func gostrictFrom57(v []any) CalendarOffset {
+func gostrictFrom60(v []any) CalendarOffset {
 	return CalendarOffset{Duration: v[0].(int32), Icon: SVG(v[1].(string)), Label: v[2].(string)}
 }
 
-func gostrictTo57(x CalendarOffset) []any {
+func gostrictTo60(x CalendarOffset) []any {
 	return []any{x.Duration, string(x.Icon), x.Label}
 }
 
-func gostrictFrom58(v []any) []CalendarCategory {
+func gostrictFrom61(v []any) []CalendarCategory {
 	res := make([]CalendarCategory, len(v))
 	for i, e := range v {
-		res[i] = gostrictFrom108(e.([]any))
+		res[i] = gostrictFrom113(e.([]any))
 	}
 	return res
 }
 
-func gostrictFrom59(v []any) CalendarPillar {
+func gostrictFrom62(v []any) CalendarPillar {
 	return CalendarPillar{Label: v[0].(string), Icon: SVG(v[1].(string)), Width: Length(v[2].(string)), Height: Length(v[3].(string))}
 }
 
-func gostrictTo59(x CalendarPillar) []any {
+func gostrictTo62(x CalendarPillar) []any {
 	return []any{x.Label, string(x.Icon), string(x.Width), string(x.Height)}
 }
 
-func gostrictFrom60(v []any) CalendarLane {
+func gostrictFrom63(v []any) CalendarLane {
 	return CalendarLane{Label: v[0].(string)}
 }
 
-func gostrictTo60(x CalendarLane) []any {
+func gostrictTo63(x CalendarLane) []any {
 	return []any{x.Label}
 }
 
-func gostrictFrom61(v []any) []CalendarChip {
+func gostrictFrom64(v []any) []CalendarChip {
 	res := make([]CalendarChip, len(v))
 	for i, e := range v {
-		res[i] = gostrictFrom109(e.([]any))
+		res[i] = gostrictFrom114(e.([]any))
 	}
 	return res
 }
 
-func gostrictFunc62(cb gostrict.Callback) func(style CalendarStyle) View {
+func gostrictFunc65(cb gostrict.Callback) func(style CalendarStyle) View {
 	return func(a0 CalendarStyle) View {
 		res, err := cb.Call(int32(a0))
 		if err != nil {
@@ -6345,21 +6561,21 @@ func gostrictFunc62(cb gostrict.Callback) func(style CalendarStyle) View {
 	}
 }
 
-func gostrictFrom63(v []any) []CalendarColumn {
+func gostrictFrom66(v []any) []CalendarColumn {
 	res := make([]CalendarColumn, len(v))
 	for i, e := range v {
-		res[i] = gostrictFrom110(e.([]any))
+		res[i] = gostrictFrom115(e.([]any))
 	}
 	return res
 }
 
-func gostrictFunc64(cb gostrict.Callback) func(row int32) {
+func gostrictFunc67(cb gostrict.Callback) func(row int32) {
 	return func(a0 int32) {
 		_, _ = cb.Call(a0)
 	}
 }
 
-func gostrictFrom65(v []any) []TDataViewCreateOption {
+func gostrictFrom68(v []any) []TDataViewCreateOption {
 	res := make([]TDataViewCreateOption, len(v))
 	for i, e := range v {
 		res[i] = TDataViewCreateOption{ref: e.(js.Ref)}
@@ -6367,7 +6583,7 @@ func gostrictFrom65(v []any) []TDataViewCreateOption {
 	return res
 }
 
-func gostrictFrom66(v []any) []TDataViewSelectOption {
+func gostrictFrom69(v []any) []TDataViewSelectOption {
 	res := make([]TDataViewSelectOption, len(v))
 	for i, e := range v {
 		res[i] = TDataViewSelectOption{ref: e.(js.Ref)}
@@ -6375,13 +6591,13 @@ func gostrictFrom66(v []any) []TDataViewSelectOption {
 	return res
 }
 
-func gostrictFunc67(cb gostrict.Callback) func(rows list.List[int32]) {
+func gostrictFunc70(cb gostrict.Callback) func(rows list.List[int32]) {
 	return func(a0 list.List[int32]) {
-		_, _ = cb.Call(gostrictTo99(a0))
+		_, _ = cb.Call(gostrictTo44(a0))
 	}
 }
 
-func gostrictFunc68(cb gostrict.Callback) func(a int32, b int32) int32 {
+func gostrictFunc71(cb gostrict.Callback) func(a int32, b int32) int32 {
 	return func(a0 int32, a1 int32) int32 {
 		res, err := cb.Call(a0, a1)
 		if err != nil {
@@ -6392,9 +6608,9 @@ func gostrictFunc68(cb gostrict.Callback) func(a int32, b int32) int32 {
 	}
 }
 
-func gostrictFunc69(cb gostrict.Callback) func(rows list.List[int32]) bool {
+func gostrictFunc72(cb gostrict.Callback) func(rows list.List[int32]) bool {
 	return func(a0 list.List[int32]) bool {
-		res, err := cb.Call(gostrictTo99(a0))
+		res, err := cb.Call(gostrictTo44(a0))
 		if err != nil {
 			var z0 bool
 			return z0
@@ -6403,15 +6619,15 @@ func gostrictFunc69(cb gostrict.Callback) func(rows list.List[int32]) bool {
 	}
 }
 
-func gostrictFrom70(v []any) DocumentSize {
+func gostrictFrom73(v []any) DocumentSize {
 	return DocumentSize{Width: Length(v[0].(string)), Height: Length(v[1].(string))}
 }
 
-func gostrictTo70(x DocumentSize) []any {
+func gostrictTo73(x DocumentSize) []any {
 	return []any{string(x.Width), string(x.Height)}
 }
 
-func gostrictFrom71(v []any) []TDocumentComment {
+func gostrictFrom74(v []any) []TDocumentComment {
 	res := make([]TDocumentComment, len(v))
 	for i, e := range v {
 		res[i] = TDocumentComment{ref: e.(js.Ref)}
@@ -6419,7 +6635,7 @@ func gostrictFrom71(v []any) []TDocumentComment {
 	return res
 }
 
-func gostrictFrom72(v []any) []TEditorVToolWindow {
+func gostrictFrom75(v []any) []TEditorVToolWindow {
 	res := make([]TEditorVToolWindow, len(v))
 	for i, e := range v {
 		res[i] = TEditorVToolWindow{ref: e.(js.Ref)}
@@ -6427,15 +6643,15 @@ func gostrictFrom72(v []any) []TEditorVToolWindow {
 	return res
 }
 
-func gostrictFrom73(v []any) FlowchartBackground {
+func gostrictFrom76(v []any) FlowchartBackground {
 	return FlowchartBackground{Color: Color(v[0].(string)), GridColor: Color(v[1].(string)), GridStyle: FlowChartBackgroundGridStyle(v[2].(int32)), GridGap: v[3].(uint32)}
 }
 
-func gostrictTo73(x FlowchartBackground) []any {
+func gostrictTo76(x FlowchartBackground) []any {
 	return []any{string(x.Color), string(x.GridColor), int32(x.GridStyle), x.GridGap}
 }
 
-func gostrictFrom74(v []any) []TFlowchartCustomContent {
+func gostrictFrom77(v []any) []TFlowchartCustomContent {
 	res := make([]TFlowchartCustomContent, len(v))
 	for i, e := range v {
 		res[i] = TFlowchartCustomContent{ref: e.(js.Ref)}
@@ -6443,15 +6659,15 @@ func gostrictFrom74(v []any) []TFlowchartCustomContent {
 	return res
 }
 
-func gostrictFrom75(v []any) FlowchartToolbar {
-	return FlowchartToolbar{Position: FlowChartToolbarPosition(v[0].(int32)), Orientation: FlowChartToolbarOrientation(v[1].(int32)), Actions: gostrictFrom111(v[2].([]any))}
+func gostrictFrom78(v []any) FlowchartToolbar {
+	return FlowchartToolbar{Position: FlowChartToolbarPosition(v[0].(int32)), Orientation: FlowChartToolbarOrientation(v[1].(int32)), Actions: gostrictFrom116(v[2].([]any))}
 }
 
-func gostrictTo75(x FlowchartToolbar) []any {
-	return []any{int32(x.Position), int32(x.Orientation), gostrictTo111(x.Actions)}
+func gostrictTo78(x FlowchartToolbar) []any {
+	return []any{int32(x.Position), int32(x.Orientation), gostrictTo116(x.Actions)}
 }
 
-func gostrictFrom76(v []any) []Length {
+func gostrictFrom79(v []any) []Length {
 	res := make([]Length, len(v))
 	for i, e := range v {
 		res[i] = Length(e.(string))
@@ -6459,29 +6675,29 @@ func gostrictFrom76(v []any) []Length {
 	return res
 }
 
-func gostrictFrom77(v []any) Position {
+func gostrictFrom80(v []any) Position {
 	return Position{Type: PositionType(v[0].(int32)), Left: Length(v[1].(string)), Top: Length(v[2].(string)), Right: Length(v[3].(string)), Bottom: Length(v[4].(string)), ZIndex: v[5].(int32)}
 }
 
-func gostrictTo77(x Position) []any {
+func gostrictTo80(x Position) []any {
 	return []any{int32(x.Type), string(x.Left), string(x.Top), string(x.Right), string(x.Bottom), x.ZIndex}
 }
 
-func gostrictFrom78(v []any) LineChartMarkers {
+func gostrictFrom81(v []any) LineChartMarkers {
 	return LineChartMarkers{Size: v[0].(int32), BorderColor: Color(v[1].(string)), ShowNullDataPoints: v[2].(bool)}
 }
 
-func gostrictTo78(x LineChartMarkers) []any {
+func gostrictTo81(x LineChartMarkers) []any {
 	return []any{x.Size, string(x.BorderColor), x.ShowNullDataPoints}
 }
 
-func gostrictFunc79(cb gostrict.Callback) func(idx int32) {
+func gostrictFunc82(cb gostrict.Callback) func(idx int32) {
 	return func(a0 int32) {
 		_, _ = cb.Call(a0)
 	}
 }
 
-func gostrictFunc80(cb gostrict.Callback) func(idx int32) bool {
+func gostrictFunc83(cb gostrict.Callback) func(idx int32) bool {
 	return func(a0 int32) bool {
 		res, err := cb.Call(a0)
 		if err != nil {
@@ -6492,7 +6708,7 @@ func gostrictFunc80(cb gostrict.Callback) func(idx int32) bool {
 	}
 }
 
-func gostrictFunc81(cb gostrict.Callback) func(l TList) TList {
+func gostrictFunc84(cb gostrict.Callback) func(l TList) TList {
 	return func(a0 TList) TList {
 		res, err := cb.Call(a0.ref)
 		if err != nil {
@@ -6503,9 +6719,42 @@ func gostrictFunc81(cb gostrict.Callback) func(l TList) TList {
 	}
 }
 
-func gostrictFunc82(cb gostrict.Callback) func(e sheet.Edit) error {
+func gostrictFunc85(cb gostrict.Callback) func(row int32) string {
+	return func(a0 int32) string {
+		res, err := cb.Call(a0)
+		if err != nil {
+			var z0 string
+			return z0
+		}
+		return res[0].(string)
+	}
+}
+
+func gostrictFunc86(cb gostrict.Callback) func(rows list.List[int32]) View {
+	return func(a0 list.List[int32]) View {
+		res, err := cb.Call(gostrictTo44(a0))
+		if err != nil {
+			var z0 View
+			return z0
+		}
+		return gostrictFrom1(res[0].(gostrict.Variant))
+	}
+}
+
+func gostrictFunc87(cb gostrict.Callback) func(wnd Window, row int32, checked BoolState) View {
+	return func(a0 Window, a1 int32, a2 BoolState) View {
+		res, err := cb.Call(a0.ref, a1, a2.ref)
+		if err != nil {
+			var z0 View
+			return z0
+		}
+		return gostrictFrom1(res[0].(gostrict.Variant))
+	}
+}
+
+func gostrictFunc88(cb gostrict.Callback) func(e sheet.Edit) error {
 	return func(a0 sheet.Edit) error {
-		res, err := cb.Call(gostrictTo112(a0))
+		res, err := cb.Call(gostrictTo117(a0))
 		if err != nil {
 			return err
 		}
@@ -6513,15 +6762,15 @@ func gostrictFunc82(cb gostrict.Callback) func(e sheet.Edit) error {
 	}
 }
 
-func gostrictFrom83(v []any) SliderRangeSliderValue {
+func gostrictFrom89(v []any) SliderRangeSliderValue {
 	return SliderRangeSliderValue{From: v[0].(float64), To: v[1].(float64)}
 }
 
-func gostrictTo83(x SliderRangeSliderValue) []any {
+func gostrictTo89(x SliderRangeSliderValue) []any {
 	return []any{x.From, x.To}
 }
 
-func gostrictFunc84(cb gostrict.Callback) func(wnd Window, stack TStack) TStack {
+func gostrictFunc90(cb gostrict.Callback) func(wnd Window, stack TStack) TStack {
 	return func(a0 Window, a1 TStack) TStack {
 		res, err := cb.Call(a0.ref, a1.ref)
 		if err != nil {
@@ -6532,7 +6781,7 @@ func gostrictFunc84(cb gostrict.Callback) func(wnd Window, stack TStack) TStack 
 	}
 }
 
-func gostrictFunc85(cb gostrict.Callback) func(stack TStack) TStack {
+func gostrictFunc91(cb gostrict.Callback) func(stack TStack) TStack {
 	return func(a0 TStack) TStack {
 		res, err := cb.Call(a0.ref)
 		if err != nil {
@@ -6543,23 +6792,23 @@ func gostrictFunc85(cb gostrict.Callback) func(stack TStack) TStack {
 	}
 }
 
-func gostrictFrom86(v []any) Transformation {
+func gostrictFrom92(v []any) Transformation {
 	return Transformation{TranslateX: Length(v[0].(string)), TranslateY: Length(v[1].(string)), TranslateZ: Length(v[2].(string)), ScaleX: v[3].(float64), ScaleY: v[4].(float64), ScaleZ: v[5].(float64), RotateZ: v[6].(float64)}
 }
 
-func gostrictTo86(x Transformation) []any {
+func gostrictTo92(x Transformation) []any {
 	return []any{string(x.TranslateX), string(x.TranslateY), string(x.TranslateZ), x.ScaleX, x.ScaleY, x.ScaleZ, x.RotateZ}
 }
 
-func gostrictFrom87(v []any) Outline {
+func gostrictFrom93(v []any) Outline {
 	return Outline{Style: OutlineStyle(v[0].(int32)), Width: v[1].(int32), Offset: v[2].(int32), Color: Color(v[3].(string))}
 }
 
-func gostrictTo87(x Outline) []any {
+func gostrictTo93(x Outline) []any {
 	return []any{int32(x.Style), x.Width, x.Offset, string(x.Color)}
 }
 
-func gostrictFunc88(cb gostrict.Callback) func(s TSwitcher) TSwitcher {
+func gostrictFunc94(cb gostrict.Callback) func(s TSwitcher) TSwitcher {
 	return func(a0 TSwitcher) TSwitcher {
 		res, err := cb.Call(a0.ref)
 		if err != nil {
@@ -6570,7 +6819,7 @@ func gostrictFunc88(cb gostrict.Callback) func(s TSwitcher) TSwitcher {
 	}
 }
 
-func gostrictFrom89(v []any) []TTableColumn {
+func gostrictFrom95(v []any) []TTableColumn {
 	res := make([]TTableColumn, len(v))
 	for i, e := range v {
 		res[i] = TTableColumn{ref: e.(js.Ref)}
@@ -6578,7 +6827,7 @@ func gostrictFrom89(v []any) []TTableColumn {
 	return res
 }
 
-func gostrictFrom90(v []any) []TTableRow {
+func gostrictFrom96(v []any) []TTableRow {
 	res := make([]TTableRow, len(v))
 	for i, e := range v {
 		res[i] = TTableRow{ref: e.(js.Ref)}
@@ -6586,7 +6835,7 @@ func gostrictFrom90(v []any) []TTableRow {
 	return res
 }
 
-func gostrictFrom91(v []any) []TTableCell {
+func gostrictFrom97(v []any) []TTableCell {
 	res := make([]TTableCell, len(v))
 	for i, e := range v {
 		res[i] = TTableCell{ref: e.(js.Ref)}
@@ -6594,7 +6843,7 @@ func gostrictFrom91(v []any) []TTableCell {
 	return res
 }
 
-func gostrictFrom92(v []any) []TTabsPage {
+func gostrictFrom98(v []any) []TTabsPage {
 	res := make([]TTabsPage, len(v))
 	for i, e := range v {
 		res[i] = TTabsPage{ref: e.(js.Ref)}
@@ -6602,32 +6851,32 @@ func gostrictFrom92(v []any) []TTabsPage {
 	return res
 }
 
-func gostrictFrom93(v []any) TimeFrame {
+func gostrictFrom99(v []any) TimeFrame {
 	return TimeFrame{StartTime: Time(v[0].(float64)), EndTime: Time(v[1].(float64)), Timezone: v[2].(string)}
 }
 
-func gostrictTo93(x TimeFrame) []any {
+func gostrictTo99(x TimeFrame) []any {
 	return []any{float64(x.StartTime), float64(x.EndTime), x.Timezone}
 }
 
-func gostrictFunc94(cb gostrict.Callback) func() TimeFrame {
+func gostrictFunc100(cb gostrict.Callback) func() TimeFrame {
 	return func() TimeFrame {
 		res, err := cb.Call()
 		if err != nil {
 			var z0 TimeFrame
 			return z0
 		}
-		return gostrictFrom93(res[0].([]any))
+		return gostrictFrom99(res[0].([]any))
 	}
 }
 
-func gostrictFunc95(cb gostrict.Callback) func(v TimeFrame) {
+func gostrictFunc101(cb gostrict.Callback) func(v TimeFrame) {
 	return func(a0 TimeFrame) {
-		_, _ = cb.Call(gostrictTo93(a0))
+		_, _ = cb.Call(gostrictTo99(a0))
 	}
 }
 
-func gostrictFrom96(v []any) []ViewWithSizeClass {
+func gostrictFrom102(v []any) []ViewWithSizeClass {
 	res := make([]ViewWithSizeClass, len(v))
 	for i, e := range v {
 		res[i] = ViewWithSizeClass{ref: e.(js.Ref)}
@@ -6635,95 +6884,79 @@ func gostrictFrom96(v []any) []ViewWithSizeClass {
 	return res
 }
 
-func gostrictFrom97(v []any) Shadow {
+func gostrictFrom103(v []any) Shadow {
 	return Shadow{Color: Color(v[0].(string)), Radius: Length(v[1].(string)), X: Length(v[2].(string)), Y: Length(v[3].(string))}
 }
 
-func gostrictTo97(x Shadow) []any {
+func gostrictTo103(x Shadow) []any {
 	return []any{string(x.Color), string(x.Radius), string(x.X), string(x.Y)}
 }
 
-func gostrictFrom98(v []any) ChartDataPoint {
+func gostrictFrom104(v []any) ChartDataPoint {
 	return ChartDataPoint{X: v[0].(string), Y: v[1].(float64)}
 }
 
-func gostrictTo98(x ChartDataPoint) []any {
+func gostrictTo104(x ChartDataPoint) []any {
 	return []any{x.X, x.Y}
 }
 
-func gostrictFrom99(v []any) list.List[int32] {
-	l := list.New[int32]()
-	for _, e := range v {
-		l.Append(e.(int32))
-	}
-	return l
-}
-
-func gostrictTo99(l list.List[int32]) []any {
-	res := make([]any, 0, l.Len())
-	for e := range l.Values() {
-		res = append(res, e)
-	}
-	return res
-}
-
-func gostrictFrom100(v []any) DropdownOption {
+func gostrictFrom105(v []any) DropdownOption {
 	return DropdownOption{Value: v[0].(string), Label: v[1].(string), Description: v[2].(string), Disabled: v[3].(bool)}
 }
 
-func gostrictTo100(x DropdownOption) []any {
+func gostrictTo105(x DropdownOption) []any {
 	return []any{x.Value, x.Label, x.Description, x.Disabled}
 }
 
-func gostrictFrom101(v []any) list.List[FlowchartNode] {
+func gostrictFrom106(v []any) list.List[FlowchartNode] {
 	l := list.New[FlowchartNode]()
 	for _, e := range v {
-		l.Append(gostrictFrom103(e.([]any)))
+		l.Append(gostrictFrom108(e.([]any)))
 	}
 	return l
 }
 
-func gostrictTo101(l list.List[FlowchartNode]) []any {
+func gostrictTo106(l list.List[FlowchartNode]) []any {
 	res := make([]any, 0, l.Len())
 	for e := range l.Values() {
-		res = append(res, gostrictTo103(e))
+		res = append(res, gostrictTo108(e))
 	}
 	return res
 }
 
-func gostrictFrom102(v []any) list.List[FlowchartEdge] {
+func gostrictFrom107(v []any) list.List[FlowchartEdge] {
 	l := list.New[FlowchartEdge]()
 	for _, e := range v {
-		l.Append(gostrictFrom104(e.([]any)))
+		l.Append(gostrictFrom109(e.([]any)))
 	}
 	return l
 }
 
-func gostrictTo102(l list.List[FlowchartEdge]) []any {
+func gostrictTo107(l list.List[FlowchartEdge]) []any {
 	res := make([]any, 0, l.Len())
 	for e := range l.Values() {
-		res = append(res, gostrictTo104(e))
+		res = append(res, gostrictTo109(e))
 	}
 	return res
 }
 
-func gostrictFrom103(v []any) FlowchartNode {
+func gostrictFrom108(v []any) FlowchartNode {
 	return FlowchartNode{ID: v[0].(string), Type: FlowchartNodeType(v[1].(uint32)), Position: gostrictFrom34(v[2].([]any)), Label: v[3].(string), Style: FlowchartNodeStyle(v[4].(uint32))}
 }
 
-func gostrictTo103(x FlowchartNode) []any {
+func gostrictTo108(x FlowchartNode) []any {
 	return []any{x.ID, uint32(x.Type), gostrictTo34(x.Position), x.Label, uint32(x.Style)}
 }
 
-func gostrictFrom104(v []any) FlowchartEdge {
+func gostrictFrom109(v []any) FlowchartEdge {
 	return FlowchartEdge{ID: v[0].(string), SourceNodeID: v[1].(string), TargetNodeID: v[2].(string), Label: v[3].(string), LabelBgColor: Color(v[4].(string)), LabelTextColor: Color(v[5].(string)), Style: FlowchartEdgeStyle(v[6].(uint32)), Color: Color(v[7].(string)), Width: v[8].(float64), Animated: v[9].(bool), MarkerStart: FlowchartEdgeMarker(v[10].(uint32)), MarkerEnd: FlowchartEdgeMarker(v[11].(uint32))}
 }
 
-func gostrictTo104(x FlowchartEdge) []any {
+func gostrictTo109(x FlowchartEdge) []any {
 	return []any{x.ID, x.SourceNodeID, x.TargetNodeID, x.Label, string(x.LabelBgColor), string(x.LabelTextColor), uint32(x.Style), string(x.Color), x.Width, x.Animated, uint32(x.MarkerStart), uint32(x.MarkerEnd)}
 }
 
-func gostrictFrom105(v []any) list.List[string] {
+func gostrictFrom110(v []any) list.List[string] {
 	l := list.New[string]()
 	for _, e := range v {
 		l.Append(e.(string))
@@ -6731,7 +6964,7 @@ func gostrictFrom105(v []any) list.List[string] {
 	return l
 }
 
-func gostrictTo105(l list.List[string]) []any {
+func gostrictTo110(l list.List[string]) []any {
 	res := make([]any, 0, l.Len())
 	for e := range l.Values() {
 		res = append(res, e)
@@ -6739,47 +6972,47 @@ func gostrictTo105(l list.List[string]) []any {
 	return res
 }
 
-func gostrictFrom106(v []any) sheet.Cell {
-	return sheet.Cell{Text: v[0].(string), Value: v[1].(string), Type: sheet.ValueType(v[2].(int32)), Style: gostrictFrom113(v[3].([]any)), Editor: sheet.Editor(v[4].(int32))}
+func gostrictFrom111(v []any) sheet.Cell {
+	return sheet.Cell{Text: v[0].(string), Value: v[1].(string), Type: sheet.ValueType(v[2].(int32)), Style: gostrictFrom118(v[3].([]any)), Editor: sheet.Editor(v[4].(int32))}
 }
 
-func gostrictTo106(x sheet.Cell) []any {
-	return []any{x.Text, x.Value, int32(x.Type), gostrictTo113(x.Style), int32(x.Editor)}
+func gostrictTo111(x sheet.Cell) []any {
+	return []any{x.Text, x.Value, int32(x.Type), gostrictTo118(x.Style), int32(x.Editor)}
 }
 
-func gostrictFrom107(v []any) BarChartMarker {
+func gostrictFrom112(v []any) BarChartMarker {
 	return BarChartMarker{Label: v[0].(string), SeriesIndex: v[1].(int32), DataPointIndex: v[2].(int32), Value: v[3].(string), Width: v[4].(int32), Height: v[5].(int32), Color: Color(v[6].(string)), Round: v[7].(bool), Dashed: v[8].(bool)}
 }
 
-func gostrictTo107(x BarChartMarker) []any {
+func gostrictTo112(x BarChartMarker) []any {
 	return []any{x.Label, x.SeriesIndex, x.DataPointIndex, x.Value, x.Width, x.Height, string(x.Color), x.Round, x.Dashed}
 }
 
-func gostrictFrom108(v []any) CalendarCategory {
+func gostrictFrom113(v []any) CalendarCategory {
 	return CalendarCategory{Color: Color(v[0].(string)), Label: v[1].(string)}
 }
 
-func gostrictTo108(x CalendarCategory) []any {
+func gostrictTo113(x CalendarCategory) []any {
 	return []any{string(x.Color), x.Label}
 }
 
-func gostrictFrom109(v []any) CalendarChip {
+func gostrictFrom114(v []any) CalendarChip {
 	return CalendarChip{Label: v[0].(string), Icon: SVG(v[1].(string)), FillColor: Color(v[2].(string)), StrokeColor: Color(v[3].(string)), BgColor: Color(v[4].(string)), TextColor: Color(v[5].(string)), Alignment: Alignment(v[6].(uint32)), FullWidth: v[7].(bool)}
 }
 
-func gostrictTo109(x CalendarChip) []any {
+func gostrictTo114(x CalendarChip) []any {
 	return []any{x.Label, string(x.Icon), string(x.FillColor), string(x.StrokeColor), string(x.BgColor), string(x.TextColor), uint32(x.Alignment), x.FullWidth}
 }
 
-func gostrictFrom110(v []any) CalendarColumn {
+func gostrictFrom115(v []any) CalendarColumn {
 	return CalendarColumn{Label: v[0].(string)}
 }
 
-func gostrictTo110(x CalendarColumn) []any {
+func gostrictTo115(x CalendarColumn) []any {
 	return []any{x.Label}
 }
 
-func gostrictFrom111(v []any) list.List[FlowChartToolbarAction] {
+func gostrictFrom116(v []any) list.List[FlowChartToolbarAction] {
 	l := list.New[FlowChartToolbarAction]()
 	for _, e := range v {
 		l.Append(FlowChartToolbarAction(e.(int32)))
@@ -6787,7 +7020,7 @@ func gostrictFrom111(v []any) list.List[FlowChartToolbarAction] {
 	return l
 }
 
-func gostrictTo111(l list.List[FlowChartToolbarAction]) []any {
+func gostrictTo116(l list.List[FlowChartToolbarAction]) []any {
 	res := make([]any, 0, l.Len())
 	for e := range l.Values() {
 		res = append(res, int32(e))
@@ -6795,34 +7028,34 @@ func gostrictTo111(l list.List[FlowChartToolbarAction]) []any {
 	return res
 }
 
-func gostrictFrom112(v []any) sheet.Edit {
+func gostrictFrom117(v []any) sheet.Edit {
 	return sheet.Edit{Row: v[0].(int32), Col: v[1].(int32), Value: v[2].(string)}
 }
 
-func gostrictTo112(x sheet.Edit) []any {
+func gostrictTo117(x sheet.Edit) []any {
 	return []any{x.Row, x.Col, x.Value}
 }
 
-func gostrictFrom113(v []any) sheet.Style {
-	return sheet.Style{BackgroundColor: v[0].(string), Color: v[1].(string), Bold: v[2].(bool), Italic: v[3].(bool), Underline: v[4].(bool), Align: sheet.Align(v[5].(int32)), Wrap: sheet.Wrap(v[6].(int32)), Borders: gostrictFrom114(v[7].([]any)), PaddingX: v[8].(float64), FontSize: v[9].(float64)}
+func gostrictFrom118(v []any) sheet.Style {
+	return sheet.Style{BackgroundColor: v[0].(string), Color: v[1].(string), Bold: v[2].(bool), Italic: v[3].(bool), Underline: v[4].(bool), Align: sheet.Align(v[5].(int32)), Wrap: sheet.Wrap(v[6].(int32)), Borders: gostrictFrom119(v[7].([]any)), PaddingX: v[8].(float64), FontSize: v[9].(float64)}
 }
 
-func gostrictTo113(x sheet.Style) []any {
-	return []any{x.BackgroundColor, x.Color, x.Bold, x.Italic, x.Underline, int32(x.Align), int32(x.Wrap), gostrictTo114(x.Borders), x.PaddingX, x.FontSize}
+func gostrictTo118(x sheet.Style) []any {
+	return []any{x.BackgroundColor, x.Color, x.Bold, x.Italic, x.Underline, int32(x.Align), int32(x.Wrap), gostrictTo119(x.Borders), x.PaddingX, x.FontSize}
 }
 
-func gostrictFrom114(v []any) sheet.Borders {
-	return sheet.Borders{Top: gostrictFrom115(v[0].([]any)), Right: gostrictFrom115(v[1].([]any)), Bottom: gostrictFrom115(v[2].([]any)), Left: gostrictFrom115(v[3].([]any))}
+func gostrictFrom119(v []any) sheet.Borders {
+	return sheet.Borders{Top: gostrictFrom120(v[0].([]any)), Right: gostrictFrom120(v[1].([]any)), Bottom: gostrictFrom120(v[2].([]any)), Left: gostrictFrom120(v[3].([]any))}
 }
 
-func gostrictTo114(x sheet.Borders) []any {
-	return []any{gostrictTo115(x.Top), gostrictTo115(x.Right), gostrictTo115(x.Bottom), gostrictTo115(x.Left)}
+func gostrictTo119(x sheet.Borders) []any {
+	return []any{gostrictTo120(x.Top), gostrictTo120(x.Right), gostrictTo120(x.Bottom), gostrictTo120(x.Left)}
 }
 
-func gostrictFrom115(v []any) sheet.Line {
+func gostrictFrom120(v []any) sheet.Line {
 	return sheet.Line{Color: v[0].(string), Width: v[1].(float64), Style: sheet.LineStyle(v[2].(int32))}
 }
 
-func gostrictTo115(x sheet.Line) []any {
+func gostrictTo120(x sheet.Line) []any {
 	return []any{x.Color, x.Width, int32(x.Style)}
 }

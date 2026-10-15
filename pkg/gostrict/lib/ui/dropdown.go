@@ -3,7 +3,9 @@
 // This file is part of the NAGO Low-Code Platform.
 // Licensed under the terms specified in the LICENSE file.
 //
-// SPDX-License-Identifier: Custom-License//gostrict:header
+// SPDX-License-Identifier: Custom-License
+
+//gostrict:header
 package ui
 
 import (

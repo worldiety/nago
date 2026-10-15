@@ -9,10 +9,11 @@ package ui_test
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"reflect"
 	"regexp"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -23,6 +24,7 @@ import (
 	"go.wdy.de/nago/pkg/gostrict/lib/ui"
 	"go.wdy.de/nago/pkg/gostrict/lib/ui/internal/agenda"
 	"go.wdy.de/nago/pkg/gostrict/lib/ui/internal/cells"
+	"go.wdy.de/nago/pkg/gostrict/lib/ui/internal/extras"
 	"go.wdy.de/nago/pkg/gostrict/lib/ui/internal/form"
 	"go.wdy.de/nago/pkg/gostrict/lib/ui/internal/page"
 	"go.wdy.de/nago/pkg/gostrict/lib/ui/internal/people"
@@ -202,28 +204,53 @@ func TestPage(t *testing.T) {
 		})
 		w := app.Open(t, nil, "page")
 		var got []string
-		got = append(got, fmt.Sprintf("%#v", w.Tree()))
+		got = append(got, treeOf(t, w))
 		w.Find(nagotest.Text("zu"))
 		w.Click(w.Find(nagotest.Text("Umschalten")))
 		w.Find(nagotest.Text("offen"))
-		got = append(got, fmt.Sprintf("%#v", w.Tree()))
+		got = append(got, treeOf(t, w))
 		if want == nil {
 			want = got
 			continue
 		}
 		for i := range want {
 			if normalize(got[i]) != normalize(want[i]) {
-				t.Fatalf("%s renders another tree %d:\n got: %s\nwant: %s", name, i, got[i], want[i])
+				t.Fatalf("%s renders another tree %d:\n%s", name, i, firstDiff(got[i], want[i]))
 			}
 		}
 	}
 }
 
-// pointers are the pointers of the callbacks, which differ between two windows.
-var pointers = regexp.MustCompile(`Ptr\(0x[0-9a-f]+\)|Ptr:0x[0-9a-f]+|0x[0-9a-f]{6,}`)
+// treeOf returns the whole rendered tree of the window as JSON, with all nested components.
+func treeOf(t testing.TB, w *nagotest.Window) string {
+	t.Helper()
+	buf, err := json.Marshal(w.Tree())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(buf)
+}
+
+// pointers are the numbers of callbacks and states and generated ids, which are random and differ between two
+// windows.
+var (
+	pointers = regexp.MustCompile(`:[0-9]{7,}`)
+	ids      = regexp.MustCompile(`"([a-z]+)[0-9]{7,}"`)
+)
 
 func normalize(s string) string {
-	return pointers.ReplaceAllString(s, "PTR")
+	return ids.ReplaceAllString(pointers.ReplaceAllString(s, ":PTR"), `"${1}ID"`)
+}
+
+// firstDiff returns the context of the first difference of a and b.
+func firstDiff(a, b string) string {
+	a, b = normalize(a), normalize(b)
+	i := 0
+	for i < len(a) && i < len(b) && a[i] == b[i] {
+		i++
+	}
+	from := max(i-120, 0)
+	return "got: ..." + a[from:min(i+80, len(a))] + "\nwant: ..." + b[from:min(i+80, len(b))]
 }
 
 // TestForm renders a form with many views natively and in goja, types into its fields and clicks a button, so that
@@ -241,21 +268,21 @@ func TestForm(t *testing.T) {
 			cfg.RootView("form", renders[name])
 		})
 		w := app.Open(t, nil, "form")
-		got := []string{fmt.Sprintf("%#v", w.Tree())}
+		got := []string{treeOf(t, w)}
 		w.Find(nagotest.Text("Hallo  (0)"))
 
 		w.Type(w.Find(nagotest.Label("Name")), "Anna")
 		w.Find(nagotest.Text("Hallo Anna (0)"))
-		got = append(got, fmt.Sprintf("%#v", w.Tree()))
+		got = append(got, treeOf(t, w))
 
 		w.Click(w.Find(nagotest.Text("Älter")))
 		w.Type(w.Find(nagotest.Type[*proto.Checkbox]()), "true")
 		w.Find(nagotest.Text("Hallo Anna (1), einverstanden"))
-		got = append(got, fmt.Sprintf("%#v", w.Tree()))
+		got = append(got, treeOf(t, w))
 
 		w.Type(w.Find(nagotest.Label("Ort")), "ol")
 		w.Find(nagotest.Text("Hallo Anna (1), einverstanden aus ol"))
-		got = append(got, fmt.Sprintf("%#v", w.Tree()))
+		got = append(got, treeOf(t, w))
 
 		if want == nil {
 			want = got
@@ -263,7 +290,7 @@ func TestForm(t *testing.T) {
 		}
 		for i := range want {
 			if normalize(got[i]) != normalize(want[i]) {
-				t.Fatalf("%s renders another tree %d:\n got: %s\nwant: %s", name, i, got[i], want[i])
+				t.Fatalf("%s renders another tree %d:\n%s", name, i, firstDiff(got[i], want[i]))
 			}
 		}
 	}
@@ -285,13 +312,13 @@ func TestDataView(t *testing.T) {
 		w := app.Open(t, nil, "people")
 		w.Find(nagotest.Text("Anna"))
 		w.Find(nagotest.Text("Carla"))
-		got := normalize(fmt.Sprintf("%#v", w.Tree()))
+		got := normalize(treeOf(t, w))
 		if want == "" {
 			want = got
 			continue
 		}
 		if got != want {
-			t.Fatalf("%s renders another data view:\n got: %s\nwant: %s", name, got, want)
+			t.Fatalf("%s renders another data view:\n%s", name, firstDiff(got, want))
 		}
 	}
 }
@@ -314,13 +341,52 @@ func TestAgenda(t *testing.T) {
 		w.Find(nagotest.Text("Kalender"))
 		w.Find(nagotest.Text("Bescherung"))
 		w.Find(nagotest.Text("Spaziergang"))
-		got := normalize(fmt.Sprintf("%#v", w.Tree()))
+		got := normalize(treeOf(t, w))
 		if want == "" {
 			want = got
 			continue
 		}
 		if got != want {
-			t.Fatalf("%s renders another tree:\n got: %s\nwant: %s", name, got, want)
+			t.Fatalf("%s renders another tree:\n%s", name, firstDiff(got, want))
+		}
+	}
+}
+
+// TestExtras renders the picker, a background, embedded images, icons and the colors of a chart natively and in
+// goja, picks rows by a button, and compares the views.
+func TestExtras(t *testing.T) {
+	in := loadDir(t, "internal/extras")
+	renders := map[string]func(wnd core.Window) core.View{
+		"native": func(wnd core.Window) core.View { return ui.Core(extras.Render(ui.WindowOf(wnd))) },
+		"goja":   func(wnd core.Window) core.View { return ui.Render(context.Background(), in, "Render", wnd) },
+	}
+	var want []string
+	for _, name := range []string{"native", "goja"} {
+		app := nagotest.New(t, func(cfg *application.Configurator) {
+			cfg.SetApplicationID(core.ApplicationID("de.worldiety.gostrict.extras." + name))
+			cfg.RootView("extras", renders[name])
+		})
+		w := app.Open(t, nil, "extras")
+		got := []string{normalize(treeOf(t, w))}
+		for _, part := range []string{"#ff0000", "linear-gradient", "PHN2Zy"} {
+			if !strings.Contains(got[0], part) {
+				t.Errorf("%s lacks %s", name, part)
+			}
+		}
+		if false {
+			t.Fatalf("%s lacks the colors, the background or an icon", name)
+		}
+		w.Click(w.Find(nagotest.Text("Speichern")))
+		w.Find(nagotest.Text("gewählt: Apfel, Kirsche"))
+		got = append(got, normalize(treeOf(t, w)))
+		if want == nil {
+			want = got
+			continue
+		}
+		for i := range want {
+			if got[i] != want[i] {
+				t.Fatalf("%s renders another tree %d:\n%s", name, i, firstDiff(got[i], want[i]))
+			}
 		}
 	}
 }

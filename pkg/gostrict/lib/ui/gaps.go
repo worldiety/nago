@@ -13,6 +13,7 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	nui "go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/barchart"
+	"go.wdy.de/nago/presentation/ui/chart"
 	"go.wdy.de/nago/presentation/ui/colorpicker"
 	"go.wdy.de/nago/presentation/ui/linechart"
 	"go.wdy.de/nago/presentation/ui/pager"
@@ -209,40 +210,61 @@ func ChartSeries(label string, typ ChartSeriesType, points ...ChartDataPoint) TC
 //
 //gostrict:host
 func BarChart(c Chart, labels ...string) TBarChart {
-	return TBarChart{ref: wrap(barchart.BarChart(c.nago(labels)))}
+	return TBarChart{ref: wrap(newChartHolder(barchart.BarChart(c.nago(labels)), c.nago(labels)))}
 }
 
 // Series sets the series.
 //
 //gostrict:host
 func (c TBarChart) Series(series ...TChartSeries) TBarChart {
-	return TBarChart{ref: wrap(get[barchart.TBarChart](c.ref).Series(chartSeriesList(series)))}
+	return c.with(func(v barchart.TBarChart) barchart.TBarChart { return v.Series(chartSeriesList(series)) })
 }
 
 // LineChart returns a line chart with the labels of its axis, like linechart.LineChart of nago.
 //
 //gostrict:host
 func LineChart(c Chart, labels ...string) TLineChart {
-	return TLineChart{ref: wrap(linechart.LineChart(c.nago(labels)))}
+	return TLineChart{ref: wrap(newChartHolder(linechart.LineChart(c.nago(labels)), c.nago(labels)))}
 }
 
 // Series sets the series.
 //
 //gostrict:host
 func (c TLineChart) Series(series ...TChartSeries) TLineChart {
-	return TLineChart{ref: wrap(get[linechart.TLineChart](c.ref).Series(chartSeriesList(series)))}
+	return c.with(func(v linechart.TLineChart) linechart.TLineChart { return v.Series(chartSeriesList(series)) })
 }
 
 // PieChart returns a pie chart with the labels of its slices, like piechart.PieChart of nago.
 //
 //gostrict:host
 func PieChart(c Chart, labels ...string) TPieChart {
-	return TPieChart{ref: wrap(piechart.PieChart(c.nago(labels)))}
+	return TPieChart{ref: wrap(newChartHolder(piechart.PieChart(c.nago(labels)), c.nago(labels)))}
 }
 
 // Series sets the series.
 //
 //gostrict:host
 func (c TPieChart) Series(series ...TChartSeries) TPieChart {
-	return TPieChart{ref: wrap(get[piechart.TPieChart](c.ref).Series(chartSeriesList(series)))}
+	return c.with(func(v piechart.TPieChart) piechart.TPieChart { return v.Series(chartSeriesList(series)) })
+}
+
+// Colors sets the colors of the series in their order.
+//
+//gostrict:host
+func (c TBarChart) Colors(colors ...Color) TBarChart {
+	return c.withChart(func(ch *chart.Chart) { ch.Colors = colorsOf(colors) })
+}
+
+// Colors sets the colors of the series in their order.
+//
+//gostrict:host
+func (c TLineChart) Colors(colors ...Color) TLineChart {
+	return c.withChart(func(ch *chart.Chart) { ch.Colors = colorsOf(colors) })
+}
+
+// Colors sets the colors of the series in their order.
+//
+//gostrict:host
+func (c TPieChart) Colors(colors ...Color) TPieChart {
+	return c.withChart(func(ch *chart.Chart) { ch.Colors = colorsOf(colors) })
 }

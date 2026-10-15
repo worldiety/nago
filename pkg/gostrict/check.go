@@ -410,6 +410,10 @@ func (c *checker) checkBinary(n *ast.BinaryExpr) {
 			return
 		}
 		t := c.info.TypeOf(n.X)
+		if t == nil || c.info.TypeOf(n.Y) == nil {
+			// the type checker has reported the operands
+			return
+		}
 		if isInterface(c.info.TypeOf(n.Y)) {
 			t = c.info.TypeOf(n.Y)
 		}
@@ -508,6 +512,10 @@ func (c *checker) checkConversion(n *ast.CallExpr, to types.Type) {
 		return
 	}
 	from := c.info.TypeOf(n.Args[0])
+	if from == nil || to == nil {
+		// the type checker has reported the argument
+		return
+	}
 	if isFloat(from) && isInteger(to) {
 		c.report(n, CodeFloatConversion, "converting a float64 into an integer is not allowed", "Go leaves the result undefined for NaN and values out of range", "use num.Trunc32(f) or num.Round32(f) from \"go.wdy.de/nago/pkg/gostrict/std/num\", which are defined for every value")
 	}

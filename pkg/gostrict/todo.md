@@ -87,9 +87,12 @@ Interpreter), eine direkte Umwandlung goja → Go-Struct spart höchstens ein Vi
   `DateState`, `TimeFrameState`, `DurationState`, `ui.Time`/`ui.Duration` (Unix-Millisekunden), Records mit
   `list.List`-Feldern statt Slices, Handles mit Buildern für Records mit Funktionen (z. B. `CalendarEvent`), sowie
   Wrapper für Dataview (`DataViewFromSlice`, Zeilen per Index, ohne Repository), Charts (`ui.Chart`,
-  `ChartSeries`) und Dropdown (`string`-IDs). Es fehlen: `crud`, `form`, `treeview`, der generische Teil von
-  `picker`, `dropdown.FromSlice`, alles mit `auth.Subject`/Repositories/i18n-Diensten, `Background`,
-  `Box(BoxLayout)`, `SignatureField`, QR-Leser, `Image.Embed`, Farben der Charts, Icons als `SVG`-Konstanten.
+  `ChartSeries`) und Dropdown (`string`-IDs). Es fehlen: `crud`, `form`, `treeview`, `dropdown.FromSlice`, alles mit
+  `auth.Subject`/Repositories/i18n-Diensten, `Box(BoxLayout)`, `SignatureField`, QR-Leser, die Icons von hero und
+  material (Flowbite: `lib/ui/icons/flowbite/{outline,solid}`, erzeugt von `TestIcons -update`). Picker über Indizes
+  (`PickerFromSlice` mit `IndicesState`), `ui.Background()`, `Image.Embed(SVG)`/`Adaptive(ImageID)` und
+  `Colors(...)` der Charts sind ergänzt. Die Baumvergleiche der Tests sind tief (JSON), Zeiger und erzeugte IDs
+  normalisiert.
 - **`opt.Option` an der Grenze:** fehlt, deshalb hat `sheet.Cell` keine `Options` (Select-Editor) und keine `View`
   (Handles in Records).
 - **`go/analysis`-Analyzer (I.6):** neue Abhängigkeit `golang.org/x/tools`, abstimmen.
