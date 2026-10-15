@@ -54,3 +54,4 @@ LineChart returns a TLineChart initialized with the given chart.
 - [Bar Chart](../bar_chart/)
 - [Pie Chart](../pie_chart/)
 - Tutorial [tutorial-66-line-chart](/docs/examples/tutorial-66-line-chart/)
+- [SVG Chart](../svg_chart/) renders the same data as a static SVG without a charting library
