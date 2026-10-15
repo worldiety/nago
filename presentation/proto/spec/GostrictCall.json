@@ -1,0 +1,26 @@
+{
+  "doc": "GostrictCall calls an exported function of the program of the bundle in the frontend, see the package presentation/ui/program. The frontend keeps an instance of the bundle per instance id and answers with GostrictReturn.",
+  "kind": "Record",
+  "id": 328,
+  "fields": {
+    "1": {
+      "doc": "Instance identifies the instance of the program in the frontend.",
+      "name": "Instance",
+      "type": "Str"
+    },
+    "2": {
+      "doc": "Bundle is the URL of the program.",
+      "name": "Bundle",
+      "type": "URI"
+    },
+    "3": {
+      "doc": "Name is the exported function. If empty, the frontend drops the instance.",
+      "name": "Name",
+      "type": "Str"
+    },
+    "4": {
+      "name": "Args",
+      "type": "GostrictValues"
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "doc": "GostrictProgram describes a gostrict program, which a component runs in the frontend.",
+  "kind": "Record",
+  "id": 322,
+  "fields": {
+    "1": {
+      "doc": "Bundle is the immutable URL of the translated program and its schema, which contains its hash.",
+      "name": "Bundle",
+      "type": "URI"
+    },
+    "2": {
+      "doc": "Init is the exported function, which the component calls first. If it returns a state, the component passes the state to the other functions, which take one.",
+      "name": "Init",
+      "type": "Str"
+    },
+    "3": {
+      "doc": "Args are the arguments of Init.",
+      "name": "Args",
+      "type": "GostrictValues"
+    },
+    "4": {
+      "doc": "Frame is the exported function, which the component calls in each animation frame with the time in seconds. If empty, there is no animation loop.",
+      "name": "Frame",
+      "type": "Str"
+    },
+    "5": {
+      "doc": "Resize is the exported function, which the component calls with the aspect ratio, with the width and the height or with the width, the height and the device pixel ratio of its area, whenever it changes.",
+      "name": "Resize",
+      "type": "Str"
+    },
+    "6": {
+      "doc": "Inputs are the input events, which the component passes to the handler of go.wdy.de/nago/pkg/gostrict/lib/input.Event of the program.",
+      "name": "Inputs",
+      "type": "InputEventTypes"
+    }
+  }
+}

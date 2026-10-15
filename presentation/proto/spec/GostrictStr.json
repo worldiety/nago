@@ -1,0 +1,11 @@
+{
+  "doc": "GostrictStr is a string of a gostrict program.",
+  "kind": "Record",
+  "id": 313,
+  "fields": {
+    "1": {
+      "name": "V",
+      "type": "Str"
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "doc": "Canvas2 draws with the 2D context of a canvas, which a gostrict program controls, see go.wdy.de/nago/pkg/gostrict/lib/canvas.",
+  "kind": "Record",
+  "id": 324,
+  "fields": {
+    "1": {
+      "doc": "Id identifies the component within the view tree and must be unique. Messages and input events refer to it.",
+      "name": "Id",
+      "type": "Str"
+    },
+    "2": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "3": {
+      "name": "Program",
+      "type": "GostrictProgram"
+    }
+  }
+}

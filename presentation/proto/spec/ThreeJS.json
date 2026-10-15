@@ -1,0 +1,24 @@
+{
+  "doc": "ThreeJS renders the scene of a gostrict program with three.js, see go.wdy.de/nago/pkg/gostrict/lib/three.",
+  "kind": "Record",
+  "id": 323,
+  "fields": {
+    "1": {
+      "doc": "Id identifies the component within the view tree and must be unique. Messages and input events refer to it.",
+      "name": "Id",
+      "type": "Str"
+    },
+    "2": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "3": {
+      "name": "Program",
+      "type": "GostrictProgram"
+    },
+    "4": {
+      "name": "Antialias",
+      "type": "Bool"
+    }
+  }
+}

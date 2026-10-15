@@ -1,0 +1,5 @@
+{
+  "doc": "GostrictNegZero is the float64 -0 of a gostrict program.",
+  "kind": "Record",
+  "id": 312
+}

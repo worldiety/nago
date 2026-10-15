@@ -1,0 +1,16 @@
+{
+  "doc": "GostrictDeliver passes the messages of the backend to the handlers of the gostrict program of the component with the id. The frontend keeps them, until the component is mounted.",
+  "kind": "Record",
+  "id": 319,
+  "fields": {
+    "1": {
+      "doc": "Id is the id of the component, which runs the program.",
+      "name": "Id",
+      "type": "Str"
+    },
+    "2": {
+      "name": "Messages",
+      "type": "GostrictMessages"
+    }
+  }
+}

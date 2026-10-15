@@ -13,15 +13,74 @@
     },
     "3": {
       "name": "X",
-      "type": "Float"
+      "type": "Float",
+      "doc": "X is the horizontal position in CSS pixels relative to the element."
     },
     "4": {
       "name": "Y",
-      "type": "Float"
+      "type": "Float",
+      "doc": "Y is the vertical position in CSS pixels relative to the element."
     },
     "5": {
       "name": "Code",
+      "type": "Str",
+      "doc": "Code is the physical key of a key event, e.g. KeyA or ArrowLeft."
+    },
+    "6": {
+      "doc": "PointerId distinguishes the pointers of a multi touch.",
+      "name": "PointerId",
+      "type": "Int"
+    },
+    "7": {
+      "doc": "Buttons is the bit mask of the pressed buttons: 1 primary, 2 secondary, 4 auxiliary.",
+      "name": "Buttons",
+      "type": "Uint"
+    },
+    "8": {
+      "doc": "Pressure of the pointer from 0 to 1.",
+      "name": "Pressure",
+      "type": "Float"
+    },
+    "9": {
+      "name": "Shift",
+      "type": "Bool"
+    },
+    "10": {
+      "name": "Ctrl",
+      "type": "Bool"
+    },
+    "11": {
+      "name": "Alt",
+      "type": "Bool"
+    },
+    "12": {
+      "name": "Meta",
+      "type": "Bool"
+    },
+    "13": {
+      "doc": "DeltaX is the horizontal amount of a wheel event.",
+      "name": "DeltaX",
+      "type": "Float"
+    },
+    "14": {
+      "doc": "DeltaY is the vertical amount of a wheel event.",
+      "name": "DeltaY",
+      "type": "Float"
+    },
+    "15": {
+      "doc": "DeltaZ is the amount of a wheel event along the z axis.",
+      "name": "DeltaZ",
+      "type": "Float"
+    },
+    "16": {
+      "doc": "Key is the value of the key, which respects the keyboard layout, e.g. a or Enter, while Code is the physical key, e.g. KeyA.",
+      "name": "Key",
       "type": "Str"
+    },
+    "17": {
+      "doc": "Repeat tells, whether the key is held down.",
+      "name": "Repeat",
+      "type": "Bool"
     }
   }
 }

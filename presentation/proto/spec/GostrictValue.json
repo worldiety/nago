@@ -1,0 +1,16 @@
+{
+  "doc": "GostrictValue is a value, which crosses the boundary of a gostrict program. The receiver knows its type from the schema of the program, so the value carries no type itself.",
+  "kind": "Enum",
+  "variants": [
+    "GostrictBool",
+    "GostrictInt",
+    "GostrictFloat",
+    "GostrictNegZero",
+    "GostrictStr",
+    "GostrictList",
+    "GostrictVariant",
+    "GostrictNil",
+    "GostrictError",
+    "GostrictRef"
+  ]
+}

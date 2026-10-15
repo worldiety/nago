@@ -1,0 +1,6 @@
+{
+  "doc": "GostrictMessages is a list of messages in the order, in which they were sent.",
+  "kind": "Array",
+  "id": 318,
+  "type": "GostrictMessage"
+}

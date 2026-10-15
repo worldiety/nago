@@ -228,11 +228,33 @@ const (
 	InputEventBlur          = InputEventType(proto.InputEventBlur)
 )
 
+// InputEvent is an event of the input devices at an element, see [Window.AddInputListener]. A program of the
+// gostrict subset in the frontend receives the same events as go.wdy.de/nago/pkg/gostrict/lib/input.Event.
 type InputEvent struct {
 	Type InputEventType
-	X    float64
-	Y    float64
+	// X and Y are the position in CSS pixels relative to the element.
+	X float64
+	Y float64
+	// Code is the physical key of a key event, e.g. KeyA or ArrowLeft.
 	Code string
+	// PointerID distinguishes the pointers of a multi touch.
+	PointerID int32
+	// Buttons is the bit mask of the pressed buttons: 1 primary, 2 secondary, 4 auxiliary.
+	Buttons uint32
+	// Pressure of the pointer from 0 to 1.
+	Pressure float64
+	Shift    bool
+	Ctrl     bool
+	Alt      bool
+	Meta     bool
+	// DeltaX, DeltaY and DeltaZ are the amounts of a wheel event in pixels.
+	DeltaX float64
+	DeltaY float64
+	DeltaZ float64
+	// Key is the value of the key, which respects the keyboard layout, e.g. a or Enter.
+	Key string
+	// Repeat tells, whether the key is held down.
+	Repeat bool
 }
 
 // Colors returns a type safe value based ColorSet instance.

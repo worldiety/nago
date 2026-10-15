@@ -50,6 +50,8 @@
     "Toggle",
     "Video",
     "WebView",
-    "WindowTitle"
+    "WindowTitle",
+    "ThreeJS",
+    "Canvas2"
   ]
 }

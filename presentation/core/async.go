@@ -32,6 +32,12 @@ func AsyncCall(wnd Window, args proto.CallArgs, fn func(ret proto.CallRet)) (can
 	return asyncCall(wnd, args, fn, false)
 }
 
+// AsyncListen is like [AsyncCall], but the frontend may resolve the call any number of times, e.g. with the
+// messages of a program, which runs in the frontend. The callback stays registered, until cancel is called.
+func AsyncListen(wnd Window, args proto.CallArgs, fn func(ret proto.CallRet)) (cancel func()) {
+	return asyncCall(wnd, args, fn, true)
+}
+
 // asyncCall is like [AsyncCall] but if repeatable is true, the callback survives any resolution and is only
 // removed by the returned cancel function. This is required for frontend calls which resolve multiple times,
 // like input event listeners.

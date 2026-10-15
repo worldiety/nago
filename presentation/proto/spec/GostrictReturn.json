@@ -1,0 +1,15 @@
+{
+  "doc": "GostrictReturn holds the results of a GostrictCall or, if the call failed in the frontend, its error.",
+  "kind": "Record",
+  "id": 329,
+  "fields": {
+    "1": {
+      "name": "Values",
+      "type": "GostrictValues"
+    },
+    "2": {
+      "name": "Failure",
+      "type": "Str"
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "doc": "GostrictRef refers to a state, which an instance of a program in the frontend holds, see GostrictCall.",
+  "kind": "Record",
+  "id": 327,
+  "fields": {
+    "1": {
+      "name": "V",
+      "type": "Int"
+    }
+  }
+}
