@@ -70,10 +70,14 @@ type Package struct {
 	Info  *types.Info
 }
 
-// Program is a package with all packages it depends on.
+// Program is a package with all packages it depends on, or a whole program of several packages, see [LoadRoots].
 type Program struct {
 	Fset *token.FileSet
+	// Main is the package of [LoadModules] or the first root of [LoadRoots].
 	Main *Package
+	// Roots are the packages, whose exported functions are the entry points of a whole program, see [LoadRoots], or
+	// nil.
+	Roots []*Package
 	// Packages contains each package after the packages it imports.
 	Packages []*Package
 	byPath   map[string]*Package
@@ -143,6 +147,22 @@ func Load(dir string) (*Program, error) {
 // are built in. A package is read from the module with the longest matching path, so a module may provide its
 // own header packages, if it is trusted, see [Module.Trusted].
 func LoadModules(main string, modules ...Module) (*Program, error) {
+	return loadModules([]string{main}, false, modules)
+}
+
+// LoadRoots loads several packages as one whole program, e.g. all scripts of an application, which call each
+// other. The exported functions of the roots are its entry points, which an engine calls by their full name, e.g.
+// "example.com/scripts/crm/read.Main", and the program runs only with an [Aspect], which the host and the
+// translated program call around each entry point. So the whole program is checked and translated once, whenever
+// one of its packages changes, while running calls keep their former bundle.
+func LoadRoots(roots []string, modules ...Module) (*Program, error) {
+	if len(roots) == 0 {
+		return nil, errors.New("a whole program needs at least one root")
+	}
+	return loadModules(roots, true, modules)
+}
+
+func loadModules(roots []string, whole bool, modules []Module) (*Program, error) {
 	std, err := fs.Sub(stdFS, "std")
 	if err != nil {
 		return nil, err
@@ -176,12 +196,22 @@ func LoadModules(main string, modules ...Module) (*Program, error) {
 	}
 	l.diag = &diagnoser{fset: fset, sources: l.prog.sources}
 
-	p, err := l.load(main)
-	if err != nil {
-		return nil, err
+	for _, root := range roots {
+		// a root may have been loaded as an import of another one
+		p := l.prog.byPath[root]
+		if p == nil {
+			p, err = l.load(root)
+			if err != nil {
+				return nil, err
+			}
+		}
+		if l.prog.Main == nil {
+			l.prog.Main = p
+		}
+		if whole && !slices.Contains(l.prog.Roots, p) {
+			l.prog.Roots = append(l.prog.Roots, p)
+		}
 	}
-
-	l.prog.Main = p
 	l.prog.Diagnostics = l.diag.sorted()
 	return l.prog, nil
 }

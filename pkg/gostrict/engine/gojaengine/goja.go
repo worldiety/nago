@@ -227,7 +227,7 @@ func (r *Runtime) run(ctx context.Context, f func() (goja.Value, error)) (goja.V
 	if err != nil {
 		var ex *goja.Exception
 		if errors.As(err, &ex) {
-			return nil, &Error{Msg: ex.Value().String()}
+			return nil, jsError(ex)
 		}
 		var ie *goja.InterruptedError
 		if errors.As(err, &ie) {
@@ -258,6 +258,15 @@ func (in *instance) Call(ctx context.Context, name string, args ...any) ([]any, 
 		err = in.callbackErr()
 	}
 	return res, err
+}
+
+// jsError returns the error of an exception: the error of an abort of the host itself, see [gostrict.Abort], or
+// the message of JavaScript, e.g. of a binding.
+func jsError(ex *goja.Exception) error {
+	if err, ok := gostrict.AbortedErr(ex.Unwrap()); ok {
+		return err
+	}
+	return &Error{Msg: ex.Value().String()}
 }
 
 // callbackErr returns and clears the error of a callback.
@@ -370,7 +379,7 @@ func (cb *callback) call(args []any) ([]any, error) {
 	if err != nil {
 		var ex *goja.Exception
 		if errors.As(err, &ex) {
-			return nil, &Error{Msg: ex.Value().String()}
+			return nil, jsError(ex)
 		}
 		return nil, err
 	}
@@ -633,6 +642,16 @@ func (c converter) toJS(v any, t gostrict.Type) (goja.Value, error) {
 func (r *Runtime) hostFunc(in *instance, sig gostrict.Func, f gostrict.Fn) func(goja.FunctionCall) goja.Value {
 	c := converter{r: r, b: in.bundle, owner: in}
 	return func(call goja.FunctionCall) goja.Value {
+		defer func() {
+			if v := recover(); v != nil {
+				// an abort unwinds the program as an exception, which it can not catch, so that the aspect exits
+				// the entry points
+				if a, ok := v.(*gostrict.Aborted); ok {
+					panic(r.rt.NewGoError(a))
+				}
+				panic(v)
+			}
+		}()
 		args := make([]any, len(sig.Params))
 		for i, k := range sig.Params {
 			v, err := c.toGo(call.Argument(i), k)

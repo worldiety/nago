@@ -11,7 +11,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"io/fs"
+	"maps"
 	"path"
+	"slices"
 	"strings"
 	"sync"
 
@@ -125,4 +127,49 @@ func SourceHash(main string, modules ...Module) (string, error) {
 		}
 	}
 	return hex.EncodeToString(h.Sum(nil)[:16]), nil
+}
+
+// Whole is a checked whole program, see [LoadRoots], which translates a bundle once for each set of entry points,
+// e.g. for each use case, which a host runs. A changed program is a new Whole, while running calls keep the bundles
+// of the former one.
+type Whole struct {
+	prog *Program
+	// mu serializes the translations, which share the program
+	mu      sync.Mutex
+	bundles map[string]*Bundle
+}
+
+// CompileWhole loads and checks a whole program, see [LoadRoots]. If it is not in the subset, it returns the
+// diagnostics and no program.
+func CompileWhole(roots []string, modules ...Module) (*Whole, Diagnostics, error) {
+	prog, err := LoadRoots(roots, modules...)
+	if err != nil {
+		return nil, nil, err
+	}
+	if diags := Check(prog); len(diags) > 0 {
+		return nil, diags, nil
+	}
+	return &Whole{prog: prog, bundles: map[string]*Bundle{}}, nil, nil
+}
+
+// Entries returns the full names of the entry points, e.g. "example.com/scripts/crm/read.Main".
+func (w *Whole) Entries() []string {
+	return slices.Sorted(maps.Values(entryPoints(w.prog)))
+}
+
+// Bundle returns the bundle of the entry points or of all, if there are none, see [EmitEntries].
+func (w *Whole) Bundle(entries ...string) (*Bundle, error) {
+	entries = slices.Sorted(slices.Values(entries))
+	key := strings.Join(entries, "\x00")
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if b, ok := w.bundles[key]; ok {
+		return b, nil
+	}
+	b, diags := EmitEntries(w.prog, entries...)
+	if len(diags) > 0 {
+		return nil, diags
+	}
+	w.bundles[key] = b
+	return b, nil
 }

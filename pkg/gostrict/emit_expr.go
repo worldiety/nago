@@ -179,6 +179,10 @@ func (c *fnCtx) funcRef(fn *types.Func, targs []types.Type, pos token.Pos) strin
 	if ok && src.pkg.Kind == KindHeader {
 		return c.e.externName(fn, targs, src, pos)
 	}
+	if _, entry := c.e.entries[fn]; entry && fn.Pkg() != c.pkg.Types {
+		// another package calls the entry point of a whole program within the aspect, also through a function value
+		return c.e.hook(fn)
+	}
 	return c.e.funcName(fn, nil, targs)
 }
 

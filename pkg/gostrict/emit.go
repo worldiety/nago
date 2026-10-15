@@ -15,6 +15,7 @@ import (
 	"go/ast"
 	"go/token"
 	"go/types"
+	"maps"
 	"slices"
 	"strings"
 )
@@ -86,6 +87,13 @@ func Compile(dir string) (*Bundle, Diagnostics, error) {
 // Emit translates a checked program into JavaScript. Every function is translated once for each combination of
 // type arguments, it is called with, so the translated code knows the concrete type of every value.
 func Emit(prog *Program) (b *Bundle, diags Diagnostics) {
+	return EmitEntries(prog)
+}
+
+// EmitEntries translates a checked whole program, see [LoadRoots], for the given entry points by their full name,
+// e.g. the use case, which a host runs, or for all entry points, if there are none. The bundle contains only the
+// packages and functions, which they reach, so it is small and loads fast, while the program is checked once.
+func EmitEntries(prog *Program, entries ...string) (b *Bundle, diags Diagnostics) {
 	e := &emitter{
 		prog:    prog,
 		decls:   funcDecls(prog),
@@ -96,6 +104,16 @@ func Emit(prog *Program) (b *Bundle, diags Diagnostics) {
 		globals: map[*types.Var]string{},
 		diag:    &diagnoser{fset: prog.Fset, sources: prog.sources},
 		mut:     analyzeMutation(prog),
+		entries: entryPoints(prog),
+	}
+	if len(entries) > 0 {
+		e.targets = map[string]bool{}
+		for _, name := range entries {
+			if !slices.Contains(slices.Collect(maps.Values(e.entries)), name) {
+				return nil, Diagnostics{{Code: CodeEntry, Msg: name + " is no entry point of the program", Why: "a bundle exports only entry points, the exported functions of the roots of a whole program"}}
+			}
+			e.targets[name] = true
+		}
 	}
 
 	defer func() {
@@ -142,12 +160,87 @@ type emitter struct {
 	positions []token.Pos
 	// mut tells, which struct types the program never changes, so that their values need no copy
 	mut *mutation
+	// entries are the entry points of a whole program by their full name, see LoadRoots
+	entries map[*types.Func]string
+	// targets are the entry points, which the bundle exports, or nil for all
+	targets map[string]bool
+}
+
+// entryPoints returns the exported functions of the roots of a whole program.
+func entryPoints(prog *Program) map[*types.Func]string {
+	res := map[*types.Func]string{}
+	for _, p := range prog.Roots {
+		for _, name := range p.Types.Scope().Names() {
+			if fn, ok := p.Types.Scope().Lookup(name).(*types.Func); ok && fn.Exported() {
+				res[fn] = p.Path + "." + name
+			}
+		}
+	}
+	return res
+}
+
+// reached returns the packages, which the bundle needs: all, or those, which the packages of the targets import.
+func (e *emitter) reached() map[*Package]bool {
+	res := map[*Package]bool{}
+	var visit func(p *types.Package)
+	visit = func(p *types.Package) {
+		pkg := e.prog.Package(p.Path())
+		if pkg == nil || res[pkg] {
+			return
+		}
+		res[pkg] = true
+		for _, imp := range p.Imports() {
+			visit(imp)
+		}
+	}
+	for fn, name := range e.entries {
+		if e.targets == nil || e.targets[name] {
+			visit(fn.Pkg())
+		}
+	}
+	if len(e.entries) == 0 {
+		for _, p := range e.prog.Packages {
+			res[p] = true
+		}
+	}
+	return res
+}
+
+// hook returns the function, which calls the entry point fn of a whole program within the enter and exit of the
+// aspect, see [Aspect]. The host and the other packages call the entry point only through it.
+func (e *emitter) hook(fn *types.Func) string {
+	key := "H:" + e.entries[fn]
+	if n, ok := e.names[key]; ok {
+		return n
+	}
+	inner := e.funcName(fn, nil, nil)
+	name := e.ident(inner + "$h")
+	e.names[key] = name
+
+	sig := fn.Signature()
+	params := make([]string, sig.Params().Len())
+	for i := range params {
+		params[i] = fmt.Sprintf("a%d", i)
+	}
+	// the error of the entry point tells the aspect, whether it failed
+	errResult := "null"
+	if n := sig.Results().Len(); n > 0 && isError(sig.Results().At(n-1).Type()) {
+		errResult = "$r"
+		if n > 1 {
+			errResult = fmt.Sprintf("$r[%d]", n-1)
+		}
+	}
+	full := jsString(e.entries[fn])
+	fmt.Fprintf(&e.out, "function %s(%s) {\n\t$aspect_enter(%s);\n\tlet $r, $done = false;\n\ttry {\n\t\t$r = %s(%s);\n\t\t$done = true;\n\t} finally {\n\t\t$aspect_exit(%s, $done ? %s : $errors_New(\"aborted\"));\n\t}\n\treturn $r;\n}\n",
+		name, strings.Join(params, ", "), full, inner, strings.Join(params, ", "), full, errResult)
+	return name
 }
 
 func (e *emitter) emit() (*Bundle, Diagnostics) {
 	var vars, init strings.Builder
+	reached := e.reached()
 	for _, p := range e.prog.Packages {
-		if p.Kind != KindUser {
+		if p.Kind != KindUser || !reached[p] {
 			continue
 		}
 
@@ -178,8 +271,29 @@ func (e *emitter) emit() (*Bundle, Diagnostics) {
 	bnd := newBoundary()
 	e.bnd = bnd
 	var ret strings.Builder
+	if len(e.entries) > 0 {
+		// the host calls the entry points of a whole program by their full name within the aspect
+		e.extern = append(e.extern, Extern{Func: Func{Name: EnterFunc, Params: []Type{String}}}, Extern{Func: Func{Name: ExitFunc, Params: []Type{String, Error}}})
+		fmt.Fprintf(&e.externs, "const $aspect_enter = $host[%s];\nconst $aspect_exit = $host[%s];\n", jsString(EnterFunc), jsString(ExitFunc))
+		e.names["X:"+EnterFunc], e.names["X:"+ExitFunc] = "$aspect_enter", "$aspect_exit"
+		for _, fn := range sortedFuncs(e.entries) {
+			full := e.entries[fn]
+			if e.targets != nil && !e.targets[full] {
+				continue
+			}
+			sig, ok := bnd.exportSignature(full, fn.Signature())
+			if !ok {
+				continue
+			}
+			exports[full] = sig
+			fmt.Fprintf(&ret, "\t%s: %s,\n", jsString(full), e.hook(fn))
+		}
+	}
 	main := e.prog.Main
 	for _, name := range main.Types.Scope().Names() {
+		if len(e.entries) > 0 {
+			break
+		}
 		fn, ok := main.Types.Scope().Lookup(name).(*types.Func)
 		if !ok || !fn.Exported() {
 			continue
@@ -263,7 +377,12 @@ func (e *emitter) emit() (*Bundle, Diagnostics) {
 			}
 		}
 	}
-	return &Bundle{JS: js, SourceMap: sourceMap, Hash: hex.EncodeToString(sum[:16]), Exports: exports, Records: bnd.records, Unions: bnd.unions, Handlers: handlers(exports, bnd.unions), Externs: e.extern, States: states}, nil
+	hs := handlers(exports, bnd.unions)
+	if len(e.entries) > 0 {
+		// the entry points of a whole program are called by name and handle no messages of a browser
+		hs = map[string]string{}
+	}
+	return &Bundle{JS: js, SourceMap: sourceMap, Hash: hex.EncodeToString(sum[:16]), Exports: exports, Records: bnd.records, Unions: bnd.unions, Handlers: hs, Externs: e.extern, States: states}, nil
 }
 
 // frozen tells, whether the values of the record t never change: its type is immutable and its fields hold only
@@ -669,4 +788,11 @@ func sortedNames[V any](m map[string]V) []string {
 	}
 	slices.Sort(names)
 	return names
+}
+
+// sortedFuncs returns the functions of the map in the order of their names, so that a bundle is deterministic.
+func sortedFuncs(m map[*types.Func]string) []*types.Func {
+	res := slices.Collect(maps.Keys(m))
+	slices.SortFunc(res, func(a, b *types.Func) int { return strings.Compare(m[a], m[b]) })
+	return res
 }

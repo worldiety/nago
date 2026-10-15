@@ -34,6 +34,7 @@ Ziele in dieser Reihenfolge: keine Laufzeitfehler (statisch bewiesen), LLM-taugl
 | Vertrauen | Header-Pakete nur aus vertrauenswürdigen Modulen (GS039); Programme von Nutzern oder LLMs nie. |
 | Callbacks | Header-Funktionen nehmen Funktionen des Programms (`ValueFunc`, in Go ein `gostrict.Callback`, generierter Code macht daraus eine Go-Funktion). Aufruf während eines Aufrufs (Host-Funktion) oder später zwischen zwei Aufrufen (Fenster rendert), immer auf der Goroutine der Instanz (Event-Loop des Fensters); innerhalb eines Aufrufs ohne erneutes Sperren. Fehler der Engine: Nullwerte bzw. der Fehler als `error`-Ergebnis, die Instanz liefert ihn beim nächsten Aufruf einmal. Keine Bereichs-Callbacks: in goja ist eine Schleife in JS langsamer als Aufrufe aus Go. |
 | Server-Header | `//gostrict:host` statt `//gostrict:js`: nur ein Go-Host implementiert die Funktion (`lib/ui`), Engines laden das Bundle sonst nicht, der Browser nie. Exporte dürfen Handles direkt nehmen und zurückgeben (`func View() ui.View`), nicht in Records, Listen oder Maps. |
+| Ganzes Programm | `LoadRoots`/`CompileWhole`: alle Skripte als ein Programm, einmal geprüft; `Whole.Bundle(entries...)` übersetzt je Ziel nur Erreichbares. Einstiegspunkte sind alle exportierten Funktionen der Wurzeln (GS042: nicht generisch, nur Daten, keine Unions). Der Compiler ruft `$enter`/`$exit` (`gostrict.Aspect`, `Funcs.WithAspect`) um jeden Einstieg vom Host oder aus einem anderen Paket, auch über Funktionswerte; im eigenen Paket nicht. Ablehnung oder Fehler des Hosts: `gostrict.Abort` beendet den ganzen Aufruf (für das Programm nicht abfangbar, wie R-SCRIPT-UNCATCHABLE in wokoda), alle Frames erhalten `Exit` mit Fehler, der Aufruf liefert den Fehler selbst (`errors.Is`). Imports sind zyklenfrei, also gibt es kein A→B→A und keine Aufrufe nach Namen zur Laufzeit; die Tiefe ist statisch begrenzt. Nativ gibt es keinen Aspekt (Go ruft direkt). |
 | Werte teilen | Struct-Typen, deren Werte das ganze Programm nie verändert (Feldzuweisung, auch über Ketten und Zeiger, `*p = v`), sind unveränderlich: keine Kopien, ein gemeinsamer Nullwert, Zuweisungen ersetzen statt kopieren (`emit_mut.go`). `Record.Immutable` zusätzlich ohne Listen/Maps; goja konvertiert solche Objekte einmal (Identitäts-Cache, je Aufruf geleert, max. 4096). Records sind Objektliterale statt Klassen (goja: Klasse 1,4 µs, Literal 0,6 µs je Objekt); Felder werden in Quellreihenfolge ausgewertet. |
 
 ## Aufbau
@@ -77,9 +78,9 @@ Interpreter), eine direkte Umwandlung goja → Go-Struct spart höchstens ein Vi
 
 ## Offen
 
-- **Use-Case-Vertrag für wokoda (G):** typisierte DB-Zeilen über generische Header-Funktionen mit Record-Typen und
-  ein Kontext pro Aufruf (Nutzer, Transaktion), der bei geteilten Runtimes nicht in Package-Variablen liegen darf.
-  Nur in nago entwerfen.
+- **Use-Case-Vertrag für wokoda (G):** typisierte DB-Zeilen über generische Header-Funktionen mit Record-Typen. Den
+  Kontext je Aufruf (Nutzer, Rechte, Transaktion) hält der Host über `Aspect` als Stapel von Frames, siehe
+  `whole_test.go`; die wokoda-Header (db, files, search, events, user, integration) entstehen downstream.
 - **`ui`-Header für nago-Views (H):** `lib/ui` hat bisher nur `Sheet` und `View`. Offen ist das Muster für alle Views:
   Builder (Methoden auf Handles in Header-Paketen?), Container mit Listen von Views (Listen von Handles fehlen an der
   Grenze), optionale Eigenschaften.

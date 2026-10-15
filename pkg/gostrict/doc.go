@@ -216,6 +216,22 @@
 // A program, which needs the state of its backend, asks for it in Init, e.g. by returning (*Game,
 // msg.Out[messages.Hello]), because the messages of a broken connection are lost.
 //
+// # Whole programs
+//
+// [LoadRoots] loads many packages as one program, e.g. all scripts of an application, which call each other by
+// importing each other. The exported functions of the roots are its entry points, e.g. "example.com/scripts/crm/
+// read.Main", which take and return records, lists, maps, basic values and states, but no sealed interfaces, whose
+// methods would bring code of the caller into the callee. The compiler calls an [Aspect] of the host around each
+// entry point: when the host calls it and when another package calls it, also through a function value, but not
+// within its own package. So the host keeps a frame of each call, e.g. with the rights of the callee and a
+// transaction of its area, which its header functions use, while the program neither sees nor bypasses it. A
+// denied call or another failure of the host, see [Abort], ends the whole call, which the program can not catch,
+// and the aspect exits each frame with the error. Imports have no cycles, so the depth of the frames is bounded by
+// the program itself.
+//
+// [CompileWhole] checks the whole program once, and [Whole.Bundle] translates a bundle for some entry points, which
+// contains only what they reach. A changed script is a new whole program, while running calls keep their bundles.
+//
 // # Caching
 //
 // A [Cache] compiles a program once per hash of its sources and keeps the most recently used bundles. A bundle

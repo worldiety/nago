@@ -19,7 +19,8 @@ import (
 )
 
 // Engine calls the exported functions of the main package natively. The functions of header packages are native
-// anyway, so the host is ignored.
+// anyway, so the host is ignored. A whole program, see gostrict.LoadRoots, runs without its aspect, because Go calls
+// its entry points directly, so it is a reference for the results only.
 type Engine struct {
 	// Exports are the exported functions of the main package, see [Reflect].
 	Exports gostrict.Funcs
@@ -41,7 +42,7 @@ type instance struct {
 	bundle *gostrict.Bundle
 }
 
-func (in instance) Call(ctx context.Context, name string, args ...any) ([]any, error) {
+func (in instance) Call(ctx context.Context, name string, args ...any) (res []any, err error) {
 	sig, ok := in.bundle.Exports[name]
 	if !ok {
 		return nil, fmt.Errorf("%s is not an exported function", name)
@@ -52,6 +53,15 @@ func (in instance) Call(ctx context.Context, name string, args ...any) ([]any, e
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
+	defer func() {
+		if v := recover(); v != nil {
+			abortErr, ok := gostrict.AbortedErr(v)
+			if !ok {
+				panic(v)
+			}
+			res, err = nil, abortErr
+		}
+	}()
 	return in.engine.Exports[name](args), nil
 }
 

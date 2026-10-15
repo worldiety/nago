@@ -55,7 +55,10 @@ func Check(prog *Program) Diagnostics {
 		}
 	}
 
-	if prog.Main.Kind == KindUser {
+	switch {
+	case len(prog.Roots) > 0:
+		checkEntries(prog, d, decls)
+	case prog.Main.Kind == KindUser:
 		checkHandlers(prog.Main, d)
 	}
 	checkRecursion(prog, d, decls)
