@@ -15,8 +15,6 @@ import (
 
 	"github.com/dop251/goja"
 	"go.wdy.de/nago/pkg/gostrict"
-	"go.wdy.de/nago/pkg/gostrict/engine/native"
-	"go.wdy.de/nago/pkg/gostrict/internal/examples/spin"
 	"go.wdy.de/nago/pkg/gostrict/lib/three"
 )
 
@@ -29,21 +27,20 @@ func TestThree(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		client := spin.Client{Instance: in}
-		n, err := client.Setup(context.Background(), 16.0/9)
-		if err != nil {
+		var n int32
+		if err := gostrict.Call(context.Background(), in, "Setup", []any{16.0 / 9}, &n); err != nil {
 			t.Fatal(err)
 		}
 		if n != 13 {
 			t.Fatalf("got %d meshes", n)
 		}
-		if err := client.Frame(context.Background(), 1.5); err != nil {
+		if err := gostrict.Call(context.Background(), in, "Frame", []any{1.5}); err != nil {
 			t.Fatal(err)
 		}
 		return three.Dump()
 	}
 
-	want := run(native.Engine{Exports: spin.Exports()}, nil)
+	want := run(nativeEngine("spin"), nil)
 	got := run(goEngine, three.Host())
 	if got != want {
 		t.Fatalf("the scenes differ\nnative:\n%s\ngoja:\n%s", want, got)
@@ -92,11 +89,11 @@ func TestThreeBindings(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	client := spin.Client{Instance: in}
-	if _, err := client.Setup(ctx, 16.0/9); err != nil {
+	var n int32
+	if err := gostrict.Call(ctx, in, "Setup", []any{16.0 / 9}, &n); err != nil {
 		t.Fatal(err)
 	}
-	if err := client.Frame(ctx, 1.5); err != nil {
+	if err := gostrict.Call(ctx, in, "Frame", []any{1.5}); err != nil {
 		t.Fatal(err)
 	}
 	want := three.Dump()

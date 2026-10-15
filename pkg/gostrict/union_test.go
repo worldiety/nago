@@ -13,7 +13,6 @@ import (
 	"testing"
 
 	"go.wdy.de/nago/pkg/gostrict"
-	"go.wdy.de/nago/pkg/gostrict/engine/native"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/shapes"
 	"go.wdy.de/nago/pkg/gostrict/std/dict"
 	"go.wdy.de/nago/pkg/gostrict/std/list"
@@ -42,31 +41,34 @@ func TestUnions(t *testing.T) {
 		t.Fatalf("unexpected union %+v", u)
 	}
 
+	gostrict.Variants[shapes.Shape](shapes.Circle{}, shapes.Rect{}, shapes.Poly{})
+
 	ctx := context.Background()
-	for name, c := range map[string]shapes.Client{
-		"native": {Instance: mustLoad(t, native.Engine{Exports: shapes.Exports()}, b)},
-		"goja":   {Instance: mustLoad(t, goEngine, b)},
+	for name, in := range map[string]gostrict.Instance{
+		"native": mustLoad(t, nativeEngine("shapes"), b),
+		"goja":   mustLoad(t, goEngine, b),
 	} {
-		area, err := c.Area(ctx, shapes.Circle{R: 2})
-		if err != nil || math.Abs(area-4*math.Pi) > 1e-9 {
+		var area float64
+		if err := gostrict.Call(ctx, in, "Area", []any{shapes.Circle{R: 2}}, &area); err != nil || math.Abs(area-4*math.Pi) > 1e-9 {
 			t.Fatal(name, area, err)
 		}
 
-		scaled, err := c.Scale(ctx, shapes.Rect{W: 2, H: 3}, 2)
-		if err != nil || scaled != (shapes.Rect{W: 4, H: 6}) {
+		var scaled shapes.Shape
+		if err := gostrict.Call(ctx, in, "Scale", []any{shapes.Rect{W: 2, H: 3}, 2.0}, &scaled); err != nil || scaled != (shapes.Rect{W: 4, H: 6}) {
 			t.Fatal(name, scaled, err)
 		}
 
-		total, summary, err := c.Summary(ctx, drawing())
-		if err != nil {
+		var total float64
+		var summary string
+		if err := gostrict.Call(ctx, in, "Summary", []any{drawing()}, &total, &summary); err != nil {
 			t.Fatal(err)
 		}
 		if math.Abs(total-(math.Pi+6+8)) > 1e-9 || summary != "scene: 3 shapes, sky=blue grass=green sun=red " {
 			t.Fatalf("%s: %v %q", name, total, summary)
 		}
 
-		largest, err := c.Largest(ctx, drawing(), shapes.Circle{R: 0})
-		if err != nil {
+		var largest shapes.Shape
+		if err := gostrict.Call(ctx, in, "Largest", []any{drawing(), shapes.Circle{R: 0}}, &largest); err != nil {
 			t.Fatal(err)
 		}
 		if p, ok := largest.(shapes.Poly); !ok || p.Points.Len() != 3 {
@@ -88,15 +90,18 @@ func (b *canvasBackend) Total(ctx context.Context, m shapes.Total) error {
 func TestUnionMessages(t *testing.T) {
 	b := compile(t, "internal/examples/shapes")
 	ctx := context.Background()
-	for _, e := range []gostrict.Engine{native.Engine{Exports: shapes.Exports()}, goEngine} {
+	gostrict.Variants[shapes.Shape](shapes.Circle{}, shapes.Rect{}, shapes.Poly{})
+	gostrict.Variants[shapes.Event](shapes.Added{}, shapes.Cleared{})
+	for _, e := range []gostrict.Engine{nativeEngine("shapes"), goEngine} {
 		in := mustLoad(t, e, b)
 		res, err := in.Call(ctx, "NewCanvas")
 		if err != nil {
 			t.Fatal(err)
 		}
 		be := &canvasBackend{}
+		router := gostrict.Handle(new(gostrict.Router), be.Total)
 		s := gostrict.NewSession(in, b, res[0].(gostrict.Token), func(ctx context.Context, m gostrict.Message) error {
-			return shapes.Dispatch(ctx, be, m)
+			return router.Dispatch(ctx, m)
 		})
 		for _, ev := range []shapes.Event{
 			shapes.Added{Shape: shapes.Rect{W: 1, H: 2}},
@@ -104,7 +109,7 @@ func TestUnionMessages(t *testing.T) {
 			shapes.Cleared{},
 			shapes.Added{Shape: shapes.Rect{W: 3, H: 3}},
 		} {
-			if err := s.Deliver(ctx, shapes.EventMessage(ev)); err != nil {
+			if err := s.Send(ctx, ev); err != nil {
 				t.Fatal(err)
 			}
 		}

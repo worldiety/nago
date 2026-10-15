@@ -14,12 +14,11 @@ import (
 	"testing"
 
 	"go.wdy.de/nago/pkg/gostrict"
-	"go.wdy.de/nago/pkg/gostrict/engine/native"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/orders"
 	"go.wdy.de/nago/pkg/gostrict/std/list"
 )
 
-// TestRecordsAndState passes records with lists and a state through the typed client of both engines.
+// TestRecordsAndState passes records with lists and a state with values of Go through both engines.
 func TestRecordsAndState(t *testing.T) {
 	b := compile(t, "internal/examples/orders")
 	ctx := context.Background()
@@ -28,9 +27,9 @@ func TestRecordsAndState(t *testing.T) {
 		t.Fatalf("unexpected schema %+v", rec)
 	}
 
-	clients := map[string]orders.Client{
-		"native": {Instance: mustLoad(t, native.Engine{Exports: orders.Exports()}, b)},
-		"goja":   {Instance: mustLoad(t, goEngine, b)},
+	instances := map[string]gostrict.Instance{
+		"native": mustLoad(t, nativeEngine("orders"), b),
+		"goja":   mustLoad(t, goEngine, b),
 	}
 
 	order := orders.Order{
@@ -48,33 +47,30 @@ func TestRecordsAndState(t *testing.T) {
 		game    orders.Game
 	}
 	results := map[string]result{}
-	for name, c := range clients {
+	for name, in := range instances {
 		var r result
-		s, err, callErr := c.Summarize(ctx, order, false)
-		if callErr != nil {
-			t.Fatal(name, callErr)
-		}
-		if err != nil {
-			t.Fatal(name, err)
+		var s orders.Summary
+		var err error
+		if callErr := gostrict.Call(ctx, in, "Summarize", []any{order, false}, &s, &err); callErr != nil || err != nil {
+			t.Fatal(name, callErr, err)
 		}
 		r.total, r.lines, r.biggest = s.Total, slices.Collect(s.Lines.Values()), s.Biggest
 
-		_, err, callErr = c.Summarize(ctx, orders.Order{Items: list.New[orders.Item]()}, true)
-		if callErr != nil || err == nil {
+		if callErr := gostrict.Call(ctx, in, "Summarize", []any{orders.Order{Items: list.New[orders.Item]()}, true}, &s, &err); callErr != nil || err == nil {
 			t.Fatal(name, callErr, err)
 		}
 		r.err = err.Error()
 
-		game, err := c.NewGame(ctx, 10)
-		if err != nil {
+		var game gostrict.State[orders.Game]
+		if err := gostrict.Call(ctx, in, "NewGame", []any{10.0}, &game); err != nil {
 			t.Fatal(err)
 		}
 		for range 600 {
-			if r.bounces, err = c.Step(ctx, game, 1.0/60); err != nil {
+			if err := gostrict.Call(ctx, in, "Step", []any{game, 1.0 / 60}, &r.bounces); err != nil {
 				t.Fatal(err)
 			}
 		}
-		if r.game, err = c.Snapshot(ctx, game); err != nil {
+		if err := gostrict.Call(ctx, in, "Snapshot", []any{game}, &r.game); err != nil {
 			t.Fatal(err)
 		}
 		results[name] = r
@@ -93,7 +89,9 @@ func TestRecordsAndState(t *testing.T) {
 	}
 
 	// a state can not cross to another engine
-	if _, err := clients["goja"].Step(ctx, gostrict.State[orders.Game]{Token: gostrict.NewToken("go.wdy.de/nago/pkg/gostrict/internal/examples/orders.Game", &orders.Game{})}, 1); err == nil {
+	native := gostrict.State[orders.Game]{Token: gostrict.NewToken("go.wdy.de/nago/pkg/gostrict/internal/examples/orders.Game", &orders.Game{})}
+	var bounces int32
+	if err := gostrict.Call(ctx, instances["goja"], "Step", []any{native, 1.0}, &bounces); err == nil {
 		t.Fatal("a native state was accepted by goja")
 	}
 }

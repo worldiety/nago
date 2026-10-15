@@ -129,7 +129,8 @@
 //
 // A binding returns several results as an array and an error as null or $errors_New(message). [Generate] writes
 // the functions of a header package as [Funcs], which an engine calls instead of the bindings, and [GenerateTS] the
-// TypeScript declaration for a JavaScript host. gojaengine.CheckBindings calls both implementations with edge
+// TypeScript declaration for a JavaScript host. Only header packages need generated code, because reflection can
+// neither instantiate their generic functions nor construct their handles; a program never does. gojaengine.CheckBindings calls both implementations with edge
 // cases and random values and reports, where they differ.
 //
 // # Messages
@@ -138,21 +139,23 @@
 // state. A message is a record. The program does not send messages itself: an exported function returns a msg.Out,
 // whose messages the host sends after the call. An exported function, which takes the state and a record,
 // handles the messages of this type, which the backend sends at any time, see [Bundle.Handlers]. A [Session]
-// couples an instance with the backend and serializes the calls like the event loop of a browser. The generated
-// code of a program encodes the messages for it and dispatches its messages to a typed interface of the backend.
-// Backend and program import the same package of messages, so they can not disagree about them.
+// couples an instance with the backend and serializes the calls like the event loop of a browser. The backend
+// sends a record or a variant as it is, see [Session.Send], and receives the messages of the program with typed
+// functions, see [Router] and [Handle]. Backend and program import the same package of messages, so they can not
+// disagree about them. The variants of a sealed interface, which the backend decodes, are registered once with
+// [Variants].
 //
 // The fields of a record are bool, int32, uint32, float64, string, enums of them, list.List and dict.Map of such
 // values and other records; opt.Option, pointers, functions and interfaces stay inside the program. A message may
-// also be a sealed interface, whose variants are records: msg.Out[proto.Event] sends any variant, and a handler
+// also be a sealed interface, whose variants are records: msg.Out[messages.Event] sends any variant, and a handler
 // of the interface receives each of them:
 //
-//	func OnMessage(s *Store, m proto.Incoming) msg.Out[proto.Event] {
+//	func OnMessage(s *Store, m messages.Incoming) msg.Out[messages.Event] {
 //		switch m := m.(type) {
-//		case proto.Payment, proto.Refund:
+//		case messages.Payment, messages.Refund:
 //			...
 //		}
-//		return msg.New[proto.Event]()
+//		return msg.New[messages.Event]()
 //	}
 //
 // An exported function, which is no handler, may take any parameters of these types besides the state, e.g.
@@ -168,7 +171,7 @@
 //
 //	func Init(n int32) *Game
 //	func Resize(g *Game, width, height float64)
-//	func Frame(g *Game, t float64) msg.Out[proto.Score]
+//	func Frame(g *Game, t float64) msg.Out[messages.Score]
 //
 // Events of the host are records, which go to handlers like the messages of the backend: input.Event of package
 // lib/input for the pointer, the wheel and the keys, and asset.Loaded and asset.Failed of package lib/asset for
@@ -192,7 +195,7 @@
 //	var palette = list.Freeze(list.Of[uint32](0xff0000ff, 0x00ff00ff))
 //
 // A program, which needs the state of its backend, asks for it in Init, e.g. by returning (*Game,
-// msg.Out[proto.Hello]), because the messages of a broken connection are lost.
+// msg.Out[messages.Hello]), because the messages of a broken connection are lost.
 //
 // # Caching
 //
@@ -204,12 +207,12 @@
 //
 // An [Engine] executes a [Bundle] behind a neutral interface, so an application may replace goja by another
 // engine. The values, which cross the boundary, are those of [ValueKind]. The native engine executes the Go code
-// itself through the generated Exports of a package and is the reference in tests. Exported functions take and
+// itself, whose functions native.Reflect adapts, and is the reference in tests. Exported functions take and
 // return records, which are structs of exported fields of these values, lists and maps of them, sealed interfaces,
 // whose variants are records, and states, which the host holds as opaque tokens. [Bundle.Records] and
 // [Bundle.Unions] describe them, e.g. for a form of the input of a use case. A handler of a sealed interface
-// receives each of its variants as a message. The generated Client calls the
-// exported functions with the types of Go in any engine, [Pool] spreads concurrent calls over instances and
+// receives each of its variants as a message. [Call] calls the exported functions with the values of Go in any
+// engine and converts them by reflection, see [ToNeutral], [Pool] spreads concurrent calls over instances and
 // [Bundle.Expect] checks the signature, which an application requires of a program. In goja, many bundles may
 // share one runtime, because a program of the subset can not reach the globals of JavaScript.
 //

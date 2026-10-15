@@ -14,8 +14,6 @@ import (
 	"testing"
 
 	"go.wdy.de/nago/pkg/gostrict"
-	"go.wdy.de/nago/pkg/gostrict/engine/native"
-	"go.wdy.de/nago/pkg/gostrict/internal/examples/arena"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/arena/proto"
 	"go.wdy.de/nago/pkg/gostrict/std/list"
 )
@@ -36,7 +34,7 @@ func (b *backend) Move(ctx context.Context, m proto.Move) error {
 	b.mu.Unlock()
 
 	if n%10 == 0 {
-		if err := b.session.Deliver(ctx, arena.HitMessage(proto.Hit{Target: m.ID, Damage: 7, Seq: int32(n)})); err != nil {
+		if err := b.session.Send(ctx, proto.Hit{Target: m.ID, Damage: 7, Seq: int32(n)}); err != nil {
 			return err
 		}
 	}
@@ -45,7 +43,7 @@ func (b *backend) Move(ctx context.Context, m proto.Move) error {
 		for i := range n / 25 {
 			players.Append(proto.Pos{ID: fmt.Sprint("bot", i), X: float64(i), Z: m.Z})
 		}
-		return b.session.Deliver(ctx, arena.WorldMessage(proto.World{Players: players}))
+		return b.session.Send(ctx, proto.World{Players: players})
 	}
 	return nil
 }
@@ -73,14 +71,17 @@ func TestSession(t *testing.T) {
 		}
 
 		be := &backend{}
+		router := new(gostrict.Router)
+		gostrict.Handle(router, be.Move)
+		gostrict.Handle(router, be.Ack)
 		be.session = gostrict.NewSession(in, b, res[0].(gostrict.Token), func(ctx context.Context, m gostrict.Message) error {
-			return arena.Dispatch(ctx, be, m)
+			return router.Dispatch(ctx, m)
 		})
 
 		// a push of another goroutine, while the frames run, is serialized with them
 		var wg sync.WaitGroup
 		wg.Go(func() {
-			if err := be.session.Deliver(ctx, arena.HitMessage(proto.Hit{Target: "ada", Damage: 1, Seq: -1})); err != nil {
+			if err := be.session.Send(ctx, proto.Hit{Target: "ada", Damage: 1, Seq: -1}); err != nil {
 				t.Error(err)
 			}
 		})
@@ -98,7 +99,7 @@ func TestSession(t *testing.T) {
 		return be, status
 	}
 
-	nb, ns := run(native.Engine{Exports: arena.Exports()})
+	nb, ns := run(nativeEngine("arena"))
 	gb, gs := run(goEngine)
 
 	t.Logf("status hp, moves, others: native %v, goja %v; %d moves and %d acks at the backend", ns, gs, len(nb.moves), len(nb.acks))

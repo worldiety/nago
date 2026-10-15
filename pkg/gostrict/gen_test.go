@@ -16,7 +16,7 @@ import (
 
 //go:generate go test -run TestGenerated -update .
 
-// TestGenerated generates the functions of the examples with -update and checks, that they are up to date.
+// TestGenerated generates the functions of the header packages with -update and checks, that they are up to date.
 func TestGenerated(t *testing.T) {
 	dirs, err := filepath.Glob("internal/examples/*")
 	if err != nil {
@@ -31,6 +31,13 @@ func TestGenerated(t *testing.T) {
 		}
 		if diags := Check(prog); len(diags) > 0 {
 			t.Fatal(diags.Text())
+		}
+		if prog.Main.Kind != KindHeader {
+			// a program needs no generated code
+			if _, err := os.Stat(filepath.Join(dir, GeneratedFile)); err == nil {
+				t.Errorf("%s is no header package, but has a generated file", dir)
+			}
+			continue
 		}
 		src, err := Generate(prog)
 		if err != nil {

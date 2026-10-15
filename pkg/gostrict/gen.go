@@ -19,17 +19,16 @@ import (
 // GeneratedFile is the name of the file, which [Generate] writes into a package.
 const GeneratedFile = "gostrict_gen.go"
 
-// Generate returns the Go source of the functions of the main package as [Funcs], which cross the boundary of an
-// engine without reflection. A header package gets a function Host, which implements its functions natively for
-// an engine like goja. Any other package gets a function Exports with its exported functions for the native
-// engine and a type Client, which calls them in any engine with the types of Go. The file is excluded from the
-// subset by a build constraint, because it uses any.
+// Generate returns the Go source of the functions of a header package as [Funcs], whose function Host implements
+// them natively for an engine like goja. It is needed, because reflection can neither instantiate the generic
+// functions of a header package nor construct its handles. A program needs no generated code. The file is excluded
+// from the subset by a build constraint.
 func Generate(prog *Program) ([]byte, error) {
 	g := &generator{pkg: prog.Main, imports: map[string]string{}, helpers: map[string]int{}}
-	if prog.Main.Kind == KindHeader {
-		return g.header()
+	if prog.Main.Kind != KindHeader {
+		return nil, fmt.Errorf("%s is no header package: a program needs no generated code, see native.Reflect, gostrict.Call and gostrict.Router", prog.Main.Path)
 	}
-	return g.exports()
+	return g.header()
 }
 
 type generator struct {
@@ -159,162 +158,8 @@ func writeAdapter(buf *bytes.Buffer, key, call string, args, results, values []s
 	buf.WriteString("\t\t},\n")
 }
 
-type export struct {
-	fn  *types.Func
-	sig Func
-}
-
-func (g *generator) exports() ([]byte, error) {
-	p := g.pkg
-	bnd := newBoundary()
-	var exports []export
-	for _, name := range p.Types.Scope().Names() {
-		fn, ok := p.Types.Scope().Lookup(name).(*types.Func)
-		if !ok || !fn.Exported() {
-			continue
-		}
-		if sig, ok := bnd.exportSignature(name, fn.Signature()); ok {
-			exports = append(exports, export{fn: fn, sig: sig})
-		}
-	}
-
-	var body bytes.Buffer
-	fmt.Fprintf(&body, "// %s returns the exported functions of this package, e.g. for the native engine.\nfunc %s() gostrict.Funcs {\n\treturn gostrict.Funcs{\n", g.name("Exports"), g.name("Exports"))
-	for _, e := range exports {
-		sig := e.fn.Signature()
-		var args, results, values []string
-		for i := 0; i < sig.Params().Len(); i++ {
-			args = append(args, g.fromNeutral(fmt.Sprintf("args[%d]", i), sig.Params().At(i).Type()))
-		}
-		for i := 0; i < sig.Results().Len(); i++ {
-			r := fmt.Sprintf("r%d", i)
-			results = append(results, r)
-			values = append(values, g.toNeutral(r, sig.Results().At(i).Type()))
-		}
-		writeAdapter(&body, e.fn.Name(), e.fn.Name(), args, results, values)
-	}
-	body.WriteString("\t}\n}\n")
-
-	g.client(&body, exports)
-	g.messages(&body, exports)
-	g.writeHelpers()
-	body.Write(g.code.Bytes())
-	return g.file(body.String())
-}
-
-// client writes a type, which calls the exported functions in an instance of any engine with the types of Go, so
-// that the caller needs no conversion.
-func (g *generator) client(buf *bytes.Buffer, exports []export) {
-	if len(exports) > 0 {
-		g.imports["context"] = "context"
-	}
-	client := g.name("Client")
-	fmt.Fprintf(buf, "\n// %s calls the exported functions of this package in an instance of its bundle, e.g. in goja.\n", client)
-	fmt.Fprintf(buf, "type %s struct {\n\tInstance gostrict.Instance\n}\n", client)
-	for _, e := range exports {
-		sig := e.fn.Signature()
-		var params, args, results, zeros, conv []string
-		for i := 0; i < sig.Params().Len(); i++ {
-			v := sig.Params().At(i)
-			name := v.Name()
-			if name == "" || name == "_" || name == "ctx" || name == "c" || name == "res" || name == "err" {
-				name = fmt.Sprintf("p%d", i)
-			}
-			params = append(params, name+" "+g.clientType(v.Type()))
-			args = append(args, g.clientToNeutral(name, v.Type()))
-		}
-		for i := 0; i < sig.Results().Len(); i++ {
-			t := sig.Results().At(i).Type()
-			results = append(results, g.clientType(t))
-			zeros = append(zeros, g.zero(t))
-			conv = append(conv, g.clientFromNeutral(fmt.Sprintf("res[%d]", i), t))
-		}
-		results = append(results, "error")
-		zeros = append(zeros, "err")
-		conv = append(conv, "nil")
-
-		callArgs := ""
-		if len(args) > 0 {
-			callArgs = ", " + strings.Join(args, ", ")
-		}
-		fmt.Fprintf(buf, "\nfunc (c %s) %s(%s) (%s) {\n", client, e.fn.Name(), strings.Join(append([]string{"ctx context.Context"}, params...), ", "), strings.Join(results, ", "))
-		fmt.Fprintf(buf, "\tres, err := c.Instance.Call(ctx, %q%s)\n", e.fn.Name(), callArgs)
-		fmt.Fprintf(buf, "\tif err != nil {\n\t\treturn %s\n\t}\n", strings.Join(zeros, ", "))
-		if sig.Results().Len() == 0 {
-			buf.WriteString("\t_ = res\n")
-		}
-		fmt.Fprintf(buf, "\treturn %s\n}\n", strings.Join(conv, ", "))
-	}
-	buf.WriteString("\nfunc gostrictErrorOf(v any) error {\n\terr, _ := v.(error)\n\treturn err\n}\n")
-}
-
 func n0(g *generator, t types.Type) int {
 	return g.helpers[typeKey(t)]
-}
-
-// messages writes the side of the backend: a function, which encodes each message, which the program handles,
-// an interface with a method for each message, which the program sends, and a function, which dispatches them.
-func (g *generator) messages(buf *bytes.Buffer, exports []export) {
-	var in, out []types.Type
-	seen := map[string]bool{}
-	for _, e := range exports {
-		sig := e.fn.Signature()
-		if isHandler(e.sig) {
-			if t := sig.Params().At(1).Type(); !seen["in"+typeKey(t)] {
-				seen["in"+typeKey(t)] = true
-				in = append(in, t)
-			}
-		}
-		for i, r := range e.sig.Results {
-			if r.Kind != ValueOut {
-				continue
-			}
-			t := types.Unalias(sig.Results().At(i).Type()).(*types.Named).TypeArgs().At(0)
-			if !seen["out"+typeKey(t)] {
-				seen["out"+typeKey(t)] = true
-				out = append(out, t)
-			}
-		}
-	}
-	if len(in) == 0 && len(out) == 0 {
-		return
-	}
-
-	for _, t := range in {
-		name := types.Unalias(t).(*types.Named).Obj().Name()
-		fn := g.name(name + "Message")
-		if isSealed(t) {
-			// the message is the record of the variant
-			fmt.Fprintf(buf, "\n// %s encodes a message for the program, see gostrict.Session.Deliver.\nfunc %s(m %s) gostrict.Message {\n\tv := %s\n\treturn gostrict.Message{Type: v.Tag, Fields: v.Fields}\n}\n", fn, fn, g.typeString(t), g.toNeutral("m", t))
-			continue
-		}
-		fmt.Fprintf(buf, "\n// %s encodes a message for the program, see gostrict.Session.Deliver.\nfunc %s(m %s) gostrict.Message {\n\treturn gostrict.Message{Type: %q, Fields: %s}\n}\n", fn, fn, g.typeString(t), typeKey(t), g.toNeutral("m", t))
-	}
-
-	if len(out) == 0 {
-		return
-	}
-	backend := g.name("Backend")
-	fmt.Fprintf(buf, "\n// %s receives the messages, which the program sends.\ntype %s interface {\n", backend, backend)
-	for _, t := range out {
-		name := types.Unalias(t).(*types.Named).Obj().Name()
-		fmt.Fprintf(buf, "\t%s(ctx context.Context, m %s) error\n", name, g.typeString(t))
-	}
-	buf.WriteString("}\n")
-	dispatch := g.name("Dispatch")
-	fmt.Fprintf(buf, "\n// %s decodes a message of the program and passes it to the backend.\nfunc %s(ctx context.Context, b %s, m gostrict.Message) error {\n\tswitch m.Type {\n", dispatch, dispatch, backend)
-	for _, t := range out {
-		name := types.Unalias(t).(*types.Named).Obj().Name()
-		if variants, ok := sealedVariants(t); ok {
-			for _, v := range variants {
-				fmt.Fprintf(buf, "\tcase %q:\n\t\treturn b.%s(ctx, %s)\n", typeKey(v), name, g.fromNeutral("any(gostrict.Variant{Tag: m.Type, Fields: m.Fields})", t))
-			}
-			continue
-		}
-		fmt.Fprintf(buf, "\tcase %q:\n\t\treturn b.%s(ctx, %s)\n", typeKey(t), name, g.fromNeutral("any(m.Fields)", t))
-	}
-	buf.WriteString("\t}\n\treturn fmt.Errorf(\"unknown message %s\", m.Type)\n}\n")
-	g.imports["fmt"] = "fmt"
 }
 
 func stateElem(t types.Type) (types.Type, bool) {
@@ -322,47 +167,6 @@ func stateElem(t types.Type) (types.Type, bool) {
 		return p.Elem(), true
 	}
 	return nil, false
-}
-
-// clientType is the type of a parameter or result of the client: a state is a typed token.
-func (g *generator) clientType(t types.Type) string {
-	if elem, ok := stateElem(t); ok {
-		return "gostrict.State[" + g.typeString(elem) + "]"
-	}
-	return g.typeString(t)
-}
-
-func (g *generator) clientToNeutral(expr string, t types.Type) string {
-	if _, ok := stateElem(t); ok {
-		return expr + ".Token"
-	}
-	return g.toNeutral(expr, t)
-}
-
-func (g *generator) clientFromNeutral(expr string, t types.Type) string {
-	if elem, ok := stateElem(t); ok {
-		return "gostrict.State[" + g.typeString(elem) + "]{Token: " + expr + ".(gostrict.Token)}"
-	}
-	return g.fromNeutral(expr, t)
-}
-
-func (g *generator) zero(t types.Type) string {
-	if _, ok := stateElem(t); ok {
-		return g.clientType(t) + "{}"
-	}
-	switch {
-	case isError(t), isInterface(t):
-		return "nil"
-	case isStruct(t), isOpaque(t):
-		return g.typeString(t) + "{}"
-	}
-	switch basicKind(t) {
-	case types.Bool:
-		return "false"
-	case types.String:
-		return `""`
-	}
-	return "0"
 }
 
 // fromNeutral converts the neutral value expr, see [ValueKind], into a value of t.

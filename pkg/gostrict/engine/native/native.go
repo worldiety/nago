@@ -21,7 +21,7 @@ import (
 // Engine calls the exported functions of the main package natively. The functions of header packages are native
 // anyway, so the host is ignored.
 type Engine struct {
-	// Exports are the exported functions of the main package, usually its generated Exports function.
+	// Exports are the exported functions of the main package, see [Reflect].
 	Exports gostrict.Funcs
 }
 
@@ -55,23 +55,40 @@ func (in instance) Call(ctx context.Context, name string, args ...any) ([]any, e
 	return in.engine.Exports[name](args), nil
 }
 
+// Bundle returns the bundle of the instance.
+func (in instance) Bundle() *gostrict.Bundle {
+	return in.bundle
+}
+
 func (instance) Close() error {
 	return nil
 }
 
-// Reflect adapts Go functions by reflection, e.g. in a test, where no generated functions exist.
+// Reflect adapts the exported functions of a program by reflection, which converts their values with
+// [gostrict.ToNeutral] and [gostrict.FromNeutral]:
+//
+//	native.Engine{Exports: native.Reflect(map[string]any{"NewGame": game.NewGame, "Step": game.Step})}
 func Reflect(funcs map[string]any) gostrict.Funcs {
 	res := gostrict.Funcs{}
 	for name, f := range funcs {
 		fn := reflect.ValueOf(f)
+		ft := fn.Type()
 		res[name] = func(args []any) []any {
 			in := make([]reflect.Value, len(args))
 			for i, a := range args {
-				in[i] = reflect.ValueOf(a)
+				v, err := gostrict.FromNeutralType(a, ft.In(i))
+				if err != nil {
+					panic(fmt.Errorf("value %d of %s: %w", i, name, err))
+				}
+				in[i] = v
 			}
 			var out []any
-			for _, v := range fn.Call(in) {
-				out = append(out, v.Interface())
+			for i, v := range fn.Call(in) {
+				n, err := gostrict.ToNeutralValue(v)
+				if err != nil {
+					panic(fmt.Errorf("result %d of %s: %w", i, name, err))
+				}
+				out = append(out, n)
 			}
 			return out
 		}

@@ -23,9 +23,10 @@ import (
 // serialized, the calls of different instances run concurrently. [Pool.Release] forgets a state, which is no longer
 // used.
 type Pool struct {
-	free  chan int
-	all   []Instance
-	locks []sync.Mutex
+	bundle *Bundle
+	free   chan int
+	all    []Instance
+	locks  []sync.Mutex
 
 	mu sync.Mutex
 	// owners maps the value of a token to the index of the instance, which created it
@@ -39,7 +40,7 @@ func NewPool(ctx context.Context, e Engine, b *Bundle, host Funcs, size int) (*P
 	if size < 1 {
 		return nil, errors.New("a pool needs at least one instance")
 	}
-	p := &Pool{free: make(chan int, size), locks: make([]sync.Mutex, size), owners: map[any]int{}}
+	p := &Pool{bundle: b, free: make(chan int, size), locks: make([]sync.Mutex, size), owners: map[any]int{}}
 	for i := range size {
 		in, err := e.Load(ctx, b, host)
 		if err != nil {
@@ -110,6 +111,11 @@ func (p *Pool) Release(tok Token) {
 
 func comparable(v any) bool {
 	return v != nil && reflect.TypeOf(v).Comparable()
+}
+
+// Bundle returns the bundle of the instances.
+func (p *Pool) Bundle() *Bundle {
+	return p.bundle
 }
 
 // Close closes all instances.

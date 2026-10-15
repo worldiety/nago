@@ -17,8 +17,6 @@ import (
 
 	"go.wdy.de/nago/pkg/gostrict"
 	"go.wdy.de/nago/pkg/gostrict/engine/gojaengine"
-	"go.wdy.de/nago/pkg/gostrict/engine/native"
-	"go.wdy.de/nago/pkg/gostrict/internal/examples/physics"
 )
 
 func script(src string) gostrict.Module {
@@ -115,18 +113,22 @@ func TestPoolAndClient(t *testing.T) {
 	}
 	defer pool.Close()
 
-	client := physics.Client{Instance: pool}
-	nativeClient := physics.Client{Instance: mustLoad(t, native.Engine{Exports: physics.Exports()}, b)}
+	nativeIn := mustLoad(t, nativeEngine("physics"), b)
 
 	var wg sync.WaitGroup
 	for i := range 16 {
 		wg.Go(func() {
-			x, y, onGround, jumps, err := client.Simulate(ctx, 300, int32(i+1))
-			if err != nil {
+			var x, y, nx, ny float64
+			var onGround, nOnGround bool
+			var jumps, nJumps int32
+			if err := gostrict.Call(ctx, pool, "Simulate", []any{int32(300), int32(i + 1)}, &x, &y, &onGround, &jumps); err != nil {
 				t.Error(err)
 				return
 			}
-			nx, ny, nOnGround, nJumps, _ := nativeClient.Simulate(ctx, 300, int32(i+1))
+			if err := gostrict.Call(ctx, nativeIn, "Simulate", []any{int32(300), int32(i + 1)}, &nx, &ny, &nOnGround, &nJumps); err != nil {
+				t.Error(err)
+				return
+			}
 			if !gostrict.CloseValues([]any{x, y, onGround, jumps}, []any{nx, ny, nOnGround, nJumps}, gojaengine.Tolerance) {
 				t.Errorf("%d: goja %v %v %v %v, native %v %v %v %v", i, x, y, onGround, jumps, nx, ny, nOnGround, nJumps)
 			}

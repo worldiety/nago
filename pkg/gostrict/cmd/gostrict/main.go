@@ -11,8 +11,9 @@
 //	gostrict fix <dir>                applies the mechanical fixes of the diagnostics to the files and reports
 //	                                  the remaining diagnostics, exit code 1 if there are any
 //	gostrict build <dir>              prints the JavaScript bundle
-//	gostrict gen <dir>                writes the functions of the package as gostrict.Funcs into gostrict_gen.go
-//	                                  and, for a header package, the TypeScript declaration of its host
+//	gostrict gen <dir>                writes the native functions of a header package as gostrict.Funcs into
+//	                                  gostrict_gen.go and the TypeScript declaration of its host; a program needs
+//	                                  no generated code
 //	gostrict run <dir> <func> [args]  runs an exported function in goja, the arguments are parsed by its kinds
 package main
 

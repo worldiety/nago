@@ -122,6 +122,15 @@ func (s *Session) Deliver(ctx context.Context, m Message) error {
 	return err
 }
 
+// Send passes a record or the variant of a sealed interface of the backend to its handler, see [Session.Deliver].
+func (s *Session) Send(ctx context.Context, v any) error {
+	m, err := MessageOf(v)
+	if err != nil {
+		return err
+	}
+	return s.Deliver(ctx, m)
+}
+
 // Call calls an exported function with the state as its first argument, if it takes one, e.g. the frame of an
 // animation, and sends the messages, which it returns. It returns the other results.
 func (s *Session) Call(ctx context.Context, name string, args ...any) ([]any, error) {

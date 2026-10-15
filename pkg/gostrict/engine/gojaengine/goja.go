@@ -556,6 +556,11 @@ func toAny(values []goja.Value) []any {
 	return res
 }
 
+// Bundle returns the bundle of the instance.
+func (in *instance) Bundle() *gostrict.Bundle {
+	return in.bundle
+}
+
 // Close releases the instance. The runtime is released, when no instance refers to it anymore.
 func (in *instance) Close() error {
 	return nil

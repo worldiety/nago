@@ -18,13 +18,18 @@ import (
 	"go.wdy.de/nago/pkg/gostrict"
 	"go.wdy.de/nago/pkg/gostrict/engine/gojaengine"
 	"go.wdy.de/nago/pkg/gostrict/engine/native"
+	"go.wdy.de/nago/pkg/gostrict/internal/examples/arena"
+	"go.wdy.de/nago/pkg/gostrict/internal/examples/draw"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/errs"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/generics"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/host"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/hostuse"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/ints"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/iters"
+	"go.wdy.de/nago/pkg/gostrict/internal/examples/orders"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/physics"
+	"go.wdy.de/nago/pkg/gostrict/internal/examples/shapes"
+	"go.wdy.de/nago/pkg/gostrict/internal/examples/spin"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/texts"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/trees"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/values"
@@ -39,17 +44,27 @@ type diffCase struct {
 // goEngine is shared by the tests, so that they use its cache of compiled programs.
 var goEngine = &gojaengine.Engine{}
 
-// exports are the generated functions of the examples for the native engine.
+// exports are the exported functions of the examples for the native engine.
 var exports = map[string]gostrict.Funcs{
-	"errs":     errs.Exports(),
-	"generics": generics.Exports(),
-	"hostuse":  hostuse.Exports(),
-	"ints":     ints.Exports(),
-	"iters":    iters.Exports(),
-	"physics":  physics.Exports(),
-	"texts":    texts.Exports(),
-	"values":   values.Exports(),
-	"trees":    trees.Exports(),
+	"arena":    native.Reflect(map[string]any{"Frame": arena.Frame, "NewClient": arena.NewClient, "OnHit": arena.OnHit, "OnWorld": arena.OnWorld, "Status": arena.Status}),
+	"draw":     native.Reflect(map[string]any{"Frame": draw.Frame, "New": draw.New}),
+	"errs":     native.Reflect(map[string]any{"Average": errs.Average, "Run": errs.Run}),
+	"generics": native.Reflect(map[string]any{"Run": generics.Run, "SumFloats": generics.SumFloats}),
+	"hostuse":  native.Reflect(map[string]any{"Records": hostuse.Records, "Run": hostuse.Run}),
+	"ints":     native.Reflect(map[string]any{"Bits": ints.Bits, "Conv": ints.Conv, "Div": ints.Div, "DivU": ints.DivU, "Hash": ints.Hash, "Wrap": ints.Wrap, "Xorshift": ints.Xorshift}),
+	"iters":    native.Reflect(map[string]any{"FirstOver": iters.FirstOver, "Live": iters.Live, "Nested": iters.Nested, "Sum": iters.Sum, "Switch": iters.Switch}),
+	"orders":   native.Reflect(map[string]any{"NewGame": orders.NewGame, "Snapshot": orders.Snapshot, "Step": orders.Step, "Summarize": orders.Summarize}),
+	"physics":  native.Reflect(map[string]any{"Simulate": physics.Simulate, "Speed": physics.Speed}),
+	"shapes":   native.Reflect(map[string]any{"Area": shapes.Area, "ColorName": shapes.ColorName, "Largest": shapes.Largest, "NewCanvas": shapes.NewCanvas, "OnEvent": shapes.OnEvent, "Scale": shapes.Scale, "Summary": shapes.Summary}),
+	"spin":     native.Reflect(map[string]any{"Frame": spin.Frame, "Orbit": spin.Orbit, "Setup": spin.Setup}),
+	"texts":    native.Reflect(map[string]any{"Misc": texts.Misc, "Order": texts.Order, "Parse": texts.Parse, "Reverse": texts.Reverse, "Stats": texts.Stats, "Words": texts.Words}),
+	"trees":    native.Reflect(map[string]any{"Run": trees.Run, "Values": trees.Values}),
+	"values":   native.Reflect(map[string]any{"Run": values.Run}),
+}
+
+// nativeEngine returns the native engine of an example.
+func nativeEngine(pkg string) native.Engine {
+	return native.Engine{Exports: exports[pkg]}
 }
 
 // TestDifferential runs each case natively and translated in goja, both behind the same engine interface, and

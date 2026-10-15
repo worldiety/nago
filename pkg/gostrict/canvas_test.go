@@ -16,7 +16,6 @@ import (
 
 	"github.com/dop251/goja"
 	"go.wdy.de/nago/pkg/gostrict"
-	"go.wdy.de/nago/pkg/gostrict/engine/native"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/draw"
 	"go.wdy.de/nago/pkg/gostrict/lib/canvas"
 )
@@ -90,18 +89,17 @@ func TestCanvas(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		client := draw.Client{Instance: in}
-		s, err := client.New(ctx)
-		if err != nil {
+		var s gostrict.State[draw.Scene]
+		if err := gostrict.Call(ctx, in, "New", nil, &s); err != nil {
 			t.Fatal(err)
 		}
-		if err := client.Frame(ctx, s, 1.5); err != nil {
+		if err := gostrict.Call(ctx, in, "Frame", []any{s, 1.5}); err != nil {
 			t.Fatal(err)
 		}
 		return canvas.Commands()
 	}
 
-	want := run(native.Engine{Exports: draw.Exports()}, nil)
+	want := run(nativeEngine("draw"), nil)
 	got := run(goEngine, canvas.Host())
 	if strings.Join(got, "\n") != strings.Join(want, "\n") {
 		t.Fatalf("the commands differ\nnative:\n%s\ngoja:\n%s", strings.Join(want, "\n"), strings.Join(got, "\n"))
