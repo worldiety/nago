@@ -22,10 +22,14 @@ func Render(wnd ui.Window) ui.View {
 	agree := ui.BoolStateOf(wnd, "agree")
 	dark := ui.BoolStateOf(wnd, "dark")
 	size := ui.AutoRadioStateGroup(wnd, "size", 3)
+	city := ui.StringStateOf(wnd, "city")
 
 	greeting := "Hallo " + name.Get() + " (" + text.FromInt(age.Get()) + ")"
 	if agree.Get() {
 		greeting += ", einverstanden"
+	}
+	if city.Get() != "" {
+		greeting += " aus " + city.Get()
 	}
 
 	return ui.ScrollView(
@@ -39,6 +43,10 @@ func Render(wnd ui.Window) ui.View {
 			ui.ToggleField("Dunkel", dark.Get()).InputValue(dark),
 			ui.RadioButtonField("Klein", size, 0),
 			ui.RadioButtonField("Groß", size, 1),
+			ui.Dropdown("Ort", city.Get(),
+				ui.DropdownOption{Value: "hb", Label: "Bremen"},
+				ui.DropdownOption{Value: "ol", Label: "Oldenburg", Description: "Niedersachsen"},
+			).InputValue(city).Searchable(true),
 			ui.HLine(),
 			ui.Text(greeting).Border(hint).Padding(ui.Padding{}.All(ui.L8)),
 			ui.HStack(

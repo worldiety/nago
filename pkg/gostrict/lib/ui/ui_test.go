@@ -21,9 +21,11 @@ import (
 	"go.wdy.de/nago/pkg/gostrict"
 	"go.wdy.de/nago/pkg/gostrict/engine/gojaengine"
 	"go.wdy.de/nago/pkg/gostrict/lib/ui"
+	"go.wdy.de/nago/pkg/gostrict/lib/ui/internal/agenda"
 	"go.wdy.de/nago/pkg/gostrict/lib/ui/internal/cells"
 	"go.wdy.de/nago/pkg/gostrict/lib/ui/internal/form"
 	"go.wdy.de/nago/pkg/gostrict/lib/ui/internal/page"
+	"go.wdy.de/nago/pkg/gostrict/lib/ui/internal/people"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
 	nui "go.wdy.de/nago/presentation/ui"
@@ -251,6 +253,10 @@ func TestForm(t *testing.T) {
 		w.Find(nagotest.Text("Hallo Anna (1), einverstanden"))
 		got = append(got, fmt.Sprintf("%#v", w.Tree()))
 
+		w.Type(w.Find(nagotest.Label("Ort")), "ol")
+		w.Find(nagotest.Text("Hallo Anna (1), einverstanden aus ol"))
+		got = append(got, fmt.Sprintf("%#v", w.Tree()))
+
 		if want == nil {
 			want = got
 			continue
@@ -259,6 +265,62 @@ func TestForm(t *testing.T) {
 			if normalize(got[i]) != normalize(want[i]) {
 				t.Fatalf("%s renders another tree %d:\n got: %s\nwant: %s", name, i, got[i], want[i])
 			}
+		}
+	}
+}
+
+// TestDataView shows the rows of a program in a data view natively and in goja, which render the same views.
+func TestDataView(t *testing.T) {
+	in := loadDir(t, "internal/people")
+	renders := map[string]func(wnd core.Window) core.View{
+		"native": func(wnd core.Window) core.View { return ui.Core(people.Render(ui.WindowOf(wnd))) },
+		"goja":   func(wnd core.Window) core.View { return ui.Render(context.Background(), in, "Render", wnd) },
+	}
+	var want string
+	for _, name := range []string{"native", "goja"} {
+		app := nagotest.New(t, func(cfg *application.Configurator) {
+			cfg.SetApplicationID(core.ApplicationID("de.worldiety.gostrict.people." + name))
+			cfg.RootView("people", renders[name])
+		})
+		w := app.Open(t, nil, "people")
+		w.Find(nagotest.Text("Anna"))
+		w.Find(nagotest.Text("Carla"))
+		got := normalize(fmt.Sprintf("%#v", w.Tree()))
+		if want == "" {
+			want = got
+			continue
+		}
+		if got != want {
+			t.Fatalf("%s renders another data view:\n got: %s\nwant: %s", name, got, want)
+		}
+	}
+}
+
+// TestAgenda renders a calendar, pickers for dates and times and a flowchart natively and in goja, which render the
+// same views.
+func TestAgenda(t *testing.T) {
+	in := loadDir(t, "internal/agenda")
+	renders := map[string]func(wnd core.Window) core.View{
+		"native": func(wnd core.Window) core.View { return ui.Core(agenda.Render(ui.WindowOf(wnd))) },
+		"goja":   func(wnd core.Window) core.View { return ui.Render(context.Background(), in, "Render", wnd) },
+	}
+	var want string
+	for _, name := range []string{"native", "goja"} {
+		app := nagotest.New(t, func(cfg *application.Configurator) {
+			cfg.SetApplicationID(core.ApplicationID("de.worldiety.gostrict.agenda." + name))
+			cfg.RootView("agenda", renders[name])
+		})
+		w := app.Open(t, nil, "agenda")
+		w.Find(nagotest.Text("Kalender"))
+		w.Find(nagotest.Text("Bescherung"))
+		w.Find(nagotest.Text("Spaziergang"))
+		got := normalize(fmt.Sprintf("%#v", w.Tree()))
+		if want == "" {
+			want = got
+			continue
+		}
+		if got != want {
+			t.Fatalf("%s renders another tree:\n got: %s\nwant: %s", name, got, want)
 		}
 	}
 }

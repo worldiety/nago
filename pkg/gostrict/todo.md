@@ -82,13 +82,14 @@ Interpreter), eine direkte Umwandlung goja → Go-Struct spart höchstens ein Vi
 - **Use-Case-Vertrag für wokoda (G):** typisierte DB-Zeilen über generische Header-Funktionen mit Record-Typen. Den
   Kontext je Aufruf (Nutzer, Rechte, Transaktion) hält der Host über `Aspect` als Stapel von Frames, siehe
   `whole_test.go`; die wokoda-Header (db, files, search, events, user, integration) entstehen downstream.
-- **Rest von `lib/ui`:** Das Hauptpaket von `presentation/ui` ist gespiegelt (512 Funktionen und Methoden, 39 Views;
-  Vorlage von Hand, Rest von haiku in 6 Batches nach `scratchpad`-Anleitung, Tests `TestValues`, `TestVars`,
-  `TestEnums*`, `TestPage`, `TestForm`). Es fehlen: die Unterpakete (accordion, tabs, dropdown, picker, …),
-  `Background`, `Box(BoxLayout)`, `SignatureField` (State von `Signature`), Datums- und QR-Leser
-  (`xtime.Date`, `MediaDevice`), `Image.Embed`/`Adaptive` (`[]byte`, `image.ID`), `RedrawAtFixedRate` und die
-  generischen Helfer von `util.go` (im Programm mit `if`), Icons als `SVG`-Konstanten und Felder vom Typ `core.View`
-  in Records (z. B. `sheet.Cell.View`).
+- **Rest von `lib/ui`:** Hauptpaket und Unterpakete von `presentation/ui` sind gespiegelt (Vorlage von Hand, Rest von
+  haiku in Batches, Zeit/Kalender/Flowchart von sonnet). Lücken geschlossen über `IndexState`, `ColorState`,
+  `DateState`, `TimeFrameState`, `DurationState`, `ui.Time`/`ui.Duration` (Unix-Millisekunden), Records mit
+  `list.List`-Feldern statt Slices, Handles mit Buildern für Records mit Funktionen (z. B. `CalendarEvent`), sowie
+  Wrapper für Dataview (`DataViewFromSlice`, Zeilen per Index, ohne Repository), Charts (`ui.Chart`,
+  `ChartSeries`) und Dropdown (`string`-IDs). Es fehlen: `crud`, `form`, `treeview`, der generische Teil von
+  `picker`, `dropdown.FromSlice`, alles mit `auth.Subject`/Repositories/i18n-Diensten, `Background`,
+  `Box(BoxLayout)`, `SignatureField`, QR-Leser, `Image.Embed`, Farben der Charts, Icons als `SVG`-Konstanten.
 - **`opt.Option` an der Grenze:** fehlt, deshalb hat `sheet.Cell` keine `Options` (Select-Editor) und keine `View`
   (Handles in Records).
 - **`go/analysis`-Analyzer (I.6):** neue Abhängigkeit `golang.org/x/tools`, abstimmen.
