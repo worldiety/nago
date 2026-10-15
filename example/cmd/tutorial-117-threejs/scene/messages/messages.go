@@ -5,9 +5,9 @@
 //
 // SPDX-License-Identifier: Custom-License
 
-// Package proto declares the messages between the scene in the browser and its backend. Both import it, so they
+// Package messages declares the messages between the scene in the browser and its backend. Both import it, so they
 // can not disagree about a message.
-package proto
+package messages
 
 // Clicked tells the backend, that the user has clicked into the scene.
 type Clicked struct {

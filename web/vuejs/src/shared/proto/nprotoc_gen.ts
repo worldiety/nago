@@ -268,12 +268,6 @@ export interface Component extends Writeable, Readable {
 	isComponent(): void;
 }
 
-// GostrictValue is a value, which crosses the boundary of a gostrict program. The receiver knows its type from the schema of the program, so the value carries no type itself.
-export interface GostrictValue extends Writeable, Readable {
-	// a marker method to indicate the enum / union type membership
-	isGostrictValue(): void;
-}
-
 // NagoEvent is the union type of all allowed NAGO protocol events. Everything which goes through a NAGO channel must be an Event at the root level.
 export interface NagoEvent extends Writeable, Readable {
 	// a marker method to indicate the enum / union type membership
@@ -24732,390 +24726,17 @@ export class SheetUserHidden implements Writeable, Readable {
 	}
 }
 
-// GostrictBool is a bool of a gostrict program.
-export class GostrictBool implements Writeable, Readable, GostrictValue {
-	public v?: Bool;
-
-	constructor(v: Bool | undefined = undefined) {
-		this.v = v;
-	}
-
-	read(reader: BinaryReader): void {
-		this.reset();
-		const fieldCount = reader.readByte();
-		for (let i = 0; i < fieldCount; i++) {
-			const fieldHeader = reader.readFieldHeader();
-			switch (fieldHeader.fieldId) {
-				case 1: {
-					this.v = readBool(reader);
-					break;
-				}
-				default:
-					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
-			}
-		}
-	}
-
-	write(writer: BinaryWriter): void {
-		const fields = [false, this.v !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
-		writer.writeByte(fieldCount);
-		if (fields[1]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 1);
-			writeBool(writer, this.v!); // typescript linters cannot see, that we already checked this properly above
-		}
-	}
-
-	isZero(): boolean {
-		return this.v === undefined;
-	}
-
-	reset(): void {
-		this.v = undefined;
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.RECORD, 309);
-		return;
-	}
-	isGostrictValue(): void {}
-}
-
-// GostrictInt is an int32 or uint32 of a gostrict program.
-export class GostrictInt implements Writeable, Readable, GostrictValue {
-	public v?: Int;
-
-	constructor(v: Int | undefined = undefined) {
-		this.v = v;
-	}
-
-	read(reader: BinaryReader): void {
-		this.reset();
-		const fieldCount = reader.readByte();
-		for (let i = 0; i < fieldCount; i++) {
-			const fieldHeader = reader.readFieldHeader();
-			switch (fieldHeader.fieldId) {
-				case 1: {
-					this.v = readSint(reader);
-					break;
-				}
-				default:
-					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
-			}
-		}
-	}
-
-	write(writer: BinaryWriter): void {
-		const fields = [false, this.v !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
-		writer.writeByte(fieldCount);
-		if (fields[1]) {
-			writer.writeFieldHeader(Shapes.VARINT, 1);
-			writeSint(writer, this.v!); // typescript linters cannot see, that we already checked this properly above
-		}
-	}
-
-	isZero(): boolean {
-		return this.v === undefined;
-	}
-
-	reset(): void {
-		this.v = undefined;
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.RECORD, 310);
-		return;
-	}
-	isGostrictValue(): void {}
-}
-
-// GostrictFloat is a float64 of a gostrict program. NaN and the infinities survive the encoding, -0 is a GostrictNegZero, because a zero field is omitted.
-export class GostrictFloat implements Writeable, Readable, GostrictValue {
-	public v?: Float;
-
-	constructor(v: Float | undefined = undefined) {
-		this.v = v;
-	}
-
-	read(reader: BinaryReader): void {
-		this.reset();
-		const fieldCount = reader.readByte();
-		for (let i = 0; i < fieldCount; i++) {
-			const fieldHeader = reader.readFieldHeader();
-			switch (fieldHeader.fieldId) {
-				case 1: {
-					this.v = readFloat(reader);
-					break;
-				}
-				default:
-					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
-			}
-		}
-	}
-
-	write(writer: BinaryWriter): void {
-		const fields = [false, this.v !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
-		writer.writeByte(fieldCount);
-		if (fields[1]) {
-			writer.writeFieldHeader(Shapes.F64, 1);
-			writeFloat(writer, this.v!); // typescript linters cannot see, that we already checked this properly above
-		}
-	}
-
-	isZero(): boolean {
-		return this.v === undefined;
-	}
-
-	reset(): void {
-		this.v = undefined;
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.RECORD, 311);
-		return;
-	}
-	isGostrictValue(): void {}
-}
-
-// GostrictNegZero is the float64 -0 of a gostrict program.
-export class GostrictNegZero implements Writeable, Readable, GostrictValue {
-	constructor() {}
-
-	read(r: BinaryReader): void {
-		r.readByte();
-	}
-	write(w: BinaryWriter): void {
-		w.writeByte(0);
-	}
-	isZero(): boolean {
-		return true;
-	}
-	reset(): void {}
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.RECORD, 312);
-		return;
-	}
-	isGostrictValue(): void {}
-}
-
-// GostrictStr is a string of a gostrict program.
-export class GostrictStr implements Writeable, Readable, GostrictValue {
-	public v?: Str;
-
-	constructor(v: Str | undefined = undefined) {
-		this.v = v;
-	}
-
-	read(reader: BinaryReader): void {
-		this.reset();
-		const fieldCount = reader.readByte();
-		for (let i = 0; i < fieldCount; i++) {
-			const fieldHeader = reader.readFieldHeader();
-			switch (fieldHeader.fieldId) {
-				case 1: {
-					this.v = readString(reader);
-					break;
-				}
-				default:
-					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
-			}
-		}
-	}
-
-	write(writer: BinaryWriter): void {
-		const fields = [false, this.v !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
-		writer.writeByte(fieldCount);
-		if (fields[1]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
-			writeString(writer, this.v!); // typescript linters cannot see, that we already checked this properly above
-		}
-	}
-
-	isZero(): boolean {
-		return this.v === undefined;
-	}
-
-	reset(): void {
-		this.v = undefined;
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.RECORD, 313);
-		return;
-	}
-	isGostrictValue(): void {}
-}
-
-// GostrictList is a list, a record or a map of a gostrict program. A record holds its fields in the order of its declaration, a map its entries as lists of the key and the value.
-export class GostrictList implements Writeable, Readable, GostrictValue {
-	public v?: GostrictValues;
-
-	constructor(v: GostrictValues | undefined = undefined) {
-		this.v = v;
-	}
-
-	read(reader: BinaryReader): void {
-		this.reset();
-		const fieldCount = reader.readByte();
-		for (let i = 0; i < fieldCount; i++) {
-			const fieldHeader = reader.readFieldHeader();
-			switch (fieldHeader.fieldId) {
-				case 1: {
-					this.v = new GostrictValues();
-					this.v.read(reader);
-					break;
-				}
-				default:
-					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
-			}
-		}
-	}
-
-	write(writer: BinaryWriter): void {
-		const fields = [false, this.v !== undefined && !this.v.isZero()];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
-		writer.writeByte(fieldCount);
-		if (fields[1]) {
-			writer.writeFieldHeader(Shapes.ARRAY, 1);
-			this.v!.write(writer); // typescript linters cannot see, that we already checked this properly above
-		}
-	}
-
-	isZero(): boolean {
-		return this.v === undefined || this.v.isZero();
-	}
-
-	reset(): void {
-		this.v = undefined;
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.RECORD, 314);
-		return;
-	}
-	isGostrictValue(): void {}
-}
-
-// GostrictVariant is a value of a sealed interface of a gostrict program: the full name of the record of the variant and its fields.
-export class GostrictVariant implements Writeable, Readable, GostrictValue {
-	public tag?: Str;
-
-	public fields?: GostrictValues;
-
-	constructor(tag: Str | undefined = undefined, fields: GostrictValues | undefined = undefined) {
-		this.tag = tag;
-		this.fields = fields;
-	}
-
-	read(reader: BinaryReader): void {
-		this.reset();
-		const fieldCount = reader.readByte();
-		for (let i = 0; i < fieldCount; i++) {
-			const fieldHeader = reader.readFieldHeader();
-			switch (fieldHeader.fieldId) {
-				case 1: {
-					this.tag = readString(reader);
-					break;
-				}
-				case 2: {
-					this.fields = new GostrictValues();
-					this.fields.read(reader);
-					break;
-				}
-				default:
-					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
-			}
-		}
-	}
-
-	write(writer: BinaryWriter): void {
-		const fields = [false, this.tag !== undefined, this.fields !== undefined && !this.fields.isZero()];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
-		writer.writeByte(fieldCount);
-		if (fields[1]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
-			writeString(writer, this.tag!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[2]) {
-			writer.writeFieldHeader(Shapes.ARRAY, 2);
-			this.fields!.write(writer); // typescript linters cannot see, that we already checked this properly above
-		}
-	}
-
-	isZero(): boolean {
-		return this.tag === undefined && (this.fields === undefined || this.fields.isZero());
-	}
-
-	reset(): void {
-		this.tag = undefined;
-		this.fields = undefined;
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.RECORD, 315);
-		return;
-	}
-	isGostrictValue(): void {}
-}
-
-// GostrictValues is a list of values of a gostrict program.
-export class GostrictValues implements Writeable, Readable {
-	public value: GostrictValue[];
-
-	constructor(value: GostrictValue[] = []) {
-		this.value = value;
-	}
-
-	isZero(): boolean {
-		return !this.value || this.value.length === 0;
-	}
-
-	reset(): void {
-		this.value = [];
-	}
-
-	write(writer: BinaryWriter): void {
-		writer.writeUvarint(this.value.length); // Write the length of the array
-		for (const c of this.value) {
-			c.writeTypeHeader(writer); // Write the type header for each component)
-			c.write(writer); // Write the component data
-
-			//c.writeTypeHeader(writer); // Write the type header for each component
-			//c.write(writer); // Write the component data
-		}
-	}
-
-	read(reader: BinaryReader): void {
-		const count = reader.readUvarint(); // Read the length of the array
-		const values: GostrictValue[] = [];
-
-		for (let i = 0; i < count; i++) {
-			const obj = unmarshal(reader); // Read and unmarshal each component
-			values.push(obj as any as GostrictValue); // Cast and add to the array
-		}
-
-		this.value = values;
-	}
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.ARRAY, 316);
-		return;
-	}
-}
-
 // GostrictMessage is a message between a gostrict program in the frontend and its backend.
 export class GostrictMessage implements Writeable, Readable {
-	// Type is the full name of the record of the message, e.g. example.com/arena/proto.Hit.
+	// Type is the full name of the record of the message, e.g. example.com/arena/messages.Hit.
 	public type?: Str;
 
-	// Fields are the fields of the record in the order of its declaration.
-	public fields?: GostrictValues;
+	// Json is the record of the message as JSON, see the package presentation/ui/program.
+	public json?: Str;
 
-	constructor(type: Str | undefined = undefined, fields: GostrictValues | undefined = undefined) {
+	constructor(type: Str | undefined = undefined, json: Str | undefined = undefined) {
 		this.type = type;
-		this.fields = fields;
+		this.json = json;
 	}
 
 	read(reader: BinaryReader): void {
@@ -25129,8 +24750,7 @@ export class GostrictMessage implements Writeable, Readable {
 					break;
 				}
 				case 2: {
-					this.fields = new GostrictValues();
-					this.fields.read(reader);
+					this.json = readString(reader);
 					break;
 				}
 				default:
@@ -25140,7 +24760,7 @@ export class GostrictMessage implements Writeable, Readable {
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, this.type !== undefined, this.fields !== undefined && !this.fields.isZero()];
+		const fields = [false, this.type !== undefined, this.json !== undefined];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
@@ -25148,18 +24768,18 @@ export class GostrictMessage implements Writeable, Readable {
 			writeString(writer, this.type!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
-			writer.writeFieldHeader(Shapes.ARRAY, 2);
-			this.fields!.write(writer); // typescript linters cannot see, that we already checked this properly above
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.json!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
 	isZero(): boolean {
-		return this.type === undefined && (this.fields === undefined || this.fields.isZero());
+		return this.type === undefined && this.json === undefined;
 	}
 
 	reset(): void {
 		this.type = undefined;
-		this.fields = undefined;
+		this.json = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -25383,8 +25003,8 @@ export class GostrictProgram implements Writeable, Readable {
 	// Init is the exported function, which the component calls first. If it returns a state, the component passes the state to the other functions, which take one.
 	public init?: Str;
 
-	// Args are the arguments of Init.
-	public args?: GostrictValues;
+	// Args are the arguments of Init as a JSON array, see the package presentation/ui/program.
+	public args?: Str;
 
 	// Frame is the exported function, which the component calls in each animation frame with the time in seconds. If empty, there is no animation loop.
 	public frame?: Str;
@@ -25398,7 +25018,7 @@ export class GostrictProgram implements Writeable, Readable {
 	constructor(
 		bundle: URI | undefined = undefined,
 		init: Str | undefined = undefined,
-		args: GostrictValues | undefined = undefined,
+		args: Str | undefined = undefined,
 		frame: Str | undefined = undefined,
 		resize: Str | undefined = undefined,
 		inputs: InputEventTypes | undefined = undefined
@@ -25426,8 +25046,7 @@ export class GostrictProgram implements Writeable, Readable {
 					break;
 				}
 				case 3: {
-					this.args = new GostrictValues();
-					this.args.read(reader);
+					this.args = readString(reader);
 					break;
 				}
 				case 4: {
@@ -25454,7 +25073,7 @@ export class GostrictProgram implements Writeable, Readable {
 			false,
 			this.bundle !== undefined,
 			this.init !== undefined,
-			this.args !== undefined && !this.args.isZero(),
+			this.args !== undefined,
 			this.frame !== undefined,
 			this.resize !== undefined,
 			this.inputs !== undefined && !this.inputs.isZero(),
@@ -25470,8 +25089,8 @@ export class GostrictProgram implements Writeable, Readable {
 			writeString(writer, this.init!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[3]) {
-			writer.writeFieldHeader(Shapes.ARRAY, 3);
-			this.args!.write(writer); // typescript linters cannot see, that we already checked this properly above
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			writeString(writer, this.args!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
@@ -25491,7 +25110,7 @@ export class GostrictProgram implements Writeable, Readable {
 		return (
 			this.bundle === undefined &&
 			this.init === undefined &&
-			(this.args === undefined || this.args.isZero()) &&
+			this.args === undefined &&
 			this.frame === undefined &&
 			this.resize === undefined &&
 			(this.inputs === undefined || this.inputs.isZero())
@@ -25706,125 +25325,6 @@ export class Canvas2 implements Writeable, Readable, Component {
 	isComponent(): void {}
 }
 
-// GostrictNil is an error, which is nil.
-export class GostrictNil implements Writeable, Readable, GostrictValue {
-	constructor() {}
-
-	read(r: BinaryReader): void {
-		r.readByte();
-	}
-	write(w: BinaryWriter): void {
-		w.writeByte(0);
-	}
-	isZero(): boolean {
-		return true;
-	}
-	reset(): void {}
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.RECORD, 325);
-		return;
-	}
-	isGostrictValue(): void {}
-}
-
-// GostrictError is an error with its message.
-export class GostrictError implements Writeable, Readable, GostrictValue {
-	public msg?: Str;
-
-	constructor(msg: Str | undefined = undefined) {
-		this.msg = msg;
-	}
-
-	read(reader: BinaryReader): void {
-		this.reset();
-		const fieldCount = reader.readByte();
-		for (let i = 0; i < fieldCount; i++) {
-			const fieldHeader = reader.readFieldHeader();
-			switch (fieldHeader.fieldId) {
-				case 1: {
-					this.msg = readString(reader);
-					break;
-				}
-				default:
-					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
-			}
-		}
-	}
-
-	write(writer: BinaryWriter): void {
-		const fields = [false, this.msg !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
-		writer.writeByte(fieldCount);
-		if (fields[1]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
-			writeString(writer, this.msg!); // typescript linters cannot see, that we already checked this properly above
-		}
-	}
-
-	isZero(): boolean {
-		return this.msg === undefined;
-	}
-
-	reset(): void {
-		this.msg = undefined;
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.RECORD, 326);
-		return;
-	}
-	isGostrictValue(): void {}
-}
-
-// GostrictRef refers to a state, which an instance of a program in the frontend holds, see GostrictCall.
-export class GostrictRef implements Writeable, Readable, GostrictValue {
-	public v?: Int;
-
-	constructor(v: Int | undefined = undefined) {
-		this.v = v;
-	}
-
-	read(reader: BinaryReader): void {
-		this.reset();
-		const fieldCount = reader.readByte();
-		for (let i = 0; i < fieldCount; i++) {
-			const fieldHeader = reader.readFieldHeader();
-			switch (fieldHeader.fieldId) {
-				case 1: {
-					this.v = readSint(reader);
-					break;
-				}
-				default:
-					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
-			}
-		}
-	}
-
-	write(writer: BinaryWriter): void {
-		const fields = [false, this.v !== undefined];
-		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
-		writer.writeByte(fieldCount);
-		if (fields[1]) {
-			writer.writeFieldHeader(Shapes.VARINT, 1);
-			writeSint(writer, this.v!); // typescript linters cannot see, that we already checked this properly above
-		}
-	}
-
-	isZero(): boolean {
-		return this.v === undefined;
-	}
-
-	reset(): void {
-		this.v = undefined;
-	}
-
-	writeTypeHeader(dst: BinaryWriter): void {
-		dst.writeTypeHeader(Shapes.RECORD, 327);
-		return;
-	}
-	isGostrictValue(): void {}
-}
-
 // GostrictCall calls an exported function of the program of the bundle in the frontend, see the package presentation/ui/program. The frontend keeps an instance of the bundle per instance id and answers with GostrictReturn.
 export class GostrictCall implements Writeable, Readable, CallArgs {
 	// Instance identifies the instance of the program in the frontend.
@@ -25836,13 +25336,14 @@ export class GostrictCall implements Writeable, Readable, CallArgs {
 	// Name is the exported function. If empty, the frontend drops the instance.
 	public name?: Str;
 
-	public args?: GostrictValues;
+	// Args are the arguments as a JSON array, see the package presentation/ui/program.
+	public args?: Str;
 
 	constructor(
 		instance: Str | undefined = undefined,
 		bundle: URI | undefined = undefined,
 		name: Str | undefined = undefined,
-		args: GostrictValues | undefined = undefined
+		args: Str | undefined = undefined
 	) {
 		this.instance = instance;
 		this.bundle = bundle;
@@ -25869,8 +25370,7 @@ export class GostrictCall implements Writeable, Readable, CallArgs {
 					break;
 				}
 				case 4: {
-					this.args = new GostrictValues();
-					this.args.read(reader);
+					this.args = readString(reader);
 					break;
 				}
 				default:
@@ -25885,7 +25385,7 @@ export class GostrictCall implements Writeable, Readable, CallArgs {
 			this.instance !== undefined,
 			this.bundle !== undefined,
 			this.name !== undefined,
-			this.args !== undefined && !this.args.isZero(),
+			this.args !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -25902,8 +25402,8 @@ export class GostrictCall implements Writeable, Readable, CallArgs {
 			writeString(writer, this.name!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[4]) {
-			writer.writeFieldHeader(Shapes.ARRAY, 4);
-			this.args!.write(writer); // typescript linters cannot see, that we already checked this properly above
+			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
+			writeString(writer, this.args!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
@@ -25912,7 +25412,7 @@ export class GostrictCall implements Writeable, Readable, CallArgs {
 			this.instance === undefined &&
 			this.bundle === undefined &&
 			this.name === undefined &&
-			(this.args === undefined || this.args.isZero())
+			this.args === undefined
 		);
 	}
 
@@ -25932,11 +25432,12 @@ export class GostrictCall implements Writeable, Readable, CallArgs {
 
 // GostrictReturn holds the results of a GostrictCall or, if the call failed in the frontend, its error.
 export class GostrictReturn implements Writeable, Readable, CallRet {
-	public values?: GostrictValues;
+	// Values are the results as a JSON array, see the package presentation/ui/program.
+	public values?: Str;
 
 	public failure?: Str;
 
-	constructor(values: GostrictValues | undefined = undefined, failure: Str | undefined = undefined) {
+	constructor(values: Str | undefined = undefined, failure: Str | undefined = undefined) {
 		this.values = values;
 		this.failure = failure;
 	}
@@ -25948,8 +25449,7 @@ export class GostrictReturn implements Writeable, Readable, CallRet {
 			const fieldHeader = reader.readFieldHeader();
 			switch (fieldHeader.fieldId) {
 				case 1: {
-					this.values = new GostrictValues();
-					this.values.read(reader);
+					this.values = readString(reader);
 					break;
 				}
 				case 2: {
@@ -25963,12 +25463,12 @@ export class GostrictReturn implements Writeable, Readable, CallRet {
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, this.values !== undefined && !this.values.isZero(), this.failure !== undefined];
+		const fields = [false, this.values !== undefined, this.failure !== undefined];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
-			writer.writeFieldHeader(Shapes.ARRAY, 1);
-			this.values!.write(writer); // typescript linters cannot see, that we already checked this properly above
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.values!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[2]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
@@ -25977,7 +25477,7 @@ export class GostrictReturn implements Writeable, Readable, CallRet {
 	}
 
 	isZero(): boolean {
-		return (this.values === undefined || this.values.isZero()) && this.failure === undefined;
+		return this.values === undefined && this.failure === undefined;
 	}
 
 	reset(): void {
@@ -27414,46 +26914,6 @@ export function unmarshal(src: BinaryReader): any {
 			v.read(src);
 			return v;
 		}
-		case 309: {
-			const v = new GostrictBool();
-			v.read(src);
-			return v;
-		}
-		case 310: {
-			const v = new GostrictInt();
-			v.read(src);
-			return v;
-		}
-		case 311: {
-			const v = new GostrictFloat();
-			v.read(src);
-			return v;
-		}
-		case 312: {
-			const v = new GostrictNegZero();
-			v.read(src);
-			return v;
-		}
-		case 313: {
-			const v = new GostrictStr();
-			v.read(src);
-			return v;
-		}
-		case 314: {
-			const v = new GostrictList();
-			v.read(src);
-			return v;
-		}
-		case 315: {
-			const v = new GostrictVariant();
-			v.read(src);
-			return v;
-		}
-		case 316: {
-			const v = new GostrictValues();
-			v.read(src);
-			return v;
-		}
 		case 317: {
 			const v = new GostrictMessage();
 			v.read(src);
@@ -27491,21 +26951,6 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 324: {
 			const v = new Canvas2();
-			v.read(src);
-			return v;
-		}
-		case 325: {
-			const v = new GostrictNil();
-			v.read(src);
-			return v;
-		}
-		case 326: {
-			const v = new GostrictError();
-			v.read(src);
-			return v;
-		}
-		case 327: {
-			const v = new GostrictRef();
 			v.read(src);
 			return v;
 		}

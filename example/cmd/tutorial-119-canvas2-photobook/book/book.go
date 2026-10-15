@@ -14,7 +14,7 @@ package book
 import (
 	"math"
 
-	"go.wdy.de/nago/example/cmd/tutorial-119-canvas2-photobook/book/proto"
+	"go.wdy.de/nago/example/cmd/tutorial-119-canvas2-photobook/book/messages"
 	"go.wdy.de/nago/pkg/gostrict/lib/asset"
 	"go.wdy.de/nago/pkg/gostrict/lib/canvas"
 	"go.wdy.de/nago/pkg/gostrict/lib/input"
@@ -49,13 +49,13 @@ var ctx = canvas.Get()
 
 // Book is the state of the editor.
 type Book struct {
-	Photos   list.List[proto.Photo]
+	Photos   list.List[messages.Photo]
 	Images   dict.Map[string, canvas.Image]
 	Selected int32
 	Mode     Mode
 	// the pointer and the photo at the start of the drag
 	StartX, StartY float64
-	Start          proto.Photo
+	Start          messages.Photo
 	Changed        bool
 	Width, Height  float64
 	// Guides are the lines in millimeters, to which the moving photo has snapped: x for vertical lines, y for
@@ -65,10 +65,10 @@ type Book struct {
 }
 
 // Init starts an empty editor and asks the backend for the layout.
-func Init() (*Book, msg.Out[proto.Hello]) {
-	b := &Book{Photos: list.New[proto.Photo](), Images: dict.New[string, canvas.Image](), Selected: -1, GuideX: list.New[float64](), GuideY: list.New[float64]()}
-	out := msg.New[proto.Hello]()
-	out.Send(proto.Hello{})
+func Init() (*Book, msg.Out[messages.Hello]) {
+	b := &Book{Photos: list.New[messages.Photo](), Images: dict.New[string, canvas.Image](), Selected: -1, GuideX: list.New[float64](), GuideY: list.New[float64]()}
+	out := msg.New[messages.Hello]()
+	out.Send(messages.Hello{})
 	return b, out
 }
 
@@ -93,7 +93,7 @@ func image(b *Book, url string) canvas.Image {
 }
 
 // OnLayout replaces the layout.
-func OnLayout(b *Book, l proto.Layout) {
+func OnLayout(b *Book, l messages.Layout) {
 	b.Photos = l.Photos.Clone()
 	if b.Selected >= b.Photos.Len() {
 		b.Selected = -1
@@ -102,7 +102,7 @@ func OnLayout(b *Book, l proto.Layout) {
 }
 
 // OnAdd puts a new photo into the middle of the left page, 120 mm wide or high, and selects it.
-func OnAdd(b *Book, a proto.Add) msg.Out[proto.Save] {
+func OnAdd(b *Book, a messages.Add) msg.Out[messages.Save] {
 	w, h := 120.0, 120.0
 	if a.Width > 0 && a.Height > 0 {
 		if a.Width >= a.Height {
@@ -111,7 +111,7 @@ func OnAdd(b *Book, a proto.Add) msg.Out[proto.Save] {
 			w = h * a.Width / a.Height
 		}
 	}
-	b.Photos.Append(proto.Photo{URL: a.URL, X: pageW / 2, Y: pageH / 2, W: w, H: h})
+	b.Photos.Append(messages.Photo{URL: a.URL, X: pageW / 2, Y: pageH / 2, W: w, H: h})
 	b.Selected = b.Photos.Len() - 1
 	return save(b)
 }
@@ -120,21 +120,21 @@ func OnAdd(b *Book, a proto.Add) msg.Out[proto.Save] {
 func OnLoaded(b *Book, e asset.Loaded) {
 }
 
-func save(b *Book) msg.Out[proto.Save] {
-	out := msg.New[proto.Save]()
-	out.Send(proto.Save{Photos: b.Photos.Clone()})
+func save(b *Book) msg.Out[messages.Save] {
+	out := msg.New[messages.Save]()
+	out.Send(messages.Save{Photos: b.Photos.Clone()})
 	return out
 }
 
 // local returns the point (x, y) in millimeters relative to the center of the photo and without its rotation.
-func local(p proto.Photo, x, y float64) (float64, float64) {
+func local(p messages.Photo, x, y float64) (float64, float64) {
 	dx, dy := x-p.X, y-p.Y
 	c, s := math.Cos(-p.Rotation), math.Sin(-p.Rotation)
 	return dx*c - dy*s, dx*s + dy*c
 }
 
 // world returns the point of the photo relative to its center in millimeters of the double page.
-func world(p proto.Photo, lx, ly float64) (float64, float64) {
+func world(p messages.Photo, lx, ly float64) (float64, float64) {
 	c, s := math.Cos(p.Rotation), math.Sin(p.Rotation)
 	return p.X + lx*c - ly*s, p.Y + lx*s + ly*c
 }
@@ -166,7 +166,7 @@ func hit(b *Book, x, y, scale float64) (int32, Mode) {
 }
 
 // OnInput edits the layout with the pointer, the wheel and the keys.
-func OnInput(b *Book, e input.Event) msg.Out[proto.Save] {
+func OnInput(b *Book, e input.Event) msg.Out[messages.Save] {
 	scale, ox, oy := view(b)
 	x, y := (e.X-ox)/scale, (e.Y-oy)/scale
 
@@ -201,7 +201,7 @@ func OnInput(b *Book, e input.Event) msg.Out[proto.Save] {
 		return key(b, e)
 	default:
 	}
-	return msg.New[proto.Save]()
+	return msg.New[messages.Save]()
 }
 
 func drag(b *Book, x, y, scale float64) {
@@ -232,13 +232,13 @@ func drag(b *Book, x, y, scale float64) {
 }
 
 // bounds returns the half width and height of the photo, which the rotation enlarges.
-func bounds(p proto.Photo) (float64, float64) {
+func bounds(p messages.Photo) (float64, float64) {
 	c, s := math.Abs(math.Cos(p.Rotation)), math.Abs(math.Sin(p.Rotation))
 	return p.W/2*c + p.H/2*s, p.W/2*s + p.H/2*c
 }
 
 // snapTo moves the photo, so that its nearest edge or center lies on a line of the pages or of another photo.
-func snapTo(b *Book, p proto.Photo, within float64) proto.Photo {
+func snapTo(b *Book, p messages.Photo, within float64) messages.Photo {
 	hw, hh := bounds(p)
 	xs := list.Of(0.0, pageW/2, pageW, pageW*1.5, spreadW)
 	ys := list.Of(0.0, pageH/2, pageH)
@@ -278,10 +278,10 @@ func nearest(lines, edges list.List[float64], within float64) (float64, float64,
 	return shift, at, found
 }
 
-func key(b *Book, e input.Event) msg.Out[proto.Save] {
+func key(b *Book, e input.Event) msg.Out[messages.Save] {
 	p, ok := b.Photos.Get(b.Selected)
 	if !ok {
-		return msg.New[proto.Save]()
+		return msg.New[messages.Save]()
 	}
 	step := 1.0
 	if e.Shift {
@@ -315,7 +315,7 @@ func key(b *Book, e input.Event) msg.Out[proto.Save] {
 	case "ArrowDown":
 		p.Y += step
 	default:
-		return msg.New[proto.Save]()
+		return msg.New[messages.Save]()
 	}
 	b.Photos.Set(b.Selected, p)
 	return save(b)
@@ -386,7 +386,7 @@ func Frame(b *Book, t float64) {
 }
 
 // selection draws the frame and the handles of the selected photo.
-func selection(p proto.Photo, scale float64) {
+func selection(p messages.Photo, scale float64) {
 	r := handle / scale
 	canvas.Save(ctx)
 	canvas.Translate(ctx, p.X, p.Y)

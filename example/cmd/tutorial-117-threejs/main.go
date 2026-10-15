@@ -18,8 +18,7 @@ import (
 	"math/rand/v2"
 
 	"go.wdy.de/nago/application"
-	"go.wdy.de/nago/example/cmd/tutorial-117-threejs/scene"
-	"go.wdy.de/nago/example/cmd/tutorial-117-threejs/scene/proto"
+	"go.wdy.de/nago/example/cmd/tutorial-117-threejs/scene/messages"
 	"go.wdy.de/nago/pkg/gostrict"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
@@ -28,13 +27,10 @@ import (
 	"go.wdy.de/nago/web/vuejs"
 )
 
-// The sources of the program, which the application translates at the start. The generated gostrict_gen.go is
-// part of the backend and ignored by the translation.
+// The sources of the program, which the application translates at the start.
 //
 //go:embed scene
 var sources embed.FS
-
-const module = "go.wdy.de/nago/example/cmd/tutorial-117-threejs"
 
 // backend receives the messages of the program in the browser.
 type backend struct {
@@ -42,10 +38,10 @@ type backend struct {
 	clicks *core.State[int]
 }
 
-func (b backend) Clicked(ctx context.Context, m proto.Clicked) error {
+func (b backend) Clicked(ctx context.Context, m messages.Clicked) error {
 	b.clicks.Set(b.clicks.Get() + 1)
 	// answer right away with a random color
-	return b.ch.Send(scene.ColorMessage(proto.Color{RGB: rand.Uint32N(0xffffff)}))
+	return b.ch.Send(messages.Color{RGB: rand.Uint32N(0xffffff)})
 }
 
 func main() {
@@ -53,7 +49,7 @@ func main() {
 		cfg.SetApplicationID("de.worldiety.tutorial_117")
 		cfg.Serve(vuejs.Dist())
 
-		bundle := program.MustCompile(module+"/scene", gostrict.Module{Path: module, FS: sources})
+		bundle := program.MustCompileFS(sources, "scene")
 
 		cfg.RootView(".", func(wnd core.Window) core.View {
 			return ui.VStack(
@@ -76,17 +72,15 @@ func knot(wnd core.Window, bundle *gostrict.Bundle, id string, balls int32) core
 			Animate("Frame").
 			Resize("Resize").
 			Antialias(true).
-			OnMessage(func(ctx context.Context, m gostrict.Message) error {
-				return scene.Dispatch(ctx, be, m)
-			}).
+			OnMessage(gostrict.Handle(new(gostrict.Router), be.Clicked).Dispatch).
 			Frame(ui.Frame{Width: ui.L560, Height: ui.L320}),
 		ui.HStack(
 			ui.Text(fmt.Sprintf("%d clicks", clicks.Get())),
 			ui.SecondaryButton(func() {
-				_ = ch.Send(scene.SpeedMessage(proto.Speed{Factor: 0.2}))
+				_ = ch.Send(messages.Speed{Factor: 0.2})
 			}).Title("slow"),
 			ui.SecondaryButton(func() {
-				_ = ch.Send(scene.SpeedMessage(proto.Speed{Factor: 3}))
+				_ = ch.Send(messages.Speed{Factor: 3})
 			}).Title("fast"),
 		).Gap(ui.L8),
 	).Gap(ui.L8)

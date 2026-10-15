@@ -85,8 +85,8 @@ func TestChannel(t *testing.T) {
 			return ui.VStack(
 				threejs.ThreeJS("scene", b).
 					Init("Init", int32(5)).
-					OnMessage(func(ctx context.Context, m gostrict.Message) error {
-						received = append(received, m)
+					OnMessage(func(ctx context.Context, e gostrict.Envelope) error {
+						received = append(received, e.(gostrict.Message))
 						return nil
 					}),
 				ui.PrimaryButton(func() {
@@ -130,12 +130,7 @@ func TestChannel(t *testing.T) {
 		}
 		w.Settle()
 	}
-	resolve(proto.GostrictMessage{Type: ping, Fields: proto.GostrictValues{
-		&proto.GostrictInt{V: 7},
-		&proto.GostrictNegZero{},
-		&proto.GostrictList{V: proto.GostrictValues{&proto.GostrictStr{V: "hi"}}},
-		&proto.GostrictList{V: proto.GostrictValues{&proto.GostrictList{V: proto.GostrictValues{&proto.GostrictStr{V: "k"}, &proto.GostrictInt{V: 4000000000}}}}},
-	}})
+	resolve(proto.GostrictMessage{Type: ping, Json: `{"N": 7, "F": {"$f": "-0"}, "Tags": ["hi"], "M": {"$m": [["k", 4000000000]]}}`})
 	// a message, which the program does not send, and a broken one are dropped
 	resolve(proto.GostrictMessage{Type: "llm.local/app.Pong"})
 	resolve(proto.GostrictMessage{Type: ping})
@@ -233,8 +228,8 @@ func TestEngine(t *testing.T) {
 		return nil
 	}
 
-	call := answer(&proto.GostrictReturn{Values: proto.GostrictValues{&proto.GostrictRef{V: 1}}})
-	if call.Name != "Init" || len(call.Args) != 1 {
+	call := answer(&proto.GostrictReturn{Values: `[{"$r": 1}]`})
+	if call.Name != "Init" || call.Args != "[3]" {
 		t.Fatalf("unexpected call %#v", call)
 	}
 	r := <-results
@@ -245,10 +240,8 @@ func TestEngine(t *testing.T) {
 		t.Fatalf("expected a state, got %#v", r.values)
 	}
 
-	call = answer(&proto.GostrictReturn{Values: proto.GostrictValues{&proto.GostrictList{V: proto.GostrictValues{
-		&proto.GostrictList{V: proto.GostrictValues{&proto.GostrictInt{V: 7}, &proto.GostrictFloat{V: 1.5}, &proto.GostrictList{}, &proto.GostrictList{}}},
-	}}}})
-	if ref, ok := call.Args[0].(*proto.GostrictRef); !ok || ref.V != 1 {
+	call = answer(&proto.GostrictReturn{Values: `[[{"N": 7, "F": 1.5, "Tags": [], "M": {"$m": []}}]]`})
+	if !strings.HasPrefix(string(call.Args), `[{"$r":1},`) {
 		t.Fatalf("the state must be passed as its reference: %#v", call.Args)
 	}
 	r = <-results

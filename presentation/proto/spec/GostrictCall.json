@@ -19,8 +19,9 @@
       "type": "Str"
     },
     "4": {
+      "doc": "Args are the arguments as a JSON array, see the package presentation/ui/program.",
       "name": "Args",
-      "type": "GostrictValues"
+      "type": "Str"
     }
   }
 }

@@ -5,8 +5,8 @@
 //
 // SPDX-License-Identifier: Custom-License
 
-// Package proto declares the messages between the photo book in the browser and its backend.
-package proto
+// Package messages declares the messages between the photo book in the browser and its backend.
+package messages
 
 import "go.wdy.de/nago/pkg/gostrict/std/list"
 

@@ -11,7 +11,7 @@ import (
 	"math"
 	"testing"
 
-	"go.wdy.de/nago/example/cmd/tutorial-119-canvas2-photobook/book/proto"
+	"go.wdy.de/nago/example/cmd/tutorial-119-canvas2-photobook/book/messages"
 	"go.wdy.de/nago/pkg/gostrict/lib/input"
 )
 
@@ -29,10 +29,10 @@ func TestEdit(t *testing.T) {
 		return input.Event{Type: typ, X: sx, Y: sy}
 	}
 
-	if out := OnAdd(b, proto.Add{URL: "/a.jpg", Width: 400, Height: 300}); out.Len() != 1 {
+	if out := OnAdd(b, messages.Add{URL: "/a.jpg", Width: 400, Height: 300}); out.Len() != 1 {
 		t.Fatal("an added photo must be saved")
 	}
-	OnAdd(b, proto.Add{URL: "/b.png", Width: 300, Height: 600})
+	OnAdd(b, messages.Add{URL: "/b.png", Width: 300, Height: 600})
 	a, _ := b.Photos.Get(0)
 	if a.W != 120 || a.H != 90 {
 		t.Fatalf("unexpected size %v", a)

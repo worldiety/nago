@@ -4,14 +4,14 @@
   "id": 317,
   "fields": {
     "1": {
-      "doc": "Type is the full name of the record of the message, e.g. example.com/arena/proto.Hit.",
+      "doc": "Type is the full name of the record of the message, e.g. example.com/arena/messages.Hit.",
       "name": "Type",
       "type": "Str"
     },
     "2": {
-      "doc": "Fields are the fields of the record in the order of its declaration.",
-      "name": "Fields",
-      "type": "GostrictValues"
+      "doc": "Json is the record of the message as JSON, see the package presentation/ui/program.",
+      "name": "Json",
+      "type": "Str"
     }
   }
 }

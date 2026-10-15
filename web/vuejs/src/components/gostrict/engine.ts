@@ -6,17 +6,8 @@
  *
  * SPDX-License-Identifier: Custom-License
  */
-import { Session, type TypeJSON, loadManifest } from '@/components/gostrict/session';
-import {
-	GostrictCall,
-	GostrictError,
-	GostrictNil,
-	GostrictProgram,
-	GostrictRef,
-	GostrictReturn,
-	type GostrictValue,
-	GostrictValues,
-} from '@/shared/proto/nprotoc_gen';
+import { Session, loadManifest } from '@/components/gostrict/session';
+import { GostrictCall, GostrictProgram, GostrictReturn } from '@/shared/proto/nprotoc_gen';
 
 /**
  * The engine of package presentation/ui/program runs programs in the browser on behalf of the backend: each
@@ -63,41 +54,25 @@ export async function call(c: GostrictCall): Promise<GostrictReturn> {
 		const inst = await instance(id, c.bundle ?? '');
 		const f = inst.session.manifest.exports[c.name];
 		if (!f) throw new Error(`the program does not export ${c.name}`);
-		const wire = c.args?.value ?? [];
-		const args = (f.params ?? []).map((t, i) => fromWire(inst, wire[i], t));
+		const args = inst.session.decode(c.args || '[]', (ref) => {
+			if (!inst.refs.has(ref)) throw new Error('unknown state');
+			return inst.refs.get(ref);
+		}) as unknown[];
 		const results = inst.session.callRaw(c.name, args);
-		const values = (f.results ?? []).map((t, i) => toWire(inst, results[i], t));
-		return new GostrictReturn(new GostrictValues(values));
+		// a state stays in the instance and crosses the protocol as its reference
+		const values = (f.results ?? []).map((t, i) => (t.kind === 'state' ? { $r: ref(inst, results[i]) } : results[i]));
+		return new GostrictReturn(inst.session.encode(values));
 	} catch (e) {
 		return new GostrictReturn(undefined, String((e as Error)?.message ?? e));
 	}
 }
 
-function fromWire(inst: Instance, v: GostrictValue | undefined, t: TypeJSON): unknown {
-	if (t.kind === 'state') {
-		const ref = v instanceof GostrictRef ? (v.v ?? 0) : 0;
-		if (!inst.refs.has(ref)) throw new Error('unknown state');
-		return inst.refs.get(ref);
+function ref(inst: Instance, state: unknown): number {
+	let r = inst.ids.get(state);
+	if (r === undefined) {
+		r = inst.next++;
+		inst.ids.set(state, r);
+		inst.refs.set(r, state);
 	}
-	return inst.session.fromWire(v, t);
-}
-
-function toWire(inst: Instance, v: unknown, t: TypeJSON): GostrictValue {
-	switch (t.kind) {
-		case 'state': {
-			let ref = inst.ids.get(v);
-			if (ref === undefined) {
-				ref = inst.next++;
-				inst.ids.set(v, ref);
-				inst.refs.set(ref, v);
-			}
-			return new GostrictRef(ref);
-		}
-		case 'error': {
-			if (v === null || v === undefined) return new GostrictNil();
-			const box = v as { v: unknown; m: { Error(v: unknown): string } };
-			return new GostrictError(box.m.Error(box.v));
-		}
-	}
-	return inst.session.toWire(v, t);
+	return r;
 }

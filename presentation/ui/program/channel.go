@@ -29,7 +29,7 @@ type Channel struct {
 	id     string
 	mu     sync.Mutex
 	bundle *gostrict.Bundle
-	recv   func(ctx context.Context, m gostrict.Message) error
+	recv   func(ctx context.Context, e gostrict.Envelope) error
 	cancel func()
 }
 
@@ -54,11 +54,13 @@ func (c *Channel) ID() string {
 	return c.id
 }
 
-// OnReceive sets the function, which handles the messages of the program, usually the generated Dispatch of the
-// program with the backend:
+// OnReceive sets the function, which handles the messages of the program, usually a router with the typed
+// functions of the backend:
 //
-//	ch.OnReceive(func(ctx context.Context, m gostrict.Message) error { return arena.Dispatch(ctx, backend, m) })
-func (c *Channel) OnReceive(fn func(ctx context.Context, m gostrict.Message) error) *Channel {
+//	router := new(gostrict.Router)
+//	gostrict.Handle(router, func(ctx context.Context, m messages.Clicked) error { ... })
+//	ch.OnReceive(router.Dispatch)
+func (c *Channel) OnReceive(fn func(ctx context.Context, e gostrict.Envelope) error) *Channel {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.recv = fn
@@ -72,25 +74,37 @@ func (c *Channel) attach(b *gostrict.Bundle) {
 	c.bundle = b
 }
 
-// Send passes the messages to the handlers of the program, e.g. those, which the generated functions like
-// HitMessage of the program encode. It may be called from any goroutine.
-func (c *Channel) Send(msgs ...gostrict.Message) error {
+// Send passes records or variants of sealed interfaces to the handlers of the program. A program, whose types the
+// backend knows only at runtime, e.g. one of a language model, gets a [gostrict.Message] with neutral values. It may
+// be called from any goroutine.
+func (c *Channel) Send(values ...any) error {
 	c.mu.Lock()
 	b := c.bundle
 	c.mu.Unlock()
-	if b != nil {
-		for _, m := range msgs {
-			if _, ok := b.Handlers[m.Type]; !ok {
-				return fmt.Errorf("the program does not handle the message %s", m.Type)
-			}
-		}
+	if b == nil {
+		return fmt.Errorf("the component %s has no program yet", c.id)
 	}
 
-	encoded, err := encodeMessages(msgs)
-	if err != nil {
-		return err
+	msgs := make(proto.GostrictMessages, 0, len(values))
+	for _, v := range values {
+		// a program, which the backend knows only at runtime, gets its messages as neutral values
+		m, ok := v.(gostrict.Message)
+		if !ok {
+			var err error
+			if m, err = gostrict.MessageOf(v); err != nil {
+				return err
+			}
+		}
+		if _, ok := b.Handlers[m.Type]; !ok {
+			return fmt.Errorf("the program does not handle the message %s", m.Type)
+		}
+		src, err := codec{b: b}.encodeRecord(m.Type, m.Fields)
+		if err != nil {
+			return fmt.Errorf("message %s: %w", m.Type, err)
+		}
+		msgs = append(msgs, proto.GostrictMessage{Type: proto.Str(m.Type), Json: proto.Str(src)})
 	}
-	core.AsyncCall(c.wnd, &proto.GostrictDeliver{Id: proto.Str(c.id), Messages: encoded}, nil)
+	core.AsyncCall(c.wnd, &proto.GostrictDeliver{Id: proto.Str(c.id), Messages: msgs}, nil)
 	return nil
 }
 
@@ -109,13 +123,19 @@ func (c *Channel) received(ret proto.CallRet) {
 		return
 	}
 
-	d := decoder{b: b}
+	cd := codec{b: b}
 	for _, pm := range r.Messages {
-		m, err := d.message(pm)
-		if err != nil {
-			slog.Error("cannot decode a message of the program", "id", c.id, "err", err)
+		name := string(pm.Type)
+		if !cd.isOutgoing(name) {
+			slog.Error("the program sent a message, which it does not declare", "id", c.id, "type", name)
 			continue
 		}
+		fields, err := cd.decodeRecord(name, string(pm.Json))
+		if err != nil {
+			slog.Error("cannot decode a message of the program", "id", c.id, "type", name, "err", err)
+			continue
+		}
+		m := gostrict.Message{Type: name, Fields: fields}
 		if err := recv(c.wnd.Context(), m); err != nil {
 			slog.Error("the backend failed to handle a message of the program", "id", c.id, "type", m.Type, "err", err)
 		}

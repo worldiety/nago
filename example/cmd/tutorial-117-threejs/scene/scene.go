@@ -12,7 +12,7 @@ package scene
 import (
 	"math"
 
-	"go.wdy.de/nago/example/cmd/tutorial-117-threejs/scene/proto"
+	"go.wdy.de/nago/example/cmd/tutorial-117-threejs/scene/messages"
 	"go.wdy.de/nago/pkg/gostrict/lib/input"
 	"go.wdy.de/nago/pkg/gostrict/lib/three"
 	"go.wdy.de/nago/pkg/gostrict/std/list"
@@ -98,20 +98,20 @@ func orbit(phase, t float64) (float64, float64, float64) {
 }
 
 // OnInput reports a click to the backend.
-func OnInput(s *State, e input.Event) msg.Out[proto.Clicked] {
-	out := msg.New[proto.Clicked]()
+func OnInput(s *State, e input.Event) msg.Out[messages.Clicked] {
+	out := msg.New[messages.Clicked]()
 	if e.Type == input.PointerDown {
-		out.Send(proto.Clicked{X: e.X, Y: e.Y})
+		out.Send(messages.Clicked{X: e.X, Y: e.Y})
 	}
 	return out
 }
 
 // OnColor takes the color, which the backend sends.
-func OnColor(s *State, c proto.Color) {
+func OnColor(s *State, c messages.Color) {
 	three.SetColor(material, c.RGB)
 }
 
 // OnSpeed takes the speed, which the backend sends.
-func OnSpeed(s *State, m proto.Speed) {
+func OnSpeed(s *State, m messages.Speed) {
 	s.Speed = m.Factor
 }

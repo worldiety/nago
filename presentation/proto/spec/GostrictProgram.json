@@ -14,9 +14,9 @@
       "type": "Str"
     },
     "3": {
-      "doc": "Args are the arguments of Init.",
+      "doc": "Args are the arguments of Init as a JSON array, see the package presentation/ui/program.",
       "name": "Args",
-      "type": "GostrictValues"
+      "type": "Str"
     },
     "4": {
       "doc": "Frame is the exported function, which the component calls in each animation frame with the time in seconds. If empty, there is no animation loop.",

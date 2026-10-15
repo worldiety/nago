@@ -8,27 +8,20 @@
  */
 import { type ProgramChannel, attach } from '@/components/gostrict/channels';
 import { type InputSample } from '@/shared/inputEvents';
-import {
-	GostrictBool,
-	GostrictFloat,
-	GostrictInt,
-	GostrictList,
-	GostrictMessage,
-	GostrictNegZero,
-	GostrictProgram,
-	GostrictStr,
-	type GostrictValue,
-	GostrictValues,
-	GostrictVariant,
-	InputEventTypeValues,
-} from '@/shared/proto/nprotoc_gen';
+import { GostrictMessage, GostrictProgram, InputEventTypeValues } from '@/shared/proto/nprotoc_gen';
 
 /**
  * A program of the gostrict subset, see package pkg/gostrict, runs in the frontend of a component. The backend
  * serves its translated script with the schema of its boundary as a manifest under an immutable URL. A session
- * evaluates the script, calls its exported functions, converts the values of the protocol with the schema and
- * passes the messages of the backend and the input events of the component to the handlers of the program between
- * two frames.
+ * evaluates the script, calls its exported functions and passes the messages of the backend and the input events of
+ * the component to the handlers of the program between two frames.
+ *
+ * The values cross the protocol as JSON, see package presentation/ui/program: a record is an object with the
+ * names of its fields, which the translated program reads as they are, a list is an array, and the values, which
+ * JSON can not express, are objects with a key starting with $: {"$m": entries} for a map, {"$": tag, ...fields}
+ * for a variant of a sealed interface, {"$f": "NaN"} for NaN, the infinities and -0, {"$e": message} for an error
+ * and {"$r": ref} for a state of the engine of the browser. So a reviver of JSON.parse and a replacer of
+ * JSON.stringify convert all values without a schema.
  */
 
 export interface TypeJSON {
@@ -164,8 +157,10 @@ export class Session {
 	readonly manifest: Manifest;
 	private readonly program: GostrictProgram;
 	private readonly exports: Record<string, any>;
-	private readonly news: Record<string, (...fields: unknown[]) => unknown>;
-	private readonly unions: Record<string, Record<string, [unknown, (...fields: unknown[]) => unknown]>>;
+	// methods maps the full name of each variant of a sealed interface to the methods of its type, which box it
+	private readonly methods = new Map<string, unknown>();
+	// tags maps the methods of the type of each variant back to its full name
+	private readonly tags = new Map<unknown, string>();
 	private readonly channel: ProgramChannel;
 	private readonly before?: () => void;
 	private readonly changed?: () => void;
@@ -189,8 +184,13 @@ export class Session {
 		const names = Object.keys(opts.libs);
 		const make = factory(opts.manifest, names);
 		this.exports = make(...names.map((n) => opts.libs[n]))(opts.host);
-		this.news = this.exports.$new ?? {};
-		this.unions = this.exports.$unions ?? {};
+		const unions: Record<string, Record<string, [unknown, unknown]>> = this.exports.$unions ?? {};
+		for (const variants of Object.values(unions)) {
+			for (const [tag, [methods]] of Object.entries(variants)) {
+				this.methods.set(tag, methods);
+				this.tags.set(methods, tag);
+			}
+		}
 		this.channel = attach(opts.id, (msgs) => this.enqueueMessages(msgs));
 	}
 
@@ -205,9 +205,7 @@ export class Session {
 			this.fail(new Error(`the program does not export ${name}`));
 			return;
 		}
-		const params = f.params ?? [];
-		const wire = this.program.args?.value ?? [];
-		const args = params.map((t, i) => this.fromWire(wire[i], t));
+		const args = this.program.args ? (this.decode(this.program.args) as unknown[]) : [];
 		const results = this.invoke(name, args);
 		const res = f.results ?? [];
 		if (res.length > 0 && res[0].kind === 'state') {
@@ -376,25 +374,36 @@ export class Session {
 			console.warn('gostrict: the program does not handle the message', type);
 			return;
 		}
-		this.handle(name, type, this.recordFields(type, m.fields?.value ?? []));
+		let record: unknown;
+		try {
+			record = this.decode(m.json ?? '');
+		} catch (e) {
+			console.warn('gostrict: cannot decode the message', type, e);
+			return;
+		}
+		this.handle(name, type, record);
 	}
 
 	// handle passes the record to its handler, which may take it as a variant of a sealed interface
-	private handle(name: string, type: string, fields: unknown[]) {
+	private handle(name: string, type: string, record: unknown) {
 		const param = (this.manifest.exports[name].params ?? [])[1];
-		const arg = param.kind === 'union' ? this.unions[param.name!][type][1](...fields) : this.news[type](...fields);
-		this.call(name, [arg]);
+		this.call(name, [param.kind === 'union' ? this.box(type, record) : record]);
+	}
+
+	// box returns the value of a sealed interface, which holds the record of the variant
+	private box(tag: string, record: unknown): unknown {
+		const m = this.methods.get(tag);
+		if (m === undefined) throw new Error(`${tag} is no variant of a sealed interface of the program`);
+		return { v: record, m };
 	}
 
 	private handleEvent(type: string, values: Record<string, unknown>) {
 		const rec = this.manifest.records[type];
 		const name = this.manifest.handlers[type];
 		if (!rec || !name) return;
-		this.handle(
-			name,
-			type,
-			(rec.fields ?? []).map((f) => values[f.name])
-		);
+		const record: Record<string, unknown> = {};
+		for (const f of rec.fields ?? []) record[f.js] = values[f.name];
+		this.handle(name, type, record);
 	}
 
 	private handleInput(s: InputSample) {
@@ -452,11 +461,11 @@ export class Session {
 	private collect(out: unknown[], elem: TypeJSON) {
 		for (const v of out) {
 			if (elem.kind === 'union') {
-				const variant = this.toWire(v, elem) as GostrictVariant;
-				this.outbox.push(new GostrictMessage(variant.tag, variant.fields));
+				const box = v as { v: unknown; m: unknown };
+				this.outbox.push(new GostrictMessage(this.tags.get(box.m), this.encode(box.v)));
 				continue;
 			}
-			this.outbox.push(new GostrictMessage(elem.name, (this.toWire(v, elem) as GostrictList).v));
+			this.outbox.push(new GostrictMessage(elem.name, this.encode(v)));
 		}
 	}
 
@@ -472,94 +481,47 @@ export class Session {
 		console.error('gostrict: the program has stopped', e);
 	}
 
-	private recordFields(name: string, values: GostrictValue[]): unknown[] {
-		const rec = this.manifest.records[name];
-		return (rec?.fields ?? []).map((f, i) => this.fromWire(values[i], f.type));
+	/**
+	 * decode parses the JSON of values of the program. A state of the engine of the browser is resolved by state.
+	 */
+	decode(json: string, state?: (ref: number) => unknown): unknown {
+		return JSON.parse(json, (_key, v) => {
+			if (v === null || typeof v !== 'object' || Array.isArray(v)) return v;
+			if ('$f' in v) return special[v.$f as string] ?? 0;
+			if ('$m' in v) return new Map(v.$m);
+			if ('$r' in v && state) return state(v.$r);
+			if ('$' in v) {
+				const tag = v.$ as string;
+				delete v.$;
+				return this.box(tag, v);
+			}
+			return v;
+		});
 	}
 
-	// fromWire converts a value of the protocol into the value of the program
-	fromWire(v: GostrictValue | undefined, t: TypeJSON): unknown {
-		switch (t.kind) {
-			case 'bool':
-				return v instanceof GostrictBool ? !!v.v : false;
-			case 'int32':
-				return v instanceof GostrictInt ? (v.v ?? 0) | 0 : 0;
-			case 'uint32':
-				return v instanceof GostrictInt ? (v.v ?? 0) >>> 0 : 0;
-			case 'float64':
-				if (v instanceof GostrictNegZero) return -0;
-				return v instanceof GostrictFloat ? (v.v ?? 0) : 0;
-			case 'string':
-				return v instanceof GostrictStr ? (v.v ?? '') : '';
-			case 'list':
-			case 'out':
-				return this.items(v).map((e) => this.fromWire(e, t.elem!));
-			case 'map':
-				return new Map(
-					this.items(v).map((e) => {
-						const kv = this.items(e);
-						return [this.fromWire(kv[0], t.key!), this.fromWire(kv[1], t.elem!)];
-					})
-				);
-			case 'record':
-				return this.news[t.name!](...this.recordFields(t.name!, this.items(v)));
-			case 'union': {
-				if (!(v instanceof GostrictVariant)) throw new Error(`expected a variant of ${t.name}`);
-				const tag = v.tag ?? '';
-				const variant = this.unions[t.name!]?.[tag];
-				if (!variant) throw new Error(`${tag} is no variant of ${t.name}`);
-				return variant[1](...this.recordFields(tag, v.fields?.value ?? []));
+	/**
+	 * encode returns the JSON of a value of the program.
+	 */
+	encode(value: unknown): string {
+		const tags = this.tags;
+		return JSON.stringify(value, (_key, v) => {
+			if (typeof v === 'number') {
+				if (v !== v) return { $f: 'NaN' };
+				if (v === Infinity) return { $f: 'Inf' };
+				if (v === -Infinity) return { $f: '-Inf' };
+				if (v === 0 && 1 / v < 0) return { $f: '-0' };
+				return v;
 			}
-		}
-		throw new Error(`${t.kind} can not cross the boundary`);
-	}
-
-	private items(v: GostrictValue | undefined): GostrictValue[] {
-		return v instanceof GostrictList ? (v.v?.value ?? []) : [];
-	}
-
-	// toWire converts a value of the program into the protocol
-	toWire(v: unknown, t: TypeJSON): GostrictValue {
-		switch (t.kind) {
-			case 'bool':
-				return new GostrictBool(v as boolean);
-			case 'int32':
-			case 'uint32':
-				return new GostrictInt(v as number);
-			case 'float64':
-				return Object.is(v, -0) ? new GostrictNegZero() : new GostrictFloat(v as number);
-			case 'string':
-				return new GostrictStr(v as string);
-			case 'list':
-			case 'out':
-				return new GostrictList(new GostrictValues((v as unknown[]).map((e) => this.toWire(e, t.elem!))));
-			case 'map':
-				return new GostrictList(
-					new GostrictValues(
-						Array.from((v as Map<unknown, unknown>).entries()).map(
-							([k, e]) =>
-								new GostrictList(new GostrictValues([this.toWire(k, t.key!), this.toWire(e, t.elem!)]))
-						)
-					)
-				);
-			case 'record': {
-				const obj = v as Record<string, unknown>;
-				const rec = this.manifest.records[t.name!];
-				return new GostrictList(
-					new GostrictValues((rec.fields ?? []).map((f) => this.toWire(obj[f.js], f.type)))
-				);
+			if (v instanceof Map) return { $m: Array.from(v.entries()) };
+			if (v !== null && typeof v === 'object' && 'm' in v && 'v' in v && Object.keys(v).length === 2) {
+				const tag = tags.get(v.m);
+				if (tag !== undefined) return { ...v.v, $: tag };
+				if (typeof v.m?.Error === 'function') return { $e: v.m.Error(v.v) };
 			}
-			case 'union': {
-				const box = v as { v: unknown; m: unknown };
-				for (const tag of this.manifest.unions[t.name!] ?? []) {
-					if (this.unions[t.name!][tag][0] === box.m) {
-						const fields = this.toWire(box.v, { kind: 'record', name: tag }) as GostrictList;
-						return new GostrictVariant(tag, fields.v);
-					}
-				}
-				throw new Error(`the value is no variant of ${t.name}`);
-			}
-		}
-		throw new Error(`${t.kind} can not cross the boundary`);
+			return v;
+		});
 	}
 }
+
+// special are the floats, which JSON can not express
+const special: Record<string, number> = { NaN: NaN, Inf: Infinity, '-Inf': -Infinity, '-0': -0 };

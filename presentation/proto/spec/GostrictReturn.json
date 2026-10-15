@@ -4,8 +4,9 @@
   "id": 329,
   "fields": {
     "1": {
+      "doc": "Values are the results as a JSON array, see the package presentation/ui/program.",
       "name": "Values",
-      "type": "GostrictValues"
+      "type": "Str"
     },
     "2": {
       "name": "Failure",

@@ -65,28 +65,29 @@ func (in *browserInstance) Call(ctx context.Context, name string, args ...any) (
 	if err := gostrict.CheckArgs(name, f.Params, args); err != nil {
 		return nil, err
 	}
-	wire := make(proto.GostrictValues, len(args))
-	for i, a := range args {
-		if tok, ok := a.(gostrict.Token); ok {
-			ref, ok := tok.Value().(browserRef)
+	cd := codec{
+		b: in.b,
+		state: func(v any) (any, error) {
+			ref, ok := v.(gostrict.Token).Value().(browserRef)
 			if !ok || ref.instance != in.id {
-				return nil, fmt.Errorf("value %d of %s: the state belongs to another instance", i, name)
+				return nil, errors.New("the state belongs to another instance")
 			}
-			wire[i] = &proto.GostrictRef{V: proto.Int(ref.ref)}
-			continue
-		}
-		v, err := encodeValue(a)
-		if err != nil {
-			return nil, fmt.Errorf("value %d of %s: %w", i, name, err)
-		}
-		wire[i] = v
+			return map[string]any{"$r": ref.ref}, nil
+		},
+		token: func(ref int64, t gostrict.Type) any {
+			return gostrict.NewToken(t.Name, browserRef{instance: in.id, ref: ref})
+		},
+	}
+	wire, err := cd.encode(args, f.Params)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", name, err)
 	}
 
 	in.mu.Lock()
 	defer in.mu.Unlock()
 
 	ret := make(chan proto.CallRet, 1)
-	cancel := core.AsyncCall(in.wnd, &proto.GostrictCall{Instance: proto.Str(in.id), Bundle: proto.URI(in.uri), Name: proto.Str(name), Args: wire}, func(r proto.CallRet) {
+	cancel := core.AsyncCall(in.wnd, &proto.GostrictCall{Instance: proto.Str(in.id), Bundle: proto.URI(in.uri), Name: proto.Str(name), Args: proto.Str(wire)}, func(r proto.CallRet) {
 		ret <- r
 	})
 	var r proto.CallRet
@@ -104,33 +105,16 @@ func (in *browserInstance) Call(ctx context.Context, name string, args ...any) (
 	if res.Failure != "" {
 		return nil, fmt.Errorf("the browser failed to call %s: %s", name, res.Failure)
 	}
-	if len(res.Values) != len(f.Results) {
-		return nil, fmt.Errorf("%s returned %d values in the browser instead of %d", name, len(res.Values), len(f.Results))
-	}
-
-	d := decoder{b: in.b}
-	values := make([]any, len(f.Results))
-	for i, t := range f.Results {
-		switch t.Kind {
-		case gostrict.ValueState:
-			ref, ok := res.Values[i].(*proto.GostrictRef)
-			if !ok {
-				return nil, fmt.Errorf("result %d of %s is no state", i, name)
-			}
-			values[i] = gostrict.NewToken(t.Name, browserRef{instance: in.id, ref: int64(ref.V)})
-		case gostrict.ValueError:
-			if e, ok := res.Values[i].(*proto.GostrictError); ok {
-				values[i] = errors.New(string(e.Msg))
-			}
-		default:
-			v, err := d.value(res.Values[i], t)
-			if err != nil {
-				return nil, fmt.Errorf("result %d of %s: %w", i, name, err)
-			}
-			values[i] = v
-		}
+	values, err := cd.decode(string(res.Values), f.Results)
+	if err != nil {
+		return nil, fmt.Errorf("the results of %s: %w", name, err)
 	}
 	return values, nil
+}
+
+// Bundle returns the bundle of the instance.
+func (in *browserInstance) Bundle() *gostrict.Bundle {
+	return in.b
 }
 
 // Close drops the instance in the browser.

@@ -387,27 +387,6 @@ func (WindowTitle) isComponent()        {}
 func (ThreeJS) isComponent()            {}
 func (Canvas2) isComponent()            {}
 
-// GostrictValue is a value, which crosses the boundary of a gostrict program. The receiver knows its type from the schema of the program, so the value carries no type itself.
-type GostrictValue interface {
-	// a marker method to indicate the enum / union type membership
-	isGostrictValue()
-	IsZero() bool
-	reset()
-	Writeable
-	Readable
-}
-
-func (GostrictBool) isGostrictValue()    {}
-func (GostrictInt) isGostrictValue()     {}
-func (GostrictFloat) isGostrictValue()   {}
-func (GostrictNegZero) isGostrictValue() {}
-func (GostrictStr) isGostrictValue()     {}
-func (GostrictList) isGostrictValue()    {}
-func (GostrictVariant) isGostrictValue() {}
-func (GostrictNil) isGostrictValue()     {}
-func (GostrictError) isGostrictValue()   {}
-func (GostrictRef) isGostrictValue()     {}
-
 // NagoEvent is the union type of all allowed NAGO protocol events. Everything which goes through a NAGO channel must be an Event at the root level.
 type NagoEvent interface {
 	// a marker method to indicate the enum / union type membership
@@ -24034,375 +24013,18 @@ func (v *SheetUserHidden) read(r *BinaryReader) error {
 	return nil
 }
 
-// GostrictBool is a bool of a gostrict program.
-type GostrictBool struct {
-	V Bool
-}
-
-func (v *GostrictBool) write(w *BinaryWriter) error {
-	var fields [2]bool
-	fields[1] = !v.V.IsZero()
-
-	fieldCount := byte(0)
-	for _, present := range fields {
-		if present {
-			fieldCount++
-		}
-	}
-	if err := w.writeByte(fieldCount); err != nil {
-		return err
-	}
-	if fields[1] {
-		if err := w.writeFieldHeader(uvarint, 1); err != nil {
-			return err
-		}
-		if err := v.V.write(w); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (v *GostrictBool) read(r *BinaryReader) error {
-	v.reset()
-	fieldCount, err := r.readByte()
-	if err != nil {
-		return err
-	}
-	for range fieldCount {
-		fh, err := r.readFieldHeader()
-		if err != nil {
-			return err
-		}
-		switch fh.fieldId {
-		case 1:
-			err := v.V.read(r)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-// GostrictInt is an int32 or uint32 of a gostrict program.
-type GostrictInt struct {
-	V Int
-}
-
-func (v *GostrictInt) write(w *BinaryWriter) error {
-	var fields [2]bool
-	fields[1] = !v.V.IsZero()
-
-	fieldCount := byte(0)
-	for _, present := range fields {
-		if present {
-			fieldCount++
-		}
-	}
-	if err := w.writeByte(fieldCount); err != nil {
-		return err
-	}
-	if fields[1] {
-		if err := w.writeFieldHeader(varint, 1); err != nil {
-			return err
-		}
-		if err := v.V.write(w); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (v *GostrictInt) read(r *BinaryReader) error {
-	v.reset()
-	fieldCount, err := r.readByte()
-	if err != nil {
-		return err
-	}
-	for range fieldCount {
-		fh, err := r.readFieldHeader()
-		if err != nil {
-			return err
-		}
-		switch fh.fieldId {
-		case 1:
-			err := v.V.read(r)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-// GostrictFloat is a float64 of a gostrict program. NaN and the infinities survive the encoding, -0 is a GostrictNegZero, because a zero field is omitted.
-type GostrictFloat struct {
-	V Float
-}
-
-func (v *GostrictFloat) write(w *BinaryWriter) error {
-	var fields [2]bool
-	fields[1] = !v.V.IsZero()
-
-	fieldCount := byte(0)
-	for _, present := range fields {
-		if present {
-			fieldCount++
-		}
-	}
-	if err := w.writeByte(fieldCount); err != nil {
-		return err
-	}
-	if fields[1] {
-		if err := w.writeFieldHeader(f64, 1); err != nil {
-			return err
-		}
-		if err := v.V.write(w); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (v *GostrictFloat) read(r *BinaryReader) error {
-	v.reset()
-	fieldCount, err := r.readByte()
-	if err != nil {
-		return err
-	}
-	for range fieldCount {
-		fh, err := r.readFieldHeader()
-		if err != nil {
-			return err
-		}
-		switch fh.fieldId {
-		case 1:
-			err := v.V.read(r)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-// GostrictNegZero is the float64 -0 of a gostrict program.
-type GostrictNegZero struct {
-}
-
-func (v *GostrictNegZero) write(w *BinaryWriter) error {
-	var fields [1]bool
-
-	fieldCount := byte(0)
-	for _, present := range fields {
-		if present {
-			fieldCount++
-		}
-	}
-	if err := w.writeByte(fieldCount); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (v *GostrictNegZero) read(r *BinaryReader) error {
-	v.reset()
-	fieldCount, err := r.readByte()
-	if err != nil {
-		return err
-	}
-	for range fieldCount {
-		fh, err := r.readFieldHeader()
-		if err != nil {
-			return err
-		}
-		switch fh.fieldId {
-		}
-	}
-	return nil
-}
-
-// GostrictStr is a string of a gostrict program.
-type GostrictStr struct {
-	V Str
-}
-
-func (v *GostrictStr) write(w *BinaryWriter) error {
-	var fields [2]bool
-	fields[1] = !v.V.IsZero()
-
-	fieldCount := byte(0)
-	for _, present := range fields {
-		if present {
-			fieldCount++
-		}
-	}
-	if err := w.writeByte(fieldCount); err != nil {
-		return err
-	}
-	if fields[1] {
-		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
-			return err
-		}
-		if err := v.V.write(w); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (v *GostrictStr) read(r *BinaryReader) error {
-	v.reset()
-	fieldCount, err := r.readByte()
-	if err != nil {
-		return err
-	}
-	for range fieldCount {
-		fh, err := r.readFieldHeader()
-		if err != nil {
-			return err
-		}
-		switch fh.fieldId {
-		case 1:
-			err := v.V.read(r)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-// GostrictList is a list, a record or a map of a gostrict program. A record holds its fields in the order of its declaration, a map its entries as lists of the key and the value.
-type GostrictList struct {
-	V GostrictValues
-}
-
-func (v *GostrictList) write(w *BinaryWriter) error {
-	var fields [2]bool
-	fields[1] = !v.V.IsZero()
-
-	fieldCount := byte(0)
-	for _, present := range fields {
-		if present {
-			fieldCount++
-		}
-	}
-	if err := w.writeByte(fieldCount); err != nil {
-		return err
-	}
-	if fields[1] {
-		if err := w.writeFieldHeader(array, 1); err != nil {
-			return err
-		}
-		if err := v.V.write(w); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (v *GostrictList) read(r *BinaryReader) error {
-	v.reset()
-	fieldCount, err := r.readByte()
-	if err != nil {
-		return err
-	}
-	for range fieldCount {
-		fh, err := r.readFieldHeader()
-		if err != nil {
-			return err
-		}
-		switch fh.fieldId {
-		case 1:
-			err := v.V.read(r)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-// GostrictVariant is a value of a sealed interface of a gostrict program: the full name of the record of the variant and its fields.
-type GostrictVariant struct {
-	Tag    Str
-	Fields GostrictValues
-}
-
-func (v *GostrictVariant) write(w *BinaryWriter) error {
-	var fields [3]bool
-	fields[1] = !v.Tag.IsZero()
-	fields[2] = !v.Fields.IsZero()
-
-	fieldCount := byte(0)
-	for _, present := range fields {
-		if present {
-			fieldCount++
-		}
-	}
-	if err := w.writeByte(fieldCount); err != nil {
-		return err
-	}
-	if fields[1] {
-		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
-			return err
-		}
-		if err := v.Tag.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[2] {
-		if err := w.writeFieldHeader(array, 2); err != nil {
-			return err
-		}
-		if err := v.Fields.write(w); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (v *GostrictVariant) read(r *BinaryReader) error {
-	v.reset()
-	fieldCount, err := r.readByte()
-	if err != nil {
-		return err
-	}
-	for range fieldCount {
-		fh, err := r.readFieldHeader()
-		if err != nil {
-			return err
-		}
-		switch fh.fieldId {
-		case 1:
-			err := v.Tag.read(r)
-			if err != nil {
-				return err
-			}
-		case 2:
-			err := v.Fields.read(r)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
 // GostrictMessage is a message between a gostrict program in the frontend and its backend.
 type GostrictMessage struct {
-	// Type is the full name of the record of the message, e.g. example.com/arena/proto.Hit.
+	// Type is the full name of the record of the message, e.g. example.com/arena/messages.Hit.
 	Type Str
-	// Fields are the fields of the record in the order of its declaration.
-	Fields GostrictValues
+	// Json is the record of the message as JSON, see the package presentation/ui/program.
+	Json Str
 }
 
 func (v *GostrictMessage) write(w *BinaryWriter) error {
 	var fields [3]bool
 	fields[1] = !v.Type.IsZero()
-	fields[2] = !v.Fields.IsZero()
+	fields[2] = !v.Json.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -24422,10 +24044,10 @@ func (v *GostrictMessage) write(w *BinaryWriter) error {
 		}
 	}
 	if fields[2] {
-		if err := w.writeFieldHeader(array, 2); err != nil {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
 			return err
 		}
-		if err := v.Fields.write(w); err != nil {
+		if err := v.Json.write(w); err != nil {
 			return err
 		}
 	}
@@ -24450,7 +24072,7 @@ func (v *GostrictMessage) read(r *BinaryReader) error {
 				return err
 			}
 		case 2:
-			err := v.Fields.read(r)
+			err := v.Json.read(r)
 			if err != nil {
 				return err
 			}
@@ -24635,8 +24257,8 @@ type GostrictProgram struct {
 	Bundle URI
 	// Init is the exported function, which the component calls first. If it returns a state, the component passes the state to the other functions, which take one.
 	Init Str
-	// Args are the arguments of Init.
-	Args GostrictValues
+	// Args are the arguments of Init as a JSON array, see the package presentation/ui/program.
+	Args Str
 	// Frame is the exported function, which the component calls in each animation frame with the time in seconds. If empty, there is no animation loop.
 	Frame Str
 	// Resize is the exported function, which the component calls with the aspect ratio, with the width and the height or with the width, the height and the device pixel ratio of its area, whenever it changes.
@@ -24680,7 +24302,7 @@ func (v *GostrictProgram) write(w *BinaryWriter) error {
 		}
 	}
 	if fields[3] {
-		if err := w.writeFieldHeader(array, 3); err != nil {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
 			return err
 		}
 		if err := v.Args.write(w); err != nil {
@@ -24940,144 +24562,6 @@ func (v *Canvas2) read(r *BinaryReader) error {
 	return nil
 }
 
-// GostrictNil is an error, which is nil.
-type GostrictNil struct {
-}
-
-func (v *GostrictNil) write(w *BinaryWriter) error {
-	var fields [1]bool
-
-	fieldCount := byte(0)
-	for _, present := range fields {
-		if present {
-			fieldCount++
-		}
-	}
-	if err := w.writeByte(fieldCount); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (v *GostrictNil) read(r *BinaryReader) error {
-	v.reset()
-	fieldCount, err := r.readByte()
-	if err != nil {
-		return err
-	}
-	for range fieldCount {
-		fh, err := r.readFieldHeader()
-		if err != nil {
-			return err
-		}
-		switch fh.fieldId {
-		}
-	}
-	return nil
-}
-
-// GostrictError is an error with its message.
-type GostrictError struct {
-	Msg Str
-}
-
-func (v *GostrictError) write(w *BinaryWriter) error {
-	var fields [2]bool
-	fields[1] = !v.Msg.IsZero()
-
-	fieldCount := byte(0)
-	for _, present := range fields {
-		if present {
-			fieldCount++
-		}
-	}
-	if err := w.writeByte(fieldCount); err != nil {
-		return err
-	}
-	if fields[1] {
-		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
-			return err
-		}
-		if err := v.Msg.write(w); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (v *GostrictError) read(r *BinaryReader) error {
-	v.reset()
-	fieldCount, err := r.readByte()
-	if err != nil {
-		return err
-	}
-	for range fieldCount {
-		fh, err := r.readFieldHeader()
-		if err != nil {
-			return err
-		}
-		switch fh.fieldId {
-		case 1:
-			err := v.Msg.read(r)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-// GostrictRef refers to a state, which an instance of a program in the frontend holds, see GostrictCall.
-type GostrictRef struct {
-	V Int
-}
-
-func (v *GostrictRef) write(w *BinaryWriter) error {
-	var fields [2]bool
-	fields[1] = !v.V.IsZero()
-
-	fieldCount := byte(0)
-	for _, present := range fields {
-		if present {
-			fieldCount++
-		}
-	}
-	if err := w.writeByte(fieldCount); err != nil {
-		return err
-	}
-	if fields[1] {
-		if err := w.writeFieldHeader(varint, 1); err != nil {
-			return err
-		}
-		if err := v.V.write(w); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (v *GostrictRef) read(r *BinaryReader) error {
-	v.reset()
-	fieldCount, err := r.readByte()
-	if err != nil {
-		return err
-	}
-	for range fieldCount {
-		fh, err := r.readFieldHeader()
-		if err != nil {
-			return err
-		}
-		switch fh.fieldId {
-		case 1:
-			err := v.V.read(r)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
 // GostrictCall calls an exported function of the program of the bundle in the frontend, see the package presentation/ui/program. The frontend keeps an instance of the bundle per instance id and answers with GostrictReturn.
 type GostrictCall struct {
 	// Instance identifies the instance of the program in the frontend.
@@ -25086,7 +24570,8 @@ type GostrictCall struct {
 	Bundle URI
 	// Name is the exported function. If empty, the frontend drops the instance.
 	Name Str
-	Args GostrictValues
+	// Args are the arguments as a JSON array, see the package presentation/ui/program.
+	Args Str
 }
 
 func (v *GostrictCall) write(w *BinaryWriter) error {
@@ -25130,7 +24615,7 @@ func (v *GostrictCall) write(w *BinaryWriter) error {
 		}
 	}
 	if fields[4] {
-		if err := w.writeFieldHeader(array, 4); err != nil {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
 			return err
 		}
 		if err := v.Args.write(w); err != nil {
@@ -25179,7 +24664,8 @@ func (v *GostrictCall) read(r *BinaryReader) error {
 
 // GostrictReturn holds the results of a GostrictCall or, if the call failed in the frontend, its error.
 type GostrictReturn struct {
-	Values  GostrictValues
+	// Values are the results as a JSON array, see the package presentation/ui/program.
+	Values  Str
 	Failure Str
 }
 
@@ -25198,7 +24684,7 @@ func (v *GostrictReturn) write(w *BinaryWriter) error {
 		return err
 	}
 	if fields[1] {
-		if err := w.writeFieldHeader(array, 1); err != nil {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
 			return err
 		}
 		if err := v.Values.write(w); err != nil {
@@ -27044,54 +26530,6 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 			return nil, err
 		}
 		return &v, nil
-	case 309:
-		var v GostrictBool
-		if err := v.read(src); err != nil {
-			return nil, err
-		}
-		return &v, nil
-	case 310:
-		var v GostrictInt
-		if err := v.read(src); err != nil {
-			return nil, err
-		}
-		return &v, nil
-	case 311:
-		var v GostrictFloat
-		if err := v.read(src); err != nil {
-			return nil, err
-		}
-		return &v, nil
-	case 312:
-		var v GostrictNegZero
-		if err := v.read(src); err != nil {
-			return nil, err
-		}
-		return &v, nil
-	case 313:
-		var v GostrictStr
-		if err := v.read(src); err != nil {
-			return nil, err
-		}
-		return &v, nil
-	case 314:
-		var v GostrictList
-		if err := v.read(src); err != nil {
-			return nil, err
-		}
-		return &v, nil
-	case 315:
-		var v GostrictVariant
-		if err := v.read(src); err != nil {
-			return nil, err
-		}
-		return &v, nil
-	case 316:
-		var v GostrictValues
-		if err := v.read(src); err != nil {
-			return nil, err
-		}
-		return &v, nil
 	case 317:
 		var v GostrictMessage
 		if err := v.read(src); err != nil {
@@ -27136,24 +26574,6 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 324:
 		var v Canvas2
-		if err := v.read(src); err != nil {
-			return nil, err
-		}
-		return &v, nil
-	case 325:
-		var v GostrictNil
-		if err := v.read(src); err != nil {
-			return nil, err
-		}
-		return &v, nil
-	case 326:
-		var v GostrictError
-		if err := v.read(src); err != nil {
-			return nil, err
-		}
-		return &v, nil
-	case 327:
-		var v GostrictRef
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -32289,138 +31709,16 @@ func (v *SheetUserHidden) IsZero() bool {
 	return v.Rows.IsZero() && v.Cols.IsZero()
 }
 
-func (v *GostrictBool) reset() {
-	v.V.reset()
-}
-
-func (v *GostrictBool) IsZero() bool {
-	if v == nil {
-		return true
-	}
-	return v.V.IsZero()
-}
-
-func (v *GostrictInt) reset() {
-	v.V.reset()
-}
-
-func (v *GostrictInt) IsZero() bool {
-	if v == nil {
-		return true
-	}
-	return v.V.IsZero()
-}
-
-func (v *GostrictFloat) reset() {
-	v.V.reset()
-}
-
-func (v *GostrictFloat) IsZero() bool {
-	if v == nil {
-		return true
-	}
-	return v.V.IsZero()
-}
-
-func (v *GostrictNegZero) reset() {
-}
-
-func (v *GostrictNegZero) IsZero() bool {
-	if v == nil {
-		return true
-	}
-	return true
-}
-
-func (v *GostrictStr) reset() {
-	v.V.reset()
-}
-
-func (v *GostrictStr) IsZero() bool {
-	if v == nil {
-		return true
-	}
-	return v.V.IsZero()
-}
-
-func (v *GostrictList) reset() {
-	v.V.reset()
-}
-
-func (v *GostrictList) IsZero() bool {
-	if v == nil {
-		return true
-	}
-	return v.V.IsZero()
-}
-
-func (v *GostrictVariant) reset() {
-	v.Tag.reset()
-	v.Fields.reset()
-}
-
-func (v *GostrictVariant) IsZero() bool {
-	if v == nil {
-		return true
-	}
-	return v.Tag.IsZero() && v.Fields.IsZero()
-}
-
-// GostrictValues is a list of values of a gostrict program.
-type GostrictValues []GostrictValue
-
-func (v *GostrictValues) write(w *BinaryWriter) error {
-	if err := w.writeUvarint(uint64(len(*v))); err != nil {
-		return err
-	}
-	for _, item := range *v {
-		if err := item.writeTypeHeader(w); err != nil {
-			return err
-		}
-		if err := item.write(w); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (v *GostrictValues) read(r *BinaryReader) error {
-	count, err := r.readUvarint()
-	if err != nil {
-		return err
-	}
-
-	slice := make([]GostrictValue, count)
-	for i := uint64(0); i < count; i++ {
-		obj, err := Unmarshal(r)
-		if err != nil {
-			return err
-		}
-		slice[i] = obj.(GostrictValue)
-	}
-
-	*v = slice
-	return nil
-}
-
-func (v *GostrictValues) IsZero() bool {
-	return v == nil || *v == nil || len(*v) == 0
-}
-
-func (v *GostrictValues) reset() {
-	*v = nil
-}
-
 func (v *GostrictMessage) reset() {
 	v.Type.reset()
-	v.Fields.reset()
+	v.Json.reset()
 }
 
 func (v *GostrictMessage) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Type.IsZero() && v.Fields.IsZero()
+	return v.Type.IsZero() && v.Json.IsZero()
 }
 
 // GostrictMessages is a list of messages in the order, in which they were sent.
@@ -32543,38 +31841,6 @@ func (v *Canvas2) IsZero() bool {
 		return true
 	}
 	return v.Id.IsZero() && v.Frame.IsZero() && v.Program.IsZero()
-}
-
-func (v *GostrictNil) reset() {
-}
-
-func (v *GostrictNil) IsZero() bool {
-	if v == nil {
-		return true
-	}
-	return true
-}
-
-func (v *GostrictError) reset() {
-	v.Msg.reset()
-}
-
-func (v *GostrictError) IsZero() bool {
-	if v == nil {
-		return true
-	}
-	return v.Msg.IsZero()
-}
-
-func (v *GostrictRef) reset() {
-	v.V.reset()
-}
-
-func (v *GostrictRef) IsZero() bool {
-	if v == nil {
-		return true
-	}
-	return v.V.IsZero()
 }
 
 func (v *GostrictCall) reset() {
@@ -34675,62 +33941,6 @@ func (v *SheetUserHidden) writeTypeHeader(w *BinaryWriter) error {
 	return nil
 }
 
-func (v *GostrictBool) writeTypeHeader(w *BinaryWriter) error {
-	if err := w.writeTypeHeader(record, 309); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (v *GostrictInt) writeTypeHeader(w *BinaryWriter) error {
-	if err := w.writeTypeHeader(record, 310); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (v *GostrictFloat) writeTypeHeader(w *BinaryWriter) error {
-	if err := w.writeTypeHeader(record, 311); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (v *GostrictNegZero) writeTypeHeader(w *BinaryWriter) error {
-	if err := w.writeTypeHeader(record, 312); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (v *GostrictStr) writeTypeHeader(w *BinaryWriter) error {
-	if err := w.writeTypeHeader(record, 313); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (v *GostrictList) writeTypeHeader(w *BinaryWriter) error {
-	if err := w.writeTypeHeader(record, 314); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (v *GostrictVariant) writeTypeHeader(w *BinaryWriter) error {
-	if err := w.writeTypeHeader(record, 315); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (v *GostrictValues) writeTypeHeader(w *BinaryWriter) error {
-	if err := w.writeTypeHeader(array, 316); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (v *GostrictMessage) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 317); err != nil {
 		return err
@@ -34782,27 +33992,6 @@ func (v *ThreeJS) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *Canvas2) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 324); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (v *GostrictNil) writeTypeHeader(w *BinaryWriter) error {
-	if err := w.writeTypeHeader(record, 325); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (v *GostrictError) writeTypeHeader(w *BinaryWriter) error {
-	if err := w.writeTypeHeader(record, 326); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (v *GostrictRef) writeTypeHeader(w *BinaryWriter) error {
-	if err := w.writeTypeHeader(record, 327); err != nil {
 		return err
 	}
 	return nil

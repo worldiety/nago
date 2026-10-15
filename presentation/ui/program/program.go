@@ -15,7 +15,10 @@ package program
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"log/slog"
+	"path"
+	"runtime/debug"
 
 	"go.wdy.de/nago/pkg/gostrict"
 	"go.wdy.de/nago/presentation/core"
@@ -45,13 +48,51 @@ func MustCompile(main string, modules ...gostrict.Module) *gostrict.Bundle {
 	return b
 }
 
+// CompileFS compiles the program in the directory dir of a tree of sources, which the application embeds, e.g.
+//
+//	//go:embed scene
+//	var sources embed.FS
+//
+//	bundle := program.MustCompileFS(sources, "scene")
+//
+// The module path is derived from the imports of the program, e.g. of its package of messages, or, if it imports
+// none of the tree, from the main package, which is right, if the main package embeds the sources. The module path
+// must be the import path of the sources in Go, because the backend names the messages by the types of Go. A
+// tree, which matches neither or has its own header packages, needs [Compile] with an explicit [gostrict.Module].
+func CompileFS(fsys fs.FS, dir string) (*gostrict.Bundle, gostrict.Diagnostics, error) {
+	module, ok, err := gostrict.InferModulePath(fsys)
+	if err != nil {
+		return nil, nil, err
+	}
+	if !ok {
+		info, found := debug.ReadBuildInfo()
+		if !found || info.Path == "" || info.Path == "command-line-arguments" {
+			return nil, nil, fmt.Errorf("cannot derive the module path of %s, use Compile with an explicit module", dir)
+		}
+		module = info.Path
+	}
+	return Compile(path.Join(module, dir), gostrict.Module{Path: module, FS: fsys})
+}
+
+// MustCompileFS is like [CompileFS], but panics, if the program can not be translated.
+func MustCompileFS(fsys fs.FS, dir string) *gostrict.Bundle {
+	b, diags, err := CompileFS(fsys, dir)
+	if err != nil {
+		panic(fmt.Errorf("cannot compile %s: %w", dir, err))
+	}
+	if len(diags) > 0 {
+		panic(fmt.Errorf("cannot compile %s:\n%s", dir, diags.Text()))
+	}
+	return b
+}
+
 // Spec describes the program, which a component runs. The components embed it and offer setters for it.
 type Spec struct {
 	Bundle *gostrict.Bundle
 	// Init is the exported function, which the component calls first, e.g. "NewGame". If it returns a state, the
 	// component passes the state to the other functions, which take one.
 	Init string
-	// Args are the arguments of Init as neutral values, see [gostrict.ValueKind].
+	// Args are the arguments of Init as values of Go, e.g. int32 or a record.
 	Args []any
 	// Frame is the exported function, which the component calls in each animation frame with the time in seconds.
 	Frame string
@@ -60,8 +101,9 @@ type Spec struct {
 	Resize string
 	// Inputs are the input events, which the component passes to the handler of input.Event of the program.
 	Inputs []core.InputEventType
-	// Receive handles the messages of the program, see [Channel.OnReceive].
-	Receive func(ctx context.Context, m gostrict.Message) error
+	// Receive handles the messages of the program, usually the Dispatch of a [gostrict.Router], see
+	// [Channel.OnReceive].
+	Receive func(ctx context.Context, e gostrict.Envelope) error
 }
 
 // Render registers the bundle, connects the channel of the component and returns its description for the
@@ -84,12 +126,10 @@ func (s Spec) Render(wnd core.Window, id string) proto.GostrictProgram {
 		}
 	}
 	if f, ok := s.Bundle.Exports[s.Init]; ok {
-		if err := gostrict.CheckArgs(s.Init, f.Params, s.Args); err != nil {
-			slog.Error("invalid arguments of the program", "id", id, "err", err)
-		} else if args, err := encodeValues(s.Args); err != nil {
+		if args, err := initArgs(s.Bundle, f, s.Args); err != nil {
 			slog.Error("invalid arguments of the program", "id", id, "err", err)
 		} else {
-			res.Args = args
+			res.Args = proto.Str(args)
 		}
 	}
 	for _, t := range s.Inputs {
@@ -119,4 +159,20 @@ func hasMessages(b *gostrict.Bundle) bool {
 		}
 	}
 	return false
+}
+
+// initArgs converts the arguments of Init into JSON.
+func initArgs(b *gostrict.Bundle, f gostrict.Func, args []any) (string, error) {
+	neutral := make([]any, len(args))
+	for i, a := range args {
+		n, err := gostrict.ToNeutral(a)
+		if err != nil {
+			return "", err
+		}
+		neutral[i] = n
+	}
+	if err := gostrict.CheckArgs(f.Name, f.Params, neutral); err != nil {
+		return "", err
+	}
+	return codec{b: b}.encode(neutral, f.Params)
 }

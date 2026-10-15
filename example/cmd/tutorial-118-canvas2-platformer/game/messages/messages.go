@@ -5,8 +5,8 @@
 //
 // SPDX-License-Identifier: Custom-License
 
-// Package proto declares the messages between the game in the browser and its backend.
-package proto
+// Package messages declares the messages between the game in the browser and its backend.
+package messages
 
 // Hello asks the backend for the highscore, when the game starts.
 type Hello struct {

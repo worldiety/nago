@@ -21,8 +21,7 @@ import (
 	"sync"
 
 	"go.wdy.de/nago/application"
-	"go.wdy.de/nago/example/cmd/tutorial-118-canvas2-platformer/game"
-	"go.wdy.de/nago/example/cmd/tutorial-118-canvas2-platformer/game/proto"
+	"go.wdy.de/nago/example/cmd/tutorial-118-canvas2-platformer/game/messages"
 	"go.wdy.de/nago/pkg/gostrict"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
@@ -34,12 +33,10 @@ import (
 //go:embed game
 var sources embed.FS
 
-const module = "go.wdy.de/nago/example/cmd/tutorial-118-canvas2-platformer"
-
 // highscores keeps the best time and the channels of all open games, to which it pushes a new best time.
 type highscores struct {
 	mu       sync.Mutex
-	best     proto.Highscore
+	best     messages.Highscore
 	channels map[*program.Channel]bool
 }
 
@@ -48,7 +45,7 @@ func (h *highscores) push(ch *program.Channel) {
 	best := h.best
 	h.mu.Unlock()
 	if best.Holder != "" {
-		_ = ch.Send(game.HighscoreMessage(best))
+		_ = ch.Send(best)
 	}
 }
 
@@ -59,17 +56,17 @@ type backend struct {
 }
 
 // Hello is sent by a game, when it starts, also after a reconnect, so it gets the current highscore.
-func (b backend) Hello(ctx context.Context, m proto.Hello) error {
+func (b backend) Hello(ctx context.Context, m messages.Hello) error {
 	b.scores.push(b.ch)
 	return nil
 }
 
-func (b backend) Finished(ctx context.Context, m proto.Finished) error {
+func (b backend) Finished(ctx context.Context, m messages.Finished) error {
 	h := b.scores
 	h.mu.Lock()
 	improved := h.best.Holder == "" || m.Seconds < h.best.Seconds
 	if improved {
-		h.best = proto.Highscore{Holder: m.Player, Seconds: m.Seconds}
+		h.best = messages.Highscore{Holder: m.Player, Seconds: m.Seconds}
 	}
 	var all []*program.Channel
 	for ch := range h.channels {
@@ -90,7 +87,7 @@ func main() {
 		cfg.SetApplicationID("de.worldiety.tutorial_118")
 		cfg.Serve(vuejs.Dist())
 
-		bundle := program.MustCompile(module+"/game", gostrict.Module{Path: module, FS: sources})
+		bundle := program.MustCompileFS(sources, "game")
 		sprites := cfg.Resource(application.StaticBytes(spriteSheet()))
 		scores := &highscores{channels: map[*program.Channel]bool{}}
 
@@ -114,6 +111,9 @@ func main() {
 				player = wnd.Subject().Name()
 			}
 			be := backend{scores: scores, ch: ch}
+			router := new(gostrict.Router)
+			gostrict.Handle(router, be.Hello)
+			gostrict.Handle(router, be.Finished)
 
 			return ui.VStack(
 				ui.H1("Platformer"),
@@ -122,9 +122,7 @@ func main() {
 					Init("Init", player, string(sprites)).
 					Animate("Frame").
 					Resize("Resize").
-					OnMessage(func(ctx context.Context, m gostrict.Message) error {
-						return game.Dispatch(ctx, be, m)
-					}).
+					OnMessage(router.Dispatch).
 					Frame(ui.Frame{Width: ui.L880, Height: ui.L400, MaxWidth: ui.Full}),
 			).Gap(ui.L16).Frame(ui.Frame{}.MatchScreen())
 		})

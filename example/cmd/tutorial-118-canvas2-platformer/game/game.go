@@ -13,7 +13,7 @@ package game
 import (
 	"math"
 
-	"go.wdy.de/nago/example/cmd/tutorial-118-canvas2-platformer/game/proto"
+	"go.wdy.de/nago/example/cmd/tutorial-118-canvas2-platformer/game/messages"
 	"go.wdy.de/nago/pkg/gostrict/lib/asset"
 	"go.wdy.de/nago/pkg/gostrict/lib/canvas"
 	"go.wdy.de/nago/pkg/gostrict/lib/input"
@@ -98,7 +98,7 @@ type Touch struct {
 }
 
 // Init loads the level and the sprite sheet at the URL and asks the backend for the highscore.
-func Init(player, sprites string) (*Game, msg.Out[proto.Hello]) {
+func Init(player, sprites string) (*Game, msg.Out[messages.Hello]) {
 	g := &Game{Player: player, Sprites: canvas.LoadImage(sprites), Tiles: list.New[Tile](), Facing: 1, Pointers: list.New[Touch]()}
 	for y, row := range level.All() {
 		chars := text.Chars(row)
@@ -122,8 +122,8 @@ func Init(player, sprites string) (*Game, msg.Out[proto.Hello]) {
 	}
 	restart(g)
 
-	out := msg.New[proto.Hello]()
-	out.Send(proto.Hello{Player: player})
+	out := msg.New[messages.Hello]()
+	out.Send(messages.Hello{Player: player})
 	return g, out
 }
 
@@ -179,8 +179,8 @@ func solid(g *Game, x, y, w, h float64) bool {
 }
 
 // Frame advances the game to the time t in seconds and draws it.
-func Frame(g *Game, t float64) msg.Out[proto.Finished] {
-	out := msg.New[proto.Finished]()
+func Frame(g *Game, t float64) msg.Out[messages.Finished] {
+	out := msg.New[messages.Finished]()
 	dt := t - g.Last
 	g.Last = t
 	if dt > 0.05 || dt < 0 {
@@ -193,7 +193,7 @@ func Frame(g *Game, t float64) msg.Out[proto.Finished] {
 	return out
 }
 
-func step(g *Game, dt float64, out msg.Out[proto.Finished]) {
+func step(g *Game, dt float64, out msg.Out[messages.Finished]) {
 	g.Time += dt
 	g.VX = 0
 	if g.Left {
@@ -247,7 +247,7 @@ func step(g *Game, dt float64, out msg.Out[proto.Finished]) {
 				g.Coins++
 			case Flag:
 				g.Done = true
-				out.Send(proto.Finished{Player: g.Player, Seconds: g.Time, Coins: g.Coins})
+				out.Send(messages.Finished{Player: g.Player, Seconds: g.Time, Coins: g.Coins})
 			case Empty, Ground:
 			}
 		}
@@ -393,7 +393,7 @@ func OnLoaded(g *Game, e asset.Loaded) {
 }
 
 // OnHighscore takes the best time, which the backend sends.
-func OnHighscore(g *Game, h proto.Highscore) {
+func OnHighscore(g *Game, h messages.Highscore) {
 	g.Best = h.Seconds
 	g.Holder = h.Holder
 }

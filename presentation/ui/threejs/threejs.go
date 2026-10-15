@@ -71,9 +71,10 @@ func (c TThreeJS) Inputs(types ...core.InputEventType) TThreeJS {
 	return c
 }
 
-// OnMessage sets the function, which handles the messages of the program, usually its generated Dispatch with the
-// backend. The backend sends messages to the program through [program.ChannelOf] with the id of the component.
-func (c TThreeJS) OnMessage(fn func(ctx context.Context, m gostrict.Message) error) TThreeJS {
+// OnMessage sets the function, which handles the messages of the program, usually the Dispatch of a
+// [gostrict.Router] with the typed functions of the backend. The backend sends messages to the program through
+// [program.ChannelOf] with the id of the component.
+func (c TThreeJS) OnMessage(fn func(ctx context.Context, e gostrict.Envelope) error) TThreeJS {
 	c.spec.Receive = fn
 	return c
 }

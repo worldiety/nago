@@ -25,8 +25,7 @@ import (
 	"time"
 
 	"go.wdy.de/nago/application"
-	"go.wdy.de/nago/example/cmd/tutorial-119-canvas2-photobook/book"
-	"go.wdy.de/nago/example/cmd/tutorial-119-canvas2-photobook/book/proto"
+	"go.wdy.de/nago/example/cmd/tutorial-119-canvas2-photobook/book/messages"
 	"go.wdy.de/nago/pkg/gostrict"
 	"go.wdy.de/nago/pkg/gostrict/std/list"
 	"go.wdy.de/nago/presentation/core"
@@ -39,17 +38,14 @@ import (
 //go:embed book
 var sources embed.FS
 
-const (
-	module    = "go.wdy.de/nago/example/cmd/tutorial-119-canvas2-photobook"
-	photoPath = "/api/tutorial-119/photos/"
-)
+const photoPath = "/api/tutorial-119/photos/"
 
 // store keeps the uploaded photos and the layout of the double page in memory and the channels of the open
 // editors.
 type store struct {
 	mu       sync.Mutex
 	photos   map[string][]byte
-	layout   []proto.Photo
+	layout   []messages.Photo
 	channels map[*program.Channel]bool
 }
 
@@ -65,12 +61,12 @@ func (s *store) serve(w http.ResponseWriter, r *http.Request) {
 	http.ServeContent(w, r, "", time.Time{}, bytes.NewReader(buf))
 }
 
-func (s *store) layoutMessage() gostrict.Message {
+func (s *store) layoutMessage() messages.Layout {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	photos := list.New[proto.Photo]()
+	photos := list.New[messages.Photo]()
 	photos.Append(s.layout...)
-	return book.LayoutMessage(proto.Layout{Photos: photos})
+	return messages.Layout{Photos: photos}
 }
 
 // backend receives the messages of one editor.
@@ -80,11 +76,11 @@ type backend struct {
 }
 
 // Hello is sent by the editor, when it starts, also after a reconnect, so that it shows the current layout.
-func (b backend) Hello(ctx context.Context, m proto.Hello) error {
+func (b backend) Hello(ctx context.Context, m messages.Hello) error {
 	return b.ch.Send(b.store.layoutMessage())
 }
 
-func (b backend) Save(ctx context.Context, m proto.Save) error {
+func (b backend) Save(ctx context.Context, m messages.Save) error {
 	s := b.store
 	s.mu.Lock()
 	s.layout = s.layout[:0]
@@ -124,7 +120,7 @@ func (b backend) upload(files []core.File) {
 		s.photos[id] = buf.Bytes()
 		s.mu.Unlock()
 
-		_ = b.ch.Send(book.AddMessage(proto.Add{URL: photoPath + id, Width: float64(cfg.Width), Height: float64(cfg.Height)}))
+		_ = b.ch.Send(messages.Add{URL: photoPath + id, Width: float64(cfg.Width), Height: float64(cfg.Height)})
 	}
 }
 
@@ -133,7 +129,7 @@ func main() {
 		cfg.SetApplicationID("de.worldiety.tutorial_119")
 		cfg.Serve(vuejs.Dist())
 
-		bundle := program.MustCompile(module+"/book", gostrict.Module{Path: module, FS: sources})
+		bundle := program.MustCompileFS(sources, "book")
 		s := &store{photos: map[string][]byte{}, channels: map[*program.Channel]bool{}}
 		// the endpoint is mounted, so it serves all paths below it
 		cfg.HandleFunc(strings.TrimSuffix(photoPath, "/"), s.serve)
@@ -153,6 +149,9 @@ func main() {
 				return true
 			})
 			be := backend{store: s, ch: ch}
+			router := new(gostrict.Router)
+			gostrict.Handle(router, be.Hello)
+			gostrict.Handle(router, be.Save)
 
 			return ui.VStack(
 				ui.H1("Photo book"),
@@ -170,9 +169,7 @@ func main() {
 					Init("Init").
 					Animate("Frame").
 					Resize("Resize").
-					OnMessage(func(ctx context.Context, m gostrict.Message) error {
-						return book.Dispatch(ctx, be, m)
-					}).
+					OnMessage(router.Dispatch).
 					Frame(ui.Frame{Width: ui.Full, Height: ui.L560}),
 			).Gap(ui.L16).Frame(ui.Frame{Width: ui.Full}.MatchScreen())
 		})

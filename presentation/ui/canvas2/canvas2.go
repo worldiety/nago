@@ -71,9 +71,10 @@ func (c TCanvas) Inputs(types ...core.InputEventType) TCanvas {
 	return c
 }
 
-// OnMessage sets the function, which handles the messages of the program, usually its generated Dispatch with the
-// backend. The backend sends messages to the program through [program.ChannelOf] with the id of the component.
-func (c TCanvas) OnMessage(fn func(ctx context.Context, m gostrict.Message) error) TCanvas {
+// OnMessage sets the function, which handles the messages of the program, usually the Dispatch of a
+// [gostrict.Router] with the typed functions of the backend. The backend sends messages to the program through
+// [program.ChannelOf] with the id of the component.
+func (c TCanvas) OnMessage(fn func(ctx context.Context, e gostrict.Envelope) error) TCanvas {
 	c.spec.Receive = fn
 	return c
 }
