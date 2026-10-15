@@ -18,6 +18,11 @@ import {
 	ColorSchemeValues,
 	FileImportRequested,
 	Fonts,
+	GostrictCall,
+	GostrictDeliver,
+	GostrictListen,
+	GostrictMessages,
+	GostrictReceived,
 	InputEvent,
 	InputEventTypeValues,
 	Locale,
@@ -48,6 +53,9 @@ import {
 	WindowSizeClass,
 	WindowSizeClassValues,
 } from '@/shared/proto/nprotoc_gen';
+import { deliver, openChannel } from '@/components/gostrict/channels';
+import { call as callProgram } from '@/components/gostrict/engine';
+import { type InputSample, listenInput } from '@/shared/inputEvents';
 import { capture } from '@/shared/screenshot';
 import ThemeManager, { ThemeKey } from '@/shared/themeManager';
 
@@ -641,6 +649,25 @@ export async function callRequested(chan: Channel, evt: CallRequested) {
 		await callScreenshot(chan, evt, evt.call);
 		return;
 	}
+
+	if (evt.call instanceof GostrictListen) {
+		const callPtr = evt.callPtr!;
+		openChannel(evt.call.id ?? '', (msgs) => {
+			chan.sendEvent(new CallResolved(callPtr, new GostrictReceived(new GostrictMessages(msgs)), nextRID()));
+		});
+		return;
+	}
+
+	if (evt.call instanceof GostrictCall) {
+		const callPtr = evt.callPtr!;
+		callProgram(evt.call).then((ret) => chan.sendEvent(new CallResolved(callPtr, ret, nextRID())));
+		return;
+	}
+
+	if (evt.call instanceof GostrictDeliver) {
+		deliver(evt.call.id ?? '', evt.call.messages?.value ?? []);
+		return;
+	}
 }
 
 async function callScreenshot(chan: Channel, evt: CallRequested, args: CallScreenshot) {
@@ -664,14 +691,7 @@ async function callScreenshot(chan: Channel, evt: CallRequested, args: CallScree
 	}
 }
 
-const registeredInputListeners = new Map<
-	number,
-	{
-		callPtr: number;
-		elem: Element;
-		listeners: Array<{ domEvent: string; fn: EventListener }>;
-	}
->();
+const registeredInputListeners = new Map<number, () => void>();
 
 function waitForElement(id: string, timeoutMs = 3000): Promise<Element | null> {
 	const existing = document.getElementById(id);
@@ -722,7 +742,6 @@ async function registerInputEvents(chan: Channel, evt: CallRequested, args: Regi
 
 	const callPtr = evt.callPtr!;
 	const handle = args.handle;
-	const listeners: Array<{ domEvent: string; fn: EventListener }> = [];
 
 	// Per-listener deduplication state for move events. The browser delivers sub-pixel
 	// coordinates which leads to a flood of redundant events. We round to integer pixels
@@ -739,146 +758,82 @@ async function registerInputEvents(chan: Channel, evt: CallRequested, args: Regi
 	const SEND_INTERVAL = 16; // milliseconds (~60 Hz)
 	const lastSentAt = new Map<InputEventTypeValues, number>();
 
-	// Hilfsfunktion: InputEvent ans Backend senden
-	const send = (type: InputEventTypeValues, x: number, y: number, code: string) => {
-		chan.sendEvent(new CallResolved(callPtr, new InputEvent(handle, type, x, y, code), nextRID()));
+	const send = (s: InputSample) => {
+		chan.sendEvent(
+			new CallResolved(
+				callPtr,
+				new InputEvent(
+					handle,
+					s.type,
+					s.x,
+					s.y,
+					s.code,
+					s.pointerId,
+					s.buttons,
+					s.pressure,
+					s.shift,
+					s.ctrl,
+					s.alt,
+					s.meta,
+					s.deltaX,
+					s.deltaY,
+					s.deltaZ,
+					s.key,
+					s.repeat
+				),
+				nextRID()
+			)
+		);
 	};
 
 	// sendMove rounds the given coordinates to integer pixels, deduplicates per type and
 	// applies a cheap leading-edge throttle of SEND_INTERVAL ms per type, so that fast
 	// input devices cannot flood the channel.
-	const sendMove = (type: InputEventTypeValues, x: number, y: number) => {
-		const rx = Math.round(x);
-		const ry = Math.round(y);
+	const sendMove = (s: InputSample) => {
+		const rx = Math.round(s.x);
+		const ry = Math.round(s.y);
 
 		// dedup: skip if the rounded pixel position did not change
-		const last = lastMovePoints.get(type);
+		const last = lastMovePoints.get(s.type);
 		if (last && last.x === rx && last.y === ry) {
 			return;
 		}
 
 		// leading-edge throttle: only forward at most once per SEND_INTERVAL
 		const now = performance.now();
-		const lastTs = lastSentAt.get(type) ?? 0;
+		const lastTs = lastSentAt.get(s.type) ?? 0;
 		if (now - lastTs < SEND_INTERVAL) {
 			return;
 		}
-		lastSentAt.set(type, now);
+		lastSentAt.set(s.type, now);
 
-		lastMovePoints.set(type, { x: rx, y: ry });
-		send(type, rx, ry, '');
+		lastMovePoints.set(s.type, { x: rx, y: ry });
+		s.x = rx;
+		s.y = ry;
+		send(s);
 	};
 
-	if (requested.has(InputEventTypeValues.InputEventInvalidate)) {
-		const fn: EventListener = () => {
-			send(InputEventTypeValues.InputEventInvalidate, 0, 0, '');
-		};
-		elem.addEventListener('invalidated', fn);
-		listeners.push({ domEvent: 'invalidated', fn });
-	}
+	const dispose = listenInput(elem, requested, (s) => {
+		if (
+			s.type === InputEventTypeValues.InputEventPointerMove ||
+			s.type === InputEventTypeValues.InputEventMouseMove
+		) {
+			sendMove(s);
+			return;
+		}
+		send(s);
+	});
 
-	const pointerMappings: [string, InputEventTypeValues][] = [
-		['pointerdown', InputEventTypeValues.InputEventPointerDown],
-		['pointerup', InputEventTypeValues.InputEventPointerUp],
-		['pointermove', InputEventTypeValues.InputEventPointerMove],
-		['pointercancel', InputEventTypeValues.InputEventPointerCancel],
-		['pointerleave', InputEventTypeValues.InputEventPointerLeave],
-		['pointerout', InputEventTypeValues.InputEventPointerOut],
-		['pointerover', InputEventTypeValues.InputEventPointerOver],
-	];
-
-	for (const [domEvent, evtType] of pointerMappings) {
-		if (!requested.has(evtType)) continue;
-		const isMove = evtType === InputEventTypeValues.InputEventPointerMove;
-		const fn: EventListener = (e) => {
-			const pe = e as PointerEvent;
-			const rect = elem.getBoundingClientRect();
-			const x = pe.clientX - rect.left;
-			const y = pe.clientY - rect.top;
-			if (isMove) {
-				sendMove(evtType, x, y);
-			} else {
-				send(evtType, x, y, '');
-			}
-		};
-		elem.addEventListener(domEvent, fn);
-		listeners.push({ domEvent, fn });
-	}
-
-	const mouseMappings: [string, InputEventTypeValues][] = [
-		['mousedown', InputEventTypeValues.InputEventMouseDown],
-		['mouseup', InputEventTypeValues.InputEventMouseUp],
-		['mousemove', InputEventTypeValues.InputEventMouseMove],
-		['mouseenter', InputEventTypeValues.InputEventMouseEnter],
-		['mouseleave', InputEventTypeValues.InputEventMouseLeave],
-		['mouseover', InputEventTypeValues.InputEventMouseOver],
-		['mouseout', InputEventTypeValues.InputEventMouseOut],
-	];
-
-	for (const [domEvent, evtType] of mouseMappings) {
-		if (!requested.has(evtType)) continue;
-		const isMove = evtType === InputEventTypeValues.InputEventMouseMove;
-		const fn: EventListener = (e) => {
-			const me = e as MouseEvent;
-			const rect = elem.getBoundingClientRect();
-			const x = me.clientX - rect.left;
-			const y = me.clientY - rect.top;
-			if (isMove) {
-				sendMove(evtType, x, y);
-			} else {
-				send(evtType, x, y, '');
-			}
-		};
-		elem.addEventListener(domEvent, fn);
-		listeners.push({ domEvent, fn });
-	}
-
-	if (requested.has(InputEventTypeValues.InputEventMouseWheel)) {
-		const fn: EventListener = (e) => {
-			const we = e as WheelEvent;
-			// X/Y carry the wheel delta; client position is conveyed via Code as not strictly needed here.
-			send(InputEventTypeValues.InputEventMouseWheel, we.deltaX, we.deltaY, '');
-		};
-		elem.addEventListener('wheel', fn);
-		listeners.push({ domEvent: 'wheel', fn });
-	}
-
-	if (requested.has(InputEventTypeValues.InputEventBlur)) {
-		const fn: EventListener = () => {
-			send(InputEventTypeValues.InputEventBlur, 0, 0, '');
-		};
-		elem.addEventListener('blur', fn);
-		listeners.push({ domEvent: 'blur', fn });
-	}
-
-	const keyMappings: [string, InputEventTypeValues][] = [
-		['keydown', InputEventTypeValues.InputEventKeyDown],
-		['keyup', InputEventTypeValues.InputEventKeyUp],
-	];
-
-	for (const [domEvent, evtType] of keyMappings) {
-		if (!requested.has(evtType)) continue;
-		const fn: EventListener = (e) => {
-			const ke = e as KeyboardEvent;
-			send(evtType, 0, 0, ke.code); // z.B. "KeyA", "ArrowLeft", "Enter"
-		};
-		elem.addEventListener(domEvent, fn);
-		listeners.push({ domEvent, fn });
-	}
-
-	registeredInputListeners.set(handle, { callPtr, elem, listeners });
+	registeredInputListeners.set(handle, dispose);
 }
 
 async function unregisterInputEvents(chan: Channel, evt: CallRequested, args: UnregisterInputEventListener) {
 	if (args.handle === undefined) return;
 
-	const reg = registeredInputListeners.get(args.handle);
-	if (!reg) return;
+	const dispose = registeredInputListeners.get(args.handle);
+	if (!dispose) return;
 
-	for (const { domEvent, fn } of reg.listeners) {
-		reg.elem.removeEventListener(domEvent, fn);
-	}
-
+	dispose();
 	registeredInputListeners.delete(args.handle);
 }
 

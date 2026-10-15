@@ -14,6 +14,7 @@ import {
 	BarChart,
 	Box,
 	Canvas,
+	Canvas2,
 	Checkbox,
 	CodeEditor,
 	ColorPicker,
@@ -58,6 +59,7 @@ import {
 	Video,
 	WebView,
 	WindowTitle,
+	ThreeJS,
 } from '@/shared/proto/nprotoc_gen';
 
 const LazyUiAccordion = defineAsyncComponent(() => import('@/components/UiAccordion.vue'));
@@ -65,6 +67,7 @@ const LazyUiAlertNotifications = defineAsyncComponent(() => import('@/components
 const LazyUiBarChart = defineAsyncComponent(() => import('@/components/charts/UiBarChart.vue'));
 const LazyUiBox = defineAsyncComponent(() => import('@/components/box/UiBox.vue'));
 const LazyUiCanvas = defineAsyncComponent(() => import('@/components/canvas/UiCanvas.vue'));
+const LazyUiCanvas2 = defineAsyncComponent(() => import('@/components/canvas2/UiCanvas2.vue'));
 const LazyUiCheckbox = defineAsyncComponent(() => import('@/components/UiCheckbox.vue'));
 const LazyUiCodeEditor = defineAsyncComponent(() => import('@/components/codeeditor/UiCodeEditor.vue'));
 const LazyUiColorPicker = defineAsyncComponent(() => import('@/components/colorpicker/UiColorPicker.vue'));
@@ -93,6 +96,7 @@ const LazyUiScaffold = defineAsyncComponent(() => import('@/components/scaffold/
 const LazyUiScrollView = defineAsyncComponent(() => import('@/components/scrollview/UiScrollView.vue'));
 const LazyUiSelect = defineAsyncComponent(() => import('@/components/select/UiSelect.vue'));
 const LazyUiSheet = defineAsyncComponent(() => import('@/components/sheet/UiSheet.vue'));
+const LazyUiThreeJS = defineAsyncComponent(() => import('@/components/threejs/UiThreeJS.vue'));
 const LazyUiSignatureField = defineAsyncComponent(() => import('@/components/signature/UiSignatureField.vue'));
 const LazyUiSlider = defineAsyncComponent(() => import('@/components/UiSlider.vue'));
 const LazyUiSpacer = defineAsyncComponent(() => import('@/components/spacer/UiSpacer.vue'));
@@ -133,6 +137,10 @@ export function vueComponentFor(ngc: NagoComponent): Component {
 
 	if (ngc instanceof Canvas) {
 		return LazyUiCanvas;
+	}
+
+	if (ngc instanceof Canvas2) {
+		return LazyUiCanvas2;
 	}
 
 	if (ngc instanceof Checkbox) {
@@ -245,6 +253,10 @@ export function vueComponentFor(ngc: NagoComponent): Component {
 
 	if (ngc instanceof Sheet) {
 		return LazyUiSheet;
+	}
+
+	if (ngc instanceof ThreeJS) {
+		return LazyUiThreeJS;
 	}
 
 	if (ngc instanceof SignatureField) {
