@@ -48,7 +48,7 @@ func checkHeaderFunc(p *Package, d *diagnoser, decls map[*types.Func]funcSrc, de
 		return
 	}
 
-	const why = "only bool, int32, uint32, float64, string and handles cross the boundary as parameters, and error as a result"
+	const why = "only bool, int32, uint32, float64, string, handles, records without handles and lists and maps of them cross the boundary as parameters, and error as a result"
 	if decl.Recv != nil {
 		d.report(decl.Name.Pos(), decl.Name.End(), CodeBridge, "header packages can not declare methods", why, "declare a function, which takes the handle as its first parameter")
 		return

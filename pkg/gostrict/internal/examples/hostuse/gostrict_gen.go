@@ -12,6 +12,10 @@ import (
 // Exports returns the exported functions of this package, e.g. for the native engine.
 func Exports() gostrict.Funcs {
 	return gostrict.Funcs{
+		"Records": func(args []any) []any {
+			r0, r1, r2 := Records(args[0].(float64))
+			return []any{r0, r1, r2}
+		},
 		"Run": func(args []any) []any {
 			r0, r1 := Run(args[0].(float64), args[1].(float64))
 			return []any{r0, r1}
@@ -22,6 +26,14 @@ func Exports() gostrict.Funcs {
 // Client calls the exported functions of this package in an instance of its bundle, e.g. in goja.
 type Client struct {
 	Instance gostrict.Instance
+}
+
+func (c Client) Records(ctx context.Context, d float64) (string, float64, int32, error) {
+	res, err := c.Instance.Call(ctx, "Records", d)
+	if err != nil {
+		return "", 0, 0, err
+	}
+	return res[0].(string), res[1].(float64), res[2].(int32), nil
 }
 
 func (c Client) Run(ctx context.Context, a float64, b float64) (string, float64, error) {

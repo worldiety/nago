@@ -8,6 +8,8 @@
 // Command gostrict checks, translates, generates and runs a package of the gostrict subset.
 //
 //	gostrict check [-json] <dir>      reports the diagnostics, exit code 1 if there are any
+//	gostrict fix <dir>                applies the mechanical fixes of the diagnostics to the files and reports
+//	                                  the remaining diagnostics, exit code 1 if there are any
 //	gostrict build <dir>              prints the JavaScript bundle
 //	gostrict gen <dir>                writes the functions of the package as gostrict.Funcs into gostrict_gen.go
 //	                                  and, for a header package, the TypeScript declaration of its host
@@ -35,7 +37,7 @@ func main() {
 
 func run() error {
 	if len(os.Args) < 3 {
-		return fmt.Errorf("usage: gostrict check [-json] <dir> | build <dir> | gen <dir> | run <dir> <func> [args]")
+		return fmt.Errorf("usage: gostrict check [-json] <dir> | fix <dir> | build <dir> | gen <dir> | run <dir> <func> [args]")
 	}
 
 	switch os.Args[1] {
@@ -60,6 +62,18 @@ func run() error {
 		if len(diags) > 0 {
 			os.Exit(1)
 		}
+		return nil
+	case "fix":
+		diags, err := fix(os.Args[2])
+		if err != nil {
+			return err
+		}
+		if len(diags) == 0 {
+			fmt.Println("ok")
+			return nil
+		}
+		fmt.Print(diags.Text())
+		os.Exit(1)
 		return nil
 	case "gen":
 		dir := os.Args[2]
@@ -159,4 +173,43 @@ func parseArgs(sig gostrict.Func, args []string) ([]any, error) {
 		}
 	}
 	return res, nil
+}
+
+// fix applies the edits of the diagnostics until there are none left, since a fix may enable another one.
+func fix(dir string) (gostrict.Diagnostics, error) {
+	for range 5 {
+		prog, err := gostrict.Load(dir)
+		if err != nil {
+			return nil, err
+		}
+		diags := gostrict.Check(prog)
+		files := map[string]bool{}
+		for _, d := range diags {
+			for _, e := range d.Edits {
+				files[e.File] = true
+			}
+		}
+		if len(files) == 0 {
+			return diags, nil
+		}
+		for file := range files {
+			src, err := os.ReadFile(file)
+			if err != nil {
+				return nil, err
+			}
+			fixed, err := gostrict.ApplyEdits(src, diags.Edits(file))
+			if err != nil {
+				return nil, fmt.Errorf("%s: %w", file, err)
+			}
+			if err := os.WriteFile(file, fixed, 0o644); err != nil {
+				return nil, err
+			}
+			fmt.Println("fixed", file)
+		}
+	}
+	prog, err := gostrict.Load(dir)
+	if err != nil {
+		return nil, err
+	}
+	return gostrict.Check(prog), nil
 }

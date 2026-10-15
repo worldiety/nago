@@ -137,7 +137,7 @@ func (r *Runtime) Load(ctx context.Context, b *gostrict.Bundle, host gostrict.Fu
 	h := r.rt.NewObject()
 	for _, x := range b.Externs {
 		if f, ok := host[x.Name]; ok {
-			if err := h.Set(x.Name, r.hostFunc(x.Func, f)); err != nil {
+			if err := h.Set(x.Name, r.hostFunc(b, x.Func, f)); err != nil {
 				return nil, err
 			}
 		}
@@ -249,7 +249,7 @@ func (in *instance) CallExtern(ctx context.Context, x gostrict.Func, args ...any
 }
 
 func (in *instance) callJS(ctx context.Context, fn goja.Callable, sig gostrict.Func, args []any) ([]any, error) {
-	c := converter{r: in.rt, in: in}
+	c := converter{r: in.rt, b: in.bundle, in: in}
 	jsArgs := make([]goja.Value, len(args))
 	for i, a := range args {
 		v, err := c.toJS(a, sig.Params[i])
@@ -284,10 +284,13 @@ func (in *instance) callJS(ctx context.Context, fn goja.Callable, sig gostrict.F
 	return res, nil
 }
 
-// converter converts between the neutral values of Go and JavaScript. The records of an instance need its
-// constructors, a host function has none.
+// converter converts between the neutral values of Go and JavaScript with the schema of the bundle. A record,
+// which an exported function takes, is created with its constructor, a record of a host function is a plain
+// object, because the host may be called, while the package variables are initialized and the constructors are
+// not known yet. The translated code accesses records only through their fields, so both behave the same.
 type converter struct {
 	r  *Runtime
+	b  *gostrict.Bundle
 	in *instance
 }
 
@@ -397,10 +400,7 @@ func (c converter) toGo(v goja.Value, t gostrict.Type) (any, error) {
 }
 
 func (c converter) record(t gostrict.Type) (gostrict.Record, error) {
-	if c.in == nil {
-		return gostrict.Record{}, fmt.Errorf("records do not cross the boundary of a host function: %s", t)
-	}
-	rec, ok := c.in.bundle.Records[t.Name]
+	rec, ok := c.b.Records[t.Name]
 	if !ok {
 		return rec, fmt.Errorf("unknown record %s", t.Name)
 	}
@@ -496,14 +496,25 @@ func (c converter) toJS(v any, t gostrict.Type) (goja.Value, error) {
 			}
 			args[i] = fv
 		}
-		return c.in.records[t.Name](goja.Undefined(), args...)
+		if c.in != nil {
+			if mk := c.in.records[t.Name]; mk != nil {
+				return mk(goja.Undefined(), args...)
+			}
+		}
+		obj := rt.NewObject()
+		for i, f := range rec.Fields {
+			if err := obj.Set(f.JS, args[i]); err != nil {
+				return nil, err
+			}
+		}
+		return obj, nil
 	}
 	return rt.ToValue(v), nil
 }
 
 // hostFunc adapts a Go function to the calling convention of the bundle: several results are an array.
-func (r *Runtime) hostFunc(sig gostrict.Func, f gostrict.Fn) func(goja.FunctionCall) goja.Value {
-	c := converter{r: r}
+func (r *Runtime) hostFunc(b *gostrict.Bundle, sig gostrict.Func, f gostrict.Fn) func(goja.FunctionCall) goja.Value {
+	c := converter{r: r, b: b}
 	return func(call goja.FunctionCall) goja.Value {
 		args := make([]any, len(sig.Params))
 		for i, k := range sig.Params {

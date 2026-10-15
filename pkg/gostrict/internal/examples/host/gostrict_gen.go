@@ -6,6 +6,8 @@ package host
 
 import (
 	"go.wdy.de/nago/pkg/gostrict"
+	"go.wdy.de/nago/pkg/gostrict/internal/examples/geom"
+	"go.wdy.de/nago/pkg/gostrict/std/list"
 )
 
 // Host implements the functions of this header package natively, e.g. for an engine like goja.
@@ -14,6 +16,10 @@ func Host() gostrict.Funcs {
 		"go.wdy.de/nago/pkg/gostrict/internal/examples/host.Clamp": func(args []any) []any {
 			r0 := Clamp(args[0].(float64), args[1].(float64), args[2].(float64))
 			return []any{r0}
+		},
+		"go.wdy.de/nago/pkg/gostrict/internal/examples/host.Grow": func(args []any) []any {
+			r0 := Grow(gostrictFrom1(args[0].([]any)), args[1].(float64))
+			return []any{gostrictTo1(r0)}
 		},
 		"go.wdy.de/nago/pkg/gostrict/internal/examples/host.Label": func(args []any) []any {
 			r0 := Label(args[0].(int32))
@@ -27,5 +33,41 @@ func Host() gostrict.Funcs {
 			r0, r1 := Ratio(args[0].(float64), args[1].(float64))
 			return []any{r0, r1}
 		},
+		"go.wdy.de/nago/pkg/gostrict/internal/examples/host.Summarize": func(args []any) []any {
+			r0 := Summarize(gostrictFrom2(args[0].([]any)), args[1].(string))
+			return []any{gostrictTo3(r0)}
+		},
 	}
+}
+
+func gostrictFrom1(v []any) geom.Rect {
+	return geom.Rect{X: v[0].(float64), Y: v[1].(float64), W: v[2].(float64), H: v[3].(float64)}
+}
+
+func gostrictTo1(x geom.Rect) []any {
+	return []any{x.X, x.Y, x.W, x.H}
+}
+
+func gostrictFrom2(v []any) list.List[geom.Rect] {
+	l := list.New[geom.Rect]()
+	for _, e := range v {
+		l.Append(gostrictFrom1(e.([]any)))
+	}
+	return l
+}
+
+func gostrictTo2(l list.List[geom.Rect]) []any {
+	res := make([]any, 0, l.Len())
+	for e := range l.Values() {
+		res = append(res, gostrictTo1(e))
+	}
+	return res
+}
+
+func gostrictFrom3(v []any) geom.Stats {
+	return geom.Stats{Count: v[0].(int32), Sum: v[1].(float64), Label: v[2].(string), Parts: gostrictFrom2(v[3].([]any))}
+}
+
+func gostrictTo3(x geom.Stats) []any {
+	return []any{x.Count, x.Sum, x.Label, gostrictTo2(x.Parts)}
 }

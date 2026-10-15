@@ -26,6 +26,7 @@ import (
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/iters"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/physics"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/texts"
+	"go.wdy.de/nago/pkg/gostrict/internal/examples/trees"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/values"
 )
 
@@ -48,6 +49,7 @@ var exports = map[string]gostrict.Funcs{
 	"physics":  physics.Exports(),
 	"texts":    texts.Exports(),
 	"values":   values.Exports(),
+	"trees":    trees.Exports(),
 }
 
 // TestDifferential runs each case natively and translated in goja, both behind the same engine interface, and
@@ -92,6 +94,9 @@ func TestDifferential(t *testing.T) {
 		{"errs", "Run", []any{int32(40)}},
 		{"errs", "Run", []any{int32(0)}},
 		{"errs", "Run", []any{int32(-3)}},
+		{"trees", "Run", []any{int32(0)}},
+		{"trees", "Run", []any{int32(200)}},
+		{"trees", "Values", nil},
 	}
 
 	ctx := context.Background()
@@ -129,6 +134,15 @@ func TestHost(t *testing.T) {
 		viaJS := call(t, goEngine, b, nil, "Run", args)
 		if viaHost[0] != want || !gostrict.SameValues(viaHost, viaJS) {
 			t.Fatalf("%v: host %v, bindings %v, want %v", args, viaHost, viaJS, want)
+		}
+	}
+	for _, d := range []float64{0, 1.5, -2} {
+		w1, w2, w3 := hostuse.Records(d)
+		want := []any{w1, w2, w3}
+		viaHost := call(t, goEngine, b, h, "Records", []any{d})
+		viaJS := call(t, goEngine, b, nil, "Records", []any{d})
+		if !gostrict.SameValues(viaHost, want) || !gostrict.SameValues(viaJS, want) {
+			t.Fatalf("records %v: host %v, bindings %v, want %v", d, viaHost, viaJS, want)
 		}
 	}
 	if calls == 0 {

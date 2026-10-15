@@ -42,7 +42,7 @@ const (
 	CodeInvalidUTF8     Code = "GS020" // string literals, which are not valid UTF-8
 	CodeUnsupported     Code = "GS021" // anything else, which is not part of the subset
 	CodeRange           Code = "GS022" // ranging over something else than int, an iterator or a list
-	CodeRangeFuncBranch Code = "GS023" // labeled break or continue out of a range over an iterator
+	CodeRangeFuncBranch Code = "GS023" // no longer reported: labeled break or continue out of a range over an iterator
 	CodeUnsafeInt       Code = "GS024" // integer constants beyond the safe range of JavaScript
 	CodeLocalType       Code = "GS025" // type declarations inside functions
 	CodeOpaqueLiteral   Code = "GS026" // composite literals of list.List or dict.Map
@@ -58,6 +58,8 @@ const (
 	CodeGlobal          Code = "GS036" // package variables, which change or hold mutable values
 	CodeHandler         Code = "GS037" // several handlers of the same message
 	CodeExhaustive      Code = "GS038" // switches, which miss variants or constants
+	CodeUntrusted       Code = "GS039" // header packages in modules, which are not trusted
+	CodeTermination     Code = "GS040" // loops and recursion, which may not end, in the terminating profile
 	CodeInternal        Code = "GS099" // the compiler can not translate a valid construct
 )
 
@@ -75,6 +77,8 @@ type Diagnostic struct {
 	Fix    string `json:"fix,omitempty"`
 	// Source is the line of source code.
 	Source string `json:"source,omitempty"`
+	// Edits fix the problem mechanically, if they are known, see [ApplyEdits] and the command gostrict fix.
+	Edits []Edit `json:"edits,omitempty"`
 }
 
 // Diagnostics is a list of problems sorted by their position.
@@ -99,6 +103,9 @@ func (d Diagnostics) Text() string {
 		}
 		if diag.Fix != "" {
 			fmt.Fprintf(&sb, "  fix: %s\n", strings.ReplaceAll(diag.Fix, "\n", "\n       "))
+		}
+		if len(diag.Edits) > 0 {
+			sb.WriteString("  gostrict fix applies the fix\n")
 		}
 	}
 	return sb.String()
@@ -137,6 +144,8 @@ type diagnoser struct {
 	sources map[string][]byte
 	diags   Diagnostics
 	seen    map[string]bool
+	// edits are the mechanical fixes by file, line and code of their diagnostic
+	edits map[string][]Edit
 }
 
 // line returns the line of the loaded source file.

@@ -34,26 +34,52 @@ func valueKind(t types.Type) ValueKind {
 	return ValueInvalid
 }
 
-// signature returns the types of a function of a header package or false, if a parameter or result is not a basic
-// value or a handle, or an error as a result. A generic function must be instantiated first.
+// signature returns the types of a function of a header package or false, if a parameter or result can not cross
+// its boundary, see [boundary.headerSignature]. A generic function must be instantiated first.
 func signature(name string, sig *types.Signature) (Func, bool) {
+	return newBoundary().headerSignature(name, sig)
+}
+
+// headerSignature returns the types of a function of a header package or false, if a parameter or result is not a
+// basic value, a handle, a record, a list or a map of them, or an error as a result. It collects the records, so
+// that an engine converts them. A record of a header package has no handles, because a native host could not
+// create them in another engine.
+func (b *boundary) headerSignature(name string, sig *types.Signature) (Func, bool) {
 	f := Func{Name: name}
 	if sig.Variadic() || sig.TypeParams().Len() > 0 || sig.Recv() != nil {
 		return f, false
 	}
+	typeOf := func(t types.Type, result bool) (Type, bool) {
+		k := valueKind(t)
+		switch {
+		case k == ValueError:
+			return Type{Kind: k}, result
+		case k != ValueInvalid:
+			return Type{Kind: k}, true
+		}
+		bt, ok := b.typeOf(t)
+		if !ok {
+			return bt, false
+		}
+		switch bt.Kind {
+		case ValueRecord, ValueList, ValueMap:
+			return bt, true
+		}
+		return bt, false
+	}
 	for v := range sig.Params().Variables() {
-		k := valueKind(v.Type())
-		if k == ValueInvalid || k == ValueError {
+		t, ok := typeOf(v.Type(), false)
+		if !ok {
 			return f, false
 		}
-		f.Params = append(f.Params, Type{Kind: k})
+		f.Params = append(f.Params, t)
 	}
 	for v := range sig.Results().Variables() {
-		k := valueKind(v.Type())
-		if k == ValueInvalid {
+		t, ok := typeOf(v.Type(), true)
+		if !ok {
 			return f, false
 		}
-		f.Results = append(f.Results, Type{Kind: k})
+		f.Results = append(f.Results, t)
 	}
 	return f, true
 }

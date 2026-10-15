@@ -34,6 +34,10 @@ func nilableSeen(t types.Type, seen map[types.Type]bool) bool {
 		return false
 	}
 	seen[t] = true
+	if isOption(t) {
+		// the zero value holds nothing
+		return false
+	}
 	if isOpaque(t) {
 		return true
 	}

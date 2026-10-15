@@ -26,8 +26,9 @@ import (
 //	func (Circle) isShape() {}
 
 // sealedVariants returns the variants of a sealed interface in the order of their declaration, or false, if t is
-// not a sealed interface.
-func sealedVariants(t types.Type) ([]*types.Named, bool) {
+// not a sealed interface. A type, whose pointer implements the interface, e.g. func (*Node) isTree(), is a
+// variant as a pointer.
+func sealedVariants(t types.Type) ([]types.Type, bool) {
 	n, ok := types.Unalias(t).(*types.Named)
 	if !ok || n.Obj().Pkg() == nil || isError(t) {
 		return nil, false
@@ -45,25 +46,86 @@ func sealedVariants(t types.Type) ([]*types.Named, bool) {
 	}
 
 	scope := n.Obj().Pkg().Scope()
-	var variants []*types.Named
+	var variants []types.Type
 	for _, name := range scope.Names() {
 		tn, ok := scope.Lookup(name).(*types.TypeName)
 		if !ok || tn.IsAlias() {
 			continue
 		}
 		v, ok := tn.Type().(*types.Named)
-		if !ok || v.TypeParams().Len() > 0 {
+		if !ok {
 			continue
+		}
+		if v.TypeParams().Len() > 0 {
+			// a generic variant of a generic interface has its type arguments, e.g. Ok[T] of Result[T]
+			if v.TypeParams().Len() != n.TypeArgs().Len() {
+				continue
+			}
+			inst, err := types.Instantiate(nil, v, typeArgs(n.TypeArgs()), true)
+			if err != nil {
+				continue
+			}
+			v = inst.(*types.Named)
 		}
 		if _, isIface := v.Underlying().(*types.Interface); isIface {
 			continue
 		}
-		if types.Implements(v, iface) {
+		switch {
+		case types.Implements(v, iface):
 			variants = append(variants, v)
+		case types.Implements(types.NewPointer(v), iface):
+			variants = append(variants, types.NewPointer(v))
 		}
 	}
-	slices.SortFunc(variants, func(a, b *types.Named) int { return int(a.Obj().Pos() - b.Obj().Pos()) })
+	slices.SortFunc(variants, func(a, b types.Type) int { return int(variantObj(a).Pos() - variantObj(b).Pos()) })
 	return variants, true
+}
+
+// variantObj returns the declaration of the type of a variant.
+func variantObj(t types.Type) *types.TypeName {
+	if p, ok := t.(*types.Pointer); ok {
+		t = p.Elem()
+	}
+	return types.Unalias(t).(*types.Named).Obj()
+}
+
+// variantName returns the name of a variant, e.g. Circle or *Node.
+func variantName(t types.Type) string {
+	if _, ok := t.(*types.Pointer); ok {
+		return "*" + variantObj(t).Name()
+	}
+	return variantObj(t).Name()
+}
+
+// unionComparable tells, whether the interfaces in t are sealed interfaces, whose variants are all comparable, so
+// that a comparison never panics, as golang/go#76920 proposes for union types.
+func unionComparable(t types.Type, seen map[types.Type]bool) bool {
+	if seen[t] {
+		return true
+	}
+	seen[t] = true
+	if isOpaque(t) {
+		return true
+	}
+	switch u := t.Underlying().(type) {
+	case *types.Interface:
+		variants, ok := sealedVariants(t)
+		if !ok {
+			return false
+		}
+		for _, v := range variants {
+			if !types.Comparable(v) || !unionComparable(v, seen) {
+				return false
+			}
+		}
+	case *types.Struct:
+		for f := range u.Fields() {
+			if !unionComparable(f.Type(), seen) {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 // isSealed tells, whether t is a sealed interface.

@@ -28,6 +28,9 @@ var runtimeJS string
 // as their JavaScript binding, and $new the constructors of the records, which take the fields in their order.
 type Bundle struct {
 	JS string
+	// SourceMap maps the lines of JS to the lines of the Go source in the format of version 3, including the
+	// sources, so that a browser shows and debugs them.
+	SourceMap []byte
 	// Hash identifies the script, e.g. for a cache of an engine or as an immutable URL for a browser.
 	Hash string
 	// Exports are the exported functions of the main package, whose values can cross the boundary of an engine.
@@ -40,6 +43,9 @@ type Bundle struct {
 	Handlers map[string]string
 	// Externs are the functions of header packages, which the program calls, e.g. "example.com/host.Mix".
 	Externs []Extern
+	// States maps the full name of each state of the exports to the hash of its structure, which is empty, if a new
+	// version of the program can not take it over, see [Bundle.CanTakeOver].
+	States map[string]string
 }
 
 // Extern is a function of a header package.
@@ -115,6 +121,12 @@ type emitter struct {
 	queue   []func()
 	extern  []Extern
 	diag    *diagnoser
+	// bnd collects the records of the exports and of the functions of header packages
+	bnd *boundary
+	// readonlyCache keeps the parameters of functions, which they only read, see readonly
+	readonlyCache map[*types.Func]readonlyInfo
+	// positions are the positions of the marks of the source map, see mark
+	positions []token.Pos
 }
 
 func (e *emitter) emit() (*Bundle, Diagnostics) {
@@ -149,6 +161,7 @@ func (e *emitter) emit() (*Bundle, Diagnostics) {
 
 	exports := map[string]Func{}
 	bnd := newBoundary()
+	e.bnd = bnd
 	var ret strings.Builder
 	main := e.prog.Main
 	for _, name := range main.Types.Scope().Names() {
@@ -178,6 +191,12 @@ func (e *emitter) emit() (*Bundle, Diagnostics) {
 		next := e.queue[0]
 		e.queue = e.queue[1:]
 		next()
+		if len(e.queue) == 0 {
+			// the records of the functions of header packages are found with their calls
+			for _, name := range sortedNames(bnd.records) {
+				e.structName(bnd.structs[name])
+			}
+		}
 	}
 
 	var sb strings.Builder
@@ -215,8 +234,17 @@ func (e *emitter) emit() (*Bundle, Diagnostics) {
 	sb.WriteString("\t},\n};\n})")
 
 	slices.SortFunc(e.extern, func(a, b Extern) int { return strings.Compare(a.Name, b.Name) })
-	sum := sha256.Sum256([]byte(sb.String()))
-	return &Bundle{JS: sb.String(), Hash: hex.EncodeToString(sum[:16]), Exports: exports, Records: bnd.records, Unions: bnd.unions, Handlers: handlers(exports, bnd.unions), Externs: e.extern}, nil
+	js, sourceMap := e.stripMarks(sb.String())
+	sum := sha256.Sum256([]byte(js))
+	states := map[string]string{}
+	for _, f := range exports {
+		for _, t := range append(slices.Clone(f.Params), f.Results...) {
+			if t.Kind == ValueState {
+				states[t.Name] = stateHash(bnd.structs[t.Name])
+			}
+		}
+	}
+	return &Bundle{JS: js, SourceMap: sourceMap, Hash: hex.EncodeToString(sum[:16]), Exports: exports, Records: bnd.records, Unions: bnd.unions, Handlers: handlers(exports, bnd.unions), Externs: e.extern, States: states}, nil
 }
 
 // ident returns a unique identifier of the bundle based on base.
@@ -352,7 +380,7 @@ func (e *emitter) externName(fn *types.Func, targs []types.Type, src funcSrc, po
 		}
 		fsig = inst.(*types.Signature)
 	}
-	sig, ok := signature(full, fsig)
+	sig, ok := e.bnd.headerSignature(full, fsig)
 	if !ok {
 		fail(pos, "%s has values, which can not cross the boundary", fn.FullName())
 	}
@@ -504,7 +532,33 @@ func (e *emitter) eq(a, b string, t types.Type) string {
 	if isStruct(t) {
 		return e.structName(t) + "$e(" + a + ", " + b + ")"
 	}
+	if isInterface(t) && isSealed(t) {
+		return e.unionEq(t) + "(" + a + ", " + b + ")"
+	}
 	return "(" + a + " === " + b + ")"
+}
+
+// unionEq requests the function, which compares two values of a sealed interface: they are equal, if they have the
+// same variant and equal values of it.
+func (e *emitter) unionEq(t types.Type) string {
+	key := "UE:" + typeKey(t)
+	if n, ok := e.names[key]; ok {
+		return n
+	}
+	name := e.ident(e.pkgPrefixOf(t) + "$" + sanitize(typeBase(t)) + "$ueq")
+	e.names[key] = name
+
+	variants, _ := sealedVariants(t)
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "function %s(a, b) {\n\tif (a.m !== b.m) return false;\n", name)
+	for _, v := range variants {
+		if isStruct(v) || (isInterface(v) && isSealed(v)) {
+			fmt.Fprintf(&sb, "\tif (a.m === %s) return %s;\n", e.methodTable(v), e.eq("a.v", "b.v", v))
+		}
+	}
+	sb.WriteString("\treturn a.v === b.v;\n}\n")
+	e.out.WriteString(sb.String())
+	return name
 }
 
 // methodTable requests the methods of t, which an interface value of a t calls, and returns its name. A value

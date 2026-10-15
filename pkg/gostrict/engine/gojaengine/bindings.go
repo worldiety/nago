@@ -56,7 +56,7 @@ func CheckBindings(ctx context.Context, b *gostrict.Bundle, host gostrict.Funcs,
 		for i := 0; i < n+len(edges); i++ {
 			args := make([]any, len(x.Params))
 			for j, t := range x.Params {
-				args[j] = sample(rnd, t.Kind, i)
+				args[j] = sampleType(rnd, b, t, i, 0)
 			}
 
 			want := native(args)
@@ -77,6 +77,42 @@ const Tolerance = 1e-9
 
 // edges are the indices of the samples, which are edge cases rather than random values.
 var edges = make([]struct{}, 8)
+
+// sampleType returns a value of the type: records, lists and maps of samples, whose lists are short and whose
+// nesting is limited.
+func sampleType(rnd *rand.Rand, b *gostrict.Bundle, t gostrict.Type, i, depth int) any {
+	switch t.Kind {
+	case gostrict.ValueRecord:
+		var fields []any
+		for _, f := range b.Records[t.Name].Fields {
+			fields = append(fields, sampleType(rnd, b, f.Type, i, depth+1))
+		}
+		return fields
+	case gostrict.ValueList:
+		res := []any{}
+		if depth < 3 {
+			for range rnd.IntN(4) {
+				res = append(res, sampleType(rnd, b, *t.Elem, rnd.IntN(1000), depth+1))
+			}
+		}
+		return res
+	case gostrict.ValueMap:
+		res := []any{}
+		seen := map[any]bool{}
+		if depth < 3 {
+			for range rnd.IntN(4) {
+				k := sampleType(rnd, b, *t.Key, rnd.IntN(1000), depth+1)
+				if seen[k] {
+					continue
+				}
+				seen[k] = true
+				res = append(res, []any{k, sampleType(rnd, b, *t.Elem, rnd.IntN(1000), depth+1)})
+			}
+		}
+		return res
+	}
+	return sample(rnd, t.Kind, i)
+}
 
 func sample(rnd *rand.Rand, k gostrict.ValueKind, i int) any {
 	edge := i < len(edges)

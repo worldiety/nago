@@ -157,3 +157,52 @@ func mustLoad(t *testing.T, e gostrict.Engine, b *gostrict.Bundle) gostrict.Inst
 	}
 	return in
 }
+
+// TestStickyPool calls the functions of states in the instances, which created them, also concurrently.
+func TestStickyPool(t *testing.T) {
+	b, diags, err := gostrict.NewCache(1).Compile("llm.local/s", script("package s\n\ntype Counter struct{ N int32 }\n\nfunc New() *Counter { return &Counter{} }\n\nfunc Inc(c *Counter) int32 {\n\tc.N++\n\treturn c.N\n}\n"))
+	if err != nil || len(diags) > 0 {
+		t.Fatal(err, diags.Text())
+	}
+	ctx := context.Background()
+	pool, err := gostrict.NewPool(ctx, goEngine, b, nil, 3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pool.Close()
+
+	var states []gostrict.Token
+	for range 6 {
+		res, err := pool.Call(ctx, "New")
+		if err != nil {
+			t.Fatal(err)
+		}
+		states = append(states, res[0].(gostrict.Token))
+	}
+
+	var wg sync.WaitGroup
+	for _, s := range states {
+		for range 4 {
+			wg.Go(func() {
+				for range 50 {
+					if _, err := pool.Call(ctx, "Inc", s); err != nil {
+						t.Error(err)
+						return
+					}
+				}
+			})
+		}
+	}
+	wg.Wait()
+
+	for i, s := range states {
+		res, err := pool.Call(ctx, "Inc", s)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if res[0] != int32(201) {
+			t.Fatalf("state %d: %v", i, res[0])
+		}
+		pool.Release(s)
+	}
+}

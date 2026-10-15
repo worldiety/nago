@@ -104,6 +104,13 @@ func FromInt(n int32) string {
 	return strconv.Itoa(int(n))
 }
 
+// FromFloat formats f with the number of decimals from 0 to 100, e.g. "3.14" for FromFloat(3.14159, 2). It rounds
+// the exact binary value of f half to even, e.g. "0.12" for 0.125, which is exact, and "0.13" for 0.135, which is
+// slightly more in binary. It writes no exponent, NaN as "NaN" and the infinities as "+Inf" and "-Inf".
+func FromFloat(f float64, decimals int32) string {
+	return strconv.FormatFloat(f, 'f', int(min(max(decimals, 0), 100)), 64)
+}
+
 // ParseInt parses a decimal integer with an optional sign, e.g. "-42". It fails for anything else and for numbers
 // beyond the range of int32.
 func ParseInt(s string) (int32, error) {

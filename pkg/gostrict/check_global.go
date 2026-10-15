@@ -60,7 +60,7 @@ func mutableTypeSeen(t types.Type, seen map[types.Type]bool) string {
 		return ""
 	case isOpaque(t):
 		n := types.Unalias(t).(*types.Named)
-		if n.Obj().Name() == "Frozen" {
+		if n.Obj().Name() == "Frozen" || isOption(t) {
 			return mutableTypeSeen(n.TypeArgs().At(0), seen)
 		}
 		return "a " + n.Obj().Pkg().Name() + "." + n.Obj().Name() + ", which can change"

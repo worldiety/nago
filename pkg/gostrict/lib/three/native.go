@@ -29,6 +29,10 @@ type node struct {
 	aspect   float64
 	geometry *node
 	material *node
+	name     string
+	hidden   bool
+	opacity  float64
+	vertices [][3]float64
 }
 
 var (
@@ -37,15 +41,23 @@ var (
 )
 
 func newNode(kind string) js.Ref {
-	return js.NewRef(&node{kind: kind, scale: 1})
+	return js.NewRef(&node{kind: kind, scale: 1, opacity: 1})
+}
+
+func newMaterial(color uint32) Material {
+	n := newNode("Material")
+	nodeOf(n).color = color
+	return Material{n}
 }
 
 func nodeOf(r js.Ref) *node {
 	return r.Value().(*node)
 }
 
-func refOf[T Mesh | Group | Light | Camera | Scene](h T) js.Ref {
+func refOf[T Mesh | Group | Light | Camera | Scene | Line](h T) js.Ref {
 	switch h := any(h).(type) {
+	case Line:
+		return h.ref
 	case Mesh:
 		return h.ref
 	case Group:
@@ -76,6 +88,12 @@ func dump(sb *strings.Builder, n *node, depth int) {
 	fmt.Fprintf(sb, "%s%s pos=%.2f rot=%.2f scale=%.2f", strings.Repeat("  ", depth), n.kind, n.pos, n.rot, n.scale)
 	if n.material != nil {
 		fmt.Fprintf(sb, " color=%06x", n.material.color)
+	}
+	if n.name != "" {
+		fmt.Fprintf(sb, " name=%q", n.name)
+	}
+	if n.hidden {
+		sb.WriteString(" hidden")
 	}
 	sb.WriteByte('\n')
 	for _, c := range n.children {

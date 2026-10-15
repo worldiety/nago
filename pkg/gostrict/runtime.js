@@ -315,8 +315,66 @@ function $text_Index(s, sub) {
 	return i < 0 ? -1 : $text_RuneCount(s.slice(0, i));
 }
 
+// opt.Option is null or an object with the value, which never changes, so a copy of it is shared
+
+function $oget(o, zero, clone) {
+	if (o === null) return [zero(), false];
+	return [clone(o.v), true];
+}
+
+function $oor(o, d, clone) {
+	return o === null ? d : clone(o.v);
+}
+
 function $text_FromInt(n) {
 	return "" + n;
+}
+
+// $text_FromFloat formats like strconv.FormatFloat(f, 'f', d, 64), which rounds the exact binary value half to
+// even. toFixed rounds the exact value too, but a tie away from zero, so a tie, which has become odd, is corrected.
+function $text_FromFloat(f, d) {
+	d = $M.min($M.max(d, 0), 100);
+	if (f !== f) return "NaN";
+	if (f === Infinity) return "+Inf";
+	if (f === -Infinity) return "-Inf";
+	const neg = f < 0 || Object.is(f, -0);
+	const a = $M.abs(f);
+	let s;
+	if (a >= 1e21) {
+		// an integer, which toFixed would write with an exponent
+		s = BigInt(a).toString() + (d > 0 ? "." + "0".repeat(d) : "");
+	} else {
+		s = a.toFixed(d);
+		if ($ftie(a, d)) {
+			const digits = s.replace(".", "");
+			if ((digits.charCodeAt(digits.length - 1) - 48) % 2 === 1) {
+				const n = (BigInt(digits) - 1n).toString().padStart(digits.length, "0");
+				s = d > 0 ? n.slice(0, n.length - d) + "." + n.slice(n.length - d) : n;
+			}
+		}
+	}
+	return neg ? "-" + s : s;
+}
+
+// $ftie tells, whether the positive finite a lies exactly in the middle between two numbers with d decimals: a is
+// m * 2^e, so 2 * a * 10^d = m * 5^d * 2^(e+1+d) is an odd integer, if the trailing zeros of m cancel the power.
+function $ftie(a, d) {
+	if (a === 0) return false;
+	const v = new DataView(new ArrayBuffer(8));
+	v.setFloat64(0, a);
+	const hi = v.getUint32(0);
+	const lo = v.getUint32(4);
+	let e = (hi >>> 20) & 0x7ff;
+	let m = (BigInt(hi & 0xfffff) << 32n) | BigInt(lo);
+	if (e === 0) {
+		e = 1;
+	} else {
+		m |= 1n << 52n;
+	}
+	e -= 1075;
+	let tz = 0;
+	while (((m >> BigInt(tz)) & 1n) === 0n) tz++;
+	return tz + e + 1 + d === 0;
 }
 
 function $text_ParseInt(s) {
