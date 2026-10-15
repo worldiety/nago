@@ -28,6 +28,10 @@ func Host() gostrict.Funcs {
 			Add[Scene, Camera](Scene{ref: args[0].(js.Ref)}, Camera{ref: args[1].(js.Ref)})
 			return nil
 		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.Add[go.wdy.de/nago/pkg/gostrict/lib/three.Scene,go.wdy.de/nago/pkg/gostrict/lib/three.Line]": func(args []any) []any {
+			Add[Scene, Line](Scene{ref: args[0].(js.Ref)}, Line{ref: args[1].(js.Ref)})
+			return nil
+		},
 		"go.wdy.de/nago/pkg/gostrict/lib/three.Add[go.wdy.de/nago/pkg/gostrict/lib/three.Group,go.wdy.de/nago/pkg/gostrict/lib/three.Mesh]": func(args []any) []any {
 			Add[Group, Mesh](Group{ref: args[0].(js.Ref)}, Mesh{ref: args[1].(js.Ref)})
 			return nil
@@ -43,6 +47,38 @@ func Host() gostrict.Funcs {
 		"go.wdy.de/nago/pkg/gostrict/lib/three.Add[go.wdy.de/nago/pkg/gostrict/lib/three.Group,go.wdy.de/nago/pkg/gostrict/lib/three.Camera]": func(args []any) []any {
 			Add[Group, Camera](Group{ref: args[0].(js.Ref)}, Camera{ref: args[1].(js.Ref)})
 			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.Add[go.wdy.de/nago/pkg/gostrict/lib/three.Group,go.wdy.de/nago/pkg/gostrict/lib/three.Line]": func(args []any) []any {
+			Add[Group, Line](Group{ref: args[0].(js.Ref)}, Line{ref: args[1].(js.Ref)})
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.AddVertex": func(args []any) []any {
+			AddVertex(Geometry{ref: args[0].(js.Ref)}, args[1].(float64), args[2].(float64), args[3].(float64))
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.ClearVertices": func(args []any) []any {
+			ClearVertices(Geometry{ref: args[0].(js.Ref)})
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.DisposeGeometry": func(args []any) []any {
+			DisposeGeometry(Geometry{ref: args[0].(js.Ref)})
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.DisposeMaterial": func(args []any) []any {
+			DisposeMaterial(Material{ref: args[0].(js.Ref)})
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.DisposeTexture": func(args []any) []any {
+			DisposeTexture(Texture{ref: args[0].(js.Ref)})
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.LoadModel": func(args []any) []any {
+			r0 := LoadModel(args[0].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.LoadTexture": func(args []any) []any {
+			r0 := LoadTexture(args[0].(string))
+			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/three.LookAt[go.wdy.de/nago/pkg/gostrict/lib/three.Mesh]": func(args []any) []any {
 			LookAt[Mesh](Mesh{ref: args[0].(js.Ref)}, args[1].(float64), args[2].(float64), args[3].(float64))
@@ -60,16 +96,36 @@ func Host() gostrict.Funcs {
 			LookAt[Camera](Camera{ref: args[0].(js.Ref)}, args[1].(float64), args[2].(float64), args[3].(float64))
 			return nil
 		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.LookAt[go.wdy.de/nago/pkg/gostrict/lib/three.Line]": func(args []any) []any {
+			LookAt[Line](Line{ref: args[0].(js.Ref)}, args[1].(float64), args[2].(float64), args[3].(float64))
+			return nil
+		},
 		"go.wdy.de/nago/pkg/gostrict/lib/three.NewAmbientLight": func(args []any) []any {
 			r0 := NewAmbientLight(args[0].(uint32), args[1].(float64))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.NewBasicMaterial": func(args []any) []any {
+			r0 := NewBasicMaterial(args[0].(uint32))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/three.NewBox": func(args []any) []any {
 			r0 := NewBox(args[0].(float64), args[1].(float64), args[2].(float64))
 			return []any{r0.ref}
 		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.NewBufferGeometry": func(args []any) []any {
+			r0 := NewBufferGeometry()
+			return []any{r0.ref}
+		},
 		"go.wdy.de/nago/pkg/gostrict/lib/three.NewCamera": func(args []any) []any {
 			r0 := NewCamera(args[0].(float64), args[1].(float64), args[2].(float64), args[3].(float64))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.NewCone": func(args []any) []any {
+			r0 := NewCone(args[0].(float64), args[1].(float64), args[2].(int32))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.NewCylinder": func(args []any) []any {
+			r0 := NewCylinder(args[0].(float64), args[1].(float64), args[2].(float64), args[3].(int32))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/three.NewDirectionalLight": func(args []any) []any {
@@ -80,12 +136,40 @@ func Host() gostrict.Funcs {
 			r0 := NewGroup()
 			return []any{r0.ref}
 		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.NewLine": func(args []any) []any {
+			r0 := NewLine(Geometry{ref: args[0].(js.Ref)}, Material{ref: args[1].(js.Ref)})
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.NewLineMaterial": func(args []any) []any {
+			r0 := NewLineMaterial(args[0].(uint32))
+			return []any{r0.ref}
+		},
 		"go.wdy.de/nago/pkg/gostrict/lib/three.NewMaterial": func(args []any) []any {
 			r0 := NewMaterial(args[0].(uint32), args[1].(float64), args[2].(float64))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/three.NewMesh": func(args []any) []any {
 			r0 := NewMesh(Geometry{ref: args[0].(js.Ref)}, Material{ref: args[1].(js.Ref)})
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.NewOrthoCamera": func(args []any) []any {
+			r0 := NewOrthoCamera(args[0].(float64), args[1].(float64), args[2].(float64), args[3].(float64))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.NewPhongMaterial": func(args []any) []any {
+			r0 := NewPhongMaterial(args[0].(uint32), args[1].(float64))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.NewPhysicalMaterial": func(args []any) []any {
+			r0 := NewPhysicalMaterial(args[0].(uint32), args[1].(float64), args[2].(float64), args[3].(float64))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.NewPlane": func(args []any) []any {
+			r0 := NewPlane(args[0].(float64), args[1].(float64))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.NewPointLight": func(args []any) []any {
+			r0 := NewPointLight(args[0].(uint32), args[1].(float64), args[2].(float64))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/three.NewScene": func(args []any) []any {
@@ -96,9 +180,61 @@ func Host() gostrict.Funcs {
 			r0 := NewSphere(args[0].(float64), args[1].(int32))
 			return []any{r0.ref}
 		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.NewSpotLight": func(args []any) []any {
+			r0 := NewSpotLight(args[0].(uint32), args[1].(float64), args[2].(float64), args[3].(float64))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.NewTorus": func(args []any) []any {
+			r0 := NewTorus(args[0].(float64), args[1].(float64))
+			return []any{r0.ref}
+		},
 		"go.wdy.de/nago/pkg/gostrict/lib/three.NewTorusKnot": func(args []any) []any {
 			r0 := NewTorusKnot(args[0].(float64), args[1].(float64))
 			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.Pick": func(args []any) []any {
+			r0, r1, r2 := Pick(Scene{ref: args[0].(js.Ref)}, Camera{ref: args[1].(js.Ref)}, args[2].(float64), args[3].(float64))
+			return []any{r0, r1, r2}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.Remove[go.wdy.de/nago/pkg/gostrict/lib/three.Scene,go.wdy.de/nago/pkg/gostrict/lib/three.Mesh]": func(args []any) []any {
+			Remove[Scene, Mesh](Scene{ref: args[0].(js.Ref)}, Mesh{ref: args[1].(js.Ref)})
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.Remove[go.wdy.de/nago/pkg/gostrict/lib/three.Scene,go.wdy.de/nago/pkg/gostrict/lib/three.Group]": func(args []any) []any {
+			Remove[Scene, Group](Scene{ref: args[0].(js.Ref)}, Group{ref: args[1].(js.Ref)})
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.Remove[go.wdy.de/nago/pkg/gostrict/lib/three.Scene,go.wdy.de/nago/pkg/gostrict/lib/three.Light]": func(args []any) []any {
+			Remove[Scene, Light](Scene{ref: args[0].(js.Ref)}, Light{ref: args[1].(js.Ref)})
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.Remove[go.wdy.de/nago/pkg/gostrict/lib/three.Scene,go.wdy.de/nago/pkg/gostrict/lib/three.Camera]": func(args []any) []any {
+			Remove[Scene, Camera](Scene{ref: args[0].(js.Ref)}, Camera{ref: args[1].(js.Ref)})
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.Remove[go.wdy.de/nago/pkg/gostrict/lib/three.Scene,go.wdy.de/nago/pkg/gostrict/lib/three.Line]": func(args []any) []any {
+			Remove[Scene, Line](Scene{ref: args[0].(js.Ref)}, Line{ref: args[1].(js.Ref)})
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.Remove[go.wdy.de/nago/pkg/gostrict/lib/three.Group,go.wdy.de/nago/pkg/gostrict/lib/three.Mesh]": func(args []any) []any {
+			Remove[Group, Mesh](Group{ref: args[0].(js.Ref)}, Mesh{ref: args[1].(js.Ref)})
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.Remove[go.wdy.de/nago/pkg/gostrict/lib/three.Group,go.wdy.de/nago/pkg/gostrict/lib/three.Group]": func(args []any) []any {
+			Remove[Group, Group](Group{ref: args[0].(js.Ref)}, Group{ref: args[1].(js.Ref)})
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.Remove[go.wdy.de/nago/pkg/gostrict/lib/three.Group,go.wdy.de/nago/pkg/gostrict/lib/three.Light]": func(args []any) []any {
+			Remove[Group, Light](Group{ref: args[0].(js.Ref)}, Light{ref: args[1].(js.Ref)})
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.Remove[go.wdy.de/nago/pkg/gostrict/lib/three.Group,go.wdy.de/nago/pkg/gostrict/lib/three.Camera]": func(args []any) []any {
+			Remove[Group, Camera](Group{ref: args[0].(js.Ref)}, Camera{ref: args[1].(js.Ref)})
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.Remove[go.wdy.de/nago/pkg/gostrict/lib/three.Group,go.wdy.de/nago/pkg/gostrict/lib/three.Line]": func(args []any) []any {
+			Remove[Group, Line](Group{ref: args[0].(js.Ref)}, Line{ref: args[1].(js.Ref)})
+			return nil
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/three.SetAspect": func(args []any) []any {
 			SetAspect(Camera{ref: args[0].(js.Ref)}, args[1].(float64))
@@ -108,8 +244,48 @@ func Host() gostrict.Funcs {
 			SetBackground(Scene{ref: args[0].(js.Ref)}, args[1].(uint32))
 			return nil
 		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.SetCastShadow[go.wdy.de/nago/pkg/gostrict/lib/three.Mesh]": func(args []any) []any {
+			SetCastShadow[Mesh](Mesh{ref: args[0].(js.Ref)}, args[1].(bool))
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.SetCastShadow[go.wdy.de/nago/pkg/gostrict/lib/three.Light]": func(args []any) []any {
+			SetCastShadow[Light](Light{ref: args[0].(js.Ref)}, args[1].(bool))
+			return nil
+		},
 		"go.wdy.de/nago/pkg/gostrict/lib/three.SetColor": func(args []any) []any {
 			SetColor(Material{ref: args[0].(js.Ref)}, args[1].(uint32))
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.SetEmissive": func(args []any) []any {
+			SetEmissive(Material{ref: args[0].(js.Ref)}, args[1].(uint32), args[2].(float64))
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.SetMap": func(args []any) []any {
+			SetMap(Material{ref: args[0].(js.Ref)}, Texture{ref: args[1].(js.Ref)})
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.SetName[go.wdy.de/nago/pkg/gostrict/lib/three.Mesh]": func(args []any) []any {
+			SetName[Mesh](Mesh{ref: args[0].(js.Ref)}, args[1].(string))
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.SetName[go.wdy.de/nago/pkg/gostrict/lib/three.Group]": func(args []any) []any {
+			SetName[Group](Group{ref: args[0].(js.Ref)}, args[1].(string))
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.SetName[go.wdy.de/nago/pkg/gostrict/lib/three.Light]": func(args []any) []any {
+			SetName[Light](Light{ref: args[0].(js.Ref)}, args[1].(string))
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.SetName[go.wdy.de/nago/pkg/gostrict/lib/three.Camera]": func(args []any) []any {
+			SetName[Camera](Camera{ref: args[0].(js.Ref)}, args[1].(string))
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.SetName[go.wdy.de/nago/pkg/gostrict/lib/three.Line]": func(args []any) []any {
+			SetName[Line](Line{ref: args[0].(js.Ref)}, args[1].(string))
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.SetOpacity": func(args []any) []any {
+			SetOpacity(Material{ref: args[0].(js.Ref)}, args[1].(float64))
 			return nil
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/three.SetPosition[go.wdy.de/nago/pkg/gostrict/lib/three.Mesh]": func(args []any) []any {
@@ -128,6 +304,18 @@ func Host() gostrict.Funcs {
 			SetPosition[Camera](Camera{ref: args[0].(js.Ref)}, args[1].(float64), args[2].(float64), args[3].(float64))
 			return nil
 		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.SetPosition[go.wdy.de/nago/pkg/gostrict/lib/three.Line]": func(args []any) []any {
+			SetPosition[Line](Line{ref: args[0].(js.Ref)}, args[1].(float64), args[2].(float64), args[3].(float64))
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.SetReceiveShadow": func(args []any) []any {
+			SetReceiveShadow(Mesh{ref: args[0].(js.Ref)}, args[1].(bool))
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.SetRepeat": func(args []any) []any {
+			SetRepeat(Texture{ref: args[0].(js.Ref)}, args[1].(float64), args[2].(float64))
+			return nil
+		},
 		"go.wdy.de/nago/pkg/gostrict/lib/three.SetRotation[go.wdy.de/nago/pkg/gostrict/lib/three.Mesh]": func(args []any) []any {
 			SetRotation[Mesh](Mesh{ref: args[0].(js.Ref)}, args[1].(float64), args[2].(float64), args[3].(float64))
 			return nil
@@ -142,6 +330,10 @@ func Host() gostrict.Funcs {
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/three.SetRotation[go.wdy.de/nago/pkg/gostrict/lib/three.Camera]": func(args []any) []any {
 			SetRotation[Camera](Camera{ref: args[0].(js.Ref)}, args[1].(float64), args[2].(float64), args[3].(float64))
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.SetRotation[go.wdy.de/nago/pkg/gostrict/lib/three.Line]": func(args []any) []any {
+			SetRotation[Line](Line{ref: args[0].(js.Ref)}, args[1].(float64), args[2].(float64), args[3].(float64))
 			return nil
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/three.SetScale[go.wdy.de/nago/pkg/gostrict/lib/three.Mesh]": func(args []any) []any {
@@ -160,8 +352,44 @@ func Host() gostrict.Funcs {
 			SetScale[Camera](Camera{ref: args[0].(js.Ref)}, args[1].(float64))
 			return nil
 		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.SetScale[go.wdy.de/nago/pkg/gostrict/lib/three.Line]": func(args []any) []any {
+			SetScale[Line](Line{ref: args[0].(js.Ref)}, args[1].(float64))
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.SetVisible[go.wdy.de/nago/pkg/gostrict/lib/three.Mesh]": func(args []any) []any {
+			SetVisible[Mesh](Mesh{ref: args[0].(js.Ref)}, args[1].(bool))
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.SetVisible[go.wdy.de/nago/pkg/gostrict/lib/three.Group]": func(args []any) []any {
+			SetVisible[Group](Group{ref: args[0].(js.Ref)}, args[1].(bool))
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.SetVisible[go.wdy.de/nago/pkg/gostrict/lib/three.Light]": func(args []any) []any {
+			SetVisible[Light](Light{ref: args[0].(js.Ref)}, args[1].(bool))
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.SetVisible[go.wdy.de/nago/pkg/gostrict/lib/three.Camera]": func(args []any) []any {
+			SetVisible[Camera](Camera{ref: args[0].(js.Ref)}, args[1].(bool))
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.SetVisible[go.wdy.de/nago/pkg/gostrict/lib/three.Line]": func(args []any) []any {
+			SetVisible[Line](Line{ref: args[0].(js.Ref)}, args[1].(bool))
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.SetWireframe": func(args []any) []any {
+			SetWireframe(Material{ref: args[0].(js.Ref)}, args[1].(bool))
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.Shadows": func(args []any) []any {
+			Shadows(args[0].(bool))
+			return nil
+		},
 		"go.wdy.de/nago/pkg/gostrict/lib/three.Show": func(args []any) []any {
 			Show(Scene{ref: args[0].(js.Ref)}, Camera{ref: args[1].(js.Ref)})
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/three.UpdateGeometry": func(args []any) []any {
+			UpdateGeometry(Geometry{ref: args[0].(js.Ref)})
 			return nil
 		},
 	}

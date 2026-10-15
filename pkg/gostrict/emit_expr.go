@@ -203,6 +203,9 @@ func (c *fnCtx) funcLit(f *ast.FuncLit) string {
 	if sub.rangeReturn {
 		sb.WriteString("\tlet $rr = false, $rv;\n")
 	}
+	if sub.rangeBranch {
+		sb.WriteString("\tlet $rb = null;\n")
+	}
 	body := sub.b.String()
 	// indent the body relative to the current line
 	pad := strings.Repeat("\t", c.ind)
@@ -415,7 +418,12 @@ func (c *fnCtx) binary(b *ast.BinaryExpr) string {
 		case c.isNil(b.Y):
 			return neg + "(" + c.expr(b.X) + " === null)"
 		}
-		return neg + c.e.eq(c.expr(b.X), c.expr(b.Y), c.typeOf(b.X))
+		// a variant is compared with a sealed interface as an interface value
+		t := c.typeOf(b.X)
+		if isInterface(c.typeOf(b.Y)) {
+			t = c.typeOf(b.Y)
+		}
+		return neg + c.e.eq(c.val(b.X, t), c.val(b.Y, t), t)
 	}
 	return c.binaryJS(b.Op, c.expr(b.X), c.expr(b.Y), c.typeOf(b.X), c.typeOf(b.Y), b.Pos())
 }
@@ -523,6 +531,11 @@ func (c *fnCtx) call(call *ast.CallExpr) string {
 // args translates the arguments for the parameters of sig. The variadic arguments of a function of a header
 // package are passed as an array.
 func (c *fnCtx) args(call *ast.CallExpr, sig *types.Signature) string {
+	return c.argsFor(nil, call, sig)
+}
+
+// argsFor translates the arguments of a call of fn, which needs no copies of the structs, which it only reads.
+func (c *fnCtx) argsFor(fn *types.Func, call *ast.CallExpr, sig *types.Signature) string {
 	params := sig.Params()
 	if len(call.Args) == 1 && params.Len() > 1 {
 		// f(g()) with several results of g
@@ -536,7 +549,7 @@ func (c *fnCtx) args(call *ast.CallExpr, sig *types.Signature) string {
 			rest = append(rest, c.val(a, elem))
 			continue
 		}
-		res = append(res, c.val(a, params.At(i).Type()))
+		res = append(res, c.argVal(fn, i, a, params.At(i).Type()))
 	}
 	if sig.Variadic() {
 		res = append(res, "["+strings.Join(rest, ", ")+"]")
@@ -562,13 +575,20 @@ func (c *fnCtx) funcCall(fn *types.Func, id *ast.Ident, call *ast.CallExpr, sig 
 		if fn.Name() == "New" {
 			return "$dnew()"
 		}
+	case optPath:
+		switch fn.Name() {
+		case "Some":
+			return "{ v: " + c.val(call.Args[0], targs[0]) + " }"
+		case "None":
+			return "null"
+		}
 	}
 
 	if src, ok := c.e.decls[fn.Origin()]; ok && src.pkg.Kind == KindHeader && !strings.HasPrefix(p, stdPrefix) {
 		return c.e.externName(fn, targs, src, id.Pos()) + "(" + c.args(call, sig) + ")"
 	}
 
-	return c.funcRef(fn, targs, id.Pos()) + "(" + c.args(call, sig) + ")"
+	return c.funcRef(fn, targs, id.Pos()) + "(" + c.argsFor(fn, call, sig) + ")"
 }
 
 func (c *fnCtx) listFunc(name string, targs []types.Type, call *ast.CallExpr, sig *types.Signature) string {
@@ -597,7 +617,14 @@ func (c *fnCtx) methodCall(se *ast.SelectorExpr, call *ast.CallExpr, sig *types.
 	if !m.iface && isOpaque(m.named) {
 		return c.opaqueMethod(m.named, se, call, sig)
 	}
-	return c.methodCallJS(se, c.receiver(se), false, c.args(call, sig))
+	recv := ""
+	if !m.iface && isStruct(m.named) && !isPointer(m.recvType) && !m.ptrRecv && c.unaliased(se.X) && c.e.readonly(m.fn).recv {
+		// the method only reads its receiver, which the call does not need to copy, unlike a method value
+		recv = c.expr(se.X)
+	} else {
+		recv = c.receiver(se)
+	}
+	return c.methodCallJS(se, recv, false, c.argsFor(m.fn, call, sig))
 }
 
 func (c *fnCtx) opaqueMethod(named *types.Named, se *ast.SelectorExpr, call *ast.CallExpr, sig *types.Signature) string {
@@ -651,6 +678,12 @@ func (c *fnCtx) opaqueMethod(named *types.Named, se *ast.SelectorExpr, call *ast
 		return "$dall(" + r + ", " + c.e.cloneFn(args[1]) + ")"
 	case "Map.Keys":
 		return "$dkeysSeq(" + r + ")"
+	case "Option.Get":
+		return "$oget(" + r + ", " + c.e.zeroFn(args[0]) + ", " + c.e.cloneFn(args[0]) + ")"
+	case "Option.Or":
+		return "$oor(" + r + ", " + arg(0, args[0]) + ", " + c.e.cloneFn(args[0]) + ")"
+	case "Option.IsSome":
+		return "(" + r + " !== null)"
 	}
 	fail(se.Pos(), "%s.%s is not supported", named.Obj().Name(), se.Sel.Name)
 	return ""

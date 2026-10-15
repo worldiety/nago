@@ -11,16 +11,25 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 	"slices"
+	"sync"
 )
 
 // Pool distributes calls over several instances of a bundle, so that concurrent callers, e.g. the requests of a
 // server, do not wait for each other. The package variables of a program never change, so the instances are
-// interchangeable. A state, see [ValueState], belongs to the instance, which created it, so a pool serves only
-// functions without states.
+// interchangeable for functions without a state. A state, see [ValueState], belongs to the instance, which created
+// it, so the pool calls a function, which takes a state, in that instance: it is sticky. The calls of a state are
+// serialized, the calls of different instances run concurrently. [Pool.Release] forgets a state, which is no longer
+// used.
 type Pool struct {
-	free chan Instance
-	all  []Instance
+	free  chan int
+	all   []Instance
+	locks []sync.Mutex
+
+	mu sync.Mutex
+	// owners maps the value of a token to the index of the instance, which created it
+	owners map[any]int
 }
 
 var _ Instance = (*Pool)(nil)
@@ -30,29 +39,77 @@ func NewPool(ctx context.Context, e Engine, b *Bundle, host Funcs, size int) (*P
 	if size < 1 {
 		return nil, errors.New("a pool needs at least one instance")
 	}
-	p := &Pool{free: make(chan Instance, size)}
-	for range size {
+	p := &Pool{free: make(chan int, size), locks: make([]sync.Mutex, size), owners: map[any]int{}}
+	for i := range size {
 		in, err := e.Load(ctx, b, host)
 		if err != nil {
 			_ = p.Close()
 			return nil, err
 		}
 		p.all = append(p.all, in)
-		p.free <- in
+		p.free <- i
 	}
 	return p, nil
 }
 
-// Call waits for a free instance and calls the function in it.
+// Call calls the function in the instance, which owns the state among the arguments, or in a free instance.
 func (p *Pool) Call(ctx context.Context, name string, args ...any) ([]any, error) {
-	var in Instance
+	if i, ok := p.owner(args); ok {
+		return p.callIn(ctx, i, name, args)
+	}
+
+	var i int
 	select {
-	case in = <-p.free:
+	case i = <-p.free:
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	}
-	defer func() { p.free <- in }()
-	return in.Call(ctx, name, args...)
+	defer func() { p.free <- i }()
+	return p.callIn(ctx, i, name, args)
+}
+
+func (p *Pool) callIn(ctx context.Context, i int, name string, args []any) ([]any, error) {
+	p.locks[i].Lock()
+	defer p.locks[i].Unlock()
+	res, err := p.all[i].Call(ctx, name, args...)
+	if err != nil {
+		return nil, err
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	for _, r := range res {
+		if tok, ok := r.(Token); ok && comparable(tok.v) {
+			p.owners[tok.v] = i
+		}
+	}
+	return res, nil
+}
+
+func (p *Pool) owner(args []any) (int, bool) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	for _, a := range args {
+		if tok, ok := a.(Token); ok && comparable(tok.v) {
+			if i, ok := p.owners[tok.v]; ok {
+				return i, true
+			}
+		}
+	}
+	return 0, false
+}
+
+// Release forgets the state, after the caller has dropped it, so that the pool does not keep it.
+func (p *Pool) Release(tok Token) {
+	if !comparable(tok.v) {
+		return
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	delete(p.owners, tok.v)
+}
+
+func comparable(v any) bool {
+	return v != nil && reflect.TypeOf(v).Comparable()
 }
 
 // Close closes all instances.

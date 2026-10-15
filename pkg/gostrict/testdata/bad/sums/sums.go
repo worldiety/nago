@@ -43,7 +43,7 @@ func NotVariant(s Shape) float64 {
 	switch s.(type) {
 	case Circle, Rect:
 		return 1
-	case *Square: // want GS013
+	case *Square:
 		return 2
 	}
 	return 0

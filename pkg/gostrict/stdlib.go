@@ -15,6 +15,7 @@ const (
 	numPath   = stdPrefix + "num"
 	jsPath    = stdPrefix + "js"
 	msgPath   = stdPrefix + "msg"
+	optPath   = stdPrefix + "opt"
 )
 
 // stdAllowed contains the packages of the standard library, which the subset allows, with the functions, which
@@ -44,11 +45,11 @@ type hint struct {
 var importHints = map[string]hint{
 	"fmt": {
 		"fmt formats with reflection, which the subset does not have",
-		"build strings with + and text.FromInt(n), join a list with text.Join(l, sep), return values instead of printing them",
+		"build strings with + and text.FromInt(n) or text.FromFloat(f, decimals), join a list with text.Join(l, sep), return values instead of printing them",
 	},
 	"strconv": {
 		"its functions work with int, which the subset replaces by int32",
-		`use text.FromInt(n) and text.ParseInt(s) from "go.wdy.de/nago/pkg/gostrict/std/text"`,
+		`use text.FromInt(n), text.FromFloat(f, decimals) and text.ParseInt(s) from "go.wdy.de/nago/pkg/gostrict/std/text"`,
 	},
 	"sort": {
 		"sort works on slices, which the subset replaces by list.List",

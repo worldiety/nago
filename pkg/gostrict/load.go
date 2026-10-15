@@ -37,7 +37,16 @@ var stdFS embed.FS
 //go:embed all:_stubs
 var stubFS embed.FS
 
-const stdModule = "go.wdy.de/nago/pkg/gostrict/std"
+// The sources of the libraries of hosts, e.g. lib/three. They are header packages like the library of the
+// subset, so that a program, which an application loads from untrusted modules, may use them.
+//
+//go:embed lib
+var libFS embed.FS
+
+const (
+	stdModule = "go.wdy.de/nago/pkg/gostrict/std"
+	libModule = "go.wdy.de/nago/pkg/gostrict/lib"
+)
 
 // Kind tells, how a package is translated.
 type Kind int
@@ -71,6 +80,12 @@ type Program struct {
 	// Diagnostics contains the import and type errors.
 	Diagnostics Diagnostics
 	sources     map[string][]byte
+	// Terminating requires the terminating profile of all packages in the subset, see the directive
+	// //gostrict:terminating.
+	Terminating bool
+	// importNames maps the name of a file to its import path and name, e.g. example.com/app/main.go, which a
+	// source map shows instead of the path on disk
+	importNames map[string]string
 }
 
 // Package returns the loaded package or nil.
@@ -87,6 +102,10 @@ type Module struct {
 	// Dir is put before the paths of the files in diagnostics, e.g. the directory of FS on disk. If empty, the
 	// module path is used.
 	Dir string
+	// Trusted allows header packages in the module, whose bodies are not checked and whose JavaScript bindings
+	// run with all rights of the host, e.g. in a browser. A module, which a language model or a user has written,
+	// must not be trusted, so its header packages are reported. The libraries std and lib are always trusted.
+	Trusted bool
 }
 
 const headerDirective = "//gostrict:header"
@@ -115,25 +134,43 @@ func Load(dir string) (*Program, error) {
 		importPath = path.Join(modPath, filepath.ToSlash(rel))
 	}
 
-	return LoadModules(importPath, Module{Path: modPath, FS: os.DirFS(modDir), Dir: modDir})
+	// the sources on disk belong to the developer, so they are trusted
+	return LoadModules(importPath, Module{Path: modPath, FS: os.DirFS(modDir), Dir: modDir, Trusted: true})
 }
 
 // LoadModules loads the package main and the packages, which it imports, from the modules. It needs neither a Go
 // installation nor the go command: the library of the subset and the allowed packages of the standard library
 // are built in. A package is read from the module with the longest matching path, so a module may provide its
-// own header packages.
+// own header packages, if it is trusted, see [Module.Trusted].
 func LoadModules(main string, modules ...Module) (*Program, error) {
 	std, err := fs.Sub(stdFS, "std")
 	if err != nil {
 		return nil, err
 	}
-	modules = append(slices.Clone(modules), Module{Path: stdModule, FS: std})
-	slices.SortStableFunc(modules, func(a, b Module) int { return len(b.Path) - len(a.Path) })
+	lib, err := fs.Sub(libFS, "lib")
+	if err != nil {
+		return nil, err
+	}
+	modules = append(slices.Clone(modules), Module{Path: stdModule, FS: std, Trusted: true}, Module{Path: libModule, FS: lib, Trusted: true})
+	// the longest path wins and a trusted module wins over an untrusted one with the same path, so that an
+	// untrusted module can not replace a library
+	slices.SortStableFunc(modules, func(a, b Module) int {
+		if len(a.Path) != len(b.Path) {
+			return len(b.Path) - len(a.Path)
+		}
+		switch {
+		case a.Trusted && !b.Trusted:
+			return -1
+		case b.Trusted && !a.Trusted:
+			return 1
+		}
+		return 0
+	})
 
 	fset := token.NewFileSet()
 	l := &loader{
 		fset:    fset,
-		prog:    &Program{Fset: fset, byPath: map[string]*Package{}, sources: map[string][]byte{}},
+		prog:    &Program{Fset: fset, byPath: map[string]*Package{}, sources: map[string][]byte{}, importNames: map[string]string{}},
 		modules: modules,
 		loading: map[string]bool{},
 	}
@@ -196,7 +233,7 @@ func (l *loader) find(importPath string) (Module, string, bool) {
 		if err != nil {
 			return Module{}, "", false
 		}
-		return Module{FS: sub, Dir: "go"}, importPath, true
+		return Module{FS: sub, Dir: "go", Trusted: true}, importPath, true
 	}
 	for _, m := range l.modules {
 		if importPath == m.Path {
@@ -256,6 +293,7 @@ func (l *loader) load(importPath string) (*Package, error) {
 
 		fname := l.fileName(m, dir, name)
 		l.prog.sources[fname] = src
+		l.prog.importNames[fname] = path.Join(importPath, name)
 		f, err := parser.ParseFile(l.fset, fname, src, parser.ParseComments|parser.SkipObjectResolution)
 		if err != nil {
 			l.reportParseError(err)
@@ -264,8 +302,14 @@ func (l *loader) load(importPath string) (*Package, error) {
 			}
 		}
 		p.Files = append(p.Files, f)
-		if p.Kind == KindUser && hasHeaderDirective(f) {
-			p.Kind = KindHeader
+		if p.Kind == KindUser {
+			if pos, ok := headerDirectivePos(f); ok {
+				if m.Trusted {
+					p.Kind = KindHeader
+				} else {
+					l.diag.report(pos, pos+token.Pos(len(headerDirective)), CodeUntrusted, "the package "+importPath+" declares itself a header package, but its module is not trusted", "a header package is not checked and its JavaScript bindings run with all rights of the host, so only the application may provide it", "remove "+headerDirective+" and write the package in the subset, or use a library like go.wdy.de/nago/pkg/gostrict/lib/three")
+				}
+			}
 		}
 		if p.Name == "" {
 			p.Name = f.Name.Name
@@ -390,16 +434,17 @@ func (l *loader) reportParseError(err error) {
 	}
 }
 
-func hasHeaderDirective(f *ast.File) bool {
+// headerDirectivePos returns the position of the directive //gostrict:header in the documentation of the file.
+func headerDirectivePos(f *ast.File) (token.Pos, bool) {
 	if f.Doc == nil {
-		return false
+		return token.NoPos, false
 	}
 	for _, c := range f.Doc.List {
 		if strings.TrimSpace(c.Text) == headerDirective {
-			return true
+			return c.Slash, true
 		}
 	}
-	return false
+	return token.NoPos, false
 }
 
 func findModule(dir string) (modDir, modPath string, err error) {

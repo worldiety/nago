@@ -48,12 +48,18 @@ func Check(prog *Program) Diagnostics {
 			c.checkGlobals(f)
 			c.collectPairs(f)
 			ast.Inspect(f, c.visit)
+			c.collectFixes(f)
+			if prog.terminating(p) {
+				c.checkLoops(f)
+			}
 		}
 	}
 
 	if prog.Main.Kind == KindUser {
 		checkHandlers(prog.Main, d)
 	}
+	checkRecursion(prog, d, decls)
+	d.attachEdits()
 	return dropFollowUps(d.sorted())
 }
 
@@ -293,7 +299,9 @@ func (c *checker) visitNode(n ast.Node) {
 	case *ast.CompositeLit:
 		c.checkType(n, c.info.TypeOf(n))
 		c.checkMissingFields(n)
-		if isOpaque(c.info.TypeOf(n)) {
+		if t := c.info.TypeOf(n); isOption(t) {
+			c.report(n, CodeOpaqueLiteral, "composite literals of opt.Option are not allowed", "an option is created by its functions", "use opt.Some(v) or opt.None[T]()")
+		} else if isOpaque(t) {
 			c.report(n, CodeOpaqueLiteral, "composite literals of list.List and dict.Map are not allowed", "the zero value can not be appended to", "use list.New[T](), list.Of(a, b) or dict.New[K, V]()")
 		}
 	case *ast.ChanType:
@@ -306,7 +314,9 @@ func (c *checker) visitNode(n ast.Node) {
 }
 
 func (c *checker) checkConstant(e ast.Expr, tv types.TypeAndValue) {
-	c.checkType(e, tv.Type)
+	if !c.stdIntArg(e) {
+		c.checkType(e, tv.Type)
+	}
 	switch tv.Value.Kind() {
 	case constant.String:
 		if !utf8.ValidString(constant.StringVal(tv.Value)) {
@@ -322,6 +332,24 @@ func (c *checker) checkConstant(e ast.Expr, tv types.TypeAndValue) {
 }
 
 const maxSafeInt = 1<<53 - 1
+
+// stdIntArg tells, whether the constant is an argument of an int parameter of an allowed function of the standard
+// library, e.g. the sign of math.IsInf(x, 0), which the runtime implements, so the int never becomes a variable.
+func (c *checker) stdIntArg(e ast.Expr) bool {
+	if len(c.stack) == 0 {
+		return false
+	}
+	call, ok := c.stack[len(c.stack)-1].(*ast.CallExpr)
+	if !ok || !slices.Contains(call.Args, e) || c.isForbiddenStdCall(call) {
+		return false
+	}
+	se, ok := ast.Unparen(call.Fun).(*ast.SelectorExpr)
+	if !ok {
+		return false
+	}
+	fn, ok := c.info.Uses[se.Sel].(*types.Func)
+	return ok && fn.Pkg() != nil && isStdPath(fn.Pkg().Path())
+}
 
 func (c *checker) checkFuncType(n *ast.FuncType) {
 	if n.Params != nil {
@@ -349,27 +377,8 @@ func (c *checker) checkBranch(n *ast.BranchStmt) {
 		c.report(n, CodeControl, "fallthrough is not allowed", "the cases of a switch are translated into an if chain", "list several values in one case, e.g. case 1, 2:")
 		return
 	}
-
-	if n.Label == nil {
-		return
-	}
-
-	// a range over an iterator is translated into a callback, which can not break an outer loop
-	for i := len(c.stack) - 1; i >= 0; i-- {
-		switch s := c.stack[i].(type) {
-		case *ast.LabeledStmt:
-			if s.Label.Name == n.Label.Name {
-				return
-			}
-		case *ast.RangeStmt:
-			if c.isIterator(s.X) && !c.isBuiltinIterator(s.X) {
-				c.report(n, CodeRangeFuncBranch, n.Tok.String()+" "+n.Label.Name+" leaves a range over an iterator", "the body of a range over an iterator is translated into a function, which can only stop its own loop", "set a flag, break the inner loop and check the flag in the outer one")
-				return
-			}
-		case *ast.FuncLit:
-			return
-		}
-	}
+	// a labeled break or continue, which leaves a range over an iterator, is stored and performed after the call
+	// of the iterator, see fnCtx.branchTo
 }
 
 func (c *checker) checkUnary(n *ast.UnaryExpr) {
@@ -397,8 +406,12 @@ func (c *checker) checkBinary(n *ast.BinaryExpr) {
 		if c.isNil(n.X) || c.isNil(n.Y) {
 			return
 		}
-		if t := c.info.TypeOf(n.X); containsInterface(t) {
-			c.report(n, CodeInterfaceEqual, "comparing interface values is not allowed", "the subset compares interfaces only with nil", "compare a distinct value, e.g. the result of a method, or compare with nil")
+		t := c.info.TypeOf(n.X)
+		if isInterface(c.info.TypeOf(n.Y)) {
+			t = c.info.TypeOf(n.Y)
+		}
+		if containsInterface(t) && !unionComparable(t, map[types.Type]bool{}) {
+			c.report(n, CodeInterfaceEqual, "comparing interface values is not allowed", "the subset compares interfaces only with nil and sealed interfaces, whose variants are all comparable, like the union types of golang/go#76920", "compare a distinct value, e.g. the result of a method, or compare with nil")
 		}
 	}
 }
@@ -682,24 +695,6 @@ func (c *checker) hasIntTerm(t types.Type) bool {
 	return ok && isInt(b)
 }
 
-func (c *checker) isIterator(x ast.Expr) bool {
-	_, ok := c.info.TypeOf(x).Underlying().(*types.Signature)
-	return ok
-}
-
-// isBuiltinIterator tells, whether x is an iterator of list.List or dict.Map, which is translated into a loop.
-func (c *checker) isBuiltinIterator(x ast.Expr) bool {
-	call, ok := ast.Unparen(x).(*ast.CallExpr)
-	if !ok {
-		return false
-	}
-	se, ok := ast.Unparen(call.Fun).(*ast.SelectorExpr)
-	if !ok {
-		return false
-	}
-	return isOpaque(c.info.TypeOf(se.X))
-}
-
 func termsHave(tp *types.TypeParam, pred func(*types.Basic) bool) bool {
 	iface, ok := tp.Constraint().Underlying().(*types.Interface)
 	if !ok {
@@ -727,7 +722,8 @@ func isStringType(t types.Type) bool {
 	return ok && b.Info()&types.IsString != 0
 }
 
-// isOpaque tells, whether t is a list.List or dict.Map, which the runtime represents natively.
+// isOpaque tells, whether t is a list.List, dict.Map, msg.Out or opt.Option, which the runtime represents
+// natively.
 func isOpaque(t types.Type) bool {
 	if t == nil {
 		return false
@@ -737,7 +733,14 @@ func isOpaque(t types.Type) bool {
 		return false
 	}
 	p := n.Obj().Pkg().Path()
-	return (p == listPath && (n.Obj().Name() == "List" || n.Obj().Name() == "Frozen")) || (p == dictPath && n.Obj().Name() == "Map") || (p == msgPath && n.Obj().Name() == "Out")
+	return (p == listPath && (n.Obj().Name() == "List" || n.Obj().Name() == "Frozen")) || (p == dictPath && n.Obj().Name() == "Map") || (p == msgPath && n.Obj().Name() == "Out") || isOption(t)
+}
+
+// isOption tells, whether t is an opt.Option, whose zero value is valid: it holds nothing. In JavaScript, it is
+// null or an object with the value, which never changes.
+func isOption(t types.Type) bool {
+	n, ok := types.Unalias(t).(*types.Named)
+	return ok && n.Obj().Pkg() != nil && n.Obj().Pkg().Path() == optPath && n.Obj().Name() == "Option"
 }
 
 func containsInterface(t types.Type) bool {

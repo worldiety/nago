@@ -30,7 +30,7 @@ func (c *checker) checkTypeSwitch(n *ast.TypeSwitchStmt) {
 		return
 	}
 
-	covered := map[*types.Named]bool{}
+	covered := map[types.Type]bool{}
 	hasDefault := false
 	for _, st := range n.Body.List {
 		cc := st.(*ast.CaseClause)
@@ -39,7 +39,7 @@ func (c *checker) checkTypeSwitch(n *ast.TypeSwitchStmt) {
 			continue
 		}
 		for _, e := range cc.List {
-			ct, _ := types.Unalias(c.info.TypeOf(e)).(*types.Named)
+			ct := types.Unalias(c.info.TypeOf(e))
 			idx := -1
 			for i, v := range variants {
 				if ct != nil && types.Identical(v, ct) {
@@ -60,7 +60,7 @@ func (c *checker) checkTypeSwitch(n *ast.TypeSwitchStmt) {
 	var missing []string
 	for _, v := range variants {
 		if !covered[v] {
-			missing = append(missing, v.Obj().Name())
+			missing = append(missing, variantName(v))
 		}
 	}
 	if len(missing) > 0 {
@@ -68,10 +68,10 @@ func (c *checker) checkTypeSwitch(n *ast.TypeSwitchStmt) {
 	}
 }
 
-func variantNames(variants []*types.Named) string {
+func variantNames(variants []types.Type) string {
 	var names []string
 	for _, v := range variants {
-		names = append(names, v.Obj().Name())
+		names = append(names, variantName(v))
 	}
 	return joinNames(names)
 }

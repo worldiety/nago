@@ -20,17 +20,23 @@
 //   - named struct types, pointers to them, created only by &T{...}, functions and interfaces with methods.
 //   - list.List[T] and dict.Map[K, V] from go.wdy.de/nago/pkg/gostrict/std instead of slices and maps. A dict
 //     iterates in the order of insertion.
+//   - opt.Option[T] for a value, which may be missing, e.g. the next node of a list, Next opt.Option[*Node]. Its
+//     zero value is empty, so it may be left out of a struct literal. opt.Some(v) and opt.None[T]() create it,
+//     o.Get() returns (T, bool) and o.Or(def) the value or def.
 //   - generic functions, types and methods, including methods with own type parameters.
 //   - sealed interfaces as sum types: an interface with an unexported method, e.g. interface{ isShape() }, is
 //     implemented only by the types of its package, its variants. A type switch over its variants must be
 //     exhaustive or have a default case, like the union types of golang/go#76920, whose notation can replace it
-//     once Go has them. A type switch over another interface and type assertions are not allowed.
+//     once Go has them. A variant may implement it with a pointer receiver, then *T is the variant, and a generic
+//     sealed interface, e.g. Result[T], has the generic types of its package as variants, e.g. Ok[T]. Two values
+//     compare like in Go, if all variants are comparable. A type switch over another interface and type
+//     assertions are not allowed.
 //   - enums: a named int32, uint32 or string type with constants of it. A switch over it must cover all constants
 //     or have a default case.
 //
-// There is no nil except for error. Every variable, field and element must have a value: var p *T without a
-// value, a struct literal without its pointer, function, interface, list or map fields and list.Make of such
-// elements are rejected.
+// There is no nil except for error. Every variable, field and element must have a value, unless it is an
+// opt.Option: var p *T without a value, a struct literal without its pointer, function, interface, list or map
+// fields and list.Make of such elements are rejected.
 //
 // Functions, which may have no result, return (T, bool), e.g. l.Get(i) and m.Get(k). If T may contain nil, the
 // value must be used only where ok is true:
@@ -56,19 +62,37 @@
 // arguments and the instances of a program are interchangeable.
 //
 // Statements: if, for in all forms, range over int32, list.List.All, Values, dict.Map.All, Keys and iterators
-// (iter.Seq, iter.Seq2), switch without fallthrough, labels with break and continue, return. A labeled break or
-// continue must not leave a range over an iterator, because its body becomes a function.
+// (iter.Seq, iter.Seq2), switch without fallthrough, labels with break and continue, return.
 //
 // Not part of the subset: goroutines, channels, select, defer, recover, panic, goto, fallthrough, type switches
 // and assertions, embedded fields, variadic parameters (calling list.Of(a, b) is fine), init functions, any as
-// the type of a value, comparing interfaces except an error with nil, taking the address of a variable or field,
+// the type of a value, comparing interfaces except an error with nil and sealed interfaces, whose variants are
+// all comparable, taking the address of a variable or field,
 // arrays, slices, maps, len, append, make, new, indexing, slicing or ranging over strings, converting float64 to
 // an integer (use num.Trunc32 and num.Round32), shifts by a variable count, method expressions and types declared
 // inside functions.
 //
-// Packages of the standard library: math, strings (Contains, HasPrefix, HasSuffix, ReplaceAll, TrimPrefix,
-// TrimSpace, TrimSuffix), errors (New) and iter. Anything else comes from the packages list, dict, text and num
-// of go.wdy.de/nago/pkg/gostrict/std, whose functions never panic.
+// Numbers become strings with text.FromInt(n) and text.FromFloat(f, decimals), which rounds the same in Go and
+// JavaScript.
+//
+// Packages of the standard library: math (without Frexp, Ldexp and the functions of int; a constant argument like
+// the sign of math.IsInf(x, 0) is fine), strings (Contains, HasPrefix, HasSuffix, ReplaceAll, TrimPrefix,
+// TrimSpace, TrimSuffix), errors (New) and iter. Anything else comes from the packages list, dict, opt, text,
+// num and fuel of go.wdy.de/nago/pkg/gostrict/std, whose functions never panic.
+//
+// # Terminating profile
+//
+// A package with the directive //gostrict:terminating in its documentation, or every package, if the host sets
+// [Program.Terminating], must also prove, that each call ends, e.g. a script, which runs on a server:
+//
+//   - a for loop counts with a counter, which only its post statement changes by a constant, up to a bound, which
+//     is a constant or a variable, which the loop does not change: for i := int32(0); i < n; i++.
+//   - a range over a number, a dict.Map, a list.List, to which its body does not append, or an iterator.
+//   - a loop with another condition burns fuel of package go.wdy.de/nago/pkg/gostrict/std/fuel:
+//     f := fuel.New(1000); for f.Burn() && x > eps { ... }.
+//   - a function calls itself only with a decreasing integer parameter, which its first statement checks:
+//     if n <= 1 { return 1 }; return n * Fact(n-1). A call of a function value or of a method of an interface
+//     may call any function, which is used as a value, or any method of its name, so such cycles are reported too.
 //
 // # Translation
 //
@@ -87,9 +111,12 @@
 // # Header packages
 //
 // A package with the directive //gostrict:header in its documentation is trusted: its bodies are not checked and
-// run natively in Go, the loader uses only its declarations. Its boundary is checked: it exports only functions,
-// whose parameters are bool, int32, uint32, float64 or string and whose results may also be an error, and each
-// declares its JavaScript binding as a function expression with the same number of parameters:
+// run natively in Go, the loader uses only its declarations. Only a trusted module may contain header packages,
+// see [Module.Trusted], so a program, which a language model writes, uses the built-in libraries, e.g.
+// go.wdy.de/nago/pkg/gostrict/lib/three, and can not bind JavaScript itself. Its boundary is checked: it exports only functions,
+// whose parameters are bool, int32, uint32, float64 or string, records of another package, lists and maps of them,
+// and whose results may also be an error, and each declares its JavaScript binding as a function expression with
+// the same number of parameters. A record is a plain object with its fields in JavaScript:
 //
 //	//gostrict:js (a, b) => a * b + 1
 //	func Mix(a, b float64) float64 { return float64(a*b) + 1 }
@@ -114,6 +141,58 @@
 // couples an instance with the backend and serializes the calls like the event loop of a browser. The generated
 // code of a program encodes the messages for it and dispatches its messages to a typed interface of the backend.
 // Backend and program import the same package of messages, so they can not disagree about them.
+//
+// The fields of a record are bool, int32, uint32, float64, string, enums of them, list.List and dict.Map of such
+// values and other records; opt.Option, pointers, functions and interfaces stay inside the program. A message may
+// also be a sealed interface, whose variants are records: msg.Out[proto.Event] sends any variant, and a handler
+// of the interface receives each of them:
+//
+//	func OnMessage(s *Store, m proto.Incoming) msg.Out[proto.Event] {
+//		switch m := m.(type) {
+//		case proto.Payment, proto.Refund:
+//			...
+//		}
+//		return msg.New[proto.Event]()
+//	}
+//
+// An exported function, which is no handler, may take any parameters of these types besides the state, e.g.
+// func AddItem(s *Store, sku string, qty int32). Like in Go, a function still ends with a return after an
+// exhaustive switch.
+//
+// # Programs in the browser
+//
+// The components threejs and canvas2 of nago run a program in the browser, see package presentation/ui/program.
+// It draws with the libraries go.wdy.de/nago/pkg/gostrict/lib/three or lib/canvas, which bind three.js and the 2D
+// context of a canvas. The component calls the exported functions, which it is told, e.g. Init, which returns the
+// state, Resize with the size of the canvas and Frame with the time in seconds in each animation frame:
+//
+//	func Init(n int32) *Game
+//	func Resize(g *Game, width, height float64)
+//	func Frame(g *Game, t float64) msg.Out[proto.Score]
+//
+// Events of the host are records, which go to handlers like the messages of the backend: input.Event of package
+// lib/input for the pointer, the wheel and the keys, and asset.Loaded and asset.Failed of package lib/asset for
+// images, textures and models, which canvas.LoadImage, three.LoadTexture and three.LoadModel load. A handler runs
+// between two frames, so it changes the state, which the next frame draws:
+//
+//	func OnInput(g *Game, e input.Event) {
+//		if e.Type == input.KeyDown && e.Code == "Space" {
+//			g.Jump = true
+//		}
+//	}
+//
+// A handler is found by its signature, not by its name: an exported function, which takes the state and a record,
+// handles this record, and only one function may handle a record. A handler, like any exported function, may
+// return msg.Out results, e.g. OnInput sends a finished stroke, also several of different types. A record may
+// have no fields, e.g. type Clear struct{}. The state may hold handles, e.g. a canvas.Image or a three.Mesh, and
+// a message package is a plain package of records, which the backend imports as well.
+//
+// A table, which never changes, is a package variable of list.Frozen:
+//
+//	var palette = list.Freeze(list.Of[uint32](0xff0000ff, 0x00ff00ff))
+//
+// A program, which needs the state of its backend, asks for it in Init, e.g. by returning (*Game,
+// msg.Out[proto.Hello]), because the messages of a broken connection are lost.
 //
 // # Caching
 //

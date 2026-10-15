@@ -32,6 +32,12 @@ type fnCtx struct {
 	rangeDepth int
 	// rangeReturn tells, whether a return inside a range over an iterator needs $rr and $rv.
 	rangeReturn bool
+	// rangeBranch tells, whether a labeled break or continue leaves a range over an iterator, which needs $rb.
+	rangeBranch bool
+	// captured are the variables, which a function literal of the function refers to, see unaliased
+	captured map[types.Object]bool
+	// pos is the position of the statement, which is translated, for the source map
+	pos token.Pos
 }
 
 type targetKind int
@@ -46,6 +52,19 @@ type target struct {
 	kind  targetKind
 	label string // the label of Go or ""
 	js    string // the label of JavaScript or ""
+	// pending are the labeled branches, which leave the callback of a range over an iterator, see branchTo
+	pending *[]pendingBranch
+}
+
+// pendingBranch is a labeled break or continue, which the callback of a range over an iterator stores in $rb,
+// before it stops the iteration, so that the code after the call of the iterator performs it.
+type pendingBranch struct {
+	tok   token.Token
+	label string
+}
+
+func (p pendingBranch) code() string {
+	return jsString(p.tok.String() + " " + p.label)
 }
 
 type localNames struct {
@@ -66,7 +85,7 @@ func newCtx(e *emitter, p *Package, subst map[*types.TypeParam]types.Type) *fnCt
 
 // nested returns a context for a function literal.
 func (c *fnCtx) nested(sig *types.Signature) *fnCtx {
-	return &fnCtx{e: c.e, pkg: c.pkg, info: c.info, subst: c.subst, names: c.names, ind: 1, sig: sig}
+	return &fnCtx{e: c.e, pkg: c.pkg, info: c.info, subst: c.subst, names: c.names, ind: 1, sig: sig, captured: c.captured, pos: c.pos}
 }
 
 var jsReserved = set("break", "case", "catch", "class", "const", "continue", "debugger", "default", "delete", "do",
@@ -100,6 +119,7 @@ func (c *fnCtx) tmp() string {
 
 func (c *fnCtx) line(format string, args ...any) {
 	c.b.WriteString(strings.Repeat("\t", c.ind))
+	c.b.WriteString(c.e.mark(c.pos))
 	fmt.Fprintf(&c.b, format, args...)
 	c.b.WriteByte('\n')
 }
@@ -182,6 +202,9 @@ func (e *emitter) emitFunc(name string, src funcSrc, recvArgs, targs []types.Typ
 	c := newCtx(e, src.pkg, subst)
 	c.sig = sig
 	c.ind = 1
+	if decl.Body != nil {
+		c.captured = capturedObjects(src.pkg.Info, decl.Body)
+	}
 
 	var params []string
 	if decl.Recv != nil {
@@ -195,9 +218,12 @@ func (e *emitter) emitFunc(name string, src funcSrc, recvArgs, targs []types.Typ
 	}
 	c.stmts(decl.Body.List)
 
-	fmt.Fprintf(&e.out, "function %s(%s) {\n", name, strings.Join(params, ", "))
+	fmt.Fprintf(&e.out, "%sfunction %s(%s) {\n", e.mark(decl.Pos()), name, strings.Join(params, ", "))
 	if c.rangeReturn {
 		e.out.WriteString("\tlet $rr = false, $rv;\n")
+	}
+	if c.rangeBranch {
+		e.out.WriteString("\tlet $rb = null;\n")
 	}
 	e.out.WriteString(c.b.String())
 	e.out.WriteString("}\n")
@@ -283,6 +309,11 @@ func (c *fnCtx) block(list []ast.Stmt) {
 }
 
 func (c *fnCtx) stmt(s ast.Stmt) {
+	// the lines of the statement map to it in the source map
+	prev := c.pos
+	c.pos = s.Pos()
+	defer func() { c.pos = prev }()
+
 	switch s := s.(type) {
 	case *ast.ExprStmt:
 		c.line("%s;", c.expr(s.X))
@@ -351,6 +382,10 @@ func (c *fnCtx) pop() {
 }
 
 func (c *fnCtx) branch(s *ast.BranchStmt) {
+	if s.Label != nil {
+		c.branchTo(pendingBranch{tok: s.Tok, label: s.Label.Name})
+		return
+	}
 	find := func(pred func(target) bool) target {
 		for i := len(c.targets) - 1; i >= 0; i-- {
 			if pred(c.targets[i]) {
@@ -401,6 +436,42 @@ func (c *fnCtx) branch(s *ast.BranchStmt) {
 	}
 }
 
+// branchTo translates a labeled break or continue. If it leaves the callback of a range over an iterator, the
+// callback stores it in $rb and stops the iteration, and the code after the call of the iterator performs it.
+func (c *fnCtx) branchTo(b pendingBranch) {
+	idx := -1
+	for i := len(c.targets) - 1; i >= 0; i-- {
+		if c.targets[i].label == b.label {
+			idx = i
+			break
+		}
+	}
+	if idx < 0 {
+		fail(token.NoPos, "no target for %s %s", b.tok, b.label)
+	}
+	for i := len(c.targets) - 1; i > idx; i-- {
+		if c.targets[i].kind == targetRangeFunc {
+			*c.targets[i].pending = append(*c.targets[i].pending, b)
+			c.rangeBranch = true
+			c.line("$rb = %s;", b.code())
+			c.line("return false;")
+			return
+		}
+	}
+
+	t := c.targets[idx]
+	switch {
+	case t.kind == targetRangeFunc && b.tok == token.BREAK:
+		c.line("return false;")
+	case t.kind == targetRangeFunc:
+		c.line("return true;")
+	case b.tok == token.BREAK:
+		c.line("break %s;", t.js)
+	default:
+		c.line("continue %s;", t.js)
+	}
+}
+
 func (c *fnCtx) assign(s *ast.AssignStmt) {
 	define := s.Tok == token.DEFINE
 	switch s.Tok {
@@ -416,28 +487,55 @@ func (c *fnCtx) assign(s *ast.AssignStmt) {
 		return
 	}
 
+	if len(s.Lhs) == len(s.Rhs) && len(s.Lhs) == 1 {
+		c.store(s.Lhs[0], c.val(s.Rhs[0], c.typeOf(s.Lhs[0])), define)
+		return
+	}
+
+	// Like Go, the operands of the left sides are evaluated first, then the right sides, and the assignments
+	// follow from left to right, so that p, p.X = q, 1 sets X of the former p.
+	targets := make([]func(js string), len(s.Lhs))
+	for i, l := range s.Lhs {
+		targets[i] = c.target(l, define)
+	}
+
 	if len(s.Lhs) == len(s.Rhs) {
-		if len(s.Lhs) == 1 {
-			c.store(s.Lhs[0], c.val(s.Rhs[0], c.typeOf(s.Lhs[0])), define)
-			return
-		}
-		// all values are evaluated, before the first one is assigned
 		var tmps []string
 		for i, r := range s.Rhs {
 			t := c.tmp()
 			c.line("const %s = %s;", t, c.val(r, c.typeOf(s.Lhs[i])))
 			tmps = append(tmps, t)
 		}
-		for i, l := range s.Lhs {
-			c.store(l, tmps[i], define)
+		for i := range s.Lhs {
+			targets[i](tmps[i])
 		}
 		return
 	}
 
 	t := c.tmp()
 	c.line("const %s = %s;", t, c.expr(s.Rhs[0]))
-	for i, l := range s.Lhs {
-		c.store(l, fmt.Sprintf("%s[%d]", t, i), define)
+	for i := range s.Lhs {
+		targets[i](fmt.Sprintf("%s[%d]", t, i))
+	}
+}
+
+// target evaluates the operand of a field on the left side of an assignment and returns the function, which
+// assigns the value later. A variable is assigned directly.
+func (c *fnCtx) target(lhs ast.Expr, define bool) func(js string) {
+	se, ok := ast.Unparen(lhs).(*ast.SelectorExpr)
+	if !ok || c.info.Selections[se] == nil {
+		return func(js string) { c.store(lhs, js, define) }
+	}
+	obj := c.tmp()
+	c.line("const %s = %s;", obj, c.expr(se.X))
+	field := obj + "." + c.fieldName(se)
+	t := c.typeOf(lhs)
+	return func(js string) {
+		if isStruct(t) {
+			c.line("%s$s(%s, %s);", c.e.structName(t), field, js)
+			return
+		}
+		c.line("%s = %s;", field, js)
 	}
 }
 
@@ -582,6 +680,23 @@ func (c *fnCtx) forStmt(s *ast.ForStmt, label string) {
 					name = c.local(c.info.Defs[id])
 				}
 				parts = append(parts, name+" = "+c.val(a.Rhs[i], c.typeOf(l)))
+			}
+			init = "let " + strings.Join(parts, ", ")
+		} else if ok && a.Tok == token.DEFINE {
+			// for a, b := f(); ...: the variables of the results are per iteration like the others
+			wrapped = true
+			c.line("{")
+			c.ind++
+			res := c.tmp()
+			c.line("const %s = %s;", res, c.expr(a.Rhs[0]))
+			var parts []string
+			for i, l := range a.Lhs {
+				id := l.(*ast.Ident)
+				name := c.tmp()
+				if id.Name != "_" {
+					name = c.local(c.info.Defs[id])
+				}
+				parts = append(parts, fmt.Sprintf("%s = %s[%d]", name, res, i))
 			}
 			init = "let " + strings.Join(parts, ", ")
 		} else {
@@ -746,7 +861,8 @@ func (c *fnCtx) rangeFunc(s *ast.RangeStmt, label string, define bool) {
 			c.bindRange(vars[i], c.e.clone(p, yield.Params().At(i).Type()), define)
 		}
 	}
-	c.push(target{kind: targetRangeFunc, label: label})
+	pending := &[]pendingBranch{}
+	c.push(target{kind: targetRangeFunc, label: label, pending: pending})
 	c.rangeDepth++
 	c.stmts(s.Body.List)
 	c.rangeDepth--
@@ -754,6 +870,7 @@ func (c *fnCtx) rangeFunc(s *ast.RangeStmt, label string, define bool) {
 	c.line("return true;")
 	c.ind--
 	c.line("});")
+	defer c.dispatchBranches(*pending)
 
 	if c.rangeReturn {
 		if c.rangeDepth > 0 {
@@ -763,6 +880,23 @@ func (c *fnCtx) rangeFunc(s *ast.RangeStmt, label string, define bool) {
 		} else {
 			c.line("if ($rr) return;")
 		}
+	}
+}
+
+// dispatchBranches performs the labeled branches, which the callback of a range over an iterator has stored in $rb.
+func (c *fnCtx) dispatchBranches(pending []pendingBranch) {
+	seen := map[pendingBranch]bool{}
+	for _, b := range pending {
+		if seen[b] {
+			continue
+		}
+		seen[b] = true
+		c.line("if ($rb === %s) {", b.code())
+		c.ind++
+		c.line("$rb = null;")
+		c.branchTo(b)
+		c.ind--
+		c.line("}")
 	}
 }
 
