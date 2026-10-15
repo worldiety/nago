@@ -138,6 +138,13 @@
 // gets its own native function. A Go file of the package with //go:build !gostrict is ignored by the subset and
 // may provide a Go API for native hosts, see package lib/three.
 //
+// A header package may also export the values of its API: records, enums, constants and variables, whose binding is
+// their value in JavaScript, e.g. //gostrict:js "100%" for var Full Length. Its types may have methods with a value
+// receiver, whose binding takes the receiver first, e.g. the builder methods of a view, and a function may be
+// variadic, whose binding takes the arguments as an array. A sealed interface of its handles, e.g.
+// type View interface{ isView() }, unites them, so that a container takes any of them, like ui.VStack(ui.Text("a"),
+// ui.PrimaryButton(f)); the host receives the handle and its type. lib/ui mirrors the views of nago this way.
+//
 // A binding returns several results as an array and an error as null or $errors_New(message). [Generate] writes
 // the functions of a header package as [Funcs], which an engine calls instead of the bindings, and [GenerateTS] the
 // TypeScript declaration for a JavaScript host. Only header packages need generated code, because reflection can

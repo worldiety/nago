@@ -5,39 +5,39 @@
 //
 // SPDX-License-Identifier: Custom-License
 
-// Package ui creates the views of nago in a program, which runs on a server, e.g. in goja, like the package
-// presentation/ui of nago. Only the server implements its functions, so such a program does not run in a browser.
+// Package ui creates the views of nago in a program, which runs on a server, e.g. in goja. It mirrors the package
+// presentation/ui of nago: the same constructors, builder methods, types and constants, with int32 instead of int.
+// Only the server implements its functions, so such a program does not run in a browser.
 //
-// A view may take functions of the program, e.g. the function, which renders the cells of a sheet. The window calls
-// them later, when it renders, and only for the visible cells:
+// A program renders a window by an exported function, which takes the window and returns the view:
 //
-//	func View() ui.View {
-//		return ui.Sheet("orders", 50000, 12, cell)
+//	func Render(wnd ui.Window) ui.View {
+//		name := ui.StringStateOf(wnd, "name")
+//		return ui.VStack(
+//			ui.Text("Kunde").Font(ui.HeadlineSmall),
+//			ui.TextField("Name", name.Get()).InputValue(name),
+//			ui.PrimaryButton(func() { save(name.Get()) }).Title("Speichern"),
+//		).Gap(ui.L16).Padding(ui.Padding{}.All(ui.L16))
 //	}
+//
+// Each builder method returns its own type, also where nago returns a DecoredView, so that the calls chain. A view
+// may take functions of the program, e.g. the action of a button or the function, which renders the cells of a
+// sheet. The window calls them later, when the user clicks or the window renders, and then renders the window
+// again. A state of the window, e.g. StringStateOf, keeps a value between two renders.
 //
 //gostrict:header
 package ui
 
-import (
-	"go.wdy.de/nago/pkg/gostrict/lib/ui/sheet"
-	"go.wdy.de/nago/pkg/gostrict/std/js"
-	"go.wdy.de/nago/presentation/core"
-	nsheet "go.wdy.de/nago/presentation/ui/sheet"
-)
+import "go.wdy.de/nago/pkg/gostrict/std/js"
 
-// View is a view of nago.
-type View struct{ ref js.Ref }
+// View is any view, e.g. a TText or a TStack, which a container takes.
+type View interface{ isView() }
 
-func wrap(v core.View) View {
-	return View{ref: js.NewRef(v)}
-}
+// Window is the window of nago, which renders the view.
+type Window struct{ ref js.Ref }
 
-// Sheet returns a sheet with rows and columns like a spreadsheet, whose cells cell returns. The window calls cell for
-// the visible cells only, also later, when the user scrolls.
-//
-//gostrict:host
-func Sheet(id string, rows, cols int32, cell func(row, col int32) sheet.Cell) View {
-	return wrap(nsheet.Sheet(id, int(rows), int(cols), func(row, col int) nsheet.Cell {
-		return cellOf(cell(int32(row), int32(col)))
-	}))
-}
+// SVG is the source of an SVG image, e.g. an icon.
+type SVG string
+
+// URI is a URI, e.g. of a link.
+type URI string

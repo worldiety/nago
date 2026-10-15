@@ -57,10 +57,20 @@ func (b *boundary) headerSignature(name string, sig *types.Signature) (Func, boo
 // which takes no callbacks itself.
 func (b *boundary) headerFunc(sig *types.Signature, callbacks bool) (Func, bool) {
 	var f Func
-	if sig.Variadic() || sig.TypeParams().Len() > 0 || sig.Recv() != nil {
+	if sig.TypeParams().Len() > 0 || sig.Recv() != nil || (sig.Variadic() && !callbacks) {
 		return f, false
 	}
-	for v := range sig.Params().Variables() {
+	for i := 0; i < sig.Params().Len(); i++ {
+		v := sig.Params().At(i)
+		if sig.Variadic() && i == sig.Params().Len()-1 {
+			// the variadic arguments are a list
+			elem, ok := b.headerType(v.Type().(*types.Slice).Elem(), false)
+			if !ok {
+				return f, false
+			}
+			f.Params = append(f.Params, Type{Kind: ValueList, Elem: &elem})
+			continue
+		}
 		if fs, ok := v.Type().Underlying().(*types.Signature); ok {
 			cb, ok := b.headerFunc(fs, false)
 			if !ok || !callbacks {
@@ -94,6 +104,14 @@ func (b *boundary) headerType(t types.Type, result bool) (Type, bool) {
 	case k != ValueInvalid:
 		return Type{Kind: k}, true
 	}
+	if isOpaque(t) && types.Unalias(t).(*types.Named).Obj().Name() == "List" {
+		// a list of handles, which crosses only the boundary of a header package
+		elem := types.Unalias(t).(*types.Named).TypeArgs().At(0)
+		if isHandle(elem) || isHandleUnion(elem) {
+			et, ok := b.headerType(elem, false)
+			return Type{Kind: ValueList, Elem: &et}, ok
+		}
+	}
 	bt, ok := b.typeOf(t)
 	if !ok {
 		return bt, false
@@ -101,6 +119,8 @@ func (b *boundary) headerType(t types.Type, result bool) (Type, bool) {
 	switch bt.Kind {
 	case ValueRecord, ValueList, ValueMap:
 		return bt, true
+	case ValueUnion:
+		return bt, b.unions[bt.Name].Handles
 	}
 	return bt, false
 }
@@ -194,6 +214,19 @@ func (b *boundary) typeOf(t types.Type) (Type, bool) {
 		return Type{Kind: ValueState, Name: name}, true
 	}
 
+	if isHandleUnion(t) {
+		name := typeKey(t)
+		variants, _ := sealedVariants(t)
+		u := Union{Name: name, Handles: true}
+		for _, v := range variants {
+			u.Variants = append(u.Variants, typeKey(v))
+			b.structs[typeKey(v)] = v
+		}
+		b.unions[name] = u
+		b.structs[name] = t
+		return Type{Kind: ValueUnion, Name: name}, true
+	}
+
 	if variants, ok := sealedVariants(t); ok {
 		name := typeKey(t)
 		if _, ok := b.unions[name]; ok {
@@ -233,7 +266,7 @@ func (b *boundary) typeOf(t types.Type) (Type, bool) {
 	for i := 0; i < st.NumFields(); i++ {
 		f := st.Field(i)
 		ft, ok := b.typeOf(f.Type())
-		if !f.Exported() || !ok || ft.Kind == ValueError || ft.Kind == ValueState {
+		if !f.Exported() || !ok || ft.Kind == ValueError || ft.Kind == ValueState || ft.Kind == ValueUnion && b.unions[ft.Name].Handles {
 			delete(b.records, name)
 			return Type{}, false
 		}

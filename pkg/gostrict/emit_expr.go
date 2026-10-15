@@ -385,6 +385,13 @@ func (c *fnCtx) methodCallJS(se *ast.SelectorExpr, recv string, _ bool, args str
 	if isOpaque(m.named) {
 		fail(se.Pos(), "%s can only be called", se.Sel.Name)
 	}
+	if src, ok := c.e.decls[m.fn.Origin()]; ok && src.pkg.Kind == KindHeader {
+		// a method of a header package is a function of the host or a binding, which takes the receiver first
+		if args != "" {
+			args = ", " + args
+		}
+		return c.e.externName(m.fn.Origin(), nil, src, se.Pos()) + "(" + recv + args + ")"
+	}
 	name := c.e.funcName(m.fn.Origin(), typeArgs(m.named.TypeArgs()), c.methodTypeArgs(se))
 	if args != "" {
 		args = ", " + args

@@ -7,6 +7,7 @@ package host
 import (
 	"go.wdy.de/nago/pkg/gostrict"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/geom"
+	"go.wdy.de/nago/pkg/gostrict/std/js"
 	"go.wdy.de/nago/pkg/gostrict/std/list"
 )
 
@@ -50,6 +51,16 @@ func Host() gostrict.Funcs {
 			return []any{gostrictTo1(r0)}
 		},
 	}
+}
+
+// HostRef returns the reference of the handle.
+func (h Later) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (Later) HostFromRef(ref js.Ref) any {
+	return Later{ref: ref}
 }
 
 func gostrictFrom1(v []any) list.List[geom.Rect] {

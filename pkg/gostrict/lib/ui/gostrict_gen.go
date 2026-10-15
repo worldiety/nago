@@ -7,57 +7,3144 @@ package ui
 import (
 	"go.wdy.de/nago/pkg/gostrict"
 	"go.wdy.de/nago/pkg/gostrict/lib/ui/sheet"
+	"go.wdy.de/nago/pkg/gostrict/std/js"
 )
 
 // Host implements the functions of this header package natively, e.g. for an engine like goja.
 func Host() gostrict.Funcs {
 	return gostrict.Funcs{
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Absolute": func(args []any) []any {
+			r0 := Absolute(args[0].(float64))
+			return []any{string(r0)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.AutoRadioStateGroup": func(args []any) []any {
+			r0 := AutoRadioStateGroup(Window{ref: args[0].(js.Ref)}, args[1].(string), args[2].(int32))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.BoolState.Get": func(args []any) []any {
+			r0 := BoolState{ref: args[0].(js.Ref)}.Get()
+			return []any{r0}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.BoolState.Set": func(args []any) []any {
+			BoolState{ref: args[0].(js.Ref)}.Set(args[1].(bool))
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.BoolState.Init": func(args []any) []any {
+			r0 := BoolState{ref: args[0].(js.Ref)}.Init(gostrictFunc1(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.BoolState.Observe": func(args []any) []any {
+			r0 := BoolState{ref: args[0].(js.Ref)}.Observe(gostrictFunc2(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.BoolStateOf": func(args []any) []any {
+			r0 := BoolStateOf(Window{ref: args[0].(js.Ref)}, args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Border.Radius": func(args []any) []any {
+			r0 := gostrictFrom3(args[0].([]any)).Radius(Length(args[1].(string)))
+			return []any{gostrictTo3(r0)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Border.Width": func(args []any) []any {
+			r0 := gostrictFrom3(args[0].([]any)).Width(Length(args[1].(string)))
+			return []any{gostrictTo3(r0)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Border.Color": func(args []any) []any {
+			r0 := gostrictFrom3(args[0].([]any)).Color(Color(args[1].(string)))
+			return []any{gostrictTo3(r0)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Border.Elevate": func(args []any) []any {
+			r0 := gostrictFrom3(args[0].([]any)).Elevate(args[1].(float64))
+			return []any{gostrictTo3(r0)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Border.TopRadius": func(args []any) []any {
+			r0 := gostrictFrom3(args[0].([]any)).TopRadius(Length(args[1].(string)))
+			return []any{gostrictTo3(r0)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Border.BottomRadius": func(args []any) []any {
+			r0 := gostrictFrom3(args[0].([]any)).BottomRadius(Length(args[1].(string)))
+			return []any{gostrictTo3(r0)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Border.Circle": func(args []any) []any {
+			r0 := gostrictFrom3(args[0].([]any)).Circle()
+			return []any{gostrictTo3(r0)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Border.Style": func(args []any) []any {
+			r0 := gostrictFrom3(args[0].([]any)).Style(BorderStyle(args[1].(int32)))
+			return []any{gostrictTo3(r0)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Border.Shadow": func(args []any) []any {
+			r0 := gostrictFrom3(args[0].([]any)).Shadow(Length(args[1].(string)))
+			return []any{gostrictTo3(r0)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.BoxAlign": func(args []any) []any {
+			r0 := BoxAlign(Alignment(args[0].(uint32)), gostrictFrom4(args[1].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Button": func(args []any) []any {
+			r0 := Button(ButtonStyle(args[0].(uint32)), gostrictFunc5(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Checkbox": func(args []any) []any {
+			r0 := Checkbox(args[0].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.CheckboxField": func(args []any) []any {
+			r0 := CheckboxField(args[0].(string), args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.CodeEditor": func(args []any) []any {
+			r0 := CodeEditor(args[0].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.ContentHeading": func(args []any) []any {
+			r0 := ContentHeading(args[0].(int32), args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.CountDown": func(args []any) []any {
+			r0 := CountDown(args[0].(int32))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Dialog": func(args []any) []any {
+			r0 := Dialog(gostrictFrom4(args[0].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.DnDArea": func(args []any) []any {
+			r0 := DnDArea(gostrictFrom6(args[0].([]any))...)
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.FilledButton": func(args []any) []any {
+			r0 := FilledButton(Color(args[0].(string)), gostrictFunc5(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.FloatField": func(args []any) []any {
+			r0 := FloatField(args[0].(string), args[1].(float64), FloatState{ref: args[2].(js.Ref)})
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.FloatState.Get": func(args []any) []any {
+			r0 := FloatState{ref: args[0].(js.Ref)}.Get()
+			return []any{r0}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.FloatState.Set": func(args []any) []any {
+			FloatState{ref: args[0].(js.Ref)}.Set(args[1].(float64))
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.FloatState.Init": func(args []any) []any {
+			r0 := FloatState{ref: args[0].(js.Ref)}.Init(gostrictFunc7(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.FloatState.Observe": func(args []any) []any {
+			r0 := FloatState{ref: args[0].(js.Ref)}.Observe(gostrictFunc8(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.FloatStateOf": func(args []any) []any {
+			r0 := FloatStateOf(Window{ref: args[0].(js.Ref)}, args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Form": func(args []any) []any {
+			r0 := Form(gostrictFrom6(args[0].([]any))...)
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.ForwardScaffoldMenuEntry": func(args []any) []any {
+			r0 := ForwardScaffoldMenuEntry(Window{ref: args[0].(js.Ref)}, SVG(args[1].(string)), args[2].(string), NavigationPath(args[3].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Frame.Size": func(args []any) []any {
+			r0 := gostrictFrom9(args[0].([]any)).Size(Length(args[1].(string)), Length(args[2].(string)))
+			return []any{gostrictTo9(r0)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Frame.MatchScreen": func(args []any) []any {
+			r0 := gostrictFrom9(args[0].([]any)).MatchScreen()
+			return []any{gostrictTo9(r0)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Frame.FullWidth": func(args []any) []any {
+			r0 := gostrictFrom9(args[0].([]any)).FullWidth()
+			return []any{gostrictTo9(r0)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Frame.FullHeight": func(args []any) []any {
+			r0 := gostrictFrom9(args[0].([]any)).FullHeight()
+			return []any{gostrictTo9(r0)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Frame.Large": func(args []any) []any {
+			r0 := gostrictFrom9(args[0].([]any)).Large()
+			return []any{gostrictTo9(r0)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Frame.Larger": func(args []any) []any {
+			r0 := gostrictFrom9(args[0].([]any)).Larger()
+			return []any{gostrictTo9(r0)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Frame.Grow": func(args []any) []any {
+			r0 := gostrictFrom9(args[0].([]any)).Grow()
+			return []any{gostrictTo9(r0)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Frame.PreventShrink": func(args []any) []any {
+			r0 := gostrictFrom9(args[0].([]any)).PreventShrink()
+			return []any{gostrictTo9(r0)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Grid": func(args []any) []any {
+			r0 := Grid(gostrictFrom10(args[0].([]any))...)
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.GridCell": func(args []any) []any {
+			r0 := GridCell(gostrictFrom4(args[0].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.H1": func(args []any) []any {
+			r0 := H1(args[0].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.H2": func(args []any) []any {
+			r0 := H2(args[0].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.H3": func(args []any) []any {
+			r0 := H3(args[0].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.H4": func(args []any) []any {
+			r0 := H4(args[0].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.H5": func(args []any) []any {
+			r0 := H5(args[0].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.H6": func(args []any) []any {
+			r0 := H6(args[0].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.HLine": func(args []any) []any {
+			r0 := HLine()
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.HLineWithColor": func(args []any) []any {
+			r0 := HLineWithColor(Color(args[0].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.HStack": func(args []any) []any {
+			r0 := HStack(gostrictFrom6(args[0].([]any))...)
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Heading": func(args []any) []any {
+			r0 := Heading(args[0].(int32), args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.HoverGroup": func(args []any) []any {
+			r0 := HoverGroup(gostrictFrom4(args[0].(gostrict.Variant)), gostrictFrom4(args[1].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Image": func(args []any) []any {
+			r0 := Image()
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.ImageIcon": func(args []any) []any {
+			r0 := ImageIcon(SVG(args[0].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.ImageIconAdaptive": func(args []any) []any {
+			r0 := ImageIconAdaptive(SVG(args[0].(string)), SVG(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.IntField": func(args []any) []any {
+			r0 := IntField(args[0].(string), args[1].(int32), IntState{ref: args[2].(js.Ref)})
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.IntState.Get": func(args []any) []any {
+			r0 := IntState{ref: args[0].(js.Ref)}.Get()
+			return []any{r0}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.IntState.Set": func(args []any) []any {
+			IntState{ref: args[0].(js.Ref)}.Set(args[1].(int32))
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.IntState.Init": func(args []any) []any {
+			r0 := IntState{ref: args[0].(js.Ref)}.Init(gostrictFunc11(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.IntState.Observe": func(args []any) []any {
+			r0 := IntState{ref: args[0].(js.Ref)}.Observe(gostrictFunc12(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.IntStateOf": func(args []any) []any {
+			r0 := IntStateOf(Window{ref: args[0].(js.Ref)}, args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.KeyboardOptions": func(args []any) []any {
+			r0 := KeyboardOptions()
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.L": func(args []any) []any {
+			r0 := L(args[0].(float64))
+			return []any{string(r0)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Link": func(args []any) []any {
+			r0 := Link(Window{ref: args[0].(js.Ref)}, args[1].(string), args[2].(string), args[3].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.LinkWithAction": func(args []any) []any {
+			r0 := LinkWithAction(args[0].(string), gostrictFunc5(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MailTo": func(args []any) []any {
+			r0 := MailTo(Window{ref: args[0].(js.Ref)}, args[1].(string), args[2].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Menu": func(args []any) []any {
+			r0 := Menu(gostrictFrom4(args[0].(gostrict.Variant)), gostrictFrom13(args[1].([]any))...)
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MenuGroup": func(args []any) []any {
+			r0 := MenuGroup(gostrictFrom14(args[0].([]any))...)
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MenuItem": func(args []any) []any {
+			r0 := MenuItem(gostrictFunc5(args[0].(gostrict.Callback)), gostrictFrom4(args[1].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Modal": func(args []any) []any {
+			r0 := Modal(gostrictFrom4(args[0].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.NotificationsOverlay": func(args []any) []any {
+			r0 := NotificationsOverlay(gostrictFrom4(args[0].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Overlay": func(args []any) []any {
+			r0 := Overlay(gostrictFrom4(args[0].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.PDF": func(args []any) []any {
+			r0 := PDF(URI(args[0].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Padding.All": func(args []any) []any {
+			r0 := gostrictFrom15(args[0].([]any)).All(Length(args[1].(string)))
+			return []any{gostrictTo15(r0)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Padding.Vertical": func(args []any) []any {
+			r0 := gostrictFrom15(args[0].([]any)).Vertical(Length(args[1].(string)))
+			return []any{gostrictTo15(r0)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Padding.Horizontal": func(args []any) []any {
+			r0 := gostrictFrom15(args[0].([]any)).Horizontal(Length(args[1].(string)))
+			return []any{gostrictTo15(r0)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.ParentScaffoldMenuEntry": func(args []any) []any {
+			r0 := ParentScaffoldMenuEntry(Window{ref: args[0].(js.Ref)}, SVG(args[1].(string)), args[2].(string), gostrictFrom16(args[3].([]any))...)
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.PasswordField": func(args []any) []any {
+			r0 := PasswordField(args[0].(string), args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.PrimaryButton": func(args []any) []any {
+			r0 := PrimaryButton(gostrictFunc5(args[0].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.QrCode": func(args []any) []any {
+			r0 := QrCode(args[0].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.RadioButton": func(args []any) []any {
+			r0 := RadioButton(args[0].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.RadioButtonField": func(args []any) []any {
+			r0 := RadioButtonField(args[0].(string), RadioStateGroup{ref: args[1].(js.Ref)}, args[2].(int32))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.RadioStateGroup.InitIndex": func(args []any) []any {
+			r0 := RadioStateGroup{ref: args[0].(js.Ref)}.InitIndex(args[1].(int32))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.RadioStateGroup.Observe": func(args []any) []any {
+			RadioStateGroup{ref: args[0].(js.Ref)}.Observe(gostrictFunc17(args[1].(gostrict.Callback)))
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.RadioStateGroup.SetSelectedIndex": func(args []any) []any {
+			RadioStateGroup{ref: args[0].(js.Ref)}.SetSelectedIndex(args[1].(int32))
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.RadioStateGroup.Notify": func(args []any) []any {
+			RadioStateGroup{ref: args[0].(js.Ref)}.Notify()
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.RadioStateGroup.SelectedIndex": func(args []any) []any {
+			r0 := RadioStateGroup{ref: args[0].(js.Ref)}.SelectedIndex()
+			return []any{r0}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Relative": func(args []any) []any {
+			r0 := Relative(args[0].(float64))
+			return []any{string(r0)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.RichText": func(args []any) []any {
+			r0 := RichText(args[0].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.RichTextEditor": func(args []any) []any {
+			r0 := RichTextEditor(args[0].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Scaffold": func(args []any) []any {
+			r0 := Scaffold(ScaffoldAlignment(args[0].(uint32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.ScaffoldMenuBarVisible": func(args []any) []any {
+			r0 := ScaffoldMenuBarVisible(Window{ref: args[0].(js.Ref)})
+			return []any{r0}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.ScrollView": func(args []any) []any {
+			r0 := ScrollView(gostrictFrom4(args[0].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.SecondaryButton": func(args []any) []any {
+			r0 := SecondaryButton(gostrictFunc5(args[0].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.Sheet": func(args []any) []any {
-			r0 := Sheet(args[0].(string), args[1].(int32), args[2].(int32), gostrictFunc1(args[3].(gostrict.Callback)))
+			r0 := Sheet(args[0].(string), args[1].(int32), args[2].(int32), gostrictFunc18(args[3].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.SizeClass": func(args []any) []any {
+			r0 := SizeClass(WindowSizeClass(args[0].(uint32)), gostrictFunc19(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Space": func(args []any) []any {
+			r0 := Space(Length(args[0].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Spacer": func(args []any) []any {
+			r0 := Spacer()
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.SplitView": func(args []any) []any {
+			r0 := SplitView(gostrictFrom4(args[0].(gostrict.Variant)), gostrictFrom4(args[1].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Stack": func(args []any) []any {
+			r0 := Stack(gostrictFrom6(args[0].([]any))...)
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.StringState.Get": func(args []any) []any {
+			r0 := StringState{ref: args[0].(js.Ref)}.Get()
+			return []any{r0}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.StringState.Set": func(args []any) []any {
+			StringState{ref: args[0].(js.Ref)}.Set(args[1].(string))
+			return nil
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.StringState.Init": func(args []any) []any {
+			r0 := StringState{ref: args[0].(js.Ref)}.Init(gostrictFunc20(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.StringState.Observe": func(args []any) []any {
+			r0 := StringState{ref: args[0].(js.Ref)}.Observe(gostrictFunc21(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.StringStateOf": func(args []any) []any {
+			r0 := StringStateOf(Window{ref: args[0].(js.Ref)}, args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TBox.Padding": func(args []any) []any {
+			r0 := TBox{ref: args[0].(js.Ref)}.Padding(gostrictFrom15(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TBox.BackgroundColor": func(args []any) []any {
+			r0 := TBox{ref: args[0].(js.Ref)}.BackgroundColor(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TBox.Frame": func(args []any) []any {
+			r0 := TBox{ref: args[0].(js.Ref)}.Frame(gostrictFrom9(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TBox.WithFrame": func(args []any) []any {
+			r0 := TBox{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc22(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TBox.FullWidth": func(args []any) []any {
+			r0 := TBox{ref: args[0].(js.Ref)}.FullWidth()
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TBox.Font": func(args []any) []any {
+			r0 := TBox{ref: args[0].(js.Ref)}.Font(gostrictFrom23(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TBox.Border": func(args []any) []any {
+			r0 := TBox{ref: args[0].(js.Ref)}.Border(gostrictFrom3(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TBox.Visible": func(args []any) []any {
+			r0 := TBox{ref: args[0].(js.Ref)}.Visible(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TBox.DisableOutsidePointerEvents": func(args []any) []any {
+			r0 := TBox{ref: args[0].(js.Ref)}.DisableOutsidePointerEvents(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TBox.AccessibilityLabel": func(args []any) []any {
+			r0 := TBox{ref: args[0].(js.Ref)}.AccessibilityLabel(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TButton.Critical": func(args []any) []any {
+			r0 := TButton{ref: args[0].(js.Ref)}.Critical(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TButton.HRef": func(args []any) []any {
+			r0 := TButton{ref: args[0].(js.Ref)}.HRef(URI(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TButton.Target": func(args []any) []any {
+			r0 := TButton{ref: args[0].(js.Ref)}.Target(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TButton.Enabled": func(args []any) []any {
+			r0 := TButton{ref: args[0].(js.Ref)}.Enabled(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TButton.Title": func(args []any) []any {
+			r0 := TButton{ref: args[0].(js.Ref)}.Title(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TButton.Visible": func(args []any) []any {
+			r0 := TButton{ref: args[0].(js.Ref)}.Visible(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TButton.Disabled": func(args []any) []any {
+			r0 := TButton{ref: args[0].(js.Ref)}.Disabled(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TButton.Font": func(args []any) []any {
+			r0 := TButton{ref: args[0].(js.Ref)}.Font(gostrictFrom23(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TButton.AccessibilityLabel": func(args []any) []any {
+			r0 := TButton{ref: args[0].(js.Ref)}.AccessibilityLabel(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TButton.PreIcon": func(args []any) []any {
+			r0 := TButton{ref: args[0].(js.Ref)}.PreIcon(SVG(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TButton.PostIcon": func(args []any) []any {
+			r0 := TButton{ref: args[0].(js.Ref)}.PostIcon(SVG(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TButton.Preset": func(args []any) []any {
+			r0 := TButton{ref: args[0].(js.Ref)}.Preset(ButtonStyle(args[1].(uint32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TButton.Frame": func(args []any) []any {
+			r0 := TButton{ref: args[0].(js.Ref)}.Frame(gostrictFrom9(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TButton.FullWidth": func(args []any) []any {
+			r0 := TButton{ref: args[0].(js.Ref)}.FullWidth()
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TButton.ID": func(args []any) []any {
+			r0 := TButton{ref: args[0].(js.Ref)}.ID(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TButton.Key": func(args []any) []any {
+			r0 := TButton{ref: args[0].(js.Ref)}.Key(args[1].(string), args[2].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TButton.Alignment": func(args []any) []any {
+			r0 := TButton{ref: args[0].(js.Ref)}.Alignment(Alignment(args[1].(uint32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TButton.NoWrap": func(args []any) []any {
+			r0 := TButton{ref: args[0].(js.Ref)}.NoWrap()
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCheckbox.InputChecked": func(args []any) []any {
+			r0 := TCheckbox{ref: args[0].(js.Ref)}.InputChecked(BoolState{ref: args[1].(js.Ref)})
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCheckbox.InputValue": func(args []any) []any {
+			r0 := TCheckbox{ref: args[0].(js.Ref)}.InputValue(BoolState{ref: args[1].(js.Ref)})
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCheckbox.Disabled": func(args []any) []any {
+			r0 := TCheckbox{ref: args[0].(js.Ref)}.Disabled(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCheckbox.Visible": func(args []any) []any {
+			r0 := TCheckbox{ref: args[0].(js.Ref)}.Visible(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCheckbox.ID": func(args []any) []any {
+			r0 := TCheckbox{ref: args[0].(js.Ref)}.ID(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCheckbox.Name": func(args []any) []any {
+			r0 := TCheckbox{ref: args[0].(js.Ref)}.Name(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCheckboxField.Enabled": func(args []any) []any {
+			r0 := TCheckboxField{ref: args[0].(js.Ref)}.Enabled(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCheckboxField.Disabled": func(args []any) []any {
+			r0 := TCheckboxField{ref: args[0].(js.Ref)}.Disabled(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCheckboxField.Padding": func(args []any) []any {
+			r0 := TCheckboxField{ref: args[0].(js.Ref)}.Padding(gostrictFrom15(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCheckboxField.Frame": func(args []any) []any {
+			r0 := TCheckboxField{ref: args[0].(js.Ref)}.Frame(gostrictFrom9(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCheckboxField.WithFrame": func(args []any) []any {
+			r0 := TCheckboxField{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc22(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCheckboxField.Border": func(args []any) []any {
+			r0 := TCheckboxField{ref: args[0].(js.Ref)}.Border(gostrictFrom3(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCheckboxField.Visible": func(args []any) []any {
+			r0 := TCheckboxField{ref: args[0].(js.Ref)}.Visible(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCheckboxField.AccessibilityLabel": func(args []any) []any {
+			r0 := TCheckboxField{ref: args[0].(js.Ref)}.AccessibilityLabel(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCheckboxField.InputValue": func(args []any) []any {
+			r0 := TCheckboxField{ref: args[0].(js.Ref)}.InputValue(BoolState{ref: args[1].(js.Ref)})
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCheckboxField.SupportingText": func(args []any) []any {
+			r0 := TCheckboxField{ref: args[0].(js.Ref)}.SupportingText(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCheckboxField.ErrorText": func(args []any) []any {
+			r0 := TCheckboxField{ref: args[0].(js.Ref)}.ErrorText(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCheckboxField.ID": func(args []any) []any {
+			r0 := TCheckboxField{ref: args[0].(js.Ref)}.ID(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCheckboxField.Name": func(args []any) []any {
+			r0 := TCheckboxField{ref: args[0].(js.Ref)}.Name(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCodeEditor.Value": func(args []any) []any {
+			r0 := TCodeEditor{ref: args[0].(js.Ref)}.Value(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCodeEditor.InputValue": func(args []any) []any {
+			r0 := TCodeEditor{ref: args[0].(js.Ref)}.InputValue(StringState{ref: args[1].(js.Ref)})
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCodeEditor.Disabled": func(args []any) []any {
+			r0 := TCodeEditor{ref: args[0].(js.Ref)}.Disabled(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCodeEditor.Frame": func(args []any) []any {
+			r0 := TCodeEditor{ref: args[0].(js.Ref)}.Frame(gostrictFrom9(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCodeEditor.FullWidth": func(args []any) []any {
+			r0 := TCodeEditor{ref: args[0].(js.Ref)}.FullWidth()
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCodeEditor.Language": func(args []any) []any {
+			r0 := TCodeEditor{ref: args[0].(js.Ref)}.Language(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCountDown.Style": func(args []any) []any {
+			r0 := TCountDown{ref: args[0].(js.Ref)}.Style(CountDownStyle(args[1].(int32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCountDown.Action": func(args []any) []any {
+			r0 := TCountDown{ref: args[0].(js.Ref)}.Action(gostrictFunc5(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCountDown.Days": func(args []any) []any {
+			r0 := TCountDown{ref: args[0].(js.Ref)}.Days(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCountDown.Hours": func(args []any) []any {
+			r0 := TCountDown{ref: args[0].(js.Ref)}.Hours(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCountDown.Minutes": func(args []any) []any {
+			r0 := TCountDown{ref: args[0].(js.Ref)}.Minutes(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCountDown.Seconds": func(args []any) []any {
+			r0 := TCountDown{ref: args[0].(js.Ref)}.Seconds(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCountDown.Frame": func(args []any) []any {
+			r0 := TCountDown{ref: args[0].(js.Ref)}.Frame(gostrictFrom9(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCountDown.TextColor": func(args []any) []any {
+			r0 := TCountDown{ref: args[0].(js.Ref)}.TextColor(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCountDown.SeparatorColor": func(args []any) []any {
+			r0 := TCountDown{ref: args[0].(js.Ref)}.SeparatorColor(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCountDown.Done": func(args []any) []any {
+			r0 := TCountDown{ref: args[0].(js.Ref)}.Done(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCountDown.ProgressBackground": func(args []any) []any {
+			r0 := TCountDown{ref: args[0].(js.Ref)}.ProgressBackground(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TCountDown.ProgressColor": func(args []any) []any {
+			r0 := TCountDown{ref: args[0].(js.Ref)}.ProgressColor(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDialog.Title": func(args []any) []any {
+			r0 := TDialog{ref: args[0].(js.Ref)}.Title(gostrictFrom4(args[1].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDialog.PreBody": func(args []any) []any {
+			r0 := TDialog{ref: args[0].(js.Ref)}.PreBody(gostrictFrom4(args[1].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDialog.TitleX": func(args []any) []any {
+			r0 := TDialog{ref: args[0].(js.Ref)}.TitleX(gostrictFrom4(args[1].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDialog.Footer": func(args []any) []any {
+			r0 := TDialog{ref: args[0].(js.Ref)}.Footer(gostrictFrom4(args[1].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDialog.Alignment": func(args []any) []any {
+			r0 := TDialog{ref: args[0].(js.Ref)}.Alignment(Alignment(args[1].(uint32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDialog.ModalPadding": func(args []any) []any {
+			r0 := TDialog{ref: args[0].(js.Ref)}.ModalPadding(gostrictFrom15(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDialog.Frame": func(args []any) []any {
+			r0 := TDialog{ref: args[0].(js.Ref)}.Frame(gostrictFrom9(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDialog.WithFrame": func(args []any) []any {
+			r0 := TDialog{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc22(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDialog.DisableBoxLayout": func(args []any) []any {
+			r0 := TDialog{ref: args[0].(js.Ref)}.DisableBoxLayout(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDivider.Padding": func(args []any) []any {
+			r0 := TDivider{ref: args[0].(js.Ref)}.Padding(gostrictFrom15(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDivider.Frame": func(args []any) []any {
+			r0 := TDivider{ref: args[0].(js.Ref)}.Frame(gostrictFrom9(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDivider.Border": func(args []any) []any {
+			r0 := TDivider{ref: args[0].(js.Ref)}.Border(gostrictFrom3(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDivider.Visible": func(args []any) []any {
+			r0 := TDivider{ref: args[0].(js.Ref)}.Visible(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDnDArea.ID": func(args []any) []any {
+			r0 := TDnDArea{ref: args[0].(js.Ref)}.ID(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDnDArea.CanDrag": func(args []any) []any {
+			r0 := TDnDArea{ref: args[0].(js.Ref)}.CanDrag(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDnDArea.CanDrop": func(args []any) []any {
+			r0 := TDnDArea{ref: args[0].(js.Ref)}.CanDrop(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDnDArea.Droppable": func(args []any) []any {
+			r0 := TDnDArea{ref: args[0].(js.Ref)}.Droppable(gostrictFrom24(args[1].([]any))...)
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDnDArea.Frame": func(args []any) []any {
+			r0 := TDnDArea{ref: args[0].(js.Ref)}.Frame(gostrictFrom9(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TDnDArea.InputValue": func(args []any) []any {
+			r0 := TDnDArea{ref: args[0].(js.Ref)}.InputValue(StringState{ref: args[1].(js.Ref)})
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TFilledButton.Title": func(args []any) []any {
+			r0 := TFilledButton{ref: args[0].(js.Ref)}.Title(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TFilledButton.PreIcon": func(args []any) []any {
+			r0 := TFilledButton{ref: args[0].(js.Ref)}.PreIcon(SVG(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TFilledButton.PostIcon": func(args []any) []any {
+			r0 := TFilledButton{ref: args[0].(js.Ref)}.PostIcon(SVG(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TFilledButton.TextColor": func(args []any) []any {
+			r0 := TFilledButton{ref: args[0].(js.Ref)}.TextColor(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TFilledButton.Frame": func(args []any) []any {
+			r0 := TFilledButton{ref: args[0].(js.Ref)}.Frame(gostrictFrom9(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TForm.ID": func(args []any) []any {
+			r0 := TForm{ref: args[0].(js.Ref)}.ID(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TForm.Action": func(args []any) []any {
+			r0 := TForm{ref: args[0].(js.Ref)}.Action(gostrictFunc5(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TForm.Frame": func(args []any) []any {
+			r0 := TForm{ref: args[0].(js.Ref)}.Frame(gostrictFrom9(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TForm.Autocomplete": func(args []any) []any {
+			r0 := TForm{ref: args[0].(js.Ref)}.Autocomplete(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGrid.Append": func(args []any) []any {
+			r0 := TGrid{ref: args[0].(js.Ref)}.Append(gostrictFrom10(args[1].([]any))...)
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGrid.Rows": func(args []any) []any {
+			r0 := TGrid{ref: args[0].(js.Ref)}.Rows(args[1].(int32))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGrid.Heights": func(args []any) []any {
+			r0 := TGrid{ref: args[0].(js.Ref)}.Heights(gostrictFrom25(args[1].([]any))...)
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGrid.Gap": func(args []any) []any {
+			r0 := TGrid{ref: args[0].(js.Ref)}.Gap(Length(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGrid.RowGap": func(args []any) []any {
+			r0 := TGrid{ref: args[0].(js.Ref)}.RowGap(Length(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGrid.ColGap": func(args []any) []any {
+			r0 := TGrid{ref: args[0].(js.Ref)}.ColGap(Length(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGrid.Columns": func(args []any) []any {
+			r0 := TGrid{ref: args[0].(js.Ref)}.Columns(args[1].(int32))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGrid.Widths": func(args []any) []any {
+			r0 := TGrid{ref: args[0].(js.Ref)}.Widths(gostrictFrom25(args[1].([]any))...)
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGrid.BackgroundColor": func(args []any) []any {
+			r0 := TGrid{ref: args[0].(js.Ref)}.BackgroundColor(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGrid.Frame": func(args []any) []any {
+			r0 := TGrid{ref: args[0].(js.Ref)}.Frame(gostrictFrom9(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGrid.WithFrame": func(args []any) []any {
+			r0 := TGrid{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc22(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGrid.FullWidth": func(args []any) []any {
+			r0 := TGrid{ref: args[0].(js.Ref)}.FullWidth()
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGrid.Font": func(args []any) []any {
+			r0 := TGrid{ref: args[0].(js.Ref)}.Font(gostrictFrom23(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGrid.Border": func(args []any) []any {
+			r0 := TGrid{ref: args[0].(js.Ref)}.Border(gostrictFrom3(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGrid.Visible": func(args []any) []any {
+			r0 := TGrid{ref: args[0].(js.Ref)}.Visible(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGrid.AccessibilityLabel": func(args []any) []any {
+			r0 := TGrid{ref: args[0].(js.Ref)}.AccessibilityLabel(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGrid.Padding": func(args []any) []any {
+			r0 := TGrid{ref: args[0].(js.Ref)}.Padding(gostrictFrom15(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGridCell.Padding": func(args []any) []any {
+			r0 := TGridCell{ref: args[0].(js.Ref)}.Padding(gostrictFrom15(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGridCell.BackgroundColor": func(args []any) []any {
+			r0 := TGridCell{ref: args[0].(js.Ref)}.BackgroundColor(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGridCell.Alignment": func(args []any) []any {
+			r0 := TGridCell{ref: args[0].(js.Ref)}.Alignment(Alignment(args[1].(uint32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGridCell.ColStart": func(args []any) []any {
+			r0 := TGridCell{ref: args[0].(js.Ref)}.ColStart(args[1].(int32))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGridCell.ColEnd": func(args []any) []any {
+			r0 := TGridCell{ref: args[0].(js.Ref)}.ColEnd(args[1].(int32))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGridCell.RowStart": func(args []any) []any {
+			r0 := TGridCell{ref: args[0].(js.Ref)}.RowStart(args[1].(int32))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGridCell.RowEnd": func(args []any) []any {
+			r0 := TGridCell{ref: args[0].(js.Ref)}.RowEnd(args[1].(int32))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGridCell.ColSpan": func(args []any) []any {
+			r0 := TGridCell{ref: args[0].(js.Ref)}.ColSpan(args[1].(int32))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TGridCell.RowSpan": func(args []any) []any {
+			r0 := TGridCell{ref: args[0].(js.Ref)}.RowSpan(args[1].(int32))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.THoverGroup.Frame": func(args []any) []any {
+			r0 := THoverGroup{ref: args[0].(js.Ref)}.Frame(gostrictFrom9(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.THoverGroup.Position": func(args []any) []any {
+			r0 := THoverGroup{ref: args[0].(js.Ref)}.Position(gostrictFrom26(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.THoverGroup.Border": func(args []any) []any {
+			r0 := THoverGroup{ref: args[0].(js.Ref)}.Border(gostrictFrom3(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.THoverGroup.Padding": func(args []any) []any {
+			r0 := THoverGroup{ref: args[0].(js.Ref)}.Padding(gostrictFrom15(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.THoverGroup.BackgroundColor": func(args []any) []any {
+			r0 := THoverGroup{ref: args[0].(js.Ref)}.BackgroundColor(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TImage.URI": func(args []any) []any {
+			r0 := TImage{ref: args[0].(js.Ref)}.URI(URI(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TImage.URIAdaptive": func(args []any) []any {
+			r0 := TImage{ref: args[0].(js.Ref)}.URIAdaptive(URI(args[1].(string)), URI(args[2].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TImage.FillColor": func(args []any) []any {
+			r0 := TImage{ref: args[0].(js.Ref)}.FillColor(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TImage.StrokeColor": func(args []any) []any {
+			r0 := TImage{ref: args[0].(js.Ref)}.StrokeColor(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TImage.AccessibilityLabel": func(args []any) []any {
+			r0 := TImage{ref: args[0].(js.Ref)}.AccessibilityLabel(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TImage.Visible": func(args []any) []any {
+			r0 := TImage{ref: args[0].(js.Ref)}.Visible(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TImage.Padding": func(args []any) []any {
+			r0 := TImage{ref: args[0].(js.Ref)}.Padding(gostrictFrom15(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TImage.Border": func(args []any) []any {
+			r0 := TImage{ref: args[0].(js.Ref)}.Border(gostrictFrom3(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TImage.Frame": func(args []any) []any {
+			r0 := TImage{ref: args[0].(js.Ref)}.Frame(gostrictFrom9(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TImage.WithFrame": func(args []any) []any {
+			r0 := TImage{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc22(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TImage.ObjectFit": func(args []any) []any {
+			r0 := TImage{ref: args[0].(js.Ref)}.ObjectFit(ObjectFit(args[1].(int32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TKeyboardOptions.Capitalization": func(args []any) []any {
+			r0 := TKeyboardOptions{ref: args[0].(js.Ref)}.Capitalization(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TKeyboardOptions.AutoCorrectEnabled": func(args []any) []any {
+			r0 := TKeyboardOptions{ref: args[0].(js.Ref)}.AutoCorrectEnabled(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TKeyboardOptions.KeyboardType": func(args []any) []any {
+			r0 := TKeyboardOptions{ref: args[0].(js.Ref)}.KeyboardType(KeyboardType(args[1].(int32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TMenu.Frame": func(args []any) []any {
+			r0 := TMenu{ref: args[0].(js.Ref)}.Frame(gostrictFrom9(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TMenu.Offset": func(args []any) []any {
+			r0 := TMenu{ref: args[0].(js.Ref)}.Offset(Length(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TMenuGroup.CustomContent": func(args []any) []any {
+			r0 := TMenuGroup{ref: args[0].(js.Ref)}.CustomContent(gostrictFrom4(args[1].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TModal.Top": func(args []any) []any {
+			r0 := TModal{ref: args[0].(js.Ref)}.Top(Length(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TModal.Left": func(args []any) []any {
+			r0 := TModal{ref: args[0].(js.Ref)}.Left(Length(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TModal.Right": func(args []any) []any {
+			r0 := TModal{ref: args[0].(js.Ref)}.Right(Length(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TModal.Bottom": func(args []any) []any {
+			r0 := TModal{ref: args[0].(js.Ref)}.Bottom(Length(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TModal.AllowBackgroundScrolling": func(args []any) []any {
+			r0 := TModal{ref: args[0].(js.Ref)}.AllowBackgroundScrolling(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TModal.OnDismissRequest": func(args []any) []any {
+			r0 := TModal{ref: args[0].(js.Ref)}.OnDismissRequest(gostrictFunc5(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPDF.Src": func(args []any) []any {
+			r0 := TPDF{ref: args[0].(js.Ref)}.Src(URI(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPDF.Frame": func(args []any) []any {
+			r0 := TPDF{ref: args[0].(js.Ref)}.Frame(gostrictFrom9(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPasswordField.Value": func(args []any) []any {
+			r0 := TPasswordField{ref: args[0].(js.Ref)}.Value(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPasswordField.AutoComplete": func(args []any) []any {
+			r0 := TPasswordField{ref: args[0].(js.Ref)}.AutoComplete(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPasswordField.Padding": func(args []any) []any {
+			r0 := TPasswordField{ref: args[0].(js.Ref)}.Padding(gostrictFrom15(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPasswordField.Border": func(args []any) []any {
+			r0 := TPasswordField{ref: args[0].(js.Ref)}.Border(gostrictFrom3(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPasswordField.AccessibilityLabel": func(args []any) []any {
+			r0 := TPasswordField{ref: args[0].(js.Ref)}.AccessibilityLabel(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPasswordField.SupportingText": func(args []any) []any {
+			r0 := TPasswordField{ref: args[0].(js.Ref)}.SupportingText(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPasswordField.ErrorText": func(args []any) []any {
+			r0 := TPasswordField{ref: args[0].(js.Ref)}.ErrorText(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPasswordField.Style": func(args []any) []any {
+			r0 := TPasswordField{ref: args[0].(js.Ref)}.Style(TextFieldStyle(args[1].(uint32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPasswordField.DebounceTime": func(args []any) []any {
+			r0 := TPasswordField{ref: args[0].(js.Ref)}.DebounceTime(args[1].(int32))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPasswordField.Debounce": func(args []any) []any {
+			r0 := TPasswordField{ref: args[0].(js.Ref)}.Debounce(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPasswordField.InputValue": func(args []any) []any {
+			r0 := TPasswordField{ref: args[0].(js.Ref)}.InputValue(StringState{ref: args[1].(js.Ref)})
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPasswordField.Disabled": func(args []any) []any {
+			r0 := TPasswordField{ref: args[0].(js.Ref)}.Disabled(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPasswordField.Frame": func(args []any) []any {
+			r0 := TPasswordField{ref: args[0].(js.Ref)}.Frame(gostrictFrom9(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPasswordField.WithFrame": func(args []any) []any {
+			r0 := TPasswordField{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc22(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPasswordField.Lines": func(args []any) []any {
+			r0 := TPasswordField{ref: args[0].(js.Ref)}.Lines(args[1].(int32))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPasswordField.Visible": func(args []any) []any {
+			r0 := TPasswordField{ref: args[0].(js.Ref)}.Visible(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPasswordField.ID": func(args []any) []any {
+			r0 := TPasswordField{ref: args[0].(js.Ref)}.ID(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPasswordField.KeydownEnter": func(args []any) []any {
+			r0 := TPasswordField{ref: args[0].(js.Ref)}.KeydownEnter(gostrictFunc5(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPasswordField.Autocomplete": func(args []any) []any {
+			r0 := TPasswordField{ref: args[0].(js.Ref)}.Autocomplete(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TPasswordField.FullWidth": func(args []any) []any {
+			r0 := TPasswordField{ref: args[0].(js.Ref)}.FullWidth()
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TQrCode.Frame": func(args []any) []any {
+			r0 := TQrCode{ref: args[0].(js.Ref)}.Frame(gostrictFrom9(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TQrCode.AccessibilityLabel": func(args []any) []any {
+			r0 := TQrCode{ref: args[0].(js.Ref)}.AccessibilityLabel(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TRadioButton.Value": func(args []any) []any {
+			r0 := TRadioButton{ref: args[0].(js.Ref)}.Value(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TRadioButton.InputChecked": func(args []any) []any {
+			r0 := TRadioButton{ref: args[0].(js.Ref)}.InputChecked(BoolState{ref: args[1].(js.Ref)})
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TRadioButton.ID": func(args []any) []any {
+			r0 := TRadioButton{ref: args[0].(js.Ref)}.ID(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TRadioButton.Disabled": func(args []any) []any {
+			r0 := TRadioButton{ref: args[0].(js.Ref)}.Disabled(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TRadioButton.Visible": func(args []any) []any {
+			r0 := TRadioButton{ref: args[0].(js.Ref)}.Visible(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TRadioButton.Name": func(args []any) []any {
+			r0 := TRadioButton{ref: args[0].(js.Ref)}.Name(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TRadioButtonField.Label": func(args []any) []any {
+			r0 := TRadioButtonField{ref: args[0].(js.Ref)}.Label(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TRadioButtonField.InputChecked": func(args []any) []any {
+			r0 := TRadioButtonField{ref: args[0].(js.Ref)}.InputChecked(BoolState{ref: args[1].(js.Ref)})
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TRadioButtonField.ID": func(args []any) []any {
+			r0 := TRadioButtonField{ref: args[0].(js.Ref)}.ID(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TRadioButtonField.Disabled": func(args []any) []any {
+			r0 := TRadioButtonField{ref: args[0].(js.Ref)}.Disabled(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TRadioButtonField.Visible": func(args []any) []any {
+			r0 := TRadioButtonField{ref: args[0].(js.Ref)}.Visible(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TRadioButtonField.Name": func(args []any) []any {
+			r0 := TRadioButtonField{ref: args[0].(js.Ref)}.Name(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TRichText.Value": func(args []any) []any {
+			r0 := TRichText{ref: args[0].(js.Ref)}.Value(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TRichText.Frame": func(args []any) []any {
+			r0 := TRichText{ref: args[0].(js.Ref)}.Frame(gostrictFrom9(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TRichText.FullWidth": func(args []any) []any {
+			r0 := TRichText{ref: args[0].(js.Ref)}.FullWidth()
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TRichTextEditor.InputValue": func(args []any) []any {
+			r0 := TRichTextEditor{ref: args[0].(js.Ref)}.InputValue(StringState{ref: args[1].(js.Ref)})
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TRichTextEditor.Frame": func(args []any) []any {
+			r0 := TRichTextEditor{ref: args[0].(js.Ref)}.Frame(gostrictFrom9(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TRichTextEditor.FullWidth": func(args []any) []any {
+			r0 := TRichTextEditor{ref: args[0].(js.Ref)}.FullWidth()
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TScaffold.Alignment": func(args []any) []any {
+			r0 := TScaffold{ref: args[0].(js.Ref)}.Alignment(ScaffoldAlignment(args[1].(uint32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TScaffold.Logo": func(args []any) []any {
+			r0 := TScaffold{ref: args[0].(js.Ref)}.Logo(gostrictFrom4(args[1].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TScaffold.Body": func(args []any) []any {
+			r0 := TScaffold{ref: args[0].(js.Ref)}.Body(gostrictFrom4(args[1].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TScaffold.Menu": func(args []any) []any {
+			r0 := TScaffold{ref: args[0].(js.Ref)}.Menu(gostrictFrom16(args[1].([]any))...)
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TScaffold.BottomView": func(args []any) []any {
+			r0 := TScaffold{ref: args[0].(js.Ref)}.BottomView(gostrictFrom4(args[1].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TScaffold.Footer": func(args []any) []any {
+			r0 := TScaffold{ref: args[0].(js.Ref)}.Footer(gostrictFrom4(args[1].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TScaffold.Breakpoint": func(args []any) []any {
+			r0 := TScaffold{ref: args[0].(js.Ref)}.Breakpoint(args[1].(int32))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TScaffold.Height": func(args []any) []any {
+			r0 := TScaffold{ref: args[0].(js.Ref)}.Height(Length(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TScaffold.BodyFullSize": func(args []any) []any {
+			r0 := TScaffold{ref: args[0].(js.Ref)}.BodyFullSize(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TScrollView.Content": func(args []any) []any {
+			r0 := TScrollView{ref: args[0].(js.Ref)}.Content(gostrictFrom4(args[1].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TScrollView.Axis": func(args []any) []any {
+			r0 := TScrollView{ref: args[0].(js.Ref)}.Axis(ScrollViewAxis(args[1].(int32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TScrollView.Frame": func(args []any) []any {
+			r0 := TScrollView{ref: args[0].(js.Ref)}.Frame(gostrictFrom9(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TScrollView.Position": func(args []any) []any {
+			r0 := TScrollView{ref: args[0].(js.Ref)}.Position(gostrictFrom26(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TScrollView.ScrollToView": func(args []any) []any {
+			r0 := TScrollView{ref: args[0].(js.Ref)}.ScrollToView(args[1].(string), ScrollAnimation(args[2].(int32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TScrollView.Border": func(args []any) []any {
+			r0 := TScrollView{ref: args[0].(js.Ref)}.Border(gostrictFrom3(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TScrollView.Padding": func(args []any) []any {
+			r0 := TScrollView{ref: args[0].(js.Ref)}.Padding(gostrictFrom15(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TScrollView.BackgroundColor": func(args []any) []any {
+			r0 := TScrollView{ref: args[0].(js.Ref)}.BackgroundColor(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TScrollView.ScrollBehavior": func(args []any) []any {
+			r0 := TScrollView{ref: args[0].(js.Ref)}.ScrollBehavior(ScrollBehavior(args[1].(int32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TScrollView.ScrollButtonLabel": func(args []any) []any {
+			r0 := TScrollView{ref: args[0].(js.Ref)}.ScrollButtonLabel(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TScrollView.ScrollAlignment": func(args []any) []any {
+			r0 := TScrollView{ref: args[0].(js.Ref)}.ScrollAlignment(ScrollAlignment(args[1].(int32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TScrollView.ListLength": func(args []any) []any {
+			r0 := TScrollView{ref: args[0].(js.Ref)}.ListLength(args[1].(int32))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TScrollView.FullWidth": func(args []any) []any {
+			r0 := TScrollView{ref: args[0].(js.Ref)}.FullWidth()
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TSheet.Frozen": func(args []any) []any {
+			r0 := TSheet{ref: args[0].(js.Ref)}.Frozen(args[1].(int32), args[2].(int32))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TSheet.ColumnWidth": func(args []any) []any {
+			r0 := TSheet{ref: args[0].(js.Ref)}.ColumnWidth(args[1].(float64))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TSheet.Disabled": func(args []any) []any {
+			r0 := TSheet{ref: args[0].(js.Ref)}.Disabled(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TSheet.OnEdit": func(args []any) []any {
+			r0 := TSheet{ref: args[0].(js.Ref)}.OnEdit(gostrictFunc27(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TSpace.Size": func(args []any) []any {
+			r0 := TSpace{ref: args[0].(js.Ref)}.Size(Length(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TSpacer.BackgroundColor": func(args []any) []any {
+			r0 := TSpacer{ref: args[0].(js.Ref)}.BackgroundColor(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TSpacer.Frame": func(args []any) []any {
+			r0 := TSpacer{ref: args[0].(js.Ref)}.Frame(gostrictFrom9(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TSplitView.Value": func(args []any) []any {
+			r0 := TSplitView{ref: args[0].(js.Ref)}.Value(args[1].(float64))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TSplitView.InputValue": func(args []any) []any {
+			r0 := TSplitView{ref: args[0].(js.Ref)}.InputValue(FloatState{ref: args[1].(js.Ref)})
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TSplitView.Orientation": func(args []any) []any {
+			r0 := TSplitView{ref: args[0].(js.Ref)}.Orientation(SplitViewOrientation(args[1].(int32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TSplitView.Frame": func(args []any) []any {
+			r0 := TSplitView{ref: args[0].(js.Ref)}.Frame(gostrictFrom9(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TSplitView.ContentA": func(args []any) []any {
+			r0 := TSplitView{ref: args[0].(js.Ref)}.ContentA(gostrictFrom4(args[1].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TSplitView.ContentB": func(args []any) []any {
+			r0 := TSplitView{ref: args[0].(js.Ref)}.ContentB(gostrictFrom4(args[1].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TSplitView.MinRatio": func(args []any) []any {
+			r0 := TSplitView{ref: args[0].(js.Ref)}.MinRatio(args[1].(float64))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TSplitView.MaxRatio": func(args []any) []any {
+			r0 := TSplitView{ref: args[0].(js.Ref)}.MaxRatio(args[1].(float64))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.Responsive": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.Responsive(gostrictFunc28(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.With": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.With(gostrictFunc29(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.NoClip": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.NoClip(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.Font": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.Font(gostrictFrom23(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.AccessibilityLabel": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.AccessibilityLabel(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.Visible": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.Visible(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.Action": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.Action(gostrictFunc5(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.Key": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.Key(args[1].(string), args[2].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.HRef": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.HRef(URI(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.Target": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.Target(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.Wrap": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.Wrap(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.Enabled": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.Enabled(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.ID": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.ID(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.Opacity": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.Opacity(args[1].(float64))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.TextColor": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.TextColor(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.Append": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.Append(gostrictFrom6(args[1].([]any))...)
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.BackgroundColor": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.BackgroundColor(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.HoveredBackgroundColor": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.HoveredBackgroundColor(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.PressedBackgroundColor": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.PressedBackgroundColor(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.FocusedBackgroundColor": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.FocusedBackgroundColor(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.Alignment": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.Alignment(Alignment(args[1].(uint32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.Frame": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.Frame(gostrictFrom9(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.WithFrame": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc22(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.Gap": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.Gap(Length(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.Padding": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.Padding(gostrictFrom15(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.WithPadding": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.WithPadding(gostrictFrom15(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.Border": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.Border(gostrictFrom3(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.HoveredBorder": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.HoveredBorder(gostrictFrom3(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.PressedBorder": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.PressedBorder(gostrictFrom3(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.FocusedBorder": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.FocusedBorder(gostrictFrom3(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.HtmlTag": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.HtmlTag(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.FullWidth": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.FullWidth()
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.StylePreset": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.StylePreset(ButtonStyle(args[1].(uint32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.Position": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.Position(gostrictFrom26(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.Animation": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.Animation(Animation(args[1].(uint32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.Transformation": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.Transformation(gostrictFrom30(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.Outline": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.Outline(gostrictFrom31(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.HoveredOutline": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.HoveredOutline(gostrictFrom31(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.PressedOutline": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.PressedOutline(gostrictFrom31(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.FocusedOutline": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.FocusedOutline(gostrictFrom31(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TStack.Layout": func(args []any) []any {
+			r0 := TStack{ref: args[0].(js.Ref)}.Layout(StackLayout(args[1].(int32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTable.Columns": func(args []any) []any {
+			r0 := TTable{ref: args[0].(js.Ref)}.Columns(gostrictFrom32(args[1].([]any))...)
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTable.BackgroundColor": func(args []any) []any {
+			r0 := TTable{ref: args[0].(js.Ref)}.BackgroundColor(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTable.Border": func(args []any) []any {
+			r0 := TTable{ref: args[0].(js.Ref)}.Border(gostrictFrom3(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTable.Frame": func(args []any) []any {
+			r0 := TTable{ref: args[0].(js.Ref)}.Frame(gostrictFrom9(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTable.RowDividerColor": func(args []any) []any {
+			r0 := TTable{ref: args[0].(js.Ref)}.RowDividerColor(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTable.HeaderDividerColor": func(args []any) []any {
+			r0 := TTable{ref: args[0].(js.Ref)}.HeaderDividerColor(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTable.Rows": func(args []any) []any {
+			r0 := TTable{ref: args[0].(js.Ref)}.Rows(gostrictFrom33(args[1].([]any))...)
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTable.CellPadding": func(args []any) []any {
+			r0 := TTable{ref: args[0].(js.Ref)}.CellPadding(gostrictFrom15(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTableCell.Content": func(args []any) []any {
+			r0 := TTableCell{ref: args[0].(js.Ref)}.Content(gostrictFrom4(args[1].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTableCell.ColSpan": func(args []any) []any {
+			r0 := TTableCell{ref: args[0].(js.Ref)}.ColSpan(args[1].(int32))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTableCell.Action": func(args []any) []any {
+			r0 := TTableCell{ref: args[0].(js.Ref)}.Action(gostrictFunc5(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTableCell.Key": func(args []any) []any {
+			r0 := TTableCell{ref: args[0].(js.Ref)}.Key(args[1].(string), args[2].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTableCell.RowSpan": func(args []any) []any {
+			r0 := TTableCell{ref: args[0].(js.Ref)}.RowSpan(args[1].(int32))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTableCell.Alignment": func(args []any) []any {
+			r0 := TTableCell{ref: args[0].(js.Ref)}.Alignment(Alignment(args[1].(uint32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTableCell.BackgroundColor": func(args []any) []any {
+			r0 := TTableCell{ref: args[0].(js.Ref)}.BackgroundColor(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTableCell.HoveredBackgroundColor": func(args []any) []any {
+			r0 := TTableCell{ref: args[0].(js.Ref)}.HoveredBackgroundColor(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTableCell.Padding": func(args []any) []any {
+			r0 := TTableCell{ref: args[0].(js.Ref)}.Padding(gostrictFrom15(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTableCell.Border": func(args []any) []any {
+			r0 := TTableCell{ref: args[0].(js.Ref)}.Border(gostrictFrom3(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTableColumn.Content": func(args []any) []any {
+			r0 := TTableColumn{ref: args[0].(js.Ref)}.Content(gostrictFrom4(args[1].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTableColumn.Action": func(args []any) []any {
+			r0 := TTableColumn{ref: args[0].(js.Ref)}.Action(gostrictFunc5(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTableColumn.Key": func(args []any) []any {
+			r0 := TTableColumn{ref: args[0].(js.Ref)}.Key(args[1].(string), args[2].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTableColumn.HoveredBackgroundColor": func(args []any) []any {
+			r0 := TTableColumn{ref: args[0].(js.Ref)}.HoveredBackgroundColor(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTableColumn.Width": func(args []any) []any {
+			r0 := TTableColumn{ref: args[0].(js.Ref)}.Width(Length(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTableColumn.Alignment": func(args []any) []any {
+			r0 := TTableColumn{ref: args[0].(js.Ref)}.Alignment(Alignment(args[1].(uint32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTableColumn.BackgroundColor": func(args []any) []any {
+			r0 := TTableColumn{ref: args[0].(js.Ref)}.BackgroundColor(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTableColumn.Padding": func(args []any) []any {
+			r0 := TTableColumn{ref: args[0].(js.Ref)}.Padding(gostrictFrom15(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTableColumn.Border": func(args []any) []any {
+			r0 := TTableColumn{ref: args[0].(js.Ref)}.Border(gostrictFrom3(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTableColumn.Span": func(args []any) []any {
+			r0 := TTableColumn{ref: args[0].(js.Ref)}.Span(args[1].(int32))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTableRow.Append": func(args []any) []any {
+			r0 := TTableRow{ref: args[0].(js.Ref)}.Append(gostrictFrom34(args[1].([]any))...)
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTableRow.Action": func(args []any) []any {
+			r0 := TTableRow{ref: args[0].(js.Ref)}.Action(gostrictFunc5(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTableRow.Key": func(args []any) []any {
+			r0 := TTableRow{ref: args[0].(js.Ref)}.Key(args[1].(string), args[2].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTableRow.Height": func(args []any) []any {
+			r0 := TTableRow{ref: args[0].(js.Ref)}.Height(Length(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTableRow.BackgroundColor": func(args []any) []any {
+			r0 := TTableRow{ref: args[0].(js.Ref)}.BackgroundColor(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTableRow.HoveredBackgroundColor": func(args []any) []any {
+			r0 := TTableRow{ref: args[0].(js.Ref)}.HoveredBackgroundColor(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TText.Text": func(args []any) []any {
+			r0 := TText{ref: args[0].(js.Ref)}.Text(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TText.Underline": func(args []any) []any {
+			r0 := TText{ref: args[0].(js.Ref)}.Underline(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TText.Padding": func(args []any) []any {
+			r0 := TText{ref: args[0].(js.Ref)}.Padding(gostrictFrom15(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TText.WordBreak": func(args []any) []any {
+			r0 := TText{ref: args[0].(js.Ref)}.WordBreak(WordBreak(args[1].(int32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TText.Frame": func(args []any) []any {
+			r0 := TText{ref: args[0].(js.Ref)}.Frame(gostrictFrom9(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TText.WithFrame": func(args []any) []any {
+			r0 := TText{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc22(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TText.FullWidth": func(args []any) []any {
+			r0 := TText{ref: args[0].(js.Ref)}.FullWidth()
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TText.Resolve": func(args []any) []any {
+			r0 := TText{ref: args[0].(js.Ref)}.Resolve(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TText.Hyphens": func(args []any) []any {
+			r0 := TText{ref: args[0].(js.Ref)}.Hyphens(Hyphens(args[1].(int32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TText.Border": func(args []any) []any {
+			r0 := TText{ref: args[0].(js.Ref)}.Border(gostrictFrom3(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TText.LineBreak": func(args []any) []any {
+			r0 := TText{ref: args[0].(js.Ref)}.LineBreak(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TText.HoveredBorder": func(args []any) []any {
+			r0 := TText{ref: args[0].(js.Ref)}.HoveredBorder(gostrictFrom3(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TText.PressedBorder": func(args []any) []any {
+			r0 := TText{ref: args[0].(js.Ref)}.PressedBorder(gostrictFrom3(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TText.FocusedBorder": func(args []any) []any {
+			r0 := TText{ref: args[0].(js.Ref)}.FocusedBorder(gostrictFrom3(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TText.TextAlignment": func(args []any) []any {
+			r0 := TText{ref: args[0].(js.Ref)}.TextAlignment(TextAlignment(args[1].(uint32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TText.Visible": func(args []any) []any {
+			r0 := TText{ref: args[0].(js.Ref)}.Visible(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TText.AccessibilityLabel": func(args []any) []any {
+			r0 := TText{ref: args[0].(js.Ref)}.AccessibilityLabel(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TText.Font": func(args []any) []any {
+			r0 := TText{ref: args[0].(js.Ref)}.Font(gostrictFrom23(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TText.Color": func(args []any) []any {
+			r0 := TText{ref: args[0].(js.Ref)}.Color(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TText.BackgroundColor": func(args []any) []any {
+			r0 := TText{ref: args[0].(js.Ref)}.BackgroundColor(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TText.Action": func(args []any) []any {
+			r0 := TText{ref: args[0].(js.Ref)}.Action(gostrictFunc5(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TText.LabelFor": func(args []any) []any {
+			r0 := TText{ref: args[0].(js.Ref)}.LabelFor(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TText.Link": func(args []any) []any {
+			r0 := TText{ref: args[0].(js.Ref)}.Link(args[1].(string), args[2].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TText.WhiteSpace": func(args []any) []any {
+			r0 := TText{ref: args[0].(js.Ref)}.WhiteSpace(WhiteSpace(args[1].(uint32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TText.Ellipsis": func(args []any) []any {
+			r0 := TText{ref: args[0].(js.Ref)}.Ellipsis(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.Border": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.Border(gostrictFrom3(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.AccessibilityLabel": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.AccessibilityLabel(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.Value": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.Value(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.SupportingText": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.SupportingText(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.ErrorText": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.ErrorText(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.Leading": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.Leading(gostrictFrom4(args[1].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.Trailing": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.Trailing(gostrictFrom4(args[1].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.TextAlignment": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.TextAlignment(TextAlignment(args[1].(uint32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.Style": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.Style(TextFieldStyle(args[1].(uint32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.DebounceTime": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.DebounceTime(args[1].(int32))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.Debounce": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.Debounce(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.InputValue": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.InputValue(StringState{ref: args[1].(js.Ref)})
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.Disabled": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.Disabled(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.Frame": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.Frame(gostrictFrom9(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.WithFrame": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc22(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.FullWidth": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.FullWidth()
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.KeydownEnter": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.KeydownEnter(gostrictFunc5(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.Lines": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.Lines(args[1].(int32))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.Visible": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.Visible(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.KeyboardOptions": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.KeyboardOptions(TKeyboardOptions{ref: args[1].(js.Ref)})
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.KeyboardType": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.KeyboardType(KeyboardType(args[1].(int32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.ID": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.ID(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.ShowZero": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.ShowZero(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.Step": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.Step(args[1].(int32))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.Max": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.Max(args[1].(float64))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.Min": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.Min(args[1].(float64))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.Autocomplete": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.Autocomplete(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.Optional": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.Optional(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.ClearButton": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.ClearButton(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.Placeholder": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.Placeholder(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField.Padding": func(args []any) []any {
+			r0 := TTextField{ref: args[0].(js.Ref)}.Padding(gostrictFrom15(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextLayout.Append": func(args []any) []any {
+			r0 := TTextLayout{ref: args[0].(js.Ref)}.Append(gostrictFrom6(args[1].([]any))...)
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextLayout.Action": func(args []any) []any {
+			r0 := TTextLayout{ref: args[0].(js.Ref)}.Action(gostrictFunc5(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextLayout.Alignment": func(args []any) []any {
+			r0 := TTextLayout{ref: args[0].(js.Ref)}.Alignment(TextAlignment(args[1].(uint32)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextLayout.Font": func(args []any) []any {
+			r0 := TTextLayout{ref: args[0].(js.Ref)}.Font(gostrictFrom23(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextLayout.Frame": func(args []any) []any {
+			r0 := TTextLayout{ref: args[0].(js.Ref)}.Frame(gostrictFrom9(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextLayout.WithFrame": func(args []any) []any {
+			r0 := TTextLayout{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc22(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextLayout.FullWidth": func(args []any) []any {
+			r0 := TTextLayout{ref: args[0].(js.Ref)}.FullWidth()
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextLayout.Padding": func(args []any) []any {
+			r0 := TTextLayout{ref: args[0].(js.Ref)}.Padding(gostrictFrom15(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextLayout.BackgroundColor": func(args []any) []any {
+			r0 := TTextLayout{ref: args[0].(js.Ref)}.BackgroundColor(Color(args[1].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextLayout.Border": func(args []any) []any {
+			r0 := TTextLayout{ref: args[0].(js.Ref)}.Border(gostrictFrom3(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextLayout.Visible": func(args []any) []any {
+			r0 := TTextLayout{ref: args[0].(js.Ref)}.Visible(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTextLayout.AccessibilityLabel": func(args []any) []any {
+			r0 := TTextLayout{ref: args[0].(js.Ref)}.AccessibilityLabel(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TThemeSwitcher.Frame": func(args []any) []any {
+			r0 := TThemeSwitcher{ref: args[0].(js.Ref)}.Frame(gostrictFrom9(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TToggle.ID": func(args []any) []any {
+			r0 := TToggle{ref: args[0].(js.Ref)}.ID(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TToggle.InputChecked": func(args []any) []any {
+			r0 := TToggle{ref: args[0].(js.Ref)}.InputChecked(BoolState{ref: args[1].(js.Ref)})
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TToggle.Disabled": func(args []any) []any {
+			r0 := TToggle{ref: args[0].(js.Ref)}.Disabled(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TToggle.Visible": func(args []any) []any {
+			r0 := TToggle{ref: args[0].(js.Ref)}.Visible(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TToggleField.Label": func(args []any) []any {
+			r0 := TToggleField{ref: args[0].(js.Ref)}.Label(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TToggleField.Value": func(args []any) []any {
+			r0 := TToggleField{ref: args[0].(js.Ref)}.Value(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TToggleField.ID": func(args []any) []any {
+			r0 := TToggleField{ref: args[0].(js.Ref)}.ID(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TToggleField.Padding": func(args []any) []any {
+			r0 := TToggleField{ref: args[0].(js.Ref)}.Padding(gostrictFrom15(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TToggleField.Frame": func(args []any) []any {
+			r0 := TToggleField{ref: args[0].(js.Ref)}.Frame(gostrictFrom9(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TToggleField.WithFrame": func(args []any) []any {
+			r0 := TToggleField{ref: args[0].(js.Ref)}.WithFrame(gostrictFunc22(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TToggleField.Border": func(args []any) []any {
+			r0 := TToggleField{ref: args[0].(js.Ref)}.Border(gostrictFrom3(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TToggleField.Visible": func(args []any) []any {
+			r0 := TToggleField{ref: args[0].(js.Ref)}.Visible(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TToggleField.AccessibilityLabel": func(args []any) []any {
+			r0 := TToggleField{ref: args[0].(js.Ref)}.AccessibilityLabel(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TToggleField.InputValue": func(args []any) []any {
+			r0 := TToggleField{ref: args[0].(js.Ref)}.InputValue(BoolState{ref: args[1].(js.Ref)})
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TToggleField.SupportingText": func(args []any) []any {
+			r0 := TToggleField{ref: args[0].(js.Ref)}.SupportingText(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TToggleField.ErrorText": func(args []any) []any {
+			r0 := TToggleField{ref: args[0].(js.Ref)}.ErrorText(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TToggleField.Disabled": func(args []any) []any {
+			r0 := TToggleField{ref: args[0].(js.Ref)}.Disabled(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TWindowTitle.Title": func(args []any) []any {
+			r0 := TWindowTitle{ref: args[0].(js.Ref)}.Title(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Table": func(args []any) []any {
+			r0 := Table(gostrictFrom32(args[0].([]any))...)
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TableCell": func(args []any) []any {
+			r0 := TableCell(gostrictFrom4(args[0].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TableColumn": func(args []any) []any {
+			r0 := TableColumn(gostrictFrom4(args[0].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TableRow": func(args []any) []any {
+			r0 := TableRow(gostrictFrom34(args[0].([]any))...)
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TertiaryButton": func(args []any) []any {
+			r0 := TertiaryButton(gostrictFunc5(args[0].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Text": func(args []any) []any {
+			r0 := Text(args[0].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TextField": func(args []any) []any {
+			r0 := TextField(args[0].(string), args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TextLayout": func(args []any) []any {
+			r0 := TextLayout(gostrictFrom6(args[0].([]any))...)
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.ThemeSwitcher": func(args []any) []any {
+			r0 := ThemeSwitcher(gostrictFrom4(args[0].(gostrict.Variant)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Toggle": func(args []any) []any {
+			r0 := Toggle(args[0].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.ToggleField": func(args []any) []any {
+			r0 := ToggleField(args[0].(string), args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.VLine": func(args []any) []any {
+			r0 := VLine()
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.VLineWithColor": func(args []any) []any {
+			r0 := VLineWithColor(Color(args[0].(string)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.VStack": func(args []any) []any {
+			r0 := VStack(gostrictFrom6(args[0].([]any))...)
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.ViewThatMatches": func(args []any) []any {
+			r0 := ViewThatMatches(Window{ref: args[0].(js.Ref)}, gostrictFrom35(args[1].([]any))...)
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.WindowTitle": func(args []any) []any {
+			r0 := WindowTitle(args[0].(string))
 			return []any{r0.ref}
 		},
 	}
 }
 
-func gostrictFunc1(cb gostrict.Callback) func(row int32, col int32) sheet.Cell {
+// HostVars returns the values of the variables of this header package, which their bindings must equal.
+func HostVars() map[string]any {
+	return map[string]any{
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.BodyLarge":        gostrictTo23(BodyLarge),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.BodyMedium":       gostrictTo23(BodyMedium),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.BodySmall":        gostrictTo23(BodySmall),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.DisplayLarge":     gostrictTo23(DisplayLarge),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.DisplayMedium":    gostrictTo23(DisplayMedium),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.DisplaySmall":     gostrictTo23(DisplaySmall),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Full":             string(Full),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.HeadlineLarge":    gostrictTo23(HeadlineLarge),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.HeadlineMedium":   gostrictTo23(HeadlineMedium),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.HeadlineSmall":    gostrictTo23(HeadlineSmall),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.LabelLarge":       gostrictTo23(LabelLarge),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.LabelMedium":      gostrictTo23(LabelMedium),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.LabelSmall":       gostrictTo23(LabelSmall),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Large":            gostrictTo23(Large),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoBoldLarge":    gostrictTo23(MonoBoldLarge),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoBoldMedium":   gostrictTo23(MonoBoldMedium),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoBoldSmall":    gostrictTo23(MonoBoldSmall),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoItalicLarge":  gostrictTo23(MonoItalicLarge),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoItalicMedium": gostrictTo23(MonoItalicMedium),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoItalicSmall":  gostrictTo23(MonoItalicSmall),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoLarge":        gostrictTo23(MonoLarge),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoMedium":       gostrictTo23(MonoMedium),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoSmall":        gostrictTo23(MonoSmall),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Monospace":        gostrictTo23(Monospace),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Small":            gostrictTo23(Small),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.SubTitle":         gostrictTo23(SubTitle),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Title":            gostrictTo23(Title),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TitleLarge":       gostrictTo23(TitleLarge),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TitleMedium":      gostrictTo23(TitleMedium),
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TitleSmall":       gostrictTo23(TitleSmall),
+	}
+}
+
+func init() {
+	gostrict.Variants[View](TBox{}, TFilledButton{}, TButton{}, TCheckbox{}, TCheckboxField{}, TCodeEditor{}, TCountDown{}, TDialog{}, TDivider{}, TDnDArea{}, TForm{}, TGrid{}, THoverGroup{}, TImage{}, TMenu{}, TModal{}, TPasswordField{}, TPDF{}, TQrCode{}, TRadioButton{}, TRadioButtonField{}, TRichText{}, TRichTextEditor{}, TScaffold{}, TScrollView{}, TSheet{}, TSpace{}, TSpacer{}, TSplitView{}, TStack{}, TTable{}, TText{}, TTextField{}, TTextLayout{}, TThemeSwitcher{}, TToggle{}, TToggleField{}, TViewThatMatches{}, TWindowTitle{})
+}
+
+// HostRef returns the reference of the handle.
+func (h BoolState) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (BoolState) HostFromRef(ref js.Ref) any {
+	return BoolState{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h FloatState) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (FloatState) HostFromRef(ref js.Ref) any {
+	return FloatState{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h IntState) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (IntState) HostFromRef(ref js.Ref) any {
+	return IntState{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h RadioStateGroup) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (RadioStateGroup) HostFromRef(ref js.Ref) any {
+	return RadioStateGroup{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h ScaffoldMenuEntry) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (ScaffoldMenuEntry) HostFromRef(ref js.Ref) any {
+	return ScaffoldMenuEntry{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h StringState) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (StringState) HostFromRef(ref js.Ref) any {
+	return StringState{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TBox) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TBox) HostFromRef(ref js.Ref) any {
+	return TBox{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TButton) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TButton) HostFromRef(ref js.Ref) any {
+	return TButton{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TCheckbox) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TCheckbox) HostFromRef(ref js.Ref) any {
+	return TCheckbox{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TCheckboxField) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TCheckboxField) HostFromRef(ref js.Ref) any {
+	return TCheckboxField{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TCodeEditor) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TCodeEditor) HostFromRef(ref js.Ref) any {
+	return TCodeEditor{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TCountDown) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TCountDown) HostFromRef(ref js.Ref) any {
+	return TCountDown{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TDialog) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TDialog) HostFromRef(ref js.Ref) any {
+	return TDialog{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TDivider) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TDivider) HostFromRef(ref js.Ref) any {
+	return TDivider{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TDnDArea) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TDnDArea) HostFromRef(ref js.Ref) any {
+	return TDnDArea{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TFilledButton) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TFilledButton) HostFromRef(ref js.Ref) any {
+	return TFilledButton{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TForm) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TForm) HostFromRef(ref js.Ref) any {
+	return TForm{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TGrid) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TGrid) HostFromRef(ref js.Ref) any {
+	return TGrid{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TGridCell) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TGridCell) HostFromRef(ref js.Ref) any {
+	return TGridCell{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h THoverGroup) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (THoverGroup) HostFromRef(ref js.Ref) any {
+	return THoverGroup{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TImage) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TImage) HostFromRef(ref js.Ref) any {
+	return TImage{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TKeyboardOptions) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TKeyboardOptions) HostFromRef(ref js.Ref) any {
+	return TKeyboardOptions{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TMenu) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TMenu) HostFromRef(ref js.Ref) any {
+	return TMenu{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TMenuGroup) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TMenuGroup) HostFromRef(ref js.Ref) any {
+	return TMenuGroup{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TMenuItem) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TMenuItem) HostFromRef(ref js.Ref) any {
+	return TMenuItem{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TModal) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TModal) HostFromRef(ref js.Ref) any {
+	return TModal{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TPDF) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TPDF) HostFromRef(ref js.Ref) any {
+	return TPDF{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TPasswordField) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TPasswordField) HostFromRef(ref js.Ref) any {
+	return TPasswordField{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TQrCode) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TQrCode) HostFromRef(ref js.Ref) any {
+	return TQrCode{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TRadioButton) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TRadioButton) HostFromRef(ref js.Ref) any {
+	return TRadioButton{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TRadioButtonField) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TRadioButtonField) HostFromRef(ref js.Ref) any {
+	return TRadioButtonField{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TRichText) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TRichText) HostFromRef(ref js.Ref) any {
+	return TRichText{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TRichTextEditor) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TRichTextEditor) HostFromRef(ref js.Ref) any {
+	return TRichTextEditor{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TScaffold) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TScaffold) HostFromRef(ref js.Ref) any {
+	return TScaffold{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TScrollView) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TScrollView) HostFromRef(ref js.Ref) any {
+	return TScrollView{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TSheet) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TSheet) HostFromRef(ref js.Ref) any {
+	return TSheet{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TSpace) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TSpace) HostFromRef(ref js.Ref) any {
+	return TSpace{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TSpacer) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TSpacer) HostFromRef(ref js.Ref) any {
+	return TSpacer{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TSplitView) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TSplitView) HostFromRef(ref js.Ref) any {
+	return TSplitView{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TStack) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TStack) HostFromRef(ref js.Ref) any {
+	return TStack{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TTable) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TTable) HostFromRef(ref js.Ref) any {
+	return TTable{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TTableCell) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TTableCell) HostFromRef(ref js.Ref) any {
+	return TTableCell{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TTableColumn) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TTableColumn) HostFromRef(ref js.Ref) any {
+	return TTableColumn{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TTableRow) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TTableRow) HostFromRef(ref js.Ref) any {
+	return TTableRow{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TText) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TText) HostFromRef(ref js.Ref) any {
+	return TText{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TTextField) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TTextField) HostFromRef(ref js.Ref) any {
+	return TTextField{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TTextLayout) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TTextLayout) HostFromRef(ref js.Ref) any {
+	return TTextLayout{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TThemeSwitcher) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TThemeSwitcher) HostFromRef(ref js.Ref) any {
+	return TThemeSwitcher{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TToggle) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TToggle) HostFromRef(ref js.Ref) any {
+	return TToggle{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TToggleField) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TToggleField) HostFromRef(ref js.Ref) any {
+	return TToggleField{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TViewThatMatches) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TViewThatMatches) HostFromRef(ref js.Ref) any {
+	return TViewThatMatches{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h TWindowTitle) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TWindowTitle) HostFromRef(ref js.Ref) any {
+	return TWindowTitle{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h ViewWithSizeClass) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (ViewWithSizeClass) HostFromRef(ref js.Ref) any {
+	return ViewWithSizeClass{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h Window) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (Window) HostFromRef(ref js.Ref) any {
+	return Window{ref: ref}
+}
+
+func gostrictFunc1(cb gostrict.Callback) func() bool {
+	return func() bool {
+		res, err := cb.Call()
+		if err != nil {
+			var z0 bool
+			return z0
+		}
+		return res[0].(bool)
+	}
+}
+
+func gostrictFunc2(cb gostrict.Callback) func(v bool) {
+	return func(a0 bool) {
+		_, _ = cb.Call(a0)
+	}
+}
+
+func gostrictFrom3(v []any) Border {
+	return Border{TopLeftRadius: Length(v[0].(string)), TopRightRadius: Length(v[1].(string)), BottomLeftRadius: Length(v[2].(string)), BottomRightRadius: Length(v[3].(string)), LeftWidth: Length(v[4].(string)), TopWidth: Length(v[5].(string)), RightWidth: Length(v[6].(string)), BottomWidth: Length(v[7].(string)), LeftColor: Color(v[8].(string)), TopColor: Color(v[9].(string)), RightColor: Color(v[10].(string)), BottomColor: Color(v[11].(string)), BoxShadow: gostrictFrom36(v[12].([]any)), BorderStyle: BorderStyle(v[13].(int32))}
+}
+
+func gostrictTo3(x Border) []any {
+	return []any{string(x.TopLeftRadius), string(x.TopRightRadius), string(x.BottomLeftRadius), string(x.BottomRightRadius), string(x.LeftWidth), string(x.TopWidth), string(x.RightWidth), string(x.BottomWidth), string(x.LeftColor), string(x.TopColor), string(x.RightColor), string(x.BottomColor), gostrictTo36(x.BoxShadow), int32(x.BorderStyle)}
+}
+
+func gostrictFrom4(x gostrict.Variant) View {
+	switch x.Tag {
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TBox":
+		return TBox{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TFilledButton":
+		return TFilledButton{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TButton":
+		return TButton{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TCheckbox":
+		return TCheckbox{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TCheckboxField":
+		return TCheckboxField{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TCodeEditor":
+		return TCodeEditor{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TCountDown":
+		return TCountDown{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TDialog":
+		return TDialog{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TDivider":
+		return TDivider{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TDnDArea":
+		return TDnDArea{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TForm":
+		return TForm{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TGrid":
+		return TGrid{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.THoverGroup":
+		return THoverGroup{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TImage":
+		return TImage{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TMenu":
+		return TMenu{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TModal":
+		return TModal{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TPasswordField":
+		return TPasswordField{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TPDF":
+		return TPDF{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TQrCode":
+		return TQrCode{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TRadioButton":
+		return TRadioButton{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TRadioButtonField":
+		return TRadioButtonField{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TRichText":
+		return TRichText{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TRichTextEditor":
+		return TRichTextEditor{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TScaffold":
+		return TScaffold{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TScrollView":
+		return TScrollView{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TSheet":
+		return TSheet{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TSpace":
+		return TSpace{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TSpacer":
+		return TSpacer{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TSplitView":
+		return TSplitView{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TStack":
+		return TStack{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TTable":
+		return TTable{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TText":
+		return TText{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField":
+		return TTextField{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TTextLayout":
+		return TTextLayout{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TThemeSwitcher":
+		return TThemeSwitcher{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TToggle":
+		return TToggle{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TToggleField":
+		return TToggleField{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TViewThatMatches":
+		return TViewThatMatches{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TWindowTitle":
+		return TWindowTitle{ref: x.Fields[0].(js.Ref)}
+	}
+	panic("unknown variant " + x.Tag)
+}
+
+func gostrictTo4(v View) gostrict.Variant {
+	switch x := v.(type) {
+	case TBox:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TBox", Fields: []any{x.ref}}
+	case TFilledButton:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TFilledButton", Fields: []any{x.ref}}
+	case TButton:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TButton", Fields: []any{x.ref}}
+	case TCheckbox:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TCheckbox", Fields: []any{x.ref}}
+	case TCheckboxField:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TCheckboxField", Fields: []any{x.ref}}
+	case TCodeEditor:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TCodeEditor", Fields: []any{x.ref}}
+	case TCountDown:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TCountDown", Fields: []any{x.ref}}
+	case TDialog:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TDialog", Fields: []any{x.ref}}
+	case TDivider:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TDivider", Fields: []any{x.ref}}
+	case TDnDArea:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TDnDArea", Fields: []any{x.ref}}
+	case TForm:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TForm", Fields: []any{x.ref}}
+	case TGrid:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TGrid", Fields: []any{x.ref}}
+	case THoverGroup:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.THoverGroup", Fields: []any{x.ref}}
+	case TImage:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TImage", Fields: []any{x.ref}}
+	case TMenu:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TMenu", Fields: []any{x.ref}}
+	case TModal:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TModal", Fields: []any{x.ref}}
+	case TPasswordField:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TPasswordField", Fields: []any{x.ref}}
+	case TPDF:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TPDF", Fields: []any{x.ref}}
+	case TQrCode:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TQrCode", Fields: []any{x.ref}}
+	case TRadioButton:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TRadioButton", Fields: []any{x.ref}}
+	case TRadioButtonField:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TRadioButtonField", Fields: []any{x.ref}}
+	case TRichText:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TRichText", Fields: []any{x.ref}}
+	case TRichTextEditor:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TRichTextEditor", Fields: []any{x.ref}}
+	case TScaffold:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TScaffold", Fields: []any{x.ref}}
+	case TScrollView:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TScrollView", Fields: []any{x.ref}}
+	case TSheet:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TSheet", Fields: []any{x.ref}}
+	case TSpace:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TSpace", Fields: []any{x.ref}}
+	case TSpacer:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TSpacer", Fields: []any{x.ref}}
+	case TSplitView:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TSplitView", Fields: []any{x.ref}}
+	case TStack:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TStack", Fields: []any{x.ref}}
+	case TTable:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TTable", Fields: []any{x.ref}}
+	case TText:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TText", Fields: []any{x.ref}}
+	case TTextField:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField", Fields: []any{x.ref}}
+	case TTextLayout:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TTextLayout", Fields: []any{x.ref}}
+	case TThemeSwitcher:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TThemeSwitcher", Fields: []any{x.ref}}
+	case TToggle:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TToggle", Fields: []any{x.ref}}
+	case TToggleField:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TToggleField", Fields: []any{x.ref}}
+	case TViewThatMatches:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TViewThatMatches", Fields: []any{x.ref}}
+	case TWindowTitle:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TWindowTitle", Fields: []any{x.ref}}
+	}
+	panic("unknown variant")
+}
+
+func gostrictFunc5(cb gostrict.Callback) func() {
+	return func() {
+		_, _ = cb.Call()
+	}
+}
+
+func gostrictFrom6(v []any) []View {
+	res := make([]View, len(v))
+	for i, e := range v {
+		res[i] = gostrictFrom4(e.(gostrict.Variant))
+	}
+	return res
+}
+
+func gostrictFunc7(cb gostrict.Callback) func() float64 {
+	return func() float64 {
+		res, err := cb.Call()
+		if err != nil {
+			var z0 float64
+			return z0
+		}
+		return res[0].(float64)
+	}
+}
+
+func gostrictFunc8(cb gostrict.Callback) func(v float64) {
+	return func(a0 float64) {
+		_, _ = cb.Call(a0)
+	}
+}
+
+func gostrictFrom9(v []any) Frame {
+	return Frame{MinWidth: Length(v[0].(string)), MaxWidth: Length(v[1].(string)), MinHeight: Length(v[2].(string)), MaxHeight: Length(v[3].(string)), Width: Length(v[4].(string)), Height: Length(v[5].(string)), FlexGrow: v[6].(bool), FlexPreventShrink: v[7].(bool)}
+}
+
+func gostrictTo9(x Frame) []any {
+	return []any{string(x.MinWidth), string(x.MaxWidth), string(x.MinHeight), string(x.MaxHeight), string(x.Width), string(x.Height), x.FlexGrow, x.FlexPreventShrink}
+}
+
+func gostrictFrom10(v []any) []TGridCell {
+	res := make([]TGridCell, len(v))
+	for i, e := range v {
+		res[i] = TGridCell{ref: e.(js.Ref)}
+	}
+	return res
+}
+
+func gostrictFunc11(cb gostrict.Callback) func() int32 {
+	return func() int32 {
+		res, err := cb.Call()
+		if err != nil {
+			var z0 int32
+			return z0
+		}
+		return res[0].(int32)
+	}
+}
+
+func gostrictFunc12(cb gostrict.Callback) func(v int32) {
+	return func(a0 int32) {
+		_, _ = cb.Call(a0)
+	}
+}
+
+func gostrictFrom13(v []any) []TMenuGroup {
+	res := make([]TMenuGroup, len(v))
+	for i, e := range v {
+		res[i] = TMenuGroup{ref: e.(js.Ref)}
+	}
+	return res
+}
+
+func gostrictFrom14(v []any) []TMenuItem {
+	res := make([]TMenuItem, len(v))
+	for i, e := range v {
+		res[i] = TMenuItem{ref: e.(js.Ref)}
+	}
+	return res
+}
+
+func gostrictFrom15(v []any) Padding {
+	return Padding{Top: Length(v[0].(string)), Left: Length(v[1].(string)), Right: Length(v[2].(string)), Bottom: Length(v[3].(string))}
+}
+
+func gostrictTo15(x Padding) []any {
+	return []any{string(x.Top), string(x.Left), string(x.Right), string(x.Bottom)}
+}
+
+func gostrictFrom16(v []any) []ScaffoldMenuEntry {
+	res := make([]ScaffoldMenuEntry, len(v))
+	for i, e := range v {
+		res[i] = ScaffoldMenuEntry{ref: e.(js.Ref)}
+	}
+	return res
+}
+
+func gostrictFunc17(cb gostrict.Callback) func(newIdx int32) {
+	return func(a0 int32) {
+		_, _ = cb.Call(a0)
+	}
+}
+
+func gostrictFunc18(cb gostrict.Callback) func(row int32, col int32) sheet.Cell {
 	return func(a0 int32, a1 int32) sheet.Cell {
 		res, err := cb.Call(a0, a1)
 		if err != nil {
 			var z0 sheet.Cell
 			return z0
 		}
-		return gostrictFrom2(res[0].([]any))
+		return gostrictFrom37(res[0].([]any))
 	}
 }
 
-func gostrictFrom2(v []any) sheet.Cell {
-	return sheet.Cell{Text: v[0].(string), Value: v[1].(string), Type: sheet.ValueType(v[2].(int32)), Style: gostrictFrom3(v[3].([]any)), Editor: sheet.Editor(v[4].(int32))}
+func gostrictFunc19(cb gostrict.Callback) func() View {
+	return func() View {
+		res, err := cb.Call()
+		if err != nil {
+			var z0 View
+			return z0
+		}
+		return gostrictFrom4(res[0].(gostrict.Variant))
+	}
 }
 
-func gostrictTo2(x sheet.Cell) []any {
-	return []any{x.Text, x.Value, int32(x.Type), gostrictTo3(x.Style), int32(x.Editor)}
+func gostrictFunc20(cb gostrict.Callback) func() string {
+	return func() string {
+		res, err := cb.Call()
+		if err != nil {
+			var z0 string
+			return z0
+		}
+		return res[0].(string)
+	}
 }
 
-func gostrictFrom3(v []any) sheet.Style {
-	return sheet.Style{BackgroundColor: v[0].(string), Color: v[1].(string), Bold: v[2].(bool), Italic: v[3].(bool), Underline: v[4].(bool), Align: sheet.Align(v[5].(int32)), Wrap: sheet.Wrap(v[6].(int32)), Borders: gostrictFrom4(v[7].([]any)), PaddingX: v[8].(float64), FontSize: v[9].(float64)}
+func gostrictFunc21(cb gostrict.Callback) func(v string) {
+	return func(a0 string) {
+		_, _ = cb.Call(a0)
+	}
 }
 
-func gostrictTo3(x sheet.Style) []any {
-	return []any{x.BackgroundColor, x.Color, x.Bold, x.Italic, x.Underline, int32(x.Align), int32(x.Wrap), gostrictTo4(x.Borders), x.PaddingX, x.FontSize}
+func gostrictFunc22(cb gostrict.Callback) func(Frame) Frame {
+	return func(a0 Frame) Frame {
+		res, err := cb.Call(gostrictTo9(a0))
+		if err != nil {
+			var z0 Frame
+			return z0
+		}
+		return gostrictFrom9(res[0].([]any))
+	}
 }
 
-func gostrictFrom4(v []any) sheet.Borders {
-	return sheet.Borders{Top: gostrictFrom5(v[0].([]any)), Right: gostrictFrom5(v[1].([]any)), Bottom: gostrictFrom5(v[2].([]any)), Left: gostrictFrom5(v[3].([]any))}
+func gostrictFrom23(v []any) Font {
+	return Font{Name: FontName(v[0].(string)), Size: Length(v[1].(string)), Style: FontStyle(v[2].(uint32)), Weight: FontWeight(v[3].(int32)), LineHeight: LineHeight(v[4].(string))}
 }
 
-func gostrictTo4(x sheet.Borders) []any {
-	return []any{gostrictTo5(x.Top), gostrictTo5(x.Right), gostrictTo5(x.Bottom), gostrictTo5(x.Left)}
+func gostrictTo23(x Font) []any {
+	return []any{string(x.Name), string(x.Size), uint32(x.Style), int32(x.Weight), string(x.LineHeight)}
 }
 
-func gostrictFrom5(v []any) sheet.Line {
+func gostrictFrom24(v []any) []string {
+	res := make([]string, len(v))
+	for i, e := range v {
+		res[i] = e.(string)
+	}
+	return res
+}
+
+func gostrictFrom25(v []any) []Length {
+	res := make([]Length, len(v))
+	for i, e := range v {
+		res[i] = Length(e.(string))
+	}
+	return res
+}
+
+func gostrictFrom26(v []any) Position {
+	return Position{Type: PositionType(v[0].(int32)), Left: Length(v[1].(string)), Top: Length(v[2].(string)), Right: Length(v[3].(string)), Bottom: Length(v[4].(string)), ZIndex: v[5].(int32)}
+}
+
+func gostrictTo26(x Position) []any {
+	return []any{int32(x.Type), string(x.Left), string(x.Top), string(x.Right), string(x.Bottom), x.ZIndex}
+}
+
+func gostrictFunc27(cb gostrict.Callback) func(e sheet.Edit) error {
+	return func(a0 sheet.Edit) error {
+		res, err := cb.Call(gostrictTo38(a0))
+		if err != nil {
+			return err
+		}
+		return gostrict.ErrorOf(res[0])
+	}
+}
+
+func gostrictFunc28(cb gostrict.Callback) func(wnd Window, stack TStack) TStack {
+	return func(a0 Window, a1 TStack) TStack {
+		res, err := cb.Call(a0.ref, a1.ref)
+		if err != nil {
+			var z0 TStack
+			return z0
+		}
+		return TStack{ref: res[0].(js.Ref)}
+	}
+}
+
+func gostrictFunc29(cb gostrict.Callback) func(stack TStack) TStack {
+	return func(a0 TStack) TStack {
+		res, err := cb.Call(a0.ref)
+		if err != nil {
+			var z0 TStack
+			return z0
+		}
+		return TStack{ref: res[0].(js.Ref)}
+	}
+}
+
+func gostrictFrom30(v []any) Transformation {
+	return Transformation{TranslateX: Length(v[0].(string)), TranslateY: Length(v[1].(string)), TranslateZ: Length(v[2].(string)), ScaleX: v[3].(float64), ScaleY: v[4].(float64), ScaleZ: v[5].(float64), RotateZ: v[6].(float64)}
+}
+
+func gostrictTo30(x Transformation) []any {
+	return []any{string(x.TranslateX), string(x.TranslateY), string(x.TranslateZ), x.ScaleX, x.ScaleY, x.ScaleZ, x.RotateZ}
+}
+
+func gostrictFrom31(v []any) Outline {
+	return Outline{Style: OutlineStyle(v[0].(int32)), Width: v[1].(int32), Offset: v[2].(int32), Color: Color(v[3].(string))}
+}
+
+func gostrictTo31(x Outline) []any {
+	return []any{int32(x.Style), x.Width, x.Offset, string(x.Color)}
+}
+
+func gostrictFrom32(v []any) []TTableColumn {
+	res := make([]TTableColumn, len(v))
+	for i, e := range v {
+		res[i] = TTableColumn{ref: e.(js.Ref)}
+	}
+	return res
+}
+
+func gostrictFrom33(v []any) []TTableRow {
+	res := make([]TTableRow, len(v))
+	for i, e := range v {
+		res[i] = TTableRow{ref: e.(js.Ref)}
+	}
+	return res
+}
+
+func gostrictFrom34(v []any) []TTableCell {
+	res := make([]TTableCell, len(v))
+	for i, e := range v {
+		res[i] = TTableCell{ref: e.(js.Ref)}
+	}
+	return res
+}
+
+func gostrictFrom35(v []any) []ViewWithSizeClass {
+	res := make([]ViewWithSizeClass, len(v))
+	for i, e := range v {
+		res[i] = ViewWithSizeClass{ref: e.(js.Ref)}
+	}
+	return res
+}
+
+func gostrictFrom36(v []any) Shadow {
+	return Shadow{Color: Color(v[0].(string)), Radius: Length(v[1].(string)), X: Length(v[2].(string)), Y: Length(v[3].(string))}
+}
+
+func gostrictTo36(x Shadow) []any {
+	return []any{string(x.Color), string(x.Radius), string(x.X), string(x.Y)}
+}
+
+func gostrictFrom37(v []any) sheet.Cell {
+	return sheet.Cell{Text: v[0].(string), Value: v[1].(string), Type: sheet.ValueType(v[2].(int32)), Style: gostrictFrom39(v[3].([]any)), Editor: sheet.Editor(v[4].(int32))}
+}
+
+func gostrictTo37(x sheet.Cell) []any {
+	return []any{x.Text, x.Value, int32(x.Type), gostrictTo39(x.Style), int32(x.Editor)}
+}
+
+func gostrictFrom38(v []any) sheet.Edit {
+	return sheet.Edit{Row: v[0].(int32), Col: v[1].(int32), Value: v[2].(string)}
+}
+
+func gostrictTo38(x sheet.Edit) []any {
+	return []any{x.Row, x.Col, x.Value}
+}
+
+func gostrictFrom39(v []any) sheet.Style {
+	return sheet.Style{BackgroundColor: v[0].(string), Color: v[1].(string), Bold: v[2].(bool), Italic: v[3].(bool), Underline: v[4].(bool), Align: sheet.Align(v[5].(int32)), Wrap: sheet.Wrap(v[6].(int32)), Borders: gostrictFrom40(v[7].([]any)), PaddingX: v[8].(float64), FontSize: v[9].(float64)}
+}
+
+func gostrictTo39(x sheet.Style) []any {
+	return []any{x.BackgroundColor, x.Color, x.Bold, x.Italic, x.Underline, int32(x.Align), int32(x.Wrap), gostrictTo40(x.Borders), x.PaddingX, x.FontSize}
+}
+
+func gostrictFrom40(v []any) sheet.Borders {
+	return sheet.Borders{Top: gostrictFrom41(v[0].([]any)), Right: gostrictFrom41(v[1].([]any)), Bottom: gostrictFrom41(v[2].([]any)), Left: gostrictFrom41(v[3].([]any))}
+}
+
+func gostrictTo40(x sheet.Borders) []any {
+	return []any{gostrictTo41(x.Top), gostrictTo41(x.Right), gostrictTo41(x.Bottom), gostrictTo41(x.Left)}
+}
+
+func gostrictFrom41(v []any) sheet.Line {
 	return sheet.Line{Color: v[0].(string), Width: v[1].(float64), Style: sheet.LineStyle(v[2].(int32))}
 }
 
-func gostrictTo5(x sheet.Line) []any {
+func gostrictTo41(x sheet.Line) []any {
 	return []any{x.Color, x.Width, int32(x.Style)}
 }

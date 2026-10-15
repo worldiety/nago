@@ -35,6 +35,22 @@ func isHandle(t types.Type) bool {
 	return handleField(t) != nil
 }
 
+// isHandleUnion tells, whether t is a sealed interface of a header package, whose variants are handles, e.g. the
+// View of lib/ui. In JavaScript, its value is the boxed handle, whose method table names the variant, see
+// [Union.Handles].
+func isHandleUnion(t types.Type) bool {
+	variants, ok := sealedVariants(t)
+	if !ok || len(variants) == 0 {
+		return false
+	}
+	for _, v := range variants {
+		if !isHandle(v) {
+			return false
+		}
+	}
+	return true
+}
+
 // isBig tells, whether t is the big.Int of package std/big, a handle, which is a BigInt in JavaScript and crosses
 // the boundary as a value.
 func isBig(t types.Type) bool {
@@ -74,6 +90,10 @@ func boundaryTerms(tp *types.TypeParam) ([]types.Type, bool) {
 // type like type ID string uses the function of string.
 func externKey(fn *types.Func, targs []types.Type) string {
 	name := fn.Pkg().Path() + "." + fn.Name()
+	if recv := fn.Signature().Recv(); recv != nil {
+		// a method of a header package, e.g. "example.com/ui.TText.Font"
+		name = fn.Pkg().Path() + "." + recvTypeName(recv.Type()) + "." + fn.Name()
+	}
 	if len(targs) == 0 {
 		return name
 	}

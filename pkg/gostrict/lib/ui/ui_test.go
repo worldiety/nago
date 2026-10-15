@@ -9,7 +9,9 @@ package ui_test
 
 import (
 	"context"
+	"fmt"
 	"reflect"
+	"regexp"
 	"strconv"
 	"testing"
 	"time"
@@ -20,6 +22,8 @@ import (
 	"go.wdy.de/nago/pkg/gostrict/engine/gojaengine"
 	"go.wdy.de/nago/pkg/gostrict/lib/ui"
 	"go.wdy.de/nago/pkg/gostrict/lib/ui/internal/cells"
+	"go.wdy.de/nago/pkg/gostrict/lib/ui/internal/form"
+	"go.wdy.de/nago/pkg/gostrict/lib/ui/internal/page"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
 	nui "go.wdy.de/nago/presentation/ui"
@@ -46,7 +50,7 @@ var sources = []source{
 		}
 	}},
 	{"native", func(testing.TB) func(core.Window) core.View {
-		return func(core.Window) core.View { return cells.View().Core() }
+		return func(core.Window) core.View { return ui.Core(cells.View()) }
 	}},
 	{"goja", func(t testing.TB) func(core.Window) core.View {
 		in := load(t)
@@ -59,13 +63,17 @@ var sources = []source{
 			if err := gostrict.FromNeutral(res[0], &v); err != nil {
 				t.Fatal(err)
 			}
-			return v.Core()
+			return ui.Core(v)
 		}
 	}},
 }
 
 func load(t testing.TB) gostrict.Instance {
-	b, diags, err := gostrict.Compile("internal/cells")
+	return loadDir(t, "internal/cells")
+}
+
+func loadDir(t testing.TB, dir string) gostrict.Instance {
+	b, diags, err := gostrict.Compile(dir)
 	if err != nil || len(diags) > 0 {
 		t.Fatal(err, diags.Text())
 	}
@@ -159,4 +167,98 @@ func BenchmarkCallback(b *testing.B) {
 		}
 	}
 	b.ReportMetric(float64(b.Elapsed().Nanoseconds())/float64(b.N), "ns/1000cells")
+}
+
+// TestVars compares the bindings of the variables of the package with their values in Go.
+func TestVars(t *testing.T) {
+	prog, err := gostrict.Load(".")
+	if err != nil {
+		t.Fatal(err)
+	}
+	vars, records := gostrict.HeaderVars(prog)
+	if len(vars) == 0 {
+		t.Fatal("no variables")
+	}
+	for _, m := range gojaengine.CheckVars(vars, records, ui.HostVars()) {
+		t.Error(m)
+	}
+}
+
+// TestPage renders a window of a program natively and in goja and clicks a button, which changes a state of the
+// window, so that both render the same views.
+func TestPage(t *testing.T) {
+	in := loadDir(t, "internal/page")
+	renders := map[string]func(wnd core.Window) core.View{
+		"native": func(wnd core.Window) core.View { return ui.Core(page.Render(ui.WindowOf(wnd))) },
+		"goja":   func(wnd core.Window) core.View { return ui.Render(context.Background(), in, "Render", wnd) },
+	}
+	var want []string
+	for _, name := range []string{"native", "goja"} {
+		app := nagotest.New(t, func(cfg *application.Configurator) {
+			cfg.SetApplicationID(core.ApplicationID("de.worldiety.gostrict.page." + name))
+			cfg.RootView("page", renders[name])
+		})
+		w := app.Open(t, nil, "page")
+		var got []string
+		got = append(got, fmt.Sprintf("%#v", w.Tree()))
+		w.Find(nagotest.Text("zu"))
+		w.Click(w.Find(nagotest.Text("Umschalten")))
+		w.Find(nagotest.Text("offen"))
+		got = append(got, fmt.Sprintf("%#v", w.Tree()))
+		if want == nil {
+			want = got
+			continue
+		}
+		for i := range want {
+			if normalize(got[i]) != normalize(want[i]) {
+				t.Fatalf("%s renders another tree %d:\n got: %s\nwant: %s", name, i, got[i], want[i])
+			}
+		}
+	}
+}
+
+// pointers are the pointers of the callbacks, which differ between two windows.
+var pointers = regexp.MustCompile(`Ptr\(0x[0-9a-f]+\)|Ptr:0x[0-9a-f]+|0x[0-9a-f]{6,}`)
+
+func normalize(s string) string {
+	return pointers.ReplaceAllString(s, "PTR")
+}
+
+// TestForm renders a form with many views natively and in goja, types into its fields and clicks a button, so that
+// both render the same views after each step.
+func TestForm(t *testing.T) {
+	in := loadDir(t, "internal/form")
+	renders := map[string]func(wnd core.Window) core.View{
+		"native": func(wnd core.Window) core.View { return ui.Core(form.Render(ui.WindowOf(wnd))) },
+		"goja":   func(wnd core.Window) core.View { return ui.Render(context.Background(), in, "Render", wnd) },
+	}
+	var want []string
+	for _, name := range []string{"native", "goja"} {
+		app := nagotest.New(t, func(cfg *application.Configurator) {
+			cfg.SetApplicationID(core.ApplicationID("de.worldiety.gostrict.form." + name))
+			cfg.RootView("form", renders[name])
+		})
+		w := app.Open(t, nil, "form")
+		got := []string{fmt.Sprintf("%#v", w.Tree())}
+		w.Find(nagotest.Text("Hallo  (0)"))
+
+		w.Type(w.Find(nagotest.Label("Name")), "Anna")
+		w.Find(nagotest.Text("Hallo Anna (0)"))
+		got = append(got, fmt.Sprintf("%#v", w.Tree()))
+
+		w.Click(w.Find(nagotest.Text("Älter")))
+		w.Type(w.Find(nagotest.Type[*proto.Checkbox]()), "true")
+		w.Find(nagotest.Text("Hallo Anna (1), einverstanden"))
+		got = append(got, fmt.Sprintf("%#v", w.Tree()))
+
+		if want == nil {
+			want = got
+			continue
+		}
+		for i := range want {
+			if normalize(got[i]) != normalize(want[i]) {
+				t.Fatalf("%s renders another tree %d:\n got: %s\nwant: %s", name, i, got[i], want[i])
+			}
+		}
+	}
 }

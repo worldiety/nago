@@ -105,6 +105,8 @@ func EmitEntries(prog *Program, entries ...string) (b *Bundle, diags Diagnostics
 		diag:    &diagnoser{fset: prog.Fset, sources: prog.sources},
 		mut:     analyzeMutation(prog),
 		entries: entryPoints(prog),
+		// the initializers of the package variables may call functions of header packages already
+		bnd: newBoundary(),
 	}
 	if len(entries) > 0 {
 		e.targets = map[string]bool{}
@@ -160,6 +162,8 @@ type emitter struct {
 	positions []token.Pos
 	// mut tells, which struct types the program never changes, so that their values need no copy
 	mut *mutation
+	// hvars are the bindings of the variables of header packages, see headerVars
+	hvars map[*types.Var]string
 	// entries are the entry points of a whole program by their full name, see LoadRoots
 	entries map[*types.Func]string
 	// targets are the entry points, which the bundle exports, or nil for all
@@ -268,8 +272,7 @@ func (e *emitter) emit() (*Bundle, Diagnostics) {
 	}
 
 	exports := map[string]Func{}
-	bnd := newBoundary()
-	e.bnd = bnd
+	bnd := e.bnd
 	var ret strings.Builder
 	if len(e.entries) > 0 {
 		// the host calls the entry points of a whole program by their full name within the aspect
@@ -351,6 +354,10 @@ func (e *emitter) emit() (*Bundle, Diagnostics) {
 		fmt.Fprintf(&sb, "\t\t%s: {\n", jsString(name))
 		for _, v := range bnd.unions[name].Variants {
 			mt := e.methodTable(bnd.structs[v])
+			if bnd.unions[name].Handles {
+				fmt.Fprintf(&sb, "\t\t\t%s: [%s, (h) => $box(h, %s)],\n", jsString(v), mt, mt)
+				continue
+			}
 			fmt.Fprintf(&sb, "\t\t\t%s: [%s, (...f) => $box(%s(...f), %s)],\n", jsString(v), mt, e.structName(bnd.structs[v]), mt)
 		}
 		sb.WriteString("\t\t},\n")
@@ -451,7 +458,41 @@ func (e *emitter) global(v *types.Var) string {
 	}
 	n := e.ident(e.pkgPrefix(v.Pkg()) + "$" + v.Name())
 	e.globals[v] = n
+	if js, ok := e.headerVars()[v]; ok {
+		// a variable of a header package is the value of its binding
+		fmt.Fprintf(&e.externs, "const %s = (%s\n);\n", n, js)
+	}
 	return n
+}
+
+// headerVars returns the bindings of the exported variables of the header packages.
+func (e *emitter) headerVars() map[*types.Var]string {
+	if e.hvars != nil {
+		return e.hvars
+	}
+	e.hvars = map[*types.Var]string{}
+	for _, p := range e.prog.Packages {
+		if p.Kind != KindHeader {
+			continue
+		}
+		for _, f := range p.Files {
+			for _, d := range f.Decls {
+				g, ok := d.(*ast.GenDecl)
+				if !ok || g.Tok != token.VAR {
+					continue
+				}
+				for _, spec := range g.Specs {
+					vs := spec.(*ast.ValueSpec)
+					for _, n := range vs.Names {
+						if v, ok := p.Info.Defs[n].(*types.Var); ok {
+							e.hvars[v] = varBinding(g, vs)
+						}
+					}
+				}
+			}
+		}
+	}
+	return e.hvars
 }
 
 func typeKey(t types.Type) string {
@@ -536,7 +577,7 @@ func (e *emitter) externName(fn *types.Func, targs []types.Type, src funcSrc, po
 	if src.js == "" && !src.host {
 		fail(pos, "%s has no //gostrict:js binding", fn.FullName())
 	}
-	fsig := fn.Signature()
+	fsig := externSignature(fn)
 	if len(targs) > 0 {
 		inst, err := types.Instantiate(e.tctx, fn.Origin().Type(), targs, true)
 		if err != nil {
@@ -550,6 +591,9 @@ func (e *emitter) externName(fn *types.Func, targs []types.Type, src funcSrc, po
 	}
 
 	base := e.pkgPrefix(fn.Pkg()) + "$" + fn.Name()
+	if recv := fn.Signature().Recv(); recv != nil {
+		base = e.pkgPrefix(fn.Pkg()) + "$" + recvTypeName(recv.Type()) + "$" + fn.Name()
+	}
 	if len(targs) > 0 {
 		base += "$$" + typeListBase(targs)
 	}
@@ -753,10 +797,20 @@ func (e *emitter) methodTable(t types.Type) string {
 	}
 
 	var entries []string
+	if named != nil && isHandle(named) {
+		// the table of a handle names its type, e.g. a variant of the View of lib/ui, which a host receives
+		entries = append(entries, "$tag: "+jsString(typeKey(named)))
+	}
 	mset := types.NewMethodSet(t)
 	for sel := range mset.Methods() {
 		fn := sel.Obj().(*types.Func)
 		if fn.Signature().TypeParams().Len() > 0 || named == nil {
+			continue
+		}
+		if src, ok := e.decls[fn.Origin()]; ok && src.pkg.Kind == KindHeader {
+			if fn.Exported() {
+				entries = append(entries, fmt.Sprintf("%s: %s", fn.Name(), e.externName(fn.Origin(), nil, src, fn.Pos())))
+			}
 			continue
 		}
 		fname := e.funcName(fn.Origin(), typeArgs(named.TypeArgs()), nil)

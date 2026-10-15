@@ -24,16 +24,21 @@ func checkHeader(p *Package, d *diagnoser, decls map[*types.Func]funcSrc) {
 		for _, decl := range f.Decls {
 			switch decl := decl.(type) {
 			case *ast.GenDecl:
-				if decl.Tok != token.TYPE {
+				switch decl.Tok {
+				case token.VAR:
+					checkHeaderVars(p, d, decl)
+					continue
+				case token.TYPE:
+				default:
 					continue
 				}
 				for _, spec := range decl.Specs {
 					ts := spec.(*ast.TypeSpec)
 					obj, ok := p.Info.Defs[ts.Name].(*types.TypeName)
-					if !ts.Name.IsExported() || !ok || isHandle(obj.Type()) || isBoundaryConstraint(obj.Type()) {
+					if !ts.Name.IsExported() || !ok || headerType(obj.Type()) {
 						continue
 					}
-					d.report(ts.Name.Pos(), ts.Name.End(), CodeBridge, "header packages export only handles and constraints", "a handle is a struct with a single unexported field of type js.Ref, a constraint a union of types, which cross the boundary", "declare type T struct{ ref js.Ref } or type Kind interface{ A | B }")
+					d.report(ts.Name.Pos(), ts.Name.End(), CodeBridge, "header packages export only handles, sealed interfaces of handles, records, enums and constraints", "a handle is a struct with a single unexported field of type js.Ref, a record a struct of exported fields, which cross the boundary, an enum a named bool, int32, uint32, float64 or string, a constraint a union of types, which cross the boundary", "declare type T struct{ ref js.Ref }, type View interface{ isView() } or type Kind interface{ A | B }")
 				}
 			case *ast.FuncDecl:
 				checkHeaderFunc(p, d, decls, decl)
@@ -50,8 +55,18 @@ func checkHeaderFunc(p *Package, d *diagnoser, decls map[*types.Func]funcSrc, de
 
 	const why = "only bool, int32, uint32, float64, string, big.Int, handles, records without handles and lists and maps of them cross the boundary, error only as a result, and functions of such values as parameters"
 	if decl.Recv != nil {
-		d.report(decl.Name.Pos(), decl.Name.End(), CodeBridge, "header packages can not declare methods", why, "declare a function, which takes the handle as its first parameter")
-		return
+		recv := fn.Signature().Recv().Type()
+		if _, ptr := recv.(*types.Pointer); ptr || types.Unalias(recv).(*types.Named).TypeParams().Len() > 0 {
+			d.report(decl.Name.Pos(), decl.Name.End(), CodeBridge, "a method of a header package needs a receiver, which is a value of a non-generic type", why, "declare func (t T) "+fn.Name()+"(...)")
+			return
+		}
+		if !fn.Exported() {
+			// an unexported method seals an interface of handles, the program can not call it
+			if sig := fn.Signature(); sig.Params().Len() > 0 || sig.Results().Len() > 0 {
+				d.report(decl.Name.Pos(), decl.Name.End(), CodeBridge, "an unexported method of a header package only seals an interface", "the program can not call it, so it has neither parameters nor results", "declare func (T) "+fn.Name()+"() {}")
+			}
+			return
+		}
 	}
 
 	instances, ok := instantiations(fn)
@@ -60,7 +75,7 @@ func checkHeaderFunc(p *Package, d *diagnoser, decls map[*types.Func]funcSrc, de
 		return
 	}
 	for _, targs := range instances {
-		sig := fn.Signature()
+		sig := externSignature(fn)
 		if len(targs) > 0 {
 			inst, err := types.Instantiate(nil, fn.Type(), targs, true)
 			if err != nil {
@@ -87,7 +102,7 @@ func checkHeaderFunc(p *Package, d *diagnoser, decls map[*types.Func]funcSrc, de
 		return
 	}
 
-	if msg := checkBinding(js, fn.Signature().Params().Len()); msg != "" {
+	if msg := checkBinding(js, externSignature(fn).Params().Len()); msg != "" {
 		pos := decl.Name.Pos()
 		if decl.Doc != nil {
 			for _, c := range decl.Doc.List {
@@ -176,4 +191,97 @@ func isBoundaryConstraint(t types.Type) bool {
 	}
 	_, ok = boundaryTerms(types.NewTypeParam(types.NewTypeName(0, nil, "T", nil), iface))
 	return ok
+}
+
+// headerType tells, whether a header package may export the type t.
+func headerType(t types.Type) bool {
+	if isHandle(t) || isBoundaryConstraint(t) || isHandleUnion(t) {
+		return true
+	}
+	if k := valueKind(t); k >= ValueBool && k <= ValueString {
+		// an enum
+		return true
+	}
+	bt, ok := newBoundary().typeOf(t)
+	return ok && bt.Kind == ValueRecord
+}
+
+// checkHeaderVars checks, that the exported variables of a header package have a binding, which is the value of
+// the variable in JavaScript, e.g. a preset of a font, and a type, which crosses the boundary.
+func checkHeaderVars(p *Package, d *diagnoser, decl *ast.GenDecl) {
+	for _, spec := range decl.Specs {
+		vs := spec.(*ast.ValueSpec)
+		for _, n := range vs.Names {
+			v, ok := p.Info.Defs[n].(*types.Var)
+			if !ok || !n.IsExported() {
+				continue
+			}
+			if vs.Type == nil {
+				d.report(n.Pos(), n.End(), CodeHeader, n.Name+" needs an explicit type", "the program reads the binding of the variable, so its value in Go is not checked", "declare var "+n.Name+" T = ...")
+			}
+			if varBinding(decl, vs) == "" {
+				d.report(n.Pos(), n.End(), CodeHeader, n.Name+" has no JavaScript binding", "a variable of a header package is a value, which the program reads in JavaScript as well", "add //gostrict:js followed by the value as an expression to the documentation of the variable")
+			}
+			if _, ok := newBoundary().headerType(v.Type(), false); !ok {
+				d.report(n.Pos(), n.End(), CodeBridge, "the variable "+n.Name+" can not cross the boundary", "a variable of a header package holds a basic value, an enum or a record", "declare a function, which returns the value")
+			}
+		}
+	}
+}
+
+// externSignature returns the signature of a function of a header package as the program calls it: a method
+// takes its receiver as its first parameter.
+func externSignature(fn *types.Func) *types.Signature {
+	sig := fn.Signature()
+	recv := sig.Recv()
+	if recv == nil {
+		return sig
+	}
+	vars := []*types.Var{types.NewParam(recv.Pos(), recv.Pkg(), "recv", recv.Type())}
+	for v := range sig.Params().Variables() {
+		vars = append(vars, v)
+	}
+	return types.NewSignatureType(nil, nil, nil, types.NewTuple(vars...), sig.Results(), sig.Variadic())
+}
+
+// HeaderVar is an exported variable of a header package, whose binding is its value in JavaScript.
+type HeaderVar struct {
+	// Name is the full name, e.g. "go.wdy.de/nago/pkg/gostrict/lib/ui.Full".
+	Name string
+	JS   string
+	Type Type
+}
+
+// HeaderVars returns the variables of the header packages of the program and the records of their types, so that
+// a test compares their bindings with their values in Go, see the function HostVars of a generated file.
+func HeaderVars(prog *Program) ([]HeaderVar, map[string]Record) {
+	b := newBoundary()
+	var res []HeaderVar
+	for _, p := range prog.Packages {
+		if p.Kind != KindHeader {
+			continue
+		}
+		for _, f := range p.Files {
+			for _, d := range f.Decls {
+				g, ok := d.(*ast.GenDecl)
+				if !ok || g.Tok != token.VAR {
+					continue
+				}
+				for _, spec := range g.Specs {
+					vs := spec.(*ast.ValueSpec)
+					for _, n := range vs.Names {
+						v, ok := p.Info.Defs[n].(*types.Var)
+						if !ok || !n.IsExported() {
+							continue
+						}
+						t, ok := b.headerType(v.Type(), false)
+						if ok {
+							res = append(res, HeaderVar{Name: p.Path + "." + n.Name, JS: varBinding(g, vs), Type: t})
+						}
+					}
+				}
+			}
+		}
+	}
+	return res, b.records
 }

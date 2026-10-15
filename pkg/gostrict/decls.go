@@ -62,6 +62,21 @@ func hasDirective(fd *ast.FuncDecl, directive string) bool {
 	return false
 }
 
+// varBinding returns the binding of a variable of a header package in the documentation of its declaration.
+func varBinding(decl *ast.GenDecl, vs *ast.ValueSpec) string {
+	for _, doc := range []*ast.CommentGroup{vs.Doc, decl.Doc} {
+		if doc == nil {
+			continue
+		}
+		for _, c := range doc.List {
+			if expr, ok := strings.CutPrefix(c.Text, jsDirective); ok {
+				return strings.TrimSpace(expr)
+			}
+		}
+	}
+	return ""
+}
+
 func jsBinding(fd *ast.FuncDecl) string {
 	if fd.Doc == nil {
 		return ""

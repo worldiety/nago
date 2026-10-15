@@ -32,6 +32,8 @@ func Generate(prog *Program) ([]byte, error) {
 }
 
 type generator struct {
+	// err is the first problem of a conversion
+	err     error
 	pkg     *Package
 	imports map[string]string
 	// helpers maps the types of records and lists to the number of their conversion functions
@@ -83,17 +85,14 @@ func (g *generator) header() ([]byte, error) {
 	var body bytes.Buffer
 	fmt.Fprintf(&body, "// %s implements the functions of this header package natively, e.g. for an engine like goja.\nfunc %s() gostrict.Funcs {\n\treturn gostrict.Funcs{\n", g.name("Host"), g.name("Host"))
 
-	for _, name := range p.Types.Scope().Names() {
-		fn, ok := p.Types.Scope().Lookup(name).(*types.Func)
-		if !ok || !fn.Exported() {
-			continue
-		}
+	for _, fn := range headerFuncs(p) {
+		name := fn.Name()
 		instances, ok := instantiations(fn)
 		if !ok {
 			continue
 		}
 		for _, targs := range instances {
-			sig := fn.Signature()
+			sig := externSignature(fn)
 			call := name
 			if len(targs) > 0 {
 				inst, err := types.Instantiate(nil, fn.Type(), targs, true)
@@ -113,11 +112,22 @@ func (g *generator) header() ([]byte, error) {
 
 			var args, results, values []string
 			for i := 0; i < sig.Params().Len(); i++ {
-				arg, err := g.fromBoundary(fmt.Sprintf("args[%d]", i), sig.Params().At(i).Type())
+				t := sig.Params().At(i).Type()
+				spread := ""
+				if sig.Variadic() && i == sig.Params().Len()-1 {
+					// the variadic arguments are a list, whose elements are spread
+					spread = "..."
+				}
+				arg, err := g.fromBoundary(fmt.Sprintf("args[%d]", i), t)
 				if err != nil {
 					return nil, fmt.Errorf("%s: %w", name, err)
 				}
-				args = append(args, arg)
+				args = append(args, arg+spread)
+			}
+			if fn.Signature().Recv() != nil {
+				// a method is called on its receiver, the first argument
+				call = args[0] + "." + name
+				args = args[1:]
 			}
 			for i := 0; i < sig.Results().Len(); i++ {
 				r := fmt.Sprintf("r%d", i)
@@ -132,35 +142,113 @@ func (g *generator) header() ([]byte, error) {
 		}
 	}
 	body.WriteString("\t}\n}\n")
+	g.writeVars(&body)
+	g.writeHandles(&body)
 	if err := g.writeHelpers(); err != nil {
 		return nil, err
+	}
+	if g.err != nil {
+		return nil, g.err
 	}
 	body.Write(g.code.Bytes())
 	return g.file(body.String())
 }
 
+// headerFuncs returns the exported functions of a header package and the exported methods of its types.
+func headerFuncs(p *Package) []*types.Func {
+	var res []*types.Func
+	scope := p.Types.Scope()
+	for _, name := range scope.Names() {
+		switch obj := scope.Lookup(name).(type) {
+		case *types.Func:
+			if obj.Exported() {
+				res = append(res, obj)
+			}
+		case *types.TypeName:
+			n, ok := obj.Type().(*types.Named)
+			if !ok || obj.IsAlias() {
+				continue
+			}
+			for m := range n.Methods() {
+				if m.Exported() {
+					res = append(res, m)
+				}
+			}
+		}
+	}
+	return res
+}
+
+// writeVars writes the function HostVars, which returns the neutral values of the exported variables by their full
+// name, so that a test compares them with their bindings, see gojaengine.CheckVars.
+func (g *generator) writeVars(body *bytes.Buffer) {
+	scope := g.pkg.Types.Scope()
+	var entries []string
+	for _, name := range scope.Names() {
+		v, ok := scope.Lookup(name).(*types.Var)
+		if !ok || !v.Exported() {
+			continue
+		}
+		entries = append(entries, fmt.Sprintf("\t\t%q: %s,\n", g.pkg.Path+"."+name, g.toNeutral(name, v.Type())))
+	}
+	if len(entries) == 0 {
+		return
+	}
+	fmt.Fprintf(body, "\n// %s returns the values of the variables of this header package, which their bindings must equal.\nfunc %s() map[string]any {\n\treturn map[string]any{\n%s\t}\n}\n", g.name("HostVars"), g.name("HostVars"), strings.Join(entries, ""))
+}
+
+// writeHandles writes the methods, which a host uses to convert the handles of the package by reflection, e.g. a
+// view, which a program returns, see gostrict.ToNeutral.
+func (g *generator) writeHandles(body *bytes.Buffer) {
+	scope := g.pkg.Types.Scope()
+	for _, name := range scope.Names() {
+		tn, ok := scope.Lookup(name).(*types.TypeName)
+		if !ok || tn.IsAlias() || !tn.Exported() || !isHandleUnion(tn.Type()) {
+			continue
+		}
+		// a host decodes a value of the sealed interface by reflection, e.g. a view, which a program returns
+		variants, _ := sealedVariants(tn.Type())
+		var vs []string
+		for _, v := range variants {
+			vs = append(vs, g.typeString(v)+"{}")
+		}
+		fmt.Fprintf(body, "\nfunc init() {\n\tgostrict.Variants[%s](%s)\n}\n", name, strings.Join(vs, ", "))
+	}
+	for _, name := range scope.Names() {
+		tn, ok := scope.Lookup(name).(*types.TypeName)
+		if !ok || tn.IsAlias() || !tn.Exported() || !isHandle(tn.Type()) || isBig(tn.Type()) {
+			continue
+		}
+		f := handleField(tn.Type())
+		g.imports[jsPath] = "js"
+		fmt.Fprintf(body, "\n// HostRef returns the reference of the handle.\nfunc (h %s) HostRef() js.Ref {\n\treturn h.%s\n}\n", name, f.Name())
+		fmt.Fprintf(body, "\n// HostFromRef returns the handle of a reference.\nfunc (%s) HostFromRef(ref js.Ref) any {\n\treturn %s{%s: ref}\n}\n", name, name, f.Name())
+	}
+}
+
 // fromBoundary converts the neutral value expr of a parameter of a header function into t, also a handle of the
 // package, which only it can construct.
 func (g *generator) fromBoundary(expr string, t types.Type) (string, error) {
-	if f := handleField(t); f != nil && !isBig(t) {
-		if f.Pkg() != g.pkg.Types {
-			return "", fmt.Errorf("the handle %s belongs to another package", t)
-		}
-		g.imports[jsPath] = "js"
-		return fmt.Sprintf("%s{%s: %s.(js.Ref)}", g.typeString(t), f.Name(), expr), nil
-	}
-	return g.fromNeutral(expr, t), nil
+	res := g.fromNeutral(expr, t)
+	return res, g.err
 }
 
 // toBoundary converts expr of type t, also a handle of the package, into its neutral value.
 func (g *generator) toBoundary(expr string, t types.Type) (string, error) {
-	if f := handleField(t); f != nil && !isBig(t) {
-		if f.Pkg() != g.pkg.Types {
-			return "", fmt.Errorf("the handle %s belongs to another package", t)
-		}
-		return expr + "." + f.Name(), nil
+	res := g.toNeutral(expr, t)
+	return res, g.err
+}
+
+// handle returns the field of a handle of the package or nil, if t is no handle.
+func (g *generator) handle(t types.Type) *types.Var {
+	f := handleField(t)
+	if f == nil || isBig(t) {
+		return nil
 	}
-	return g.toNeutral(expr, t), nil
+	if f.Pkg() != g.pkg.Types && g.err == nil {
+		g.err = fmt.Errorf("the handle %s belongs to another package", t)
+	}
+	return f
 }
 
 func writeAdapter(buf *bytes.Buffer, key, call string, args, results, values []string) {
@@ -187,6 +275,14 @@ func stateElem(t types.Type) (types.Type, bool) {
 
 // fromNeutral converts the neutral value expr, see [ValueKind], into a value of t.
 func (g *generator) fromNeutral(expr string, t types.Type) string {
+	if f := g.handle(t); f != nil {
+		g.imports[jsPath] = "js"
+		return fmt.Sprintf("%s{%s: %s.(js.Ref)}", g.typeString(t), f.Name(), expr)
+	}
+	if _, ok := t.(*types.Slice); ok {
+		// the variadic arguments of a header function
+		return fmt.Sprintf("gostrictFrom%d(%s.([]any))", g.helper(t), expr)
+	}
 	if _, ok := t.Underlying().(*types.Signature); ok {
 		return fmt.Sprintf("gostrictFunc%d(%s.(gostrict.Callback))", g.helper(t), expr)
 	}
@@ -215,6 +311,9 @@ func (g *generator) fromNeutral(expr string, t types.Type) string {
 
 // toNeutral converts expr of type t into its neutral value.
 func (g *generator) toNeutral(expr string, t types.Type) string {
+	if f := g.handle(t); f != nil {
+		return expr + "." + f.Name()
+	}
 	if isBig(t) {
 		return expr + ".HostString()"
 	}
@@ -262,6 +361,11 @@ func (g *generator) writeHelpers() error {
 			continue
 		}
 
+		if sl, ok := t.(*types.Slice); ok {
+			fmt.Fprintf(&g.code, "\nfunc gostrictFrom%d(v []any) %s {\n\tres := make(%s, len(v))\n\tfor i, e := range v {\n\t\tres[i] = %s\n\t}\n\treturn res\n}\n", n, ts, ts, g.fromNeutral("e", sl.Elem()))
+			continue
+		}
+
 		if n := types.Unalias(t).(*types.Named); isOpaque(t) && n.Obj().Name() == "Out" {
 			elem := n.TypeArgs().At(0)
 			g.imports[msgPath] = "msg"
@@ -273,6 +377,12 @@ func (g *generator) writeHelpers() error {
 		if variants, ok := sealedVariants(t); ok {
 			var from, to strings.Builder
 			for _, v := range variants {
+				if isHandle(v) {
+					// a variant of a sealed interface of handles is the reference of the handle
+					fmt.Fprintf(&from, "\tcase %q:\n\t\treturn %s\n", typeKey(v), g.fromNeutral("x.Fields[0]", v))
+					fmt.Fprintf(&to, "\tcase %s:\n\t\treturn gostrict.Variant{Tag: %q, Fields: []any{%s}}\n", g.typeString(v), typeKey(v), g.toNeutral("x", v))
+					continue
+				}
 				fmt.Fprintf(&from, "\tcase %q:\n\t\treturn %s\n", typeKey(v), g.fromNeutral("any(x.Fields)", v))
 				fmt.Fprintf(&to, "\tcase %s:\n\t\treturn gostrict.Variant{Tag: %q, Fields: %s}\n", g.typeString(v), typeKey(v), g.toNeutral("x", v))
 			}

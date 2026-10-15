@@ -12,6 +12,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -463,6 +464,19 @@ func (c converter) toGo(v goja.Value, t gostrict.Type) (any, error) {
 		}
 		return res, nil
 	case gostrict.ValueUnion:
+		if u := c.b.Unions[t.Name]; u.Handles {
+			// the table of the methods of a handle names its type
+			box := v.ToObject(rt)
+			tag := box.Get("m").ToObject(rt).Get("$tag").String()
+			if !slices.Contains(u.Variants, tag) {
+				return nil, fmt.Errorf("the value is no variant of %s", t.Name)
+			}
+			ref, err := c.toGo(box.Get("v"), gostrict.Type{Kind: gostrict.ValueHandle})
+			if err != nil {
+				return nil, err
+			}
+			return gostrict.Variant{Tag: tag, Fields: []any{ref}}, nil
+		}
 		if c.in == nil {
 			return nil, fmt.Errorf("unions do not cross the boundary of a host function: %s", t)
 		}
@@ -583,10 +597,26 @@ func (c converter) toJS(v any, t gostrict.Type) (goja.Value, error) {
 		}
 		return rt.NewArray(values...), nil
 	case gostrict.ValueUnion:
-		if c.in == nil {
+		in := c.in
+		if in == nil && c.b.Unions[t.Name].Handles {
+			// a handle needs only its table of methods, which the instance knows after its initialization
+			in = c.owner
+		}
+		if in == nil || in.variants == nil {
 			return nil, fmt.Errorf("unions do not cross the boundary of a host function: %s", t)
 		}
 		x := v.(gostrict.Variant)
+		if c.b.Unions[t.Name].Handles {
+			vr, ok := in.variants[t.Name][x.Tag]
+			if !ok || len(x.Fields) != 1 {
+				return nil, fmt.Errorf("%s is no variant of %s", x.Tag, t.Name)
+			}
+			h, err := c.toJS(x.Fields[0], gostrict.Type{Kind: gostrict.ValueHandle})
+			if err != nil {
+				return nil, err
+			}
+			return vr.make(goja.Undefined(), h)
+		}
 		vr, ok := c.in.variants[t.Name][x.Tag]
 		if !ok {
 			return nil, fmt.Errorf("%s is no variant of %s", x.Tag, t.Name)

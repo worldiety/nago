@@ -196,6 +196,10 @@ func toNeutral(v reflect.Value) (any, error) {
 		if err != nil {
 			return nil, err
 		}
+		if ref, ok := fields.(js.Ref); ok {
+			// a handle, e.g. a view of lib/ui
+			return Variant{Tag: TypeName(dyn.Type()), Fields: []any{ref}}, nil
+		}
 		return Variant{Tag: TypeName(dyn.Type()), Fields: fields.([]any)}, nil
 	}
 	return nil, fmt.Errorf("%s can not cross the boundary", t)
@@ -339,7 +343,11 @@ func fromNeutral(n any, t reflect.Type) (reflect.Value, error) {
 		if err != nil {
 			return zero, err
 		}
-		v, err := fromNeutral(x.Fields, vt)
+		var fields any = x.Fields
+		if vt.Implements(hostHandleType) && len(x.Fields) == 1 {
+			fields = x.Fields[0]
+		}
+		v, err := fromNeutral(fields, vt)
 		if err != nil {
 			return zero, err
 		}

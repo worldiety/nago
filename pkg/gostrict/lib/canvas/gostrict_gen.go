@@ -358,3 +358,53 @@ func Host() gostrict.Funcs {
 		},
 	}
 }
+
+// HostRef returns the reference of the handle.
+func (h Context) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (Context) HostFromRef(ref js.Ref) any {
+	return Context{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h Gradient) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (Gradient) HostFromRef(ref js.Ref) any {
+	return Gradient{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h Image) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (Image) HostFromRef(ref js.Ref) any {
+	return Image{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h Path) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (Path) HostFromRef(ref js.Ref) any {
+	return Path{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h Pattern) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (Pattern) HostFromRef(ref js.Ref) any {
+	return Pattern{ref: ref}
+}

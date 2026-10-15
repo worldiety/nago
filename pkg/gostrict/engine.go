@@ -223,6 +223,10 @@ type Union struct {
 	Name string
 	// Variants are the full names of the records.
 	Variants []string
+	// Handles is set, if the variants are handles of a header package, e.g. the views of lib/ui, which cross the
+	// boundary from the program to the host. The value of such a variant is a [Variant] with the js.Ref of the
+	// handle as its only field.
+	Handles bool
 }
 
 // Variant is the value of a union: the full name of its record and the fields of the record.

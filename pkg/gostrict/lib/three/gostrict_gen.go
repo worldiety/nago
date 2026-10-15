@@ -394,3 +394,93 @@ func Host() gostrict.Funcs {
 		},
 	}
 }
+
+// HostRef returns the reference of the handle.
+func (h Camera) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (Camera) HostFromRef(ref js.Ref) any {
+	return Camera{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h Geometry) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (Geometry) HostFromRef(ref js.Ref) any {
+	return Geometry{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h Group) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (Group) HostFromRef(ref js.Ref) any {
+	return Group{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h Light) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (Light) HostFromRef(ref js.Ref) any {
+	return Light{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h Line) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (Line) HostFromRef(ref js.Ref) any {
+	return Line{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h Material) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (Material) HostFromRef(ref js.Ref) any {
+	return Material{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h Mesh) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (Mesh) HostFromRef(ref js.Ref) any {
+	return Mesh{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h Scene) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (Scene) HostFromRef(ref js.Ref) any {
+	return Scene{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
+func (h Texture) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (Texture) HostFromRef(ref js.Ref) any {
+	return Texture{ref: ref}
+}

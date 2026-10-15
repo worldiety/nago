@@ -179,3 +179,31 @@ func hasHandle(f gostrict.Func) bool {
 	}
 	return false
 }
+
+// CheckVars evaluates the binding of each variable of a header package and returns the variables, whose values
+// differ from their values in Go, see gostrict.HeaderVars and the function HostVars of a generated file.
+func CheckVars(vars []gostrict.HeaderVar, records map[string]gostrict.Record, values map[string]any) []Mismatch {
+	r := new(Engine).NewRuntime()
+	c := converter{r: r, b: &gostrict.Bundle{Records: records}}
+	var res []Mismatch
+	for _, v := range vars {
+		want, ok := values[v.Name]
+		if !ok {
+			continue
+		}
+		val, err := r.rt.RunString("(" + v.JS + "\n)")
+		if err != nil {
+			res = append(res, Mismatch{Func: v.Name, Err: err})
+			continue
+		}
+		got, err := c.toGo(val, v.Type)
+		if err != nil {
+			res = append(res, Mismatch{Func: v.Name, Err: err})
+			continue
+		}
+		if !gostrict.SameValues([]any{want}, []any{got}) {
+			res = append(res, Mismatch{Func: v.Name, Native: []any{want}, JS: []any{got}})
+		}
+	}
+	return res
+}

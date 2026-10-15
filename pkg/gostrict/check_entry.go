@@ -47,7 +47,7 @@ func checkEntries(prog *Program, d *diagnoser, decls map[*types.Func]funcSrc) {
 				continue
 			}
 			for _, t := range append(sig.Params, sig.Results...) {
-				if hasUnion(t, b.records, map[string]bool{}) {
+				if hasUnion(t, b, map[string]bool{}) {
 					d.report(pos, end, CodeEntry, "the entry point "+fn.Name()+" takes or returns a sealed interface", "an entry point runs in a frame with the rights of its package, where the methods of the values of the caller must not run", "pass a record with a kind field instead")
 					break
 				}
@@ -56,21 +56,23 @@ func checkEntries(prog *Program, d *diagnoser, decls map[*types.Func]funcSrc) {
 	}
 }
 
-func hasUnion(t Type, records map[string]Record, seen map[string]bool) bool {
+// hasUnion tells, whether a value of t may hold a sealed interface of the program. A sealed interface of handles,
+// e.g. a view of lib/ui, has no code of the program.
+func hasUnion(t Type, b *boundary, seen map[string]bool) bool {
 	switch t.Kind {
 	case ValueUnion:
-		return true
+		return !b.unions[t.Name].Handles
 	case ValueList, ValueOut:
-		return hasUnion(*t.Elem, records, seen)
+		return hasUnion(*t.Elem, b, seen)
 	case ValueMap:
-		return hasUnion(*t.Key, records, seen) || hasUnion(*t.Elem, records, seen)
+		return hasUnion(*t.Key, b, seen) || hasUnion(*t.Elem, b, seen)
 	case ValueRecord:
 		if seen[t.Name] {
 			return false
 		}
 		seen[t.Name] = true
-		for _, f := range records[t.Name].Fields {
-			if hasUnion(f.Type, records, seen) {
+		for _, f := range b.records[t.Name].Fields {
+			if hasUnion(f.Type, b, seen) {
 				return true
 			}
 		}

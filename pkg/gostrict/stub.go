@@ -20,18 +20,43 @@ import (
 // anything of Go. Removing the bodies removes their imports as well, so a stub depends only on the packages,
 // which its declarations use.
 
-// stubHeader turns a file of a header package into a stub. It keeps the exported functions, all types and
-// constants and drops the variables and unexported functions, which are implementation details.
+// stubHeader turns a file of a header package into a stub. It keeps the exported functions, all methods, which
+// may seal an interface, all types and constants and the exported variables, which have a binding, and drops the
+// unexported functions and variables, which are implementation details.
 func stubHeader(f *ast.File) {
 	stub(f, func(d ast.Decl) bool {
 		switch d := d.(type) {
 		case *ast.FuncDecl:
-			return d.Name.IsExported()
+			return d.Name.IsExported() || d.Recv != nil
 		case *ast.GenDecl:
+			if d.Tok == token.VAR {
+				return keepExportedVars(d)
+			}
 			return d.Tok == token.TYPE || d.Tok == token.CONST || d.Tok == token.IMPORT
 		}
 		return false
 	})
+}
+
+// keepExportedVars removes the unexported variables of the declaration and tells, whether any are left.
+func keepExportedVars(d *ast.GenDecl) bool {
+	var specs []ast.Spec
+	for _, s := range d.Specs {
+		vs := s.(*ast.ValueSpec)
+		exported := false
+		for _, n := range vs.Names {
+			exported = exported || n.IsExported()
+		}
+		if exported {
+			if vs.Type != nil {
+				// the program reads the binding, so the value of Go may use anything
+				vs.Values = nil
+			}
+			specs = append(specs, vs)
+		}
+	}
+	d.Specs = specs
+	return len(specs) > 0
 }
 
 // stub keeps the declarations, for which keep returns true, replaces the bodies of the functions and removes
