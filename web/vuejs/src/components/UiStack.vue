@@ -64,8 +64,16 @@ const isA = computed<boolean>(() => {
 	return props.ui.orientation === OrientationValues.Horizontal && !!props.ui.url;
 });
 
+// focusable stacks take part in the tab order (tabindex 0). All other stacks carry no tabindex at all:
+// a tabindex of -1 would still make them focusable for the accessibility tree, and Firefox (141 and
+// later) walks all focusable ancestors of every focusable element to inherit the disabled state,
+// recursively, which costs 2^depth for nested stacks and freezes the tab from about 20 levels on.
 const focusable = computed<boolean>(
-	() => !!props.ui.action || !!props.ui.border?.focused || !!props.ui.backgroundColorStates?.focus
+	() =>
+		!!props.ui.action ||
+		!!props.ui.border?.focused ||
+		!!props.ui.outline?.focused ||
+		!!props.ui.backgroundColorStates?.focus
 );
 
 const classes = computed<string>(() => {
@@ -278,7 +286,7 @@ function onKeydown(event: KeyboardEvent) {
 		:id="id"
 		:class="classes"
 		:title="props.ui.accessibilityLabel"
-		:tabindex="focusable ? 0 : -1"
+		:tabindex="focusable ? 0 : undefined"
 		@click="onClick"
 		@keydown="onKeydown"
 	>
