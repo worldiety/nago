@@ -30,6 +30,7 @@ func TestRecordsAndState(t *testing.T) {
 	instances := map[string]gostrict.Instance{
 		"native": mustLoad(t, nativeEngine("orders"), b),
 		"goja":   mustLoad(t, goEngine, b),
+		"vm":     mustLoad(t, vmEngine, b),
 	}
 
 	order := orders.Order{
@@ -76,14 +77,17 @@ func TestRecordsAndState(t *testing.T) {
 		results[name] = r
 	}
 
-	n, g := results["native"], results["goja"]
+	n := results["native"]
+	for _, name := range []string{"goja", "vm"} {
+		g := results[name]
+		if math.Abs(n.total-g.total) > 1e-9 || !slices.Equal(n.lines, g.lines) || n.biggest != g.biggest || n.err != g.err {
+			t.Fatalf("the summaries differ\nnative %+v\n%-6s %+v", n, name, g)
+		}
+		if n.bounces != g.bounces || n.bounces == 0 || math.Abs(n.game.Pos-g.game.Pos) > 1e-9 || n.game.Trail.Len() != g.game.Trail.Len() {
+			t.Fatalf("the games differ\nnative %+v\n%-6s %+v", n.game, name, g.game)
+		}
+	}
 	t.Logf("total %.4f, lines %v, biggest %v, error %q, %d bounces, trail %d", n.total, n.lines, n.biggest, n.err, n.bounces, n.game.Trail.Len())
-	if math.Abs(n.total-g.total) > 1e-9 || !slices.Equal(n.lines, g.lines) || n.biggest != g.biggest || n.err != g.err {
-		t.Fatalf("the summaries differ\nnative %+v\ngoja   %+v", n, g)
-	}
-	if n.bounces != g.bounces || n.bounces == 0 || math.Abs(n.game.Pos-g.game.Pos) > 1e-9 || n.game.Trail.Len() != g.game.Trail.Len() {
-		t.Fatalf("the games differ\nnative %+v\ngoja   %+v", n.game, g.game)
-	}
 	if n.lines[0] != "60x Bolt = 600 ct" || n.biggest.Name != "Gear" {
 		t.Fatalf("unexpected summary %+v", n)
 	}
@@ -91,7 +95,9 @@ func TestRecordsAndState(t *testing.T) {
 	// a state can not cross to another engine
 	native := gostrict.State[orders.Game]{Token: gostrict.NewToken("go.wdy.de/nago/pkg/gostrict/internal/examples/orders.Game", &orders.Game{})}
 	var bounces int32
-	if err := gostrict.Call(ctx, instances["goja"], "Step", []any{native, 1.0}, &bounces); err == nil {
-		t.Fatal("a native state was accepted by goja")
+	for _, name := range []string{"goja", "vm"} {
+		if err := gostrict.Call(ctx, instances[name], "Step", []any{native, 1.0}, &bounces); err == nil {
+			t.Fatalf("a native state was accepted by %s", name)
+		}
 	}
 }

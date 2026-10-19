@@ -18,8 +18,10 @@ import (
 	"go.wdy.de/nago/pkg/gostrict"
 	"go.wdy.de/nago/pkg/gostrict/engine/gojaengine"
 	"go.wdy.de/nago/pkg/gostrict/engine/native"
+	"go.wdy.de/nago/pkg/gostrict/engine/vm"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/alias"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/arena"
+	"go.wdy.de/nago/pkg/gostrict/internal/examples/core"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/draw"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/errs"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/generics"
@@ -53,6 +55,7 @@ var goEngine = &gojaengine.Engine{}
 var exports = map[string]gostrict.Funcs{
 	"alias":      native.Reflect(map[string]any{"Order": alias.Order, "Run": alias.Run}),
 	"arena":      native.Reflect(map[string]any{"Frame": arena.Frame, "NewClient": arena.NewClient, "OnHit": arena.OnHit, "OnWorld": arena.OnWorld, "Status": arena.Status}),
+	"core":       native.Reflect(map[string]any{"Control": core.Control, "Equal": core.Equal, "Lists": core.Lists, "Maps": core.Maps, "Options": core.Options, "Results": core.Results}),
 	"draw":       native.Reflect(map[string]any{"Frame": draw.Frame, "New": draw.New}),
 	"errs":       native.Reflect(map[string]any{"Average": errs.Average, "Run": errs.Run}),
 	"generics":   native.Reflect(map[string]any{"Run": generics.Run, "SumFloats": generics.SumFloats}),
@@ -70,6 +73,37 @@ var exports = map[string]gostrict.Funcs{
 	"widgetsuse": native.Reflect(map[string]any{"Run": widgetsuse.Run}),
 }
 
+// vmEngine is the interpreter, which the tests share.
+var vmEngine = &vm.Engine{}
+
+// vmPending are the examples, which the vm can not compile yet, with the reason.
+var vmPending = map[string]string{
+	"alias":    "function literals",
+	"generics": "function literals and generic functions",
+	"hostuse":  "function literals",
+	"iters":    "iterators",
+	"values":   "methods of interfaces",
+}
+
+// checkVM compares the result of the vm with the native one, unless the example is pending.
+func checkVM(t *testing.T, b *gostrict.Bundle, pkg string, host gostrict.Funcs, name string, args []any, want []any) {
+	t.Helper()
+	if _, err := b.VM(); err != nil {
+		if why, ok := vmPending[pkg]; ok {
+			t.Logf("vm pending (%s): %v", why, err)
+			return
+		}
+		t.Fatal(err)
+	}
+	if why, ok := vmPending[pkg]; ok {
+		t.Errorf("%s is pending (%s), but compiles for the vm", pkg, why)
+	}
+	got := call(t, vmEngine, b, host, name, args)
+	if !gostrict.CloseValues(want, got, gojaengine.Tolerance) {
+		t.Fatalf("native and vm differ\n  native: %#v\n  vm:     %#v", want, got)
+	}
+}
+
 // nativeEngine returns the native engine of an example.
 func nativeEngine(pkg string) native.Engine {
 	return native.Engine{Exports: exports[pkg]}
@@ -79,6 +113,19 @@ func nativeEngine(pkg string) native.Engine {
 // compares the results, floats up to the tolerance.
 func TestDifferential(t *testing.T) {
 	cases := []diffCase{
+		{"core", "Equal", []any{1.5, 2.5}},
+		{"core", "Equal", []any{2.0, 2.0}},
+		{"core", "Equal", []any{math.NaN(), 1.0}},
+		{"core", "Equal", []any{0.0, math.Copysign(0, -1)}},
+		{"core", "Results", []any{int32(47)}},
+		{"core", "Results", []any{int32(-123)}},
+		{"core", "Lists", []any{int32(6)}},
+		{"core", "Lists", []any{int32(12)}},
+		{"core", "Maps", []any{int32(10)}},
+		{"core", "Maps", []any{int32(0)}},
+		{"core", "Options", []any{int32(5)}},
+		{"core", "Options", []any{int32(0)}},
+		{"core", "Control", []any{int32(20)}},
 		{"generics", "Run", nil},
 		{"generics", "SumFloats", []any{0.1, 0.2, 0.3}},
 		{"physics", "Simulate", []any{int32(600), int32(0)}},
@@ -165,6 +212,7 @@ func TestDifferential(t *testing.T) {
 			if !gostrict.CloseValues(want, got, gojaengine.Tolerance) {
 				t.Fatalf("the engines differ\n  native: %#v\n  goja:   %#v", want, got)
 			}
+			checkVM(t, b, tc.pkg, nil, tc.name, tc.args, want)
 			t.Logf("%v", want)
 		})
 	}
