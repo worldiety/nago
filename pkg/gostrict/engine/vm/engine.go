@@ -101,6 +101,9 @@ func (in *Instance) Call(ctx context.Context, name string, args ...any) ([]any, 
 
 // failure returns the error of a failed call: the error of an abort itself, see [gostrict.Abort].
 func (in *Instance) failure(err error) error {
+	if errors.Is(err, vmcode.ErrDepth) {
+		return fmt.Errorf("%w: %w", gostrict.ErrStackExhausted, err)
+	}
 	var p *vmcode.PanicError
 	if errors.As(err, &p) {
 		if abortErr, ok := gostrict.AbortedErr(p.Value); ok {

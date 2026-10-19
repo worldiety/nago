@@ -159,6 +159,8 @@ func (rd *Reader) Error() error {
 	switch v := r[0].(type) {
 	case nil:
 		return nil
+	case *progError:
+		return rd.m.host.ProgramError(v.msg, v.pos)
 	case *object:
 		return errors.New(rd.m.errorMessage(v))
 	}

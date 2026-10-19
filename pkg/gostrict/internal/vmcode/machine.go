@@ -33,6 +33,9 @@ type Host interface {
 	TokenValue(v any) (any, bool)
 	// Callback returns the neutral value of a function of the program.
 	Callback(fn *Closure) any
+	// ProgramError returns the error, which the program created at the position with the index pos of the table
+	// of the bundle, see [Source.ErrorPos].
+	ProgramError(msg string, pos int) error
 }
 
 // debugPanics lets the panics of the machine through with their stack, e.g. GOSTRICT_VM_PANIC=1 go test.

@@ -34,6 +34,28 @@ type native struct {
 
 type nativeFn = func(m *Machine, n []uint64, s []string, r []any)
 
+// progError is an error, which the program created, e.g. with errors.New, with the index of its position.
+type progError struct {
+	msg string
+	pos int
+}
+
+func (e *progError) Error() string {
+	return e.msg
+}
+
+// errorNative returns the native, which keeps the position of the call in the error, which nat returns as the
+// last result at the reference r[at].
+func errorNative(nat *native, at int32, pos int) *native {
+	fn := nat.fn
+	return &native{name: nat.name, fn: func(m *Machine, n []uint64, s []string, r []any) {
+		fn(m, n, s, r)
+		if err, ok := r[at].(error); ok && err != nil {
+			r[at] = &progError{msg: err.Error(), pos: pos}
+		}
+	}}
+}
+
 // native returns the implementation of a function of a package, which is not in the subset, by its full name, or
 // nil.
 func (c *compiler) native(key string, targs []*tinfo, pos token.Pos) *native {

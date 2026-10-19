@@ -48,7 +48,8 @@ type vmError struct {
 // fuelChunk is the number of loops and calls between two checks of the context.
 const fuelChunk = 1 << 14
 
-var errDepth = errors.New("vm: the calls are nested too deeply")
+// ErrDepth is the error of a call, whose calls are nested deeper than the machine allows, e.g. an endless recursion.
+var ErrDepth = errors.New("vm: the calls are nested too deeply")
 
 // ensure grows the banks to hold a frame.
 func (m *Machine) ensure(n, s, r int) {
@@ -542,7 +543,7 @@ func (m *Machine) callFunc(cl *Closure, args func(n []uint64, s []string, r []an
 func (m *Machine) enter() {
 	m.depth++
 	if m.depth > m.maxDepth {
-		panic(&vmError{err: errDepth})
+		panic(&vmError{err: ErrDepth})
 	}
 	if m.fuel--; m.fuel <= 0 {
 		m.burn()

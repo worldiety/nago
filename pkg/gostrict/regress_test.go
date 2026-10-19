@@ -17,6 +17,7 @@ import (
 
 	"go.wdy.de/nago/pkg/gostrict"
 	"go.wdy.de/nago/pkg/gostrict/engine/gojaengine"
+	"go.wdy.de/nago/pkg/gostrict/engine/vm"
 )
 
 // The tests of this file reproduce defects, which a downstream application has found.
@@ -143,18 +144,20 @@ func Grow(l list.List[int32]) int32 {
 	if len(diags) > 0 {
 		t.Fatal(diags.Text())
 	}
-	in, err := goEngine.Load(context.Background(), b, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	res, err := in.Call(context.Background(), "Sum")
-	if err != nil || res[0] != int32(6) {
-		t.Fatalf("Sum returned %v, %v", res, err)
-	}
-	// the range sees the elements, which the list had, when the loop started, like a range over a slice
-	res, err = in.Call(context.Background(), "Grow", []any{int32(1), int32(2)})
-	if err != nil || res[0] != int32(4) {
-		t.Fatalf("Grow returned %v, %v", res, err)
+	for _, e := range []gostrict.Engine{goEngine, vmEngine} {
+		in, err := e.Load(context.Background(), b, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		res, err := in.Call(context.Background(), "Sum")
+		if err != nil || res[0] != int32(6) {
+			t.Fatalf("%T: Sum returned %v, %v", e, res, err)
+		}
+		// the range sees the elements, which the list had, when the loop started, like a range over a slice
+		res, err = in.Call(context.Background(), "Grow", []any{int32(1), int32(2)})
+		if err != nil || res[0] != int32(4) {
+			t.Fatalf("%T: Grow returned %v, %v", e, res, err)
+		}
 	}
 }
 
@@ -316,7 +319,13 @@ func compileScript(t *testing.T, src string) *gostrict.Bundle {
 // TestCancelAfterCall cancels the context of each call, after it has returned, which must not reach the next call.
 func TestCancelAfterCall(t *testing.T) {
 	b := compileScript(t, "package s\n\nfunc F(n int32) int32 { return n + 1 }\n")
-	in, err := new(gojaengine.Engine).Load(context.Background(), b, nil)
+	for _, e := range []gostrict.Engine{new(gojaengine.Engine), new(vm.Engine)} {
+		testCancelAfterCall(t, e, b)
+	}
+}
+
+func testCancelAfterCall(t *testing.T, e gostrict.Engine, b *gostrict.Bundle) {
+	in, err := e.Load(context.Background(), b, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -336,7 +345,13 @@ func TestCancelAfterCall(t *testing.T) {
 // TestStackExhausted returns an error of the package gostrict for a recursion, which exhausts the stack.
 func TestStackExhausted(t *testing.T) {
 	b := compileScript(t, "package s\n\nfunc F(n int32) int32 { return F(n+1) + 1 }\n")
-	in, err := (&gojaengine.Engine{MaxCallStackSize: 100}).Load(context.Background(), b, nil)
+	for _, e := range []gostrict.Engine{&gojaengine.Engine{MaxCallStackSize: 100}, &vm.Engine{MaxCallDepth: 100}} {
+		testStackExhausted(t, e, b)
+	}
+}
+
+func testStackExhausted(t *testing.T, e gostrict.Engine, b *gostrict.Bundle) {
+	in, err := e.Load(context.Background(), b, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

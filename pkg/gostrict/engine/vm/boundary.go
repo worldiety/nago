@@ -53,6 +53,10 @@ func (b boundary) TokenValue(v any) (any, bool) {
 	return tok.Value(), true
 }
 
+func (b boundary) ProgramError(msg string, pos int) error {
+	return b.in.bundle.ProgramError(msg, pos)
+}
+
 func (b boundary) Callback(fn *vmcode.Closure) any {
 	return &callback{in: b.in, fn: fn}
 }
