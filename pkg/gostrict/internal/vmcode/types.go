@@ -206,7 +206,8 @@ func (c *compiler) describe(ti *tinfo) {
 		switch u.Kind() {
 		case types.Bool, types.UntypedBool:
 			ti.kind, ti.l = kBool, layout{n: 1}
-		case types.Int32, types.UntypedRune:
+		case types.Int32, types.UntypedRune, types.Int:
+			// int only occurs in parameters of the library, e.g. the sign of math.Inf, whose natives read an int32
 			ti.kind, ti.l = kI32, layout{n: 1}
 		case types.Uint32:
 			ti.kind, ti.l = kU32, layout{n: 1}

@@ -1112,6 +1112,9 @@ func (l *fnLower) ident(id *ast.Ident) expr {
 				targs = append(targs, l.sub(t))
 			}
 		}
+		if !l.c.user(obj) {
+			return l.libValue(id, obj, targs)
+		}
 		return &eFunc{t: l.typeOf(id), fn: l.funcOf(obj, nil, targs)}
 	}
 	l.fail(id.Pos(), "identifier %s is not supported", id.Name)
@@ -1426,41 +1429,83 @@ func (c *compiler) listOf(t types.Type) *tinfo {
 }
 
 func (l *fnLower) funcCall(fn *types.Func, recvArgs, targs []types.Type, call *ast.CallExpr, sig *types.Signature, recv expr) expr {
-	path := fn.Pkg().Path()
-	res := l.tupleOf(sig.Results())
-	if p := l.c.pkgs[path]; p == nil || !p.User {
-		key := path + "." + fn.Name()
-		if r := fn.Signature().Recv(); r != nil {
-			key = path + "." + recvName(r.Type()) + "." + fn.Name()
-		}
-		if (key == listPath+".List.Append" || key == msgPath+".Out.Send") && recv != nil {
+	if !l.c.user(fn) {
+		if key := libKey(fn); (key == listPath+".List.Append" || key == msgPath+".Out.Send") && recv != nil {
 			var elems []expr
 			for _, a := range call.Args {
 				elems = append(elems, l.val(a, recv.typ().elem))
 			}
-			return &eListAppend{t: res, l: recv, elems: elems}
+			return &eListAppend{t: l.tupleOf(sig.Results()), l: recv, elems: elems}
 		}
-		var ntargs []*tinfo
-		for _, t := range append(append([]types.Type(nil), recvArgs...), targs...) {
-			ntargs = append(ntargs, l.ty(t))
-		}
-		if nat := l.c.native(key, ntargs, call.Pos()); nat != nil {
-			if n := sig.Results().Len(); n > 0 && isErrorType(sig.Results().At(n-1).Type()) && l.c.src.ErrorPos != nil {
-				// a function of the library, which creates an error, e.g. errors.New, keeps the position of the call
-				at := res.l.r - 1
-				nat = errorNative(nat, at, l.c.src.ErrorPos(call.Pos()))
-			}
-			return l.nativeCall(nat, res, l.args(call, sig, recv))
-		}
-		if p == nil {
-			l.fail(call.Pos(), "%s is not supported yet", key)
-		}
-		if len(targs) > 0 {
-			key += "[" + hostTypeArgs(targs) + "]"
-		}
-		return &eHost{t: res, ext: l.c.extern(key, recv, sig, call.Pos()), args: l.args(call, sig, recv)}
+		return l.libCall(fn, recvArgs, targs, sig, call.Pos(), recv, l.args(call, sig, recv))
 	}
-	return &eCall{t: res, fn: l.funcOf(fn, recvArgs, targs), args: l.args(call, sig, recv)}
+	return &eCall{t: l.tupleOf(sig.Results()), fn: l.funcOf(fn, recvArgs, targs), args: l.args(call, sig, recv)}
+}
+
+// user reports whether fn belongs to a package of the program, whose body l compiles, and not to the library or a
+// header package.
+func (c *compiler) user(fn *types.Func) bool {
+	p := c.pkgs[fn.Pkg().Path()]
+	return p != nil && p.User
+}
+
+// libKey names a function or method of the library or a header package, e.g. strings.TrimSpace.
+func libKey(fn *types.Func) string {
+	path := fn.Pkg().Path()
+	if r := fn.Signature().Recv(); r != nil {
+		return path + "." + recvName(r.Type()) + "." + fn.Name()
+	}
+	return path + "." + fn.Name()
+}
+
+// libCall calls fn of the library or a header package with the lowered arguments: its native or, for a function of a
+// header package, the host.
+func (l *fnLower) libCall(fn *types.Func, recvArgs, targs []types.Type, sig *types.Signature, pos token.Pos, recv expr, args []expr) expr {
+	key := libKey(fn)
+	res := l.tupleOf(sig.Results())
+	var ntargs []*tinfo
+	for _, t := range append(append([]types.Type(nil), recvArgs...), targs...) {
+		ntargs = append(ntargs, l.ty(t))
+	}
+	if nat := l.c.native(key, ntargs, pos); nat != nil {
+		if n := sig.Results().Len(); n > 0 && isErrorType(sig.Results().At(n-1).Type()) && l.c.src.ErrorPos != nil {
+			// a function of the library, which creates an error, e.g. errors.New, keeps the position of the call
+			at := res.l.r - 1
+			nat = errorNative(nat, at, l.c.src.ErrorPos(pos))
+		}
+		return l.nativeCall(nat, res, args)
+	}
+	if l.c.pkgs[fn.Pkg().Path()] == nil {
+		l.fail(pos, "%s is not supported yet", key)
+	}
+	if len(targs) > 0 {
+		key += "[" + hostTypeArgs(targs) + "]"
+	}
+	return &eHost{t: res, ext: l.c.extern(key, recv, sig, pos), args: args}
+}
+
+// libValue returns a function of the library or a header package as a value, e.g. f := strings.TrimSpace, as a
+// function literal, which calls it like a direct call does.
+func (l *fnLower) libValue(id *ast.Ident, fn *types.Func, targs []types.Type) expr {
+	sig := l.sub(l.info.TypeOf(id)).(*types.Signature)
+	inner := l.child(sig, "lib")
+	var args []expr
+	for _, pt := range inner.f.params.elems {
+		p := inner.newLocal("p", pt)
+		args = append(args, &eLocal{t: pt, v: p})
+	}
+	inner.returnCall(inner.libCall(fn, nil, targs, sig, id.Pos(), nil, args))
+	return inner.finish(l.typeOf(id))
+}
+
+// returnCall returns the results of call, the body of a function literal, which wraps a call.
+func (l *fnLower) returnCall(call expr) {
+	if res := call.typ(); res.l == (layout{}) && res.kind == kTuple && len(res.elems) == 0 {
+		l.emit(&sExpr{x: call})
+		l.emit(&sReturn{})
+		return
+	}
+	l.emit(&sReturn{vals: []expr{call}})
 }
 
 // funcOf returns the function, which l calls for fn: the hook of an entry point of another package, see hookFor.

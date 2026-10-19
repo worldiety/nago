@@ -285,12 +285,7 @@ func (l *fnLower) methodValue(se *ast.SelectorExpr, sel *types.Selection) expr {
 		}
 		call = &eCall{t: res, fn: l.c.funcFor(fn, recvArgs, nil), args: append([]expr{&eLocal{t: cp.t, v: cp}}, args...)}
 	}
-	if res.l == (layout{}) && res.kind == kTuple && len(res.elems) == 0 {
-		inner.emit(&sExpr{x: call})
-		inner.emit(&sReturn{})
-	} else {
-		inner.emit(&sReturn{vals: []expr{call}})
-	}
+	inner.returnCall(call)
 	return inner.finish(l.typeOf(se))
 }
 

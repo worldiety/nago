@@ -27,11 +27,13 @@ type Program struct {
 	init        *Func
 	instGlobals layout
 	instInit    *Func
-	once        sync.Once
-	initErr     error
-	gn          []uint64
-	gs          []string
-	gr          []any
+	// initMu guards the initialization of the package variables by the first machine, see NewMachine
+	initMu   sync.Mutex
+	initDone bool
+	initErr  error
+	gn       []uint64
+	gs       []string
+	gr       []any
 	// types are the types, which instructions refer to, e.g. of new objects
 	types []*tinfo
 	// entries are the hooks of the entry points of a whole program
