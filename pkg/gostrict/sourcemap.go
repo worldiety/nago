@@ -30,6 +30,32 @@ func (e *emitter) mark(pos token.Pos) string {
 	return string(markChar) + strconv.Itoa(len(e.positions)-1) + string(markChar)
 }
 
+// sourceName returns the name of a file of the source, which a source map and the position of an error show, e.g.
+// example.com/app/main.go.
+func (e *emitter) sourceName(filename string) string {
+	if name := e.prog.importNames[filename]; name != "" {
+		return name
+	}
+	return filename
+}
+
+// errorPos returns the index of the position, where the program creates an error, which the runtime keeps in the
+// error, so that an engine finds the position in [Bundle.Positions].
+func (e *emitter) errorPos(pos token.Pos) string {
+	e.errPositions = append(e.errPositions, pos)
+	return strconv.Itoa(len(e.errPositions) - 1)
+}
+
+// errorPositions returns the positions of errorPos.
+func (e *emitter) errorPositions() []Position {
+	res := make([]Position, len(e.errPositions))
+	for i, pos := range e.errPositions {
+		p := e.prog.Fset.Position(pos)
+		res[i] = Position{File: e.sourceName(p.Filename), Line: p.Line}
+	}
+	return res
+}
+
 type sourceMap struct {
 	Version        int      `json:"version"`
 	File           string   `json:"file,omitempty"`
@@ -90,11 +116,7 @@ func (e *emitter) stripMarks(code string) (string, []byte) {
 		if !ok {
 			idx = len(sm.Sources)
 			sourceIdx[p.Filename] = idx
-			name := e.prog.importNames[p.Filename]
-			if name == "" {
-				name = p.Filename
-			}
-			sm.Sources = append(sm.Sources, name)
+			sm.Sources = append(sm.Sources, e.sourceName(p.Filename))
 			sm.SourcesContent = append(sm.SourcesContent, string(e.prog.sources[p.Filename]))
 		}
 		// the generated column is the first character after the indentation
