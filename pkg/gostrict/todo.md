@@ -124,6 +124,22 @@ Zelle (goja 1,40 µs), `BenchmarkSheet` 1,20 ms (goja 4,23 ms, nativ 0,43 ms), p
 `money.Invoice` 9,5 µs (goja 130 µs, nativ 6,1 µs). Eine Instanz belegt 0,4–1,3 KiB, die erste nicht mehr, weil das
 Programm schon im Bundle ist; das kostet ein Bundle von money rund 48 KiB und weniger als 1 % der Übersetzungszeit.
 
+### Interpreter nach Phase 3
+
+Callbacks der VM sind `gostrict.FastCallback`: die generierten Adapter schreiben die Argumente und lesen die
+Ergebnisse über `gostrict.Writer`/`Reader` direkt in den Slots, ein geteilter Record (Style) wird einmal in Go
+umgewandelt und behalten. `BenchmarkCallback` misst jetzt die Zellfunktion, wie nago sie ruft (generierter Adapter
+und Umwandlung in die Zelle von nago):
+
+| je Zelle | nativ | goja | vm |
+|---|---|---|---|
+| Zeit | 0,09 µs | 1,53 µs | 0,26–0,27 µs |
+| Allokationen | 1,76 | 32,6 | 1,76 |
+
+`BenchmarkSheet/vm` 0,95 ms je Fensterwechsel (goja 4,67 ms, nativ 0,47 ms). Die Allokationen der VM sind nur noch die
+Strings von `text.FromInt`, wie nativ. Vom Rest entfallen etwa 80 ns auf den Bytecode (Vergleiche und Multiplikation
+mit Konstanten, Structs direkt in die Ergebnisse), 50 ns auf Reader und Writer und 50 ns auf Sperre und Rahmen.
+
 ## Offen
 
 - **Use-Case-Vertrag für wokoda (G):** typisierte DB-Zeilen über generische Header-Funktionen mit Record-Typen. Den
@@ -155,9 +171,10 @@ Programm schon im Bundle ist; das kostet ein Bundle von money rund 48 KiB und we
   `TestRecordsAndState`, `TestTimeout` und in lib/ui `TestSheet`, `TestPage`, `TestForm`, `TestDataView`,
   `TestAgenda`, `TestExtras`. Variablen von Header-Paketen liefert `Host()` jetzt auch als Funktionen ohne
   Parameter (Generator), die VM liest sie einmal je Programm. Als Nächstes:
-  - Phase 3: typisierter Pfad an der Grenze: optionales Interface der Callbacks (z. B. `gostrict.FrameCallback`),
-    über das generierter Code einmal je Callback die Slots der Felder erfragt; geteilte Records cachen ihren
-    Go-Wert. Danach `doc.go` (Abschnitt „Engines“).
+  - Phase 3 ist fertig. Typisierte Adapter der Header-Funktionen selbst (VM → Host) sind auf Phase 5 verschoben
+    (abgestimmt): dafür müsste das Engine neben `gostrict.Funcs` schnelle Funktionen bekommen, ohne dass ein Host,
+    der eine Funktion in `Funcs` ersetzt (z. B. ein Test), stillschweigend umgangen wird; im Sheet dominieren die
+    Callbacks, die Header-Funktionen laufen einmal je Render. Erst nach einem Profil entscheiden.
   - Phase 4: ganze Programme (Aspekte um jeden Einstieg, `Abort`), bis dahin lehnt die VM sie beim Übersetzen ab.
   - Package-Variablen werden einmal je Programm mit den Host-Funktionen der ersten Instanz initialisiert. Für
     Initialisierer, die den Host rufen (Handles), muss das geklärt werden.

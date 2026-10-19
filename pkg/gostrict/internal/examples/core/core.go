@@ -261,3 +261,14 @@ outer:
 	z := ^x &^ 0xf0
 	return out + text.FromInt(int32(x>>28)) + text.FromInt(y) + text.FromInt(int32(z))
 }
+
+// Names is a record, whose fields come from different calls.
+type Names struct {
+	First, Second string
+	N             int32
+}
+
+// Pairs returns a record with fields, which are computed one after the other from the parameter.
+func Pairs(n int32) Names {
+	return Names{First: text.FromInt(n), Second: text.FromInt(n * 2), N: n + 1}
+}

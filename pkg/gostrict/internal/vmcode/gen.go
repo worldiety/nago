@@ -142,6 +142,18 @@ func (g *gen) condJump(cond expr, when bool) []int {
 		g.patchAll(skip, g.pc())
 		return res
 	case *eBinary:
+		if c, ok := e.y.(*eConst); ok && !e.swap && (e.op == opEqI || e.op == opNeI) && int64(int32(c.n)) == int64(c.n) {
+			// a comparison with a small constant: jump if equal, or not
+			eq := (e.op == opEqI) == when
+			saved := g.top
+			x := g.expr(e.x)
+			g.top = saved
+			op := opJNeIK
+			if eq {
+				op = opJEqIK
+			}
+			return []int{g.emit(op, 0, x.n, int32(c.n))}
+		}
 		if !when {
 			if fused, ok := fusedJump[e.op]; ok {
 				saved := g.top
@@ -173,7 +185,14 @@ var fusedJump = map[op]op{opLtI: opJNltI, opLeI: opJNleI, opEqI: opJNeqI, opNeI:
 
 func (g *gen) ret(s *sReturn) {
 	res := g.f.results
-	if len(s.vals) == 1 && (res.kind == kTuple || !hazard(s.vals[0], res)) {
+	if len(s.vals) == 1 && (res.kind == kTuple || !hazard(s.vals[0], res) || g.safeStruct(s.vals[0])) {
+		if _, ok := s.vals[0].(*eStruct); ok {
+			// the temporaries of a later field must not overwrite an earlier one
+			saved := g.top
+			g.top = g.top.max(res.l)
+			g.max = g.max.max(g.top)
+			defer func() { g.top = saved }()
+		}
 		g.exprTo(s.vals[0], layout{})
 		g.emit(opRet, 0, 0, 0)
 		return
@@ -192,6 +211,44 @@ func (g *gen) ret(s *sReturn) {
 		g.move(off, at[i], v.typ().l)
 	}
 	g.emit(opRet, 0, 0, 0)
+}
+
+// safeStruct tells, whether a struct may be written into the slots of the results of the function field by field:
+// no field reads a variable, whose slots an earlier field has written, e.g. a parameter.
+func (g *gen) safeStruct(x expr) bool {
+	st, ok := x.(*eStruct)
+	if !ok || st.t.kind != kStruct {
+		return false
+	}
+	var written []layout // the slots, which are written, as pairs of start and end
+	overlaps := func(v *local) bool {
+		for i := 0; i < len(written); i += 2 {
+			from, to := written[i], written[i+1]
+			at, end := v.at, v.at.add(v.t.l)
+			if (at.n < to.n && from.n < end.n) || (at.s < to.s && from.s < end.s) || (at.r < to.r && from.r < end.r) {
+				return false
+			}
+		}
+		return true
+	}
+	for _, i := range st.order {
+		f := st.fields[i]
+		if hazard(f, f.typ()) {
+			return false
+		}
+		safe := true
+		walk(f, func(e expr) {
+			if l, ok := e.(*eLocal); ok && !overlaps(l.v) {
+				safe = false
+			}
+		})
+		if !safe {
+			return false
+		}
+		off := st.t.fields[i].off
+		written = append(written, off, off.add(f.typ().l))
+	}
+	return true
 }
 
 // hazard tells, whether evaluating x into slots may write them, before x has read all its operands, e.g. a
@@ -614,9 +671,18 @@ func (g *gen) binary(e *eBinary, dst layout) {
 		g.emit(e.op, dst.n, x.n, int32(e.y.(*eConst).n))
 		return
 	}
-	if c, ok := e.y.(*eConst); ok && e.op == opAddI && !e.swap {
-		g.emit(opAddIK, dst.n, x.n, int32(c.n))
-		return
+	if c, ok := e.y.(*eConst); ok && !e.swap && int64(int32(c.n)) == int64(c.n) {
+		switch e.op {
+		case opAddI:
+			g.emit(opAddIK, dst.n, x.n, int32(c.n))
+			return
+		case opSubI:
+			g.emit(opAddIK, dst.n, x.n, -int32(c.n))
+			return
+		case opMulI:
+			g.emit(opMulIK, dst.n, x.n, int32(c.n))
+			return
+		}
 	}
 	y := g.expr(e.y)
 	if e.swap {

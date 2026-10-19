@@ -37,6 +37,7 @@ var opNames = [...]string{
 	opNew:        "new",
 	opAddI:       "addi",
 	opAddIK:      "addik",
+	opMulIK:      "mulik",
 	opSubI:       "subi",
 	opMulI:       "muli",
 	opDivI:       "divi",
@@ -89,6 +90,8 @@ var opNames = [...]string{
 	opJNneI:      "jnnei",
 	opJNltF:      "jnltf",
 	opJNleF:      "jnlef",
+	opJEqIK:      "jeqik",
+	opJNeIK:      "jneik",
 	opCall:       "call",
 	opCallNative: "callnative",
 	opCallHost:   "callhost",
@@ -108,6 +111,10 @@ var opNames = [...]string{
 	opLSet:       "lset",
 	opBox:        "box",
 	opZeroR:      "zeror",
+	opClosure:    "closure",
+	opCallIface:  "calliface",
+	opTypeIs:     "typeis",
+	opView:       "view",
 }
 
 // Dump returns the bytecode of the program, e.g. for a test.

@@ -6110,7 +6110,17 @@ func gostrictTo1(v View) gostrict.Variant {
 }
 
 func gostrictFunc2(cb gostrict.Callback) func() bool {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func() bool {
+		if fast {
+			fc.Begin()
+			defer fc.End()
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(bool)
+			}
+			return r.Bool()
+		}
 		res, err := cb.Call()
 		if err != nil {
 			var z0 bool
@@ -6121,7 +6131,14 @@ func gostrictFunc2(cb gostrict.Callback) func() bool {
 }
 
 func gostrictFunc3(cb gostrict.Callback) func() {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func() {
+		if fast {
+			fc.Begin()
+			defer fc.End()
+			_, _ = fc.Invoke()
+			return
+		}
 		_, _ = cb.Call()
 	}
 }
@@ -6167,7 +6184,15 @@ func gostrictFrom8(v []any) []string {
 }
 
 func gostrictFunc9(cb gostrict.Callback) func(v bool) {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 bool) {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			w.Bool(bool(a0))
+			_, _ = fc.Invoke()
+			return
+		}
 		_, _ = cb.Call(a0)
 	}
 }
@@ -6213,7 +6238,17 @@ func gostrictFrom14(v []any) []ChartDataPoint {
 }
 
 func gostrictFunc15(cb gostrict.Callback) func() Color {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func() Color {
+		if fast {
+			fc.Begin()
+			defer fc.End()
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(Color)
+			}
+			return Color(r.String())
+		}
 		res, err := cb.Call()
 		if err != nil {
 			var z0 Color
@@ -6224,13 +6259,31 @@ func gostrictFunc15(cb gostrict.Callback) func() Color {
 }
 
 func gostrictFunc16(cb gostrict.Callback) func(v Color) {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 Color) {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			w.String(string(a0))
+			_, _ = fc.Invoke()
+			return
+		}
 		_, _ = cb.Call(string(a0))
 	}
 }
 
 func gostrictFunc17(cb gostrict.Callback) func() error {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func() error {
+		if fast {
+			fc.Begin()
+			defer fc.End()
+			r, err := fc.Invoke()
+			if err != nil {
+				return err
+			}
+			return r.Error()
+		}
 		res, err := cb.Call()
 		if err != nil {
 			return err
@@ -6240,7 +6293,18 @@ func gostrictFunc17(cb gostrict.Callback) func() error {
 }
 
 func gostrictFunc18(cb gostrict.Callback) func(row int32) View {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 int32) View {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			w.Int32(int32(a0))
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(View)
+			}
+			return gostrictRead1(r)
+		}
 		res, err := cb.Call(a0)
 		if err != nil {
 			var z0 View
@@ -6259,7 +6323,18 @@ func gostrictFrom19(v []any) []TDataViewField {
 }
 
 func gostrictFunc20(cb gostrict.Callback) func(rows list.List[int32]) error {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 list.List[int32]) error {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			gostrictWrite44(w, a0)
+			r, err := fc.Invoke()
+			if err != nil {
+				return err
+			}
+			return r.Error()
+		}
 		res, err := cb.Call(gostrictTo44(a0))
 		if err != nil {
 			return err
@@ -6277,7 +6352,17 @@ func gostrictTo21(x Date) []any {
 }
 
 func gostrictFunc22(cb gostrict.Callback) func() Date {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func() Date {
+		if fast {
+			fc.Begin()
+			defer fc.End()
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(Date)
+			}
+			return gostrictRead21(r)
+		}
 		res, err := cb.Call()
 		if err != nil {
 			var z0 Date
@@ -6288,13 +6373,31 @@ func gostrictFunc22(cb gostrict.Callback) func() Date {
 }
 
 func gostrictFunc23(cb gostrict.Callback) func(v Date) {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 Date) {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			gostrictWrite21(w, a0)
+			_, _ = fc.Invoke()
+			return
+		}
 		_, _ = cb.Call(gostrictTo21(a0))
 	}
 }
 
 func gostrictFunc24(cb gostrict.Callback) func() View {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func() View {
+		if fast {
+			fc.Begin()
+			defer fc.End()
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(View)
+			}
+			return gostrictRead1(r)
+		}
 		res, err := cb.Call()
 		if err != nil {
 			var z0 View
@@ -6313,7 +6416,17 @@ func gostrictFrom25(v []any) []DropdownOption {
 }
 
 func gostrictFunc26(cb gostrict.Callback) func() Duration {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func() Duration {
+		if fast {
+			fc.Begin()
+			defer fc.End()
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(Duration)
+			}
+			return Duration(r.Float64())
+		}
 		res, err := cb.Call()
 		if err != nil {
 			var z0 Duration
@@ -6324,13 +6437,31 @@ func gostrictFunc26(cb gostrict.Callback) func() Duration {
 }
 
 func gostrictFunc27(cb gostrict.Callback) func(v Duration) {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 Duration) {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			w.Float64(float64(a0))
+			_, _ = fc.Invoke()
+			return
+		}
 		_, _ = cb.Call(float64(a0))
 	}
 }
 
 func gostrictFunc28(cb gostrict.Callback) func() float64 {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func() float64 {
+		if fast {
+			fc.Begin()
+			defer fc.End()
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(float64)
+			}
+			return r.Float64()
+		}
 		res, err := cb.Call()
 		if err != nil {
 			var z0 float64
@@ -6341,7 +6472,15 @@ func gostrictFunc28(cb gostrict.Callback) func() float64 {
 }
 
 func gostrictFunc29(cb gostrict.Callback) func(v float64) {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 float64) {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			w.Float64(float64(a0))
+			_, _ = fc.Invoke()
+			return
+		}
 		_, _ = cb.Call(a0)
 	}
 }
@@ -6363,7 +6502,17 @@ func gostrictTo31(x FlowChartActionData) []any {
 }
 
 func gostrictFunc32(cb gostrict.Callback) func() FlowChartActionData {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func() FlowChartActionData {
+		if fast {
+			fc.Begin()
+			defer fc.End()
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(FlowChartActionData)
+			}
+			return gostrictRead31(r)
+		}
 		res, err := cb.Call()
 		if err != nil {
 			var z0 FlowChartActionData
@@ -6374,7 +6523,15 @@ func gostrictFunc32(cb gostrict.Callback) func() FlowChartActionData {
 }
 
 func gostrictFunc33(cb gostrict.Callback) func(v FlowChartActionData) {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 FlowChartActionData) {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			gostrictWrite31(w, a0)
+			_, _ = fc.Invoke()
+			return
+		}
 		_, _ = cb.Call(gostrictTo31(a0))
 	}
 }
@@ -6404,7 +6561,17 @@ func gostrictFrom36(v []any) []FlowchartEdge {
 }
 
 func gostrictFunc37(cb gostrict.Callback) func() FlowchartModel {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func() FlowchartModel {
+		if fast {
+			fc.Begin()
+			defer fc.End()
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(FlowchartModel)
+			}
+			return gostrictRead30(r)
+		}
 		res, err := cb.Call()
 		if err != nil {
 			var z0 FlowchartModel
@@ -6415,7 +6582,15 @@ func gostrictFunc37(cb gostrict.Callback) func() FlowchartModel {
 }
 
 func gostrictFunc38(cb gostrict.Callback) func(v FlowchartModel) {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 FlowchartModel) {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			gostrictWrite30(w, a0)
+			_, _ = fc.Invoke()
+			return
+		}
 		_, _ = cb.Call(gostrictTo30(a0))
 	}
 }
@@ -6445,7 +6620,17 @@ func gostrictFrom41(v []any) []TSwitcherPage {
 }
 
 func gostrictFunc42(cb gostrict.Callback) func() int32 {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func() int32 {
+		if fast {
+			fc.Begin()
+			defer fc.End()
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(int32)
+			}
+			return r.Int32()
+		}
 		res, err := cb.Call()
 		if err != nil {
 			var z0 int32
@@ -6456,7 +6641,15 @@ func gostrictFunc42(cb gostrict.Callback) func() int32 {
 }
 
 func gostrictFunc43(cb gostrict.Callback) func(v int32) {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 int32) {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			w.Int32(int32(a0))
+			_, _ = fc.Invoke()
+			return
+		}
 		_, _ = cb.Call(a0)
 	}
 }
@@ -6478,7 +6671,15 @@ func gostrictTo44(l list.List[int32]) []any {
 }
 
 func gostrictFunc45(cb gostrict.Callback) func(v list.List[int32]) {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 list.List[int32]) {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			gostrictWrite44(w, a0)
+			_, _ = fc.Invoke()
+			return
+		}
 		_, _ = cb.Call(gostrictTo44(a0))
 	}
 }
@@ -6500,7 +6701,18 @@ func gostrictFrom47(v []any) []TMenuItem {
 }
 
 func gostrictFunc48(cb gostrict.Callback) func(id NavsplitviewViewID) View {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 NavsplitviewViewID) View {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			w.String(string(a0))
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(View)
+			}
+			return gostrictRead1(r)
+		}
 		res, err := cb.Call(string(a0))
 		if err != nil {
 			var z0 View
@@ -6519,13 +6731,33 @@ func gostrictFrom49(v []any) []ScaffoldMenuEntry {
 }
 
 func gostrictFunc50(cb gostrict.Callback) func(newIdx int32) {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 int32) {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			w.Int32(int32(a0))
+			_, _ = fc.Invoke()
+			return
+		}
 		_, _ = cb.Call(a0)
 	}
 }
 
 func gostrictFunc51(cb gostrict.Callback) func(row int32, col int32) sheet.Cell {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 int32, a1 int32) sheet.Cell {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			w.Int32(int32(a0))
+			w.Int32(int32(a1))
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(sheet.Cell)
+			}
+			return gostrictRead111(r)
+		}
 		res, err := cb.Call(a0, a1)
 		if err != nil {
 			var z0 sheet.Cell
@@ -6544,7 +6776,17 @@ func gostrictFrom52(v []any) []TStepperStep {
 }
 
 func gostrictFunc53(cb gostrict.Callback) func() string {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func() string {
+		if fast {
+			fc.Begin()
+			defer fc.End()
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(string)
+			}
+			return r.String()
+		}
 		res, err := cb.Call()
 		if err != nil {
 			var z0 string
@@ -6555,7 +6797,15 @@ func gostrictFunc53(cb gostrict.Callback) func() string {
 }
 
 func gostrictFunc54(cb gostrict.Callback) func(v string) {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 string) {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			w.String(string(a0))
+			_, _ = fc.Invoke()
+			return
+		}
 		_, _ = cb.Call(a0)
 	}
 }
@@ -6585,7 +6835,18 @@ func gostrictFrom57(v []any) []TChartSeries {
 }
 
 func gostrictFunc58(cb gostrict.Callback) func(Frame) Frame {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 Frame) Frame {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			gostrictWrite39(w, a0)
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(Frame)
+			}
+			return gostrictRead39(r)
+		}
 		res, err := cb.Call(gostrictTo39(a0))
 		if err != nil {
 			var z0 Frame
@@ -6644,7 +6905,18 @@ func gostrictFrom64(v []any) []CalendarChip {
 }
 
 func gostrictFunc65(cb gostrict.Callback) func(style CalendarStyle) View {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 CalendarStyle) View {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			w.Int32(int32(a0))
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(View)
+			}
+			return gostrictRead1(r)
+		}
 		res, err := cb.Call(int32(a0))
 		if err != nil {
 			var z0 View
@@ -6663,7 +6935,15 @@ func gostrictFrom66(v []any) []CalendarColumn {
 }
 
 func gostrictFunc67(cb gostrict.Callback) func(row int32) {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 int32) {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			w.Int32(int32(a0))
+			_, _ = fc.Invoke()
+			return
+		}
 		_, _ = cb.Call(a0)
 	}
 }
@@ -6685,13 +6965,33 @@ func gostrictFrom69(v []any) []TDataViewSelectOption {
 }
 
 func gostrictFunc70(cb gostrict.Callback) func(rows list.List[int32]) {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 list.List[int32]) {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			gostrictWrite44(w, a0)
+			_, _ = fc.Invoke()
+			return
+		}
 		_, _ = cb.Call(gostrictTo44(a0))
 	}
 }
 
 func gostrictFunc71(cb gostrict.Callback) func(a int32, b int32) int32 {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 int32, a1 int32) int32 {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			w.Int32(int32(a0))
+			w.Int32(int32(a1))
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(int32)
+			}
+			return r.Int32()
+		}
 		res, err := cb.Call(a0, a1)
 		if err != nil {
 			var z0 int32
@@ -6702,7 +7002,18 @@ func gostrictFunc71(cb gostrict.Callback) func(a int32, b int32) int32 {
 }
 
 func gostrictFunc72(cb gostrict.Callback) func(rows list.List[int32]) bool {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 list.List[int32]) bool {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			gostrictWrite44(w, a0)
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(bool)
+			}
+			return r.Bool()
+		}
 		res, err := cb.Call(gostrictTo44(a0))
 		if err != nil {
 			var z0 bool
@@ -6785,13 +7096,32 @@ func gostrictTo81(x LineChartMarkers) []any {
 }
 
 func gostrictFunc82(cb gostrict.Callback) func(idx int32) {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 int32) {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			w.Int32(int32(a0))
+			_, _ = fc.Invoke()
+			return
+		}
 		_, _ = cb.Call(a0)
 	}
 }
 
 func gostrictFunc83(cb gostrict.Callback) func(idx int32) bool {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 int32) bool {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			w.Int32(int32(a0))
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(bool)
+			}
+			return r.Bool()
+		}
 		res, err := cb.Call(a0)
 		if err != nil {
 			var z0 bool
@@ -6802,7 +7132,18 @@ func gostrictFunc83(cb gostrict.Callback) func(idx int32) bool {
 }
 
 func gostrictFunc84(cb gostrict.Callback) func(l TList) TList {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 TList) TList {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			w.Handle(a0.ref)
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(TList)
+			}
+			return TList{ref: r.Handle()}
+		}
 		res, err := cb.Call(a0.ref)
 		if err != nil {
 			var z0 TList
@@ -6813,7 +7154,18 @@ func gostrictFunc84(cb gostrict.Callback) func(l TList) TList {
 }
 
 func gostrictFunc85(cb gostrict.Callback) func(row int32) string {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 int32) string {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			w.Int32(int32(a0))
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(string)
+			}
+			return r.String()
+		}
 		res, err := cb.Call(a0)
 		if err != nil {
 			var z0 string
@@ -6824,7 +7176,18 @@ func gostrictFunc85(cb gostrict.Callback) func(row int32) string {
 }
 
 func gostrictFunc86(cb gostrict.Callback) func(rows list.List[int32]) View {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 list.List[int32]) View {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			gostrictWrite44(w, a0)
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(View)
+			}
+			return gostrictRead1(r)
+		}
 		res, err := cb.Call(gostrictTo44(a0))
 		if err != nil {
 			var z0 View
@@ -6835,7 +7198,20 @@ func gostrictFunc86(cb gostrict.Callback) func(rows list.List[int32]) View {
 }
 
 func gostrictFunc87(cb gostrict.Callback) func(wnd Window, row int32, checked BoolState) View {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 Window, a1 int32, a2 BoolState) View {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			w.Handle(a0.ref)
+			w.Int32(int32(a1))
+			w.Handle(a2.ref)
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(View)
+			}
+			return gostrictRead1(r)
+		}
 		res, err := cb.Call(a0.ref, a1, a2.ref)
 		if err != nil {
 			var z0 View
@@ -6846,7 +7222,18 @@ func gostrictFunc87(cb gostrict.Callback) func(wnd Window, row int32, checked Bo
 }
 
 func gostrictFunc88(cb gostrict.Callback) func(e sheet.Edit) error {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 sheet.Edit) error {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			gostrictWrite117(w, a0)
+			r, err := fc.Invoke()
+			if err != nil {
+				return err
+			}
+			return r.Error()
+		}
 		res, err := cb.Call(gostrictTo117(a0))
 		if err != nil {
 			return err
@@ -6864,7 +7251,19 @@ func gostrictTo89(x SliderRangeSliderValue) []any {
 }
 
 func gostrictFunc90(cb gostrict.Callback) func(wnd Window, stack TStack) TStack {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 Window, a1 TStack) TStack {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			w.Handle(a0.ref)
+			w.Handle(a1.ref)
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(TStack)
+			}
+			return TStack{ref: r.Handle()}
+		}
 		res, err := cb.Call(a0.ref, a1.ref)
 		if err != nil {
 			var z0 TStack
@@ -6875,7 +7274,18 @@ func gostrictFunc90(cb gostrict.Callback) func(wnd Window, stack TStack) TStack 
 }
 
 func gostrictFunc91(cb gostrict.Callback) func(stack TStack) TStack {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 TStack) TStack {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			w.Handle(a0.ref)
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(TStack)
+			}
+			return TStack{ref: r.Handle()}
+		}
 		res, err := cb.Call(a0.ref)
 		if err != nil {
 			var z0 TStack
@@ -6902,7 +7312,18 @@ func gostrictTo93(x Outline) []any {
 }
 
 func gostrictFunc94(cb gostrict.Callback) func(s TSwitcher) TSwitcher {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 TSwitcher) TSwitcher {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			w.Handle(a0.ref)
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(TSwitcher)
+			}
+			return TSwitcher{ref: r.Handle()}
+		}
 		res, err := cb.Call(a0.ref)
 		if err != nil {
 			var z0 TSwitcher
@@ -6953,7 +7374,17 @@ func gostrictTo99(x TimeFrame) []any {
 }
 
 func gostrictFunc100(cb gostrict.Callback) func() TimeFrame {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func() TimeFrame {
+		if fast {
+			fc.Begin()
+			defer fc.End()
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(TimeFrame)
+			}
+			return gostrictRead99(r)
+		}
 		res, err := cb.Call()
 		if err != nil {
 			var z0 TimeFrame
@@ -6964,7 +7395,15 @@ func gostrictFunc100(cb gostrict.Callback) func() TimeFrame {
 }
 
 func gostrictFunc101(cb gostrict.Callback) func(v TimeFrame) {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 TimeFrame) {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			gostrictWrite99(w, a0)
+			_, _ = fc.Invoke()
+			return
+		}
 		_, _ = cb.Call(gostrictTo99(a0))
 	}
 }
@@ -7151,4 +7590,1076 @@ func gostrictFrom120(v []any) sheet.Line {
 
 func gostrictTo120(x sheet.Line) []any {
 	return []any{x.Color, x.Width, int32(x.Style)}
+}
+
+func gostrictRead1(r gostrict.Reader) View {
+	switch tag := r.Variant(); tag {
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TAccordion":
+		x := TAccordion{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TAlertDialog":
+		x := TAlertDialog{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TAlertBanner":
+		x := TAlertBanner{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TAlertBannerMessages":
+		x := TAlertBannerMessages{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TAvatar":
+		x := TAvatar{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TBarChart":
+		x := TBarChart{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TBox":
+		x := TBox{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TBreadcrumbs":
+		x := TBreadcrumbs{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TFilledButton":
+		x := TFilledButton{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TButton":
+		x := TButton{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TCalendar":
+		x := TCalendar{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TCardLayout":
+		x := TCardLayout{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TCard":
+		x := TCard{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TCheckbox":
+		x := TCheckbox{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TCheckboxField":
+		x := TCheckboxField{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TCodeEditor":
+		x := TCodeEditor{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TColorpickerColor":
+		x := TColorpickerColor{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TColorpickerPickerField":
+		x := TColorpickerPickerField{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TColorpickerPicker":
+		x := TColorpickerPicker{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TCountDown":
+		x := TCountDown{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TDataView":
+		x := TDataView{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TDatePicker":
+		x := TDatePicker{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TDialog":
+		x := TDialog{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TDivider":
+		x := TDivider{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TDnDArea":
+		x := TDnDArea{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TDocumentComment":
+		x := TDocumentComment{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TDocumentEditable":
+		x := TDocumentEditable{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TDocumentPage":
+		x := TDocumentPage{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TDropdown":
+		x := TDropdown{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TEditorContent":
+		x := TEditorContent{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TEditorHeader":
+		x := TEditorHeader{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TEditorNavbar":
+		x := TEditorNavbar{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TEditorVToolWindow":
+		x := TEditorVToolWindow{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TEditorScreen":
+		x := TEditorScreen{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TEsignatureSignature":
+		x := TEsignatureSignature{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TPicker":
+		x := TPicker{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TFlowChart":
+		x := TFlowChart{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TFooter":
+		x := TFooter{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TForm":
+		x := TForm{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TPager":
+		x := TPager{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TGrid":
+		x := TGrid{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.THero":
+		x := THero{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.THoverGroup":
+		x := THoverGroup{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TImage":
+		x := TImage{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TLineChart":
+		x := TLineChart{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TListEntry":
+		x := TListEntry{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TList":
+		x := TList{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TMenu":
+		x := TMenu{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TModal":
+		x := TModal{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TNavsplitviewListItem":
+		x := TNavsplitviewListItem{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TNavsplitviewTwoColumn":
+		x := TNavsplitviewTwoColumn{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TNavsplitviewThreeColumn":
+		x := TNavsplitviewThreeColumn{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TPasswordField":
+		x := TPasswordField{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TPDF":
+		x := TPDF{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TPickerButton":
+		x := TPickerButton{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TPieChart":
+		x := TPieChart{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TProgress":
+		x := TProgress{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TQrCode":
+		x := TQrCode{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TRadioButton":
+		x := TRadioButton{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TRadioButtonField":
+		x := TRadioButtonField{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TRichText":
+		x := TRichText{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TRichTextEditor":
+		x := TRichTextEditor{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TScaffold":
+		x := TScaffold{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TScrollView":
+		x := TScrollView{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TSheet":
+		x := TSheet{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TSlider":
+		x := TSlider{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TSliderRangeSlider":
+		x := TSliderRangeSlider{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TSpace":
+		x := TSpace{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TSpacer":
+		x := TSpacer{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TSplitView":
+		x := TSplitView{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TStack":
+		x := TStack{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TStepper":
+		x := TStepper{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TSwitcher":
+		x := TSwitcher{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TTable":
+		x := TTable{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TTabs":
+		x := TTabs{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TTagsColoredTextPill":
+		x := TTagsColoredTextPill{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TText":
+		x := TText{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField":
+		x := TTextField{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TTextLayout":
+		x := TTextLayout{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TThemeSwitcher":
+		x := TThemeSwitcher{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TTimeframePicker":
+		x := TTimeframePicker{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TTimepickerPicker":
+		x := TTimepickerPicker{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TToggle":
+		x := TToggle{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TToggleField":
+		x := TToggleField{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TTrackingSupportRequestDialog":
+		x := TTrackingSupportRequestDialog{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TVideo":
+		x := TVideo{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TViewThatMatches":
+		x := TViewThatMatches{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TWebView":
+		x := TWebView{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TWindowTitle":
+		x := TWindowTitle{ref: r.Handle()}
+		r.End()
+		return x
+	}
+	panic("unknown variant")
+}
+
+func gostrictWrite1(w gostrict.Writer, x View) {
+	switch x := x.(type) {
+	case TAccordion:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TAccordion")
+		w.Handle(x.ref)
+		w.End()
+	case TAlertDialog:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TAlertDialog")
+		w.Handle(x.ref)
+		w.End()
+	case TAlertBanner:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TAlertBanner")
+		w.Handle(x.ref)
+		w.End()
+	case TAlertBannerMessages:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TAlertBannerMessages")
+		w.Handle(x.ref)
+		w.End()
+	case TAvatar:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TAvatar")
+		w.Handle(x.ref)
+		w.End()
+	case TBarChart:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TBarChart")
+		w.Handle(x.ref)
+		w.End()
+	case TBox:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TBox")
+		w.Handle(x.ref)
+		w.End()
+	case TBreadcrumbs:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TBreadcrumbs")
+		w.Handle(x.ref)
+		w.End()
+	case TFilledButton:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TFilledButton")
+		w.Handle(x.ref)
+		w.End()
+	case TButton:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TButton")
+		w.Handle(x.ref)
+		w.End()
+	case TCalendar:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TCalendar")
+		w.Handle(x.ref)
+		w.End()
+	case TCardLayout:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TCardLayout")
+		w.Handle(x.ref)
+		w.End()
+	case TCard:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TCard")
+		w.Handle(x.ref)
+		w.End()
+	case TCheckbox:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TCheckbox")
+		w.Handle(x.ref)
+		w.End()
+	case TCheckboxField:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TCheckboxField")
+		w.Handle(x.ref)
+		w.End()
+	case TCodeEditor:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TCodeEditor")
+		w.Handle(x.ref)
+		w.End()
+	case TColorpickerColor:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TColorpickerColor")
+		w.Handle(x.ref)
+		w.End()
+	case TColorpickerPickerField:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TColorpickerPickerField")
+		w.Handle(x.ref)
+		w.End()
+	case TColorpickerPicker:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TColorpickerPicker")
+		w.Handle(x.ref)
+		w.End()
+	case TCountDown:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TCountDown")
+		w.Handle(x.ref)
+		w.End()
+	case TDataView:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TDataView")
+		w.Handle(x.ref)
+		w.End()
+	case TDatePicker:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TDatePicker")
+		w.Handle(x.ref)
+		w.End()
+	case TDialog:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TDialog")
+		w.Handle(x.ref)
+		w.End()
+	case TDivider:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TDivider")
+		w.Handle(x.ref)
+		w.End()
+	case TDnDArea:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TDnDArea")
+		w.Handle(x.ref)
+		w.End()
+	case TDocumentComment:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TDocumentComment")
+		w.Handle(x.ref)
+		w.End()
+	case TDocumentEditable:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TDocumentEditable")
+		w.Handle(x.ref)
+		w.End()
+	case TDocumentPage:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TDocumentPage")
+		w.Handle(x.ref)
+		w.End()
+	case TDropdown:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TDropdown")
+		w.Handle(x.ref)
+		w.End()
+	case TEditorContent:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TEditorContent")
+		w.Handle(x.ref)
+		w.End()
+	case TEditorHeader:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TEditorHeader")
+		w.Handle(x.ref)
+		w.End()
+	case TEditorNavbar:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TEditorNavbar")
+		w.Handle(x.ref)
+		w.End()
+	case TEditorVToolWindow:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TEditorVToolWindow")
+		w.Handle(x.ref)
+		w.End()
+	case TEditorScreen:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TEditorScreen")
+		w.Handle(x.ref)
+		w.End()
+	case TEsignatureSignature:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TEsignatureSignature")
+		w.Handle(x.ref)
+		w.End()
+	case TPicker:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TPicker")
+		w.Handle(x.ref)
+		w.End()
+	case TFlowChart:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TFlowChart")
+		w.Handle(x.ref)
+		w.End()
+	case TFooter:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TFooter")
+		w.Handle(x.ref)
+		w.End()
+	case TForm:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TForm")
+		w.Handle(x.ref)
+		w.End()
+	case TPager:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TPager")
+		w.Handle(x.ref)
+		w.End()
+	case TGrid:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TGrid")
+		w.Handle(x.ref)
+		w.End()
+	case THero:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.THero")
+		w.Handle(x.ref)
+		w.End()
+	case THoverGroup:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.THoverGroup")
+		w.Handle(x.ref)
+		w.End()
+	case TImage:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TImage")
+		w.Handle(x.ref)
+		w.End()
+	case TLineChart:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TLineChart")
+		w.Handle(x.ref)
+		w.End()
+	case TListEntry:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TListEntry")
+		w.Handle(x.ref)
+		w.End()
+	case TList:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TList")
+		w.Handle(x.ref)
+		w.End()
+	case TMenu:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TMenu")
+		w.Handle(x.ref)
+		w.End()
+	case TModal:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TModal")
+		w.Handle(x.ref)
+		w.End()
+	case TNavsplitviewListItem:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TNavsplitviewListItem")
+		w.Handle(x.ref)
+		w.End()
+	case TNavsplitviewTwoColumn:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TNavsplitviewTwoColumn")
+		w.Handle(x.ref)
+		w.End()
+	case TNavsplitviewThreeColumn:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TNavsplitviewThreeColumn")
+		w.Handle(x.ref)
+		w.End()
+	case TPasswordField:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TPasswordField")
+		w.Handle(x.ref)
+		w.End()
+	case TPDF:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TPDF")
+		w.Handle(x.ref)
+		w.End()
+	case TPickerButton:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TPickerButton")
+		w.Handle(x.ref)
+		w.End()
+	case TPieChart:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TPieChart")
+		w.Handle(x.ref)
+		w.End()
+	case TProgress:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TProgress")
+		w.Handle(x.ref)
+		w.End()
+	case TQrCode:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TQrCode")
+		w.Handle(x.ref)
+		w.End()
+	case TRadioButton:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TRadioButton")
+		w.Handle(x.ref)
+		w.End()
+	case TRadioButtonField:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TRadioButtonField")
+		w.Handle(x.ref)
+		w.End()
+	case TRichText:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TRichText")
+		w.Handle(x.ref)
+		w.End()
+	case TRichTextEditor:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TRichTextEditor")
+		w.Handle(x.ref)
+		w.End()
+	case TScaffold:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TScaffold")
+		w.Handle(x.ref)
+		w.End()
+	case TScrollView:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TScrollView")
+		w.Handle(x.ref)
+		w.End()
+	case TSheet:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TSheet")
+		w.Handle(x.ref)
+		w.End()
+	case TSlider:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TSlider")
+		w.Handle(x.ref)
+		w.End()
+	case TSliderRangeSlider:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TSliderRangeSlider")
+		w.Handle(x.ref)
+		w.End()
+	case TSpace:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TSpace")
+		w.Handle(x.ref)
+		w.End()
+	case TSpacer:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TSpacer")
+		w.Handle(x.ref)
+		w.End()
+	case TSplitView:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TSplitView")
+		w.Handle(x.ref)
+		w.End()
+	case TStack:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TStack")
+		w.Handle(x.ref)
+		w.End()
+	case TStepper:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TStepper")
+		w.Handle(x.ref)
+		w.End()
+	case TSwitcher:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TSwitcher")
+		w.Handle(x.ref)
+		w.End()
+	case TTable:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TTable")
+		w.Handle(x.ref)
+		w.End()
+	case TTabs:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TTabs")
+		w.Handle(x.ref)
+		w.End()
+	case TTagsColoredTextPill:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TTagsColoredTextPill")
+		w.Handle(x.ref)
+		w.End()
+	case TText:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TText")
+		w.Handle(x.ref)
+		w.End()
+	case TTextField:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TTextField")
+		w.Handle(x.ref)
+		w.End()
+	case TTextLayout:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TTextLayout")
+		w.Handle(x.ref)
+		w.End()
+	case TThemeSwitcher:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TThemeSwitcher")
+		w.Handle(x.ref)
+		w.End()
+	case TTimeframePicker:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TTimeframePicker")
+		w.Handle(x.ref)
+		w.End()
+	case TTimepickerPicker:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TTimepickerPicker")
+		w.Handle(x.ref)
+		w.End()
+	case TToggle:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TToggle")
+		w.Handle(x.ref)
+		w.End()
+	case TToggleField:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TToggleField")
+		w.Handle(x.ref)
+		w.End()
+	case TTrackingSupportRequestDialog:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TTrackingSupportRequestDialog")
+		w.Handle(x.ref)
+		w.End()
+	case TVideo:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TVideo")
+		w.Handle(x.ref)
+		w.End()
+	case TViewThatMatches:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TViewThatMatches")
+		w.Handle(x.ref)
+		w.End()
+	case TWebView:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TWebView")
+		w.Handle(x.ref)
+		w.End()
+	case TWindowTitle:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TWindowTitle")
+		w.Handle(x.ref)
+		w.End()
+	}
+}
+
+func gostrictRead44(r gostrict.Reader) list.List[int32] {
+	n := r.List()
+	l := list.New[int32]()
+	for range n {
+		l.Append(r.Int32())
+	}
+	r.End()
+	return l
+}
+
+func gostrictWrite44(w gostrict.Writer, x list.List[int32]) {
+	w.List(int(x.Len()))
+	for e := range x.Values() {
+		w.Int32(int32(e))
+	}
+	w.End()
+}
+
+func gostrictRead21(r gostrict.Reader) Date {
+	if v, ok := r.Record(); ok {
+		return v.(Date)
+	}
+	x := Date{Day: r.Int32(), Month: r.Int32(), Year: r.Int32()}
+	if r.End() {
+		r.Keep(x)
+	}
+	return x
+}
+
+func gostrictWrite21(w gostrict.Writer, x Date) {
+	w.Record()
+	w.Int32(int32(x.Day))
+	w.Int32(int32(x.Month))
+	w.Int32(int32(x.Year))
+	w.End()
+}
+
+func gostrictRead31(r gostrict.Reader) FlowChartActionData {
+	if v, ok := r.Record(); ok {
+		return v.(FlowChartActionData)
+	}
+	x := FlowChartActionData{Node: gostrictRead108(r), Edge: gostrictRead109(r), ViewX: r.Float64(), ViewY: r.Float64(), PaneX: r.Float64(), PaneY: r.Float64(), SelectedNodes: gostrictRead110(r), SelectedEdges: gostrictRead110(r), RightClick: r.Bool()}
+	if r.End() {
+		r.Keep(x)
+	}
+	return x
+}
+
+func gostrictWrite31(w gostrict.Writer, x FlowChartActionData) {
+	w.Record()
+	gostrictWrite108(w, x.Node)
+	gostrictWrite109(w, x.Edge)
+	w.Float64(float64(x.ViewX))
+	w.Float64(float64(x.ViewY))
+	w.Float64(float64(x.PaneX))
+	w.Float64(float64(x.PaneY))
+	gostrictWrite110(w, x.SelectedNodes)
+	gostrictWrite110(w, x.SelectedEdges)
+	w.Bool(bool(x.RightClick))
+	w.End()
+}
+
+func gostrictRead30(r gostrict.Reader) FlowchartModel {
+	if v, ok := r.Record(); ok {
+		return v.(FlowchartModel)
+	}
+	x := FlowchartModel{Nodes: gostrictRead106(r), Edges: gostrictRead107(r)}
+	if r.End() {
+		r.Keep(x)
+	}
+	return x
+}
+
+func gostrictWrite30(w gostrict.Writer, x FlowchartModel) {
+	w.Record()
+	gostrictWrite106(w, x.Nodes)
+	gostrictWrite107(w, x.Edges)
+	w.End()
+}
+
+func gostrictRead111(r gostrict.Reader) sheet.Cell {
+	if v, ok := r.Record(); ok {
+		return v.(sheet.Cell)
+	}
+	x := sheet.Cell{Text: r.String(), Value: r.String(), Type: sheet.ValueType(r.Int32()), Style: gostrictRead118(r), Editor: sheet.Editor(r.Int32())}
+	if r.End() {
+		r.Keep(x)
+	}
+	return x
+}
+
+func gostrictWrite111(w gostrict.Writer, x sheet.Cell) {
+	w.Record()
+	w.String(string(x.Text))
+	w.String(string(x.Value))
+	w.Int32(int32(x.Type))
+	gostrictWrite118(w, x.Style)
+	w.Int32(int32(x.Editor))
+	w.End()
+}
+
+func gostrictRead39(r gostrict.Reader) Frame {
+	if v, ok := r.Record(); ok {
+		return v.(Frame)
+	}
+	x := Frame{MinWidth: Length(r.String()), MaxWidth: Length(r.String()), MinHeight: Length(r.String()), MaxHeight: Length(r.String()), Width: Length(r.String()), Height: Length(r.String()), FlexGrow: r.Bool(), FlexPreventShrink: r.Bool()}
+	if r.End() {
+		r.Keep(x)
+	}
+	return x
+}
+
+func gostrictWrite39(w gostrict.Writer, x Frame) {
+	w.Record()
+	w.String(string(x.MinWidth))
+	w.String(string(x.MaxWidth))
+	w.String(string(x.MinHeight))
+	w.String(string(x.MaxHeight))
+	w.String(string(x.Width))
+	w.String(string(x.Height))
+	w.Bool(bool(x.FlexGrow))
+	w.Bool(bool(x.FlexPreventShrink))
+	w.End()
+}
+
+func gostrictRead117(r gostrict.Reader) sheet.Edit {
+	if v, ok := r.Record(); ok {
+		return v.(sheet.Edit)
+	}
+	x := sheet.Edit{Row: r.Int32(), Col: r.Int32(), Value: r.String()}
+	if r.End() {
+		r.Keep(x)
+	}
+	return x
+}
+
+func gostrictWrite117(w gostrict.Writer, x sheet.Edit) {
+	w.Record()
+	w.Int32(int32(x.Row))
+	w.Int32(int32(x.Col))
+	w.String(string(x.Value))
+	w.End()
+}
+
+func gostrictRead99(r gostrict.Reader) TimeFrame {
+	if v, ok := r.Record(); ok {
+		return v.(TimeFrame)
+	}
+	x := TimeFrame{StartTime: Time(r.Float64()), EndTime: Time(r.Float64()), Timezone: r.String()}
+	if r.End() {
+		r.Keep(x)
+	}
+	return x
+}
+
+func gostrictWrite99(w gostrict.Writer, x TimeFrame) {
+	w.Record()
+	w.Float64(float64(x.StartTime))
+	w.Float64(float64(x.EndTime))
+	w.String(string(x.Timezone))
+	w.End()
+}
+
+func gostrictRead108(r gostrict.Reader) FlowchartNode {
+	if v, ok := r.Record(); ok {
+		return v.(FlowchartNode)
+	}
+	x := FlowchartNode{ID: r.String(), Type: FlowchartNodeType(r.Uint32()), Position: gostrictRead34(r), Label: r.String(), Style: FlowchartNodeStyle(r.Uint32())}
+	if r.End() {
+		r.Keep(x)
+	}
+	return x
+}
+
+func gostrictWrite108(w gostrict.Writer, x FlowchartNode) {
+	w.Record()
+	w.String(string(x.ID))
+	w.Uint32(uint32(x.Type))
+	gostrictWrite34(w, x.Position)
+	w.String(string(x.Label))
+	w.Uint32(uint32(x.Style))
+	w.End()
+}
+
+func gostrictRead109(r gostrict.Reader) FlowchartEdge {
+	if v, ok := r.Record(); ok {
+		return v.(FlowchartEdge)
+	}
+	x := FlowchartEdge{ID: r.String(), SourceNodeID: r.String(), TargetNodeID: r.String(), Label: r.String(), LabelBgColor: Color(r.String()), LabelTextColor: Color(r.String()), Style: FlowchartEdgeStyle(r.Uint32()), Color: Color(r.String()), Width: r.Float64(), Animated: r.Bool(), MarkerStart: FlowchartEdgeMarker(r.Uint32()), MarkerEnd: FlowchartEdgeMarker(r.Uint32())}
+	if r.End() {
+		r.Keep(x)
+	}
+	return x
+}
+
+func gostrictWrite109(w gostrict.Writer, x FlowchartEdge) {
+	w.Record()
+	w.String(string(x.ID))
+	w.String(string(x.SourceNodeID))
+	w.String(string(x.TargetNodeID))
+	w.String(string(x.Label))
+	w.String(string(x.LabelBgColor))
+	w.String(string(x.LabelTextColor))
+	w.Uint32(uint32(x.Style))
+	w.String(string(x.Color))
+	w.Float64(float64(x.Width))
+	w.Bool(bool(x.Animated))
+	w.Uint32(uint32(x.MarkerStart))
+	w.Uint32(uint32(x.MarkerEnd))
+	w.End()
+}
+
+func gostrictRead110(r gostrict.Reader) list.List[string] {
+	n := r.List()
+	l := list.New[string]()
+	for range n {
+		l.Append(r.String())
+	}
+	r.End()
+	return l
+}
+
+func gostrictWrite110(w gostrict.Writer, x list.List[string]) {
+	w.List(int(x.Len()))
+	for e := range x.Values() {
+		w.String(string(e))
+	}
+	w.End()
+}
+
+func gostrictRead106(r gostrict.Reader) list.List[FlowchartNode] {
+	n := r.List()
+	l := list.New[FlowchartNode]()
+	for range n {
+		l.Append(gostrictRead108(r))
+	}
+	r.End()
+	return l
+}
+
+func gostrictWrite106(w gostrict.Writer, x list.List[FlowchartNode]) {
+	w.List(int(x.Len()))
+	for e := range x.Values() {
+		gostrictWrite108(w, e)
+	}
+	w.End()
+}
+
+func gostrictRead107(r gostrict.Reader) list.List[FlowchartEdge] {
+	n := r.List()
+	l := list.New[FlowchartEdge]()
+	for range n {
+		l.Append(gostrictRead109(r))
+	}
+	r.End()
+	return l
+}
+
+func gostrictWrite107(w gostrict.Writer, x list.List[FlowchartEdge]) {
+	w.List(int(x.Len()))
+	for e := range x.Values() {
+		gostrictWrite109(w, e)
+	}
+	w.End()
+}
+
+func gostrictRead118(r gostrict.Reader) sheet.Style {
+	if v, ok := r.Record(); ok {
+		return v.(sheet.Style)
+	}
+	x := sheet.Style{BackgroundColor: r.String(), Color: r.String(), Bold: r.Bool(), Italic: r.Bool(), Underline: r.Bool(), Align: sheet.Align(r.Int32()), Wrap: sheet.Wrap(r.Int32()), Borders: gostrictRead119(r), PaddingX: r.Float64(), FontSize: r.Float64()}
+	if r.End() {
+		r.Keep(x)
+	}
+	return x
+}
+
+func gostrictWrite118(w gostrict.Writer, x sheet.Style) {
+	w.Record()
+	w.String(string(x.BackgroundColor))
+	w.String(string(x.Color))
+	w.Bool(bool(x.Bold))
+	w.Bool(bool(x.Italic))
+	w.Bool(bool(x.Underline))
+	w.Int32(int32(x.Align))
+	w.Int32(int32(x.Wrap))
+	gostrictWrite119(w, x.Borders)
+	w.Float64(float64(x.PaddingX))
+	w.Float64(float64(x.FontSize))
+	w.End()
+}
+
+func gostrictRead34(r gostrict.Reader) FlowchartPoint {
+	if v, ok := r.Record(); ok {
+		return v.(FlowchartPoint)
+	}
+	x := FlowchartPoint{X: r.Float64(), Y: r.Float64()}
+	if r.End() {
+		r.Keep(x)
+	}
+	return x
+}
+
+func gostrictWrite34(w gostrict.Writer, x FlowchartPoint) {
+	w.Record()
+	w.Float64(float64(x.X))
+	w.Float64(float64(x.Y))
+	w.End()
+}
+
+func gostrictRead119(r gostrict.Reader) sheet.Borders {
+	if v, ok := r.Record(); ok {
+		return v.(sheet.Borders)
+	}
+	x := sheet.Borders{Top: gostrictRead120(r), Right: gostrictRead120(r), Bottom: gostrictRead120(r), Left: gostrictRead120(r)}
+	if r.End() {
+		r.Keep(x)
+	}
+	return x
+}
+
+func gostrictWrite119(w gostrict.Writer, x sheet.Borders) {
+	w.Record()
+	gostrictWrite120(w, x.Top)
+	gostrictWrite120(w, x.Right)
+	gostrictWrite120(w, x.Bottom)
+	gostrictWrite120(w, x.Left)
+	w.End()
+}
+
+func gostrictRead120(r gostrict.Reader) sheet.Line {
+	if v, ok := r.Record(); ok {
+		return v.(sheet.Line)
+	}
+	x := sheet.Line{Color: r.String(), Width: r.Float64(), Style: sheet.LineStyle(r.Int32())}
+	if r.End() {
+		r.Keep(x)
+	}
+	return x
+}
+
+func gostrictWrite120(w gostrict.Writer, x sheet.Line) {
+	w.Record()
+	w.String(string(x.Color))
+	w.Float64(float64(x.Width))
+	w.Int32(int32(x.Style))
+	w.End()
 }

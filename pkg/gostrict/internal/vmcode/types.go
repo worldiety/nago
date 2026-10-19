@@ -92,6 +92,8 @@ type tinfo struct {
 	zero *object
 	// rec are the indices of the fields of a record in the order of the boundary, see [compiler.plan]
 	rec []int
+	// recFields are the fields of rec in their order
+	recFields []field
 	// handles is set for a union of handles, e.g. ui.View
 	handles bool
 }

@@ -197,10 +197,11 @@ func (c *compiler) plan() {
 		}
 		c.out.byName[name] = ti
 		ti.rec = make([]int, len(fields))
+		ti.recFields = make([]field, len(fields))
 		for i, f := range fields {
 			for j, tf := range ti.fields {
 				if tf.name == f {
-					ti.rec[i] = j
+					ti.rec[i], ti.recFields[i] = j, tf
 				}
 			}
 		}
