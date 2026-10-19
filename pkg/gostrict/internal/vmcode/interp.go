@@ -404,6 +404,9 @@ func (m *Machine) exec(f *Func, bn, bs, br int) {
 			r[x.dst.r].(*list).add(x.t.l, n[x.src.n:], s[x.src.s:], r[x.src.r:])
 		case opLNew:
 			r[in.a] = &list{}
+		case opEntry:
+			m.callEntry(m.prog.entries[in.a], bn, bs, br)
+			n, s, r = m.n[bn:bn+int(fr.n)], m.s[bs:bs+int(fr.s)], m.r[br:br+int(fr.r)]
 		case opCallIface:
 			m.callIface(&f.calls[in.a], r[in.b], bn, bs, br)
 			n, s, r = m.n[bn:bn+int(fr.n)], m.s[bs:bs+int(fr.s)], m.r[br:br+int(fr.r)]

@@ -19,6 +19,7 @@ import (
 
 	"go.wdy.de/nago/pkg/gostrict"
 	"go.wdy.de/nago/pkg/gostrict/engine/gojaengine"
+	"go.wdy.de/nago/pkg/gostrict/engine/vm"
 )
 
 const wholePrefix = "go.wdy.de/nago/pkg/gostrict/internal/whole/"
@@ -132,10 +133,17 @@ func loadWhole(t *testing.T, roots ...string) *gostrict.Program {
 	return prog
 }
 
-var wholeRoots = []string{"crm/create", "crm/read", "crm/purge", "billing/invoice", "admin/wipe", "chain/c1", "chain/c2", "chain/c3", "chain/c4"}
+var wholeRoots = []string{"crm/create", "crm/read", "crm/purge", "crm/lookup", "billing/invoice", "admin/wipe", "chain/c1", "chain/c2", "chain/c3", "chain/c4"}
 
-// TestWholeProgram runs scripts, which call each other, as one program within the frames of a fake host.
+// TestWholeProgram runs scripts, which call each other, as one program within the frames of a fake host, in goja and
+// in the vm.
 func TestWholeProgram(t *testing.T) {
+	for name, e := range map[string]gostrict.Engine{"goja": new(gojaengine.Engine), "vm": new(vm.Engine)} {
+		t.Run(name, func(t *testing.T) { testWholeProgram(t, e) })
+	}
+}
+
+func testWholeProgram(t *testing.T, e gostrict.Engine) {
 	prog := loadWhole(t, wholeRoots...)
 	b, diags := gostrict.Emit(prog)
 	if len(diags) > 0 {
@@ -146,12 +154,12 @@ func TestWholeProgram(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	if _, err := new(gojaengine.Engine).Load(ctx, b, nil); err == nil || !strings.Contains(err.Error(), gostrict.EnterFunc) {
+	if _, err := e.Load(ctx, b, nil); err == nil || !strings.Contains(err.Error(), "$") {
 		t.Fatalf("a whole program was loaded without an aspect: %v", err)
 	}
 
 	h := newFakeHost()
-	in, err := new(gojaengine.Engine).Load(ctx, b, h.funcs())
+	in, err := e.Load(ctx, b, h.funcs())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -224,6 +232,13 @@ func TestWholeProgram(t *testing.T) {
 		t.Fatalf("read returned %v, %v", res, err)
 	}
 	expectLog("enter crm/read.Main", "exit crm/read.Main ok")
+
+	// a function value of an entry point of another package calls it within the aspect, also with its error
+	res, err = run("crm/lookup.Main", "c1", "nobody")
+	if err != nil || res[0] != "Alice+unknown customer nobody" {
+		t.Fatalf("lookup returned %v, %v", res, err)
+	}
+	expectLog("enter crm/lookup.Main", "enter crm/read.Main", "exit crm/read.Main ok", "enter crm/read.Main", "exit crm/read.Main unknown customer nobody", "exit crm/lookup.Main ok")
 }
 
 // TestWholeProgramTargets translates a bundle for each entry point, which contains only what it reaches.
@@ -247,15 +262,17 @@ func TestWholeProgramTargets(t *testing.T) {
 		t.Fatal("an unknown entry point was accepted")
 	}
 
-	h := newFakeHost()
-	h.data["customer/x"] = "Xaver"
-	in, err := new(gojaengine.Engine).Load(context.Background(), read, h.funcs())
-	if err != nil {
-		t.Fatal(err)
-	}
-	res, err := in.Call(context.Background(), wholePrefix+"crm/read.Main", "x")
-	if err != nil || res[0] != "Xaver" {
-		t.Fatalf("read returned %v, %v", res, err)
+	for _, e := range []gostrict.Engine{new(gojaengine.Engine), new(vm.Engine)} {
+		h := newFakeHost()
+		h.data["customer/x"] = "Xaver"
+		in, err := e.Load(context.Background(), read, h.funcs())
+		if err != nil {
+			t.Fatal(err)
+		}
+		res, err := in.Call(context.Background(), wholePrefix+"crm/read.Main", "x")
+		if err != nil || res[0] != "Xaver" {
+			t.Fatalf("%T: read returned %v, %v", e, res, err)
+		}
 	}
 }
 

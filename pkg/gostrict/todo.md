@@ -175,7 +175,12 @@ mit Konstanten, Structs direkt in die Ergebnisse), 50 ns auf Reader und Writer u
     (abgestimmt): dafür müsste das Engine neben `gostrict.Funcs` schnelle Funktionen bekommen, ohne dass ein Host,
     der eine Funktion in `Funcs` ersetzt (z. B. ein Test), stillschweigend umgangen wird; im Sheet dominieren die
     Callbacks, die Header-Funktionen laufen einmal je Render. Erst nach einem Profil entscheiden.
-  - Phase 4: ganze Programme (Aspekte um jeden Einstieg, `Abort`), bis dahin lehnt die VM sie beim Übersetzen ab.
+  - Phase 4 ist fertig: ganze Programme laufen in der VM mit ihrem Aspekt. Ein Einstieg, den der Host oder ein
+    anderes Paket ruft, auch über einen Funktionswert, läuft über einen Hook (`opEntry`): `$enter`, der Einstieg,
+    `$exit` mit seinem Fehler-Ergebnis, bei einem Abbruch mit „aborted“ (wie im JS-Emitter). `TestWholeProgram` und
+    `TestWholeProgramTargets` laufen mit goja und vm, neu ist das Skript `crm/lookup` (Einstieg als Funktionswert).
+    `TestSharedVariables`: 32 Instanzen auf eigenen Goroutinen teilen die Package-Variablen, eine Variable eines
+    Header-Pakets wird einmal gelesen.
   - Package-Variablen werden einmal je Programm mit den Host-Funktionen der ersten Instanz initialisiert. Für
     Initialisierer, die den Host rufen (Handles), muss das geklärt werden.
   - Zeiger auf Felder sind eigene Objekte, also `&x.A == &x.A` falsch, wo Go true liefert; das Subset kann solche

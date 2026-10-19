@@ -195,7 +195,7 @@ func (l *fnLower) child(sig *types.Signature, kind string) *fnLower {
 	f := &Func{name: fmt.Sprintf("%s.%s%d", l.f.name, kind, l.c.lits), params: l.paramTuple(nil, sig), results: l.tupleOf(sig.Results())}
 	l.c.out.funcs = append(l.c.out.funcs, f)
 	inner := l.c.newFnLower(f, l.info)
-	inner.parent, inner.subst, inner.cells = l, l.subst, l.cells
+	inner.parent, inner.subst, inner.cells, inner.pkg = l, l.subst, l.cells, l.pkg
 	return inner
 }
 

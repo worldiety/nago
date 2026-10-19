@@ -115,6 +115,7 @@ var opNames = [...]string{
 	opCallIface:  "calliface",
 	opTypeIs:     "typeis",
 	opView:       "view",
+	opEntry:      "entry",
 }
 
 // Dump returns the bytecode of the program, e.g. for a test.

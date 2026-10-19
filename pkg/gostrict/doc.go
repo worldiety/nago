@@ -269,7 +269,7 @@
 // bundle share its program and its package variables, so an instance costs about a kilobyte. Each function of a
 // header package needs a function of the host in Go, which [Generate] writes, also for the variables of the
 // package; a binding of JavaScript is not used. Its callbacks are a [FastCallback], which the generated adapters
-// call without neutral values.
+// call without neutral values. A whole program runs with its [Aspect] like in goja.
 //
 // Floating point is not exact across engines: JavaScript rounds every operation, while Go may fuse a
 // multiplication and an addition into one instruction, e.g. on arm64, and other targets like a GPU may differ

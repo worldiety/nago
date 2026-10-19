@@ -32,6 +32,8 @@ type Program struct {
 	gr      []any
 	// types are the types, which instructions refer to, e.g. of new objects
 	types []*tinfo
+	// entries are the hooks of the entry points of a whole program
+	entries []*entryInfo
 	// byName are the records and variants of the boundary by their full name
 	byName map[string]*tinfo
 }
@@ -268,4 +270,5 @@ const (
 	opCallIface // calls[a]: the method of the interface value in r[b]
 	opTypeIs    // n[a] = the box in r[b] holds a value of types[c]
 	opView      // aux[a]: r[dst.r] = a pointer into the object of r[src.r] at off
+	opEntry     // calls the entry point of entries[a] within the aspect
 )

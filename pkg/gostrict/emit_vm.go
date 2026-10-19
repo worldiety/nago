@@ -33,7 +33,7 @@ func (e *emitter) emitVM(b *Bundle, exports map[string]*types.Func) (p *vmcode.P
 	}()
 	src := &vmcode.Source{
 		Fset:      e.prog.Fset,
-		Whole:     len(e.entries) > 0,
+		Entries:   e.entries,
 		Exports:   exports,
 		Hosted:    map[string]bool{},
 		Immutable: e.mut.immutable,
