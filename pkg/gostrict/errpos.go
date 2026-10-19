@@ -47,11 +47,11 @@ func (b *Bundle) ProgramError(msg string, pos int) error {
 	return &ProgramError{Msg: msg, File: p.File, Line: p.Line}
 }
 
-// ErrorPos returns the position in the Go source, where the program created the error, which an engine returned,
-// e.g. from an exported function or to [Aspect.Exit]. Only errors.New and the functions of the library, which
-// return an error, e.g. text.ParseInt, record their position, and only engines, which run the translated code,
-// e.g. gojaengine, report it. The native engine runs the Go code itself and returns its errors unchanged, so it
-// reports none, nor does the browser, nor does a host function or an error type of the program.
+// ErrorPos returns the position in the Go source, where the program created the error, which an engine returned, e.g.
+// from an exported function or to [Aspect.Exit]. Only errors.New and the functions of the library, which return an
+// error, e.g. text.ParseInt, record their position, and only engines, which run the translated code, e.g. gojaengine
+// and the vm, report it. The native engine runs the Go code itself and returns its errors unchanged, so it reports
+// none, nor does the browser, nor does a host function or an error type of the program.
 func ErrorPos(err error) (file string, line int, ok bool) {
 	var pe *ProgramError
 	if errors.As(err, &pe) {

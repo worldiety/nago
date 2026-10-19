@@ -785,8 +785,13 @@ func (l *fnLower) rangeStmt(s *ast.RangeStmt, label string) {
 	lst := l.newLocal("$l", recvT)
 	l.emit(&sAssign{lhs: []lval{&lLocal{t: recvT, v: lst}}, rhs: []expr{l.expr(se.X)}})
 	i := counter()
+	// the range visits the elements, which the list has, when it starts, and ends early, if it shrinks, like std/list
 	length := l.nativeCall(l.c.listLen(), i32, []expr{&eLocal{t: recvT, v: lst}})
-	loop := &sLoop{pos: s.Pos(), cond: &eBinary{t: l.c.boolType(), op: opLtI, x: &eLocal{t: i32, v: i}, y: length}, post: inc(i)}
+	n := l.newLocal("$n", i32)
+	l.emit(&sAssign{lhs: []lval{&lLocal{t: i32, v: n}}, rhs: []expr{length}})
+	bt := l.c.boolType()
+	cond := &eAndOr{t: bt, and: true, x: &eBinary{t: bt, op: opLtI, x: &eLocal{t: i32, v: i}, y: &eLocal{t: i32, v: n}}, y: &eBinary{t: bt, op: opLtI, x: &eLocal{t: i32, v: i}, y: length}}
+	loop := &sLoop{pos: s.Pos(), cond: cond, post: inc(i)}
 	elem := &eListGet{t: recvT.elem, l: &eLocal{t: recvT, v: lst}, i: &eLocal{t: i32, v: i}, unchecked: true}
 	l.loop(label, loop, func() {
 		saved := l.body
@@ -1440,6 +1445,11 @@ func (l *fnLower) funcCall(fn *types.Func, recvArgs, targs []types.Type, call *a
 			ntargs = append(ntargs, l.ty(t))
 		}
 		if nat := l.c.native(key, ntargs, call.Pos()); nat != nil {
+			if n := sig.Results().Len(); n > 0 && isErrorType(sig.Results().At(n-1).Type()) && l.c.src.ErrorPos != nil {
+				// a function of the library, which creates an error, e.g. errors.New, keeps the position of the call
+				at := res.l.r - 1
+				nat = errorNative(nat, at, l.c.src.ErrorPos(call.Pos()))
+			}
 			return l.nativeCall(nat, res, l.args(call, sig, recv))
 		}
 		if p == nil {
@@ -1481,6 +1491,10 @@ func (l *fnLower) nativeCall(nat *native, res *tinfo, args []expr) expr {
 		ts = append(ts, a.typ())
 	}
 	return &eNative{t: res, nat: nat, params: tuple(ts...), args: args}
+}
+
+func isErrorType(t types.Type) bool {
+	return types.Identical(t, errorType)
 }
 
 func recvName(t types.Type) string {

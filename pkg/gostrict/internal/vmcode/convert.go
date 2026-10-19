@@ -35,6 +35,8 @@ func (m *Machine) neutral(t *tinfo, n []uint64, s []string, r []any) any {
 		switch v := r[0].(type) {
 		case nil:
 			return nil
+		case *progError:
+			return m.host.ProgramError(v.msg, v.pos)
 		case *object:
 			// an error of the program crosses the boundary with its message
 			return errors.New(m.errorMessage(v))

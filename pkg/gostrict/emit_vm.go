@@ -9,6 +9,7 @@ package gostrict
 
 import (
 	"fmt"
+	"go/token"
 	"go/types"
 
 	"go.wdy.de/nago/pkg/gostrict/internal/vmcode"
@@ -39,6 +40,15 @@ func (e *emitter) emitVM(b *Bundle, exports map[string]*types.Func) (p *vmcode.P
 		Immutable: e.mut.immutable,
 		Records:   map[string][]string{},
 		Unions:    map[string]vmcode.Union{},
+		ErrorPos: func(pos token.Pos) int {
+			for i, p := range e.errPositions {
+				if p == pos {
+					return i
+				}
+			}
+			e.errPositions = append(e.errPositions, pos)
+			return len(e.errPositions) - 1
+		},
 	}
 	for _, p := range e.prog.Packages {
 		src.Packages = append(src.Packages, &vmcode.Package{Path: p.Path, User: p.Kind == KindUser, Files: p.Files, Types: p.Types, Info: p.Info})

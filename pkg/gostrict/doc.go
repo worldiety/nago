@@ -260,17 +260,17 @@
 // share one runtime, because a program of the subset can not reach the globals of JavaScript.
 //
 // An error, which the program creates with errors.New or a function of the library like text.ParseInt, keeps the
-// line of the call: goja returns it as a [ProgramError], also to [Aspect.Exit], whose file and line [ErrorPos]
-// tells, e.g. to show the failing line of a script, from the table [Bundle.Positions]. The native engine, the
-// browser, the bindings and the host create errors without a position, and errors compare only by their message.
+// line of the call: goja and the vm return it as a [ProgramError], also to [Aspect.Exit], whose file and line
+// [ErrorPos] tells, e.g. to show the failing line of a script, from the table [Bundle.Positions]. The native engine,
+// the browser, the bindings and the host create errors without a position, and errors compare only by their message.
 //
-// The engine of package engine/vm needs no JavaScript: the compiler translates each bundle also into register
-// bytecode, see [Bundle.VM], whose values keep their types and whose structs live in registers. All instances of a
-// bundle share its program and its package variables, so an instance costs about a kilobyte; a variable, whose
-// initialization calls a function of the host, e.g. three.NewScene, belongs to each instance like in goja. Each function of a
-// header package needs a function of the host in Go, which [Generate] writes, also for the variables of the
-// package; a binding of JavaScript is not used. Its callbacks are a [FastCallback], which the generated adapters
-// call without neutral values. A whole program runs with its [Aspect] like in goja.
+// The engine of package engine/vm needs no JavaScript: the compiler translates each bundle also into register bytecode,
+// see [Bundle.VM], whose values keep their types and whose structs live in registers. All instances of a bundle share
+// its program and its package variables, so an instance costs about a kilobyte; a variable, whose initialization calls
+// a function of the host, e.g. three.NewScene, belongs to each instance like in goja. Each function of a header package
+// needs a function of the host in Go, which [Generate] writes, also for the variables of the package; a binding of
+// JavaScript is not used. Its callbacks are a [FastCallback], which the generated adapters call without neutral values.
+// A whole program runs with its [Aspect] like in goja.
 //
 // Floating point is not exact across engines: JavaScript rounds every operation, while Go may fuse a
 // multiplication and an addition into one instruction, e.g. on arm64, and other targets like a GPU may differ

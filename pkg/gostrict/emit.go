@@ -407,6 +407,8 @@ func (e *emitter) emit() (*Bundle, Diagnostics) {
 	}
 	b := &Bundle{JS: js, SourceMap: sourceMap, Hash: hex.EncodeToString(sum[:16]), Exports: exports, Records: bnd.records, Unions: bnd.unions, Handlers: hs, Externs: e.extern, States: states, Positions: e.errorPositions()}
 	b.vm, b.vmErr = e.emitVM(b, exportFuncs)
+	// the vm may add the positions of errors, which it creates elsewhere, e.g. in an inlined function
+	b.Positions = e.errorPositions()
 	return b, nil
 }
 

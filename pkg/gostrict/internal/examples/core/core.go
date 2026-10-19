@@ -272,3 +272,22 @@ type Names struct {
 func Pairs(n int32) Names {
 	return Names{First: text.FromInt(n), Second: text.FromInt(n * 2), N: n + 1}
 }
+
+// Ranges changes lists during a range over them: a range visits the elements, which a list has, when it starts,
+// and ends early, if the list shrinks.
+func Ranges(n int32) (int32, int32, int32) {
+	grow := list.Of[int32](1, 2, 3)
+	for v := range grow.Values() {
+		grow.Append(v * n)
+	}
+	shrink := list.Of[int32](1, 2, 3, 4)
+	sum := int32(0)
+	for i, v := range shrink.All() {
+		if i == 0 {
+			shrink.Pop()
+			shrink.Pop()
+		}
+		sum += v
+	}
+	return grow.Len(), sum, shrink.Len()
+}

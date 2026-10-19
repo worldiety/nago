@@ -34,6 +34,9 @@ type Source struct {
 	// Records are the names of the fields of the records of the boundary in their order by the full name of the
 	// record.
 	Records map[string][]string
+	// ErrorPos returns the index of the position in the table of the bundle, where the program creates an error,
+	// e.g. with errors.New.
+	ErrorPos func(token.Pos) int
 	// Unions are the variants of the unions of the boundary by the full name of the union, and whether they are
 	// handles.
 	Unions map[string]Union
