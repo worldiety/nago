@@ -122,7 +122,8 @@ func EmitEntries(prog *Program, entries ...string) (b *Bundle, diags Diagnostics
 		if r := recover(); r != nil {
 			err, ok := r.(emitError)
 			if !ok {
-				panic(r)
+				// the programs come from users or language models, so a defect of the compiler must not end the host
+				err = emitError{pos: token.NoPos, msg: fmt.Sprintf("the compiler failed: %v", r)}
 			}
 			e.diag.report(err.pos, token.NoPos, CodeInternal, err.msg, "the compiler can not translate this construct yet", "rewrite it with simpler constructs")
 			b, diags = nil, e.diag.sorted()
@@ -168,6 +169,8 @@ type emitter struct {
 	entries map[*types.Func]string
 	// targets are the entry points, which the bundle exports, or nil for all
 	targets map[string]bool
+	// dynamic are the names of the methods, which the program calls through an interface, see dynamicMethods
+	dynamic map[string]bool
 }
 
 // entryPoints returns the exported functions of the roots of a whole program.
@@ -780,6 +783,32 @@ func (e *emitter) unionEq(t types.Type) string {
 	return name
 }
 
+// dynamicMethods returns the names of the methods, which the program may call through an interface, and Error,
+// which an engine calls to convert an error. A method table needs no other method, e.g. the builders of the views
+// of lib/ui, which the program calls only statically, so that a bundle binds only the functions of the host, which
+// it calls.
+func (e *emitter) dynamicMethods() map[string]bool {
+	if e.dynamic != nil {
+		return e.dynamic
+	}
+	e.dynamic = map[string]bool{"Error": true}
+	for _, p := range e.prog.Packages {
+		if p.Kind != KindUser {
+			continue
+		}
+		for _, sel := range p.Info.Selections {
+			fn, ok := sel.Obj().(*types.Func)
+			if !ok || sel.Kind() == types.FieldVal {
+				continue
+			}
+			if types.IsInterface(sel.Recv()) || types.IsInterface(fn.Signature().Recv().Type()) {
+				e.dynamic[fn.Name()] = true
+			}
+		}
+	}
+	return e.dynamic
+}
+
 // methodTable requests the methods of t, which an interface value of a t calls, and returns its name. A value
 // receiver gets a copy, so a method can not change the value of the interface.
 func (e *emitter) methodTable(t types.Type) string {
@@ -802,9 +831,10 @@ func (e *emitter) methodTable(t types.Type) string {
 		entries = append(entries, "$tag: "+jsString(typeKey(named)))
 	}
 	mset := types.NewMethodSet(t)
+	dynamic := e.dynamicMethods()
 	for sel := range mset.Methods() {
 		fn := sel.Obj().(*types.Func)
-		if fn.Signature().TypeParams().Len() > 0 || named == nil {
+		if fn.Signature().TypeParams().Len() > 0 || named == nil || !dynamic[fn.Name()] {
 			continue
 		}
 		if src, ok := e.decls[fn.Origin()]; ok && src.pkg.Kind == KindHeader {

@@ -27,6 +27,7 @@ type Pool struct {
 	free   chan int
 	all    []Instance
 	locks  []sync.Mutex
+	slots  []*Slot
 
 	mu sync.Mutex
 	// owners maps the value of a token to the index of the instance, which created it
@@ -35,19 +36,45 @@ type Pool struct {
 
 var _ Instance = (*Pool)(nil)
 
-// NewPool loads size instances of the bundle.
+// Slot is an instance of a [Pool], as the functions of its host see it, see [NewPoolFunc].
+type Slot struct {
+	// Index is the number of the instance in the pool.
+	Index int
+	ctx   context.Context
+}
+
+// Context returns the context of the call, which the instance runs, while a function of its host runs, e.g. to find
+// the transaction of the request, or the context of its loading. It is valid only during a call of the pool.
+func (s *Slot) Context() context.Context {
+	if s.ctx == nil {
+		return context.Background()
+	}
+	return s.ctx
+}
+
+// NewPool loads size instances of the bundle, which share the functions of the host.
 func NewPool(ctx context.Context, e Engine, b *Bundle, host Funcs, size int) (*Pool, error) {
+	return NewPoolFunc(ctx, e, b, size, func(*Slot) Funcs { return host })
+}
+
+// NewPoolFunc loads size instances of the bundle, each with the functions, which host returns for its slot. So the
+// functions of an instance keep a state of their own, e.g. the frames of an [Aspect], and find the context of the
+// call, which runs, see [Slot.Context].
+func NewPoolFunc(ctx context.Context, e Engine, b *Bundle, size int, host func(s *Slot) Funcs) (*Pool, error) {
 	if size < 1 {
 		return nil, errors.New("a pool needs at least one instance")
 	}
 	p := &Pool{bundle: b, free: make(chan int, size), locks: make([]sync.Mutex, size), owners: map[any]int{}}
 	for i := range size {
-		in, err := e.Load(ctx, b, host)
+		s := &Slot{Index: i, ctx: ctx}
+		in, err := e.Load(ctx, b, host(s))
+		s.ctx = nil
 		if err != nil {
 			_ = p.Close()
 			return nil, err
 		}
 		p.all = append(p.all, in)
+		p.slots = append(p.slots, s)
 		p.free <- i
 	}
 	return p, nil
@@ -72,7 +99,9 @@ func (p *Pool) Call(ctx context.Context, name string, args ...any) ([]any, error
 func (p *Pool) callIn(ctx context.Context, i int, name string, args []any) ([]any, error) {
 	p.locks[i].Lock()
 	defer p.locks[i].Unlock()
+	p.slots[i].ctx = ctx
 	res, err := p.all[i].Call(ctx, name, args...)
+	p.slots[i].ctx = nil
 	if err != nil {
 		return nil, err
 	}

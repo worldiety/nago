@@ -66,7 +66,7 @@ func Changed(n int32) int32 {
 }
 
 func Grow(l list.List[int32]) int32 {
-	for _, v := range l.All() { // want GS040
+	for _, v := range l.All() {
 		l.Append(v)
 	}
 	other := list.New[int32]()

@@ -581,9 +581,15 @@ func (c *fnCtx) args(call *ast.CallExpr, sig *types.Signature) string {
 // argsFor translates the arguments of a call of fn, which needs no copies of the structs, which it only reads.
 func (c *fnCtx) argsFor(fn *types.Func, call *ast.CallExpr, sig *types.Signature) string {
 	params := sig.Params()
-	if len(call.Args) == 1 && params.Len() > 1 {
-		// f(g()) with several results of g
-		return "..." + c.expr(call.Args[0])
+	if len(call.Args) == 1 {
+		if t, ok := c.typeOf(call.Args[0]).(*types.Tuple); ok && t.Len() > 1 {
+			// f(g()) with several results of g
+			if !sig.Variadic() {
+				return "..." + c.expr(call.Args[0])
+			}
+			n := params.Len() - 1
+			return "...((r) => [...r.slice(0, " + strconv.Itoa(n) + "), r.slice(" + strconv.Itoa(n) + ")])(" + c.expr(call.Args[0]) + ")"
+		}
 	}
 
 	var res, rest []string

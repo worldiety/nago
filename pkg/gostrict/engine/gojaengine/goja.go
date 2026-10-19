@@ -211,32 +211,41 @@ type variant struct {
 	make    goja.Callable
 }
 
-// run interrupts the runtime, when the context ends.
+// run interrupts the runtime, when the context ends during f. An end of the context after f does not reach the
+// runtime, e.g. a host, which cancels the context of each call, after it has returned.
 func (r *Runtime) run(ctx context.Context, f func() (goja.Value, error)) (goja.Value, error) {
-	done := make(chan struct{})
-	defer close(done)
-	go func() {
-		select {
-		case <-ctx.Done():
-			r.rt.Interrupt(ctx.Err())
-		case <-done:
-		}
-	}()
-
+	interrupted := make(chan struct{})
+	stop := context.AfterFunc(ctx, func() {
+		r.rt.Interrupt(ctx.Err())
+		close(interrupted)
+	})
 	v, err := f()
+	if !stop() {
+		// the interrupt has started, so it must be set, before it is cleared, or it would hit the next call
+		<-interrupted
+	}
 	r.rt.ClearInterrupt()
 	if err != nil {
-		var ex *goja.Exception
-		if errors.As(err, &ex) {
-			return nil, jsError(ex)
-		}
 		var ie *goja.InterruptedError
 		if errors.As(err, &ie) {
 			return nil, ctx.Err()
 		}
-		return nil, err
+		return nil, runError(err)
 	}
 	return v, nil
+}
+
+// runError returns the error of a failed call of JavaScript.
+func runError(err error) error {
+	var so *goja.StackOverflowError
+	if errors.As(err, &so) {
+		return fmt.Errorf("%w: %s", gostrict.ErrStackExhausted, so.Error())
+	}
+	var ex *goja.Exception
+	if errors.As(err, &ex) {
+		return jsError(ex)
+	}
+	return err
 }
 
 func (in *instance) Call(ctx context.Context, name string, args ...any) ([]any, error) {
@@ -378,11 +387,7 @@ func (cb *callback) call(args []any) ([]any, error) {
 	}
 	v, err := cb.fn(goja.Undefined(), jsArgs...)
 	if err != nil {
-		var ex *goja.Exception
-		if errors.As(err, &ex) {
-			return nil, jsError(ex)
-		}
-		return nil, err
+		return nil, runError(err)
 	}
 	return c.results(v, cb.sig.Results)
 }

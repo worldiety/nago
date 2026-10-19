@@ -173,10 +173,16 @@ func (c *checker) collectPairs(f *ast.File) {
 			return true
 		}
 
-		v, ok := lhs[0].(*ast.Ident), lhs[1].(*ast.Ident)
+		// = may assign a field or an element, := and var only new variables
+		v, isVar := lhs[0].(*ast.Ident)
+		ok, isOk := lhs[1].(*ast.Ident)
 		switch {
-		case !define:
-			c.report(n, CodeGuard, "assign the result with :=", "the value may be nil, unless ok is true, and the compiler tracks this only for new variables", "write v, ok := ... and use v only where ok is true")
+		case !define || !isVar || !isOk:
+			fix := "write v, ok := ... and use v only where ok is true"
+			if !isVar {
+				fix = "write v, ok := ... and assign v inside if ok { ... }, e.g. if v, ok := l.Get(i); ok { r.F = v }"
+			}
+			c.report(n, CodeGuard, "assign the result with := to new variables", "the value may be nil, unless ok is true, and the compiler tracks this only for new variables", fix)
 		case v.Name == "_":
 		case ok.Name == "_":
 			c.report(ok, CodeGuard, "ok must be checked", "the value is nil, if ok is false", "write v, ok := ... and use v inside if ok { ... } or after if !ok { return ... }")

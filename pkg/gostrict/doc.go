@@ -94,7 +94,8 @@
 //
 //   - a for loop counts with a counter, which only its post statement changes by a constant, up to a bound, which
 //     is a constant or a variable, which the loop does not change: for i := int32(0); i < n; i++.
-//   - a range over a number, a dict.Map, a list.List, to which its body does not append, or an iterator.
+//   - a range over a number, a dict.Map, a list.List or an iterator. A range over a list visits the elements, which
+//     the list has, when the range starts, like a range over a slice.
 //   - a loop with another condition burns fuel of package go.wdy.de/nago/pkg/gostrict/std/fuel:
 //     f := fuel.New(1000); for f.Burn() && x > eps { ... }.
 //   - a function calls itself only with a decreasing integer parameter, which its first statement checks:
