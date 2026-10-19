@@ -52,6 +52,33 @@ func TestThree(t *testing.T) {
 	t.Log("\n" + want)
 }
 
+// TestThreeInstances loads two instances of a program, whose package variables hold handles of the host: each
+// instance has a scene of its own, like in a browser, so that the second shows the same scene as the first.
+func TestThreeInstances(t *testing.T) {
+	b := compile(t, "internal/examples/spin")
+	run := func(e gostrict.Engine) string {
+		in, err := e.Load(context.Background(), b, three.Host())
+		if err != nil {
+			t.Fatal(err)
+		}
+		var n int32
+		if err := gostrict.Call(context.Background(), in, "Setup", []any{16.0 / 9}, &n); err != nil {
+			t.Fatal(err)
+		}
+		if err := gostrict.Call(context.Background(), in, "Frame", []any{1.5}); err != nil {
+			t.Fatal(err)
+		}
+		return three.Dump()
+	}
+	// the native engine shares the variables of the Go package, so the first instance of each engine is the reference
+	for name, e := range map[string]gostrict.Engine{"goja": goEngine, "vm": vmEngine} {
+		want := run(e)
+		if got := run(e); got != want || strings.Count(want, "\n") != 16 {
+			t.Fatalf("the second instance of %s shows another scene\nfirst:\n%s\nsecond:\n%s", name, want, got)
+		}
+	}
+}
+
 // fakeThree is a minimal three.js in goja: its objects keep, what the native scene graph of lib/three keeps.
 const fakeThree = `(function () {
 	class Vec { constructor(x, y, z) { this.x = x; this.y = y; this.z = z; } set(x, y, z) { this.x = x; this.y = y; this.z = z; } setScalar(s) { this.set(s, s, s); } }

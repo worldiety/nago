@@ -339,15 +339,19 @@ func (g *gen) store(lv lval, ptr, src layout) {
 	case *lLocal:
 		g.move(lv.v.at.add(lv.off), src, lv.t.l)
 	case *lGlobal:
-		l := lv.t.l
+		l, off := lv.t.l, lv.g.off.add(lv.off)
+		stN, stS, stR := opStgN, opStgS, opStgR
+		if lv.g.inst {
+			stN, stS, stR = opStxN, opStxS, opStxR
+		}
 		for i := range l.n {
-			g.emit(opStgN, lv.off.n+i, src.n+i, 0)
+			g.emit(stN, off.n+i, src.n+i, 0)
 		}
 		for i := range l.s {
-			g.emit(opStgS, lv.off.s+i, src.s+i, 0)
+			g.emit(stS, off.s+i, src.s+i, 0)
 		}
 		for i := range l.r {
-			g.emit(opStgR, lv.off.r+i, src.r+i, 0)
+			g.emit(stR, off.r+i, src.r+i, 0)
 		}
 	case *lStore:
 		l := lv.t.l
@@ -509,15 +513,19 @@ func (g *gen) exprTo(x expr, dst layout) {
 	case *eLocal:
 		g.move(dst, e.v.at.add(e.off), e.t.l)
 	case *eGlobal:
-		l := e.t.l
+		l, off := e.t.l, e.g.off.add(e.off)
+		ldN, ldS, ldR := opLdgN, opLdgS, opLdgR
+		if e.g.inst {
+			ldN, ldS, ldR = opLdxN, opLdxS, opLdxR
+		}
 		for i := range l.n {
-			g.emit(opLdgN, dst.n+i, e.off.n+i, 0)
+			g.emit(ldN, dst.n+i, off.n+i, 0)
 		}
 		for i := range l.s {
-			g.emit(opLdgS, dst.s+i, e.off.s+i, 0)
+			g.emit(ldS, dst.s+i, off.s+i, 0)
 		}
 		for i := range l.r {
-			g.emit(opLdgR, dst.r+i, e.off.r+i, 0)
+			g.emit(ldR, dst.r+i, off.r+i, 0)
 		}
 	case *eField:
 		v := g.expr(e.x)

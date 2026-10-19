@@ -22,14 +22,16 @@ type Program struct {
 	nconst []uint64
 	sconst []string
 	rconst []any
-	// the package variables, which init writes once
-	globals layout
-	init    *Func
-	once    sync.Once
-	initErr error
-	gn      []uint64
-	gs      []string
-	gr      []any
+	// the package variables, which init writes once, and those of each instance, which instInit writes
+	globals     layout
+	init        *Func
+	instGlobals layout
+	instInit    *Func
+	once        sync.Once
+	initErr     error
+	gn          []uint64
+	gs          []string
+	gr          []any
 	// types are the types, which instructions refer to, e.g. of new objects
 	types []*tinfo
 	// entries are the hooks of the entry points of a whole program
@@ -177,6 +179,12 @@ const (
 	opStgN // gn[a] = n[b]
 	opStgS
 	opStgR
+	opLdxN // n[a] = the variable of the instance xn[b]
+	opLdxS
+	opLdxR
+	opStxN // xn[a] = n[b]
+	opStxS
+	opStxR
 	opLdoN // n[a] = r[b].n[c]
 	opLdoS
 	opLdoR

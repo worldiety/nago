@@ -271,7 +271,7 @@ func subst(x expr, params map[*local]expr) expr {
 			case *eLocal:
 				return &eLocal{t: e.t, v: a.v, off: a.off.add(e.off)}
 			case *eGlobal:
-				return &eGlobal{t: e.t, off: a.off.add(e.off)}
+				return &eGlobal{t: e.t, g: a.g, off: a.off.add(e.off)}
 			}
 			return &eField{t: e.t, x: p, off: e.off}
 		}

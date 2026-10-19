@@ -107,3 +107,60 @@ func Sum(n int32) string {
 	}
 	t.Log(results[0])
 }
+
+// TestInstanceVariables checks, that a package variable, whose initialization calls the host, belongs to each
+// instance, while a pure one is shared.
+func TestInstanceVariables(t *testing.T) {
+	src := `package s
+
+import (
+	"go.wdy.de/nago/pkg/gostrict/lib/ui"
+	"go.wdy.de/nago/pkg/gostrict/std/list"
+)
+
+// Holder reads the variable of the instance without a call of the host, so it belongs to the instance as well.
+type Holder struct {
+	T ui.TText
+}
+
+var (
+	title  = ui.Text("own")
+	holder = Holder{T: title}
+	sizes  = list.Freeze(list.Of[int32](1, 2, 3))
+)
+
+func View() ui.View {
+	if sizes.Len() == 3 {
+		return holder.T
+	}
+	return title
+}
+`
+	b, diags, err := gostrict.NewCache(1).Compile("llm.local/s", gostrict.Module{Path: "llm.local/s", FS: fstest.MapFS{"s.go": {Data: []byte(src)}}})
+	if err != nil || len(diags) > 0 {
+		t.Fatal(err, diags.Text())
+	}
+	calls := 0
+	host := ui.Host()
+	text := host["go.wdy.de/nago/pkg/gostrict/lib/ui.Text"]
+	host["go.wdy.de/nago/pkg/gostrict/lib/ui.Text"] = func(args []any) []any {
+		calls++
+		return text(args)
+	}
+	e := new(vm.Engine)
+	var views []any
+	for range 2 {
+		in, err := e.Load(context.Background(), b, host)
+		if err != nil {
+			t.Fatal(err)
+		}
+		res, err := in.Call(context.Background(), "View")
+		if err != nil {
+			t.Fatal(err)
+		}
+		views = append(views, res[0].(gostrict.Variant).Fields[0])
+	}
+	if calls != 2 {
+		t.Fatalf("ui.Text was called %d times for two instances", calls)
+	}
+}

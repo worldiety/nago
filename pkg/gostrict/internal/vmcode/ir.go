@@ -31,9 +31,10 @@ type (
 		v   *local
 		off layout
 	}
-	// eGlobal is a package variable or a part of it.
+	// eGlobal is a package variable or the part at off of it.
 	eGlobal struct {
 		t   *tinfo
+		g   *global
 		off layout
 	}
 	// eField is a field of a struct value, which is not a variable, e.g. the result of a call.
@@ -253,6 +254,7 @@ type (
 	}
 	lGlobal struct {
 		t   *tinfo
+		g   *global
 		off layout
 	}
 	// lStore stores into the object of the pointer p at the offset.

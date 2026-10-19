@@ -266,7 +266,8 @@
 //
 // The engine of package engine/vm needs no JavaScript: the compiler translates each bundle also into register
 // bytecode, see [Bundle.VM], whose values keep their types and whose structs live in registers. All instances of a
-// bundle share its program and its package variables, so an instance costs about a kilobyte. Each function of a
+// bundle share its program and its package variables, so an instance costs about a kilobyte; a variable, whose
+// initialization calls a function of the host, e.g. three.NewScene, belongs to each instance like in goja. Each function of a
 // header package needs a function of the host in Go, which [Generate] writes, also for the variables of the
 // package; a binding of JavaScript is not used. Its callbacks are a [FastCallback], which the generated adapters
 // call without neutral values. A whole program runs with its [Aspect] like in goja.
