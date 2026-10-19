@@ -18,6 +18,8 @@ import (
 	"maps"
 	"slices"
 	"strings"
+
+	"go.wdy.de/nago/pkg/gostrict/internal/vmcode"
 )
 
 //go:embed runtime.js
@@ -50,6 +52,9 @@ type Bundle struct {
 	// Positions are the positions in the Go source, where the program creates errors. An error of the program
 	// refers to one by its index, which an engine resolves with [Bundle.ProgramError].
 	Positions []Position
+	// vm is the program of the interpreter of package engine/vm, or vmErr, why it could not be compiled
+	vm    *vmcode.Program
+	vmErr error
 }
 
 // Extern is a function of a header package.
@@ -280,6 +285,7 @@ func (e *emitter) emit() (*Bundle, Diagnostics) {
 	}
 
 	exports := map[string]Func{}
+	exportFuncs := map[string]*types.Func{}
 	bnd := e.bnd
 	var ret strings.Builder
 	if len(e.entries) > 0 {
@@ -297,6 +303,7 @@ func (e *emitter) emit() (*Bundle, Diagnostics) {
 				continue
 			}
 			exports[full] = sig
+			exportFuncs[full] = fn
 			fmt.Fprintf(&ret, "\t%s: %s,\n", jsString(full), e.hook(fn))
 		}
 	}
@@ -314,6 +321,7 @@ func (e *emitter) emit() (*Bundle, Diagnostics) {
 			continue
 		}
 		exports[name] = sig
+		exportFuncs[name] = fn
 		fmt.Fprintf(&ret, "\t%s: %s,\n", name, e.funcName(fn, nil, nil))
 	}
 
@@ -397,7 +405,9 @@ func (e *emitter) emit() (*Bundle, Diagnostics) {
 		// the entry points of a whole program are called by name and handle no messages of a browser
 		hs = map[string]string{}
 	}
-	return &Bundle{JS: js, SourceMap: sourceMap, Hash: hex.EncodeToString(sum[:16]), Exports: exports, Records: bnd.records, Unions: bnd.unions, Handlers: hs, Externs: e.extern, States: states, Positions: e.errorPositions()}, nil
+	b := &Bundle{JS: js, SourceMap: sourceMap, Hash: hex.EncodeToString(sum[:16]), Exports: exports, Records: bnd.records, Unions: bnd.unions, Handlers: hs, Externs: e.extern, States: states, Positions: e.errorPositions()}
+	b.vm, b.vmErr = e.emitVM(b, exportFuncs)
+	return b, nil
 }
 
 // frozen tells, whether the values of the record t never change: its type is immutable and its fields hold only

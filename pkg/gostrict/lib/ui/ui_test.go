@@ -21,6 +21,7 @@ import (
 	"go.wdy.de/nago/nagotest"
 	"go.wdy.de/nago/pkg/gostrict"
 	"go.wdy.de/nago/pkg/gostrict/engine/gojaengine"
+	"go.wdy.de/nago/pkg/gostrict/engine/vm"
 	"go.wdy.de/nago/pkg/gostrict/lib/ui"
 	"go.wdy.de/nago/pkg/gostrict/lib/ui/internal/agenda"
 	"go.wdy.de/nago/pkg/gostrict/lib/ui/internal/cells"
@@ -57,7 +58,16 @@ var sources = []source{
 		return func(core.Window) core.View { return ui.Core(cells.View()) }
 	}},
 	{"goja", func(t testing.TB) func(core.Window) core.View {
-		in := load(t)
+		return viewOf(t, load(t))
+	}},
+	{"vm", func(t testing.TB) func(core.Window) core.View {
+		return viewOf(t, loadWith(t, "internal/cells", &vm.Engine{}))
+	}},
+}
+
+// viewOf returns the view, which the program of the instance returns.
+func viewOf(t testing.TB, in gostrict.Instance) func(core.Window) core.View {
+	{
 		return func(core.Window) core.View {
 			res, err := in.Call(context.Background(), "View")
 			if err != nil {
@@ -69,7 +79,7 @@ var sources = []source{
 			}
 			return ui.Core(v)
 		}
-	}},
+	}
 }
 
 func load(t testing.TB) gostrict.Instance {
@@ -77,11 +87,15 @@ func load(t testing.TB) gostrict.Instance {
 }
 
 func loadDir(t testing.TB, dir string) gostrict.Instance {
+	return loadWith(t, dir, new(gojaengine.Engine))
+}
+
+func loadWith(t testing.TB, dir string, e gostrict.Engine) gostrict.Instance {
 	b, diags, err := gostrict.Compile(dir)
 	if err != nil || len(diags) > 0 {
 		t.Fatal(err, diags.Text())
 	}
-	in, err := new(gojaengine.Engine).Load(context.Background(), b, ui.Host())
+	in, err := e.Load(context.Background(), b, ui.Host())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -143,6 +157,11 @@ func BenchmarkSheet(b *testing.B) {
 // BenchmarkCallback measures the calls of the function of the cells from Go into goja and the conversion of the
 // cells, without nago.
 func BenchmarkCallback(b *testing.B) {
+	b.Run("goja", func(b *testing.B) { benchCallback(b, new(gojaengine.Engine)) })
+	b.Run("vm", func(b *testing.B) { benchCallback(b, new(vm.Engine)) })
+}
+
+func benchCallback(b *testing.B, e gostrict.Engine) {
 	var cell gostrict.Callback
 	host := ui.Host()
 	sheetFn := host["go.wdy.de/nago/pkg/gostrict/lib/ui.Sheet"]
@@ -154,7 +173,7 @@ func BenchmarkCallback(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	in, err := new(gojaengine.Engine).Load(context.Background(), bnd, host)
+	in, err := e.Load(context.Background(), bnd, host)
 	if err != nil {
 		b.Fatal(err)
 	}

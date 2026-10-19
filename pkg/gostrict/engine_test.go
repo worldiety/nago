@@ -142,12 +142,14 @@ func TestTimeout(t *testing.T) {
 	if err != nil || len(diags) > 0 {
 		t.Fatal(err, diags.Text())
 	}
-	in := mustLoad(t, goEngine, b)
-	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
-	defer cancel()
-	_, err = in.Call(ctx, "Loop")
-	if !errors.Is(err, context.DeadlineExceeded) {
-		t.Fatalf("got %v", err)
+	for _, e := range []gostrict.Engine{goEngine, vmEngine} {
+		in := mustLoad(t, e, b)
+		ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+		_, err = in.Call(ctx, "Loop")
+		cancel()
+		if !errors.Is(err, context.DeadlineExceeded) {
+			t.Fatalf("%T: got %v", e, err)
+		}
 	}
 }
 
