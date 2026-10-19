@@ -140,6 +140,32 @@ und Umwandlung in die Zelle von nago):
 Strings von `text.FromInt`, wie nativ. Vom Rest entfallen etwa 80 ns auf den Bytecode (Vergleiche und Multiplikation
 mit Konstanten, Structs direkt in die Ergebnisse), 50 ns auf Reader und Writer und 50 ns auf Sperre und Rahmen.
 
+### Interpreter nach Phase 5
+
+Nach Profil (Zähler der Befehlspaare mit `-tags vmstats`, `TestStats`): Inliner kleiner Funktionen, deren Rumpf nur
+ein `return` ist (Argumente in ihrer Reihenfolge an Temporäre gebunden, `eLet`), Superinstruktionen für Schleifen
+(`i += k` mit Rücksprung, `i < len(l)` als Sprung), Kopien mehrerer Skalare in einem Befehl, `&&`/`||` als
+Sprungkette, `a + b + c` mit einer Allokation, Frames nur nach Natives neu zuschneiden, die das Programm rufen.
+Median aus 4–6 Läufen, Apple M2 Max:
+
+| Messung | nativ | goja | vm vor Phase 5 | vm |
+|---|---|---|---|---|
+| `physics.Simulate(10000, 45)` | 0,086 ms | 34 ms | 2,68 ms | 1,60 ms |
+| `ints.Xorshift(…, 100000)` | 0,20 ms | 41 ms | 2,01 ms | 1,81 ms |
+| `ints.Hash` (8000 Zeichen) | 0,034 ms | 6,0 ms | 0,142 ms | 0,114 ms |
+| `money.Factorial(300)` | 22 µs | 108 µs | 36 µs | 37 µs |
+| `money.Invoice` | 6,3 µs | 135 µs | 9,6 µs | 8,8 µs |
+| `BenchmarkCallback` je Zelle | 0,088 µs | 1,61 µs | 0,26 µs | 0,26 µs |
+| `BenchmarkSheet` je Fensterwechsel | 0,44 ms | 4,43 ms | 0,95 ms | 0,92 ms |
+| `BenchmarkRender` (Form, neu) | 65 µs | 133 µs | – | 78 µs |
+
+Alle Zielwerte des Plans sind erreicht: `BenchmarkCallback` ≤ 0,3 µs mit 1,76 Allokationen (wie nativ),
+`BenchmarkSheet` ≤ 1,5 ms, eine Instanz ≤ 1/10 von goja, die rechenlastigen Beispiele 20–80× schneller als goja.
+Zur VM: rechenlastige Programme bleiben 2–20× langsamer als nativ, typisch für einen Interpreter mit `switch` in Go.
+Geprüft und verworfen: ein Zeiger auf den Befehl statt einer Kopie (kein Gewinn). Typisierte Adapter der
+Header-Funktionen (VM → Host): beim Rendern der Form entfallen nur rund 2,6 % der CPU auf das Programm, der Rest ist
+nago; sie lohnen sich nicht.
+
 ## Offen
 
 - **Use-Case-Vertrag für wokoda (G):** typisierte DB-Zeilen über generische Header-Funktionen mit Record-Typen. Den
@@ -161,7 +187,7 @@ mit Konstanten, Structs direkt in die Ergebnisse), 50 ns auf Reader und Writer u
 - **`go/analysis`-Analyzer (I.6):** neue Abhängigkeit `golang.org/x/tools`, abstimmen.
 - **Verträge und Wertebereiche (I.8, I.9):** Sprachdesign offen.
 - **QuickJS über wazero (I.12):** Engine mit Speicherlimit, neue Abhängigkeiten.
-- **Interpreter `engine/vm` (I.12):** Phase 1 und 2 sind fertig: alle Ausdrücke und Anweisungen des Subsets, auch
+- **Interpreter `engine/vm` (I.12):** Alle Phasen des Plans sind fertig. Phase 1 und 2: alle Ausdrücke und Anweisungen des Subsets, auch
   Funktionsliterale (Zellen nur für eingefangene Variablen, die danach zugewiesen werden, je Iteration neu),
   Methodenwerte, Interfaces (Box mit Methodentabelle je Typ, Type Switch, Vergleich, eigene Fehlertypen), Zeiger
   auf Variablen und Felder für Methoden mit Zeiger-Empfänger (Zelle bzw. Objekt, dessen Slices in das umgebende
@@ -171,16 +197,16 @@ mit Konstanten, Structs direkt in die Ergebnisse), 50 ns auf Reader und Writer u
   `TestRecordsAndState`, `TestTimeout` und in lib/ui `TestSheet`, `TestPage`, `TestForm`, `TestDataView`,
   `TestAgenda`, `TestExtras`. Variablen von Header-Paketen liefert `Host()` jetzt auch als Funktionen ohne
   Parameter (Generator), die VM liest sie einmal je Programm. Als Nächstes:
-  - Phase 3 ist fertig. Typisierte Adapter der Header-Funktionen selbst (VM → Host) sind auf Phase 5 verschoben
-    (abgestimmt): dafür müsste das Engine neben `gostrict.Funcs` schnelle Funktionen bekommen, ohne dass ein Host,
-    der eine Funktion in `Funcs` ersetzt (z. B. ein Test), stillschweigend umgangen wird; im Sheet dominieren die
-    Callbacks, die Header-Funktionen laufen einmal je Render. Erst nach einem Profil entscheiden.
+  - Phase 3 ist fertig. Typisierte Adapter der Header-Funktionen selbst (VM → Host) gibt es nicht: nach dem Profil
+    von Phase 5 (`BenchmarkRender`) lohnen sie sich nicht.
   - Phase 4 ist fertig: ganze Programme laufen in der VM mit ihrem Aspekt. Ein Einstieg, den der Host oder ein
     anderes Paket ruft, auch über einen Funktionswert, läuft über einen Hook (`opEntry`): `$enter`, der Einstieg,
     `$exit` mit seinem Fehler-Ergebnis, bei einem Abbruch mit „aborted“ (wie im JS-Emitter). `TestWholeProgram` und
     `TestWholeProgramTargets` laufen mit goja und vm, neu ist das Skript `crm/lookup` (Einstieg als Funktionswert).
     `TestSharedVariables`: 32 Instanzen auf eigenen Goroutinen teilen die Package-Variablen, eine Variable eines
     Header-Pakets wird einmal gelesen.
+  - Phase 5 ist fertig, siehe „Interpreter nach Phase 5“ unter Messungen. Weitere Ideen nach Profil: 8-Byte-Befehle,
+    Superinstruktionen für `x ^= x << k` (Hashes), Aufrufe ohne `ensure` bei bekannter Tiefe.
   - Package-Variablen werden einmal je Programm mit den Host-Funktionen der ersten Instanz initialisiert. Für
     Initialisierer, die den Host rufen (Handles), muss das geklärt werden.
   - Zeiger auf Felder sind eigene Objekte, also `&x.A == &x.A` falsch, wo Go true liefert; das Subset kann solche

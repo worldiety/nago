@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"strings"
 )
 
 // Machine executes the bytecode of an instance. Its banks are stacks, on which each call has its frame. It is not
@@ -160,13 +161,20 @@ func (m *Machine) exec(f *Func, bn, bs, br int) {
 	r := m.r[br : br+int(fr.r)]
 	code := f.code
 	pc := 0
+	prev := opNop
 	for {
 		in := code[pc]
 		pc++
+		if statsOn {
+			countOp(prev, in.op)
+			prev = in.op
+		}
 		switch in.op {
 		case opNop:
 		case opMovN:
 			n[in.a] = n[in.b]
+		case opMovNK:
+			copy(n[in.a:in.a+in.c], n[in.b:in.b+in.c])
 		case opMovS:
 			s[in.a] = s[in.b]
 		case opMovR:
@@ -195,6 +203,10 @@ func (m *Machine) exec(f *Func, bn, bs, br int) {
 			m.prog.gr[in.a] = r[in.b]
 		case opLdoN:
 			n[in.a] = r[in.b].(*object).n[in.c]
+		case opLdoNK:
+			o := r[in.b].(*object)
+			off := in.c & 0xffff
+			copy(n[in.a:in.a+in.c>>16], o.n[off:])
 		case opLdoS:
 			s[in.a] = r[in.b].(*object).s[in.c]
 		case opLdoR:
@@ -294,6 +306,8 @@ func (m *Machine) exec(f *Func, bn, bs, br int) {
 			n[x.dst.n] = fromBool(equal(x.t, n[x.src.n:], s[x.src.s:], r[x.src.r:], n[x.off.n:], s[x.off.s:], r[x.off.r:]))
 		case opConcat:
 			s[in.a] = s[in.b] + s[in.c]
+		case opConcatN:
+			s[in.a] = strings.Join(s[in.b:in.b+in.c], "")
 		case opEqS:
 			n[in.a] = fromBool(s[in.b] == s[in.c])
 		case opNeS:
@@ -309,6 +323,16 @@ func (m *Machine) exec(f *Func, bn, bs, br int) {
 			pc = int(in.a)
 			if m.fuel--; m.fuel <= 0 {
 				m.burn()
+			}
+		case opIncLoop:
+			n[in.b] = fromI32(int32(n[in.b]) + in.c)
+			pc = int(in.a)
+			if m.fuel--; m.fuel <= 0 {
+				m.burn()
+			}
+		case opJNltLen:
+			if !(int32(n[in.b]) < r[in.c].(*list).len) {
+				pc = int(in.a)
 			}
 		case opJmpT:
 			if n[in.b] != 0 {
@@ -367,7 +391,10 @@ func (m *Machine) exec(f *Func, bn, bs, br int) {
 		case opCallNative:
 			cs := &f.calls[in.a]
 			cs.nat.fn(m, n[cs.base.n:], s[cs.base.s:], r[cs.base.r:])
-			// a native may call the program, e.g. list.SortFunc, which grows the banks
+		case opCallNativeR:
+			cs := &f.calls[in.a]
+			cs.nat.fn(m, n[cs.base.n:], s[cs.base.s:], r[cs.base.r:])
+			// the native called the program, which may have grown the banks
 			n, s, r = m.n[bn:bn+int(fr.n)], m.s[bs:bs+int(fr.s)], m.r[br:br+int(fr.r)]
 		case opCallHost:
 			cs := &f.calls[in.a]
