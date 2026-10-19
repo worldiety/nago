@@ -16,6 +16,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unsafe"
 
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/nagotest"
@@ -29,6 +30,7 @@ import (
 	"go.wdy.de/nago/pkg/gostrict/lib/ui/internal/form"
 	"go.wdy.de/nago/pkg/gostrict/lib/ui/internal/page"
 	"go.wdy.de/nago/pkg/gostrict/lib/ui/internal/people"
+	"go.wdy.de/nago/pkg/gostrict/std/js"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
 	nui "go.wdy.de/nago/presentation/ui"
@@ -154,20 +156,33 @@ func BenchmarkSheet(b *testing.B) {
 	}
 }
 
-// BenchmarkCallback measures the calls of the function of the cells from Go into goja and the conversion of the
-// cells, without nago.
+// BenchmarkCallback measures the function of the cells of a sheet, as nago calls it: the adapter, which the generator
+// writes, calls the program through its callback, in the vm without neutral values, and converts the cell.
 func BenchmarkCallback(b *testing.B) {
+	b.Run("native", func(b *testing.B) {
+		cell := cellsOf(ui.Core(cells.View()).(nsheet.TSheet))
+		b.ReportAllocs()
+		for b.Loop() {
+			for row := range 40 {
+				for col := range 25 {
+					cell(row, col)
+				}
+			}
+		}
+		b.ReportMetric(float64(b.Elapsed().Nanoseconds())/float64(b.N)/1000, "ns/cell")
+	})
 	b.Run("goja", func(b *testing.B) { benchCallback(b, new(gojaengine.Engine)) })
 	b.Run("vm", func(b *testing.B) { benchCallback(b, new(vm.Engine)) })
 }
 
 func benchCallback(b *testing.B, e gostrict.Engine) {
-	var cell gostrict.Callback
+	var cell func(row, col int) nsheet.Cell
 	host := ui.Host()
 	sheetFn := host["go.wdy.de/nago/pkg/gostrict/lib/ui.Sheet"]
 	host["go.wdy.de/nago/pkg/gostrict/lib/ui.Sheet"] = func(args []any) []any {
-		cell = args[3].(gostrict.Callback)
-		return sheetFn(args)
+		res := sheetFn(args)
+		cell = cellsOf(res[0].(js.Ref).Value().(nsheet.TSheet))
+		return res
 	}
 	bnd, _, err := gostrict.Compile("internal/cells")
 	if err != nil {
@@ -180,16 +195,27 @@ func benchCallback(b *testing.B, e gostrict.Engine) {
 	if _, err := in.Call(context.Background(), "View"); err != nil {
 		b.Fatal(err)
 	}
+	if c := cell(3, 4); c.Text != "94" || c.Type != nsheet.ValueNumber {
+		b.Fatalf("unexpected cell %+v", c)
+	}
+	if c := cell(0, 4); c.Text != "4" || !c.Style.Bold {
+		b.Fatalf("unexpected header %+v", c)
+	}
+	b.ReportAllocs()
 	for b.Loop() {
-		for row := range int32(40) {
-			for col := range int32(25) {
-				if _, err := cell.Call(row, col); err != nil {
-					b.Fatal(err)
-				}
+		for row := range 40 {
+			for col := range 25 {
+				cell(row, col)
 			}
 		}
 	}
-	b.ReportMetric(float64(b.Elapsed().Nanoseconds())/float64(b.N), "ns/1000cells")
+	b.ReportMetric(float64(b.Elapsed().Nanoseconds())/float64(b.N)/1000, "ns/cell")
+}
+
+// cellsOf returns the function of the cells of a sheet of nago, which keeps it unexported.
+func cellsOf(s nsheet.TSheet) func(row, col int) nsheet.Cell {
+	v := reflect.ValueOf(&s).Elem().FieldByName("cell")
+	return reflect.NewAt(v.Type(), unsafe.Pointer(v.UnsafeAddr())).Elem().Interface().(func(row, col int) nsheet.Cell)
 }
 
 // TestVars compares the bindings of the variables of the package with their values in Go.

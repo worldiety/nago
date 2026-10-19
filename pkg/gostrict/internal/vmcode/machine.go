@@ -123,13 +123,7 @@ func (m *Machine) Invoke(ctx context.Context, cl *Closure, args []any) (res []an
 
 // restore restores the machine after a call and recovers from its failure.
 func (m *Machine) restore(s saved, err *error) {
-	m.hi, m.depth, m.ctx = s.hi, s.depth, s.ctx
-	if s.hi == (layout{}) {
-		// the outermost call releases the values of its frames
-		clear(m.s[:m.peak.s])
-		clear(m.r[:m.peak.r])
-		m.peak = layout{}
-	}
+	m.reset(s)
 	v := recover()
 	if v == nil {
 		return
@@ -142,6 +136,17 @@ func (m *Machine) restore(s saved, err *error) {
 		panic(v)
 	}
 	*err = &PanicError{Value: v}
+}
+
+// reset restores the state of the machine after a call.
+func (m *Machine) reset(s saved) {
+	m.hi, m.depth, m.ctx = s.hi, s.depth, s.ctx
+	if s.hi == (layout{}) {
+		// the outermost call releases the values of its frames
+		clear(m.s[:m.peak.s])
+		clear(m.r[:m.peak.r])
+		m.peak = layout{}
+	}
 }
 
 // callHost calls a function of the host with the arguments at base and writes its results over them.

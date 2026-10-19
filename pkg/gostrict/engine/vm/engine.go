@@ -73,6 +73,8 @@ type Instance struct {
 	depth atomic.Int32
 	// err is the first error of a callback since the last call, see [gostrict.Callback]
 	err error
+	// fastLocks tells for each fast call in progress, whether it locked the instance
+	fastLocks []bool
 }
 
 // Call calls an exported function.

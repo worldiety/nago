@@ -56,7 +56,7 @@ var goEngine = &gojaengine.Engine{}
 var exports = map[string]gostrict.Funcs{
 	"alias":      native.Reflect(map[string]any{"Order": alias.Order, "Run": alias.Run}),
 	"arena":      native.Reflect(map[string]any{"Frame": arena.Frame, "NewClient": arena.NewClient, "OnHit": arena.OnHit, "OnWorld": arena.OnWorld, "Status": arena.Status}),
-	"core":       native.Reflect(map[string]any{"Control": core.Control, "Equal": core.Equal, "Lists": core.Lists, "Maps": core.Maps, "Options": core.Options, "Results": core.Results}),
+	"core":       native.Reflect(map[string]any{"Control": core.Control, "Equal": core.Equal, "Lists": core.Lists, "Maps": core.Maps, "Options": core.Options, "Pairs": core.Pairs, "Results": core.Results}),
 	"draw":       native.Reflect(map[string]any{"Frame": draw.Frame, "New": draw.New}),
 	"errs":       native.Reflect(map[string]any{"Average": errs.Average, "Run": errs.Run}),
 	"funcs":      native.Reflect(map[string]any{"Branches": funcs.Branches, "Captures": funcs.Captures, "Methods": funcs.Methods}),
@@ -122,6 +122,7 @@ func TestDifferential(t *testing.T) {
 		{"funcs", "Branches", []any{int32(6)}},
 		{"funcs", "Methods", []any{int32(2)}},
 		{"funcs", "Methods", []any{int32(6)}},
+		{"core", "Pairs", []any{int32(21)}},
 		{"core", "Equal", []any{1.5, 2.5}},
 		{"core", "Equal", []any{2.0, 2.0}},
 		{"core", "Equal", []any{math.NaN(), 1.0}},

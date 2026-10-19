@@ -30,6 +30,9 @@ type Machine struct {
 	ctx      context.Context
 	// peak is the end of the frames since the outermost call, whose references it releases
 	peak layout
+	// calls are the fast calls, the first fast of them are in progress, see [Machine.BeginFast]
+	calls []*fastCall
+	fast  int
 }
 
 // vmError ends a call of the instance, e.g. because the context ended.
@@ -210,6 +213,8 @@ func (m *Machine) exec(f *Func, bn, bs, br int) {
 			n[in.a] = fromI32(int32(n[in.b]) + int32(n[in.c]))
 		case opAddIK:
 			n[in.a] = fromI32(int32(n[in.b]) + in.c)
+		case opMulIK:
+			n[in.a] = fromI32(int32(n[in.b]) * in.c)
 		case opSubI:
 			n[in.a] = fromI32(int32(n[in.b]) - int32(n[in.c]))
 		case opMulI:
@@ -327,6 +332,14 @@ func (m *Machine) exec(f *Func, bn, bs, br int) {
 			}
 		case opJNneI:
 			if int32(n[in.b]) == int32(n[in.c]) {
+				pc = int(in.a)
+			}
+		case opJEqIK:
+			if int32(n[in.b]) == in.c {
+				pc = int(in.a)
+			}
+		case opJNeIK:
+			if int32(n[in.b]) != in.c {
 				pc = int(in.a)
 			}
 		case opJNltF:

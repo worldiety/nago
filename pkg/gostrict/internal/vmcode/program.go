@@ -116,6 +116,8 @@ type object struct {
 	// cache is the neutral value of a shared struct, which never changes, e.g. a style, which many cells of a
 	// table refer to
 	cache atomic.Pointer[any]
+	// kept is the Go value of a shared struct, which a reader of a fast call keeps, see [Reader.Keep]
+	kept atomic.Pointer[any]
 }
 
 func newObject(t *tinfo, l layout) *object {
@@ -182,6 +184,7 @@ const (
 
 	opAddI
 	opAddIK // n[a] = n[b] + c
+	opMulIK // n[a] = n[b] * c
 	opSubI
 	opMulI
 	opDivI
@@ -238,6 +241,8 @@ const (
 	opJNneI
 	opJNltF
 	opJNleF
+	opJEqIK // if n[b] == c { pc = a }
+	opJNeIK // if n[b] != c { pc = a }
 
 	opCall       // calls[a]
 	opCallNative // calls[a]

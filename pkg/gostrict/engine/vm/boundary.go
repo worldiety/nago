@@ -85,3 +85,61 @@ func (cb *callback) Call(args ...any) ([]any, error) {
 	}
 	return res, err
 }
+
+var _ gostrict.FastCallback = (*callback)(nil)
+
+// Begin begins a fast call, see [gostrict.FastCallback].
+func (cb *callback) Begin() gostrict.Writer {
+	in := cb.in
+	locked := in.depth.Load() == 0
+	if locked {
+		in.lock()
+	}
+	in.fastLocks = append(in.fastLocks, locked)
+	return writer{in.m.BeginFast(in.m.Context(), cb.fn)}
+}
+
+// Invoke runs the fast call.
+func (cb *callback) Invoke() (gostrict.Reader, error) {
+	in := cb.in
+	r, err := in.m.InvokeFast()
+	if err != nil {
+		err = in.failure(err)
+		if in.err == nil {
+			in.err = err
+		}
+		return nil, err
+	}
+	return reader{r}, nil
+}
+
+// End ends the fast call.
+func (cb *callback) End() {
+	in := cb.in
+	in.m.EndFast()
+	locked := in.fastLocks[len(in.fastLocks)-1]
+	in.fastLocks = in.fastLocks[:len(in.fastLocks)-1]
+	if locked {
+		in.unlock()
+	}
+}
+
+type reader struct {
+	*vmcode.Reader
+}
+
+func (r reader) State() gostrict.Token {
+	return r.StateValue().(gostrict.Token)
+}
+
+func (r reader) Func() gostrict.Callback {
+	return r.FuncValue().(gostrict.Callback)
+}
+
+type writer struct {
+	*vmcode.Writer
+}
+
+func (w writer) State(t gostrict.Token) {
+	w.StateValue(t)
+}

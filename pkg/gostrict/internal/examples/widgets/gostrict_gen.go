@@ -114,7 +114,17 @@ func gostrictTo3(x Insets) []any {
 }
 
 func gostrictFunc4(cb gostrict.Callback) func() int32 {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func() int32 {
+		if fast {
+			fc.Begin()
+			defer fc.End()
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(int32)
+			}
+			return r.Int32()
+		}
 		res, err := cb.Call()
 		if err != nil {
 			var z0 int32

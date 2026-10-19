@@ -80,7 +80,19 @@ func gostrictTo1(l list.List[geom.Rect]) []any {
 }
 
 func gostrictFunc2(cb gostrict.Callback) func(acc float64, r geom.Rect) (float64, error) {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 float64, a1 geom.Rect) (float64, error) {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			w.Float64(float64(a0))
+			gostrictWrite3(w, a1)
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(float64), err
+			}
+			return r.Float64(), r.Error()
+		}
 		res, err := cb.Call(a0, gostrictTo3(a1))
 		if err != nil {
 			var z0 float64
@@ -99,7 +111,18 @@ func gostrictTo3(x geom.Rect) []any {
 }
 
 func gostrictFunc4(cb gostrict.Callback) func(x float64) float64 {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 float64) float64 {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			w.Float64(float64(a0))
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(float64)
+			}
+			return r.Float64()
+		}
 		res, err := cb.Call(a0)
 		if err != nil {
 			var z0 float64
@@ -118,7 +141,18 @@ func gostrictTo5(x geom.Stats) []any {
 }
 
 func gostrictFunc6(cb gostrict.Callback) func(i int32) geom.Rect {
+	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 int32) geom.Rect {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			w.Int32(int32(a0))
+			r, err := fc.Invoke()
+			if err != nil {
+				return *new(geom.Rect)
+			}
+			return gostrictRead3(r)
+		}
 		res, err := cb.Call(a0)
 		if err != nil {
 			var z0 geom.Rect
@@ -126,4 +160,24 @@ func gostrictFunc6(cb gostrict.Callback) func(i int32) geom.Rect {
 		}
 		return gostrictFrom3(res[0].([]any))
 	}
+}
+
+func gostrictRead3(r gostrict.Reader) geom.Rect {
+	if v, ok := r.Record(); ok {
+		return v.(geom.Rect)
+	}
+	x := geom.Rect{X: r.Float64(), Y: r.Float64(), W: r.Float64(), H: r.Float64()}
+	if r.End() {
+		r.Keep(x)
+	}
+	return x
+}
+
+func gostrictWrite3(w gostrict.Writer, x geom.Rect) {
+	w.Record()
+	w.Float64(float64(x.X))
+	w.Float64(float64(x.Y))
+	w.Float64(float64(x.W))
+	w.Float64(float64(x.H))
+	w.End()
 }

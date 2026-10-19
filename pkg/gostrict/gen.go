@@ -24,7 +24,7 @@ const GeneratedFile = "gostrict_gen.go"
 // functions of a header package nor construct its handles. A program needs no generated code. The file is excluded
 // from the subset by a build constraint.
 func Generate(prog *Program) ([]byte, error) {
-	g := &generator{pkg: prog.Main, imports: map[string]string{}, helpers: map[string]int{}}
+	g := &generator{pkg: prog.Main, imports: map[string]string{}, helpers: map[string]int{}, fast: map[string]bool{}}
 	if prog.Main.Kind != KindHeader {
 		return nil, fmt.Errorf("%s is no header package: a program needs no generated code, see native.Reflect, gostrict.Call and gostrict.Router", prog.Main.Path)
 	}
@@ -40,6 +40,9 @@ type generator struct {
 	helpers map[string]int
 	code    bytes.Buffer
 	pending []types.Type
+	// fast are the types, whose functions for a fast call are written, see [FastCallback]
+	fast        map[string]bool
+	fastPending []types.Type
 }
 
 func (g *generator) qual(p *types.Package) string {
@@ -157,6 +160,12 @@ func (g *generator) header() ([]byte, error) {
 	body.WriteString("\t}\n}\n")
 	g.writeVars(&body)
 	g.writeHandles(&body)
+	for len(g.pending) > 0 || len(g.fastPending) > 0 {
+		if err := g.writeHelpers(); err != nil {
+			return nil, err
+		}
+		g.writeFast()
+	}
 	if err := g.writeHelpers(); err != nil {
 		return nil, err
 	}
@@ -433,6 +442,167 @@ func (g *generator) writeHelpers() error {
 	return nil
 }
 
+// readValue returns the expression, which reads a value of t from the reader r of a fast call.
+func (g *generator) readValue(r string, t types.Type) string {
+	if f := g.handle(t); f != nil {
+		return fmt.Sprintf("%s{%s: %s.Handle()}", g.typeString(t), f.Name(), r)
+	}
+	if _, ok := t.Underlying().(*types.Signature); ok {
+		return fmt.Sprintf("gostrictFunc%d(%s.Func())", g.helper(t), r)
+	}
+	if isBig(t) {
+		ts := g.typeString(t)
+		return fmt.Sprintf("%s{}.HostFromString(%s.Big()).(%s)", ts, r, ts)
+	}
+	if _, ok := stateElem(t); ok {
+		return fmt.Sprintf("%s.State().Value().(%s)", r, g.typeString(t))
+	}
+	if isError(t) {
+		return r + ".Error()"
+	}
+	if _, ok := t.(*types.Slice); ok || isSealed(t) || isOpaque(t) || isStruct(t) {
+		return fmt.Sprintf("gostrictRead%d(%s)", g.fastHelper(t), r)
+	}
+	basic := g.typeString(t.Underlying())
+	call := fmt.Sprintf("%s.%s()", r, fastMethod(basic))
+	if _, named := types.Unalias(t).(*types.Named); named {
+		return fmt.Sprintf("%s(%s)", g.typeString(t), call)
+	}
+	return call
+}
+
+// writeValue returns the statement, which writes the value expr of t with the writer w of a fast call.
+func (g *generator) writeValue(w, expr string, t types.Type) string {
+	if f := g.handle(t); f != nil {
+		return fmt.Sprintf("%s.Handle(%s.%s)", w, expr, f.Name())
+	}
+	if _, ok := t.Underlying().(*types.Signature); ok {
+		return `panic("gostrict: a function of the host can not be passed to the program")`
+	}
+	if isBig(t) {
+		return fmt.Sprintf("%s.Big(%s.HostString())", w, expr)
+	}
+	if elem, ok := stateElem(t); ok {
+		return fmt.Sprintf("%s.State(gostrict.NewToken(%q, %s))", w, typeKey(elem), expr)
+	}
+	if isError(t) {
+		return fmt.Sprintf("%s.Error(%s)", w, expr)
+	}
+	if _, ok := t.(*types.Slice); ok || isSealed(t) || isOpaque(t) || isStruct(t) {
+		return fmt.Sprintf("gostrictWrite%d(%s, %s)", g.fastHelper(t), w, expr)
+	}
+	basic := g.typeString(t.Underlying())
+	return fmt.Sprintf("%s.%s(%s(%s))", w, fastMethod(basic), basic, expr)
+}
+
+func fastMethod(basic string) string {
+	switch basic {
+	case "bool":
+		return "Bool"
+	case "int32":
+		return "Int32"
+	case "uint32":
+		return "Uint32"
+	case "float64":
+		return "Float64"
+	}
+	return "String"
+}
+
+// fastHelper returns the number of the functions, which read and write a record, list, map or union in a fast
+// call, and queues them.
+func (g *generator) fastHelper(t types.Type) int {
+	n := g.helper(t)
+	if key := typeKey(t); !g.fast[key] {
+		g.fast[key] = true
+		g.fastPending = append(g.fastPending, t)
+	}
+	return n
+}
+
+// writeFast writes the functions of the types, which fast calls read and write.
+func (g *generator) writeFast() {
+	for len(g.fastPending) > 0 {
+		t := g.fastPending[0]
+		g.fastPending = g.fastPending[1:]
+		n := g.helpers[typeKey(t)]
+		ts := g.typeString(t)
+		var read, write string
+		switch {
+		case isSealed(t):
+			variants, _ := sealedVariants(t)
+			var rc, wc strings.Builder
+			for _, v := range variants {
+				if isHandle(v) {
+					fmt.Fprintf(&rc, "\tcase %q:\n\t\tx := %s\n\t\tr.End()\n\t\treturn x\n", typeKey(v), g.readValue("r", v))
+					fmt.Fprintf(&wc, "\tcase %s:\n\t\tw.Variant(%q)\n\t\t%s\n\t\tw.End()\n", g.typeString(v), typeKey(v), g.writeValue("w", "x", v))
+					continue
+				}
+				fmt.Fprintf(&rc, "\tcase %q:\n\t\tx := %s\n\t\tr.End()\n\t\treturn x\n", typeKey(v), g.readFields("r", v))
+				fmt.Fprintf(&wc, "\tcase %s:\n\t\tw.Variant(%q)\n%s\t\tw.End()\n", g.typeString(v), typeKey(v), g.writeFields("w", "x", v, "\t\t"))
+			}
+			read = fmt.Sprintf("\tswitch tag := r.Variant(); tag {\n%s\t}\n\tpanic(\"unknown variant\")\n", rc.String())
+			write = fmt.Sprintf("\tswitch x := x.(type) {\n%s\t}\n", wc.String())
+		case isOpaque(t):
+			nt := types.Unalias(t).(*types.Named)
+			switch nt.Obj().Name() {
+			case "Map":
+				key, elem := nt.TypeArgs().At(0), nt.TypeArgs().At(1)
+				g.imports[dictPath] = "dict"
+				read = fmt.Sprintf("\tn := r.Map()\n\tm := dict.New[%s, %s]()\n\tfor range n {\n\t\tk := %s\n\t\tm.Set(k, %s)\n\t}\n\tr.End()\n\treturn m\n", g.typeString(key), g.typeString(elem), g.readValue("r", key), g.readValue("r", elem))
+				write = fmt.Sprintf("\tw.Map(int(x.Len()))\n\tfor k, v := range x.All() {\n\t\t%s\n\t\t%s\n\t}\n\tw.End()\n", g.writeValue("w", "k", key), g.writeValue("w", "v", elem))
+			case "Out":
+				elem := nt.TypeArgs().At(0)
+				g.imports[msgPath] = "msg"
+				read = fmt.Sprintf("\tn := r.List()\n\to := msg.New[%s]()\n\tfor range n {\n\t\to.Send(%s)\n\t}\n\tr.End()\n\treturn o\n", g.typeString(elem), g.readValue("r", elem))
+				write = fmt.Sprintf("\tw.List(int(x.Len()))\n\tfor e := range x.Values() {\n\t\t%s\n\t}\n\tw.End()\n", g.writeValue("w", "e", elem))
+			default:
+				elem := nt.TypeArgs().At(0)
+				g.imports[listPath] = "list"
+				read = fmt.Sprintf("\tn := r.List()\n\tl := list.New[%s]()\n\tfor range n {\n\t\tl.Append(%s)\n\t}\n\tr.End()\n\treturn l\n", g.typeString(elem), g.readValue("r", elem))
+				write = fmt.Sprintf("\tw.List(int(x.Len()))\n\tfor e := range x.Values() {\n\t\t%s\n\t}\n\tw.End()\n", g.writeValue("w", "e", elem))
+			}
+		case isSlice(t):
+			elem := t.(*types.Slice).Elem()
+			read = fmt.Sprintf("\tres := make(%s, r.List())\n\tfor i := range res {\n\t\tres[i] = %s\n\t}\n\tr.End()\n\treturn res\n", ts, g.readValue("r", elem))
+			write = fmt.Sprintf("\tw.List(len(x))\n\tfor _, e := range x {\n\t\t%s\n\t}\n\tw.End()\n", g.writeValue("w", "e", elem))
+		default:
+			// a record, whose value the reader may keep, if it never changes
+			read = fmt.Sprintf("\tif v, ok := r.Record(); ok {\n\t\treturn v.(%s)\n\t}\n\tx := %s\n\tif r.End() {\n\t\tr.Keep(x)\n\t}\n\treturn x\n", ts, g.readFields("r", t))
+			write = fmt.Sprintf("\tw.Record()\n%s\tw.End()\n", g.writeFields("w", "x", t, "\t"))
+		}
+		fmt.Fprintf(&g.code, "\nfunc gostrictRead%d(r gostrict.Reader) %s {\n%s}\n", n, ts, read)
+		fmt.Fprintf(&g.code, "\nfunc gostrictWrite%d(w gostrict.Writer, x %s) {\n%s}\n", n, ts, write)
+	}
+}
+
+func isSlice(t types.Type) bool {
+	_, ok := t.(*types.Slice)
+	return ok
+}
+
+// readFields returns the composite literal of a struct, whose fields it reads in their order.
+func (g *generator) readFields(r string, t types.Type) string {
+	st := t.Underlying().(*types.Struct)
+	var fields []string
+	for i := 0; i < st.NumFields(); i++ {
+		f := st.Field(i)
+		fields = append(fields, fmt.Sprintf("%s: %s", f.Name(), g.readValue(r, f.Type())))
+	}
+	return fmt.Sprintf("%s{%s}", g.typeString(t), strings.Join(fields, ", "))
+}
+
+// writeFields returns the statements, which write the fields of the struct x in their order.
+func (g *generator) writeFields(w, x string, t types.Type, indent string) string {
+	st := t.Underlying().(*types.Struct)
+	var sb strings.Builder
+	for i := 0; i < st.NumFields(); i++ {
+		f := st.Field(i)
+		sb.WriteString(indent + g.writeValue(w, x+"."+f.Name(), f.Type()) + "\n")
+	}
+	return sb.String()
+}
+
 // writeCallback writes the function, which turns a callback into a Go function of the signature. If the engine
 // fails, the function returns zero values or the error, if a result is an error, and the instance reports the
 // error, see [Callback].
@@ -463,7 +633,31 @@ func (g *generator) writeCallback(n int, ts string, fs *types.Signature) error {
 	if len(rtypes) > 1 {
 		ret = "(" + ret + ")"
 	}
-	fmt.Fprintf(&g.code, "\nfunc gostrictFunc%d(cb gostrict.Callback) %s {\n\treturn func(%s) %s {\n", n, ts, strings.Join(params, ", "), ret)
+	fmt.Fprintf(&g.code, "\nfunc gostrictFunc%d(cb gostrict.Callback) %s {\n\tfc, fast := cb.(gostrict.FastCallback)\n\treturn func(%s) %s {\n", n, ts, strings.Join(params, ", "), ret)
+	// a fast callback passes the values without neutral values
+	if fs.Params().Len() == 0 {
+		g.code.WriteString("\t\tif fast {\n\t\t\tfc.Begin()\n\t\t\tdefer fc.End()\n")
+	} else {
+		g.code.WriteString("\t\tif fast {\n\t\t\tw := fc.Begin()\n\t\t\tdefer fc.End()\n")
+	}
+	for i := 0; i < fs.Params().Len(); i++ {
+		fmt.Fprintf(&g.code, "\t\t\t%s\n", g.writeValue("w", fmt.Sprintf("a%d", i), fs.Params().At(i).Type()))
+	}
+	var fastZeros, reads []string
+	for i := 0; i < fs.Results().Len(); i++ {
+		rt := fs.Results().At(i).Type()
+		if isError(rt) {
+			fastZeros = append(fastZeros, "err")
+		} else {
+			fastZeros = append(fastZeros, fmt.Sprintf("*new(%s)", g.typeString(rt)))
+		}
+		reads = append(reads, g.readValue("r", rt))
+	}
+	if len(reads) == 0 {
+		g.code.WriteString("\t\t\t_, _ = fc.Invoke()\n\t\t\treturn\n\t\t}\n")
+	} else {
+		fmt.Fprintf(&g.code, "\t\t\tr, err := fc.Invoke()\n\t\t\tif err != nil {\n\t\t\t\treturn %s\n\t\t\t}\n\t\t\treturn %s\n\t\t}\n", strings.Join(fastZeros, ", "), strings.Join(reads, ", "))
+	}
 	call := fmt.Sprintf("cb.Call(%s)", strings.Join(args, ", "))
 	if len(results) == 0 {
 		fmt.Fprintf(&g.code, "\t\t_, _ = %s\n\t}\n}\n", call)
