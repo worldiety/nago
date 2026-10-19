@@ -43,10 +43,12 @@ type fakeHost struct {
 	log      []string
 	denied   map[string]bool
 	maxDepth int
+	// exits are the errors of Exit by the short name of the entry point
+	exits map[string]error
 }
 
 func newFakeHost() *fakeHost {
-	return &fakeHost{data: map[string]string{}, denied: map[string]bool{"admin/wipe.Main": true}, maxDepth: 8}
+	return &fakeHost{data: map[string]string{}, denied: map[string]bool{"admin/wipe.Main": true}, maxDepth: 8, exits: map[string]error{}}
 }
 
 func short(entry string) string {
@@ -85,6 +87,7 @@ func (h *fakeHost) Exit(entry string, err error) {
 	if err != nil {
 		state = err.Error()
 	}
+	h.exits[short(entry)] = err
 	h.log = append(h.log, "exit "+short(entry)+" "+state)
 	if f.owner && err == nil {
 		maps.Copy(h.data, f.tx)
@@ -186,6 +189,8 @@ func TestWholeProgram(t *testing.T) {
 	if _, ok := h.data["invoice/c2"]; ok || h.data["customer/c2"] != "Bob" {
 		t.Fatalf("the invoice was not rolled back: %v", h.data)
 	}
+	// the aspect knows, where the entry point created its error
+	expectPos(t, h.exits["billing/invoice.Main"], wholePrefix+"billing/invoice/invoice.go", 22)
 
 	// a denied call aborts the whole call, which returns the error of the aspect, and the frames exit with it
 	_, err = run("crm/purge.Main")
@@ -193,6 +198,9 @@ func TestWholeProgram(t *testing.T) {
 		t.Fatalf("the denial was not returned: %v", err)
 	}
 	expectLog("enter crm/purge.Main", "enter admin/wipe.Main", "exit crm/purge.Main aborted")
+	if _, _, ok := gostrict.ErrorPos(h.exits["crm/purge.Main"]); ok {
+		t.Fatal("an abort has no position in the program")
+	}
 	if _, ok := h.data["purge"]; ok {
 		t.Fatalf("the aborted frame was committed: %v", h.data)
 	}

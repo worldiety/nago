@@ -259,6 +259,11 @@
 // [Bundle.Expect] checks the signature, which an application requires of a program. In goja, many bundles may
 // share one runtime, because a program of the subset can not reach the globals of JavaScript.
 //
+// An error, which the program creates with errors.New or a function of the library like text.ParseInt, keeps the
+// line of the call: goja returns it as a [ProgramError], also to [Aspect.Exit], whose file and line [ErrorPos]
+// tells, e.g. to show the failing line of a script, from the table [Bundle.Positions]. The native engine, the
+// browser, the bindings and the host create errors without a position, and errors compare only by their message.
+//
 // Floating point is not exact across engines: JavaScript rounds every operation, while Go may fuse a
 // multiplication and an addition into one instruction, e.g. on arm64, and other targets like a GPU may differ
 // more. The native performance matters more than equal bits, so floats agree only approximately, see

@@ -139,8 +139,10 @@ function $dkeysSeq(m) {
 
 const $errorString = { Error: (e) => e.s };
 
-function $errors_New(s) {
-	return $box({ s: s }, $errorString);
+// p is the index of the position in the Go source, where the program creates the error, see Bundle.Positions, or
+// undefined, e.g. in a binding of a header package
+function $errors_New(s, p) {
+	return $box({ s: s, $p: p }, $errorString);
 }
 
 // math, which behaves like Go also for the special cases
@@ -379,23 +381,23 @@ function $ftie(a, d) {
 	return tz + e + 1 + d === 0;
 }
 
-function $text_ParseInt(s) {
+function $text_ParseInt(s, p) {
 	let d = s;
 	let neg = false;
 	if (d.length > 0 && (d[0] === "+" || d[0] === "-")) {
 		neg = d[0] === "-";
 		d = d.slice(1);
 	}
-	if (d === "") return [0, $errors_New("text.ParseInt: invalid syntax: " + s)];
+	if (d === "") return [0, $errors_New("text.ParseInt: invalid syntax: " + s, p)];
 	let n = 0;
 	for (let i = 0; i < d.length; i++) {
 		const c = d.charCodeAt(i);
-		if (c < 48 || c > 57) return [0, $errors_New("text.ParseInt: invalid syntax: " + s)];
+		if (c < 48 || c > 57) return [0, $errors_New("text.ParseInt: invalid syntax: " + s, p)];
 		n = n * 10 + (c - 48);
-		if (n > 2147483648) return [0, $errors_New("text.ParseInt: value out of range: " + s)];
+		if (n > 2147483648) return [0, $errors_New("text.ParseInt: value out of range: " + s, p)];
 	}
 	if (neg) n = 0 - n;
-	if (n > 2147483647) return [0, $errors_New("text.ParseInt: value out of range: " + s)];
+	if (n > 2147483647) return [0, $errors_New("text.ParseInt: value out of range: " + s, p)];
 	return [n | 0, null];
 }
 

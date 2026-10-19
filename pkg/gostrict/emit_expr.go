@@ -638,7 +638,15 @@ func (c *fnCtx) funcCall(fn *types.Func, id *ast.Ident, call *ast.CallExpr, sig 
 		return c.e.externName(fn, targs, src, id.Pos()) + "(" + c.args(call, sig) + ")"
 	}
 
-	return c.funcRef(fn, targs, id.Pos()) + "(" + c.argsFor(fn, call, sig) + ")"
+	args := c.argsFor(fn, call, sig)
+	if n := sig.Results().Len(); n > 0 && isError(sig.Results().At(n-1).Type()) && (p == "errors" || p == textPath || p == numPath) {
+		// a function of the runtime, which creates an error, e.g. errors.New, keeps the position of the call in it
+		if args != "" {
+			args += ", "
+		}
+		args += c.e.errorPos(call.Pos())
+	}
+	return c.funcRef(fn, targs, id.Pos()) + "(" + args + ")"
 }
 
 func (c *fnCtx) listFunc(name string, targs []types.Type, call *ast.CallExpr, sig *types.Signature) string {

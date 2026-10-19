@@ -533,9 +533,16 @@ func (c converter) toGo(v goja.Value, t gostrict.Type) (any, error) {
 		if !ok {
 			return nil, errors.New("value is not an error")
 		}
-		msg, err := errorFn(goja.Undefined(), box.Get("v"))
+		val := box.Get("v")
+		msg, err := errorFn(goja.Undefined(), val)
 		if err != nil {
 			return nil, err
+		}
+		// errors.New keeps the index of its position, an error type of the program has none
+		if obj, ok := val.(*goja.Object); ok {
+			if p := obj.Get("$p"); p != nil && !goja.IsUndefined(p) && !goja.IsNull(p) {
+				return c.b.ProgramError(msg.String(), int(p.ToInteger())), nil
+			}
 		}
 		return errors.New(msg.String()), nil
 	}

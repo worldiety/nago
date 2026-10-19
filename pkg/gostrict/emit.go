@@ -47,6 +47,9 @@ type Bundle struct {
 	// States maps the full name of each state of the exports to the hash of its structure, which is empty, if a new
 	// version of the program can not take it over, see [Bundle.CanTakeOver].
 	States map[string]string
+	// Positions are the positions in the Go source, where the program creates errors. An error of the program
+	// refers to one by its index, which an engine resolves with [Bundle.ProgramError].
+	Positions []Position
 }
 
 // Extern is a function of a header package.
@@ -161,6 +164,8 @@ type emitter struct {
 	readonlyCache map[*types.Func]readonlyInfo
 	// positions are the positions of the marks of the source map, see mark
 	positions []token.Pos
+	// errPositions are the positions, where the program creates errors, see errorPos
+	errPositions []token.Pos
 	// mut tells, which struct types the program never changes, so that their values need no copy
 	mut *mutation
 	// hvars are the bindings of the variables of header packages, see headerVars
@@ -392,7 +397,7 @@ func (e *emitter) emit() (*Bundle, Diagnostics) {
 		// the entry points of a whole program are called by name and handle no messages of a browser
 		hs = map[string]string{}
 	}
-	return &Bundle{JS: js, SourceMap: sourceMap, Hash: hex.EncodeToString(sum[:16]), Exports: exports, Records: bnd.records, Unions: bnd.unions, Handlers: hs, Externs: e.extern, States: states}, nil
+	return &Bundle{JS: js, SourceMap: sourceMap, Hash: hex.EncodeToString(sum[:16]), Exports: exports, Records: bnd.records, Unions: bnd.unions, Handlers: hs, Externs: e.extern, States: states, Positions: e.errorPositions()}, nil
 }
 
 // frozen tells, whether the values of the record t never change: its type is immutable and its fields hold only
