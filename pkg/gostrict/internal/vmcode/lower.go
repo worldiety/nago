@@ -118,11 +118,13 @@ func (c *compiler) compile() {
 			visit(imp)
 		}
 	}
-	if c.src.Whole {
-		c.fail(token.NoPos, "whole programs are not supported yet")
-	}
 	for name, fn := range c.src.Exports {
 		visit(fn.Pkg())
+		if _, ok := c.src.Entries[fn]; ok {
+			// the host calls an entry point within the aspect
+			c.out.exports[name] = c.hookFor(fn)
+			continue
+		}
 		c.out.exports[name] = c.funcFor(fn, nil, nil)
 	}
 
@@ -181,6 +183,11 @@ func (c *compiler) compile() {
 		// the program keeps only the bytecode
 		f.body = nil
 	}
+	for i, e := range c.out.entries {
+		h := e.hook
+		h.frame = e.inner.frame.max(h.params.l).max(h.results.l)
+		h.code = []instr{{op: opEntry, a: int32(i)}, {op: opRet}}
+	}
 	c.plan()
 	for _, t := range c.types {
 		t.t, t.sig = nil, nil
@@ -203,6 +210,17 @@ func (c *compiler) plan() {
 				if tf.name == f {
 					ti.rec[i], ti.recFields[i] = j, tf
 				}
+			}
+		}
+	}
+	// the other structs cross the boundary with their fields in their order, like the generated code converts them,
+	// e.g. the value of a variable of a header package
+	for _, ti := range c.types {
+		if (ti.kind == kStruct || ti.kind == kShared) && ti.rec == nil {
+			ti.rec = make([]int, len(ti.fields))
+			ti.recFields = make([]field, len(ti.fields))
+			for i, f := range ti.fields {
+				ti.rec[i], ti.recFields[i] = i, f
 			}
 		}
 	}
@@ -271,6 +289,7 @@ func (c *compiler) funcFor(fn *types.Func, recvArgs, targs []types.Type) *Func {
 	}
 	l := c.newFnLower(nil, d.pkg.Info)
 	l.subst = subst
+	l.pkg = d.pkg.Types
 	f := &Func{name: key, params: l.paramTuple(sig.Recv(), sig), results: l.tupleOf(sig.Results())}
 	l.f = f
 	f.closure = &Closure{fn: f}
@@ -332,6 +351,8 @@ type fnLower struct {
 	labels map[string]stmt
 	// named are the named results
 	named []*local
+	// pkg is the package of the function, whose calls of entry points of other packages go through the aspect
+	pkg *types.Package
 	// parent is the function, which encloses a function literal, whose variables it captures
 	parent *fnLower
 	// caps are the captured variables of a function literal
@@ -1074,7 +1095,7 @@ func (l *fnLower) ident(id *ast.Ident) expr {
 				targs = append(targs, l.sub(t))
 			}
 		}
-		return &eFunc{t: l.typeOf(id), fn: l.c.funcFor(obj, nil, targs)}
+		return &eFunc{t: l.typeOf(id), fn: l.funcOf(obj, nil, targs)}
 	}
 	l.fail(id.Pos(), "identifier %s is not supported", id.Name)
 	return nil
@@ -1417,7 +1438,15 @@ func (l *fnLower) funcCall(fn *types.Func, recvArgs, targs []types.Type, call *a
 		}
 		return &eHost{t: res, ext: l.c.extern(key, recv, sig, call.Pos()), args: l.args(call, sig, recv)}
 	}
-	return &eCall{t: res, fn: l.c.funcFor(fn, recvArgs, targs), args: l.args(call, sig, recv)}
+	return &eCall{t: res, fn: l.funcOf(fn, recvArgs, targs), args: l.args(call, sig, recv)}
+}
+
+// funcOf returns the function, which l calls for fn: the hook of an entry point of another package, see hookFor.
+func (l *fnLower) funcOf(fn *types.Func, recvArgs, targs []types.Type) *Func {
+	if _, ok := l.c.src.Entries[fn]; ok && fn.Pkg() != l.pkg {
+		return l.c.hookFor(fn)
+	}
+	return l.c.funcFor(fn, recvArgs, targs)
 }
 
 // hostTypeArgs names the type arguments of an instance of a function of a header package like the bundle: a type

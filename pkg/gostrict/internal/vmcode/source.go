@@ -20,8 +20,9 @@ type Source struct {
 	Packages []*Package
 	// Exports are the functions, which the host calls, by their name at the boundary.
 	Exports map[string]*types.Func
-	// Whole is set for a whole program, whose entry points the aspect of the host surrounds.
-	Whole bool
+	// Entries are the entry points of a whole program by their full name, which the aspect of the host surrounds,
+	// when the host or another package calls them, see gostrict.Aspect.
+	Entries map[*types.Func]string
 	// Hosted are the full names of the functions of header packages, which the host implements, e.g.
 	// "example.com/ui.Text" or "example.com/ui.TText.Font" for a method.
 	Hosted map[string]bool
