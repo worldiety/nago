@@ -100,9 +100,10 @@ func TestCanvas(t *testing.T) {
 	}
 
 	want := run(nativeEngine("draw"), nil)
-	got := run(goEngine, canvas.Host())
-	if strings.Join(got, "\n") != strings.Join(want, "\n") {
-		t.Fatalf("the commands differ\nnative:\n%s\ngoja:\n%s", strings.Join(want, "\n"), strings.Join(got, "\n"))
+	for name, e := range map[string]gostrict.Engine{"goja": goEngine, "vm": vmEngine} {
+		if got := run(e, canvas.Host()); strings.Join(got, "\n") != strings.Join(want, "\n") {
+			t.Fatalf("the commands differ\nnative:\n%s\n%s:\n%s", strings.Join(want, "\n"), name, strings.Join(got, "\n"))
+		}
 	}
 
 	bound := runBindings(t, b)

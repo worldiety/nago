@@ -8,6 +8,7 @@
 package vmcode
 
 import (
+	"errors"
 	"fmt"
 	"math"
 
@@ -31,8 +32,12 @@ func (m *Machine) neutral(t *tinfo, n []uint64, s []string, r []any) any {
 	case kStr:
 		return s[0]
 	case kError:
-		if r[0] == nil {
+		switch v := r[0].(type) {
+		case nil:
 			return nil
+		case *object:
+			// an error of the program crosses the boundary with its message
+			return errors.New(m.errorMessage(v))
 		}
 		return r[0].(error)
 	case kHandle:
@@ -42,7 +47,7 @@ func (m *Machine) neutral(t *tinfo, n []uint64, s []string, r []any) any {
 	case kPtr:
 		return m.host.Token(t.elem.name, r[0])
 	case kFunc:
-		return m.host.Callback(r[0].(*closure).fn)
+		return m.host.Callback(r[0].(*Closure))
 	case kList, kOut:
 		return m.neutralList(t.elem, r[0].(*list))
 	case kMap:
@@ -193,7 +198,8 @@ func (m *Machine) writeFields(fs []any, t *tinfo, n []uint64, s []string, r []an
 
 // CheckArgs reports, whether the neutral values fit the parameters of the function, e.g. of a callback, which the
 // host calls with values of its own.
-func (f *Func) CheckArgs(args []any) error {
+func (c *Closure) CheckArgs(args []any) error {
+	f := c.fn
 	if len(args) != len(f.params.elems) {
 		return fmt.Errorf("%s needs %d values, got %d", f.name, len(f.params.elems), len(args))
 	}

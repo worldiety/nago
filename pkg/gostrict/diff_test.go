@@ -24,6 +24,7 @@ import (
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/core"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/draw"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/errs"
+	"go.wdy.de/nago/pkg/gostrict/internal/examples/funcs"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/generics"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/host"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/hostuse"
@@ -58,6 +59,7 @@ var exports = map[string]gostrict.Funcs{
 	"core":       native.Reflect(map[string]any{"Control": core.Control, "Equal": core.Equal, "Lists": core.Lists, "Maps": core.Maps, "Options": core.Options, "Results": core.Results}),
 	"draw":       native.Reflect(map[string]any{"Frame": draw.Frame, "New": draw.New}),
 	"errs":       native.Reflect(map[string]any{"Average": errs.Average, "Run": errs.Run}),
+	"funcs":      native.Reflect(map[string]any{"Branches": funcs.Branches, "Captures": funcs.Captures, "Methods": funcs.Methods}),
 	"generics":   native.Reflect(map[string]any{"Run": generics.Run, "SumFloats": generics.SumFloats}),
 	"hostuse":    native.Reflect(map[string]any{"Callbacks": hostuse.Callbacks, "Records": hostuse.Records, "Run": hostuse.Run}),
 	"ints":       native.Reflect(map[string]any{"Bits": ints.Bits, "Conv": ints.Conv, "Div": ints.Div, "DivU": ints.DivU, "Hash": ints.Hash, "Wrap": ints.Wrap, "Xorshift": ints.Xorshift}),
@@ -77,13 +79,11 @@ var exports = map[string]gostrict.Funcs{
 var vmEngine = &vm.Engine{}
 
 // vmPending are the examples, which the vm can not compile yet, with the reason.
-var vmPending = map[string]string{
-	"alias":    "function literals",
-	"generics": "function literals and generic functions",
-	"hostuse":  "function literals",
-	"iters":    "iterators",
-	"values":   "methods of interfaces",
-}
+var vmPending = map[string]string{}
+
+// vmHosts are the functions of the header packages of the examples, which the vm needs, while goja uses their
+// bindings.
+var vmHosts = map[string]gostrict.Funcs{"hostuse": host.Host(), "widgetsuse": widgets.Host()}
 
 // checkVM compares the result of the vm with the native one, unless the example is pending.
 func checkVM(t *testing.T, b *gostrict.Bundle, pkg string, host gostrict.Funcs, name string, args []any, want []any) {
@@ -97,6 +97,10 @@ func checkVM(t *testing.T, b *gostrict.Bundle, pkg string, host gostrict.Funcs, 
 	}
 	if why, ok := vmPending[pkg]; ok {
 		t.Errorf("%s is pending (%s), but compiles for the vm", pkg, why)
+	}
+	if host == nil {
+		// the vm needs the functions of header packages in Go
+		host = vmHosts[pkg]
 	}
 	got := call(t, vmEngine, b, host, name, args)
 	if !gostrict.CloseValues(want, got, gojaengine.Tolerance) {
@@ -113,6 +117,11 @@ func nativeEngine(pkg string) native.Engine {
 // compares the results, floats up to the tolerance.
 func TestDifferential(t *testing.T) {
 	cases := []diffCase{
+		{"funcs", "Captures", []any{int32(4)}},
+		{"funcs", "Branches", []any{int32(3)}},
+		{"funcs", "Branches", []any{int32(6)}},
+		{"funcs", "Methods", []any{int32(2)}},
+		{"funcs", "Methods", []any{int32(6)}},
 		{"core", "Equal", []any{1.5, 2.5}},
 		{"core", "Equal", []any{2.0, 2.0}},
 		{"core", "Equal", []any{math.NaN(), 1.0}},
@@ -255,6 +264,14 @@ func TestHost(t *testing.T) {
 	}
 
 	// the callbacks are called during the call and the kept one later, between two calls
+	for _, e := range []gostrict.Engine{goEngine, vmEngine} {
+		testKept(t, e, b, h)
+	}
+}
+
+// testKept checks the callbacks, which a host function keeps, in an engine: they are called during the call and
+// later, between two calls, and report an error once.
+func testKept(t *testing.T, e gostrict.Engine, b *gostrict.Bundle, h gostrict.Funcs) {
 	var kept gostrict.Callback
 	keep := "go.wdy.de/nago/pkg/gostrict/internal/examples/host.Keep"
 	withKeep := gostrict.Funcs{}
@@ -265,7 +282,7 @@ func TestHost(t *testing.T) {
 		kept = args[0].(gostrict.Callback)
 		return h[keep](args)
 	}
-	in, err := goEngine.Load(context.Background(), b, withKeep)
+	in, err := e.Load(context.Background(), b, withKeep)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -301,6 +318,11 @@ func TestHost(t *testing.T) {
 		t.Fatalf("the error of the callback was reported twice: %v", err)
 	}
 
+}
+
+// TestHostBindings checks the bindings of the example host.
+func TestHostBindings(t *testing.T) {
+	b := compile(t, "internal/examples/hostuse")
 	mismatches, err := gojaengine.CheckBindings(context.Background(), b, host.Host(), 200)
 	if err != nil {
 		t.Fatal(err)
@@ -318,8 +340,9 @@ func TestWidgets(t *testing.T) {
 		want := call(t, nativeEngine("widgetsuse"), b, nil, "Run", []any{n})
 		viaJS := call(t, goEngine, b, nil, "Run", []any{n})
 		viaHost := call(t, goEngine, b, widgets.Host(), "Run", []any{n})
-		if !gostrict.SameValues(want, viaJS) || !gostrict.SameValues(want, viaHost) {
-			t.Fatalf("the views differ\n  native: %v\n  js:     %v\n  host:   %v", want, viaJS, viaHost)
+		viaVM := call(t, vmEngine, b, widgets.Host(), "Run", []any{n})
+		if !gostrict.SameValues(want, viaJS) || !gostrict.SameValues(want, viaHost) || !gostrict.SameValues(want, viaVM) {
+			t.Fatalf("the views differ\n  native: %v\n  js:     %v\n  host:   %v\n  vm:     %v", want, viaJS, viaHost, viaVM)
 		}
 		t.Log(want)
 	}

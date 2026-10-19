@@ -199,7 +199,7 @@ func (g *gen) ret(s *sReturn) {
 // slots of a variable, which it reads.
 func hazard(x expr, res *tinfo) bool {
 	switch x := x.(type) {
-	case *eConst, *eLocal, *eGlobal, *eCall, *eNative, *eHost, *eCallValue, *eBinary, *eUnary, *eFunc, *eBox, *eNew, *eListGet:
+	case *eConst, *eLocal, *eGlobal, *eCall, *eNative, *eHost, *eCallValue, *eBinary, *eUnary, *eFunc, *eClosure, *eBox, *eNew, *eListGet, *eCallIface, *eTypeIs, *eView:
 		return false
 	case *eLoad:
 		return x.t.l.size() > 1
@@ -330,6 +330,19 @@ func walk(x expr, f func(expr)) {
 		}
 	case *eNew:
 		walk(x.x, f)
+	case *eCallIface:
+		walk(x.x, f)
+		for _, a := range x.args {
+			walk(a, f)
+		}
+	case *eTypeIs:
+		walk(x.x, f)
+	case *eView:
+		walk(x.p, f)
+	case *eClosure:
+		for _, a := range x.caps {
+			walk(a, f)
+		}
 	case *eBox:
 		walk(x.x, f)
 	case *eListOf:
@@ -377,7 +390,7 @@ func (g *gen) expr(x expr) layout {
 		base := g.call(e)
 		g.top = base.add(x.typ().l).max(g.top)
 		return base
-	case *eCall, *eHost, *eCallValue:
+	case *eCall, *eHost, *eCallValue, *eCallIface:
 		base := g.call(e)
 		g.top = base.add(x.typ().l).max(g.top)
 		return base
@@ -420,6 +433,15 @@ func (g *gen) exprTo(x expr, dst layout) {
 	case *eTupleAt:
 		v := g.expr(e.x)
 		g.move(dst, v.add(e.x.typ().offs[e.i]), e.t.l)
+	case *eCallIface:
+		base := g.call(e)
+		g.move(dst, base, x.typ().l)
+	case *eTypeIs:
+		v := g.expr(e.x)
+		g.emit(opTypeIs, dst.n, v.r, g.c.typeIndex(e.v))
+	case *eView:
+		p := g.expr(e.p)
+		g.emit(opView, g.aux(aux{t: e.t.elem, dst: dst, src: p, off: e.off}), 0, 0)
 	case *eLoad:
 		p := g.expr(e.p)
 		l := e.t.l
@@ -495,6 +517,13 @@ func (g *gen) exprTo(x expr, dst layout) {
 		g.move(dst, obj, e.t.l)
 	case *eFunc:
 		g.emit(opLdkR, dst.r, g.c.rconst(e.fn.closure), 0)
+	case *eClosure:
+		site := closureSite{fn: e.fn, dst: dst.r}
+		for _, c := range e.caps {
+			site.caps = append(site.caps, g.expr(c))
+		}
+		g.f.closures = append(g.f.closures, site)
+		g.emit(opClosure, int32(len(g.f.closures)-1), 0, 0)
 	case *eBox:
 		v := g.expr(e.x)
 		g.emit(opBox, g.aux(aux{t: e.v, dst: dst, src: v}), 0, 0)
@@ -632,6 +661,28 @@ func (g *gen) call(x expr) layout {
 			ps = append(ps, a.typ())
 		}
 		params = tuple(ps...)
+	case *eCallIface:
+		// the arguments are evaluated into temporaries, the machine copies them behind the receiver
+		fnReg = g.expr(e.x)
+		var ps []*tinfo
+		for _, a := range e.args {
+			ps = append(ps, a.typ())
+		}
+		pt := tuple(ps...)
+		at := g.alloc(pt.l)
+		for i, a := range e.args {
+			off := layout{}
+			if pt.kind == kTuple {
+				off = pt.offs[i]
+			}
+			g.exprTo(a, at.add(off))
+		}
+		site.method, site.args, site.argsL = e.method, at, pt.l
+		site.base = g.top
+		g.alloc(x.typ().l)
+		g.f.calls = append(g.f.calls, site)
+		g.emit(opCallIface, int32(len(g.f.calls)-1), fnReg.r, 0)
+		return site.base
 	}
 	base := g.top
 	site.base = base

@@ -33,6 +33,13 @@ type compiler struct {
 	nk      map[uint64]int32
 	sk      map[string]int32
 	typeIdx map[*tinfo]int32
+	tctx    *types.Context
+	// lits counts the function literals for their names
+	lits int
+	// hostInits initialize the variables of header packages
+	hostInits []stmt
+	// branches counts the codes of the branches out of the bodies of ranges
+	branches int32
 }
 
 type funcDecl struct {
@@ -71,6 +78,7 @@ func Compile(src *Source) (p *Program, err error) {
 		nk:      map[uint64]int32{},
 		sk:      map[string]int32{},
 		typeIdx: map[*tinfo]int32{},
+		tctx:    types.NewContext(),
 	}
 	defer func() {
 		if r := recover(); r != nil {
@@ -110,9 +118,12 @@ func (c *compiler) compile() {
 			visit(imp)
 		}
 	}
+	if c.src.Whole {
+		c.fail(token.NoPos, "whole programs are not supported yet")
+	}
 	for name, fn := range c.src.Exports {
 		visit(fn.Pkg())
-		c.out.exports[name] = c.funcFor(fn, nil)
+		c.out.exports[name] = c.funcFor(fn, nil, nil)
 	}
 
 	// the package variables in the order of their initialization
@@ -142,6 +153,18 @@ func (c *compiler) compile() {
 	init.locals = l.frame
 	c.out.init = init
 
+	// the variants of the unions of the boundary, which the host creates, need their methods
+	for name, u := range c.src.Unions {
+		ut, ok := c.types[name]
+		if !ok {
+			continue
+		}
+		for _, v := range u.Variants {
+			if vt, ok := c.types[v]; ok {
+				c.methodsFor(vt, ut.t, token.NoPos)
+			}
+		}
+	}
 	for len(c.queue) > 0 {
 		next := c.queue[0]
 		c.queue = c.queue[1:]
@@ -150,6 +173,7 @@ func (c *compiler) compile() {
 	for _, f := range c.later {
 		f()
 	}
+	init.body = append(c.hostInits, init.body...)
 
 	for _, f := range append(c.out.funcs, init) {
 		g := &gen{c: c, f: f}
@@ -193,6 +217,22 @@ func (c *compiler) plan() {
 	}
 }
 
+// hostVar initializes the global of a variable of a header package by the function of the host, which returns its
+// value, before the variables of the program.
+func (c *compiler) hostVar(v *types.Var, g *global, pos token.Pos) {
+	key := v.Pkg().Path() + "." + v.Name()
+	if _, ok := c.externs[key]; ok {
+		return
+	}
+	if !c.src.HostVars[key] {
+		c.fail(pos, "%s is no variable of a header package", key)
+	}
+	x := &extern{name: key, idx: len(c.out.externs), results: g.t, variable: true}
+	c.externs[key] = x
+	c.out.externs = append(c.out.externs, x)
+	c.hostInits = append(c.hostInits, &sAssign{lhs: []lval{&lGlobal{t: g.t, off: g.off}}, rhs: []expr{&eHost{t: g.t, ext: x}}})
+}
+
 // global returns the slots of a package variable.
 func (c *compiler) global(v *types.Var) *global {
 	if g, ok := c.globals[v]; ok {
@@ -205,66 +245,65 @@ func (c *compiler) global(v *types.Var) *global {
 	return g
 }
 
-// funcFor returns the function of fn, a function or method of the program, and queues its compilation.
-func (c *compiler) funcFor(fn *types.Func, targs []types.Type) *Func {
-	key := fn.FullName()
-	if len(targs) > 0 {
-		c.fail(fn.Pos(), "generic functions are not supported yet")
+// funcFor returns the function of fn, a function or method of the program, for the type arguments of its receiver
+// and its own, and queues its compilation. Each combination of type arguments is a function of its own.
+func (c *compiler) funcFor(fn *types.Func, recvArgs, targs []types.Type) *Func {
+	origin := fn.Origin()
+	key := origin.FullName()
+	if len(recvArgs)+len(targs) > 0 {
+		key += "[" + typeListKey(recvArgs) + ";" + typeListKey(targs) + "]"
 	}
 	if f, ok := c.funcs[key]; ok {
 		return f
 	}
-	d, ok := c.decls[fn]
+	d, ok := c.decls[origin]
 	if !ok || d.decl.Body == nil {
 		c.fail(fn.Pos(), "%s has no body", key)
 	}
-	sig := fn.Signature()
-	var params []*tinfo
-	if sig.Recv() != nil {
-		params = append(params, c.typeOf(sig.Recv().Type()))
+	sig := origin.Signature()
+	subst := map[*types.TypeParam]types.Type{}
+	for i := 0; i < sig.RecvTypeParams().Len() && i < len(recvArgs); i++ {
+		subst[sig.RecvTypeParams().At(i)] = recvArgs[i]
 	}
-	for v := range sig.Params().Variables() {
-		params = append(params, c.typeOf(v.Type()))
+	for i := 0; i < sig.TypeParams().Len() && i < len(targs); i++ {
+		subst[sig.TypeParams().At(i)] = targs[i]
 	}
-	f := &Func{name: key, params: tuple(params...), results: c.tupleOf(sig.Results())}
-	if f.params.kind != kTuple {
-		f.params = &tinfo{kind: kTuple, elems: []*tinfo{f.params}, offs: []layout{{}}, l: f.params.l}
-	}
-	f.closure = &closure{fn: f}
+	l := c.newFnLower(nil, d.pkg.Info)
+	l.subst = subst
+	f := &Func{name: key, params: l.paramTuple(sig.Recv(), sig), results: l.tupleOf(sig.Results())}
+	l.f = f
+	f.closure = &Closure{fn: f}
 	c.funcs[key] = f
 	c.out.funcs = append(c.out.funcs, f)
 	c.queue = append(c.queue, func() {
-		l := c.newFnLower(f, d.pkg.Info)
 		decl := d.decl
+		l.cells = cellsOf(d.pkg.Info, decl.Body)
+		addressed(d.pkg.Info, decl.Body, l.cells)
 		var names []*ast.Ident
 		if decl.Recv != nil {
 			names = append(names, fieldNames(decl.Recv)...)
 		}
 		names = append(names, fieldNames(decl.Type.Params)...)
 		for i, id := range names {
-			v := l.newLocal(id.Name, f.params.elems[i])
-			if obj := d.pkg.Info.Defs[id]; obj != nil {
-				l.vars[obj] = v
-			}
+			l.param(d.pkg.Info.Defs[id], id.Name, f.params.elems[i])
 		}
-		if decl.Type.Results != nil {
-			// named results are variables with their zero values, which a bare return returns
-			for _, fld := range decl.Type.Results.List {
-				for _, id := range fld.Names {
-					obj := d.pkg.Info.Defs[id]
-					t := c.typeOf(obj.Type())
-					v := l.newLocal(id.Name, t)
-					l.vars[obj] = v
-					l.named = append(l.named, v)
-					l.emit(&sAssign{lhs: []lval{&lLocal{t: t, v: v}}, rhs: []expr{c.zeroOrNil(t)}})
-				}
-			}
-		}
+		l.namedResults(decl.Type.Results)
 		l.stmts(decl.Body.List)
-		f.body = l.body
+		f.body = append(l.prologue, l.body...)
 		f.locals = l.frame
 	})
 	return f
+}
+
+func typeListKey(ts []types.Type) string {
+	var s string
+	for i, t := range ts {
+		if i > 0 {
+			s += ","
+		}
+		s += typeKey(t)
+	}
+	return s
 }
 
 // fieldNames returns the names of the parameters, with a placeholder for each unnamed one.
@@ -292,6 +331,22 @@ type fnLower struct {
 	labels map[string]stmt
 	// named are the named results
 	named []*local
+	// parent is the function, which encloses a function literal, whose variables it captures
+	parent *fnLower
+	// caps are the captured variables of a function literal
+	caps []capture
+	// subst maps the type parameters to the type arguments of the instance
+	subst map[*types.TypeParam]types.Type
+	// cells are the variables, which live in cells, see cellsOf
+	cells map[types.Object]bool
+	// rng is set for the body of a range over an iterator, see rangeFunc
+	rng *rangeCtx
+	// prologue initializes the cells of the ranges over iterators at the beginning of the function
+	prologue []stmt
+	// rr, rb and rv are the cells of a return and a branch out of the body of a range and of the results
+	rr, rb    *types.Var
+	rv        []*types.Var
+	namedObjs []types.Object
 	// breaks and conts are the innermost targets of break and continue
 	breaks []stmt
 	conts  []*sLoop
@@ -312,7 +367,7 @@ func (l *fnLower) fail(pos token.Pos, format string, args ...any) {
 }
 
 func (l *fnLower) typeOf(x ast.Expr) *tinfo {
-	return l.c.typeOf(l.info.TypeOf(x))
+	return l.ty(l.info.TypeOf(x))
 }
 
 func (l *fnLower) emit(s stmt) {
@@ -372,6 +427,8 @@ func (l *fnLower) stmt(s ast.Stmt, label string) {
 		l.rangeStmt(s, label)
 	case *ast.SwitchStmt:
 		l.switchStmt(s, label)
+	case *ast.TypeSwitchStmt:
+		l.typeSwitch(s, label)
 	case *ast.ReturnStmt:
 		l.returnStmt(s)
 	case *ast.BranchStmt:
@@ -387,22 +444,26 @@ func (l *fnLower) stmt(s ast.Stmt, label string) {
 // define declares the variables with their values or zero values.
 func (l *fnLower) define(names []*ast.Ident, values []ast.Expr, pos token.Pos) {
 	var lhs []lval
+	var cells []*local
 	for _, id := range names {
 		obj := l.info.Defs[id]
-		t := l.c.typeOf(obj.Type())
+		t := l.ty(obj.Type())
 		if id.Name == "_" {
 			lhs = append(lhs, &lDiscard{t: t})
 			continue
 		}
-		v := l.newLocal(id.Name, t)
-		l.vars[obj] = v
-		lhs = append(lhs, &lLocal{t: t, v: v})
+		v, lv := l.declare(obj, id.Name, t)
+		if v.cell != nil {
+			cells = append(cells, v)
+		}
+		lhs = append(lhs, lv)
 	}
+	defer l.boxCells(cells)
 	var rhs []expr
 	switch {
 	case len(values) == 0:
 		for _, lv := range lhs {
-			rhs = append(rhs, l.c.zero(lv.ltyp(), pos))
+			rhs = append(rhs, l.c.zeroOrNil(lv.ltyp()))
 		}
 	case len(values) == 1 && len(names) > 1:
 		rhs = []expr{l.expr(values[0])}
@@ -417,6 +478,7 @@ func (l *fnLower) define(names []*ast.Ident, values []ast.Expr, pos token.Pos) {
 func (l *fnLower) assign(s *ast.AssignStmt) {
 	if s.Tok == token.DEFINE {
 		var lhs []lval
+		var cells []*local
 		for _, x := range s.Lhs {
 			id := x.(*ast.Ident)
 			if id.Name == "_" {
@@ -424,15 +486,17 @@ func (l *fnLower) assign(s *ast.AssignStmt) {
 				continue
 			}
 			if obj := l.info.Defs[id]; obj != nil {
-				t := l.c.typeOf(obj.Type())
-				v := l.newLocal(id.Name, t)
-				l.vars[obj] = v
-				lhs = append(lhs, &lLocal{t: t, v: v})
+				v, lv := l.declare(obj, id.Name, l.ty(obj.Type()))
+				if v.cell != nil {
+					cells = append(cells, v)
+				}
+				lhs = append(lhs, lv)
 				continue
 			}
 			lhs = append(lhs, l.lvalue(x, false))
 		}
 		l.assignValues(lhs, s.Rhs)
+		l.boxCells(cells)
 		return
 	}
 	if s.Tok != token.ASSIGN {
@@ -493,8 +557,8 @@ func (l *fnLower) lvalue(x ast.Expr, twice bool) lval {
 		if obj == nil {
 			obj = l.info.Defs[x]
 		}
-		if v, ok := l.vars[obj]; ok {
-			return &lLocal{t: v.t, v: v}
+		if v, ok := l.lookup(obj); ok {
+			return varLval(v)
 		}
 		l.fail(x.Pos(), "assignment to %s is not supported", x.Name)
 	case *ast.SelectorExpr:
@@ -591,19 +655,35 @@ func (l *fnLower) forStmt(s *ast.ForStmt, label string) {
 	if s.Init != nil {
 		l.stmt(s.Init, "")
 	}
+	// each iteration has its own variables of the init statement, which the next one copies before the post statement
+	var cells []*local
+	if init, ok := s.Init.(*ast.AssignStmt); ok && init.Tok == token.DEFINE {
+		for _, x := range init.Lhs {
+			if v, ok := l.vars[l.info.Defs[x.(*ast.Ident)]]; ok && v.cell != nil {
+				cells = append(cells, v)
+			}
+		}
+	}
 	loop := &sLoop{pos: s.Pos()}
 	if s.Cond != nil {
 		loop.cond = l.expr(s.Cond)
 	}
 	l.loop(label, loop, func() {
 		loop.body = l.block(s.Body.List)
+		for _, v := range cells {
+			loop.post = append(loop.post, l.initVar(v, varExpr(v)))
+		}
 		if s.Post != nil {
-			loop.post = l.block([]ast.Stmt{s.Post})
+			loop.post = append(loop.post, l.block([]ast.Stmt{s.Post})...)
 		}
 	})
 }
 
 func (l *fnLower) rangeStmt(s *ast.RangeStmt, label string) {
+	if rangeOverFunc(l.info, s) {
+		l.rangeFunc(s, label)
+		return
+	}
 	xt := l.typeOf(s.X)
 	define := s.Tok == token.DEFINE
 	bind := func(x ast.Expr, val expr) {
@@ -613,18 +693,15 @@ func (l *fnLower) rangeStmt(s *ast.RangeStmt, label string) {
 		if id, ok := x.(*ast.Ident); ok && id.Name == "_" {
 			return
 		}
-		var lv lval
 		if define {
 			obj := l.info.Defs[x.(*ast.Ident)]
-			v := l.newLocal(obj.Name(), val.typ())
-			l.vars[obj] = v
-			lv = &lLocal{t: v.t, v: v}
-		} else {
-			lv = l.lvalue(x, false)
+			v := l.newVar(obj, obj.Name(), val.typ())
+			l.emit(l.initVar(v, val))
+			return
 		}
-		l.emit(&sAssign{lhs: []lval{lv}, rhs: []expr{val}})
+		l.emit(&sAssign{lhs: []lval{l.lvalue(x, false)}, rhs: []expr{val}})
 	}
-	i32 := l.c.typeOf(types.Typ[types.Int32])
+	i32 := l.ty(types.Typ[types.Int32])
 	counter := func() *local {
 		i := l.newLocal("$i", i32)
 		l.emit(&sAssign{lhs: []lval{&lLocal{t: i32, v: i}}, rhs: []expr{&eConst{t: i32}}})
@@ -697,7 +774,7 @@ func (l *fnLower) rangeStmt(s *ast.RangeStmt, label string) {
 
 // rangeMap ranges over the keys, which a map has, when the loop starts, and skips the deleted ones, like std/dict.
 func (l *fnLower) rangeMap(s *ast.RangeStmt, label string, se *ast.SelectorExpr, mt *tinfo, bind func(ast.Expr, expr), counter func() *local, inc func(*local) []stmt) {
-	i32 := l.c.typeOf(types.Typ[types.Int32])
+	i32 := l.ty(types.Typ[types.Int32])
 	targs := []*tinfo{mt.key, mt.elem}
 	mv := l.newLocal("$m", mt)
 	l.emit(&sAssign{lhs: []lval{&lLocal{t: mt, v: mv}}, rhs: []expr{l.expr(se.X)}})
@@ -799,11 +876,15 @@ func (l *fnLower) switchStmt(s *ast.SwitchStmt, label string) {
 }
 
 func (l *fnLower) returnStmt(s *ast.ReturnStmt) {
+	if l.rng != nil {
+		l.rangeReturn(s)
+		return
+	}
 	res := l.f.results
 	if len(s.Results) == 0 && len(l.named) > 0 {
 		var vals []expr
 		for _, v := range l.named {
-			vals = append(vals, &eLocal{t: v.t, v: v})
+			vals = append(vals, varExpr(v))
 		}
 		l.emit(&sReturn{vals: vals})
 		return
@@ -824,22 +905,14 @@ func (l *fnLower) returnStmt(s *ast.ReturnStmt) {
 }
 
 func (l *fnLower) branch(s *ast.BranchStmt) {
-	switch s.Tok {
-	case token.BREAK:
-		if s.Label != nil {
-			l.emit(&sBreak{target: l.labels[s.Label.Name]})
-			return
-		}
-		l.emit(&sBreak{target: l.breaks[len(l.breaks)-1]})
-	case token.CONTINUE:
-		if s.Label != nil {
-			l.emit(&sContinue{target: l.labels[s.Label.Name].(*sLoop)})
-			return
-		}
-		l.emit(&sContinue{target: l.conts[len(l.conts)-1]})
-	default:
+	if s.Tok != token.BREAK && s.Tok != token.CONTINUE {
 		l.fail(s.Pos(), "%s is not supported", s.Tok)
 	}
+	label := ""
+	if s.Label != nil {
+		label = s.Label.Name
+	}
+	l.branchTo(s.Tok, label, s.Pos())
 }
 
 func (c *compiler) boolType() *tinfo {
@@ -936,7 +1009,7 @@ func (l *fnLower) convert(pos token.Pos, e expr, to *tinfo) expr {
 		return e
 	}
 	if (to.kind == kIface || to.kind == kError) && from.kind != kIface && from.kind != kError {
-		return &eBox{t: to, x: e, v: from}
+		return l.box(pos, e, to)
 	}
 	return e
 }
@@ -944,7 +1017,7 @@ func (l *fnLower) convert(pos token.Pos, e expr, to *tinfo) expr {
 func (l *fnLower) expr(x ast.Expr) expr {
 	tv := l.info.Types[x]
 	if tv.Value != nil {
-		return l.c.constant(tv.Value, l.c.typeOf(tv.Type))
+		return l.c.constant(tv.Value, l.ty(tv.Type))
 	}
 	switch x := x.(type) {
 	case *ast.ParenExpr:
@@ -961,6 +1034,8 @@ func (l *fnLower) expr(x ast.Expr) expr {
 		return l.call(x)
 	case *ast.CompositeLit:
 		return l.composite(x)
+	case *ast.FuncLit:
+		return l.funcLit(x)
 	case *ast.StarExpr:
 		p := l.expr(x.X)
 		t := p.typ().elem
@@ -981,15 +1056,24 @@ func (l *fnLower) ident(id *ast.Ident) expr {
 	}
 	switch obj := obj.(type) {
 	case *types.Var:
-		if v, ok := l.vars[obj]; ok {
-			return &eLocal{t: v.t, v: v}
+		if v, ok := l.lookup(obj); ok {
+			return varExpr(v)
 		}
 		if obj.Parent() == obj.Pkg().Scope() {
 			g := l.c.global(obj)
+			if p := l.c.pkgs[obj.Pkg().Path()]; p == nil || !p.User {
+				l.c.hostVar(obj, g, id.Pos())
+			}
 			return &eGlobal{t: g.t, off: g.off}
 		}
 	case *types.Func:
-		return &eFunc{t: l.c.typeOf(obj.Type()), fn: l.c.funcFor(obj, nil)}
+		var targs []types.Type
+		if inst, ok := l.info.Instances[id]; ok {
+			for t := range inst.TypeArgs.Types() {
+				targs = append(targs, l.sub(t))
+			}
+		}
+		return &eFunc{t: l.typeOf(id), fn: l.c.funcFor(obj, nil, targs)}
 	}
 	l.fail(id.Pos(), "identifier %s is not supported", id.Name)
 	return nil
@@ -1001,8 +1085,8 @@ func (l *fnLower) selector(x *ast.SelectorExpr) expr {
 		// a qualified identifier of another package
 		return l.ident(x.Sel)
 	}
-	if sel.Kind() != types.FieldVal {
-		l.fail(x.Pos(), "method values are not supported yet")
+	if sel.Kind() == types.MethodVal {
+		return l.methodValue(x, sel)
 	}
 	return l.field(l.expr(x.X), x.Sel.Name)
 }
@@ -1064,7 +1148,7 @@ func (l *fnLower) shiftCount(x ast.Expr) expr {
 		l.fail(x.Pos(), "shift by a variable count")
 	}
 	n, _ := constant.Uint64Val(constant.ToInt(tv.Value))
-	return &eConst{t: l.c.typeOf(types.Typ[types.Uint32]), n: n}
+	return &eConst{t: l.ty(types.Typ[types.Uint32]), n: n}
 }
 
 // compare compares two values of the same type.
@@ -1090,7 +1174,7 @@ func (l *fnLower) compare(pos token.Pos, tok token.Token, a, b expr) expr {
 		o = map[token.Token]op{token.EQL: opEqS, token.NEQ: opNeS, token.LSS: opLtS, token.LEQ: opLeS}[tok]
 	case kPtr, kHandle:
 		o = map[token.Token]op{token.EQL: opEqR, token.NEQ: opNeR}[tok]
-	case kStruct, kShared:
+	case kStruct, kShared, kIface:
 		eq := &eBinary{t: bt, op: opEqV, x: a, y: b}
 		if tok == token.NEQ {
 			return &eUnary{t: bt, op: opNotB, x: eq}
@@ -1214,7 +1298,7 @@ func (l *fnLower) composite(lit *ast.CompositeLit) expr {
 
 func (l *fnLower) call(call *ast.CallExpr) expr {
 	if tv, ok := l.info.Types[call.Fun]; ok && tv.IsType() {
-		return l.conversion(call, l.c.typeOf(tv.Type))
+		return l.conversion(call, l.ty(tv.Type))
 	}
 	fun := ast.Unparen(call.Fun)
 	if id, ok := fun.(*ast.Ident); ok {
@@ -1222,7 +1306,7 @@ func (l *fnLower) call(call *ast.CallExpr) expr {
 			return l.builtin(b, call)
 		}
 	}
-	sig := l.info.TypeOf(call.Fun).Underlying().(*types.Signature)
+	sig := l.sub(l.info.TypeOf(call.Fun)).Underlying().(*types.Signature)
 
 	base := fun
 	switch x := fun.(type) {
@@ -1245,17 +1329,17 @@ func (l *fnLower) call(call *ast.CallExpr) expr {
 	}
 	if id != nil {
 		if fn, ok := l.info.Uses[id].(*types.Func); ok {
-			var targs []*tinfo
+			var targs []types.Type
 			if inst, ok := l.info.Instances[id]; ok {
 				for t := range inst.TypeArgs.Types() {
-					targs = append(targs, l.c.typeOf(t))
+					targs = append(targs, l.sub(t))
 				}
 			}
-			return l.funcCall(fn, targs, call, sig, nil)
+			return l.funcCall(fn, nil, targs, call, sig, nil)
 		}
 	}
 	f := l.expr(call.Fun)
-	return &eCallValue{t: l.c.tupleOf(sig.Results()), f: f, args: l.args(call, sig, nil)}
+	return &eCallValue{t: l.tupleOf(sig.Results()), f: f, args: l.args(call, sig, nil)}
 }
 
 // args lowers the arguments of a call, the variadic ones as a list.
@@ -1269,7 +1353,7 @@ func (l *fnLower) args(call *ast.CallExpr, sig *types.Signature, recv expr) []ex
 		// f(g()): the results of g are laid out like the parameters of f
 		x := l.expr(call.Args[0])
 		for i, et := range x.typ().elems {
-			if pt := l.c.typeOf(params.At(i).Type()); pt != et && (pt.kind == kIface || pt.kind == kError || sig.Variadic()) {
+			if pt := l.ty(params.At(i).Type()); pt != et && (pt.kind == kIface || pt.kind == kError || sig.Variadic()) {
 				l.fail(call.Pos(), "f(g()), which converts the results of g, is not supported yet")
 			}
 		}
@@ -1278,11 +1362,11 @@ func (l *fnLower) args(call *ast.CallExpr, sig *types.Signature, recv expr) []ex
 	var rest []expr
 	for i, a := range call.Args {
 		if sig.Variadic() && i >= params.Len()-1 {
-			elem := l.c.typeOf(params.At(params.Len() - 1).Type().(*types.Slice).Elem())
+			elem := l.ty(params.At(params.Len() - 1).Type().(*types.Slice).Elem())
 			rest = append(rest, l.val(a, elem))
 			continue
 		}
-		res = append(res, l.val(a, l.c.typeOf(params.At(i).Type())))
+		res = append(res, l.val(a, l.ty(params.At(i).Type())))
 	}
 	if sig.Variadic() {
 		lt := l.c.listOf(params.At(params.Len() - 1).Type().(*types.Slice).Elem())
@@ -1302,12 +1386,12 @@ func (c *compiler) listOf(t types.Type) *tinfo {
 	return ti
 }
 
-func (l *fnLower) funcCall(fn *types.Func, targs []*tinfo, call *ast.CallExpr, sig *types.Signature, recv expr) expr {
+func (l *fnLower) funcCall(fn *types.Func, recvArgs, targs []types.Type, call *ast.CallExpr, sig *types.Signature, recv expr) expr {
 	path := fn.Pkg().Path()
-	res := l.c.tupleOf(sig.Results())
+	res := l.tupleOf(sig.Results())
 	if p := l.c.pkgs[path]; p == nil || !p.User {
 		key := path + "." + fn.Name()
-		if r := sig.Recv(); r != nil {
+		if r := fn.Signature().Recv(); r != nil {
 			key = path + "." + recvName(r.Type()) + "." + fn.Name()
 		}
 		if (key == listPath+".List.Append" || key == msgPath+".Out.Send") && recv != nil {
@@ -1317,18 +1401,35 @@ func (l *fnLower) funcCall(fn *types.Func, targs []*tinfo, call *ast.CallExpr, s
 			}
 			return &eListAppend{t: res, l: recv, elems: elems}
 		}
-		if nat := l.c.native(key, targs, call.Pos()); nat != nil {
+		var ntargs []*tinfo
+		for _, t := range append(append([]types.Type(nil), recvArgs...), targs...) {
+			ntargs = append(ntargs, l.ty(t))
+		}
+		if nat := l.c.native(key, ntargs, call.Pos()); nat != nil {
 			return l.nativeCall(nat, res, l.args(call, sig, recv))
 		}
 		if p == nil {
 			l.fail(call.Pos(), "%s is not supported yet", key)
 		}
 		if len(targs) > 0 {
-			l.fail(call.Pos(), "generic functions of header packages are not supported yet")
+			key += "[" + hostTypeArgs(targs) + "]"
 		}
-		return &eHost{t: res, ext: l.c.extern(key, fn, call.Pos()), args: l.args(call, sig, recv)}
+		return &eHost{t: res, ext: l.c.extern(key, recv, sig, call.Pos()), args: l.args(call, sig, recv)}
 	}
-	return &eCall{t: res, fn: l.c.funcFor(fn, nil), args: l.args(call, sig, recv)}
+	return &eCall{t: res, fn: l.c.funcFor(fn, recvArgs, targs), args: l.args(call, sig, recv)}
+}
+
+// hostTypeArgs names the type arguments of an instance of a function of a header package like the bundle: a type
+// argument by its core type, so that a named type like type ID string uses the function of string.
+func hostTypeArgs(targs []types.Type) string {
+	var parts []string
+	for _, t := range targs {
+		if !isHandle(t) {
+			t = t.Underlying()
+		}
+		parts = append(parts, typeKey(t))
+	}
+	return strings.Join(parts, ",")
 }
 
 // nativeCall calls a native with the arguments, which are laid out like a tuple of their types.
@@ -1352,30 +1453,36 @@ func recvName(t types.Type) string {
 
 func (l *fnLower) methodCall(se *ast.SelectorExpr, sel *types.Selection, call *ast.CallExpr) expr {
 	fn := sel.Obj().(*types.Func)
-	sig := fn.Signature()
+	sig := l.sub(l.info.TypeOf(se)).(*types.Signature)
 	recvT := l.typeOf(se.X)
 	switch recvT.kind {
-	case kIface:
-		l.fail(se.Pos(), "methods of interfaces are not supported yet")
-	case kError:
-		return l.nativeCall(l.c.native("error.Error", nil, se.Pos()), l.c.typeOf(types.Typ[types.String]), []expr{l.expr(se.X)})
+	case kIface, kError:
+		return l.ifaceCall(se, call)
 	}
-	var targs []*tinfo
+	var recvArgs []types.Type
 	if n, ok := types.Unalias(derefType(recvT.t)).(*types.Named); ok {
 		for t := range n.TypeArgs().Types() {
-			targs = append(targs, l.c.typeOf(t))
+			recvArgs = append(recvArgs, t)
 		}
 	}
-	recv := l.expr(se.X)
+	var targs []types.Type
+	if inst, ok := l.info.Instances[se.Sel]; ok {
+		for t := range inst.TypeArgs.Types() {
+			targs = append(targs, l.sub(t))
+		}
+	}
 	// the receiver as the method takes it
-	_, ptrRecv := sig.Recv().Type().(*types.Pointer)
-	if !ptrRecv && recvT.kind == kPtr {
-		recv = &eLoad{t: recvT.elem, p: recv}
-		if recvT.elem.kind == kShared {
-			recv = &eField{t: recvT.elem, x: recv.(*eLoad).p}
-		}
+	var recv expr
+	_, ptrRecv := fn.Signature().Recv().Type().(*types.Pointer)
+	switch {
+	case ptrRecv && recvT.kind != kPtr && recvT.kind != kHandle && recvT.kind != kList && recvT.kind != kMap && recvT.kind != kOut && recvT.kind != kOpt && recvT.kind != kBig:
+		recv = l.addr(se.X)
+	case !ptrRecv && recvT.kind == kPtr:
+		recv = l.deref(l.expr(se.X))
+	default:
+		recv = l.expr(se.X)
 	}
-	return l.funcCall(fn, targs, call, sig, recv)
+	return l.funcCall(fn, recvArgs, targs, call, sig, recv)
 }
 
 func derefType(t types.Type) types.Type {
@@ -1446,7 +1553,9 @@ func retype(x expr, t *tinfo) expr {
 }
 
 // extern returns the function of a header package, which the host implements.
-func (c *compiler) extern(key string, fn *types.Func, pos token.Pos) *extern {
+// extern returns the function of a header package, which the host implements, with the parameters of the instance:
+// the receiver, if any, and the parameters of sig, the variadic ones as a list.
+func (c *compiler) extern(key string, recv expr, sig *types.Signature, pos token.Pos) *extern {
 	if x, ok := c.externs[key]; ok {
 		return x
 	}
@@ -1454,9 +1563,8 @@ func (c *compiler) extern(key string, fn *types.Func, pos token.Pos) *extern {
 	if !c.src.Hosted[key] {
 		c.fail(pos, "%s is no function of a header package, which the host implements", key)
 	}
-	sig := fn.Signature()
-	if r := sig.Recv(); r != nil {
-		x.params = append(x.params, c.typeOf(r.Type()))
+	if recv != nil {
+		x.params = append(x.params, recv.typ())
 	}
 	for i := range sig.Params().Len() {
 		t := sig.Params().At(i).Type()

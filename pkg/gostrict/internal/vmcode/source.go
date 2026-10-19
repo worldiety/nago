@@ -20,9 +20,14 @@ type Source struct {
 	Packages []*Package
 	// Exports are the functions, which the host calls, by their name at the boundary.
 	Exports map[string]*types.Func
+	// Whole is set for a whole program, whose entry points the aspect of the host surrounds.
+	Whole bool
 	// Hosted are the full names of the functions of header packages, which the host implements, e.g.
 	// "example.com/ui.Text" or "example.com/ui.TText.Font" for a method.
 	Hosted map[string]bool
+	// HostVars are the full names of the exported variables of header packages, whose values the host provides as
+	// functions without parameters, e.g. "example.com/ui.Full".
+	HostVars map[string]bool
 	// Immutable tells, whether the program never changes a value of the struct type in place.
 	Immutable func(types.Type) bool
 	// Records are the names of the fields of the records of the boundary in their order by the full name of the

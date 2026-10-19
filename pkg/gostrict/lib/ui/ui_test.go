@@ -211,12 +211,14 @@ func TestVars(t *testing.T) {
 // window, so that both render the same views.
 func TestPage(t *testing.T) {
 	in := loadDir(t, "internal/page")
+	inVM := loadWith(t, "internal/page", new(vm.Engine))
 	renders := map[string]func(wnd core.Window) core.View{
 		"native": func(wnd core.Window) core.View { return ui.Core(page.Render(ui.WindowOf(wnd))) },
 		"goja":   func(wnd core.Window) core.View { return ui.Render(context.Background(), in, "Render", wnd) },
+		"vm":     func(wnd core.Window) core.View { return ui.Render(context.Background(), inVM, "Render", wnd) },
 	}
 	var want []string
-	for _, name := range []string{"native", "goja"} {
+	for _, name := range []string{"native", "goja", "vm"} {
 		app := nagotest.New(t, func(cfg *application.Configurator) {
 			cfg.SetApplicationID(core.ApplicationID("de.worldiety.gostrict.page." + name))
 			cfg.RootView("page", renders[name])
@@ -255,9 +257,12 @@ func treeOf(t testing.TB, w *nagotest.Window) string {
 var (
 	pointers = regexp.MustCompile(`:[0-9]{7,}`)
 	ids      = regexp.MustCompile(`"([a-z]+)[0-9]{7,}"`)
+	// ptrFields are the fields of type proto.Ptr, whose numbers may also be short
+	ptrFields = regexp.MustCompile(`"(Action|ActionValue|CallPtr|CellAction|CloseAll|Copy|DroppedId|Edit|EndInputValue|Filter|FunctionPointer|InputValue|KeydownEnter|Layout|OnCameraReady|OnClick|OnDismissRequest|OnHoverEnd|OnHoverStart|Paste|Ptr|Sort|StatePointer|Viewport)":[1-9][0-9]*`)
 )
 
 func normalize(s string) string {
+	s = ptrFields.ReplaceAllString(s, `"${1}":PTR`)
 	return ids.ReplaceAllString(pointers.ReplaceAllString(s, ":PTR"), `"${1}ID"`)
 }
 
@@ -276,12 +281,14 @@ func firstDiff(a, b string) string {
 // both render the same views after each step.
 func TestForm(t *testing.T) {
 	in := loadDir(t, "internal/form")
+	inVM := loadWith(t, "internal/form", new(vm.Engine))
 	renders := map[string]func(wnd core.Window) core.View{
 		"native": func(wnd core.Window) core.View { return ui.Core(form.Render(ui.WindowOf(wnd))) },
 		"goja":   func(wnd core.Window) core.View { return ui.Render(context.Background(), in, "Render", wnd) },
+		"vm":     func(wnd core.Window) core.View { return ui.Render(context.Background(), inVM, "Render", wnd) },
 	}
 	var want []string
-	for _, name := range []string{"native", "goja"} {
+	for _, name := range []string{"native", "goja", "vm"} {
 		app := nagotest.New(t, func(cfg *application.Configurator) {
 			cfg.SetApplicationID(core.ApplicationID("de.worldiety.gostrict.form." + name))
 			cfg.RootView("form", renders[name])
@@ -318,12 +325,14 @@ func TestForm(t *testing.T) {
 // TestDataView shows the rows of a program in a data view natively and in goja, which render the same views.
 func TestDataView(t *testing.T) {
 	in := loadDir(t, "internal/people")
+	inVM := loadWith(t, "internal/people", new(vm.Engine))
 	renders := map[string]func(wnd core.Window) core.View{
 		"native": func(wnd core.Window) core.View { return ui.Core(people.Render(ui.WindowOf(wnd))) },
 		"goja":   func(wnd core.Window) core.View { return ui.Render(context.Background(), in, "Render", wnd) },
+		"vm":     func(wnd core.Window) core.View { return ui.Render(context.Background(), inVM, "Render", wnd) },
 	}
 	var want string
-	for _, name := range []string{"native", "goja"} {
+	for _, name := range []string{"native", "goja", "vm"} {
 		app := nagotest.New(t, func(cfg *application.Configurator) {
 			cfg.SetApplicationID(core.ApplicationID("de.worldiety.gostrict.people." + name))
 			cfg.RootView("people", renders[name])
@@ -346,12 +355,14 @@ func TestDataView(t *testing.T) {
 // same views.
 func TestAgenda(t *testing.T) {
 	in := loadDir(t, "internal/agenda")
+	inVM := loadWith(t, "internal/agenda", new(vm.Engine))
 	renders := map[string]func(wnd core.Window) core.View{
 		"native": func(wnd core.Window) core.View { return ui.Core(agenda.Render(ui.WindowOf(wnd))) },
 		"goja":   func(wnd core.Window) core.View { return ui.Render(context.Background(), in, "Render", wnd) },
+		"vm":     func(wnd core.Window) core.View { return ui.Render(context.Background(), inVM, "Render", wnd) },
 	}
 	var want string
-	for _, name := range []string{"native", "goja"} {
+	for _, name := range []string{"native", "goja", "vm"} {
 		app := nagotest.New(t, func(cfg *application.Configurator) {
 			cfg.SetApplicationID(core.ApplicationID("de.worldiety.gostrict.agenda." + name))
 			cfg.RootView("agenda", renders[name])
@@ -375,12 +386,14 @@ func TestAgenda(t *testing.T) {
 // goja, picks rows by a button, and compares the views.
 func TestExtras(t *testing.T) {
 	in := loadDir(t, "internal/extras")
+	inVM := loadWith(t, "internal/extras", new(vm.Engine))
 	renders := map[string]func(wnd core.Window) core.View{
 		"native": func(wnd core.Window) core.View { return ui.Core(extras.Render(ui.WindowOf(wnd))) },
 		"goja":   func(wnd core.Window) core.View { return ui.Render(context.Background(), in, "Render", wnd) },
+		"vm":     func(wnd core.Window) core.View { return ui.Render(context.Background(), inVM, "Render", wnd) },
 	}
 	var want []string
-	for _, name := range []string{"native", "goja"} {
+	for _, name := range []string{"native", "goja", "vm"} {
 		app := nagotest.New(t, func(cfg *application.Configurator) {
 			cfg.SetApplicationID(core.ApplicationID("de.worldiety.gostrict.extras." + name))
 			cfg.RootView("extras", renders[name])

@@ -41,9 +41,10 @@ func TestThree(t *testing.T) {
 	}
 
 	want := run(nativeEngine("spin"), nil)
-	got := run(goEngine, three.Host())
-	if got != want {
-		t.Fatalf("the scenes differ\nnative:\n%s\ngoja:\n%s", want, got)
+	for name, e := range map[string]gostrict.Engine{"goja": goEngine, "vm": vmEngine} {
+		if got := run(e, three.Host()); got != want {
+			t.Fatalf("the scenes differ\nnative:\n%s\n%s:\n%s", want, name, got)
+		}
 	}
 	if !strings.Contains(want, "Mesh pos=[") || strings.Count(want, "\n") != 16 {
 		t.Fatalf("unexpected scene:\n%s", want)

@@ -101,6 +101,16 @@ func TestSession(t *testing.T) {
 
 	nb, ns := run(nativeEngine("arena"))
 	gb, gs := run(goEngine)
+	vb, vs := run(vmEngine)
+	if !gostrict.SameValues(ns, vs) || len(vb.moves) != len(nb.moves) || len(vb.acks) != len(nb.acks) {
+		t.Fatalf("the vm differs: native %v, vm %v, %d/%d messages", ns, vs, len(vb.moves), len(vb.acks))
+	}
+	for i := range nb.moves {
+		n, v := nb.moves[i], vb.moves[i]
+		if !gostrict.CloseValues([]any{n.ID, n.X, n.Z, n.Seq}, []any{v.ID, v.X, v.Z, v.Seq}, 1e-9) {
+			t.Fatalf("move %d differs in the vm: %v %v", i, n, v)
+		}
+	}
 
 	t.Logf("status hp, moves, others: native %v, goja %v; %d moves and %d acks at the backend", ns, gs, len(nb.moves), len(nb.acks))
 	if !gostrict.SameValues(ns, gs) || ns[0] != int32(100-10*7-1) || ns[1] != int32(100) || ns[2] != int32(4) {
