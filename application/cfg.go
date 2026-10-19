@@ -25,6 +25,7 @@ import (
 	"syscall"
 
 	"go.wdy.de/nago/application/admin"
+	httpimage "go.wdy.de/nago/application/image/http"
 	"go.wdy.de/nago/application/migration"
 	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/theme"
@@ -94,6 +95,7 @@ type Configurator struct {
 	permissionManagement   *PermissionManagement
 	groupManagement        *GroupManagement
 	imageManagement        *ImageManagement
+	imageAccess            httpimage.Access
 	backupManagement       *BackupManagement
 	secretManagement       *SecretManagement
 	templateManagement     *TemplateManagement

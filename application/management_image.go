@@ -11,6 +11,7 @@ import (
 	"fmt"
 
 	"go.wdy.de/nago/application/image"
+	httpimage "go.wdy.de/nago/application/image/http"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/presentation/core"
@@ -98,4 +99,14 @@ func (c *Configurator) ImageManagement() (ImageManagement, error) {
 	}
 
 	return *c.imageManagement, nil
+}
+
+// SetImageAccess lets the default image endpoint ask access, whether the subject of a request may load an image or
+// source set. A denied image is answered with 404. By default, any request may load any image, whose id it knows,
+// even without login, so access must allow the images of the pages before a login, like a logo or the app icon.
+func (c *Configurator) SetImageAccess(access httpimage.Access) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	c.imageAccess = access
 }
