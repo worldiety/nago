@@ -46,6 +46,10 @@ type Bundle struct {
 	Handlers map[string]string
 	// Externs are the functions of header packages, which the program calls, e.g. "example.com/host.Mix".
 	Externs []Extern
+	// HostVars are the variables of header packages, which the program of the vm reads, by their full name. The
+	// JavaScript has their bindings, but the vm reads each from the function of the host with its name, which
+	// takes no parameters and returns the value, see [Bundle.VM].
+	HostVars []HeaderVar
 	// States maps the full name of each state of the exports to the hash of its structure, which is empty, if a new
 	// version of the program can not take it over, see [Bundle.CanTakeOver].
 	States map[string]string

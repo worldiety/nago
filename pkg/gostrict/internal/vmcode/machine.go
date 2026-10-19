@@ -58,7 +58,8 @@ func (p *Program) Export(name string) *Closure {
 	return nil
 }
 
-// Externs returns the full names of the functions of header packages, which the host implements, by their index.
+// Externs returns the full names of the functions of header packages, which the host implements, and of the
+// variables of header packages, which the host provides as functions without parameters, by their index.
 func (p *Program) Externs() []string {
 	names := make([]string, len(p.externs))
 	for i, x := range p.externs {

@@ -160,22 +160,16 @@ func (c *compiler) compile() {
 	init.locals = l.frame
 	c.out.init = init
 
-	// the variants of the unions of the boundary, which the host creates, need their methods
-	for name, u := range c.src.Unions {
-		ut, ok := c.types[name]
-		if !ok {
-			continue
+	for {
+		c.hostVariants()
+		if len(c.queue) == 0 {
+			break
 		}
-		for _, v := range u.Variants {
-			if vt, ok := c.types[v]; ok {
-				c.methodsFor(vt, ut.t, token.NoPos)
-			}
+		for len(c.queue) > 0 {
+			next := c.queue[0]
+			c.queue = c.queue[1:]
+			next()
 		}
-	}
-	for len(c.queue) > 0 {
-		next := c.queue[0]
-		c.queue = c.queue[1:]
-		next()
 	}
 	for _, f := range c.later {
 		f()
@@ -203,6 +197,63 @@ func (c *compiler) compile() {
 	for _, t := range c.types {
 		t.t, t.sig = nil, nil
 	}
+}
+
+// hostVariants adds the variants of the unions of the boundary, which the program uses, with their methods, also
+// those, which the program never names: the host may create any of them, e.g. a ui.TBox as a ui.View.
+func (c *compiler) hostVariants() {
+	for name, u := range c.src.Unions {
+		ut, ok := c.types[name]
+		if !ok || ut.t == nil {
+			continue
+		}
+		for _, v := range u.Variants {
+			vt, ok := c.types[v]
+			if !ok {
+				t := variantType(ut.t, v)
+				if t == nil {
+					continue
+				}
+				vt = c.typeOf(t)
+			}
+			c.methodsFor(vt, ut.t, token.NoPos)
+		}
+	}
+}
+
+// variantType returns the variant of the sealed interface u by its full name, or nil. The variants are declared in
+// the package of u, a generic one with the type arguments of u.
+func variantType(u types.Type, name string) types.Type {
+	n, ok := types.Unalias(u).(*types.Named)
+	if !ok || n.Obj().Pkg() == nil {
+		return nil
+	}
+	scope := n.Obj().Pkg().Scope()
+	for _, tn := range scope.Names() {
+		obj, ok := scope.Lookup(tn).(*types.TypeName)
+		if !ok || obj.IsAlias() {
+			continue
+		}
+		var t types.Type = obj.Type()
+		if v, ok := t.(*types.Named); ok && v.TypeParams().Len() > 0 {
+			if v.TypeParams().Len() != n.TypeArgs().Len() {
+				continue
+			}
+			var targs []types.Type
+			for a := range n.TypeArgs().Types() {
+				targs = append(targs, a)
+			}
+			inst, err := types.Instantiate(nil, v, targs, true)
+			if err != nil {
+				continue
+			}
+			t = inst
+		}
+		if typeKey(t) == name {
+			return t
+		}
+	}
+	return nil
 }
 
 // plan prepares the conversion of the records and unions of the boundary.
@@ -1388,11 +1439,14 @@ func (l *fnLower) args(call *ast.CallExpr, sig *types.Signature, recv expr) []ex
 		res = append(res, recv)
 	}
 	params := sig.Params()
-	if len(call.Args) == 1 && params.Len() > 1 {
-		// f(g()): the results of g are laid out like the parameters of f
+	if len(call.Args) == 1 && isTuple(l.info.TypeOf(call.Args[0])) {
+		// f(g()): the results of g are laid out like the parameters of f, unless f is variadic and needs a list
 		x := l.expr(call.Args[0])
 		for i, et := range x.typ().elems {
-			if pt := l.ty(params.At(i).Type()); pt != et && (pt.kind == kIface || pt.kind == kError || sig.Variadic()) {
+			if sig.Variadic() && i >= params.Len()-1 {
+				l.fail(call.Pos(), "f(g()) of a variadic f is not supported yet")
+			}
+			if pt := l.ty(params.At(i).Type()); pt != et && (pt.kind == kIface || pt.kind == kError) {
 				l.fail(call.Pos(), "f(g()), which converts the results of g, is not supported yet")
 			}
 		}
@@ -1412,6 +1466,11 @@ func (l *fnLower) args(call *ast.CallExpr, sig *types.Signature, recv expr) []ex
 		res = append(res, &eListOf{t: lt, elems: rest})
 	}
 	return res
+}
+
+func isTuple(t types.Type) bool {
+	_, ok := t.(*types.Tuple)
+	return ok
 }
 
 // listOf returns the type of a list of elements of type t, which a variadic parameter receives.

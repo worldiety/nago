@@ -57,6 +57,7 @@ func (e *emitter) emitVM(b *Bundle, exports map[string]*types.Func) (p *vmcode.P
 		src.Hosted[x.Name] = true
 	}
 	src.HostVars = map[string]bool{}
+	vars := map[string]*types.Var{}
 	for _, p := range e.prog.Packages {
 		if p.Kind != KindHeader {
 			continue
@@ -64,6 +65,7 @@ func (e *emitter) emitVM(b *Bundle, exports map[string]*types.Func) (p *vmcode.P
 		for _, name := range p.Types.Scope().Names() {
 			if v, ok := p.Types.Scope().Lookup(name).(*types.Var); ok && v.Exported() {
 				src.HostVars[p.Path+"."+name] = true
+				vars[p.Path+"."+name] = v
 			}
 		}
 	}
@@ -75,5 +77,19 @@ func (e *emitter) emitVM(b *Bundle, exports map[string]*types.Func) (p *vmcode.P
 	for name, u := range b.Unions {
 		src.Unions[name] = vmcode.Union{Variants: u.Variants, Handles: u.Handles}
 	}
-	return vmcode.Compile(src)
+	p, err = vmcode.Compile(src)
+	if err != nil {
+		return nil, err
+	}
+	// the vm reads the variables from the host like functions, so the host needs to know them
+	bnd := newBoundary()
+	for _, name := range p.Externs() {
+		v, ok := vars[name]
+		if !ok {
+			continue
+		}
+		t, _ := bnd.headerType(v.Type(), false)
+		b.HostVars = append(b.HostVars, HeaderVar{Name: name, JS: e.headerVars()[v], Type: t})
+	}
+	return p, nil
 }

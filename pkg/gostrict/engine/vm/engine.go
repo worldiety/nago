@@ -30,7 +30,8 @@ type Engine struct {
 var _ gostrict.Engine = (*Engine)(nil)
 
 // Load creates an instance of the bundle. Each function of a header package needs a function of the host, also
-// one with a JavaScript binding.
+// one with a JavaScript binding, and each variable of [gostrict.Bundle.HostVars] a function without parameters,
+// which returns its value.
 func (e *Engine) Load(ctx context.Context, b *gostrict.Bundle, host gostrict.Funcs) (gostrict.Instance, error) {
 	p, err := b.VM()
 	if err != nil {
