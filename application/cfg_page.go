@@ -11,6 +11,7 @@ import (
 	"archive/zip"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -39,6 +40,7 @@ import (
 	"go.wdy.de/nago/logging"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
+	http2 "go.wdy.de/nago/presentation/core/http"
 	"go.wdy.de/nago/presentation/core/http/gorilla"
 	"go.wdy.de/nago/presentation/proto"
 	"go.wdy.de/nago/presentation/ui/alert"
@@ -398,7 +400,10 @@ func (c *Configurator) newHandler() http.Handler {
 	}))
 
 	// the translated programs of components like threejs and canvas2, see package program
-	r.Mount(program.BundlePath, program.Handler())
+	r.Mount(program.BundlePath, program.SessionHandler(func(r *http.Request) string {
+		id, _ := c.sessionIDOf(r)
+		return id
+	}))
 
 	// Serve the configured application icon under the static favicon paths referenced by index.html.
 	faviconHandler := http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
@@ -583,59 +588,25 @@ func (c *Configurator) newHandler() http.Handler {
 
 	}))
 
-	r.Mount("/api/ora/v1/upload", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		slog.Info("received upload request")
-		// we support currently only multipart upload forms
-		scopeID := proto.ScopeID(r.Header.Get("x-scope"))
-		if len(scopeID) < 32 {
-			slog.Error("upload request has a weired x-scope id", "id", logging.Secret(string(scopeID)))
-			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-			return
-		}
-
-		uploadId := uploadReceiver(r)
-		if uploadId == "" {
-			slog.Error("upload request has no parseable x-receiver header")
-			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-			return
-		}
-
-		isMultipart := strings.Contains(r.Header.Get("Content-Type"), "multipart/form-data")
-		if isMultipart {
-			if err := r.ParseMultipartForm(1024 * 1024); err != nil {
-				slog.Error("cannot parse multipart form", "err", err)
-				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-				return
-			}
-
-			var files []core.File
-			for _, headers := range r.MultipartForm.File {
-				// we don't care about specific field names and instead just collect everything what looks like a file
-				for _, header := range headers {
-					files = append(files, core.NewMultipartFile(header))
-				}
-			}
-
-			importer, ok := app2.ImportFilesOptions(scopeID, uploadId)
-			if !ok {
-				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-				return
-			}
-
-			importer.OnCompletion(files)
-
-			slog.Info("multipart upload complete")
-			return
-		} else {
-			slog.Error("upload request must be multipart form", "content-type", r.Header.Get("Content-Type"))
-			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-			return
-		}
-
-	}))
+	r.Mount("/api/ora/v1/upload", uploadHandler(app2.ImportFilesOptions))
 
 	images := option.Must(c.ImageManagement())
-	r.Mount(httpimage.Endpoint, httpimage.NewHandler(images.UseCases.LoadBestFit))
+	if c.imageAccess == nil {
+		r.Mount(httpimage.Endpoint, httpimage.NewHandler(images.UseCases.LoadBestFit))
+	} else {
+		sessions := std.Must(c.SessionManagement())
+		users := std.Must(c.UserManagement())
+		r.Mount(httpimage.Endpoint, http2.NewSessionSubjectHandlerFunc(
+			func(r *http.Request) session.ID {
+				id, _ := c.sessionIDOf(r)
+				return session.ID(id)
+			},
+			sessions.UseCases.FindUserSessionByID,
+			users.UseCases.SubjectFromUser,
+			users.UseCases.GetAnonUser,
+			httpimage.NewSubjectHandler(images.UseCases.LoadBestFit, c.imageAccess),
+		))
+	}
 
 	if c.sitemap != nil {
 		r.Mount("/sitemap.xml", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -745,6 +716,80 @@ func (c *Configurator) newHandler() http.Handler {
 //
 // It exists so that packages which must not import this one - the AI assistant UI, for instance - can still
 // ask what a route is for, using core.FromContext[RootViewPurposeLookup](wnd.Context(), CtxRootViewPurpose).
+// defaultMaxUploadBytes limits an upload, whose import has no limit of its own. [core.Window.ImportFiles] sets the
+// same default, so it only applies to an import, which has been registered differently.
+const defaultMaxUploadBytes = 512 * 1024 * 1024
+
+// multipartOverhead is the room of an upload for the boundaries and the part headers next to the file. The frontend
+// sends one file per request, so a few KiB would do, but a long file name must not fail.
+const multipartOverhead = 64 * 1024
+
+// uploadHandler receives the files of an import, which a window has requested by [core.Window.ImportFiles]. The
+// request may not exceed the MaxBytes of the import, otherwise it is answered with 413 and the import does not
+// complete, because the frontend may ignore the limit.
+func uploadHandler(importOptions func(scopeID proto.ScopeID, uploadID string) (core.ImportFilesOptions, bool)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		slog.Info("received upload request")
+		// we support currently only multipart upload forms
+		scopeID := proto.ScopeID(r.Header.Get("x-scope"))
+		if len(scopeID) < 32 {
+			slog.Error("upload request has a weired x-scope id", "id", logging.Secret(string(scopeID)))
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+
+		uploadId := uploadReceiver(r)
+		if uploadId == "" {
+			slog.Error("upload request has no parseable x-receiver header")
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+
+		if !strings.Contains(r.Header.Get("Content-Type"), "multipart/form-data") {
+			slog.Error("upload request must be multipart form", "content-type", r.Header.Get("Content-Type"))
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+
+		// look up the import before reading the body, so that an unknown import costs no temp space
+		importer, ok := importOptions(scopeID, uploadId)
+		if !ok {
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+
+		maxBytes := importer.MaxBytes
+		if maxBytes <= 0 {
+			maxBytes = defaultMaxUploadBytes
+		}
+
+		r.Body = http.MaxBytesReader(w, r.Body, maxBytes+multipartOverhead)
+		if err := r.ParseMultipartForm(1024 * 1024); err != nil {
+			if maxErr, ok := errors.AsType[*http.MaxBytesError](err); ok {
+				slog.Error("upload exceeds the limit of its import", "id", uploadId, "limit", maxErr.Limit)
+				http.Error(w, http.StatusText(http.StatusRequestEntityTooLarge), http.StatusRequestEntityTooLarge)
+				return
+			}
+
+			slog.Error("cannot parse multipart form", "err", err)
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+
+		var files []core.File
+		for _, headers := range r.MultipartForm.File {
+			// we don't care about specific field names and instead just collect everything what looks like a file
+			for _, header := range headers {
+				files = append(files, core.NewMultipartFile(header))
+			}
+		}
+
+		importer.OnCompletion(files)
+
+		slog.Info("multipart upload complete")
+	}
+}
+
 // uploadReceiver returns the import id of an upload. The frontend percent-encodes it, because a browser sends a
 // header value as Latin-1, which turns an id like "Datei wählen" into invalid UTF-8.
 func uploadReceiver(r *http.Request) string {

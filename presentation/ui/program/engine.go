@@ -42,7 +42,7 @@ func (e Engine) Load(ctx context.Context, b *gostrict.Bundle, host gostrict.Func
 		return nil, fmt.Errorf("%s has no JavaScript binding, so the program runs only on a server", name)
 	}
 	id := "engine-" + strconv.FormatInt(instanceIDs.Add(1), 10)
-	return &browserInstance{wnd: e.Window, b: b, uri: Register(b), id: id}, nil
+	return &browserInstance{wnd: e.Window, b: b, uri: registerFor(e.Window, b), id: id}, nil
 }
 
 type browserInstance struct {

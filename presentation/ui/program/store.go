@@ -9,6 +9,10 @@ package program
 
 import (
 	"container/list"
+	"crypto/hmac"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -29,6 +33,14 @@ const maxBundles = 1024
 // process may share it.
 var bundles = newStore(maxBundles)
 
+// bindingKey signs the URLs, which bind a bundle to the session of a window, see [registerFor]. The bundles live in
+// the memory of the process, so the key does not need to survive it.
+var bindingKey = func() []byte {
+	key := make([]byte, 32)
+	_, _ = rand.Read(key) // never fails, see the documentation of crypto/rand
+	return key
+}()
+
 type store struct {
 	mu    sync.Mutex
 	max   int
@@ -39,21 +51,26 @@ type store struct {
 type storeEntry struct {
 	hash string
 	body []byte
+	// public is set by [Register], whose URL is valid for any session
+	public bool
 }
 
 func newStore(max int) *store {
 	return &store{max: max, order: list.New(), items: map[string]*list.Element{}}
 }
 
-// put keeps the manifest of the bundle and returns its URL.
-func (s *store) put(b *gostrict.Bundle) core.URI {
-	uri := core.URI(BundlePath + b.Hash + ".json")
-
+// put keeps the manifest of the bundle. A public bundle stays public, even if a window registers it again.
+func (s *store) put(b *gostrict.Bundle, public bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if el, ok := s.items[b.Hash]; ok {
 		s.order.MoveToFront(el)
-		return uri
+		if public {
+			e := el.Value.(storeEntry)
+			e.public = true
+			el.Value = e
+		}
+		return
 	}
 
 	body, err := json.Marshal(newManifest(b))
@@ -61,34 +78,70 @@ func (s *store) put(b *gostrict.Bundle) core.URI {
 		// the manifest consists of strings and numbers only
 		panic(err)
 	}
-	s.items[b.Hash] = s.order.PushFront(storeEntry{hash: b.Hash, body: body})
+	s.items[b.Hash] = s.order.PushFront(storeEntry{hash: b.Hash, body: body, public: public})
 	for s.order.Len() > s.max {
 		last := s.order.Back()
 		s.order.Remove(last)
 		delete(s.items, last.Value.(storeEntry).hash)
 	}
-	return uri
 }
 
-func (s *store) get(hash string) ([]byte, bool) {
+func (s *store) get(hash string) (storeEntry, bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	el, ok := s.items[hash]
 	if !ok {
-		return nil, false
+		return storeEntry{}, false
 	}
 	s.order.MoveToFront(el)
-	return el.Value.(storeEntry).body, true
+	return el.Value.(storeEntry), true
 }
 
-// Register keeps the bundle for the frontend and returns its immutable URL. A component calls it in each render.
+// Register keeps the bundle for the frontend and returns its immutable URL, which any session may load. The
+// components of this package use [registerFor] instead, which binds the URL to the session of the window.
 func Register(b *gostrict.Bundle) core.URI {
-	return bundles.put(b)
+	bundles.put(b, true)
+	return core.URI(BundlePath + b.Hash + ".json")
 }
 
-// Handler serves the bundles under [BundlePath]. A bundle never changes under its URL, so a browser may cache it
-// forever.
+// registerFor keeps the bundle for the frontend and returns its immutable URL, which only the session of the window
+// may load, so that a hash, which leaks, e.g. from a log, does not grant access to the bundle. A component calls it
+// in each render, and the URL stays the same as long as the session does.
+func registerFor(wnd core.Window, b *gostrict.Bundle) core.URI {
+	bundles.put(b, false)
+	return core.URI(BundlePath + b.Hash + ".json?s=" + binding(b.Hash, sessionOf(wnd)))
+}
+
+func sessionOf(wnd core.Window) string {
+	if wnd == nil {
+		return ""
+	}
+	sess := wnd.Session()
+	if sess == nil {
+		return ""
+	}
+	return string(sess.ID())
+}
+
+// binding signs the hash of a bundle together with a session id.
+func binding(hash, sessionID string) string {
+	mac := hmac.New(sha256.New, bindingKey)
+	mac.Write([]byte(hash))
+	mac.Write([]byte{0})
+	mac.Write([]byte(sessionID))
+	return base64.RawURLEncoding.EncodeToString(mac.Sum(nil)[:16])
+}
+
+// Handler serves the bundles under [BundlePath] like [SessionHandler], but it knows no session, so it only serves
+// the bundles of [Register] and those, which a window without session has registered.
 func Handler() http.Handler {
+	return SessionHandler(nil)
+}
+
+// SessionHandler serves the bundles under [BundlePath]. A bundle never changes under its URL, so a browser may cache
+// it forever, but no shared cache may, because a component binds the URL to the session of its window. The given
+// function returns the session id of a request and may be nil.
+func SessionHandler(sessionOf func(r *http.Request) string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		name := strings.TrimPrefix(r.URL.Path, BundlePath)
 		hash, ok := strings.CutSuffix(name, ".json")
@@ -96,14 +149,25 @@ func Handler() http.Handler {
 			http.NotFound(w, r)
 			return
 		}
-		body, ok := bundles.get(hash)
+		e, ok := bundles.get(hash)
 		if !ok {
 			http.NotFound(w, r)
 			return
 		}
+		if !e.public {
+			var sessionID string
+			if sessionOf != nil {
+				sessionID = sessionOf(r)
+			}
+			// a foreign session looks like an unknown bundle
+			if !hmac.Equal([]byte(r.URL.Query().Get("s")), []byte(binding(hash, sessionID))) {
+				http.NotFound(w, r)
+				return
+			}
+		}
 		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
-		_, _ = w.Write(body)
+		w.Header().Set("Cache-Control", "private, max-age=31536000, immutable")
+		_, _ = w.Write(e.body)
 	})
 }
 

@@ -119,7 +119,7 @@ func (s Spec) Render(wnd core.Window, id string) proto.GostrictProgram {
 	}
 
 	res := proto.GostrictProgram{
-		Bundle: proto.URI(Register(s.Bundle)),
+		Bundle: proto.URI(registerFor(wnd, s.Bundle)),
 		Init:   proto.Str(s.Init),
 		Frame:  proto.Str(s.Frame),
 		Resize: proto.Str(s.Resize),

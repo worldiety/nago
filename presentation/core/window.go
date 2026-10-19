@@ -27,8 +27,8 @@ type ImportFilesOptions struct {
 	// consider using a unique static ID.
 	ID       string
 	Multiple bool
-	// MaxBytes is a recommendation and an attacker may ignore that, so don't
-	// count on that for security reasons.
+	// MaxBytes limits the size of each file. The upload endpoint of a server rejects a larger
+	// request with 413 and does not call OnCompletion. Zero defaults to 512MiB.
 	MaxBytes         int64
 	AllowedMimeTypes []string
 	// OnCompletion may be performance optimized and thus may be called from
