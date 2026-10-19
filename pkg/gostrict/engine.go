@@ -9,6 +9,7 @@ package gostrict
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"strings"
@@ -406,6 +407,10 @@ func compareValues(a, b []any, floats func(x, y float64) bool) bool {
 	}
 	return true
 }
+
+// ErrStackExhausted is the error of a call, which exceeded the depth of calls of its engine, e.g. a recursion, which
+// does not end. An engine wraps it, so that errors.Is finds it.
+var ErrStackExhausted = errors.New("the call stack is exhausted")
 
 // Fn is a function, which takes and returns values of the types of its [Func].
 type Fn func(args []any) []any

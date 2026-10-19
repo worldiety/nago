@@ -117,10 +117,12 @@ func (l List[T]) Clone() List[T] {
 	return List[T]{p: &s}
 }
 
-// All iterates over the indices and elements. Elements appended during the iteration are visited as well.
+// All iterates over the indices and elements, which the list has, when the iteration starts, like a range over a
+// slice: elements appended during the iteration are not visited, so the iteration always ends.
 func (l List[T]) All() iter.Seq2[int32, T] {
 	return func(yield func(int32, T) bool) {
-		for i := int32(0); i < l.Len(); i++ {
+		n := l.Len()
+		for i := int32(0); i < n && i < l.Len(); i++ {
 			if !yield(i, (*l.p)[i]) {
 				return
 			}
@@ -131,7 +133,8 @@ func (l List[T]) All() iter.Seq2[int32, T] {
 // Values iterates over the elements, see [List.All].
 func (l List[T]) Values() iter.Seq[T] {
 	return func(yield func(T) bool) {
-		for i := int32(0); i < l.Len(); i++ {
+		n := l.Len()
+		for i := int32(0); i < n && i < l.Len(); i++ {
 			if !yield((*l.p)[i]) {
 				return
 			}

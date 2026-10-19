@@ -21,9 +21,16 @@ import (
 
 // Check checks the packages of the program, which are not trusted, against the subset. It returns the
 // diagnostics of [Program.Diagnostics] as well, so an empty result means, that the program can be translated.
-func Check(prog *Program) Diagnostics {
+func Check(prog *Program) (res Diagnostics) {
 	d := &diagnoser{fset: prog.Fset, sources: prog.sources}
 	d.diags = append(d.diags, prog.Diagnostics...)
+	defer func() {
+		// the programs come from users or language models, so a defect of the checker must not end the host
+		if r := recover(); r != nil {
+			d.report(token.NoPos, token.NoPos, CodeInternal, fmt.Sprintf("the checker failed: %v", r), "this is a defect of gostrict, not of the program", "rewrite the construct, which the checker can not handle, and report the program to the maintainers of gostrict")
+			res = d.sorted()
+		}
+	}()
 
 	decls := funcDecls(prog)
 	for _, p := range prog.Packages {

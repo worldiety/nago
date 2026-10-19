@@ -805,7 +805,9 @@ func (c *fnCtx) builtinRange(s *ast.RangeStmt, label string, define bool) bool {
 
 	switch method {
 	case "List.All", "List.Values", "Frozen.All", "Frozen.Values", "Out.Values":
-		c.line("%sfor (let %s = 0; %s < %s.length; %s++) {", c.labelPrefix(label), i, i, src, i)
+		// the range visits the elements, which the list has, when it starts, like a range over a slice of Go
+		n := c.tmp()
+		c.line("%sfor (let %s = 0, %s = %s.length; %s < %s && %s < %s.length; %s++) {", c.labelPrefix(label), i, n, src, i, n, i, src, i)
 		c.ind++
 		elem := c.e.clone(src+"["+i+"]", args[0])
 		if strings.HasSuffix(method, ".All") {

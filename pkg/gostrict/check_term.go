@@ -44,7 +44,8 @@ func (p *Program) terminating(pkg *Package) bool {
 	return false
 }
 
-// checkLoops reports the loops of the package, whose end the compiler can not prove.
+// checkLoops reports the loops of the package, whose end the compiler can not prove. Every range ends: a range over
+// a list visits the elements, which the list has, when the range starts.
 func (c *checker) checkLoops(f *ast.File) {
 	const why = "the terminating profile requires, that every loop ends"
 	ast.Inspect(f, func(n ast.Node) bool {
@@ -52,10 +53,6 @@ func (c *checker) checkLoops(f *ast.File) {
 		case *ast.ForStmt:
 			if msg := c.boundedFor(n); msg != "" {
 				c.report(n, CodeTermination, msg, why, "count with a bound, e.g. for i := int32(0); i < n; i++, range over a list or a number, or limit the loop with fuel: f := fuel.New(1000); for f.Burn() && cond { ... }")
-			}
-		case *ast.RangeStmt:
-			if msg := c.boundedRange(n); msg != "" {
-				c.report(n, CodeTermination, msg, why, "do not append to the list, while ranging over it, e.g. collect the new elements in another list")
 			}
 		}
 		return true
@@ -204,44 +201,6 @@ func (c *checker) burnsFuel(cond ast.Expr) bool {
 	return false
 }
 
-// boundedRange returns, why the range may not end, or "". A range over a list sees the elements, which its body
-// appends.
-func (c *checker) boundedRange(n *ast.RangeStmt) string {
-	call, ok := ast.Unparen(n.X).(*ast.CallExpr)
-	if !ok {
-		return ""
-	}
-	se, ok := ast.Unparen(call.Fun).(*ast.SelectorExpr)
-	if !ok {
-		return ""
-	}
-	t := c.info.TypeOf(se.X)
-	named, ok := types.Unalias(t).(*types.Named)
-	if !ok || !isOpaque(t) || named.Obj().Name() != "List" {
-		return ""
-	}
-	root := rootObject(c.info, se.X)
-	if root == nil {
-		return "the list may grow, while the loop ranges over it"
-	}
-	grows := false
-	ast.Inspect(n.Body, func(m ast.Node) bool {
-		mc, ok := m.(*ast.CallExpr)
-		if !ok {
-			return true
-		}
-		ms, ok := ast.Unparen(mc.Fun).(*ast.SelectorExpr)
-		if ok && ms.Sel.Name == "Append" && isOpaque(c.info.TypeOf(ms.X)) && rootObject(c.info, ms.X) == root {
-			grows = true
-		}
-		return true
-	})
-	if grows {
-		return "the body appends to the list, over which the loop ranges"
-	}
-	return ""
-}
-
 // callNode is a function or a function literal of the call graph.
 type callNode struct {
 	fn  *types.Func
@@ -265,8 +224,10 @@ func (n callNode) pos() token.Pos {
 // checkRecursion reports the functions of the packages of the profile, which may call themselves. The call graph
 // contains the static calls of all packages of the program in the subset. A call of a function value may reach
 // every function, which is used as a value, and every function literal, a call of a method of an interface every
-// method of this name. A cycle of function literals alone is not reported, e.g. an iterator, which calls the
-// body of its loop.
+// method of this name, but only of the packages, which are connected to the caller by imports: a value reaches
+// another package only as an argument or a result of a call along an import. So the result of a package does not
+// depend on the packages of a whole program, which are not connected to it. A cycle of function literals alone is
+// not reported, e.g. an iterator, which calls the body of its loop.
 func checkRecursion(prog *Program, d *diagnoser, decls map[*types.Func]funcSrc) {
 	var profiled []*Package
 	for _, p := range prog.Packages {
@@ -278,11 +239,17 @@ func checkRecursion(prog *Program, d *diagnoser, decls map[*types.Func]funcSrc) 
 		return
 	}
 
+	group := importGroups(prog)
 	edges := map[callNode][]callNode{}
-	var valueFuncs []callNode
-	ifaceMethods := map[string][]callNode{}
+	valueFuncs := map[*Package][]callNode{}
+	type methodKey struct {
+		group *Package
+		name  string
+	}
+	ifaceMethods := map[methodKey][]callNode{}
 	type dynamic struct {
 		from   callNode
+		group  *Package
 		method string // "" for a function value
 	}
 	var dynamics []dynamic
@@ -293,6 +260,7 @@ func checkRecursion(prog *Program, d *diagnoser, decls map[*types.Func]funcSrc) 
 			continue
 		}
 		info := p.Info
+		g := group[p]
 		// the methods, which a call of a method of an interface may reach, are approximated by all methods
 		for _, f := range p.Files {
 			for _, decl := range f.Decls {
@@ -301,7 +269,8 @@ func checkRecursion(prog *Program, d *diagnoser, decls map[*types.Func]funcSrc) 
 					continue
 				}
 				if fn, ok := info.Defs[fd.Name].(*types.Func); ok {
-					ifaceMethods[fn.Name()] = append(ifaceMethods[fn.Name()], callNode{fn: fn})
+					k := methodKey{group: g, name: fn.Name()}
+					ifaceMethods[k] = append(ifaceMethods[k], callNode{fn: fn})
 				}
 			}
 		}
@@ -328,7 +297,7 @@ func checkRecursion(prog *Program, d *diagnoser, decls map[*types.Func]funcSrc) 
 					switch n := n.(type) {
 					case *ast.FuncLit:
 						lit := callNode{lit: n}
-						valueFuncs = append(valueFuncs, lit)
+						valueFuncs[g] = append(valueFuncs[g], lit)
 						stack = append(stack, lit)
 						ast.Inspect(n.Body, visit)
 						stack = stack[:len(stack)-1]
@@ -337,18 +306,23 @@ func checkRecursion(prog *Program, d *diagnoser, decls map[*types.Func]funcSrc) 
 						callee := staticCallee(info, n)
 						switch {
 						case callee != nil:
-							if src, ok := decls[callee.Origin()]; ok && src.pkg.Kind == KindUser {
+							src, ok := decls[callee.Origin()]
+							switch {
+							case ok && src.pkg.Kind == KindUser:
 								edges[cur] = append(edges[cur], callNode{fn: callee.Origin()})
+							case ok && strings.HasPrefix(src.pkg.Path, stdPrefix) && takesFunc(callee):
+								// a function of the standard packages calls its function argument, e.g. list.SortFunc
+								dynamics = append(dynamics, dynamic{from: cur, group: g})
 							}
 						case isMethodOfInterface(info, n):
-							dynamics = append(dynamics, dynamic{from: cur, method: ast.Unparen(n.Fun).(*ast.SelectorExpr).Sel.Name})
+							dynamics = append(dynamics, dynamic{from: cur, group: g, method: ast.Unparen(n.Fun).(*ast.SelectorExpr).Sel.Name})
 						case isDynamicCall(info, n):
-							dynamics = append(dynamics, dynamic{from: cur})
+							dynamics = append(dynamics, dynamic{from: cur, group: g})
 						}
 					case *ast.Ident:
 						// a function, which is used as a value, may be called by any call of a function value
 						if fn, ok := info.Uses[n].(*types.Func); ok && !calls[n] {
-							valueFuncs = append(valueFuncs, callNode{fn: fn.Origin()})
+							valueFuncs[g] = append(valueFuncs[g], callNode{fn: fn.Origin()})
 						}
 					}
 					return true
@@ -360,10 +334,10 @@ func checkRecursion(prog *Program, d *diagnoser, decls map[*types.Func]funcSrc) 
 
 	for _, dy := range dynamics {
 		if dy.method != "" {
-			edges[dy.from] = append(edges[dy.from], ifaceMethods[dy.method]...)
+			edges[dy.from] = append(edges[dy.from], ifaceMethods[methodKey{group: dy.group, name: dy.method}]...)
 			continue
 		}
-		edges[dy.from] = append(edges[dy.from], valueFuncs...)
+		edges[dy.from] = append(edges[dy.from], valueFuncs[dy.group]...)
 	}
 
 	inProfile := map[*types.Package]bool{}
@@ -400,6 +374,53 @@ func checkRecursion(prog *Program, d *diagnoser, decls map[*types.Func]funcSrc) 
 			d.report(pos, pos+token.Pos(len(n.name())), CodeTermination, n.name()+" may call itself through "+strings.Join(names, ", "), "the terminating profile requires, that every call ends, which recursion can not prove", "use a loop with a bound, or recurse with an argument, which decreases: if n <= 0 { return ... } as the first statement and f(n-1) for each call")
 		}
 	}
+}
+
+// takesFunc tells, whether a parameter of the function is a function.
+func takesFunc(fn *types.Func) bool {
+	params := fn.Signature().Params()
+	for i := range params.Len() {
+		if _, ok := params.At(i).Type().Underlying().(*types.Signature); ok {
+			return true
+		}
+	}
+	return false
+}
+
+// importGroups maps each package of the subset to a representative of the packages, which are connected to it by
+// imports in either direction, also through other packages. Values flow only along imports, e.g. a package, which
+// imports two others, passes a function of one to the other.
+func importGroups(prog *Program) map[*Package]*Package {
+	parent := map[*Package]*Package{}
+	var find func(p *Package) *Package
+	find = func(p *Package) *Package {
+		if parent[p] == p {
+			return p
+		}
+		root := find(parent[p])
+		parent[p] = root
+		return root
+	}
+	for _, p := range prog.Packages {
+		if p.Kind == KindUser {
+			parent[p] = p
+		}
+	}
+	for _, p := range prog.Packages {
+		if p.Kind != KindUser || p.Types == nil {
+			continue
+		}
+		for _, imp := range p.Types.Imports() {
+			if q := prog.Package(imp.Path()); q != nil && q.Kind == KindUser {
+				parent[find(q)] = find(p)
+			}
+		}
+	}
+	res := map[*Package]*Package{}
+	for p := range parent {
+		res[p] = find(p)
+	}
+	return res
 }
 
 // staticCallee returns the function or method, which the call calls statically, or nil.
@@ -445,12 +466,17 @@ func isMethodOfInterface(info *types.Info, call *ast.CallExpr) bool {
 	return iface
 }
 
-// isDynamicCall tells, whether the call calls a function value, e.g. a parameter or a field.
+// isDynamicCall tells, whether the call calls a function value, e.g. a parameter or a field. A call without a type,
+// e.g. of a function, which is not in the subset and reported elsewhere, is none.
 func isDynamicCall(info *types.Info, call *ast.CallExpr) bool {
 	if tv, ok := info.Types[call.Fun]; ok && (tv.IsType() || tv.IsBuiltin()) {
 		return false
 	}
-	_, ok := info.TypeOf(call.Fun).Underlying().(*types.Signature)
+	t := info.TypeOf(call.Fun)
+	if t == nil {
+		return false
+	}
+	_, ok := t.Underlying().(*types.Signature)
 	return ok
 }
 

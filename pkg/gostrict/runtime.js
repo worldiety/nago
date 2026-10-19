@@ -81,9 +81,11 @@ function $lsort(a, cmp) {
 	a.sort((x, y) => cmp(x, y));
 }
 
+// a range over a list visits the elements, which it has, when the range starts, see List.All
+
 function $lall(a, clone) {
 	return (y) => {
-		for (let i = 0; i < a.length; i++) {
+		for (let i = 0, n = a.length; i < n && i < a.length; i++) {
 			if (!y(i, clone(a[i]))) return;
 		}
 	};
@@ -91,7 +93,7 @@ function $lall(a, clone) {
 
 function $lvalues(a, clone) {
 	return (y) => {
-		for (let i = 0; i < a.length; i++) {
+		for (let i = 0, n = a.length; i < n && i < a.length; i++) {
 			if (!y(clone(a[i]))) return;
 		}
 	};
