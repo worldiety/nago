@@ -99,7 +99,44 @@ func (in *Instance) Call(ctx context.Context, name string, args ...any) ([]any, 
 	return res, in.callbackErr()
 }
 
-// failure returns the error of a failed call: the error of an abort itself, see [gostrict.Abort].
+// Run runs f, which calls the callbacks of the program, which the host has received, e.g. to render what a call has
+// created, like a call with the context ctx: it ends the callbacks, which f calls, and f holds the instance. Run
+// returns the first error of these callbacks. Without Run, a callback between two calls runs without a context.
+func (in *Instance) Run(ctx context.Context, f func()) error {
+	outer := in.depth.Load() == 0
+	if outer {
+		in.lock()
+		defer in.unlock()
+	}
+	prev := in.m.SetContext(ctx)
+	defer in.m.SetContext(prev)
+	f()
+	if !outer {
+		// the error belongs to the call, which runs f, too
+		return in.err
+	}
+	return in.callbackErr()
+}
+
+// Error is a failure of the program run, e.g. a panic of the program or of a function of the host, unlike an error
+// of the API, e.g. an unknown export or wrong arguments, an ended context, an exhausted stack, see
+// [gostrict.ErrStackExhausted], or an abort, see [gostrict.Abort].
+type Error struct {
+	Msg string
+	// Err is the error of the failure, if any.
+	Err error
+}
+
+func (e *Error) Error() string {
+	return "vm: " + e.Msg
+}
+
+func (e *Error) Unwrap() error {
+	return e.Err
+}
+
+// failure returns the error of a failed call: the error of an abort itself, see [gostrict.Abort], or an [Error] for a
+// panic.
 func (in *Instance) failure(err error) error {
 	if errors.Is(err, vmcode.ErrDepth) {
 		return fmt.Errorf("%w: %w", gostrict.ErrStackExhausted, err)
@@ -109,9 +146,8 @@ func (in *Instance) failure(err error) error {
 		if abortErr, ok := gostrict.AbortedErr(p.Value); ok {
 			return abortErr
 		}
-		if e, ok := p.Value.(error); ok {
-			return fmt.Errorf("vm: %w", e)
-		}
+		e, _ := p.Value.(error)
+		return &Error{Msg: fmt.Sprint(p.Value), Err: e}
 	}
 	return err
 }

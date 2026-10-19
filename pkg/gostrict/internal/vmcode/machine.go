@@ -68,18 +68,14 @@ func (p *Program) Externs() []string {
 }
 
 // NewMachine returns a machine, which executes the program. The package variables of the program are initialized
-// once, by the first machine.
+// once, by the first machine. An initialization, which ctx ended, is not kept: the next machine runs it again.
 func NewMachine(ctx context.Context, p *Program, h Host, maxDepth int) (*Machine, error) {
 	if maxDepth == 0 {
 		maxDepth = 10000
 	}
 	m := &Machine{prog: p, host: h, maxDepth: maxDepth, fuel: fuelChunk}
-	p.once.Do(func() {
-		p.gn, p.gs, p.gr = make([]uint64, p.globals.n), make([]string, p.globals.s), make([]any, p.globals.r)
-		_, p.initErr = m.Invoke(ctx, &Closure{fn: p.init}, nil)
-	})
-	if p.initErr != nil {
-		return nil, p.initErr
+	if err := m.initShared(ctx); err != nil {
+		return nil, err
 	}
 	if p.instInit != nil {
 		// the variables, which hold values of the host, belong to the instance, like in a browser
@@ -89,6 +85,33 @@ func NewMachine(ctx context.Context, p *Program, h Host, maxDepth int) (*Machine
 		}
 	}
 	return m, nil
+}
+
+// initShared initializes the package variables, which all machines of the program share, unless an earlier machine
+// did so.
+func (m *Machine) initShared(ctx context.Context) error {
+	p := m.prog
+	p.initMu.Lock()
+	defer p.initMu.Unlock()
+	if p.initDone {
+		return p.initErr
+	}
+	p.gn, p.gs, p.gr = make([]uint64, p.globals.n), make([]string, p.globals.s), make([]any, p.globals.r)
+	_, err := m.Invoke(ctx, &Closure{fn: p.init}, nil)
+	if err != nil && ctx.Err() != nil {
+		// the context of this machine ended the initialization, not the program
+		return err
+	}
+	p.initDone, p.initErr = true, err
+	return err
+}
+
+// SetContext sets the context of the calls, which begin outside of a call, e.g. of a callback, which the host calls
+// between two calls, and returns the previous one, see [Machine.Context].
+func (m *Machine) SetContext(ctx context.Context) context.Context {
+	prev := m.ctx
+	m.ctx = ctx
+	return prev
 }
 
 // Context returns the context of the current call, e.g. for a callback, which the host calls during the call.
