@@ -176,6 +176,7 @@ func (c *compiler) compile() {
 		f()
 	}
 	init.body = append(c.hostInits, init.body...)
+	c.inline()
 
 	for _, f := range append(c.out.funcs, init) {
 		g := &gen{c: c, f: f}

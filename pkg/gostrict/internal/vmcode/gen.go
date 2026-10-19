@@ -104,6 +104,19 @@ func (g *gen) ifStmt(s *sIf) {
 	g.patch(toEnd, g.pc())
 }
 
+// target tells, whether a jump, which is patched already, leads to pc, so that the instruction before pc must stay.
+func (g *gen) target(pc int) bool {
+	for _, in := range g.code {
+		switch in.op {
+		case opJmp, opJmpT, opJmpF, opJNltI, opJNleI, opJNeqI, opJNneI, opJNltF, opJNleF, opJEqIK, opJNeIK, opJNltLen:
+			if int(in.a) == pc {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func (g *gen) patchAll(at []int, target int32) {
 	for _, a := range at {
 		g.patch(a, target)
@@ -119,7 +132,12 @@ func (g *gen) loop(s *sLoop) {
 	g.stmts(s.body)
 	g.patchAll(g.conts[s], g.pc())
 	g.stmts(s.post)
-	g.emit(opLoop, start, 0, 0)
+	if last := len(g.code) - 1; last >= 0 && g.code[last].op == opAddIK && g.code[last].a == g.code[last].b && !g.target(last+1) {
+		in := g.code[last]
+		g.code[last] = instr{op: opIncLoop, a: start, b: in.a, c: in.c}
+	} else {
+		g.emit(opLoop, start, 0, 0)
+	}
 	g.patchAll(exits, g.pc())
 	g.patchAll(g.breaks[s], g.pc())
 }
@@ -153,6 +171,12 @@ func (g *gen) condJump(cond expr, when bool) []int {
 				op = opJEqIK
 			}
 			return []int{g.emit(op, 0, x.n, int32(c.n))}
+		}
+		if n, ok := e.y.(*eNative); ok && !when && !e.swap && e.op == opLtI && n.nat.name == "List.Len" {
+			saved := g.top
+			i, l := g.expr(e.x), g.expr(n.args[0])
+			g.top = saved
+			return []int{g.emit(opJNltLen, 0, i.n, l.r)}
 		}
 		if !when {
 			if fused, ok := fusedJump[e.op]; ok {
@@ -260,6 +284,8 @@ func hazard(x expr, res *tinfo) bool {
 		return false
 	case *eLoad:
 		return x.t.l.size() > 1
+	case *eLet:
+		return hazard(x.x, res)
 	}
 	return true
 }
@@ -387,6 +413,11 @@ func walk(x expr, f func(expr)) {
 		}
 	case *eNew:
 		walk(x.x, f)
+	case *eLet:
+		for _, v := range x.vals {
+			walk(v, f)
+		}
+		walk(x.x, f)
 	case *eCallIface:
 		walk(x.x, f)
 		for _, a := range x.args {
@@ -424,8 +455,12 @@ func (g *gen) move(dst, src layout, l layout) {
 	if dst == src {
 		return
 	}
-	for i := range l.n {
-		g.emit(opMovN, dst.n+i, src.n+i, 0)
+	if l.n > 1 && (dst.n+l.n <= src.n || src.n+l.n <= dst.n) {
+		g.emit(opMovNK, dst.n, src.n, l.n)
+	} else {
+		for i := range l.n {
+			g.emit(opMovN, dst.n+i, src.n+i, 0)
+		}
 	}
 	for i := range l.s {
 		g.emit(opMovS, dst.s+i, src.s+i, 0)
@@ -490,6 +525,11 @@ func (g *gen) exprTo(x expr, dst layout) {
 	case *eTupleAt:
 		v := g.expr(e.x)
 		g.move(dst, v.add(e.x.typ().offs[e.i]), e.t.l)
+	case *eLet:
+		for i, v := range e.vars {
+			g.exprTo(e.vals[i], v.at)
+		}
+		g.exprTo(e.x, dst)
 	case *eCallIface:
 		base := g.call(e)
 		g.move(dst, base, x.typ().l)
@@ -502,8 +542,12 @@ func (g *gen) exprTo(x expr, dst layout) {
 	case *eLoad:
 		p := g.expr(e.p)
 		l := e.t.l
-		for i := range l.n {
-			g.emit(opLdoN, dst.n+i, p.r, e.off.n+i)
+		if l.n > 1 && e.off.n < 1<<16 {
+			g.emit(opLdoNK, dst.n, p.r, e.off.n|l.n<<16)
+		} else {
+			for i := range l.n {
+				g.emit(opLdoN, dst.n+i, p.r, e.off.n+i)
+			}
 		}
 		for i := range l.s {
 			g.emit(opLdoS, dst.s+i, p.r, e.off.s+i)
@@ -522,14 +566,13 @@ func (g *gen) exprTo(x expr, dst layout) {
 	case *eBinary:
 		g.binary(e, dst)
 	case *eAndOr:
-		g.exprTo(e.x, dst)
-		op := opJmpF
-		if !e.and {
-			op = opJmpT
-		}
-		skip := g.emit(op, 0, dst.n, 0)
-		g.exprTo(e.y, dst)
-		g.patch(skip, g.pc())
+		// the jumps of the conditions decide the value
+		falses := g.condJump(e, false)
+		g.emit(opLdiN, dst.n, 1, 0)
+		end := g.emit(opJmp, 0, 0, 0)
+		g.patchAll(falses, g.pc())
+		g.emit(opLdiN, dst.n, 0, 0)
+		g.patch(end, g.pc())
 	case *eNative:
 		if e.nat.inline != nil {
 			var args []layout
@@ -666,6 +709,17 @@ func (g *gen) constant(e *eConst, dst layout) {
 }
 
 func (g *gen) binary(e *eBinary, dst layout) {
+	if e.op == opConcat {
+		if parts := concatParts(e); len(parts) > 2 {
+			// a + b + c concatenates once, without the strings in between
+			at := g.alloc(layout{s: int32(len(parts))})
+			for i, p := range parts {
+				g.exprTo(p, at.add(layout{s: int32(i)}))
+			}
+			g.emit(opConcatN, dst.s, at.s, int32(len(parts)))
+			return
+		}
+	}
 	x := g.expr(e.x)
 	if e.imm {
 		g.emit(e.op, dst.n, x.n, int32(e.y.(*eConst).n))
@@ -702,6 +756,15 @@ func (g *gen) binary(e *eBinary, dst layout) {
 	}
 }
 
+// concatParts returns the operands of a chain of concatenations in their order.
+func concatParts(e expr) []expr {
+	b, ok := e.(*eBinary)
+	if !ok || b.op != opConcat {
+		return []expr{e}
+	}
+	return append(concatParts(b.x), concatParts(b.y)...)
+}
+
 // call evaluates the arguments into the slots above the temporaries, calls the function and returns the slots of
 // its results, which the callee writes over its arguments.
 func (g *gen) call(x expr) layout {
@@ -715,6 +778,9 @@ func (g *gen) call(x expr) layout {
 		args, site.fn, op, params = e.args, e.fn, opCall, e.fn.params
 	case *eNative:
 		args, site.nat, op, params = e.args, e.nat, opCallNative, e.params
+		if e.nat.reenters {
+			op = opCallNativeR
+		}
 	case *eHost:
 		args, site.ext, op = e.args, e.ext, opCallHost
 		params = tuple(e.ext.params...)

@@ -28,6 +28,8 @@ type native struct {
 	fn   func(m *Machine, n []uint64, s []string, r []any)
 	// inline emits the function as instructions, e.g. the length of a list
 	inline func(g *gen, dst layout, args []layout)
+	// reenters is set for a native, which calls the program, e.g. list.SortFunc, so that the banks may grow
+	reenters bool
 }
 
 type nativeFn = func(m *Machine, n []uint64, s []string, r []any)
@@ -317,7 +319,7 @@ var genericNatives = map[string]func(c *compiler, targs []*tinfo, pos token.Pos)
 	},
 	listPath + ".SortFunc": func(c *compiler, targs []*tinfo, pos token.Pos) *native {
 		el := targs[0].l
-		return &native{name: "list.SortFunc", fn: func(m *Machine, n []uint64, s []string, r []any) {
+		return &native{name: "list.SortFunc", reenters: true, fn: func(m *Machine, n []uint64, s []string, r []any) {
 			l, fn := r[0].(*list), r[1].(*Closure)
 			idx := make([]int, l.len)
 			for i := range idx {

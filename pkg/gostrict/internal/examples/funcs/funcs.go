@@ -220,3 +220,38 @@ func boolStr(b bool) string {
 	}
 	return "n"
 }
+
+func pick(a, b int32) int32             { return a*10 + b }
+func ignore(a int32, b int32) int32     { return b }
+func twice(x int32) int32               { return x + x }
+func corner(r Rect2) float64            { return r.Min.X + r.Max.Y }
+func (p Point2) Plus(q Point2) Point2   { return Point2{p.X + q.X, p.Y + q.Y} }
+func (p Point2) Scale(f float64) Point2 { return Point2{p.X * f, p.Y * f} }
+func depth(n int32) int32 {
+	if n <= 0 {
+		return 0
+	}
+	return depth(n-1) + 1
+}
+
+type Point2 struct{ X, Y float64 }
+
+type Rect2 struct{ Min, Max Point2 }
+
+// Inlined calls small functions, which an engine may inline, with arguments, whose order of evaluation and side
+// effects must stay.
+func Inlined(n int32) string {
+	count := int32(0)
+	next := func() int32 {
+		count++
+		return count
+	}
+	a := pick(next(), next())
+	b := ignore(next(), 5)
+	c := twice(next())
+	p := Point2{1, 2}
+	p = p.Plus(p.Scale(float64(n))).Plus(Point2{X: 0.5})
+	r := Rect2{Min: Point2{1, 2}, Max: p}
+	return text.FromInt(a) + "," + text.FromInt(b) + "," + text.FromInt(c) + "," + text.FromInt(count) + "," +
+		text.FromFloat(p.X, 1) + "," + text.FromFloat(p.Y, 1) + "," + text.FromFloat(corner(r), 1) + "," + text.FromInt(depth(n))
+}

@@ -59,7 +59,7 @@ var exports = map[string]gostrict.Funcs{
 	"core":       native.Reflect(map[string]any{"Control": core.Control, "Equal": core.Equal, "Lists": core.Lists, "Maps": core.Maps, "Options": core.Options, "Pairs": core.Pairs, "Results": core.Results}),
 	"draw":       native.Reflect(map[string]any{"Frame": draw.Frame, "New": draw.New}),
 	"errs":       native.Reflect(map[string]any{"Average": errs.Average, "Run": errs.Run}),
-	"funcs":      native.Reflect(map[string]any{"Branches": funcs.Branches, "Captures": funcs.Captures, "Methods": funcs.Methods}),
+	"funcs":      native.Reflect(map[string]any{"Branches": funcs.Branches, "Captures": funcs.Captures, "Inlined": funcs.Inlined, "Methods": funcs.Methods}),
 	"generics":   native.Reflect(map[string]any{"Run": generics.Run, "SumFloats": generics.SumFloats}),
 	"hostuse":    native.Reflect(map[string]any{"Callbacks": hostuse.Callbacks, "Records": hostuse.Records, "Run": hostuse.Run}),
 	"ints":       native.Reflect(map[string]any{"Bits": ints.Bits, "Conv": ints.Conv, "Div": ints.Div, "DivU": ints.DivU, "Hash": ints.Hash, "Wrap": ints.Wrap, "Xorshift": ints.Xorshift}),
@@ -118,6 +118,7 @@ func nativeEngine(pkg string) native.Engine {
 func TestDifferential(t *testing.T) {
 	cases := []diffCase{
 		{"funcs", "Captures", []any{int32(4)}},
+		{"funcs", "Inlined", []any{int32(3)}},
 		{"funcs", "Branches", []any{int32(3)}},
 		{"funcs", "Branches", []any{int32(6)}},
 		{"funcs", "Methods", []any{int32(2)}},

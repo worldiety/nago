@@ -166,8 +166,9 @@ const (
 	opMovN
 	opMovS
 	opMovR
-	opLdiN // n[a] = int64(b)
-	opLdkN // n[a] = nconst[b]
+	opMovNK // n[a:a+c] = n[b:b+c]
+	opLdiN  // n[a] = int64(b)
+	opLdkN  // n[a] = nconst[b]
 	opLdkS
 	opLdkR
 	opLdgN // n[a] = gn[b]
@@ -179,7 +180,8 @@ const (
 	opLdoN // n[a] = r[b].n[c]
 	opLdoS
 	opLdoR
-	opStoN // r[a].n[b] = n[c]
+	opLdoNK // n[a:a+c>>16] = r[b].n[c&0xffff:]
+	opStoN  // r[a].n[b] = n[c]
 	opStoS
 	opStoR
 	opNew // r[a] = new object of types[b]
@@ -227,14 +229,17 @@ const (
 	opNeR
 	opEqV // aux[a]: n[dst.n] = the values of type t at src and off are equal
 	opConcat
+	opConcatN // s[a] = s[b] + ... + s[b+c-1]
 	opEqS
 	opNeS
 	opLtS
 	opLeS
 
-	opJmp  // pc = a
-	opLoop // pc = a, a backward jump, which burns fuel
-	opJmpT // if n[a] != 0 { pc = b }
+	opJmp     // pc = a
+	opLoop    // pc = a, a backward jump, which burns fuel
+	opIncLoop // n[b] += c, then like opLoop
+	opJNltLen // if !(n[b] < len(r[c])) { pc = a }
+	opJmpT    // if n[a] != 0 { pc = b }
 	opJmpF
 	// fused comparisons, which jump, if the comparison of b and c fails, to a
 	opJNltI
@@ -246,10 +251,11 @@ const (
 	opJEqIK // if n[b] == c { pc = a }
 	opJNeIK // if n[b] != c { pc = a }
 
-	opCall       // calls[a]
-	opCallNative // calls[a]
-	opCallHost   // calls[a]
-	opCallValue  // calls[a] with the closure in r[b]
+	opCall        // calls[a]
+	opCallNative  // calls[a]
+	opCallNativeR // calls[a] of a native, which calls the program
+	opCallHost    // calls[a]
+	opCallValue   // calls[a] with the closure in r[b]
 	opRet
 
 	opLLen   // n[a] = len(r[b])
