@@ -22,6 +22,10 @@ var _ vmcode.Host = boundary{}
 func (b boundary) Call(idx int, args []any) []any {
 	h := b.in.host[idx]
 	res := h.fn(args)
+	if h.sig.Name == "" {
+		// a variable, whose value the machine checks itself
+		return res
+	}
 	if err := gostrict.CheckArgs(h.sig.Name, h.sig.Results, res); err != nil {
 		panic(err)
 	}
@@ -49,14 +53,14 @@ func (b boundary) TokenValue(v any) (any, bool) {
 	return tok.Value(), true
 }
 
-func (b boundary) Callback(fn *vmcode.Func) any {
+func (b boundary) Callback(fn *vmcode.Closure) any {
 	return &callback{in: b.in, fn: fn}
 }
 
 // callback is a function of the program, which the host has received.
 type callback struct {
 	in *Instance
-	fn *vmcode.Func
+	fn *vmcode.Closure
 }
 
 func (cb *callback) Call(args ...any) ([]any, error) {

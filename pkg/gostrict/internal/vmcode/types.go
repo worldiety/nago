@@ -86,7 +86,7 @@ type tinfo struct {
 	// name is the full name of a named type, e.g. "example.com/app.Input"
 	name string
 	// methods are the methods of a variant of an interface by their name, filled lazily
-	methods map[string]*Func
+	methods map[string]*methodRef
 	sig     *types.Signature
 	// zero is the zero value of a shared struct
 	zero *object

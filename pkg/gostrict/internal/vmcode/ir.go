@@ -116,6 +116,12 @@ type (
 		t  *tinfo
 		fn *Func
 	}
+	// eClosure is a function literal, which captures the values of caps.
+	eClosure struct {
+		t    *tinfo
+		fn   *Func
+		caps []expr
+	}
 	// eBox converts the value x of the variant v into an interface.
 	eBox struct {
 		t *tinfo
@@ -133,6 +139,25 @@ type (
 		l, i expr
 		// unchecked is set within a loop over the indices of the list, which only reads the element
 		unchecked bool
+	}
+	// eCallIface calls the method of the interface value x.
+	eCallIface struct {
+		t      *tinfo
+		x      expr
+		method string
+		args   []expr
+	}
+	// eTypeIs tells, whether the interface value x holds a value of type v.
+	eTypeIs struct {
+		t *tinfo
+		x expr
+		v *tinfo
+	}
+	// eView is a pointer to the part at off of the object of p, e.g. the address of a field.
+	eView struct {
+		t   *tinfo
+		p   expr
+		off layout
 	}
 	// eTupleAt is the element of a tuple.
 	eTupleAt struct {
@@ -157,6 +182,10 @@ func (e *eHost) typ() *tinfo       { return e.t }
 func (e *eStruct) typ() *tinfo     { return e.t }
 func (e *eNew) typ() *tinfo        { return e.t }
 func (e *eFunc) typ() *tinfo       { return e.t }
+func (e *eClosure) typ() *tinfo    { return e.t }
+func (e *eCallIface) typ() *tinfo  { return e.t }
+func (e *eTypeIs) typ() *tinfo     { return e.t }
+func (e *eView) typ() *tinfo       { return e.t }
 func (e *eBox) typ() *tinfo        { return e.t }
 func (e *eListOf) typ() *tinfo     { return e.t }
 func (e *eListGet) typ() *tinfo    { return e.t }
@@ -168,6 +197,10 @@ type local struct {
 	name string
 	t    *tinfo
 	at   layout
+	// cell is the type of a variable, which lives in a cell, whose pointer the local holds
+	cell *tinfo
+	// raw is the plain variable, which an assignment writes, before it moves the value into the cell
+	raw *local
 }
 
 type stmt interface{}

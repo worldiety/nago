@@ -45,13 +45,22 @@ type Func struct {
 	frame layout
 	code  []instr
 	// lines are the positions of the instructions, see [Func.pos]
-	calls []callSite
-	aux   []aux
+	calls    []callSite
+	aux      []aux
+	closures []closureSite
 	// body is the IR, which the backends translate
 	body   []stmt
 	locals layout
-	// closure is the value of the function, e.g. a callback, which needs no captures
-	closure *closure
+	// closure is the value of a function, which captures nothing, e.g. a callback
+	closure *Closure
+	// caps are the slots of the captured variables of a function literal, see [Closure]
+	caps []capSlot
+}
+
+// capSlot is the place of a captured variable in the frame of a function literal.
+type capSlot struct {
+	at layout
+	l  layout
 }
 
 // extern is a function of a header package, which the host implements.
@@ -60,6 +69,8 @@ type extern struct {
 	params  []*tinfo
 	results *tinfo
 	idx     int
+	// variable is set for a variable of a header package, whose value the function returns
+	variable bool
 }
 
 // callSite is the target of a call and the offset of its arguments and results in the frame of the caller.
@@ -68,6 +79,17 @@ type callSite struct {
 	nat  *native
 	ext  *extern
 	base layout
+	// method is the name of the method of an interface, whose arguments are in the slots at args
+	method string
+	args   layout
+	argsL  layout
+}
+
+// closureSite creates a closure of fn with the captured slots at caps into r[dst].
+type closureSite struct {
+	fn   *Func
+	dst  int32
+	caps []layout
 }
 
 // aux are the operands of an instruction, which do not fit into it, e.g. the slots of a struct.
@@ -119,9 +141,18 @@ type list struct {
 	len int32
 }
 
-// closure is a function value.
-type closure struct {
+// Closure is a function value: the function and the slots of the variables, which it captured, in the order of
+// [Func.caps].
+type Closure struct {
 	fn *Func
+	n  []uint64
+	s  []string
+	r  []any
+}
+
+// Name returns the full name of the function.
+func (c *Closure) Name() string {
+	return c.fn.name
 }
 
 type op uint8
@@ -223,9 +254,13 @@ const (
 	opLAppN  // append n[b] to r[a]
 	opLAppS
 	opLAppR
-	opLApp  // aux[a]: append the element at src to r[b]
-	opLNew  // r[a] = new list
-	opLSet  // aux[a]: n[dst.n + el.n] = set element n[c] of r[b] to src
-	opBox   // aux[a]: r[dst.r] = box of the value at src of type t
-	opZeroR // r[a] = nil
+	opLApp      // aux[a]: append the element at src to r[b]
+	opLNew      // r[a] = new list
+	opLSet      // aux[a]: n[dst.n + el.n] = set element n[c] of r[b] to src
+	opBox       // aux[a]: r[dst.r] = box of the value at src of type t
+	opZeroR     // r[a] = nil
+	opClosure   // closures[a]: r[dst] = a closure, which captures the slots
+	opCallIface // calls[a]: the method of the interface value in r[b]
+	opTypeIs    // n[a] = the box in r[b] holds a value of types[c]
+	opView      // aux[a]: r[dst.r] = a pointer into the object of r[src.r] at off
 )

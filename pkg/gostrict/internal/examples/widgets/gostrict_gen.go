@@ -40,6 +40,9 @@ func Host() gostrict.Funcs {
 			r0 := TLabel{ref: args[0].(js.Ref)}.OnClick(gostrictFunc4(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
+		"go.wdy.de/nago/pkg/gostrict/internal/examples/widgets.Wide": func(args []any) []any {
+			return []any{gostrictTo3(Wide)}
+		},
 	}
 }
 

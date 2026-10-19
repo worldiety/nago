@@ -318,7 +318,7 @@ var genericNatives = map[string]func(c *compiler, targs []*tinfo, pos token.Pos)
 	listPath + ".SortFunc": func(c *compiler, targs []*tinfo, pos token.Pos) *native {
 		el := targs[0].l
 		return &native{name: "list.SortFunc", fn: func(m *Machine, n []uint64, s []string, r []any) {
-			l, fn := r[0].(*list), r[1].(*closure).fn
+			l, fn := r[0].(*list), r[1].(*Closure)
 			idx := make([]int, l.len)
 			for i := range idx {
 				idx[i] = i

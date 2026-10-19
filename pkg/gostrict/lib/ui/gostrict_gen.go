@@ -4354,6 +4354,99 @@ func Host() gostrict.Funcs {
 			r0 := WindowTitle(args[0].(string))
 			return []any{r0.ref}
 		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.BodyLarge": func(args []any) []any {
+			return []any{gostrictTo59(BodyLarge)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.BodyMedium": func(args []any) []any {
+			return []any{gostrictTo59(BodyMedium)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.BodySmall": func(args []any) []any {
+			return []any{gostrictTo59(BodySmall)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.DisplayLarge": func(args []any) []any {
+			return []any{gostrictTo59(DisplayLarge)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.DisplayMedium": func(args []any) []any {
+			return []any{gostrictTo59(DisplayMedium)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.DisplaySmall": func(args []any) []any {
+			return []any{gostrictTo59(DisplaySmall)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.DocumentDinA4": func(args []any) []any {
+			return []any{gostrictTo73(DocumentDinA4)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Full": func(args []any) []any {
+			return []any{string(Full)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.HeadlineLarge": func(args []any) []any {
+			return []any{gostrictTo59(HeadlineLarge)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.HeadlineMedium": func(args []any) []any {
+			return []any{gostrictTo59(HeadlineMedium)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.HeadlineSmall": func(args []any) []any {
+			return []any{gostrictTo59(HeadlineSmall)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.LabelLarge": func(args []any) []any {
+			return []any{gostrictTo59(LabelLarge)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.LabelMedium": func(args []any) []any {
+			return []any{gostrictTo59(LabelMedium)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.LabelSmall": func(args []any) []any {
+			return []any{gostrictTo59(LabelSmall)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Large": func(args []any) []any {
+			return []any{gostrictTo59(Large)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoBoldLarge": func(args []any) []any {
+			return []any{gostrictTo59(MonoBoldLarge)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoBoldMedium": func(args []any) []any {
+			return []any{gostrictTo59(MonoBoldMedium)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoBoldSmall": func(args []any) []any {
+			return []any{gostrictTo59(MonoBoldSmall)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoItalicLarge": func(args []any) []any {
+			return []any{gostrictTo59(MonoItalicLarge)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoItalicMedium": func(args []any) []any {
+			return []any{gostrictTo59(MonoItalicMedium)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoItalicSmall": func(args []any) []any {
+			return []any{gostrictTo59(MonoItalicSmall)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoLarge": func(args []any) []any {
+			return []any{gostrictTo59(MonoLarge)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoMedium": func(args []any) []any {
+			return []any{gostrictTo59(MonoMedium)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.MonoSmall": func(args []any) []any {
+			return []any{gostrictTo59(MonoSmall)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Monospace": func(args []any) []any {
+			return []any{gostrictTo59(Monospace)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Small": func(args []any) []any {
+			return []any{gostrictTo59(Small)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.SubTitle": func(args []any) []any {
+			return []any{gostrictTo59(SubTitle)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.Title": func(args []any) []any {
+			return []any{gostrictTo59(Title)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TitleLarge": func(args []any) []any {
+			return []any{gostrictTo59(TitleLarge)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TitleMedium": func(args []any) []any {
+			return []any{gostrictTo59(TitleMedium)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TitleSmall": func(args []any) []any {
+			return []any{gostrictTo59(TitleSmall)}
+		},
 	}
 }
 

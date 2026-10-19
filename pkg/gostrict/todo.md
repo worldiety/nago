@@ -145,18 +145,24 @@ Programm schon im Bundle ist; das kostet ein Bundle von money rund 48 KiB und we
 - **`go/analysis`-Analyzer (I.6):** neue Abhängigkeit `golang.org/x/tools`, abstimmen.
 - **Verträge und Wertebereiche (I.8, I.9):** Sprachdesign offen.
 - **QuickJS über wazero (I.12):** Engine mit Speicherlimit, neue Abhängigkeiten.
-- **Interpreter `engine/vm` (I.12):** Phase 1 (Kern) ist fertig: alle Ausdrücke und Anweisungen ohne
-  Funktionsliterale, Iteratoren und Interfaces, Records, Listen, Maps, Optionen, Vergleich von Structs, benannte
-  Ergebnisse, `f(g())`, Zustände, Timeout. `diff_test.go` hat die dritte Spalte `vm` (neu: Beispiel `core`), dazu
-  `TestRecordsAndState`, `TestTimeout`, `TestSheet`. Ausstehend in `vmPending`: alias, generics, hostuse (Closures),
-  iters (Iteratoren), values (Interfaces). Als Nächstes:
-  - Phase 2: Closures (Zellen nur für Variablen, die nach dem Einfangen zugewiesen werden), Methodenwerte,
-    Interfaces und Sealed Interfaces (Methodentabelle, Type Switch, Vergleich), Generics (Monomorphisierung wie im
-    Emitter), Range über Iteratoren, `msg.Out`, Handler.
-  - Typisierter Pfad an der Grenze (Phase 3): optionales Interface der Callbacks (z. B. `gostrict.FrameCallback`),
-    über das generierter Code einmal je Callback die Slots der Felder erfragt; geteilte Records cachen ihren Go-Wert.
+- **Interpreter `engine/vm` (I.12):** Phase 1 und 2 sind fertig: alle Ausdrücke und Anweisungen des Subsets, auch
+  Funktionsliterale (Zellen nur für eingefangene Variablen, die danach zugewiesen werden, je Iteration neu),
+  Methodenwerte, Interfaces (Box mit Methodentabelle je Typ, Type Switch, Vergleich, eigene Fehlertypen), Zeiger
+  auf Variablen und Felder für Methoden mit Zeiger-Empfänger (Zelle bzw. Objekt, dessen Slices in das umgebende
+  zeigen), Generics (Monomorphisierung) und Range über Iteratoren (Rumpf als `yield`, `return` und Sprünge nach
+  außen über Zellen der Funktion). `vmPending` ist leer; neu ist das Beispiel `funcs`. Mit der VM laufen außerdem
+  `TestHost`, `TestWidgets`, `TestUnions`, `TestUnionMessages`, `TestSession`, `TestThree`, `TestCanvas`,
+  `TestRecordsAndState`, `TestTimeout` und in lib/ui `TestSheet`, `TestPage`, `TestForm`, `TestDataView`,
+  `TestAgenda`, `TestExtras`. Variablen von Header-Paketen liefert `Host()` jetzt auch als Funktionen ohne
+  Parameter (Generator), die VM liest sie einmal je Programm. Als Nächstes:
+  - Phase 3: typisierter Pfad an der Grenze: optionales Interface der Callbacks (z. B. `gostrict.FrameCallback`),
+    über das generierter Code einmal je Callback die Slots der Felder erfragt; geteilte Records cachen ihren
+    Go-Wert. Danach `doc.go` (Abschnitt „Engines“).
+  - Phase 4: ganze Programme (Aspekte um jeden Einstieg, `Abort`), bis dahin lehnt die VM sie beim Übersetzen ab.
   - Package-Variablen werden einmal je Programm mit den Host-Funktionen der ersten Instanz initialisiert. Für
     Initialisierer, die den Host rufen (Handles), muss das geklärt werden.
+  - Zeiger auf Felder sind eigene Objekte, also `&x.A == &x.A` falsch, wo Go true liefert; das Subset kann solche
+    Zeiger nur über Methoden mit Zeiger-Empfänger bilden, ein Vergleich darin ist unwahrscheinlich.
   - Fehler der VM tragen noch keine Quellposition; `GOSTRICT_VM_PANIC=1` lässt Panics mit Stack durch,
     `VMDUMP=<dir> go test -run TestDump ./engine/vm` zeigt den Bytecode.
 - **Fotobuch:** Drag-and-drop von Dateien direkt auf den Canvas.

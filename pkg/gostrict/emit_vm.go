@@ -33,6 +33,7 @@ func (e *emitter) emitVM(b *Bundle, exports map[string]*types.Func) (p *vmcode.P
 	}()
 	src := &vmcode.Source{
 		Fset:      e.prog.Fset,
+		Whole:     len(e.entries) > 0,
 		Exports:   exports,
 		Hosted:    map[string]bool{},
 		Immutable: e.mut.immutable,
@@ -44,6 +45,17 @@ func (e *emitter) emitVM(b *Bundle, exports map[string]*types.Func) (p *vmcode.P
 	}
 	for _, x := range b.Externs {
 		src.Hosted[x.Name] = true
+	}
+	src.HostVars = map[string]bool{}
+	for _, p := range e.prog.Packages {
+		if p.Kind != KindHeader {
+			continue
+		}
+		for _, name := range p.Types.Scope().Names() {
+			if v, ok := p.Types.Scope().Lookup(name).(*types.Var); ok && v.Exported() {
+				src.HostVars[p.Path+"."+name] = true
+			}
+		}
 	}
 	for name, r := range b.Records {
 		for _, f := range r.Fields {

@@ -32,7 +32,7 @@ type Host interface {
 	// TokenValue returns the state of a token, or false, if it belongs to another engine.
 	TokenValue(v any) (any, bool)
 	// Callback returns the neutral value of a function of the program.
-	Callback(fn *Func) any
+	Callback(fn *Closure) any
 }
 
 // debugPanics lets the panics of the machine through with their stack, e.g. GOSTRICT_VM_PANIC=1 go test.
@@ -48,8 +48,11 @@ func (p *PanicError) Error() string {
 }
 
 // Export returns the exported function with the name, or nil.
-func (p *Program) Export(name string) *Func {
-	return p.exports[name]
+func (p *Program) Export(name string) *Closure {
+	if f := p.exports[name]; f != nil {
+		return f.closure
+	}
+	return nil
 }
 
 // Externs returns the full names of the functions of header packages, which the host implements, by their index.
@@ -61,11 +64,6 @@ func (p *Program) Externs() []string {
 	return names
 }
 
-// Name returns the full name of the function.
-func (f *Func) Name() string {
-	return f.name
-}
-
 // NewMachine returns a machine, which executes the program. The package variables of the program are initialized
 // once, by the first machine.
 func NewMachine(ctx context.Context, p *Program, h Host, maxDepth int) (*Machine, error) {
@@ -75,7 +73,7 @@ func NewMachine(ctx context.Context, p *Program, h Host, maxDepth int) (*Machine
 	m := &Machine{prog: p, host: h, maxDepth: maxDepth, fuel: fuelChunk}
 	p.once.Do(func() {
 		p.gn, p.gs, p.gr = make([]uint64, p.globals.n), make([]string, p.globals.s), make([]any, p.globals.r)
-		_, p.initErr = m.Invoke(ctx, p.init, nil)
+		_, p.initErr = m.Invoke(ctx, &Closure{fn: p.init}, nil)
 	})
 	if p.initErr != nil {
 		return nil, p.initErr
@@ -98,7 +96,8 @@ type saved struct {
 // Invoke calls fn with neutral arguments above the frames in use, e.g. within a host function, which calls a
 // callback, and returns its neutral results. A failure of the engine, e.g. an ended context, is returned as error,
 // a panic of a host function as [PanicError].
-func (m *Machine) Invoke(ctx context.Context, fn *Func, args []any) (res []any, err error) {
+func (m *Machine) Invoke(ctx context.Context, cl *Closure, args []any) (res []any, err error) {
+	fn := cl.fn
 	s := saved{hi: m.hi, depth: m.depth, ctx: m.ctx}
 	m.ctx = ctx
 	defer m.restore(s, &err)
@@ -109,7 +108,7 @@ func (m *Machine) Invoke(ctx context.Context, fn *Func, args []any) (res []any, 
 		at := base.add(params.offs[i])
 		m.write(a, params.elems[i], m.n[at.n:], m.s[at.s:], m.r[at.r:])
 	}
-	m.run(fn, int(base.n), int(base.s), int(base.r))
+	m.runClosure(cl, int(base.n), int(base.s), int(base.r))
 	t := fn.results
 	if t.kind != kTuple {
 		return []any{m.neutral(t, m.n[base.n:], m.s[base.s:], m.r[base.r:])}, nil

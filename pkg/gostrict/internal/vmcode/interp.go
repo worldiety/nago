@@ -80,6 +80,76 @@ func (m *Machine) run(f *Func, bn, bs, br int) {
 	m.hi = hi
 }
 
+// callIface calls the method of the interface value v: it copies the receiver from the box and the arguments
+// behind it into the frame of the method at the base of the call site.
+func (m *Machine) callIface(cs *callSite, v any, bn, bs, br int) {
+	base := layout{int32(bn) + cs.base.n, int32(bs) + cs.base.s, int32(br) + cs.base.r}
+	o, ok := v.(*object)
+	if !ok {
+		// an error of errors.New
+		if err, ok := v.(error); ok && cs.method == "Error" {
+			m.s[base.s] = err.Error()
+			return
+		}
+		panic(fmt.Sprintf("vm: %T has no method %s", v, cs.method))
+	}
+	mr := o.t.methods[cs.method]
+	if mr == nil {
+		panic(fmt.Sprintf("vm: %s has no method %s", o.t.name, cs.method))
+	}
+	rn, rs, rr := o.n, o.s, o.r
+	if mr.deref {
+		elem := o.t.elem
+		p := o.r[0].(*object)
+		if elem.kind == kShared {
+			rn, rs, rr = nil, nil, []any{p}
+		} else {
+			rn, rs, rr = p.n, p.s, p.r
+		}
+	}
+	at := base.add(layout{int32(len(rn)), int32(len(rs)), int32(len(rr))})
+	fn := mr.fn
+	m.ensure(int(max(base.n+fn.frame.n, at.n+cs.argsL.n)), int(max(base.s+fn.frame.s, at.s+cs.argsL.s)), int(max(base.r+fn.frame.r, at.r+cs.argsL.r)))
+	args := layout{int32(bn) + cs.args.n, int32(bs) + cs.args.s, int32(br) + cs.args.r}
+	copy(m.n[at.n:at.n+cs.argsL.n], m.n[args.n:])
+	copy(m.s[at.s:at.s+cs.argsL.s], m.s[args.s:])
+	copy(m.r[at.r:at.r+cs.argsL.r], m.r[args.r:])
+	copy(m.n[base.n:], rn)
+	copy(m.s[base.s:], rs)
+	copy(m.r[base.r:], rr)
+	m.enter()
+	m.run(fn, int(base.n), int(base.s), int(base.r))
+	m.depth--
+}
+
+// errorMessage calls the method Error of a value of the program, which is an error.
+func (m *Machine) errorMessage(o *object) string {
+	base := m.hi
+	cs := &callSite{method: "Error", base: layout{}}
+	m.ensure(int(base.n+1), int(base.s+1), int(base.r+1))
+	m.callIface(cs, o, int(base.n), int(base.s), int(base.r))
+	return m.s[base.s]
+}
+
+// runClosure runs the function of a closure with the captured variables in its frame.
+func (m *Machine) runClosure(cl *Closure, bn, bs, br int) {
+	f := cl.fn
+	if len(f.caps) == 0 {
+		m.run(f, bn, bs, br)
+		return
+	}
+	fr := f.frame
+	m.ensure(bn+int(fr.n), bs+int(fr.s), br+int(fr.r))
+	var at layout
+	for _, c := range f.caps {
+		copy(m.n[bn+int(c.at.n):bn+int(c.at.n+c.l.n)], cl.n[at.n:])
+		copy(m.s[bs+int(c.at.s):bs+int(c.at.s+c.l.s)], cl.s[at.s:])
+		copy(m.r[br+int(c.at.r):br+int(c.at.r+c.l.r)], cl.r[at.r:])
+		at = at.add(c.l)
+	}
+	m.run(f, bn, bs, br)
+}
+
 func (m *Machine) exec(f *Func, bn, bs, br int) {
 	fr := f.frame
 	n := m.n[bn : bn+int(fr.n)]
@@ -276,9 +346,9 @@ func (m *Machine) exec(f *Func, bn, bs, br int) {
 			n, s, r = m.n[bn:bn+int(fr.n)], m.s[bs:bs+int(fr.s)], m.r[br:br+int(fr.r)]
 		case opCallValue:
 			cs := &f.calls[in.a]
-			cl := r[in.b].(*closure)
+			cl := r[in.b].(*Closure)
 			m.enter()
-			m.run(cl.fn, bn+int(cs.base.n), bs+int(cs.base.s), br+int(cs.base.r))
+			m.runClosure(cl, bn+int(cs.base.n), bs+int(cs.base.s), br+int(cs.base.r))
 			m.depth--
 			n, s, r = m.n[bn:bn+int(fr.n)], m.s[bs:bs+int(fr.s)], m.r[br:br+int(fr.r)]
 		case opCallNative:
@@ -321,6 +391,27 @@ func (m *Machine) exec(f *Func, bn, bs, br int) {
 			r[x.dst.r].(*list).add(x.t.l, n[x.src.n:], s[x.src.s:], r[x.src.r:])
 		case opLNew:
 			r[in.a] = &list{}
+		case opCallIface:
+			m.callIface(&f.calls[in.a], r[in.b], bn, bs, br)
+			n, s, r = m.n[bn:bn+int(fr.n)], m.s[bs:bs+int(fr.s)], m.r[br:br+int(fr.r)]
+		case opTypeIs:
+			o, ok := r[in.b].(*object)
+			n[in.a] = fromBool(ok && o.t == m.prog.types[in.c])
+		case opView:
+			x := &f.aux[in.a]
+			o := r[x.src.r].(*object)
+			l := x.t.l
+			r[x.dst.r] = &object{t: x.t, n: o.n[x.off.n : x.off.n+l.n], s: o.s[x.off.s : x.off.s+l.s], r: o.r[x.off.r : x.off.r+l.r]}
+		case opClosure:
+			x := &f.closures[in.a]
+			cl := &Closure{fn: x.fn}
+			for i, at := range x.caps {
+				l := x.fn.caps[i].l
+				cl.n = append(cl.n, n[at.n:at.n+l.n]...)
+				cl.s = append(cl.s, s[at.s:at.s+l.s]...)
+				cl.r = append(cl.r, r[at.r:at.r+l.r]...)
+			}
+			r[x.dst] = cl
 		case opBox:
 			x := &f.aux[in.a]
 			o := newObject(x.t, x.t.l)
@@ -345,6 +436,13 @@ func equal(t *tinfo, an []uint64, as []string, ar []any, bn []uint64, bs []strin
 		return as[0] == bs[0]
 	case kPtr, kHandle, kFunc:
 		return ar[0] == br[0]
+	case kIface, kError:
+		ao, aok := ar[0].(*object)
+		bo, bok := br[0].(*object)
+		if !aok || !bok {
+			return ar[0] == br[0]
+		}
+		return ao.t == bo.t && equal(ao.t, ao.n, ao.s, ao.r, bo.n, bo.s, bo.r)
 	case kStruct:
 		for _, f := range t.fields {
 			o := f.off
@@ -371,12 +469,13 @@ func equal(t *tinfo, an []uint64, as []string, ar []any, bn []uint64, bs []strin
 
 // callFunc calls fn above the frames in use with the arguments, which args writes into the windows of its
 // frame, e.g. the comparison of list.SortFunc, and returns the base of its results.
-func (m *Machine) callFunc(fn *Func, args func(n []uint64, s []string, r []any)) layout {
+func (m *Machine) callFunc(cl *Closure, args func(n []uint64, s []string, r []any)) layout {
 	base := m.hi
+	fn := cl.fn
 	m.ensure(int(base.n+fn.frame.n), int(base.s+fn.frame.s), int(base.r+fn.frame.r))
 	args(m.n[base.n:], m.s[base.s:], m.r[base.r:])
 	m.enter()
-	m.run(fn, int(base.n), int(base.s), int(base.r))
+	m.runClosure(cl, int(base.n), int(base.s), int(base.r))
 	m.depth--
 	return base
 }

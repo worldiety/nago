@@ -47,6 +47,7 @@ func TestUnions(t *testing.T) {
 	for name, in := range map[string]gostrict.Instance{
 		"native": mustLoad(t, nativeEngine("shapes"), b),
 		"goja":   mustLoad(t, goEngine, b),
+		"vm":     mustLoad(t, vmEngine, b),
 	} {
 		var area float64
 		if err := gostrict.Call(ctx, in, "Area", []any{shapes.Circle{R: 2}}, &area); err != nil || math.Abs(area-4*math.Pi) > 1e-9 {
@@ -92,7 +93,7 @@ func TestUnionMessages(t *testing.T) {
 	ctx := context.Background()
 	gostrict.Variants[shapes.Shape](shapes.Circle{}, shapes.Rect{}, shapes.Poly{})
 	gostrict.Variants[shapes.Event](shapes.Added{}, shapes.Cleared{})
-	for _, e := range []gostrict.Engine{nativeEngine("shapes"), goEngine} {
+	for _, e := range []gostrict.Engine{nativeEngine("shapes"), goEngine, vmEngine} {
 		in := mustLoad(t, e, b)
 		res, err := in.Call(ctx, "NewCanvas")
 		if err != nil {

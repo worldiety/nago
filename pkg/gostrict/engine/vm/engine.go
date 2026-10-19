@@ -135,3 +135,8 @@ func (in *Instance) callbackErr() error {
 func (in *Instance) Close() error {
 	return nil
 }
+
+// Bundle returns the bundle of the instance.
+func (in *Instance) Bundle() *gostrict.Bundle {
+	return in.bundle
+}

@@ -141,6 +141,19 @@ func (g *generator) header() ([]byte, error) {
 			writeAdapter(&body, externKey(fn, targs), call, args, results, values)
 		}
 	}
+	// the variables are functions without parameters, e.g. for an engine, which has no bindings
+	scope := p.Types.Scope()
+	for _, name := range scope.Names() {
+		v, ok := scope.Lookup(name).(*types.Var)
+		if !ok || !v.Exported() {
+			continue
+		}
+		val, err := g.toBoundary(name, v.Type())
+		if err != nil {
+			continue
+		}
+		fmt.Fprintf(&body, "\t\t%q: func(args []any) []any {\n\t\t\treturn []any{%s}\n\t\t},\n", p.Path+"."+name, val)
+	}
 	body.WriteString("\t}\n}\n")
 	g.writeVars(&body)
 	g.writeHandles(&body)
