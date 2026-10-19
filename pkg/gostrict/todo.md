@@ -207,8 +207,10 @@ nago; sie lohnen sich nicht.
     Header-Pakets wird einmal gelesen.
   - Phase 5 ist fertig, siehe „Interpreter nach Phase 5“ unter Messungen. Weitere Ideen nach Profil: 8-Byte-Befehle,
     Superinstruktionen für `x ^= x << k` (Hashes), Aufrufe ohne `ensure` bei bekannter Tiefe.
-  - Package-Variablen werden einmal je Programm mit den Host-Funktionen der ersten Instanz initialisiert. Für
-    Initialisierer, die den Host rufen (Handles), muss das geklärt werden.
+  - Package-Variablen (abgestimmt): rein initialisierte teilt das Programm, z. B. Tabellen von `list.Frozen`; eine
+    Variable, deren Initialisierung eine Host-Funktion ruft oder eine solche Variable liest (auch über Funktionen),
+    gehört wie in goja und im Browser jeder Instanz, z. B. die Szene von three.js (`divide.go`, `TestThreeInstances`,
+    `TestInstanceVariables`). Werte von Variablen der Header-Pakete gelten als rein. Der Checker bleibt unverändert.
   - Zeiger auf Felder sind eigene Objekte, also `&x.A == &x.A` falsch, wo Go true liefert; das Subset kann solche
     Zeiger nur über Methoden mit Zeiger-Empfänger bilden, ein Vergleich darin ist unwahrscheinlich.
   - Fehler der VM tragen noch keine Quellposition; `GOSTRICT_VM_PANIC=1` lässt Panics mit Stack durch,

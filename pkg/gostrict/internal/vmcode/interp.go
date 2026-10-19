@@ -31,6 +31,10 @@ type Machine struct {
 	ctx      context.Context
 	// peak is the end of the frames since the outermost call, whose references it releases
 	peak layout
+	// xn, xs and xr are the package variables of the instance, see [global.inst]
+	xn []uint64
+	xs []string
+	xr []any
 	// calls are the fast calls, the first fast of them are in progress, see [Machine.BeginFast]
 	calls []*fastCall
 	fast  int
@@ -201,6 +205,18 @@ func (m *Machine) exec(f *Func, bn, bs, br int) {
 			m.prog.gs[in.a] = s[in.b]
 		case opStgR:
 			m.prog.gr[in.a] = r[in.b]
+		case opLdxN:
+			n[in.a] = m.xn[in.b]
+		case opLdxS:
+			s[in.a] = m.xs[in.b]
+		case opLdxR:
+			r[in.a] = m.xr[in.b]
+		case opStxN:
+			m.xn[in.a] = n[in.b]
+		case opStxS:
+			m.xs[in.a] = s[in.b]
+		case opStxR:
+			m.xr[in.a] = r[in.b]
 		case opLdoN:
 			n[in.a] = r[in.b].(*object).n[in.c]
 		case opLdoNK:

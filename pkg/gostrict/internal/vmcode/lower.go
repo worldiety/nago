@@ -38,6 +38,8 @@ type compiler struct {
 	lits int
 	// hostInits initialize the variables of header packages
 	hostInits []stmt
+	// globalList are the package variables in the order of their declaration
+	globalList []*global
 	// branches counts the codes of the branches out of the bodies of ranges
 	branches int32
 }
@@ -47,9 +49,12 @@ type funcDecl struct {
 	decl *ast.FuncDecl
 }
 
+// global is a package variable: in the slots of the program, which all instances share, or of each instance, if
+// its initialization calls the host, e.g. a scene of three.js.
 type global struct {
-	t   *tinfo
-	off layout
+	t    *tinfo
+	off  layout
+	inst bool
 }
 
 // compileError is the panic of an unsupported construct.
@@ -140,7 +145,7 @@ func (c *compiler) compile() {
 			var lhs []lval
 			for _, v := range ini.Lhs {
 				g := c.global(v)
-				lhs = append(lhs, &lGlobal{t: g.t, off: g.off})
+				lhs = append(lhs, &lGlobal{t: g.t, g: g})
 			}
 			var rhs []expr
 			if len(ini.Lhs) == 1 {
@@ -176,9 +181,14 @@ func (c *compiler) compile() {
 		f()
 	}
 	init.body = append(c.hostInits, init.body...)
+	c.divideGlobals(init)
 	c.inline()
 
-	for _, f := range append(c.out.funcs, init) {
+	gens := append(c.out.funcs, init)
+	if c.out.instInit != nil {
+		gens = append(gens, c.out.instInit)
+	}
+	for _, f := range gens {
 		g := &gen{c: c, f: f}
 		g.function()
 		// the program keeps only the bytecode
@@ -250,7 +260,7 @@ func (c *compiler) hostVar(v *types.Var, g *global, pos token.Pos) {
 	x := &extern{name: key, idx: len(c.out.externs), results: g.t, variable: true}
 	c.externs[key] = x
 	c.out.externs = append(c.out.externs, x)
-	c.hostInits = append(c.hostInits, &sAssign{lhs: []lval{&lGlobal{t: g.t, off: g.off}}, rhs: []expr{&eHost{t: g.t, ext: x}}})
+	c.hostInits = append(c.hostInits, &sAssign{lhs: []lval{&lGlobal{t: g.t, g: g}}, rhs: []expr{&eHost{t: g.t, ext: x}}})
 }
 
 // global returns the slots of a package variable.
@@ -259,9 +269,10 @@ func (c *compiler) global(v *types.Var) *global {
 		return g
 	}
 	t := c.typeOf(v.Type())
-	g := &global{t: t, off: c.out.globals}
-	c.out.globals = c.out.globals.add(t.l)
+	// the slots follow, when the variables are divided between the program and the instances, see divideGlobals
+	g := &global{t: t}
 	c.globals[v] = g
+	c.globalList = append(c.globalList, g)
 	return g
 }
 
@@ -644,7 +655,7 @@ func (l *fnLower) read(lv lval) expr {
 	case *lStore:
 		return &eLoad{t: lv.t, p: lv.p, off: lv.off}
 	case *lGlobal:
-		return &eGlobal{t: lv.t, off: lv.off}
+		return &eGlobal{t: lv.t, g: lv.g, off: lv.off}
 	}
 	panic("vm: unreadable target")
 }
@@ -1087,7 +1098,7 @@ func (l *fnLower) ident(id *ast.Ident) expr {
 			if p := l.c.pkgs[obj.Pkg().Path()]; p == nil || !p.User {
 				l.c.hostVar(obj, g, id.Pos())
 			}
-			return &eGlobal{t: g.t, off: g.off}
+			return &eGlobal{t: g.t, g: g}
 		}
 	case *types.Func:
 		var targs []types.Type
@@ -1129,7 +1140,7 @@ func (l *fnLower) field(base expr, name string) expr {
 	case *eLocal:
 		return &eLocal{t: f.t, v: b.v, off: b.off.add(f.off)}
 	case *eGlobal:
-		return &eGlobal{t: f.t, off: b.off.add(f.off)}
+		return &eGlobal{t: f.t, g: b.g, off: b.off.add(f.off)}
 	case *eLoad:
 		return &eLoad{t: f.t, p: b.p, off: b.off.add(f.off)}
 	case *eField:
@@ -1576,7 +1587,7 @@ func retype(x expr, t *tinfo) expr {
 	case *eLocal:
 		return &eLocal{t: t, v: x.v, off: x.off}
 	case *eGlobal:
-		return &eGlobal{t: t, off: x.off}
+		return &eGlobal{t: t, g: x.g, off: x.off}
 	case *eLoad:
 		return &eLoad{t: t, p: x.p, off: x.off}
 	}

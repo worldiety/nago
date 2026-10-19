@@ -78,6 +78,13 @@ func NewMachine(ctx context.Context, p *Program, h Host, maxDepth int) (*Machine
 	if p.initErr != nil {
 		return nil, p.initErr
 	}
+	if p.instInit != nil {
+		// the variables, which hold values of the host, belong to the instance, like in a browser
+		m.xn, m.xs, m.xr = make([]uint64, p.instGlobals.n), make([]string, p.instGlobals.s), make([]any, p.instGlobals.r)
+		if _, err := m.Invoke(ctx, &Closure{fn: p.instInit}, nil); err != nil {
+			return nil, err
+		}
+	}
 	return m, nil
 }
 
