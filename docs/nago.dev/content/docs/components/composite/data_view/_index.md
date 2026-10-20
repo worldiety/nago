@@ -54,6 +54,30 @@ func view(wnd core.Window) core.View {
 }
 ```
 
+## Sorting
+
+A field with a `Comparator` gets a sort control, which sorts ascending and, on the next click, descending by
+negating the comparator. Entries for which `Empty` reports true stay at the end in both directions, in their
+original order:
+
+```go
+{
+    ID:         "due",
+    Name:       "Due",
+    Map:        func(e E) core.View { return Text(e.Value.Due.String()) },
+    Comparator: func(a, b E) int { return a.Value.Due.Compare(b.Value.Due) },
+    Empty:      func(e E) bool { return e.Value.Due.IsZero() },
+}
+```
+
+A field without a `Name` gets no sort control.
+
+## Wide tables
+
+A table with many columns may be wider than the window. With `TableOptions{MinWidth: "1800px"}` only the table
+scrolls horizontally, while the search, the options, the create button and the pager keep the width of the
+view.
+
 ## Constructors
 
 ```go

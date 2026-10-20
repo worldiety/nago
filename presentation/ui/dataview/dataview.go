@@ -101,10 +101,44 @@ type Field[E any] struct {
 	// Comparator may be nil to disable field sorting. If not-nil this will increase at least the temporary
 	// amount of memory to O(n) to apply the comparator on the entire data set. If you can provide a natural
 	// identifier order which would be fine for most use cases, you should definitely rely on it for performance.
+	// The comparator defines the ascending order, the descending order negates it. A field without a Name
+	// gets no sort control.
 	Comparator func(a, b E) int
+
+	// Empty optionally reports whether obj has no value in this field. When sorting by this field, such entries
+	// are kept at the end in both directions and the Comparator is never applied to them.
+	Empty func(obj E) bool
 
 	// Visible is an optional predicate which determines if this field shall be generally shown or not.
 	Visible func(ctx FieldContext) bool
+}
+
+// compare returns the comparator of the field for the given direction, which keeps the empty entries at the end.
+func (f Field[E]) compare(reverse bool) func(a, b E) int {
+	return func(a, b E) int {
+		if f.Empty != nil {
+			ea, eb := f.Empty(a), f.Empty(b)
+			switch {
+			case ea && eb:
+				return 0
+			case ea:
+				return 1
+			case eb:
+				return -1
+			}
+		}
+
+		if reverse {
+			return -f.Comparator(a, b)
+		}
+
+		return f.Comparator(a, b)
+	}
+}
+
+// sortable tells whether the field gets a sort control.
+func (f Field[E]) sortable() bool {
+	return f.Comparator != nil && f.Name != ""
 }
 
 func MinSizeMedium() func(ctx FieldContext) bool {

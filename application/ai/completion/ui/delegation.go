@@ -23,7 +23,6 @@ import (
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/accordion"
 	"go.wdy.de/nago/presentation/ui/alert"
-	"go.wdy.de/nago/presentation/ui/markdown"
 )
 
 // DelegationOptions lets the model of a [Chat] hand independent tasks to sub-agents, which work on them in
@@ -349,7 +348,7 @@ func taskRow(hv historyView, t completion.TaskResult) core.View {
 	var detail core.View
 	switch {
 	case t.Status == completion.TaskCompleted && strings.TrimSpace(t.Answer) != "":
-		detail = ui.VStack(markdown.RichText(t.Answer)).Alignment(ui.Leading).Font(ui.Small)
+		detail = ui.VStack(modelText(t.Answer)).Alignment(ui.Leading).Font(ui.Small)
 	case t.Error != "":
 		detail = ui.Text(t.Error).Font(ui.Small)
 	}

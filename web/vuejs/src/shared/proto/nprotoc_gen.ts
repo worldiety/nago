@@ -10385,16 +10385,24 @@ export class RichTextEditor implements Writeable, Readable, Component {
 	isComponent(): void {}
 }
 
-// RichText renders a small subset of HTML which shall look mostly native in the current view context.
+// RichText renders a small subset of HTML which shall look mostly native in the current view context. A relative link of the own origin navigates within the application, an external link opens in a new tab.
 export class RichText implements Writeable, Readable, Component {
 	// Value contains the text, which shall be shown or edited.
 	public value?: Str;
 
 	public frame?: Frame;
 
-	constructor(value: Str | undefined = undefined, frame: Frame | undefined = undefined) {
+	// ExternalLinkConfirmation is the question, which the user has to confirm before an external link is opened. The full address follows the question. If empty, an external link opens without asking.
+	public externalLinkConfirmation?: Str;
+
+	constructor(
+		value: Str | undefined = undefined,
+		frame: Frame | undefined = undefined,
+		externalLinkConfirmation: Str | undefined = undefined
+	) {
 		this.value = value;
 		this.frame = frame;
+		this.externalLinkConfirmation = externalLinkConfirmation;
 	}
 
 	read(reader: BinaryReader): void {
@@ -10412,6 +10420,10 @@ export class RichText implements Writeable, Readable, Component {
 					this.frame.read(reader);
 					break;
 				}
+				case 3: {
+					this.externalLinkConfirmation = readString(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -10419,7 +10431,12 @@ export class RichText implements Writeable, Readable, Component {
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, this.value !== undefined, this.frame !== undefined && !this.frame.isZero()];
+		const fields = [
+			false,
+			this.value !== undefined,
+			this.frame !== undefined && !this.frame.isZero(),
+			this.externalLinkConfirmation !== undefined,
+		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
@@ -10430,15 +10447,24 @@ export class RichText implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.RECORD, 2);
 			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			writeString(writer, this.externalLinkConfirmation!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
-		return this.value === undefined && (this.frame === undefined || this.frame.isZero());
+		return (
+			this.value === undefined &&
+			(this.frame === undefined || this.frame.isZero()) &&
+			this.externalLinkConfirmation === undefined
+		);
 	}
 
 	reset(): void {
 		this.value = undefined;
 		this.frame = undefined;
+		this.externalLinkConfirmation = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

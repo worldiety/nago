@@ -72,6 +72,9 @@ type historyView struct {
 
 	// openChild, when set, offers to open the persisted transcript of a sub-agent.
 	openChild func(id session.ID)
+
+	// toolView, when set, returns the view of a successful call, see [completion.Tool.View].
+	toolView func(call completion.ToolCall, result completion.ToolResult) core.View
 }
 
 // renderHistory turns the stateless message history into chat bubbles. Consecutive tool calls are shown as one
@@ -141,7 +144,11 @@ func renderHistory(wnd core.Window, history []completion.Message, hv historyView
 						continue
 					}
 				}
-				group = append(group, groupItem{id: id, tool: v.Name})
+				item := groupItem{id: id, tool: v.Name}
+				if res, done := results[v.ID]; done && !res.IsError && hv.toolView != nil {
+					item.view = hv.toolView(v, res)
+				}
+				group = append(group, item)
 			case completion.ToolResult:
 				if !askCalls[v.ToolCallID] || v.IsError {
 					continue
@@ -162,10 +169,12 @@ type groupItem struct {
 	id       string // stable while the history grows, it keeps the section open or closed
 	tool     string
 	thinking string
+	view     core.View // the view of the tool call, see [completion.Tool.View]
 }
 
 // groupView renders consecutive tool calls as a single collapsed section. Reasoning without any tool call keeps
-// its own collapsed section.
+// its own collapsed section. The views of the tool calls follow below the section, so that they are visible
+// while it is collapsed.
 func groupView(wnd core.Window, items []groupItem) []core.View {
 	var tools []string
 	for _, it := range items {
@@ -198,7 +207,7 @@ func groupView(wnd core.Window, items []groupItem) []core.View {
 	}
 
 	open := core.StateOf[bool](wnd, items[0].id+"-tools")
-	return []core.View{ui.HStack(
+	views := []core.View{ui.HStack(
 		accordion.Accordion(
 			ui.Text(title).Font(ui.Small),
 			ui.VStack(body...).Gap(ui.L4).Alignment(ui.Leading).FullWidth(),
@@ -206,6 +215,34 @@ func groupView(wnd core.Window, items []groupItem) []core.View {
 		).Small().HideSeparator().Frame(ui.Frame{MaxWidth: "85%"}),
 		ui.Spacer(),
 	).FullWidth()}
+
+	for _, it := range items {
+		if it.view != nil {
+			views = append(views, ui.VStack(it.view).Alignment(ui.Leading).FullWidth())
+		}
+	}
+
+	return views
+}
+
+// toolResultJSON returns the result of a call, as [completion.Tool.View] receives it: the JSON which Invoke
+// returned, which is the text of the result, or the first text as JSON string.
+func toolResultJSON(res completion.ToolResult) json.RawMessage {
+	for _, c := range res.Content {
+		t, ok := c.(completion.Text)
+		if !ok {
+			continue
+		}
+
+		if json.Valid([]byte(t.Text)) {
+			return json.RawMessage(t.Text)
+		}
+
+		buf, _ := json.Marshal(t.Text)
+		return buf
+	}
+
+	return nil
 }
 
 // askQuestion extracts the question of an ask_user call.
@@ -242,11 +279,19 @@ func thinkingView(wnd core.Window, id, text string) core.View {
 	return ui.HStack(
 		accordion.Accordion(
 			ui.Text("Gedankengang").Font(ui.Small),
-			ui.VStack(markdown.RichText(text)).Alignment(ui.Leading).Font(ui.Small),
+			ui.VStack(modelText(text)).Alignment(ui.Leading).Font(ui.Small),
 			open,
 		).Small().HideSeparator().Frame(ui.Frame{MaxWidth: "85%"}),
 		ui.Spacer(),
 	).FullWidth()
+}
+
+// modelText renders markdown, which a model may have written. A link written by a model may carry data to a
+// foreign server, if a prompt injection succeeded, thus an external one opens only after the user saw its full
+// address. A link within the application navigates without loading the page anew, which would close the
+// floating assistant.
+func modelText(text string) ui.TRichText {
+	return markdown.RichText(text).ConfirmExternalLinks(true)
 }
 
 func chatBubble(role completion.Role, text string) core.View {
@@ -255,7 +300,7 @@ func chatBubble(role completion.Role, text string) core.View {
 		bg = ui.M4
 	}
 
-	bubble := ui.VStack(markdown.RichText(text)).
+	bubble := ui.VStack(modelText(text)).
 		Alignment(ui.Leading).
 		BackgroundColor(bg).
 		Border(ui.Border{}.Radius(ui.L8)).

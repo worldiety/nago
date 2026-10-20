@@ -36,30 +36,7 @@ func (t TDataView[E, ID]) renderList(ctx core.RenderContext) core.RenderNode {
 	wnd := ctx.Window()
 	data := t.data
 
-	sortByField := core.StateOf[FieldID](wnd, t.modelOptions.StatePrefix+"-sortByField")
-	sortReverse := core.StateOf[bool](wnd, t.modelOptions.StatePrefix+"-sortReverse")
-
-	findAllIDs := data.FindAll
-	if sortByField.Get() != "" {
-		var sortField Field[E]
-		for _, field := range t.data.Fields {
-			if field.ID == sortByField.Get() {
-				sortField = field
-				break
-			}
-		}
-
-		if sortField.Comparator != nil {
-			findAllIDs = pager.Sort(data.FindByID, data.FindAll, func(a, b E) int {
-				if sortReverse.Get() {
-					return -sortField.Comparator(a, b)
-				}
-
-				return sortField.Comparator(a, b)
-			}, pager.SortOptions[E]{})
-		}
-
-	}
+	findAllIDs := t.findAll(t.sortState(wnd))
 
 	var model pager.Model[E, ID]
 	if t.model.IsSome() {
@@ -276,34 +253,17 @@ func (t TDataView[E, ID]) listActionBar(wnd core.Window, model pager.Model[E, ID
 		groups = append(groups, ui.MenuGroup(selItems...))
 	}
 
-	sortByField := core.StateOf[FieldID](wnd, t.modelOptions.StatePrefix+"-sortByField")
-	sortReverse := core.StateOf[bool](wnd, t.modelOptions.StatePrefix+"-sortReverse")
+	sorting := t.sortState(wnd)
 	var sortItems []ui.TMenuItem
 
 	for _, f := range t.data.Fields {
-		if f.Comparator == nil {
+		if !f.sortable() {
 			continue
 		}
 
-		ico := icons.ArrowUpDown
-		if f.ID == sortByField.Get() {
-			if sortReverse.Get() {
-				ico = icons.ArrowDown
-			} else {
-				ico = icons.ArrowUp
-			}
-		}
-
 		sortItems = append(sortItems, ui.MenuItem(func() {
-			if sortByField.Get() != f.ID {
-				sortByField.Set(f.ID)
-				sortReverse.Set(false)
-			} else {
-				sortReverse.Set(!sortReverse.Get())
-			}
-
-		}, ui.HStack(ui.ImageIcon(ico), ui.Text(f.Name))))
-
+			sorting.toggle(f.ID)
+		}, ui.HStack(ui.ImageIcon(sorting.icon(f.ID)), ui.Text(f.Name))))
 	}
 
 	if len(sortItems) > 0 {

@@ -228,11 +228,33 @@ func (a *Assistant) ChatOptions(wnd core.Window, opts AssistantOptions) (uicompl
 	}, nil
 }
 
-// The states of the floating assistant of a window, see [Assistant.Open].
+// The states of the floating assistant, see [Assistant.Open] and keptState.
 const (
-	assistantOpenState  = "nago.ai.assistant.open"
-	assistantDraftState = "nago.ai.assistant.draft"
+	assistantOpenState    = "nago.ai.assistant.open"
+	assistantDraftState   = "nago.ai.assistant.draft"
+	assistantSessionState = "nago.ai.assistant.session"
 )
+
+// keptState returns the state of the floating assistant with the given id. A navigation to another page
+// destroys the window together with its states, so the state starts with the value which the scope, i.e. the
+// browser tab, has kept, and the scope keeps the value again when the window is closed. Thus, the assistant
+// stays open with its draft and conversation, while the user moves from page to page. The value is kept per
+// subject, so that a user who signs in within the same tab never sees the assistant of the former one.
+func keptState[T any](wnd core.Window, id string) *core.State[T] {
+	kept := core.TransientStateOf[T](wnd, id+"."+string(wnd.Subject().ID()))
+
+	var state *core.State[T]
+	state = core.StateOf[T](wnd, id).Init(func() T {
+		// once per window, the observers of a closed window are not called again
+		wnd.AddDestroyObserver(func() {
+			kept.Set(state.Get())
+		}, core.DestroyOnClose)
+
+		return kept.Get()
+	})
+
+	return state
+}
 
 // Available reports whether the assistant is shown in the window, e.g. to offer an action which opens it. It is
 // false for the same reasons [Assistant.ChatOptions] fails: nobody is signed in, an operator hid it, the role
@@ -245,19 +267,23 @@ func (a *Assistant) Available(wnd core.Window) bool {
 // Open opens the floating assistant of the window, see [Assistant.Decorate], and puts the draft into its input
 // field. The user still decides to send it, so a page never starts a model call or a tool by itself. A running
 // conversation is kept; text the user already typed is replaced. Open returns false and does nothing, if the
-// assistant is not available in the window. A window has at most one floating assistant.
+// assistant is not available in the window. A window has at most one floating assistant, which stays open while
+// the user navigates to other pages of the same browser tab.
 func (a *Assistant) Open(wnd core.Window, draft string) bool {
 	if !a.Available(wnd) {
 		return false
 	}
 
-	core.StateOf[string](wnd, assistantDraftState).Set(draft)
-	core.StateOf[bool](wnd, assistantOpenState).Set(true)
+	keptState[string](wnd, assistantDraftState).Set(draft)
+	keptState[bool](wnd, assistantOpenState).Set(true)
 	return true
 }
 
 // Button returns the floating assistant button, or nil when the assistant cannot or should not run right now:
 // nobody is signed in, an operator hid it, no provider is configured, or no model could be determined.
+//
+// The assistant follows the user from page to page within the browser tab: it stays open and keeps its draft
+// and, with [AssistantOptions.History], its conversation including a running turn, see keptState.
 //
 // Returning nil rather than an error view is deliberate - the button lives in a decorator and appears on every
 // screen, so a misconfiguration must not turn into a banner on every page. The reason is logged instead, once
@@ -274,9 +300,10 @@ func (a *Assistant) Button(wnd core.Window, opts AssistantOptions) core.View {
 		return nil
 	}
 
-	// only the floating assistant listens to Open, an embedded chat keeps its own input field
-	chatOpts.Open = core.StateOf[bool](wnd, assistantOpenState)
-	chatOpts.Draft = core.StateOf[string](wnd, assistantDraftState)
+	// only the floating assistant listens to Open, an embedded chat keeps its own input field and conversation
+	chatOpts.Open = keptState[bool](wnd, assistantOpenState)
+	chatOpts.Draft = keptState[string](wnd, assistantDraftState)
+	chatOpts.Session = keptState[session.ID](wnd, assistantSessionState)
 
 	button := uicompletion.ChatButton(chatOpts)
 	button = button.Corner(opts.Corner)
