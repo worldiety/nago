@@ -1,6 +1,6 @@
 {
   "kind": "Record",
-  "doc": "RichText renders a small subset of HTML which shall look mostly native in the current view context.",
+  "doc": "RichText renders a small subset of HTML which shall look mostly native in the current view context. A relative link of the own origin navigates within the application, an external link opens in a new tab.",
   "id": 126,
   "fields": {
     "1": {
@@ -11,6 +11,11 @@
     "2": {
       "name": "Frame",
       "type": "Frame"
+    },
+    "3": {
+      "doc": "ExternalLinkConfirmation is the question, which the user has to confirm before an external link is opened. The full address follows the question. If empty, an external link opens without asking.",
+      "name": "ExternalLinkConfirmation",
+      "type": "Str"
     }
   }
 }

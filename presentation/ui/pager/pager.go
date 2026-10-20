@@ -8,11 +8,17 @@
 package pager
 
 import (
-	"fmt"
-
+	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/presentation/core"
 	flowbiteOutline "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	"go.wdy.de/nago/presentation/ui"
+	"golang.org/x/text/language"
+)
+
+var (
+	StrPreviousPage = i18n.MustString("nago.pager.previous_page", i18n.Values{language.English: "Previous page", language.German: "Vorherige Seite"})
+	StrNextPage     = i18n.MustString("nago.pager.next_page", i18n.Values{language.English: "Next page", language.German: "Nächste Seite"})
+	StrPageXOfY     = i18n.MustVarString("nago.pager.page_x_of_y", i18n.Values{language.English: "{page} of {count}", language.German: "{page} von {count}"})
 )
 
 // TPager is a utility component (Pager).
@@ -54,11 +60,12 @@ func (c TPager) Render(ctx core.RenderContext) core.RenderNode {
 		return ui.VStack().Visible(false).Render(ctx)
 	}
 
+	wnd := ctx.Window()
 	if c.count <= 1 {
 		return ui.HStack(
-			ui.TertiaryButton(nil).PreIcon(flowbiteOutline.ChevronLeft).Enabled(false),
-			ui.Text("1 von 1"),
-			ui.TertiaryButton(nil).PreIcon(flowbiteOutline.ChevronRight).Enabled(false),
+			ui.TertiaryButton(nil).PreIcon(flowbiteOutline.ChevronLeft).AccessibilityLabel(StrPreviousPage.Get(wnd)).Enabled(false),
+			ui.Text(StrPageXOfY.Get(wnd, i18n.Int("page", 1), i18n.Int("count", 1))),
+			ui.TertiaryButton(nil).PreIcon(flowbiteOutline.ChevronRight).AccessibilityLabel(StrNextPage.Get(wnd)).Enabled(false),
 		).Gap(ui.L16).Frame(c.frame).Render(ctx)
 	}
 
@@ -66,11 +73,11 @@ func (c TPager) Render(ctx core.RenderContext) core.RenderNode {
 		ui.TertiaryButton(func() {
 			c.page.Set(c.page.Get() - 1)
 			c.page.Notify()
-		}).PreIcon(flowbiteOutline.ChevronLeft).Enabled(c.page.Get() > 0),
-		ui.Text(fmt.Sprintf("%d von %d", c.page.Get()+1, c.count)),
+		}).PreIcon(flowbiteOutline.ChevronLeft).AccessibilityLabel(StrPreviousPage.Get(wnd)).Enabled(c.page.Get() > 0),
+		ui.Text(StrPageXOfY.Get(wnd, i18n.Int("page", c.page.Get()+1), i18n.Int("count", c.count))),
 		ui.TertiaryButton(func() {
 			c.page.Set(c.page.Get() + 1)
 			c.page.Notify()
-		}).PreIcon(flowbiteOutline.ChevronRight).Enabled(c.page.Get() < c.count-1),
+		}).PreIcon(flowbiteOutline.ChevronRight).AccessibilityLabel(StrNextPage.Get(wnd)).Enabled(c.page.Get() < c.count-1),
 	).Gap(ui.L8).Frame(c.frame).Render(ctx)
 }

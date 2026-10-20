@@ -9,6 +9,7 @@ package uicompletion
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -180,6 +181,13 @@ type ChatOptions struct {
 	// Draft holds the text of the input field, so that a page can suggest a message. The user still decides to
 	// send it. Nil keeps the state inside the chat.
 	Draft *core.State[string]
+
+	// Session holds the id of the persisted conversation the chat shows, so that it outlives the chat, e.g.
+	// when the floating panel is closed and opened again or when its owner keeps it across a navigation to
+	// another page. A chat continues the conversation of a non-empty id, including a run which still works on
+	// it. Only used with History. Nil keeps the state inside the chat, which then continues only a conversation
+	// waiting on the user.
+	Session *core.State[session.ID]
 }
 
 // effectiveAgents returns the configured agents, or a single default agent when none are configured.
@@ -244,13 +252,29 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		title = prov.Name()
 	}
 
-	// resumed is the session a freshly mounted chat continues because it still waits on the user, e.g. after
-	// the chat was closed to look something up. Evaluated once per mount.
+	// resumed is the session a freshly mounted chat continues: the one of opts.Session, otherwise one which still
+	// waits on the user, e.g. after the chat was closed to look something up. Evaluated once per mount.
 	resumed := core.AutoState[*session.Session](wnd).Init(func() *session.Session {
 		if !opts.History {
 			return nil
 		}
-		return findResumable(wnd.Subject(), opts.Sessions, opts.Tags, string(prov.Identity()))
+
+		if opts.Session != nil && opts.Session.Get() != "" {
+			if s, ok := reloadSession(wnd.Subject(), opts.Sessions, opts.Session.Get()); ok && s.ParentID == "" {
+				return &s
+			}
+		}
+
+		r := findResumable(wnd.Subject(), opts.Sessions, opts.Tags, string(prov.Identity()))
+		if opts.Session != nil {
+			// the kept conversation is gone, e.g. deleted in another tab
+			var id session.ID
+			if r != nil {
+				id = r.ID
+			}
+			opts.Session.Set(id)
+		}
+		return r
 	})
 
 	history := core.AutoState[[]completion.Message](wnd).Init(func() []completion.Message {
@@ -274,6 +298,10 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		}
 		return ""
 	})
+	if opts.Session != nil && opts.History {
+		// the resumed session has been taken from or written into it
+		sessionID = opts.Session
+	}
 	// pending and pendingRev mirror the suspension of the current run: from the session with History, from
 	// the transient run otherwise.
 	pending := core.AutoState[*completion.Continuation](wnd).Init(func() *completion.Continuation {
@@ -341,6 +369,17 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 	}
 	uploadEnabled := opts.FileUpload && (providerFiles != nil || opts.OnAttach != nil)
 
+	// toolViews holds the views of the tools by name, see [completion.Tool.View]. A restored conversation may
+	// have been held with another agent, thus all agents are asked.
+	toolViews := map[string]func(wnd core.Window, args, result json.RawMessage) core.View{}
+	for _, a := range agentsList {
+		for _, t := range a.Tools {
+			if _, ok := toolViews[t.Def.Name]; !ok && t.View != nil {
+				toolViews[t.Def.Name] = t.View
+			}
+		}
+	}
+
 	// currentAgent resolves the selected agent, falling back to the first configured one.
 	currentAgent := func() Agent {
 		id := selectedAgent.Get()
@@ -370,7 +409,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 	}
 
 	// With History, a run keeps working when the chat is closed, because its answer is persisted anyway. A chat
-	// which shows the conversation while such a run still works, e.g. after a reload or in another tab, shows
+	// which shows the conversation while such a run still works, e.g. after a navigation or in another tab, shows
 	// it as busy and lets the user stop it. The run itself belongs to the chat which started it.
 	attached := core.AutoState[*activeRun](wnd)
 	if opts.History {
@@ -379,7 +418,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			if run, ok := activeRuns.Get(sid); ok && attached.Get() == nil && wnd.Subject().AuditResource(session.Namespace, rebac.Instance(sid), session.PermAppend) == nil {
 				attached.Set(run)
 				busy.Set(true)
-				status.Set("… die KI arbeitet in einem anderen Fenster")
+				status.Set("… die KI arbeitet noch")
 			}
 		}
 
@@ -648,6 +687,14 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 					name = p.ToolCall.Name
 				}
 				setStatus(toolLabel(name))
+			case completion.PhaseToolCompleted:
+				// the view of a call shows up as soon as the call is done, see completion.Tool.View
+				if p.ToolCall == nil || p.ToolResult == nil || toolViews[p.ToolCall.Name] == nil {
+					return
+				}
+				live = withToolResult(live, *p.ToolResult)
+				snapshot := slices.Clone(live)
+				wnd.Post(func() { history.Set(snapshot) })
 			}
 		}
 
@@ -948,7 +995,12 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		status.Set("… die KI wird angehalten")
 	}
 
-	var hv historyView
+	hv := historyView{toolView: func(call completion.ToolCall, result completion.ToolResult) core.View {
+		if fn := toolViews[call.Name]; fn != nil {
+			return fn(wnd, call.Arguments, toolResultJSON(result))
+		}
+		return nil
+	}}
 	if opts.History {
 		hv.openChild = func(id session.ID) {
 			childID.Set(id)
@@ -1066,6 +1118,20 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		Alignment(ui.Leading).
 		// the conversation shrinks, when the floating panel is limited by the height of the screen, see chatFrame
 		Frame(ui.Frame{Width: ui.Full, MinHeight: "0dp"})
+}
+
+// withToolResult appends the result of a call to the history, like the loop does: the results of the calls of a
+// model turn follow in a single user message.
+func withToolResult(history []completion.Message, res completion.ToolResult) []completion.Message {
+	if n := len(history); n > 0 && history[n-1].Role == completion.User && len(history[n-1].Content) > 0 {
+		if _, ok := history[n-1].Content[0].(completion.ToolResult); ok {
+			last := history[n-1]
+			last.Content = append(slices.Clone(last.Content), res)
+			return append(history[:n-1:n-1], last)
+		}
+	}
+
+	return append(history, completion.Message{Role: completion.User, Content: []completion.Content{res}})
 }
 
 // turnNotice is the reason, why a turn has been refused, see noticeView.

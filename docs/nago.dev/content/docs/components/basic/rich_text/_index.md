@@ -18,6 +18,11 @@ RichText(`<h2>Release notes</h2>
 </ul>`).Frame(Frame{Width: L480})
 ```
 
+A relative link of the own origin navigates within the application, like a link of a stack, instead of loading
+the page anew. An external link opens in a new tab, which gets no access to the application. For text which
+neither you nor the user wrote, e.g. the answer of an AI model, `ConfirmExternalLinks(true)` asks the user
+before an external link is opened and shows its full address.
+
 ## Constructors
 
 | Constructor | Description |
@@ -28,6 +33,7 @@ RichText(`<h2>Release notes</h2>
 
 | Method | Description |
 |---|---|
+| `ConfirmExternalLinks(confirm bool) TRichText` | ConfirmExternalLinks asks the user before an external link is opened and shows its full address. |
 | `Frame(frame Frame) TRichText` | Frame sets the layout frame for the rich text component. |
 | `FullWidth() TRichText` | FullWidth expands the rich text component to take the full available width. |
 | `Value(value string) TRichText` | Value sets the rich text content to be rendered. |

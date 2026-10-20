@@ -28,37 +28,18 @@ var (
 
 type TableOptions struct {
 	ColumnWidths map[FieldID]ui.Length // Field ID -> column width
+
+	// MinWidth is the optional minimum width of the table. If set, only the table scrolls horizontally, if it is
+	// wider than the view, while the action bar above and the pager below keep the width of the view.
+	MinWidth ui.Length
 }
 
 func (t TDataView[E, ID]) renderTable(ctx core.RenderContext) core.RenderNode {
 	wnd := ctx.Window()
 	data := t.data
 
-	sortByField := core.StateOf[FieldID](wnd, t.modelOptions.StatePrefix+"-sortByField")
-	sortReverse := core.StateOf[bool](wnd, t.modelOptions.StatePrefix+"-sortReverse")
-
-	findAllIDs := data.FindAll
-	if sortByField.Get() != "" {
-		var sortField Field[E]
-		for _, field := range t.data.Fields {
-
-			if field.ID == sortByField.Get() {
-				sortField = field
-				break
-			}
-		}
-
-		if sortField.Comparator != nil {
-			findAllIDs = pager.Sort(data.FindByID, data.FindAll, func(a, b E) int {
-				if sortReverse.Get() {
-					return -sortField.Comparator(a, b)
-				}
-
-				return sortField.Comparator(a, b)
-			}, pager.SortOptions[E]{})
-		}
-
-	}
+	sorting := t.sortState(wnd)
+	findAllIDs := t.findAll(sorting)
 
 	var model pager.Model[E, ID]
 	if t.model.IsSome() {
@@ -96,30 +77,16 @@ func (t TDataView[E, ID]) renderTable(ctx core.RenderContext) core.RenderNode {
 			}
 		}
 
-		if field.Comparator == nil {
+		if !field.sortable() {
 			cols = append(cols, ui.TableColumn(ui.Text(field.Name)).Width(t.tableOptions.ColumnWidths[field.ID]))
 			continue
-		}
-
-		ico := icons.ArrowUpDown
-		if field.ID == sortByField.Get() {
-			if sortReverse.Get() {
-				ico = icons.ArrowDown
-			} else {
-				ico = icons.ArrowUp
-			}
 		}
 
 		cols = append(cols, ui.TableColumn(ui.HStack(
 			ui.Text(field.Name),
 			ui.TertiaryButton(func() {
-				if sortByField.Get() != field.ID {
-					sortByField.Set(field.ID)
-					sortReverse.Set(false)
-				} else {
-					sortReverse.Set(!sortReverse.Get())
-				}
-			}).PreIcon(ico).Key("sort", string(field.ID)),
+				sorting.toggle(field.ID)
+			}).PreIcon(sorting.icon(field.ID)).AccessibilityLabel(sorting.label(wnd, field.Name, field.ID)).Key("sort", string(field.ID)),
 		)).Width(t.tableOptions.ColumnWidths[field.ID]))
 	}
 
@@ -127,50 +94,64 @@ func (t TDataView[E, ID]) renderTable(ctx core.RenderContext) core.RenderNode {
 		cols = append(cols, ui.TableColumn(ui.Text("")).Width(ui.L64))
 	}
 
-	return ui.VStack(
-		t.tableActionBar(ctx.Window(), model),
-		ui.Table(cols...).Rows(
-			ui.ForEach(model.Page.Items, func(u E) ui.TTableRow {
-				if v := u.Identity(); v == "" {
-					//panic(fmt.Errorf("an item must not have a zero identity"))
-					return ui.TableRow(ui.TableCell(ui.Text("invalid item: zero identity"))).BackgroundColor(ui.ColorSemanticError)
-				}
+	table := ui.Table(cols...).Rows(
+		ui.ForEach(model.Page.Items, func(u E) ui.TTableRow {
+			if v := u.Identity(); v == "" {
+				//panic(fmt.Errorf("an item must not have a zero identity"))
+				return ui.TableRow(ui.TableCell(ui.Text("invalid item: zero identity"))).BackgroundColor(ui.ColorSemanticError)
+			}
 
-				myState := model.Selections[u.Identity()]
-				if myState == nil {
-					panic(fmt.Errorf("no selection state for %q", u.Identity()))
-				}
+			myState := model.Selections[u.Identity()]
+			if myState == nil {
+				panic(fmt.Errorf("no selection state for %q", u.Identity()))
+			}
 
-				var cells []ui.TTableCell
-				if !t.hideSelection {
-					cells = append(cells, ui.TableCell(ui.Checkbox(myState.Get()).InputChecked(myState)))
-				}
-				for _, field := range data.Fields {
-					if field.Visible != nil {
-						if !field.Visible(FieldContext{Style: Table, Window: wnd}) {
-							continue
-						}
+			var cells []ui.TTableCell
+			if !t.hideSelection {
+				cells = append(cells, ui.TableCell(ui.Checkbox(myState.Get()).InputChecked(myState)))
+			}
+			for _, field := range data.Fields {
+				if field.Visible != nil {
+					if !field.Visible(FieldContext{Style: Table, Window: wnd}) {
+						continue
 					}
-					cells = append(cells, ui.TableCell(field.Map(u)))
 				}
+				cells = append(cells, ui.TableCell(field.Map(u)))
+			}
 
-				if t.addChevronRight {
-					cells = append(cells, ui.TableCell(ui.HStack(ui.ImageIcon(icons.ChevronRight))).Alignment(ui.Trailing))
-				}
+			if t.addChevronRight {
+				cells = append(cells, ui.TableCell(ui.HStack(ui.ImageIcon(icons.ChevronRight))).Alignment(ui.Trailing))
+			}
 
-				return ui.TableRow(cells...).Key(t.itemKey("row", u.Identity())).Action(t.wrappedAction(u)).HoveredBackgroundColor(ui.ColorCardFooter)
-			})...,
-		).Rows(
-			ui.TableRow(
-				ui.TableCell(
-					ui.HStack(
-						ui.Text(model.PageString()),
-						ui.Spacer(),
-						pager.Pager(model.PageIdx).Count(model.Page.PageCount).Visible(model.HasPages()),
-					).FullWidth(),
-				).ColSpan(len(cols)),
-			).BackgroundColor(ui.ColorCardFooter),
-		).Frame(ui.Frame{}.FullWidth()),
+			return ui.TableRow(cells...).Key(t.itemKey("row", u.Identity())).Action(t.wrappedAction(u)).HoveredBackgroundColor(ui.ColorCardFooter)
+		})...,
+	)
+
+	footer := ui.HStack(
+		ui.Text(model.PageString()),
+		ui.Spacer(),
+		pager.Pager(model.PageIdx).Count(model.Page.PageCount).Visible(model.HasPages()),
+	).FullWidth()
+
+	if t.tableOptions.MinWidth == "" {
+		return ui.VStack(
+			t.tableActionBar(wnd, model),
+			table.Rows(
+				ui.TableRow(ui.TableCell(footer).ColSpan(len(cols))).BackgroundColor(ui.ColorCardFooter),
+			).Frame(ui.Frame{}.FullWidth()),
+		).FullWidth().Render(ctx)
+	}
+
+	// only the table scrolls horizontally, the action bar and the footer keep the width of the view
+	return ui.VStack(
+		t.tableActionBar(wnd, model),
+		ui.ScrollView(
+			table.Border(ui.Border{}).Frame(ui.Frame{MinWidth: t.tableOptions.MinWidth, Width: ui.Full}),
+		).Axis(ui.ScrollViewAxisHorizontal).Border(ui.Border{}.TopRadius(ui.L20)).FullWidth(),
+		footer.
+			BackgroundColor(ui.ColorCardFooter).
+			Padding(ui.Padding{}.Horizontal(ui.L24).Vertical(ui.L16)).
+			Border(ui.Border{TopWidth: ui.L1, TopColor: ui.M5}.BottomRadius(ui.L20)),
 	).FullWidth().Render(ctx)
 }
 

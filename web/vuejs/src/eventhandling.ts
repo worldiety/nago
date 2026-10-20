@@ -433,18 +433,21 @@ export function navigateForward(chan: Channel, evt: NavigationForwardToRequested
  * @param event the click event, whose currentTarget must be the anchor element
  */
 export function routeLinkClick(chan: Channel, event: MouseEvent): void {
-	if (
-		event.defaultPrevented ||
-		event.button !== 0 ||
-		event.metaKey ||
-		event.ctrlKey ||
-		event.shiftKey ||
-		event.altKey
-	) {
+	routeAnchorClick(chan, event, event.currentTarget as HTMLAnchorElement);
+}
+
+/**
+ * routeAnchorClick is {@link routeLinkClick} for the given anchor, e.g. one within rich text, which receives the
+ * clicks of all its links.
+ * @param chan
+ * @param event the click event
+ * @param a the clicked anchor element
+ */
+export function routeAnchorClick(chan: Channel, event: MouseEvent, a: HTMLAnchorElement): void {
+	if (!isPlainClick(event)) {
 		return;
 	}
 
-	const a = event.currentTarget as HTMLAnchorElement;
 	if (a.hasAttribute('download') || (a.target !== '' && a.target !== '_self')) {
 		return;
 	}
@@ -475,6 +478,21 @@ export function routeLinkClick(chan: Channel, event: MouseEvent): void {
 	}
 
 	navigateForward(chan, new NavigationForwardToRequested(rootViewID, values));
+}
+
+/**
+ * isPlainClick tells if the event is an unhandled click of the primary button without modifiers, which the browser
+ * would follow in the current tab.
+ */
+export function isPlainClick(event: MouseEvent): boolean {
+	return (
+		!event.defaultPrevented &&
+		event.button === 0 &&
+		!event.metaKey &&
+		!event.ctrlKey &&
+		!event.shiftKey &&
+		!event.altKey
+	);
 }
 
 /**

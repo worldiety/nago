@@ -38,30 +38,7 @@ func (t TDataView[E, ID]) renderCards(ctx core.RenderContext) core.RenderNode {
 	wnd := ctx.Window()
 	data := t.data
 
-	sortByField := core.StateOf[FieldID](wnd, t.modelOptions.StatePrefix+"-sortByField")
-	sortReverse := core.StateOf[bool](wnd, t.modelOptions.StatePrefix+"-sortReverse")
-
-	findAllIDs := data.FindAll
-	if sortByField.Get() != "" {
-		var sortField Field[E]
-		for _, field := range t.data.Fields {
-			if field.ID == sortByField.Get() {
-				sortField = field
-				break
-			}
-		}
-
-		if sortField.Comparator != nil {
-			findAllIDs = pager.Sort(data.FindByID, data.FindAll, func(a, b E) int {
-				if sortReverse.Get() {
-					return -sortField.Comparator(a, b)
-				}
-
-				return sortField.Comparator(a, b)
-			}, pager.SortOptions[E]{})
-		}
-
-	}
+	findAllIDs := t.findAll(t.sortState(wnd))
 
 	var model pager.Model[E, ID]
 	if t.model.IsSome() {
@@ -250,8 +227,7 @@ func (t TDataView[E, ID]) cardActionBar(wnd core.Window, model pager.Model[E, ID
 
 	filterToggle := core.StateOf[bool](wnd, model.SelectSubset.ID()+"-filterToggle")
 
-	sortByField := core.StateOf[FieldID](wnd, t.modelOptions.StatePrefix+"-sortByField")
-	sortReverse := core.StateOf[bool](wnd, t.modelOptions.StatePrefix+"-sortReverse")
+	sorting := t.sortState(wnd)
 
 	return ui.VStack(
 		ui.If(t.actionBarContent != nil, t.actionBarContent),
@@ -290,27 +266,13 @@ func (t TDataView[E, ID]) cardActionBar(wnd core.Window, model pager.Model[E, ID
 
 				ui.HStack(
 					ui.ForEach(t.data.Fields, func(f Field[E]) core.View {
-						if f.Comparator == nil {
+						if !f.sortable() {
 							return nil
 						}
 
-						ico := icons.ArrowUpDown
-						if f.ID == sortByField.Get() {
-							if sortReverse.Get() {
-								ico = icons.ArrowDown
-							} else {
-								ico = icons.ArrowUp
-							}
-						}
-
 						return ui.SecondaryButton(func() {
-							if sortByField.Get() != f.ID {
-								sortByField.Set(f.ID)
-								sortReverse.Set(false)
-							} else {
-								sortReverse.Set(!sortReverse.Get())
-							}
-						}).Title(f.Name).PreIcon(ico)
+							sorting.toggle(f.ID)
+						}).Title(f.Name).PreIcon(sorting.icon(f.ID)).AccessibilityLabel(sorting.label(wnd, f.Name, f.ID)).Key("sort", string(f.ID))
 					})...,
 				).Wrap(true).Gap(ui.L8).FullWidth(),
 			).FullWidth().Gap(ui.L8),

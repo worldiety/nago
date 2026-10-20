@@ -26,6 +26,7 @@ import (
 	"go.wdy.de/nago/application/ai/file"
 	"go.wdy.de/nago/application/xerror"
 	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/presentation/core"
 )
 
 // ToolFunc is the canonical shape of a Go function that can be exposed as a callable tool to the model.
@@ -126,6 +127,16 @@ type Tool struct {
 	// sub-agents and possibly after the parent run already ended, so such a tool would act on a screen nobody
 	// looks at. Tools with [Tool.AwaitsUser] are never delegated, regardless of this flag.
 	NoDelegate bool
+
+	// View, when set, shows the outcome of a call to the user in the chat, e.g. a button which opens the page the
+	// model suggests. args are the arguments of the call and result is what Invoke returned, or the first text
+	// block of InvokeContent as JSON string, if it is no JSON. The chat renders the view below the call, also
+	// when the section of the tool calls is collapsed, and again when the conversation is restored from its
+	// history. Thus, the view must depend on args and result only, and the tool should check in Invoke what the
+	// view will do, e.g. that the page exists and the user may open it. A failed call has no view. Give the
+	// actions of the view a key derived from args, e.g. by ui.TButton.Key, because the chat renders often while
+	// the model works. A sub-agent never shows a view. Optional.
+	View func(wnd core.Window, args, result json.RawMessage) core.View
 
 	// run, when set, executes the call with access to the calling run (its context, provider and options). It is
 	// how the built-in delegation tools of this package inherit the model, the system prompt and the tools of

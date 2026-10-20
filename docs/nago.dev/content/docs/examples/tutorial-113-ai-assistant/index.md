@@ -343,6 +343,36 @@ admin pages of the framework. When it cannot run (no provider, no model, hidden 
 `Decorate` returns the view unchanged and logs the reason once. A missing token must not become a banner that
 follows the user through the application.
 
+The assistant also follows the user from page to page within the browser tab: it stays open and keeps the draft
+and, with `History`, the conversation, including a turn which is still running. A navigation allocates a new
+window, so these states are kept by the scope of the tab, per signed-in user.
+
+### A tool may show a view: "open this page"
+
+A model can only write text, and a link in that text is a poor way to send the user somewhere: the model
+invents the address, and a link to another origin may even carry data out, if a prompt injection succeeded.
+Therefore, links of the model navigate within the application without reloading the page, and an external one
+opens only after the user saw its full address.
+
+Better, a tool decides where to go and the chat shows a button for it, `completion.Tool.View`:
+
+```go
+suggest := completion.NewUseCaseTool("suggest_view", "…", uc.SuggestView) // checks that the page exists and the user may open it
+suggest.View = func(wnd core.Window, args, result json.RawMessage) core.View {
+	var out SuggestedView
+	if json.Unmarshal(result, &out) != nil {
+		return nil
+	}
+
+	return ui.SecondaryButton(func() {
+		wnd.Navigation().ForwardTo(out.Path, out.Values)
+	}).Title("Ansicht „"+out.Title+"“ öffnen").Key("suggest_view", string(args))
+}
+```
+
+The chat renders the view below the call, also while the section of the tool calls is collapsed, and again when
+a conversation is restored from the history. Hence, the view depends on the arguments and the result only.
+
 ### Date and time are built in
 
 A model has no clock. Its "today" is its training cut-off, and it calculates with that fluently and wrongly:

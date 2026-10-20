@@ -20,9 +20,9 @@ type SortOptions[T any] struct {
 	Cache *core.State[[]T] // if not nil, this state is used as the source for the cache using Init. To reload, use [core.State.Reset].
 }
 
-// Sort loads the entire dataset into memory and applies the comparator func on it. Using the
-// SortOptions the dataset may be cached within the non-nil state. Comparator may be nil and returns the identifiers
-// in the original order.
+// Sort loads the entire dataset into memory and applies the comparator func on it. The sort is stable, thus
+// equal elements keep their original order. Using the SortOptions the dataset may be cached within the non-nil
+// state. Comparator may be nil and returns the identifiers in the original order.
 func Sort[E data.Aggregate[ID], ID ~string](findByID data.ByIDFinder[E, ID], it iter.Seq2[ID, error], comparator func(a, b E) int, opts SortOptions[E]) iter.Seq2[ID, error] {
 	if comparator == nil {
 		return it
@@ -81,7 +81,7 @@ func Sort[E data.Aggregate[ID], ID ~string](findByID data.ByIDFinder[E, ID], it 
 		}
 
 		// always apply the sorting, we don't know if it is a delegate and may have changed
-		slices.SortFunc(items, comparator)
+		slices.SortStableFunc(items, comparator)
 
 		for _, item := range items {
 			if !yield(item.Identity(), nil) {

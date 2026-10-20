@@ -10023,17 +10023,20 @@ func (v *RichTextEditor) read(r *BinaryReader) error {
 	return nil
 }
 
-// RichText renders a small subset of HTML which shall look mostly native in the current view context.
+// RichText renders a small subset of HTML which shall look mostly native in the current view context. A relative link of the own origin navigates within the application, an external link opens in a new tab.
 type RichText struct {
 	// Value contains the text, which shall be shown or edited.
 	Value Str
 	Frame Frame
+	// ExternalLinkConfirmation is the question, which the user has to confirm before an external link is opened. The full address follows the question. If empty, an external link opens without asking.
+	ExternalLinkConfirmation Str
 }
 
 func (v *RichText) write(w *BinaryWriter) error {
-	var fields [3]bool
+	var fields [4]bool
 	fields[1] = !v.Value.IsZero()
 	fields[2] = !v.Frame.IsZero()
+	fields[3] = !v.ExternalLinkConfirmation.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -10060,6 +10063,14 @@ func (v *RichText) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.ExternalLinkConfirmation.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -10082,6 +10093,11 @@ func (v *RichText) read(r *BinaryReader) error {
 			}
 		case 2:
 			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.ExternalLinkConfirmation.read(r)
 			if err != nil {
 				return err
 			}
@@ -28991,13 +29007,14 @@ func (v *RichTextEditor) IsZero() bool {
 func (v *RichText) reset() {
 	v.Value.reset()
 	v.Frame.reset()
+	v.ExternalLinkConfirmation.reset()
 }
 
 func (v *RichText) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Value.IsZero() && v.Frame.IsZero()
+	return v.Value.IsZero() && v.Frame.IsZero() && v.ExternalLinkConfirmation.IsZero()
 }
 
 func (v *HoverGroup) reset() {
