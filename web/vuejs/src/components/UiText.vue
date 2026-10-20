@@ -143,6 +143,7 @@ const textValue = computed<string>(() => {
 </template>
 
 <style scoped>
+@reference '@/assets/css/tailwind.css';
 a {
 	@apply text-I0 underline decoration-I0;
 }

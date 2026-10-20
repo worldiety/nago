@@ -178,6 +178,7 @@ onMounted(() => {
 });
 </script>
 <style scoped>
+@reference '@/assets/css/tailwind.css';
 .stepper-container {
 	@apply flex justify-center items-center gap-4;
 
@@ -189,7 +190,7 @@ onMounted(() => {
 
 			.bubble {
 				@apply relative mb-2 flex justify-center items-center rounded-full text-lg z-[1] shrink-0;
-				@apply outline outline-2 -outline-offset-2 outline-current;
+				@apply outline-solid outline-2 -outline-offset-2 outline-current;
 				@apply text-SI0;
 
 				svg {

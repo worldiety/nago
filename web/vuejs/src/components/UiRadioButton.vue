@@ -55,12 +55,13 @@ function radioButtonClicked(): void {
 </template>
 
 <style scoped>
+@reference '@/assets/css/tailwind.css';
 .input-radio {
-	@apply relative cursor-pointer p-2.5 text-[0];
+	@apply relative cursor-pointer p-2.5 text-[0px];
 
 	input {
 		@apply appearance-none cursor-pointer overflow-hidden;
-		@apply relative size-4 rounded-full outline outline-1 -outline-offset-1 outline-current;
+		@apply relative size-4 rounded-full outline-solid outline-1 -outline-offset-1 outline-current;
 
 		&:checked {
 			&:before {
@@ -72,7 +73,7 @@ function radioButtonClicked(): void {
 
 	&:before {
 		content: '';
-		@apply block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-full rounded-full bg-I0 bg-opacity-0 scale-75 duration-100;
+		@apply block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-full rounded-full bg-I0/0 scale-75 duration-100;
 	}
 
 	&.input-radio-disabled {
@@ -97,19 +98,19 @@ function radioButtonClicked(): void {
 
 		&:hover {
 			&:before {
-				@apply bg-opacity-20;
+				@apply bg-I0/20;
 			}
 		}
 
 		&:focus-within {
 			&:before {
-				@apply bg-opacity-30;
+				@apply bg-I0/30;
 			}
 		}
 
 		&:active {
 			&:before {
-				@apply bg-opacity-40;
+				@apply bg-I0/40;
 			}
 		}
 	}

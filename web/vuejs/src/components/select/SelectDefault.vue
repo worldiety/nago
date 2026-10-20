@@ -82,6 +82,7 @@ watch(selectedValue, () => {
 });
 </script>
 <style scoped>
+@reference '@/assets/css/tailwind.css';
 .select-default {
 	@apply relative;
 

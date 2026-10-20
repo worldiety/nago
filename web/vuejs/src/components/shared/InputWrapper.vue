@@ -94,6 +94,7 @@ const inputFieldWrapperClasses = computed((): string | null => {
 </script>
 
 <style>
+@reference '@/assets/css/tailwind.css';
 .input-wrapper {
 	@apply flex flex-col-reverse;
 
@@ -116,14 +117,14 @@ const inputFieldWrapperClasses = computed((): string | null => {
 
 		&.input-field-wrapper-detailed {
 			.input-field {
-				@apply border-none outline outline-1 -outline-offset-1 rounded-lg px-3;
+				@apply border-none outline-solid outline-1 -outline-offset-1 rounded-lg px-3;
 				@apply focus:outline-2 focus:-outline-offset-2 focus:outline-I0;
 			}
 		}
 
 		&.input-field-wrapper-filled {
 			.input-field {
-				@apply outline outline-1 -outline-offset-1 outline-M5 bg-M2 rounded-lg px-3;
+				@apply outline-solid outline-1 -outline-offset-1 outline-M5 bg-M2 rounded-lg px-3;
 				@apply focus:outline-2 focus:-outline-offset-2 focus:outline-I0;
 			}
 		}
@@ -184,7 +185,7 @@ const inputFieldWrapperClasses = computed((): string | null => {
 	}
 
 	.input-field-wrapper:not(.input-field-wrapper-detailed) .input-field:focus {
-		@apply outline-none ring-0;
+		@apply outline-hidden ring-0;
 	}
 
 	.input-field-wrapper.input-field-wrapper-disabled .input-field {

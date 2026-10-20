@@ -1545,6 +1545,7 @@ function cancelLongPress() {
 </script>
 
 <style scoped>
+@reference '@/assets/css/tailwind.css';
 .sheet {
 	--sheet-grid: rgb(from var(--M5) r g b / 0.5);
 	@apply relative flex flex-col overflow-hidden rounded-md border border-M5;
@@ -1571,7 +1572,7 @@ function cancelLongPress() {
 }
 
 .scroller {
-	@apply w-full min-h-0 flex-1 overflow-auto outline-none;
+	@apply w-full min-h-0 flex-1 overflow-auto outline-hidden;
 	overscroll-behavior: contain;
 }
 
@@ -1688,7 +1689,7 @@ function cancelLongPress() {
 }
 
 .checkbox {
-	@apply size-4 rounded-sm border border-M7 flex items-center justify-center;
+	@apply size-4 rounded-xs border border-M7 flex items-center justify-center;
 
 	&.checked {
 		@apply bg-I0 border-I0;
@@ -1711,7 +1712,7 @@ function cancelLongPress() {
 	@apply ml-auto flex shrink-0 items-center gap-0.5 pl-1;
 
 	.tool {
-		@apply flex size-5 items-center justify-center rounded opacity-40;
+		@apply flex size-5 items-center justify-center rounded-sm opacity-40;
 
 		&:hover,
 		&.on {
@@ -1768,7 +1769,7 @@ function cancelLongPress() {
 		@apply w-full rounded-md border border-M5 bg-transparent px-2 py-1;
 
 		&:focus {
-			@apply border-I0 outline-none;
+			@apply border-I0 outline-hidden;
 		}
 	}
 
@@ -1816,7 +1817,7 @@ function cancelLongPress() {
 
 		&:hover,
 		&:focus-visible {
-			@apply bg-I0 bg-opacity-10 outline-none;
+			@apply bg-I0/10 outline-hidden;
 		}
 	}
 }

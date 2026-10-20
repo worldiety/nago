@@ -328,6 +328,7 @@ watch(
 </template>
 
 <style scoped>
+@reference '@/assets/css/tailwind.css';
 .modal-container {
 	z-index: var(--modal-z-index);
 }

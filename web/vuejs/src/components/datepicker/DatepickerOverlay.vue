@@ -153,7 +153,7 @@
 		</div>
 
 		<!-- Blurred Background -->
-		<div class="absolute top-0 left-0 bottom-0 right-0 bg-opacity-60 bg-black z-0" @click="emit('close')"></div>
+		<div class="absolute top-0 left-0 bottom-0 right-0 bg-black/60 z-0" @click="emit('close')"></div>
 	</div>
 </template>
 
@@ -422,6 +422,7 @@ watch(() => props.selectedStartDate, showSelectedRange);
 </script>
 
 <style scoped>
+@reference '@/assets/css/tailwind.css';
 .datepicker {
 	@apply fixed top-0 left-0 bottom-0 right-0 flex justify-center items-center z-30;
 
@@ -471,11 +472,11 @@ watch(() => props.selectedStartDate, showSelectedRange);
 }
 
 .selected-day {
-	@apply bg-I0 bg-opacity-25 text-M8;
+	@apply bg-I0/25 text-M8;
 }
 
 .within-range-day {
-	@apply bg-I0 bg-opacity-5 text-M8;
+	@apply bg-I0/5 text-M8;
 }
 
 .unselectable-day {
@@ -492,7 +493,7 @@ watch(() => props.selectedStartDate, showSelectedRange);
 /* Each day in the first grid column within the selected range that is not a selected day (before element) */
 .datepicker-grid > .within-range-day:nth-of-type(7n - 6) > .day:not(.selected-day)::before {
 	content: '';
-	@apply absolute top-0 left-0 bottom-0 h-full w-1/2 bg-I0 bg-opacity-5 rounded-l-full;
+	@apply absolute top-0 left-0 bottom-0 h-full w-1/2 bg-I0/5 rounded-l-full;
 }
 
 /* Each day in the last column within the selected range except the selected days (before element) */
@@ -505,7 +506,7 @@ watch(() => props.selectedStartDate, showSelectedRange);
 /* Each day in the last grid column within the selected range that is not a selected day (after element) */
 .datepicker-grid > .within-range-day:nth-of-type(7n) > .day:not(.selected-day)::after {
 	content: '';
-	@apply absolute top-0 bottom-0 right-0 h-full w-1/2 bg-I0 bg-opacity-5 rounded-r-full;
+	@apply absolute top-0 bottom-0 right-0 h-full w-1/2 bg-I0/5 rounded-r-full;
 }
 
 /* First day of selected range (before element) */

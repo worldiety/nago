@@ -154,6 +154,7 @@ watch(
 );
 </script>
 <style scoped>
+@reference '@/assets/css/tailwind.css';
 .split-view {
 	@apply relative flex;
 
@@ -189,7 +190,7 @@ watch(
 			@apply left-0 top-auto h-4 w-full translate-x-0 -translate-y-1/2 cursor-ns-resize;
 
 			&:after {
-				@apply top-1/2 left-0 h-0.5 w-full -translate-x-0 -translate-y-1/2;
+				@apply top-1/2 left-0 h-0.5 w-full translate-x-0 -translate-y-1/2;
 			}
 		}
 	}

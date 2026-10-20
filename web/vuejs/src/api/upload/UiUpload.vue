@@ -39,7 +39,7 @@ function formatBytes(bytes: number, decimals = 1): string {
 <template>
 	<div v-if="uploads.length > 0" id="uploads" class="inset-0" style="--modal-z-index: 50">
 		<div v-for="item in uploads" :key="item.id" class="flex flex-col gap-1 fixed bottom-2 w-full items-center">
-			<div class="flex items-center gap-4 p-3 bg-M2 rounded-xl shadow-sm" style="min-width: 30rem">
+			<div class="flex items-center gap-4 p-3 bg-M2 rounded-xl shadow-xs" style="min-width: 30rem">
 				<!-- Icon -->
 				<div class="">
 					<svg

@@ -9,7 +9,7 @@
 
 <template>
 	<div
-		class="fixed top-0 left-0 w-screen h-screen z-50 bg-stone-900/50 backdrop-blur flex items-center justify-center"
+		class="fixed top-0 left-0 w-screen h-screen z-50 bg-stone-900/50 backdrop-blur-sm flex items-center justify-center"
 	>
 		<div class="flex flex-col items-center gap-4">
 			<div class="">

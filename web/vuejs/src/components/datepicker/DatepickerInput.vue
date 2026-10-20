@@ -410,6 +410,7 @@ onUpdated(fixAllInputDecimals);
 watch(dateSelected, () => nextTick(fixAllInputDecimals));
 </script>
 <style scoped>
+@reference '@/assets/css/tailwind.css';
 .input-day,
 .input-month,
 .input-year {

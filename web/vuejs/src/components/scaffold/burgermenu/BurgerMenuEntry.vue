@@ -13,8 +13,8 @@
 			:is="menuEntryClickable ? 'button' : 'div'"
 			class="menu-entry flex justify-start items-center gap-x-4 rounded-full w-full p-4"
 			:class="{
-				'cursor-pointer hover:bg-M7 hover:bg-opacity-25 active:bg-opacity-35': menuEntryClickable,
-				'bg-M7 bg-opacity-35': menuEntryActive,
+				'cursor-pointer hover:bg-M7/25 hover:active:bg-M7/35': menuEntryClickable,
+				'bg-M7/35': menuEntryActive,
 				'has-active-icon': expanded && ui.iconActive,
 			}"
 			@click="menuEntryClicked"
@@ -134,6 +134,7 @@ watch(
 </script>
 
 <style scoped>
+@reference '@/assets/css/tailwind.css';
 .menu-entry .menu-entry-icon > :nth-child(2) {
 	@apply hidden;
 }

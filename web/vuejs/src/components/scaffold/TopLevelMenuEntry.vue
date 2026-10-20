@@ -109,16 +109,14 @@ const iconClasses = computed((): string => {
 		iconClasses.push('h-10 w-16');
 	}
 	if (props.ui.isZero() && hover.value) {
-		iconClasses.push('mix-blend-multiply', 'bg-M7');
-	}
-	if (expanded.value) {
-		iconClasses.push('bg-M7', 'bg-opacity-25');
-	}
-	if (interacted.value) {
-		iconClasses.push('bg-opacity-35');
+		iconClasses.push('mix-blend-multiply');
 	}
 	if (active.value) {
-		iconClasses.push('bg-M7', 'bg-opacity-35');
+		iconClasses.push('bg-M7/35');
+	} else if (expanded.value) {
+		iconClasses.push('bg-M7/25');
+	} else if (props.ui.isZero() && hover.value) {
+		iconClasses.push('bg-M7');
 	}
 	return iconClasses.join(' ');
 });

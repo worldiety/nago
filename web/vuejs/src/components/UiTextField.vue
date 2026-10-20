@@ -581,6 +581,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
+@reference '@/assets/css/tailwind.css';
 .additional-left,
 .additional-right {
 	@apply absolute top-1/2 -translate-y-1/2 pointer-events-auto;

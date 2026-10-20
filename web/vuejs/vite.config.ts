@@ -6,17 +6,32 @@
  *
  * SPDX-License-Identifier: Custom-License
  */
+import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
+import { copyFile, mkdir } from 'node:fs/promises';
 import { URL, fileURLToPath } from 'node:url';
 import path from 'path';
 import { visualizer } from 'rollup-plugin-visualizer';
 import type { PluginOption } from 'vite';
 import { defineConfig } from 'vite';
-import { viteStaticCopy } from 'vite-plugin-static-copy';
 import vueDevTools from 'vite-plugin-vue-devtools';
 import svgLoader from 'vite-svg-loader';
 
+// copyFiles copies the given files into the assets of the build, like the loader of the legacy build expects them.
+function copyFiles(files: string[]): PluginOption {
+	return {
+		name: 'copy-files',
+		apply: 'build',
+		async writeBundle(options) {
+			const dir = path.join(options.dir!, 'assets');
+			await mkdir(dir, { recursive: true });
+			await Promise.all(files.map((file) => copyFile(file, path.join(dir, path.basename(file)))));
+		},
+	};
+}
+
 const basePlugins: PluginOption[] = [
+	tailwindcss(),
 	vue(),
 	svgLoader({
 		defaultImport: 'component',
@@ -24,26 +39,12 @@ const basePlugins: PluginOption[] = [
 	vueDevTools(),
 ];
 const legacyPlugins: PluginOption[] = [
-	viteStaticCopy({
-		targets: [
-			{
-				src: 'node_modules/es5-polyfill/dist/polyfill.min.js',
-				dest: 'assets',
-			},
-			{
-				src: 'node_modules/core-js-bundle/minified.js',
-				dest: 'assets',
-			},
-			{
-				src: 'node_modules/regenerator-runtime/runtime.js',
-				dest: 'assets',
-			},
-			{
-				src: 'node_modules/bowser/es5.js',
-				dest: 'assets',
-			},
-		],
-	}),
+	copyFiles([
+		'node_modules/es5-polyfill/dist/polyfill.min.js',
+		'node_modules/core-js-bundle/minified.js',
+		'node_modules/regenerator-runtime/runtime.js',
+		'node_modules/bowser/es5.js',
+	]),
 ];
 const modernPlugins: PluginOption[] = [
 	visualizer({

@@ -105,6 +105,7 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+@reference '@/assets/css/tailwind.css';
 .accordion-container {
 	@apply text-M8;
 

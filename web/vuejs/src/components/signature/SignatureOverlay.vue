@@ -105,6 +105,7 @@ onMounted(() => {
 });
 </script>
 <style scoped>
+@reference '@/assets/css/tailwind.css';
 .signature-overlay {
 	@apply fixed top-0 left-0 bottom-0 right-0 flex justify-center items-center z-30;
 
@@ -120,7 +121,7 @@ onMounted(() => {
 		}
 
 		canvas {
-			@apply size-full min-w-96 min-h-64 bg-M2 rounded-lg shadow;
+			@apply size-full min-w-96 min-h-64 bg-M2 rounded-lg shadow-sm;
 		}
 
 		.footer {
@@ -129,7 +130,7 @@ onMounted(() => {
 	}
 
 	.bg {
-		@apply absolute top-0 left-0 bottom-0 right-0 bg-opacity-60 bg-black z-0;
+		@apply absolute top-0 left-0 bottom-0 right-0 bg-black/60 z-0;
 	}
 }
 </style>
