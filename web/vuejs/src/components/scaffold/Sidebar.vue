@@ -255,6 +255,7 @@ function expandMenuEntry(menuEntry: ScaffoldMenuEntry): void {
 </script>
 
 <style scoped>
+@reference '@/assets/css/tailwind.css';
 /* Vue transitions: https://vuejs.org/guide/built-ins/transition#css-transitions */
 .slide-enter-active,
 .slide-leave-active {

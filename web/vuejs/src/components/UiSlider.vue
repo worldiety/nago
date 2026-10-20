@@ -302,6 +302,7 @@ watch(
 </script>
 
 <style scoped>
+@reference '@/assets/css/tailwind.css';
 .slider {
 	@apply pt-8 pb-4 min-w-32;
 
@@ -343,7 +344,7 @@ watch(
 			&:focus,
 			&:hover,
 			&.dragging {
-				@apply bg-I0 bg-opacity-20;
+				@apply bg-I0/20;
 			}
 
 			&.dragging {
@@ -382,7 +383,7 @@ watch(
 				&:focus,
 				&:hover,
 				&.dragging {
-					@apply bg-SE0 bg-opacity-20;
+					@apply bg-SE0/20;
 				}
 			}
 		}
@@ -420,7 +421,7 @@ watch(
 				&:focus,
 				&:hover,
 				&.dragging {
-					@apply bg-ST0 bg-opacity-20;
+					@apply bg-ST0/20;
 				}
 			}
 		}

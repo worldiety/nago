@@ -66,6 +66,7 @@ function onAutoLayout() {
 }
 </script>
 <style scoped>
+@reference '@/assets/css/tailwind.css';
 .flow-chart-actions {
 	@apply flex gap-2 m-0 p-4;
 

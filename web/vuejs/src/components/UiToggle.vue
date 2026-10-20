@@ -43,8 +43,9 @@ function toggle() {
 </template>
 
 <style scoped>
+@reference '@/assets/css/tailwind.css';
 .toggle-switch {
-	@apply relative inline-block appearance-none rounded-full outline outline-1 -outline-offset-1 w-12 h-6 cursor-pointer;
+	@apply relative inline-block appearance-none rounded-full outline-solid outline-1 -outline-offset-1 w-12 h-6 cursor-pointer;
 	@apply focus:outline-I0 focus-visible:outline-I0 focus:outline-2 focus:-outline-offset-2;
 
 	&:before {

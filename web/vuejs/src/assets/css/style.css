@@ -7,6 +7,8 @@
  * SPDX-License-Identifier: Custom-License
  */
 
+@reference './tailwind.css';
+
 @import 'typography.css';
 @import 'inputs.css';
 @import 'effects.css';

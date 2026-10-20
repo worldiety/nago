@@ -169,6 +169,7 @@ watch(activeToggle, calcActiveToggleStyles);
 addEventListener('resize', onWindowResize);
 </script>
 <style scoped>
+@reference '@/assets/css/tailwind.css';
 .switcher {
 	@apply bg-M2 rounded-3xl overflow-hidden flex items-end gap-8;
 
@@ -195,7 +196,7 @@ addEventListener('resize', onWindowResize);
 			}
 
 			.active-toggle-bg {
-				@apply absolute outline outline-2 -outline-offset-2 outline-M0 bg-M3 rounded-xl z-0;
+				@apply absolute outline-solid outline-2 -outline-offset-2 outline-M0 bg-M3 rounded-xl z-0;
 			}
 		}
 	}

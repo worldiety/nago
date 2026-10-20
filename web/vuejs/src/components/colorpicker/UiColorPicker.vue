@@ -574,6 +574,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+@reference '@/assets/css/tailwind.css';
 .color-picker {
 	@apply flex flex-col gap-3 min-w-64;
 
@@ -623,7 +624,7 @@ onUnmounted(() => {
 	@apply min-w-0 rounded-md border border-M5 bg-transparent px-2 py-1.5 text-sm tabular-nums;
 
 	&:focus {
-		@apply outline-none border-I0;
+		@apply outline-hidden border-I0;
 	}
 }
 
@@ -636,7 +637,7 @@ onUnmounted(() => {
 
 	&:hover,
 	&:focus-visible {
-		@apply bg-I0 bg-opacity-10;
+		@apply bg-I0/10;
 	}
 }
 
@@ -692,7 +693,7 @@ onUnmounted(() => {
 
 .area:focus-visible,
 .bar:focus-visible {
-	@apply outline outline-2 outline-offset-2 outline-I0;
+	@apply outline-solid outline-2 outline-offset-2 outline-I0;
 }
 
 .notations {

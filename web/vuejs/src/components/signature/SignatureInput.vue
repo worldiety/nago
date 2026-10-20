@@ -36,6 +36,7 @@ function onFocus(): void {
 const id = randomStr(16);
 </script>
 <style scoped>
+@reference '@/assets/css/tailwind.css';
 .input-field {
 	@apply h-20 cursor-pointer;
 }
@@ -45,6 +46,7 @@ const id = randomStr(16);
 }
 </style>
 <style>
+@reference '@/assets/css/tailwind.css';
 .signature {
 	& > svg {
 		@apply max-h-full max-w-full;

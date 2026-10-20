@@ -32,6 +32,7 @@ const frameStyles = computed<string>(() => {
 });
 </script>
 <style scoped>
+@reference '@/assets/css/tailwind.css';
 fieldset {
 	@apply bg-M2 rounded-xl p-5 -mt-5;
 

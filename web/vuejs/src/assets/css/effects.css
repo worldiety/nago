@@ -9,7 +9,7 @@
 
 * {
 	outline: none;
-	@apply outline-0;
+	outline-width: 0;
 }
 
 input,
@@ -30,17 +30,17 @@ object,
 			.toggle-switch,
 			.toggle-switch-container
 		) {
-		@apply outline outline-2 -outline-offset-2 outline-I0 rounded-lg;
+		@apply outline-solid outline-2 -outline-offset-2 outline-I0 rounded-lg;
 	}
 }
 
 .focus-within:focus-within {
-	@apply outline-none outline-I0 -outline-offset-2 rounded-lg;
+	@apply outline-2 outline-solid outline-I0 -outline-offset-2 rounded-lg;
 }
 
 a:focus-visible:not(.custom-focus, .button-primary, .button-secondary, .button-tertiary),
 button[role='link']:focus-visible:not(.custom-focus, .button-primary, .button-secondary, .button-tertiary) {
-	@apply outline outline-2 outline-I0 outline-offset-4 rounded-full;
+	@apply outline-solid outline-2 outline-I0 outline-offset-4 rounded-full;
 }
 
 a:hover:not(.custom-hover),
@@ -49,5 +49,5 @@ button[role='link']:hover:not(.custom-hover) {
 }
 
 .custom-focus {
-	@apply outline-none;
+	@apply outline-2 outline-solid outline-transparent outline-offset-2;
 }

@@ -254,6 +254,7 @@ onUnmounted(() => {
 // note that we need the max-content hack, otherwise we get layout bugs at least for horizontal areas
 </script>
 <style scoped>
+@reference '@/assets/css/tailwind.css';
 .scroll-view {
 	@apply relative flex min-h-0 max-h-full overflow-clip;
 

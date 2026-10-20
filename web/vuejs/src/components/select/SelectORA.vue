@@ -225,6 +225,7 @@ onUnmounted(() => {
 });
 </script>
 <style scoped>
+@reference '@/assets/css/tailwind.css';
 .select-ora {
 	@apply relative;
 
@@ -270,7 +271,7 @@ onUnmounted(() => {
 			@apply w-full grow py-2;
 
 			button[role='option'] {
-				@apply flex flex-col w-full text-left p-1.5 rounded;
+				@apply flex flex-col w-full text-left p-1.5 rounded-sm;
 				@apply hover:bg-I0/20 hover:text-I0;
 
 				.description {

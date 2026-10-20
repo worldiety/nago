@@ -88,7 +88,7 @@ onUpdated(checkAnchorType);
 					<MenuItem v-for="itemUi in section.items?.value" v-slot="{ active }" @click.stop>
 						<button
 							:class="[
-								active ? 'bg-I0 bg-opacity-15' : '',
+								active ? 'bg-I0/15' : '',
 								'group flex w-full items-center rounded-lg py-3 px-2 text-sm',
 							]"
 							@click="itemClick(itemUi)"

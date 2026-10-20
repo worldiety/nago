@@ -132,6 +132,7 @@ function onImageError() {
 }
 </script>
 <style scoped>
+@reference '@/assets/css/tailwind.css';
 .page {
 	@apply absolute left-0 bottom-0 size-full pr-8 grid grid-cols-1 gap-8 opacity-0 pointer-events-none min-h-full;
 

@@ -106,7 +106,7 @@ function onDrop() {
 	<div
 		:id="id"
 		:class="{
-			'outline outline-1 -outline-offset-1': isDropArea && isOver,
+			'outline-solid outline-1 -outline-offset-1': isDropArea && isOver,
 			'outline-green-500 bg-green-50': isDropArea && isOver && canDrop,
 			'outline-red-600 bg-red-50': isDropArea && isOver && !canDrop,
 		}"

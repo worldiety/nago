@@ -50,7 +50,7 @@ async function start() {
 
 	const c = document.createElement('canvas');
 	c.tabIndex = 0;
-	c.className = 'block w-full h-full outline-none';
+	c.className = 'block w-full h-full outline-hidden';
 	c.style.touchAction = 'none';
 	root.appendChild(c);
 	canvas = c;

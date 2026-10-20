@@ -71,7 +71,7 @@
 								'mb-4': subMenuEntry.menu?.value?.length > 0,
 								'cursor-pointer hover:underline focus-visible:underline':
 									subMenuEntry.action !== undefined,
-								'bg-M7 bg-opacity-35': isActiveMenuEntry(subMenuEntry),
+								'bg-M7/35': isActiveMenuEntry(subMenuEntry),
 							}"
 							:tabindex="subMenuEntry.action !== undefined ? '0' : '-1'"
 							@click="menuEntryClicked(subMenuEntry)"
@@ -88,7 +88,7 @@
 							:class="{
 								'cursor-pointer hover:underline focus-visible:underline':
 									subSubMenuEntry.action !== undefined,
-								'bg-M7 bg-opacity-35': isActiveMenuEntry(subSubMenuEntry),
+								'bg-M7/35': isActiveMenuEntry(subSubMenuEntry),
 							}"
 							:tabindex="subSubMenuEntry.action !== undefined ? '0' : '-1'"
 							@click="menuEntryClicked(subSubMenuEntry)"
@@ -254,6 +254,7 @@ function expandMenuEntry(menuEntry: ScaffoldMenuEntry): void {
 </script>
 
 <style scoped>
+@reference '@/assets/css/tailwind.css';
 .sub-menu-triangle {
 	left: var(--sub-menu-triangle-left-offset);
 }

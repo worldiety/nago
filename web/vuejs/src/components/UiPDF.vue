@@ -114,6 +114,7 @@ function onInit(container: EmbedPdfContainer) {
 themeManager.observeTheme(setTheme);
 </script>
 <style scoped>
+@reference '@/assets/css/tailwind.css';
 .pdf {
 	@apply rounded-2xl overflow-hidden;
 }

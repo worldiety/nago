@@ -7,12 +7,106 @@
  * SPDX-License-Identifier: Custom-License
  */
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/*
+ * Tailwind CSS v4 puts its styles into cascade layers by default. Unlayered styles take precedence over all layers, so
+ * the custom styles of style.css and of the components would beat every utility regardless of their specificity. The
+ * parts are imported without layers instead, which keeps the cascade of Tailwind CSS v3: the custom styles of style.css
+ * come first, followed by the base styles and the utilities.
+ */
+@import 'tailwindcss/theme.css';
+@import './preflight.css';
+@import 'tailwindcss/utilities.css' source(none);
+
+@source '../../**/*.{html,vue}';
+
+@plugin '@tailwindcss/typography';
+
+@custom-variant lightmode (.lightmode &);
+@custom-variant darkmode (.darkmode &);
+@custom-variant contrast (.contrast &);
+@custom-variant protanopia (.protanopia &);
+@custom-variant deuteranopia (.deuteranopia &);
+@custom-variant tritanopia (.tritanopia &);
+
+/* Tailwind CSS v4 applies hover styles only on devices which can hover, v3 also on touch devices */
+@custom-variant hover (&:hover);
+
+@theme {
+	/* Tailwind CSS v4 defines the breakpoints in rem, v3 in px like the size classes in eventhandling.ts */
+	--breakpoint-xs: 400px;
+	--breakpoint-sm: 640px;
+	--breakpoint-md: 768px;
+	--breakpoint-lg: 1024px;
+	--breakpoint-xl: 1280px;
+	--breakpoint-2xl: 1536px;
+
+	/* Tailwind CSS v4 defines the line heights relative to the font size, v3 as absolute lengths */
+	--text-xs--line-height: 1rem;
+	--text-sm--line-height: 1.25rem;
+	--text-base--line-height: 1.5rem;
+	--text-lg--line-height: 1.75rem;
+	--text-xl--line-height: 1.75rem;
+	--text-2xl--line-height: 2rem;
+	--text-3xl--line-height: 2.25rem;
+	--text-4xl--line-height: 2.5rem;
+
+	/* the colors of the default palette in use keep their values of Tailwind CSS v3 */
+	--color-stone-900: #1c1917;
+	--color-red-50: #fef2f2;
+	--color-red-600: #dc2626;
+	--color-green-50: #f0fdf4;
+	--color-green-500: #22c55e;
+
+	--shadow-ora-shadow: 0 3px 6px rgba(0, 0, 0, 0.16);
+	--radius-2lg: 0.625rem;
+	--animate-spin-slow: spin 2s linear infinite;
+}
+
+/* the ORA colors are set as variables of the html element by the theme manager */
+@theme inline {
+	/* semantic colors */
+	--color-SE0: rgb(from var(--SE0) r g b);
+	--color-SW0: rgb(from var(--SW0) r g b);
+	--color-SG0: rgb(from var(--SG0) r g b);
+	--color-SV0: rgb(from var(--SV0) r g b);
+	--color-SI0: rgb(from var(--SI0) r g b);
+	--color-ST0: rgb(from var(--ST0) r g b);
+
+	/* main colors */
+	--color-M0: rgb(from var(--M0) r g b);
+	--color-M1: rgb(from var(--M1) r g b);
+	--color-M2: rgb(from var(--M2) r g b);
+	--color-M3: rgb(from var(--M3) r g b);
+	--color-M4: rgb(from var(--M4) r g b);
+	--color-M5: rgb(from var(--M5) r g b);
+	--color-M6: rgb(from var(--M6) r g b);
+	--color-M7: rgb(from var(--M7) r g b);
+	--color-M8: rgb(from var(--M8) r g b);
+	--color-M9: rgb(from var(--M9) r g b);
+
+	/* accent colors */
+	--color-A0: rgb(from var(--A0) r g b);
+	--color-A1: rgb(from var(--A1) r g b);
+	--color-A2: rgb(from var(--A2) r g b);
+
+	/* interactive colors */
+	--color-I0: rgb(from var(--I0) r g b);
+	--color-I1: rgb(from var(--I1) r g b);
+
+	/* more specific type/class colors */
+	--color-PBT: rgb(from var(--PBT) r g b); /* PrimaryButtonText */
+	--color-CBEB: rgb(from var(--CBEB) r g b); /* BannerErrorBackground */
+	--color-CBET: rgb(from var(--CBET) r g b); /* BannerErrorText */
+	--color-CBIB: rgb(from var(--CBIB) r g b); /* BannerInfoBackground */
+	--color-CBIT: rgb(from var(--CBIT) r g b); /* BannerInfoText */
+	--color-CBWB: rgb(from var(--CBWB) r g b); /* BannerWarningBackground */
+	--color-CBWT: rgb(from var(--CBWT) r g b); /* BannerWarningText */
+	--color-CBSB: rgb(from var(--CBSB) r g b); /* BannerSuccessBackground */
+	--color-CBST: rgb(from var(--CBST) r g b); /* BannerSuccessText */
+}
 
 .prose-custom {
-	@apply prose leading-normal text-current prose-p:text-current prose-em:text-current prose-a:text-I0 prose-code:text-current prose-strong:text-current prose-hr:border-M3 prose-li:marker:text-current prose-h1:text-current prose-h2:text-current prose-h3:text-current prose-h4:text-current prose-h5:text-current prose-h6:text-current prose-pre:text-current prose-pre:bg-M3 max-w-none dark:prose-invert focus:outline-none focus-visible:outline-none;
+	@apply prose leading-normal text-current prose-p:text-current prose-em:text-current prose-a:text-I0 prose-code:text-current prose-strong:text-current prose-hr:border-M3 prose-li:marker:text-current prose-h1:text-current prose-h2:text-current prose-h3:text-current prose-h4:text-current prose-h5:text-current prose-h6:text-current prose-pre:text-current prose-pre:bg-M3 max-w-none dark:prose-invert focus:outline-hidden focus-visible:outline-hidden;
 }
 
 .ProseMirror-focused {

@@ -254,6 +254,7 @@ onMounted(() => {
 });
 </script>
 <style scoped>
+@reference '@/assets/css/tailwind.css';
 .alert-notifications {
 	@apply flex flex-col gap-4 h-full pointer-events-none;
 

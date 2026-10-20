@@ -596,6 +596,7 @@ onUnmounted(() => {
 init();
 </script>
 <style scoped>
+@reference '@/assets/css/tailwind.css';
 .ui-flow-chart__canvas {
 	@apply min-h-[inherit];
 }

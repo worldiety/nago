@@ -118,7 +118,7 @@ export default {
 			<div class="gap-1 flex flex-wrap">
 				<button
 					:disabled="!editor.can().chain().focus().toggleBold().run()"
-					:class="{ 'bg-I0 rounded-sm': editor.isActive('bold') }"
+					:class="{ 'bg-I0 rounded-xs': editor.isActive('bold') }"
 					title="Bold"
 					@click="editor.chain().focus().toggleBold().run()"
 				>
@@ -143,7 +143,7 @@ export default {
 				<button
 					:disabled="!editor.can().chain().focus().toggleItalic().run()"
 					title="italic"
-					:class="{ 'bg-I0 rounded-sm': editor.isActive('italic') }"
+					:class="{ 'bg-I0 rounded-xs': editor.isActive('italic') }"
 					@click="editor.chain().focus().toggleItalic().run()"
 				>
 					<svg
@@ -168,7 +168,7 @@ export default {
 				<button
 					:disabled="!editor.can().chain().focus().toggleUnderline().run()"
 					title="underline"
-					:class="{ 'bg-I0 rounded-sm': editor.isActive('underline') }"
+					:class="{ 'bg-I0 rounded-xs': editor.isActive('underline') }"
 					@click="editor.chain().focus().toggleUnderline().run()"
 				>
 					<svg
@@ -192,7 +192,7 @@ export default {
 				<button
 					:disabled="!editor.can().chain().focus().toggleStrike().run()"
 					title="strike"
-					:class="{ 'bg-I0 rounded-sm': editor.isActive('strike') }"
+					:class="{ 'bg-I0 rounded-xs': editor.isActive('strike') }"
 					@click="editor.chain().focus().toggleStrike().run()"
 				>
 					<svg
@@ -213,7 +213,7 @@ export default {
 				<button
 					:disabled="!editor.can().chain().focus().toggleCode().run()"
 					title="code"
-					:class="{ 'bg-I0 rounded-sm': editor.isActive('code') }"
+					:class="{ 'bg-I0 rounded-xs': editor.isActive('code') }"
 					@click="editor.chain().focus().toggleCode().run()"
 				>
 					<svg
@@ -244,7 +244,7 @@ export default {
 
 				<button
 					title="bullet list"
-					:class="{ 'bg-I0 rounded-sm': editor.isActive('bulletList') }"
+					:class="{ 'bg-I0 rounded-xs': editor.isActive('bulletList') }"
 					@click="editor.chain().focus().toggleBulletList().run()"
 				>
 					<svg
@@ -266,7 +266,7 @@ export default {
 				</button>
 				<button
 					title="ordered list"
-					:class="{ 'bg-I0 rounded-sm': editor.isActive('orderedList') }"
+					:class="{ 'bg-I0 rounded-xs': editor.isActive('orderedList') }"
 					@click="editor.chain().focus().toggleOrderedList().run()"
 				>
 					<svg
@@ -289,7 +289,7 @@ export default {
 				</button>
 				<button
 					title="code block"
-					:class="{ 'bg-I0 rounded-sm': editor.isActive('codeBlock') }"
+					:class="{ 'bg-I0 rounded-xs': editor.isActive('codeBlock') }"
 					@click="editor.chain().focus().toggleCodeBlock().run()"
 				>
 					<svg
@@ -309,7 +309,7 @@ export default {
 				</button>
 				<button
 					title="blockquote"
-					:class="{ 'bg-I0 rounded-sm': editor.isActive('blockquote') }"
+					:class="{ 'bg-I0 rounded-xs': editor.isActive('blockquote') }"
 					@click="editor.chain().focus().toggleBlockquote().run()"
 				>
 					<svg
@@ -349,7 +349,7 @@ export default {
 
 				<button
 					title="Link einfügen"
-					:class="{ 'bg-I0 rounded-sm': editor.isActive('link') }"
+					:class="{ 'bg-I0 rounded-xs': editor.isActive('link') }"
 					@click="openLinkOverlay"
 				>
 					<svg
@@ -422,7 +422,7 @@ export default {
 
 				<button
 					title="Main color"
-					:class="{ 'bg-I0 rounded-sm': editor.isActive('textStyle', { color: 'var(--M0)' }) }"
+					:class="{ 'bg-I0 rounded-xs': editor.isActive('textStyle', { color: 'var(--M0)' }) }"
 					@click="editor.chain().focus().setColor('var(--M0)').run()"
 				>
 					<svg
@@ -449,7 +449,7 @@ export default {
 
 				<button
 					title="interaktivitäts color"
-					:class="{ 'bg-I0 rounded-sm': editor.isActive('textStyle', { color: 'var(--I0)' }) }"
+					:class="{ 'bg-I0 rounded-xs': editor.isActive('textStyle', { color: 'var(--I0)' }) }"
 					@click="editor.chain().focus().setColor('var(--I0)').run()"
 				>
 					<svg
@@ -472,7 +472,7 @@ export default {
 
 				<button
 					title="Akzentfarbe"
-					:class="{ 'bg-I0 rounded-sm': editor.isActive('textStyle', { color: 'var(--A0)' }) }"
+					:class="{ 'bg-I0 rounded-xs': editor.isActive('textStyle', { color: 'var(--A0)' }) }"
 					@click="editor.chain().focus().setColor('var(--A0)').run()"
 				>
 					<svg
@@ -496,7 +496,7 @@ export default {
 				<button
 					title="Titel"
 					class="p-1"
-					:class="{ 'bg-I0 rounded-sm': editor.isActive('heading', { level: 1 }) }"
+					:class="{ 'bg-I0 rounded-xs': editor.isActive('heading', { level: 1 }) }"
 					@click="editor.chain().focus().toggleHeading({ level: 1 }).run()"
 				>
 					<span class="font-bold text-lg">AaBb</span>
@@ -507,7 +507,7 @@ export default {
 				<button
 					title="Überschrift 2"
 					class="p-1"
-					:class="{ 'bg-I0 rounded-sm': editor.isActive('heading', { level: 2 }) }"
+					:class="{ 'bg-I0 rounded-xs': editor.isActive('heading', { level: 2 }) }"
 					@click="editor.chain().focus().toggleHeading({ level: 2 }).run()"
 				>
 					<span class="font-bold">AaBb</span>
@@ -518,7 +518,7 @@ export default {
 				<button
 					title="Überschrift 3"
 					class="p-1"
-					:class="{ 'bg-I0 rounded-sm': editor.isActive('heading', { level: 3 }) }"
+					:class="{ 'bg-I0 rounded-xs': editor.isActive('heading', { level: 3 }) }"
 					@click="editor.chain().focus().toggleHeading({ level: 3 }).run()"
 				>
 					<span class="">AaBb</span>
@@ -534,28 +534,28 @@ export default {
 					v-model="linkOverlay.url"
 					type="url"
 					placeholder="https://..."
-					class="min-w-48 flex-1 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2"
+					class="min-w-48 flex-1 rounded-sm px-2 py-1 text-sm focus:outline-hidden focus:ring-2"
 					style="border: 1px solid var(--M3); background-color: var(--M2); color: var(--M8)"
 					@keydown.enter.prevent="applyLink"
 					@keydown.esc="closeLinkOverlay"
 				/>
 				<label class="flex cursor-pointer items-center gap-1 text-sm" style="color: var(--M5)">
-					<input v-model="linkOverlay.openInNewTab" type="checkbox" class="rounded" />
+					<input v-model="linkOverlay.openInNewTab" type="checkbox" class="rounded-sm" />
 					Neuer Tab
 				</label>
-				<button class="rounded px-3 py-1 text-sm font-medium bg-I0 text-PBT" @click="applyLink">
+				<button class="rounded-sm px-3 py-1 text-sm font-medium bg-I0 text-PBT" @click="applyLink">
 					Übernehmen
 				</button>
 				<button
 					:disabled="!editor.isActive('link')"
-					class="rounded px-3 py-1 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40"
+					class="rounded-sm px-3 py-1 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40"
 					style="border: 1px solid var(--M3); color: var(--M8)"
 					@click="removeLink"
 				>
 					Entfernen
 				</button>
 				<button
-					class="rounded px-2 py-1 text-sm"
+					class="rounded-sm px-2 py-1 text-sm"
 					style="border: 1px solid var(--M3); color: var(--M5)"
 					title="Abbrechen"
 					@click="closeLinkOverlay"
