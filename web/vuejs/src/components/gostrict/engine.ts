@@ -60,7 +60,9 @@ export async function call(c: GostrictCall): Promise<GostrictReturn> {
 		}) as unknown[];
 		const results = inst.session.callRaw(c.name, args);
 		// a state stays in the instance and crosses the protocol as its reference
-		const values = (f.results ?? []).map((t, i) => (t.kind === 'state' ? { $r: ref(inst, results[i]) } : results[i]));
+		const values = (f.results ?? []).map((t, i) =>
+			t.kind === 'state' ? { $r: ref(inst, results[i]) } : results[i]
+		);
 		return new GostrictReturn(inst.session.encode(values));
 	} catch (e) {
 		return new GostrictReturn(undefined, String((e as Error)?.message ?? e));
