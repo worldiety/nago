@@ -527,4 +527,4 @@ export class Session {
 }
 
 // special are the floats, which JSON can not express
-const special: Record<string, number> = { NaN: NaN, Inf: Infinity, '-Inf': -Infinity, '-0': -0 };
+const special: Record<string, number> = { 'NaN': NaN, 'Inf': Infinity, '-Inf': -Infinity, '-0': -0 };
