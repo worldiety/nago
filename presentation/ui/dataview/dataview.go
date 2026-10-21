@@ -295,7 +295,12 @@ func (t TDataView[E, ID]) NextActionIndicator(b bool) TDataView[E, ID] {
 // CreateAction is a conventional default factory to create a new element for this data view. It has a default
 // position, icon, text and button style. See also [TDataView.CreateActionView] and [TDataView.CreateOptions].
 func (t TDataView[E, ID]) CreateAction(fn func()) TDataView[E, ID] {
-	return t.CreateActionView(ui.PrimaryButton(fn).PreIcon(icons.Plus).Title(rstring.ActionNew.Get(t.wnd)))
+	return t.CreateActionWithLabel(fn, rstring.ActionNew.Get(t.wnd))
+}
+
+// CreateActionWithLabel is like CreateAction, but with a custom button label
+func (t TDataView[E, ID]) CreateActionWithLabel(fn func(), label string) TDataView[E, ID] {
+	return t.CreateActionView(ui.PrimaryButton(fn).PreIcon(icons.Plus).Title(label))
 }
 
 // CreateOptions is default factory for [TDataView.NewActionView]. See also [TDataView.NewAction].
