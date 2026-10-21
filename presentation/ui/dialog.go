@@ -98,8 +98,6 @@ func (c TDialog) DisableBoxLayout(b bool) TDialog {
 
 // Render builds and returns the protocol representation of the dialog.
 func (c TDialog) Render(ctx core.RenderContext) proto.Component {
-	colors := core.Colors[Colors](ctx.Window())
-
 	stack := VStack(
 		If(c.title != nil, HStack(c.title, Spacer(), c.titleX).Alignment(Leading).BackgroundColor(ColorCardTop).Frame(Frame{}.FullWidth()).Padding(Padding{Left: L20, Right: L20, Top: L12, Bottom: L12})),
 		VStack(
@@ -127,7 +125,7 @@ func (c TDialog) Render(ctx core.RenderContext) proto.Component {
 
 	dlg := BoxAlign(c.alignment, stack).
 		DisableOutsidePointerEvents(true).
-		BackgroundColor(colors.M7.WithTransparency(40)).Padding(c.modalPadding)
+		BackgroundColor(Color("#000000").WithTransparency(40)).Padding(c.modalPadding)
 
 	return dlg.Render(ctx)
 }
