@@ -167,7 +167,9 @@ function getNotificationStyles(i: number): string {
 	const styles: string[] = [
 		`--notification-opacity: ${notificationOpacities.value[i]}`,
 		`top: ${notificationTops.value[i]}px`,
-		`transform: translate(-50%, -100%) scale(${notificationScales.value[i]})`,
+		// the translate property replaces the one of the -translate-x-1/2 class, whereas a transform would add to it
+		`translate: -50% -100%`,
+		`scale: ${notificationScales.value[i]}`,
 		`opacity: var(--notification-opacity)`,
 		`z-index: ${(notificationElements.value?.length ?? 0) - i}`,
 	];

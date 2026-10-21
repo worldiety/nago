@@ -123,7 +123,8 @@ const contentStyles = computed<string>(() => {
 const lineStyles = computed<string>(() => {
 	let styles;
 	if (isVertical.value || isSimpleList.value) {
-		styles = `height: ${lineLength.value + 2}px; transform: translate(-50%, ${-bubbleSize.value / 2}px);`;
+		// the translate property replaces the one of the -translate-y-1/2 class, whereas a transform would add to it
+		styles = `height: ${lineLength.value + 2}px; translate: -50% ${-bubbleSize.value / 2}px;`;
 		if (bubbleSize.value) styles += ` left: ${bubbleSize.value / 2}px; top: ${bubbleSize.value - 1}px;`;
 		return styles;
 	}
