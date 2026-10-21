@@ -12,6 +12,7 @@ import (
 
 	"github.com/worldiety/i18n"
 	"github.com/worldiety/option"
+	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/presentation/core"
 	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	"go.wdy.de/nago/presentation/ui"
@@ -272,7 +273,7 @@ func (t TDataView[E, ID]) listActionBar(wnd core.Window, model pager.Model[E, ID
 
 	return ui.HStack(
 		t.confirmDialog(wnd, confirmPresented, dlgSpec, selected),
-		ui.If(t.showSearchbar, ui.TextField("", model.Query.Get()).InputValue(model.Query).Style(ui.TextFieldReduced).Leading(ui.ImageIcon(icons.Search)).FullWidth()),
+		ui.If(t.showSearchbar, ui.TextField("", model.Query.Get()).Placeholder(fmt.Sprintf("%s…", rstring.ActionSearch.Get(t.wnd))).InputValue(model.Query).Style(ui.TextFieldReduced).Leading(ui.ImageIcon(icons.Search)).FullWidth()),
 		ui.If(len(groups) > 0, ui.Menu(
 			ui.TertiaryButton(nil).PreIcon(icons.DotsVertical),
 			groups...,

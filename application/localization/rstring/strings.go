@@ -228,6 +228,15 @@ var (
 		},
 		i18n.LocalizationHint("This text is usually used on buttons and is displayed where space must be minified. So keep it as short and generic as possible."),
 	)
+
+	ActionSearch = i18n.MustString(
+		"nago.common.action.search",
+		i18n.Values{
+			language.English: "Search",
+			language.German:  "Suchen",
+		},
+		i18n.LocalizationHint("This text is usually used as placeholder in text fields."),
+	)
 )
 
 var (
