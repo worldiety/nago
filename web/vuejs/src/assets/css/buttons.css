@@ -69,6 +69,10 @@
 	@apply rounded-[1.25rem] min-h-10 w-fit px-5 py-1 border border-I0 outline-I0 backdrop-blur-sm;
 	@apply darkmode:border-I0;
 
+	* {
+		@apply text-I0;
+	}
+
 	&.critical {
 		@apply border-SE0 outline-SE0;
 		@apply darkmode:border-SE0;
@@ -108,10 +112,6 @@
 
 .button-secondary:active:not(.custom-active) {
 	@apply active:[--bg-opacity:35%];
-}
-
-.button-secondary * {
-	@apply text-M8;
 }
 
 .button-tertiary {
