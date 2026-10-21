@@ -40,3 +40,31 @@ func TestMaskEnv(t *testing.T) {
 		}
 	}
 }
+
+func TestLoadConfigFromEnvContextPath(t *testing.T) {
+	tests := []struct {
+		name     string
+		hostname string
+		hubURL   string
+		want     string
+	}{
+		{name: "nothing set", want: ""},
+		{name: "hostname", hostname: "my-app.example.com", want: "https://my-app.example.com"},
+		{name: "hub public url", hubURL: "https://my-app.example.com/", want: "https://my-app.example.com"},
+		{name: "hub public url wins over hostname", hostname: "a1b2c3d4e5f6", hubURL: "https://my-app.example.com", want: "https://my-app.example.com"},
+		{name: "blank hub public url", hostname: "my-app.example.com", hubURL: " ", want: "https://my-app.example.com"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("HOSTNAME", tt.hostname)
+			t.Setenv(EnvHubPublicURL, tt.hubURL)
+
+			cfg := NewConfigurator()
+			cfg.LoadConfigFromEnv()
+			if got := cfg.ContextPath(); got != tt.want {
+				t.Errorf("ContextPath() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}

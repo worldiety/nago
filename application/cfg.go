@@ -256,7 +256,25 @@ var envConfig = []envVarConfig{
 			return nil
 		},
 	},
+	// must come after HOSTNAME, so that it takes precedence
+	{
+		key:      EnvHubPublicURL,
+		required: false,
+		cb: func(config envVarConfig, s string, cfg *Configurator, logger *slog.Logger) error {
+			s = strings.TrimRight(strings.TrimSpace(s), "/")
+			if s != "" {
+				cfg.SetContextPath(s)
+			}
+
+			return nil
+		},
+	},
 }
+
+// EnvHubPublicURL is the environment variable with the public URL of the application, like
+// https://my-app.example.com, which the worldiety Hub passes to the applications it deploys behind its reverse
+// proxies. If set, it is the context path, unless the application sets one itself.
+const EnvHubPublicURL = "HUB_PUBLIC_URL"
 
 func (c *Configurator) LoadConfigFromEnv() {
 	logger := c.defaultLogger()

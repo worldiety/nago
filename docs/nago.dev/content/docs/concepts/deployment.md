@@ -25,14 +25,15 @@ directory, if present; variables which are already set in the environment take p
 | `HOST`                   | `localhost`                | address the server binds to; use `0.0.0.0` in containers or behind a reverse proxy on another host |
 | `PORT`                   | `3000`                     | port of the HTTP server                                                                     |
 | `HOSTNAME`               | taken from the first request | public DNS name; Nago uses `https://<HOSTNAME>` to generate absolute links, e.g. in mails  |
+| `HUB_PUBLIC_URL`         | not set                    | public URL, like `https://myapp.example.com`, set by the worldiety Hub; takes precedence over `HOSTNAME` |
 | `STATE_DIRECTORY`        | `~/.nago/<application ID>` | data directory, set by systemd for services with `StateDirectory=`                          |
 | `NAGO_MASTER_KEY`        | generated file             | hex-encoded 32 byte key to encrypt sensitive data, see [Master key](#master-key)            |
 | `NO_SSL`                 | depends on the OS, see [Debug mode](#debug-mode) | `true` marks the session cookie as not secure, `false` as secure                            |
 
 `NAGO_HOST` and `NAGO_PORT` are deprecated aliases of `HOST` and `PORT`.
 
-The variables are applied before your configuration function runs, so calls like `cfg.SetHost` or
-`cfg.SetDataDir` in your code override them.
+The variables are applied before your configuration function runs, so calls like `cfg.SetHost`,
+`cfg.SetDataDir` or `cfg.SetContextPath` in your code override them.
 
 {{< callout type="warning" >}}
 Some container runtimes, e.g. Docker, set `HOSTNAME` to the container ID. Set it explicitly to your public DNS
