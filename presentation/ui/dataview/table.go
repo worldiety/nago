@@ -196,7 +196,7 @@ func (t TDataView[E, ID]) tableActionBar(wnd core.Window, model pager.Model[E, I
 
 		ui.Spacer(),
 
-		ui.If(t.showSearchbar, ui.TextField("", model.Query.Get()).InputValue(model.Query).Style(ui.TextFieldReduced).Leading(ui.ImageIcon(icons.Search))),
+		ui.If(t.showSearchbar, ui.TextField("", model.Query.Get()).Placeholder(fmt.Sprintf("%s…", rstring.ActionSearch.Get(t.wnd))).InputValue(model.Query).Style(ui.TextFieldReduced).Leading(ui.ImageIcon(icons.Search))),
 
 		ui.TertiaryButton(func() {
 			model.UnselectAll()

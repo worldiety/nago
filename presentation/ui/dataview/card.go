@@ -257,7 +257,7 @@ func (t TDataView[E, ID]) cardActionBar(wnd core.Window, model pager.Model[E, ID
 				ui.Text(rstring.LabelFilter.Get(wnd)),
 			),
 			ui.VStack(
-				ui.If(t.showSearchbar, ui.TextField("", model.Query.Get()).InputValue(model.Query).Style(ui.TextFieldReduced).Leading(ui.ImageIcon(icons.Search)).FullWidth()),
+				ui.If(t.showSearchbar, ui.TextField("", model.Query.Get()).Placeholder(fmt.Sprintf("%s…", rstring.ActionSearch.Get(t.wnd))).InputValue(model.Query).Style(ui.TextFieldReduced).Leading(ui.ImageIcon(icons.Search)).FullWidth()),
 				ui.HStack(
 					ui.TertiaryButton(func() {
 						model.UnselectAll()
