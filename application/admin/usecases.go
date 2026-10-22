@@ -25,6 +25,10 @@ import (
 type FindAllGroups func(subject auth.Subject) []Group
 type QueryGroups func(subject auth.Subject, filterText string) []Group
 
+// HasEntries decides, whether QueryGroups returns any group for the subject and an empty filter text. It is evaluated
+// while rendering, e.g. to show or hide the link to the admin center, and therefore must be cheap.
+type HasEntries func(subject auth.Subject) bool
+
 type Pages struct {
 	Mail          uimail.Pages
 	Session       uisession.Pages

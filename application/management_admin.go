@@ -13,6 +13,7 @@ import (
 
 	"go.wdy.de/nago/application/admin"
 	uiadmin "go.wdy.de/nago/application/admin/ui"
+	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/presentation/core"
 )
@@ -32,6 +33,7 @@ import (
 type AdminManagement struct {
 	FindAll     admin.FindAllGroups
 	QueryGroups admin.QueryGroups
+	HasEntries  admin.HasEntries
 	Pages       uiadmin.Pages
 }
 
@@ -64,43 +66,6 @@ func (c *Configurator) AdminManagement() (AdminManagement, error) {
 				if !subject.Valid() {
 					return nil
 				}
-				// be invariant on execution order
-				var pages admin.Pages
-				if c.mailManagement != nil {
-					pages.Mail = c.mailManagement.Pages
-				}
-
-				if c.roleManagement != nil {
-					pages.Role = c.roleManagement.Pages
-				}
-
-				if c.sessionManagement != nil {
-					pages.Session = c.sessionManagement.Pages
-				}
-
-				if c.userManagement != nil {
-					pages.UsersOverview = c.userManagement.Pages.Users
-				}
-
-				if c.permissionManagement != nil {
-					pages.Permission = c.permissionManagement.Pages
-				}
-
-				if c.groupManagement != nil {
-					pages.Group = c.groupManagement.Pages
-				}
-
-				if c.backupManagement != nil {
-					pages.Backup = c.backupManagement.Pages
-				}
-
-				if c.secretManagement != nil {
-					pages.Secret = c.secretManagement.Pages
-				}
-
-				if c.templateManagement != nil {
-					pages.Template = c.templateManagement.Pages
-				}
 
 				var groups []admin.Group
 				for _, groupFn := range c.adminManagementGroups {
@@ -121,7 +86,7 @@ func (c *Configurator) AdminManagement() (AdminManagement, error) {
 					}
 				}
 
-				groups = append(groups, admin.DefaultGroups(pages)...)
+				groups = append(groups, admin.DefaultGroups(c.adminPages())...)
 
 				slices.SortFunc(groups, func(a, b admin.Group) int {
 					return strings.Compare(a.Title, b.Title)
@@ -136,10 +101,35 @@ func (c *Configurator) AdminManagement() (AdminManagement, error) {
 				return groups
 			},
 			QueryGroups: admin.NewGroups(func(subject auth.Subject) []admin.Group {
-				// TODO not sure about always inflating this also for the profile menu ?!?
 				// be invariant on replacements for FindAll, so that developer can inject custom admin groups
 				return c.adminManagement.FindAll(subject)
 			}),
+			HasEntries: func(subject auth.Subject) bool {
+				if !subject.Valid() {
+					return false
+				}
+
+				// the groups check a lot of permissions, which are mostly denied and therefore the most expensive ones
+				subject = user.WithGlobalGrants(subject)
+
+				if c.adminManagementMutator != nil {
+					// FindAll or QueryGroups may have been replaced, thus only the installed use case knows the answer
+					return len(c.adminManagement.QueryGroups(subject, "")) > 0
+				}
+
+				// the same as the default FindAll and QueryGroups, but stops at the first visible card
+				if admin.AnyVisible(subject, admin.DefaultGroups(c.adminPages())...) {
+					return true
+				}
+
+				for _, groupFn := range c.adminManagementGroups {
+					if admin.AnyVisible(subject, groupFn(subject)) {
+						return true
+					}
+				}
+
+				return false
+			},
 		}
 
 		if c.adminManagementMutator != nil {
@@ -152,7 +142,54 @@ func (c *Configurator) AdminManagement() (AdminManagement, error) {
 
 		c.AddContextValue(core.ContextValue("", c.adminManagement.Pages))
 		c.AddContextValue(core.ContextValue("", c.adminManagement.QueryGroups))
+		c.AddContextValue(core.ContextValue("", admin.HasEntries(func(subject auth.Subject) bool {
+			// be invariant on replacements by WithAdminManagement after the initialization
+			return c.adminManagement.HasEntries(subject)
+		})))
 	}
 
 	return *c.adminManagement, nil
+}
+
+// adminPages collects the pages of the default admin center groups. Be invariant on the execution order, the
+// management systems may be configured before or after the admin management.
+func (c *Configurator) adminPages() admin.Pages {
+	var pages admin.Pages
+	if c.mailManagement != nil {
+		pages.Mail = c.mailManagement.Pages
+	}
+
+	if c.roleManagement != nil {
+		pages.Role = c.roleManagement.Pages
+	}
+
+	if c.sessionManagement != nil {
+		pages.Session = c.sessionManagement.Pages
+	}
+
+	if c.userManagement != nil {
+		pages.UsersOverview = c.userManagement.Pages.Users
+	}
+
+	if c.permissionManagement != nil {
+		pages.Permission = c.permissionManagement.Pages
+	}
+
+	if c.groupManagement != nil {
+		pages.Group = c.groupManagement.Pages
+	}
+
+	if c.backupManagement != nil {
+		pages.Backup = c.backupManagement.Pages
+	}
+
+	if c.secretManagement != nil {
+		pages.Secret = c.secretManagement.Pages
+	}
+
+	if c.templateManagement != nil {
+		pages.Template = c.templateManagement.Pages
+	}
+
+	return pages
 }

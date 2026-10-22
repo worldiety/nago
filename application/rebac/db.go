@@ -34,6 +34,7 @@ type DB struct {
 	strTable            *strTable
 	mutex               sync.RWMutex
 	resolvers           []Resolver
+	memberResolvers     []memberResolver // the subset of resolvers, which has been added by AddMemberResolver
 	resources           concurrent.RWMap[Namespace, Resources]
 	staticRules         map[bNamespace][]bStaticRelationRule // unclear, if and which performance optimizations we need. Currently, we expect a single digit number of rules.
 	validateStaticRules atomic.Bool
@@ -45,13 +46,9 @@ type DB struct {
 func NewDB(store blob.Store) (*DB, error) {
 	db := &DB{
 		strTable: newStrTable(),
-		forward: btree.NewBTreeG[fixedBinaryTriple](func(a, b fixedBinaryTriple) bool {
-			return bytes.Compare(a[:], b[:]) < 0
-		}),
-		backward: btree.NewBTreeG[fixedBinaryTriple](func(a, b fixedBinaryTriple) bool {
-			return bytes.Compare(a[:], b[:]) < 0
-		}),
-		store: store,
+		forward:  btree.NewBTreeG[fixedBinaryTriple](lessFixedBinaryTriple),
+		backward: btree.NewBTreeG[fixedBinaryTriple](lessFixedBinaryTriple),
+		store:    store,
 
 		staticRules: make(map[bNamespace][]bStaticRelationRule),
 	}
@@ -86,6 +83,16 @@ func (db *DB) AddResolver(resolver Resolver) {
 	defer db.mutex.Unlock()
 
 	db.resolvers = append(db.resolvers, resolver)
+}
+
+// AddMemberResolver adds a resolver created by [NewSourceMemberResolver]. In contrast to [DB.AddResolver], the
+// database knows what the resolver does, which allows [DB.GlobalGrants] to evaluate it in bulk.
+func (db *DB) AddMemberResolver(srcNamespace Namespace, memberNamespace Namespace) {
+	db.mutex.Lock()
+	defer db.mutex.Unlock()
+
+	db.resolvers = append(db.resolvers, NewSourceMemberResolver(srcNamespace, memberNamespace))
+	db.memberResolvers = append(db.memberResolvers, memberResolver{src: srcNamespace, member: memberNamespace})
 }
 
 // Resolve checks if the database allows the given triple. If the triple is not directly contained within the database,
@@ -438,23 +445,26 @@ func (db *DB) intoBinary(t Triple) binaryTriple {
 func (db *DB) tryIntoBinary(t Triple) (binaryTriple, bool) {
 	var b binaryTriple
 
-	srcNsID, ok := db.strTable.Lookup(string(t.Source.Namespace))
+	db.strTable.mutex.RLock()
+	defer db.strTable.mutex.RUnlock()
+
+	srcNsID, ok := db.strTable.lookupLocked(string(t.Source.Namespace))
 	if !ok {
 		return b, false
 	}
-	srcInstID, ok := db.strTable.Lookup(string(t.Source.Instance))
+	srcInstID, ok := db.strTable.lookupLocked(string(t.Source.Instance))
 	if !ok {
 		return b, false
 	}
-	relID, ok := db.strTable.Lookup(string(t.Relation))
+	relID, ok := db.strTable.lookupLocked(string(t.Relation))
 	if !ok {
 		return b, false
 	}
-	tgtNsID, ok := db.strTable.Lookup(string(t.Target.Namespace))
+	tgtNsID, ok := db.strTable.lookupLocked(string(t.Target.Namespace))
 	if !ok {
 		return b, false
 	}
-	tgtInstID, ok := db.strTable.Lookup(string(t.Target.Instance))
+	tgtInstID, ok := db.strTable.lookupLocked(string(t.Target.Instance))
 	if !ok {
 		return b, false
 	}
