@@ -5338,18 +5338,20 @@ type Radiobutton struct {
 	Disabled  Bool
 	Invisible Bool
 	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
-	Id   Str
-	Name Str
+	Id    Str
+	Name  Str
+	Label Str
 }
 
 func (v *Radiobutton) write(w *BinaryWriter) error {
-	var fields [7]bool
+	var fields [8]bool
 	fields[1] = !v.InputValue.IsZero()
 	fields[2] = !v.Value.IsZero()
 	fields[3] = !v.Disabled.IsZero()
 	fields[4] = !v.Invisible.IsZero()
 	fields[5] = !v.Id.IsZero()
 	fields[6] = !v.Name.IsZero()
+	fields[7] = !v.Label.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -5408,6 +5410,14 @@ func (v *Radiobutton) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[7] {
+		if err := w.writeFieldHeader(byteSlice, 7); err != nil {
+			return err
+		}
+		if err := v.Label.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -5450,6 +5460,11 @@ func (v *Radiobutton) read(r *BinaryReader) error {
 			}
 		case 6:
 			err := v.Name.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.Label.read(r)
 			if err != nil {
 				return err
 			}
@@ -28134,13 +28149,14 @@ func (v *Radiobutton) reset() {
 	v.Invisible.reset()
 	v.Id.reset()
 	v.Name.reset()
+	v.Label.reset()
 }
 
 func (v *Radiobutton) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.InputValue.IsZero() && v.Value.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero() && v.Name.IsZero()
+	return v.InputValue.IsZero() && v.Value.IsZero() && v.Disabled.IsZero() && v.Invisible.IsZero() && v.Id.IsZero() && v.Name.IsZero() && v.Label.IsZero()
 }
 
 type ScaffoldMenuEntries []ScaffoldMenuEntry

@@ -105,6 +105,7 @@ type TRadioButton struct {
 	invisible  bool              // hides the radio button when true
 	id         string
 	name       string // name of the radio button
+	label      string
 }
 
 // RadioButton represents a user interface element which spans a visible area to click or tap from the user.
@@ -149,9 +150,15 @@ func (c TRadioButton) Visible(v bool) TRadioButton {
 	return c
 }
 
-// Name defines the name of the checkbox
+// Name defines the name of the radio button
 func (c TRadioButton) Name(name string) TRadioButton {
 	c.name = name
+	return c
+}
+
+// Label defines the label of the radio button
+func (c TRadioButton) Label(label string) TRadioButton {
+	c.label = label
 	return c
 }
 
@@ -164,5 +171,6 @@ func (c TRadioButton) Render(ctx core.RenderContext) core.RenderNode {
 		Invisible:  proto.Bool(c.invisible),
 		Id:         proto.Str(c.id),
 		Name:       proto.Str(c.name),
+		Label:      proto.Str(c.label),
 	}
 }
