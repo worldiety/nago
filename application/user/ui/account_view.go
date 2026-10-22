@@ -39,6 +39,7 @@ type TAccountView struct {
 //   - user.DisplayName
 //   - uiuser.Pages
 //   - uisession.Pages
+//   - admin.HasEntries and uiadmin.Pages, to link the admin center
 func AccountView(wnd core.Window) TAccountView {
 	getDisplayName, ok := core.FromContext[user.DisplayName](wnd.Context(), "")
 	if !ok {
@@ -67,20 +68,16 @@ func AccountView(wnd core.Window) TAccountView {
 	)
 
 	if adminPages, ok := core.FromContext[uiadmin.Pages](wnd.Context(), ""); ok {
-		if queryGroups, ok := core.FromContext[admin.QueryGroups](wnd.Context(), ""); ok {
-			visibleEntries := queryGroups(wnd.Subject(), "")
-			if len(visibleEntries) > 0 {
-				c = c.WithSections(
-					AccountSection("Einstellungen").
-						Entries(
-							AccountAction(flowbiteOutline.Cog, "Verwalten", func() {
-								wnd.Navigation().ForwardTo(adminPages.AdminCenter, nil)
-							}),
-						),
-				)
-			}
+		if hasEntries, ok := core.FromContext[admin.HasEntries](wnd.Context(), ""); ok && hasEntries(wnd.Subject()) {
+			c = c.WithSections(
+				AccountSection("Einstellungen").
+					Entries(
+						AccountAction(flowbiteOutline.Cog, "Verwalten", func() {
+							wnd.Navigation().ForwardTo(adminPages.AdminCenter, nil)
+						}),
+					),
+			)
 		}
-
 	}
 
 	return c

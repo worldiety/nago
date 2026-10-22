@@ -256,23 +256,16 @@ func (u User) ConsentStatusByID(id consent.ID) consent.Status {
 }
 
 func (u User) Enabled() bool {
-	enabled := false
-	AccountStatusEnum.Switch(u.Status)(
-		func(Enabled) {
-			enabled = true
-		},
-		func(disabled Disabled) {
-
-		},
-		func(until EnabledUntil) {
-			enabled = time.Now().Before(until.ValidUntil)
-		},
-		func(a any) {
-
-		},
-	)
-
-	return enabled
+	// a plain type switch instead of AccountStatusEnum.Switch, because every permission check of a subject ends up
+	// here and the enum switch allocates through reflection
+	switch status := u.Status.(type) {
+	case Enabled:
+		return true
+	case EnabledUntil:
+		return time.Now().Before(status.ValidUntil)
+	default:
+		return false
+	}
 }
 
 func (u User) RequiresVerification() bool {
