@@ -70,8 +70,8 @@ func (c *Configurator) TokenManagement() (TokenManagement, error) {
 		if err != nil {
 			return TokenManagement{}, fmt.Errorf("cannot get rdb: %w", err)
 		}
-		rdb.AddResolver(rebac.NewSourceMemberResolver(token.Namespace, role.Namespace))
-		rdb.AddResolver(rebac.NewSourceMemberResolver(token.Namespace, group.Namespace))
+		rdb.AddMemberResolver(token.Namespace, role.Namespace)
+		rdb.AddMemberResolver(token.Namespace, group.Namespace)
 
 		rdb.RegisterStaticRule(rebac.StaticRule{
 			Source:   role.Namespace,

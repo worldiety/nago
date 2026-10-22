@@ -15,6 +15,20 @@ type bRelation uint32
 
 type fixedBinaryTriple [8 + 4 + 8]byte
 
+// lessFixedBinaryTriple orders like bytes.Compare, but compares big endian words instead of single bytes, which
+// keeps the btree lookups of the permission checks cheap.
+func lessFixedBinaryTriple(a, b fixedBinaryTriple) bool {
+	if x, y := binary.BigEndian.Uint64(a[0:8]), binary.BigEndian.Uint64(b[0:8]); x != y {
+		return x < y
+	}
+
+	if x, y := binary.BigEndian.Uint64(a[8:16]), binary.BigEndian.Uint64(b[8:16]); x != y {
+		return x < y
+	}
+
+	return binary.BigEndian.Uint32(a[16:20]) < binary.BigEndian.Uint32(b[16:20])
+}
+
 func (t fixedBinaryTriple) Unwrap() binaryTriple {
 	return binaryTriple{
 		A: bEntity{
