@@ -29,6 +29,10 @@
     "6": {
       "name": "Name",
       "type": "Str"
+    },
+    "7": {
+      "name": "Label",
+      "type": "Str"
     }
   }
 }

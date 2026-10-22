@@ -85,20 +85,21 @@ func (c TRadioButtonField) Name(name string) TRadioButtonField {
 
 // Render builds and returns the protocol representation of the radio button.
 func (c TRadioButtonField) Render(ctx core.RenderContext) core.RenderNode {
-	action := func() {
-		c.stateGroup.SetSelectedIndex(c.index)
-	}
-	opacity := 1.0
-	if c.disabled {
-		action = nil
-		opacity = 0.6
+	if c.inputValue != nil {
+		c.inputValue.Observe(func(selected bool) {
+			if selected {
+				c.stateGroup.SetSelectedIndex(c.index)
+			}
+		})
 	}
 
 	return HStack(
 		RadioButton(c.value).
-			InputChecked(c.inputValue).Disabled(c.disabled).ID(c.id).Visible(!c.invisible).Name(c.name),
-		HStack(
-			Text(c.label),
-		).Opacity(opacity).Action(action).Padding(Padding{Left: L4}),
+			InputChecked(c.inputValue).
+			Disabled(c.disabled).
+			ID(c.id).
+			Visible(!c.invisible).
+			Name(c.name).
+			Label(c.label),
 	).Render(ctx)
 }
