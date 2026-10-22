@@ -13,7 +13,6 @@ import (
 	"log/slog"
 	"reflect"
 	"regexp"
-	"slices"
 	"strings"
 
 	"go.wdy.de/nago/pkg/data"
@@ -400,46 +399,48 @@ func (c TPicker[T]) pickerTable(wnd core.Window) (table core.View, quickFilter c
 		Visible(quickFilterVisible).
 		Frame(ui.Frame{MinHeight: ui.L64}.FullWidth()).Padding(ui.Padding{Left: ui.L8, Bottom: ui.L16})
 
+	renderedOptions := make([]core.View, 0)
+	for i, value := range filtered {
+		if value {
+			continue
+		}
+
+		state := c.checkboxStates[i]
+
+		if c.multiselect.Get() {
+			renderedOptions = append(renderedOptions,
+				ui.HStack(
+					ui.Checkbox(state.Get()).InputChecked(state).ID(state.ID()),
+					c.renderToSelect2(wnd, c, c.values[i], state),
+				).Alignment(ui.Leading).Gap(ui.L4),
+			)
+		} else {
+			renderedOptions = append(renderedOptions,
+				ui.HStack(
+					ui.RadioButton(state.Get()).InputChecked(state).ID(state.ID()),
+					c.renderToSelect2(wnd, c, c.values[i], state),
+				).Alignment(ui.Leading).Gap(ui.L4),
+			)
+		}
+	}
+
 	return ui.VStack(
-
-		ui.With(ui.Table(
-			ui.TableColumn(ui.Checkbox(c.selectAllCheckbox.Get()).InputChecked(c.selectAllCheckbox).Visible(selectAllVisible)).Width(ui.L20),
-			ui.TableColumn(ui.Text("alles auswählen").Visible(selectAllVisible)).Width(ui.L320),
-		).CellPadding(ui.Padding{}).
-			RowDividerColor(ui.ColorCardBody).
-			BackgroundColor(ui.ColorCardBody).Rows(slices.Collect(func(yield func(row ui.TTableRow) bool) {
-
-			for i, value := range filtered {
-				if value {
-					continue
-				}
-
-				state := c.checkboxStates[i]
-
-				if c.multiselect.Get() {
-					yield(ui.TableRow(
-						ui.TableCell(ui.Checkbox(state.Get()).InputChecked(state).ID(state.ID())),
-						ui.TableCell(c.renderToSelect2(wnd, c, c.values[i], state)).Alignment(ui.Leading),
-					),
-					)
-				} else {
-					yield(ui.TableRow(
-						ui.TableCell(ui.RadioButton(state.Get()).InputChecked(state).ID(state.ID())),
-						ui.TableCell(c.renderToSelect2(wnd, c, c.values[i], state)).Alignment(ui.Leading),
-					),
-					)
-				}
-
-			}
-		})...), func(table ui.TTable) ui.TTable {
-			if !quickFilterVisible {
-				table = table.HeaderDividerColor("")
-				table = table.RowDividerColor("")
-			} else {
-				table = table.HeaderDividerColor(ui.ColorLine)
-			}
-			return table
-		}),
+		ui.VStack(
+			ui.CheckboxField("alles auswählen", c.selectAllCheckbox.Get()).InputValue(c.selectAllCheckbox).Visible(selectAllVisible),
+			ui.If(quickFilterVisible,
+				ui.Stack(
+					ui.Stack().
+						BackgroundColor(ui.ColorLine).
+						Frame(ui.Frame{Height: ui.L1}.FullWidth()),
+				).
+					FullWidth().
+					Padding(ui.Padding{}.Vertical(ui.L8)),
+			),
+		).
+			Append(renderedOptions...).
+			Alignment(ui.Leading).
+			FullWidth().
+			Padding(ui.Padding{}.Vertical(ui.L8)),
 		noEntries,
 		c.detailView,
 	).Frame(ui.Frame{}.FullWidth()), quickFilter
