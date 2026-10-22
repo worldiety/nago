@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"iter"
 	"log/slog"
+	"math/rand"
 	"reflect"
 	"regexp"
 	"strings"
@@ -37,6 +38,7 @@ type Data[E data.Aggregate[ID], ID ~string] struct {
 // The picker can bind to external selection state or manage its own, and it
 // can be presented in a dialog with configurable options.
 type TPicker[T any] struct {
+	id                   string                          // random id
 	renderPicked         func(TPicker[T], []T) core.View // renders the "picked" summary view from current selections
 	renderToSelect2      func(wnd core.Window, self TPicker[T], item T, state *core.State[bool]) core.View
 	stringer             func(T) string      // returns a textual representation (used e.g. for quick search/filter)
@@ -93,6 +95,7 @@ func FromData[E data.Aggregate[ID], ID ~string](label string, selectedState *cor
 // the unique set of selected elements and coordinate that with the UI state.
 func Picker[T any](label string, values []T, selectedState *core.State[[]T]) TPicker[T] {
 	c := TPicker[T]{
+		id:                fmt.Sprintf("%d", rand.Intn(999999999999)),
 		selectAllCheckbox: core.DerivedState[bool](selectedState, "pck.all"),
 		multiselect:       core.DerivedState[bool](selectedState, ".pck.ms"),
 		// warning: do not reference this from constructor, because it may get overridden from outside
@@ -105,24 +108,23 @@ func Picker[T any](label string, values []T, selectedState *core.State[[]T]) TPi
 		selectAllSupported:   true,
 		quickFilterSupported: true,
 		checkboxStates:       make([]*core.State[bool], 0, len(values)),
-	}
 
-	c.renderPicked = func(p TPicker[T], t []T) core.View {
-		textColor := ui.M8
-		if p.disabled {
-			textColor = ui.ColorIconsMuted
-		}
+		renderPicked: func(p TPicker[T], t []T) core.View {
+			textColor := ui.M8
+			if p.disabled {
+				textColor = ui.ColorIconsMuted
+			}
 
-		switch len(t) {
-		case 0:
-			return ui.Text("nichts gewählt").Color(textColor)
-		case 1:
-			return ui.Text(p.stringer(t[0])).Color(textColor)
-		default:
-			return ui.Text(fmt.Sprintf("%d gewählt", len(t))).Color(textColor)
-		}
+			switch len(t) {
+			case 0:
+				return ui.Text("nichts gewählt").Color(textColor)
+			case 1:
+				return ui.Text(p.stringer(t[0])).Color(textColor)
+			default:
+				return ui.Text(fmt.Sprintf("%d gewählt", len(t))).Color(textColor)
+			}
 
-	}
+		}}
 
 	c = c.ItemRenderer(nil)
 
@@ -502,6 +504,8 @@ func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
 		ui.Spacer(),
 		ui.Image().Embed(heroSolid.ChevronRight).Frame(ui.Frame{}.Size(ui.L16, ui.L16)),
 	).
+		ID(c.id).
+		HtmlTag("button").
 		Gap(ui.L8).
 		BackgroundColor(backgroundColor).
 		FocusedBorder(ui.Border{}.Color(ui.I0).Width(ui.L1)).
@@ -522,7 +526,7 @@ func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
 
 	return ui.VStack(
 		ui.IfElse(c.errorText == "",
-			ui.If(c.label != "", ui.Text(c.label).Font(ui.Font{Size: ui.L14, LineHeight: "1.25rem"}).Color(borderColor)),
+			ui.If(c.label != "", ui.Text(c.label).Font(ui.Font{Size: ui.L14, LineHeight: "1.25rem"}).Color(borderColor).LabelFor(c.id)),
 			ui.HStack(
 				ui.Image().StrokeColor(ui.SE0).Embed(heroSolid.XMark).Frame(ui.Frame{}.Size(ui.L20, ui.L20)),
 				ui.Text(c.label).Font(ui.Font{Size: ui.L16}).Color(ui.SE0),
