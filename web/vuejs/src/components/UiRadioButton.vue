@@ -46,14 +46,10 @@ function radioButtonClicked(): void {
 
 <template>
 	<div v-if="!ui.invisible" class="radio-button-container">
-		<div
-			class="input-radio"
-			:class="{ 'input-radio-disabled': ui.disabled }"
-			@click="radioButtonClicked"
-		>
+		<div class="input-radio" :class="{ 'input-radio-disabled': ui.disabled }" @click="radioButtonClicked">
 			<input :id="id" :name="ui.name" :checked="checked" type="radio" :disabled="ui.disabled" />
 		</div>
-		<label v-if="ui.label" :for="id" :class="{ 'disabled': ui.disabled }">
+		<label v-if="ui.label" :for="id" :class="{ disabled: ui.disabled }">
 			{{ ui.label }}
 		</label>
 	</div>
