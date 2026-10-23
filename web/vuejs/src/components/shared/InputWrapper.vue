@@ -168,7 +168,6 @@ const inputFieldWrapperClasses = computed((): string | null => {
 		}
 
 		&:not(.input-field-wrapper-readonly) {
-
 			&.input-field-wrapper-detailed {
 				.input-field {
 					@apply border-none outline-solid outline-1 -outline-offset-1 rounded-lg px-3;
