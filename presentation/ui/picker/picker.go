@@ -108,23 +108,7 @@ func Picker[T any](label string, values []T, selectedState *core.State[[]T]) TPi
 		selectAllSupported:   true,
 		quickFilterSupported: true,
 		checkboxStates:       make([]*core.State[bool], 0, len(values)),
-
-		renderPicked: func(p TPicker[T], t []T) core.View {
-			textColor := ui.M8
-			if p.disabled {
-				textColor = ui.ColorIconsMuted
-			}
-
-			switch len(t) {
-			case 0:
-				return ui.Text("nichts gewählt").Color(textColor)
-			case 1:
-				return ui.Text(p.stringer(t[0])).Color(textColor)
-			default:
-				return ui.Text(fmt.Sprintf("%d gewählt", len(t))).Color(textColor)
-			}
-
-		}}
+	}
 
 	c = c.ItemRenderer(nil)
 
@@ -487,61 +471,99 @@ func (c TPicker[T]) Dialog() core.View {
 	return alert.Dialog(c.title, table, c.pickerPresented, dlgOpts...)
 }
 
+func (c TPicker[T]) pickedStr() string {
+	selected := c.targetSelectedState.Get()
+	switch len(selected) {
+	case 0:
+		return "nichts gewählt"
+	case 1:
+		return c.stringer(selected[0])
+	default:
+		return fmt.Sprintf("%d gewählt", len(selected))
+	}
+}
+
 func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
-	// TODO refactor me to use the picker.TButton
-	borderColor := ui.Color("")
-	backgroundColor := ui.Color("")
-	if c.disabled {
-		backgroundColor = ""
-		borderColor = ui.ColorIconsMuted
+	if c.renderPicked == nil {
+		return ui.VStack(
+			c.Dialog(),
+			ui.VStack(
+				ui.TextField(c.label, c.pickedStr()).
+					ID(c.id).
+					Disabled(c.disabled).
+					ReadOnly(true).
+					Trailing(ui.Image().Embed(heroSolid.ChevronRight).Frame(ui.Frame{}.Size(ui.L16, ui.L16))).
+					ErrorText(c.errorText).
+					SupportingText(c.supportingText).
+					FullWidth(),
+			).
+				Action(func() {
+					if c.disabled {
+						return
+					}
+					c.pickerPresented.Set(true)
+				}).
+				FullWidth(),
+		).
+			Alignment(ui.Leading).
+			Visible(!c.invisible).
+			Frame(c.frame).
+			Render(ctx)
 	} else {
-		borderColor = ui.ColorText
-	}
+		// TODO refactor me to use the picker.TButton
+		borderColor := ui.Color("")
+		backgroundColor := ui.Color("")
+		if c.disabled {
+			backgroundColor = ""
+			borderColor = ui.ColorIconsMuted
+		} else {
+			borderColor = ui.ColorText
+		}
 
-	inner := ui.HStack(
-		c.Dialog(),
-		c.renderPicked(c, c.targetSelectedState.Get()),
-		ui.Spacer(),
-		ui.Image().Embed(heroSolid.ChevronRight).Frame(ui.Frame{}.Size(ui.L16, ui.L16)),
-	).
-		ID(c.id).
-		HtmlTag("button").
-		Gap(ui.L8).
-		BackgroundColor(backgroundColor).
-		FocusedBorder(ui.Border{}.Color(ui.I0).Width(ui.L1)).
-		Frame(ui.Frame{}.FullWidth()).
-		Border(ui.Border{}.Color(borderColor).Width(ui.L1).Radius("0.375rem")).
-		Padding(ui.Padding{}.All(ui.L8))
+		inner := ui.HStack(
+			c.Dialog(),
+			c.renderPicked(c, c.targetSelectedState.Get()),
+			ui.Spacer(),
+			ui.Image().Embed(heroSolid.ChevronRight).Frame(ui.Frame{}.Size(ui.L16, ui.L16)),
+		).
+			ID(c.id).
+			Gap(ui.L8).
+			BackgroundColor(backgroundColor).
+			FocusedBorder(ui.Border{}.Color(ui.I0).Width(ui.L1)).
+			Frame(ui.Frame{}.FullWidth()).
+			Border(ui.Border{}.Color(borderColor).Width(ui.L1).Radius("0.375rem")).
+			Padding(ui.Padding{}.All(ui.L8))
 
-	if !c.disabled {
-		inner = inner.(ui.THStack).Action(func() {
-			if c.disabled {
-				return
-			}
-			c.pickerPresented.Set(true)
-		})
+		if !c.disabled {
+			inner = inner.(ui.THStack).Action(func() {
+				if c.disabled {
+					return
+				}
+				c.pickerPresented.Set(true)
+			})
 
-		inner = inner.(ui.THStack).HoveredBorder(ui.Border{}.Color(ui.I0).Width(ui.L1).Radius("0.375rem"))
-	}
+			inner = inner.(ui.THStack).HoveredBorder(ui.Border{}.Color(ui.I0).Width(ui.L1).Radius("0.375rem"))
+		}
 
-	return ui.VStack(
-		ui.IfElse(c.errorText == "",
-			ui.If(c.label != "", ui.Text(c.label).Font(ui.Font{Size: ui.L14, LineHeight: "1.25rem"}).Color(borderColor).LabelFor(c.id)),
-			ui.HStack(
-				ui.Image().StrokeColor(ui.SE0).Embed(heroSolid.XMark).Frame(ui.Frame{}.Size(ui.L20, ui.L20)),
-				ui.Text(c.label).Font(ui.Font{Size: ui.L16}).Color(ui.SE0),
+		return ui.VStack(
+			ui.IfElse(c.errorText == "",
+				ui.If(c.label != "", ui.Text(c.label).Font(ui.Font{Size: ui.L14, LineHeight: "1.25rem"}).Color(borderColor).LabelFor(c.id)),
+				ui.HStack(
+					ui.Image().StrokeColor(ui.SE0).Embed(heroSolid.XMark).Frame(ui.Frame{}.Size(ui.L20, ui.L20)),
+					ui.Text(c.label).Font(ui.Font{Size: ui.L16}).Color(ui.SE0),
+				),
 			),
-		),
-		inner,
-		ui.IfElse(c.errorText == "",
-			ui.If(c.supportingText != "", ui.Text(c.supportingText).Font(ui.Font{Size: "0.75rem"}).Color(ui.ST0)),
-			ui.Text(c.errorText).Font(ui.Font{Size: "0.75rem"}).Color(ui.SE0),
-		),
-	).Alignment(ui.Leading).
-		Gap(ui.L4).
-		Visible(!c.invisible).
-		Frame(c.frame).
-		Render(ctx)
+			inner,
+			ui.IfElse(c.errorText == "",
+				ui.If(c.supportingText != "", ui.Text(c.supportingText).Font(ui.Font{Size: "0.75rem"}).Color(ui.ST0)),
+				ui.Text(c.errorText).Font(ui.Font{Size: "0.75rem"}).Color(ui.SE0),
+			),
+		).Alignment(ui.Leading).
+			Gap(ui.L4).
+			Visible(!c.invisible).
+			Frame(c.frame).
+			Render(ctx)
+	}
 }
 
 var regexMarkdownLink = regexp.MustCompile(`\[(.*?)\]\((.*?)\)`)
