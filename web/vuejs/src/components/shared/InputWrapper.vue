@@ -52,6 +52,7 @@ const props = defineProps<{
 	disabled?: boolean;
 	noHoverEffect?: boolean;
 	optional?: boolean;
+	readonly?: boolean;
 }>();
 
 const { t } = useI18n();
@@ -89,6 +90,10 @@ const inputFieldWrapperClasses = computed((): string | null => {
 		classes.push('input-field-wrapper-no-hover');
 	}
 
+	if (props.readonly) {
+		classes.push('input-field-wrapper-readonly');
+	}
+
 	return classes.join(' ') || null;
 });
 </script>
@@ -118,14 +123,12 @@ const inputFieldWrapperClasses = computed((): string | null => {
 		&.input-field-wrapper-detailed {
 			.input-field {
 				@apply border-none outline-solid outline-1 -outline-offset-1 rounded-lg px-3;
-				@apply focus:outline-2 focus:-outline-offset-2 focus:outline-I0;
 			}
 		}
 
 		&.input-field-wrapper-filled {
 			.input-field {
 				@apply outline-solid outline-1 -outline-offset-1 outline-M5 bg-M2 rounded-lg px-3;
-				@apply focus:outline-2 focus:-outline-offset-2 focus:outline-I0;
 			}
 		}
 
@@ -133,7 +136,6 @@ const inputFieldWrapperClasses = computed((): string | null => {
 			.input-field {
 				outline: none !important;
 				@apply border-b border-b-current !rounded-none;
-				@apply focus:border-b-2 focus:-mb-px focus:border-I0;
 			}
 		}
 
@@ -162,6 +164,31 @@ const inputFieldWrapperClasses = computed((): string | null => {
 
 			.input-field {
 				@apply border-SE0 outline-SE0;
+			}
+		}
+
+		&:not(.input-field-wrapper-readonly) {
+
+			&.input-field-wrapper-detailed {
+				.input-field {
+					@apply border-none outline-solid outline-1 -outline-offset-1 rounded-lg px-3;
+					@apply focus:outline-2 focus:-outline-offset-2 focus:outline-I0;
+				}
+			}
+
+			&.input-field-wrapper-filled {
+				.input-field {
+					@apply outline-solid outline-1 -outline-offset-1 outline-M5 bg-M2 rounded-lg px-3;
+					@apply focus:outline-2 focus:-outline-offset-2 focus:outline-I0;
+				}
+			}
+
+			&.input-field-wrapper-reduced {
+				.input-field {
+					outline: none !important;
+					@apply border-b border-b-current !rounded-none;
+					@apply focus:border-b-2 focus:-mb-px focus:border-I0;
+				}
 			}
 		}
 	}

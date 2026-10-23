@@ -56,6 +56,13 @@ func main() {
 						Trailing(ImageIcon(heroOutline.UserCircle)).
 						FullWidth(),
 
+					TextField("read-only", firstname.Get()).
+						InputValue(firstname).
+						Leading(ImageIcon(heroOutline.UserCircle)).
+						Trailing(ImageIcon(heroOutline.UserCircle)).
+						ReadOnly(true).
+						FullWidth(),
+
 					TextField("hello world", firstname.Get()).
 						InputValue(firstname).
 						Placeholder("Placeholder blub").
@@ -76,6 +83,14 @@ func main() {
 						Placeholder("Placeholder blib").
 						Trailing(ImageIcon(heroOutline.UserCircle)).
 						Style(TextFieldFilled).
+						FullWidth(),
+
+					TextField("filled field (read-only)", firstname.Get()).
+						InputValue(firstname).
+						Placeholder("Placeholder bleb").
+						Trailing(ImageIcon(heroOutline.UserCircle)).
+						Style(TextFieldFilled).
+						ReadOnly(true).
 						FullWidth(),
 
 					TextField("filled field (disabled)", firstname.Get()).

@@ -7840,10 +7840,11 @@ type TextField struct {
 	ClearButton Bool
 	Placeholder Str
 	Padding     Padding
+	ReadOnly    Bool
 }
 
 func (v *TextField) write(w *BinaryWriter) error {
-	var fields [30]bool
+	var fields [31]bool
 	fields[1] = !v.Label.IsZero()
 	fields[2] = !v.SupportingText.IsZero()
 	fields[3] = !v.ErrorText.IsZero()
@@ -7873,6 +7874,7 @@ func (v *TextField) write(w *BinaryWriter) error {
 	fields[27] = !v.ClearButton.IsZero()
 	fields[28] = !v.Placeholder.IsZero()
 	fields[29] = !v.Padding.IsZero()
+	fields[30] = !v.ReadOnly.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -8129,6 +8131,14 @@ func (v *TextField) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[30] {
+		if err := w.writeFieldHeader(uvarint, 30); err != nil {
+			return err
+		}
+		if err := v.ReadOnly.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -8304,6 +8314,11 @@ func (v *TextField) read(r *BinaryReader) error {
 			}
 		case 29:
 			err := v.Padding.read(r)
+			if err != nil {
+				return err
+			}
+		case 30:
+			err := v.ReadOnly.read(r)
 			if err != nil {
 				return err
 			}
@@ -28691,13 +28706,14 @@ func (v *TextField) reset() {
 	v.ClearButton.reset()
 	v.Placeholder.reset()
 	v.Padding.reset()
+	v.ReadOnly.reset()
 }
 
 func (v *TextField) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && isZeroComponent(v.Leading) && isZeroComponent(v.Trailing) && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.KeyboardOptions.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero() && v.KeydownEnter.IsZero() && v.TextAlignment.IsZero() && v.ShowZero.IsZero() && v.Step.IsZero() && v.Max.IsZero() && v.Min.IsZero() && v.Autocomplete.IsZero() && v.Optional.IsZero() && v.ClearButton.IsZero() && v.Placeholder.IsZero() && v.Padding.IsZero()
+	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && isZeroComponent(v.Leading) && isZeroComponent(v.Trailing) && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.KeyboardOptions.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero() && v.KeydownEnter.IsZero() && v.TextAlignment.IsZero() && v.ShowZero.IsZero() && v.Step.IsZero() && v.Max.IsZero() && v.Min.IsZero() && v.Autocomplete.IsZero() && v.Optional.IsZero() && v.ClearButton.IsZero() && v.Placeholder.IsZero() && v.Padding.IsZero() && v.ReadOnly.IsZero()
 }
 
 func (v *Toggle) reset() {

@@ -8143,6 +8143,8 @@ export class TextField implements Writeable, Readable, Component {
 
 	public padding?: Padding;
 
+	public readOnly?: Bool;
+
 	constructor(
 		label: Str | undefined = undefined,
 		supportingText: Str | undefined = undefined,
@@ -8172,7 +8174,8 @@ export class TextField implements Writeable, Readable, Component {
 		optional: Bool | undefined = undefined,
 		clearButton: Bool | undefined = undefined,
 		placeholder: Str | undefined = undefined,
-		padding: Padding | undefined = undefined
+		padding: Padding | undefined = undefined,
+		readOnly: Bool | undefined = undefined
 	) {
 		this.label = label;
 		this.supportingText = supportingText;
@@ -8203,6 +8206,7 @@ export class TextField implements Writeable, Readable, Component {
 		this.clearButton = clearButton;
 		this.placeholder = placeholder;
 		this.padding = padding;
+		this.readOnly = readOnly;
 	}
 
 	read(reader: BinaryReader): void {
@@ -8340,6 +8344,10 @@ export class TextField implements Writeable, Readable, Component {
 					this.padding.read(reader);
 					break;
 				}
+				case 30: {
+					this.readOnly = readBool(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -8378,6 +8386,7 @@ export class TextField implements Writeable, Readable, Component {
 			this.clearButton !== undefined,
 			this.placeholder !== undefined,
 			this.padding !== undefined && !this.padding.isZero(),
+			this.readOnly !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -8503,6 +8512,10 @@ export class TextField implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.RECORD, 29);
 			this.padding!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[30]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 30);
+			writeBool(writer, this.readOnly!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -8535,7 +8548,8 @@ export class TextField implements Writeable, Readable, Component {
 			this.optional === undefined &&
 			this.clearButton === undefined &&
 			this.placeholder === undefined &&
-			(this.padding === undefined || this.padding.isZero())
+			(this.padding === undefined || this.padding.isZero()) &&
+			this.readOnly === undefined
 		);
 	}
 
@@ -8569,6 +8583,7 @@ export class TextField implements Writeable, Readable, Component {
 		this.clearButton = undefined;
 		this.placeholder = undefined;
 		this.padding = undefined;
+		this.readOnly = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

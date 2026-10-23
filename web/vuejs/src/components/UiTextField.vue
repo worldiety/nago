@@ -243,6 +243,10 @@ const inputStyle = computed<string>(() => {
 		styles.push(`height: ${textareaHeight.value}`);
 	}
 
+	if (props.ui.readOnly) {
+		styles.push('cursor: default');
+	}
+
 	return styles.join(';');
 });
 
@@ -517,6 +521,7 @@ onMounted(() => {
 			:disabled="props.ui.disabled"
 			:input-id="id"
 			:optional="ui.optional"
+			:readonly="ui.readOnly"
 		>
 			<div class="relative flex flex-col">
 				<!-- Leading view -->
@@ -535,6 +540,8 @@ onMounted(() => {
 					type="text"
 					:inputmode="inputMode"
 					:placeholder="ui.placeholder"
+					:readonly="ui.readOnly"
+					:tabindex="ui.readOnly ? -1 : undefined"
 					@keydown.enter="handleKeydownEnter"
 					@keydown.up.prevent="onInputUp"
 					@keydown.down.prevent="onInputDown"
@@ -555,6 +562,8 @@ onMounted(() => {
 					type="text"
 					:rows="props.ui.lines"
 					:placeholder="ui.placeholder"
+					:readonly="ui.readOnly"
+					:tabindex="ui.readOnly ? -1 : undefined"
 					@keydown.enter="handleKeydownEnter"
 					@focusout="onFocusOut"
 					@input="onTextareaInput(false)"

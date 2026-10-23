@@ -133,6 +133,10 @@
     "29": {
       "name": "Padding",
       "type": "Padding"
+    },
+    "30": {
+      "name": "ReadOnly",
+      "type": "Bool"
     }
   }
 }
