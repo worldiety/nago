@@ -115,6 +115,7 @@ func (c TDialog) Render(ctx core.RenderContext) proto.Component {
 			Frame(Frame{Width: Full, Height: L60, MinHeight: L60}),
 		),
 	).
+		HtmlTag("dialog").
 		BackgroundColor(ColorCardBody).
 		Border(Border{}.Radius(L20).Elevate(4)).
 		Frame(Frame{Height: c.frame.Height, MinWidth: c.frame.MinWidth, Width: c.frame.Width, MaxWidth: "calc(100% - 2rem)"}) // TODO ... this looks wrong
