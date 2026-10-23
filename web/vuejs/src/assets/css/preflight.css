@@ -330,6 +330,7 @@ Reset default styling for dialogs.
 */
 dialog {
 	padding: 0;
+	color: inherit;
 }
 
 /*
