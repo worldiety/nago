@@ -39,6 +39,7 @@ type Data[E data.Aggregate[ID], ID ~string] struct {
 // can be presented in a dialog with configurable options.
 type TPicker[T any] struct {
 	id                   string                          // random id
+	name                 string                          // name of the picker, like a input name
 	renderPicked         func(TPicker[T], []T) core.View // renders the "picked" summary view from current selections
 	renderToSelect2      func(wnd core.Window, self TPicker[T], item T, state *core.State[bool]) core.View
 	stringer             func(T) string      // returns a textual representation (used e.g. for quick search/filter)
@@ -158,6 +159,12 @@ func Picker[T any](label string, values []T, selectedState *core.State[[]T]) TPi
 		c.selectAllCheckbox.Set(count == len(c.values))
 	}
 
+	return c
+}
+
+// Name sets the picker's name, just like you would set the name of a text input
+func (c TPicker[T]) Name(name string) TPicker[T] {
+	c.name = name
 	return c
 }
 
@@ -385,6 +392,11 @@ func (c TPicker[T]) pickerTable(wnd core.Window) (table core.View, quickFilter c
 		Visible(quickFilterVisible).
 		Frame(ui.Frame{MinHeight: ui.L64}.FullWidth()).Padding(ui.Padding{Left: ui.L8, Bottom: ui.L16})
 
+	inputName := c.name
+	if inputName == "" {
+		inputName = fmt.Sprintf("name-id-%s", c.id)
+	}
+
 	renderedOptions := make([]core.View, 0)
 	for i, value := range filtered {
 		if value {
@@ -396,14 +408,14 @@ func (c TPicker[T]) pickerTable(wnd core.Window) (table core.View, quickFilter c
 		if c.multiselect.Get() {
 			renderedOptions = append(renderedOptions,
 				ui.HStack(
-					ui.Checkbox(state.Get()).InputChecked(state).ID(state.ID()),
+					ui.Checkbox(state.Get()).InputChecked(state).ID(state.ID()).Name(inputName),
 					c.renderToSelect2(wnd, c, c.values[i], state),
 				).Alignment(ui.Leading).Gap(ui.L4),
 			)
 		} else {
 			renderedOptions = append(renderedOptions,
 				ui.HStack(
-					ui.RadioButton(state.Get()).InputChecked(state).ID(state.ID()),
+					ui.RadioButton(state.Get()).InputChecked(state).ID(state.ID()).Name(inputName),
 					c.renderToSelect2(wnd, c, c.values[i], state),
 				).Alignment(ui.Leading).Gap(ui.L4),
 			)
