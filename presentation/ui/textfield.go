@@ -73,6 +73,7 @@ type TTextField struct {
 	clearButton     bool    // whether to show a clear button for the field
 	placeholder     string  // placeholder of the input field
 	padding         Padding // padding of the text field (overwrites defaults)
+	readOnly        bool    // readOnly mode, preventing user edits while still allowing text selection and copying
 }
 
 // TextField creates a new text field with the given label and initial value.
@@ -384,6 +385,12 @@ func (c TTextField) Padding(padding Padding) DecoredView {
 	return c
 }
 
+// ReadOnly sets the input field to read-only mode, preventing user edits while still allowing text selection and copying.
+func (c TTextField) ReadOnly(readOnly bool) TTextField {
+	c.readOnly = readOnly
+	return c
+}
+
 // Render builds and returns the protocol representation of the text field.
 func (c TTextField) Render(ctx core.RenderContext) core.RenderNode {
 	return &proto.TextField{
@@ -414,5 +421,6 @@ func (c TTextField) Render(ctx core.RenderContext) core.RenderNode {
 		ClearButton:     proto.Bool(c.clearButton),
 		Placeholder:     proto.Str(c.placeholder),
 		Padding:         c.padding.ora(),
+		ReadOnly:        proto.Bool(c.readOnly),
 	}
 }
