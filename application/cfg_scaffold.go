@@ -526,15 +526,6 @@ func (b *ScaffoldBuilder) logoActionClick(wnd core.Window) func() {
 	}
 }
 
-func (b *ScaffoldBuilder) hasAdminCenter(wnd core.Window) bool {
-	if b.cfg.adminManagement == nil {
-		return false
-	}
-
-	visibleEntries := b.cfg.adminManagement.QueryGroups(wnd.Subject(), "")
-	return len(visibleEntries) > 0
-}
-
 func (b *ScaffoldBuilder) profileMenu(wnd core.Window) core.View {
 	return uiuser.AccountView(wnd)
 }

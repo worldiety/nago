@@ -35,6 +35,16 @@ func (t *strTable) Lookup(s string) (uint32, bool) {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
+	return t.lookupLocked(s)
+}
+
+// lookupLocked is like Lookup, but the caller must hold the read lock. This allows looking up all strings of a
+// triple while acquiring the lock only once.
+func (t *strTable) lookupLocked(s string) (uint32, bool) {
+	if s == "" {
+		return 0, true
+	}
+
 	ptr, ok := t.index[s]
 	return ptr, ok
 }

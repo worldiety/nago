@@ -271,6 +271,22 @@ func (v *viewImpl) Audit(perm permission.ID) error {
 	return nil
 }
 
+// GlobalGrants returns a snapshot of the permissions of the user, which decides like [viewImpl.HasPermission] at the
+// time of the call, but is much cheaper when checking a lot of permissions at once. It returns false, if the
+// permissions cannot be enumerated, see [rebac.DB.GlobalGrants].
+func (v *viewImpl) GlobalGrants() (rebac.GlobalGrants, bool) {
+	v.refresh()
+
+	if !v.Valid() {
+		return rebac.GlobalGrants{}, true
+	}
+
+	return v.rdb.GlobalGrants(rebac.Entity{
+		Namespace: Namespace,
+		Instance:  rebac.Instance(v.ID()),
+	})
+}
+
 func (v *viewImpl) HasPermission(permission permission.ID) bool {
 	v.refresh()
 
@@ -514,4 +530,42 @@ type ctxSubject struct {
 
 func (s ctxSubject) Context() context.Context {
 	return s.ctx
+}
+
+// WithGlobalGrants wraps the subject and answers HasPermission and Audit from a single snapshot of its global
+// permissions, which is much cheaper when checking a lot of permissions at once, e.g. to decide which of many
+// permission dependent entries are visible. The snapshot is never updated, thus do not keep the returned subject.
+// If the subject cannot provide a snapshot, it is returned as is.
+func WithGlobalGrants(subject Subject) Subject {
+	granter, ok := subject.(interface {
+		GlobalGrants() (rebac.GlobalGrants, bool)
+	})
+	if !ok {
+		return subject
+	}
+
+	grants, ok := granter.GlobalGrants()
+	if !ok {
+		return subject
+	}
+
+	return grantsSubject{grants: grants, Subject: subject}
+}
+
+type grantsSubject struct {
+	grants rebac.GlobalGrants
+	Subject
+}
+
+func (s grantsSubject) HasPermission(permission permission.ID) bool {
+	return s.grants.Has(rebac.Relation(permission))
+}
+
+func (s grantsSubject) Audit(permission permission.ID) error {
+	if s.grants.Has(rebac.Relation(permission)) {
+		return nil
+	}
+
+	// the subject knows the exact reason
+	return s.Subject.Audit(permission)
 }

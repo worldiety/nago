@@ -38,10 +38,10 @@ func (c *Configurator) RDB() (*rebac.DB, error) {
 		}
 
 		// automatically resolve role relations by user memberships
-		db.AddResolver(rebac.NewSourceMemberResolver(user.Namespace, role.Namespace))
+		db.AddMemberResolver(user.Namespace, role.Namespace)
 		// automatically resolve group relations by user memberships, so that resource permissions
 		// (e.g. a drive file ACL) which are granted to a group are honored for its members.
-		db.AddResolver(rebac.NewSourceMemberResolver(user.Namespace, group.Namespace))
+		db.AddMemberResolver(user.Namespace, group.Namespace)
 		db.RegisterResources(globalResources{})
 		db.RegisterResources(relationResources{})
 

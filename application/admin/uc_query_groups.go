@@ -35,11 +35,7 @@ func filter(subject auth.Subject, groups []Group, text string) []Group {
 				continue
 			}
 
-			if entry.Role != "" && !subject.HasRole(entry.Role) {
-				continue
-			}
-
-			if entry.Permission != "" && !subject.HasPermission(entry.Permission) {
+			if !permitted(subject, entry) {
 				continue
 			}
 
@@ -60,4 +56,30 @@ func filter(subject auth.Subject, groups []Group, text string) []Group {
 	}
 
 	return res
+}
+
+// AnyVisible returns true, if QueryGroups would show at least one of the cards of the given groups to the subject
+// for an empty filter text. It stops at the first visible card and does not merge or sort anything.
+func AnyVisible(subject auth.Subject, groups ...Group) bool {
+	for _, group := range groups {
+		for _, entry := range group.Entries {
+			if entry.Target != "" && permitted(subject, entry) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func permitted(subject auth.Subject, entry Card) bool {
+	if entry.Role != "" && !subject.HasRole(entry.Role) {
+		return false
+	}
+
+	if entry.Permission != "" && !subject.HasPermission(entry.Permission) {
+		return false
+	}
+
+	return true
 }
