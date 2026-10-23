@@ -58,8 +58,6 @@ const props = defineProps<{
 
 const serviceAdapter = useServiceAdapter();
 const dialogContainer = ref<HTMLElement | undefined>();
-let firstFocusableElement: HTMLElement | undefined;
-let lastFocusableElement: HTMLElement | undefined;
 
 onMounted(() => {
 	if (!props.ui.allowBackgroundScrolling) {
@@ -126,36 +124,61 @@ function onBackdropClick(e: MouseEvent) {
 	if (onBackdrop) sendDismissEvent();
 }
 
+const focusableSelector = [
+	'a[href]',
+	'area[href]',
+	'button',
+	'input:not([type="hidden"])',
+	'select',
+	'textarea',
+	'iframe',
+	'[contenteditable]:not([contenteditable="false"])',
+	'[tabindex]',
+].join(',');
+
+// returns all tabbable elements of the dialog in document order. It is evaluated on each use, because the
+// dialog content may change while it is open.
+function getFocusableElements(): HTMLElement[] {
+	const candidates = dialogContainer.value?.querySelectorAll<HTMLElement>(focusableSelector) ?? [];
+	return Array.from(candidates).filter(
+		(el) =>
+			el.tabIndex >= 0 &&
+			!(el as HTMLButtonElement).disabled &&
+			!el.closest('[inert]') &&
+			el.getClientRects().length > 0
+	);
+}
+
 function captureFocusInDialog(): void {
-	const focusableElements =
-		dialogContainer.value?.querySelectorAll('[tabindex="0"], button:not([tabindex="-1"])') ?? [];
-	const firstFocusable = focusableElements[0];
-	const lastFocusable = focusableElements[focusableElements.length - 1];
-	if (firstFocusable) {
-		firstFocusableElement = firstFocusable as HTMLElement;
-		firstFocusableElement.focus();
-	}
-	if (lastFocusable) {
-		lastFocusableElement = lastFocusable as HTMLElement;
-	}
+	getFocusableElements()[0]?.focus();
 }
 
 function moveFocusForward(e: KeyboardEvent): void {
 	if (e.shiftKey) {
 		return;
 	}
-	if ((document.activeElement as HTMLElement) === lastFocusableElement) {
+	const elements = getFocusableElements();
+	const active = document.activeElement as HTMLElement | null;
+	if (elements.length === 0) {
 		e.preventDefault();
-		firstFocusableElement?.focus();
 		return;
+	}
+	if (active === elements[elements.length - 1] || !elements.includes(active as HTMLElement)) {
+		e.preventDefault();
+		elements[0].focus();
 	}
 }
 
 function moveFocusBackwards(e: KeyboardEvent): void {
-	if ((document.activeElement as HTMLElement) === firstFocusableElement) {
+	const elements = getFocusableElements();
+	const active = document.activeElement as HTMLElement | null;
+	if (elements.length === 0) {
 		e.preventDefault();
-		lastFocusableElement?.focus();
 		return;
+	}
+	if (active === elements[0] || !elements.includes(active as HTMLElement)) {
+		e.preventDefault();
+		elements[elements.length - 1].focus();
 	}
 }
 
