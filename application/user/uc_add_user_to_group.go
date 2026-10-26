@@ -18,15 +18,17 @@ func NewAddUserToGroup(rdb *rebac.DB) AddUserToGroup {
 			return err
 		}
 
+		// a membership is stored as group:has-member:user, like UpdateOtherGroups and the static rule
+		// in Configurator.GroupManagement
 		return rdb.Put(rebac.Triple{
 			Source: rebac.Entity{
-				Namespace: Namespace,
-				Instance:  rebac.Instance(id),
+				Namespace: group.Namespace,
+				Instance:  rebac.Instance(gid),
 			},
 			Relation: rebac.Member,
 			Target: rebac.Entity{
-				Namespace: group.Namespace,
-				Instance:  rebac.Instance(gid),
+				Namespace: Namespace,
+				Instance:  rebac.Instance(id),
 			},
 		})
 	}
