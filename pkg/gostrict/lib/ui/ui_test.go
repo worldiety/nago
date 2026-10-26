@@ -279,10 +279,10 @@ func treeOf(t testing.TB, w *nagotest.Window) string {
 }
 
 // pointers are the numbers of callbacks and states and generated ids, which are random and differ between two
-// windows.
+// windows. Generated ids may carry a prefix like cb or name-id-, or none at all like the picker.
 var (
 	pointers = regexp.MustCompile(`:[0-9]{7,}`)
-	ids      = regexp.MustCompile(`"([a-z]+)[0-9]{7,}"`)
+	ids      = regexp.MustCompile(`"([a-z-]*)[0-9]{7,}"`)
 	// ptrFields are the fields of type proto.Ptr, whose numbers may also be short
 	ptrFields = regexp.MustCompile(`"(Action|ActionValue|CallPtr|CellAction|CloseAll|Copy|DroppedId|Edit|EndInputValue|Filter|FunctionPointer|InputValue|KeydownEnter|Layout|OnCameraReady|OnClick|OnDismissRequest|OnHoverEnd|OnHoverStart|Paste|Ptr|Sort|StatePointer|Viewport)":[1-9][0-9]*`)
 )
