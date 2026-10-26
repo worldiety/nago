@@ -326,11 +326,23 @@ menu {
 }
 
 /*
-Reset default styling for dialogs.
+Reset default styling for dialogs. Nago renders dialogs as a plain element within its own modal layout and never
+opens them with show() or showModal(). The user agent positions a dialog absolutely, which takes it out of the flow
+of its alignment wrapper: a dialog aligned to a corner then resolves a percentage max-width against a wrapper of zero
+width and collapses to nothing.
 */
 dialog {
+	position: static;
+	inset: auto;
+	width: auto;
+	height: auto;
+	max-width: none;
+	max-height: none;
+	margin: 0;
+	border: 0;
 	padding: 0;
 	color: inherit;
+	background-color: transparent;
 }
 
 /*
