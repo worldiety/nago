@@ -23,8 +23,9 @@ import (
 
 // RDB returns the nago ReBAC (relation-based access control) database. Even though there is a separate module,
 // the rebac system is always available, and the module is only required if you want the admin user interface for it.
-// The default resolvers are
-//   - users which are members of a role resolve to the assigned role relations
+// The default rules are
+//   - users which are members of a role have the relations of the role
+//   - users which are members of a group have the relations of the group
 func (c *Configurator) RDB() (*rebac.DB, error) {
 	if c.rdb == nil {
 		store, err := c.EntityStore("nago.rebac")
@@ -38,10 +39,10 @@ func (c *Configurator) RDB() (*rebac.DB, error) {
 		}
 
 		// automatically resolve role relations by user memberships
-		db.AddMemberResolver(user.Namespace, role.Namespace)
+		db.AddRule(rebac.Rule{Source: user.Namespace, Via: role.Namespace})
 		// automatically resolve group relations by user memberships, so that resource permissions
 		// (e.g. a drive file ACL) which are granted to a group are honored for its members.
-		db.AddMemberResolver(user.Namespace, group.Namespace)
+		db.AddRule(rebac.Rule{Source: user.Namespace, Via: group.Namespace})
 		db.RegisterResources(globalResources{})
 		db.RegisterResources(relationResources{})
 

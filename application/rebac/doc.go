@@ -11,4 +11,8 @@
 // relationships, we currently do not encourage such design.
 // However, all RBAC (role-based access control) or direct permission assignments are modeled on top of
 // this design to unify the access control model and be open for future extensions.
+//
+// Relations, which are not stored, are derived by declarative rules, see [Rule] and [DB.AddRule]: a user has what
+// its roles and groups have. [DB.Resolve] decides a single triple and [DB.Relations] enumerates all relations of a
+// source on a target, both from the same rules and the same binary indices.
 package rebac

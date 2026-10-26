@@ -114,6 +114,14 @@ func (s *subject) AuditResource(name rebac.Namespace, id rebac.Instance, p permi
 	return nil
 }
 
+// GlobalGrants returns a snapshot of the permissions of the token, which decides like [subject.HasPermission] at
+// the time of the call, see [user.WithGlobalGrants].
+func (s *subject) GlobalGrants() rebac.RelationSet {
+	s.load()
+
+	return s.rdb.Relations(s.source(), rebac.Entity{Namespace: rebac.Global, Instance: rebac.AllInstances})
+}
+
 func (s *subject) HasPermission(permission permission.ID) bool {
 	s.load()
 

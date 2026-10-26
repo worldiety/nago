@@ -28,7 +28,7 @@ const (
 )
 
 // newGrantsTestSubject builds a real viewImpl for a user, who is member of one role and one group, wired with the same
-// resolvers as the application. The role carries a realistic amount of other permissions.
+// rules as the application. The role carries a realistic amount of other permissions.
 func newGrantsTestSubject(tb testing.TB) *viewImpl {
 	tb.Helper()
 
@@ -40,8 +40,8 @@ func newGrantsTestSubject(tb testing.TB) *viewImpl {
 	}
 
 	rdb.ValidateStaticRules(false)
-	rdb.AddMemberResolver(Namespace, role.Namespace)
-	rdb.AddMemberResolver(Namespace, group.Namespace)
+	rdb.AddRule(rebac.Rule{Source: Namespace, Via: role.Namespace})
+	rdb.AddRule(rebac.Rule{Source: Namespace, Via: group.Namespace})
 
 	usr := User{ID: "42", EMailVerified: true, Status: Enabled{}}
 	if err := repo.Save(usr); err != nil {
@@ -91,10 +91,7 @@ func newGrantsTestSubject(tb testing.TB) *viewImpl {
 func TestGlobalGrantsMatchesHasPermission(t *testing.T) {
 	v := newGrantsTestSubject(t)
 
-	grants, ok := v.GlobalGrants()
-	if !ok {
-		t.Fatal("grants must be enumerable")
-	}
+	grants := v.GlobalGrants()
 
 	for perm, want := range map[permission.ID]bool{
 		grantsPermByRole:  true,
@@ -113,8 +110,8 @@ func TestGlobalGrantsMatchesHasPermission(t *testing.T) {
 	// an invalid user has no permissions at all, like HasPermission
 	v.user.Status = Disabled{}
 	v.lastRefreshedAt = time.Now()
-	grants, ok = v.GlobalGrants()
-	if !ok || grants.Has(rebac.Relation(grantsPermByRole)) {
+	grants = v.GlobalGrants()
+	if grants.Len() != 0 || grants.Has(rebac.Relation(grantsPermByRole)) {
 		t.Error("a disabled user must not have any grants")
 	}
 }

@@ -203,13 +203,13 @@ func TestDB2_Resolve(t *testing.T) {
 		},
 	}
 
-	// without resolver must fail
+	// without rule must fail
 	if ok := option.Must(db.Resolve(q1)); ok {
 		t.Fatal("expected resolve to be !ok")
 	}
 
-	// with resolver must ok
-	db.AddResolver(rebac.NewSourceMemberResolver(usrNS, roleNS))
+	// with rule must ok
+	db.AddRule(rebac.Rule{Source: usrNS, Via: roleNS})
 	if ok := option.Must(db.Resolve(q1)); !ok {
 		t.Fatal("expected resolve to be ok")
 	}

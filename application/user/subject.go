@@ -219,7 +219,7 @@ func (v *viewImpl) HasResourcePermission(name rebac.Namespace, id rebac.Instance
 	}
 
 	// Resolve (not just Contains) so that indirect grants are honored as well, e.g. a resource permission
-	// which was granted to a group (or role) the subject is a member of. See the registered member resolvers
+	// which was granted to a group (or role) the subject is a member of. See the registered rules
 	// in Configurator.RDB.
 	ok, err := v.rdb.Resolve(rebac.Triple{
 		Source: rebac.Entity{
@@ -272,19 +272,18 @@ func (v *viewImpl) Audit(perm permission.ID) error {
 }
 
 // GlobalGrants returns a snapshot of the permissions of the user, which decides like [viewImpl.HasPermission] at the
-// time of the call, but is much cheaper when checking a lot of permissions at once. It returns false, if the
-// permissions cannot be enumerated, see [rebac.DB.GlobalGrants].
-func (v *viewImpl) GlobalGrants() (rebac.GlobalGrants, bool) {
+// time of the call, but is much cheaper when checking a lot of permissions at once, see [rebac.DB.Relations].
+func (v *viewImpl) GlobalGrants() rebac.RelationSet {
 	v.refresh()
 
 	if !v.Valid() {
-		return rebac.GlobalGrants{}, true
+		return rebac.RelationSet{}
 	}
 
-	return v.rdb.GlobalGrants(rebac.Entity{
-		Namespace: Namespace,
-		Instance:  rebac.Instance(v.ID()),
-	})
+	return v.rdb.Relations(
+		rebac.Entity{Namespace: Namespace, Instance: rebac.Instance(v.ID())},
+		rebac.Entity{Namespace: rebac.Global, Instance: rebac.AllInstances},
+	)
 }
 
 func (v *viewImpl) HasPermission(permission permission.ID) bool {
@@ -534,26 +533,22 @@ func (s ctxSubject) Context() context.Context {
 
 // WithGlobalGrants wraps the subject and answers HasPermission and Audit from a single snapshot of its global
 // permissions, which is much cheaper when checking a lot of permissions at once, e.g. to decide which of many
-// permission dependent entries are visible. The snapshot is never updated, thus do not keep the returned subject.
+// permission dependent entries are visible. All other methods, e.g. HasRole or HasResourcePermission, are
+// delegated to the subject as is. The snapshot is never updated, thus do not keep the returned subject.
 // If the subject cannot provide a snapshot, it is returned as is.
 func WithGlobalGrants(subject Subject) Subject {
 	granter, ok := subject.(interface {
-		GlobalGrants() (rebac.GlobalGrants, bool)
+		GlobalGrants() rebac.RelationSet
 	})
 	if !ok {
 		return subject
 	}
 
-	grants, ok := granter.GlobalGrants()
-	if !ok {
-		return subject
-	}
-
-	return grantsSubject{grants: grants, Subject: subject}
+	return grantsSubject{grants: granter.GlobalGrants(), Subject: subject}
 }
 
 type grantsSubject struct {
-	grants rebac.GlobalGrants
+	grants rebac.RelationSet
 	Subject
 }
 

@@ -96,5 +96,14 @@ func (t *strTable) String(ptr uint32) string {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
+	return t.stringLocked(ptr)
+}
+
+// stringLocked is like String, but the caller must hold the read lock.
+func (t *strTable) stringLocked(ptr uint32) string {
+	if ptr == 0 {
+		return ""
+	}
+
 	return t.reverse[ptr]
 }
