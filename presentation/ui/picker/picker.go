@@ -38,7 +38,7 @@ type Data[E data.Aggregate[ID], ID ~string] struct {
 // The picker can bind to external selection state or manage its own, and it
 // can be presented in a dialog with configurable options.
 type TPicker[T any] struct {
-	id                   string                          // random id
+	id                   string                          // random id with a letter prefix, so that it is usable as a css selector
 	name                 string                          // name of the picker, like a input name
 	renderPicked         func(TPicker[T], []T) core.View // renders the "picked" summary view from current selections
 	renderToSelect2      func(wnd core.Window, self TPicker[T], item T, state *core.State[bool]) core.View
@@ -96,7 +96,7 @@ func FromData[E data.Aggregate[ID], ID ~string](label string, selectedState *cor
 // the unique set of selected elements and coordinate that with the UI state.
 func Picker[T any](label string, values []T, selectedState *core.State[[]T]) TPicker[T] {
 	c := TPicker[T]{
-		id:                fmt.Sprintf("%d", rand.Intn(999999999999)),
+		id:                fmt.Sprintf("picker%d", rand.Intn(999999999999)),
 		selectAllCheckbox: core.DerivedState[bool](selectedState, "pck.all"),
 		multiselect:       core.DerivedState[bool](selectedState, ".pck.ms"),
 		// warning: do not reference this from constructor, because it may get overridden from outside
