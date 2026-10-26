@@ -332,6 +332,28 @@ func TestAdminCenterVisibilityVariantsAgree(t *testing.T) {
 	}
 }
 
+// BenchmarkAdminCenterVisibility measures the decision, whether the link to the admin center is shown, for the
+// typical profiles: an admin sees the first card, an editor the last one and a domain user none.
+func BenchmarkAdminCenterVisibility(b *testing.B) {
+	env := adminVisibilitySetup(b)
+	for _, variant := range adminVisibilityVariants(env) {
+		for _, profile := range env.profiles {
+			if profile.name != "admin" && profile.name != "editor" && profile.name != "user" {
+				continue
+			}
+
+			b.Run(variant.name+"/"+profile.name, func(b *testing.B) {
+				b.ReportAllocs()
+				for b.Loop() {
+					if variant.visible(profile.subject) != profile.visible {
+						b.Fatal("unexpected visibility")
+					}
+				}
+			})
+		}
+	}
+}
+
 // TestHasEntriesFollowsRuntimeRoleChanges ensures that a role, which a user gets while being logged in, shows the
 // link to the admin center immediately.
 func TestHasEntriesFollowsRuntimeRoleChanges(t *testing.T) {

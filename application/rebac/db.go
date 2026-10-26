@@ -17,7 +17,6 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/tidwall/btree"
 	"go.wdy.de/nago/pkg/blob"
@@ -33,8 +32,7 @@ type DB struct {
 	backward            *btree.BTreeG[fixedBinaryTriple]
 	strTable            *strTable
 	mutex               sync.RWMutex
-	resolvers           []Resolver
-	memberResolvers     []memberResolver // the subset of resolvers, which has been added by AddMemberResolver
+	rules               atomic.Pointer[[]bRule] // copy on write, see AddRule
 	resources           concurrent.RWMap[Namespace, Resources]
 	staticRules         map[bNamespace][]bStaticRelationRule // unclear, if and which performance optimizations we need. Currently, we expect a single digit number of rules.
 	validateStaticRules atomic.Bool
@@ -53,6 +51,7 @@ func NewDB(store blob.Store) (*DB, error) {
 		staticRules: make(map[bNamespace][]bStaticRelationRule),
 	}
 
+	db.rules.Store(new([]bRule))
 	db.validateStaticRules.Store(true)
 
 	slog.Info("loading ReBAC database from blob store...")
@@ -78,47 +77,27 @@ func NewDB(store blob.Store) (*DB, error) {
 	return db, nil
 }
 
-func (db *DB) AddResolver(resolver Resolver) {
-	db.mutex.Lock()
-	defer db.mutex.Unlock()
-
-	db.resolvers = append(db.resolvers, resolver)
-}
-
-// AddMemberResolver adds a resolver created by [NewSourceMemberResolver]. In contrast to [DB.AddResolver], the
-// database knows what the resolver does, which allows [DB.GlobalGrants] to evaluate it in bulk.
-func (db *DB) AddMemberResolver(srcNamespace Namespace, memberNamespace Namespace) {
-	db.mutex.Lock()
-	defer db.mutex.Unlock()
-
-	db.resolvers = append(db.resolvers, NewSourceMemberResolver(srcNamespace, memberNamespace))
-	db.memberResolvers = append(db.memberResolvers, memberResolver{src: srcNamespace, member: memberNamespace})
-}
-
-// Resolve checks if the database allows the given triple. If the triple is not directly contained within the database,
-// it will be checked against all registered resolvers.
-// Resolvers are evaluated in registration order: first positive match wins.
+// Resolve decides, whether the source has the relation on the target. In contrast to [DB.Contains], which only
+// knows the stored triples, Resolve allows the triple if
+//   - it is stored as is, or
+//   - it is stored for the wildcard target [AllInstances] of the same namespace, or
+//   - a rule added by [DB.AddRule] derives it from a membership of the source.
+//
+// A triple with an empty component is never allowed. [DB.Relations] enumerates the same decision for all relations
+// at once. The error is always nil and only kept for the callers.
 func (db *DB) Resolve(triple Triple) (bool, error) {
-	if ok, err := db.Contains(triple); ok || err != nil {
-		return ok, err
+	if triple.Relation == "" {
+		return false, nil
 	}
 
-	db.mutex.RLock()
-	resolvers := db.resolvers
-	db.mutex.RUnlock()
-
-	for _, resolver := range resolvers {
-		allowed, err := resolver(db, triple)
-		if err != nil {
-			return false, err
-		}
-
-		if allowed {
-			return true, nil
-		}
+	// security note: newProbe never interns any string to avoid simple DOS attack vectors by just
+	// requesting infinite numbers of checks, which otherwise would fill our string table with garbage.
+	p, ok := db.newProbe(triple.Source, triple.Relation, triple.Target)
+	if !ok {
+		return false, nil
 	}
 
-	return false, nil
+	return db.check(p, 0), nil
 }
 
 // Contains checks if the database has the given exact triple.
@@ -134,145 +113,86 @@ func (db *DB) Contains(tuple Triple) (bool, error) {
 	return ok, nil
 }
 
-func optimizerWantsReverse(query Query) bool {
-	t := query.triple
-	if t.Source.Namespace != "" && t.Source.Instance != "" {
-		// forward
-		return false
-	}
-
-	if t.Target.Namespace != "" && t.Target.Instance != "" {
-		//backward
-		return true
-	}
-
-	if t.Target.Namespace != "" {
-		//backward
-		return false
-	}
-
-	return true
-}
-
 // Query retrieves all triples that match the given query. This does not involve any resolving. Leaving
-// any namespace, instance or relation empty triggers an according range search. If no source namespace is
-// specified, the inverse index is used. At worst, a full table scan is performed if no namespace is specified,
-// which is performed internally as a fixed vector comparison and will be faster than conventional string
-// Triple equivalence.
+// any namespace, instance or relation empty triggers an according range search on the index with the longest
+// bound prefix, see [DB.scan]. At worst, a full table scan is performed if nothing is specified, which is
+// performed internally as a fixed vector comparison and will be faster than conventional string Triple equivalence.
 func (db *DB) Query(query Query) iter.Seq2[Triple, error] {
 	return func(yield func(Triple, error) bool) {
-		var tree *btree.BTreeG[fixedBinaryTriple]
-		var reverse bool
-
-		if optimizerWantsReverse(query) {
-			tree = db.backward
-			reverse = true
-		} else {
-			tree = db.forward
-			reverse = false
-		}
-
-		if debug {
-			slog.Info("db optimizer picked index", "reverse", reverse)
-		}
-
-		bTriple, ok := db.tryIntoBinary(query.triple)
+		pattern, ok := db.tryIntoBinary(query.triple)
 		if !ok {
 			// some string is not interned; therefore, the result must be the empty set
 			return
 		}
 
-		queryTriple := bTriple
-		if reverse {
-			bTriple = bTriple.reverse()
+		if !query.hasGroupBy() {
+			db.scan(pattern, func(t binaryTriple) bool {
+				return yield(db.fromBinary(t), nil)
+			})
+
+			return
 		}
 
-		prefixBytes := prefixSlice(bTriple.Binary())
-		emptyPrefix := len(prefixBytes) == 0
-
-		// we may get query triples with [a b nil c d], and the pivot prefix must stop at [a b] or [c d]
-		var prefixPivot fixedBinaryTriple
-		copy(prefixPivot[:], prefixBytes)
-
-		var debugVisited int
-		var debugStart time.Time
-
-		if debug {
-			debugStart = time.Now()
-		}
-
-		var groupByRelation map[bRelation]struct{}
-		if query.groupByRelation {
-			groupByRelation = make(map[bRelation]struct{})
-		}
-
-		const next = true
-		tree.Ascend(prefixPivot, func(item fixedBinaryTriple) bool {
-			if debug {
-				debugVisited++
-			}
-
-			it := item.Unwrap()
-			if reverse {
-				it = it.reverse()
-			}
-
-			// exit early if the prefix does not match anymore
-			if !emptyPrefix && !bytes.HasPrefix(item[:], prefixBytes) {
-				return false
-			}
-
-			// check if we match the query triple, which is not just a prefix but may contain arbitrary query holes
-			if queryTriple.A.Namespace != 0 && it.A.Namespace != queryTriple.A.Namespace {
-				return next
-			}
-
-			if queryTriple.A.Instance != 0 && it.A.Instance != queryTriple.A.Instance {
-				return next
-			}
-
-			if queryTriple.Relation != 0 && it.Relation != queryTriple.Relation {
-				return next
-			}
-
-			if queryTriple.B.Namespace != 0 && it.B.Namespace != queryTriple.B.Namespace {
-				return next
-			}
-
-			if queryTriple.B.Instance != 0 && it.B.Instance != queryTriple.B.Instance {
-				return next
-			}
-
-			if query.groupByRelation {
-
-			}
-
-			if !query.hasGroupBy() {
-				triple := db.fromBinary(it)
-				return yield(triple, nil)
-			}
-
-			if query.groupByRelation {
-				groupByRelation[it.Relation] = struct{}{}
-			}
-
-			return true // group by must iterate over all to collect
+		// group by must iterate over all to collect
+		relations := make(map[bRelation]struct{})
+		db.scan(pattern, func(t binaryTriple) bool {
+			relations[t.Relation] = struct{}{}
+			return true
 		})
 
-		if debug {
-			slog.Info("rebac db query done", "visited", debugVisited, "duration", time.Since(debugStart).String())
-		}
-
-		if query.groupByRelation {
-			for relation := range groupByRelation {
-				if !yield(db.fromBinary(binaryTriple{
-					Relation: relation,
-				}), nil) {
-					return
-				}
+		for relation := range relations {
+			if !yield(db.fromBinary(binaryTriple{Relation: relation}), nil) {
+				return
 			}
 		}
 	}
+}
+
+// plan picks the index for the pattern: the one with the longest bound prefix visits the fewest triples. It
+// returns the pivot to start at, the length of the prefix every match must share and whether the backward index
+// has been chosen, in which case the items are stored reversed.
+func plan(pattern binaryTriple) (pivot fixedBinaryTriple, prefix int, reverse bool) {
+	forward := pattern.Binary()
+	backward := pattern.reverse().Binary()
+
+	if n, m := forward.boundPrefix(), backward.boundPrefix(); m > n {
+		return backward, m, true
+	} else {
+		return forward, n, false
+	}
+}
+
+// scan yields all stored triples, which match the pattern, where a zero component matches anything. This is the
+// binary core of [DB.Query]: no string is touched. The order of the yielded triples depends on the chosen index.
+func (db *DB) scan(pattern binaryTriple, yield func(binaryTriple) bool) {
+	pivot, prefix, reverse := plan(pattern)
+	tree := db.forward
+	if reverse {
+		tree = db.backward
+	}
+
+	if debug {
+		slog.Info("db optimizer picked index", "reverse", reverse, "prefix", prefix)
+	}
+
+	tree.Ascend(pivot, func(item fixedBinaryTriple) bool {
+		// exit early if the prefix does not match anymore
+		if !bytes.Equal(item[:prefix], pivot[:prefix]) {
+			return false
+		}
+
+		t := item.Unwrap()
+		if reverse {
+			t = t.reverse()
+		}
+
+		// the pattern is not just a prefix but may contain arbitrary query holes
+		if !t.matches(pattern) {
+			return true
+		}
+
+		return yield(t)
+	})
 }
 
 // Delete removes the exact indexed tuple.
@@ -315,21 +235,6 @@ func (db *DB) DeleteByQuery(query Query) error {
 	}
 
 	return nil
-}
-
-// prefixSlice checks each uint32 in the fixed binary triple and returns the resulting slice until and exclusive
-// the first found zero pointer.
-func prefixSlice(p fixedBinaryTriple) []byte {
-	// 5 fields à 4 Bytes = 20 Bytes total
-	for i := 0; i < 5; i++ {
-		offset := i * 4
-		// check for zero pointer
-		if p[offset] == 0 && p[offset+1] == 0 && p[offset+2] == 0 && p[offset+3] == 0 {
-			return p[:offset]
-		}
-	}
-
-	return p[:]
 }
 
 // Put just inserts the given tuple in an idempotent fashion.
@@ -407,15 +312,11 @@ func (db *DB) Count() (int64, error) {
 	return int64(db.forward.Len()), nil
 }
 
+// All yields every stored triple in the order of the forward index.
 func (db *DB) All() iter.Seq2[Triple, error] {
 	return func(yield func(Triple, error) bool) {
-		db.forward.Walk(func(items []fixedBinaryTriple) bool {
-			for _, item := range items {
-				triple := db.fromBinary(item.Unwrap())
-				return yield(triple, nil)
-			}
-
-			return true
+		db.forward.Scan(func(item fixedBinaryTriple) bool {
+			return yield(db.fromBinary(item.Unwrap()), nil)
 		})
 	}
 }
@@ -478,16 +379,21 @@ func (db *DB) tryIntoBinary(t Triple) (binaryTriple, bool) {
 	return b, true
 }
 
+// fromBinary converts the interned ids back into strings, acquiring the lock of the string table only once.
 func (db *DB) fromBinary(b binaryTriple) Triple {
+	t := db.strTable
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
+
 	return Triple{
 		Source: Entity{
-			Namespace: Namespace(db.strTable.String(uint32(b.A.Namespace))),
-			Instance:  Instance(db.strTable.String(uint32(b.A.Instance))),
+			Namespace: Namespace(t.stringLocked(uint32(b.A.Namespace))),
+			Instance:  Instance(t.stringLocked(uint32(b.A.Instance))),
 		},
-		Relation: Relation(db.strTable.String(uint32(b.Relation))),
+		Relation: Relation(t.stringLocked(uint32(b.Relation))),
 		Target: Entity{
-			Namespace: Namespace(db.strTable.String(uint32(b.B.Namespace))),
-			Instance:  Instance(db.strTable.String(uint32(b.B.Instance))),
+			Namespace: Namespace(t.stringLocked(uint32(b.B.Namespace))),
+			Instance:  Instance(t.stringLocked(uint32(b.B.Instance))),
 		},
 	}
 }

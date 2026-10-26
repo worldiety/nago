@@ -28,7 +28,7 @@ import (
 )
 
 // newTestRDB creates an in-memory ReBAC database wired like the real application: the drive per-file static
-// rules are registered (user/group -> file for every ACL permission) and the group member resolver is added,
+// rules are registered (user/group -> file for every ACL permission) and the group membership rule is added,
 // so that a resource permission granted to a group is honored for its members (see Configurator.RDB and
 // application/drive/cfg).
 func newTestRDB(t *testing.T) *rebac.DB {
@@ -38,9 +38,9 @@ func newTestRDB(t *testing.T) *rebac.DB {
 		t.Fatalf("cannot create rebac db: %v", err)
 	}
 
-	// resolvers used by the real wiring for user membership resolution
-	rdb.AddResolver(rebac.NewSourceMemberResolver(user.Namespace, role.Namespace))
-	rdb.AddResolver(rebac.NewSourceMemberResolver(user.Namespace, group.Namespace))
+	// rules used by the real wiring for user membership resolution
+	rdb.AddRule(rebac.Rule{Source: user.Namespace, Via: role.Namespace})
+	rdb.AddRule(rebac.Rule{Source: user.Namespace, Via: group.Namespace})
 
 	// membership relations need a rule as well so we can wire test group memberships
 	rdb.RegisterStaticRule(rebac.StaticRule{Source: group.Namespace, Relation: rebac.Member, Target: user.Namespace})
@@ -102,7 +102,7 @@ func statFile(t *testing.T, uc UseCases, fid FID) File {
 	return optFile.Unwrap()
 }
 
-// addGroupMember wires a test membership triple (group has-member user) so that the group member resolver can
+// addGroupMember wires a test membership triple (group has-member user) so that the group membership rule can
 // resolve group grants for that user.
 func addGroupMember(t *testing.T, rdb *rebac.DB, gid group.ID, uid user.ID) {
 	t.Helper()
@@ -257,7 +257,7 @@ func TestGrantAndRevokeUser(t *testing.T) {
 }
 
 // TestGroupGrantResolvesForMember is the key test for the group support: a permission granted to a group must
-// be honored for a member of that group through the source-member resolver.
+// be honored for a member of that group through the group membership rule.
 func TestGroupGrantResolvesForMember(t *testing.T) {
 	uc, _, rdb := newTestUseCases(t)
 	owner := user.SU()
