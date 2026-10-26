@@ -10,25 +10,12 @@ package vm_test
 import (
 	"context"
 	"testing"
-	"testing/fstest"
 
 	"go.wdy.de/nago/pkg/gostrict"
 	"go.wdy.de/nago/pkg/gostrict/engine/vm"
 	"go.wdy.de/nago/pkg/gostrict/lib/ui"
 	"go.wdy.de/nago/pkg/gostrict/std/js"
 )
-
-func compileSrc(t *testing.T, src string) *gostrict.Bundle {
-	t.Helper()
-	b, diags, err := gostrict.NewCache(1).Compile("llm.local/s", gostrict.Module{Path: "llm.local/s", FS: fstest.MapFS{"s.go": {Data: []byte(src)}}})
-	if err != nil || len(diags) > 0 {
-		t.Fatal(err, diags.Text())
-	}
-	if _, err := b.VM(); err != nil {
-		t.Fatal(err)
-	}
-	return b
-}
 
 // TestVariadicWithoutArgs calls variadic functions of a header package without variadic arguments, which receive
 // an empty list.
