@@ -1,40 +1,42 @@
 <template>
-	<div class="signature-overlay">
-		<div class="dialog">
-			<div class="flex justify-between items-center gap-x-2">
-				<p class="truncate">{{ ui.label ?? '' }}</p>
-				<button
-					ref="closeButton"
-					class="close-button button-tertiary square"
-					tabindex="0"
-					:aria-label="$t('signature-field.overlay.close')"
-					@click="$emit('close')"
-					@keydown.enter="$emit('close')"
-				>
-					<Close class="h-3.5" aria-hidden="true" />
-				</button>
+	<Teleport to="body">
+		<div class="signature-overlay">
+			<div class="dialog">
+				<div class="flex justify-between items-center gap-x-2">
+					<p class="truncate">{{ ui.label ?? '' }}</p>
+					<button
+						ref="closeButton"
+						class="close-button button-tertiary square"
+						tabindex="0"
+						:aria-label="$t('signature-field.overlay.close')"
+						@click="$emit('close')"
+						@keydown.enter="$emit('close')"
+					>
+						<Close class="h-3.5" aria-hidden="true" />
+					</button>
+				</div>
+
+				<hr class="border-I0" />
+
+				<canvas ref="canvas" />
+
+				<hr class="border-ST0" />
+
+				<div class="footer">
+					<button class="button-tertiary" :disabled="!clearButtonVisible" @click="clearInputValue">
+						<eraser-icon class="h-4 fill-current" aria-hidden="true" />
+						{{ $t('signature-field.overlay.reset') }}
+					</button>
+					<button class="button-confirm button-primary" @click="onSubmit">
+						{{ $t('signature-field.overlay.submit') }}
+					</button>
+				</div>
 			</div>
 
-			<hr class="border-I0" />
-
-			<canvas ref="canvas" />
-
-			<hr class="border-ST0" />
-
-			<div class="footer">
-				<button class="button-tertiary" :disabled="!clearButtonVisible" @click="clearInputValue">
-					<eraser-icon class="h-4 fill-current" aria-hidden="true" />
-					{{ $t('signature-field.overlay.reset') }}
-				</button>
-				<button class="button-confirm button-primary" @click="onSubmit">
-					{{ $t('signature-field.overlay.submit') }}
-				</button>
-			</div>
+			<!-- Blurred Background -->
+			<div class="bg" @click="$emit('close')"></div>
 		</div>
-
-		<!-- Blurred Background -->
-		<div class="bg" @click="$emit('close')"></div>
-	</div>
+	</Teleport>
 </template>
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
