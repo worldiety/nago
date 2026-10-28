@@ -39,10 +39,10 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onBeforeUnmount, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, onUnmounted, ref, watch } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
 import { cssLengthValue } from '@/components/shared/length';
-import { onModalClose, onModalOpen } from '@/components/shared/modalManager';
+import { ModalManager } from '@/components/shared/modalManager';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
 import type { Modal } from '@/shared/proto/nprotoc_gen';
@@ -51,18 +51,10 @@ import { ModalTypeValues } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: Modal;
-	//isActiveDialog: boolean|undefined;
 }>();
 
 const serviceAdapter = useServiceAdapter();
 const dialogContainer = ref<HTMLElement | undefined>();
-
-// TODO the following code causes focus-lost event in input elements and seems not be appropriate anymore - this is a port from a dialog
-// watch(() => props.ui, (newValue) => {
-// 	if (newValue) {
-// 		captureFocusInDialog();
-// 	}
-// });
 
 const styles = computed<string>(() => {
 	const styles: string[] = [];
@@ -112,13 +104,27 @@ const focusableSelector = [
 	'select',
 	'textarea',
 	'iframe',
+	'audio[controls]',
+	'video[controls]',
+	'summary',
 	'[contenteditable]:not([contenteditable="false"])',
 	'[tabindex]',
 ].join(',');
 
-// returns all tabbable elements of the dialog in document order. It is evaluated on each use, because the
-// dialog content may change while it is open.
-function getFocusableElements(): HTMLElement[] {
+// returns all tabbable elements within the given root in document order.
+function getTabbableElements(root: Element): HTMLElement[] {
+	return Array.from(root.querySelectorAll<HTMLElement>(focusableSelector)).filter(
+		(el) =>
+			el.tabIndex >= 0 &&
+			!(el as HTMLButtonElement).disabled &&
+			!el.closest('[inert]') &&
+			el.getClientRects().length > 0
+	);
+}
+
+// returns all tabbable elements of the dialogs main content in document order. It is evaluated on each use, because
+// the dialog content may change while it is open.
+function getInitialFocusCandidates(): HTMLElement[] {
 	if (!dialogContainer.value) return [];
 
 	const dialog = dialogContainer.value.querySelector('dialog');
@@ -134,40 +140,98 @@ function getFocusableElements(): HTMLElement[] {
 
 	if (!highestDialogSection) return [];
 
-	const candidates = highestDialogSection.querySelectorAll<HTMLElement>(focusableSelector) ?? [];
-	return Array.from(candidates).filter(
-		(el) =>
-			el.tabIndex >= 0 &&
-			!(el as HTMLButtonElement).disabled &&
-			!el.closest('[inert]') &&
-			el.getClientRects().length > 0
-	);
+	return getTabbableElements(highestDialogSection);
 }
 
 function captureFocusInDialog(): void {
-	getFocusableElements()[0]?.focus({ focusVisible: true } as any); // focus options help to make the focus event visible
+	getInitialFocusCandidates()[0]?.focus({ focusVisible: true } as any); // focus options help to make the focus event visible
 }
 
 function onKeydown(e: KeyboardEvent) {
 	if (e.code === 'Escape') sendDismissEvent();
 }
 
-onMounted(() => {
-	addEventListener('keydown', onKeydown);
+// keeps the tab order cycling within the dialog.
+function onTabKeydown(e: KeyboardEvent) {
+	if (e.key !== 'Tab' || e.defaultPrevented) return;
 
-	if (!props.ui.allowBackgroundScrolling) {
-		onModalOpen();
+	const container = dialogContainer.value;
+	if (!container || !ModalManager.isTopmostDialog(container)) return;
+
+	const active = document.activeElement;
+	if (active instanceof Element && active.closest(ModalManager.keepInteractiveSelector)) return;
+
+	const tabbables = getTabbableElements(container);
+	if (tabbables.length === 0) {
+		e.preventDefault();
+		return;
 	}
 
-	if (props.ui.modalType !== ModalTypeValues.ModalTypeOverlay) {
+	const first = tabbables[0];
+	const last = tabbables[tabbables.length - 1];
+	const insideDialog = active instanceof Node && container.contains(active);
+
+	if (!insideDialog) {
+		e.preventDefault();
+		(e.shiftKey ? last : first).focus();
+	} else if (e.shiftKey && active === first) {
+		e.preventDefault();
+		last.focus();
+	} else if (!e.shiftKey && active === last) {
+		e.preventDefault();
+		first.focus();
+	}
+}
+
+function trapFocus(trap: boolean) {
+	if (trap) {
+		document.addEventListener('keydown', onTabKeydown, true);
+	} else {
+		document.removeEventListener('keydown', onTabKeydown, true);
+	}
+}
+
+// the dialog container only exists, if this is a dialog with content. While it exists, the focus is trapped in it.
+watch(dialogContainer, (newContainer, oldContainer) => {
+	if (oldContainer) {
+		ModalManager.popDialog(oldContainer);
+		trapFocus(false);
+	}
+
+	if (newContainer) {
+		ModalManager.pushDialog(newContainer);
+		trapFocus(true);
 		setTimeout(captureFocusInDialog, 50); // wait for dialog content to be rendered
 	}
 });
 
-onBeforeUnmount(() => {
-	if (!props.ui.allowBackgroundScrolling) {
-		onModalClose();
+let scrollLocked = false;
+
+function setScrollLock(lock: boolean) {
+	if (lock === scrollLocked) return;
+
+	scrollLocked = lock;
+	if (lock) {
+		ModalManager.onModalOpen();
+	} else {
+		ModalManager.onModalClose();
 	}
+}
+
+watch(
+	() => !!props.ui.content && !props.ui.allowBackgroundScrolling,
+	(lock) => setScrollLock(lock)
+);
+
+onMounted(() => {
+	addEventListener('keydown', onKeydown);
+	setScrollLock(!!props.ui.content && !props.ui.allowBackgroundScrolling);
+});
+
+onBeforeUnmount(() => {
+	setScrollLock(false);
+	trapFocus(false);
+	if (dialogContainer.value) ModalManager.popDialog(dialogContainer.value);
 });
 
 onUnmounted(() => {
