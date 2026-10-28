@@ -8,8 +8,10 @@
 package ui
 
 import (
+	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
+	"go.wdy.de/nago/presentation/ui/accessibility"
 )
 
 // TDialog is a overlay component (Dialog).
@@ -99,7 +101,7 @@ func (c TDialog) DisableBoxLayout(b bool) TDialog {
 // Render builds and returns the protocol representation of the dialog.
 func (c TDialog) Render(ctx core.RenderContext) proto.Component {
 	stack := VStack(
-		If(c.title != nil, HStack(c.title, Spacer(), c.titleX).Alignment(Leading).BackgroundColor(ColorCardTop).Frame(Frame{}.FullWidth()).Padding(Padding{Left: L20, Right: L20, Top: L12, Bottom: L12})),
+		If(c.title != nil, HStack(c.title, Spacer(), accessibility.Accessible(c.titleX).Label(rstring.ActionDialogClose.Get(ctx.Window()))).Alignment(Leading).BackgroundColor(ColorCardTop).Frame(Frame{}.FullWidth()).Padding(Padding{Left: L20, Right: L20, Top: L12, Bottom: L12})),
 		VStack(
 			c.preBody,
 			c.body,
