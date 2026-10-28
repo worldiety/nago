@@ -202,6 +202,15 @@ var (
 		i18n.LocalizationHint("This text is usually used on buttons and is displayed where space must be minified. So keep it as short and generic as possible."),
 	)
 
+	ActionDialogClose = i18n.MustString(
+		"nago.common.action.dialog_close",
+		i18n.Values{
+			language.English: "Close dialog",
+			language.German:  "Dialog schließen",
+		},
+		i18n.LocalizationHint("This text is usually used in dialog close buttons."),
+	)
+
 	ActionDownload = i18n.MustString(
 		"nago.common.action.download",
 		i18n.Values{

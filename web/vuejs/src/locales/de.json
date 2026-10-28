@@ -127,6 +127,7 @@
 	},
 	"signature-field": {
 		"overlay": {
+			"close": "Dialog schließen",
 			"reset": "Unterschrift löschen",
 			"submit": "Bestätigen"
 		}

@@ -7,6 +7,7 @@
 					ref="closeButton"
 					class="close-button button-tertiary square"
 					tabindex="0"
+					:aria-label="$t('signature-field.overlay.close')"
 					@click="$emit('close')"
 					@keydown.enter="$emit('close')"
 				>
