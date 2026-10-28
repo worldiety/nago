@@ -29,8 +29,6 @@
 		<div
 			ref="dialogContainer"
 			class="pointer-events-auto fixed"
-			@keydown.tab.exact="moveFocusForward"
-			@keydown.shift.tab="moveFocusBackwards"
 			@pointerdown="pressedOnBackdrop = $event.target === $event.currentTarget"
 			@pointerup="releasedOnBackdrop = $event.target === $event.currentTarget"
 			@click.stop="onBackdropClick"
@@ -58,24 +56,6 @@ const props = defineProps<{
 
 const serviceAdapter = useServiceAdapter();
 const dialogContainer = ref<HTMLElement | undefined>();
-
-onMounted(() => {
-	if (!props.ui.allowBackgroundScrolling) {
-		onModalOpen();
-	}
-	//if (props.isActiveDialog) {
-	if (props.ui.modalType !== ModalTypeValues.ModalTypeOverlay) {
-		captureFocusInDialog();
-	}
-
-	//}
-});
-
-onBeforeUnmount(() => {
-	if (!props.ui.allowBackgroundScrolling) {
-		onModalClose();
-	}
-});
 
 // TODO the following code causes focus-lost event in input elements and seems not be appropriate anymore - this is a port from a dialog
 // watch(() => props.ui, (newValue) => {
@@ -139,7 +119,22 @@ const focusableSelector = [
 // returns all tabbable elements of the dialog in document order. It is evaluated on each use, because the
 // dialog content may change while it is open.
 function getFocusableElements(): HTMLElement[] {
-	const candidates = dialogContainer.value?.querySelectorAll<HTMLElement>(focusableSelector) ?? [];
+	if (!dialogContainer.value) return [];
+
+	const dialog = dialogContainer.value.querySelector('dialog');
+	if (!dialog) return [];
+
+	// find the highest dialog section and assume it contains the dialogs main content
+	let highestDialogSection: HTMLElement | undefined;
+	for (let child of dialog.children) {
+		if (!highestDialogSection || child.clientHeight > highestDialogSection.clientHeight) {
+			highestDialogSection = child as HTMLElement;
+		}
+	}
+
+	if (!highestDialogSection) return [];
+
+	const candidates = highestDialogSection.querySelectorAll<HTMLElement>(focusableSelector) ?? [];
 	return Array.from(candidates).filter(
 		(el) =>
 			el.tabIndex >= 0 &&
@@ -150,36 +145,7 @@ function getFocusableElements(): HTMLElement[] {
 }
 
 function captureFocusInDialog(): void {
-	getFocusableElements()[0]?.focus();
-}
-
-function moveFocusForward(e: KeyboardEvent): void {
-	if (e.shiftKey) {
-		return;
-	}
-	const elements = getFocusableElements();
-	const active = document.activeElement as HTMLElement | null;
-	if (elements.length === 0) {
-		e.preventDefault();
-		return;
-	}
-	if (active === elements[elements.length - 1] || !elements.includes(active as HTMLElement)) {
-		e.preventDefault();
-		elements[0].focus();
-	}
-}
-
-function moveFocusBackwards(e: KeyboardEvent): void {
-	const elements = getFocusableElements();
-	const active = document.activeElement as HTMLElement | null;
-	if (elements.length === 0) {
-		e.preventDefault();
-		return;
-	}
-	if (active === elements[0] || !elements.includes(active as HTMLElement)) {
-		e.preventDefault();
-		elements[elements.length - 1].focus();
-	}
+	getFocusableElements()[0]?.focus({ focusVisible: true } as any); // focus options help to make the focus event visible
 }
 
 function onKeydown(e: KeyboardEvent) {
@@ -188,6 +154,20 @@ function onKeydown(e: KeyboardEvent) {
 
 onMounted(() => {
 	addEventListener('keydown', onKeydown);
+
+	if (!props.ui.allowBackgroundScrolling) {
+		onModalOpen();
+	}
+
+	if (props.ui.modalType !== ModalTypeValues.ModalTypeOverlay) {
+		setTimeout(captureFocusInDialog, 50); // wait for dialog content to be rendered
+	}
+});
+
+onBeforeUnmount(() => {
+	if (!props.ui.allowBackgroundScrolling) {
+		onModalClose();
+	}
 });
 
 onUnmounted(() => {
