@@ -127,7 +127,7 @@ func (c *checker) checkImports(f *ast.File) {
 			continue
 		}
 
-		why := "the package is not part of the subset, which allows only math, strings, strconv, errors and iter of the standard library"
+		why := "the package is not part of the subset, which allows only math, strings, errors and iter of the standard library"
 		fix := `use the packages "go.wdy.de/nago/pkg/gostrict/std/list", ".../dict" and ".../text"`
 		if h, ok := importHints[p]; ok {
 			why, fix = h.why, h.fix
@@ -527,7 +527,7 @@ func (c *checker) checkConversion(n *ast.CallExpr, to types.Type) {
 		c.report(n, CodeFloatConversion, "converting a float64 into an integer is not allowed", "Go leaves the result undefined for NaN and values out of range", "use num.Trunc32(f) or num.Round32(f) from \"go.wdy.de/nago/pkg/gostrict/std/num\", which are defined for every value")
 	}
 	if isStringType(to) && !isStringType(from) {
-		c.report(n, CodeString, "converting a number to a string is not allowed", "string(n) returns the character of a code point, which is easily confused with formatting the number", "use strconv.Itoa(n) to format a number or text.FromCodePoint(r) for a character")
+		c.report(n, CodeString, "converting a number to a string is not allowed", "string(n) returns the character of a code point, which is easily confused with formatting the number", "use text.FromInt(n) to format a number or text.FromCodePoint(r) for a character")
 	}
 }
 
