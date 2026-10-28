@@ -21,6 +21,7 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/accessibility"
 	"go.wdy.de/nago/presentation/ui/alert"
 )
 
@@ -499,23 +500,26 @@ func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
 	if c.renderPicked == nil {
 		return ui.VStack(
 			c.Dialog(),
-			ui.VStack(
-				ui.TextField(c.label, c.pickedStr()).
-					ID(c.id).
-					Disabled(c.disabled).
-					ReadOnly(true).
-					Trailing(ui.Image().Embed(heroSolid.ChevronRight).Frame(ui.Frame{}.Size(ui.L16, ui.L16))).
-					ErrorText(c.errorText).
-					SupportingText(c.supportingText).
+			accessibility.Accessible(
+				ui.VStack(
+					ui.TextField(c.label, c.pickedStr()).
+						ID(c.id).
+						Disabled(c.disabled).
+						ReadOnly(true).
+						Trailing(ui.Image().Embed(heroSolid.ChevronRight).Frame(ui.Frame{}.Size(ui.L16, ui.L16))).
+						ErrorText(c.errorText).
+						SupportingText(c.supportingText).
+						FullWidth(),
+				).
+					Action(func() {
+						if c.disabled {
+							return
+						}
+						c.pickerPresented.Set(true)
+					}).
 					FullWidth(),
 			).
-				Action(func() {
-					if c.disabled {
-						return
-					}
-					c.pickerPresented.Set(true)
-				}).
-				FullWidth(),
+				Role(accessibility.RoleButton),
 		).
 			Alignment(ui.Leading).
 			Visible(!c.invisible).
