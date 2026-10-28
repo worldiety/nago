@@ -519,7 +519,8 @@ func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
 					}).
 					FullWidth(),
 			).
-				Role(accessibility.RoleButton),
+				Role(accessibility.RoleButton).
+				Disabled(c.disabled),
 		).
 			Alignment(ui.Leading).
 			Visible(!c.invisible).
