@@ -25548,6 +25548,246 @@ export class GostrictReturn implements Writeable, Readable, CallRet {
 	isCallRet(): void {}
 }
 
+// Accessible wraps an arbitrary component and annotates it with WAI-ARIA attributes for assistive technologies like screen readers. The attributes are applied directly to the content, so the wrapper itself does not introduce an additional element. All fields are optional and an empty value means that the according attribute is not set. Boolean-like and numeric attributes are transported as strings, so that a false or zero value can be distinguished from an absent value.
+export class Accessible implements Writeable, Readable, Component {
+	public content?: Component;
+
+	// Role is the WAI-ARIA role, e.g. button, region, status or slider.
+	public role?: Str;
+
+	// Label is the aria-label which defines the accessible name.
+	public label?: Str;
+
+	// LabelledBy is the aria-labelledby which contains a space separated list of ids of the labelling elements.
+	public labelledBy?: Str;
+
+	// Hidden is the aria-hidden which removes the content from the accessibility tree.
+	public hidden?: Bool;
+
+	// ValueText is the aria-valuetext which is a human readable text alternative of ValueNow.
+	public valueText?: Str;
+
+	// ValueNow is the aria-valuenow as a decimal number for range widgets.
+	public valueNow?: Str;
+
+	// ValueMin is the aria-valuemin as a decimal number for range widgets.
+	public valueMin?: Str;
+
+	// ValueMax is the aria-valuemax as a decimal number for range widgets.
+	public valueMax?: Str;
+
+	// Expanded is the aria-expanded which is either true or false.
+	public expanded?: Str;
+
+	// Selected is the aria-selected which is either true or false.
+	public selected?: Str;
+
+	// Disabled is the aria-disabled which is either true or false.
+	public disabled?: Str;
+
+	constructor(
+		content: Component | undefined = undefined,
+		role: Str | undefined = undefined,
+		label: Str | undefined = undefined,
+		labelledBy: Str | undefined = undefined,
+		hidden: Bool | undefined = undefined,
+		valueText: Str | undefined = undefined,
+		valueNow: Str | undefined = undefined,
+		valueMin: Str | undefined = undefined,
+		valueMax: Str | undefined = undefined,
+		expanded: Str | undefined = undefined,
+		selected: Str | undefined = undefined,
+		disabled: Str | undefined = undefined
+	) {
+		this.content = content;
+		this.role = role;
+		this.label = label;
+		this.labelledBy = labelledBy;
+		this.hidden = hidden;
+		this.valueText = valueText;
+		this.valueNow = valueNow;
+		this.valueMin = valueMin;
+		this.valueMax = valueMax;
+		this.expanded = expanded;
+		this.selected = selected;
+		this.disabled = disabled;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					// decode polymorphic field as 1 element array
+					const len = reader.readUvarint();
+					if (len != 1) {
+						throw new Error(`unexpected length: ` + len);
+					}
+					this.content = unmarshal(reader) as Component;
+					break;
+				}
+				case 2: {
+					this.role = readString(reader);
+					break;
+				}
+				case 3: {
+					this.label = readString(reader);
+					break;
+				}
+				case 4: {
+					this.labelledBy = readString(reader);
+					break;
+				}
+				case 5: {
+					this.hidden = readBool(reader);
+					break;
+				}
+				case 6: {
+					this.valueText = readString(reader);
+					break;
+				}
+				case 7: {
+					this.valueNow = readString(reader);
+					break;
+				}
+				case 8: {
+					this.valueMin = readString(reader);
+					break;
+				}
+				case 9: {
+					this.valueMax = readString(reader);
+					break;
+				}
+				case 10: {
+					this.expanded = readString(reader);
+					break;
+				}
+				case 11: {
+					this.selected = readString(reader);
+					break;
+				}
+				case 12: {
+					this.disabled = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.content !== undefined && !this.content.isZero(),
+			this.role !== undefined,
+			this.label !== undefined,
+			this.labelledBy !== undefined,
+			this.hidden !== undefined,
+			this.valueText !== undefined,
+			this.valueNow !== undefined,
+			this.valueMin !== undefined,
+			this.valueMax !== undefined,
+			this.expanded !== undefined,
+			this.selected !== undefined,
+			this.disabled !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			// encode polymorphic enum as 1 element slice
+			writer.writeFieldHeader(Shapes.ARRAY, 1);
+			writer.writeByte(1);
+			this.content.writeTypeHeader(writer);
+			this.content!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.role!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			writeString(writer, this.label!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
+			writeString(writer, this.labelledBy!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 5);
+			writeBool(writer, this.hidden!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 6);
+			writeString(writer, this.valueText!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 7);
+			writeString(writer, this.valueNow!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 8);
+			writeString(writer, this.valueMin!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[9]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 9);
+			writeString(writer, this.valueMax!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[10]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 10);
+			writeString(writer, this.expanded!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[11]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 11);
+			writeString(writer, this.selected!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[12]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 12);
+			writeString(writer, this.disabled!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			(this.content === undefined || this.content.isZero()) &&
+			this.role === undefined &&
+			this.label === undefined &&
+			this.labelledBy === undefined &&
+			this.hidden === undefined &&
+			this.valueText === undefined &&
+			this.valueNow === undefined &&
+			this.valueMin === undefined &&
+			this.valueMax === undefined &&
+			this.expanded === undefined &&
+			this.selected === undefined &&
+			this.disabled === undefined
+		);
+	}
+
+	reset(): void {
+		this.content = undefined;
+		this.role = undefined;
+		this.label = undefined;
+		this.labelledBy = undefined;
+		this.hidden = undefined;
+		this.valueText = undefined;
+		this.valueNow = undefined;
+		this.valueMin = undefined;
+		this.valueMax = undefined;
+		this.expanded = undefined;
+		this.selected = undefined;
+		this.disabled = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 330);
+		return;
+	}
+	isComponent(): void {}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -27017,6 +27257,11 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 329: {
 			const v = new GostrictReturn();
+			v.read(src);
+			return v;
+		}
+		case 330: {
+			const v = new Accessible();
 			v.read(src);
 			return v;
 		}

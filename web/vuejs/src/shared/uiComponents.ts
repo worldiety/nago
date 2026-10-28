@@ -9,6 +9,7 @@
 import type { Component } from 'vue';
 import { defineAsyncComponent } from 'vue';
 import {
+	Accessible,
 	Accordion,
 	AlertNotifications,
 	BarChart,
@@ -62,6 +63,7 @@ import {
 	ThreeJS,
 } from '@/shared/proto/nprotoc_gen';
 
+const LazyUiAccessible = defineAsyncComponent(() => import('@/components/accessible/UiAccessible.vue'));
 const LazyUiAccordion = defineAsyncComponent(() => import('@/components/UiAccordion.vue'));
 const LazyUiAlertNotifications = defineAsyncComponent(() => import('@/components/UiAlertNotifications.vue'));
 const LazyUiBarChart = defineAsyncComponent(() => import('@/components/charts/UiBarChart.vue'));
@@ -119,6 +121,10 @@ const LazyUiWindowTitle = defineAsyncComponent(() => import('@/components/UiWind
  * the template component properly.
  */
 export function vueComponentFor(ngc: NagoComponent): Component {
+	if (ngc instanceof Accessible) {
+		return LazyUiAccessible;
+	}
+
 	if (ngc instanceof Accordion) {
 		return LazyUiAccordion;
 	}

@@ -102,7 +102,7 @@ const rewriteSVG = computed<string>(() => {
 		:style="styles"
 	/>
 	<VHtml
-		v-if="props.ui.sVG"
+		v-else-if="props.ui.sVG"
 		tag="div"
 		:html="rewriteSVG"
 		:title="props.ui.accessibilityLabel"
