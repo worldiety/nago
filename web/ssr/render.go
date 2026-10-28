@@ -82,6 +82,8 @@ func RenderComponent(c proto.Component) dom.FlowContent {
 		return renderSelect(v)
 	case *proto.DnDArea:
 		return renderDnDArea(v)
+	case *proto.Accessible:
+		return renderAccessible(v)
 
 	default:
 		// Any unknown component type returns an empty placeholder <div>.
@@ -1128,4 +1130,38 @@ func renderDnDArea(v *proto.DnDArea) dom.FlowContent {
 	d.SetAttr("data-ssr", "dnd-area")
 	renderChildren(d, v.Children)
 	return d
+}
+
+// renderAccessible renders the content and applies the WAI-ARIA attributes directly to it.
+func renderAccessible(v *proto.Accessible) dom.FlowContent {
+	node := RenderComponent(v.Content)
+	if node == nil {
+		return nil
+	}
+
+	attrs := []struct {
+		name  string
+		value proto.Str
+	}{
+		{"role", v.Role},
+		{"aria-label", v.Label},
+		{"aria-labelledby", v.LabelledBy},
+		{"aria-valuetext", v.ValueText},
+		{"aria-valuenow", v.ValueNow},
+		{"aria-valuemin", v.ValueMin},
+		{"aria-valuemax", v.ValueMax},
+		{"aria-expanded", v.Expanded},
+		{"aria-selected", v.Selected},
+		{"aria-disabled", v.Disabled},
+	}
+	for _, attr := range attrs {
+		if attr.value != "" {
+			node.SetAttr(attr.name, string(attr.value))
+		}
+	}
+	if bool(v.Hidden) {
+		node.SetAttr("aria-hidden", "true")
+	}
+
+	return node
 }

@@ -335,6 +335,7 @@ type Component interface {
 	Readable
 }
 
+func (Accessible) isComponent()         {}
 func (Accordion) isComponent()          {}
 func (AlertNotifications) isComponent() {}
 func (BarChart) isComponent()           {}
@@ -24775,6 +24776,249 @@ func (v *GostrictReturn) read(r *BinaryReader) error {
 	return nil
 }
 
+// Accessible wraps an arbitrary component and annotates it with WAI-ARIA attributes for assistive technologies like screen readers. The attributes are applied directly to the content, so the wrapper itself does not introduce an additional element. All fields are optional and an empty value means that the according attribute is not set. Boolean-like and numeric attributes are transported as strings, so that a false or zero value can be distinguished from an absent value.
+type Accessible struct {
+	Content Component
+	// Role is the WAI-ARIA role, e.g. button, region, status or slider.
+	Role Str
+	// Label is the aria-label which defines the accessible name.
+	Label Str
+	// LabelledBy is the aria-labelledby which contains a space separated list of ids of the labelling elements.
+	LabelledBy Str
+	// Hidden is the aria-hidden which removes the content from the accessibility tree.
+	Hidden Bool
+	// ValueText is the aria-valuetext which is a human readable text alternative of ValueNow.
+	ValueText Str
+	// ValueNow is the aria-valuenow as a decimal number for range widgets.
+	ValueNow Str
+	// ValueMin is the aria-valuemin as a decimal number for range widgets.
+	ValueMin Str
+	// ValueMax is the aria-valuemax as a decimal number for range widgets.
+	ValueMax Str
+	// Expanded is the aria-expanded which is either true or false.
+	Expanded Str
+	// Selected is the aria-selected which is either true or false.
+	Selected Str
+	// Disabled is the aria-disabled which is either true or false.
+	Disabled Str
+}
+
+func (v *Accessible) write(w *BinaryWriter) error {
+	var fields [13]bool
+	fields[1] = v.Content != nil && !v.Content.IsZero()
+	fields[2] = !v.Role.IsZero()
+	fields[3] = !v.Label.IsZero()
+	fields[4] = !v.LabelledBy.IsZero()
+	fields[5] = !v.Hidden.IsZero()
+	fields[6] = !v.ValueText.IsZero()
+	fields[7] = !v.ValueNow.IsZero()
+	fields[8] = !v.ValueMin.IsZero()
+	fields[9] = !v.ValueMax.IsZero()
+	fields[10] = !v.Expanded.IsZero()
+	fields[11] = !v.Selected.IsZero()
+	fields[12] = !v.Disabled.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 1); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.Content.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.Content.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Role.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.Label.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.LabelledBy.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(uvarint, 5); err != nil {
+			return err
+		}
+		if err := v.Hidden.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(byteSlice, 6); err != nil {
+			return err
+		}
+		if err := v.ValueText.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(byteSlice, 7); err != nil {
+			return err
+		}
+		if err := v.ValueNow.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		if err := w.writeFieldHeader(byteSlice, 8); err != nil {
+			return err
+		}
+		if err := v.ValueMin.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[9] {
+		if err := w.writeFieldHeader(byteSlice, 9); err != nil {
+			return err
+		}
+		if err := v.ValueMax.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[10] {
+		if err := w.writeFieldHeader(byteSlice, 10); err != nil {
+			return err
+		}
+		if err := v.Expanded.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[11] {
+		if err := w.writeFieldHeader(byteSlice, 11); err != nil {
+			return err
+		}
+		if err := v.Selected.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[12] {
+		if err := w.writeFieldHeader(byteSlice, 12); err != nil {
+			return err
+		}
+		if err := v.Disabled.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Accessible) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.Content = obj.(Component)
+		case 2:
+			err := v.Role.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Label.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.LabelledBy.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Hidden.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.ValueText.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.ValueNow.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.ValueMin.read(r)
+			if err != nil {
+				return err
+			}
+		case 9:
+			err := v.ValueMax.read(r)
+			if err != nil {
+				return err
+			}
+		case 10:
+			err := v.Expanded.read(r)
+			if err != nil {
+				return err
+			}
+		case 11:
+			err := v.Selected.read(r)
+			if err != nil {
+				return err
+			}
+		case 12:
+			err := v.Disabled.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -26632,6 +26876,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 329:
 		var v GostrictReturn
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 330:
+		var v Accessible
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -31918,6 +32168,28 @@ func (v *GostrictReturn) IsZero() bool {
 	return v.Values.IsZero() && v.Failure.IsZero()
 }
 
+func (v *Accessible) reset() {
+	v.Content = nil
+	v.Role.reset()
+	v.Label.reset()
+	v.LabelledBy.reset()
+	v.Hidden.reset()
+	v.ValueText.reset()
+	v.ValueNow.reset()
+	v.ValueMin.reset()
+	v.ValueMax.reset()
+	v.Expanded.reset()
+	v.Selected.reset()
+	v.Disabled.reset()
+}
+
+func (v *Accessible) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return isZeroComponent(v.Content) && v.Role.IsZero() && v.Label.IsZero() && v.LabelledBy.IsZero() && v.Hidden.IsZero() && v.ValueText.IsZero() && v.ValueNow.IsZero() && v.ValueMin.IsZero() && v.ValueMax.IsZero() && v.Expanded.IsZero() && v.Selected.IsZero() && v.Disabled.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -34055,6 +34327,13 @@ func (v *GostrictCall) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *GostrictReturn) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 329); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Accessible) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 330); err != nil {
 		return err
 	}
 	return nil

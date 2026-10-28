@@ -1,0 +1,66 @@
+{
+  "doc": "Accessible wraps an arbitrary component and annotates it with WAI-ARIA attributes for assistive technologies like screen readers. The attributes are applied directly to the content, so the wrapper itself does not introduce an additional element. All fields are optional and an empty value means that the according attribute is not set. Boolean-like and numeric attributes are transported as strings, so that a false or zero value can be distinguished from an absent value.",
+  "kind": "Record",
+  "id": 330,
+  "fields": {
+    "1": {
+      "name": "Content",
+      "type": "Component"
+    },
+    "2": {
+      "doc": "Role is the WAI-ARIA role, e.g. button, region, status or slider.",
+      "name": "Role",
+      "type": "Str"
+    },
+    "3": {
+      "doc": "Label is the aria-label which defines the accessible name.",
+      "name": "Label",
+      "type": "Str"
+    },
+    "4": {
+      "doc": "LabelledBy is the aria-labelledby which contains a space separated list of ids of the labelling elements.",
+      "name": "LabelledBy",
+      "type": "Str"
+    },
+    "5": {
+      "doc": "Hidden is the aria-hidden which removes the content from the accessibility tree.",
+      "name": "Hidden",
+      "type": "Bool"
+    },
+    "6": {
+      "doc": "ValueText is the aria-valuetext which is a human readable text alternative of ValueNow.",
+      "name": "ValueText",
+      "type": "Str"
+    },
+    "7": {
+      "doc": "ValueNow is the aria-valuenow as a decimal number for range widgets.",
+      "name": "ValueNow",
+      "type": "Str"
+    },
+    "8": {
+      "doc": "ValueMin is the aria-valuemin as a decimal number for range widgets.",
+      "name": "ValueMin",
+      "type": "Str"
+    },
+    "9": {
+      "doc": "ValueMax is the aria-valuemax as a decimal number for range widgets.",
+      "name": "ValueMax",
+      "type": "Str"
+    },
+    "10": {
+      "doc": "Expanded is the aria-expanded which is either true or false.",
+      "name": "Expanded",
+      "type": "Str"
+    },
+    "11": {
+      "doc": "Selected is the aria-selected which is either true or false.",
+      "name": "Selected",
+      "type": "Str"
+    },
+    "12": {
+      "doc": "Disabled is the aria-disabled which is either true or false.",
+      "name": "Disabled",
+      "type": "Str"
+    }
+  }
+}
