@@ -19,6 +19,8 @@
 			class="input-field !pr-8 cursor-pointer"
 			:disabled="props.ui.disabled"
 			:style="{ paddingLeft: paddingLeft ? `${paddingLeft}px` : undefined }"
+			:aria-description="ui.errorText || ui.supportingText"
+			:aria-invalid="!!ui.errorText"
 		>
 			<template v-if="props.ui.options">
 				<option
@@ -44,6 +46,7 @@ import UiGeneric from '@/components/UiGeneric.vue';
 
 interface Props {
 	ui: Select;
+	id: string;
 }
 
 interface Emits {
@@ -56,16 +59,12 @@ const emit = defineEmits<Emits>();
 const leading = useTemplateRef('leading');
 const selectedValue = ref(props.ui.value);
 
-const paddingLeft = computed<number | undefined>(() => {
-	return leading.value?.offsetWidth;
+const selectedLabel = computed<string>(() => {
+	return props.ui.options?.value.find((o) => o.value === selectedValue.value)?.label ?? '';
 });
 
-const id = computed<string>(() => {
-	if (props.ui.id) {
-		return props.ui.id;
-	}
-
-	return 'tf-' + props.ui.inputValue;
+const paddingLeft = computed<number | undefined>(() => {
+	return leading.value?.offsetWidth;
 });
 
 watch(

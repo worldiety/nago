@@ -101,6 +101,7 @@
 	},
 	"dropdown": {
 		"select": "Auswählen...",
+		"selected": "ausgewählt",
 		"search": {
 			"no-results": "Keine Optionen",
 			"placeholder": "Suchen nach..."

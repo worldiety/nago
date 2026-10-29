@@ -9,6 +9,7 @@
 <template>
 	<div class="ui-select" :style="frameStyles">
 		<InputWrapper
+			:input-id="id"
 			:wrapper-style="inputWrapperStyleFrom(props.ui.style)"
 			:label="props.ui.label"
 			:error="props.ui.errorText"
@@ -19,12 +20,20 @@
 			<div class="relative">
 				<SelectORA
 					v-if="ui.oRADropdown"
+					:id="id"
 					v-model="selectedValue"
 					:class="styleClass"
 					:ui="ui"
 					:style="inputStyle"
 				/>
-				<SelectDefault v-else v-model="selectedValue" :class="styleClass" :ui="ui" :style="inputStyle" />
+				<SelectDefault
+					v-else
+					:id="id"
+					v-model="selectedValue"
+					:class="styleClass"
+					:ui="ui"
+					:style="inputStyle"
+				/>
 			</div>
 		</InputWrapper>
 	</div>
@@ -47,6 +56,14 @@ const props = defineProps<{
 
 const serviceAdapter = useServiceAdapter();
 const selectedValue = ref(props.ui.value);
+
+const id = computed<string>(() => {
+	if (props.ui.id) {
+		return props.ui.id;
+	}
+
+	return 'tf-' + props.ui.inputValue;
+});
 
 const styleClass = computed<string>(() => {
 	switch (props.ui.style) {
