@@ -59,10 +59,6 @@ const emit = defineEmits<Emits>();
 const leading = useTemplateRef('leading');
 const selectedValue = ref(props.ui.value);
 
-const selectedLabel = computed<string>(() => {
-	return props.ui.options?.value.find((o) => o.value === selectedValue.value)?.label ?? '';
-});
-
 const paddingLeft = computed<number | undefined>(() => {
 	return leading.value?.offsetWidth;
 });
