@@ -49,6 +49,7 @@ import type { Select } from '@/shared/proto/nprotoc_gen';
 import { TextFieldStyleValues, UpdateStateValueRequested } from '@/shared/proto/nprotoc_gen';
 import SelectDefault from '@/components/select/SelectDefault.vue';
 import SelectORA from '@/components/select/SelectORA.vue';
+import { randomStr } from '@/components/shared/util';
 
 const props = defineProps<{
 	ui: Select;
@@ -62,7 +63,7 @@ const id = computed<string>(() => {
 		return props.ui.id;
 	}
 
-	return 'tf-' + props.ui.inputValue;
+	return randomStr(16);
 });
 
 const styleClass = computed<string>(() => {
