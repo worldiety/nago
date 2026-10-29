@@ -9,22 +9,22 @@
 
 <template>
 	<div class="input-wrapper">
-		<!-- Input -->
-		<div class="peer relative">
-			<div class="peer input-field-wrapper" :class="inputFieldWrapperClasses">
-				<slot />
-			</div>
-		</div>
-
 		<!-- Label with optional hint -->
 		<div v-if="label || optional" class="label-container">
-			<label v-if="label" :for="inputId" :class="labelClass">
-				<LockIcon v-if="disabled" class="h-4" />
-				<ErrorIcon v-else-if="error" class="h-2.5" />
+			<label v-if="label" :for="inputId" :class="labelClass" role="presentation">
+				<LockIcon v-if="disabled" class="h-4" aria-hidden="true" />
+				<ErrorIcon v-else-if="error" class="h-2.5" aria-hidden="true" />
 				<span>{{ label }}</span>
 			</label>
 			<div v-if="!disabled" class="hint">
 				<span v-if="optional">{{ t('inputWrapper.optional') }}</span>
+			</div>
+		</div>
+
+		<!-- Input -->
+		<div class="peer relative">
+			<div class="peer input-field-wrapper" :class="inputFieldWrapperClasses">
+				<slot />
 			</div>
 		</div>
 	</div>
@@ -101,7 +101,7 @@ const inputFieldWrapperClasses = computed((): string | null => {
 <style>
 @reference '@/assets/css/tailwind.css';
 .input-wrapper {
-	@apply flex flex-col-reverse;
+	@apply flex flex-col;
 
 	.label-container {
 		@apply flex justify-between items-end text-sm pb-1 leading-none gap-4;

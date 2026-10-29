@@ -90,6 +90,7 @@ import UiGeneric from '@/components/UiGeneric.vue';
 
 interface Props {
 	ui: Select;
+	id: string;
 }
 
 interface Emits {
@@ -133,14 +134,6 @@ const valueLabel = computed<string>(() => {
 
 const paddingLeft = computed<number | undefined>(() => {
 	return leading.value?.offsetWidth;
-});
-
-const id = computed<string>(() => {
-	if (props.ui.id) {
-		return props.ui.id;
-	}
-
-	return 'tf-' + props.ui.inputValue;
 });
 
 const filteredOptions = computed<SelectOption[]>(() => {
