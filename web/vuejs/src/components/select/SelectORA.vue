@@ -26,9 +26,13 @@
 			class="input-field !pr-8 cursor-pointer"
 			:disabled="props.ui.disabled"
 			:style="{ paddingLeft: paddingLeft ? `${paddingLeft}px` : undefined }"
+			:aria-expanded="dropdownVisible"
+			:aria-description="ui.errorText || ui.supportingText"
+			:aria-invalid="!!ui.errorText"
 			role="combobox"
 			readonly
 			@click="toggleDropdown(undefined)"
+			@keydown.space.exact.prevent="onComboboxSpace"
 		/>
 		<div class="chevron">
 			<ArrowDownIcon class="size-3" />
@@ -46,9 +50,15 @@
 				</div>
 				<div v-if="ui.searchable" class="search">
 					<InputWrapper :wrapper-style="InputWrapperStyle.REDUCED">
-						<input v-model="filter" class="input-field" :placeholder="$t('dropdown.search.placeholder')" />
+						<input
+							ref="searchInput"
+							v-model="filter"
+							class="input-field"
+							:placeholder="$t('dropdown.search.placeholder')"
+							role="searchbox"
+						/>
 					</InputWrapper>
-					<MagnifierIcon />
+					<MagnifierIcon aria-hidden="true" />
 				</div>
 			</div>
 			<div ref="options" class="options overflow-y-auto">
@@ -59,6 +69,7 @@
 						:value="option.value"
 						:disabled="option.disabled"
 						role="option"
+						tabindex="-1"
 						@click="selectOption(option)"
 					>
 						<span>
@@ -79,7 +90,7 @@
 	</div>
 </template>
 <script lang="ts" setup>
-import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
 import { Select, SelectOption, TextFieldStyleValues } from '@/shared/proto/nprotoc_gen';
 import { autoUpdate, flip, Middleware, offset, shift, useFloating } from '@floating-ui/vue';
 import ArrowDownIcon from '@/assets/svg/chevron-down.svg';
@@ -102,11 +113,15 @@ const emit = defineEmits<Emits>();
 
 const container = ref();
 const leading = useTemplateRef('leading');
+const searchInput = useTemplateRef<HTMLInputElement>('searchInput');
 const dropdown = ref();
 const options = ref();
 const dropdownVisible = ref(false);
 const filter = ref('');
 const dropdownMinWidth = ref<number>();
+
+let typeaheadBuffer = '';
+let typeaheadTimeout: ReturnType<typeof setTimeout> | undefined;
 
 const { floatingStyles, middlewareData } = useFloating(container, dropdown, {
 	placement: 'bottom-start',
@@ -154,7 +169,18 @@ const filteredOptions = computed<SelectOption[]>(() => {
 
 function toggleDropdown(visible?: boolean) {
 	dropdownVisible.value = visible ?? !dropdownVisible.value;
+
+	if (dropdownVisible.value) {
+		addEventListener('keydown', onWindowKeyDown);
+		if (props.ui.searchable) nextTick(() => searchInput.value?.focus());
+	}
 	if (!dropdownVisible.value) resetDropdown();
+}
+
+function onComboboxSpace() {
+	// while typing ahead, a space is part of the search term and must not close the dropdown
+	if (dropdownVisible.value && typeaheadBuffer) return;
+	toggleDropdown(undefined);
 }
 
 function selectOption(option: SelectOption) {
@@ -163,8 +189,108 @@ function selectOption(option: SelectOption) {
 }
 
 function resetDropdown() {
+	removeEventListener('keydown', onWindowKeyDown);
 	filter.value = '';
+	resetTypeahead();
 	if (options.value) (options.value as HTMLElement).scrollTo(0, 0);
+}
+
+function resetTypeahead() {
+	typeaheadBuffer = '';
+	clearTimeout(typeaheadTimeout);
+	typeaheadTimeout = undefined;
+}
+
+function onWindowKeyDown(event: KeyboardEvent) {
+	if (event.key === 'Escape') {
+		toggleDropdown(false);
+		return;
+	}
+
+	if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+		event.preventDefault();
+		focusAdjacentOption(event.key === 'ArrowDown' ? 1 : -1);
+		return;
+	}
+
+	if (event.key === 'Tab') {
+		// keep the focus inside the dropdown while it is open
+		event.preventDefault();
+		const isOptionFocused = getOptionButtons().includes(document.activeElement as HTMLButtonElement);
+		if (isOptionFocused) {
+			searchInput.value?.focus();
+		} else if (document.activeElement === searchInput.value || !props.ui.searchable) {
+			focusFirstAvailableOption();
+		} else {
+			searchInput.value?.focus();
+		}
+		return;
+	}
+
+	if (isPrintableKey(event)) handlePrintableKey(event);
+}
+
+function isPrintableKey(event: KeyboardEvent): boolean {
+	return event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey;
+}
+
+function handlePrintableKey(event: KeyboardEvent) {
+	if (props.ui.searchable) {
+		const input = searchInput.value;
+		if (!input || document.activeElement === input) return;
+		// a space on a focused option selects it instead of being typed into the search
+		if (event.key === ' ' && getOptionButtons().includes(document.activeElement as HTMLButtonElement)) return;
+		event.preventDefault();
+		filter.value += event.key;
+		input.focus();
+		return;
+	}
+
+	// a space only belongs to the typeahead if the user is already typing, otherwise it activates the focused element
+	if (event.key === ' ' && !typeaheadBuffer) return;
+	event.preventDefault();
+	typeahead(event.key);
+}
+
+function typeahead(char: string) {
+	clearTimeout(typeaheadTimeout);
+	typeaheadTimeout = setTimeout(resetTypeahead, 500);
+	typeaheadBuffer += char.toLowerCase();
+
+	const match = getOptionButtons()
+		.map((button, index) => ({ button, label: filteredOptions.value[index]?.label?.toLowerCase() ?? '' }))
+		.find((c) => !c.button.disabled && c.label.startsWith(typeaheadBuffer));
+	if (match) focusOptionButton(match.button);
+}
+
+function getOptionButtons(): HTMLButtonElement[] {
+	if (!options.value) return [];
+	return Array.from((options.value as HTMLElement).querySelectorAll<HTMLButtonElement>('button[role="option"]'));
+}
+
+function focusOptionButton(button: HTMLButtonElement) {
+	button.focus({ preventScroll: true });
+	button.scrollIntoView({ block: 'nearest' });
+}
+
+function focusFirstAvailableOption() {
+	const firstOption = getOptionButtons().find((b) => !b.disabled);
+	if (firstOption) focusOptionButton(firstOption);
+}
+
+function focusAdjacentOption(direction: 1 | -1) {
+	const optionButtons = getOptionButtons().filter((b) => !b.disabled);
+	if (!optionButtons.length) return;
+
+	const currentIndex = optionButtons.indexOf(document.activeElement as HTMLButtonElement);
+	let nextIndex: number;
+	if (currentIndex === -1) {
+		nextIndex = direction === 1 ? 0 : optionButtons.length - 1;
+	} else {
+		nextIndex = (currentIndex + direction + optionButtons.length) % optionButtons.length;
+	}
+
+	focusOptionButton(optionButtons[nextIndex]);
 }
 
 function calcDropdownMinWidth() {
@@ -215,6 +341,8 @@ onMounted(() => {
 onUnmounted(() => {
 	window.removeEventListener('pointerdown', onWindowPointerDown);
 	window.removeEventListener('blur', onWindowBlur);
+	removeEventListener('keydown', onWindowKeyDown);
+	resetTypeahead();
 });
 </script>
 <style scoped>
@@ -266,6 +394,7 @@ onUnmounted(() => {
 			button[role='option'] {
 				@apply flex flex-col w-full text-left p-1.5 rounded-sm;
 				@apply hover:bg-I0/20 hover:text-I0;
+				@apply focus-visible:bg-I0/20 focus-visible:text-I0 focus-visible:outline-none;
 
 				.description {
 					@apply text-sm text-M7 leading-tight -mt-0.5;
