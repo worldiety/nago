@@ -16,11 +16,12 @@
 				:aria-invalid="!!ui.errorText"
 				:aria-description="ui.errorText || ui.supportingText"
 				:aria-disabled="ui.disabled"
+				:aria-label="`${ui.label} (${ui.value && ui.value.sVG ? $t('signature-field.input.has-value') : $t('signature-field.input.no-value')})`"
 				readonly
 				@click="onFocus"
 				@keydown.enter="onFocus"
 			/>
-			<VHtml v-if="ui.value && ui.value.sVG" :html="ui.value.sVG" class="signature" />
+			<VHtml v-if="ui.value && ui.value.sVG" :html="ui.value.sVG" class="signature" aria-hidden="true" />
 		</div>
 	</InputWrapper>
 </template>

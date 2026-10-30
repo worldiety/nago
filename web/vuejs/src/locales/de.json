@@ -128,13 +128,20 @@
 	},
 	"signature-field": {
 		"input": {
+			"has-value": "ausgefüllt",
+			"no-value": "leer",
 			"input-aria-label": "Unterschrift zeichnen"
 		},
 		"overlay": {
 			"close": "Dialog schließen",
 			"input-aria-label": "Unterschrift-Feld",
 			"reset": "Unterschrift löschen",
-			"submit": "Bestätigen"
+			"submit": "Bestätigen",
+			"upload": "Bild hochladen",
+			"upload-error-type": "Die Datei ist kein gültiges Bild. Erlaubt sind PNG, JPEG und WebP.",
+			"upload-error-size": "Die Datei ist zu groß. Erlaubt sind maximal {max} MB.",
+			"upload-error-dimensions-max": "Das Bild ist zu groß. Erlaubt sind maximal {max} × {max} Pixel.",
+			"upload-error-dimensions-min": "Das Bild ist zu klein. Erforderlich sind mindestens {min} × {min} Pixel."
 		}
 	},
 	"slider": {

@@ -19,6 +19,9 @@
 				<hr class="border-I0" aria-hidden="true" />
 
 				<canvas ref="canvas" tabindex="0" :aria-label="$t('signature-field.overlay.input-aria-label')" />
+				<p :id="uploadErrorId" class="upload-error text-error" :class="{ 'mt-2': uploadError }" role="alert">
+					{{ uploadError }}
+				</p>
 
 				<hr class="border-ST0" aria-hidden="true" />
 
@@ -27,7 +30,24 @@
 						<eraser-icon class="h-4 fill-current" aria-hidden="true" />
 						{{ $t('signature-field.overlay.reset') }}
 					</button>
-					<button class="button-confirm button-primary" @click="onSubmit">
+					<button
+						class="button-secondary"
+						:aria-describedby="uploadError ? uploadErrorId : undefined"
+						@click="fileInput?.click()"
+					>
+						<upload-icon class="h-4" aria-hidden="true" />
+						<span>{{ $t('signature-field.overlay.upload') }}</span>
+					</button>
+					<input
+						ref="fileInput"
+						type="file"
+						class="hidden"
+						:accept="allowedImageTypes.join(',')"
+						aria-hidden="true"
+						tabindex="-1"
+						@change="onImageSelected"
+					/>
+					<button class="button-confirm button-primary" :disabled="!!uploadError" @click="onSubmit">
 						{{ $t('signature-field.overlay.submit') }}
 					</button>
 				</div>
@@ -39,12 +59,15 @@
 	</Teleport>
 </template>
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import SignaturePad from 'signature_pad';
 import Close from '@/assets/svg/closeBold.svg';
 import { ModalManager } from '@/components/shared/modalManager';
 import { Signature, SignatureField } from '@/shared/proto/nprotoc_gen';
 import EraserIcon from '@/assets/svg/eraser.svg';
+import UploadIcon from '@/assets/svg/upload.svg';
+import { useI18n } from 'vue-i18n';
+import { randomStr } from '@/components/shared/util';
 
 defineProps<{
 	ui: SignatureField;
@@ -65,10 +88,107 @@ let previouslyFocused: HTMLElement | undefined;
 
 const clearButtonVisible = ref(false);
 
+const { t } = useI18n();
+const fileInput = ref<HTMLInputElement>();
+const uploadError = ref('');
+const uploadErrorId = randomStr(16);
+
+// the error is cleared before it is set again, so that screen readers also announce a repeated, identical error.
+async function setUploadError(key: string, params: Record<string, unknown> = {}): Promise<void> {
+	uploadError.value = '';
+	await nextTick();
+	uploadError.value = t(key, params);
+}
+
+// limits for uploaded signature images. A scanned or photographed signature is small, so anything beyond these
+// limits, e.g. a wallpaper or an unprocessed camera photo, is rejected as implausible.
+const allowedImageTypes = ['image/png', 'image/jpeg', 'image/webp'];
+const maxImageFileSize = 1024 * 1024; // 1 MiB
+const maxImageDimension = 2000; // px per side
+const minImageDimension = 20; // px per side
+
+async function onImageSelected(e: Event): Promise<void> {
+	const input = e.target as HTMLInputElement;
+	const file = input.files?.[0];
+	input.value = ''; // allows to select the same file again
+	if (!file || !signaturePad.value || !canvas.value) return;
+
+	uploadError.value = '';
+	if (!allowedImageTypes.includes(file.type)) {
+		await setUploadError('signature-field.overlay.upload-error-type');
+		return;
+	}
+
+	if (file.size > maxImageFileSize) {
+		await setUploadError('signature-field.overlay.upload-error-size', { max: maxImageFileSize / 1024 / 1024 });
+		return;
+	}
+
+	let image: HTMLImageElement;
+	try {
+		image = await loadImage(file);
+	} catch {
+		await setUploadError('signature-field.overlay.upload-error-type');
+		return;
+	}
+
+	const { naturalWidth: width, naturalHeight: height } = image;
+	if (width > maxImageDimension || height > maxImageDimension) {
+		await setUploadError('signature-field.overlay.upload-error-dimensions-max', { max: maxImageDimension });
+		return;
+	}
+
+	if (width < minImageDimension || height < minImageDimension) {
+		await setUploadError('signature-field.overlay.upload-error-dimensions-min', { min: minImageDimension });
+		return;
+	}
+
+	await drawImageOnCanvas(image);
+}
+
+async function loadImage(file: File): Promise<HTMLImageElement> {
+	const url = URL.createObjectURL(file);
+	try {
+		return await new Promise<HTMLImageElement>((resolve, reject) => {
+			const image = new Image();
+			image.onload = () => resolve(image);
+			image.onerror = reject;
+			image.src = url;
+		});
+	} finally {
+		URL.revokeObjectURL(url);
+	}
+}
+
+// replaces the current signature by the image, which is scaled to fit and centered within the canvas. The image is
+// re-encoded in its scaled size, so that the submitted signature does not contain the original file.
+async function drawImageOnCanvas(image: HTMLImageElement): Promise<void> {
+	if (!signaturePad.value || !canvas.value) return;
+
+	const scale = Math.min(canvas.value.width / image.naturalWidth, canvas.value.height / image.naturalHeight);
+	const width = Math.max(1, Math.round(image.naturalWidth * scale));
+	const height = Math.max(1, Math.round(image.naturalHeight * scale));
+
+	const scaled = document.createElement('canvas');
+	scaled.width = width;
+	scaled.height = height;
+	scaled.getContext('2d')?.drawImage(image, 0, 0, width, height);
+
+	signaturePad.value.clear();
+	await signaturePad.value.fromDataURL(scaled.toDataURL('image/png'), {
+		ratio: 1,
+		width,
+		height,
+		xOffset: Math.round((canvas.value.width - width) / 2),
+		yOffset: Math.round((canvas.value.height - height) / 2),
+	});
+	clearButtonVisible.value = true;
+}
+
 function onSubmit(): void {
 	if (!signaturePad.value) return;
 
-	const svg = fixSVG(signaturePad.value.toSVG());
+	const svg = fixSVG(signaturePad.value.toSVG({ includeDataUrl: true }));
 	emit('submit', new Signature(svg));
 }
 
@@ -94,6 +214,7 @@ function clearInputValue(): void {
 	if (!signaturePad.value) return;
 	signaturePad.value.clear();
 	clearButtonVisible.value = false;
+	uploadError.value = '';
 }
 
 function getCurrentColor(): string {
@@ -124,10 +245,10 @@ onMounted(() => {
 	canvas.value.width = canvas.value.clientWidth;
 	canvas.value.height = canvas.value.clientHeight;
 
-	console.warn(canvas.value.width, canvas.value.height);
 	signaturePad.value = new SignaturePad(canvas.value, { penColor: color.value });
 	signaturePad.value.addEventListener('endStroke', () => {
 		clearButtonVisible.value = !signaturePad.value?.isEmpty();
+		uploadError.value = '';
 	});
 });
 
@@ -159,8 +280,16 @@ onBeforeUnmount(() => {
 			@apply size-full sm:min-w-96 min-h-64 bg-M2 rounded-lg shadow-sm;
 		}
 
+		.upload-error {
+			@apply text-sm sm:max-w-96;
+		}
+
 		.footer {
-			@apply flex items-center justify-between w-full gap-2;
+			@apply flex max-sm:flex-col items-center justify-between w-full gap-2;
+
+			button {
+				@apply max-sm:w-full;
+			}
 		}
 	}
 
