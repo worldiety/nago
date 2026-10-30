@@ -96,32 +96,6 @@ function onBackdropClick(e: MouseEvent) {
 	if (onBackdrop) sendDismissEvent();
 }
 
-const focusableSelector = [
-	'a[href]',
-	'area[href]',
-	'button',
-	'input:not([type="hidden"])',
-	'select',
-	'textarea',
-	'iframe',
-	'audio[controls]',
-	'video[controls]',
-	'summary',
-	'[contenteditable]:not([contenteditable="false"])',
-	'[tabindex]',
-].join(',');
-
-// returns all tabbable elements within the given root in document order.
-function getTabbableElements(root: Element): HTMLElement[] {
-	return Array.from(root.querySelectorAll<HTMLElement>(focusableSelector)).filter(
-		(el) =>
-			el.tabIndex >= 0 &&
-			!(el as HTMLButtonElement).disabled &&
-			!el.closest('[inert]') &&
-			el.getClientRects().length > 0
-	);
-}
-
 // returns all tabbable elements of the dialogs main content in document order. It is evaluated on each use, because
 // the dialog content may change while it is open.
 function getInitialFocusCandidates(): HTMLElement[] {
@@ -140,7 +114,7 @@ function getInitialFocusCandidates(): HTMLElement[] {
 
 	if (!highestDialogSection) return [];
 
-	return getTabbableElements(highestDialogSection);
+	return ModalManager.getTabbableElements(highestDialogSection);
 }
 
 function captureFocusInDialog(): void {
@@ -151,56 +125,12 @@ function onKeydown(e: KeyboardEvent) {
 	if (e.code === 'Escape') sendDismissEvent();
 }
 
-// keeps the tab order cycling within the dialog.
-function onTabKeydown(e: KeyboardEvent) {
-	if (e.key !== 'Tab' || e.defaultPrevented) return;
-
-	const container = dialogContainer.value;
-	if (!container || !ModalManager.isTopmostDialog(container)) return;
-
-	const active = document.activeElement;
-	if (active instanceof Element && active.closest(ModalManager.keepInteractiveSelector)) return;
-
-	const tabbables = getTabbableElements(container);
-	if (tabbables.length === 0) {
-		e.preventDefault();
-		return;
-	}
-
-	const first = tabbables[0];
-	const last = tabbables[tabbables.length - 1];
-	const insideDialog = active instanceof Node && container.contains(active);
-
-	if (!insideDialog) {
-		e.preventDefault();
-		(e.shiftKey ? last : first).focus();
-	} else if (e.shiftKey && active === first) {
-		e.preventDefault();
-		last.focus();
-	} else if (!e.shiftKey && active === last) {
-		e.preventDefault();
-		first.focus();
-	}
-}
-
-function trapFocus(trap: boolean) {
-	if (trap) {
-		document.addEventListener('keydown', onTabKeydown, true);
-	} else {
-		document.removeEventListener('keydown', onTabKeydown, true);
-	}
-}
-
 // the dialog container only exists, if this is a dialog with content. While it exists, the focus is trapped in it.
 watch(dialogContainer, (newContainer, oldContainer) => {
-	if (oldContainer) {
-		ModalManager.popDialog(oldContainer);
-		trapFocus(false);
-	}
+	if (oldContainer) ModalManager.popDialog(oldContainer);
 
 	if (newContainer) {
 		ModalManager.pushDialog(newContainer);
-		trapFocus(true);
 		setTimeout(captureFocusInDialog, 50); // wait for dialog content to be rendered
 	}
 });
@@ -230,7 +160,6 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
 	setScrollLock(false);
-	trapFocus(false);
 	if (dialogContainer.value) ModalManager.popDialog(dialogContainer.value);
 });
 

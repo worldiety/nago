@@ -1,7 +1,7 @@
 <template>
 	<Teleport to="body">
-		<div class="signature-overlay" v-bind="$attrs">
-			<div class="dialog">
+		<div ref="overlay" class="signature-overlay" v-bind="$attrs">
+			<div class="dialog" role="dialog" aria-modal="true" :aria-label="ui.label || undefined">
 				<div class="flex justify-between items-center gap-x-2">
 					<p class="truncate">{{ ui.label ?? '' }}</p>
 					<button
@@ -39,9 +39,10 @@
 	</Teleport>
 </template>
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 import SignaturePad from 'signature_pad';
 import Close from '@/assets/svg/closeBold.svg';
+import { ModalManager } from '@/components/shared/modalManager';
 import { Signature, SignatureField } from '@/shared/proto/nprotoc_gen';
 import EraserIcon from '@/assets/svg/eraser.svg';
 
@@ -54,9 +55,13 @@ const emit = defineEmits<{
 	(e: 'submit', signature: Signature): void;
 }>();
 
+const overlay = ref<HTMLElement>();
 const canvas = ref<HTMLCanvasElement>();
 const signaturePad = ref<SignaturePad>();
 const color = ref('');
+
+// the element which had the focus before the overlay has been opened, to restore it when the overlay closes
+let previouslyFocused: HTMLElement | undefined;
 
 const clearButtonVisible = ref(false);
 
@@ -96,7 +101,24 @@ function getCurrentColor(): string {
 	return getComputedStyle(canvas.value).color;
 }
 
+// closes the overlay on escape, if it is the topmost dialog. The event is not propagated any further, so that an
+// underlying modal is not dismissed as well.
+function onKeydown(e: KeyboardEvent): void {
+	if (e.key !== 'Escape' || e.defaultPrevented) return;
+	if (!overlay.value || !ModalManager.isTopmostDialog(overlay.value)) return;
+
+	e.preventDefault();
+	e.stopPropagation();
+	emit('close');
+}
+
 onMounted(() => {
+	document.addEventListener('keydown', onKeydown, true);
+	if (document.activeElement instanceof HTMLElement) previouslyFocused = document.activeElement;
+	if (overlay.value) ModalManager.pushDialog(overlay.value);
+	ModalManager.onModalOpen();
+	canvas.value?.focus();
+
 	if (!canvas.value) return;
 	color.value = getCurrentColor();
 	canvas.value.width = canvas.value.clientWidth;
@@ -107,6 +129,14 @@ onMounted(() => {
 	signaturePad.value.addEventListener('endStroke', () => {
 		clearButtonVisible.value = !signaturePad.value?.isEmpty();
 	});
+});
+
+onBeforeUnmount(() => {
+	document.removeEventListener('keydown', onKeydown, true);
+	signaturePad.value?.off();
+	if (overlay.value) ModalManager.popDialog(overlay.value);
+	ModalManager.onModalClose();
+	previouslyFocused?.focus();
 });
 </script>
 <style scoped>

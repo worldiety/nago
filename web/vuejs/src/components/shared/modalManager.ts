@@ -37,16 +37,92 @@ export class ModalManager {
 		}
 	}
 
+	// registers the container as the topmost dialog. While it is the topmost dialog, the background is inert and the
+	// tab order cycles within the container.
 	static pushDialog(container: HTMLElement): void {
 		ModalManager.removeFromStack(container);
 		ModalManager.dialogStack.push(container);
 		ModalManager.updateInert();
+		ModalManager.updateFocusTrap();
 	}
 
 	static popDialog(container: HTMLElement): void {
 		if (!ModalManager.removeFromStack(container)) return;
 
 		ModalManager.updateInert();
+		ModalManager.updateFocusTrap();
+	}
+
+	private static focusTrapActive = false;
+
+	private static updateFocusTrap(): void {
+		const active = ModalManager.dialogStack.length > 0;
+		if (active === ModalManager.focusTrapActive) return;
+
+		ModalManager.focusTrapActive = active;
+		if (active) {
+			document.addEventListener('keydown', ModalManager.onTabKeydown, true);
+		} else {
+			document.removeEventListener('keydown', ModalManager.onTabKeydown, true);
+		}
+	}
+
+	private static readonly focusableSelector = [
+		'a[href]',
+		'area[href]',
+		'button',
+		'input:not([type="hidden"])',
+		'select',
+		'textarea',
+		'iframe',
+		'audio[controls]',
+		'video[controls]',
+		'summary',
+		'[contenteditable]:not([contenteditable="false"])',
+		'[tabindex]',
+	].join(',');
+
+	// returns all tabbable elements within the given root in document order.
+	static getTabbableElements(root: Element): HTMLElement[] {
+		return Array.from(root.querySelectorAll<HTMLElement>(ModalManager.focusableSelector)).filter(
+			(el) =>
+				el.tabIndex >= 0 &&
+				!(el as HTMLButtonElement).disabled &&
+				!el.closest('[inert]') &&
+				el.getClientRects().length > 0
+		);
+	}
+
+	// keeps the tab order cycling within the topmost dialog.
+	private static onTabKeydown(e: KeyboardEvent): void {
+		if (e.key !== 'Tab' || e.defaultPrevented) return;
+
+		const container = ModalManager.topmostDialog();
+		if (!container) return;
+
+		const active = document.activeElement;
+		if (active instanceof Element && active.closest(ModalManager.keepInteractiveSelector)) return;
+
+		const tabbables = ModalManager.getTabbableElements(container);
+		if (tabbables.length === 0) {
+			e.preventDefault();
+			return;
+		}
+
+		const first = tabbables[0];
+		const last = tabbables[tabbables.length - 1];
+		const insideDialog = active instanceof Node && container.contains(active);
+
+		if (!insideDialog) {
+			e.preventDefault();
+			(e.shiftKey ? last : first).focus();
+		} else if (e.shiftKey && active === first) {
+			e.preventDefault();
+			last.focus();
+		} else if (!e.shiftKey && active === last) {
+			e.preventDefault();
+			first.focus();
+		}
 	}
 
 	private static removeFromStack(container: HTMLElement): boolean {
