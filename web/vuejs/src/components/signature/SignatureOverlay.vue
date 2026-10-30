@@ -1,6 +1,6 @@
 <template>
 	<Teleport to="body">
-		<div class="signature-overlay">
+		<div class="signature-overlay" v-bind="$attrs">
 			<div class="dialog">
 				<div class="flex justify-between items-center gap-x-2">
 					<p class="truncate">{{ ui.label ?? '' }}</p>
@@ -101,6 +101,8 @@ onMounted(() => {
 	color.value = getCurrentColor();
 	canvas.value.width = canvas.value.clientWidth;
 	canvas.value.height = canvas.value.clientHeight;
+
+	console.warn(canvas.value.width, canvas.value.height);
 	signaturePad.value = new SignaturePad(canvas.value, { penColor: color.value });
 	signaturePad.value.addEventListener('endStroke', () => {
 		clearButtonVisible.value = !signaturePad.value?.isEmpty();
@@ -124,7 +126,7 @@ onMounted(() => {
 		}
 
 		canvas {
-			@apply size-full min-w-96 min-h-64 bg-M2 rounded-lg shadow-sm;
+			@apply size-full sm:min-w-96 min-h-64 bg-M2 rounded-lg shadow-sm;
 		}
 
 		.footer {

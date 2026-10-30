@@ -127,6 +127,9 @@
 		"toMenu": "Hauptmenü"
 	},
 	"signature-field": {
+		"input": {
+			"input-aria-label": "Unterschrift zeichnen"
+		},
 		"overlay": {
 			"close": "Dialog schließen",
 			"input-aria-label": "Unterschrift-Feld",
