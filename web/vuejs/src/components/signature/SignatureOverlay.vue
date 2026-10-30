@@ -16,11 +16,11 @@
 					</button>
 				</div>
 
-				<hr class="border-I0" />
+				<hr class="border-I0" aria-hidden="true" />
 
 				<canvas ref="canvas" />
 
-				<hr class="border-ST0" />
+				<hr class="border-ST0" aria-hidden="true" />
 
 				<div class="footer">
 					<button class="button-tertiary" :disabled="!clearButtonVisible" @click="clearInputValue">
