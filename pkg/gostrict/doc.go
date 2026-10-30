@@ -160,6 +160,12 @@
 // nago in lib/ui, so its program runs only on a server, whose engine refuses to load the bundle without it. Such a
 // program may return a handle from an exported function, e.g. the ui.View, which the server renders.
 //
+// The directive //gostrict:const name[, name...] on a function of a header package names parameters of a basic type
+// or an enum, whose arguments must be constants at each call: a literal, a named constant or a constant expression,
+// e.g. //gostrict:const name for func Activity(name string). So a host reads them from the source at compile time
+// without running the program, e.g. the steps of a process. Such a function can only be called, not used as a value,
+// and the directive is not allowed on methods, because a method may also be called through an interface.
+//
 // # Messages
 //
 // A program exchanges messages with its backend, e.g. a three.js program in a browser, which synchronizes its

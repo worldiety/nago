@@ -258,6 +258,7 @@ func (c *checker) visitNode(n ast.Node) {
 		if n.Recv == nil && n.Name.Name == "init" {
 			c.report(n.Name, CodeInit, "init functions are not allowed", "the order of initialization is part of the program and must be visible", "call a setup function explicitly, or initialize the package variable with a function call")
 		}
+		c.checkConstDirective(n)
 	case *ast.FuncType:
 		c.checkFuncType(n)
 		c.checkNamedResults(n)
@@ -302,8 +303,10 @@ func (c *checker) visitNode(n ast.Node) {
 		c.checkErrorCall(n)
 		c.checkMake(n)
 		c.checkGlobalMethod(n)
+		c.checkConstArgs(n)
 	case *ast.SelectorExpr:
 		c.checkSelector(n)
+		c.checkConstValue(n)
 	case *ast.RangeStmt:
 		c.checkRange(n)
 	case *ast.CompositeLit:

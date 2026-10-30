@@ -52,6 +52,7 @@ func checkHeaderFunc(p *Package, d *diagnoser, decls map[*types.Func]funcSrc, de
 	if !ok {
 		return
 	}
+	checkConstDirective(d, decls[fn], fn)
 
 	const why = "only bool, int32, uint32, float64, string, big.Int, handles, records without handles and lists and maps of them cross the boundary, error only as a result, and functions of such values as parameters"
 	if decl.Recv != nil {
@@ -113,6 +114,56 @@ func checkHeaderFunc(p *Package, d *diagnoser, decls map[*types.Func]funcSrc, de
 		}
 		d.report(pos, token.NoPos, CodeBinding, "the binding of "+fn.Name()+" is invalid: "+msg, "the binding is a JavaScript function expression, which the program calls with the parameters", "write e.g. //gostrict:js (a, b) => a * b")
 	}
+}
+
+// checkConstDirective checks, that the constDirective of a function names parameters, which take constants.
+func checkConstDirective(d *diagnoser, src funcSrc, fn *types.Func) {
+	if src.constPos == token.NoPos {
+		return
+	}
+	report := func(msg string) {
+		d.report(src.constPos, token.NoPos, CodeHeader, msg, constDirective+" names the parameters of a function, whose arguments the host reads from the source at compile time, so they must be constants of a basic type", "write e.g. "+constDirective+" name for func Activity(name string)")
+	}
+	sig := fn.Signature()
+	if sig.Recv() != nil {
+		report(constDirective + " is only allowed on functions, because a method may also be called through an interface")
+		return
+	}
+	if len(src.consts) == 0 {
+		report(constDirective + " names no parameter")
+		return
+	}
+	for _, name := range src.consts {
+		i := paramIndex(sig, name)
+		switch {
+		case i < 0:
+			report(fn.Name() + " has no parameter " + name)
+		case sig.Variadic() && i == sig.Params().Len()-1:
+			report("the variadic parameter " + name + " of " + fn.Name() + " takes no constant")
+		case !constType(sig.Params().At(i).Type()):
+			report("the parameter " + name + " of " + fn.Name() + " has the type " + types.TypeString(sig.Params().At(i).Type(), types.RelativeTo(fn.Pkg())) + ", which has no constants")
+		}
+	}
+}
+
+// paramIndex returns the index of the parameter of the signature with the name or -1.
+func paramIndex(sig *types.Signature, name string) int {
+	for i := range sig.Params().Len() {
+		if sig.Params().At(i).Name() == name {
+			return i
+		}
+	}
+	return -1
+}
+
+// constType tells, whether constants of the type exist: bool, numbers and strings and the enums of them, but not
+// type parameters.
+func constType(t types.Type) bool {
+	if _, ok := t.(*types.TypeParam); ok {
+		return false
+	}
+	_, ok := t.Underlying().(*types.Basic)
+	return ok
 }
 
 // checkBinding parses the binding and returns a problem or "".

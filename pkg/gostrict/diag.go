@@ -47,7 +47,7 @@ const (
 	CodeLocalType       Code = "GS025" // type declarations inside functions
 	CodeOpaqueLiteral   Code = "GS026" // composite literals of list.List or dict.Map
 	CodeImportForm      Code = "GS027" // dot and blank imports
-	CodeHeader          Code = "GS028" // functions of header packages without a JavaScript binding
+	CodeHeader          Code = "GS028" // functions of header packages without a JavaScript binding or with invalid directives
 	CodePanic           Code = "GS029" // panic
 	CodeDivision        Code = "GS030" // integer division by a divisor, which may be zero
 	CodeFloatConversion Code = "GS031" // converting a float64 into an integer
@@ -62,6 +62,8 @@ const (
 	CodeTermination     Code = "GS040" // loops and recursion, which may not end, in the terminating profile
 	CodeBigEqual        Code = "GS041" // == on values, which contain a big.Int
 	CodeEntry           Code = "GS042" // an exported function of a root of a whole program, which is no entry point
+	CodeConstArg        Code = "GS043" // arguments of parameters with //gostrict:const, which are not constants
+	CodeConstValue      Code = "GS044" // functions with //gostrict:const parameters used as values
 	CodeInternal        Code = "GS099" // the compiler can not translate a valid construct
 )
 
