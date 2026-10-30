@@ -148,9 +148,20 @@ func (c TAccessible[T]) Disabled(disabled bool) TAccessible[T] {
 }
 
 // Render builds and returns the protocol representation of the accessible wrapper.
+// Absent content stays absent, as in a stack: if the content is nil or renders nil, the wrapper renders nil
+// too, because the attributes have no element to apply to.
 func (c TAccessible[T]) Render(ctx core.RenderContext) core.RenderNode {
+	if any(c.content) == nil {
+		return nil
+	}
+
+	content := c.content.Render(ctx)
+	if content == nil {
+		return nil
+	}
+
 	return &proto.Accessible{
-		Content:    c.content.Render(ctx),
+		Content:    content,
 		Role:       proto.Str(c.role),
 		Label:      proto.Str(c.label),
 		LabelledBy: proto.Str(strings.Join(c.labelledBy, " ")),
