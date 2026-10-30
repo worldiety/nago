@@ -9,7 +9,17 @@
 		:optional="ui.optional"
 	>
 		<div class="relative">
-			<input class="input-field" readonly @click="onFocus" @keydown.enter="onFocus" />
+			<input
+				:id="id"
+				class="input-field"
+				role="button"
+				:aria-invalid="!!ui.errorText"
+				:aria-description="ui.errorText || ui.supportingText"
+				:aria-disabled="ui.disabled"
+				readonly
+				@click="onFocus"
+				@keydown.enter="onFocus"
+			/>
 			<VHtml v-if="ui.value && ui.value.sVG" :html="ui.value.sVG" class="signature" />
 		</div>
 	</InputWrapper>
@@ -21,7 +31,7 @@ import { SignatureField } from '@/shared/proto/nprotoc_gen';
 import { randomStr } from '@/components/shared/util';
 import VHtml from '@/components/VHtml.vue';
 
-defineProps<{
+const props = defineProps<{
 	ui: SignatureField;
 }>();
 
@@ -30,6 +40,7 @@ const emit = defineEmits<{
 }>();
 
 function onFocus(): void {
+	if (props.ui.disabled) return;
 	emit('expand');
 }
 
