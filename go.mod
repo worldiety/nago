@@ -5,9 +5,10 @@ go 1.27.0
 require (
 	github.com/dave/jennifer v1.7.1
 	github.com/dianlight/gollama.cpp v0.2.2-llamacpp.b6862.0.20251113101306-6376d0d4e0a2
+	github.com/dop251/goja v0.0.0-20260917113740-793a2a65c13b
 	github.com/elastic/go-seccomp-bpf v1.6.0
 	github.com/expr-lang/expr v1.17.8
-	github.com/go-chi/chi/v5 v5.3.2
+	github.com/go-chi/chi/v5 v5.4.0
 	github.com/go-chi/cors v1.2.2
 	github.com/google/btree v1.1.3
 	github.com/gorilla/websocket v1.5.3
@@ -27,16 +28,15 @@ require (
 	github.com/worldiety/option v0.0.0-20251007074526-863facc0bc83
 	github.com/worldiety/speclink/spec v0.0.0-20260909124605-a91968ddccb4
 	github.com/yuin/goldmark v1.8.6
-	golang.org/x/crypto v0.57.0
+	golang.org/x/crypto v0.58.0
 	golang.org/x/image v0.46.0
-	golang.org/x/net v0.59.0
-	golang.org/x/sys v0.48.0
-	golang.org/x/text v0.42.0
+	golang.org/x/net v0.62.0
+	golang.org/x/sys v0.49.0
+	golang.org/x/text v0.43.0
 )
 
 require (
 	github.com/dlclark/regexp2/v2 v2.5.2 // indirect
-	github.com/dop251/goja v0.0.0-20260917113740-793a2a65c13b // indirect
 	github.com/ebitengine/purego v0.9.1 // indirect
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/google/go-github/v68 v68.0.0 // indirect

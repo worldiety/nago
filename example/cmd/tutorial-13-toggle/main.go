@@ -28,8 +28,11 @@ func main() {
 
 			return VStack(
 				alert.Dialog("Achtung", Text(fmt.Sprintf("Deine Eingabe: %v", checked)), showAlert, alert.Ok()),
-				HStack(
+				VStack(
 					Toggle(checked.Get()).InputChecked(checked),
+					ToggleField("1bcdefg", checked.Get()).InputValue(checked).Frame(Frame{Width: L32}),
+					ToggleField("2bcdefg", checked.Get()).InputValue(checked).Frame(Frame{Width: L64}),
+					ToggleField("3bcdefg", checked.Get()).InputValue(checked).Frame(Frame{Width: L96}),
 				),
 				PrimaryButton(func() {
 					showAlert.Set(true)
