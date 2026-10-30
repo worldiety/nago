@@ -28,10 +28,11 @@ const (
 type WordBreak int32
 
 const (
-	WordBreakInherit  WordBreak = 0
-	WordBreakNormal   WordBreak = 1
-	WordBreakBreakAll WordBreak = 2
-	WordBreakKeepAll  WordBreak = 3
+	WordBreakInherit   WordBreak = 0
+	WordBreakNormal    WordBreak = 1
+	WordBreakBreakAll  WordBreak = 2
+	WordBreakKeepAll   WordBreak = 3
+	WordBreakBreakWord WordBreak = 4
 )
 
 // Hyphens tells, whether a word breaks with a hyphen.

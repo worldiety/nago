@@ -26,6 +26,9 @@ const (
 	WordBreakNormal
 	WordBreakBreakAll
 	WordBreakKeepAll
+	// WordBreakBreakWord breaks words only, where a line has no other break opportunity, and lets the text shrink
+	// below its longest word, e.g. inside a narrow stack.
+	WordBreakBreakWord
 )
 
 type Hyphens byte
@@ -310,7 +313,8 @@ func (c TText) Render(ctx core.RenderContext) core.RenderNode {
 		wordBreak = "keep-all"
 	case WordBreakNormal:
 		wordBreak = "normal"
-
+	case WordBreakBreakWord:
+		wordBreak = "break-word"
 	}
 
 	return &proto.TextView{

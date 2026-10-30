@@ -33,6 +33,7 @@ function toggle() {
 
 <template>
 	<input
+		v-if="!ui.invisible"
 		:id="ui.id"
 		class="toggle-switch"
 		type="checkbox"
@@ -45,7 +46,8 @@ function toggle() {
 <style scoped>
 @reference '@/assets/css/tailwind.css';
 .toggle-switch {
-	@apply relative inline-block appearance-none rounded-full outline-solid outline-1 -outline-offset-1 w-12 h-6 cursor-pointer;
+	/* the switch has a fixed size: without shrink-0, a stack under pressure squeezes it, because appearance-none leaves no intrinsic width */
+	@apply relative inline-block shrink-0 appearance-none rounded-full outline-solid outline-1 -outline-offset-1 w-12 h-6 cursor-pointer;
 	@apply focus:outline-I0 focus-visible:outline-I0 focus:outline-2 focus:-outline-offset-2;
 
 	&:before {

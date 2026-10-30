@@ -113,6 +113,7 @@ func TestValues(t *testing.T) {
 		"WordBreakNormal":              {int64(WordBreakNormal), int64(nui.WordBreakNormal)},
 		"WordBreakBreakAll":            {int64(WordBreakBreakAll), int64(nui.WordBreakBreakAll)},
 		"WordBreakKeepAll":             {int64(WordBreakKeepAll), int64(nui.WordBreakKeepAll)},
+		"WordBreakBreakWord":           {int64(WordBreakBreakWord), int64(nui.WordBreakBreakWord)},
 		"HyphensInherit":               {int64(HyphensInherit), int64(nui.HyphensInherit)},
 		"HyphensNone":                  {int64(HyphensNone), int64(nui.HyphensNone)},
 		"HyphensManual":                {int64(HyphensManual), int64(nui.HyphensManual)},
