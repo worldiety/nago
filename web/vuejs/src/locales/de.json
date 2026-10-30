@@ -129,6 +129,7 @@
 	"signature-field": {
 		"overlay": {
 			"close": "Dialog schließen",
+			"input-aria-label": "Unterschrift-Feld",
 			"reset": "Unterschrift löschen",
 			"submit": "Bestätigen"
 		}

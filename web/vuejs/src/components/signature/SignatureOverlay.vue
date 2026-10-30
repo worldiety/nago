@@ -18,7 +18,7 @@
 
 				<hr class="border-I0" aria-hidden="true" />
 
-				<canvas ref="canvas" />
+				<canvas ref="canvas" tabindex="0" :aria-label="$t('signature-field.overlay.input-aria-label')" />
 
 				<hr class="border-ST0" aria-hidden="true" />
 
