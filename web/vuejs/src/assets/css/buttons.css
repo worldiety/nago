@@ -127,7 +127,7 @@
 
 	&.disabled,
 	&:disabled {
-		@apply bg-transparent text-ST0;
+		@apply bg-transparent text-ST0 opacity-60;
 
 		* {
 			@apply text-ST0 darkmode:text-ST0;
