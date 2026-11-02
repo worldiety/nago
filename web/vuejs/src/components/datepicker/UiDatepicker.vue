@@ -11,6 +11,7 @@
 	<div v-if="!ui.invisible" class="relative" :style="frameStyles">
 		<!-- Input field -->
 		<DatepickerInput
+			:id="id"
 			:value="value"
 			:label="ui.label"
 			:error-text="ui.errorText"
@@ -60,6 +61,7 @@ import {
 	UpdateStateValueRequested,
 	UpdateStateValues2Requested,
 } from '@/shared/proto/nprotoc_gen';
+import { randomStr } from '@/components/shared/util';
 
 const props = defineProps<{
 	ui: DatePicker;
@@ -67,6 +69,7 @@ const props = defineProps<{
 
 const MIN_YEAR = 1583;
 
+const id = `datepicker-${randomStr(16)}`;
 const serviceAdapter = useServiceAdapter();
 
 const value = ref(props.ui.value);
