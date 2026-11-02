@@ -96,29 +96,36 @@ function onBackdropClick(e: MouseEvent) {
 	if (onBackdrop) sendDismissEvent();
 }
 
-// returns all tabbable elements of the dialogs main content in document order. It is evaluated on each use, because
-// the dialog content may change while it is open.
-function getInitialFocusCandidates(): HTMLElement[] {
-	if (!dialogContainer.value) return [];
+// returns the dialogs main content section. It is evaluated on each use, because the dialog content may change while
+// it is open.
+function getDialogContentSection(): HTMLElement | undefined {
+	if (!dialogContainer.value) return undefined;
 
 	const dialog = dialogContainer.value.querySelector('dialog');
-	if (!dialog) return [];
+	if (!dialog) return undefined;
 
 	// find the highest dialog section and assume it contains the dialogs main content
 	let highestDialogSection: HTMLElement | undefined;
 	for (let child of dialog.children) {
+		console.warn(child, child.clientHeight);
 		if (!highestDialogSection || child.clientHeight > highestDialogSection.clientHeight) {
 			highestDialogSection = child as HTMLElement;
 		}
 	}
 
-	if (!highestDialogSection) return [];
-
-	return ModalManager.getTabbableElements(highestDialogSection);
+	return highestDialogSection ?? (dialog as HTMLElement);
 }
 
+// Moves the focus to the start of the dialog content without focusing an interactive element. The content section
+// is made programmatically focusable (but not tabbable), thus the next tab key press or the next screen reader
+// navigation step starts at the beginning of the dialog content.
 function captureFocusInDialog(): void {
-	getInitialFocusCandidates()[0]?.focus({ focusVisible: true } as any); // focus options help to make the focus event visible
+	const section = getDialogContentSection();
+	if (!section) return;
+
+	if (!section.hasAttribute('tabindex')) section.setAttribute('tabindex', '-1');
+	section.setAttribute('data-modal-focus-start', '');
+	section.focus({ preventScroll: true });
 }
 
 function onKeydown(e: KeyboardEvent) {
@@ -131,7 +138,7 @@ watch(dialogContainer, (newContainer, oldContainer) => {
 
 	if (newContainer) {
 		ModalManager.pushDialog(newContainer);
-		setTimeout(captureFocusInDialog, 50); // wait for dialog content to be rendered
+		setTimeout(captureFocusInDialog, 100); // wait for dialog content to be rendered
 	}
 });
 
@@ -176,5 +183,10 @@ onUnmounted(() => {
 .v-enter-from,
 .v-leave-to {
 	opacity: 0;
+}
+
+/* the content section is only focused as starting point for the tab order, it is not interactive */
+[data-modal-focus-start]:focus {
+	outline: none;
 }
 </style>
