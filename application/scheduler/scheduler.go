@@ -257,19 +257,22 @@ func (s *Scheduler) Launch() {
 	}()
 }
 
-// nextCronAt returns the next planned execution after now.
+// nextCronAt returns the next planned execution after now. The cron time is a wall clock time in the location of
+// now, thus it stays the same on days with 23 or 25 hours, when the daylight saving time begins or ends. A cron
+// time, which does not exist on such a day, is normalized like by [time.Date], e.g. 02:30 to 03:30, and an
+// ambiguous one is planned once. The pause time is a duration between the executions, starting at the cron time.
 func nextCronAt(now time.Time, settings Settings) time.Time {
-	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-	nextPlannedAt := startOfDay.
-		Add(time.Duration(settings.CronHour) * time.Hour).
-		Add(time.Duration(settings.CronMinute) * time.Minute)
+	at := func(day int) time.Time {
+		return time.Date(now.Year(), now.Month(), day, settings.CronHour, settings.CronMinute, 0, 0, now.Location())
+	}
 
+	nextPlannedAt := at(now.Day())
 	if settings.PauseTime > 0 {
 		for !nextPlannedAt.After(now) {
 			nextPlannedAt = nextPlannedAt.Add(settings.PauseTime)
 		}
 	} else if nextPlannedAt.Before(now) {
-		nextPlannedAt = nextPlannedAt.Add(24 * time.Hour)
+		nextPlannedAt = at(now.Day() + 1)
 	}
 
 	return nextPlannedAt
