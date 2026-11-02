@@ -246,7 +246,8 @@ const screenreaderDateFormatted = computed((): string => {
 });
 
 function getMonthName(month: number): string {
-	const date = new Date(0, month - 1);
+	const monthIndex = month - 1;
+	const date = new Date(0, monthIndex);
 	return date.toLocaleString('default', { month: 'long' });
 }
 

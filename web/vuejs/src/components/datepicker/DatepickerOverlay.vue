@@ -31,7 +31,8 @@
 									'hover:bg-I0/15 cursor-pointer': !lowerBoundReached,
 									'opacity-0 pointer-events-none': i !== 1,
 								}"
-								:tabindex="lowerBoundReached ? '-1' : '0'"
+								:tabindex="i !== 1 ? -1 : 0"
+								:aria-hidden="i !== 1"
 								:aria-label="$t('datepicker.overlay.decreaseMonth')"
 								@click="tryDecreaseMonth"
 								@keydown.enter="tryDecreaseMonth"
@@ -73,8 +74,9 @@
 							<button
 								class="hover:bg-I0/15 flex justify-center items-center cursor-pointer rounded-full size-8"
 								:class="i !== monthsToShow ? 'opacity-0 pointer-events-none' : ''"
-								tabindex="0"
+								:tabindex="i !== monthsToShow ? -1 : 0"
 								:aria-label="$t('datepicker.overlay.increaseMonth')"
+								:aria-hidden="i !== monthsToShow"
 								@click="increaseMonth"
 								@keydown.enter="increaseMonth"
 							>
@@ -83,13 +85,13 @@
 						</div>
 
 						<div class="datepicker-grid grid grid-cols-7 gap-y-2 text-center leading-none">
-							<span>Mo</span>
-							<span>Di</span>
-							<span>Mi</span>
-							<span>Do</span>
-							<span>Fr</span>
-							<span>Sa</span>
-							<span>So</span>
+							<span aria-hidden="true">Mo</span>
+							<span aria-hidden="true">Di</span>
+							<span aria-hidden="true">Mi</span>
+							<span aria-hidden="true">Do</span>
+							<span aria-hidden="true">Fr</span>
+							<span aria-hidden="true">Sa</span>
+							<span aria-hidden="true">So</span>
 
 							<div
 								v-for="(day, index) in getDatepickerDays(i - 1)"
@@ -113,6 +115,7 @@
 											!day.withinRange && day.monthIndex !== getSelectedMonth(i - 1),
 									}"
 									:tabindex="day.selectable ? '0' : '-1'"
+									:aria-label="`${day.dayOfMonth}. ${getMonthName(day.monthIndex)} ${day.year}`"
 									@click="trySelectDate(day)"
 									@keydown.enter.prevent="trySelectDate(day)"
 								>
@@ -229,6 +232,11 @@ function getSelectedMonth(offset: number): number {
 
 function getSelectedYear(offset: number): number {
 	return selectedYear.value + (selectedMonth.value + offset > 11 ? 1 : 0);
+}
+
+function getMonthName(monthIndex: number): string {
+	const date = new Date(0, monthIndex);
+	return date.toLocaleString('default', { month: 'long' });
 }
 
 function onMonthChange(e: Event, offset: number) {
