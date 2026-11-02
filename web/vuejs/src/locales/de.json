@@ -164,5 +164,19 @@
 	},
 	"connectingChannelOverlay": {
 		"content": "Verbindung wird hergestellt"
+	},
+	"chart": {
+		"barChart": "Balkendiagramm",
+		"lineChart": "Liniendiagramm",
+		"pieChart": "Kreisdiagramm",
+		"donutChart": "Ringdiagramm",
+		"category": "Kategorie",
+		"value": "Wert",
+		"series": "Serie {n}",
+		"noData": "Keine Daten",
+		"download": "Diagramm herunterladen",
+		"download_svg": "Als SVG herunterladen",
+		"download_png": "Als PNG herunterladen",
+		"download_csv": "Als CSV herunterladen"
 	}
 }

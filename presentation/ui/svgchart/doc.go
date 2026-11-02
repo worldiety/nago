@@ -19,7 +19,8 @@
 // the value on hover. The SVG() methods return the markup, e.g. to embed it in a
 // PDF or a mail.
 //
-// Differences to the Apex based chart components:
+// Differences to the interactive chart components of the packages barchart,
+// linechart and piechart:
 //   - [chart.Chart.Downloadable] is ignored, there is no toolbar.
 //   - A line chart has no concept of null data points, so there is no
 //     ShowNullDataPoints option.

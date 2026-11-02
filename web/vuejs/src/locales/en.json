@@ -79,5 +79,19 @@
 		"confirm": "Copy",
 		"cancel": "Cancel",
 		"info": "Your browser blocked your clipboard. Please confirm the copy action."
+	},
+	"chart": {
+		"barChart": "Bar chart",
+		"lineChart": "Line chart",
+		"pieChart": "Pie chart",
+		"donutChart": "Donut chart",
+		"category": "Category",
+		"value": "Value",
+		"series": "Series {n}",
+		"noData": "No data",
+		"download": "Download chart",
+		"download_svg": "Download as SVG",
+		"download_png": "Download as PNG",
+		"download_csv": "Download as CSV"
 	}
 }

@@ -1,3 +1,62 @@
-.apexcharts-toolbar {
-	@apply !p-0;
+/**
+ * Copyright (c) 2026 worldiety GmbH
+ *
+ * This file is part of the NAGO Low-Code Platform.
+ * Licensed under the terms specified in the LICENSE file.
+ *
+ * SPDX-License-Identifier: Custom-License
+ */
+
+/*
+ * The default colors of the series of a chart without colors of its own, the same as those of the server side
+ * svgchart package. They are ordered, so that neighbouring series stay distinguishable for color vision
+ * deficiencies, and stepped for a dark surface in the dark mode.
+ */
+:root {
+	--chart-color-0: #2a78d6;
+	--chart-color-1: #eb6834;
+	--chart-color-2: #1baf7a;
+	--chart-color-3: #eda100;
+	--chart-color-4: #e87ba4;
+	--chart-color-5: #008300;
+	--chart-color-6: #6250d6;
+	--chart-color-7: #e34948;
+}
+
+html.darkmode {
+	--chart-color-0: #3987e5;
+	--chart-color-1: #d95926;
+	--chart-color-2: #199e70;
+	--chart-color-3: #c98500;
+	--chart-color-4: #d55181;
+	--chart-color-5: #008300;
+	--chart-color-6: #9085e9;
+	--chart-color-7: #e66767;
+}
+
+@media (prefers-color-scheme: dark) {
+	html:not(.lightmode) {
+		--chart-color-0: #3987e5;
+		--chart-color-1: #d95926;
+		--chart-color-2: #199e70;
+		--chart-color-3: #c98500;
+		--chart-color-4: #d55181;
+		--chart-color-5: #008300;
+		--chart-color-6: #9085e9;
+		--chart-color-7: #e66767;
+	}
+}
+
+.chart {
+	@apply relative select-none outline-none;
+	touch-action: pan-y;
+	-webkit-tap-highlight-color: transparent;
+
+	&:focus-visible {
+		@apply outline-2 outline-solid outline-offset-2 outline-I0;
+	}
+
+	.chart-drawing {
+		@apply absolute inset-0 overflow-visible;
+	}
 }
