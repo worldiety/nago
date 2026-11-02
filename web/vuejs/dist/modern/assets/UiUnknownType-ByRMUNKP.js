@@ -1,0 +1,1 @@
+import{At as e,N as t,f as n,y as r}from"./runtime-core.esm-bundler-Disj5Itt.js";var i={key:0},a={key:1},o=r({__name:`UiUnknownType`,props:{ui:{}},setup(r){let o=r;return(r,s)=>o.ui?(t(),n(`div`,i,`[Protocol type has not been implemented: '`+e(o.ui.constructor.name)+`']`,1)):(t(),n(`div`,a,`ui component is null`))}});export{o as default};
