@@ -8,13 +8,13 @@
 -->
 
 <template>
-	<div
-		ref="datepicker"
-		class="datepicker"
-		:class="{ 'double-mode': doubleMode, 'range-mode': rangeMode }"
-		@keydown.esc="$emit('close')"
-	>
-		<div class="relative bg-M1 rounded-xl shadow-lg p-6 z-10">
+	<div ref="datepicker" class="datepicker" :class="{ 'double-mode': doubleMode, 'range-mode': rangeMode }">
+		<div
+			class="relative bg-M1 rounded-xl shadow-lg p-6 z-10"
+			role="dialog"
+			aria-modal="true"
+			:aria-label="headerText || undefined"
+		>
 			<div class="h-[22.75rem]">
 				<DatepickerHeader ref="datepickerHeader" :label="headerText" @close="emit('close')" />
 
@@ -102,7 +102,7 @@
 									'other-month-day': day.otherMonth,
 								}"
 							>
-								<div
+								<button
 									:ref="(el) => setLastDatepickerDayElement(el, index)"
 									class="day flex justify-center items-center"
 									:class="{
@@ -114,10 +114,10 @@
 									}"
 									:tabindex="day.selectable ? '0' : '-1'"
 									@click="trySelectDate(day)"
-									@keydown.enter="trySelectDate(day)"
+									@keydown.enter.prevent="trySelectDate(day)"
 								>
 									<span class="select-none">{{ day.dayOfMonth }}</span>
-								</div>
+								</button>
 							</div>
 						</div>
 					</div>
@@ -159,7 +159,7 @@
 
 <script setup lang="ts">
 import type { ComponentPublicInstance } from 'vue';
-import { computed, ref, useTemplateRef, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import ArrowRight from '@/assets/svg/arrowRightBold.svg';
 import UndoIcon from '@/assets/svg/undo.svg';
@@ -168,6 +168,7 @@ import type DatepickerDay from '@/components/datepicker/datepickerDay';
 import { RangeSelectionState } from '@/components/datepicker/rangeSelectionState';
 import { weekNumber } from 'weeknumber';
 import monthNames from '@/shared/monthNames';
+import { ModalManager } from '@/components/shared/modalManager';
 
 const props = defineProps<{
 	rangeMode: boolean;
@@ -395,6 +396,45 @@ function showSelectedRange() {
 }
 
 watch(() => props.selectedStartDate, showSelectedRange);
+
+// the element which had the focus before the overlay has been opened, to restore it when the overlay closes
+let previouslyFocused: HTMLElement | undefined;
+
+// closes the overlay on escape, if it is the topmost dialog. The event is not propagated any further, so that an
+// underlying modal is not dismissed as well.
+function onKeydown(e: KeyboardEvent): void {
+	if (e.key !== 'Escape' || e.defaultPrevented) return;
+	if (!datepicker.value || !ModalManager.isTopmostDialog(datepicker.value)) return;
+
+	e.preventDefault();
+	e.stopPropagation();
+	emit('close');
+}
+
+function focusInitialElement(): void {
+	if (!datepicker.value) return;
+
+	const initial =
+		datepicker.value.querySelector<HTMLElement>('.day.selected-day[tabindex="0"]') ??
+		datepickerHeader.value?.closeButton ??
+		ModalManager.getTabbableElements(datepicker.value)[0];
+	initial?.focus({ focusVisible: true } as any);
+}
+
+onMounted(() => {
+	document.addEventListener('keydown', onKeydown, true);
+	if (document.activeElement instanceof HTMLElement) previouslyFocused = document.activeElement;
+	if (datepicker.value) ModalManager.pushDialog(datepicker.value);
+	ModalManager.onModalOpen();
+	nextTick(focusInitialElement);
+});
+
+onBeforeUnmount(() => {
+	document.removeEventListener('keydown', onKeydown, true);
+	if (datepicker.value) ModalManager.popDialog(datepicker.value);
+	ModalManager.onModalClose();
+	previouslyFocused?.focus();
+});
 </script>
 
 <style scoped>
