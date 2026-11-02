@@ -25,6 +25,7 @@
 			:input-value="ui.inputValue"
 			:end-input-value="ui.endInputValue"
 			:min-year="MIN_YEAR"
+			:max-year="MAX_YEAR"
 			:optional="ui.optional"
 			@show-datepicker="showDatepicker"
 		/>
@@ -68,6 +69,7 @@ const props = defineProps<{
 }>();
 
 const MIN_YEAR = 1583;
+const MAX_YEAR = 9999;
 
 const id = `datepicker-${randomStr(16)}`;
 const serviceAdapter = useServiceAdapter();
