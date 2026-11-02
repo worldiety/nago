@@ -77,6 +77,7 @@
 						min="1"
 						:max="totalDaysForEditableEndMonth"
 						class="input-day arrows-none"
+						:disabled="disabled"
 						aria-label="Enddatum Tag auswählen"
 						:aria-valuetext="`${editableEndDay}`"
 						:aria-invalid="!!errorText"
@@ -94,6 +95,7 @@
 						min="1"
 						max="12"
 						class="input-month arrows-none"
+						:disabled="disabled"
 						aria-label="Enddatum Monat auswählen"
 						:aria-valuetext="`${getMonthName(editableEndMonth)}`"
 						:aria-invalid="!!errorText"
@@ -111,6 +113,7 @@
 						:min="minYear || 0"
 						:max="maxYear || 9999"
 						class="input-year arrows-none"
+						:disabled="disabled"
 						aria-label="Enddatum Jahr eingeben"
 						:aria-valuetext="`${editableEndYear}`"
 						:aria-invalid="!!errorText"
@@ -138,8 +141,8 @@
 				:disabled="disabled"
 				:aria-invalid="!!errorText"
 				:aria-description="errorText || supportingText"
-				@click="$emit('showDatepicker')"
-				@keydown.enter.prevent="$emit('showDatepicker')"
+				@click="onCalendarButtonClick"
+				@keydown.enter.prevent="onCalendarButtonClick"
 			>
 				<Calendar class="w-4" aria-hidden="true" />
 			</button>
@@ -178,7 +181,7 @@ const props = defineProps<{
 	optional?: boolean;
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
 	(e: 'showDatepicker'): void;
 }>();
 
@@ -447,6 +450,11 @@ function fixAllInputDecimals() {
 			fixInputDecimals(input as HTMLInputElement);
 		}
 	});
+}
+
+function onCalendarButtonClick() {
+	if (props.disabled) return;
+	emit('showDatepicker');
 }
 
 function init() {
