@@ -1,5 +1,6 @@
 <template>
 	<InputWrapper
+		:input-id="id"
 		:label="label"
 		:error="errorText"
 		:help="supportingText"
@@ -21,6 +22,9 @@
 						:aria-label="rangeMode ? 'Startdatum Tag auswählen' : 'Datum Tag auswählen'"
 						onfocus="this.select()"
 						:disabled="disabled"
+						:aria-valuetext="`${editableStartDay}`"
+						:aria-invalid="!!errorText"
+						:aria-description="errorText || supportingText"
 						@input="onInputInput"
 						@blur="onInputBlur"
 						@click.stop
@@ -36,6 +40,9 @@
 						:aria-label="rangeMode ? 'Startdatum Monat auswählen' : 'Datum Monat auswählen'"
 						onfocus="this.select()"
 						:disabled="disabled"
+						:aria-valuetext="`${getMonthName(editableStartMonth)}`"
+						:aria-invalid="!!errorText"
+						:aria-description="errorText || supportingText"
 						@input="onInputInput"
 						@blur="onInputBlur"
 						@click.stop
@@ -51,6 +58,9 @@
 						:aria-label="rangeMode ? 'Startdatum Jahr eingeben' : 'Datum Jahr eingeben'"
 						onfocus="this.select()"
 						:disabled="disabled"
+						:aria-valuetext="`${editableStartYear}`"
+						:aria-invalid="!!errorText"
+						:aria-description="errorText || supportingText"
 						@input="onInputInput"
 						@blur="onInputBlur"
 						@click.stop
@@ -59,7 +69,7 @@
 
 				<!-- Editable end date parts-->
 				<template v-if="dateSelected && rangeMode">
-					<span class="mx-0.5">-</span>
+					<span class="mx-0.5" aria-hidden="true">-</span>
 					<input
 						v-model="editableEndDay"
 						type="number"
@@ -68,6 +78,9 @@
 						:max="totalDaysForEditableEndMonth"
 						class="input-day arrows-none"
 						aria-label="Enddatum Tag auswählen"
+						:aria-valuetext="`${editableEndDay}`"
+						:aria-invalid="!!errorText"
+						:aria-description="errorText || supportingText"
 						onfocus="this.select()"
 						@input="onInputInput"
 						@blur="onInputBlur"
@@ -82,6 +95,9 @@
 						max="12"
 						class="input-month arrows-none"
 						aria-label="Enddatum Monat auswählen"
+						:aria-valuetext="`${getMonthName(editableEndMonth)}`"
+						:aria-invalid="!!errorText"
+						:aria-description="errorText || supportingText"
 						onfocus="this.select()"
 						@input="onInputInput"
 						@blur="onInputBlur"
@@ -96,6 +112,9 @@
 						max="9999"
 						class="input-year arrows-none"
 						aria-label="Enddatum Jahr eingeben"
+						:aria-valuetext="`${editableEndYear}`"
+						:aria-invalid="!!errorText"
+						:aria-description="errorText || supportingText"
 						onfocus="this.select()"
 						@input="onInputInput"
 						@blur="onInputBlur"
@@ -111,11 +130,14 @@
 
 			<!-- Clickable calendar icon -->
 			<button
+				:id="id"
 				class="button-tertiary square small additional-right overlay-button"
 				tabindex="0"
 				role="button"
 				:aria-label="datepickerCalendarAriaLabel"
 				:disabled="disabled"
+				:aria-invalid="!!errorText"
+				:aria-description="errorText || supportingText"
 				@click="$emit('showDatepicker')"
 				@keydown.enter="$emit('showDatepicker')"
 			>
@@ -135,6 +157,7 @@ import type { DateData, DatePickerStyleValues } from '@/shared/proto/nprotoc_gen
 import { UpdateStateValueRequested, UpdateStateValues2Requested } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
+	id: string;
 	// value containing the selected start date
 	value?: DateData;
 	label?: string;
@@ -221,6 +244,11 @@ const screenreaderDateFormatted = computed((): string => {
 	);
 	return `Ausgewählter Zeitraum: ${editableStartDate.toLocaleDateString()} bis ${editableEndDate.toLocaleDateString()}`;
 });
+
+function getMonthName(month: number): string {
+	const date = new Date(0, month - 1);
+	return date.toLocaleString('default', { month: 'long' });
+}
 
 function isEditableEndDateBeforeEditableStartDate() {
 	if (!props.rangeMode) {

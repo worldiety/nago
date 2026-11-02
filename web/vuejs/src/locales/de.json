@@ -97,7 +97,11 @@
 	},
 	"datepicker": {
 		"confirm": "Bestätigen",
-		"select": "Auswählen..."
+		"select": "Auswählen...",
+		"overlay": {
+			"decreaseMonth": "Vorheriger Monat",
+			"increaseMonth": "Nächster Monat"
+		}
 	},
 	"dropdown": {
 		"select": "Auswählen...",

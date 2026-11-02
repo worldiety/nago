@@ -12,8 +12,6 @@
 		ref="datepicker"
 		class="datepicker"
 		:class="{ 'double-mode': doubleMode, 'range-mode': rangeMode }"
-		@keydown.tab.exact="moveFocusForward"
-		@keydown.shift.tab="moveFocusBackwards"
 		@keydown.esc="$emit('close')"
 	>
 		<div class="relative bg-M1 rounded-xl shadow-lg p-6 z-10">
@@ -34,6 +32,7 @@
 									'opacity-0 pointer-events-none': i !== 1,
 								}"
 								:tabindex="lowerBoundReached ? '-1' : '0'"
+								:aria-label="$t('datepicker.overlay.decreaseMonth')"
 								@click="tryDecreaseMonth"
 								@keydown.enter="tryDecreaseMonth"
 							>
@@ -43,7 +42,7 @@
 								<label
 									class="relative hover:bg-I0/15 border-0 bg-M1 rounded-l-md select-none h-full focus-within flex items-center px-1"
 								>
-									<span class="">
+									<span class="" aria-hidden="true">
 										{{ getSelectedMonthName(i - 1) }}
 									</span>
 									<select
@@ -75,6 +74,7 @@
 								class="hover:bg-I0/15 flex justify-center items-center cursor-pointer rounded-full size-8"
 								:class="i !== monthsToShow ? 'opacity-0 pointer-events-none' : ''"
 								tabindex="0"
+								:aria-label="$t('datepicker.overlay.increaseMonth')"
 								@click="increaseMonth"
 								@keydown.enter="increaseMonth"
 							>
@@ -371,30 +371,6 @@ function trySelectDate(datepickerDay: DatepickerDay): void {
 	emit('select', datepickerDay.dayOfMonth, datepickerDay.monthIndex, datepickerDay.year);
 	if (!props.rangeMode) {
 		emit('close');
-	}
-}
-
-function moveFocusForward(event: Event) {
-	if (document.activeElement === getLastFocusableElement()) {
-		event.preventDefault();
-		datepickerHeader.value?.closeButton?.focus();
-	}
-}
-
-function getLastFocusableElement(): HTMLElement | null {
-	if (props.rangeSelectionState === RangeSelectionState.COMPLETE) {
-		return confirmButton.value;
-	}
-	if (lastDatepickerDayElement.value instanceof HTMLElement) {
-		return lastDatepickerDayElement.value;
-	}
-	return null;
-}
-
-function moveFocusBackwards(event: Event) {
-	if (document.activeElement === datepickerHeader.value?.closeButton) {
-		event.preventDefault();
-		getLastFocusableElement()?.focus();
 	}
 }
 
