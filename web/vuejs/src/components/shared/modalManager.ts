@@ -116,6 +116,11 @@ export class ModalManager {
 		if (!insideDialog) {
 			e.preventDefault();
 			(e.shiftKey ? last : first).focus();
+		} else if (!tabbables.includes(active as HTMLElement)) {
+			// the focus is on a non-tabbable element, e.g. the start of the dialog content. The browser would continue
+			// with the neighbouring tabbable element in document order, which may be outside of the dialog.
+			e.preventDefault();
+			ModalManager.neighbourTabbable(tabbables, active as Element, e.shiftKey).focus();
 		} else if (e.shiftKey && active === first) {
 			e.preventDefault();
 			last.focus();
@@ -123,6 +128,21 @@ export class ModalManager {
 			e.preventDefault();
 			first.focus();
 		}
+	}
+
+	// returns the next (or previous) tabbable element relative to the given element in document order and wraps
+	// around at the ends. Tabbable descendants of the element count as following it.
+	private static neighbourTabbable(tabbables: HTMLElement[], el: Element, backwards: boolean): HTMLElement {
+		const follows = (t: HTMLElement) => !!(el.compareDocumentPosition(t) & Node.DOCUMENT_POSITION_FOLLOWING);
+
+		if (backwards) {
+			for (let i = tabbables.length - 1; i >= 0; i--) {
+				if (!follows(tabbables[i])) return tabbables[i];
+			}
+			return tabbables[tabbables.length - 1];
+		}
+
+		return tabbables.find(follows) ?? tabbables[0];
 	}
 
 	private static removeFromStack(container: HTMLElement): boolean {
