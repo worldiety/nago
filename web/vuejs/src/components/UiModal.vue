@@ -107,7 +107,6 @@ function getDialogContentSection(): HTMLElement | undefined {
 	// find the highest dialog section and assume it contains the dialogs main content
 	let highestDialogSection: HTMLElement | undefined;
 	for (let child of dialog.children) {
-		console.warn(child, child.clientHeight);
 		if (!highestDialogSection || child.clientHeight > highestDialogSection.clientHeight) {
 			highestDialogSection = child as HTMLElement;
 		}
