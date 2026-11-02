@@ -90,7 +90,7 @@ const frameStyles = computed<string>(() => {
 
 const isDoubleMode = computed<boolean>(() => {
 	return !!props.ui.doubleMode && viewportWidth.value > 600;
-})
+});
 
 function initialize(): void {
 	if (value.value === undefined) {
