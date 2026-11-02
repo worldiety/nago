@@ -53,7 +53,7 @@
 						type="number"
 						step="1"
 						:min="minYear || 0"
-						max="9999"
+						:max="maxYear"
 						class="input-year arrows-none"
 						:aria-label="rangeMode ? 'Startdatum Jahr eingeben' : 'Datum Jahr eingeben'"
 						onfocus="this.select()"
@@ -109,7 +109,7 @@
 						type="number"
 						step="1"
 						:min="minYear || 0"
-						max="9999"
+						:max="maxYear || 9999"
 						class="input-year arrows-none"
 						aria-label="Enddatum Jahr eingeben"
 						:aria-valuetext="`${editableEndYear}`"
@@ -174,6 +174,7 @@ const props = defineProps<{
 	// needed by Nago to submit updated dates
 	endInputValue?: number;
 	minYear?: number;
+	maxYear?: number;
 	optional?: boolean;
 }>();
 
@@ -295,12 +296,41 @@ function onInputBlur(event: FocusEvent) {
 	const input = event.target as HTMLInputElement;
 	if (!input) return;
 
+	normalizeEditableValues();
 	fixInputDecimals(input);
 	trySubmitSelection(event);
 }
 
+function isValidDatePart(value: unknown): boolean {
+	return typeof value === 'number' && Number.isFinite(value);
+}
+
+// a cleared input sets its model to an empty string, which must not be submitted. Such parts are reset to the
+// previously selected date instead. Years out of range are clamped.
+function normalizeEditableValues() {
+	const now = new Date();
+	const start = props.selectedStartDate ?? now;
+	if (!isValidDatePart(editableStartDay.value)) editableStartDay.value = start.getDate();
+	if (!isValidDatePart(editableStartMonth.value)) editableStartMonth.value = start.getMonth() + 1;
+	if (!isValidDatePart(editableStartYear.value)) editableStartYear.value = start.getFullYear();
+
+	const end = props.selectedEndDate ?? now;
+	if (!isValidDatePart(editableEndDay.value)) editableEndDay.value = end.getDate();
+	if (!isValidDatePart(editableEndMonth.value)) editableEndMonth.value = end.getMonth() + 1;
+	if (!isValidDatePart(editableEndYear.value)) editableEndYear.value = end.getFullYear();
+
+	// the year is not limited to its minimum while typing, thus it must be clamped once the input is left
+	editableStartYear.value = clampYear(editableStartYear.value);
+	editableEndYear.value = clampYear(editableEndYear.value);
+}
+
+function clampYear(year: number): number {
+	return Math.min(props.maxYear || 9999, Math.max(props.minYear || 0, year));
+}
+
 function fixInputRange(input: HTMLInputElement) {
-	const min = input.min;
+	// a year below the minimum is valid while typing, because it is entered digit by digit
+	const min = input.classList.contains('input-year') ? undefined : input.min;
 	if (min && input.valueAsNumber < parseInt(min)) {
 		input.value = min;
 	}
@@ -313,16 +343,8 @@ function fixInputRange(input: HTMLInputElement) {
 
 function fixInputDecimals(input: HTMLInputElement) {
 	if (input.classList.contains('input-day') || input.classList.contains('input-month')) {
-		if (isNaN(input.valueAsNumber)) input.valueAsNumber = 1;
 		const value = input.value;
 		if (value.length === 1) {
-			input.value = `0${value}`;
-		}
-	}
-	if (input.classList.contains('input.year')) {
-		if (isNaN(input.valueAsNumber)) input.valueAsNumber = new Date().getFullYear();
-		const value = input.value;
-		while (value.length < 4) {
 			input.value = `0${value}`;
 		}
 	}
@@ -341,6 +363,8 @@ function trySubmitSelection(event: FocusEvent) {
 }
 
 function submitSelection() {
+	normalizeEditableValues();
+
 	if (isEditableEndDateBeforeEditableStartDate()) {
 		swapEditableDates();
 	}
