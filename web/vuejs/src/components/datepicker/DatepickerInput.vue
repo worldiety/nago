@@ -139,7 +139,7 @@
 				:aria-invalid="!!errorText"
 				:aria-description="errorText || supportingText"
 				@click="$emit('showDatepicker')"
-				@keydown.enter="$emit('showDatepicker')"
+				@keydown.enter.prevent="$emit('showDatepicker')"
 			>
 				<Calendar class="w-4" aria-hidden="true" />
 			</button>

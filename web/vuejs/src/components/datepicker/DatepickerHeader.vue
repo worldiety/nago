@@ -18,7 +18,7 @@
 				tabindex="0"
 				aria-label="Dialog schließen"
 				@click="$emit('close')"
-				@keydown.enter="$emit('close')"
+				@keydown.enter.prevent="$emit('close')"
 			>
 				<Close class="h-3.5" aria-hidden="true" />
 			</button>
