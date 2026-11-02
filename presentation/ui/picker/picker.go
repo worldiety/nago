@@ -424,22 +424,24 @@ func (c TPicker[T]) pickerTable(wnd core.Window) (table core.View, quickFilter c
 	}
 
 	return ui.VStack(
-		ui.VStack(
-			ui.CheckboxField("alles auswählen", c.selectAllCheckbox.Get()).InputValue(c.selectAllCheckbox).Visible(selectAllVisible),
-			ui.If(quickFilterVisible,
-				ui.Stack(
-					ui.Stack().
-						BackgroundColor(ui.ColorLine).
-						Frame(ui.Frame{Height: ui.L1}.FullWidth()),
-				).
-					FullWidth().
-					Padding(ui.Padding{}.Vertical(ui.L8)),
-			),
-		).
-			Append(renderedOptions...).
-			Alignment(ui.Leading).
-			FullWidth().
-			Padding(ui.Padding{}.Vertical(ui.L8)),
+		accessibility.Accessible(
+			ui.VStack(
+				ui.CheckboxField("alles auswählen", c.selectAllCheckbox.Get()).InputValue(c.selectAllCheckbox).Visible(selectAllVisible),
+				ui.If(quickFilterVisible,
+					ui.Stack(
+						ui.Stack().
+							BackgroundColor(ui.ColorLine).
+							Frame(ui.Frame{Height: ui.L1}.FullWidth()),
+					).
+						FullWidth().
+						Padding(ui.Padding{}.Vertical(ui.L8)),
+				),
+			).
+				Append(renderedOptions...).
+				Alignment(ui.Leading).
+				FullWidth().
+				Padding(ui.Padding{}.Vertical(ui.L8)),
+		).Label("Optionsfelder"),
 		noEntries,
 		c.detailView,
 	).Frame(ui.Frame{}.FullWidth()), quickFilter
