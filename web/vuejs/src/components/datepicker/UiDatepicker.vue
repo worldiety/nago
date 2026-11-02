@@ -33,7 +33,7 @@
 		<DatepickerOverlay
 			v-if="expanded"
 			:range-mode="ui.style === DatePickerStyleValues.DatePickerDateRange"
-			:double-mode="ui.doubleMode"
+			:double-mode="isDoubleMode"
 			:label="ui.label"
 			:selected-start-date="selectedStartDate"
 			:selected-end-date="selectedEndDate"
@@ -48,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import DatepickerInput from '@/components/datepicker/DatepickerInput.vue';
 import DatepickerOverlay from '@/components/datepicker/DatepickerOverlay.vue';
 import { RangeSelectionState } from '@/components/datepicker/rangeSelectionState';
@@ -73,6 +73,7 @@ const MAX_YEAR = 9999;
 
 const id = `datepicker-${randomStr(16)}`;
 const serviceAdapter = useServiceAdapter();
+const viewportWidth = ref<number>(document.body.clientWidth);
 
 const value = ref(props.ui.value);
 const endValue = ref(props.ui.endValue);
@@ -86,6 +87,10 @@ onMounted(initialize);
 const frameStyles = computed<string>(() => {
 	return frameCSS(props.ui.frame).join(';');
 });
+
+const isDoubleMode = computed<boolean>(() => {
+	return !!props.ui.doubleMode && viewportWidth.value > 600;
+})
 
 function initialize(): void {
 	if (value.value === undefined) {
@@ -232,6 +237,10 @@ function submitSelection(): void {
 	}
 }
 
+function onViewportResize() {
+	viewportWidth.value = document.body.clientWidth;
+}
+
 watch(
 	() => props.ui.value,
 	() => {
@@ -247,4 +256,12 @@ watch(
 		initialize();
 	}
 );
+
+onMounted(() => {
+	addEventListener('resize', onViewportResize);
+});
+
+onBeforeUnmount(() => {
+	removeEventListener('resize', onViewportResize);
+});
 </script>

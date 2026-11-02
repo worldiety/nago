@@ -202,7 +202,10 @@ const selectedYear = ref<number>(
 
 const lastDatepickerDayIndex = ref<number | null>(null);
 const lastDatepickerDayElement = ref<ComponentPublicInstance | Element | null>(null);
-const monthsToShow = props.doubleMode ? 2 : 1;
+
+const monthsToShow = computed<number>(() => {
+	return props.doubleMode ? 2 : 1;
+});
 
 const headerText = computed<string | undefined>(() => {
 	if (!props.rangeMode) return props.label;
@@ -391,7 +394,7 @@ function clearSelection() {
 function showSelectedRange() {
 	if (!props.selectedStartDate) return;
 
-	for (let i = 0; i < monthsToShow; i++) {
+	for (let i = 0; i < monthsToShow.value; i++) {
 		if (
 			props.selectedStartDate.getFullYear() === selectedYear.value &&
 			props.selectedStartDate.getMonth() === selectedMonth.value + i
