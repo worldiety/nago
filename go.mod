@@ -1,6 +1,6 @@
 module go.wdy.de/nago
 
-go 1.27.0
+go 1.27.3
 
 require (
 	github.com/dave/jennifer v1.7.1
@@ -8,7 +8,7 @@ require (
 	github.com/dop251/goja v0.0.0-20260917113740-793a2a65c13b
 	github.com/elastic/go-seccomp-bpf v1.6.0
 	github.com/expr-lang/expr v1.17.8
-	github.com/go-chi/chi/v5 v5.4.0
+	github.com/go-chi/chi/v5 v5.4.1-0.20261013232336-607557061251
 	github.com/go-chi/cors v1.2.2
 	github.com/google/btree v1.1.3
 	github.com/gorilla/websocket v1.5.3

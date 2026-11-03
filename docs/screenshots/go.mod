@@ -1,6 +1,6 @@
 module go.wdy.de/nago/docs/screenshots
 
-go 1.27.0
+go 1.27.3
 
 require (
 	github.com/chromedp/cdproto v0.0.0-20260714215040-dc233986426f
