@@ -65,18 +65,20 @@ const (
 // aria-valuetext, so that assistive technologies like screen readers can understand the content.
 // The attributes are applied directly to the content, no additional element is introduced.
 type TAccessible[T core.View] struct {
-	content    T
-	role       AriaRole
-	label      string
-	labelledBy []string
-	hidden     bool
-	valueText  string
-	valueNow   string
-	valueMin   string
-	valueMax   string
-	expanded   string
-	selected   string
-	disabled   string
+	content     T
+	role        AriaRole
+	label       string
+	labelledBy  []string
+	hidden      bool
+	valueText   string
+	valueNow    string
+	valueMin    string
+	valueMax    string
+	expanded    string
+	selected    string
+	disabled    string
+	description string
+	invalid     bool
 }
 
 // Accessible wraps the given content to annotate it with WAI-ARIA attributes.
@@ -147,6 +149,18 @@ func (c TAccessible[T]) Disabled(disabled bool) TAccessible[T] {
 	return c
 }
 
+// Description sets the aria-description, which is a human readable description of the content.
+func (c TAccessible[T]) Description(description string) TAccessible[T] {
+	c.description = description
+	return c
+}
+
+// Invalid sets the aria-invalid, which tells that the content has an error.
+func (c TAccessible[T]) Invalid(invalid bool) TAccessible[T] {
+	c.invalid = invalid
+	return c
+}
+
 // Render builds and returns the protocol representation of the accessible wrapper.
 // Absent content stays absent, as in a stack: if the content is nil or renders nil, the wrapper renders nil
 // too, because the attributes have no element to apply to.
@@ -161,18 +175,20 @@ func (c TAccessible[T]) Render(ctx core.RenderContext) core.RenderNode {
 	}
 
 	return &proto.Accessible{
-		Content:    content,
-		Role:       proto.Str(c.role),
-		Label:      proto.Str(c.label),
-		LabelledBy: proto.Str(strings.Join(c.labelledBy, " ")),
-		Hidden:     proto.Bool(c.hidden),
-		ValueText:  proto.Str(c.valueText),
-		ValueNow:   proto.Str(c.valueNow),
-		ValueMin:   proto.Str(c.valueMin),
-		ValueMax:   proto.Str(c.valueMax),
-		Expanded:   proto.Str(c.expanded),
-		Selected:   proto.Str(c.selected),
-		Disabled:   proto.Str(c.disabled),
+		Content:     content,
+		Role:        proto.Str(c.role),
+		Label:       proto.Str(c.label),
+		LabelledBy:  proto.Str(strings.Join(c.labelledBy, " ")),
+		Hidden:      proto.Bool(c.hidden),
+		ValueText:   proto.Str(c.valueText),
+		ValueNow:    proto.Str(c.valueNow),
+		ValueMin:    proto.Str(c.valueMin),
+		ValueMax:    proto.Str(c.valueMax),
+		Expanded:    proto.Str(c.expanded),
+		Selected:    proto.Str(c.selected),
+		Disabled:    proto.Str(c.disabled),
+		Description: proto.Str(c.description),
+		Invalid:     proto.Bool(c.invalid),
 	}
 }
 

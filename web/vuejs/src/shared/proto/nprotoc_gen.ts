@@ -25571,6 +25571,12 @@ export class Accessible implements Writeable, Readable, Component {
 	// Disabled is the aria-disabled which is either true or false.
 	public disabled?: Str;
 
+	// Description is the aria-description which is a human readable description of the content.
+	public description?: Str;
+
+	// Invalid is the aria-invalid which is either true or false.
+	public invalid?: Bool;
+
 	constructor(
 		content: Component | undefined = undefined,
 		role: Str | undefined = undefined,
@@ -25583,7 +25589,9 @@ export class Accessible implements Writeable, Readable, Component {
 		valueMax: Str | undefined = undefined,
 		expanded: Str | undefined = undefined,
 		selected: Str | undefined = undefined,
-		disabled: Str | undefined = undefined
+		disabled: Str | undefined = undefined,
+		description: Str | undefined = undefined,
+		invalid: Bool | undefined = undefined
 	) {
 		this.content = content;
 		this.role = role;
@@ -25597,6 +25605,8 @@ export class Accessible implements Writeable, Readable, Component {
 		this.expanded = expanded;
 		this.selected = selected;
 		this.disabled = disabled;
+		this.description = description;
+		this.invalid = invalid;
 	}
 
 	read(reader: BinaryReader): void {
@@ -25658,6 +25668,14 @@ export class Accessible implements Writeable, Readable, Component {
 					this.disabled = readString(reader);
 					break;
 				}
+				case 13: {
+					this.description = readString(reader);
+					break;
+				}
+				case 14: {
+					this.invalid = readBool(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -25679,6 +25697,8 @@ export class Accessible implements Writeable, Readable, Component {
 			this.expanded !== undefined,
 			this.selected !== undefined,
 			this.disabled !== undefined,
+			this.description !== undefined,
+			this.invalid !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -25733,6 +25753,14 @@ export class Accessible implements Writeable, Readable, Component {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 12);
 			writeString(writer, this.disabled!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[13]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 13);
+			writeString(writer, this.description!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[14]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 14);
+			writeBool(writer, this.invalid!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -25748,7 +25776,9 @@ export class Accessible implements Writeable, Readable, Component {
 			this.valueMax === undefined &&
 			this.expanded === undefined &&
 			this.selected === undefined &&
-			this.disabled === undefined
+			this.disabled === undefined &&
+			this.description === undefined &&
+			this.invalid === undefined
 		);
 	}
 
@@ -25765,6 +25795,8 @@ export class Accessible implements Writeable, Readable, Component {
 		this.expanded = undefined;
 		this.selected = undefined;
 		this.disabled = undefined;
+		this.description = undefined;
+		this.invalid = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

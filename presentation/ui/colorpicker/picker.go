@@ -9,15 +9,16 @@ package colorpicker
 
 import (
 	"fmt"
+	"math/rand"
 	"slices"
 	"strings"
 
-	"github.com/worldiety/option"
 	"go.wdy.de/nago/pkg/xiter"
 	"go.wdy.de/nago/presentation/core"
 	heroOutline "go.wdy.de/nago/presentation/icons/hero/outline"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/accessibility"
 	"go.wdy.de/nago/presentation/ui/alert"
 )
 
@@ -119,6 +120,8 @@ func (c TPalettePicker) Disabled(disabled bool) TPalettePicker {
 }
 
 func (c TPalettePicker) Render(ctx core.RenderContext) core.RenderNode {
+	id := fmt.Sprintf("palette-picker-%s", rand.Intn(999999999))
+
 	isCustomColor := c.state.Get() != "" && !slices.Contains(c.palette, c.state.Get())
 	c.customColorState = core.AutoState[string](ctx.Window()).Init(func() string {
 		if isCustomColor {
@@ -133,43 +136,65 @@ func (c TPalettePicker) Render(ctx core.RenderContext) core.RenderNode {
 		}
 	})
 	colors := core.Colors[ui.Colors](ctx.Window())
-	borderColor := ui.Color("")
+	outlineColor := ui.Color("")
+	outlineHoverFocusColor := ui.Color("")
 	backgroundColor := ui.Color("")
 	if c.disabled {
-		borderColor = ""
 		backgroundColor = colors.Disabled
 	} else {
-		borderColor = option.Must(colors.I1.WithChromaAndTone(16, 75))
+		outlineColor = ui.M8
+		outlineHoverFocusColor = ui.I0
 	}
 
-	inner := ui.HStack(
-		c.Dialog(c.pickerPresented),
-		renderColor(c.palette, c.value),
-		ui.Spacer(),
-		ui.Image().Embed(heroSolid.ChevronRight).Frame(ui.Frame{}.Size(ui.L16, ui.L16)),
-	).Action(func() {
-		if c.disabled {
-			return
-		}
-		if c.state.Get() != "" && !slices.Contains(c.palette, c.state.Get()) {
-			c.currentState.Set(c.state.Get())
-			c.customColorState.Set(string(c.state.Get()))
-		}
-		c.pickerPresented.Set(true)
-	}).HoveredBorder(ui.Border{}.Color(borderColor).Width(ui.L1).Radius("0.375rem")).
-		FocusedBorder(ui.Border{}.Color(ui.I0).Width(ui.L1)).
-		Gap(ui.L8).
-		BackgroundColor(backgroundColor).
-		Frame(ui.Frame{}.FullWidth()).
-		Border(ui.Border{}.Color(ui.M8).Width(ui.L1).Radius("0.375rem")).
-		Padding(c.padding)
+	description := c.errorText
+	if c.errorText == "" {
+		description = c.supportingText
+	}
+
+	value := c.value
+	if c.currentState != nil {
+		value = c.currentState.Get()
+	}
+
+	inner := accessibility.Accessible(
+		ui.HStack(
+			c.Dialog(c.pickerPresented),
+			renderColor(c.palette, value),
+			ui.Spacer(),
+			ui.Image().Embed(heroSolid.ChevronRight).Frame(ui.Frame{}.Size(ui.L16, ui.L16)),
+		).
+			ID(id).
+			HtmlTag("button").
+			Action(func() {
+				if c.disabled {
+					return
+				}
+				if c.state.Get() != "" && !slices.Contains(c.palette, c.state.Get()) {
+					c.currentState.Set(c.state.Get())
+					c.customColorState.Set(string(c.state.Get()))
+				}
+				c.pickerPresented.Set(true)
+			}).
+			Outline(ui.Outline{Color: outlineColor, Width: 1, Offset: -1}).
+			HoveredOutline(ui.Outline{Color: outlineHoverFocusColor, Width: 1, Offset: -1}).
+			FocusedOutline(ui.Outline{Color: outlineHoverFocusColor, Width: 2, Offset: -2}).
+			Gap(ui.L8).
+			BackgroundColor(backgroundColor).
+			Border(ui.Border{}.Radius("0.375rem")).
+			Frame(ui.Frame{}.FullWidth()).
+			Padding(c.padding),
+	).
+		Label(fmt.Sprintf("%s, Farbauswahl öffnen", c.label)).
+		Description(description).
+		Invalid(c.errorText != "").
+		Disabled(c.disabled)
 
 	return ui.VStack(
 		ui.IfElse(c.errorText == "",
-			ui.Text(c.label).Font(ui.Font{Size: ui.L16}),
+			ui.Text(c.label).Font(ui.Font{Size: ui.L14}).LabelFor(id),
 			ui.HStack(
-				ui.Image().StrokeColor(ui.SE0).Embed(heroSolid.XMark).Frame(ui.Frame{}.Size(ui.L20, ui.L20)),
-				ui.Text(c.label).Font(ui.Font{Size: ui.L16}).Color(ui.SE0),
+				ui.Image().StrokeColor(ui.SE0).Embed(heroSolid.XMark).Frame(ui.Frame{}.Size(ui.L16, ui.L16)),
+				ui.Text(c.label).Font(ui.Font{Size: ui.L14}).Color(ui.SE0).LabelFor(id),
 			),
 		),
 		inner,

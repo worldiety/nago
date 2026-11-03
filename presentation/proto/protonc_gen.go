@@ -24785,10 +24785,14 @@ type Accessible struct {
 	Selected Str
 	// Disabled is the aria-disabled which is either true or false.
 	Disabled Str
+	// Description is the aria-description which is a human readable description of the content.
+	Description Str
+	// Invalid is the aria-invalid which is either true or false.
+	Invalid Bool
 }
 
 func (v *Accessible) write(w *BinaryWriter) error {
-	var fields [13]bool
+	var fields [15]bool
 	fields[1] = v.Content != nil && !v.Content.IsZero()
 	fields[2] = !v.Role.IsZero()
 	fields[3] = !v.Label.IsZero()
@@ -24801,6 +24805,8 @@ func (v *Accessible) write(w *BinaryWriter) error {
 	fields[10] = !v.Expanded.IsZero()
 	fields[11] = !v.Selected.IsZero()
 	fields[12] = !v.Disabled.IsZero()
+	fields[13] = !v.Description.IsZero()
+	fields[14] = !v.Invalid.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -24914,6 +24920,22 @@ func (v *Accessible) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[13] {
+		if err := w.writeFieldHeader(byteSlice, 13); err != nil {
+			return err
+		}
+		if err := v.Description.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[14] {
+		if err := w.writeFieldHeader(uvarint, 14); err != nil {
+			return err
+		}
+		if err := v.Invalid.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -24995,6 +25017,16 @@ func (v *Accessible) read(r *BinaryReader) error {
 			}
 		case 12:
 			err := v.Disabled.read(r)
+			if err != nil {
+				return err
+			}
+		case 13:
+			err := v.Description.read(r)
+			if err != nil {
+				return err
+			}
+		case 14:
+			err := v.Invalid.read(r)
 			if err != nil {
 				return err
 			}
@@ -32238,13 +32270,15 @@ func (v *Accessible) reset() {
 	v.Expanded.reset()
 	v.Selected.reset()
 	v.Disabled.reset()
+	v.Description.reset()
+	v.Invalid.reset()
 }
 
 func (v *Accessible) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return isZeroComponent(v.Content) && v.Role.IsZero() && v.Label.IsZero() && v.LabelledBy.IsZero() && v.Hidden.IsZero() && v.ValueText.IsZero() && v.ValueNow.IsZero() && v.ValueMin.IsZero() && v.ValueMax.IsZero() && v.Expanded.IsZero() && v.Selected.IsZero() && v.Disabled.IsZero()
+	return isZeroComponent(v.Content) && v.Role.IsZero() && v.Label.IsZero() && v.LabelledBy.IsZero() && v.Hidden.IsZero() && v.ValueText.IsZero() && v.ValueNow.IsZero() && v.ValueMin.IsZero() && v.ValueMax.IsZero() && v.Expanded.IsZero() && v.Selected.IsZero() && v.Disabled.IsZero() && v.Description.IsZero() && v.Invalid.IsZero()
 }
 
 func (v *DebounceOptions) reset() {
