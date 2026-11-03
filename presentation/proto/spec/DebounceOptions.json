@@ -1,0 +1,17 @@
+{
+  "kind": "Record",
+  "id": 331,
+  "doc": "DebounceOptions configures the debouncing of user input, e.g. when typing text into a field.",
+  "fields": {
+    "1": {
+      "doc": "Disabled must be set to true, to disable the default debouncer logic. This will cause a render roundtrip for each keystroke, so be careful not to break the server or cause UX issues due to UI latencies.",
+      "name": "Disabled",
+      "type": "Bool"
+    },
+    "2": {
+      "doc": "Time is in nanoseconds. A zero or omitted value means to enable debounce default logic.",
+      "name": "Time",
+      "type": "Duration"
+    }
+  }
+}

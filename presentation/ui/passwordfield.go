@@ -20,22 +20,21 @@ import (
 // after input. It supports validation feedback, debouncing, autocomplete
 // control, multiline behavior, accessibility labels, and styling options.
 type TPasswordField struct {
-	label               string               // field label shown to the user
-	value               string               // initial value (should not be reused after input for security reasons)
-	inputValue          *core.State[string]  // bound state for two-way data binding
-	supportingText      string               // optional supporting/helper text
-	errorText           string               // error message displayed when validation fails
-	disabled            bool                 // disables the input if true
-	style               proto.TextFieldStyle // visual style (e.g., outlined, filled)
-	disableDebounce     bool                 // disables input debouncing if true
-	disableAutocomplete bool                 // disables browser autocomplete if true
-	debounceTime        time.Duration        // custom debounce time for input updates
-	invisible           bool                 // hides the field if true
-	frame               Frame                // layout frame
-	lines               int                  // number of lines (0 = single-line text field, >0 = text area)
-	id                  string               // unique identifier
-	keydownEnter        func()               // callback for Enter key press
-	autocomplete        string               // autocomplete tags of the input
+	label               string                // field label shown to the user
+	value               string                // initial value (should not be reused after input for security reasons)
+	inputValue          *core.State[string]   // bound state for two-way data binding
+	supportingText      string                // optional supporting/helper text
+	errorText           string                // error message displayed when validation fails
+	disabled            bool                  // disables the input if true
+	style               proto.TextFieldStyle  // visual style (e.g., outlined, filled)
+	disableAutocomplete bool                  // disables browser autocomplete if true
+	debounce            proto.DebounceOptions // debounce configuration for input updates
+	invisible           bool                  // hides the field if true
+	frame               Frame                 // layout frame
+	lines               int                   // number of lines (0 = single-line text field, >0 = text area)
+	id                  string                // unique identifier
+	keydownEnter        func()                // callback for Enter key press
+	autocomplete        string                // autocomplete tags of the input
 }
 
 // PasswordField represents a secret entered by the user.
@@ -108,13 +107,13 @@ func (c TPasswordField) Style(s TextFieldStyle) TPasswordField {
 // DebounceTime sets a custom debouncing time when entering text. By default, this is 500ms and always applied.
 // You can disable debouncing, but be very careful with that, as it may break your server, the client or network.
 func (c TPasswordField) DebounceTime(d time.Duration) TPasswordField {
-	c.debounceTime = d
+	c.debounce.Time = proto.Duration(d)
 	return c
 }
 
 // Debounce is enabled by default. See also DebounceTime.
 func (c TPasswordField) Debounce(enabled bool) TPasswordField {
-	c.disableDebounce = !enabled
+	c.debounce.Disabled = proto.Bool(!enabled)
 	return c
 }
 
@@ -196,8 +195,7 @@ func (c TPasswordField) Render(ctx core.RenderContext) core.RenderNode {
 		InputValue:          c.inputValue.Ptr(),
 		Disabled:            proto.Bool(c.disabled),
 		Style:               c.style,
-		DebounceTime:        proto.Duration(c.debounceTime),
-		DisableDebounce:     proto.Bool(c.disableDebounce),
+		Debounce:            c.debounce,
 		Invisible:           proto.Bool(c.invisible),
 		Frame:               c.frame.ora(),
 		Lines:               proto.Uint(c.lines),

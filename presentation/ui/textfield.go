@@ -46,23 +46,22 @@ const (
 //
 // It is typically used in forms, search bars, and other user input scenarios.
 type TTextField struct {
-	label           string               // label displayed above or inside the field
-	value           string               // static text value (used if InputValue is not set)
-	inputValue      *core.State[string]  // bound state for controlled input
-	supportingText  string               // helper text shown below the field
-	errorText       string               // error message shown below the field
-	disabled        bool                 // disables user interaction
-	leading         core.View            // optional leading element (e.g., icon)
-	trailing        core.View            // optional trailing element (e.g., button, icon)
-	style           proto.TextFieldStyle // visual style of the field (outlined, filled, etc.)
-	disableDebounce bool                 // disables debounce if true
-	debounceTime    time.Duration        // custom debounce duration for input
-	invisible       bool                 // hides the field when true
-	frame           Frame                // layout constraints
-	lines           int                  // number of lines (0 = single line, >0 = text area)
-	keyboardOptions TKeyboardOptions     // platform-specific keyboard options
-	id              string               // unique identifier for the field
-	keydownEnter    func()               // callback for Enter key press
+	label           string                // label displayed above or inside the field
+	value           string                // static text value (used if InputValue is not set)
+	inputValue      *core.State[string]   // bound state for controlled input
+	supportingText  string                // helper text shown below the field
+	errorText       string                // error message shown below the field
+	disabled        bool                  // disables user interaction
+	leading         core.View             // optional leading element (e.g., icon)
+	trailing        core.View             // optional trailing element (e.g., button, icon)
+	style           proto.TextFieldStyle  // visual style of the field (outlined, filled, etc.)
+	debounce        proto.DebounceOptions // debounce configuration for input
+	invisible       bool                  // hides the field when true
+	frame           Frame                 // layout constraints
+	lines           int                   // number of lines (0 = single line, >0 = text area)
+	keyboardOptions TKeyboardOptions      // platform-specific keyboard options
+	id              string                // unique identifier for the field
+	keydownEnter    func()                // callback for Enter key press
 	textAlignment   TextAlignment
 	showZero        bool    // show '0' character for empty/zero values in number fields
 	step            int     // step size to increase/decrease number values
@@ -74,6 +73,7 @@ type TTextField struct {
 	placeholder     string  // placeholder of the input field
 	padding         Padding // padding of the text field (overwrites defaults)
 	readOnly        bool    // readOnly mode, preventing user edits while still allowing text selection and copying
+	sizeByContent   bool    // sizes the input element by its content (CSS field-sizing: content)
 }
 
 // TextField creates a new text field with the given label and initial value.
@@ -236,13 +236,13 @@ func (c TTextField) Style(s TextFieldStyle) TTextField {
 // DebounceTime sets a custom debouncing time when entering text. By default, this is 500ms and always applied.
 // You can disable debouncing, but be very careful with that, as it may break your server, the client or network.
 func (c TTextField) DebounceTime(d time.Duration) TTextField {
-	c.debounceTime = d
+	c.debounce.Time = proto.Duration(d)
 	return c
 }
 
 // Debounce is enabled by default. See also DebounceTime.
 func (c TTextField) Debounce(enabled bool) TTextField {
-	c.disableDebounce = !enabled
+	c.debounce.Disabled = proto.Bool(!enabled)
 	return c
 }
 
@@ -391,6 +391,12 @@ func (c TTextField) ReadOnly(readOnly bool) TTextField {
 	return c
 }
 
+// SizeByContent sizes the input field (or text area) by its content, using the CSS property field-sizing: content.
+func (c TTextField) SizeByContent(sizeByContent bool) TTextField {
+	c.sizeByContent = sizeByContent
+	return c
+}
+
 // Render builds and returns the protocol representation of the text field.
 func (c TTextField) Render(ctx core.RenderContext) core.RenderNode {
 	return &proto.TextField{
@@ -403,8 +409,7 @@ func (c TTextField) Render(ctx core.RenderContext) core.RenderNode {
 		Leading:         render(ctx, c.leading),
 		Trailing:        render(ctx, c.trailing),
 		Style:           c.style,
-		DebounceTime:    proto.Duration(c.debounceTime),
-		DisableDebounce: proto.Bool(c.disableDebounce),
+		Debounce:        c.debounce,
 		Invisible:       proto.Bool(c.invisible),
 		Frame:           c.frame.ora(),
 		Lines:           proto.Uint(c.lines),
@@ -422,5 +427,6 @@ func (c TTextField) Render(ctx core.RenderContext) core.RenderNode {
 		Placeholder:     proto.Str(c.placeholder),
 		Padding:         c.padding.ora(),
 		ReadOnly:        proto.Bool(c.readOnly),
+		SizeByContent:   proto.Bool(c.sizeByContent),
 	}
 }
