@@ -396,11 +396,11 @@ func (c TPicker) renderPicker() core.View {
 	if c.showDays {
 		segments = append(segments,
 			ui.VStack(
-				ui.TertiaryButton(c.dayUp).PreIcon(heroSolid.ChevronUp),
-				editInt(c.currentSelectedState, "day", days, func(v int) {
+				ui.TertiaryButton(c.dayUp).PreIcon(heroSolid.ChevronUp).AccessibilityLabel(fmt.Sprintf("Tage erhöhen, aktuell %d", days)),
+				editInt(c.currentSelectedState, "day", "Tage", days, func(v int) {
 					c.setDay(v)
 				}),
-				ui.TertiaryButton(c.dayDown).PreIcon(heroSolid.ChevronDown),
+				ui.TertiaryButton(c.dayDown).PreIcon(heroSolid.ChevronDown).AccessibilityLabel(fmt.Sprintf("Tage verringern, aktuell %d", days)),
 			),
 			ui.Text("Tage"),
 		)
@@ -409,11 +409,11 @@ func (c TPicker) renderPicker() core.View {
 	if c.showHours {
 		segments = append(segments,
 			ui.VStack(
-				ui.TertiaryButton(c.hourUp).PreIcon(heroSolid.ChevronUp),
-				editInt(c.currentSelectedState, "hour", hours, func(v int) {
+				ui.TertiaryButton(c.hourUp).PreIcon(heroSolid.ChevronUp).AccessibilityLabel(fmt.Sprintf("Stunden erhöhen, aktuell %d", hours)),
+				editInt(c.currentSelectedState, "hour", "Stunden", hours, func(v int) {
 					c.setHour(v)
 				}),
-				ui.TertiaryButton(c.hourDown).PreIcon(heroSolid.ChevronDown),
+				ui.TertiaryButton(c.hourDown).PreIcon(heroSolid.ChevronDown).AccessibilityLabel(fmt.Sprintf("Stunden verringern, aktuell %d", hours)),
 			),
 			ui.Text("Std."),
 		)
@@ -422,11 +422,11 @@ func (c TPicker) renderPicker() core.View {
 	if c.showMinutes {
 		segments = append(segments,
 			ui.VStack(
-				ui.TertiaryButton(c.minUp).PreIcon(heroSolid.ChevronUp),
-				editInt(c.currentSelectedState, "min", minutes, func(v int) {
+				ui.TertiaryButton(c.minUp).PreIcon(heroSolid.ChevronUp).AccessibilityLabel(fmt.Sprintf("Minuten erhöhen, aktuell %d", minutes)),
+				editInt(c.currentSelectedState, "min", "Minuten", minutes, func(v int) {
 					c.setMin(v)
 				}),
-				ui.TertiaryButton(c.minDown).PreIcon(heroSolid.ChevronDown),
+				ui.TertiaryButton(c.minDown).PreIcon(heroSolid.ChevronDown).AccessibilityLabel(fmt.Sprintf("Minuten verringern, aktuell %d", minutes)),
 			),
 			ui.Text("Min."),
 		)
@@ -435,11 +435,11 @@ func (c TPicker) renderPicker() core.View {
 	if c.showSeconds {
 		segments = append(segments,
 			ui.VStack(
-				ui.TertiaryButton(c.secUp).PreIcon(heroSolid.ChevronUp),
-				editInt(c.currentSelectedState, "sec", seconds, func(v int) {
+				ui.TertiaryButton(c.secUp).PreIcon(heroSolid.ChevronUp).AccessibilityLabel(fmt.Sprintf("Sekunden erhöhen, aktuell %d", seconds)),
+				editInt(c.currentSelectedState, "sec", "Sekunden", seconds, func(v int) {
 					c.setSec(v)
 				}),
-				ui.TertiaryButton(c.secDown).PreIcon(heroSolid.ChevronDown),
+				ui.TertiaryButton(c.secDown).PreIcon(heroSolid.ChevronDown).AccessibilityLabel(fmt.Sprintf("Sekunden verringern, aktuell %d", seconds)),
 			),
 			ui.Text("Sek."),
 		)
@@ -448,7 +448,7 @@ func (c TPicker) renderPicker() core.View {
 	return ui.HStack(segments...).Frame(ui.Frame{}.FullWidth())
 }
 
-func editInt(state *core.State[time.Duration], name string, val int, set func(v int)) core.View {
+func editInt(state *core.State[time.Duration], name, accessibilityLabel string, val int, set func(v int)) core.View {
 	formattedVal := fmt.Sprintf("%02d", val)
 
 	editVal := core.DerivedState[string](state, name+"-edit").Init(func() string {
@@ -480,7 +480,10 @@ func editInt(state *core.State[time.Duration], name string, val int, set func(v 
 		textField = textField.Max(59)
 	}
 
-	return textField.Frame(ui.Frame{Width: ui.L32})
+	return accessibility.Accessible(
+		textField.
+			Frame(ui.Frame{Width: ui.L32}),
+	).Label(accessibilityLabel)
 }
 
 // Render builds and returns the UI representation of the time picker.
