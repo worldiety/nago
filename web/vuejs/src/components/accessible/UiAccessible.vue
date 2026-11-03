@@ -29,6 +29,8 @@ const attrs = computed<Record<string, string | undefined>>(() => ({
 	'aria-expanded': props.ui.expanded || undefined,
 	'aria-selected': props.ui.selected || undefined,
 	'aria-disabled': props.ui.disabled || undefined,
+	'aria-description': props.ui.description || undefined,
+	'aria-invalid': props.ui.invalid ? 'true' : undefined,
 }));
 </script>
 

@@ -61,6 +61,16 @@
       "doc": "Disabled is the aria-disabled which is either true or false.",
       "name": "Disabled",
       "type": "Str"
+    },
+    "13": {
+      "doc": "Description is the aria-description which is a human readable description of the content.",
+      "name": "Description",
+      "type": "Str"
+    },
+    "14": {
+      "doc": "Invalid is the aria-invalid which is either true or false.",
+      "name": "Invalid",
+      "type": "Bool"
     }
   }
 }
