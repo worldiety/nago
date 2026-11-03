@@ -9,16 +9,16 @@ package timepicker
 
 import (
 	"fmt"
+	"math/rand"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/worldiety/option"
-	"go.wdy.de/nago/application/color"
 	"go.wdy.de/nago/application/localization/rstring"
 	"go.wdy.de/nago/presentation/core"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/accessibility"
 	"go.wdy.de/nago/presentation/ui/alert"
 )
 
@@ -40,6 +40,7 @@ const (
 // bind to external state, and format its value either as a clock or
 // as decomposed units.
 type TPicker struct {
+	id                   string
 	label                string                     // primary label shown with the control
 	supportingText       string                     // helper or secondary text shown below the label
 	errorText            string                     // validation or error message
@@ -64,6 +65,7 @@ type TPicker struct {
 // 25 hours, instead you must enable the day flag, so that the user can configure 1 day and 1 hour.
 func Picker(label string, selectedState *core.State[time.Duration]) TPicker {
 	p := TPicker{
+		id:                  fmt.Sprintf("timepicker-%d", rand.Intn(999999999)),
 		label:               label,
 		format:              ClockFormat,
 		targetSelectedState: selectedState,
@@ -490,69 +492,39 @@ func (c TPicker) Render(ctx core.RenderContext) core.RenderNode {
 	wnd := ctx.Window()
 	durationText := Format(c.showDays, c.showHours, c.showMinutes, c.showSeconds, c.format, c.currentSelectedState.Get())
 
-	colors := core.Colors[ui.Colors](ctx.Window())
+	return accessibility.Accessible(
+		ui.VStack(
+			ui.TextField(c.label, durationText).
+				ReadOnly(true).
+				SizeByContent(true).
+				Trailing(ui.Image().Embed(heroSolid.ChevronRight).Frame(ui.Frame{}.Size(ui.L16, ui.L16))).
+				Disabled(c.disabled).
+				ErrorText(c.errorText).
+				SupportingText(c.supportingText).
+				Frame(ui.Frame{MinWidth: ui.L0}),
 
-	textColor := color.Color("")
-	if c.disabled {
-		textColor = ui.ST0
-	}
-
-	inner := ui.HStack(
-		alert.Dialog(c.title, c.renderPicker(), c.pickerPresented, alert.Cancel(func() {
-			c.currentSelectedState.Set(c.targetSelectedState.Get())
-		}), alert.Custom(func(close func(closeDlg bool)) core.View {
-			// positive case
-			return ui.PrimaryButton(func() {
-				c.targetSelectedState.Set(c.currentSelectedState.Get())
-				c.targetSelectedState.Notify() // invoke observers
-				close(true)
-			}).Title(rstring.ActionApply.Get(wnd))
-		})),
-		ui.Text(durationText).Color(textColor),
-		ui.Spacer(),
-		ui.Image().Embed(heroSolid.ChevronRight).Frame(ui.Frame{}.Size(ui.L16, ui.L16)),
-	)
-
-	var innerView ui.DecoredView
-	if !c.disabled {
-		innerView = inner.Action(func() {
-			if c.disabled {
-				return
-			}
-			c.pickerPresented.Set(true)
-		}).Outline(ui.Outline{Width: 1, Color: ui.M8}.Inside()).
-			HoveredOutline(ui.Outline{Color: option.Must(colors.I1.WithChromaAndTone(16, 50))}).
-			FocusedOutline(ui.Outline{Color: ui.I0}).
-			Gap(ui.L8).
-			Frame(ui.Frame{}.FullWidth()).
-			Border(ui.Border{}.Radius("0.375rem")).
-			Padding(ui.Padding{}.All(ui.L8))
-	} else {
-		innerView = inner.
-			Gap(ui.L8).
-			BackgroundColor(ui.SI0).
-			TextColor(ui.ST0).
-			Frame(ui.Frame{}.FullWidth()).
-			Border(ui.Border{}.Radius("0.375rem")).
-			Padding(ui.Padding{}.All(ui.L8))
-	}
-
-	return ui.VStack(
-		ui.IfElse(c.errorText == "",
-			ui.If(c.label != "", ui.Text(c.label).Font(ui.Font{Size: ui.L14}).Color(textColor)),
-			ui.HStack(
-				ui.Image().StrokeColor(ui.SE0).Embed(heroSolid.XMark).Frame(ui.Frame{}.Size(ui.L20, ui.L20)),
-				ui.Text(c.label).Font(ui.Font{Size: ui.L16}).Color(ui.SE0),
-			),
-		),
-		innerView,
-		ui.IfElse(c.errorText == "",
-			ui.Text(c.supportingText).Font(ui.Font{Size: "0.75rem"}).Color(ui.ST0),
-			ui.Text(c.errorText).Font(ui.Font{Size: "0.75rem"}).Color(ui.SE0),
-		),
-	).Alignment(ui.Leading).
-		Gap(ui.L4).
-		Frame(c.frame).
+			alert.Dialog(c.title, c.renderPicker(), c.pickerPresented, alert.Cancel(func() {
+				c.currentSelectedState.Set(c.targetSelectedState.Get())
+			}), alert.Custom(func(close func(closeDlg bool)) core.View {
+				// positive case
+				return ui.PrimaryButton(func() {
+					c.targetSelectedState.Set(c.currentSelectedState.Get())
+					c.targetSelectedState.Notify() // invoke observers
+					close(true)
+				}).Title(rstring.ActionApply.Get(wnd))
+			})),
+		).
+			Action(func() {
+				if c.disabled {
+					return
+				}
+				c.pickerPresented.Set(true)
+			}).
+			Alignment(ui.Leading).
+			Frame(c.frame),
+	).
+		Role(accessibility.RoleButton).
+		Disabled(c.disabled).
 		Render(ctx)
 }
 

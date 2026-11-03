@@ -71,6 +71,7 @@ Some setters return `DecoredView` instead of `TTextField`. Call them last in the
 | `Padding(padding Padding) DecoredView` | Padding sets the input field's padding. |
 | `Placeholder(placeholder string) TTextField` | Placeholder sets the input's placeholder text. |
 | `ShowZero(showZero bool) TTextField` | ShowZero defines wheter the '0' character should be displayed for empty/zero values in number fields. |
+| `SizeByContent(sizeByContent bool) TTextField` | SizeByContent sizes the input field (or text area) by its content, using the CSS property `field-sizing: content`. |
 | `Step(step int) TTextField` | Step defines the step size to increase/decrease number values stepwise. |
 | `Style(s TextFieldStyle) TTextField` | Style sets the wanted style. |
 | `SupportingText(text string) TTextField` | SupportingText sets helper text for the field. |

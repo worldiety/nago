@@ -218,6 +218,10 @@ const inputStyle = computed<string>(() => {
 			break;
 	}
 
+	if (props.ui.sizeByContent) {
+		styles.push('field-sizing: content');
+	}
+
 	if (props.ui.style == TextFieldStyleValues.TextFieldBasic) {
 		styles.push('display:inline', 'background:unset');
 
@@ -316,7 +320,7 @@ function submitInputValue(force: boolean, functionPointer: number = 0): void {
 	// Thus, immediately increase the request id, so that everybody knows, that any older responses are outdated.
 	nextRID();
 
-	if (force || props.ui.disableDebounce) {
+	if (force || props.ui.debounce?.disabled) {
 		serviceAdapter.sendEvent(
 			new UpdateStateValueRequested(props.ui.inputValue, functionPointer, nextRID(), parsedValue)
 		);
@@ -425,8 +429,9 @@ function deserializeGoDuration(durationInNanoseconds: number): number {
 
 function debouncedInput() {
 	let debounceTime = 500; // ms
-	if (props.ui.debounceTime && props.ui.debounceTime > 0) {
-		debounceTime = deserializeGoDuration(props.ui.debounceTime);
+	const configuredTime = props.ui.debounce?.time;
+	if (configuredTime && configuredTime > 0) {
+		debounceTime = deserializeGoDuration(configuredTime);
 	}
 
 	clearTimeout(timer);

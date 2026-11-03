@@ -4974,15 +4974,13 @@ type PasswordField struct {
 	InputValue Ptr
 	// Style to apply. Use TextFieldReduced in forms where many textfields cause too much visual noise and you need to reduce it. By default, the TextFieldOutlined is applied.
 	Style TextFieldStyle
-	// DebounceTime is in nanoseconds. A zero or omitted value means to enable debounce default logic.
-	DebounceTime Duration
+	// Debounce configures the debouncing of the user input. By default, debouncing is enabled with the default time.
+	Debounce DebounceOptions
 	// Lines enforces a single line if <= 0, otherwise it shows the amount of text lines within a text area.
 	Lines               Uint
 	Disabled            Bool
 	DisableAutocomplete Bool
-	// DisableDebounce must be set to true, to disable the default debouncer logic. This will cause a render roundtrip for each keystroke, so be careful not to break the server or cause UX issues due to UI latencies.
-	DisableDebounce Bool
-	Invisible       Bool
+	Invisible           Bool
 	// If Revealed the password is shown
 	Revealed Bool
 	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
@@ -4992,7 +4990,7 @@ type PasswordField struct {
 }
 
 func (v *PasswordField) write(w *BinaryWriter) error {
-	var fields [18]bool
+	var fields [17]bool
 	fields[1] = !v.Label.IsZero()
 	fields[2] = !v.SupportingText.IsZero()
 	fields[3] = !v.ErrorText.IsZero()
@@ -5000,16 +4998,15 @@ func (v *PasswordField) write(w *BinaryWriter) error {
 	fields[5] = !v.Frame.IsZero()
 	fields[6] = !v.InputValue.IsZero()
 	fields[7] = !v.Style.IsZero()
-	fields[8] = !v.DebounceTime.IsZero()
+	fields[8] = !v.Debounce.IsZero()
 	fields[9] = !v.Lines.IsZero()
 	fields[10] = !v.Disabled.IsZero()
 	fields[11] = !v.DisableAutocomplete.IsZero()
-	fields[12] = !v.DisableDebounce.IsZero()
-	fields[13] = !v.Invisible.IsZero()
-	fields[14] = !v.Revealed.IsZero()
-	fields[15] = !v.Id.IsZero()
-	fields[16] = !v.KeydownEnter.IsZero()
-	fields[17] = !v.Autocomplete.IsZero()
+	fields[12] = !v.Invisible.IsZero()
+	fields[13] = !v.Revealed.IsZero()
+	fields[14] = !v.Id.IsZero()
+	fields[15] = !v.KeydownEnter.IsZero()
+	fields[16] = !v.Autocomplete.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -5077,10 +5074,10 @@ func (v *PasswordField) write(w *BinaryWriter) error {
 		}
 	}
 	if fields[8] {
-		if err := w.writeFieldHeader(uvarint, 8); err != nil {
+		if err := w.writeFieldHeader(record, 8); err != nil {
 			return err
 		}
-		if err := v.DebounceTime.write(w); err != nil {
+		if err := v.Debounce.write(w); err != nil {
 			return err
 		}
 	}
@@ -5112,7 +5109,7 @@ func (v *PasswordField) write(w *BinaryWriter) error {
 		if err := w.writeFieldHeader(uvarint, 12); err != nil {
 			return err
 		}
-		if err := v.DisableDebounce.write(w); err != nil {
+		if err := v.Invisible.write(w); err != nil {
 			return err
 		}
 	}
@@ -5120,36 +5117,28 @@ func (v *PasswordField) write(w *BinaryWriter) error {
 		if err := w.writeFieldHeader(uvarint, 13); err != nil {
 			return err
 		}
-		if err := v.Invisible.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[14] {
-		if err := w.writeFieldHeader(uvarint, 14); err != nil {
-			return err
-		}
 		if err := v.Revealed.write(w); err != nil {
 			return err
 		}
 	}
-	if fields[15] {
-		if err := w.writeFieldHeader(byteSlice, 15); err != nil {
+	if fields[14] {
+		if err := w.writeFieldHeader(byteSlice, 14); err != nil {
 			return err
 		}
 		if err := v.Id.write(w); err != nil {
 			return err
 		}
 	}
-	if fields[16] {
-		if err := w.writeFieldHeader(uvarint, 16); err != nil {
+	if fields[15] {
+		if err := w.writeFieldHeader(uvarint, 15); err != nil {
 			return err
 		}
 		if err := v.KeydownEnter.write(w); err != nil {
 			return err
 		}
 	}
-	if fields[17] {
-		if err := w.writeFieldHeader(byteSlice, 17); err != nil {
+	if fields[16] {
+		if err := w.writeFieldHeader(byteSlice, 16); err != nil {
 			return err
 		}
 		if err := v.Autocomplete.write(w); err != nil {
@@ -5207,7 +5196,7 @@ func (v *PasswordField) read(r *BinaryReader) error {
 				return err
 			}
 		case 8:
-			err := v.DebounceTime.read(r)
+			err := v.Debounce.read(r)
 			if err != nil {
 				return err
 			}
@@ -5227,31 +5216,26 @@ func (v *PasswordField) read(r *BinaryReader) error {
 				return err
 			}
 		case 12:
-			err := v.DisableDebounce.read(r)
-			if err != nil {
-				return err
-			}
-		case 13:
 			err := v.Invisible.read(r)
 			if err != nil {
 				return err
 			}
-		case 14:
+		case 13:
 			err := v.Revealed.read(r)
 			if err != nil {
 				return err
 			}
-		case 15:
+		case 14:
 			err := v.Id.read(r)
 			if err != nil {
 				return err
 			}
-		case 16:
+		case 15:
 			err := v.KeydownEnter.read(r)
 			if err != nil {
 				return err
 			}
-		case 17:
+		case 16:
 			err := v.Autocomplete.read(r)
 			if err != nil {
 				return err
@@ -7811,16 +7795,14 @@ type TextField struct {
 	Leading Component
 	// Trailing show the given component usually at the right (or left if RTL mode). If set, the clear (or x button) must not be shown, to reduce distraction. This can be used for an Info button or a text showing a value unit.
 	Trailing Component
-	// DebounceTime is in nanoseconds. A zero or omitted value means to enable debounce default logic.
-	DebounceTime Duration
+	// Debounce configures the debouncing of the user input. By default, debouncing is enabled with the default time.
+	Debounce DebounceOptions
 	// Lines enforces a single line if <= 0, otherwise it shows the amount of text lines within a text area.
 	Lines               Uint
 	KeyboardOptions     KeyboardOptions
 	Disabled            Bool
 	DisableAutocomplete Bool
-	// DisableDebounce must be set to true, to disable the default debouncer logic. This will cause a render roundtrip for each keystroke, so be careful not to break the server or cause UX issues due to UI latencies.
-	DisableDebounce Bool
-	Invisible       Bool
+	Invisible           Bool
 	// If Revealed the password is shown
 	Revealed Bool
 	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
@@ -7842,6 +7824,8 @@ type TextField struct {
 	Placeholder Str
 	Padding     Padding
 	ReadOnly    Bool
+	// SizeByContent sets the CSS property field-sizing to content on the input or textarea element, so that the field grows or shrinks with its content.
+	SizeByContent Bool
 }
 
 func (v *TextField) write(w *BinaryWriter) error {
@@ -7855,27 +7839,27 @@ func (v *TextField) write(w *BinaryWriter) error {
 	fields[7] = !v.Style.IsZero()
 	fields[8] = v.Leading != nil && !v.Leading.IsZero()
 	fields[9] = v.Trailing != nil && !v.Trailing.IsZero()
-	fields[10] = !v.DebounceTime.IsZero()
+	fields[10] = !v.Debounce.IsZero()
 	fields[11] = !v.Lines.IsZero()
 	fields[12] = !v.KeyboardOptions.IsZero()
 	fields[13] = !v.Disabled.IsZero()
 	fields[14] = !v.DisableAutocomplete.IsZero()
-	fields[15] = !v.DisableDebounce.IsZero()
-	fields[16] = !v.Invisible.IsZero()
-	fields[17] = !v.Revealed.IsZero()
-	fields[18] = !v.Id.IsZero()
-	fields[19] = !v.KeydownEnter.IsZero()
-	fields[20] = !v.TextAlignment.IsZero()
-	fields[21] = !v.ShowZero.IsZero()
-	fields[22] = !v.Step.IsZero()
-	fields[23] = !v.Max.IsZero()
-	fields[24] = !v.Min.IsZero()
-	fields[25] = !v.Autocomplete.IsZero()
-	fields[26] = !v.Optional.IsZero()
-	fields[27] = !v.ClearButton.IsZero()
-	fields[28] = !v.Placeholder.IsZero()
-	fields[29] = !v.Padding.IsZero()
-	fields[30] = !v.ReadOnly.IsZero()
+	fields[15] = !v.Invisible.IsZero()
+	fields[16] = !v.Revealed.IsZero()
+	fields[17] = !v.Id.IsZero()
+	fields[18] = !v.KeydownEnter.IsZero()
+	fields[19] = !v.TextAlignment.IsZero()
+	fields[20] = !v.ShowZero.IsZero()
+	fields[21] = !v.Step.IsZero()
+	fields[22] = !v.Max.IsZero()
+	fields[23] = !v.Min.IsZero()
+	fields[24] = !v.Autocomplete.IsZero()
+	fields[25] = !v.Optional.IsZero()
+	fields[26] = !v.ClearButton.IsZero()
+	fields[27] = !v.Placeholder.IsZero()
+	fields[28] = !v.Padding.IsZero()
+	fields[29] = !v.ReadOnly.IsZero()
+	fields[30] = !v.SizeByContent.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -7973,10 +7957,10 @@ func (v *TextField) write(w *BinaryWriter) error {
 		}
 	}
 	if fields[10] {
-		if err := w.writeFieldHeader(uvarint, 10); err != nil {
+		if err := w.writeFieldHeader(record, 10); err != nil {
 			return err
 		}
-		if err := v.DebounceTime.write(w); err != nil {
+		if err := v.Debounce.write(w); err != nil {
 			return err
 		}
 	}
@@ -8016,7 +8000,7 @@ func (v *TextField) write(w *BinaryWriter) error {
 		if err := w.writeFieldHeader(uvarint, 15); err != nil {
 			return err
 		}
-		if err := v.DisableDebounce.write(w); err != nil {
+		if err := v.Invisible.write(w); err != nil {
 			return err
 		}
 	}
@@ -8024,23 +8008,23 @@ func (v *TextField) write(w *BinaryWriter) error {
 		if err := w.writeFieldHeader(uvarint, 16); err != nil {
 			return err
 		}
-		if err := v.Invisible.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[17] {
-		if err := w.writeFieldHeader(uvarint, 17); err != nil {
-			return err
-		}
 		if err := v.Revealed.write(w); err != nil {
 			return err
 		}
 	}
-	if fields[18] {
-		if err := w.writeFieldHeader(byteSlice, 18); err != nil {
+	if fields[17] {
+		if err := w.writeFieldHeader(byteSlice, 17); err != nil {
 			return err
 		}
 		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[18] {
+		if err := w.writeFieldHeader(uvarint, 18); err != nil {
+			return err
+		}
+		if err := v.KeydownEnter.write(w); err != nil {
 			return err
 		}
 	}
@@ -8048,7 +8032,7 @@ func (v *TextField) write(w *BinaryWriter) error {
 		if err := w.writeFieldHeader(uvarint, 19); err != nil {
 			return err
 		}
-		if err := v.KeydownEnter.write(w); err != nil {
+		if err := v.TextAlignment.write(w); err != nil {
 			return err
 		}
 	}
@@ -8056,7 +8040,7 @@ func (v *TextField) write(w *BinaryWriter) error {
 		if err := w.writeFieldHeader(uvarint, 20); err != nil {
 			return err
 		}
-		if err := v.TextAlignment.write(w); err != nil {
+		if err := v.ShowZero.write(w); err != nil {
 			return err
 		}
 	}
@@ -8064,15 +8048,15 @@ func (v *TextField) write(w *BinaryWriter) error {
 		if err := w.writeFieldHeader(uvarint, 21); err != nil {
 			return err
 		}
-		if err := v.ShowZero.write(w); err != nil {
+		if err := v.Step.write(w); err != nil {
 			return err
 		}
 	}
 	if fields[22] {
-		if err := w.writeFieldHeader(uvarint, 22); err != nil {
+		if err := w.writeFieldHeader(f64, 22); err != nil {
 			return err
 		}
-		if err := v.Step.write(w); err != nil {
+		if err := v.Max.write(w); err != nil {
 			return err
 		}
 	}
@@ -8080,23 +8064,23 @@ func (v *TextField) write(w *BinaryWriter) error {
 		if err := w.writeFieldHeader(f64, 23); err != nil {
 			return err
 		}
-		if err := v.Max.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[24] {
-		if err := w.writeFieldHeader(f64, 24); err != nil {
-			return err
-		}
 		if err := v.Min.write(w); err != nil {
 			return err
 		}
 	}
-	if fields[25] {
-		if err := w.writeFieldHeader(byteSlice, 25); err != nil {
+	if fields[24] {
+		if err := w.writeFieldHeader(byteSlice, 24); err != nil {
 			return err
 		}
 		if err := v.Autocomplete.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[25] {
+		if err := w.writeFieldHeader(uvarint, 25); err != nil {
+			return err
+		}
+		if err := v.Optional.write(w); err != nil {
 			return err
 		}
 	}
@@ -8104,31 +8088,31 @@ func (v *TextField) write(w *BinaryWriter) error {
 		if err := w.writeFieldHeader(uvarint, 26); err != nil {
 			return err
 		}
-		if err := v.Optional.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[27] {
-		if err := w.writeFieldHeader(uvarint, 27); err != nil {
-			return err
-		}
 		if err := v.ClearButton.write(w); err != nil {
 			return err
 		}
 	}
-	if fields[28] {
-		if err := w.writeFieldHeader(byteSlice, 28); err != nil {
+	if fields[27] {
+		if err := w.writeFieldHeader(byteSlice, 27); err != nil {
 			return err
 		}
 		if err := v.Placeholder.write(w); err != nil {
 			return err
 		}
 	}
-	if fields[29] {
-		if err := w.writeFieldHeader(record, 29); err != nil {
+	if fields[28] {
+		if err := w.writeFieldHeader(record, 28); err != nil {
 			return err
 		}
 		if err := v.Padding.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[29] {
+		if err := w.writeFieldHeader(uvarint, 29); err != nil {
+			return err
+		}
+		if err := v.ReadOnly.write(w); err != nil {
 			return err
 		}
 	}
@@ -8136,7 +8120,7 @@ func (v *TextField) write(w *BinaryWriter) error {
 		if err := w.writeFieldHeader(uvarint, 30); err != nil {
 			return err
 		}
-		if err := v.ReadOnly.write(w); err != nil {
+		if err := v.SizeByContent.write(w); err != nil {
 			return err
 		}
 	}
@@ -8219,7 +8203,7 @@ func (v *TextField) read(r *BinaryReader) error {
 			}
 			v.Trailing = obj.(Component)
 		case 10:
-			err := v.DebounceTime.read(r)
+			err := v.Debounce.read(r)
 			if err != nil {
 				return err
 			}
@@ -8244,82 +8228,82 @@ func (v *TextField) read(r *BinaryReader) error {
 				return err
 			}
 		case 15:
-			err := v.DisableDebounce.read(r)
-			if err != nil {
-				return err
-			}
-		case 16:
 			err := v.Invisible.read(r)
 			if err != nil {
 				return err
 			}
-		case 17:
+		case 16:
 			err := v.Revealed.read(r)
 			if err != nil {
 				return err
 			}
-		case 18:
+		case 17:
 			err := v.Id.read(r)
 			if err != nil {
 				return err
 			}
-		case 19:
+		case 18:
 			err := v.KeydownEnter.read(r)
 			if err != nil {
 				return err
 			}
-		case 20:
+		case 19:
 			err := v.TextAlignment.read(r)
 			if err != nil {
 				return err
 			}
-		case 21:
+		case 20:
 			err := v.ShowZero.read(r)
 			if err != nil {
 				return err
 			}
-		case 22:
+		case 21:
 			err := v.Step.read(r)
 			if err != nil {
 				return err
 			}
-		case 23:
+		case 22:
 			err := v.Max.read(r)
 			if err != nil {
 				return err
 			}
-		case 24:
+		case 23:
 			err := v.Min.read(r)
 			if err != nil {
 				return err
 			}
-		case 25:
+		case 24:
 			err := v.Autocomplete.read(r)
 			if err != nil {
 				return err
 			}
-		case 26:
+		case 25:
 			err := v.Optional.read(r)
 			if err != nil {
 				return err
 			}
-		case 27:
+		case 26:
 			err := v.ClearButton.read(r)
 			if err != nil {
 				return err
 			}
-		case 28:
+		case 27:
 			err := v.Placeholder.read(r)
 			if err != nil {
 				return err
 			}
-		case 29:
+		case 28:
 			err := v.Padding.read(r)
 			if err != nil {
 				return err
 			}
-		case 30:
+		case 29:
 			err := v.ReadOnly.read(r)
+			if err != nil {
+				return err
+			}
+		case 30:
+			err := v.SizeByContent.read(r)
 			if err != nil {
 				return err
 			}
@@ -25019,6 +25003,74 @@ func (v *Accessible) read(r *BinaryReader) error {
 	return nil
 }
 
+// DebounceOptions configures the debouncing of user input, e.g. when typing text into a field.
+type DebounceOptions struct {
+	// Disabled must be set to true, to disable the default debouncer logic. This will cause a render roundtrip for each keystroke, so be careful not to break the server or cause UX issues due to UI latencies.
+	Disabled Bool
+	// Time is in nanoseconds. A zero or omitted value means to enable debounce default logic.
+	Time Duration
+}
+
+func (v *DebounceOptions) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.Disabled.IsZero()
+	fields[2] = !v.Time.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(uvarint, 1); err != nil {
+			return err
+		}
+		if err := v.Disabled.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.Time.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *DebounceOptions) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Disabled.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Time.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -26886,6 +26938,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 			return nil, err
 		}
 		return &v, nil
+	case 331:
+		var v DebounceOptions
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
 	default:
 		return nil, fmt.Errorf("unknown type in marshal: %d", tid)
 	}
@@ -28378,11 +28436,10 @@ func (v *PasswordField) reset() {
 	v.Frame.reset()
 	v.InputValue.reset()
 	v.Style.reset()
-	v.DebounceTime.reset()
+	v.Debounce.reset()
 	v.Lines.reset()
 	v.Disabled.reset()
 	v.DisableAutocomplete.reset()
-	v.DisableDebounce.reset()
 	v.Invisible.reset()
 	v.Revealed.reset()
 	v.Id.reset()
@@ -28394,7 +28451,7 @@ func (v *PasswordField) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero() && v.KeydownEnter.IsZero() && v.Autocomplete.IsZero()
+	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && v.Debounce.IsZero() && v.Lines.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero() && v.KeydownEnter.IsZero() && v.Autocomplete.IsZero()
 }
 
 func (v *Ping) reset() {
@@ -28936,12 +28993,11 @@ func (v *TextField) reset() {
 	v.Style.reset()
 	v.Leading = nil
 	v.Trailing = nil
-	v.DebounceTime.reset()
+	v.Debounce.reset()
 	v.Lines.reset()
 	v.KeyboardOptions.reset()
 	v.Disabled.reset()
 	v.DisableAutocomplete.reset()
-	v.DisableDebounce.reset()
 	v.Invisible.reset()
 	v.Revealed.reset()
 	v.Id.reset()
@@ -28957,13 +29013,14 @@ func (v *TextField) reset() {
 	v.Placeholder.reset()
 	v.Padding.reset()
 	v.ReadOnly.reset()
+	v.SizeByContent.reset()
 }
 
 func (v *TextField) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && isZeroComponent(v.Leading) && isZeroComponent(v.Trailing) && v.DebounceTime.IsZero() && v.Lines.IsZero() && v.KeyboardOptions.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.DisableDebounce.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero() && v.KeydownEnter.IsZero() && v.TextAlignment.IsZero() && v.ShowZero.IsZero() && v.Step.IsZero() && v.Max.IsZero() && v.Min.IsZero() && v.Autocomplete.IsZero() && v.Optional.IsZero() && v.ClearButton.IsZero() && v.Placeholder.IsZero() && v.Padding.IsZero() && v.ReadOnly.IsZero()
+	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && isZeroComponent(v.Leading) && isZeroComponent(v.Trailing) && v.Debounce.IsZero() && v.Lines.IsZero() && v.KeyboardOptions.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero() && v.KeydownEnter.IsZero() && v.TextAlignment.IsZero() && v.ShowZero.IsZero() && v.Step.IsZero() && v.Max.IsZero() && v.Min.IsZero() && v.Autocomplete.IsZero() && v.Optional.IsZero() && v.ClearButton.IsZero() && v.Placeholder.IsZero() && v.Padding.IsZero() && v.ReadOnly.IsZero() && v.SizeByContent.IsZero()
 }
 
 func (v *Toggle) reset() {
@@ -32190,6 +32247,18 @@ func (v *Accessible) IsZero() bool {
 	return isZeroComponent(v.Content) && v.Role.IsZero() && v.Label.IsZero() && v.LabelledBy.IsZero() && v.Hidden.IsZero() && v.ValueText.IsZero() && v.ValueNow.IsZero() && v.ValueMin.IsZero() && v.ValueMax.IsZero() && v.Expanded.IsZero() && v.Selected.IsZero() && v.Disabled.IsZero()
 }
 
+func (v *DebounceOptions) reset() {
+	v.Disabled.reset()
+	v.Time.reset()
+}
+
+func (v *DebounceOptions) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Disabled.IsZero() && v.Time.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -34334,6 +34403,13 @@ func (v *GostrictReturn) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *Accessible) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 330); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *DebounceOptions) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 331); err != nil {
 		return err
 	}
 	return nil

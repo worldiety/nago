@@ -5126,8 +5126,8 @@ export class PasswordField implements Writeable, Readable, Component {
 	// Style to apply. Use TextFieldReduced in forms where many textfields cause too much visual noise and you need to reduce it. By default, the TextFieldOutlined is applied.
 	public style?: TextFieldStyle;
 
-	// DebounceTime is in nanoseconds. A zero or omitted value means to enable debounce default logic.
-	public debounceTime?: Duration;
+	// Debounce configures the debouncing of the user input. By default, debouncing is enabled with the default time.
+	public debounce?: DebounceOptions;
 
 	// Lines enforces a single line if <= 0, otherwise it shows the amount of text lines within a text area.
 	public lines?: Uint;
@@ -5135,9 +5135,6 @@ export class PasswordField implements Writeable, Readable, Component {
 	public disabled?: Bool;
 
 	public disableAutocomplete?: Bool;
-
-	// DisableDebounce must be set to true, to disable the default debouncer logic. This will cause a render roundtrip for each keystroke, so be careful not to break the server or cause UX issues due to UI latencies.
-	public disableDebounce?: Bool;
 
 	public invisible?: Bool;
 
@@ -5159,11 +5156,10 @@ export class PasswordField implements Writeable, Readable, Component {
 		frame: Frame | undefined = undefined,
 		inputValue: Ptr | undefined = undefined,
 		style: TextFieldStyle | undefined = undefined,
-		debounceTime: Duration | undefined = undefined,
+		debounce: DebounceOptions | undefined = undefined,
 		lines: Uint | undefined = undefined,
 		disabled: Bool | undefined = undefined,
 		disableAutocomplete: Bool | undefined = undefined,
-		disableDebounce: Bool | undefined = undefined,
 		invisible: Bool | undefined = undefined,
 		revealed: Bool | undefined = undefined,
 		id: Str | undefined = undefined,
@@ -5177,11 +5173,10 @@ export class PasswordField implements Writeable, Readable, Component {
 		this.frame = frame;
 		this.inputValue = inputValue;
 		this.style = style;
-		this.debounceTime = debounceTime;
+		this.debounce = debounce;
 		this.lines = lines;
 		this.disabled = disabled;
 		this.disableAutocomplete = disableAutocomplete;
-		this.disableDebounce = disableDebounce;
 		this.invisible = invisible;
 		this.revealed = revealed;
 		this.id = id;
@@ -5225,7 +5220,8 @@ export class PasswordField implements Writeable, Readable, Component {
 					break;
 				}
 				case 8: {
-					this.debounceTime = readInt(reader);
+					this.debounce = new DebounceOptions();
+					this.debounce.read(reader);
 					break;
 				}
 				case 9: {
@@ -5241,26 +5237,22 @@ export class PasswordField implements Writeable, Readable, Component {
 					break;
 				}
 				case 12: {
-					this.disableDebounce = readBool(reader);
-					break;
-				}
-				case 13: {
 					this.invisible = readBool(reader);
 					break;
 				}
-				case 14: {
+				case 13: {
 					this.revealed = readBool(reader);
 					break;
 				}
-				case 15: {
+				case 14: {
 					this.id = readString(reader);
 					break;
 				}
-				case 16: {
+				case 15: {
 					this.keydownEnter = readInt(reader);
 					break;
 				}
-				case 17: {
+				case 16: {
 					this.autocomplete = readString(reader);
 					break;
 				}
@@ -5280,11 +5272,10 @@ export class PasswordField implements Writeable, Readable, Component {
 			this.frame !== undefined && !this.frame.isZero(),
 			this.inputValue !== undefined,
 			this.style !== undefined,
-			this.debounceTime !== undefined,
+			this.debounce !== undefined && !this.debounce.isZero(),
 			this.lines !== undefined,
 			this.disabled !== undefined,
 			this.disableAutocomplete !== undefined,
-			this.disableDebounce !== undefined,
 			this.invisible !== undefined,
 			this.revealed !== undefined,
 			this.id !== undefined,
@@ -5322,8 +5313,8 @@ export class PasswordField implements Writeable, Readable, Component {
 			writeInt(writer, this.style!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[8]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 8);
-			writeInt(writer, this.debounceTime!); // typescript linters cannot see, that we already checked this properly above
+			writer.writeFieldHeader(Shapes.RECORD, 8);
+			this.debounce!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[9]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 9);
@@ -5339,26 +5330,22 @@ export class PasswordField implements Writeable, Readable, Component {
 		}
 		if (fields[12]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 12);
-			writeBool(writer, this.disableDebounce!); // typescript linters cannot see, that we already checked this properly above
+			writeBool(writer, this.invisible!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[13]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 13);
-			writeBool(writer, this.invisible!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[14]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 14);
 			writeBool(writer, this.revealed!); // typescript linters cannot see, that we already checked this properly above
 		}
-		if (fields[15]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 15);
+		if (fields[14]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 14);
 			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
 		}
-		if (fields[16]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 16);
+		if (fields[15]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 15);
 			writeInt(writer, this.keydownEnter!); // typescript linters cannot see, that we already checked this properly above
 		}
-		if (fields[17]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 17);
+		if (fields[16]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 16);
 			writeString(writer, this.autocomplete!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
@@ -5372,11 +5359,10 @@ export class PasswordField implements Writeable, Readable, Component {
 			(this.frame === undefined || this.frame.isZero()) &&
 			this.inputValue === undefined &&
 			this.style === undefined &&
-			this.debounceTime === undefined &&
+			(this.debounce === undefined || this.debounce.isZero()) &&
 			this.lines === undefined &&
 			this.disabled === undefined &&
 			this.disableAutocomplete === undefined &&
-			this.disableDebounce === undefined &&
 			this.invisible === undefined &&
 			this.revealed === undefined &&
 			this.id === undefined &&
@@ -5393,11 +5379,10 @@ export class PasswordField implements Writeable, Readable, Component {
 		this.frame = undefined;
 		this.inputValue = undefined;
 		this.style = undefined;
-		this.debounceTime = undefined;
+		this.debounce = undefined;
 		this.lines = undefined;
 		this.disabled = undefined;
 		this.disableAutocomplete = undefined;
-		this.disableDebounce = undefined;
 		this.invisible = undefined;
 		this.revealed = undefined;
 		this.id = undefined;
@@ -8093,8 +8078,8 @@ export class TextField implements Writeable, Readable, Component {
 	// Trailing show the given component usually at the right (or left if RTL mode). If set, the clear (or x button) must not be shown, to reduce distraction. This can be used for an Info button or a text showing a value unit.
 	public trailing?: Component;
 
-	// DebounceTime is in nanoseconds. A zero or omitted value means to enable debounce default logic.
-	public debounceTime?: Duration;
+	// Debounce configures the debouncing of the user input. By default, debouncing is enabled with the default time.
+	public debounce?: DebounceOptions;
 
 	// Lines enforces a single line if <= 0, otherwise it shows the amount of text lines within a text area.
 	public lines?: Uint;
@@ -8104,9 +8089,6 @@ export class TextField implements Writeable, Readable, Component {
 	public disabled?: Bool;
 
 	public disableAutocomplete?: Bool;
-
-	// DisableDebounce must be set to true, to disable the default debouncer logic. This will cause a render roundtrip for each keystroke, so be careful not to break the server or cause UX issues due to UI latencies.
-	public disableDebounce?: Bool;
 
 	public invisible?: Bool;
 
@@ -8145,6 +8127,9 @@ export class TextField implements Writeable, Readable, Component {
 
 	public readOnly?: Bool;
 
+	// SizeByContent sets the CSS property field-sizing to content on the input or textarea element, so that the field grows or shrinks with its content.
+	public sizeByContent?: Bool;
+
 	constructor(
 		label: Str | undefined = undefined,
 		supportingText: Str | undefined = undefined,
@@ -8155,12 +8140,11 @@ export class TextField implements Writeable, Readable, Component {
 		style: TextFieldStyle | undefined = undefined,
 		leading: Component | undefined = undefined,
 		trailing: Component | undefined = undefined,
-		debounceTime: Duration | undefined = undefined,
+		debounce: DebounceOptions | undefined = undefined,
 		lines: Uint | undefined = undefined,
 		keyboardOptions: KeyboardOptions | undefined = undefined,
 		disabled: Bool | undefined = undefined,
 		disableAutocomplete: Bool | undefined = undefined,
-		disableDebounce: Bool | undefined = undefined,
 		invisible: Bool | undefined = undefined,
 		revealed: Bool | undefined = undefined,
 		id: Str | undefined = undefined,
@@ -8175,7 +8159,8 @@ export class TextField implements Writeable, Readable, Component {
 		clearButton: Bool | undefined = undefined,
 		placeholder: Str | undefined = undefined,
 		padding: Padding | undefined = undefined,
-		readOnly: Bool | undefined = undefined
+		readOnly: Bool | undefined = undefined,
+		sizeByContent: Bool | undefined = undefined
 	) {
 		this.label = label;
 		this.supportingText = supportingText;
@@ -8186,12 +8171,11 @@ export class TextField implements Writeable, Readable, Component {
 		this.style = style;
 		this.leading = leading;
 		this.trailing = trailing;
-		this.debounceTime = debounceTime;
+		this.debounce = debounce;
 		this.lines = lines;
 		this.keyboardOptions = keyboardOptions;
 		this.disabled = disabled;
 		this.disableAutocomplete = disableAutocomplete;
-		this.disableDebounce = disableDebounce;
 		this.invisible = invisible;
 		this.revealed = revealed;
 		this.id = id;
@@ -8207,6 +8191,7 @@ export class TextField implements Writeable, Readable, Component {
 		this.placeholder = placeholder;
 		this.padding = padding;
 		this.readOnly = readOnly;
+		this.sizeByContent = sizeByContent;
 	}
 
 	read(reader: BinaryReader): void {
@@ -8263,7 +8248,8 @@ export class TextField implements Writeable, Readable, Component {
 					break;
 				}
 				case 10: {
-					this.debounceTime = readInt(reader);
+					this.debounce = new DebounceOptions();
+					this.debounce.read(reader);
 					break;
 				}
 				case 11: {
@@ -8284,68 +8270,68 @@ export class TextField implements Writeable, Readable, Component {
 					break;
 				}
 				case 15: {
-					this.disableDebounce = readBool(reader);
-					break;
-				}
-				case 16: {
 					this.invisible = readBool(reader);
 					break;
 				}
-				case 17: {
+				case 16: {
 					this.revealed = readBool(reader);
 					break;
 				}
-				case 18: {
+				case 17: {
 					this.id = readString(reader);
 					break;
 				}
-				case 19: {
+				case 18: {
 					this.keydownEnter = readInt(reader);
 					break;
 				}
-				case 20: {
+				case 19: {
 					this.textAlignment = readInt(reader);
 					break;
 				}
-				case 21: {
+				case 20: {
 					this.showZero = readBool(reader);
 					break;
 				}
-				case 22: {
+				case 21: {
 					this.step = readInt(reader);
 					break;
 				}
-				case 23: {
+				case 22: {
 					this.max = readFloat(reader);
 					break;
 				}
-				case 24: {
+				case 23: {
 					this.min = readFloat(reader);
 					break;
 				}
-				case 25: {
+				case 24: {
 					this.autocomplete = readString(reader);
 					break;
 				}
-				case 26: {
+				case 25: {
 					this.optional = readBool(reader);
 					break;
 				}
-				case 27: {
+				case 26: {
 					this.clearButton = readBool(reader);
 					break;
 				}
-				case 28: {
+				case 27: {
 					this.placeholder = readString(reader);
 					break;
 				}
-				case 29: {
+				case 28: {
 					this.padding = new Padding();
 					this.padding.read(reader);
 					break;
 				}
-				case 30: {
+				case 29: {
 					this.readOnly = readBool(reader);
+					break;
+				}
+				case 30: {
+					this.sizeByContent = readBool(reader);
 					break;
 				}
 				default:
@@ -8366,12 +8352,11 @@ export class TextField implements Writeable, Readable, Component {
 			this.style !== undefined,
 			this.leading !== undefined && !this.leading.isZero(),
 			this.trailing !== undefined && !this.trailing.isZero(),
-			this.debounceTime !== undefined,
+			this.debounce !== undefined && !this.debounce.isZero(),
 			this.lines !== undefined,
 			this.keyboardOptions !== undefined && !this.keyboardOptions.isZero(),
 			this.disabled !== undefined,
 			this.disableAutocomplete !== undefined,
-			this.disableDebounce !== undefined,
 			this.invisible !== undefined,
 			this.revealed !== undefined,
 			this.id !== undefined,
@@ -8387,6 +8372,7 @@ export class TextField implements Writeable, Readable, Component {
 			this.placeholder !== undefined,
 			this.padding !== undefined && !this.padding.isZero(),
 			this.readOnly !== undefined,
+			this.sizeByContent !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -8433,8 +8419,8 @@ export class TextField implements Writeable, Readable, Component {
 			this.trailing!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[10]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 10);
-			writeInt(writer, this.debounceTime!); // typescript linters cannot see, that we already checked this properly above
+			writer.writeFieldHeader(Shapes.RECORD, 10);
+			this.debounce!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[11]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 11);
@@ -8454,67 +8440,67 @@ export class TextField implements Writeable, Readable, Component {
 		}
 		if (fields[15]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 15);
-			writeBool(writer, this.disableDebounce!); // typescript linters cannot see, that we already checked this properly above
+			writeBool(writer, this.invisible!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[16]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 16);
-			writeBool(writer, this.invisible!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[17]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 17);
 			writeBool(writer, this.revealed!); // typescript linters cannot see, that we already checked this properly above
 		}
-		if (fields[18]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 18);
+		if (fields[17]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 17);
 			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[18]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 18);
+			writeInt(writer, this.keydownEnter!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[19]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 19);
-			writeInt(writer, this.keydownEnter!); // typescript linters cannot see, that we already checked this properly above
+			writeInt(writer, this.textAlignment!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[20]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 20);
-			writeInt(writer, this.textAlignment!); // typescript linters cannot see, that we already checked this properly above
+			writeBool(writer, this.showZero!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[21]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 21);
-			writeBool(writer, this.showZero!); // typescript linters cannot see, that we already checked this properly above
+			writeInt(writer, this.step!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[22]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 22);
-			writeInt(writer, this.step!); // typescript linters cannot see, that we already checked this properly above
+			writer.writeFieldHeader(Shapes.F64, 22);
+			writeFloat(writer, this.max!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[23]) {
 			writer.writeFieldHeader(Shapes.F64, 23);
-			writeFloat(writer, this.max!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[24]) {
-			writer.writeFieldHeader(Shapes.F64, 24);
 			writeFloat(writer, this.min!); // typescript linters cannot see, that we already checked this properly above
 		}
-		if (fields[25]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 25);
+		if (fields[24]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 24);
 			writeString(writer, this.autocomplete!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[25]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 25);
+			writeBool(writer, this.optional!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[26]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 26);
-			writeBool(writer, this.optional!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[27]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 27);
 			writeBool(writer, this.clearButton!); // typescript linters cannot see, that we already checked this properly above
 		}
-		if (fields[28]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 28);
+		if (fields[27]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 27);
 			writeString(writer, this.placeholder!); // typescript linters cannot see, that we already checked this properly above
 		}
-		if (fields[29]) {
-			writer.writeFieldHeader(Shapes.RECORD, 29);
+		if (fields[28]) {
+			writer.writeFieldHeader(Shapes.RECORD, 28);
 			this.padding!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[29]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 29);
+			writeBool(writer, this.readOnly!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[30]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 30);
-			writeBool(writer, this.readOnly!); // typescript linters cannot see, that we already checked this properly above
+			writeBool(writer, this.sizeByContent!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
@@ -8529,12 +8515,11 @@ export class TextField implements Writeable, Readable, Component {
 			this.style === undefined &&
 			(this.leading === undefined || this.leading.isZero()) &&
 			(this.trailing === undefined || this.trailing.isZero()) &&
-			this.debounceTime === undefined &&
+			(this.debounce === undefined || this.debounce.isZero()) &&
 			this.lines === undefined &&
 			(this.keyboardOptions === undefined || this.keyboardOptions.isZero()) &&
 			this.disabled === undefined &&
 			this.disableAutocomplete === undefined &&
-			this.disableDebounce === undefined &&
 			this.invisible === undefined &&
 			this.revealed === undefined &&
 			this.id === undefined &&
@@ -8549,7 +8534,8 @@ export class TextField implements Writeable, Readable, Component {
 			this.clearButton === undefined &&
 			this.placeholder === undefined &&
 			(this.padding === undefined || this.padding.isZero()) &&
-			this.readOnly === undefined
+			this.readOnly === undefined &&
+			this.sizeByContent === undefined
 		);
 	}
 
@@ -8563,12 +8549,11 @@ export class TextField implements Writeable, Readable, Component {
 		this.style = undefined;
 		this.leading = undefined;
 		this.trailing = undefined;
-		this.debounceTime = undefined;
+		this.debounce = undefined;
 		this.lines = undefined;
 		this.keyboardOptions = undefined;
 		this.disabled = undefined;
 		this.disableAutocomplete = undefined;
-		this.disableDebounce = undefined;
 		this.invisible = undefined;
 		this.revealed = undefined;
 		this.id = undefined;
@@ -8584,6 +8569,7 @@ export class TextField implements Writeable, Readable, Component {
 		this.placeholder = undefined;
 		this.padding = undefined;
 		this.readOnly = undefined;
+		this.sizeByContent = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -25788,6 +25774,68 @@ export class Accessible implements Writeable, Readable, Component {
 	isComponent(): void {}
 }
 
+// DebounceOptions configures the debouncing of user input, e.g. when typing text into a field.
+export class DebounceOptions implements Writeable, Readable {
+	// Disabled must be set to true, to disable the default debouncer logic. This will cause a render roundtrip for each keystroke, so be careful not to break the server or cause UX issues due to UI latencies.
+	public disabled?: Bool;
+
+	// Time is in nanoseconds. A zero or omitted value means to enable debounce default logic.
+	public time?: Duration;
+
+	constructor(disabled: Bool | undefined = undefined, time: Duration | undefined = undefined) {
+		this.disabled = disabled;
+		this.time = time;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.disabled = readBool(reader);
+					break;
+				}
+				case 2: {
+					this.time = readInt(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.disabled !== undefined, this.time !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 1);
+			writeBool(writer, this.disabled!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 2);
+			writeInt(writer, this.time!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.disabled === undefined && this.time === undefined;
+	}
+
+	reset(): void {
+		this.disabled = undefined;
+		this.time = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 331);
+		return;
+	}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -27262,6 +27310,11 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 330: {
 			const v = new Accessible();
+			v.read(src);
+			return v;
+		}
+		case 331: {
+			const v = new DebounceOptions();
 			v.read(src);
 			return v;
 		}

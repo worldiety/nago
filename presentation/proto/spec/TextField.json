@@ -45,9 +45,9 @@
       "type": "Component"
     },
     "10": {
-      "doc": "DebounceTime is in nanoseconds. A zero or omitted value means to enable debounce default logic.",
-      "name": "DebounceTime",
-      "type": "Duration"
+      "doc": "Debounce configures the debouncing of the user input. By default, debouncing is enabled with the default time.",
+      "name": "Debounce",
+      "type": "DebounceOptions"
     },
     "11": {
       "doc": "Lines enforces a single line if <= 0, otherwise it shows the amount of text lines within a text area.",
@@ -67,75 +67,75 @@
       "type": "Bool"
     },
     "15": {
-      "doc": "DisableDebounce must be set to true, to disable the default debouncer logic. This will cause a render roundtrip for each keystroke, so be careful not to break the server or cause UX issues due to UI latencies.",
-      "name": "DisableDebounce",
-      "type": "Bool"
-    },
-    "16": {
       "name": "Invisible",
       "type": "Bool"
     },
-    "17": {
+    "16": {
       "doc": "If Revealed the password is shown",
       "name": "Revealed",
       "type": "Bool"
     },
-    "18": {
+    "17": {
       "doc": "Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.",
       "name": "Id",
       "type": "Str"
     },
-    "19": {
+    "18": {
       "name": "KeydownEnter",
       "type": "Ptr"
     },
-    "20": {
+    "19": {
       "name": "TextAlignment",
       "type": "TextAlignment"
     },
-    "21": {
+    "20": {
       "doc": "ShowZero defines whether '0' should be displayed for empty/zero values of number fields.",
       "name": "ShowZero",
       "type": "Bool"
     },
-    "22": {
+    "21": {
       "doc": "Step allows to set numeric steps, that will be used to increase/decrease the value stepwise.",
       "name": "Step",
       "type": "Uint"
     },
-    "23": {
+    "22": {
       "doc": "Max defines the max value of a number field.",
       "name": "Max",
       "type": "Float"
     },
-    "24": {
+    "23": {
       "doc": "Min defines the min value of a number field.",
       "name": "Min",
       "type": "Float"
     },
-    "25": {
+    "24": {
       "name": "Autocomplete",
       "type": "Str"
     },
-    "26": {
+    "25": {
       "name": "Optional",
       "type": "Bool"
     },
-    "27": {
+    "26": {
       "doc": "ClearButton defines whether a clear button should be displayed for the text field. This only shows, if no trailing component is set, and the text field is not empty.",
       "name": "ClearButton",
       "type": "Bool"
     },
-    "28": {
+    "27": {
       "name": "Placeholder",
       "type": "Str"
     },
-    "29": {
+    "28": {
       "name": "Padding",
       "type": "Padding"
     },
-    "30": {
+    "29": {
       "name": "ReadOnly",
+      "type": "Bool"
+    },
+    "30": {
+      "doc": "SizeByContent sets the CSS property field-sizing to content on the input or textarea element, so that the field grows or shrinks with its content.",
+      "name": "SizeByContent",
       "type": "Bool"
     }
   }
