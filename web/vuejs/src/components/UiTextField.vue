@@ -1,5 +1,5 @@
 <!--
- Copyright (c) 2025 worldiety GmbH
+ Copyright (c) 2026 worldiety GmbH
 
  This file is part of the NAGO Low-Code Platform.
  Licensed under the terms specified in the LICENSE file.
@@ -491,7 +491,7 @@ watch(
 		const serverValue = newValue.value ?? '';
 		const parsedInputValue = parseValue(inputValue.value);
 		const parsedServerValue = parseValue(serverValue);
-		if (parsedInputValue !== lastSentValue || parsedInputValue === parsedServerValue) {
+		if (parsedInputValue === lastSentValue && parsedInputValue === parsedServerValue) {
 			return;
 		}
 
