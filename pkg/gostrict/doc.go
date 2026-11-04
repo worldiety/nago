@@ -18,6 +18,11 @@
 //     JavaScript computes with float64. int32 and uint32 wrap around in both. Write int32(0) or var n int32 for
 //     an integer constant.
 //   - named struct types, pointers to them, created only by &T{...}, functions and interfaces with methods.
+//   - named types of bool, string, float64, int32 and uint32 for the values of a domain, e.g. type CustomerID
+//     string, type Cents int32 or type Rate float64, also without constants and with methods like any named type.
+//     They are fields of structs and records, keys of a dict.Map and parameters and results of exported
+//     functions, which the host sees as their basic values. The functions of the library take the basic types, so
+//     convert them like in Go: text.FromInt(int32(c)) or strings.HasPrefix(string(id), "c-").
 //   - list.List[T] and dict.Map[K, V] from go.wdy.de/nago/pkg/gostrict/std instead of slices and maps. A dict
 //     iterates in the order of insertion.
 //   - opt.Option[T] for a value, which may be missing, e.g. the next node of a list, Next opt.Option[*Node]. Its
@@ -178,10 +183,10 @@
 // disagree about them. The variants of a sealed interface, which the backend decodes, are registered once with
 // [Variants].
 //
-// The fields of a record are bool, int32, uint32, float64, string, enums of them, list.List and dict.Map of such
-// values and other records; opt.Option, pointers, functions and interfaces stay inside the program. A message may
-// also be a sealed interface, whose variants are records: msg.Out[messages.Event] sends any variant, and a handler
-// of the interface receives each of them:
+// The fields of a record are bool, int32, uint32, float64, string, named types of them like enums, list.List and
+// dict.Map of such values and other records; opt.Option, pointers, functions and interfaces stay inside the program.
+// A message may also be a sealed interface, whose variants are records: msg.Out[messages.Event] sends any variant,
+// and a handler of the interface receives each of them:
 //
 //	func OnMessage(s *Store, m messages.Incoming) msg.Out[messages.Event] {
 //		switch m := m.(type) {
