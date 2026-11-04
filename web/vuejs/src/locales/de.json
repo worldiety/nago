@@ -159,6 +159,9 @@
 			"progress": "Fortschritt: Schritt {current} von {total}"
 		}
 	},
+	"text-field": {
+		"clear": "Eingabe löschen"
+	},
 	"connectionLostOverlay": {
 		"content": "Verbindung unterbrochen"
 	},
