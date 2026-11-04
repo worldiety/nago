@@ -585,7 +585,7 @@ onMounted(() => {
 					ref="clearButton"
 					type="button"
 					class="button-tertiary square small additional-right clear-button"
-                    :aria-label="$t('text-field.clear')"
+					:aria-label="$t('text-field.clear')"
 					@click="clearInputValue"
 				>
 					<CloseIcon class="size-3" />
