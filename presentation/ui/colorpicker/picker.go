@@ -13,7 +13,6 @@ import (
 	"slices"
 	"strings"
 
-	"go.wdy.de/nago/pkg/xiter"
 	"go.wdy.de/nago/presentation/core"
 	heroOutline "go.wdy.de/nago/presentation/icons/hero/outline"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
@@ -156,9 +155,17 @@ func (c TPalettePicker) Render(ctx core.RenderContext) core.RenderNode {
 		value = c.currentState.Get()
 	}
 
+	accessibilityLabel := c.label
+	if value != "" {
+		accessibilityLabel += fmt.Sprintf(", aktuell %s", ColorName(ctx.Window(), string(value)))
+	} else {
+		accessibilityLabel += ", nichts ausgewählt"
+	}
+	accessibilityLabel += ", Farbauswahl öffnen"
+
 	inner := accessibility.Accessible(
 		ui.HStack(
-			c.Dialog(c.pickerPresented),
+			c.Dialog(ctx.Window(), c.pickerPresented),
 			renderColor(c.palette, value),
 			ui.Spacer(),
 			ui.Image().Embed(heroSolid.ChevronRight).Frame(ui.Frame{}.Size(ui.L16, ui.L16)),
@@ -184,7 +191,7 @@ func (c TPalettePicker) Render(ctx core.RenderContext) core.RenderNode {
 			Frame(ui.Frame{}.FullWidth()).
 			Padding(c.padding),
 	).
-		Label(fmt.Sprintf("%s, Farbauswahl öffnen", c.label)).
+		Label(accessibilityLabel).
 		Description(description).
 		Invalid(c.errorText != "").
 		Disabled(c.disabled)
@@ -209,31 +216,45 @@ func (c TPalettePicker) Render(ctx core.RenderContext) core.RenderNode {
 		Render(ctx)
 }
 
-func (c TPalettePicker) pickerTable() core.View {
-	return ui.VStack(ui.Each(xiter.Chunks(slices.Values(c.palette), c.paletteCols), func(t []ui.Color) core.View {
-		return ui.HStack(ui.Each(slices.Values(t), func(t ui.Color) core.View {
+func (c TPalettePicker) pickerTable(wnd core.Window) core.View {
+	return accessibility.Accessible(
+		ui.VStack(
+			ui.Grid(
+				ui.ForEach(c.palette, func(t ui.Color) ui.TGridCell {
+					isSelected := c.currentState != nil && t == c.currentState.Get() && c.customColorState.Get() == ""
+					var borderColor ui.Color
+					if isSelected {
+						// mark whatever is selected
+						borderColor = ui.ColorInputBorder
+					} else {
+						borderColor = "#00000000"
+					}
 
-			var borderColor ui.Color
-			if c.currentState != nil && t == c.currentState.Get() && c.customColorState.Get() == "" {
-				// mark whatever is selected
-				borderColor = ui.ColorInputBorder
-			} else {
-				borderColor = "#00000000"
-			}
-
-			return ui.HStack(renderColor(c.palette, t)).Action(func() {
-				c.currentState.Set(t)
-				c.customColorState.Set("")
-			}).
-				Padding(ui.Padding{}.All(ui.L2)).
-				Border(ui.Border{}.Circle().Color(borderColor).Width(ui.L2))
-
-		})...).Gap(ui.L12)
-	})...).Gap(ui.L12).Frame(ui.Frame{}.FullWidth())
+					return ui.GridCell(accessibility.Accessible(
+						ui.HStack(renderColor(c.palette, t)).
+							Action(func() {
+								c.currentState.Set(t)
+								c.customColorState.Set("")
+							}).
+							HtmlTag("button").
+							FocusedBorder(ui.Border{}.Circle().Color(ui.I0).Width(ui.L2)).
+							Border(ui.Border{}.Circle().Color(borderColor).Width(ui.L2)).
+							Padding(ui.Padding{}.All(ui.L2)),
+					).
+						Role(accessibility.RoleOption).
+						Label(ColorName(wnd, string(t))).
+						Selected(isSelected),
+					)
+				})...,
+			).
+				Columns(c.paletteCols).
+				Gap(ui.L12),
+		).FullWidth(),
+	).Role(accessibility.RoleListBox)
 }
 
 // Dialog returns the dialog view as if pressed on the actual button.
-func (c TPalettePicker) Dialog(pickerPresented *core.State[bool]) core.View {
+func (c TPalettePicker) Dialog(wnd core.Window, pickerPresented *core.State[bool]) core.View {
 
 	var primaryEnabled bool
 	if strings.TrimSpace(c.customColorState.Get()) != "" {
@@ -245,7 +266,7 @@ func (c TPalettePicker) Dialog(pickerPresented *core.State[bool]) core.View {
 	return alert.Dialog(
 		c.title,
 		ui.VStack(
-			c.pickerTable(),
+			c.pickerTable(wnd),
 			c.customColorView(),
 		).Gap(ui.L12).FullWidth(),
 		pickerPresented,
