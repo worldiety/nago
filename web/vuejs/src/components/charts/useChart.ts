@@ -10,9 +10,13 @@ import { onBeforeUnmount, onMounted, ref, shallowRef } from 'vue';
 import { type Point, TextMeasurer } from '@/components/charts/chart';
 
 // useChart follows the size of the chart's element and the inspection: the category or the slice under a mouse,
-// a finger or a pen, or the one chosen with the arrow keys. count returns how many there are and hit which one is
-// at a position, or -1.
-export function useChart(count: () => number, hit: (x: number, y: number) => number) {
+// a finger or a pen, or the one chosen with the arrow keys. count returns how many there are, hit which one is
+// at a position, or -1, and visible the first and the last one shown, where the arrow keys begin.
+export function useChart(
+	count: () => number,
+	hit: (x: number, y: number) => number,
+	visible: () => [number, number] = () => [0, count() - 1]
+) {
 	const root = ref<HTMLElement>();
 	const width = ref(0);
 	const height = ref(0);
@@ -33,12 +37,12 @@ export function useChart(count: () => number, hit: (x: number, y: number) => num
 		height.value = root.value.clientHeight;
 	}
 
-	function local(e: PointerEvent): Point {
+	function local(e: MouseEvent): Point {
 		const r = root.value!.getBoundingClientRect();
 		return { x: e.clientX - r.left, y: e.clientY - r.top };
 	}
 
-	function inspectAt(e: PointerEvent) {
+	function inspectAt(e: MouseEvent) {
 		const p = local(e);
 		inspected.value = hit(p.x, p.y);
 		pointer.value = p;
@@ -64,15 +68,17 @@ export function useChart(count: () => number, hit: (x: number, y: number) => num
 			return;
 		}
 
-		let i = inspected.value;
+		// the arrow keys begin in view, where the one inspected has gone out of it
+		const [first, last] = visible();
+		let i = inspected.value >= first && inspected.value <= last ? inspected.value : -1;
 		switch (e.key) {
 			case 'ArrowRight':
 			case 'ArrowDown':
-				i = i < 0 ? 0 : Math.min(i + 1, n - 1);
+				i = i < 0 ? first : Math.min(i + 1, n - 1);
 				break;
 			case 'ArrowLeft':
 			case 'ArrowUp':
-				i = i < 0 ? n - 1 : Math.max(i - 1, 0);
+				i = i < 0 ? last : Math.max(i - 1, 0);
 				break;
 			case 'Home':
 				i = 0;
@@ -81,7 +87,7 @@ export function useChart(count: () => number, hit: (x: number, y: number) => num
 				i = n - 1;
 				break;
 			case 'Escape':
-				if (i < 0) {
+				if (inspected.value < 0) {
 					return;
 				}
 

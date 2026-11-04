@@ -92,6 +92,9 @@
 		"download": "Download chart",
 		"download_svg": "Download as SVG",
 		"download_png": "Download as PNG",
-		"download_csv": "Download as CSV"
+		"download_csv": "Download as CSV",
+		"resetZoom": "Reset zoom",
+		"zoomRange": "Showing {from} to {to}",
+		"zoomAll": "Showing all values"
 	}
 }

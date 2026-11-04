@@ -8,7 +8,7 @@
 -->
 
 <script lang="ts" setup>
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import CartesianAxes from '@/components/charts/CartesianAxes.vue';
 import ChartOverlay from '@/components/charts/ChartOverlay.vue';
@@ -29,10 +29,12 @@ import {
 	linePath,
 	m4,
 	num,
+	pad,
 	seriesColor,
 	seriesValues,
 } from '@/components/charts/chart';
 import { useChart } from '@/components/charts/useChart';
+import { useGlide, useZoom } from '@/components/charts/useZoom';
 import { colorValue } from '@/components/shared/colors';
 import { randomStr } from '@/components/shared/util';
 import type { LineChart } from '@/shared/proto/nprotoc_gen';
@@ -72,35 +74,53 @@ const columnSeries = computed(() =>
 const markerSize = computed(() => props.ui.markers?.size ?? 0);
 const markerStroke = computed(() => colorValue(props.ui.markers?.borderColor) || 'var(--M1)');
 
+const count = () => (hasData.value ? cats.value.length : 0);
 const { root, width, height, measure, inspected, keyboard, listeners } = useChart(
-	() => (hasData.value ? cats.value.length : 0),
-	(x, y) => layout.value?.categoryAt(x, y) ?? -1
+	count,
+	(x, y) => layout.value?.categoryAt(x, y) ?? -1,
+	() => layout.value?.visible() ?? [0, count() - 1]
 );
+const zoom = useZoom({ root, count, plot: () => layout.value?.plot, inspected, listeners });
 
-const layout = computed(() => {
-	if (width.value <= 0 || height.value <= 0 || !hasData.value) {
-		return undefined;
-	}
+// reach is the categories drawn: those in view and the next one on either side, which the lines run to.
+const reach = computed<[number, number]>(() => {
+	const [lo, hi] = zoom.view.value;
+	return [Math.max(Math.floor(lo), 0), Math.min(Math.ceil(hi), cats.value.length - 1)];
+});
 
-	let lo = Infinity;
-	let hi = -Infinity;
-	for (const d of data.value) {
-		for (const v of d.values) {
-			if (v !== undefined) {
-				lo = Math.min(lo, v);
-				hi = Math.max(hi, v);
+// extent is the range of the values drawn, or of all of them where a zoom shows none.
+const extent = computed<[number, number]>(() => {
+	const range = (first: number, last: number): [number, number] => {
+		let lo = Infinity;
+		let hi = -Infinity;
+		for (const d of data.value) {
+			for (let c = first; c <= last; c++) {
+				const v = d.values[c];
+				if (v !== undefined) {
+					lo = Math.min(lo, v);
+					hi = Math.max(hi, v);
+				}
 			}
 		}
-	}
 
+		return [lo, hi];
+	};
+
+	const r = range(...reach.value);
+	return r[0] <= r[1] ? r : range(0, cats.value.length - 1);
+});
+
+function cartesian(domain?: [number, number]): Cartesian {
 	return new Cartesian({
 		width: width.value,
 		height: height.value,
 		categories: cats.value,
-		lo,
-		hi,
+		lo: extent.value[0],
+		hi: extent.value[1],
 		// bars and areas grow from zero, lines fit the values
 		includeZero: types.value.some((type) => type !== ChartSeriesTypeValues.ChartSeriesTypeLine),
+		domain,
+		view: zoom.view.value,
 		horizontal: false,
 		xTitle: props.ui.chart?.xAxisTitle,
 		yTitle: props.ui.chart?.yAxisTitle,
@@ -108,7 +128,26 @@ const layout = computed(() => {
 		toolbar: props.ui.chart?.downloadable ?? false,
 		measure: measure.value,
 	});
+}
+
+// fit is the layout with the value axis fitted to what is in view, to which the value axis of a zoomed chart
+// glides.
+const fit = computed(() => (width.value > 0 && height.value > 0 && hasData.value ? cartesian() : undefined));
+const domain = useGlide(
+	() => (fit.value ? [fit.value.min, fit.value.max] : undefined),
+	() => zoom.active.value
+);
+const layout = computed(() => {
+	const l = fit.value;
+	const d = domain.value;
+	return !l || !d || (d[0] === l.min && d[1] === l.max) ? l : cartesian(d);
 });
+
+// shows reports whether category i is in view.
+function shows(i: number): boolean {
+	const v = layout.value?.visible();
+	return !!v && i >= v[0] && i <= v[1];
+}
 
 interface Column {
 	series: number;
@@ -132,17 +171,19 @@ const columns = computed<Column[]>(() => {
 	const thickness = Math.min((l.bandSize * 0.8 - gap * (n - 1)) / n, 56);
 	const groupWidth = thickness * n + gap * (n - 1);
 	const base = l.valuePos(0);
+	const [first, last] = reach.value;
 	const out: Column[] = [];
 	columnSeries.value.forEach((s, k) => {
-		data.value[s].values.forEach((v, c) => {
+		for (let c = first; c <= last; c++) {
+			const v = data.value[s].values[c];
 			if (v === undefined) {
-				return;
+				continue;
 			}
 
 			const end = l.valuePos(v);
 			const x = l.bandStart(c) + (l.bandSize - groupWidth) / 2 + k * (thickness + gap);
 			out.push({ series: s, value: v, x, y: Math.min(base, end), w: thickness, h: Math.abs(end - base), end });
-		});
+		}
 	});
 
 	return out;
@@ -160,6 +201,7 @@ const runs = computed<Run[][]>(() => {
 		return [];
 	}
 
+	const [first, last] = reach.value;
 	return data.value.map((d, s) => {
 		if (types.value[s] === ChartSeriesTypeValues.ChartSeriesTypeColumn) {
 			return [];
@@ -167,10 +209,11 @@ const runs = computed<Run[][]>(() => {
 
 		const out: Run[] = [];
 		let run: Run | undefined;
-		d.values.forEach((v, c) => {
+		for (let c = first; c <= last; c++) {
+			const v = d.values[c];
 			if (v === undefined) {
 				run = undefined;
-				return;
+				continue;
 			}
 
 			if (!run) {
@@ -180,7 +223,7 @@ const runs = computed<Run[][]>(() => {
 
 			run.points.push({ x: l.bandCenter(c), y: l.valuePos(v) });
 			run.values.push(v);
-		});
+		}
 
 		return out;
 	});
@@ -247,7 +290,8 @@ const valueLabels = computed<ValueLabel[]>(() => {
 		const half = labelHeight / 2;
 		for (const y of [above - half, below + half]) {
 			const box: ValueLabel['box'] = [x - w / 2 - 1, y - half, x + w / 2 + 1, y + half];
-			if (box[1] >= p.y - 2 && box[3] <= p.y + p.h + 2 && free(box)) {
+			const inside = box[0] >= p.x && box[2] <= p.x + p.w && box[1] >= p.y - 2 && box[3] <= p.y + p.h + 2;
+			if (inside && free(box)) {
 				out.push({ x, y, text, anchor: 'middle', box });
 				return;
 			}
@@ -284,7 +328,7 @@ const valueLabels = computed<ValueLabel[]>(() => {
 const inspection = computed(() => {
 	const l = layout.value;
 	const i = inspected.value;
-	if (!l || i < 0 || i >= cats.value.length) {
+	if (!l || !shows(i)) {
 		return undefined;
 	}
 
@@ -304,7 +348,7 @@ const inspection = computed(() => {
 const callout = computed<Callout | undefined>(() => {
 	const l = layout.value;
 	const i = inspected.value;
-	if (!l || i < 0 || i >= cats.value.length) {
+	if (!l || !shows(i)) {
 		return undefined;
 	}
 
@@ -324,14 +368,49 @@ const callout = computed<Callout | undefined>(() => {
 	return { title: cats.value[i], rows, x: l.bandCenter(i), top: l.plot.y + 4 };
 });
 
-const announcement = computed(() => {
-	const c = callout.value;
-	if (!keyboard.value || !c) {
-		return '';
+// brushed is the range the mouse drags out to zoom into.
+const brushed = computed(() => {
+	const l = layout.value;
+	const b = zoom.brush.value;
+	if (!l || !b) {
+		return undefined;
 	}
 
-	return `${c.title}: ${c.rows.map((r) => `${r.label} ${r.value}`).join(', ')}`;
+	const x0 = Math.round(Math.min(b[0], b[1])) + 0.5;
+	const x1 = Math.round(Math.max(b[0], b[1])) + 0.5;
+	return { x0, x1, y: l.plot.y, h: l.plot.h };
 });
+
+// announcement tells a screen reader the values inspected with the keyboard, or where a key zoomed to.
+const announcement = ref('');
+watch(
+	() => {
+		const c = callout.value;
+		return keyboard.value && c ? `${c.title}: ${c.rows.map((r) => `${r.label} ${r.value}`).join(', ')}` : '';
+	},
+	(text) => (announcement.value = text)
+);
+watch(zoom.keyZoom, (r) => {
+	if (!r) {
+		return;
+	}
+
+	const first = Math.max(Math.ceil(r[0]), 0);
+	const last = Math.min(Math.floor(r[1]), cats.value.length - 1);
+	announcement.value =
+		first <= 0 && last >= cats.value.length - 1
+			? t('chart.zoomAll')
+			: t('chart.zoomRange', { from: cats.value[first], to: cats.value[last] });
+});
+
+function resetZoom(e: MouseEvent) {
+	// the button goes with the zoom, the focus stays in the chart
+	if (document.activeElement === e.currentTarget) {
+		root.value?.focus();
+	}
+
+	zoom.reset();
+}
 
 const ariaLabel = computed(() => {
 	const named = series.value.map((s) => s.label).filter((s) => !!s);
@@ -355,7 +434,7 @@ function table(): string[][] {
 		tabindex="0"
 		role="figure"
 		:aria-label="ariaLabel"
-		v-on="listeners"
+		v-on="zoom.listeners"
 	>
 		<svg
 			v-if="layout"
@@ -366,6 +445,9 @@ function table(): string[][] {
 			aria-hidden="true"
 		>
 			<defs>
+				<clipPath :id="`${id}-plot`">
+					<rect :x="num(layout.plot.x)" y="0" :width="num(layout.plot.w)" :height="height" />
+				</clipPath>
 				<linearGradient
 					v-for="(color, s) in colors"
 					:id="`${id}-area-${s}`"
@@ -381,7 +463,7 @@ function table(): string[][] {
 				</linearGradient>
 			</defs>
 			<CartesianAxes :layout="layout" />
-			<g>
+			<g :clip-path="`url(#${id}-plot)`">
 				<template v-for="(c, i) in columns" :key="i">
 					<rect
 						v-if="c.h >= 0.5"
@@ -394,12 +476,18 @@ function table(): string[][] {
 					/>
 				</template>
 			</g>
-			<g>
+			<g :clip-path="`url(#${id}-plot)`">
 				<template v-for="(sh, i) in shapes" :key="i">
 					<path v-if="sh.area" :d="sh.area" :fill="`url(#${id}-area-${sh.series})`" />
 				</template>
 			</g>
-			<g fill="none" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+			<g
+				:clip-path="`url(#${id}-plot)`"
+				fill="none"
+				stroke-width="2"
+				stroke-linejoin="round"
+				stroke-linecap="round"
+			>
 				<template v-for="(sh, i) in shapes" :key="i">
 					<path v-if="sh.line" :d="sh.line" :stroke="colors[sh.series]" />
 					<circle
@@ -413,7 +501,7 @@ function table(): string[][] {
 					/>
 				</template>
 			</g>
-			<g :stroke="markerStroke" stroke-width="2">
+			<g :clip-path="`url(#${id}-plot)`" :stroke="markerStroke" stroke-width="2">
 				<circle
 					v-for="(m, i) in markers"
 					:key="i"
@@ -449,7 +537,41 @@ function table(): string[][] {
 					<circle :cx="num(d.x)" :cy="num(d.y)" r="3.5" :fill="colors[d.series]" />
 				</template>
 			</g>
+			<g v-if="brushed" data-export="false" stroke="var(--I0)">
+				<rect
+					:x="brushed.x0"
+					:y="num(brushed.y)"
+					:width="brushed.x1 - brushed.x0"
+					:height="num(brushed.h)"
+					fill="var(--I0)"
+					fill-opacity="0.15"
+					stroke="none"
+				/>
+				<line :x1="brushed.x0" :y1="num(brushed.y)" :x2="brushed.x0" :y2="num(brushed.y + brushed.h)" />
+				<line :x1="brushed.x1" :y1="num(brushed.y)" :x2="brushed.x1" :y2="num(brushed.y + brushed.h)" />
+			</g>
 		</svg>
+		<button
+			v-if="layout && zoom.zoomed.value"
+			type="button"
+			class="chart-reset"
+			:style="{ left: `${layout.plot.x + pad}px`, top: `${layout.plot.y + pad}px` }"
+			:title="t('chart.resetZoom')"
+			:aria-label="t('chart.resetZoom')"
+			@pointerdown.stop
+			@dblclick.stop
+			@keydown.stop
+			@click="resetZoom"
+		>
+			<svg viewBox="0 0 20 20" fill="none" class="size-4" aria-hidden="true">
+				<path
+					stroke="currentColor"
+					stroke-width="1.75"
+					stroke-linecap="round"
+					d="M8.5 14a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11Zm4-1.5L17 17M6 8.5h5"
+				/>
+			</svg>
+		</button>
 		<ChartOverlay
 			:width="width"
 			:height="height"
@@ -461,3 +583,12 @@ function table(): string[][] {
 		/>
 	</div>
 </template>
+
+<style scoped>
+@reference '@/assets/css/tailwind.css';
+
+.chart-reset {
+	@apply absolute flex size-7 items-center justify-center rounded-full border border-M5 bg-M1/90 opacity-80 shadow-sm;
+	@apply hover:opacity-100 focus-visible:outline-2 focus-visible:outline-I0;
+}
+</style>

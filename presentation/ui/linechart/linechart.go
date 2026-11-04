@@ -18,6 +18,13 @@ import (
 // It supports different curve styles (straight, smooth, stepline) and
 // can display markers for data points or thresholds.
 // Typical usage is in dashboards, analytics tools, or reporting interfaces.
+//
+// A chart of more than four categories drills down into a range of them:
+// the mouse drags out the range, two fingers pinch, a double tap or click
+// zooms in where it lands, and the wheel zooms with the control or command
+// key held. A zoomed chart is dragged with a finger or scrolled sideways,
+// its value axis fits the categories in view, and a button in its corner
+// or the 0 key shows all of it again.
 type TLineChart struct {
 	chart   chart.Chart    // underlying chart configuration and layout
 	series  []chart.Series // data series that define the plotted lines

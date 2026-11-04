@@ -180,6 +180,9 @@
 		"download": "Diagramm herunterladen",
 		"download_svg": "Als SVG herunterladen",
 		"download_png": "Als PNG herunterladen",
-		"download_csv": "Als CSV herunterladen"
+		"download_csv": "Als CSV herunterladen",
+		"resetZoom": "Zoom zurücksetzen",
+		"zoomRange": "Ausschnitt von {from} bis {to}",
+		"zoomAll": "Alle Werte sichtbar"
 	}
 }

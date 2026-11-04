@@ -32,6 +32,11 @@ export interface CartesianOptions {
 	hi: number;
 	// includeZero keeps zero on the value axis, as bars and areas need it.
 	includeZero: boolean;
+	// domain fixes the value axis instead of widening lo..hi to nice ticks, as a value axis gliding to them needs.
+	domain?: [number, number];
+	// view is the visible part of the category axis, the index of a category being where its middle is. The
+	// default is all of them, from -0.5 to the number of categories - 0.5.
+	view?: [number, number];
 	// horizontal puts the categories on the vertical axis and the values on the horizontal one.
 	horizontal: boolean;
 	xTitle?: string;
@@ -59,12 +64,14 @@ export class Cartesian {
 	readonly legend: PlacedLegendEntry[];
 	readonly bandSize: number;
 	readonly horizontal: boolean;
+	readonly view: [number, number];
 	private readonly count: number;
 
 	constructor(o: CartesianOptions) {
 		const { width, height, measure } = o;
 		this.horizontal = o.horizontal;
 		this.count = Math.max(o.categories.length, 1);
+		this.view = o.view ?? [-0.5, this.count - 0.5];
 
 		const legend = o.legend.length > 1 ? flowLegend(o.legend, width, measure) : { items: [], height: 0 };
 		const header = Math.max(o.yTitle ? titleHeight : 0, o.toolbar ? toolbarSize : 0);
@@ -87,7 +94,7 @@ export class Cartesian {
 		let right: number;
 		let lo = o.lo;
 		let hi = o.hi;
-		if (o.includeZero) {
+		if (o.includeZero && !o.domain) {
 			lo = Math.min(lo, 0);
 			hi = Math.max(hi, 0);
 			if (lo === 0 && hi === 0) {
@@ -100,7 +107,7 @@ export class Cartesian {
 			left = catWidth + pad;
 			right = Math.max(width - 8, left + 1);
 			const count = Math.max(1, Math.floor((right - left) / 80));
-			[this.min, this.max] = niceDomain(lo, hi, count);
+			[this.min, this.max] = o.domain ?? niceDomain(lo, hi, count);
 			this.ticks = this.position(numberTicks(this.min, this.max, count), {
 				x: left,
 				y: top,
@@ -109,7 +116,7 @@ export class Cartesian {
 			});
 		} else {
 			const count = Math.max(1, Math.floor((bottom - top) / 36));
-			[this.min, this.max] = niceDomain(lo, hi, count);
+			[this.min, this.max] = o.domain ?? niceDomain(lo, hi, count);
 			const ticks = numberTicks(this.min, this.max, count);
 			const tickWidth = Math.max(0, ...ticks.map((t) => measure.width(t.label)));
 			left = 0;
@@ -118,7 +125,7 @@ export class Cartesian {
 		}
 
 		this.plot = { x: left, y: top, w: right - left, h: bottom - top };
-		this.bandSize = (this.horizontal ? this.plot.h : this.plot.w) / this.count;
+		this.bandSize = (this.horizontal ? this.plot.h : this.plot.w) / (this.view[1] - this.view[0]);
 		this.legend = legend.items.map((e) => ({ ...e, y: e.y + height - legend.height }));
 
 		this.layoutTicks(width, measure);
@@ -151,11 +158,16 @@ export class Cartesian {
 
 	// bandStart returns the start of the category on the category axis.
 	bandStart(i: number): number {
-		return (this.horizontal ? this.plot.y : this.plot.x) + i * this.bandSize;
+		return this.bandCenter(i) - this.bandSize / 2;
 	}
 
 	bandCenter(i: number): number {
-		return this.bandStart(i) + this.bandSize / 2;
+		return (this.horizontal ? this.plot.y : this.plot.x) + (i - this.view[0]) * this.bandSize;
+	}
+
+	// visible returns the first and the last category whose middle is in the plot.
+	visible(): [number, number] {
+		return [Math.max(Math.ceil(this.view[0]), 0), Math.min(Math.floor(this.view[1]), this.count - 1)];
 	}
 
 	// categoryAt returns the category under the position, or -1 if there is none. The labels of a category belong
@@ -177,7 +189,8 @@ export class Cartesian {
 			at = x - p.x;
 		}
 
-		return Math.min(Math.max(Math.floor(at / this.bandSize), 0), this.count - 1);
+		const [first, last] = this.visible();
+		return Math.min(Math.max(Math.round(this.view[0] + at / this.bandSize), first), last);
 	}
 
 	private layoutTicks(width: number, measure: TextMeasurer) {
@@ -206,37 +219,49 @@ export class Cartesian {
 		}
 
 		const p = this.plot;
+		const [first, last] = this.visible();
 		if (this.horizontal) {
 			const every = Math.max(1, Math.ceil(labelHeight / this.bandSize));
 			const room = p.x - pad;
-			cats.forEach((c, i) => {
+			for (let i = first; i <= last; i++) {
 				if (i % every === 0) {
 					this.categoryLabels.push({
 						x: room,
 						y: this.bandCenter(i),
-						text: measure.truncate(c, room),
+						text: measure.truncate(cats[i], room),
 						anchor: 'end',
 					});
 				}
-			});
+			}
 
 			return;
 		}
 
-		// categories take every so many bands, so that the widest of them does not run into its neighbours
+		// categories take every so many bands, so that the widest of them does not run into its neighbours, and
+		// the same ones while the axis moves
 		const maxWidth = Math.min(Math.max(0, ...widths), 160);
 		const every = Math.max(1, Math.ceil((maxWidth + pad * 2) / this.bandSize));
 		const room = this.bandSize * every - pad;
-		cats.forEach((c, i) => {
-			if (i % every !== 0) {
-				return;
+		let edge = -Infinity;
+		let moved = false;
+		for (let i = Math.ceil(first / every) * every; i <= last; i += every) {
+			const text = measure.truncate(cats[i], Math.max(room, 24));
+			const w = measure.width(text);
+			const center = this.bandCenter(i);
+			const x = Math.min(Math.max(center, w / 2), width - w / 2);
+			if (x - w / 2 < edge + pad) {
+				if (!moved) {
+					continue;
+				}
+
+				// the label before was moved in from the edge, this one stands where it belongs
+				this.categoryLabels.pop();
 			}
 
-			const text = measure.truncate(c, Math.max(room, 24));
-			const w = measure.width(text);
-			const x = Math.min(Math.max(this.bandCenter(i), w / 2), width - w / 2);
+			edge = x + w / 2;
+			moved = x !== center;
 			this.categoryLabels.push({ x, y: p.y + p.h + pad / 2 + labelHeight / 2, text, anchor: 'middle' });
-		});
+		}
 	}
 
 	private layoutTitles(o: CartesianOptions, width: number, header: number) {

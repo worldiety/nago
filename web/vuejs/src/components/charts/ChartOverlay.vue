@@ -160,7 +160,13 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocumentPoin
 
 		<div class="sr-only" aria-live="polite">{{ announcement }}</div>
 
-		<div v-if="downloadable" class="absolute top-0 right-0 pointer-events-auto" @pointerdown.stop @keydown.stop>
+		<div
+			v-if="downloadable"
+			class="absolute top-0 right-0 pointer-events-auto"
+			@pointerdown.stop
+			@dblclick.stop
+			@keydown.stop
+		>
 			<button
 				ref="button"
 				type="button"
