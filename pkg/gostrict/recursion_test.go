@@ -57,6 +57,9 @@ type recCase struct {
 	// untranslatable is the part of the message of GS099, with which the translation rejects a program, which the
 	// checker accepts, so that it can not run.
 	untranslatable string
+	// vmFails is the part of the error, with which the vm does not load the program, a defect of the vm outside of
+	// the contract, so that the run is observed only in goja.
+	vmFails string
 }
 
 func (c recCase) module(directive bool) gostrict.Module {
@@ -155,6 +158,13 @@ func recRun(t *testing.T, c recCase) {
 	}
 	for _, e := range recEngines() {
 		in, err := e.e.Load(context.Background(), b, host)
+		if e.name == "vm" && c.vmFails != "" {
+			if err == nil || !strings.Contains(err.Error(), c.vmFails) {
+				t.Fatalf("vm: want the error %q, got %v", c.vmFails, err)
+			}
+			t.Logf("the vm can not load the program: %v", err)
+			continue
+		}
 		if err != nil {
 			t.Fatalf("%s: %v", e.name, err)
 		}
@@ -646,6 +656,68 @@ func Run() int32 { return run(sq{n: 2}) }
 		entry: "Run", want: []any{int32(2)},
 	},
 
+	{
+		name: "method value of a type parameter: run calls the method value, the method calls run",
+		files: recSingle(`type shape interface{ area() int32 }
+
+type sq struct{ n int32 }
+
+func (q sq) area() int32 { return run(q) }
+
+func run[S shape](s S) int32 {
+	f := s.area
+	return f()
+}
+
+func Run() int32 { return run(sq{n: 2}) }
+`),
+		entry: "Run", loops: true, vmFails: "area has no body",
+		finding: [][]string{{"r.go|func run["}, {"r.go|func (q sq) area("}},
+	},
+	{
+		name: "method value of a type parameter counter: the method does not call run",
+		files: recSingle(`type shape interface{ area() int32 }
+
+type sq struct{ n int32 }
+
+func (q sq) area() int32 { return q.n }
+
+func run[S shape](s S) int32 {
+	f := s.area
+	return f()
+}
+
+func Run() int32 { return run(sq{n: 2}) }
+`),
+		entry: "Run", want: []any{int32(2)}, vmFails: "area has no body",
+	},
+
+	// a named function type, whose underlying signature counts
+	{
+		name: "named function type: the function passes itself as a value of the named type",
+		files: recSingle(`type op func(int32) int32
+
+func apply(o op, n int32) int32 { return o(n) }
+
+func Run(n int32) int32 { return apply(Run, n) }
+`),
+		entry: "Run", args: []any{int32(1)}, loops: true,
+		finding: [][]string{{"r.go|func Run("}},
+		may:     []string{"r.go|func apply("},
+	},
+	{
+		name: "named function type counter: another function is passed",
+		files: recSingle(`type op func(int32) int32
+
+func apply(o op, n int32) int32 { return o(n) }
+
+func double(n int32) int32 { return 2 * n }
+
+func Run(n int32) int32 { return apply(double, n) }
+`),
+		entry: "Run", args: []any{int32(3)}, want: []any{int32(6)},
+	},
+
 	// a function argument of a header, which calls it at once, and one, which calls it later
 	{
 		name: "callback argument: TBox.WithFrame calls the literal, which calls card",
@@ -810,6 +882,39 @@ import (
 )
 
 func Total(l list.List[string]) float64 {
+	m := lib.Map(l, func(s string) float64 { return 1 })
+	sum := float64(0)
+	for _, v := range m.All() {
+		sum += v
+	}
+	return sum
+}
+
+func Run() float64 { return Total(list.Of("a", "b")) }
+`,
+		},
+		main: "fall", entry: "Run", want: []any{2.0},
+	},
+	{
+		name: "generic Map: a function of another number of parameters, which calls the case back, is a value",
+		files: map[string]string{
+			"lib/lib.go": recMapLib,
+			"fall/fall.go": `// Package fall uses the generic library.
+//
+//gostrict:terminating
+package fall
+
+import (
+	"go.wdy.de/nago/pkg/gostrict/std/list"
+
+	"llm.local/r/lib"
+)
+
+func pair(a, b string) float64 { return Total(list.Of(a, b)) }
+
+func Total(l list.List[string]) float64 {
+	g := pair
+	_ = g
 	m := lib.Map(l, func(s string) float64 { return 1 })
 	sum := float64(0)
 	for _, v := range m.All() {
