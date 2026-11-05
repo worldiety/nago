@@ -1561,6 +1561,9 @@ func libKey(fn *types.Func) string {
 // header package, the host.
 func (l *fnLower) libCall(fn *types.Func, recvArgs, targs []types.Type, sig *types.Signature, pos token.Pos, recv expr, args []expr) expr {
 	key := libKey(fn)
+	if it := l.iterator(key, recv, sig, pos); it != nil {
+		return it
+	}
 	res := l.tupleOf(sig.Results())
 	var ntargs []*tinfo
 	for _, t := range append(append([]types.Type(nil), recvArgs...), targs...) {
@@ -1581,6 +1584,87 @@ func (l *fnLower) libCall(fn *types.Func, recvArgs, targs []types.Type, sig *typ
 		key += "[" + hostTypeArgs(targs) + "]"
 	}
 	return &eHost{t: res, ext: l.c.extern(key, recv, sig, pos), args: args}
+}
+
+// iterator returns the iterator of a list, an outbox or a map as a value, e.g. it := l.All() outside of a range,
+// which lowers a range over the call into a loop instead, or nil for another function. The value is a function
+// literal, which captures the receiver and calls yield with the elements, which the receiver has, when the
+// iteration starts, like std/list, std/msg and std/dict: the length of a list then, ending early, if it shrinks,
+// and the keys of a map then, skipping the deleted ones.
+func (l *fnLower) iterator(key string, recv expr, sig *types.Signature, pos token.Pos) expr {
+	var isMap, pairs bool
+	switch key {
+	case listPath + ".List.All", listPath + ".Frozen.All":
+		pairs = true
+	case listPath + ".List.Values", listPath + ".Frozen.Values", msgPath + ".Out.Values":
+	case dictPath + ".Map.All":
+		isMap, pairs = true, true
+	case dictPath + ".Map.Keys":
+		isMap = true
+	default:
+		return nil
+	}
+	seq := sig.Results().At(0).Type()
+	rv := l.newLocal("$recv", recv.typ())
+	l.emit(&sAssign{lhs: []lval{&lLocal{t: rv.t, v: rv}}, rhs: []expr{recv}})
+
+	inner := l.child(seq.Underlying().(*types.Signature), "iter")
+	yt := inner.f.params.elems[0]
+	y := inner.newLocal("yield", yt)
+	cp := inner.newLocal("$recv", rv.t)
+	inner.caps = append(inner.caps, capture{src: rv, dst: cp})
+	self := &eLocal{t: cp.t, v: cp}
+
+	i32 := inner.ty(types.Typ[types.Int32])
+	bt := inner.c.boolType()
+	i := inner.newLocal("$i", i32)
+	inner.emit(&sAssign{lhs: []lval{&lLocal{t: i32, v: i}}, rhs: []expr{&eConst{t: i32}}})
+	idx := &eLocal{t: i32, v: i}
+	inc := []stmt{&sAssign{lhs: []lval{&lLocal{t: i32, v: i}}, rhs: []expr{&eBinary{t: i32, op: opAddI, x: idx, y: &eConst{t: i32, n: 1}}}}}
+	// yield returns false to stop the iteration
+	stop := func(args ...expr) stmt {
+		return &sIf{cond: &eUnary{t: bt, op: opNotB, x: &eCallValue{t: bt, f: &eLocal{t: yt, v: y}, args: args}}, then: []stmt{&sReturn{}}}
+	}
+
+	if !isMap {
+		length := inner.nativeCall(inner.c.listLen(), i32, []expr{self})
+		n := inner.newLocal("$n", i32)
+		inner.emit(&sAssign{lhs: []lval{&lLocal{t: i32, v: n}}, rhs: []expr{length}})
+		cond := &eAndOr{t: bt, and: true, x: &eBinary{t: bt, op: opLtI, x: idx, y: &eLocal{t: i32, v: n}}, y: &eBinary{t: bt, op: opLtI, x: idx, y: length}}
+		elem := &eListGet{t: rv.t.elem, l: self, i: idx, unchecked: true}
+		body := stop(elem)
+		if pairs {
+			body = stop(idx, elem)
+		}
+		inner.emit(&sLoop{pos: pos, cond: cond, post: inc, body: []stmt{body}})
+		return inner.finish(l.ty(seq))
+	}
+
+	mt := rv.t
+	targs := []*tinfo{mt.key, mt.elem}
+	keysT := inner.c.listOf(mt.key.t)
+	keys := inner.newLocal("$keys", keysT)
+	inner.emit(&sAssign{lhs: []lval{&lLocal{t: keysT, v: keys}}, rhs: []expr{inner.nativeCall(inner.c.native(dictPath+".Map.$keys", targs, pos), keysT, []expr{self})}})
+	length := inner.nativeCall(inner.c.listLen(), i32, []expr{&eLocal{t: keysT, v: keys}})
+	loop := &sLoop{pos: pos, cond: &eBinary{t: bt, op: opLtI, x: idx, y: length}, post: inc}
+	k := inner.newLocal("$k", mt.key)
+	got := tuple(mt.elem, bt)
+	v := inner.newLocal("$v", got)
+	get := inner.nativeCall(inner.c.native(dictPath+".Map.Get", targs, pos), got, []expr{self, &eLocal{t: mt.key, v: k}})
+	ok := &eLocal{t: bt, v: v, off: got.offs[1]}
+	call := stop(&eLocal{t: mt.key, v: k})
+	if pairs {
+		call = stop(&eLocal{t: mt.key, v: k}, &eLocal{t: mt.elem, v: v})
+	}
+	loop.body = []stmt{
+		&sAssign{lhs: []lval{&lLocal{t: mt.key, v: k}}, rhs: []expr{&eListGet{t: mt.key, l: &eLocal{t: keysT, v: keys}, i: idx, unchecked: true}}},
+		&sAssign{lhs: []lval{&lLocal{t: got, v: v}}, rhs: []expr{get}},
+		// a key deleted during the iteration is skipped
+		&sIf{cond: &eUnary{t: bt, op: opNotB, x: ok}, then: []stmt{&sContinue{target: loop}}},
+		call,
+	}
+	inner.emit(loop)
+	return inner.finish(l.ty(seq))
 }
 
 // libValue returns a function of the library or a header package as a value, e.g. f := strings.TrimSpace, as a

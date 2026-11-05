@@ -18,10 +18,7 @@
 //gostrict:header
 package msg
 
-import (
-	"iter"
-	"slices"
-)
+import "iter"
 
 // Out collects the messages of one type. Create it with [New].
 type Out[T any] struct {
@@ -50,10 +47,17 @@ func (o Out[T]) Len() int32 {
 	return int32(len(*o.p))
 }
 
-// Values iterates over the messages.
+// Values iterates over the messages, which the outbox has, when the iteration starts, like the Values of a list:
+// messages sent during the iteration are not visited, so the iteration always ends.
 func (o Out[T]) Values() iter.Seq[T] {
-	if o.p == nil {
-		return slices.Values([]T(nil))
+	return func(yield func(T) bool) {
+		if o.p == nil {
+			return
+		}
+		for _, m := range *o.p {
+			if !yield(m) {
+				return
+			}
+		}
 	}
-	return slices.Values(*o.p)
 }
