@@ -258,3 +258,136 @@ func aearly() int32 { return F(false) }
 		t.Fatal("the fixture needs aearly on an earlier line than zlate")
 	}
 }
+
+// recLink is an expected member of a cycle: the function, the line of its call, which leads to the next member, the
+// kind of the call and its expression.
+type recLink struct {
+	pkg, fn string
+	// at is the anchor "file|substring" of the line of the call.
+	at   string
+	call gostrict.CallKind
+	// expr is the expression of the call or, if it starts with "…", the end of it.
+	expr string
+}
+
+// TestRecursionCycleStructure checks Diagnostic.Cycle: each member with the path of its package, its function,
+// "function literal" or "range body", the file and line of the call, which leads to the next member, the kind of the
+// call and its expression, starting at the reported function. A method may be named with its type.
+func TestRecursionCycleStructure(t *testing.T) {
+	byName := map[string]recCase{}
+	for _, c := range recCases {
+		byName[c.name] = c
+	}
+	const r, x = "llm.local/r", "llm.local/r/usecase/x"
+	for _, w := range []struct {
+		row, anchor string
+		links       []recLink
+	}{
+		{"CR-02 counter: the function value calls the case back", "usecase/x/x.go|func wert(", []recLink{
+			{x, "wert", `usecase/x/x.go|return z("n")`, gostrict.CallValue, "z"},
+			{x, gostrict.LinkLiteral, "usecase/x/x.go|return Invoke()", gostrict.CallStatic, "Invoke"},
+			{x, "Invoke", "usecase/x/x.go|return invoke()", gostrict.CallStatic, "invoke"},
+			{x, "invoke", "usecase/x/x.go|return wert(2)", gostrict.CallStatic, "wert"},
+		}},
+		{"range: the iterator calls the function, which ranges over it", "r.go|func Total(", []recLink{
+			{r, "Total", "r.go|for x := range nums", gostrict.CallRange, "nums"},
+			{r, "nums", "r.go|_ = Total()", gostrict.CallStatic, "Total"},
+		}},
+		{"range body: the iterator calls yield, the body calls the function", "r.go|func Total(", []recLink{
+			{r, "Total", "r.go|for x := range nums", gostrict.CallRange, "nums"},
+			{r, "nums", "r.go|_ = yield(1)", gostrict.CallValue, "yield"},
+			{r, gostrict.LinkRangeBody, "r.go|s += x + Total()", gostrict.CallStatic, "Total"},
+		}},
+		{"package variable: the method calls the function of the variable, which calls the method", "r.go|func (q sq) area(", []recLink{
+			{r, "area", "r.go|func (q sq) area(", gostrict.CallValue, "apply"},
+			{r, gostrict.LinkLiteral, "r.go|var apply =", gostrict.CallInterface, "s.area"},
+		}},
+		{"callback argument: TBox.WithFrame calls the literal, which calls card", "r.go|func card(", []recLink{
+			{r, "card", "r.go|return ui.BoxAlign(", gostrict.CallCallback, "…WithFrame"},
+			{r, gostrict.LinkLiteral, "r.go|_ = card(a)", gostrict.CallStatic, "card"},
+		}},
+		{"literals: a literal calls itself through the variable", "r.go|f = func(", []recLink{
+			{r, gostrict.LinkLiteral, "r.go|f = func(", gostrict.CallValue, "f"},
+		}},
+		{"generic Map counter: the literal calls the case back", "fall/fall.go|func Total(", []recLink{
+			{r + "/fall", "Total", "fall/fall.go|m := lib.Map(", gostrict.CallStatic, "lib.Map"},
+			{r + "/lib", "Map", "lib/lib.go|for _, x := range l.All()", gostrict.CallRange, "l.All()"},
+			{r + "/lib", gostrict.LinkRangeBody, "lib/lib.go|res.Append(f(x))", gostrict.CallValue, "f"},
+			{r + "/fall", gostrict.LinkLiteral, "fall/fall.go|m := lib.Map(", gostrict.CallStatic, "Total"},
+		}},
+	} {
+		t.Run(w.row, func(t *testing.T) {
+			c, ok := byName[w.row]
+			if !ok {
+				t.Fatalf("no row %q", w.row)
+			}
+			d := recDiag(t, c, recCheck(t, c), w.anchor)
+			if len(d.Cycle) != len(w.links) {
+				t.Fatalf("cycle %+v, want %d links", d.Cycle, len(w.links))
+			}
+			for i, want := range w.links {
+				got := d.Cycle[i]
+				file, line := c.line(t, want.at)
+				exprOK := got.Expr == want.expr
+				if end, ok := strings.CutPrefix(want.expr, "…"); ok {
+					exprOK = strings.HasSuffix(got.Expr, end)
+				}
+				fnOK := got.Func == want.fn || strings.HasSuffix(got.Func, "."+want.fn)
+				if got.Package != want.pkg || !fnOK || got.File != file || got.Line != line || got.Call != want.call || !exprOK {
+					t.Errorf("link %d is %+v, want %s %s at %s:%d, %s %q", i, got, want.pkg, want.fn, file, line, want.call, want.expr)
+				}
+				// the column points into the call on its line
+				src := strings.Split(c.files[strings.TrimPrefix(file, "llm.local/r/")], "\n")[line-1]
+				ident := strings.TrimSuffix(strings.TrimPrefix(want.expr, "…"), "()")
+				ident = ident[strings.LastIndex(ident, ".")+1:]
+				if got.Col < 1 || got.Col > len(src) || !strings.Contains(src[got.Col-1:], ident) {
+					t.Errorf("link %d: column %d is not before %q in %q", i, got.Col, ident, src)
+				}
+				if got.Arity {
+					t.Errorf("link %d: the signatures can be compared, but the link reaches by arity", i)
+				}
+			}
+		})
+	}
+}
+
+// TestRecursionCycleInMessage checks for each finding of a cycle in the table of cases, that Diagnostic.Cycle starts
+// at the reported function and that the message shows its links in their order, so that a host, which composes its
+// own message from Cycle, says the same.
+func TestRecursionCycleInMessage(t *testing.T) {
+	n := 0
+	for _, c := range recCases {
+		if len(c.finding) == 0 {
+			continue
+		}
+		for _, d := range recCheck(t, c) {
+			if d.Code != gostrict.CodeTermination {
+				continue
+			}
+			n++
+			if len(d.Cycle) == 0 {
+				t.Errorf("%s: %s:%d has no cycle: %s", c.name, d.File, d.Line, d.Msg)
+				continue
+			}
+			first := d.Cycle[0].Package + "." + d.Cycle[0].Func
+			rest, ok := strings.CutPrefix(d.Msg, first+" may call itself: ")
+			// the last call leads back to the first link, after "→" or after "to" of a call, which is not static
+			if !ok || !(strings.HasSuffix(d.Msg, " → "+first) || strings.HasSuffix(d.Msg, " to "+first)) {
+				t.Errorf("%s: the message does not start and end with %s: %s", c.name, first, d.Msg)
+				continue
+			}
+			for _, l := range d.Cycle {
+				part := fmt.Sprintf("%s.%s (%s:%d)", l.Package, l.Func, l.File, l.Line)
+				i := strings.Index(rest, part)
+				if i < 0 {
+					t.Errorf("%s: the message misses %q in its order: %s", c.name, part, d.Msg)
+					break
+				}
+				rest = rest[i+len(part):]
+			}
+		}
+	}
+	if n == 0 {
+		t.Fatal("no finding")
+	}
+}
