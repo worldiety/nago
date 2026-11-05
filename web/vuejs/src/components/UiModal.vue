@@ -118,13 +118,26 @@ function getDialogContentSection(): HTMLElement | undefined {
 // Moves the focus to the start of the dialog content without focusing an interactive element. The content section
 // is made programmatically focusable (but not tabbable), thus the next tab key press or the next screen reader
 // navigation step starts at the beginning of the dialog content.
+// The section is only focusable temporarily: once the focus leaves it, the tabindex is removed again. Otherwise,
+// VoiceOver treats the section as a focusable group and gets stuck at its boundary, when navigating backwards into
+// it from outside, e.g. from the dialog buttons.
 function captureFocusInDialog(): void {
 	const section = getDialogContentSection();
 	if (!section) return;
 
-	if (!section.hasAttribute('tabindex')) section.setAttribute('tabindex', '-1');
+	const addedTabIndex = !section.hasAttribute('tabindex');
+	if (addedTabIndex) section.setAttribute('tabindex', '-1');
 	section.setAttribute('data-modal-focus-start', '');
+
+	const release = () => {
+		section.removeEventListener('blur', release);
+		section.removeAttribute('data-modal-focus-start');
+		if (addedTabIndex) section.removeAttribute('tabindex');
+	};
+	section.addEventListener('blur', release);
+
 	section.focus({ preventScroll: true });
+	if (document.activeElement !== section) release();
 }
 
 function onKeydown(e: KeyboardEvent) {

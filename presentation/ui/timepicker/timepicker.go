@@ -65,13 +65,17 @@ type TPicker struct {
 // 25 hours, instead you must enable the day flag, so that the user can configure 1 day and 1 hour.
 func Picker(label string, selectedState *core.State[time.Duration]) TPicker {
 	p := TPicker{
-		id:                  fmt.Sprintf("timepicker-%d", rand.Intn(999999999)),
 		label:               label,
 		format:              ClockFormat,
 		targetSelectedState: selectedState,
 	}
 
 	if selectedState != nil {
+		// keep the id stable across render cycles, otherwise labels lose their input reference
+		p.id = core.DerivedState[string](selectedState, ".pck.id").Init(func() string {
+			return fmt.Sprintf("timepicker-%d", rand.Intn(999999999))
+		}).Get()
+
 		p.pickerPresented = core.DerivedState[bool](selectedState, ".pck.pre")
 		p.currentSelectedState = core.DerivedState[time.Duration](selectedState, ".pck.tmp").Init(func() time.Duration {
 			return selectedState.Get()
@@ -394,61 +398,65 @@ func (c TPicker) renderPicker() core.View {
 
 	segments := make([]core.View, 0, 8)
 	if c.showDays {
+		inputId := fmt.Sprintf("%s-day", c.id)
 		segments = append(segments,
 			ui.VStack(
 				ui.TertiaryButton(c.dayUp).PreIcon(heroSolid.ChevronUp).AccessibilityLabel(fmt.Sprintf("Tage erhöhen, aktuell %d", days)),
-				editInt(c.currentSelectedState, "day", "Tage", days, func(v int) {
+				editInt(c.currentSelectedState, inputId, "day", days, func(v int) {
 					c.setDay(v)
 				}),
 				ui.TertiaryButton(c.dayDown).PreIcon(heroSolid.ChevronDown).AccessibilityLabel(fmt.Sprintf("Tage verringern, aktuell %d", days)),
 			),
-			ui.Text("Tage"),
+			ui.Text("Tage").LabelFor(inputId),
 		)
 	}
 
 	if c.showHours {
+		inputId := fmt.Sprintf("%s-hour", c.id)
 		segments = append(segments,
 			ui.VStack(
 				ui.TertiaryButton(c.hourUp).PreIcon(heroSolid.ChevronUp).AccessibilityLabel(fmt.Sprintf("Stunden erhöhen, aktuell %d", hours)),
-				editInt(c.currentSelectedState, "hour", "Stunden", hours, func(v int) {
+				editInt(c.currentSelectedState, inputId, "hour", hours, func(v int) {
 					c.setHour(v)
 				}),
 				ui.TertiaryButton(c.hourDown).PreIcon(heroSolid.ChevronDown).AccessibilityLabel(fmt.Sprintf("Stunden verringern, aktuell %d", hours)),
 			),
-			ui.Text("Std."),
+			ui.Text("Std.").LabelFor(inputId),
 		)
 	}
 
 	if c.showMinutes {
+		inputId := fmt.Sprintf("%s-min", c.id)
 		segments = append(segments,
 			ui.VStack(
 				ui.TertiaryButton(c.minUp).PreIcon(heroSolid.ChevronUp).AccessibilityLabel(fmt.Sprintf("Minuten erhöhen, aktuell %d", minutes)),
-				editInt(c.currentSelectedState, "min", "Minuten", minutes, func(v int) {
+				editInt(c.currentSelectedState, inputId, "min", minutes, func(v int) {
 					c.setMin(v)
 				}),
 				ui.TertiaryButton(c.minDown).PreIcon(heroSolid.ChevronDown).AccessibilityLabel(fmt.Sprintf("Minuten verringern, aktuell %d", minutes)),
 			),
-			ui.Text("Min."),
+			ui.Text("Min.").LabelFor(inputId),
 		)
 	}
 
 	if c.showSeconds {
+		inputId := fmt.Sprintf("%s-sec", c.id)
 		segments = append(segments,
 			ui.VStack(
 				ui.TertiaryButton(c.secUp).PreIcon(heroSolid.ChevronUp).AccessibilityLabel(fmt.Sprintf("Sekunden erhöhen, aktuell %d", seconds)),
-				editInt(c.currentSelectedState, "sec", "Sekunden", seconds, func(v int) {
+				editInt(c.currentSelectedState, inputId, "sec", seconds, func(v int) {
 					c.setSec(v)
 				}),
 				ui.TertiaryButton(c.secDown).PreIcon(heroSolid.ChevronDown).AccessibilityLabel(fmt.Sprintf("Sekunden verringern, aktuell %d", seconds)),
 			),
-			ui.Text("Sek."),
+			ui.Text("Sek.").LabelFor(inputId),
 		)
 	}
 
 	return ui.HStack(segments...).Frame(ui.Frame{}.FullWidth())
 }
 
-func editInt(state *core.State[time.Duration], name, accessibilityLabel string, val int, set func(v int)) core.View {
+func editInt(state *core.State[time.Duration], inputId, name string, val int, set func(v int)) core.View {
 	formattedVal := fmt.Sprintf("%02d", val)
 
 	editVal := core.DerivedState[string](state, name+"-edit").Init(func() string {
@@ -464,6 +472,7 @@ func editInt(state *core.State[time.Duration], name, accessibilityLabel string, 
 	}
 
 	textField := ui.TextField("", editVal.Get()).
+		ID(inputId).
 		ShowZero(true).
 		Min(0).
 		Step(1).
@@ -480,10 +489,7 @@ func editInt(state *core.State[time.Duration], name, accessibilityLabel string, 
 		textField = textField.Max(59)
 	}
 
-	return accessibility.Accessible(
-		textField.
-			Frame(ui.Frame{Width: ui.L32}),
-	).Label(accessibilityLabel)
+	return textField.Frame(ui.Frame{Width: ui.L32})
 }
 
 // Render builds and returns the UI representation of the time picker.
