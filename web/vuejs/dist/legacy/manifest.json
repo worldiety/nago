@@ -1,7 +1,7 @@
 {
-  "node_modules/@embedpdf/snippet/dist/pdfium.wasm": {
+  "../../../../../../../../../Users/tschinke/git/gitlab.worldiety.net/group/ora/nago.git/web/vuejs/node_modules/@embedpdf/snippet/dist/pdfium.wasm": {
     "file": "assets/pdfium-RAgkpwfK.wasm",
-    "src": "node_modules/@embedpdf/snippet/dist/pdfium.wasm"
+    "src": "../../../../../../../../../Users/tschinke/git/gitlab.worldiety.net/group/ora/nago.git/web/vuejs/node_modules/@embedpdf/snippet/dist/pdfium.wasm"
   },
   "src/assets/fonts/ibm-plex-mono/complete/woff/IBMPlexMono-Bold.woff": {
     "file": "assets/IBMPlexMono-Bold-BV9METIw.woff",
@@ -460,7 +460,7 @@
     "src": "src/assets/fonts/inter/InterVariable.woff2"
   },
   "src/main.ts": {
-    "file": "assets/main-BDIv_ZJj.js",
+    "file": "assets/main-DROcIMp-.js",
     "name": "main",
     "src": "src/main.ts",
     "isEntry": true,
