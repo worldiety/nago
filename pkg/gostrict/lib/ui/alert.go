@@ -27,6 +27,7 @@ func AlertOk() AlertOption {
 // AlertDelete adds a button, which closes the dialog and calls onDelete.
 //
 //gostrict:host
+//gostrict:calls later
 func AlertDelete(onDelete func()) AlertOption {
 	return AlertOption{ref: wrap(alert.Delete(onDelete))}
 }
@@ -34,6 +35,7 @@ func AlertDelete(onDelete func()) AlertOption {
 // AlertSave adds a button, which calls onSave and closes the dialog, if onSave returns true.
 //
 //gostrict:host
+//gostrict:calls later
 func AlertSave(onSave func() bool) AlertOption {
 	return AlertOption{ref: wrap(alert.Save(onSave))}
 }
@@ -41,6 +43,7 @@ func AlertSave(onSave func() bool) AlertOption {
 // AlertCreate adds a button, which calls onSave and closes the dialog, if onSave returns true.
 //
 //gostrict:host
+//gostrict:calls later
 func AlertCreate(onSave func() bool) AlertOption {
 	return AlertOption{ref: wrap(alert.Create(onSave))}
 }
@@ -48,6 +51,7 @@ func AlertCreate(onSave func() bool) AlertOption {
 // AlertAdd adds a button, which calls onSave and closes the dialog, if onSave returns true.
 //
 //gostrict:host
+//gostrict:calls later
 func AlertAdd(onSave func() bool) AlertOption {
 	return AlertOption{ref: wrap(alert.Add(onSave))}
 }
@@ -55,6 +59,7 @@ func AlertAdd(onSave func() bool) AlertOption {
 // AlertApply adds a button, which calls onSave and closes the dialog, if onSave returns true.
 //
 //gostrict:host
+//gostrict:calls later
 func AlertApply(onSave func() bool) AlertOption {
 	return AlertOption{ref: wrap(alert.Apply(onSave))}
 }
@@ -62,6 +67,7 @@ func AlertApply(onSave func() bool) AlertOption {
 // AlertClose adds a button, which calls onSave and closes the dialog, if onSave returns true.
 //
 //gostrict:host
+//gostrict:calls later
 func AlertClose(onSave func() bool) AlertOption {
 	return AlertOption{ref: wrap(alert.Close(onSave))}
 }
@@ -69,6 +75,7 @@ func AlertClose(onSave func() bool) AlertOption {
 // AlertConfirm adds a button, which calls onSave and closes the dialog, if onSave returns true.
 //
 //gostrict:host
+//gostrict:calls later
 func AlertConfirm(onSave func() bool) AlertOption {
 	return AlertOption{ref: wrap(alert.Confirm(onSave))}
 }
@@ -139,6 +146,7 @@ func AlertHeight(h Length) AlertOption {
 // AlertCancel adds a button, which closes the dialog and calls onCancel.
 //
 //gostrict:host
+//gostrict:calls later
 func AlertCancel(onCancel func()) AlertOption {
 	return AlertOption{ref: wrap(alert.Cancel(onCancel))}
 }
@@ -146,6 +154,7 @@ func AlertCancel(onCancel func()) AlertOption {
 // AlertBack adds a button, which closes the dialog and calls onCancel.
 //
 //gostrict:host
+//gostrict:calls later
 func AlertBack(onCancel func()) AlertOption {
 	return AlertOption{ref: wrap(alert.Back(onCancel))}
 }

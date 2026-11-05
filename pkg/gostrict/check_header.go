@@ -11,7 +11,9 @@ import (
 	"go/ast"
 	"go/token"
 	"go/types"
+	"slices"
 	"strconv"
+	"strings"
 
 	jsast "github.com/dop251/goja/ast"
 	jsparser "github.com/dop251/goja/parser"
@@ -53,6 +55,7 @@ func checkHeaderFunc(p *Package, d *diagnoser, decls map[*types.Func]funcSrc, de
 		return
 	}
 	checkConstDirective(d, decls[fn], fn)
+	checkCallsDirective(d, decls[fn], fn)
 
 	const why = "only bool, int32, uint32, float64, string, big.Int, handles, records without handles and lists and maps of them cross the boundary, error only as a result, and functions of such values as parameters"
 	if decl.Recv != nil {
@@ -144,6 +147,90 @@ func checkConstDirective(d *diagnoser, src funcSrc, fn *types.Func) {
 			report("the parameter " + name + " of " + fn.Name() + " has the type " + types.TypeString(sig.Params().At(i).Type(), types.RelativeTo(fn.Pkg())) + ", which has no constants")
 		}
 	}
+}
+
+// checkCallsDirective checks the callsDirective of a function of a header package: it is now or later, and the
+// function takes a function.
+func checkCallsDirective(d *diagnoser, src funcSrc, fn *types.Func) {
+	if src.callsPos == token.NoPos {
+		return
+	}
+	report := func(msg string) {
+		d.report(src.callsPos, token.NoPos, CodeHeader, msg, callsDirective+" tells the check of recursion, whether the function calls its function arguments during the call or only after it returned", "write "+callsDirective+" now or "+callsDirective+" later on a function, which takes a function")
+	}
+	switch {
+	case src.calls != CallsNow && src.calls != CallsLater:
+		report(callsDirective + " takes now or later, not " + strconv.Quote(string(src.calls)))
+	case len(funcParams(fn.Signature())) == 0:
+		report(fn.Name() + " takes no function, so " + callsDirective + " has nothing to tell")
+	}
+}
+
+// HeaderCallback is an exported function or method of a header package, which takes a function, see
+// [HeaderCallbacks].
+type HeaderCallback struct {
+	// Name is the full name, e.g. "go.wdy.de/nago/pkg/gostrict/lib/ui.TBox.WithFrame" or
+	// "go.wdy.de/nago/pkg/gostrict/std/list.SortFunc".
+	Name string
+	// Calls is the time of the directive //gostrict:calls or "" without one.
+	Calls CallTime
+}
+
+// HeaderCallbacks returns the exported functions and methods of the header packages of the program, which take a
+// function, with the time, at which they call it, sorted by name. The check of recursion follows a call of such a
+// function to its function arguments, unless its directive is //gostrict:calls later, e.g. the action of a button.
+// A function without the directive counts as now, so a test of a host checks, that each of its header functions
+// has one.
+func HeaderCallbacks(prog *Program) []HeaderCallback {
+	var res []HeaderCallback
+	for fn, src := range funcDecls(prog) {
+		if src.pkg.Kind == KindUser || !fn.Exported() || len(funcParams(fn.Signature())) == 0 {
+			continue
+		}
+		if recv := fn.Signature().Recv(); recv != nil {
+			if n, ok := types.Unalias(derefType(recv.Type())).(*types.Named); !ok || !n.Obj().Exported() {
+				continue
+			}
+		}
+		res = append(res, HeaderCallback{Name: src.pkg.Path + "." + funcName(fn), Calls: src.calls})
+	}
+	slices.SortFunc(res, func(a, b HeaderCallback) int { return strings.Compare(a.Name, b.Name) })
+	return res
+}
+
+// funcName returns the name of the function or Type.Method for a method.
+func funcName(fn *types.Func) string {
+	recv := fn.Signature().Recv()
+	if recv == nil {
+		return fn.Name()
+	}
+	if n, ok := types.Unalias(derefType(recv.Type())).(*types.Named); ok {
+		return n.Obj().Name() + "." + fn.Name()
+	}
+	return fn.Name()
+}
+
+func derefType(t types.Type) types.Type {
+	if p, ok := t.(*types.Pointer); ok {
+		return p.Elem()
+	}
+	return t
+}
+
+// funcParams returns the indices of the parameters of the signature, whose types are functions or, for a variadic
+// parameter, slices of functions.
+func funcParams(sig *types.Signature) []int {
+	var res []int
+	for i := range sig.Params().Len() {
+		t := sig.Params().At(i).Type()
+		if s, ok := t.Underlying().(*types.Slice); ok && sig.Variadic() && i == sig.Params().Len()-1 {
+			t = s.Elem()
+		}
+		if coreSignature(t) != nil {
+			res = append(res, i)
+		}
+	}
+	return res
 }
 
 // paramIndex returns the index of the parameter of the signature with the name or -1.

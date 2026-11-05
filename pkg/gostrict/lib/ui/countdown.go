@@ -48,6 +48,7 @@ func (c TCountDown) Style(style CountDownStyle) TCountDown {
 // Action calls action, when the countdown ends.
 //
 //gostrict:host
+//gostrict:calls later
 func (c TCountDown) Action(action func()) TCountDown {
 	return TCountDown{ref: wrap(get[nui.TCountDown](c.ref).Action(action))}
 }

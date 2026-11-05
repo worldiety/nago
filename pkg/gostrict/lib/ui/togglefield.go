@@ -63,6 +63,7 @@ func (c TToggleField) Frame(frame Frame) TToggleField {
 // WithFrame changes the layout frame of the toggle field with fn, which gets the current one.
 //
 //gostrict:host
+//gostrict:calls now
 func (c TToggleField) WithFrame(fn func(Frame) Frame) TToggleField {
 	return TToggleField{ref: wrap(get[nui.TToggleField](c.ref).WithFrame(func(f nui.Frame) nui.Frame { return fn(frameFrom(f)).nago() }).(nui.TToggleField))}
 }

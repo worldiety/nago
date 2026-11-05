@@ -172,6 +172,7 @@ func (c TGrid) Frame(frame Frame) TGrid {
 // WithFrame changes the size and the position of the grid with fn, which gets the current one.
 //
 //gostrict:host
+//gostrict:calls now
 func (c TGrid) WithFrame(fn func(Frame) Frame) TGrid {
 	return TGrid{ref: wrap(get[nui.TGrid](c.ref).WithFrame(func(f nui.Frame) nui.Frame { return fn(frameFrom(f)).nago() }).(nui.TGrid))}
 }

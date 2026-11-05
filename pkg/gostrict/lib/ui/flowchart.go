@@ -233,6 +233,7 @@ func (s FlowchartModelState) Set(v FlowchartModel) {
 // Init sets the model of fn, if the state is new.
 //
 //gostrict:host
+//gostrict:calls now
 func (s FlowchartModelState) Init(fn func() FlowchartModel) FlowchartModelState {
 	return FlowchartModelState{ref: wrap(s.nago().Init(func() flowchart.Model { return fn().nago() }))}
 }
@@ -240,6 +241,7 @@ func (s FlowchartModelState) Init(fn func() FlowchartModel) FlowchartModelState 
 // Observe calls fn, when the user changes the model.
 //
 //gostrict:host
+//gostrict:calls later
 func (s FlowchartModelState) Observe(fn func(v FlowchartModel)) FlowchartModelState {
 	return FlowchartModelState{ref: wrap(s.nago().Observe(func(v flowchart.Model) { fn(flowchartModelFrom(v)) }))}
 }
@@ -268,6 +270,7 @@ func (s FlowchartActionState) Set(v FlowChartActionData) {
 // Init sets the action of fn, if the state is new.
 //
 //gostrict:host
+//gostrict:calls now
 func (s FlowchartActionState) Init(fn func() FlowChartActionData) FlowchartActionState {
 	return FlowchartActionState{ref: wrap(s.nago().Init(func() flowchart.FlowChartActionData { return fn().nago() }))}
 }
@@ -275,6 +278,7 @@ func (s FlowchartActionState) Init(fn func() FlowChartActionData) FlowchartActio
 // Observe calls fn, when the user acts in the chart.
 //
 //gostrict:host
+//gostrict:calls later
 func (s FlowchartActionState) Observe(fn func(v FlowChartActionData)) FlowchartActionState {
 	return FlowchartActionState{ref: wrap(s.nago().Observe(func(v flowchart.FlowChartActionData) { fn(flowChartActionDataFrom(v)) }))}
 }
@@ -341,6 +345,7 @@ func (c TFlowChart) Frame(frame Frame) TFlowChart {
 // WithFrame changes the size with fn, which gets the current one.
 //
 //gostrict:host
+//gostrict:calls now
 func (c TFlowChart) WithFrame(fn func(Frame) Frame) TFlowChart {
 	return TFlowChart{ref: wrap(get[flowchart.TFlowChart](c.ref).WithFrame(func(f nui.Frame) nui.Frame { return fn(frameFrom(f)).nago() }))}
 }

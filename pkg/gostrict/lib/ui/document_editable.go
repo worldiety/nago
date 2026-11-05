@@ -35,6 +35,7 @@ func (TDocumentEditable) isView() {}
 // DocumentEditable creates an editable component with the view and the edit callbacks, like document.Editable of nago.
 //
 //gostrict:host
+//gostrict:calls later
 func DocumentEditable(onView func() View, onEdit func() View) TDocumentEditable {
 	return TDocumentEditable{ref: wrap(document.Editable(
 		func() core.View { return viewOf(onView()) },
@@ -59,6 +60,7 @@ func (c TDocumentEditable) Style(style DocumentToggleStyle) TDocumentEditable {
 // Comment sets the action, which is executed when a comment is triggered.
 //
 //gostrict:host
+//gostrict:calls later
 func (c TDocumentEditable) Comment(action func()) TDocumentEditable {
 	return TDocumentEditable{ref: wrap(get[document.TEditable](c.ref).Comment(action))}
 }

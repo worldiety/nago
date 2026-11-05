@@ -126,6 +126,7 @@ func (c TPasswordField) Frame(frame Frame) TPasswordField {
 // WithFrame changes the layout frame of the field with fn, which gets the current one.
 //
 //gostrict:host
+//gostrict:calls now
 func (c TPasswordField) WithFrame(fn func(Frame) Frame) TPasswordField {
 	return TPasswordField{ref: wrap(get[nui.TPasswordField](c.ref).WithFrame(func(f nui.Frame) nui.Frame { return fn(frameFrom(f)).nago() }).(nui.TPasswordField))}
 }
@@ -154,6 +155,7 @@ func (c TPasswordField) ID(id string) TPasswordField {
 // KeydownEnter calls fn, when the user presses the enter key.
 //
 //gostrict:host
+//gostrict:calls later
 func (c TPasswordField) KeydownEnter(fn func()) TPasswordField {
 	return TPasswordField{ref: wrap(get[nui.TPasswordField](c.ref).KeydownEnter(fn))}
 }

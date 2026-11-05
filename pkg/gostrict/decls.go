@@ -26,6 +26,23 @@ const hostDirective = "//gostrict:host"
 // time. Such a function can only be called, because a call of a function value would bypass the rule.
 const constDirective = "//gostrict:const"
 
+// callsDirective tells, when a function of a header package calls the functions, which it takes: //gostrict:calls now
+// during the call, e.g. a builder, which changes a frame with a function, //gostrict:calls later only after the call
+// returned, e.g. the action of a button. The check of recursion follows a call, which calls now, and assumes now
+// without the directive, see [HeaderCallbacks].
+const callsDirective = "//gostrict:calls"
+
+// CallTime tells, when a function of a header package calls the functions, which it takes, see [HeaderCallbacks].
+type CallTime string
+
+const (
+	// CallsNow calls them during the call, e.g. ui.TBox.WithFrame or list.SortFunc.
+	CallsNow CallTime = "now"
+	// CallsLater calls them only after the call returned, e.g. the host calls the action of ui.PrimaryButton, when
+	// the user clicks the button.
+	CallsLater CallTime = "later"
+)
+
 // funcSrc is the declaration of a function or method.
 type funcSrc struct {
 	pkg  *Package
@@ -38,6 +55,9 @@ type funcSrc struct {
 	// token.NoPos without one.
 	consts   []string
 	constPos token.Pos
+	// calls is the value of the callsDirective or "" without one, and callsPos the position of the directive.
+	calls    CallTime
+	callsPos token.Pos
 }
 
 func funcDecls(prog *Program) map[*types.Func]funcSrc {
@@ -54,7 +74,8 @@ func funcDecls(prog *Program) map[*types.Func]funcSrc {
 					continue
 				}
 				consts, pos := constNames(fd)
-				res[fn] = funcSrc{pkg: p, decl: fd, js: jsBinding(fd), host: hasDirective(fd, hostDirective), consts: consts, constPos: pos}
+				calls, callsPos := callsTime(fd)
+				res[fn] = funcSrc{pkg: p, decl: fd, js: jsBinding(fd), host: hasDirective(fd, hostDirective), consts: consts, constPos: pos, calls: calls, callsPos: callsPos}
 			}
 		}
 	}
@@ -96,6 +117,22 @@ func constNames(fd *ast.FuncDecl) ([]string, token.Pos) {
 		return names, c.Pos()
 	}
 	return nil, token.NoPos
+}
+
+// callsTime returns the value of the callsDirective in the documentation of the function and its position, or ""
+// and token.NoPos without one.
+func callsTime(fd *ast.FuncDecl) (CallTime, token.Pos) {
+	if fd.Doc == nil {
+		return "", token.NoPos
+	}
+	for _, c := range fd.Doc.List {
+		rest, ok := strings.CutPrefix(c.Text, callsDirective)
+		if !ok || rest != "" && rest[0] != ' ' && rest[0] != '\t' {
+			continue
+		}
+		return CallTime(strings.TrimSpace(rest)), c.Pos()
+	}
+	return "", token.NoPos
 }
 
 // varBinding returns the binding of a variable of a header package in the documentation of its declaration.

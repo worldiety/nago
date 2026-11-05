@@ -67,6 +67,7 @@ func (c TAlertBanner) Closeable(presented BoolState) TAlertBanner {
 // OnClosed calls fn, when the banner is closed.
 //
 //gostrict:host
+//gostrict:calls later
 func (c TAlertBanner) OnClosed(fn func()) TAlertBanner {
 	return TAlertBanner{ref: wrap(get[alert.TBanner](c.ref).OnClosed(fn))}
 }

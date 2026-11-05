@@ -34,6 +34,7 @@ func (TButton) isView() {}
 // Button returns a button of the style, which calls action, when the user clicks it.
 //
 //gostrict:host
+//gostrict:calls later
 func Button(style ButtonStyle, action func()) TButton {
 	return TButton{ref: wrap(nui.Button(nui.ButtonStyle(style), action))}
 }
@@ -41,6 +42,7 @@ func Button(style ButtonStyle, action func()) TButton {
 // PrimaryButton returns the button of the main action.
 //
 //gostrict:host
+//gostrict:calls later
 func PrimaryButton(action func()) TButton {
 	return TButton{ref: wrap(nui.PrimaryButton(action))}
 }
@@ -48,6 +50,7 @@ func PrimaryButton(action func()) TButton {
 // SecondaryButton returns the button of a secondary action.
 //
 //gostrict:host
+//gostrict:calls later
 func SecondaryButton(action func()) TButton {
 	return TButton{ref: wrap(nui.SecondaryButton(action))}
 }
@@ -55,6 +58,7 @@ func SecondaryButton(action func()) TButton {
 // TertiaryButton returns the button of a minor action, which looks like a text.
 //
 //gostrict:host
+//gostrict:calls later
 func TertiaryButton(action func()) TButton {
 	return TButton{ref: wrap(nui.TertiaryButton(action))}
 }

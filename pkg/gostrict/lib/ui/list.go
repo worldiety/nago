@@ -71,6 +71,7 @@ func (c TListEntry) Trailing(v View) TListEntry {
 // Action sets the action, which is called when the user clicks the entry.
 //
 //gostrict:host
+//gostrict:calls later
 func (c TListEntry) Action(fn func()) TListEntry {
 	return TListEntry{ref: wrap(get[list.TEntry](c.ref).Action(fn))}
 }
@@ -160,6 +161,7 @@ func (c TList) Footer(s View) TList {
 // OnEntryClicked sets the callback, which is called with the index of the row, which the user clicks.
 //
 //gostrict:host
+//gostrict:calls later
 func (c TList) OnEntryClicked(fn func(idx int32)) TList {
 	return TList{ref: wrap(get[list.TList](c.ref).OnEntryClicked(func(idx int) { fn(int32(idx)) }))}
 }
@@ -167,6 +169,7 @@ func (c TList) OnEntryClicked(fn func(idx int32)) TList {
 // OnHighlighted sets the callback, which tells for the index of a row, whether the row is highlighted.
 //
 //gostrict:host
+//gostrict:calls later
 func (c TList) OnHighlighted(fn func(idx int32) bool) TList {
 	return TList{ref: wrap(get[list.TList](c.ref).OnHighlighted(func(idx int) bool { return fn(int32(idx)) }))}
 }
@@ -174,6 +177,7 @@ func (c TList) OnHighlighted(fn func(idx int32) bool) TList {
 // With changes the list with fn.
 //
 //gostrict:host
+//gostrict:calls now
 func (c TList) With(fn func(l TList) TList) TList {
 	return TList{ref: wrap(get[list.TList](c.ref).With(func(v list.TList) list.TList {
 		return get[list.TList](fn(TList{ref: wrap(v)}).ref)

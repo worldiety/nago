@@ -78,6 +78,7 @@ func (c TModal) AllowBackgroundScrolling(allowBackgroundScrolling bool) TModal {
 // OnDismissRequest calls fn, when the user requests to dismiss the modal.
 //
 //gostrict:host
+//gostrict:calls later
 func (c TModal) OnDismissRequest(fn func()) TModal {
 	return TModal{ref: wrap(get[nui.TModal](c.ref).OnDismissRequest(fn))}
 }

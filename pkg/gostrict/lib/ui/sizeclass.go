@@ -34,6 +34,7 @@ const (
 // The function view is called, when the window renders.
 //
 //gostrict:host
+//gostrict:calls later
 func SizeClass(class WindowSizeClass, view func() View) ViewWithSizeClass {
 	return ViewWithSizeClass{ref: wrap(nui.SizeClass(core.WindowSizeClass(class), b5ViewFunc(view)))}
 }

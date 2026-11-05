@@ -44,6 +44,7 @@ func (s StringState) Set(v string) {
 // Init sets the value of fn, if the state is new.
 //
 //gostrict:host
+//gostrict:calls now
 func (s StringState) Init(fn func() string) StringState {
 	return StringState{ref: wrap(s.nago().Init(fn))}
 }
@@ -51,6 +52,7 @@ func (s StringState) Init(fn func() string) StringState {
 // Observe calls fn, when the user changes the value.
 //
 //gostrict:host
+//gostrict:calls later
 func (s StringState) Observe(fn func(v string)) StringState {
 	return StringState{ref: wrap(s.nago().Observe(fn))}
 }
@@ -79,6 +81,7 @@ func (s BoolState) Set(v bool) {
 // Init sets the value of fn, if the state is new.
 //
 //gostrict:host
+//gostrict:calls now
 func (s BoolState) Init(fn func() bool) BoolState {
 	return BoolState{ref: wrap(s.nago().Init(fn))}
 }
@@ -86,6 +89,7 @@ func (s BoolState) Init(fn func() bool) BoolState {
 // Observe calls fn, when the user changes the value.
 //
 //gostrict:host
+//gostrict:calls later
 func (s BoolState) Observe(fn func(v bool)) BoolState {
 	return BoolState{ref: wrap(s.nago().Observe(fn))}
 }

@@ -35,6 +35,7 @@ func (c TForm) ID(id string) TForm {
 // Action sets the function, which is called, when the form is submitted.
 //
 //gostrict:host
+//gostrict:calls later
 func (c TForm) Action(action func()) TForm {
 	return TForm{ref: wrap(get[nui.TForm](c.ref).Action(action))}
 }

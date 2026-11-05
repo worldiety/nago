@@ -73,6 +73,7 @@ func Text(content string) TText {
 // LinkWithAction returns a text, which looks like a link and calls action, when the user clicks it.
 //
 //gostrict:host
+//gostrict:calls later
 func LinkWithAction(text string, action func()) TText {
 	return TText{ref: wrap(nui.LinkWithAction(text, action))}
 }
@@ -129,6 +130,7 @@ func (c TText) Frame(frame Frame) TText {
 // WithFrame changes the size with fn, which gets the current one.
 //
 //gostrict:host
+//gostrict:calls now
 func (c TText) WithFrame(fn func(Frame) Frame) TText {
 	return TText{ref: wrap(get[nui.TText](c.ref).WithFrame(func(f nui.Frame) nui.Frame { return fn(frameFrom(f)).nago() }).(nui.TText))}
 }
@@ -234,6 +236,7 @@ func (c TText) BackgroundColor(backgroundColor Color) TText {
 // Action calls f, when the user clicks the text.
 //
 //gostrict:host
+//gostrict:calls later
 func (c TText) Action(f func()) TText {
 	return TText{ref: wrap(get[nui.TText](c.ref).Action(f))}
 }

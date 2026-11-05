@@ -36,6 +36,7 @@ func (s RadioStateGroup) InitIndex(idx int32) RadioStateGroup {
 // Observe calls f with the index of the selected state, whenever any state of the group changes.
 //
 //gostrict:host
+//gostrict:calls later
 func (s RadioStateGroup) Observe(f func(newIdx int32)) {
 	b2GroupOf(s).Observe(func(newIdx int) { f(int32(newIdx)) })
 }

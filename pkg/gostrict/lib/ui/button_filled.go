@@ -22,6 +22,7 @@ func (TFilledButton) isView() {}
 // FilledButton returns a button with the background color, which calls action, when the user clicks it.
 //
 //gostrict:host
+//gostrict:calls later
 func FilledButton(fillColor Color, action func()) TFilledButton {
 	return TFilledButton{ref: wrap(nui.FilledButton(nui.Color(fillColor), action))}
 }

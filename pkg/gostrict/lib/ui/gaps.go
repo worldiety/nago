@@ -56,6 +56,7 @@ func (s IndexState) Set(v int32) {
 // Init sets the index of fn, if the state is new.
 //
 //gostrict:host
+//gostrict:calls now
 func (s IndexState) Init(fn func() int32) IndexState {
 	return IndexState{ref: wrap(s.nago().Init(func() int { return int(fn()) }))}
 }
@@ -63,6 +64,7 @@ func (s IndexState) Init(fn func() int32) IndexState {
 // Observe calls fn, when the user changes the index.
 //
 //gostrict:host
+//gostrict:calls later
 func (s IndexState) Observe(fn func(v int32)) IndexState {
 	return IndexState{ref: wrap(s.nago().Observe(func(v int) { fn(int32(v)) }))}
 }
@@ -91,6 +93,7 @@ func (s ColorState) Set(v Color) {
 // Init sets the color of fn, if the state is new.
 //
 //gostrict:host
+//gostrict:calls now
 func (s ColorState) Init(fn func() Color) ColorState {
 	return ColorState{ref: wrap(s.nago().Init(func() nui.Color { return nui.Color(fn()) }))}
 }
@@ -98,6 +101,7 @@ func (s ColorState) Init(fn func() Color) ColorState {
 // Observe calls fn, when the user changes the color.
 //
 //gostrict:host
+//gostrict:calls later
 func (s ColorState) Observe(fn func(v Color)) ColorState {
 	return ColorState{ref: wrap(s.nago().Observe(func(v nui.Color) { fn(Color(v)) }))}
 }

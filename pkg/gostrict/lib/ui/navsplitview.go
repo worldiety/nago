@@ -82,6 +82,7 @@ func (TNavsplitviewTwoColumn) isView() {}
 // navsplitview.TwoColumn of nago. The content column is centered and the detail column starts at the top.
 //
 //gostrict:host
+//gostrict:calls later
 func NavsplitviewTwoColumn(nav func(id NavsplitviewViewID) View) TNavsplitviewTwoColumn {
 	return TNavsplitviewTwoColumn{ref: wrap(navsplitview.TwoColumn(c6Factory(nav)))}
 }
@@ -166,6 +167,7 @@ func (TNavsplitviewThreeColumn) isView() {}
 // navsplitview.ThreeColumn of nago. The order from left to right is sidebar, content and detail.
 //
 //gostrict:host
+//gostrict:calls later
 func NavsplitviewThreeColumn(nav func(id NavsplitviewViewID) View) TNavsplitviewThreeColumn {
 	return TNavsplitviewThreeColumn{ref: wrap(navsplitview.ThreeColumn(c6Factory(nav)))}
 }

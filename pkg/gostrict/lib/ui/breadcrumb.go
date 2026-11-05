@@ -57,6 +57,7 @@ func (c TBreadcrumbs) ClampLeading() TBreadcrumbs {
 // Item appends a tertiary button with the title, which calls action, when the user clicks it.
 //
 //gostrict:host
+//gostrict:calls later
 func (c TBreadcrumbs) Item(title string, action func()) TBreadcrumbs {
 	return TBreadcrumbs{ref: wrap(get[breadcrumb.TBreadcrumbs](c.ref).Item(title, action))}
 }

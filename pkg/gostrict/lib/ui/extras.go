@@ -105,6 +105,7 @@ func (s IndicesState) Set(v list.List[int32]) {
 // Observe calls fn, when the user changes the indices.
 //
 //gostrict:host
+//gostrict:calls later
 func (s IndicesState) Observe(fn func(v list.List[int32])) IndicesState {
 	return IndicesState{ref: wrap(s.nago().Observe(func(v []int) { fn(indicesOf(v)) }))}
 }
@@ -210,6 +211,7 @@ func (c TPicker) DialogOptions(opts ...AlertOption) TPicker {
 // Stringer sets the text of a row, which the dialog and the filter use.
 //
 //gostrict:host
+//gostrict:calls later
 func (c TPicker) Stringer(fn func(row int32) string) TPicker {
 	return TPicker{ref: wrap(get[picker.TPicker[int]](c.ref).Stringer(func(i int) string { return fn(int32(i)) }))}
 }
@@ -217,6 +219,7 @@ func (c TPicker) Stringer(fn func(row int32) string) TPicker {
 // ItemRenderer sets the view of a row in the dialog.
 //
 //gostrict:host
+//gostrict:calls later
 func (c TPicker) ItemRenderer(fn func(row int32) View) TPicker {
 	return TPicker{ref: wrap(get[picker.TPicker[int]](c.ref).ItemRenderer(func(i int) core.View { return viewOf(fn(int32(i))) }))}
 }
@@ -224,6 +227,7 @@ func (c TPicker) ItemRenderer(fn func(row int32) View) TPicker {
 // ItemPickedRenderer sets the view of the picked rows in the field.
 //
 //gostrict:host
+//gostrict:calls later
 func (c TPicker) ItemPickedRenderer(fn func(rows list.List[int32]) View) TPicker {
 	return TPicker{ref: wrap(get[picker.TPicker[int]](c.ref).ItemPickedRenderer(func(rows []int) core.View { return viewOf(fn(indicesOf(rows))) }))}
 }
@@ -231,6 +235,7 @@ func (c TPicker) ItemPickedRenderer(fn func(rows list.List[int32]) View) TPicker
 // ItemRenderer2 sets the view of a row in the dialog with its checkbox.
 //
 //gostrict:host
+//gostrict:calls later
 func (c TPicker) ItemRenderer2(fn func(wnd Window, row int32, checked BoolState) View) TPicker {
 	return TPicker{ref: wrap(get[picker.TPicker[int]](c.ref).ItemRenderer2(func(wnd core.Window, i int, checked *core.State[bool]) core.View {
 		return viewOf(fn(Window{ref: wrap(wnd)}, int32(i), BoolState{ref: wrap(checked)}))
@@ -254,6 +259,7 @@ func (c TPicker) Frame(frame Frame) TPicker {
 // WithFrame changes the size with fn, which gets the current one.
 //
 //gostrict:host
+//gostrict:calls now
 func (c TPicker) WithFrame(fn func(Frame) Frame) TPicker {
 	return TPicker{ref: wrap(get[picker.TPicker[int]](c.ref).WithFrame(func(f nui.Frame) nui.Frame { return fn(frameFrom(f)).nago() }).(picker.TPicker[int]))}
 }

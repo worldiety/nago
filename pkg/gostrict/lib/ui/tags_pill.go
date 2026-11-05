@@ -37,6 +37,7 @@ func (c TTagsColoredTextPill) Padding(padding Padding) TTagsColoredTextPill {
 // WithFrame changes the layout frame of the pill with fn, which gets the current one.
 //
 //gostrict:host
+//gostrict:calls now
 func (c TTagsColoredTextPill) WithFrame(fn func(Frame) Frame) TTagsColoredTextPill {
 	return TTagsColoredTextPill{ref: wrap(get[tags.TColoredTextPill](c.ref).WithFrame(func(f nui.Frame) nui.Frame { return fn(frameFrom(f)).nago() }).(tags.TColoredTextPill))}
 }

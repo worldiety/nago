@@ -34,6 +34,7 @@ func (c TTableColumn) Content(content View) TTableColumn {
 // Action calls action, when the user clicks a cell of the column.
 //
 //gostrict:host
+//gostrict:calls later
 func (c TTableColumn) Action(action func()) TTableColumn {
 	return TTableColumn{ref: wrap(get[nui.TTableColumn](c.ref).Action(action))}
 }
@@ -121,6 +122,7 @@ func (c TTableCell) ColSpan(colSpan int32) TTableCell {
 // Action calls action, when the user clicks the cell.
 //
 //gostrict:host
+//gostrict:calls later
 func (c TTableCell) Action(action func()) TTableCell {
 	return TTableCell{ref: wrap(get[nui.TTableCell](c.ref).Action(action))}
 }
@@ -194,6 +196,7 @@ func (r TTableRow) Append(cells ...TTableCell) TTableRow {
 // Action calls action, when the user clicks the row.
 //
 //gostrict:host
+//gostrict:calls later
 func (r TTableRow) Action(action func()) TTableRow {
 	return TTableRow{ref: wrap(get[nui.TTableRow](r.ref).Action(action))}
 }

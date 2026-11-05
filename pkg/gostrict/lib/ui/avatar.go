@@ -54,6 +54,7 @@ func (c TAvatar) Border(border Border) TAvatar {
 // Action calls fn, when the user clicks the avatar.
 //
 //gostrict:host
+//gostrict:calls later
 func (c TAvatar) Action(fn func()) TAvatar {
 	return TAvatar{ref: wrap(get[avatar.TAvatar](c.ref).Action(fn))}
 }

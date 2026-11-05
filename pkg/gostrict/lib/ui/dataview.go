@@ -63,6 +63,7 @@ func DataViewFromSlice(wnd Window, rows int32, fields ...TDataViewField) TDataVi
 // DataViewField returns a field, which shows the view of each row.
 //
 //gostrict:host
+//gostrict:calls later
 func DataViewField(name string, view func(row int32) View) TDataViewField {
 	return TDataViewField{ref: wrap(dataViewField{name: name, view: view})}
 }
@@ -78,6 +79,7 @@ func (f TDataViewField) ID(id string) TDataViewField {
 // both are equal, and a positive number otherwise.
 //
 //gostrict:host
+//gostrict:calls later
 func (f TDataViewField) Comparator(cmp func(a, b int32) int32) TDataViewField {
 	return f.with(func(d *dataViewField) { d.cmp = cmp })
 }
@@ -92,6 +94,7 @@ func (f TDataViewField) MinSize(class WindowSizeClass) TDataViewField {
 // DataViewSelectOption returns an action on the selected rows, which the user finds in the bar of the selection.
 //
 //gostrict:host
+//gostrict:calls later
 func DataViewSelectOption(icon SVG, name string, action func(rows list.List[int32]) error) TDataViewSelectOption {
 	return TDataViewSelectOption{ref: wrap(dataViewSelect{icon: icon, name: name, action: action})}
 }
@@ -100,6 +103,7 @@ func DataViewSelectOption(icon SVG, name string, action func(rows list.List[int3
 // dataview.NewSelectOptionDelete of nago.
 //
 //gostrict:host
+//gostrict:calls later
 func DataViewSelectOptionDelete(wnd Window, action func(rows list.List[int32]) error) TDataViewSelectOption {
 	return TDataViewSelectOption{ref: wrap(dataViewSelect{delete: true, wnd: wnd.nago(), action: action})}
 }
@@ -107,6 +111,7 @@ func DataViewSelectOptionDelete(wnd Window, action func(rows list.List[int32]) e
 // Visible shows the action only, if visible returns true for the selected rows.
 //
 //gostrict:host
+//gostrict:calls later
 func (o TDataViewSelectOption) Visible(visible func(rows list.List[int32]) bool) TDataViewSelectOption {
 	return o.with(func(d *dataViewSelect) { d.visible = visible })
 }
@@ -121,6 +126,7 @@ func (o TDataViewSelectOption) ConfirmDialog(title, message string) TDataViewSel
 // DataViewCreateOption returns an entry of the menu, which creates a row.
 //
 //gostrict:host
+//gostrict:calls later
 func DataViewCreateOption(icon SVG, name string, action func() error) TDataViewCreateOption {
 	return TDataViewCreateOption{ref: wrap(dataViewCreate{icon: icon, name: name, action: action})}
 }
@@ -128,6 +134,7 @@ func DataViewCreateOption(icon SVG, name string, action func() error) TDataViewC
 // Action calls fn with the row, which the user clicks.
 //
 //gostrict:host
+//gostrict:calls later
 func (c TDataView) Action(fn func(row int32)) TDataView {
 	return c.with(func(d *dataView) { d.action = fn })
 }
@@ -142,6 +149,7 @@ func (c TDataView) NextActionIndicator(b bool) TDataView {
 // CreateAction shows a button, which calls fn to create a row.
 //
 //gostrict:host
+//gostrict:calls later
 func (c TDataView) CreateAction(fn func()) TDataView {
 	return c.with(func(d *dataView) { d.create = fn })
 }
@@ -177,6 +185,7 @@ func (c TDataView) SelectOptions(options ...TDataViewSelectOption) TDataView {
 // SelectionChanged calls fn with the selected rows, whenever the selection changes.
 //
 //gostrict:host
+//gostrict:calls later
 func (c TDataView) SelectionChanged(fn func(rows list.List[int32])) TDataView {
 	return c.with(func(d *dataView) { d.selectionChanged = fn })
 }

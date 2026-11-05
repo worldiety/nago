@@ -144,6 +144,8 @@ func (l List[T]) Values() iter.Seq[T] {
 
 // SortFunc sorts the list stably by cmp, which returns a negative number, if a is less than b, a positive one,
 // if it is greater and zero, if both are equal. Equal elements keep their order.
+//
+//gostrict:calls now
 func SortFunc[T any](l List[T], cmp func(a, b T) int32) {
 	if l.p == nil {
 		return

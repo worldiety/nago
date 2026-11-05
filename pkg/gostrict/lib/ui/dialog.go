@@ -77,6 +77,7 @@ func (c TDialog) Frame(frame Frame) TDialog {
 // WithFrame changes the layout frame of the dialog with fn, which gets the current one.
 //
 //gostrict:host
+//gostrict:calls now
 func (c TDialog) WithFrame(fn func(Frame) Frame) TDialog {
 	return TDialog{ref: wrap(get[nui.TDialog](c.ref).WithFrame(func(f nui.Frame) nui.Frame { return fn(frameFrom(f)).nago() }))}
 }

@@ -22,6 +22,7 @@ func (TPickerButton) isView() {}
 // PickerButton returns a button, which calls action, when the user clicks it, like picker.Button of nago.
 //
 //gostrict:host
+//gostrict:calls later
 func PickerButton(action func()) TPickerButton {
 	return TPickerButton{ref: wrap(picker.Button(action))}
 }
@@ -57,6 +58,7 @@ func (c TPickerButton) Frame(frame Frame) TPickerButton {
 // WithFrame changes the size and the position with fn, which gets the current one.
 //
 //gostrict:host
+//gostrict:calls now
 func (c TPickerButton) WithFrame(fn func(Frame) Frame) TPickerButton {
 	return TPickerButton{ref: wrap(get[picker.TButton](c.ref).WithFrame(func(f nui.Frame) nui.Frame { return fn(frameFrom(f)).nago() }).(picker.TButton))}
 }

@@ -83,7 +83,58 @@ type Diagnostic struct {
 	Source string `json:"source,omitempty"`
 	// Edits fix the problem mechanically, if they are known, see [ApplyEdits] and the command gostrict fix.
 	Edits []Edit `json:"edits,omitempty"`
+	// Cycle is the cycle of calls of a recursion (GS040), which starts at the reported function, or nil. Msg
+	// contains it as text, so a host composes its own message from it, e.g. without the parts, which a user may not
+	// read.
+	Cycle []CycleLink `json:"cycle,omitempty"`
 }
+
+// CycleLink is a member of a cycle of calls, see [Diagnostic.Cycle]: a function, a function literal or the body
+// of a range over a function, and the call, which leads to the next link. The call of the last link leads back to
+// the first one.
+type CycleLink struct {
+	// Package is the import path of the package of the link.
+	Package string `json:"package"`
+	// Func is the name of the function, Type.Method for a method, [LinkLiteral] or [LinkRangeBody].
+	Func string `json:"func"`
+	// File, Line and Col are the position of the call, which leads to the next link.
+	File string `json:"file"`
+	Line int    `json:"line"`
+	Col  int    `json:"col"`
+	// Call is the kind of the call.
+	Call CallKind `json:"call"`
+	// Expr is the expression, through which the link calls, e.g. the name of a function value or the function of
+	// a header package, which calls its function argument. Arguments of calls in it are shortened to (…).
+	Expr string `json:"expr"`
+	// Arity tells, that a call of a function value reaches the next link only by the number of its parameters
+	// and results, because the types of the signatures could not be compared.
+	Arity bool `json:"arity,omitempty"`
+}
+
+// The names of the links of a cycle, which are no named functions, see [CycleLink.Func].
+const (
+	LinkLiteral   = "function literal"
+	LinkRangeBody = "range body"
+)
+
+// CallKind is the kind of a call of a cycle, see [CycleLink].
+type CallKind string
+
+const (
+	// CallStatic calls a function or a method of a type, which is not an interface, by its name.
+	CallStatic CallKind = "static"
+	// CallValue calls a function value, e.g. a variable, a parameter or a field, or a type parameter, whose core
+	// type is a function. It reaches each function, which the import group uses as a value, each function literal
+	// and each body of a range over a function of the import group, whose signature fits.
+	CallValue CallKind = "function value"
+	// CallInterface calls a method of an interface or of a type parameter. It reaches each method of its name.
+	CallInterface CallKind = "interface method"
+	// CallCallback passes a function to a function of a header package or of the standard library, which calls
+	// it, before it returns, see the directive //gostrict:calls.
+	CallCallback CallKind = "callback argument"
+	// CallRange ranges over a function, which calls the body of the loop.
+	CallRange CallKind = "range"
+)
 
 // Diagnostics is a list of problems sorted by their position.
 type Diagnostics []Diagnostic
@@ -166,9 +217,14 @@ func (d *diagnoser) line(file string, line int) string {
 }
 
 func (d *diagnoser) report(pos, end token.Pos, code Code, msg, why, fix string) {
+	d.add(pos, end, Diagnostic{Code: code, Msg: msg, Why: why, Fix: fix})
+}
+
+// add reports the diagnostic at the position, unless the line has one of its code already.
+func (d *diagnoser) add(pos, end token.Pos, diag Diagnostic) {
 	p := d.fset.Position(pos)
 	// one diagnostic per kind and line is enough to fix the line, more would only repeat it
-	key := fmt.Sprintf("%s:%d:%s", p.Filename, p.Line, code)
+	key := fmt.Sprintf("%s:%d:%s", p.Filename, p.Line, diag.Code)
 	if d.seen == nil {
 		d.seen = map[string]bool{}
 	}
@@ -177,7 +233,7 @@ func (d *diagnoser) report(pos, end token.Pos, code Code, msg, why, fix string) 
 	}
 	d.seen[key] = true
 
-	diag := Diagnostic{Code: code, File: p.Filename, Line: p.Line, Col: p.Column, Msg: msg, Why: why, Fix: fix, Source: d.line(p.Filename, p.Line)}
+	diag.File, diag.Line, diag.Col, diag.Source = p.Filename, p.Line, p.Column, d.line(p.Filename, p.Line)
 	if end.IsValid() {
 		if e := d.fset.Position(end); e.Line == p.Line && e.Column > p.Column {
 			diag.EndCol = e.Column

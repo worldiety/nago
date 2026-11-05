@@ -144,6 +144,7 @@ func CalendarEvent(label string, from, to Time) TCalendarEvent {
 // Action sets the function, which is called, when the user clicks the event.
 //
 //gostrict:host
+//gostrict:calls later
 func (e TCalendarEvent) Action(fn func()) TCalendarEvent {
 	return e.with(func(v *calendar.Event) { v.Action = fn })
 }
@@ -214,6 +215,7 @@ func (e TCalendarEvent) Cancelled(cancelled bool) TCalendarEvent {
 // Render sets the function, which returns the view of the event instead of the default one.
 //
 //gostrict:host
+//gostrict:calls later
 func (e TCalendarEvent) Render(fn func(style CalendarStyle) View) TCalendarEvent {
 	return e.with(func(v *calendar.Event) {
 		v.Render = func(s calendar.Style) core.View { return viewOf(fn(CalendarStyle(s))) }

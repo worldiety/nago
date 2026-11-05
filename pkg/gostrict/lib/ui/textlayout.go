@@ -36,6 +36,7 @@ func (c TTextLayout) Append(views ...View) TTextLayout {
 // Action calls f, when the user clicks the layout.
 //
 //gostrict:host
+//gostrict:calls later
 func (c TTextLayout) Action(f func()) TTextLayout {
 	return TTextLayout{ref: wrap(get[nui.TTextLayout](c.ref).Action(f))}
 }
@@ -64,6 +65,7 @@ func (c TTextLayout) Frame(f Frame) TTextLayout {
 // WithFrame changes the size and the position with fn, which gets the current ones.
 //
 //gostrict:host
+//gostrict:calls now
 func (c TTextLayout) WithFrame(fn func(Frame) Frame) TTextLayout {
 	return TTextLayout{ref: wrap(get[nui.TTextLayout](c.ref).WithFrame(func(f nui.Frame) nui.Frame { return fn(frameFrom(f)).nago() }).(nui.TTextLayout))}
 }

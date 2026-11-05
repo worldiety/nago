@@ -56,6 +56,7 @@ func (c TCheckboxField) Frame(frame Frame) TCheckboxField {
 // WithFrame changes the layout frame of the checkbox field with fn, which gets the current one.
 //
 //gostrict:host
+//gostrict:calls now
 func (c TCheckboxField) WithFrame(fn func(Frame) Frame) TCheckboxField {
 	return TCheckboxField{ref: wrap(get[nui.TCheckboxField](c.ref).WithFrame(func(f nui.Frame) nui.Frame { return fn(frameFrom(f)).nago() }).(nui.TCheckboxField))}
 }

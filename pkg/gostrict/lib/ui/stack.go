@@ -43,6 +43,7 @@ func VStack(children ...View) TStack {
 // Responsive changes the stack with fn, which gets the window, e.g. to lay it out by the size of the window.
 //
 //gostrict:host
+//gostrict:calls later
 func (c TStack) Responsive(fn func(wnd Window, stack TStack) TStack) TStack {
 	return TStack{ref: wrap(get[nui.TStack](c.ref).Responsive(func(wnd core.Window, s nui.TStack) nui.TStack {
 		return get[nui.TStack](fn(Window{ref: wrap(wnd)}, TStack{ref: wrap(s)}).ref)
@@ -52,6 +53,7 @@ func (c TStack) Responsive(fn func(wnd Window, stack TStack) TStack) TStack {
 // With changes the stack with fn.
 //
 //gostrict:host
+//gostrict:calls now
 func (c TStack) With(fn func(stack TStack) TStack) TStack {
 	return TStack{ref: wrap(get[nui.TStack](c.ref).With(func(s nui.TStack) nui.TStack {
 		return get[nui.TStack](fn(TStack{ref: wrap(s)}).ref)
@@ -89,6 +91,7 @@ func (c TStack) Visible(visible bool) TStack {
 // Action calls f, when the user clicks the stack.
 //
 //gostrict:host
+//gostrict:calls later
 func (c TStack) Action(f func()) TStack {
 	return TStack{ref: wrap(get[nui.TStack](c.ref).Action(f))}
 }
@@ -201,6 +204,7 @@ func (c TStack) Frame(frame Frame) TStack {
 // WithFrame changes the size with fn, which gets the current one.
 //
 //gostrict:host
+//gostrict:calls now
 func (c TStack) WithFrame(fn func(Frame) Frame) TStack {
 	return TStack{ref: wrap(get[nui.TStack](c.ref).WithFrame(func(f nui.Frame) nui.Frame { return fn(frameFrom(f)).nago() }).(nui.TStack))}
 }

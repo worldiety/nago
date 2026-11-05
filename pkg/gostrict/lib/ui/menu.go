@@ -62,6 +62,7 @@ type TMenuItem struct{ ref js.Ref }
 // MenuItem returns an item, which calls action, when the user selects it, and which shows the content.
 //
 //gostrict:host
+//gostrict:calls later
 func MenuItem(action func(), content View) TMenuItem {
 	return TMenuItem{ref: wrap(nui.MenuItem(action, viewOf(content)))}
 }

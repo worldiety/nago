@@ -23,6 +23,7 @@ func (TSheet) isView() {}
 // cell for the visible cells only, also later, when the user scrolls.
 //
 //gostrict:host
+//gostrict:calls later
 func Sheet(id string, rows, cols int32, cell func(row, col int32) sheet.Cell) TSheet {
 	return TSheet{ref: wrap(nsheet.Sheet(id, int(rows), int(cols), func(row, col int) nsheet.Cell {
 		return cellOf(cell(int32(row), int32(col)))
@@ -54,6 +55,7 @@ func (c TSheet) Disabled(disabled bool) TSheet {
 // cell.
 //
 //gostrict:host
+//gostrict:calls later
 func (c TSheet) OnEdit(fn func(e sheet.Edit) error) TSheet {
 	return TSheet{ref: wrap(get[nsheet.TSheet](c.ref).OnEdit(func(e nsheet.Edit) error {
 		return fn(sheet.Edit{Row: int32(e.Row), Col: int32(e.Col), Value: e.Value})

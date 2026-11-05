@@ -50,6 +50,7 @@ func (c TDatePicker) Frame(frame Frame) TDatePicker {
 // WithFrame changes the size with fn, which gets the current one.
 //
 //gostrict:host
+//gostrict:calls now
 func (c TDatePicker) WithFrame(fn func(Frame) Frame) TDatePicker {
 	return TDatePicker{ref: wrap(get[nui.TDatePicker](c.ref).WithFrame(func(f nui.Frame) nui.Frame { return fn(frameFrom(f)).nago() }).(nui.TDatePicker))}
 }

@@ -131,6 +131,7 @@ func (c TImage) Frame(frame Frame) TImage {
 // WithFrame changes the layout frame with fn, which gets the current one.
 //
 //gostrict:host
+//gostrict:calls now
 func (c TImage) WithFrame(fn func(Frame) Frame) TImage {
 	return TImage{ref: wrap(get[nui.TImage](c.ref).WithFrame(func(f nui.Frame) nui.Frame { return fn(frameFrom(f)).nago() }).(nui.TImage))}
 }

@@ -22,6 +22,7 @@ type TTabsPage struct{ ref js.Ref }
 // nago.
 //
 //gostrict:host
+//gostrict:calls later
 func TabsPage(title string, body func() View) TTabsPage {
 	return TTabsPage{ref: wrap(tabs.Page(title, func() core.View {
 		return viewOf(body())

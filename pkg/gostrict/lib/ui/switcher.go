@@ -83,6 +83,7 @@ func (c TSwitcher) InputValue(input StringState) TSwitcher {
 // With changes the switcher with fn, which gets the switcher and returns the changed one.
 //
 //gostrict:host
+//gostrict:calls now
 func (c TSwitcher) With(fn func(s TSwitcher) TSwitcher) TSwitcher {
 	return TSwitcher{ref: wrap(get[switcher.TSwitcher](c.ref).With(func(s switcher.TSwitcher) switcher.TSwitcher {
 		return get[switcher.TSwitcher](fn(TSwitcher{ref: wrap(s)}).ref)

@@ -107,9 +107,22 @@
 //     the list has, when the range starts, like a range over a slice.
 //   - a loop with another condition burns fuel of package go.wdy.de/nago/pkg/gostrict/std/fuel:
 //     f := fuel.New(1000); for f.Burn() && x > eps { ... }.
-//   - a function calls itself only with a decreasing integer parameter, which its first statement checks:
-//     if n <= 1 { return 1 }; return n * Fact(n-1). A call of a function value or of a method of an interface
-//     may call any function, which is used as a value, or any method of its name, so such cycles are reported too.
+//   - a function calls itself only by its name with a decreasing integer parameter, which its first statement
+//     checks: if n <= 1 { return 1 }; return n * Fact(n-1). Any other cycle of calls is reported, also one through
+//     a function value or only of function literals.
+//
+// The check follows each call, which may run, before the call returns: a static call; a call of a function value or
+// of a type parameter, whose core type is a function; a range over a function, which calls it, while its body is a
+// function of its own with the signature of yield; the initializers of package variables; a call of a method of an
+// interface and a method value of an interface or of a type parameter, which may reach each method of its name;
+// and a call of a function of a header package or of the standard library, which calls its function arguments,
+// unless its directive is //gostrict:calls later, e.g. ui.TBox.WithFrame and list.SortFunc, but not the action of
+// ui.PrimaryButton. A call of a function value reaches the functions, which are used as values, the function
+// literals and the bodies of ranges over functions of the packages, which are connected to it by imports, whose
+// signature fits: in Go, a value holds only functions with an identical underlying signature, and a type parameter
+// of either side may stand for any type, which makes them identical. Two functions of the same signature still count
+// as possible, so call a named function instead of a function value, where a cycle is reported, which the program
+// never takes. The diagnostic GS040 reports a shortest cycle through the function as text and in [Diagnostic.Cycle].
 //
 // # Translation
 //
@@ -162,12 +175,16 @@
 // cases and random values and reports, where they differ.
 //
 // A function of a header package may take a function of the program, e.g. the function, which renders a cell of a
-// sheet. A binding receives the JavaScript function, a host in Go a [Callback], which the generated code turns into
-// a Go function. The host may call it during the call, e.g. in the host function, or later between two calls of the
-// instance, e.g. when a window renders the sheet, but always on the goroutine, which uses the instance. A function
-// with the directive //gostrict:host instead of a binding is implemented only by a host in Go, e.g. the views of
-// nago in lib/ui, so its program runs only on a server, whose engine refuses to load the bundle without it. Such a
-// program may return a handle from an exported function, e.g. the ui.View, which the server renders.
+// sheet. A binding receives the JavaScript function, a host in Go a [Callback], which the generated code turns into a
+// Go function. The host may call it during the call, e.g. in the host function, or later between two calls of the
+// instance, e.g. when a window renders the sheet, but always on the goroutine, which uses the instance. The directive
+// //gostrict:calls now or //gostrict:calls later tells the check of recursion of the terminating profile, which of both
+// it does: now during the call, e.g. the function of ui.TBox.WithFrame, or later only after the call returned, e.g. the
+// action of a button. A function without the directive counts as now, and [HeaderCallbacks] lists them, so that a test
+// of a host finds one, which misses the directive. A function with the directive //gostrict:host instead of a binding
+// is implemented only by a host in Go, e.g. the views of nago in lib/ui, so its program runs only on a server, whose
+// engine refuses to load the bundle without it. Such a program may return a handle from an exported function, e.g. the
+// ui.View, which the server renders.
 //
 // The directive //gostrict:const name[, name...] on a function of a header package names parameters of a basic type
 // or an enum, whose arguments must be constants at each call: a literal, a named constant or a constant expression,

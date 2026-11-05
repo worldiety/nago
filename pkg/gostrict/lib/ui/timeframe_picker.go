@@ -53,6 +53,7 @@ func (c TTimeframePicker) Frame(frame Frame) TTimeframePicker {
 // WithFrame changes the size with fn, which gets the current one.
 //
 //gostrict:host
+//gostrict:calls now
 func (c TTimeframePicker) WithFrame(fn func(Frame) Frame) TTimeframePicker {
 	return TTimeframePicker{ref: wrap(get[timeframe.TPicker](c.ref).WithFrame(func(f nui.Frame) nui.Frame { return fn(frameFrom(f)).nago() }).(timeframe.TPicker))}
 }

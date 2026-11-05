@@ -168,6 +168,7 @@ func (s DateState) Set(v Date) {
 // Init sets the day of fn, if the state is new.
 //
 //gostrict:host
+//gostrict:calls now
 func (s DateState) Init(fn func() Date) DateState {
 	return DateState{ref: wrap(s.nago().Init(func() xtime.Date { return fn().nago() }))}
 }
@@ -175,6 +176,7 @@ func (s DateState) Init(fn func() Date) DateState {
 // Observe calls fn, when the user changes the day.
 //
 //gostrict:host
+//gostrict:calls later
 func (s DateState) Observe(fn func(v Date)) DateState {
 	return DateState{ref: wrap(s.nago().Observe(func(v xtime.Date) { fn(dateFrom(v)) }))}
 }
@@ -203,6 +205,7 @@ func (s TimeFrameState) Set(v TimeFrame) {
 // Init sets the time frame of fn, if the state is new.
 //
 //gostrict:host
+//gostrict:calls now
 func (s TimeFrameState) Init(fn func() TimeFrame) TimeFrameState {
 	return TimeFrameState{ref: wrap(s.nago().Init(func() xtime.TimeFrame { return fn().nago() }))}
 }
@@ -210,6 +213,7 @@ func (s TimeFrameState) Init(fn func() TimeFrame) TimeFrameState {
 // Observe calls fn, when the user changes the time frame.
 //
 //gostrict:host
+//gostrict:calls later
 func (s TimeFrameState) Observe(fn func(v TimeFrame)) TimeFrameState {
 	return TimeFrameState{ref: wrap(s.nago().Observe(func(v xtime.TimeFrame) { fn(timeFrameFrom(v)) }))}
 }
@@ -238,6 +242,7 @@ func (s DurationState) Set(v Duration) {
 // Init sets the duration of fn, if the state is new.
 //
 //gostrict:host
+//gostrict:calls now
 func (s DurationState) Init(fn func() Duration) DurationState {
 	return DurationState{ref: wrap(s.nago().Init(func() time.Duration { return fn().nago() }))}
 }
@@ -245,6 +250,7 @@ func (s DurationState) Init(fn func() Duration) DurationState {
 // Observe calls fn, when the user changes the duration.
 //
 //gostrict:host
+//gostrict:calls later
 func (s DurationState) Observe(fn func(v Duration)) DurationState {
 	return DurationState{ref: wrap(s.nago().Observe(func(v time.Duration) { fn(durationFrom(v)) }))}
 }

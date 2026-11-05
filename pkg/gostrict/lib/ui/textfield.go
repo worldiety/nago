@@ -166,6 +166,7 @@ func (c TTextField) Frame(frame Frame) TTextField {
 // WithFrame changes the layout frame of the field with fn, which gets the current one.
 //
 //gostrict:host
+//gostrict:calls now
 func (c TTextField) WithFrame(fn func(Frame) Frame) TTextField {
 	return TTextField{ref: wrap(get[nui.TTextField](c.ref).WithFrame(func(f nui.Frame) nui.Frame { return fn(frameFrom(f)).nago() }).(nui.TTextField))}
 }
@@ -180,6 +181,7 @@ func (c TTextField) FullWidth() TTextField {
 // KeydownEnter calls fn, when the user presses the enter key. It only works for single-line fields, see Lines.
 //
 //gostrict:host
+//gostrict:calls later
 func (c TTextField) KeydownEnter(fn func()) TTextField {
 	return TTextField{ref: wrap(get[nui.TTextField](c.ref).KeydownEnter(fn))}
 }

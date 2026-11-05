@@ -42,6 +42,7 @@ func (c TDocumentComment) InputValue(comment StringState) TDocumentComment {
 // Resolve sets the action, which marks the comment thread as resolved.
 //
 //gostrict:host
+//gostrict:calls later
 func (c TDocumentComment) Resolve(action func()) TDocumentComment {
 	return TDocumentComment{ref: wrap(get[document.TComment](c.ref).Resolve(action))}
 }

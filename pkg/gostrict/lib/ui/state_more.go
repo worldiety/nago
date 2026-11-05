@@ -43,6 +43,7 @@ func (s IntState) Set(v int32) {
 // Init sets the value of fn, if the state is new.
 //
 //gostrict:host
+//gostrict:calls now
 func (s IntState) Init(fn func() int32) IntState {
 	return IntState{ref: wrap(s.nago().Init(func() int64 { return int64(fn()) }))}
 }
@@ -50,6 +51,7 @@ func (s IntState) Init(fn func() int32) IntState {
 // Observe calls fn, when the user changes the value.
 //
 //gostrict:host
+//gostrict:calls later
 func (s IntState) Observe(fn func(v int32)) IntState {
 	return IntState{ref: wrap(s.nago().Observe(func(v int64) { fn(int32(v)) }))}
 }
@@ -78,6 +80,7 @@ func (s FloatState) Set(v float64) {
 // Init sets the value of fn, if the state is new.
 //
 //gostrict:host
+//gostrict:calls now
 func (s FloatState) Init(fn func() float64) FloatState {
 	return FloatState{ref: wrap(s.nago().Init(fn))}
 }
@@ -85,6 +88,7 @@ func (s FloatState) Init(fn func() float64) FloatState {
 // Observe calls fn, when the user changes the value.
 //
 //gostrict:host
+//gostrict:calls later
 func (s FloatState) Observe(fn func(v float64)) FloatState {
 	return FloatState{ref: wrap(s.nago().Observe(fn))}
 }

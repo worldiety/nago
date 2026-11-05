@@ -51,6 +51,7 @@ func (c TBox) Frame(fr Frame) TBox {
 // WithFrame changes the layout frame of the box with fn, which gets the current one.
 //
 //gostrict:host
+//gostrict:calls now
 func (c TBox) WithFrame(fn func(Frame) Frame) TBox {
 	return TBox{ref: wrap(get[nui.TBox](c.ref).WithFrame(func(f nui.Frame) nui.Frame { return fn(frameFrom(f)).nago() }).(nui.TBox))}
 }
