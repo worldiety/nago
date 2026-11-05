@@ -26,6 +26,7 @@ import (
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/errs"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/funcs"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/generics"
+	"go.wdy.de/nago/pkg/gostrict/internal/examples/handlevalues"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/host"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/hostuse"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/ints"
@@ -57,28 +58,29 @@ var goEngine = &gojaengine.Engine{}
 
 // exports are the exported functions of the examples for the native engine.
 var exports = map[string]gostrict.Funcs{
-	"alias":      native.Reflect(map[string]any{"Order": alias.Order, "Run": alias.Run}),
-	"arena":      native.Reflect(map[string]any{"Frame": arena.Frame, "NewClient": arena.NewClient, "OnHit": arena.OnHit, "OnWorld": arena.OnWorld, "Status": arena.Status}),
-	"core":       native.Reflect(map[string]any{"Control": core.Control, "Equal": core.Equal, "Lists": core.Lists, "Maps": core.Maps, "Options": core.Options, "Pairs": core.Pairs, "Ranges": core.Ranges, "Results": core.Results}),
-	"draw":       native.Reflect(map[string]any{"Frame": draw.Frame, "New": draw.New}),
-	"errs":       native.Reflect(map[string]any{"Average": errs.Average, "Run": errs.Run}),
-	"funcs":      native.Reflect(map[string]any{"Branches": funcs.Branches, "Captures": funcs.Captures, "Inlined": funcs.Inlined, "Methods": funcs.Methods}),
-	"generics":   native.Reflect(map[string]any{"Run": generics.Run, "SumFloats": generics.SumFloats}),
-	"hostuse":    native.Reflect(map[string]any{"Callbacks": hostuse.Callbacks, "Records": hostuse.Records, "Run": hostuse.Run}),
-	"ints":       native.Reflect(map[string]any{"Bits": ints.Bits, "Conv": ints.Conv, "Div": ints.Div, "DivU": ints.DivU, "Hash": ints.Hash, "Wrap": ints.Wrap, "Xorshift": ints.Xorshift}),
-	"iters":      native.Reflect(map[string]any{"FirstOver": iters.FirstOver, "Live": iters.Live, "Nested": iters.Nested, "Sum": iters.Sum, "Switch": iters.Switch}),
-	"money":      native.Reflect(map[string]any{"Calc": money.Calc, "Factorial": money.Factorial, "Ints": money.Ints, "Invoice": money.Invoice, "Limits": money.Limits, "Parse": money.Parse, "Round": money.Round}),
-	"orders":     native.Reflect(map[string]any{"NewGame": orders.NewGame, "Snapshot": orders.Snapshot, "Step": orders.Step, "Summarize": orders.Summarize}),
-	"physics":    native.Reflect(map[string]any{"Simulate": physics.Simulate, "Speed": physics.Speed}),
-	"shapes":     native.Reflect(map[string]any{"Area": shapes.Area, "ColorName": shapes.ColorName, "Largest": shapes.Largest, "NewCanvas": shapes.NewCanvas, "OnEvent": shapes.OnEvent, "Scale": shapes.Scale, "Summary": shapes.Summary}),
-	"spin":       native.Reflect(map[string]any{"Frame": spin.Frame, "Orbit": spin.Orbit, "Setup": spin.Setup}),
-	"stdvalues":  native.Reflect(map[string]any{"DictGet": stdvalues.DictGet, "DictNew": stdvalues.DictNew, "Freeze": stdvalues.Freeze, "ListLen": stdvalues.ListLen, "ListMake": stdvalues.ListMake, "ListNew": stdvalues.ListNew, "ListOf": stdvalues.ListOf, "OptArg": stdvalues.OptArg, "OptInfer": stdvalues.OptInfer, "OptNone": stdvalues.OptNone, "OptOr": stdvalues.OptOr, "OptSome": stdvalues.OptSome, "SortFunc": stdvalues.SortFunc, "SortInfer": stdvalues.SortInfer, "SortVar": stdvalues.SortVar, "TextRepeat": stdvalues.TextRepeat}),
-	"texts":      native.Reflect(map[string]any{"Misc": texts.Misc, "Order": texts.Order, "Parse": texts.Parse, "Reverse": texts.Reverse, "Stats": texts.Stats, "Words": texts.Words}),
-	"tparams":    native.Reflect(map[string]any{"Args": tparams.Args, "Call": tparams.Call, "Closure": tparams.Closure, "Field": tparams.Field, "Pass": tparams.Pass, "Pointer": tparams.Pointer, "Two": tparams.Two, "Value": tparams.Value}),
-	"trees":      native.Reflect(map[string]any{"Run": trees.Run, "Values": trees.Values}),
-	"values":     native.Reflect(map[string]any{"Run": values.Run}),
-	"viewhost":   native.Reflect(map[string]any{"Arg": viewhost.Arg, "Empty": viewhost.Empty, "Later": viewhost.Later, "Nested": viewhost.Nested, "Own": viewhost.Own, "Variadic": viewhost.Variadic}),
-	"widgetsuse": native.Reflect(map[string]any{"Run": widgetsuse.Run}),
+	"alias":        native.Reflect(map[string]any{"Order": alias.Order, "Run": alias.Run}),
+	"arena":        native.Reflect(map[string]any{"Frame": arena.Frame, "NewClient": arena.NewClient, "OnHit": arena.OnHit, "OnWorld": arena.OnWorld, "Status": arena.Status}),
+	"core":         native.Reflect(map[string]any{"Control": core.Control, "Equal": core.Equal, "Lists": core.Lists, "Maps": core.Maps, "Options": core.Options, "Pairs": core.Pairs, "Ranges": core.Ranges, "Results": core.Results}),
+	"draw":         native.Reflect(map[string]any{"Frame": draw.Frame, "New": draw.New}),
+	"errs":         native.Reflect(map[string]any{"Average": errs.Average, "Run": errs.Run}),
+	"funcs":        native.Reflect(map[string]any{"Branches": funcs.Branches, "Captures": funcs.Captures, "Inlined": funcs.Inlined, "Methods": funcs.Methods}),
+	"generics":     native.Reflect(map[string]any{"Run": generics.Run, "SumFloats": generics.SumFloats}),
+	"handlevalues": native.Reflect(map[string]any{"ImageFrame": handlevalues.ImageFrame, "PassFrame": handlevalues.PassFrame, "TextFrame": handlevalues.TextFrame, "WithFrame": handlevalues.WithFrame}),
+	"hostuse":      native.Reflect(map[string]any{"Callbacks": hostuse.Callbacks, "Records": hostuse.Records, "Run": hostuse.Run}),
+	"ints":         native.Reflect(map[string]any{"Bits": ints.Bits, "Conv": ints.Conv, "Div": ints.Div, "DivU": ints.DivU, "Hash": ints.Hash, "Wrap": ints.Wrap, "Xorshift": ints.Xorshift}),
+	"iters":        native.Reflect(map[string]any{"FirstOver": iters.FirstOver, "Live": iters.Live, "Nested": iters.Nested, "Sum": iters.Sum, "Switch": iters.Switch}),
+	"money":        native.Reflect(map[string]any{"Calc": money.Calc, "Factorial": money.Factorial, "Ints": money.Ints, "Invoice": money.Invoice, "Limits": money.Limits, "Parse": money.Parse, "Round": money.Round}),
+	"orders":       native.Reflect(map[string]any{"NewGame": orders.NewGame, "Snapshot": orders.Snapshot, "Step": orders.Step, "Summarize": orders.Summarize}),
+	"physics":      native.Reflect(map[string]any{"Simulate": physics.Simulate, "Speed": physics.Speed}),
+	"shapes":       native.Reflect(map[string]any{"Area": shapes.Area, "ColorName": shapes.ColorName, "Largest": shapes.Largest, "NewCanvas": shapes.NewCanvas, "OnEvent": shapes.OnEvent, "Scale": shapes.Scale, "Summary": shapes.Summary}),
+	"spin":         native.Reflect(map[string]any{"Frame": spin.Frame, "Orbit": spin.Orbit, "Setup": spin.Setup}),
+	"stdvalues":    native.Reflect(map[string]any{"DictAll": stdvalues.DictAll, "DictGet": stdvalues.DictGet, "DictIter": stdvalues.DictIter, "DictKeys": stdvalues.DictKeys, "FrozenValues": stdvalues.FrozenValues, "IterAll": stdvalues.IterAll, "IterValues": stdvalues.IterValues, "ListAll": stdvalues.ListAll, "ListValues": stdvalues.ListValues, "DictNew": stdvalues.DictNew, "Freeze": stdvalues.Freeze, "ListLen": stdvalues.ListLen, "ListMake": stdvalues.ListMake, "ListNew": stdvalues.ListNew, "ListOf": stdvalues.ListOf, "OptArg": stdvalues.OptArg, "OptInfer": stdvalues.OptInfer, "OptNone": stdvalues.OptNone, "OptOr": stdvalues.OptOr, "OptSome": stdvalues.OptSome, "SortFunc": stdvalues.SortFunc, "SortInfer": stdvalues.SortInfer, "SortVar": stdvalues.SortVar, "TextRepeat": stdvalues.TextRepeat}),
+	"texts":        native.Reflect(map[string]any{"Misc": texts.Misc, "Order": texts.Order, "Parse": texts.Parse, "Reverse": texts.Reverse, "Stats": texts.Stats, "Words": texts.Words}),
+	"tparams":      native.Reflect(map[string]any{"Args": tparams.Args, "Call": tparams.Call, "Closure": tparams.Closure, "Field": tparams.Field, "Pass": tparams.Pass, "Pointer": tparams.Pointer, "Two": tparams.Two, "Value": tparams.Value}),
+	"trees":        native.Reflect(map[string]any{"Run": trees.Run, "Values": trees.Values}),
+	"values":       native.Reflect(map[string]any{"Run": values.Run}),
+	"viewhost":     native.Reflect(map[string]any{"Arg": viewhost.Arg, "Empty": viewhost.Empty, "Later": viewhost.Later, "Nested": viewhost.Nested, "Own": viewhost.Own, "Variadic": viewhost.Variadic}),
+	"widgetsuse":   native.Reflect(map[string]any{"Run": widgetsuse.Run}),
 }
 
 // vmEngine is the interpreter, which the tests share.

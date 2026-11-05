@@ -22,10 +22,11 @@ import (
 )
 
 // The tests of this file check, that a program, which the checker accepts, loads and runs natively, in goja and in
-// the vm alike, or that the checker rejects it with a finding of its own, never the translation with GS099. They
-// cover three constructs, which loaded in one engine and not in the other or passed the checker and failed in the
-// translation: a view of lib/ui, which crosses to the host as a ui.View without an exported function with the
-// result ui.View (goja), the method of a type parameter (vm) and a function of a standard package as a value (GS099).
+// the vm alike, or that the checker rejects it with a finding of its own, never the translation with GS099 or an
+// engine with an error of loading. They cover constructs, which loaded in one engine and not in the other or passed
+// the checker and failed in the translation: a view of lib/ui, which crosses to the host as a ui.View without an
+// exported function with the result ui.View (goja), the method of a type parameter (vm), a function or a method of
+// a standard package as a value (GS099) and the method of a handle of lib/ui as a value (vm).
 // Each program is a file of an example package together with its doc.go, so that it runs natively as the Go code of
 // the package, next to a counter row, which differs only in the construct and ran in both engines before.
 
@@ -321,14 +322,17 @@ func TestTypeParamMethodsWhole(t *testing.T) {
 	}
 }
 
-// ---- functions and methods of standard packages as values ----
+// ---- functions and methods of standard packages and handles of lib/ui as values ----
 
-// stdValueCases are the programs of internal/examples/stdvalues. value is the text of the line, which uses the
-// function as a value, and direct are the edits of the counter row, which call the function directly instead.
-var stdValueCases = []struct {
+// valueCase is a program, which uses a function or a method as a value. value is the text of the line, which uses
+// it as a value, and direct are the edits of the counter row, which call it directly instead.
+type valueCase struct {
 	file, fn, value string
 	direct          [][2]string
-}{
+}
+
+// stdValueCases are the programs of internal/examples/stdvalues.
+var stdValueCases = []valueCase{
 	{"sortfunc.go", "SortFunc", "s := list.SortFunc[int32]", [][2]string{{"s := list.SortFunc[int32]\n\ts(l,", "list.SortFunc(l,"}}},
 	{"sortinfer.go", "SortInfer", "= list.SortFunc\n", [][2]string{{"var s func(list.List[int32], func(x, y int32) int32) = list.SortFunc\n\ts(l,", "list.SortFunc(l,"}}},
 	{"sortvar.go", "SortVar", "var sorter = list.SortFunc[int32]", [][2]string{{"var sorter = list.SortFunc[int32]", "func sorter(l list.List[int32], cmp func(x, y int32) int32) { list.SortFunc(l, cmp) }"}}},
@@ -345,10 +349,31 @@ var stdValueCases = []struct {
 	{"listlen.go", "ListLen", "f := l.Len", [][2]string{{"f := l.Len\n\treturn 10*f()", "return 10*l.Len()"}}},
 	{"optor.go", "OptOr", "f := opt.Some(a).Or", [][2]string{{"f := opt.Some(a).Or\n\treturn f(b)", "return opt.Some(a).Or(b)"}}},
 	{"dictget.go", "DictGet", "f := m.Get", [][2]string{{"f := m.Get\n\tv, ok := f(\"a\")", "v, ok := m.Get(\"a\")"}}},
+	// iterators as values outside of a range and method values, which return an iterator
+	{"iterall.go", "IterAll", "it := l.All()", [][2]string{{"it := l.All()\n", ""}, {"range it {", "range l.All() {"}}},
+	{"itervalues.go", "IterValues", "it := l.Values()", [][2]string{{"it := l.Values()\n", ""}, {"range it {", "range l.Values() {"}}},
+	{"dictiter.go", "DictIter", "it := m.All()", [][2]string{{"it := m.All()\n", ""}, {"range it {", "range m.All() {"}}},
+	{"listall.go", "ListAll", "f := l.All", [][2]string{{"f := l.All\n", ""}, {"range f() {", "range l.All() {"}}},
+	{"listvalues.go", "ListValues", "f := l.Values", [][2]string{{"f := l.Values\n", ""}, {"range f() {", "range l.Values() {"}}},
+	{"frozenvalues.go", "FrozenValues", "f := fr.Values", [][2]string{{"f := fr.Values\n", ""}, {"range f() {", "range fr.Values() {"}}},
+	{"dictall.go", "DictAll", "f := m.All", [][2]string{{"f := m.All\n", ""}, {"range f() {", "range m.All() {"}}},
+	{"dictkeys.go", "DictKeys", "f := m.Keys", [][2]string{{"f := m.Keys\n", ""}, {"range f() {", "range m.Keys() {"}}},
 }
 
-// stdValueLine returns the line of the file, which contains the text, which must occur exactly once.
-func stdValueLine(t *testing.T, m gostrict.Module, file, text string) int {
+// handleValueCases are the programs of internal/examples/handlevalues, which use the methods of handles of lib/ui
+// as values.
+var handleValueCases = []valueCase{
+	{"textframe.go", "TextFrame", `f := ui.Text("a").Frame`, [][2]string{{"f := ui.Text(\"a\").Frame\n\t_ = f(frame(dp))", "_ = ui.Text(\"a\").Frame(frame(dp))"}}},
+	{"imageframe.go", "ImageFrame", `f := ui.ImageIcon("<svg/>").Frame`, [][2]string{{"f := ui.ImageIcon(\"<svg/>\").Frame\n\t_ = f(frame(dp))", "_ = ui.ImageIcon(\"<svg/>\").Frame(frame(dp))"}}},
+	{"withframe.go", "WithFrame", `g := ui.Text("a").Frame(frame(dp)).WithFrame`, [][2]string{{"g := ui.Text(\"a\").Frame(frame(dp)).WithFrame\n\t_ = g(w.record())", "_ = ui.Text(\"a\").Frame(frame(dp)).WithFrame(w.record())"}}},
+	{"passframe.go", "PassFrame", `passImage(ui.ImageIcon("<svg/>").Frame, dp)`, [][2]string{
+		{`passImage(ui.ImageIcon("<svg/>").Frame, dp)`, `ui.ImageIcon("<svg/>").Frame(frame(dp))`},
+		{`passDivider(ui.HLine().Frame, 2*dp)`, `ui.HLine().Frame(frame(2 * dp))`},
+	}},
+}
+
+// valueLine returns the line of the file, which contains the text, which must occur exactly once.
+func valueLine(t *testing.T, m gostrict.Module, file, text string) int {
 	t.Helper()
 	src := string(m.FS.(fstest.MapFS)[file].Data)
 	if strings.Count(src, text) != 1 {
@@ -357,34 +382,38 @@ func stdValueLine(t *testing.T, m gostrict.Module, file, text string) int {
 	return strings.Count(src[:strings.Index(src, text)], "\n") + 1
 }
 
-// stdValueRun runs the program of the row in goja and in the vm and compares the results with the native ones.
-func stdValueRun(t *testing.T, b *gostrict.Bundle, fn string) {
+// valueRun runs the program of the row in goja and in the vm with the host and compares the results with the native
+// ones, which must not be an empty text.
+func valueRun(t *testing.T, dir string, b *gostrict.Bundle, host gostrict.Funcs, fn string, args [][]any) {
 	t.Helper()
-	for _, args := range [][]any{{int32(2), int32(5)}, {int32(7), int32(1)}} {
-		want := call(t, nativeEngine("stdvalues"), b, nil, fn, args)
+	for _, a := range args {
+		want := call(t, nativeEngine(dir), b, nil, fn, a)
+		if s, ok := want[0].(string); ok && s == "" {
+			t.Fatalf("native: %s%v = %q, want the widths of the frames", fn, a, s)
+		}
 		for _, e := range gapEngines {
-			got, err := gapRun(e.e, b, nil, fn, args, nil)
+			got, err := gapRun(e.e, b, host, fn, a, nil)
 			if err != nil {
-				t.Errorf("%s: %s%v: %v", e.name, fn, args, err)
+				t.Errorf("%s: %s%v: %v", e.name, fn, a, err)
 				continue
 			}
 			if !gostrict.SameValues(got, want) {
-				t.Errorf("%s: %s%v = %v, native %v", e.name, fn, args, got, want)
+				t.Errorf("%s: %s%v = %v, native %v", e.name, fn, a, got, want)
 			}
 		}
 	}
 }
 
-// TestStdValues checks each program of internal/examples/stdvalues, which uses a function or a method of a standard
-// package as a value: if the checker accepts it, it translates without any diagnostic and runs natively, in goja and
-// in the vm alike; if the checker rejects it, it does so with a finding of its own at the line of the value and
-// never with GS099, and the translation adds nothing. The counter row calls the function directly: the checker
-// accepts it and it runs, so that a rejection is one of the value.
-func TestStdValues(t *testing.T) {
-	for _, c := range stdValueCases {
+// testValues checks each program of internal/examples/<dir>, which uses a function or a method as a value: if the
+// checker accepts it, it translates without any diagnostic and loads and runs natively, in goja and in the vm alike;
+// if the checker rejects it, it does so with a finding of its own at the line of the value and never with GS099,
+// and the translation adds nothing. The counter row calls the function directly: the checker accepts it and it
+// runs, so that a rejection is one of the value.
+func testValues(t *testing.T, dir string, host gostrict.Funcs, args [][]any, cases []valueCase) {
+	for _, c := range cases {
 		t.Run(c.fn, func(t *testing.T) {
 			t.Run("counter: called directly", func(t *testing.T) {
-				path, m := gapProgram(t, "stdvalues", []string{"doc.go", c.file}, c.direct, nil)
+				path, m := gapProgram(t, dir, []string{"doc.go", c.file}, c.direct, nil)
 				prog, err := gostrict.LoadModules(path, m)
 				if err != nil {
 					t.Fatal(err)
@@ -392,11 +421,11 @@ func TestStdValues(t *testing.T) {
 				if diags := gostrict.Check(prog); len(diags) > 0 {
 					t.Fatalf("the checker rejects the direct call:\n%s", diags.Text())
 				}
-				stdValueRun(t, gapCompile(t, path, m), c.fn)
+				valueRun(t, dir, gapCompile(t, path, m), host, c.fn, args)
 			})
 			t.Run("as a value", func(t *testing.T) {
-				path, m := gapProgram(t, "stdvalues", []string{"doc.go", c.file}, nil, nil)
-				line := stdValueLine(t, m, c.file, c.value)
+				path, m := gapProgram(t, dir, []string{"doc.go", c.file}, nil, nil)
+				line := valueLine(t, m, c.file, c.value)
 				prog, err := gostrict.LoadModules(path, m)
 				if err != nil {
 					t.Fatal(err)
@@ -415,7 +444,7 @@ func TestStdValues(t *testing.T) {
 					if len(diags) > 0 {
 						t.Fatalf("the checker accepts the program, the translation rejects it:\n%s", diags.Text())
 					}
-					stdValueRun(t, b, c.fn)
+					valueRun(t, dir, b, host, c.fn, args)
 					return
 				}
 				own := false
@@ -436,20 +465,20 @@ func TestStdValues(t *testing.T) {
 	}
 }
 
-// TestStdValuesExcluded checks, that the package internal/examples/stdvalues as a whole contains none of the
-// programs, so that it is in the subset, whichever way the checker decides about a value, and that each program of
-// the table is a file of the package.
-func TestStdValuesExcluded(t *testing.T) {
-	b := compile(t, "internal/examples/stdvalues")
+// testValuesExcluded checks, that the package internal/examples/<dir> as a whole contains none of the programs, so
+// that it is in the subset, whichever way the checker decides about a value, and that each program of the table is
+// a file of the package.
+func testValuesExcluded(t *testing.T, dir string, cases []valueCase) {
+	b := compile(t, "internal/examples/"+dir)
 	if len(b.Exports) != 0 {
 		t.Fatalf("the package exports %d functions without the excluded files", len(b.Exports))
 	}
-	files, err := filepath.Glob("internal/examples/stdvalues/*.go")
+	files, err := filepath.Glob("internal/examples/" + dir + "/*.go")
 	if err != nil {
 		t.Fatal(err)
 	}
 	var want []string
-	for _, c := range stdValueCases {
+	for _, c := range cases {
 		want = append(want, c.file)
 	}
 	var got []string
@@ -462,4 +491,24 @@ func TestStdValuesExcluded(t *testing.T) {
 	if !slices.Equal(got, want) {
 		t.Fatalf("the files of the package %v are not the files of the table %v", got, want)
 	}
+}
+
+// TestStdValues checks the functions and methods of the standard packages as values, see testValues.
+func TestStdValues(t *testing.T) {
+	testValues(t, "stdvalues", nil, [][]any{{int32(2), int32(5)}, {int32(7), int32(1)}}, stdValueCases)
+}
+
+// TestStdValuesExcluded checks the package internal/examples/stdvalues, see testValuesExcluded.
+func TestStdValuesExcluded(t *testing.T) {
+	testValuesExcluded(t, "stdvalues", stdValueCases)
+}
+
+// TestHandleValues checks the methods of handles of lib/ui as values, see testValues.
+func TestHandleValues(t *testing.T) {
+	testValues(t, "handlevalues", ui.Host(), [][]any{{3.0}, {12.0}}, handleValueCases)
+}
+
+// TestHandleValuesExcluded checks the package internal/examples/handlevalues, see testValuesExcluded.
+func TestHandleValuesExcluded(t *testing.T) {
+	testValuesExcluded(t, "handlevalues", handleValueCases)
 }
