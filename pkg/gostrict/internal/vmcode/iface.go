@@ -245,8 +245,11 @@ func (l *fnLower) view(p expr, off layout, ptrT *tinfo) expr {
 // receiver.
 func (l *fnLower) methodValue(se *ast.SelectorExpr, sel *types.Selection) expr {
 	sig := l.sub(l.info.TypeOf(se)).(*types.Signature)
-	fn := sel.Obj().(*types.Func)
 	recvT := l.typeOf(se.X)
+	fn := sel.Obj().(*types.Func)
+	if recvT.kind != kIface && recvT.kind != kError {
+		fn = l.method(se, sel)
+	}
 	var recv expr
 	_, ptrRecv := fn.Signature().Recv().Type().(*types.Pointer)
 	switch {
@@ -283,7 +286,13 @@ func (l *fnLower) methodValue(se *ast.SelectorExpr, sel *types.Selection) expr {
 				recvArgs = append(recvArgs, t)
 			}
 		}
-		call = &eCall{t: res, fn: l.c.funcFor(fn, recvArgs, nil), args: append([]expr{&eLocal{t: cp.t, v: cp}}, args...)}
+		self := &eLocal{t: cp.t, v: cp}
+		if l.c.user(fn) {
+			call = &eCall{t: res, fn: l.c.funcFor(fn, recvArgs, nil), args: append([]expr{self}, args...)}
+		} else {
+			// a method of a header package, e.g. the action of a ui.TText, which the host implements like at its call
+			call = inner.libCall(fn, recvArgs, nil, sig, se.Pos(), self, append([]expr{self}, args...))
+		}
 	}
 	inner.returnCall(call)
 	return inner.finish(l.typeOf(se))

@@ -329,25 +329,30 @@ func (e *emitter) emit() (*Bundle, Diagnostics) {
 		fmt.Fprintf(&ret, "\t%s: %s,\n", name, e.funcName(fn, nil, nil))
 	}
 
-	// the classes of the records and the methods of the variants must exist, before the program is written
-	for _, name := range sortedNames(bnd.records) {
-		e.structName(bnd.structs[name])
-	}
-	for _, name := range sortedNames(bnd.unions) {
-		for _, v := range bnd.unions[name].Variants {
-			e.methodTable(bnd.structs[v])
+	// the classes of the records and the methods of the variants must exist, before the program is written. The
+	// records and unions of the functions of header packages are found with their calls, e.g. ui.View of the
+	// children of ui.VStack in a program, which exports no function with a view, so their classes and tables are
+	// requested again, until neither adds a function nor a binding.
+	for {
+		before := len(e.names)
+		for _, name := range sortedNames(bnd.records) {
+			e.structName(bnd.structs[name])
 		}
-	}
-
-	for len(e.queue) > 0 {
-		next := e.queue[0]
-		e.queue = e.queue[1:]
-		next()
-		if len(e.queue) == 0 {
-			// the records of the functions of header packages are found with their calls
-			for _, name := range sortedNames(bnd.records) {
-				e.structName(bnd.structs[name])
+		for _, name := range sortedNames(bnd.unions) {
+			for _, v := range bnd.unions[name].Variants {
+				e.methodTable(bnd.structs[v])
+				if !bnd.unions[name].Handles {
+					e.structName(bnd.structs[v])
+				}
 			}
+		}
+		if len(e.queue) == 0 && len(e.names) == before {
+			break
+		}
+		for len(e.queue) > 0 {
+			next := e.queue[0]
+			e.queue = e.queue[1:]
+			next()
 		}
 	}
 

@@ -333,7 +333,15 @@ var genericNatives = map[string]func(c *compiler, targs []*tinfo, pos token.Pos)
 			n[0] = 1
 		}}
 	},
-	listPath + ".List.Clone": listClone,
+	listPath + ".List.Clone":  listClone,
+	listPath + ".List.Append": listAppend,
+	msgPath + ".Out.Send": func(c *compiler, targs []*tinfo, pos token.Pos) *native {
+		// the message follows the outbox, e.g. in the value of o.Send, whose call appends it directly
+		el := targs[0].l
+		return &native{name: "Out.Send", fn: func(m *Machine, n []uint64, s []string, r []any) {
+			r[0].(*list).add(el, n, s, r[1:])
+		}}
+	},
 	listPath + ".Make": func(c *compiler, targs []*tinfo, pos token.Pos) *native {
 		el := targs[0].l
 		zero := c.zeroSlots(targs[0], pos)
@@ -413,6 +421,16 @@ func listClone(c *compiler, targs []*tinfo, pos token.Pos) *native {
 	return &native{name: "List.Clone", fn: func(m *Machine, n []uint64, s []string, r []any) {
 		l := r[0].(*list)
 		r[0] = &list{n: cloneSlice(l.n), s: cloneSlice(l.s), r: cloneSlice(l.r), len: l.len}
+	}}
+}
+
+// listAppend appends the elements of the list of the variadic arguments, which a function value receives, e.g.
+// f := l.Append. A call of the method appends its arguments one by one instead, see eListAppend.
+func listAppend(c *compiler, targs []*tinfo, pos token.Pos) *native {
+	return &native{name: "List.Append", fn: func(m *Machine, n []uint64, s []string, r []any) {
+		l, items := r[0].(*list), r[1].(*list)
+		l.n, l.s, l.r = append(l.n, items.n...), append(l.s, items.s...), append(l.r, items.r...)
+		l.len += items.len
 	}}
 }
 

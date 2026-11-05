@@ -173,7 +173,11 @@ func (c *fnCtx) funcRef(fn *types.Func, targs []types.Type, pos token.Pos) strin
 		return c.e.externName(fn, targs, src, pos)
 	}
 	if strings.HasPrefix(p, stdPrefix) && (!ok || src.pkg.Kind != KindUser) {
-		// the built in functions of the library, e.g. list.New, have no function value
+		// the built in functions of the library, e.g. list.SortFunc, are inlined at their call, so their value is a
+		// function literal, which calls them like a direct call
+		if js, ok := c.libFuncValue(fn, targs, pos); ok {
+			return js
+		}
 		fail(pos, "%s can only be called", fn.FullName())
 	}
 	if ok && src.pkg.Kind == KindHeader {
@@ -186,6 +190,8 @@ func (c *fnCtx) funcRef(fn *types.Func, targs []types.Type, pos token.Pos) strin
 	return c.e.funcName(fn, nil, targs)
 }
 
+// instanceValue returns an instance of a generic function as a value, e.g. id[int32] or list.SortFunc[int32] of
+// another package. The type arguments are recorded at the identifier.
 func (c *fnCtx) instanceValue(x ast.Expr) string {
 	var base ast.Expr
 	switch x := x.(type) {
@@ -194,11 +200,105 @@ func (c *fnCtx) instanceValue(x ast.Expr) string {
 	case *ast.IndexListExpr:
 		base = x.X
 	}
-	if id, ok := ast.Unparen(base).(*ast.Ident); ok {
-		return c.ident(id)
+	switch b := ast.Unparen(base).(type) {
+	case *ast.Ident:
+		return c.ident(b)
+	case *ast.SelectorExpr:
+		if c.info.Selections[b] == nil {
+			// a qualified identifier
+			return c.selector(b)
+		}
 	}
 	fail(x.Pos(), "index expressions are not supported")
 	return ""
+}
+
+// libArgs are the translated arguments of a function of the library, which the translation inlines at its call:
+// the arguments of a call or the parameters of the function literal, which is the value of the function.
+type libArgs struct {
+	// expr returns the argument i as it is
+	expr func(i int) string
+	// val returns the argument i for a parameter of type t, see [fnCtx.val]
+	val func(i int, t types.Type) string
+	// rest returns the array of the variadic arguments, which begin at i, for elements of type t
+	rest func(i int, t types.Type) string
+	// all returns the arguments for all parameters like the call of a function value
+	all func() string
+}
+
+// callArgs returns the arguments of the call of a function of the library with the signature sig.
+func (c *fnCtx) callArgs(call *ast.CallExpr, sig *types.Signature) libArgs {
+	return libArgs{
+		expr: func(i int) string { return c.expr(call.Args[i]) },
+		val:  func(i int, t types.Type) string { return c.val(call.Args[i], t) },
+		rest: func(i int, t types.Type) string {
+			var vals []string
+			for _, a := range call.Args[i:] {
+				vals = append(vals, c.val(a, t))
+			}
+			return "[" + strings.Join(vals, ", ") + "]"
+		},
+		all: func() string { return c.args(call, sig) },
+	}
+}
+
+// paramArgs returns the parameters of a function literal as the arguments of a function of the library, which is
+// inlined at its call. The caller of a function value converts and copies the values, which it passes, and passes
+// the variadic arguments as a new array.
+func paramArgs(params []string) libArgs {
+	param := func(i int, _ types.Type) string { return params[i] }
+	return libArgs{
+		expr: func(i int) string { return params[i] },
+		val:  param,
+		rest: param,
+		all:  func() string { return strings.Join(params, ", ") },
+	}
+}
+
+// libFunc translates the call of a function of the library, which has no function of the runtime or binding, but
+// is inlined at its call, or returns false for another function.
+func (c *fnCtx) libFunc(fn *types.Func, targs []types.Type, args libArgs) (string, bool) {
+	switch fn.Pkg().Path() + "." + fn.Name() {
+	case listPath + ".New", msgPath + ".New":
+		return "[]", true
+	case listPath + ".Of":
+		return args.rest(0, targs[0]), true
+	case listPath + ".Make":
+		return "$lmake(" + args.expr(0) + ", " + c.e.zeroFn(targs[0]) + ")", true
+	case listPath + ".SortFunc":
+		return "$lsort(" + args.all() + ")", true
+	case listPath + ".Freeze":
+		return "$lclone(" + args.expr(0) + ", " + c.e.cloneFn(targs[0]) + ")", true
+	case dictPath + ".New":
+		return "$dnew()", true
+	case optPath + ".Some":
+		return "{ v: " + args.val(0, targs[0]) + " }", true
+	case optPath + ".None":
+		return "null", true
+	}
+	return "", false
+}
+
+// libFuncValue returns a function of the library, which is inlined at its call, as a value, e.g.
+// s := list.SortFunc[int32]: a function literal, which calls it with its parameters like a direct call.
+func (c *fnCtx) libFuncValue(fn *types.Func, targs []types.Type, pos token.Pos) (string, bool) {
+	sig := fn.Signature()
+	if len(targs) > 0 {
+		inst, err := types.Instantiate(c.e.tctx, fn.Origin().Type(), targs, true)
+		if err != nil {
+			fail(pos, "cannot instantiate %s: %v", fn.FullName(), err)
+		}
+		sig = inst.(*types.Signature)
+	}
+	params := make([]string, sig.Params().Len())
+	for i := range params {
+		params[i] = c.tmp()
+	}
+	js, ok := c.libFunc(fn, targs, paramArgs(params))
+	if !ok {
+		return "", false
+	}
+	return "((" + strings.Join(params, ", ") + ") => (" + js + "))", true
 }
 
 func (c *fnCtx) funcLit(f *ast.FuncLit) string {
@@ -312,6 +412,9 @@ func (c *fnCtx) selector(se *ast.SelectorExpr) string {
 	case types.FieldVal:
 		return c.expr(se.X) + "." + c.fieldName(se)
 	case types.MethodVal:
+		if m := c.resolveMethod(se); !m.iface && isOpaque(m.named) {
+			return c.opaqueMethodValue(se, m.named)
+		}
 		// a method value binds the receiver, when it is evaluated
 		r := c.tmp()
 		return "((" + r + ") => (...a) => " + c.methodCallJS(se, r, true, "...a") + ")(" + c.receiver(se) + ")"
@@ -614,24 +717,11 @@ func (c *fnCtx) funcCall(fn *types.Func, id *ast.Ident, call *ast.CallExpr, sig 
 		targs = c.subList(typeArgs(inst.TypeArgs))
 	}
 
-	switch p {
-	case listPath:
-		return c.listFunc(fn.Name(), targs, call, sig)
-	case msgPath:
-		if fn.Name() == "New" {
-			return "[]"
-		}
-	case dictPath:
-		if fn.Name() == "New" {
-			return "$dnew()"
-		}
-	case optPath:
-		switch fn.Name() {
-		case "Some":
-			return "{ v: " + c.val(call.Args[0], targs[0]) + " }"
-		case "None":
-			return "null"
-		}
+	if js, ok := c.libFunc(fn, targs, c.callArgs(call, sig)); ok {
+		return js
+	}
+	if p == listPath {
+		fail(call.Pos(), "list.%s is not supported", fn.Name())
 	}
 
 	if src, ok := c.e.decls[fn.Origin()]; ok && src.pkg.Kind == KindHeader && (!strings.HasPrefix(p, stdPrefix) || src.js != "") {
@@ -649,31 +739,10 @@ func (c *fnCtx) funcCall(fn *types.Func, id *ast.Ident, call *ast.CallExpr, sig 
 	return c.funcRef(fn, targs, id.Pos()) + "(" + args + ")"
 }
 
-func (c *fnCtx) listFunc(name string, targs []types.Type, call *ast.CallExpr, sig *types.Signature) string {
-	switch name {
-	case "New":
-		return "[]"
-	case "Of":
-		var vals []string
-		for _, a := range call.Args {
-			vals = append(vals, c.val(a, targs[0]))
-		}
-		return "[" + strings.Join(vals, ", ") + "]"
-	case "Make":
-		return "$lmake(" + c.expr(call.Args[0]) + ", " + c.e.zeroFn(targs[0]) + ")"
-	case "SortFunc":
-		return "$lsort(" + c.args(call, sig) + ")"
-	case "Freeze":
-		return "$lclone(" + c.expr(call.Args[0]) + ", " + c.e.cloneFn(targs[0]) + ")"
-	}
-	fail(call.Pos(), "list.%s is not supported", name)
-	return ""
-}
-
 func (c *fnCtx) methodCall(se *ast.SelectorExpr, call *ast.CallExpr, sig *types.Signature) string {
 	m := c.resolveMethod(se)
 	if !m.iface && isOpaque(m.named) {
-		return c.opaqueMethod(m.named, se, call, sig)
+		return c.opaqueMethod(m.named, se.Sel.Name, c.expr(se.X), c.callArgs(call, sig), se.Pos())
 	}
 	recv := ""
 	if !m.iface && isStruct(m.named) && !isPointer(m.recvType) && !m.ptrRecv && c.unaliased(se.X) && c.e.readonly(m.fn).recv {
@@ -685,19 +754,23 @@ func (c *fnCtx) methodCall(se *ast.SelectorExpr, call *ast.CallExpr, sig *types.
 	return c.methodCallJS(se, recv, false, c.argsFor(m.fn, call, sig))
 }
 
-func (c *fnCtx) opaqueMethod(named *types.Named, se *ast.SelectorExpr, call *ast.CallExpr, sig *types.Signature) string {
-	r := c.expr(se.X)
+// opaqueMethod translates the call of the method name of a list, map, outbox or option, which is inlined, on the
+// translated receiver r with the arguments a.
+func (c *fnCtx) opaqueMethod(named *types.Named, name, r string, a libArgs, pos token.Pos) string {
 	args := typeArgs(named.TypeArgs())
-	arg := func(i int, t types.Type) string { return c.val(call.Args[i], t) }
+	arg := a.val
 
-	method := named.Obj().Name() + "." + se.Sel.Name
+	method := named.Obj().Name() + "." + name
 	if rest, ok := strings.CutPrefix(method, "Frozen."); ok {
 		// a frozen list is an array like a list, which the program can only read
 		method = "List." + rest
 	}
+	if method == "Out.Send" {
+		// an outbox is an array like a list, to which the program only appends one message at a time
+		return "$lappend(" + r + ", [" + arg(0, args[0]) + "])"
+	}
 	if rest, ok := strings.CutPrefix(method, "Out."); ok {
-		// an outbox is an array like a list, to which the program only appends
-		method = "List." + strings.Replace(rest, "Send", "Append", 1)
+		method = "List." + rest
 	}
 	switch method {
 	case "List.Len":
@@ -707,11 +780,7 @@ func (c *fnCtx) opaqueMethod(named *types.Named, se *ast.SelectorExpr, call *ast
 	case "List.Set":
 		return "$lset(" + r + ", " + arg(0, nil) + ", " + arg(1, args[0]) + ")"
 	case "List.Append":
-		var vals []string
-		for i := range call.Args {
-			vals = append(vals, arg(i, args[0]))
-		}
-		return "$lappend(" + r + ", [" + strings.Join(vals, ", ") + "])"
+		return "$lappend(" + r + ", " + a.rest(0, args[0]) + ")"
 	case "List.Pop":
 		return "$lpop(" + r + ", " + c.e.zeroFn(args[0]) + ")"
 	case "List.Delete":
@@ -743,8 +812,22 @@ func (c *fnCtx) opaqueMethod(named *types.Named, se *ast.SelectorExpr, call *ast
 	case "Option.IsSome":
 		return "(" + r + " !== null)"
 	}
-	fail(se.Pos(), "%s.%s is not supported", named.Obj().Name(), se.Sel.Name)
+	fail(pos, "%s.%s is not supported", named.Obj().Name(), name)
 	return ""
+}
+
+// opaqueMethodValue returns the method of a list, map, outbox or option, which is inlined at its call, bound to its
+// receiver, e.g. f := l.Len: a function literal, which calls it with its parameters like a direct call. The
+// receiver is a reference or never changes, so it is not copied.
+func (c *fnCtx) opaqueMethodValue(se *ast.SelectorExpr, named *types.Named) string {
+	sig := c.typeOf(se).(*types.Signature)
+	r := c.tmp()
+	params := make([]string, sig.Params().Len())
+	for i := range params {
+		params[i] = c.tmp()
+	}
+	js := c.opaqueMethod(named, se.Sel.Name, r, paramArgs(params), se.Pos())
+	return "((" + r + ") => (" + strings.Join(params, ", ") + ") => (" + js + "))(" + c.expr(se.X) + ")"
 }
 
 func (c *fnCtx) builtin(b *types.Builtin, call *ast.CallExpr) string {

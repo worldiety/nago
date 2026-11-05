@@ -254,8 +254,14 @@ func (l *fnLower) paramTuple(recv *types.Var, sig *types.Signature) *tinfo {
 	if recv != nil {
 		params = append(params, l.ty(recv.Type()))
 	}
-	for v := range sig.Params().Variables() {
-		params = append(params, l.ty(v.Type()))
+	for i := range sig.Params().Len() {
+		t := sig.Params().At(i).Type()
+		if sig.Variadic() && i == sig.Params().Len()-1 {
+			// the variadic arguments arrive as a list, see args, e.g. in the value of list.Of[int32]
+			params = append(params, l.c.listOf(l.sub(t.(*types.Slice).Elem())))
+			continue
+		}
+		params = append(params, l.ty(t))
 	}
 	return &tinfo{kind: kTuple, elems: params, offs: tupleOffsets(params), l: tupleLayout(params)}
 }

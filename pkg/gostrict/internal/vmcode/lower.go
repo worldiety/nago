@@ -1126,6 +1126,8 @@ func (l *fnLower) expr(x ast.Expr) expr {
 		return l.composite(x)
 	case *ast.FuncLit:
 		return l.funcLit(x)
+	case *ast.IndexExpr, *ast.IndexListExpr:
+		return l.instance(x)
 	case *ast.StarExpr:
 		p := l.expr(x.X)
 		t := p.typ().elem
@@ -1157,25 +1159,63 @@ func (l *fnLower) ident(id *ast.Ident) expr {
 			return &eGlobal{t: g.t, g: g}
 		}
 	case *types.Func:
-		var targs []types.Type
-		if inst, ok := l.info.Instances[id]; ok {
-			for t := range inst.TypeArgs.Types() {
-				targs = append(targs, l.sub(t))
-			}
-		}
-		if !l.c.user(obj) {
-			return l.libValue(id, obj, targs)
-		}
-		return &eFunc{t: l.typeOf(id), fn: l.funcOf(obj, nil, targs)}
+		return l.funcValue(id, obj, l.info.TypeOf(id))
 	}
 	l.fail(id.Pos(), "identifier %s is not supported", id.Name)
+	return nil
+}
+
+// funcValue returns the function of the identifier id as a value of type t, the type of the instance.
+func (l *fnLower) funcValue(id *ast.Ident, fn *types.Func, t types.Type) expr {
+	var targs []types.Type
+	if inst, ok := l.info.Instances[id]; ok {
+		for t := range inst.TypeArgs.Types() {
+			targs = append(targs, l.sub(t))
+		}
+	}
+	if !l.c.user(fn) {
+		return l.libValue(id, fn, targs, t)
+	}
+	return &eFunc{t: l.ty(t), fn: l.funcOf(fn, nil, targs)}
+}
+
+// instance returns an instance of a generic function as a value, e.g. id[int32] or list.SortFunc[int32] of another
+// package. go/types records the type of the instance at the index expression and the generic one at the identifier.
+func (l *fnLower) instance(x ast.Expr) expr {
+	var base ast.Expr
+	switch x := x.(type) {
+	case *ast.IndexExpr:
+		base = x.X
+	case *ast.IndexListExpr:
+		base = x.X
+	}
+	var id *ast.Ident
+	switch b := ast.Unparen(base).(type) {
+	case *ast.Ident:
+		id = b
+	case *ast.SelectorExpr:
+		if l.info.Selections[b] == nil {
+			// a qualified identifier
+			id = b.Sel
+		}
+	}
+	if id != nil {
+		if fn, ok := l.info.Uses[id].(*types.Func); ok {
+			return l.funcValue(id, fn, l.info.TypeOf(x))
+		}
+	}
+	l.fail(x.Pos(), "expression %T is not supported yet", x)
 	return nil
 }
 
 func (l *fnLower) selector(x *ast.SelectorExpr) expr {
 	sel := l.info.Selections[x]
 	if sel == nil {
-		// a qualified identifier of another package
+		// a qualified identifier of another package; go/types records the type of an instance, e.g. of opt.Some
+		// passed to a generic function, which infers its type argument, at the selector and not at the identifier
+		if fn, ok := l.info.Uses[x.Sel].(*types.Func); ok {
+			return l.funcValue(x.Sel, fn, l.info.TypeOf(x))
+		}
 		return l.ident(x.Sel)
 	}
 	if sel.Kind() == types.MethodVal {
@@ -1545,8 +1585,8 @@ func (l *fnLower) libCall(fn *types.Func, recvArgs, targs []types.Type, sig *typ
 
 // libValue returns a function of the library or a header package as a value, e.g. f := strings.TrimSpace, as a
 // function literal, which calls it like a direct call does.
-func (l *fnLower) libValue(id *ast.Ident, fn *types.Func, targs []types.Type) expr {
-	sig := l.sub(l.info.TypeOf(id)).(*types.Signature)
+func (l *fnLower) libValue(id *ast.Ident, fn *types.Func, targs []types.Type, t types.Type) expr {
+	sig := l.sub(t).(*types.Signature)
 	inner := l.child(sig, "lib")
 	var args []expr
 	for _, pt := range inner.f.params.elems {
@@ -1554,7 +1594,7 @@ func (l *fnLower) libValue(id *ast.Ident, fn *types.Func, targs []types.Type) ex
 		args = append(args, &eLocal{t: pt, v: p})
 	}
 	inner.returnCall(inner.libCall(fn, nil, targs, sig, id.Pos(), nil, args))
-	return inner.finish(l.typeOf(id))
+	return inner.finish(l.ty(t))
 }
 
 // returnCall returns the results of call, the body of a function literal, which wraps a call.
@@ -1612,13 +1652,13 @@ func recvName(t types.Type) string {
 }
 
 func (l *fnLower) methodCall(se *ast.SelectorExpr, sel *types.Selection, call *ast.CallExpr) expr {
-	fn := sel.Obj().(*types.Func)
 	sig := l.sub(l.info.TypeOf(se)).(*types.Signature)
 	recvT := l.typeOf(se.X)
 	switch recvT.kind {
 	case kIface, kError:
 		return l.ifaceCall(se, call)
 	}
+	fn := l.method(se, sel)
 	var recvArgs []types.Type
 	if n, ok := types.Unalias(derefType(recvT.t)).(*types.Named); ok {
 		for t := range n.TypeArgs().Types() {
@@ -1643,6 +1683,23 @@ func (l *fnLower) methodCall(se *ast.SelectorExpr, sel *types.Selection, call *a
 		recv = l.expr(se.X)
 	}
 	return l.funcCall(fn, recvArgs, targs, call, sig, recv)
+}
+
+// method returns the method, which the selection se calls on a receiver of a concrete type. The method of a type
+// parameter is the one of its type argument, e.g. s.area of an s of type S with the constraint
+// interface{ area() int32 } is sq.area in the instance with S = sq.
+func (l *fnLower) method(se *ast.SelectorExpr, sel *types.Selection) *types.Func {
+	fn := sel.Obj().(*types.Func)
+	if !types.IsInterface(fn.Signature().Recv().Type()) {
+		return fn
+	}
+	recv := l.sub(l.info.TypeOf(se.X))
+	obj, _, _ := types.LookupFieldOrMethod(recv, true, fn.Pkg(), fn.Name())
+	m, ok := obj.(*types.Func)
+	if !ok {
+		l.fail(se.Pos(), "%s has no method %s", recv, fn.Name())
+	}
+	return m
 }
 
 func derefType(t types.Type) types.Type {
