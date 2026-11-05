@@ -110,8 +110,8 @@ func recHeaderFuncs(t *testing.T) []*types.Func {
 }
 
 // recObserved are header functions, whose call is run with a function argument, which counts its calls. The
-// argument runs at once, if the count is not zero after the call. The program exports a function with the result
-// ui.View, without which goja does not load a program, which passes a view to a function of the host.
+// argument runs at once, if the count is not zero after the call. U and L only use the imports, and no function of
+// the program has the result ui.View.
 var recObserved = []struct {
 	fn, probe string
 	now       bool
@@ -157,7 +157,10 @@ import (
 
 type hit struct{ n int32 }
 
-func V() ui.View { return ui.Text("") }
+func U() int32 {
+	_ = ui.Text("")
+	return 1
+}
 
 func L() int32 { return list.Of(int32(1)).Len() }
 

@@ -35,9 +35,12 @@ import (
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/physics"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/shapes"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/spin"
+	"go.wdy.de/nago/pkg/gostrict/internal/examples/stdvalues"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/texts"
+	"go.wdy.de/nago/pkg/gostrict/internal/examples/tparams"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/trees"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/values"
+	"go.wdy.de/nago/pkg/gostrict/internal/examples/viewhost"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/widgets"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/widgetsuse"
 	"go.wdy.de/nago/pkg/gostrict/std/big"
@@ -69,9 +72,12 @@ var exports = map[string]gostrict.Funcs{
 	"physics":    native.Reflect(map[string]any{"Simulate": physics.Simulate, "Speed": physics.Speed}),
 	"shapes":     native.Reflect(map[string]any{"Area": shapes.Area, "ColorName": shapes.ColorName, "Largest": shapes.Largest, "NewCanvas": shapes.NewCanvas, "OnEvent": shapes.OnEvent, "Scale": shapes.Scale, "Summary": shapes.Summary}),
 	"spin":       native.Reflect(map[string]any{"Frame": spin.Frame, "Orbit": spin.Orbit, "Setup": spin.Setup}),
+	"stdvalues":  native.Reflect(map[string]any{"DictGet": stdvalues.DictGet, "DictNew": stdvalues.DictNew, "Freeze": stdvalues.Freeze, "ListLen": stdvalues.ListLen, "ListMake": stdvalues.ListMake, "ListNew": stdvalues.ListNew, "ListOf": stdvalues.ListOf, "OptArg": stdvalues.OptArg, "OptInfer": stdvalues.OptInfer, "OptNone": stdvalues.OptNone, "OptOr": stdvalues.OptOr, "OptSome": stdvalues.OptSome, "SortFunc": stdvalues.SortFunc, "SortInfer": stdvalues.SortInfer, "SortVar": stdvalues.SortVar, "TextRepeat": stdvalues.TextRepeat}),
 	"texts":      native.Reflect(map[string]any{"Misc": texts.Misc, "Order": texts.Order, "Parse": texts.Parse, "Reverse": texts.Reverse, "Stats": texts.Stats, "Words": texts.Words}),
+	"tparams":    native.Reflect(map[string]any{"Args": tparams.Args, "Call": tparams.Call, "Closure": tparams.Closure, "Field": tparams.Field, "Pass": tparams.Pass, "Pointer": tparams.Pointer, "Two": tparams.Two, "Value": tparams.Value}),
 	"trees":      native.Reflect(map[string]any{"Run": trees.Run, "Values": trees.Values}),
 	"values":     native.Reflect(map[string]any{"Run": values.Run}),
+	"viewhost":   native.Reflect(map[string]any{"Arg": viewhost.Arg, "Empty": viewhost.Empty, "Later": viewhost.Later, "Nested": viewhost.Nested, "Own": viewhost.Own, "Variadic": viewhost.Variadic}),
 	"widgetsuse": native.Reflect(map[string]any{"Run": widgetsuse.Run}),
 }
 

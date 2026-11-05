@@ -10,6 +10,7 @@ package gostrict_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -54,12 +55,10 @@ type recCase struct {
 	loops bool
 	// ui tells, that the program uses the header package lib/ui, whose host functions both engines need.
 	ui bool
-	// untranslatable is the part of the message of GS099, with which the translation rejects a program, which the
-	// checker accepts, so that it can not run.
-	untranslatable string
-	// vmFails is the part of the error, with which the vm does not load the program, a defect of the vm outside of
-	// the contract, so that the run is observed only in goja.
-	vmFails string
+	// stdValue is the anchor of the line, where the program uses a function of a standard package as a value. The
+	// checker either accepts it, then the row holds as without it, or rejects it with a finding of its own at that
+	// line, never with GS099, then the program can not run and the findings of the row may be missing.
+	stdValue string
 }
 
 func (c recCase) module(directive bool) gostrict.Module {
@@ -142,11 +141,16 @@ func recRun(t *testing.T, c recCase) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if c.untranslatable != "" {
-		if len(diags) != 1 || diags[0].Code != gostrict.CodeInternal || !strings.Contains(diags[0].Msg, c.untranslatable) {
-			t.Fatalf("want only GS099 %q, got:\n%s", c.untranslatable, diags.Text())
+	if c.stdValue != "" && len(diags) > 0 {
+		for _, d := range diags {
+			if d.Code == gostrict.CodeInternal {
+				t.Errorf("GS099 at %s:%d: %s", d.File, d.Line, d.Msg)
+			}
 		}
-		t.Logf("the program can not run: %s", diags[0].Msg)
+		if !recStdRejected(t, c, diags) {
+			t.Fatalf("the checker accepts the value at %s, the translation rejects it:\n%s", c.stdValue, diags.Text())
+		}
+		t.Logf("the checker rejects the value, so the program can not run:\n%s", diags.Text())
 		return
 	}
 	if len(diags) > 0 {
@@ -158,13 +162,6 @@ func recRun(t *testing.T, c recCase) {
 	}
 	for _, e := range recEngines() {
 		in, err := e.e.Load(context.Background(), b, host)
-		if e.name == "vm" && c.vmFails != "" {
-			if err == nil || !strings.Contains(err.Error(), c.vmFails) {
-				t.Fatalf("vm: want the error %q, got %v", c.vmFails, err)
-			}
-			t.Logf("the vm can not load the program: %v", err)
-			continue
-		}
 		if err != nil {
 			t.Fatalf("%s: %v", e.name, err)
 		}
@@ -181,9 +178,52 @@ func recRun(t *testing.T, c recCase) {
 	}
 }
 
+// recStdRejected tells, whether the checker rejects the function of a standard package, which the row uses as a
+// value, with a finding of its own at the line of stdValue, which is neither GS040 nor GS099.
+func recStdRejected(t *testing.T, c recCase, diags gostrict.Diagnostics) bool {
+	t.Helper()
+	if c.stdValue == "" {
+		return false
+	}
+	f, l := c.line(t, c.stdValue)
+	for _, d := range diags {
+		if d.File == f && d.Line == l && d.Code != gostrict.CodeTermination && d.Code != gostrict.CodeInternal {
+			return true
+		}
+	}
+	return false
+}
+
 // recExpect compares the diagnostics with the expected findings of the row.
 func recExpect(t *testing.T, c recCase, diags gostrict.Diagnostics) {
 	t.Helper()
+	if recStdRejected(t, c, diags) {
+		// the program can not run, so the findings of the cycle may be missing, but none is outside of it
+		f, l := c.line(t, c.stdValue)
+		lines := map[string]bool{}
+		for _, alts := range c.finding {
+			for _, a := range alts {
+				af, al := c.line(t, a)
+				lines[fmt.Sprint(af, al)] = true
+			}
+		}
+		for _, a := range c.may {
+			af, al := c.line(t, a)
+			lines[fmt.Sprint(af, al)] = true
+		}
+		for _, d := range diags {
+			switch {
+			case d.Code == gostrict.CodeInternal:
+				t.Errorf("GS099 at %s:%d: %s", d.File, d.Line, d.Msg)
+			case d.Code == gostrict.CodeTermination && lines[fmt.Sprint(d.File, d.Line)]:
+			case d.Code != gostrict.CodeTermination && d.File == f && d.Line == l:
+			default:
+				t.Errorf("unexpected diagnostic %s:%d %s %s", d.File, d.Line, d.Code, d.Msg)
+			}
+		}
+		t.Logf("the checker rejects the value:\n%s", diags.Text())
+		return
+	}
 	if len(c.finding) == 0 {
 		if len(diags) > 0 {
 			t.Errorf("want no diagnostic, got:\n%s", diags.Text())
@@ -671,7 +711,7 @@ func run[S shape](s S) int32 {
 
 func Run() int32 { return run(sq{n: 2}) }
 `),
-		entry: "Run", loops: true, vmFails: "area has no body",
+		entry: "Run", loops: true,
 		finding: [][]string{{"r.go|func run["}, {"r.go|func (q sq) area("}},
 	},
 	{
@@ -689,7 +729,7 @@ func run[S shape](s S) int32 {
 
 func Run() int32 { return run(sq{n: 2}) }
 `),
-		entry: "Run", want: []any{int32(2)}, vmFails: "area has no body",
+		entry: "Run", want: []any{int32(2)},
 	},
 
 	// a named function type, whose underlying signature counts
@@ -795,7 +835,7 @@ func Sort(l list.List[int32]) int32 {
 
 func Run() int32 { return Sort(list.Of(int32(2), 1)) }
 `),
-		entry: "Run", loops: true, untranslatable: "index expressions are not supported",
+		entry: "Run", loops: true, stdValue: "r.go|s := list.SortFunc[int32]",
 		finding: [][]string{{"r.go|func Sort("}},
 		may:     []string{"r.go|func cmp("},
 	},
@@ -815,7 +855,7 @@ func Sort(l list.List[int32]) int32 {
 
 func Run() int32 { return Sort(list.Of(int32(2), 1)) }
 `),
-		entry: "Run", want: []any{int32(2)}, untranslatable: "index expressions are not supported",
+		entry: "Run", want: []any{int32(2)}, stdValue: "r.go|s := list.SortFunc[int32]",
 	},
 	{
 		name: "a function, which passes its function parameter to list.SortFunc, as a value: cmp calls Sort",
