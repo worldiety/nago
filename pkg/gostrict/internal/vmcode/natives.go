@@ -188,9 +188,15 @@ var simpleNatives = map[string]nativeFn{
 	textPath + ".FromFloat":     func(m *Machine, n []uint64, s []string, r []any) { s[0] = text.FromFloat(ffrom(n[0]), i32(n[1])) },
 	textPath + ".UpperASCII":    func(m *Machine, n []uint64, s []string, r []any) { s[0] = text.UpperASCII(s[0]) },
 	textPath + ".LowerASCII":    func(m *Machine, n []uint64, s []string, r []any) { s[0] = text.LowerASCII(s[0]) },
+	textPath + ".Slice":         func(m *Machine, n []uint64, s []string, r []any) { s[0] = text.Slice(s[0], i32(n[0]), i32(n[1])) },
+	textPath + ".GroupDigits":   func(m *Machine, n []uint64, s []string, r []any) { s[0] = text.GroupDigits(s[0], s[1], s[2]) },
 	textPath + ".ParseInt": func(m *Machine, n []uint64, s []string, r []any) {
 		v, err := text.ParseInt(s[0])
 		n[0], r[0] = fromI32(v), err
+	},
+	textPath + ".ParseFloat": func(m *Machine, n []uint64, s []string, r []any) {
+		v, err := text.ParseFloat(s[0])
+		n[0], r[0] = fbits(v), err
 	},
 	textPath + ".Split": func(m *Machine, n []uint64, s []string, r []any) { r[0] = newStrings(strings.Split(s[0], s[1])) },
 	textPath + ".Join": func(m *Machine, n []uint64, s []string, r []any) {

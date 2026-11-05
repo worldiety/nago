@@ -85,12 +85,16 @@
 // inside functions.
 //
 // Numbers become strings with text.FromInt(n) and text.FromFloat(f, decimals), which rounds the same in Go and
-// JavaScript.
+// JavaScript, and text.GroupDigits(s, ",", ".") writes such a string with other marks, e.g. "1.234,50". Strings
+// become numbers with text.ParseInt(s) and text.ParseFloat(s), which rounds to the nearest float64 in Go and
+// JavaScript like strconv.ParseFloat. text.Slice(s, from, to) cuts characters out of a string.
 //
 // Packages of the standard library: math (without Frexp, Ldexp and the functions of int; a constant argument like
 // the sign of math.IsInf(x, 0) is fine), strings (Contains, HasPrefix, HasSuffix, ReplaceAll, TrimPrefix,
 // TrimSpace, TrimSuffix), errors (New) and iter. Anything else comes from the packages list, dict, opt, text,
-// num, fuel, big and decimal of go.wdy.de/nago/pkg/gostrict/std, whose functions never panic.
+// num, fuel, big and decimal of go.wdy.de/nago/pkg/gostrict/std, whose functions never panic. In a browser,
+// math.Min and math.Max follow Go also for NaN and the infinities, while math.Pow, Exp, Log and the other functions
+// use Math of JavaScript and may differ from Go in the last bit, and the sign of a NaN is not defined.
 //
 // # Terminating profile
 //

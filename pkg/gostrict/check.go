@@ -294,7 +294,7 @@ func (c *checker) visitNode(n ast.Node) {
 		}
 	case *ast.SliceExpr:
 		if c.isString(n.X) {
-			c.report(n, CodeString, "slicing a string is not allowed", "Go slices the bytes of UTF-8, JavaScript the units of UTF-16", "split the string with text.Split or text.Chars and join the parts with text.Join")
+			c.report(n, CodeString, "slicing a string is not allowed", "Go slices the bytes of UTF-8, JavaScript the units of UTF-16", "use text.Slice(s, from, to), which counts characters, or split the string with text.Split or text.Chars and join the parts with text.Join")
 		} else {
 			c.report(n, CodeSlice, "slice expressions are not allowed", "the subset replaces slices by list.List", "copy the elements into a new list.List")
 		}

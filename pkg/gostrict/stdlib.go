@@ -21,7 +21,9 @@ const (
 )
 
 // stdAllowed contains the packages of the standard library, which the subset allows, with the functions, which
-// behave the same in Go and in JavaScript and never panic. Constants of these packages are always allowed.
+// behave the same in Go and in JavaScript and never panic, except that math.Pow, Exp, Log and the other functions
+// of math, which the runtime takes from Math of JavaScript, may differ in the last bit and in the sign of a NaN.
+// Constants of these packages are always allowed.
 var stdAllowed = map[string]map[string]bool{
 	"math": set("Abs", "Acos", "Asin", "Atan", "Atan2", "Cbrt", "Ceil", "Copysign", "Cos", "Exp", "Floor", "Hypot",
 		"Inf", "IsInf", "IsNaN", "Log", "Log10", "Log2", "Max", "Min", "Mod", "NaN", "Pow", "Round", "Signbit", "Sin",
@@ -51,7 +53,7 @@ var importHints = map[string]hint{
 	},
 	"strconv": {
 		"its functions work with int, which the subset replaces by int32",
-		`use text.FromInt(n), text.FromFloat(f, decimals) and text.ParseInt(s) from "go.wdy.de/nago/pkg/gostrict/std/text"`,
+		`use text.FromInt(n), text.FromFloat(f, decimals), text.ParseInt(s) and text.ParseFloat(s) from "go.wdy.de/nago/pkg/gostrict/std/text"`,
 	},
 	"sort": {
 		"sort works on slices, which the subset replaces by list.List",

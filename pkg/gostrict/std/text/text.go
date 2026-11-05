@@ -99,6 +99,29 @@ func Index(s, sub string) int32 {
 	return int32(utf8.RuneCountInString(s[:i]))
 }
 
+// Slice returns the characters of s from the index from up to, but not including, the index to, joined like the
+// elements of [Chars], e.g. "rü" for Slice("Grüße", 1, 3). A from below 0 counts as 0 and a to beyond the number
+// of characters as that number. If from is not less than to, it returns "".
+func Slice(s string, from, to int32) string {
+	from = max(from, 0)
+	if from >= to {
+		return ""
+	}
+	var sb strings.Builder
+	i := int32(0)
+	for _, r := range s {
+		if i >= to {
+			break
+		}
+		if i >= from {
+			// an invalid byte is utf8.RuneError, which Chars also returns as "�"
+			sb.WriteRune(r)
+		}
+		i++
+	}
+	return sb.String()
+}
+
 // FromInt formats n in decimal, e.g. "-42".
 func FromInt(n int32) string {
 	return strconv.Itoa(int(n))
@@ -109,6 +132,52 @@ func FromInt(n int32) string {
 // slightly more in binary. It writes no exponent, NaN as "NaN" and the infinities as "+Inf" and "-Inf".
 func FromFloat(f float64, decimals int32) string {
 	return strconv.FormatFloat(f, 'f', int(min(max(decimals, 0), 100)), 64)
+}
+
+// GroupDigits writes a decimal number like "-1234567.89", which has an optional sign, at least one digit and
+// optional decimals after a point, with decimalMark instead of the point and groupMark between the groups of three
+// digits before it, counted from the right, e.g. "-1.234.567,89" for GroupDigits("-1234567.89", ",", "."). An empty
+// groupMark writes no groups. It returns anything else unchanged, e.g. "NaN", "+Inf" or "1e5". It suits the results
+// of [FromFloat] and of decimal.String after decimal.Round, so that an amount is never formatted through a float64.
+func GroupDigits(s, decimalMark, groupMark string) string {
+	i := 0
+	if len(s) > 0 && (s[0] == '+' || s[0] == '-') {
+		i = 1
+	}
+	j := i
+	for j < len(s) && isDigit(s[j]) {
+		j++
+	}
+	if j == i {
+		return s
+	}
+	if j < len(s) {
+		if s[j] != '.' || j+1 == len(s) {
+			return s
+		}
+		for k := j + 1; k < len(s); k++ {
+			if !isDigit(s[k]) {
+				return s
+			}
+		}
+	}
+	var sb strings.Builder
+	sb.WriteString(s[:i])
+	for k := i; k < j; k++ {
+		if k > i && (j-k)%3 == 0 {
+			sb.WriteString(groupMark)
+		}
+		sb.WriteByte(s[k])
+	}
+	if j < len(s) {
+		sb.WriteString(decimalMark)
+		sb.WriteString(s[j+1:])
+	}
+	return sb.String()
+}
+
+func isDigit(c byte) bool {
+	return c >= '0' && c <= '9'
 }
 
 // ParseInt parses a decimal integer with an optional sign, e.g. "-42". It fails for anything else and for numbers
@@ -141,6 +210,105 @@ func ParseInt(s string) (int32, error) {
 		return 0, errors.New("text.ParseInt: value out of range: " + s)
 	}
 	return int32(n), nil
+}
+
+// ParseFloat parses a decimal number with an optional sign, digits with an optional point and an optional exponent
+// with e or E, e.g. "-1.5", ".5", "5." or "2.5E-3", into the nearest float64 and rounds a tie to even, for any
+// number of digits and any exponent. The sign holds also for zero, so "-0" and "-1e-400" are -0. It fails for
+// anything else, e.g. a comma, a space, an underscore, "Inf", "NaN" or a hexadecimal number, and for a number, which
+// would round to an infinity, but not for one, which rounds to 0 or to a subnormal number. On failure it returns 0.
+func ParseFloat(s string) (float64, error) {
+	neg, digits, exp, ok := scanFloat(s)
+	if !ok {
+		return 0, errors.New("text.ParseFloat: invalid syntax: " + s)
+	}
+	var f float64
+	switch {
+	case digits == "" || exp < -323:
+		// 0.digits * 10^exp is less than 10^-324, which is less than half of the least subnormal number
+	case exp > 309:
+		// at least 10^309, which is beyond the greatest float64
+		return 0, errors.New("text.ParseFloat: value out of range: " + s)
+	default:
+		// strconv rounds exactly for any number of digits, but caps the exponent of its input, which may then
+		// differ from the exponent of s with many zeros, e.g. "0.00…01e100005", so it gets the small exponent here
+		var err error
+		f, err = strconv.ParseFloat("0."+digits+"e"+strconv.FormatInt(exp, 10), 64)
+		if err != nil {
+			return 0, errors.New("text.ParseFloat: value out of range: " + s)
+		}
+	}
+	if neg {
+		f = -f
+	}
+	return f, nil
+}
+
+// scanFloat splits a number of the form of [ParseFloat] into its sign, its digits without the zeros at both ends
+// and the exponent, so that its magnitude is 0.digits * 10^exp. It reports false for any other form.
+func scanFloat(s string) (neg bool, digits string, exp int64, ok bool) {
+	i := 0
+	if i < len(s) && (s[i] == '+' || s[i] == '-') {
+		neg = s[i] == '-'
+		i++
+	}
+	var sb strings.Builder
+	seen, point := false, false
+	for ; i < len(s); i++ {
+		c := s[i]
+		if c == '.' && !point {
+			point = true
+			continue
+		}
+		if !isDigit(c) {
+			break
+		}
+		seen = true
+		switch {
+		case c == '0' && sb.Len() == 0:
+			// a leading zero after the point moves the digits to the right
+			if point {
+				exp--
+			}
+		case point:
+			sb.WriteByte(c)
+		default:
+			sb.WriteByte(c)
+			exp++
+		}
+	}
+	if !seen {
+		return false, "", 0, false
+	}
+	if i < len(s) && (s[i] == 'e' || s[i] == 'E') {
+		i++
+		eneg := false
+		if i < len(s) && (s[i] == '+' || s[i] == '-') {
+			eneg = s[i] == '-'
+			i++
+		}
+		// the exponent stops growing at maxExp: any number of digits is far less, so a number with a greater
+		// exponent is out of range or 0 anyway
+		const maxExp = 1e12
+		start := i
+		var e int64
+		for ; i < len(s) && isDigit(s[i]); i++ {
+			if e < maxExp {
+				e = e*10 + int64(s[i]-'0')
+			}
+		}
+		if i == start {
+			return false, "", 0, false
+		}
+		if eneg {
+			e = -e
+		}
+		exp += e
+	}
+	if i < len(s) {
+		return false, "", 0, false
+	}
+	return neg, strings.TrimRight(sb.String(), "0"), exp, true
 }
 
 // UpperASCII maps the letters a to z to upper case and keeps any other character.
