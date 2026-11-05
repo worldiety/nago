@@ -40,9 +40,10 @@ let canvas: HTMLCanvasElement | null = null;
 let assets: AssetLoader | null = null;
 let starts = 0;
 
-async function start() {
-	// a new version of the program takes over the state of the running one, if it has the same structure
-	const previous = handle?.session.takeOver() ?? null;
+// start runs the program. A new version of the program takes over the state of the running one, if it has the same
+// structure, unless fresh is set: then the program starts from the beginning, e.g. with new arguments.
+async function start(fresh: boolean) {
+	const previous = fresh ? null : (handle?.session.takeOver() ?? null);
 	stop();
 	const root = rootRef.value;
 	if (!root || !props.ui.program?.bundle) return;
@@ -51,7 +52,6 @@ async function start() {
 	const c = document.createElement('canvas');
 	c.tabIndex = 0;
 	c.className = 'block w-full h-full outline-hidden';
-	c.style.touchAction = 'none';
 	root.appendChild(c);
 	canvas = c;
 
@@ -90,12 +90,15 @@ async function start() {
 			session = s;
 		},
 		previous,
+		alive: () => run === starts,
 	});
 	if (run !== starts) {
 		h?.stop();
 		return;
 	}
 	handle = h;
+	// the inputs may have changed, while the program was loading
+	h?.inputs(props.ui.program?.inputs?.value ?? []);
 }
 
 function stop() {
@@ -108,14 +111,29 @@ function stop() {
 	canvas = null;
 }
 
-onMounted(start);
+onMounted(() => start(true));
 onUnmounted(stop);
 
-// a new version of the program, e.g. after an edit, replaces the running one, while a render of nago, which
-// changes nothing of it, keeps the program and its state
+// Other arguments or another id start the program from the beginning, with the arguments and the channel of the
+// id. A new version of the program, e.g. after an edit, replaces the running one and takes over its state, if the
+// arguments and the id stay. Other inputs apply to the running program. A render of nago, which changes nothing of
+// it, keeps the program and its state.
 watch(
-	() => `${props.ui.program?.bundle}|${props.ui.program?.init}`,
-	() => start()
+	[
+		() => props.ui.id ?? '',
+		() => props.ui.program?.args ?? '',
+		() => `${props.ui.program?.bundle}|${props.ui.program?.init}`,
+		() => (props.ui.program?.inputs?.value ?? []).join(','),
+	],
+	([id, args, version, inputs], [oldID, oldArgs, oldVersion, oldInputs]) => {
+		if (id !== oldID || args !== oldArgs) {
+			start(true);
+		} else if (version !== oldVersion) {
+			start(false);
+		} else if (inputs !== oldInputs) {
+			handle?.inputs(props.ui.program?.inputs?.value ?? []);
+		}
+	}
 );
 </script>
 

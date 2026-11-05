@@ -41,7 +41,9 @@ func Canvas(id string, b *gostrict.Bundle) TCanvas {
 
 // Init sets the exported function, which the component calls first, and its arguments as neutral values, see
 // [gostrict.ValueKind]. If it returns a state, the component passes the state to the other functions, which take
-// one.
+// one. A render with other arguments or another id starts the program from the beginning, without the state of the
+// running one; a new version of the bundle with the same arguments and id takes the state over, if it has the same
+// structure.
 func (c TCanvas) Init(name string, args ...any) TCanvas {
 	c.spec.Init = name
 	c.spec.Args = args
@@ -65,7 +67,9 @@ func (c TCanvas) Resize(name string) TCanvas {
 
 // Inputs sets the input events, which the component passes to the handler of input.Event of the program, see
 // package go.wdy.de/nago/pkg/gostrict/lib/input. If the program has such a handler and no inputs are set, it
-// receives the pointer, wheel and key events.
+// receives the pointer, wheel and key events. The page scrolls over the component as next to it, unless the program
+// has such a handler and the inputs have the wheel, which then goes to the program only, or the pointer, which then
+// gets the gestures of a touch. Other inputs apply to the running program, which keeps its state.
 func (c TCanvas) Inputs(types ...core.InputEventType) TCanvas {
 	c.spec.Inputs = types
 	return c

@@ -30,17 +30,35 @@ export interface StartOptions {
 	attached?: (s: Session) => void;
 	// previous is the state of the former version of the program, see Session.takeOver
 	previous?: Previous | null;
+	// alive tells, whether the component still wants this start, after the program has been loaded. A start, which a
+	// later one has replaced, neither calls Init nor takes the messages, which the backend keeps for the component.
+	alive?: () => boolean;
 }
 
 export interface ProgramHandle {
 	session: Session;
+	// inputs replaces the input events, which go to the program, without restarting it
+	inputs(types: readonly InputEventTypeValues[]): void;
 	stop(): void;
 }
+
+// pointerTypes are the input events of a pointer: a program, which handles them, gets the gestures of a touch over
+// its element, else the browser scrolls the page with them
+const pointerTypes = [
+	InputEventTypeValues.InputEventPointerDown,
+	InputEventTypeValues.InputEventPointerMove,
+	InputEventTypeValues.InputEventPointerUp,
+	InputEventTypeValues.InputEventPointerCancel,
+];
 
 /**
  * startProgram loads the program of a component and runs it: it calls Init, tells it the size of the component,
  * passes the input events and calls the Frame function in each animation frame, until stop is called. The root
  * element shows the average time of a frame of the program in milliseconds in its attribute data-frame-ms.
+ *
+ * The page scrolls over the input element as next to it, unless the program takes the wheel or the pointer: only a
+ * program, which handles input.Event, gets the wheel, if its inputs have it, and the gestures of a touch, if its
+ * inputs have the pointer (touch-action: none); else the input element keeps the default of the browser.
  */
 export async function startProgram(opts: StartOptions): Promise<ProgramHandle | null> {
 	let manifest;
@@ -50,6 +68,7 @@ export async function startProgram(opts: StartOptions): Promise<ProgramHandle | 
 		console.error('gostrict: cannot load the program', e);
 		return null;
 	}
+	if (opts.alive && !opts.alive()) return null;
 
 	const session = new Session({
 		id: opts.id,
@@ -82,13 +101,25 @@ export async function startProgram(opts: StartOptions): Promise<ProgramHandle | 
 	observer.observe(opts.root);
 
 	let stopInput = () => {};
-	if (session.wantsInput) {
-		const types = new Set<InputEventTypeValues>(opts.program.inputs?.value ?? []);
+	let inputKey: string | null = null;
+	let stopped = false;
+	const inputs = (list: readonly InputEventTypeValues[]) => {
+		if (stopped) return;
+		const types = new Set<InputEventTypeValues>(list);
+		const key = [...types].sort((a, b) => a - b).join(',');
+		if (key === inputKey) return;
+		inputKey = key;
+		stopInput();
+		stopInput = () => {};
+		const pointer = session.wantsInput && pointerTypes.some((t) => types.has(t));
+		opts.input.style.touchAction = pointer ? 'none' : '';
+		if (!session.wantsInput) return;
 		stopInput = listenInput(opts.input, types, (s) => session.input(s), {
 			preventWheel: true,
 			capturePointer: true,
 		});
-	}
+	};
+	inputs(opts.program.inputs?.value ?? []);
 
 	let raf = 0;
 	if (session.animated) {
@@ -111,7 +142,9 @@ export async function startProgram(opts: StartOptions): Promise<ProgramHandle | 
 
 	return {
 		session,
+		inputs,
 		stop() {
+			stopped = true;
 			cancelAnimationFrame(raf);
 			observer.disconnect();
 			stopInput();
