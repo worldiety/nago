@@ -61,6 +61,7 @@ import {
 	WebView,
 	WindowTitle,
 	ThreeJS,
+	WeekCalendar,
 } from '@/shared/proto/nprotoc_gen';
 
 const LazyUiAccessible = defineAsyncComponent(() => import('@/components/accessible/UiAccessible.vue'));
@@ -114,6 +115,7 @@ const LazyUiToggle = defineAsyncComponent(() => import('@/components/UiToggle.vu
 const LazyUiUnknownType = defineAsyncComponent(() => import('@/components/UiUnknownType.vue'));
 const LazyUiVideo = defineAsyncComponent(() => import('@/components/video/UiVideo.vue'));
 const LazyUiWebView = defineAsyncComponent(() => import('@/components/UiWebView.vue'));
+const LazyUiWeekCalendar = defineAsyncComponent(() => import('@/components/weekcal/UiWeekCalendar.vue'));
 const LazyUiWindowTitle = defineAsyncComponent(() => import('@/components/UiWindowTitle.vue'));
 /**
  * vueComponentFor returns an associated vue component for the given nago protocol component.
@@ -319,6 +321,10 @@ export function vueComponentFor(ngc: NagoComponent): Component {
 
 	if (ngc instanceof WebView) {
 		return LazyUiWebView;
+	}
+
+	if (ngc instanceof WeekCalendar) {
+		return LazyUiWeekCalendar;
 	}
 
 	if (ngc instanceof WindowTitle) {

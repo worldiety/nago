@@ -184,5 +184,11 @@
 		"resetZoom": "Zoom zurücksetzen",
 		"zoomRange": "Ausschnitt von {from} bis {to}",
 		"zoomAll": "Alle Werte sichtbar"
+	},
+	"weekcal": {
+		"label": "Wochenkalender",
+		"to": "bis",
+		"hiddenBefore": "{n} davor",
+		"hiddenAfter": "{n} danach"
 	}
 }
