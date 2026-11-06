@@ -140,7 +140,7 @@ func openCalendar(t *testing.T, m *model) *nagotest.Window {
 			}
 
 			cal := weekcal.WeekCalendar("cal", weekcal.Day{Title: "Montag"}, weekcal.Day{Title: "Dienstag"}).
-				Range(360, 1320).Step(15).Events(events...).Disabled(disabled.Get())
+				Range(360, 1320).Step(15).Append(events...).Disabled(disabled.Get())
 			if !noClick.Get() {
 				cal = cal.OnClick(func(id string) { m.record("CLICK " + id) })
 			}
@@ -514,7 +514,7 @@ func TestWeekCalendarValidate(t *testing.T) {
 		return r
 	}
 	cal := func(n int, ev []weekcal.Event) weekcal.TWeekCalendar {
-		return weekcal.WeekCalendar("cal", days(n)...).Events(ev...)
+		return weekcal.WeekCalendar("cal", days(n)...).Append(ev...)
 	}
 	two := func() weekcal.TWeekCalendar { return cal(2, ab) }
 	for _, c := range []struct {
@@ -567,5 +567,106 @@ func TestWeekCalendarValidate(t *testing.T) {
 		if (err == nil) != c.valid {
 			t.Errorf("%s: Validate() = %v, expected valid %v", c.name, err, c.valid)
 		}
+	}
+}
+
+// openView opens a window with the view of render.
+func openView(t *testing.T, render func(wnd core.Window) core.View) *nagotest.Window {
+	t.Helper()
+	app := nagotest.New(t, func(cfg *application.Configurator) {
+		cfg.SetApplicationID("de.worldiety.weekcaltest")
+		cfg.RootView("view", render)
+	})
+	return app.Open(t, nil, "view", nagotest.StaleRetries(0))
+}
+
+// eventIDs are the ids of the events of a calendar in the tree.
+func eventIDs(cal *proto.WeekCalendar) []string {
+	var ids []string
+	for _, e := range cal.Events {
+		ids = append(ids, string(e.Id))
+	}
+	return ids
+}
+
+// Append appends, also twice and in a loop, and returns a new calendar: the receiver and another branch stay unchanged.
+func TestWeekCalendarAppend(t *testing.T) {
+	ev := func(id string, day, from int) weekcal.Event {
+		return weekcal.Event{ID: id, Day: day, From: from, To: from + 60}
+	}
+	w := openView(t, func(wnd core.Window) core.View {
+		looped := weekcal.WeekCalendar("looped", weekcal.Day{Title: "Montag"})
+		for _, e := range []weekcal.Event{ev("E1", 0, 480), ev("E2", 0, 600), ev("E3", 0, 720)} {
+			looped = looped.Append(e)
+		}
+		twice := weekcal.WeekCalendar("twice", weekcal.Day{Title: "Montag"}).Append(ev("E1", 0, 480)).Append(ev("E2", 0, 600))
+		base := weekcal.WeekCalendar("branch", weekcal.Day{Title: "Montag"}, weekcal.Day{Title: "Dienstag"}).
+			Append(ev("C1", 0, 480)).Append(ev("C2", 0, 600)).Append(ev("C3", 1, 480))
+		x := base.Append(ev("D", 1, 600))
+		y := base.Append(ev("E", 1, 720))
+		return ui.VStack(looped, twice, base, x, y)
+	})
+	cs := calendars(w)
+	if len(cs) != 5 {
+		t.Fatalf("premise: %d calendars instead of five", len(cs))
+	}
+	for i, want := range []string{"E1,E2,E3", "E1,E2", "C1,C2,C3", "C1,C2,C3,D", "C1,C2,C3,E"} {
+		if got := strings.Join(eventIDs(cs[i]), ","); got != want {
+			t.Errorf("calendar %d (%s): events %s, expected %s", i, cs[i].Id, got, want)
+		}
+	}
+}
+
+// Per state, nago discards a number, which is not greater than the acknowledged one, without a callback: number 5
+// twice and then 3 call once, and the same calendar twice in the tree calls once for one action.
+func TestWeekCalendarSequenceNumbers(t *testing.T) {
+	m := &model{}
+	w := openCalendar(t, m)
+	sendAs := func(cal *proto.WeekCalendar, a action, n int64) {
+		a.Seq = n
+		w.WeekCalendarSend(cal, a.text())
+	}
+	calls := func() int { return len(m.recorded()) }
+	sendAs(calendarOf(t, w), sel(0, 540, 600), 5)
+	if c, ack := calls(), int64(calendarOf(t, w).Ack); c != 1 || ack != 5 {
+		t.Errorf("number 5: %d callbacks, ack %d; expected 1 and 5", c, ack)
+	}
+	sendAs(calendarOf(t, w), sel(1, 540, 600), 5)
+	if c, ack := calls(), int64(calendarOf(t, w).Ack); c != 1 || ack != 5 {
+		t.Errorf("number 5 again: %d callbacks, ack %d; expected 1 and 5", c, ack)
+	}
+	sendAs(calendarOf(t, w), sel(0, 600, 660), 3)
+	if c, ack := calls(), int64(calendarOf(t, w).Ack); c != 1 || ack != 5 {
+		t.Errorf("number 3 afterward: %d callbacks, ack %d; expected 1 and 5", c, ack)
+	}
+	sendAs(calendarOf(t, w), sel(0, 600, 660), 6)
+	if c, ack := calls(), int64(calendarOf(t, w).Ack); c != 2 || ack != 6 {
+		t.Errorf("counter row number 6: %d callbacks, ack %d; expected 2 and 6", c, ack)
+	}
+}
+
+func TestWeekCalendarTwiceInTree(t *testing.T) {
+	m := &model{}
+	w := openView(t, func(wnd core.Window) core.View {
+		cal := weekcal.WeekCalendar("cal", weekcal.Day{Title: "Montag"}).OnSelect(func(s weekcal.Span) error {
+			m.record(fmt.Sprintf("SELECT %d %d %d", s.Day, s.From, s.To))
+			return nil
+		})
+		return ui.VStack(cal, cal)
+	})
+	cs := calendars(w)
+	if len(cs) != 2 {
+		t.Fatalf("premise: %d calendars instead of two", len(cs))
+	}
+	a := sel(0, 540, 600)
+	a.Seq = seq.Add(1)
+	w.WeekCalendarSend(cs[0], a.text())
+	w.WeekCalendarSend(calendars(w)[1], a.text())
+	if got := m.recorded(); len(got) != 1 {
+		t.Errorf("one action from both occurrences: callbacks %q, expected exactly one", got)
+	}
+	send(w, calendars(w)[1], sel(0, 600, 660))
+	if got := m.recorded(); len(got) != 2 {
+		t.Errorf("counter row: a new number from the second occurrence: callbacks %q, expected two", got)
 	}
 }
