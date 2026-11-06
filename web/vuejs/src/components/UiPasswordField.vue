@@ -16,7 +16,7 @@ import { frameCSS } from '@/components/shared/frame';
 import { inputWrapperStyleFrom } from '@/components/shared/inputWrapperStyle';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
-import { FunctionCallRequested, PasswordField, UpdateStateValueRequested } from '@/shared/proto/nprotoc_gen';
+import { PasswordField, UpdateStateValueRequested } from '@/shared/proto/nprotoc_gen';
 import { PRE_SUBMIT_GROUP, PreSubmitGroup } from '@/components/form/preSubmitGroup';
 
 const props = defineProps<{
@@ -90,10 +90,15 @@ function debouncedInput() {
 }
 
 function handleKeydownEnter(event: Event) {
-	if (props.ui.keydownEnter) {
-		event.stopPropagation();
-		serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.keydownEnter, nextRID()));
-	}
+	if (!props.ui.keydownEnter) return;
+
+	event.stopPropagation();
+	// Like the text field, the enter carries the typed value, so that the callback sees it, even if the debounce has
+	// not sent it yet. The server calls the callback also without a state.
+	clearTimeout(timer); // cancel any debounced follow up event
+	serviceAdapter.sendEvent(
+		new UpdateStateValueRequested(props.ui.inputValue, props.ui.keydownEnter, nextRID(), inputValue.value)
+	);
 }
 
 function toggleRevealed(): void {
