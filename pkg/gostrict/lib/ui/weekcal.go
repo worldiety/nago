@@ -65,11 +65,12 @@ func WeekCalendar(id string, days ...WeekCalendarDay) TWeekCalendar {
 	return TWeekCalendar{ref: wrap(nweekcal.WeekCalendar(id, weekCalendarDays(days)...))}
 }
 
-// Events sets the events of the calendar.
+// Append appends events to the calendar, like weekcal.TWeekCalendar.Append of nago, also several times, e.g. one in
+// each pass of a loop over a list. It returns a new calendar; the receiver stays unchanged.
 //
 //gostrict:host
-func (c TWeekCalendar) Events(events ...WeekCalendarEvent) TWeekCalendar {
-	return TWeekCalendar{ref: wrap(get[nweekcal.TWeekCalendar](c.ref).Events(weekCalendarEvents(events)...))}
+func (c TWeekCalendar) Append(events ...WeekCalendarEvent) TWeekCalendar {
+	return TWeekCalendar{ref: wrap(get[nweekcal.TWeekCalendar](c.ref).Append(weekCalendarEvents(events)...))}
 }
 
 // Range sets the visible minutes, 0 <= from < to <= 1440 in the raster of Step, by default 360 to 1320.

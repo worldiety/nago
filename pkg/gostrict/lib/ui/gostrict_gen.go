@@ -4194,8 +4194,8 @@ func Host() gostrict.Funcs {
 			r0 := TWebView{ref: args[0].(js.Ref)}.Raw(args[1].(string))
 			return []any{r0.ref}
 		},
-		"go.wdy.de/nago/pkg/gostrict/lib/ui.TWeekCalendar.Events": func(args []any) []any {
-			r0 := TWeekCalendar{ref: args[0].(js.Ref)}.Events(gostrictFrom98(args[1].([]any))...)
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TWeekCalendar.Append": func(args []any) []any {
+			r0 := TWeekCalendar{ref: args[0].(js.Ref)}.Append(gostrictFrom98(args[1].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TWeekCalendar.Range": func(args []any) []any {
