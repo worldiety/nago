@@ -140,7 +140,7 @@ func main() {
 					Text("deaktiviert"),
 				).Gap(L8),
 				weekcal.WeekCalendar("week", days...).
-					Events(data.list()...).
+					Append(data.list()...).
 					Now(0, 600).
 					Disabled(disabled.Get()).
 					OnClick(func(id string) { clicked.Set(id) }).
