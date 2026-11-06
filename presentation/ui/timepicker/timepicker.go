@@ -367,6 +367,21 @@ func (c TPicker) setSec(seconds int) {
 	c.currentSelectedState.Set(c.round(Duration(days, hours, minutes, seconds)))
 }
 
+// unitOf returns the value of the unit name of the duration, see FromDuration.
+func unitOf(name string, d time.Duration) int {
+	days, hours, minutes, seconds := FromDuration(d)
+	switch name {
+	case unitDay:
+		return days
+	case unitHour:
+		return hours
+	case unitMin:
+		return minutes
+	default:
+		return seconds
+	}
+}
+
 // clamp returns v within 0 and max: a typed value out of the bounds of a field is set to the nearest bound, instead
 // of wrapping around like the buttons.
 func clamp(v, max int) int {
@@ -487,16 +502,21 @@ func keyDown(unit string) string {
 	return "nago.timepicker." + unit + ".down"
 }
 
-// editInt is the field of a unit of the dialog. The field shows the value of the working copy; its state only
-// carries the typed text to set, which parses it, so the render does not set it (which would render again).
-// Text, which is no integer, leaves the value.
+// editInt is the field of a unit of the dialog, which shows the value of the working copy. Its state carries the
+// typed text to set, which parses it; text, which is no integer, leaves the value. The observer then sets the state
+// to the shown value again, so that each typed text, which differs from it, renders the field again with its value,
+// and the render need not set the state (which would render each input and each +/- twice).
 func editInt(state *core.State[time.Duration], inputId, name string, val int, set func(v int)) core.View {
 	formattedVal := fmt.Sprintf("%02d", val)
 
-	editVal := core.DerivedState[string](state, name+"-edit").Observe(func(newValue string) {
+	editVal := core.DerivedState[string](state, name+"-edit").Init(func() string {
+		return formattedVal
+	})
+	editVal.Observe(func(newValue string) {
 		if v, err := strconv.Atoi(newValue); err == nil {
 			set(v)
 		}
+		editVal.Set(fmt.Sprintf("%02d", unitOf(name, state.Get())))
 	})
 
 	textField := ui.TextField("", formattedVal).
