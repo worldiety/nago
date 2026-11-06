@@ -12,6 +12,7 @@ import (
 	"math/rand"
 
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ui/accessibility"
 )
 
 // TCheckboxField is a basic component (Checkbox Field).
@@ -141,18 +142,32 @@ func (c TCheckboxField) Render(context core.RenderContext) core.RenderNode {
 		opacity = 0.6
 	}
 
+	ariaDescription := c.errorText
+	if ariaDescription == "" {
+		ariaDescription = c.supportingText
+	}
+
 	return HStack(
-		Checkbox(c.value).
-			ID(c.id).
-			Disabled(c.disabled).
-			InputValue(c.inputValue).
-			Name(c.name),
+		accessibility.Accessible(
+			Checkbox(c.value).
+				ID(c.id).
+				Disabled(c.disabled).
+				InputValue(c.inputValue).
+				Name(c.name),
+		).
+			Label(c.label).
+			Description(ariaDescription).
+			Invalid(c.errorText != ""),
 		VStack(
-			Text(c.label).LabelFor(labelFor),
-			IfElse(c.errorText == "",
-				Text(c.supportingText).Font(Font{Size: "0.75rem"}).Color(ST0).LabelFor(labelFor),
-				Text(c.errorText).Font(Font{Size: "0.75rem"}).Color(SE0).LabelFor(labelFor),
-			),
+			accessibility.Accessible(
+				Text(c.label).LabelFor(labelFor),
+			).Hidden(true),
+			accessibility.Accessible(
+				IfElse(c.errorText == "",
+					If(c.supportingText != "", Text(c.supportingText).Font(Font{Size: "0.75rem"}).Color(ST0).LabelFor(labelFor)),
+					Text(c.errorText).Font(Font{Size: "0.75rem"}).Color(SE0).LabelFor(labelFor),
+				),
+			).Hidden(true),
 		).Alignment(Leading).Opacity(opacity),
 	).Alignment(Leading).
 		Gap(L4).

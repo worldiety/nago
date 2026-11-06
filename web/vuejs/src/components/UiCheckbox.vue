@@ -1,5 +1,5 @@
 <!--
- Copyright (c) 2025 worldiety GmbH
+ Copyright (c) 2026 worldiety GmbH
 
  This file is part of the NAGO Low-Code Platform.
  Licensed under the terms specified in the LICENSE file.
@@ -8,16 +8,26 @@
 -->
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, useAttrs, watch } from 'vue';
 import { bool2Str } from '@/components/shared/util';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
 import type { Checkbox } from '@/shared/proto/nprotoc_gen';
 import { UpdateStateValueRequested } from '@/shared/proto/nprotoc_gen';
 
+defineOptions({ inheritAttrs: false });
+
 const props = defineProps<{
 	ui: Checkbox;
 }>();
+
+// aria attributes (e.g. from UiAccessible) belong to the focusable input, all others to the wrapper.
+// attrs is not reactive, therefore plain functions are used which are evaluated on each render.
+const attrs = useAttrs();
+
+function filterAttrs(aria: boolean): Record<string, unknown> {
+	return Object.fromEntries(Object.entries(attrs).filter(([key]) => key.startsWith('aria-') === aria));
+}
 
 const serviceAdapter = useServiceAdapter();
 
@@ -55,12 +65,20 @@ function checkboxSelected(): void {
 <template>
 	<div
 		v-if="!ui.invisible"
+		v-bind="filterAttrs(false)"
 		class="input-checkbox"
 		:class="{ 'input-checkbox-disabled': ui.disabled }"
 		@click="checkboxSelectedClick"
 		@keydown.enter="checkboxSelected"
 	>
-		<input :id="ui.id" :name="ui.name" :checked="checked" type="checkbox" :disabled="ui.disabled" />
+		<input
+			v-bind="filterAttrs(true)"
+			:id="ui.id"
+			:name="ui.name"
+			:checked="checked"
+			type="checkbox"
+			:disabled="ui.disabled"
+		/>
 	</div>
 </template>
 
