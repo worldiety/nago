@@ -4194,6 +4194,50 @@ func Host() gostrict.Funcs {
 			r0 := TWebView{ref: args[0].(js.Ref)}.Raw(args[1].(string))
 			return []any{r0.ref}
 		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TWeekCalendar.Events": func(args []any) []any {
+			r0 := TWeekCalendar{ref: args[0].(js.Ref)}.Events(gostrictFrom98(args[1].([]any))...)
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TWeekCalendar.Range": func(args []any) []any {
+			r0 := TWeekCalendar{ref: args[0].(js.Ref)}.Range(args[1].(int32), args[2].(int32))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TWeekCalendar.Step": func(args []any) []any {
+			r0 := TWeekCalendar{ref: args[0].(js.Ref)}.Step(args[1].(int32))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TWeekCalendar.ClickSpan": func(args []any) []any {
+			r0 := TWeekCalendar{ref: args[0].(js.Ref)}.ClickSpan(args[1].(int32))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TWeekCalendar.Now": func(args []any) []any {
+			r0 := TWeekCalendar{ref: args[0].(js.Ref)}.Now(args[1].(int32), args[2].(int32))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TWeekCalendar.HourHeight": func(args []any) []any {
+			r0 := TWeekCalendar{ref: args[0].(js.Ref)}.HourHeight(args[1].(float64))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TWeekCalendar.Disabled": func(args []any) []any {
+			r0 := TWeekCalendar{ref: args[0].(js.Ref)}.Disabled(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TWeekCalendar.Frame": func(args []any) []any {
+			r0 := TWeekCalendar{ref: args[0].(js.Ref)}.Frame(gostrictFrom39(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TWeekCalendar.OnClick": func(args []any) []any {
+			r0 := TWeekCalendar{ref: args[0].(js.Ref)}.OnClick(gostrictFunc99(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TWeekCalendar.OnSelect": func(args []any) []any {
+			r0 := TWeekCalendar{ref: args[0].(js.Ref)}.OnSelect(gostrictFunc100(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TWeekCalendar.OnMove": func(args []any) []any {
+			r0 := TWeekCalendar{ref: args[0].(js.Ref)}.OnMove(gostrictFunc101(args[1].(gostrict.Callback)))
+			return []any{r0.ref}
+		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TWindowTitle.Title": func(args []any) []any {
 			r0 := TWindowTitle{ref: args[0].(js.Ref)}.Title(args[1].(string))
 			return []any{r0.ref}
@@ -4215,7 +4259,7 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.Tabs": func(args []any) []any {
-			r0 := Tabs(gostrictFrom98(args[0].([]any))...)
+			r0 := Tabs(gostrictFrom102(args[0].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TabsPage": func(args []any) []any {
@@ -4284,18 +4328,18 @@ func Host() gostrict.Funcs {
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TimeFrameState.Get": func(args []any) []any {
 			r0 := TimeFrameState{ref: args[0].(js.Ref)}.Get()
-			return []any{gostrictTo99(r0)}
+			return []any{gostrictTo103(r0)}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TimeFrameState.Set": func(args []any) []any {
-			TimeFrameState{ref: args[0].(js.Ref)}.Set(gostrictFrom99(args[1].([]any)))
+			TimeFrameState{ref: args[0].(js.Ref)}.Set(gostrictFrom103(args[1].([]any)))
 			return nil
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TimeFrameState.Init": func(args []any) []any {
-			r0 := TimeFrameState{ref: args[0].(js.Ref)}.Init(gostrictFunc100(args[1].(gostrict.Callback)))
+			r0 := TimeFrameState{ref: args[0].(js.Ref)}.Init(gostrictFunc104(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TimeFrameState.Observe": func(args []any) []any {
-			r0 := TimeFrameState{ref: args[0].(js.Ref)}.Observe(gostrictFunc101(args[1].(gostrict.Callback)))
+			r0 := TimeFrameState{ref: args[0].(js.Ref)}.Observe(gostrictFunc105(args[1].(gostrict.Callback)))
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TimeFrameStateOf": func(args []any) []any {
@@ -4367,11 +4411,15 @@ func Host() gostrict.Funcs {
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.ViewThatMatches": func(args []any) []any {
-			r0 := ViewThatMatches(Window{ref: args[0].(js.Ref)}, gostrictFrom102(args[1].([]any))...)
+			r0 := ViewThatMatches(Window{ref: args[0].(js.Ref)}, gostrictFrom106(args[1].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.WebView": func(args []any) []any {
 			r0 := WebView()
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.WeekCalendar": func(args []any) []any {
+			r0 := WeekCalendar(args[0].(string), gostrictFrom107(args[1].([]any))...)
 			return []any{r0.ref}
 		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.WindowTitle": func(args []any) []any {
@@ -4512,7 +4560,7 @@ func HostVars() map[string]any {
 }
 
 func init() {
-	gostrict.Variants[View](TAccordion{}, TAlertDialog{}, TAlertBanner{}, TAlertBannerMessages{}, TAvatar{}, TBarChart{}, TBox{}, TBreadcrumbs{}, TFilledButton{}, TButton{}, TCalendar{}, TCardLayout{}, TCard{}, TCheckbox{}, TCheckboxField{}, TCodeEditor{}, TColorpickerColor{}, TColorpickerPickerField{}, TColorpickerPicker{}, TCountDown{}, TDataView{}, TDatePicker{}, TDialog{}, TDivider{}, TDnDArea{}, TDocumentComment{}, TDocumentEditable{}, TDocumentPage{}, TDropdown{}, TEditorContent{}, TEditorHeader{}, TEditorNavbar{}, TEditorVToolWindow{}, TEditorScreen{}, TEsignatureSignature{}, TPicker{}, TFlowChart{}, TFooter{}, TForm{}, TPager{}, TGrid{}, THero{}, THoverGroup{}, TImage{}, TLineChart{}, TListEntry{}, TList{}, TMenu{}, TModal{}, TNavsplitviewListItem{}, TNavsplitviewTwoColumn{}, TNavsplitviewThreeColumn{}, TPasswordField{}, TPDF{}, TPickerButton{}, TPieChart{}, TProgress{}, TQrCode{}, TRadioButton{}, TRadioButtonField{}, TRichText{}, TRichTextEditor{}, TScaffold{}, TScrollView{}, TSheet{}, TSlider{}, TSliderRangeSlider{}, TSpace{}, TSpacer{}, TSplitView{}, TStack{}, TStepper{}, TSwitcher{}, TTable{}, TTabs{}, TTagsColoredTextPill{}, TText{}, TTextField{}, TTextLayout{}, TThemeSwitcher{}, TTimeField{}, TTimeframePicker{}, TTimepickerPicker{}, TToggle{}, TToggleField{}, TTrackingSupportRequestDialog{}, TVideo{}, TViewThatMatches{}, TWebView{}, TWindowTitle{})
+	gostrict.Variants[View](TAccordion{}, TAlertDialog{}, TAlertBanner{}, TAlertBannerMessages{}, TAvatar{}, TBarChart{}, TBox{}, TBreadcrumbs{}, TFilledButton{}, TButton{}, TCalendar{}, TCardLayout{}, TCard{}, TCheckbox{}, TCheckboxField{}, TCodeEditor{}, TColorpickerColor{}, TColorpickerPickerField{}, TColorpickerPicker{}, TCountDown{}, TDataView{}, TDatePicker{}, TDialog{}, TDivider{}, TDnDArea{}, TDocumentComment{}, TDocumentEditable{}, TDocumentPage{}, TDropdown{}, TEditorContent{}, TEditorHeader{}, TEditorNavbar{}, TEditorVToolWindow{}, TEditorScreen{}, TEsignatureSignature{}, TPicker{}, TFlowChart{}, TFooter{}, TForm{}, TPager{}, TGrid{}, THero{}, THoverGroup{}, TImage{}, TLineChart{}, TListEntry{}, TList{}, TMenu{}, TModal{}, TNavsplitviewListItem{}, TNavsplitviewTwoColumn{}, TNavsplitviewThreeColumn{}, TPasswordField{}, TPDF{}, TPickerButton{}, TPieChart{}, TProgress{}, TQrCode{}, TRadioButton{}, TRadioButtonField{}, TRichText{}, TRichTextEditor{}, TScaffold{}, TScrollView{}, TSheet{}, TSlider{}, TSliderRangeSlider{}, TSpace{}, TSpacer{}, TSplitView{}, TStack{}, TStepper{}, TSwitcher{}, TTable{}, TTabs{}, TTagsColoredTextPill{}, TText{}, TTextField{}, TTextLayout{}, TThemeSwitcher{}, TTimeField{}, TTimeframePicker{}, TTimepickerPicker{}, TToggle{}, TToggleField{}, TTrackingSupportRequestDialog{}, TVideo{}, TViewThatMatches{}, TWebView{}, TWeekCalendar{}, TWindowTitle{})
 }
 
 // HostRef returns the reference of the handle.
@@ -5736,6 +5784,16 @@ func (TWebView) HostFromRef(ref js.Ref) any {
 }
 
 // HostRef returns the reference of the handle.
+func (h TWeekCalendar) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TWeekCalendar) HostFromRef(ref js.Ref) any {
+	return TWeekCalendar{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
 func (h TWindowTitle) HostRef() js.Ref {
 	return h.ref
 }
@@ -5955,6 +6013,8 @@ func gostrictFrom1(x gostrict.Variant) View {
 		return TViewThatMatches{ref: x.Fields[0].(js.Ref)}
 	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TWebView":
 		return TWebView{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TWeekCalendar":
+		return TWeekCalendar{ref: x.Fields[0].(js.Ref)}
 	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TWindowTitle":
 		return TWindowTitle{ref: x.Fields[0].(js.Ref)}
 	}
@@ -6141,6 +6201,8 @@ func gostrictTo1(v View) gostrict.Variant {
 		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TViewThatMatches", Fields: []any{x.ref}}
 	case TWebView:
 		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TWebView", Fields: []any{x.ref}}
+	case TWeekCalendar:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TWeekCalendar", Fields: []any{x.ref}}
 	case TWindowTitle:
 		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TWindowTitle", Fields: []any{x.ref}}
 	}
@@ -6236,11 +6298,11 @@ func gostrictFunc9(cb gostrict.Callback) func(v bool) {
 }
 
 func gostrictFrom10(v []any) Border {
-	return Border{TopLeftRadius: Length(v[0].(string)), TopRightRadius: Length(v[1].(string)), BottomLeftRadius: Length(v[2].(string)), BottomRightRadius: Length(v[3].(string)), LeftWidth: Length(v[4].(string)), TopWidth: Length(v[5].(string)), RightWidth: Length(v[6].(string)), BottomWidth: Length(v[7].(string)), LeftColor: Color(v[8].(string)), TopColor: Color(v[9].(string)), RightColor: Color(v[10].(string)), BottomColor: Color(v[11].(string)), BoxShadow: gostrictFrom103(v[12].([]any)), BorderStyle: BorderStyle(v[13].(int32))}
+	return Border{TopLeftRadius: Length(v[0].(string)), TopRightRadius: Length(v[1].(string)), BottomLeftRadius: Length(v[2].(string)), BottomRightRadius: Length(v[3].(string)), LeftWidth: Length(v[4].(string)), TopWidth: Length(v[5].(string)), RightWidth: Length(v[6].(string)), BottomWidth: Length(v[7].(string)), LeftColor: Color(v[8].(string)), TopColor: Color(v[9].(string)), RightColor: Color(v[10].(string)), BottomColor: Color(v[11].(string)), BoxShadow: gostrictFrom108(v[12].([]any)), BorderStyle: BorderStyle(v[13].(int32))}
 }
 
 func gostrictTo10(x Border) []any {
-	return []any{string(x.TopLeftRadius), string(x.TopRightRadius), string(x.BottomLeftRadius), string(x.BottomRightRadius), string(x.LeftWidth), string(x.TopWidth), string(x.RightWidth), string(x.BottomWidth), string(x.LeftColor), string(x.TopColor), string(x.RightColor), string(x.BottomColor), gostrictTo103(x.BoxShadow), int32(x.BorderStyle)}
+	return []any{string(x.TopLeftRadius), string(x.TopRightRadius), string(x.BottomLeftRadius), string(x.BottomRightRadius), string(x.LeftWidth), string(x.TopWidth), string(x.RightWidth), string(x.BottomWidth), string(x.LeftColor), string(x.TopColor), string(x.RightColor), string(x.BottomColor), gostrictTo108(x.BoxShadow), int32(x.BorderStyle)}
 }
 
 func gostrictFrom11(v []any) []View {
@@ -6270,7 +6332,7 @@ func gostrictTo13(x CalendarColors) []any {
 func gostrictFrom14(v []any) []ChartDataPoint {
 	res := make([]ChartDataPoint, len(v))
 	for i, e := range v {
-		res[i] = gostrictFrom104(e.([]any))
+		res[i] = gostrictFrom109(e.([]any))
 	}
 	return res
 }
@@ -6448,7 +6510,7 @@ func gostrictFunc24(cb gostrict.Callback) func() View {
 func gostrictFrom25(v []any) []DropdownOption {
 	res := make([]DropdownOption, len(v))
 	for i, e := range v {
-		res[i] = gostrictFrom105(e.([]any))
+		res[i] = gostrictFrom110(e.([]any))
 	}
 	return res
 }
@@ -6524,19 +6586,19 @@ func gostrictFunc29(cb gostrict.Callback) func(v float64) {
 }
 
 func gostrictFrom30(v []any) FlowchartModel {
-	return FlowchartModel{Nodes: gostrictFrom106(v[0].([]any)), Edges: gostrictFrom107(v[1].([]any))}
+	return FlowchartModel{Nodes: gostrictFrom111(v[0].([]any)), Edges: gostrictFrom112(v[1].([]any))}
 }
 
 func gostrictTo30(x FlowchartModel) []any {
-	return []any{gostrictTo106(x.Nodes), gostrictTo107(x.Edges)}
+	return []any{gostrictTo111(x.Nodes), gostrictTo112(x.Edges)}
 }
 
 func gostrictFrom31(v []any) FlowChartActionData {
-	return FlowChartActionData{Node: gostrictFrom108(v[0].([]any)), Edge: gostrictFrom109(v[1].([]any)), ViewX: v[2].(float64), ViewY: v[3].(float64), PaneX: v[4].(float64), PaneY: v[5].(float64), SelectedNodes: gostrictFrom110(v[6].([]any)), SelectedEdges: gostrictFrom110(v[7].([]any)), RightClick: v[8].(bool)}
+	return FlowChartActionData{Node: gostrictFrom113(v[0].([]any)), Edge: gostrictFrom114(v[1].([]any)), ViewX: v[2].(float64), ViewY: v[3].(float64), PaneX: v[4].(float64), PaneY: v[5].(float64), SelectedNodes: gostrictFrom115(v[6].([]any)), SelectedEdges: gostrictFrom115(v[7].([]any)), RightClick: v[8].(bool)}
 }
 
 func gostrictTo31(x FlowChartActionData) []any {
-	return []any{gostrictTo108(x.Node), gostrictTo109(x.Edge), x.ViewX, x.ViewY, x.PaneX, x.PaneY, gostrictTo110(x.SelectedNodes), gostrictTo110(x.SelectedEdges), x.RightClick}
+	return []any{gostrictTo113(x.Node), gostrictTo114(x.Edge), x.ViewX, x.ViewY, x.PaneX, x.PaneY, gostrictTo115(x.SelectedNodes), gostrictTo115(x.SelectedEdges), x.RightClick}
 }
 
 func gostrictFunc32(cb gostrict.Callback) func() FlowChartActionData {
@@ -6585,7 +6647,7 @@ func gostrictTo34(x FlowchartPoint) []any {
 func gostrictFrom35(v []any) []FlowchartNode {
 	res := make([]FlowchartNode, len(v))
 	for i, e := range v {
-		res[i] = gostrictFrom108(e.([]any))
+		res[i] = gostrictFrom113(e.([]any))
 	}
 	return res
 }
@@ -6593,7 +6655,7 @@ func gostrictFrom35(v []any) []FlowchartNode {
 func gostrictFrom36(v []any) []FlowchartEdge {
 	res := make([]FlowchartEdge, len(v))
 	for i, e := range v {
-		res[i] = gostrictFrom109(e.([]any))
+		res[i] = gostrictFrom114(e.([]any))
 	}
 	return res
 }
@@ -6794,14 +6856,14 @@ func gostrictFunc51(cb gostrict.Callback) func(row int32, col int32) sheet.Cell 
 			if err != nil {
 				return *new(sheet.Cell)
 			}
-			return gostrictRead111(r)
+			return gostrictRead116(r)
 		}
 		res, err := cb.Call(a0, a1)
 		if err != nil {
 			var z0 sheet.Cell
 			return z0
 		}
-		return gostrictFrom111(res[0].([]any))
+		return gostrictFrom116(res[0].([]any))
 	}
 }
 
@@ -6859,7 +6921,7 @@ func gostrictFrom55(v []any) []Color {
 func gostrictFrom56(v []any) []BarChartMarker {
 	res := make([]BarChartMarker, len(v))
 	for i, e := range v {
-		res[i] = gostrictFrom112(e.([]any))
+		res[i] = gostrictFrom117(e.([]any))
 	}
 	return res
 }
@@ -6913,7 +6975,7 @@ func gostrictTo60(x CalendarOffset) []any {
 func gostrictFrom61(v []any) []CalendarCategory {
 	res := make([]CalendarCategory, len(v))
 	for i, e := range v {
-		res[i] = gostrictFrom113(e.([]any))
+		res[i] = gostrictFrom118(e.([]any))
 	}
 	return res
 }
@@ -6937,7 +6999,7 @@ func gostrictTo63(x CalendarLane) []any {
 func gostrictFrom64(v []any) []CalendarChip {
 	res := make([]CalendarChip, len(v))
 	for i, e := range v {
-		res[i] = gostrictFrom114(e.([]any))
+		res[i] = gostrictFrom119(e.([]any))
 	}
 	return res
 }
@@ -6967,7 +7029,7 @@ func gostrictFunc65(cb gostrict.Callback) func(style CalendarStyle) View {
 func gostrictFrom66(v []any) []CalendarColumn {
 	res := make([]CalendarColumn, len(v))
 	for i, e := range v {
-		res[i] = gostrictFrom115(e.([]any))
+		res[i] = gostrictFrom120(e.([]any))
 	}
 	return res
 }
@@ -7102,11 +7164,11 @@ func gostrictFrom77(v []any) []TFlowchartCustomContent {
 }
 
 func gostrictFrom78(v []any) FlowchartToolbar {
-	return FlowchartToolbar{Position: FlowChartToolbarPosition(v[0].(int32)), Orientation: FlowChartToolbarOrientation(v[1].(int32)), Actions: gostrictFrom116(v[2].([]any))}
+	return FlowchartToolbar{Position: FlowChartToolbarPosition(v[0].(int32)), Orientation: FlowChartToolbarOrientation(v[1].(int32)), Actions: gostrictFrom121(v[2].([]any))}
 }
 
 func gostrictTo78(x FlowchartToolbar) []any {
-	return []any{int32(x.Position), int32(x.Orientation), gostrictTo116(x.Actions)}
+	return []any{int32(x.Position), int32(x.Orientation), gostrictTo121(x.Actions)}
 }
 
 func gostrictFrom79(v []any) []Length {
@@ -7265,14 +7327,14 @@ func gostrictFunc88(cb gostrict.Callback) func(e sheet.Edit) error {
 		if fast {
 			w := fc.Begin()
 			defer fc.End()
-			gostrictWrite117(w, a0)
+			gostrictWrite122(w, a0)
 			r, err := fc.Invoke()
 			if err != nil {
 				return err
 			}
 			return r.Error()
 		}
-		res, err := cb.Call(gostrictTo117(a0))
+		res, err := cb.Call(gostrictTo122(a0))
 		if err != nil {
 			return err
 		}
@@ -7395,7 +7457,71 @@ func gostrictFrom97(v []any) []TTableCell {
 	return res
 }
 
-func gostrictFrom98(v []any) []TTabsPage {
+func gostrictFrom98(v []any) []WeekCalendarEvent {
+	res := make([]WeekCalendarEvent, len(v))
+	for i, e := range v {
+		res[i] = gostrictFrom123(e.([]any))
+	}
+	return res
+}
+
+func gostrictFunc99(cb gostrict.Callback) func(id string) {
+	fc, fast := cb.(gostrict.FastCallback)
+	return func(a0 string) {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			w.String(string(a0))
+			_, _ = fc.Invoke()
+			return
+		}
+		_, _ = cb.Call(a0)
+	}
+}
+
+func gostrictFunc100(cb gostrict.Callback) func(s WeekCalendarSpan) error {
+	fc, fast := cb.(gostrict.FastCallback)
+	return func(a0 WeekCalendarSpan) error {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			gostrictWrite124(w, a0)
+			r, err := fc.Invoke()
+			if err != nil {
+				return err
+			}
+			return r.Error()
+		}
+		res, err := cb.Call(gostrictTo124(a0))
+		if err != nil {
+			return err
+		}
+		return gostrict.ErrorOf(res[0])
+	}
+}
+
+func gostrictFunc101(cb gostrict.Callback) func(m WeekCalendarMove) error {
+	fc, fast := cb.(gostrict.FastCallback)
+	return func(a0 WeekCalendarMove) error {
+		if fast {
+			w := fc.Begin()
+			defer fc.End()
+			gostrictWrite125(w, a0)
+			r, err := fc.Invoke()
+			if err != nil {
+				return err
+			}
+			return r.Error()
+		}
+		res, err := cb.Call(gostrictTo125(a0))
+		if err != nil {
+			return err
+		}
+		return gostrict.ErrorOf(res[0])
+	}
+}
+
+func gostrictFrom102(v []any) []TTabsPage {
 	res := make([]TTabsPage, len(v))
 	for i, e := range v {
 		res[i] = TTabsPage{ref: e.(js.Ref)}
@@ -7403,15 +7529,15 @@ func gostrictFrom98(v []any) []TTabsPage {
 	return res
 }
 
-func gostrictFrom99(v []any) TimeFrame {
+func gostrictFrom103(v []any) TimeFrame {
 	return TimeFrame{StartTime: Time(v[0].(float64)), EndTime: Time(v[1].(float64)), Timezone: v[2].(string)}
 }
 
-func gostrictTo99(x TimeFrame) []any {
+func gostrictTo103(x TimeFrame) []any {
 	return []any{float64(x.StartTime), float64(x.EndTime), x.Timezone}
 }
 
-func gostrictFunc100(cb gostrict.Callback) func() TimeFrame {
+func gostrictFunc104(cb gostrict.Callback) func() TimeFrame {
 	fc, fast := cb.(gostrict.FastCallback)
 	return func() TimeFrame {
 		if fast {
@@ -7421,32 +7547,32 @@ func gostrictFunc100(cb gostrict.Callback) func() TimeFrame {
 			if err != nil {
 				return *new(TimeFrame)
 			}
-			return gostrictRead99(r)
+			return gostrictRead103(r)
 		}
 		res, err := cb.Call()
 		if err != nil {
 			var z0 TimeFrame
 			return z0
 		}
-		return gostrictFrom99(res[0].([]any))
+		return gostrictFrom103(res[0].([]any))
 	}
 }
 
-func gostrictFunc101(cb gostrict.Callback) func(v TimeFrame) {
+func gostrictFunc105(cb gostrict.Callback) func(v TimeFrame) {
 	fc, fast := cb.(gostrict.FastCallback)
 	return func(a0 TimeFrame) {
 		if fast {
 			w := fc.Begin()
 			defer fc.End()
-			gostrictWrite99(w, a0)
+			gostrictWrite103(w, a0)
 			_, _ = fc.Invoke()
 			return
 		}
-		_, _ = cb.Call(gostrictTo99(a0))
+		_, _ = cb.Call(gostrictTo103(a0))
 	}
 }
 
-func gostrictFrom102(v []any) []ViewWithSizeClass {
+func gostrictFrom106(v []any) []ViewWithSizeClass {
 	res := make([]ViewWithSizeClass, len(v))
 	for i, e := range v {
 		res[i] = ViewWithSizeClass{ref: e.(js.Ref)}
@@ -7454,79 +7580,87 @@ func gostrictFrom102(v []any) []ViewWithSizeClass {
 	return res
 }
 
-func gostrictFrom103(v []any) Shadow {
+func gostrictFrom107(v []any) []WeekCalendarDay {
+	res := make([]WeekCalendarDay, len(v))
+	for i, e := range v {
+		res[i] = gostrictFrom126(e.([]any))
+	}
+	return res
+}
+
+func gostrictFrom108(v []any) Shadow {
 	return Shadow{Color: Color(v[0].(string)), Radius: Length(v[1].(string)), X: Length(v[2].(string)), Y: Length(v[3].(string))}
 }
 
-func gostrictTo103(x Shadow) []any {
+func gostrictTo108(x Shadow) []any {
 	return []any{string(x.Color), string(x.Radius), string(x.X), string(x.Y)}
 }
 
-func gostrictFrom104(v []any) ChartDataPoint {
+func gostrictFrom109(v []any) ChartDataPoint {
 	return ChartDataPoint{X: v[0].(string), Y: v[1].(float64)}
 }
 
-func gostrictTo104(x ChartDataPoint) []any {
+func gostrictTo109(x ChartDataPoint) []any {
 	return []any{x.X, x.Y}
 }
 
-func gostrictFrom105(v []any) DropdownOption {
+func gostrictFrom110(v []any) DropdownOption {
 	return DropdownOption{Value: v[0].(string), Label: v[1].(string), Description: v[2].(string), Disabled: v[3].(bool)}
 }
 
-func gostrictTo105(x DropdownOption) []any {
+func gostrictTo110(x DropdownOption) []any {
 	return []any{x.Value, x.Label, x.Description, x.Disabled}
 }
 
-func gostrictFrom106(v []any) list.List[FlowchartNode] {
+func gostrictFrom111(v []any) list.List[FlowchartNode] {
 	l := list.New[FlowchartNode]()
 	for _, e := range v {
-		l.Append(gostrictFrom108(e.([]any)))
+		l.Append(gostrictFrom113(e.([]any)))
 	}
 	return l
 }
 
-func gostrictTo106(l list.List[FlowchartNode]) []any {
+func gostrictTo111(l list.List[FlowchartNode]) []any {
 	res := make([]any, 0, l.Len())
 	for e := range l.Values() {
-		res = append(res, gostrictTo108(e))
+		res = append(res, gostrictTo113(e))
 	}
 	return res
 }
 
-func gostrictFrom107(v []any) list.List[FlowchartEdge] {
+func gostrictFrom112(v []any) list.List[FlowchartEdge] {
 	l := list.New[FlowchartEdge]()
 	for _, e := range v {
-		l.Append(gostrictFrom109(e.([]any)))
+		l.Append(gostrictFrom114(e.([]any)))
 	}
 	return l
 }
 
-func gostrictTo107(l list.List[FlowchartEdge]) []any {
+func gostrictTo112(l list.List[FlowchartEdge]) []any {
 	res := make([]any, 0, l.Len())
 	for e := range l.Values() {
-		res = append(res, gostrictTo109(e))
+		res = append(res, gostrictTo114(e))
 	}
 	return res
 }
 
-func gostrictFrom108(v []any) FlowchartNode {
+func gostrictFrom113(v []any) FlowchartNode {
 	return FlowchartNode{ID: v[0].(string), Type: FlowchartNodeType(v[1].(uint32)), Position: gostrictFrom34(v[2].([]any)), Label: v[3].(string), Style: FlowchartNodeStyle(v[4].(uint32))}
 }
 
-func gostrictTo108(x FlowchartNode) []any {
+func gostrictTo113(x FlowchartNode) []any {
 	return []any{x.ID, uint32(x.Type), gostrictTo34(x.Position), x.Label, uint32(x.Style)}
 }
 
-func gostrictFrom109(v []any) FlowchartEdge {
+func gostrictFrom114(v []any) FlowchartEdge {
 	return FlowchartEdge{ID: v[0].(string), SourceNodeID: v[1].(string), TargetNodeID: v[2].(string), Label: v[3].(string), LabelBgColor: Color(v[4].(string)), LabelTextColor: Color(v[5].(string)), Style: FlowchartEdgeStyle(v[6].(uint32)), Color: Color(v[7].(string)), Width: v[8].(float64), Animated: v[9].(bool), MarkerStart: FlowchartEdgeMarker(v[10].(uint32)), MarkerEnd: FlowchartEdgeMarker(v[11].(uint32))}
 }
 
-func gostrictTo109(x FlowchartEdge) []any {
+func gostrictTo114(x FlowchartEdge) []any {
 	return []any{x.ID, x.SourceNodeID, x.TargetNodeID, x.Label, string(x.LabelBgColor), string(x.LabelTextColor), uint32(x.Style), string(x.Color), x.Width, x.Animated, uint32(x.MarkerStart), uint32(x.MarkerEnd)}
 }
 
-func gostrictFrom110(v []any) list.List[string] {
+func gostrictFrom115(v []any) list.List[string] {
 	l := list.New[string]()
 	for _, e := range v {
 		l.Append(e.(string))
@@ -7534,7 +7668,7 @@ func gostrictFrom110(v []any) list.List[string] {
 	return l
 }
 
-func gostrictTo110(l list.List[string]) []any {
+func gostrictTo115(l list.List[string]) []any {
 	res := make([]any, 0, l.Len())
 	for e := range l.Values() {
 		res = append(res, e)
@@ -7542,47 +7676,47 @@ func gostrictTo110(l list.List[string]) []any {
 	return res
 }
 
-func gostrictFrom111(v []any) sheet.Cell {
-	return sheet.Cell{Text: v[0].(string), Value: v[1].(string), Type: sheet.ValueType(v[2].(int32)), Style: gostrictFrom118(v[3].([]any)), Editor: sheet.Editor(v[4].(int32))}
+func gostrictFrom116(v []any) sheet.Cell {
+	return sheet.Cell{Text: v[0].(string), Value: v[1].(string), Type: sheet.ValueType(v[2].(int32)), Style: gostrictFrom127(v[3].([]any)), Editor: sheet.Editor(v[4].(int32))}
 }
 
-func gostrictTo111(x sheet.Cell) []any {
-	return []any{x.Text, x.Value, int32(x.Type), gostrictTo118(x.Style), int32(x.Editor)}
+func gostrictTo116(x sheet.Cell) []any {
+	return []any{x.Text, x.Value, int32(x.Type), gostrictTo127(x.Style), int32(x.Editor)}
 }
 
-func gostrictFrom112(v []any) BarChartMarker {
+func gostrictFrom117(v []any) BarChartMarker {
 	return BarChartMarker{Label: v[0].(string), SeriesIndex: v[1].(int32), DataPointIndex: v[2].(int32), Value: v[3].(string), Width: v[4].(int32), Height: v[5].(int32), Color: Color(v[6].(string)), Round: v[7].(bool), Dashed: v[8].(bool)}
 }
 
-func gostrictTo112(x BarChartMarker) []any {
+func gostrictTo117(x BarChartMarker) []any {
 	return []any{x.Label, x.SeriesIndex, x.DataPointIndex, x.Value, x.Width, x.Height, string(x.Color), x.Round, x.Dashed}
 }
 
-func gostrictFrom113(v []any) CalendarCategory {
+func gostrictFrom118(v []any) CalendarCategory {
 	return CalendarCategory{Color: Color(v[0].(string)), Label: v[1].(string)}
 }
 
-func gostrictTo113(x CalendarCategory) []any {
+func gostrictTo118(x CalendarCategory) []any {
 	return []any{string(x.Color), x.Label}
 }
 
-func gostrictFrom114(v []any) CalendarChip {
+func gostrictFrom119(v []any) CalendarChip {
 	return CalendarChip{Label: v[0].(string), Icon: SVG(v[1].(string)), FillColor: Color(v[2].(string)), StrokeColor: Color(v[3].(string)), BgColor: Color(v[4].(string)), TextColor: Color(v[5].(string)), Alignment: Alignment(v[6].(uint32)), FullWidth: v[7].(bool)}
 }
 
-func gostrictTo114(x CalendarChip) []any {
+func gostrictTo119(x CalendarChip) []any {
 	return []any{x.Label, string(x.Icon), string(x.FillColor), string(x.StrokeColor), string(x.BgColor), string(x.TextColor), uint32(x.Alignment), x.FullWidth}
 }
 
-func gostrictFrom115(v []any) CalendarColumn {
+func gostrictFrom120(v []any) CalendarColumn {
 	return CalendarColumn{Label: v[0].(string)}
 }
 
-func gostrictTo115(x CalendarColumn) []any {
+func gostrictTo120(x CalendarColumn) []any {
 	return []any{x.Label}
 }
 
-func gostrictFrom116(v []any) list.List[FlowChartToolbarAction] {
+func gostrictFrom121(v []any) list.List[FlowChartToolbarAction] {
 	l := list.New[FlowChartToolbarAction]()
 	for _, e := range v {
 		l.Append(FlowChartToolbarAction(e.(int32)))
@@ -7590,7 +7724,7 @@ func gostrictFrom116(v []any) list.List[FlowChartToolbarAction] {
 	return l
 }
 
-func gostrictTo116(l list.List[FlowChartToolbarAction]) []any {
+func gostrictTo121(l list.List[FlowChartToolbarAction]) []any {
 	res := make([]any, 0, l.Len())
 	for e := range l.Values() {
 		res = append(res, int32(e))
@@ -7598,35 +7732,67 @@ func gostrictTo116(l list.List[FlowChartToolbarAction]) []any {
 	return res
 }
 
-func gostrictFrom117(v []any) sheet.Edit {
+func gostrictFrom122(v []any) sheet.Edit {
 	return sheet.Edit{Row: v[0].(int32), Col: v[1].(int32), Value: v[2].(string)}
 }
 
-func gostrictTo117(x sheet.Edit) []any {
+func gostrictTo122(x sheet.Edit) []any {
 	return []any{x.Row, x.Col, x.Value}
 }
 
-func gostrictFrom118(v []any) sheet.Style {
-	return sheet.Style{BackgroundColor: v[0].(string), Color: v[1].(string), Bold: v[2].(bool), Italic: v[3].(bool), Underline: v[4].(bool), Align: sheet.Align(v[5].(int32)), Wrap: sheet.Wrap(v[6].(int32)), Borders: gostrictFrom119(v[7].([]any)), PaddingX: v[8].(float64), FontSize: v[9].(float64)}
+func gostrictFrom123(v []any) WeekCalendarEvent {
+	return WeekCalendarEvent{ID: v[0].(string), Day: v[1].(int32), From: v[2].(int32), To: v[3].(int32), Title: v[4].(string), Text: v[5].(string), Color: Color(v[6].(string)), Fixed: v[7].(bool)}
 }
 
-func gostrictTo118(x sheet.Style) []any {
-	return []any{x.BackgroundColor, x.Color, x.Bold, x.Italic, x.Underline, int32(x.Align), int32(x.Wrap), gostrictTo119(x.Borders), x.PaddingX, x.FontSize}
+func gostrictTo123(x WeekCalendarEvent) []any {
+	return []any{x.ID, x.Day, x.From, x.To, x.Title, x.Text, string(x.Color), x.Fixed}
 }
 
-func gostrictFrom119(v []any) sheet.Borders {
-	return sheet.Borders{Top: gostrictFrom120(v[0].([]any)), Right: gostrictFrom120(v[1].([]any)), Bottom: gostrictFrom120(v[2].([]any)), Left: gostrictFrom120(v[3].([]any))}
+func gostrictFrom124(v []any) WeekCalendarSpan {
+	return WeekCalendarSpan{Day: v[0].(int32), From: v[1].(int32), To: v[2].(int32)}
 }
 
-func gostrictTo119(x sheet.Borders) []any {
-	return []any{gostrictTo120(x.Top), gostrictTo120(x.Right), gostrictTo120(x.Bottom), gostrictTo120(x.Left)}
+func gostrictTo124(x WeekCalendarSpan) []any {
+	return []any{x.Day, x.From, x.To}
 }
 
-func gostrictFrom120(v []any) sheet.Line {
+func gostrictFrom125(v []any) WeekCalendarMove {
+	return WeekCalendarMove{ID: v[0].(string), Day: v[1].(int32), From: v[2].(int32), To: v[3].(int32), OldDay: v[4].(int32), OldFrom: v[5].(int32), OldTo: v[6].(int32)}
+}
+
+func gostrictTo125(x WeekCalendarMove) []any {
+	return []any{x.ID, x.Day, x.From, x.To, x.OldDay, x.OldFrom, x.OldTo}
+}
+
+func gostrictFrom126(v []any) WeekCalendarDay {
+	return WeekCalendarDay{Title: v[0].(string), Subtitle: v[1].(string), Today: v[2].(bool), Muted: v[3].(bool)}
+}
+
+func gostrictTo126(x WeekCalendarDay) []any {
+	return []any{x.Title, x.Subtitle, x.Today, x.Muted}
+}
+
+func gostrictFrom127(v []any) sheet.Style {
+	return sheet.Style{BackgroundColor: v[0].(string), Color: v[1].(string), Bold: v[2].(bool), Italic: v[3].(bool), Underline: v[4].(bool), Align: sheet.Align(v[5].(int32)), Wrap: sheet.Wrap(v[6].(int32)), Borders: gostrictFrom128(v[7].([]any)), PaddingX: v[8].(float64), FontSize: v[9].(float64)}
+}
+
+func gostrictTo127(x sheet.Style) []any {
+	return []any{x.BackgroundColor, x.Color, x.Bold, x.Italic, x.Underline, int32(x.Align), int32(x.Wrap), gostrictTo128(x.Borders), x.PaddingX, x.FontSize}
+}
+
+func gostrictFrom128(v []any) sheet.Borders {
+	return sheet.Borders{Top: gostrictFrom129(v[0].([]any)), Right: gostrictFrom129(v[1].([]any)), Bottom: gostrictFrom129(v[2].([]any)), Left: gostrictFrom129(v[3].([]any))}
+}
+
+func gostrictTo128(x sheet.Borders) []any {
+	return []any{gostrictTo129(x.Top), gostrictTo129(x.Right), gostrictTo129(x.Bottom), gostrictTo129(x.Left)}
+}
+
+func gostrictFrom129(v []any) sheet.Line {
 	return sheet.Line{Color: v[0].(string), Width: v[1].(float64), Style: sheet.LineStyle(v[2].(int32))}
 }
 
-func gostrictTo120(x sheet.Line) []any {
+func gostrictTo129(x sheet.Line) []any {
 	return []any{x.Color, x.Width, int32(x.Style)}
 }
 
@@ -7986,6 +8152,10 @@ func gostrictRead1(r gostrict.Reader) View {
 		return x
 	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TWebView":
 		x := TWebView{ref: r.Handle()}
+		r.End()
+		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TWeekCalendar":
+		x := TWeekCalendar{ref: r.Handle()}
 		r.End()
 		return x
 	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TWindowTitle":
@@ -8354,6 +8524,10 @@ func gostrictWrite1(w gostrict.Writer, x View) {
 		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TWebView")
 		w.Handle(x.ref)
 		w.End()
+	case TWeekCalendar:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TWeekCalendar")
+		w.Handle(x.ref)
+		w.End()
 	case TWindowTitle:
 		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TWindowTitle")
 		w.Handle(x.ref)
@@ -8402,7 +8576,7 @@ func gostrictRead31(r gostrict.Reader) FlowChartActionData {
 	if v, ok := r.Record(); ok {
 		return v.(FlowChartActionData)
 	}
-	x := FlowChartActionData{Node: gostrictRead108(r), Edge: gostrictRead109(r), ViewX: r.Float64(), ViewY: r.Float64(), PaneX: r.Float64(), PaneY: r.Float64(), SelectedNodes: gostrictRead110(r), SelectedEdges: gostrictRead110(r), RightClick: r.Bool()}
+	x := FlowChartActionData{Node: gostrictRead113(r), Edge: gostrictRead114(r), ViewX: r.Float64(), ViewY: r.Float64(), PaneX: r.Float64(), PaneY: r.Float64(), SelectedNodes: gostrictRead115(r), SelectedEdges: gostrictRead115(r), RightClick: r.Bool()}
 	if r.End() {
 		r.Keep(x)
 	}
@@ -8411,14 +8585,14 @@ func gostrictRead31(r gostrict.Reader) FlowChartActionData {
 
 func gostrictWrite31(w gostrict.Writer, x FlowChartActionData) {
 	w.Record()
-	gostrictWrite108(w, x.Node)
-	gostrictWrite109(w, x.Edge)
+	gostrictWrite113(w, x.Node)
+	gostrictWrite114(w, x.Edge)
 	w.Float64(float64(x.ViewX))
 	w.Float64(float64(x.ViewY))
 	w.Float64(float64(x.PaneX))
 	w.Float64(float64(x.PaneY))
-	gostrictWrite110(w, x.SelectedNodes)
-	gostrictWrite110(w, x.SelectedEdges)
+	gostrictWrite115(w, x.SelectedNodes)
+	gostrictWrite115(w, x.SelectedEdges)
 	w.Bool(bool(x.RightClick))
 	w.End()
 }
@@ -8427,7 +8601,7 @@ func gostrictRead30(r gostrict.Reader) FlowchartModel {
 	if v, ok := r.Record(); ok {
 		return v.(FlowchartModel)
 	}
-	x := FlowchartModel{Nodes: gostrictRead106(r), Edges: gostrictRead107(r)}
+	x := FlowchartModel{Nodes: gostrictRead111(r), Edges: gostrictRead112(r)}
 	if r.End() {
 		r.Keep(x)
 	}
@@ -8436,28 +8610,28 @@ func gostrictRead30(r gostrict.Reader) FlowchartModel {
 
 func gostrictWrite30(w gostrict.Writer, x FlowchartModel) {
 	w.Record()
-	gostrictWrite106(w, x.Nodes)
-	gostrictWrite107(w, x.Edges)
+	gostrictWrite111(w, x.Nodes)
+	gostrictWrite112(w, x.Edges)
 	w.End()
 }
 
-func gostrictRead111(r gostrict.Reader) sheet.Cell {
+func gostrictRead116(r gostrict.Reader) sheet.Cell {
 	if v, ok := r.Record(); ok {
 		return v.(sheet.Cell)
 	}
-	x := sheet.Cell{Text: r.String(), Value: r.String(), Type: sheet.ValueType(r.Int32()), Style: gostrictRead118(r), Editor: sheet.Editor(r.Int32())}
+	x := sheet.Cell{Text: r.String(), Value: r.String(), Type: sheet.ValueType(r.Int32()), Style: gostrictRead127(r), Editor: sheet.Editor(r.Int32())}
 	if r.End() {
 		r.Keep(x)
 	}
 	return x
 }
 
-func gostrictWrite111(w gostrict.Writer, x sheet.Cell) {
+func gostrictWrite116(w gostrict.Writer, x sheet.Cell) {
 	w.Record()
 	w.String(string(x.Text))
 	w.String(string(x.Value))
 	w.Int32(int32(x.Type))
-	gostrictWrite118(w, x.Style)
+	gostrictWrite127(w, x.Style)
 	w.Int32(int32(x.Editor))
 	w.End()
 }
@@ -8486,7 +8660,7 @@ func gostrictWrite39(w gostrict.Writer, x Frame) {
 	w.End()
 }
 
-func gostrictRead117(r gostrict.Reader) sheet.Edit {
+func gostrictRead122(r gostrict.Reader) sheet.Edit {
 	if v, ok := r.Record(); ok {
 		return v.(sheet.Edit)
 	}
@@ -8497,7 +8671,7 @@ func gostrictRead117(r gostrict.Reader) sheet.Edit {
 	return x
 }
 
-func gostrictWrite117(w gostrict.Writer, x sheet.Edit) {
+func gostrictWrite122(w gostrict.Writer, x sheet.Edit) {
 	w.Record()
 	w.Int32(int32(x.Row))
 	w.Int32(int32(x.Col))
@@ -8505,7 +8679,49 @@ func gostrictWrite117(w gostrict.Writer, x sheet.Edit) {
 	w.End()
 }
 
-func gostrictRead99(r gostrict.Reader) TimeFrame {
+func gostrictRead124(r gostrict.Reader) WeekCalendarSpan {
+	if v, ok := r.Record(); ok {
+		return v.(WeekCalendarSpan)
+	}
+	x := WeekCalendarSpan{Day: r.Int32(), From: r.Int32(), To: r.Int32()}
+	if r.End() {
+		r.Keep(x)
+	}
+	return x
+}
+
+func gostrictWrite124(w gostrict.Writer, x WeekCalendarSpan) {
+	w.Record()
+	w.Int32(int32(x.Day))
+	w.Int32(int32(x.From))
+	w.Int32(int32(x.To))
+	w.End()
+}
+
+func gostrictRead125(r gostrict.Reader) WeekCalendarMove {
+	if v, ok := r.Record(); ok {
+		return v.(WeekCalendarMove)
+	}
+	x := WeekCalendarMove{ID: r.String(), Day: r.Int32(), From: r.Int32(), To: r.Int32(), OldDay: r.Int32(), OldFrom: r.Int32(), OldTo: r.Int32()}
+	if r.End() {
+		r.Keep(x)
+	}
+	return x
+}
+
+func gostrictWrite125(w gostrict.Writer, x WeekCalendarMove) {
+	w.Record()
+	w.String(string(x.ID))
+	w.Int32(int32(x.Day))
+	w.Int32(int32(x.From))
+	w.Int32(int32(x.To))
+	w.Int32(int32(x.OldDay))
+	w.Int32(int32(x.OldFrom))
+	w.Int32(int32(x.OldTo))
+	w.End()
+}
+
+func gostrictRead103(r gostrict.Reader) TimeFrame {
 	if v, ok := r.Record(); ok {
 		return v.(TimeFrame)
 	}
@@ -8516,7 +8732,7 @@ func gostrictRead99(r gostrict.Reader) TimeFrame {
 	return x
 }
 
-func gostrictWrite99(w gostrict.Writer, x TimeFrame) {
+func gostrictWrite103(w gostrict.Writer, x TimeFrame) {
 	w.Record()
 	w.Float64(float64(x.StartTime))
 	w.Float64(float64(x.EndTime))
@@ -8524,7 +8740,7 @@ func gostrictWrite99(w gostrict.Writer, x TimeFrame) {
 	w.End()
 }
 
-func gostrictRead108(r gostrict.Reader) FlowchartNode {
+func gostrictRead113(r gostrict.Reader) FlowchartNode {
 	if v, ok := r.Record(); ok {
 		return v.(FlowchartNode)
 	}
@@ -8535,7 +8751,7 @@ func gostrictRead108(r gostrict.Reader) FlowchartNode {
 	return x
 }
 
-func gostrictWrite108(w gostrict.Writer, x FlowchartNode) {
+func gostrictWrite113(w gostrict.Writer, x FlowchartNode) {
 	w.Record()
 	w.String(string(x.ID))
 	w.Uint32(uint32(x.Type))
@@ -8545,7 +8761,7 @@ func gostrictWrite108(w gostrict.Writer, x FlowchartNode) {
 	w.End()
 }
 
-func gostrictRead109(r gostrict.Reader) FlowchartEdge {
+func gostrictRead114(r gostrict.Reader) FlowchartEdge {
 	if v, ok := r.Record(); ok {
 		return v.(FlowchartEdge)
 	}
@@ -8556,7 +8772,7 @@ func gostrictRead109(r gostrict.Reader) FlowchartEdge {
 	return x
 }
 
-func gostrictWrite109(w gostrict.Writer, x FlowchartEdge) {
+func gostrictWrite114(w gostrict.Writer, x FlowchartEdge) {
 	w.Record()
 	w.String(string(x.ID))
 	w.String(string(x.SourceNodeID))
@@ -8573,7 +8789,7 @@ func gostrictWrite109(w gostrict.Writer, x FlowchartEdge) {
 	w.End()
 }
 
-func gostrictRead110(r gostrict.Reader) list.List[string] {
+func gostrictRead115(r gostrict.Reader) list.List[string] {
 	n := r.List()
 	l := list.New[string]()
 	for range n {
@@ -8583,7 +8799,7 @@ func gostrictRead110(r gostrict.Reader) list.List[string] {
 	return l
 }
 
-func gostrictWrite110(w gostrict.Writer, x list.List[string]) {
+func gostrictWrite115(w gostrict.Writer, x list.List[string]) {
 	w.List(int(x.Len()))
 	for e := range x.Values() {
 		w.String(string(e))
@@ -8591,54 +8807,54 @@ func gostrictWrite110(w gostrict.Writer, x list.List[string]) {
 	w.End()
 }
 
-func gostrictRead106(r gostrict.Reader) list.List[FlowchartNode] {
+func gostrictRead111(r gostrict.Reader) list.List[FlowchartNode] {
 	n := r.List()
 	l := list.New[FlowchartNode]()
 	for range n {
-		l.Append(gostrictRead108(r))
+		l.Append(gostrictRead113(r))
 	}
 	r.End()
 	return l
 }
 
-func gostrictWrite106(w gostrict.Writer, x list.List[FlowchartNode]) {
+func gostrictWrite111(w gostrict.Writer, x list.List[FlowchartNode]) {
 	w.List(int(x.Len()))
 	for e := range x.Values() {
-		gostrictWrite108(w, e)
+		gostrictWrite113(w, e)
 	}
 	w.End()
 }
 
-func gostrictRead107(r gostrict.Reader) list.List[FlowchartEdge] {
+func gostrictRead112(r gostrict.Reader) list.List[FlowchartEdge] {
 	n := r.List()
 	l := list.New[FlowchartEdge]()
 	for range n {
-		l.Append(gostrictRead109(r))
+		l.Append(gostrictRead114(r))
 	}
 	r.End()
 	return l
 }
 
-func gostrictWrite107(w gostrict.Writer, x list.List[FlowchartEdge]) {
+func gostrictWrite112(w gostrict.Writer, x list.List[FlowchartEdge]) {
 	w.List(int(x.Len()))
 	for e := range x.Values() {
-		gostrictWrite109(w, e)
+		gostrictWrite114(w, e)
 	}
 	w.End()
 }
 
-func gostrictRead118(r gostrict.Reader) sheet.Style {
+func gostrictRead127(r gostrict.Reader) sheet.Style {
 	if v, ok := r.Record(); ok {
 		return v.(sheet.Style)
 	}
-	x := sheet.Style{BackgroundColor: r.String(), Color: r.String(), Bold: r.Bool(), Italic: r.Bool(), Underline: r.Bool(), Align: sheet.Align(r.Int32()), Wrap: sheet.Wrap(r.Int32()), Borders: gostrictRead119(r), PaddingX: r.Float64(), FontSize: r.Float64()}
+	x := sheet.Style{BackgroundColor: r.String(), Color: r.String(), Bold: r.Bool(), Italic: r.Bool(), Underline: r.Bool(), Align: sheet.Align(r.Int32()), Wrap: sheet.Wrap(r.Int32()), Borders: gostrictRead128(r), PaddingX: r.Float64(), FontSize: r.Float64()}
 	if r.End() {
 		r.Keep(x)
 	}
 	return x
 }
 
-func gostrictWrite118(w gostrict.Writer, x sheet.Style) {
+func gostrictWrite127(w gostrict.Writer, x sheet.Style) {
 	w.Record()
 	w.String(string(x.BackgroundColor))
 	w.String(string(x.Color))
@@ -8647,7 +8863,7 @@ func gostrictWrite118(w gostrict.Writer, x sheet.Style) {
 	w.Bool(bool(x.Underline))
 	w.Int32(int32(x.Align))
 	w.Int32(int32(x.Wrap))
-	gostrictWrite119(w, x.Borders)
+	gostrictWrite128(w, x.Borders)
 	w.Float64(float64(x.PaddingX))
 	w.Float64(float64(x.FontSize))
 	w.End()
@@ -8671,27 +8887,27 @@ func gostrictWrite34(w gostrict.Writer, x FlowchartPoint) {
 	w.End()
 }
 
-func gostrictRead119(r gostrict.Reader) sheet.Borders {
+func gostrictRead128(r gostrict.Reader) sheet.Borders {
 	if v, ok := r.Record(); ok {
 		return v.(sheet.Borders)
 	}
-	x := sheet.Borders{Top: gostrictRead120(r), Right: gostrictRead120(r), Bottom: gostrictRead120(r), Left: gostrictRead120(r)}
+	x := sheet.Borders{Top: gostrictRead129(r), Right: gostrictRead129(r), Bottom: gostrictRead129(r), Left: gostrictRead129(r)}
 	if r.End() {
 		r.Keep(x)
 	}
 	return x
 }
 
-func gostrictWrite119(w gostrict.Writer, x sheet.Borders) {
+func gostrictWrite128(w gostrict.Writer, x sheet.Borders) {
 	w.Record()
-	gostrictWrite120(w, x.Top)
-	gostrictWrite120(w, x.Right)
-	gostrictWrite120(w, x.Bottom)
-	gostrictWrite120(w, x.Left)
+	gostrictWrite129(w, x.Top)
+	gostrictWrite129(w, x.Right)
+	gostrictWrite129(w, x.Bottom)
+	gostrictWrite129(w, x.Left)
 	w.End()
 }
 
-func gostrictRead120(r gostrict.Reader) sheet.Line {
+func gostrictRead129(r gostrict.Reader) sheet.Line {
 	if v, ok := r.Record(); ok {
 		return v.(sheet.Line)
 	}
@@ -8702,7 +8918,7 @@ func gostrictRead120(r gostrict.Reader) sheet.Line {
 	return x
 }
 
-func gostrictWrite120(w gostrict.Writer, x sheet.Line) {
+func gostrictWrite129(w gostrict.Writer, x sheet.Line) {
 	w.Record()
 	w.String(string(x.Color))
 	w.Float64(float64(x.Width))
