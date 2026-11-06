@@ -120,6 +120,11 @@ func WeekCalendar(id string, days ...Day) TWeekCalendar {
 	}
 }
 
+// ID returns the id of the calendar, e.g. to name it in a message.
+func (c TWeekCalendar) ID() string {
+	return c.id
+}
+
 // StateID sets the id, from which the states of the calendar derive, if it shall differ from its id, e.g. with a
 // prefix of the caller. The id is still shown to the client.
 func (c TWeekCalendar) StateID(id string) TWeekCalendar {
