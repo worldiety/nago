@@ -3946,6 +3946,26 @@ func Host() gostrict.Funcs {
 			r0 := TThemeSwitcher{ref: args[0].(js.Ref)}.Frame(gostrictFrom39(args[1].([]any)))
 			return []any{r0.ref}
 		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTimeField.SupportingText": func(args []any) []any {
+			r0 := TTimeField{ref: args[0].(js.Ref)}.SupportingText(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTimeField.ErrorText": func(args []any) []any {
+			r0 := TTimeField{ref: args[0].(js.Ref)}.ErrorText(args[1].(string))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTimeField.Disabled": func(args []any) []any {
+			r0 := TTimeField{ref: args[0].(js.Ref)}.Disabled(args[1].(bool))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTimeField.Frame": func(args []any) []any {
+			r0 := TTimeField{ref: args[0].(js.Ref)}.Frame(gostrictFrom39(args[1].([]any)))
+			return []any{r0.ref}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTimeField.Placeholder": func(args []any) []any {
+			r0 := TTimeField{ref: args[0].(js.Ref)}.Placeholder(args[1].(string))
+			return []any{r0.ref}
+		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TTimeframePicker.Padding": func(args []any) []any {
 			r0 := TTimeframePicker{ref: args[0].(js.Ref)}.Padding(gostrictFrom5(args[1].([]any)))
 			return []any{r0.ref}
@@ -4258,6 +4278,10 @@ func Host() gostrict.Funcs {
 			r0 := Time(args[0].(float64)).Format(args[1].(string))
 			return []any{r0}
 		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TimeField": func(args []any) []any {
+			r0 := TimeField(args[0].(string), StringState{ref: args[1].(js.Ref)})
+			return []any{r0.ref}
+		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TimeFrameState.Get": func(args []any) []any {
 			r0 := TimeFrameState{ref: args[0].(js.Ref)}.Get()
 			return []any{gostrictTo99(r0)}
@@ -4488,7 +4512,7 @@ func HostVars() map[string]any {
 }
 
 func init() {
-	gostrict.Variants[View](TAccordion{}, TAlertDialog{}, TAlertBanner{}, TAlertBannerMessages{}, TAvatar{}, TBarChart{}, TBox{}, TBreadcrumbs{}, TFilledButton{}, TButton{}, TCalendar{}, TCardLayout{}, TCard{}, TCheckbox{}, TCheckboxField{}, TCodeEditor{}, TColorpickerColor{}, TColorpickerPickerField{}, TColorpickerPicker{}, TCountDown{}, TDataView{}, TDatePicker{}, TDialog{}, TDivider{}, TDnDArea{}, TDocumentComment{}, TDocumentEditable{}, TDocumentPage{}, TDropdown{}, TEditorContent{}, TEditorHeader{}, TEditorNavbar{}, TEditorVToolWindow{}, TEditorScreen{}, TEsignatureSignature{}, TPicker{}, TFlowChart{}, TFooter{}, TForm{}, TPager{}, TGrid{}, THero{}, THoverGroup{}, TImage{}, TLineChart{}, TListEntry{}, TList{}, TMenu{}, TModal{}, TNavsplitviewListItem{}, TNavsplitviewTwoColumn{}, TNavsplitviewThreeColumn{}, TPasswordField{}, TPDF{}, TPickerButton{}, TPieChart{}, TProgress{}, TQrCode{}, TRadioButton{}, TRadioButtonField{}, TRichText{}, TRichTextEditor{}, TScaffold{}, TScrollView{}, TSheet{}, TSlider{}, TSliderRangeSlider{}, TSpace{}, TSpacer{}, TSplitView{}, TStack{}, TStepper{}, TSwitcher{}, TTable{}, TTabs{}, TTagsColoredTextPill{}, TText{}, TTextField{}, TTextLayout{}, TThemeSwitcher{}, TTimeframePicker{}, TTimepickerPicker{}, TToggle{}, TToggleField{}, TTrackingSupportRequestDialog{}, TVideo{}, TViewThatMatches{}, TWebView{}, TWindowTitle{})
+	gostrict.Variants[View](TAccordion{}, TAlertDialog{}, TAlertBanner{}, TAlertBannerMessages{}, TAvatar{}, TBarChart{}, TBox{}, TBreadcrumbs{}, TFilledButton{}, TButton{}, TCalendar{}, TCardLayout{}, TCard{}, TCheckbox{}, TCheckboxField{}, TCodeEditor{}, TColorpickerColor{}, TColorpickerPickerField{}, TColorpickerPicker{}, TCountDown{}, TDataView{}, TDatePicker{}, TDialog{}, TDivider{}, TDnDArea{}, TDocumentComment{}, TDocumentEditable{}, TDocumentPage{}, TDropdown{}, TEditorContent{}, TEditorHeader{}, TEditorNavbar{}, TEditorVToolWindow{}, TEditorScreen{}, TEsignatureSignature{}, TPicker{}, TFlowChart{}, TFooter{}, TForm{}, TPager{}, TGrid{}, THero{}, THoverGroup{}, TImage{}, TLineChart{}, TListEntry{}, TList{}, TMenu{}, TModal{}, TNavsplitviewListItem{}, TNavsplitviewTwoColumn{}, TNavsplitviewThreeColumn{}, TPasswordField{}, TPDF{}, TPickerButton{}, TPieChart{}, TProgress{}, TQrCode{}, TRadioButton{}, TRadioButtonField{}, TRichText{}, TRichTextEditor{}, TScaffold{}, TScrollView{}, TSheet{}, TSlider{}, TSliderRangeSlider{}, TSpace{}, TSpacer{}, TSplitView{}, TStack{}, TStepper{}, TSwitcher{}, TTable{}, TTabs{}, TTagsColoredTextPill{}, TText{}, TTextField{}, TTextLayout{}, TThemeSwitcher{}, TTimeField{}, TTimeframePicker{}, TTimepickerPicker{}, TToggle{}, TToggleField{}, TTrackingSupportRequestDialog{}, TVideo{}, TViewThatMatches{}, TWebView{}, TWindowTitle{})
 }
 
 // HostRef returns the reference of the handle.
@@ -5622,6 +5646,16 @@ func (TThemeSwitcher) HostFromRef(ref js.Ref) any {
 }
 
 // HostRef returns the reference of the handle.
+func (h TTimeField) HostRef() js.Ref {
+	return h.ref
+}
+
+// HostFromRef returns the handle of a reference.
+func (TTimeField) HostFromRef(ref js.Ref) any {
+	return TTimeField{ref: ref}
+}
+
+// HostRef returns the reference of the handle.
 func (h TTimeframePicker) HostRef() js.Ref {
 	return h.ref
 }
@@ -5903,6 +5937,8 @@ func gostrictFrom1(x gostrict.Variant) View {
 		return TTextLayout{ref: x.Fields[0].(js.Ref)}
 	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TThemeSwitcher":
 		return TThemeSwitcher{ref: x.Fields[0].(js.Ref)}
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TTimeField":
+		return TTimeField{ref: x.Fields[0].(js.Ref)}
 	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TTimeframePicker":
 		return TTimeframePicker{ref: x.Fields[0].(js.Ref)}
 	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TTimepickerPicker":
@@ -6087,6 +6123,8 @@ func gostrictTo1(v View) gostrict.Variant {
 		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TTextLayout", Fields: []any{x.ref}}
 	case TThemeSwitcher:
 		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TThemeSwitcher", Fields: []any{x.ref}}
+	case TTimeField:
+		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TTimeField", Fields: []any{x.ref}}
 	case TTimeframePicker:
 		return gostrict.Variant{Tag: "go.wdy.de/nago/pkg/gostrict/lib/ui.TTimeframePicker", Fields: []any{x.ref}}
 	case TTimepickerPicker:
@@ -7914,6 +7952,10 @@ func gostrictRead1(r gostrict.Reader) View {
 		x := TThemeSwitcher{ref: r.Handle()}
 		r.End()
 		return x
+	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TTimeField":
+		x := TTimeField{ref: r.Handle()}
+		r.End()
+		return x
 	case "go.wdy.de/nago/pkg/gostrict/lib/ui.TTimeframePicker":
 		x := TTimeframePicker{ref: r.Handle()}
 		r.End()
@@ -8274,6 +8316,10 @@ func gostrictWrite1(w gostrict.Writer, x View) {
 		w.End()
 	case TThemeSwitcher:
 		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TThemeSwitcher")
+		w.Handle(x.ref)
+		w.End()
+	case TTimeField:
+		w.Variant("go.wdy.de/nago/pkg/gostrict/lib/ui.TTimeField")
 		w.Handle(x.ref)
 		w.End()
 	case TTimeframePicker:
