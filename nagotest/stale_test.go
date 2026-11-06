@@ -799,3 +799,120 @@ func TestDialogSaveAfterInputIsNotLost(t *testing.T) {
 		t.Fatalf("expected no stale calls, got %d", n)
 	}
 }
+
+// enterLock disables the chat input of the enter app from outside, see enterApp.
+type enterLock struct {
+	wnd    core.Window
+	locked *core.State[bool]
+}
+
+func (l *enterLock) lock() {
+	l.wnd.Post(func() { l.locked.Set(true) })
+}
+
+// enterApp has a chat input, which its enter handler empties, and a password field, which logs in on enter.
+func enterApp(t *testing.T, lock *enterLock) *nagotest.App {
+	return nagotest.New(t, func(cfg *application.Configurator) {
+		cfg.SetApplicationID("de.worldiety.nagotest")
+		cfg.RootView("chat", func(wnd core.Window) core.View {
+			chat := core.AutoState[string](wnd)
+			sent := core.AutoState[string](wnd)
+			password := core.AutoState[string](wnd)
+			login := core.AutoState[string](wnd)
+			locked := core.AutoState[bool](wnd)
+			if lock != nil {
+				lock.wnd, lock.locked = wnd, locked
+			}
+
+			return ui.VStack(
+				ui.TextField("Chat", chat.Get()).InputValue(chat).Disabled(locked.Get()).KeydownEnter(func() {
+					sent.Set(sent.Get() + "[" + chat.Get() + "]")
+					chat.Set("")
+				}),
+				ui.Text("sent: "+sent.Get()),
+				ui.PasswordField("Password", password.Get()).InputValue(password).KeydownEnter(func() {
+					login.Set(password.Get())
+				}),
+				ui.Text("login: "+login.Get()),
+			)
+		})
+	})
+}
+
+func chatField(t *testing.T, w *nagotest.Window) *proto.TextField {
+	t.Helper()
+	return w.Find(nagotest.Label("Chat")).Node().Component.(*proto.TextField)
+}
+
+// enter presses enter in a text field like the frontend: the value and the enter callback in one request.
+func enter(t *testing.T, w *nagotest.Window, field *proto.TextField, value string) {
+	t.Helper()
+	if err := w.Scope().Dispatch(&proto.UpdateStateValueRequested{StatePointer: field.InputValue, FunctionPointer: field.KeydownEnter, Value: proto.Str(value), RID: 700}); err != nil {
+		t.Fatal(err)
+	}
+	w.Settle()
+}
+
+// The server renders on its own, e.g. because a goroutine changed a state, while the enter of a chat input is on its
+// way. The enter refers to the tree before that render, but its key redirects it to the current enter callback of
+// the field, which is bound to the same state, so the message is sent and the input is emptied.
+func TestEnterAfterServerRenderIsNotLost(t *testing.T) {
+	w := enterApp(t, nil).Open(t, nil, "chat")
+
+	field := chatField(t, w)
+	rerender(t, w)
+
+	before := w.Scope().StaleCalls()
+	enter(t, w, field, "hello")
+
+	w.Find(nagotest.Text("sent: [hello]"))
+	if v := chatField(t, w).Value; v != "" {
+		t.Fatalf("expected the enter handler to empty the input, got %q", v)
+	}
+
+	if n := w.Scope().StaleCalls() - before; n != 0 {
+		t.Fatalf("expected no stale calls, got %d", n)
+	}
+
+	// the former tree has been used, a second enter of it is the second press of a double press
+	enter(t, w, field, "hello")
+	w.Find(nagotest.Text("sent: [hello]"))
+	if n := w.Scope().StaleCalls() - before; n != 1 {
+		t.Fatalf("expected a stale second enter, got %d", n)
+	}
+}
+
+// The frontend sends the value of a password field with the debounce and the enter key as a call of its own. The
+// value renders a new tree, but the enter refers to the tree before it and is redirected.
+func TestPasswordEnterAfterInputIsNotLost(t *testing.T) {
+	w := enterApp(t, nil).Open(t, nil, "chat")
+
+	field := w.Find(nagotest.Label("Password")).Node().Component.(*proto.PasswordField)
+	before := w.Scope().StaleCalls()
+
+	w.Type(w.Find(nagotest.Label("Password")), "secret")
+	call(t, w, field.KeydownEnter)
+
+	w.Find(nagotest.Text("login: secret"))
+	if n := w.Scope().StaleCalls() - before; n != 0 {
+		t.Fatalf("expected no stale calls, got %d", n)
+	}
+}
+
+// An enter is not redirected to a field, which the current tree disables.
+func TestEnterIsNotRedirectedToDisabledField(t *testing.T) {
+	var lock enterLock
+	w := enterApp(t, &lock).Open(t, nil, "chat")
+
+	field := chatField(t, w)
+	lock.lock()
+	w.Settle()
+
+	before := w.Scope().StaleCalls()
+	enter(t, w, field, "hello")
+
+	w.Find(nagotest.Text("sent: "))
+	if n := w.Scope().StaleCalls() - before; n != 1 {
+		t.Fatalf("expected a stale enter, got %d", n)
+	}
+}

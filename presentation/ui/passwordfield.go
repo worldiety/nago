@@ -167,6 +167,10 @@ func (c TPasswordField) ID(id string) TPasswordField {
 }
 
 // KeydownEnter sets a callback function to be triggered when the Enter key is pressed.
+//
+// With an [TPasswordField.InputValue] state, an enter on a tree, which the server has rendered again in the
+// meantime, is redirected to the current callback of the field bound to the same state, see
+// [core.MountKeyedCallback].
 func (c TPasswordField) KeydownEnter(fn func()) TPasswordField {
 	c.keydownEnter = fn
 	return c
@@ -201,7 +205,7 @@ func (c TPasswordField) Render(ctx core.RenderContext) core.RenderNode {
 		Lines:               proto.Uint(c.lines),
 		DisableAutocomplete: proto.Bool(c.disableAutocomplete),
 		Id:                  proto.Str(c.id),
-		KeydownEnter:        ctx.MountCallback(c.keydownEnter),
+		KeydownEnter:        core.MountKeyedCallback(ctx, keydownEnterKey(c.inputValue, !c.disabled && !c.invisible), c.keydownEnter),
 		Autocomplete:        proto.Str(c.autocomplete),
 	}
 }

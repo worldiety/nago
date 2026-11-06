@@ -292,6 +292,11 @@ func (c TTextField) FullWidth() TTextField {
 //   - using the inversion, which is shift and enter for submitting is also wrong, because that is already overloaded
 //     in multiple ways (e.g. line break vs paragraph behavior or opening a new window in Chrome etc)
 //   - same applies to Str + Enter which may also be overloaded, typically for a soft line break
+//
+// The frontend sends the enter key together with the value for the [TTextField.InputValue] state, thus the
+// enter key only works with such a state. An enter on a tree, which the server has rendered again in the
+// meantime, is redirected to the current callback of the field bound to the same state, see
+// [core.MountKeyedCallback].
 func (c TTextField) KeydownEnter(fn func()) TTextField {
 	c.keydownEnter = fn
 	return c
@@ -415,7 +420,7 @@ func (c TTextField) Render(ctx core.RenderContext) core.RenderNode {
 		Lines:           proto.Uint(c.lines),
 		KeyboardOptions: c.keyboardOptions.ora(),
 		Id:              proto.Str(c.id),
-		KeydownEnter:    ctx.MountCallback(c.keydownEnter),
+		KeydownEnter:    core.MountKeyedCallback(ctx, keydownEnterKey(c.inputValue, !c.disabled && !c.invisible && !c.readOnly), c.keydownEnter),
 		TextAlignment:   proto.TextAlignment(c.textAlignment),
 		ShowZero:        proto.Bool(c.showZero),
 		Step:            proto.Uint(c.step),
@@ -429,4 +434,23 @@ func (c TTextField) Render(ctx core.RenderContext) core.RenderNode {
 		ReadOnly:        proto.Bool(c.readOnly),
 		SizeByContent:   proto.Bool(c.sizeByContent),
 	}
+}
+
+// keydownEnterKey identifies the enter key of a text or password field across renders by the state, which the field
+// is bound to, see [core.MountKeyedCallback].
+//
+// Like a click, an enter refers to the callbacks of the tree, which the frontend shows, and the backend discards it,
+// if it has rendered again in the meantime, e.g. because a goroutine changed a state or the network is slow. A chat
+// input would then lose the submit, although the frontend has sent the text. With the key, the enter is redirected
+// to the current enter callback of the field, which is bound to the same state. The text field sends that state
+// together with the enter, so that the enter always acts on the field, which has just got the value.
+//
+// A field, which does not accept input in the current tree, gets no key, so that nothing is redirected to it. Two
+// fields bound to the same state are ambiguous and get nothing redirected either.
+func keydownEnterKey(input *core.State[string], interactive bool) core.CallbackKey {
+	if input == nil || !interactive {
+		return core.CallbackKey{}
+	}
+
+	return core.CallbackKey{Name: "keydownEnter", ID: input.ID()}
 }
