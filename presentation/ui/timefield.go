@@ -99,6 +99,10 @@ func (c TTimeField) Render(ctx core.RenderContext) core.RenderNode {
 				state.Set(v)
 				state.Notify() // delegate the observable event, because it was caused by the ui
 			}
+
+			// keep the shown text, so that typing a complete form again, e.g. 8:30 after 08:30, renders and is
+			// rewritten again, without setting the state during the render
+			input.Set(timeFieldText(typed))
 		})
 
 		value = state.Get()
