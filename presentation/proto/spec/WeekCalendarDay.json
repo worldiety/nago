@@ -1,0 +1,26 @@
+{
+  "doc": "WeekCalendarDay is the head of a column of a WeekCalendar.",
+  "kind": "Record",
+  "id": 333,
+  "fields": {
+    "1": {
+      "name": "Title",
+      "type": "Str"
+    },
+    "2": {
+      "doc": "Subtitle is shown below the title, with up to two lines.",
+      "name": "Subtitle",
+      "type": "Str"
+    },
+    "3": {
+      "doc": "Today marks the current day.",
+      "name": "Today",
+      "type": "Bool"
+    },
+    "4": {
+      "doc": "Muted marks a day, which is not a working day, e.g. a holiday.",
+      "name": "Muted",
+      "type": "Bool"
+    }
+  }
+}

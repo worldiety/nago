@@ -25868,6 +25868,704 @@ export class DebounceOptions implements Writeable, Readable {
 	}
 }
 
+// WeekCalendar shows up to seven days as columns over a time axis with events as blocks. The user may span an interval in free time, move a block, also to another day, change its duration at its bottom edge and click a block, with the pointer and with the keyboard. The client reports each action as json into Input, and the server checks it against the calendar of its last render, before it invokes a callback.
+export class WeekCalendar implements Writeable, Readable, Component {
+	// Id is the id of the calendar, as the application wrote it.
+	public id?: Str;
+
+	// Days are the columns, from left to right. The index of a day is its position.
+	public days?: WeekCalendarDays;
+
+	// Events are all events, also those outside of the visible range.
+	public events?: WeekCalendarEvents;
+
+	// From is the first visible minute since midnight.
+	public from?: Int;
+
+	// To is the last visible minute since midnight, at most 1440.
+	public to?: Int;
+
+	// Step is the raster in minutes, onto which the user spans, moves and resizes.
+	public step?: Int;
+
+	// ClickSpan is the duration in minutes, which a click into free time spans.
+	public clickSpan?: Int;
+
+	// ShowNow tells, whether the line of the current time is shown at NowDay and NowMinute.
+	public showNow?: Bool;
+
+	public nowDay?: Int;
+
+	public nowMinute?: Int;
+
+	// HourHeight is the height of an hour in dp.
+	public hourHeight?: Float;
+
+	// Input is a state, into which the client writes each action as json {seq,kind,id,day,from,to,base:{day,from,to}}, kind is click, select, move or resize. It is zero, if the calendar takes no action.
+	public input?: Ptr;
+
+	// Ack is the sequence number of the last action, which the server has processed, also if it rejected it.
+	public ack?: Int;
+
+	// Message is the text of the error of the last callback, until the next action.
+	public message?: Str;
+
+	// CanClick tells, whether a click on a block is reported.
+	public canClick?: Bool;
+
+	// CanSelect tells, whether the user may span an interval in free time.
+	public canSelect?: Bool;
+
+	// CanMove tells, whether the user may move a block and change its duration.
+	public canMove?: Bool;
+
+	public disabled?: Bool;
+
+	public frame?: Frame;
+
+	constructor(
+		id: Str | undefined = undefined,
+		days: WeekCalendarDays | undefined = undefined,
+		events: WeekCalendarEvents | undefined = undefined,
+		from: Int | undefined = undefined,
+		to: Int | undefined = undefined,
+		step: Int | undefined = undefined,
+		clickSpan: Int | undefined = undefined,
+		showNow: Bool | undefined = undefined,
+		nowDay: Int | undefined = undefined,
+		nowMinute: Int | undefined = undefined,
+		hourHeight: Float | undefined = undefined,
+		input: Ptr | undefined = undefined,
+		ack: Int | undefined = undefined,
+		message: Str | undefined = undefined,
+		canClick: Bool | undefined = undefined,
+		canSelect: Bool | undefined = undefined,
+		canMove: Bool | undefined = undefined,
+		disabled: Bool | undefined = undefined,
+		frame: Frame | undefined = undefined
+	) {
+		this.id = id;
+		this.days = days;
+		this.events = events;
+		this.from = from;
+		this.to = to;
+		this.step = step;
+		this.clickSpan = clickSpan;
+		this.showNow = showNow;
+		this.nowDay = nowDay;
+		this.nowMinute = nowMinute;
+		this.hourHeight = hourHeight;
+		this.input = input;
+		this.ack = ack;
+		this.message = message;
+		this.canClick = canClick;
+		this.canSelect = canSelect;
+		this.canMove = canMove;
+		this.disabled = disabled;
+		this.frame = frame;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.days = new WeekCalendarDays();
+					this.days.read(reader);
+					break;
+				}
+				case 3: {
+					this.events = new WeekCalendarEvents();
+					this.events.read(reader);
+					break;
+				}
+				case 4: {
+					this.from = readSint(reader);
+					break;
+				}
+				case 5: {
+					this.to = readSint(reader);
+					break;
+				}
+				case 6: {
+					this.step = readSint(reader);
+					break;
+				}
+				case 7: {
+					this.clickSpan = readSint(reader);
+					break;
+				}
+				case 8: {
+					this.showNow = readBool(reader);
+					break;
+				}
+				case 9: {
+					this.nowDay = readSint(reader);
+					break;
+				}
+				case 10: {
+					this.nowMinute = readSint(reader);
+					break;
+				}
+				case 11: {
+					this.hourHeight = readFloat(reader);
+					break;
+				}
+				case 12: {
+					this.input = readInt(reader);
+					break;
+				}
+				case 13: {
+					this.ack = readSint(reader);
+					break;
+				}
+				case 14: {
+					this.message = readString(reader);
+					break;
+				}
+				case 15: {
+					this.canClick = readBool(reader);
+					break;
+				}
+				case 16: {
+					this.canSelect = readBool(reader);
+					break;
+				}
+				case 17: {
+					this.canMove = readBool(reader);
+					break;
+				}
+				case 18: {
+					this.disabled = readBool(reader);
+					break;
+				}
+				case 19: {
+					this.frame = new Frame();
+					this.frame.read(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.id !== undefined,
+			this.days !== undefined && !this.days.isZero(),
+			this.events !== undefined && !this.events.isZero(),
+			this.from !== undefined,
+			this.to !== undefined,
+			this.step !== undefined,
+			this.clickSpan !== undefined,
+			this.showNow !== undefined,
+			this.nowDay !== undefined,
+			this.nowMinute !== undefined,
+			this.hourHeight !== undefined,
+			this.input !== undefined,
+			this.ack !== undefined,
+			this.message !== undefined,
+			this.canClick !== undefined,
+			this.canSelect !== undefined,
+			this.canMove !== undefined,
+			this.disabled !== undefined,
+			this.frame !== undefined && !this.frame.isZero(),
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 2);
+			this.days!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.ARRAY, 3);
+			this.events!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.VARINT, 4);
+			writeSint(writer, this.from!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.VARINT, 5);
+			writeSint(writer, this.to!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.VARINT, 6);
+			writeSint(writer, this.step!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.VARINT, 7);
+			writeSint(writer, this.clickSpan!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 8);
+			writeBool(writer, this.showNow!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[9]) {
+			writer.writeFieldHeader(Shapes.VARINT, 9);
+			writeSint(writer, this.nowDay!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[10]) {
+			writer.writeFieldHeader(Shapes.VARINT, 10);
+			writeSint(writer, this.nowMinute!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[11]) {
+			writer.writeFieldHeader(Shapes.F64, 11);
+			writeFloat(writer, this.hourHeight!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[12]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 12);
+			writeInt(writer, this.input!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[13]) {
+			writer.writeFieldHeader(Shapes.VARINT, 13);
+			writeSint(writer, this.ack!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[14]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 14);
+			writeString(writer, this.message!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[15]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 15);
+			writeBool(writer, this.canClick!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[16]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 16);
+			writeBool(writer, this.canSelect!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[17]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 17);
+			writeBool(writer, this.canMove!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[18]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 18);
+			writeBool(writer, this.disabled!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[19]) {
+			writer.writeFieldHeader(Shapes.RECORD, 19);
+			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.id === undefined &&
+			(this.days === undefined || this.days.isZero()) &&
+			(this.events === undefined || this.events.isZero()) &&
+			this.from === undefined &&
+			this.to === undefined &&
+			this.step === undefined &&
+			this.clickSpan === undefined &&
+			this.showNow === undefined &&
+			this.nowDay === undefined &&
+			this.nowMinute === undefined &&
+			this.hourHeight === undefined &&
+			this.input === undefined &&
+			this.ack === undefined &&
+			this.message === undefined &&
+			this.canClick === undefined &&
+			this.canSelect === undefined &&
+			this.canMove === undefined &&
+			this.disabled === undefined &&
+			(this.frame === undefined || this.frame.isZero())
+		);
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.days = undefined;
+		this.events = undefined;
+		this.from = undefined;
+		this.to = undefined;
+		this.step = undefined;
+		this.clickSpan = undefined;
+		this.showNow = undefined;
+		this.nowDay = undefined;
+		this.nowMinute = undefined;
+		this.hourHeight = undefined;
+		this.input = undefined;
+		this.ack = undefined;
+		this.message = undefined;
+		this.canClick = undefined;
+		this.canSelect = undefined;
+		this.canMove = undefined;
+		this.disabled = undefined;
+		this.frame = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 332);
+		return;
+	}
+	isComponent(): void {}
+}
+
+// WeekCalendarDay is the head of a column of a WeekCalendar.
+export class WeekCalendarDay implements Writeable, Readable {
+	public title?: Str;
+
+	// Subtitle is shown below the title, with up to two lines.
+	public subtitle?: Str;
+
+	// Today marks the current day.
+	public today?: Bool;
+
+	// Muted marks a day, which is not a working day, e.g. a holiday.
+	public muted?: Bool;
+
+	constructor(
+		title: Str | undefined = undefined,
+		subtitle: Str | undefined = undefined,
+		today: Bool | undefined = undefined,
+		muted: Bool | undefined = undefined
+	) {
+		this.title = title;
+		this.subtitle = subtitle;
+		this.today = today;
+		this.muted = muted;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.title = readString(reader);
+					break;
+				}
+				case 2: {
+					this.subtitle = readString(reader);
+					break;
+				}
+				case 3: {
+					this.today = readBool(reader);
+					break;
+				}
+				case 4: {
+					this.muted = readBool(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.title !== undefined,
+			this.subtitle !== undefined,
+			this.today !== undefined,
+			this.muted !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.title!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.subtitle!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 3);
+			writeBool(writer, this.today!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 4);
+			writeBool(writer, this.muted!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.title === undefined &&
+			this.subtitle === undefined &&
+			this.today === undefined &&
+			this.muted === undefined
+		);
+	}
+
+	reset(): void {
+		this.title = undefined;
+		this.subtitle = undefined;
+		this.today = undefined;
+		this.muted = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 333);
+		return;
+	}
+}
+
+export class WeekCalendarDays implements Writeable, Readable {
+	public value: WeekCalendarDay[];
+
+	constructor(value: WeekCalendarDay[] = []) {
+		this.value = value;
+	}
+
+	isZero(): boolean {
+		return !this.value || this.value.length === 0;
+	}
+
+	reset(): void {
+		this.value = [];
+	}
+
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value.length); // Write the length of the array
+		for (const c of this.value) {
+			c.writeTypeHeader(writer); // Write the type header for each component)
+			c.write(writer); // Write the component data
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
+		}
+	}
+
+	read(reader: BinaryReader): void {
+		const count = reader.readUvarint(); // Read the length of the array
+		const values: WeekCalendarDay[] = [];
+
+		for (let i = 0; i < count; i++) {
+			const obj = unmarshal(reader); // Read and unmarshal each component
+			values.push(obj as any as WeekCalendarDay); // Cast and add to the array
+		}
+
+		this.value = values;
+	}
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 334);
+		return;
+	}
+}
+
+// WeekCalendarEvent is a block of a WeekCalendar.
+export class WeekCalendarEvent implements Writeable, Readable {
+	// Id identifies the event within the calendar.
+	public id?: Str;
+
+	// Day is the index of the day of the event.
+	public day?: Int;
+
+	// From is the beginning in minutes since midnight.
+	public from?: Int;
+
+	// To is the end in minutes since midnight, after From and at most 1440.
+	public to?: Int;
+
+	public title?: Str;
+
+	public text?: Str;
+
+	public color?: Color;
+
+	// Fixed events can only be clicked.
+	public fixed?: Bool;
+
+	constructor(
+		id: Str | undefined = undefined,
+		day: Int | undefined = undefined,
+		from: Int | undefined = undefined,
+		to: Int | undefined = undefined,
+		title: Str | undefined = undefined,
+		text: Str | undefined = undefined,
+		color: Color | undefined = undefined,
+		fixed: Bool | undefined = undefined
+	) {
+		this.id = id;
+		this.day = day;
+		this.from = from;
+		this.to = to;
+		this.title = title;
+		this.text = text;
+		this.color = color;
+		this.fixed = fixed;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.id = readString(reader);
+					break;
+				}
+				case 2: {
+					this.day = readSint(reader);
+					break;
+				}
+				case 3: {
+					this.from = readSint(reader);
+					break;
+				}
+				case 4: {
+					this.to = readSint(reader);
+					break;
+				}
+				case 5: {
+					this.title = readString(reader);
+					break;
+				}
+				case 6: {
+					this.text = readString(reader);
+					break;
+				}
+				case 7: {
+					this.color = readString(reader);
+					break;
+				}
+				case 8: {
+					this.fixed = readBool(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.id !== undefined,
+			this.day !== undefined,
+			this.from !== undefined,
+			this.to !== undefined,
+			this.title !== undefined,
+			this.text !== undefined,
+			this.color !== undefined,
+			this.fixed !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.VARINT, 2);
+			writeSint(writer, this.day!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.VARINT, 3);
+			writeSint(writer, this.from!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.VARINT, 4);
+			writeSint(writer, this.to!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
+			writeString(writer, this.title!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 6);
+			writeString(writer, this.text!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 7);
+			writeString(writer, this.color!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[8]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 8);
+			writeBool(writer, this.fixed!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.id === undefined &&
+			this.day === undefined &&
+			this.from === undefined &&
+			this.to === undefined &&
+			this.title === undefined &&
+			this.text === undefined &&
+			this.color === undefined &&
+			this.fixed === undefined
+		);
+	}
+
+	reset(): void {
+		this.id = undefined;
+		this.day = undefined;
+		this.from = undefined;
+		this.to = undefined;
+		this.title = undefined;
+		this.text = undefined;
+		this.color = undefined;
+		this.fixed = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 335);
+		return;
+	}
+}
+
+export class WeekCalendarEvents implements Writeable, Readable {
+	public value: WeekCalendarEvent[];
+
+	constructor(value: WeekCalendarEvent[] = []) {
+		this.value = value;
+	}
+
+	isZero(): boolean {
+		return !this.value || this.value.length === 0;
+	}
+
+	reset(): void {
+		this.value = [];
+	}
+
+	write(writer: BinaryWriter): void {
+		writer.writeUvarint(this.value.length); // Write the length of the array
+		for (const c of this.value) {
+			c.writeTypeHeader(writer); // Write the type header for each component)
+			c.write(writer); // Write the component data
+
+			//c.writeTypeHeader(writer); // Write the type header for each component
+			//c.write(writer); // Write the component data
+		}
+	}
+
+	read(reader: BinaryReader): void {
+		const count = reader.readUvarint(); // Read the length of the array
+		const values: WeekCalendarEvent[] = [];
+
+		for (let i = 0; i < count; i++) {
+			const obj = unmarshal(reader); // Read and unmarshal each component
+			values.push(obj as any as WeekCalendarEvent); // Cast and add to the array
+		}
+
+		this.value = values;
+	}
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.ARRAY, 336);
+		return;
+	}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -27347,6 +28045,31 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 331: {
 			const v = new DebounceOptions();
+			v.read(src);
+			return v;
+		}
+		case 332: {
+			const v = new WeekCalendar();
+			v.read(src);
+			return v;
+		}
+		case 333: {
+			const v = new WeekCalendarDay();
+			v.read(src);
+			return v;
+		}
+		case 334: {
+			const v = new WeekCalendarDays();
+			v.read(src);
+			return v;
+		}
+		case 335: {
+			const v = new WeekCalendarEvent();
+			v.read(src);
+			return v;
+		}
+		case 336: {
+			const v = new WeekCalendarEvents();
 			v.read(src);
 			return v;
 		}

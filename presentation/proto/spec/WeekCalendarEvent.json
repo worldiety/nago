@@ -1,0 +1,44 @@
+{
+  "doc": "WeekCalendarEvent is a block of a WeekCalendar.",
+  "kind": "Record",
+  "id": 335,
+  "fields": {
+    "1": {
+      "doc": "Id identifies the event within the calendar.",
+      "name": "Id",
+      "type": "Str"
+    },
+    "2": {
+      "doc": "Day is the index of the day of the event.",
+      "name": "Day",
+      "type": "Int"
+    },
+    "3": {
+      "doc": "From is the beginning in minutes since midnight.",
+      "name": "From",
+      "type": "Int"
+    },
+    "4": {
+      "doc": "To is the end in minutes since midnight, after From and at most 1440.",
+      "name": "To",
+      "type": "Int"
+    },
+    "5": {
+      "name": "Title",
+      "type": "Str"
+    },
+    "6": {
+      "name": "Text",
+      "type": "Str"
+    },
+    "7": {
+      "name": "Color",
+      "type": "Color"
+    },
+    "8": {
+      "doc": "Fixed events can only be clicked.",
+      "name": "Fixed",
+      "type": "Bool"
+    }
+  }
+}

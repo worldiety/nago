@@ -387,6 +387,7 @@ func (WebView) isComponent()            {}
 func (WindowTitle) isComponent()        {}
 func (ThreeJS) isComponent()            {}
 func (Canvas2) isComponent()            {}
+func (WeekCalendar) isComponent()       {}
 
 // NagoEvent is the union type of all allowed NAGO protocol events. Everything which goes through a NAGO channel must be an Event at the root level.
 type NagoEvent interface {
@@ -25103,6 +25104,602 @@ func (v *DebounceOptions) read(r *BinaryReader) error {
 	return nil
 }
 
+// WeekCalendar shows up to seven days as columns over a time axis with events as blocks. The user may span an interval in free time, move a block, also to another day, change its duration at its bottom edge and click a block, with the pointer and with the keyboard. The client reports each action as json into Input, and the server checks it against the calendar of its last render, before it invokes a callback.
+type WeekCalendar struct {
+	// Id is the id of the calendar, as the application wrote it.
+	Id Str
+	// Days are the columns, from left to right. The index of a day is its position.
+	Days WeekCalendarDays
+	// Events are all events, also those outside of the visible range.
+	Events WeekCalendarEvents
+	// From is the first visible minute since midnight.
+	From Int
+	// To is the last visible minute since midnight, at most 1440.
+	To Int
+	// Step is the raster in minutes, onto which the user spans, moves and resizes.
+	Step Int
+	// ClickSpan is the duration in minutes, which a click into free time spans.
+	ClickSpan Int
+	// ShowNow tells, whether the line of the current time is shown at NowDay and NowMinute.
+	ShowNow   Bool
+	NowDay    Int
+	NowMinute Int
+	// HourHeight is the height of an hour in dp.
+	HourHeight Float
+	// Input is a state, into which the client writes each action as json {seq,kind,id,day,from,to,base:{day,from,to}}, kind is click, select, move or resize. It is zero, if the calendar takes no action.
+	Input Ptr
+	// Ack is the sequence number of the last action, which the server has processed, also if it rejected it.
+	Ack Int
+	// Message is the text of the error of the last callback, until the next action.
+	Message Str
+	// CanClick tells, whether a click on a block is reported.
+	CanClick Bool
+	// CanSelect tells, whether the user may span an interval in free time.
+	CanSelect Bool
+	// CanMove tells, whether the user may move a block and change its duration.
+	CanMove  Bool
+	Disabled Bool
+	Frame    Frame
+}
+
+func (v *WeekCalendar) write(w *BinaryWriter) error {
+	var fields [20]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.Days.IsZero()
+	fields[3] = !v.Events.IsZero()
+	fields[4] = !v.From.IsZero()
+	fields[5] = !v.To.IsZero()
+	fields[6] = !v.Step.IsZero()
+	fields[7] = !v.ClickSpan.IsZero()
+	fields[8] = !v.ShowNow.IsZero()
+	fields[9] = !v.NowDay.IsZero()
+	fields[10] = !v.NowMinute.IsZero()
+	fields[11] = !v.HourHeight.IsZero()
+	fields[12] = !v.Input.IsZero()
+	fields[13] = !v.Ack.IsZero()
+	fields[14] = !v.Message.IsZero()
+	fields[15] = !v.CanClick.IsZero()
+	fields[16] = !v.CanSelect.IsZero()
+	fields[17] = !v.CanMove.IsZero()
+	fields[18] = !v.Disabled.IsZero()
+	fields[19] = !v.Frame.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(array, 2); err != nil {
+			return err
+		}
+		if err := v.Days.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(array, 3); err != nil {
+			return err
+		}
+		if err := v.Events.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(varint, 4); err != nil {
+			return err
+		}
+		if err := v.From.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(varint, 5); err != nil {
+			return err
+		}
+		if err := v.To.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(varint, 6); err != nil {
+			return err
+		}
+		if err := v.Step.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(varint, 7); err != nil {
+			return err
+		}
+		if err := v.ClickSpan.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		if err := w.writeFieldHeader(uvarint, 8); err != nil {
+			return err
+		}
+		if err := v.ShowNow.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[9] {
+		if err := w.writeFieldHeader(varint, 9); err != nil {
+			return err
+		}
+		if err := v.NowDay.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[10] {
+		if err := w.writeFieldHeader(varint, 10); err != nil {
+			return err
+		}
+		if err := v.NowMinute.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[11] {
+		if err := w.writeFieldHeader(f64, 11); err != nil {
+			return err
+		}
+		if err := v.HourHeight.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[12] {
+		if err := w.writeFieldHeader(uvarint, 12); err != nil {
+			return err
+		}
+		if err := v.Input.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[13] {
+		if err := w.writeFieldHeader(varint, 13); err != nil {
+			return err
+		}
+		if err := v.Ack.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[14] {
+		if err := w.writeFieldHeader(byteSlice, 14); err != nil {
+			return err
+		}
+		if err := v.Message.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[15] {
+		if err := w.writeFieldHeader(uvarint, 15); err != nil {
+			return err
+		}
+		if err := v.CanClick.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[16] {
+		if err := w.writeFieldHeader(uvarint, 16); err != nil {
+			return err
+		}
+		if err := v.CanSelect.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[17] {
+		if err := w.writeFieldHeader(uvarint, 17); err != nil {
+			return err
+		}
+		if err := v.CanMove.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[18] {
+		if err := w.writeFieldHeader(uvarint, 18); err != nil {
+			return err
+		}
+		if err := v.Disabled.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[19] {
+		if err := w.writeFieldHeader(record, 19); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *WeekCalendar) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Days.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Events.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.From.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.To.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.Step.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.ClickSpan.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.ShowNow.read(r)
+			if err != nil {
+				return err
+			}
+		case 9:
+			err := v.NowDay.read(r)
+			if err != nil {
+				return err
+			}
+		case 10:
+			err := v.NowMinute.read(r)
+			if err != nil {
+				return err
+			}
+		case 11:
+			err := v.HourHeight.read(r)
+			if err != nil {
+				return err
+			}
+		case 12:
+			err := v.Input.read(r)
+			if err != nil {
+				return err
+			}
+		case 13:
+			err := v.Ack.read(r)
+			if err != nil {
+				return err
+			}
+		case 14:
+			err := v.Message.read(r)
+			if err != nil {
+				return err
+			}
+		case 15:
+			err := v.CanClick.read(r)
+			if err != nil {
+				return err
+			}
+		case 16:
+			err := v.CanSelect.read(r)
+			if err != nil {
+				return err
+			}
+		case 17:
+			err := v.CanMove.read(r)
+			if err != nil {
+				return err
+			}
+		case 18:
+			err := v.Disabled.read(r)
+			if err != nil {
+				return err
+			}
+		case 19:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// WeekCalendarDay is the head of a column of a WeekCalendar.
+type WeekCalendarDay struct {
+	Title Str
+	// Subtitle is shown below the title, with up to two lines.
+	Subtitle Str
+	// Today marks the current day.
+	Today Bool
+	// Muted marks a day, which is not a working day, e.g. a holiday.
+	Muted Bool
+}
+
+func (v *WeekCalendarDay) write(w *BinaryWriter) error {
+	var fields [5]bool
+	fields[1] = !v.Title.IsZero()
+	fields[2] = !v.Subtitle.IsZero()
+	fields[3] = !v.Today.IsZero()
+	fields[4] = !v.Muted.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Title.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.Subtitle.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(uvarint, 3); err != nil {
+			return err
+		}
+		if err := v.Today.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(uvarint, 4); err != nil {
+			return err
+		}
+		if err := v.Muted.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *WeekCalendarDay) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Title.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Subtitle.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Today.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Muted.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// WeekCalendarEvent is a block of a WeekCalendar.
+type WeekCalendarEvent struct {
+	// Id identifies the event within the calendar.
+	Id Str
+	// Day is the index of the day of the event.
+	Day Int
+	// From is the beginning in minutes since midnight.
+	From Int
+	// To is the end in minutes since midnight, after From and at most 1440.
+	To    Int
+	Title Str
+	Text  Str
+	Color Color
+	// Fixed events can only be clicked.
+	Fixed Bool
+}
+
+func (v *WeekCalendarEvent) write(w *BinaryWriter) error {
+	var fields [9]bool
+	fields[1] = !v.Id.IsZero()
+	fields[2] = !v.Day.IsZero()
+	fields[3] = !v.From.IsZero()
+	fields[4] = !v.To.IsZero()
+	fields[5] = !v.Title.IsZero()
+	fields[6] = !v.Text.IsZero()
+	fields[7] = !v.Color.IsZero()
+	fields[8] = !v.Fixed.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(varint, 2); err != nil {
+			return err
+		}
+		if err := v.Day.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(varint, 3); err != nil {
+			return err
+		}
+		if err := v.From.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(varint, 4); err != nil {
+			return err
+		}
+		if err := v.To.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(byteSlice, 5); err != nil {
+			return err
+		}
+		if err := v.Title.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(byteSlice, 6); err != nil {
+			return err
+		}
+		if err := v.Text.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(byteSlice, 7); err != nil {
+			return err
+		}
+		if err := v.Color.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[8] {
+		if err := w.writeFieldHeader(uvarint, 8); err != nil {
+			return err
+		}
+		if err := v.Fixed.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *WeekCalendarEvent) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Day.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.From.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.To.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Title.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.Text.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.Color.read(r)
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := v.Fixed.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -26972,6 +27569,36 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 331:
 		var v DebounceOptions
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 332:
+		var v WeekCalendar
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 333:
+		var v WeekCalendarDay
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 334:
+		var v WeekCalendarDays
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 335:
+		var v WeekCalendarEvent
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 336:
+		var v WeekCalendarEvents
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -32293,6 +32920,155 @@ func (v *DebounceOptions) IsZero() bool {
 	return v.Disabled.IsZero() && v.Time.IsZero()
 }
 
+func (v *WeekCalendar) reset() {
+	v.Id.reset()
+	v.Days.reset()
+	v.Events.reset()
+	v.From.reset()
+	v.To.reset()
+	v.Step.reset()
+	v.ClickSpan.reset()
+	v.ShowNow.reset()
+	v.NowDay.reset()
+	v.NowMinute.reset()
+	v.HourHeight.reset()
+	v.Input.reset()
+	v.Ack.reset()
+	v.Message.reset()
+	v.CanClick.reset()
+	v.CanSelect.reset()
+	v.CanMove.reset()
+	v.Disabled.reset()
+	v.Frame.reset()
+}
+
+func (v *WeekCalendar) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.Days.IsZero() && v.Events.IsZero() && v.From.IsZero() && v.To.IsZero() && v.Step.IsZero() && v.ClickSpan.IsZero() && v.ShowNow.IsZero() && v.NowDay.IsZero() && v.NowMinute.IsZero() && v.HourHeight.IsZero() && v.Input.IsZero() && v.Ack.IsZero() && v.Message.IsZero() && v.CanClick.IsZero() && v.CanSelect.IsZero() && v.CanMove.IsZero() && v.Disabled.IsZero() && v.Frame.IsZero()
+}
+
+func (v *WeekCalendarDay) reset() {
+	v.Title.reset()
+	v.Subtitle.reset()
+	v.Today.reset()
+	v.Muted.reset()
+}
+
+func (v *WeekCalendarDay) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Title.IsZero() && v.Subtitle.IsZero() && v.Today.IsZero() && v.Muted.IsZero()
+}
+
+type WeekCalendarDays []WeekCalendarDay
+
+func (v *WeekCalendarDays) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *WeekCalendarDays) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	slice := make([]WeekCalendarDay, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = *obj.(*WeekCalendarDay)
+	}
+
+	*v = slice
+	return nil
+}
+
+func (v *WeekCalendarDays) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
+}
+
+func (v *WeekCalendarDays) reset() {
+	*v = nil
+}
+
+func (v *WeekCalendarEvent) reset() {
+	v.Id.reset()
+	v.Day.reset()
+	v.From.reset()
+	v.To.reset()
+	v.Title.reset()
+	v.Text.reset()
+	v.Color.reset()
+	v.Fixed.reset()
+}
+
+func (v *WeekCalendarEvent) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Id.IsZero() && v.Day.IsZero() && v.From.IsZero() && v.To.IsZero() && v.Title.IsZero() && v.Text.IsZero() && v.Color.IsZero() && v.Fixed.IsZero()
+}
+
+type WeekCalendarEvents []WeekCalendarEvent
+
+func (v *WeekCalendarEvents) write(w *BinaryWriter) error {
+	if err := w.writeUvarint(uint64(len(*v))); err != nil {
+		return err
+	}
+	for _, item := range *v {
+		if err := item.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := item.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *WeekCalendarEvents) read(r *BinaryReader) error {
+	count, err := r.readUvarint()
+	if err != nil {
+		return err
+	}
+
+	slice := make([]WeekCalendarEvent, count)
+	for i := uint64(0); i < count; i++ {
+		obj, err := Unmarshal(r)
+		if err != nil {
+			return err
+		}
+		slice[i] = *obj.(*WeekCalendarEvent)
+	}
+
+	*v = slice
+	return nil
+}
+
+func (v *WeekCalendarEvents) IsZero() bool {
+	return v == nil || *v == nil || len(*v) == 0
+}
+
+func (v *WeekCalendarEvents) reset() {
+	*v = nil
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -34444,6 +35220,41 @@ func (v *Accessible) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *DebounceOptions) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 331); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *WeekCalendar) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 332); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *WeekCalendarDay) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 333); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *WeekCalendarDays) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 334); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *WeekCalendarEvent) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 335); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *WeekCalendarEvents) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(array, 336); err != nil {
 		return err
 	}
 	return nil

@@ -1,0 +1,98 @@
+{
+  "doc": "WeekCalendar shows up to seven days as columns over a time axis with events as blocks. The user may span an interval in free time, move a block, also to another day, change its duration at its bottom edge and click a block, with the pointer and with the keyboard. The client reports each action as json into Input, and the server checks it against the calendar of its last render, before it invokes a callback.",
+  "kind": "Record",
+  "id": 332,
+  "fields": {
+    "1": {
+      "doc": "Id is the id of the calendar, as the application wrote it.",
+      "name": "Id",
+      "type": "Str"
+    },
+    "2": {
+      "doc": "Days are the columns, from left to right. The index of a day is its position.",
+      "name": "Days",
+      "type": "WeekCalendarDays"
+    },
+    "3": {
+      "doc": "Events are all events, also those outside of the visible range.",
+      "name": "Events",
+      "type": "WeekCalendarEvents"
+    },
+    "4": {
+      "doc": "From is the first visible minute since midnight.",
+      "name": "From",
+      "type": "Int"
+    },
+    "5": {
+      "doc": "To is the last visible minute since midnight, at most 1440.",
+      "name": "To",
+      "type": "Int"
+    },
+    "6": {
+      "doc": "Step is the raster in minutes, onto which the user spans, moves and resizes.",
+      "name": "Step",
+      "type": "Int"
+    },
+    "7": {
+      "doc": "ClickSpan is the duration in minutes, which a click into free time spans.",
+      "name": "ClickSpan",
+      "type": "Int"
+    },
+    "8": {
+      "doc": "ShowNow tells, whether the line of the current time is shown at NowDay and NowMinute.",
+      "name": "ShowNow",
+      "type": "Bool"
+    },
+    "9": {
+      "name": "NowDay",
+      "type": "Int"
+    },
+    "10": {
+      "name": "NowMinute",
+      "type": "Int"
+    },
+    "11": {
+      "doc": "HourHeight is the height of an hour in dp.",
+      "name": "HourHeight",
+      "type": "Float"
+    },
+    "12": {
+      "doc": "Input is a state, into which the client writes each action as json {seq,kind,id,day,from,to,base:{day,from,to}}, kind is click, select, move or resize. It is zero, if the calendar takes no action.",
+      "name": "Input",
+      "type": "Ptr"
+    },
+    "13": {
+      "doc": "Ack is the sequence number of the last action, which the server has processed, also if it rejected it.",
+      "name": "Ack",
+      "type": "Int"
+    },
+    "14": {
+      "doc": "Message is the text of the error of the last callback, until the next action.",
+      "name": "Message",
+      "type": "Str"
+    },
+    "15": {
+      "doc": "CanClick tells, whether a click on a block is reported.",
+      "name": "CanClick",
+      "type": "Bool"
+    },
+    "16": {
+      "doc": "CanSelect tells, whether the user may span an interval in free time.",
+      "name": "CanSelect",
+      "type": "Bool"
+    },
+    "17": {
+      "doc": "CanMove tells, whether the user may move a block and change its duration.",
+      "name": "CanMove",
+      "type": "Bool"
+    },
+    "18": {
+      "name": "Disabled",
+      "type": "Bool"
+    },
+    "19": {
+      "name": "Frame",
+      "type": "Frame"
+    }
+  }
+}

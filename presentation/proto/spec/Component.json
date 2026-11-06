@@ -53,6 +53,7 @@
     "WebView",
     "WindowTitle",
     "ThreeJS",
-    "Canvas2"
+    "Canvas2",
+    "WeekCalendar"
   ]
 }
