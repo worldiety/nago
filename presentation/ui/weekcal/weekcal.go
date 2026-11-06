@@ -86,10 +86,14 @@ type Move struct {
 // the interval, from which the user moved it. The calendar renders again afterward and shows whatever the
 // application returns then. While an action is pending, the client keeps its preview and takes no new gesture.
 type TWeekCalendar struct {
-	id         string
-	stateID    string
-	days       []Day
-	events     []Event
+	id      string
+	stateID string
+	days    []Day
+	events  []Event
+	// tail is shared by the values, which share the array of events: its length of events, which only the value with
+	// as many events may extend in place (Append)
+	tail       *eventsTail
+	maxEvents  int
 	from, to   int
 	step       int
 	clickSpan  int
@@ -133,10 +137,39 @@ func (c TWeekCalendar) StateID(id string) TWeekCalendar {
 	return c
 }
 
-// Events sets the events. An event, which lies partly outside of the range, is cut at the edge and marked; events
-// entirely outside of it are counted per day at the top or the bottom.
-func (c TWeekCalendar) Events(events ...Event) TWeekCalendar {
-	c.events = events
+// eventsTail is the number of events, which are used of an array of events: a value with exactly as many events owns
+// the end of the array.
+type eventsTail struct {
+	n int
+}
+
+// Append appends events, like calendar.TCalendar.Append, also several times, e.g. in a loop. It returns a new
+// calendar; the receiver and every other value, which shares its events, stay unchanged. A loop of n appends takes
+// linear time: the value, which owns the end of the shared array, appends in place, any other value copies. An event,
+// which lies partly outside of the range, is cut at the edge and marked; events entirely outside of it are counted
+// per day at the top or the bottom.
+func (c TWeekCalendar) Append(events ...Event) TWeekCalendar {
+	if len(events) == 0 {
+		return c
+	}
+
+	if c.tail == nil || c.tail.n != len(c.events) {
+		// another value appended to the shared array already: copy, so that its events stay unseen
+		own := make([]Event, len(c.events), len(c.events)+len(events))
+		copy(own, c.events)
+		c.events = own
+		c.tail = &eventsTail{}
+	}
+
+	c.events = append(c.events, events...)
+	c.tail.n = len(c.events)
+	return c
+}
+
+// MaxEvents sets the largest number of events, which Validate accepts, e.g. to bound the size of the tree. The default
+// is 0, no bound.
+func (c TWeekCalendar) MaxEvents(n int) TWeekCalendar {
+	c.maxEvents = n
 	return c
 }
 
@@ -219,9 +252,10 @@ func (c TWeekCalendar) OnInvalid(fn func(err error) core.View) TWeekCalendar {
 }
 
 // Validate returns the first violation of the rules of the days, the events and the settings, or nil: 1 to 7 days;
-// each event with an id, which is not empty and unique, a day of the calendar and 0 <= From < To <= 1440; a step of
-// [Steps]; a range 0 <= from < to <= 1440 in the raster; a click span, which is a positive multiple of the step; an
-// hour height from 24 to 240; the current time at a day of the calendar and a minute from 0 to 1440.
+// at most [TWeekCalendar.MaxEvents] events; each event with an id, which is not empty and unique, a day of the
+// calendar and 0 <= From < To <= 1440; a step of [Steps]; a range 0 <= from < to <= 1440 in the raster; a click
+// span, which is a positive multiple of the step; an hour height from 24 to 240; the current time at a day of the
+// calendar and a minute from 0 to 1440.
 func (c TWeekCalendar) Validate() error {
 	if len(c.days) == 0 || len(c.days) > MaxDays {
 		return fmt.Errorf("a week calendar has 1 to %d days, not %d", MaxDays, len(c.days))
@@ -249,6 +283,10 @@ func (c TWeekCalendar) Validate() error {
 
 	if c.now && (c.nowDay < 0 || c.nowDay >= len(c.days) || c.nowMinute < 0 || c.nowMinute > MinutesPerDay) {
 		return fmt.Errorf("the current time is at a day from 0 to %d and a minute from 0 to 1440, not at day %d and minute %d", len(c.days)-1, c.nowDay, c.nowMinute)
+	}
+
+	if c.maxEvents > 0 && len(c.events) > c.maxEvents {
+		return fmt.Errorf("a week calendar has at most %d events, not %d", c.maxEvents, len(c.events))
 	}
 
 	ids := make(map[string]struct{}, len(c.events))
@@ -378,11 +416,17 @@ const (
 )
 
 // handle checks an action of the client against the calendar of the last render and passes it to its callback. The
-// sequence number tells the client, that the action has been processed, also if it has been rejected. The message
-// of a former callback lasts until the next action.
+// sequence number tells the client, that the action has been processed, also if it has been rejected. A number, which
+// is not greater than the acknowledged one, has been processed already and is dropped without a callback: so an action
+// calls one callback, also if the same calendar stands several times in the tree, e.g. ui.VStack(cal, cal), whose
+// observers of the same state all see it. The message of a former callback lasts until the next action.
 func (c TWeekCalendar) handle(raw string, ack *core.State[int64], msg *core.State[string]) {
 	var a action
 	if err := json.Unmarshal([]byte(raw), &a); err != nil {
+		return
+	}
+
+	if a.Seq <= ack.Get() {
 		return
 	}
 
