@@ -23,6 +23,9 @@
 		@contextmenu="onContextMenu"
 		@dragstart.prevent
 	>
+		<!-- the sizer asks a container, which follows its content, for the width of all days, but, as a replaced
+		     element with a relative maximum, never forces it wider than its place -->
+		<svg class="sizer" aria-hidden="true" :width="minWidth" height="1"></svg>
 		<div v-if="ui.message" class="message" role="alert" data-weekcal-message>{{ ui.message }}</div>
 
 		<div class="grid" :style="gridStyle">
@@ -308,11 +311,15 @@ const nowLine = computed(() => {
 const AXIS_WIDTH = 52;
 const MIN_DAY_WIDTH = 96;
 const rootStyle = computed(() => frameCSS(props.ui.frame).join(';'));
-// a day is at least 96dp wide, otherwise the calendar scrolls horizontally, and the axis stays
+// The calendar is at most as wide as its place and scrolls itself: a day is at least 96dp wide, the axis stays. Only
+// the width of the grid, a maximum of the place and all days, keeps the days; its percentage leaves the days out of
+// the smallest width, which the calendar asks of a container, so a container, which follows its content, does not
+// widen beyond its place. The sizer asks for the width of all days as the preferred one.
+const minWidth = computed(() => AXIS_WIDTH + MIN_DAY_WIDTH * n.value);
 const gridStyle = computed(
 	() =>
-		`grid-template-columns:${AXIS_WIDTH}px repeat(${n.value}, minmax(${MIN_DAY_WIDTH}px, 1fr));` +
-		`grid-template-rows:auto ${bodyHeight.value}px;min-width:${AXIS_WIDTH + MIN_DAY_WIDTH * n.value}px`
+		`grid-template-columns:${AXIS_WIDTH}px repeat(${n.value}, minmax(0, 1fr));` +
+		`grid-template-rows:auto ${bodyHeight.value}px;width:max(100%, ${minWidth.value}px)`
 );
 const bodyStyle = computed(() => {
 	const offset = ((Math.ceil(range.value.from / 60) * 60 - range.value.from) / 60) * hourHeight.value;
@@ -684,7 +691,9 @@ function onPointerCancel(e: PointerEvent) {
 	if (g && e.pointerId === g.pointerId) cancelGesture();
 }
 
-// a finger, which drags, must not scroll the page: only a cancelable touchmove keeps the pointer events
+// a finger, which drags, must not scroll the page: only a cancelable touchmove keeps the pointer events. While a
+// finger is held for the long press, the browser holds back its moves within its own slop; a move beyond it, before
+// the long press, has cancelled the gesture in onPointerMove, which comes first, so the page scrolls.
 function onTouchMove(e: TouchEvent) {
 	const g = gesture.value;
 	if (g && g.touch && g.phase === 'dragging' && e.cancelable) e.preventDefault();
@@ -930,15 +939,25 @@ onBeforeUnmount(() => {
 <style scoped>
 @reference '@/assets/css/tailwind.css';
 
+/* at most as wide as its place, also in a container, which follows the width of its content (gridStyle) */
 .weekcal {
 	--weekcal-line: rgb(from var(--M5) r g b / 0.6);
 	--weekcal-hour-line: rgb(from var(--M5) r g b / 0.45);
 	position: relative;
 	overflow: auto;
 	overscroll-behavior-x: contain;
+	width: 100%;
+	min-width: 0;
 	max-width: 100%;
 	touch-action: manipulation;
 	@apply rounded-md border border-M5 bg-M1 text-M8;
+}
+
+.sizer {
+	display: block;
+	max-width: 100%;
+	height: 0;
+	pointer-events: none;
 }
 
 .message {
@@ -949,7 +968,6 @@ onBeforeUnmount(() => {
 
 .grid {
 	display: grid;
-	width: 100%;
 }
 
 .corner {
