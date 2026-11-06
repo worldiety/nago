@@ -14,6 +14,7 @@
 		"build-loader": "npx babel src/loader.ts --out-file dist/legacy/assets/loader.js --extensions \".ts\"",
 		"postbuild": "npm run build-loader && cp index-build.html dist/index.html",
 		"type-check": "vue-tsc --noEmit -p tsconfig.json --composite false",
+		"test": "node --test 'test/**/*.test.ts'",
 		"lint": "eslint src",
 		"lint-fix": "eslint --fix src",
 		"format": "prettier --write src"

@@ -14,6 +14,7 @@ import UiGeneric from '@/components/UiGeneric.vue';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import { frameCSS } from '@/components/shared/frame';
 import { inputWrapperStyleFrom } from '@/components/shared/inputWrapperStyle';
+import { TextFieldSync } from '@/components/shared/textFieldSync';
 import { randomStr } from '@/components/shared/util';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
@@ -49,10 +50,8 @@ let timer: number = 0;
 // unmounting tells a focusout caused by our own destruction apart from the user really leaving the field.
 // See onFocusOut for why this matters.
 let unmounting = false;
-// lastSentValue is the (parsed) value we last transmitted to the server. It is our synchronization anchor:
-// as long as the local input still equals it, the user has not typed anything the server does not know about,
-// and therefore any incoming server value is newer than our local state and must win.
-let lastSentValue: string = props.ui.value ?? '';
+// sync decides, whether a server rendering replaces the input or the text typed by the user wins, see TextFieldSync.
+const sync = new TextFieldSync(parseValue(inputValue.value));
 
 const textarea = ref<HTMLTextAreaElement>();
 const textareaHeight = ref('auto');
@@ -294,7 +293,7 @@ function sendKeydownEnterEvent() {
 	serviceAdapter.sendEvent(
 		new UpdateStateValueRequested(props.ui.inputValue, props.ui.keydownEnter, nextRID(), parsedValue)
 	);
-	lastSentValue = parsedValue;
+	sync.sent(parsedValue);
 	clearTimeout(timer); // cancel any debounced follow up event
 }
 
@@ -306,13 +305,15 @@ function onTextareaInput(force: boolean) {
 function submitInputValue(force: boolean, functionPointer: number = 0): void {
 	putValueInRange();
 
-	// Any pending debounce is obsolete from here on: either we send right now ourselves, or the value already
-	// matches the server. Would it fire later, it would push back a value the server has meanwhile discarded.
+	// Any pending debounce is obsolete from here on: either we send right now ourselves, or the server already has
+	// or is about to have the value. Would it fire later, it would push back a value the server has meanwhile
+	// discarded.
 	clearTimeout(timer);
 
 	const parsedValue = parseValue(inputValue.value);
-	// note the ?? '': an empty value is not transmitted by the protocol, thus it arrives as undefined.
-	if (parsedValue == (props.ui.value ?? '')) {
+	// Compared with what has been sent and not with props.ui.value, which still lags behind while a transmitted
+	// value is on its way: deleting what has just been sent must be transmitted as well.
+	if (!sync.hasUnsentInput(parsedValue)) {
 		return;
 	}
 
@@ -324,7 +325,7 @@ function submitInputValue(force: boolean, functionPointer: number = 0): void {
 		serviceAdapter.sendEvent(
 			new UpdateStateValueRequested(props.ui.inputValue, functionPointer, nextRID(), parsedValue)
 		);
-		lastSentValue = parsedValue;
+		sync.sent(parsedValue);
 		return;
 	}
 
@@ -437,11 +438,11 @@ function debouncedInput() {
 	clearTimeout(timer);
 	timer = window.setTimeout(() => {
 		const parsedValue = parseValue(inputValue.value);
-		if (parsedValue == (props.ui.value ?? '')) {
+		if (!sync.hasUnsentInput(parsedValue)) {
 			return;
 		}
 		serviceAdapter.sendEvent(new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), parsedValue));
-		lastSentValue = parsedValue;
+		sync.sent(parsedValue);
 	}, debounceTime);
 }
 
@@ -475,11 +476,13 @@ watch(inputValue, (newValue, oldValue) => {
 /**
  * Adopts values coming from the server.
  *
- * Outdated renderings (those which are older than our last interaction) are already discarded globally in App.vue
- * based on the request tracing id. What that mechanism cannot catch is a *current* rendering, triggered by some
- * other component, which still carries an older value for this text field - namely everything the user has typed
- * but which has not been transmitted yet due to the debounce. Therefore we only adopt the server value while the
- * local input still equals what we last sent: in that case the server knows everything we know and has decided.
+ * Outdated renderings (those which answer a request older than our last interaction) are already discarded globally
+ * in App.vue based on the request tracing id. What that mechanism cannot catch is a *current* rendering, which still
+ * carries an older value for this text field: the server renders on its own (request tracing id 0), e.g. because a
+ * goroutine changed some state, or another component caused the rendering. Such a rendering cannot know what the
+ * user has typed but not transmitted yet due to the debounce. Therefore we only adopt the server value while the
+ * input still equals what we last sent: in that case the server knows everything we know and has decided.
+ * Otherwise, the input and the pending debounce stay untouched, see TextFieldSync.
  *
  * This is what makes a server side reset work while the field keeps the focus, e.g. a chat input which is emptied
  * by its own submit handler. Note that an empty value is not transmitted at all by the protocol and thus arrives
@@ -488,16 +491,13 @@ watch(inputValue, (newValue, oldValue) => {
 watch(
 	() => props.ui,
 	(newValue) => {
-		const serverValue = newValue.value ?? '';
-		const parsedInputValue = parseValue(inputValue.value);
-		const parsedServerValue = parseValue(serverValue);
-		if (parsedInputValue === lastSentValue && parsedInputValue === parsedServerValue) {
+		const serverValue = formatValue(newValue.value ?? '');
+		if (!sync.adopt(parseValue(inputValue.value), parseValue(serverValue))) {
 			return;
 		}
 
 		clearTimeout(timer);
-		inputValue.value = formatValue(serverValue);
-		lastSentValue = serverValue;
+		inputValue.value = serverValue;
 	}
 );
 
