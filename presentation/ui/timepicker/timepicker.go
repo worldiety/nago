@@ -46,8 +46,8 @@ type TPicker struct {
 	errorText            string                     // validation or error message
 	frame                ui.Frame                   // layout frame for size and positioning
 	pickerPresented      *core.State[bool]          // controls whether the picker UI is currently shown
-	targetSelectedState  *core.State[time.Duration] // external binding for the selected duration
-	currentSelectedState *core.State[time.Duration] // working copy used while editing
+	targetSelectedState  *core.State[time.Duration] // external binding for the selected duration, which the field shows
+	currentSelectedState *core.State[time.Duration] // working copy of the dialog, set to the bound value on each open
 	title                string                     // title used when presenting the picker (e.g., in a dialog)
 	showDays             bool                       // enables selection of days
 	showHours            bool                       // enables selection of hours
@@ -77,12 +77,11 @@ func Picker(label string, selectedState *core.State[time.Duration]) TPicker {
 		}).Get()
 
 		p.pickerPresented = core.DerivedState[bool](selectedState, ".pck.pre")
+		// The working copy is the value of the dialog: +/- and the fields change only the copy, which apply writes
+		// into the bound state. Opening the dialog sets the copy to the bound value, so neither a cancel nor a set
+		// of the bound state from outside leaves a former value in the dialog.
 		p.currentSelectedState = core.DerivedState[time.Duration](selectedState, ".pck.tmp").Init(func() time.Duration {
 			return selectedState.Get()
-		})
-
-		p.currentSelectedState.Observe(func(newValue time.Duration) {
-			p.targetSelectedState.Set(newValue)
 		})
 	}
 	return p
@@ -274,11 +273,10 @@ func (c TPicker) dayUp() {
 	c.currentSelectedState.Set(c.round(Duration(days, hours, minutes, seconds)))
 }
 
+// setDay sets the typed days, clamped to 0 to 99 like the buttons.
 func (c TPicker) setDay(days int) {
 	_, hours, minutes, seconds := FromDuration(c.currentSelectedState.Get())
-	if days > 99 {
-		days = 0
-	}
+	days = clamp(days, 99)
 	c.currentSelectedState.Set(c.round(Duration(days, hours, minutes, seconds)))
 }
 
@@ -304,11 +302,10 @@ func (c TPicker) hourUp() {
 	c.currentSelectedState.Set(c.round(Duration(days, hours, minutes, seconds)))
 }
 
+// setHour sets the typed hours, clamped to 0 to 23.
 func (c TPicker) setHour(hours int) {
 	days, _, minutes, seconds := FromDuration(c.currentSelectedState.Get())
-	if hours >= 24 {
-		hours = 0
-	}
+	hours = clamp(hours, 23)
 	c.currentSelectedState.Set(c.round(Duration(days, hours, minutes, seconds)))
 }
 
@@ -334,11 +331,10 @@ func (c TPicker) minUp() {
 	c.currentSelectedState.Set(c.round(Duration(days, hours, minutes, seconds)))
 }
 
+// setMin sets the typed minutes, clamped to 0 to 59.
 func (c TPicker) setMin(minutes int) {
 	days, hours, _, seconds := FromDuration(c.currentSelectedState.Get())
-	if minutes > 59 {
-		minutes = 0
-	}
+	minutes = clamp(minutes, 59)
 	c.currentSelectedState.Set(c.round(Duration(days, hours, minutes, seconds)))
 }
 
@@ -364,12 +360,25 @@ func (c TPicker) secUp() {
 	c.currentSelectedState.Set(Duration(days, hours, minutes, seconds))
 }
 
+// setSec sets the typed seconds, clamped to 0 to 59.
 func (c TPicker) setSec(seconds int) {
 	days, hours, minutes, _ := FromDuration(c.currentSelectedState.Get())
-	if seconds > 59 {
-		seconds = 0
-	}
+	seconds = clamp(seconds, 59)
 	c.currentSelectedState.Set(c.round(Duration(days, hours, minutes, seconds)))
+}
+
+// clamp returns v within 0 and max: a typed value out of the bounds of a field is set to the nearest bound, instead
+// of wrapping around like the buttons.
+func clamp(v, max int) int {
+	if v < 0 {
+		return 0
+	}
+
+	if v > max {
+		return max
+	}
+
+	return v
 }
 
 // round normalizes the given duration based on the picker's configuration.
@@ -401,11 +410,11 @@ func (c TPicker) renderPicker() core.View {
 		inputId := fmt.Sprintf("%s-day", c.id)
 		segments = append(segments,
 			ui.VStack(
-				ui.TertiaryButton(c.dayUp).PreIcon(heroSolid.ChevronUp).AccessibilityLabel(fmt.Sprintf("Tage erhöhen, aktuell %d", days)),
-				editInt(c.currentSelectedState, inputId, "day", days, func(v int) {
+				ui.TertiaryButton(c.dayUp).PreIcon(heroSolid.ChevronUp).AccessibilityLabel(fmt.Sprintf("Tage erhöhen, aktuell %d", days)).Key(keyUp(unitDay), c.id),
+				editInt(c.currentSelectedState, inputId, unitDay, days, func(v int) {
 					c.setDay(v)
 				}),
-				ui.TertiaryButton(c.dayDown).PreIcon(heroSolid.ChevronDown).AccessibilityLabel(fmt.Sprintf("Tage verringern, aktuell %d", days)),
+				ui.TertiaryButton(c.dayDown).PreIcon(heroSolid.ChevronDown).AccessibilityLabel(fmt.Sprintf("Tage verringern, aktuell %d", days)).Key(keyDown(unitDay), c.id),
 			),
 			ui.Text("Tage").LabelFor(inputId),
 		)
@@ -415,11 +424,11 @@ func (c TPicker) renderPicker() core.View {
 		inputId := fmt.Sprintf("%s-hour", c.id)
 		segments = append(segments,
 			ui.VStack(
-				ui.TertiaryButton(c.hourUp).PreIcon(heroSolid.ChevronUp).AccessibilityLabel(fmt.Sprintf("Stunden erhöhen, aktuell %d", hours)),
-				editInt(c.currentSelectedState, inputId, "hour", hours, func(v int) {
+				ui.TertiaryButton(c.hourUp).PreIcon(heroSolid.ChevronUp).AccessibilityLabel(fmt.Sprintf("Stunden erhöhen, aktuell %d", hours)).Key(keyUp(unitHour), c.id),
+				editInt(c.currentSelectedState, inputId, unitHour, hours, func(v int) {
 					c.setHour(v)
 				}),
-				ui.TertiaryButton(c.hourDown).PreIcon(heroSolid.ChevronDown).AccessibilityLabel(fmt.Sprintf("Stunden verringern, aktuell %d", hours)),
+				ui.TertiaryButton(c.hourDown).PreIcon(heroSolid.ChevronDown).AccessibilityLabel(fmt.Sprintf("Stunden verringern, aktuell %d", hours)).Key(keyDown(unitHour), c.id),
 			),
 			ui.Text("Std.").LabelFor(inputId),
 		)
@@ -429,11 +438,11 @@ func (c TPicker) renderPicker() core.View {
 		inputId := fmt.Sprintf("%s-min", c.id)
 		segments = append(segments,
 			ui.VStack(
-				ui.TertiaryButton(c.minUp).PreIcon(heroSolid.ChevronUp).AccessibilityLabel(fmt.Sprintf("Minuten erhöhen, aktuell %d", minutes)),
-				editInt(c.currentSelectedState, inputId, "min", minutes, func(v int) {
+				ui.TertiaryButton(c.minUp).PreIcon(heroSolid.ChevronUp).AccessibilityLabel(fmt.Sprintf("Minuten erhöhen, aktuell %d", minutes)).Key(keyUp(unitMin), c.id),
+				editInt(c.currentSelectedState, inputId, unitMin, minutes, func(v int) {
 					c.setMin(v)
 				}),
-				ui.TertiaryButton(c.minDown).PreIcon(heroSolid.ChevronDown).AccessibilityLabel(fmt.Sprintf("Minuten verringern, aktuell %d", minutes)),
+				ui.TertiaryButton(c.minDown).PreIcon(heroSolid.ChevronDown).AccessibilityLabel(fmt.Sprintf("Minuten verringern, aktuell %d", minutes)).Key(keyDown(unitMin), c.id),
 			),
 			ui.Text("Min.").LabelFor(inputId),
 		)
@@ -443,11 +452,11 @@ func (c TPicker) renderPicker() core.View {
 		inputId := fmt.Sprintf("%s-sec", c.id)
 		segments = append(segments,
 			ui.VStack(
-				ui.TertiaryButton(c.secUp).PreIcon(heroSolid.ChevronUp).AccessibilityLabel(fmt.Sprintf("Sekunden erhöhen, aktuell %d", seconds)),
-				editInt(c.currentSelectedState, inputId, "sec", seconds, func(v int) {
+				ui.TertiaryButton(c.secUp).PreIcon(heroSolid.ChevronUp).AccessibilityLabel(fmt.Sprintf("Sekunden erhöhen, aktuell %d", seconds)).Key(keyUp(unitSec), c.id),
+				editInt(c.currentSelectedState, inputId, unitSec, seconds, func(v int) {
 					c.setSec(v)
 				}),
-				ui.TertiaryButton(c.secDown).PreIcon(heroSolid.ChevronDown).AccessibilityLabel(fmt.Sprintf("Sekunden verringern, aktuell %d", seconds)),
+				ui.TertiaryButton(c.secDown).PreIcon(heroSolid.ChevronDown).AccessibilityLabel(fmt.Sprintf("Sekunden verringern, aktuell %d", seconds)).Key(keyDown(unitSec), c.id),
 			),
 			ui.Text("Sek.").LabelFor(inputId),
 		)
@@ -456,22 +465,41 @@ func (c TPicker) renderPicker() core.View {
 	return ui.HStack(segments...).Frame(ui.Frame{}.FullWidth())
 }
 
+// The names of the units of the dialog, which name the fields and the keys of their buttons.
+const (
+	unitDay  = "day"
+	unitHour = "hour"
+	unitMin  = "min"
+	unitSec  = "sec"
+)
+
+// keyApply, keyUp and keyDown name the buttons of the dialog, see [ui.TButton.Key], with the id of the picker as
+// target, so that a click right after typing into a field of the dialog is not lost. They are not the keys of alert,
+// so that the buttons of a picker in a dialog without a title do not collide with the buttons of that dialog. Two
+// pickers of the same state share their id and thus their keys, which makes them ambiguous.
+const keyApply = "nago.timepicker.apply"
+
+func keyUp(unit string) string {
+	return "nago.timepicker." + unit + ".up"
+}
+
+func keyDown(unit string) string {
+	return "nago.timepicker." + unit + ".down"
+}
+
+// editInt is the field of a unit of the dialog. The field shows the value of the working copy; its state only
+// carries the typed text to set, which parses it, so the render does not set it (which would render again).
+// Text, which is no integer, leaves the value.
 func editInt(state *core.State[time.Duration], inputId, name string, val int, set func(v int)) core.View {
 	formattedVal := fmt.Sprintf("%02d", val)
 
-	editVal := core.DerivedState[string](state, name+"-edit").Init(func() string {
-		return formattedVal
-	}).Observe(func(newValue string) {
+	editVal := core.DerivedState[string](state, name+"-edit").Observe(func(newValue string) {
 		if v, err := strconv.Atoi(newValue); err == nil {
 			set(v)
 		}
 	})
 
-	if editVal.String() != formattedVal {
-		editVal.Set(formattedVal)
-	}
-
-	textField := ui.TextField("", editVal.Get()).
+	textField := ui.TextField("", formattedVal).
 		ID(inputId).
 		ShowZero(true).
 		Min(0).
@@ -481,11 +509,12 @@ func editInt(state *core.State[time.Duration], inputId, name string, val int, se
 		KeyboardOptions(ui.KeyboardOptions().KeyboardType(ui.KeyboardInteger)).
 		TextAlignment(ui.TextAlignCenter)
 
-	if name == "hour" {
+	switch name {
+	case unitDay:
+		textField = textField.Max(99)
+	case unitHour:
 		textField = textField.Max(23)
-	} else if name == "min" {
-		textField = textField.Max(59)
-	} else if name == "sec" {
+	case unitMin, unitSec:
 		textField = textField.Max(59)
 	}
 
@@ -499,7 +528,8 @@ func editInt(state *core.State[time.Duration], inputId, name string, val int, se
 // interaction is blocked.
 func (c TPicker) Render(ctx core.RenderContext) core.RenderNode {
 	wnd := ctx.Window()
-	durationText := Format(c.showDays, c.showHours, c.showMinutes, c.showSeconds, c.format, c.currentSelectedState.Get())
+	// the field shows the bound state, not the working copy of the dialog
+	durationText := Format(c.showDays, c.showHours, c.showMinutes, c.showSeconds, c.format, c.targetSelectedState.Get())
 
 	return accessibility.Accessible(
 		ui.VStack(
@@ -512,21 +542,22 @@ func (c TPicker) Render(ctx core.RenderContext) core.RenderNode {
 				SupportingText(c.supportingText).
 				Frame(ui.Frame{MinWidth: ui.L0}),
 
-			alert.Dialog(c.title, c.renderPicker(), c.pickerPresented, alert.Cancel(func() {
-				c.currentSelectedState.Set(c.targetSelectedState.Get())
-			}), alert.Custom(func(close func(closeDlg bool)) core.View {
+			// cancel, escape and a click beside the dialog only close it: the working copy is set again on the next
+			// open, so they write nothing
+			alert.Dialog(c.title, c.renderPicker(), c.pickerPresented, alert.Cancel(nil), alert.Custom(func(close func(closeDlg bool)) core.View {
 				// positive case
 				return ui.PrimaryButton(func() {
 					c.targetSelectedState.Set(c.currentSelectedState.Get())
 					c.targetSelectedState.Notify() // invoke observers
 					close(true)
-				}).Title(rstring.ActionApply.Get(wnd))
+				}).Title(rstring.ActionApply.Get(wnd)).Key(keyApply, c.id)
 			})),
 		).
 			Action(func() {
 				if c.disabled {
 					return
 				}
+				c.currentSelectedState.Set(c.targetSelectedState.Get())
 				c.pickerPresented.Set(true)
 			}).
 			Alignment(ui.Leading).
