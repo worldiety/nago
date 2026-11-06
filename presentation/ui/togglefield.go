@@ -12,6 +12,7 @@ import (
 	"math/rand"
 
 	"go.wdy.de/nago/presentation/core"
+	"go.wdy.de/nago/presentation/ui/accessibility"
 )
 
 // TToggleField is a composite component (Toggle Field).
@@ -129,21 +130,34 @@ func (c TToggleField) Render(context core.RenderContext) core.RenderNode {
 		opacity = 0.6
 	}
 
+	ariaDescription := c.errorText
+	if ariaDescription == "" {
+		ariaDescription = c.supportingText
+	}
+
 	// Under layout pressure, the toggle keeps its size, while the texts wrap and break even long words, so that
 	// they shrink beside the toggle instead of overflowing. The toggle stays at the first line of the label.
 	return HStack(
-		Toggle(c.value).
-			ID(c.id).
-			Disabled(c.disabled).
-			InputChecked(c.inputValue),
-		VStack(
-			Text(c.label).WordBreak(WordBreakBreakWord).LabelFor(labelFor),
-			IfElse(c.errorText == "",
-				Text(c.supportingText).Font(Font{Size: "0.75rem"}).Color(ST0).WordBreak(WordBreakBreakWord).LabelFor(labelFor),
-				Text(c.errorText).Font(Font{Size: "0.75rem"}).Color(SE0).WordBreak(WordBreakBreakWord).LabelFor(labelFor),
-			),
-		).Alignment(Leading).Opacity(opacity),
-	).Alignment(TopLeading).
+		accessibility.Accessible(
+			Toggle(c.value).
+				ID(c.id).
+				Disabled(c.disabled).
+				InputChecked(c.inputValue),
+		).
+			Role(accessibility.RoleSwitch).
+			Label(c.label).
+			Description(ariaDescription).
+			Invalid(c.errorText != ""),
+		accessibility.Accessible(
+			VStack(
+				Text(c.label).WordBreak(WordBreakBreakWord).LabelFor(labelFor),
+				IfElse(c.errorText == "",
+					Text(c.supportingText).Font(Font{Size: "0.75rem"}).Color(ST0).WordBreak(WordBreakBreakWord).LabelFor(labelFor),
+					Text(c.errorText).Font(Font{Size: "0.75rem"}).Color(SE0).WordBreak(WordBreakBreakWord).LabelFor(labelFor),
+				),
+			).Alignment(Leading).Opacity(opacity),
+		).Hidden(true),
+	).Alignment(Leading).
 		Gap(L8).
 		Border(c.border).
 		Visible(!c.invisible).
