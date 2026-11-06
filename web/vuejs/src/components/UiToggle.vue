@@ -39,6 +39,7 @@ function toggle() {
 		type="checkbox"
 		:checked="!!props.ui.value"
 		:disabled="props.ui.disabled"
+		role="switch"
 		@change="toggle"
 	/>
 </template>
