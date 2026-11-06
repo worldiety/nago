@@ -119,23 +119,23 @@ func (s *Scope) handleSetPropertyValueRequested(evt *proto.UpdateStateValueReque
 
 	alloc := s.allocatedRootView.Unwrap()
 
-	if evt.StatePointer.IsZero() {
-		return
-	}
+	// Without a state, there is nothing to set, but the callback is called anyway: the frontend sends the enter key
+	// of a text field like this, even if the field has no InputValue state.
+	if !evt.StatePointer.IsZero() {
+		state, ok := alloc.states[evt.StatePointer]
+		if !ok {
+			// the state has been removed from the tree in the meantime, so the frontend shows a stale tree
+			s.discardStale("state", evt.StatePointer, evt.RID)
+			return
+		}
 
-	state, ok := alloc.states[evt.StatePointer]
-	if !ok {
-		// the state has been removed from the tree in the meantime, so the frontend shows a stale tree
-		s.discardStale("state", evt.StatePointer, evt.RID)
-		return
-	}
-
-	if err := state.parse(string(evt.Value)); err != nil {
-		slog.Error("invalid property value", slog.Any("evt", evt), slog.String("property-type", fmt.Sprintf("%T", state)))
-		s.Publish(&proto.ErrorOccurred{
-			RID:     evt.RID,
-			Message: proto.Str(fmt.Sprintf("cannot set property: invalid property value: %d", evt.StatePointer)),
-		})
+		if err := state.parse(string(evt.Value)); err != nil {
+			slog.Error("invalid property value", slog.Any("evt", evt), slog.String("property-type", fmt.Sprintf("%T", state)))
+			s.Publish(&proto.ErrorOccurred{
+				RID:     evt.RID,
+				Message: proto.Str(fmt.Sprintf("cannot set property: invalid property value: %d", evt.StatePointer)),
+			})
+		}
 	}
 
 	if evt.FunctionPointer.IsZero() {

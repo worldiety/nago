@@ -293,10 +293,9 @@ func (c TTextField) FullWidth() TTextField {
 //     in multiple ways (e.g. line break vs paragraph behavior or opening a new window in Chrome etc)
 //   - same applies to Str + Enter which may also be overloaded, typically for a soft line break
 //
-// The frontend sends the enter key together with the value for the [TTextField.InputValue] state, thus the
-// enter key only works with such a state. An enter on a tree, which the server has rendered again in the
-// meantime, is redirected to the current callback of the field bound to the same state, see
-// [core.MountKeyedCallback].
+// The frontend sends the enter key together with the value for the [TTextField.InputValue] state. With such a
+// state, an enter on a tree, which the server has rendered again in the meantime, is redirected to the current
+// callback of the field bound to the same state, see [core.MountKeyedCallback].
 func (c TTextField) KeydownEnter(fn func()) TTextField {
 	c.keydownEnter = fn
 	return c

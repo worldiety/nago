@@ -810,7 +810,8 @@ func (l *enterLock) lock() {
 	l.wnd.Post(func() { l.locked.Set(true) })
 }
 
-// enterApp has a chat input, which its enter handler empties, and a password field, which logs in on enter.
+// enterApp has a chat input, which its enter handler empties, a password field, which logs in on enter, and a text
+// field without a state, which counts its enters.
 func enterApp(t *testing.T, lock *enterLock) *nagotest.App {
 	return nagotest.New(t, func(cfg *application.Configurator) {
 		cfg.SetApplicationID("de.worldiety.nagotest")
@@ -820,6 +821,7 @@ func enterApp(t *testing.T, lock *enterLock) *nagotest.App {
 			password := core.AutoState[string](wnd)
 			login := core.AutoState[string](wnd)
 			locked := core.AutoState[bool](wnd)
+			plain := core.AutoState[int](wnd)
 			if lock != nil {
 				lock.wnd, lock.locked = wnd, locked
 			}
@@ -834,6 +836,8 @@ func enterApp(t *testing.T, lock *enterLock) *nagotest.App {
 					login.Set(password.Get())
 				}),
 				ui.Text("login: "+login.Get()),
+				ui.TextField("Plain", "").KeydownEnter(func() { plain.Set(plain.Get() + 1) }),
+				ui.Text(fmt.Sprintf("plain: %d", plain.Get())),
 			)
 		})
 	})
@@ -844,10 +848,11 @@ func chatField(t *testing.T, w *nagotest.Window) *proto.TextField {
 	return w.Find(nagotest.Label("Chat")).Node().Component.(*proto.TextField)
 }
 
-// enter presses enter in a text field like the frontend: the value and the enter callback in one request.
-func enter(t *testing.T, w *nagotest.Window, field *proto.TextField, value string) {
+// enter presses enter in a text or password field like the frontend: the value for the state of the field and the
+// enter callback in one request. The state pointer is 0 for a field without a state.
+func enter(t *testing.T, w *nagotest.Window, input, keydownEnter proto.Ptr, value string) {
 	t.Helper()
-	if err := w.Scope().Dispatch(&proto.UpdateStateValueRequested{StatePointer: field.InputValue, FunctionPointer: field.KeydownEnter, Value: proto.Str(value), RID: 700}); err != nil {
+	if err := w.Scope().Dispatch(&proto.UpdateStateValueRequested{StatePointer: input, FunctionPointer: keydownEnter, Value: proto.Str(value), RID: 700}); err != nil {
 		t.Fatal(err)
 	}
 	w.Settle()
@@ -863,7 +868,7 @@ func TestEnterAfterServerRenderIsNotLost(t *testing.T) {
 	rerender(t, w)
 
 	before := w.Scope().StaleCalls()
-	enter(t, w, field, "hello")
+	enter(t, w, field.InputValue, field.KeydownEnter, "hello")
 
 	w.Find(nagotest.Text("sent: [hello]"))
 	if v := chatField(t, w).Value; v != "" {
@@ -875,7 +880,7 @@ func TestEnterAfterServerRenderIsNotLost(t *testing.T) {
 	}
 
 	// the former tree has been used, a second enter of it is the second press of a double press
-	enter(t, w, field, "hello")
+	enter(t, w, field.InputValue, field.KeydownEnter, "hello")
 	w.Find(nagotest.Text("sent: [hello]"))
 	if n := w.Scope().StaleCalls() - before; n != 1 {
 		t.Fatalf("expected a stale second enter, got %d", n)
@@ -909,10 +914,38 @@ func TestEnterIsNotRedirectedToDisabledField(t *testing.T) {
 	w.Settle()
 
 	before := w.Scope().StaleCalls()
-	enter(t, w, field, "hello")
+	enter(t, w, field.InputValue, field.KeydownEnter, "hello")
 
 	w.Find(nagotest.Text("sent: "))
 	if n := w.Scope().StaleCalls() - before; n != 1 {
 		t.Fatalf("expected a stale enter, got %d", n)
 	}
+}
+
+// The frontend sends the typed password together with the enter, so that the callback sees it, even if the debounce
+// has not sent it yet, and even if the server has rendered again in the meantime.
+func TestPasswordEnterCarriesTheValue(t *testing.T) {
+	w := enterApp(t, nil).Open(t, nil, "chat")
+
+	field := w.Find(nagotest.Label("Password")).Node().Component.(*proto.PasswordField)
+	rerender(t, w)
+
+	before := w.Scope().StaleCalls()
+	enter(t, w, field.InputValue, field.KeydownEnter, "secret")
+
+	w.Find(nagotest.Text("login: secret"))
+	if n := w.Scope().StaleCalls() - before; n != 0 {
+		t.Fatalf("expected no stale calls, got %d", n)
+	}
+}
+
+// The frontend sends the enter of a text field without a state with the state pointer 0. There is nothing to set, but
+// the callback is called.
+func TestEnterWithoutStateIsCalled(t *testing.T) {
+	w := enterApp(t, nil).Open(t, nil, "chat")
+
+	field := w.Find(nagotest.Label("Plain")).Node().Component.(*proto.TextField)
+	enter(t, w, 0, field.KeydownEnter, "")
+
+	w.Find(nagotest.Text("plain: 1"))
 }
