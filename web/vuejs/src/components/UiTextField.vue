@@ -17,7 +17,7 @@ import { inputWrapperStyleFrom } from '@/components/shared/inputWrapperStyle';
 import { TextFieldSync } from '@/components/shared/textFieldSync';
 import { randomStr } from '@/components/shared/util';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
-import { nextRID } from '@/eventhandling';
+import { nextRID, renderedRID } from '@/eventhandling';
 import type { TextField } from '@/shared/proto/nprotoc_gen';
 import {
 	KeyboardTypeValues,
@@ -290,10 +290,11 @@ function sendKeydownEnterEvent() {
 
 	const parsedValue = parseValue(inputValue.value);
 	// note that we must always issue the key-down event, even we did not change the text
+	const rid = nextRID();
 	serviceAdapter.sendEvent(
-		new UpdateStateValueRequested(props.ui.inputValue, props.ui.keydownEnter, nextRID(), parsedValue)
+		new UpdateStateValueRequested(props.ui.inputValue, props.ui.keydownEnter, rid, parsedValue)
 	);
-	sync.sent(parsedValue);
+	sync.sent(parsedValue, rid);
 	clearTimeout(timer); // cancel any debounced follow up event
 }
 
@@ -322,10 +323,9 @@ function submitInputValue(force: boolean, functionPointer: number = 0): void {
 	nextRID();
 
 	if (force || props.ui.debounce?.disabled) {
-		serviceAdapter.sendEvent(
-			new UpdateStateValueRequested(props.ui.inputValue, functionPointer, nextRID(), parsedValue)
-		);
-		sync.sent(parsedValue);
+		const rid = nextRID();
+		serviceAdapter.sendEvent(new UpdateStateValueRequested(props.ui.inputValue, functionPointer, rid, parsedValue));
+		sync.sent(parsedValue, rid);
 		return;
 	}
 
@@ -441,8 +441,9 @@ function debouncedInput() {
 		if (!sync.hasUnsentInput(parsedValue)) {
 			return;
 		}
-		serviceAdapter.sendEvent(new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), parsedValue));
-		sync.sent(parsedValue);
+		const rid = nextRID();
+		serviceAdapter.sendEvent(new UpdateStateValueRequested(props.ui.inputValue, 0, rid, parsedValue));
+		sync.sent(parsedValue, rid);
 	}, debounceTime);
 }
 
@@ -482,7 +483,8 @@ watch(inputValue, (newValue, oldValue) => {
  * goroutine changed some state, or another component caused the rendering. Such a rendering cannot know what the
  * user has typed but not transmitted yet due to the debounce. Therefore we only adopt the server value while the
  * input still equals what we last sent: in that case the server knows everything we know and has decided.
- * Otherwise, the input and the pending debounce stay untouched, see TextFieldSync.
+ * Otherwise, the input and the pending debounce stay untouched. Neither is a rendering adopted, which may have been
+ * made before the server received what we sent last, see TextFieldSync.
  *
  * This is what makes a server side reset work while the field keeps the focus, e.g. a chat input which is emptied
  * by its own submit handler. Note that an empty value is not transmitted at all by the protocol and thus arrives
@@ -492,7 +494,7 @@ watch(
 	() => props.ui,
 	(newValue) => {
 		const serverValue = formatValue(newValue.value ?? '');
-		if (!sync.adopt(parseValue(inputValue.value), parseValue(serverValue))) {
+		if (!sync.adopt(parseValue(inputValue.value), parseValue(serverValue), renderedRID())) {
 			return;
 		}
 

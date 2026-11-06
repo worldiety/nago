@@ -29,6 +29,7 @@ import {
 	onScopeConfigurationChanged,
 	openHttpFlow,
 	openHttpLink,
+	rendered,
 	requestRootViewAllocation,
 	requestRootViewRendering,
 	requestScopeConfigurationChange,
@@ -116,6 +117,7 @@ async function applyConfiguration(): Promise<void> {
 				return;
 			}
 
+			rendered(evt.rID);
 			ui.value = evt.root;
 			state.value = State.ShowUI;
 

@@ -24,10 +24,19 @@
  * never discards as outdated), or another component caused it. The input wins then, and the pending debounce
  * transmits it.
  *
+ * A transmitted value is in flight until a rendering shows, that the server has processed it: one which answers its
+ * request or a later one (see renderedRID in eventhandling.ts), or one which carries it. Meanwhile, a rendering with
+ * another value may have been made before the server received ours, typically a rendering the server made on its own
+ * while our value was on its way. Adopting it would throw the field back to an older value, and whatever the user
+ * typed in the meantime would continue from there. Thus, such renderings are ignored as well.
+ *
  * This module has no dependencies, so that node can test it directly, see test/textFieldSync.test.ts.
  */
 export class TextFieldSync {
 	private anchor: string;
+	// inFlight is the request tracing id, which has transmitted the anchor, as long as no rendering has shown that
+	// the server has processed it, otherwise 0.
+	private inFlight: number = 0;
 
 	constructor(initialValue: string) {
 		this.anchor = initialValue;
@@ -42,21 +51,32 @@ export class TextFieldSync {
 	}
 
 	/**
-	 * sent records, that the value has been transmitted to the server.
+	 * sent records, that the value has been transmitted to the server with the given request tracing id.
 	 */
-	sent(value: string): void {
+	sent(value: string, rid: number): void {
 		this.anchor = value;
+		this.inFlight = rid;
 	}
 
 	/**
 	 * adopt tells, whether the text field replaces its input with the server value of a rendering. If so, the server
-	 * value becomes the anchor.
+	 * value becomes the anchor. renderedRID is the highest request tracing id answered by a rendering so far.
 	 */
-	adopt(input: string, serverValue: string): boolean {
-		if (this.hasUnsentInput(input) || serverValue === this.anchor) {
+	adopt(input: string, serverValue: string, renderedRID: number): boolean {
+		if (this.hasUnsentInput(input)) {
 			return false;
 		}
 
+		if (serverValue === this.anchor) {
+			this.inFlight = 0; // the server has it
+			return false;
+		}
+
+		if (this.inFlight > renderedRID) {
+			return false; // possibly made before the server received our value
+		}
+
+		this.inFlight = 0;
 		this.anchor = serverValue;
 		return true;
 	}

@@ -75,6 +75,26 @@ export function lastRID(): RID {
 	return nextRequestTracingID;
 }
 
+let renderedRequestTracingID: RID = 0;
+
+/**
+ * renderedRID returns the highest request tracing id, which an applied root view rendering has answered. The server
+ * processes the events of a scope in their order and renders right after handling an event with its id, so it has
+ * processed every event up to this id. A rendering the server makes on its own carries 0 and does not count.
+ */
+export function renderedRID(): RID {
+	return renderedRequestTracingID;
+}
+
+/**
+ * rendered records the request tracing id of a root view rendering, which is about to be applied, see renderedRID.
+ */
+export function rendered(rid: RID | undefined): void {
+	if (rid && rid > renderedRequestTracingID) {
+		renderedRequestTracingID = rid;
+	}
+}
+
 /**
  * windowInfoChanged emits the according event into the channel. There is logic behind it to avoid
  * sending redundant or spamming changed events.
