@@ -389,6 +389,17 @@ func (c TWeekCalendar) Render(ctx core.RenderContext) core.RenderNode {
 	}
 }
 
+// KeepStates keeps the states of the calendar with the state id, see [TWeekCalendar.StateID], in a render, which does
+// not render the calendar, e.g. while an error tile stands in its place, so that the calendar finds them again
+// afterward, with the same pointers. A state keeps no observer, so an action, which a former tree sends meanwhile,
+// calls no callback.
+func KeepStates(wnd core.Window, stateID string) {
+	prefix := "nago.weekcal." + stateID
+	core.StateOf[int64](wnd, prefix+".ack")
+	core.StateOf[string](wnd, prefix+".message")
+	core.StateOf[string](wnd, prefix+".input")
+}
+
 // interval is the interval of an event, from which the client began a gesture.
 type interval struct {
 	Day  int `json:"day"`
