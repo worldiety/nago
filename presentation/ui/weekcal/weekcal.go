@@ -102,6 +102,7 @@ type TWeekCalendar struct {
 	onClick    func(id string)
 	onSelect   func(s Span) error
 	onMove     func(m Move) error
+	onInvalid  func(err error) core.View
 }
 
 // WeekCalendar creates a calendar with 1 to 7 days, see [MaxDays]. The id must be unique within the window, because
@@ -208,6 +209,15 @@ func (c TWeekCalendar) OnMove(fn func(m Move) error) TWeekCalendar {
 	return c
 }
 
+// OnInvalid sets the view, which Render shows instead of a calendar, which is invalid, see [TWeekCalendar.Validate],
+// e.g. to report the error of the application elsewhere. It is called with the calendar, which is rendered, so it
+// does not depend on the order, in which the settings have been made. Without it, the calendar shows the error as a
+// text.
+func (c TWeekCalendar) OnInvalid(fn func(err error) core.View) TWeekCalendar {
+	c.onInvalid = fn
+	return c
+}
+
 // Validate returns the first violation of the rules of the days, the events and the settings, or nil: 1 to 7 days;
 // each event with an id, which is not empty and unique, a day of the calendar and 0 <= From < To <= 1440; a step of
 // [Steps]; a range 0 <= from < to <= 1440 in the raster; a click span, which is a positive multiple of the step; an
@@ -267,6 +277,12 @@ func (c TWeekCalendar) Validate() error {
 func (c TWeekCalendar) Render(ctx core.RenderContext) core.RenderNode {
 	if err := c.Validate(); err != nil {
 		// a programming error of the application, which must not show a broken calendar
+		if c.onInvalid != nil {
+			if v := c.onInvalid(err); v != nil {
+				return v.Render(ctx)
+			}
+			return ui.VStack().Render(ctx)
+		}
 		slog.Error("invalid week calendar", "id", c.id, "err", err)
 		return ui.Text(fmt.Sprintf("week calendar %q: %v", c.id, err)).Render(ctx)
 	}
