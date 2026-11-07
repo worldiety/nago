@@ -34,6 +34,7 @@ func (c *gollamaCompletions) Complete(ctx context.Context, subject auth.Subject,
 		return completion.Result{}, err
 	}
 
+	opts.Messages = completion.FlattenServerBlocks(opts.Messages) // see the openai provider
 	prompt, err := lm.adapter.renderPrompt(opts)
 	if err != nil {
 		return completion.Result{}, fmt.Errorf("render prompt: %w", err)
@@ -68,6 +69,7 @@ func (c *gollamaCompletions) Stream(ctx context.Context, subject auth.Subject, o
 			return
 		}
 
+		opts.Messages = completion.FlattenServerBlocks(opts.Messages) // see the openai provider
 		prompt, err := lm.adapter.renderPrompt(opts)
 		if err != nil {
 			yield(completion.Delta{}, fmt.Errorf("render prompt: %w", err))

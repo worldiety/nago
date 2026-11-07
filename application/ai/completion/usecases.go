@@ -58,6 +58,10 @@ type Options struct {
 	// Tools advertises the function tools the model may call. Optional.
 	Tools []ToolDef
 
+	// ServerTools are the tools the provider runs itself, see [ServerTool]. Their names must differ from the
+	// names of Tools. Optional.
+	ServerTools []ServerTool
+
 	// ToolChoice controls whether/which tool must be used. Optional (zero value = auto).
 	ToolChoice ToolChoice
 
@@ -113,6 +117,9 @@ type Content interface {
 // Text is a plain text block (Anthropic "text", OpenAI "text"/string content).
 type Text struct {
 	Text string `json:"text"`
+	// Citations attribute the text to the sources of a [ServerTool], in the format of the provider. They must be
+	// sent back unchanged, like a [ServerBlock]. Optional.
+	Citations json.RawMessage `json:"citations,omitzero"`
 }
 
 func (Text) isContent() {}
@@ -208,6 +215,10 @@ type Usage struct {
 	OutputTokens     int `json:"outputTokens"`
 	CacheReadTokens  int `json:"cacheReadTokens,omitzero"`
 	CacheWriteTokens int `json:"cacheWriteTokens,omitzero"`
+	// WebSearches and WebFetches count the calls of the [ServerTool]s, which a provider may bill apart from the
+	// tokens.
+	WebSearches int `json:"webSearches,omitzero"`
+	WebFetches  int `json:"webFetches,omitzero"`
 }
 
 // Add returns the sum of both usages.
@@ -217,6 +228,8 @@ func (u Usage) Add(o Usage) Usage {
 		OutputTokens:     u.OutputTokens + o.OutputTokens,
 		CacheReadTokens:  u.CacheReadTokens + o.CacheReadTokens,
 		CacheWriteTokens: u.CacheWriteTokens + o.CacheWriteTokens,
+		WebSearches:      u.WebSearches + o.WebSearches,
+		WebFetches:       u.WebFetches + o.WebFetches,
 	}
 }
 

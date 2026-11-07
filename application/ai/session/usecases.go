@@ -199,6 +199,10 @@ type AppendOptions struct {
 	// unless Agentic is set. Tools are never persisted.
 	Tools []completion.Tool
 
+	// ServerTools are the tools the provider runs itself, e.g. a web search, see [completion.ServerTool]. They
+	// are not persisted either. Optional.
+	ServerTools []completion.ServerTool
+
 	// Agentic drives the agentic loop even without Tools, so that a truncated answer is continued, a turn
 	// with reasoning only is asked for its answer and the history is compacted on overflow. Sub-agents use
 	// it, see [NewSubRunner]. Optional.

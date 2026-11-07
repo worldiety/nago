@@ -144,6 +144,10 @@ type ChatOptions struct {
 	// wired into every turn. Without it a model calculates with the date of its training cut-off.
 	DisableCurrentTime bool
 
+	// ServerTools are the tools the provider runs itself, e.g. a web search, see [completion.ServerTool] and
+	// [WebResearch]. Providers without server-side tools ignore them. Optional.
+	ServerTools []completion.ServerTool
+
 	// ReadOnly removes every tool marked [completion.Tool.Mutating] before the turn starts, so the model is
 	// never even told they exist. Use it for an assistant that may look but not touch.
 	//
@@ -541,6 +545,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			System:          cfg.system,
 			Tools:           tools,
 			MaxTokens:       cfg.maxTokens,
+			ServerTools:     opts.ServerTools,
 			MaxTurns:        opts.MaxTurns,
 			OnProgress:      run.onProgress,
 			FileUploader:    uploaderFor(sid),
@@ -554,10 +559,11 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 	runOptions := func(cfg turnConfig, messages []completion.Message, run runEnv, tools []completion.Tool, beforeFinish func(context.Context) string) completion.RunOptions {
 		return completion.RunOptions{
 			Options: completion.Options{
-				Model:     cfg.model,
-				System:    cfg.system,
-				MaxTokens: cfg.maxTokens,
-				Messages:  messages,
+				Model:       cfg.model,
+				System:      cfg.system,
+				MaxTokens:   cfg.maxTokens,
+				Messages:    messages,
+				ServerTools: opts.ServerTools,
 			},
 			Tools:           tools,
 			MaxTurns:        opts.MaxTurns,

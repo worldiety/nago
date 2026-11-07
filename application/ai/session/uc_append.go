@@ -89,6 +89,7 @@ func NewAppend(locks *locker, repo Repository, ledger *usageLedger) Append {
 			Messages:    history,
 			MaxTokens:   opts.MaxTokens,
 			Temperature: opts.Temperature,
+			ServerTools: opts.ServerTools,
 		}
 
 		if session.Pending != nil {

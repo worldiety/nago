@@ -99,6 +99,7 @@ func NewSubRunner(uc UseCases, parentID ID) completion.SubRunner {
 			FileUploader:     req.FileUploader,
 			MaxTokens:        req.Options.MaxTokens,
 			Temperature:      req.Options.Temperature,
+			ServerTools:      req.Options.ServerTools,
 			OnProgress:       req.OnProgress,
 			MaxTurns:         req.MaxTurns,
 			OnBeforeToolCall: req.OnBeforeToolCall,

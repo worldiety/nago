@@ -14,6 +14,7 @@ import (
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/ai/completion"
+	"go.wdy.de/nago/application/ai/model"
 	"go.wdy.de/nago/application/ai/provider"
 )
 
@@ -29,6 +30,21 @@ type anthropicProvider struct {
 	// noAdaptiveThinking remembers models (model.ID as string) that rejected adaptive thinking, so the
 	// automatic default is not sent to them again.
 	noAdaptiveThinking sync.Map
+
+	// noServerTools remembers the server tools a model refused (model.ID and completion.ServerToolKind as
+	// serverToolKey), e.g. because the organisation disabled web search, a gateway does not offer it or has no
+	// search configured, so they are not sent to it again.
+	noServerTools sync.Map
+}
+
+type serverToolKey struct {
+	model model.ID
+	kind  completion.ServerToolKind
+}
+
+func (p *anthropicProvider) refusedServerTool(m model.ID, kind completion.ServerToolKind) bool {
+	_, refused := p.noServerTools.Load(serverToolKey{model: m, kind: kind})
+	return refused
 }
 
 // NewProvider creates a stateless Anthropic (Claude) provider. Models, Tools, Completions and Files are

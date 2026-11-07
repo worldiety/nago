@@ -48,7 +48,23 @@ func (p *anthropicProvider) buildRequest(opts completion.Options) (apiRequest, e
 		req.TopP = &v
 	}
 
-	for _, m := range opts.Messages {
+	messages := opts.Messages
+	var serverTools []completion.ServerTool
+	var refused []completion.ServerToolKind
+	for _, t := range opts.ServerTools {
+		if p.refusedServerTool(opts.Model, t.Kind) {
+			refused = append(refused, t.Kind)
+			continue
+		}
+		serverTools = append(serverTools, t)
+	}
+
+	if len(refused) > 0 {
+		// without a tool, the API refuses its blocks as well
+		messages = completion.FlattenServerBlocks(messages, refused...)
+	}
+
+	for _, m := range messages {
 		am, err := toAPIMessage(m)
 		if err != nil {
 			return apiRequest{}, err
@@ -59,6 +75,15 @@ func (p *anthropicProvider) buildRequest(opts completion.Options) (apiRequest, e
 			continue
 		}
 		req.Messages = append(req.Messages, am)
+	}
+
+	// Server tools come first, so that the cache breakpoint lands on a custom tool, see applyPromptCache.
+	for _, t := range serverTools {
+		tool, ok := toAPIServerTool(t)
+		if !ok {
+			return apiRequest{}, fmt.Errorf("unsupported server tool %q", t.Kind)
+		}
+		req.Tools = append(req.Tools, tool)
 	}
 
 	for _, t := range opts.Tools {
@@ -80,6 +105,36 @@ func (p *anthropicProvider) buildRequest(opts completion.Options) (apiRequest, e
 	}
 
 	return req, nil
+}
+
+// Versions of the server tools. They are the basic ones, which every model and platform offers and which are
+// eligible for zero data retention. The later versions filter the results by running code, which adds code
+// execution blocks and a container to the conversation.
+const (
+	webSearchType = "web_search_20250305"
+	webFetchType  = "web_fetch_20250910"
+)
+
+// toAPIServerTool returns the definition of a server tool.
+func toAPIServerTool(t completion.ServerTool) (apiTool, bool) {
+	tool := apiTool{
+		Name:           string(t.Kind),
+		MaxUses:        t.MaxUses,
+		AllowedDomains: t.AllowedDomains,
+		BlockedDomains: t.BlockedDomains,
+	}
+
+	switch t.Kind {
+	case completion.WebSearch:
+		tool.Type = webSearchType
+	case completion.WebFetch:
+		tool.Type = webFetchType
+		tool.MaxContentTokens = t.MaxContentTokens
+	default:
+		return apiTool{}, false
+	}
+
+	return tool, true
 }
 
 // minThinkingBudget is the smallest budget_tokens value accepted by the API.
@@ -127,8 +182,8 @@ func (p *anthropicProvider) thinking(opts completion.Options, req *apiRequest) *
 func (p *anthropicProvider) applyPromptCache(req *apiRequest) {
 	cc := p.cacheControl()
 
-	// 1. last tool
-	if n := len(req.Tools); n > 0 {
+	// 1. last tool, if it is a custom one; the system prompt behind it caches the server tools anyway
+	if n := len(req.Tools); n > 0 && req.Tools[n-1].Type == "" {
 		req.Tools[n-1].CacheControl = cc
 	}
 
@@ -153,13 +208,14 @@ func (p *anthropicProvider) applyPromptCache(req *apiRequest) {
 }
 
 // isCacheableBlock reports whether the Anthropic API accepts a cache_control marker on a block of the given
-// type. Thinking and redacted thinking blocks are rejected with "Extra inputs are not permitted".
+// type. Thinking and redacted thinking blocks are rejected with "Extra inputs are not permitted". The blocks of
+// server tools are replayed unchanged and never carry one.
 func isCacheableBlock(typ string) bool {
 	switch typ {
 	case "thinking", "redacted_thinking":
 		return false
 	default:
-		return true
+		return !isServerBlock(typ)
 	}
 }
 
@@ -219,7 +275,14 @@ func toAPIContents(in []completion.Content) ([]apiContent, error) {
 func toAPIContent(c completion.Content) (apiContent, error) {
 	switch v := c.(type) {
 	case completion.Text:
-		return apiContent{Type: "text", Text: v.Text}, nil
+		return apiContent{Type: "text", Text: v.Text, Citations: v.Citations}, nil
+
+	case completion.ServerBlock:
+		typ := v.Type()
+		if typ == "" || !isServerBlock(typ) {
+			return apiContent{}, fmt.Errorf("invalid server block %q", typ)
+		}
+		return apiContent{Type: typ, Raw: v.Raw}, nil
 
 	case completion.Thinking:
 		return apiContent{Type: "thinking", Thinking: v.Text, Signature: v.Signature}, nil
@@ -338,9 +401,14 @@ func fromAPIResponse(resp apiResponse) completion.Result {
 func fromAPIContents(in []apiContent) []completion.Content {
 	out := make([]completion.Content, 0, len(in))
 	for _, c := range in {
+		if len(c.Raw) > 0 && isServerBlock(c.Type) {
+			out = append(out, completion.ServerBlock{Raw: c.Raw})
+			continue
+		}
+
 		switch c.Type {
 		case "text":
-			out = append(out, completion.Text{Text: c.Text})
+			out = append(out, completion.Text{Text: c.Text, Citations: c.Citations})
 		case "thinking":
 			out = append(out, completion.Thinking{Text: c.Thinking, Signature: c.Signature})
 		case "redacted_thinking":
@@ -358,6 +426,8 @@ func fromAPIUsage(u apiUsage) completion.Usage {
 		OutputTokens:     u.OutputTokens,
 		CacheReadTokens:  u.CacheReadInputTokens,
 		CacheWriteTokens: u.CacheCreationInputTokens,
+		WebSearches:      u.ServerToolUse.WebSearchRequests,
+		WebFetches:       u.ServerToolUse.WebFetchRequests,
 	}
 }
 

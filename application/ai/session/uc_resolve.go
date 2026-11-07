@@ -52,6 +52,7 @@ func NewResolve(locks *locker, repo Repository, ledger *usageLedger) Resolve {
 			Messages:    session.Messages,
 			MaxTokens:   opts.Run.MaxTokens,
 			Temperature: opts.Run.Temperature,
+			ServerTools: opts.Run.ServerTools,
 		}
 
 		out, rerr := completion.Continue(withSession(repo, subject, session), opts.Run.Completions, runOptions(base, opts.Run), *session.Pending, opts.Resolutions)

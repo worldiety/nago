@@ -384,6 +384,26 @@ Why a tool and not a line in the system prompt: a prompt that changes every seco
 the provider, while a tool costs only when the model needs it. If you provide a tool with the same name, the
 built-in one steps back; `AssistantOptions.DisableCurrentTime` turns it off.
 
+### Research on the web
+
+`AssistantOptions.WebResearch` lets the model search the web and read pages, e.g. to compare a book with its
+reviews. Nago fetches nothing itself: the provider runs both tools within the request, as server tools of the
+Messages API. Anthropic runs them natively. The Nago AI Service runs them for its other models as well: it reads
+pages from public addresses only, and only those which already appear in the conversation, so a model steered by
+a foreign page cannot send data to an address it made up. A search needs a search service configured there.
+
+```go
+modAI.Assistant.Decorate(wnd, view, cfgai.AssistantOptions{
+	// …
+	WebResearch: true,
+})
+```
+
+The chat shows each search with its hits and each page read, as links, in the section of the tool calls, and marks
+every cited passage of the answer with a numbered link to its page. Searches are billed apart from the tokens, and their queries leave the application. A model which refuses the tools, e.g.
+because the organization disabled them, continues without them. Other providers, like a local model, ignore the
+option.
+
 ## The screen as feedback channel
 
 Every tool above tells the model what is in the data. None tells it what the user sees, and that is often the

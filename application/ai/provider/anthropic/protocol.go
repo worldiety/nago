@@ -208,8 +208,52 @@ type apiContent struct {
 	Content   []apiContent `json:"content,omitempty"`
 	IsError   bool         `json:"is_error,omitempty"`
 
+	// type == "text": the sources of a server tool the text is attributed to, kept as sent.
+	Citations json.RawMessage `json:"citations,omitempty"`
+
 	// CacheControl, when set, marks this block as a prompt-cache breakpoint.
 	CacheControl *apiCacheControl `json:"cache_control,omitempty"`
+
+	// Raw is the block of a server tool exactly as the API sent it, see [isServerBlock]. Such a block is sent
+	// back as it is.
+	Raw json.RawMessage `json:"-"`
+}
+
+// isServerBlock reports whether a block of the given type is none of those this client builds itself, e.g. a
+// server_tool_use or web_search_tool_result block. The API validates them on the way back, so they are kept
+// raw and replayed unchanged, including types this client does not know yet.
+func isServerBlock(typ string) bool {
+	switch typ {
+	case "text", "thinking", "redacted_thinking", "image", "document", "tool_use", "tool_result":
+		return false
+	default:
+		return true
+	}
+}
+
+// UnmarshalJSON decodes the blocks this client builds itself and keeps any other one raw, see [isServerBlock].
+// The content of a server block may be an object instead of a list, which the struct could not hold.
+func (c *apiContent) UnmarshalJSON(data []byte) error {
+	var head struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &head); err != nil {
+		return err
+	}
+
+	if isServerBlock(head.Type) {
+		*c = apiContent{Type: head.Type, Raw: append(json.RawMessage(nil), data...)}
+		return nil
+	}
+
+	type plain apiContent // without the methods, to avoid the recursion
+	var p plain
+	if err := json.Unmarshal(data, &p); err != nil {
+		return err
+	}
+
+	*c = apiContent(p)
+	return nil
 }
 
 // MarshalJSON renders the content block with only the fields relevant to its Type. This is required
@@ -218,11 +262,18 @@ type apiContent struct {
 // text is empty — and (b) rejects unrelated/empty sibling fields. A plain struct with "omitempty" tags
 // cannot satisfy both constraints with a single shared struct, so we assemble the payload explicitly.
 func (c apiContent) MarshalJSON() ([]byte, error) {
+	if len(c.Raw) > 0 && isServerBlock(c.Type) {
+		return c.Raw, nil
+	}
+
 	m := map[string]any{"type": c.Type}
 
 	switch c.Type {
 	case "text":
 		m["text"] = c.Text
+		if len(c.Citations) > 0 {
+			m["citations"] = c.Citations
+		}
 	case "thinking":
 		// thinking and signature are mandatory for thinking blocks; never drop them.
 		m["thinking"] = c.Thinking
@@ -270,11 +321,29 @@ type apiSource struct {
 	FileID    string `json:"file_id,omitempty"`
 }
 
+// apiTool is a tool definition: a custom tool with its input schema or, if Type is set, a server tool like
+// web_search_20250305 with its options.
 type apiTool struct {
+	Type         string           `json:"type,omitempty"`
 	Name         string           `json:"name"`
 	Description  string           `json:"description,omitempty"`
-	InputSchema  json.RawMessage  `json:"input_schema"`
+	InputSchema  json.RawMessage  `json:"input_schema,omitempty"`
 	CacheControl *apiCacheControl `json:"cache_control,omitempty"`
+
+	// server tools
+	MaxUses          int      `json:"max_uses,omitempty"`
+	AllowedDomains   []string `json:"allowed_domains,omitempty"`
+	BlockedDomains   []string `json:"blocked_domains,omitempty"`
+	MaxContentTokens int      `json:"max_content_tokens,omitempty"`
+}
+
+// MarshalJSON keeps the input schema of a custom tool, which the API requires even if it is empty.
+func (t apiTool) MarshalJSON() ([]byte, error) {
+	type plain apiTool
+	if t.Type == "" && len(t.InputSchema) == 0 {
+		t.InputSchema = json.RawMessage(`{"type":"object"}`)
+	}
+	return json.Marshal(plain(t))
 }
 
 type apiToolChoice struct {
@@ -297,6 +366,10 @@ type apiUsage struct {
 	OutputTokens             int `json:"output_tokens"`
 	CacheCreationInputTokens int `json:"cache_creation_input_tokens"`
 	CacheReadInputTokens     int `json:"cache_read_input_tokens"`
+	ServerToolUse            struct {
+		WebSearchRequests int `json:"web_search_requests"`
+		WebFetchRequests  int `json:"web_fetch_requests"`
+	} `json:"server_tool_use"`
 }
 
 type apiModel struct {
@@ -305,6 +378,9 @@ type apiModel struct {
 	DisplayName string `json:"display_name"`
 	CreatedAt   string `json:"created_at"`
 }
+
+// maxResponseBytes bounds a complete answer. Pages and PDFs a server tool fetched are part of it.
+const maxResponseBytes = 64 * 1024 * 1024
 
 // CreateMessage performs a blocking, stateless Messages API call. Cancelling ctx aborts the request.
 func (c *Client) CreateMessage(ctx context.Context, req apiRequest) (apiResponse, error) {
@@ -317,7 +393,7 @@ func (c *Client) CreateMessage(ctx context.Context, req apiRequest) (apiResponse
 		Assert2xx(true).
 		BodyJSON(req).
 		ToJSON(&resp).
-		ToLimit(8 * 1024 * 1024)
+		ToLimit(maxResponseBytes)
 
 	if requestUsesFileSource(req) {
 		// Referencing an uploaded file by id (source.type == "file") requires opting the Messages request

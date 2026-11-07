@@ -13,6 +13,7 @@ import (
 	"errors"
 	"fmt"
 	"iter"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -56,6 +57,26 @@ func (c *anthropicCompletions) Complete(ctx context.Context, subject auth.Subjec
 		req.Thinking = nil
 		resp, err = c.client().CreateMessage(ctx, req)
 	}
+	for attempt := 0; err != nil && attempt < len(opts.ServerTools); attempt++ {
+		// The organisation disabled a tool, the model or a gateway in between does not offer it. The
+		// conversation goes on without, instead of failing on every turn.
+		kinds := rejectedServerTools(err, req.Tools)
+		if len(kinds) == 0 {
+			break
+		}
+
+		slog.Warn("the model refused server tools, continuing without them", "model", req.Model, "tools", kinds, "err", err)
+		for _, k := range kinds {
+			c.parent.noServerTools.Store(serverToolKey{model: opts.Model, kind: k}, true)
+		}
+
+		thinking := req.Thinking
+		if req, err = c.parent.buildRequest(opts); err != nil {
+			return completion.Result{}, err
+		}
+		req.Thinking = thinking
+		resp, err = c.client().CreateMessage(ctx, req)
+	}
 	if err != nil {
 		return completion.Result{}, err
 	}
@@ -71,6 +92,39 @@ func isThinkingRejected(err error) bool {
 		return false
 	}
 	return strings.Contains(strings.ToLower(string(statusErr.Body)), "adaptive")
+}
+
+// rejectedServerTools returns the server tools of the request, which err refuses: a 400 of the API naming them,
+// e.g. "web search is not enabled" or "the server tool web_search is not available on the models of …", or all
+// of them, if it names a server tool without saying which.
+func rejectedServerTools(err error, tools []apiTool) []completion.ServerToolKind {
+	var statusErr xhttp.UnexpectedStatusCodeError
+	if !errors.As(err, &statusErr) || statusErr.StatusCode != http.StatusBadRequest {
+		return nil
+	}
+
+	body := strings.ToLower(string(statusErr.Body))
+	var sent, named []completion.ServerToolKind
+	for _, t := range tools {
+		if t.Type == "" {
+			continue
+		}
+
+		kind := completion.ServerToolKind(t.Name)
+		sent = append(sent, kind)
+		if strings.Contains(body, string(kind)) || strings.Contains(body, strings.ReplaceAll(string(kind), "_", " ")) {
+			named = append(named, kind)
+		}
+	}
+
+	switch {
+	case len(named) > 0:
+		return named
+	case strings.Contains(body, "server tool") || strings.Contains(body, "server_tool"):
+		return sent
+	default:
+		return nil
+	}
 }
 
 func (c *anthropicCompletions) Stream(ctx context.Context, subject auth.Subject, opts completion.Options) iter.Seq2[completion.Delta, error] {

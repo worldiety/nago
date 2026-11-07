@@ -767,6 +767,12 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 		defs = append(defs, t.Def)
 	}
 
+	for _, st := range opts.ServerTools {
+		if _, dup := tools[string(st.Kind)]; dup {
+			return Outcome{History: opts.Messages}, fmt.Errorf("the tool %q collides with the server tool of the same name", st.Kind)
+		}
+	}
+
 	req := opts.Options
 	req.Tools = defs
 
@@ -776,6 +782,10 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 	history := make([]Message, len(req.Messages))
 	copy(history, req.Messages)
 
+	// carried are attachments which could not join the tool results of their turn, see onlyToolResults. They
+	// join the next one.
+	var carried []Content
+
 	if resume != nil {
 		if cerr := ctx.Err(); cerr != nil {
 			return Outcome{History: history}, runCancelled(cerr)
@@ -784,6 +794,9 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 		msg, err := resumeMessage(env, tools, history, resume.cont, resume.resolutions)
 		if err != nil {
 			return Outcome{History: history}, err
+		}
+		if pendingServerCall(history[len(history)-1]) {
+			msg, carried = onlyToolResults(msg)
 		}
 		history = append(history, msg)
 		progressed = true
@@ -989,7 +1002,11 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 			// A cancelled run executes nothing more. Every call of this turn still needs an answer, otherwise
 			// the history would carry a tool_use without its tool_result and could never be continued.
 			if cerr := ctx.Err(); cerr != nil {
-				history = append(history, cancelledTurn(calls[i:], results, pending, attachments))
+				turn := cancelledTurn(calls[i:], results, pending, append(slices.Clone(carried), attachments...))
+				if pendingServerCall(res.Message) {
+					turn, _ = onlyToolResults(turn)
+				}
+				history = append(history, turn)
 				progressed = true
 				return Outcome{Result: res, History: history}, runCancelled(cerr)
 			}
@@ -1042,8 +1059,13 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 			}}, nil
 		}
 
-		content := append(results, attachments...)
-		history = append(history, Message{Role: User, Content: content})
+		content := append(append(results, carried...), attachments...)
+		carried = nil
+		msg := Message{Role: User, Content: content}
+		if pendingServerCall(res.Message) {
+			msg, carried = onlyToolResults(msg)
+		}
+		history = append(history, msg)
 		progressed = true
 	}
 
@@ -1139,7 +1161,8 @@ func hasAnswerText(msg Message) bool {
 
 // stripToolCalls returns a copy of msg with all [ToolCall] content blocks removed. It is used to discard
 // truncated tool_use blocks from an aborted turn (e.g. stop_reason == max_tokens) so the resulting history
-// never contains a tool_use without a matching tool_result.
+// never contains a tool_use without a matching tool_result. Calls of server tools without their result are
+// removed as well, because nobody delivers it any more.
 func stripToolCalls(msg Message) Message {
 	out := make([]Content, 0, len(msg.Content))
 	for _, c := range msg.Content {
@@ -1148,7 +1171,22 @@ func stripToolCalls(msg Message) Message {
 		}
 		out = append(out, c)
 	}
-	return Message{Role: msg.Role, Content: out}
+	return withoutPendingServerCalls(Message{Role: msg.Role, Content: out})
+}
+
+// onlyToolResults splits the tool results of a user turn from the rest. A turn answering an assistant turn with
+// a pending server call may carry nothing but tool results, see [ServerBlock]; the rest, i.e. the attachments
+// of file-providing tools, joins the next turn of tool results.
+func onlyToolResults(msg Message) (Message, []Content) {
+	var results, rest []Content
+	for _, c := range msg.Content {
+		if _, ok := c.(ToolResult); ok {
+			results = append(results, c)
+		} else {
+			rest = append(rest, c)
+		}
+	}
+	return Message{Role: msg.Role, Content: results}, rest
 }
 
 // executeToolCall runs a single tool call and wraps the outcome into a [ToolResult] content block. Unknown

@@ -718,6 +718,7 @@ func (d *delegator) plan(env toolEnv, in delegateTaskIn, callID string, index in
 			MaxTokens:      parent.MaxTokens,
 			Thinking:       parent.Thinking,
 			ThinkingBudget: parent.ThinkingBudget,
+			ServerTools:    parent.ServerTools,
 		},
 		Input:            []Content{Text{Text: text}},
 		Tools:            tools,

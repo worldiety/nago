@@ -61,7 +61,8 @@ func (p *openaiProvider) buildRequest(opts completion.Options) (apiRequest, erro
 		req.Messages = append(req.Messages, apiMessage{Role: "system", Content: opts.System})
 	}
 
-	for _, m := range opts.Messages {
+	// the blocks of server tools of another provider cannot be replayed here, but what they found stays readable
+	for _, m := range completion.FlattenServerBlocks(opts.Messages) {
 		msgs, err := toAPIMessages(m)
 		if err != nil {
 			return apiRequest{}, err

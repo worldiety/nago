@@ -25,6 +25,7 @@ const (
 	contentTypeToolResult contentType = "tool_result"
 	contentTypeThinking   contentType = "thinking"
 	contentTypeRedacted   contentType = "redacted_thinking"
+	contentTypeServer     contentType = "server"
 )
 
 // contentEnvelope is the wire format of a single [Content] block: a discriminator plus the flattened payload
@@ -36,6 +37,12 @@ type contentEnvelope struct {
 	// text / thinking
 	Text      string `json:"text,omitempty"`
 	Signature string `json:"signature,omitempty"`
+
+	// text
+	Citations json.RawMessage `json:"citations,omitempty"`
+
+	// server
+	Raw json.RawMessage `json:"raw,omitempty"`
 
 	// redacted_thinking
 	Data string `json:"data,omitempty"`
@@ -54,7 +61,9 @@ type contentEnvelope struct {
 func marshalContent(c Content) (contentEnvelope, error) {
 	switch v := c.(type) {
 	case Text:
-		return contentEnvelope{Type: contentTypeText, Text: v.Text}, nil
+		return contentEnvelope{Type: contentTypeText, Text: v.Text, Citations: v.Citations}, nil
+	case ServerBlock:
+		return contentEnvelope{Type: contentTypeServer, Raw: v.Raw}, nil
 	case Thinking:
 		return contentEnvelope{Type: contentTypeThinking, Text: v.Text, Signature: v.Signature}, nil
 	case RedactedThinking:
@@ -80,7 +89,9 @@ func marshalContent(c Content) (contentEnvelope, error) {
 func (e contentEnvelope) toContent() (Content, error) {
 	switch e.Type {
 	case contentTypeText:
-		return Text{Text: e.Text}, nil
+		return Text{Text: e.Text, Citations: e.Citations}, nil
+	case contentTypeServer:
+		return ServerBlock{Raw: e.Raw}, nil
 	case contentTypeThinking:
 		return Thinking{Text: e.Text, Signature: e.Signature}, nil
 	case contentTypeRedacted:

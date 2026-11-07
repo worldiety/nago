@@ -135,8 +135,9 @@ func splitIndex(history []Message, keepLastN int) int {
 		start = 0
 	}
 
-	// Move the boundary forward while the first kept message would be a dangling tool_result.
-	for start < n && hasToolResult(history[start]) {
+	// Move the boundary forward while the first kept message would be a dangling tool_result or would open with
+	// the deferred result of a server call in the summarized prefix.
+	for start < n && (hasToolResult(history[start]) || opensWithServerResult(history[start])) {
 		start++
 	}
 
@@ -233,6 +234,8 @@ func renderTranscript(msgs []Message) string {
 				sb.WriteString(extractText(Message{Content: c.Content}))
 			case Media:
 				sb.WriteString(fmt.Sprintf("[media %s]", c.MimeType))
+			case ServerBlock:
+				sb.WriteString(c.Summary(flattenedRunes))
 			}
 			sb.WriteString("\n")
 		}
@@ -251,6 +254,24 @@ func extractText(m Message) string {
 	return sb.String()
 }
 
+// opensWithServerResult reports whether the message carries the result of a server call, which is not in the
+// message itself, i.e. a deferred one, see [ServerBlock].
+func opensWithServerResult(m Message) bool {
+	calls := map[string]bool{}
+	for _, content := range m.Content {
+		b, ok := content.(ServerBlock)
+		if !ok {
+			continue
+		}
+		if call, ok := b.Call(); ok {
+			calls[call.ID] = true
+		} else if res, ok := b.Result(); ok && !calls[res.CallID] {
+			return true
+		}
+	}
+	return false
+}
+
 // hasToolResult reports whether the message carries any tool_result content block.
 func hasToolResult(m Message) bool {
 	for _, content := range m.Content {
@@ -267,6 +288,12 @@ func hasToolResult(m Message) bool {
 func truncateLargest(history []Message) []Message {
 	out := make([]Message, len(history))
 	copy(out, history)
+
+	// The blocks of server tools must not be cut, but a fetched page is usually the largest part. Flattening all
+	// of them keeps every call with its result, wherever it is.
+	if HasServerBlocks(out) {
+		return FlattenServerBlocks(out)
+	}
 
 	idx, maxLen := -1, 0
 	for i, m := range out {
@@ -318,6 +345,8 @@ func runeLenMsg(m Message) int {
 			total += utf8.RuneCountInString(c.Name) + len(c.Arguments)
 		case ToolResult:
 			total += runeLenMsg(Message{Content: c.Content})
+		case ServerBlock:
+			total += len(c.Raw)
 		}
 	}
 	return total
