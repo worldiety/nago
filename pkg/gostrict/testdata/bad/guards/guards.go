@@ -78,8 +78,7 @@ func GetEarly(m dict.Map[string, *Item]) int32 {
 }
 
 func Plain(l list.List[Item]) int32 {
-	v, _ := l.Get(0)
-	return v.N
+	return l.GetOr(0, Item{}).N
 }
 
 func Errors(f func() error) string {

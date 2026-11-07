@@ -42,14 +42,19 @@ func Two(a, b big.Int) (big.Int, big.Int, big.Int, big.Int, bool, big.Int, bool,
 	return big.Add(a, b), big.Sub(a, b), big.Mul(a, b), q, qok, r, rok, q2, r2, ok, big.Cmp(a, b)
 }
 
-func One(a big.Int, n int32, u uint32, s string) (big.Int, big.Int, int32, int32, bool, float64, big.Int, big.Int, big.Int, string, big.Int, bool, big.Int) {
-	i, ok := big.Int32(a)
+func One(a big.Int, n int32, u uint32, s string) (big.Int, big.Int, int32, float64, big.Int, big.Int, big.Int, string, big.Int, bool, big.Int) {
 	p := big.Zero()
 	pv, pok := big.Parse(s)
 	if pok {
 		p = pv
 	}
-	return big.Neg(a), big.Abs(a), big.Sign(a), i, ok, big.Float64(a), big.FromInt32(n), big.FromUint32(u), big.Pow10(n), big.String(a), p, pok, big.Zero()
+	return big.Neg(a), big.Abs(a), big.Sign(a), big.Float64(a), big.FromInt32(n), big.FromUint32(u), big.Pow10(n), big.String(a), p, pok, big.Zero()
+}
+
+// Int32 passes the results of big.Int32 on, so that the host compares also the value beside false, which a program
+// may not read (wokoda R-SCRIPT-GS-OPTIONAL).
+func Int32(a big.Int) (int32, bool) {
+	return big.Int32(a)
 }
 `
 	b, diags, err := gostrict.NewCache(1).Compile("llm.local/s", gostrict.Module{Path: "llm.local/s", FS: fstest.MapFS{"s.go": {Data: []byte(src)}}})
@@ -100,10 +105,15 @@ func One(a big.Int, n int32, u uint32, s string) (big.Int, big.Int, int32, int32
 		s := []string{x, "+" + y, " 1", "1e3", "", "--1", "12x"}[rnd.IntN(7)]
 		i, iok := big.Int32(a)
 		p, pok := big.Parse(s)
-		want = []any{big.String(big.Neg(a)), big.String(big.Abs(a)), big.Sign(a), i, iok, big.Float64(a), big.String(big.FromInt32(n)), big.String(big.FromUint32(u)), big.String(big.Pow10(n)), big.String(a), big.String(p), pok, big.String(big.Zero())}
+		want = []any{big.String(big.Neg(a)), big.String(big.Abs(a)), big.Sign(a), big.Float64(a), big.String(big.FromInt32(n)), big.String(big.FromUint32(u)), big.String(big.Pow10(n)), big.String(a), big.String(p), pok, big.String(big.Zero())}
 		got, err = in.Call(context.Background(), "One", x, n, u, s)
 		if err != nil || !gostrict.SameValues(got, want) {
 			t.Fatalf("One(%s, %d, %d, %q): vm %v, %v, std/big %v", x, n, u, s, got, err, want)
+		}
+		want = []any{i, iok}
+		got, err = in.Call(context.Background(), "Int32", x)
+		if err != nil || !gostrict.SameValues(got, want) {
+			t.Fatalf("Int32(%s): vm %v, %v, std/big %v", x, got, err, want)
 		}
 	}
 }

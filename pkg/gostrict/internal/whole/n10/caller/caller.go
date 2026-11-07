@@ -13,12 +13,12 @@ import (
 	"go.wdy.de/nago/pkg/gostrict/std/text"
 )
 
-// Main reports "value <error> zero <results>" for an error of target, else "result <results>".
+// Main reports "value <error>" for an error of target, which it handles as a value, else "result <results>". Beside
+// the error it may not read the results of target (wokoda R-SCRIPT-GS-OPTIONAL); n10/pass passes them on to the host.
 func Main(id string, reject bool) (string, error) {
 	info, err := target.Main(id, reject)
-	got := info.Name + "/" + text.FromInt(info.N) + "/" + text.FromInt(info.Tags.Len())
 	if err != nil {
-		return "value " + err.Error() + " zero " + got, nil
+		return "value " + err.Error(), nil
 	}
-	return "result " + got, nil
+	return "result " + info.Name + "/" + text.FromInt(info.N) + "/" + text.FromInt(info.Tags.Len()), nil
 }

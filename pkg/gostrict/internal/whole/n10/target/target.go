@@ -15,7 +15,8 @@ import (
 	"go.wdy.de/nago/pkg/gostrict/std/list"
 )
 
-// Info is the first result of Main: a basic value, a number and a list, whose zero values the caller reads.
+// Info is the first result of Main: a basic value, a number and a list, whose zero values n10/pass passes on to the
+// host.
 type Info struct {
 	Name string
 	N    int32

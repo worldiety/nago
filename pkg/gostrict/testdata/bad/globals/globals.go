@@ -29,6 +29,6 @@ func Change() float64 {
 	origin.Move(1)  // want GS036
 	local := origin // a copy may change
 	local.Move(1)
-	v, _ := table.Get(0)
+	v := table.GetOr(0, 0)
 	return origin.Len() + local.X + float64(v+limit)
 }

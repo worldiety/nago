@@ -36,12 +36,19 @@ import (
 )
 
 // PF returns the value, its sign bit, as the program sees it, the message of the error and whether there is one.
+// Beside an error a program may not read the value (wokoda R-SCRIPT-GS-OPTIONAL), so PF returns 0 and false there,
+// and PFValue passes the value beside the error on to the host.
 func PF(s string) (float64, bool, string, bool) {
 	f, err := text.ParseFloat(s)
 	if err != nil {
-		return f, math.Signbit(f), err.Error(), true
+		return 0, false, err.Error(), true
 	}
 	return f, math.Signbit(f), "", false
+}
+
+// PFValue passes the results of text.ParseFloat on, so that the host reads the value beside an error.
+func PFValue(s string) (float64, error) {
+	return text.ParseFloat(s)
 }
 
 func Slice(s string, from, to int32) string { return text.Slice(s, from, to) }
@@ -53,8 +60,7 @@ func GroupFloat(f float64, decimals int32, decimalMark, groupMark string) string
 }
 
 func CharAt(s string, i int32) string {
-	c, _ := text.Chars(s).Get(i)
-	return c
+	return text.Chars(s).GetOr(i, "")
 }
 
 func Count(s string) int32 { return text.RuneCount(s) }
@@ -99,11 +105,20 @@ func (e textNumEngine) call(t *testing.T, name string, args ...any) []any {
 	return res
 }
 
-// parseFloat calls PF and returns the value, the sign bit in the program, the message and whether it failed.
+// parseFloat calls PF and returns the value, the sign bit in the program, the message and whether it failed; beside
+// an error the value is the one, which PFValue passes on to the host, and the sign bit is false.
 func (e textNumEngine) parseFloat(t *testing.T, s string) (float64, bool, string, bool) {
 	t.Helper()
 	res := e.call(t, "PF", s)
-	return res[0].(float64), res[1].(bool), res[2].(string), res[3].(bool)
+	f, failed := res[0].(float64), res[3].(bool)
+	if failed {
+		v := e.call(t, "PFValue", s)
+		if gostrict.ErrorOf(v[1]) == nil {
+			t.Fatalf("%s: PFValue(%s) gives no error, PF gives %q", e.name, abbrev(s), res[2])
+		}
+		f = v[0].(float64)
+	}
+	return f, res[1].(bool), res[2].(string), failed
 }
 
 // chars returns s with each byte of invalid UTF-8 replaced by "�", like text.Chars counts it, so that two strings
