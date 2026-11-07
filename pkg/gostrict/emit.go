@@ -245,15 +245,26 @@ func (e *emitter) hook(fn *types.Func) string {
 	}
 	// the error of the entry point tells the aspect, whether it failed
 	errResult := "null"
+	full := jsString(e.entries[fn])
+	// an entry point, whose last result is an error, returns the error of a denial, which the aspect marks as a
+	// result (AsResult), with zero values, without its body and without the exit; any other denial aborts in $enter
+	enter := fmt.Sprintf("\t$aspect_enter(%s, false);\n", full)
 	if n := sig.Results().Len(); n > 0 && isError(sig.Results().At(n-1).Type()) {
 		errResult = "$r"
+		denied := "$e"
 		if n > 1 {
 			errResult = fmt.Sprintf("$r[%d]", n-1)
+			zeros := make([]string, n)
+			for i := range n - 1 {
+				zeros[i] = e.resultZero(sig.Results().At(i).Type())
+			}
+			zeros[n-1] = "$e"
+			denied = "[" + strings.Join(zeros, ", ") + "]"
 		}
+		enter = fmt.Sprintf("\tconst $e = $aspect_enter(%s, true);\n\tif ($e !== null) {\n\t\treturn %s;\n\t}\n", full, denied)
 	}
-	full := jsString(e.entries[fn])
-	fmt.Fprintf(&e.out, "function %s(%s) {\n\t$aspect_enter(%s);\n\tlet $r, $done = false;\n\ttry {\n\t\t$r = %s(%s);\n\t\t$done = true;\n\t} finally {\n\t\t$aspect_exit(%s, $done ? %s : $errors_New(\"aborted\"));\n\t}\n\treturn $r;\n}\n",
-		name, strings.Join(params, ", "), full, inner, strings.Join(params, ", "), full, errResult)
+	fmt.Fprintf(&e.out, "function %s(%s) {\n%s\tlet $r, $done = false;\n\ttry {\n\t\t$r = %s(%s);\n\t\t$done = true;\n\t} finally {\n\t\t$aspect_exit(%s, $done ? %s : $errors_New(\"aborted\"));\n\t}\n\treturn $r;\n}\n",
+		name, strings.Join(params, ", "), enter, inner, strings.Join(params, ", "), full, errResult)
 	return name
 }
 
@@ -294,7 +305,7 @@ func (e *emitter) emit() (*Bundle, Diagnostics) {
 	var ret strings.Builder
 	if len(e.entries) > 0 {
 		// the host calls the entry points of a whole program by their full name within the aspect
-		e.extern = append(e.extern, Extern{Func: Func{Name: EnterFunc, Params: []Type{String}}}, Extern{Func: Func{Name: ExitFunc, Params: []Type{String, Error}}})
+		e.extern = append(e.extern, Extern{Func: Func{Name: EnterFunc, Params: []Type{String, Bool}, Results: []Type{Error}}}, Extern{Func: Func{Name: ExitFunc, Params: []Type{String, Error}}})
 		fmt.Fprintf(&e.externs, "const $aspect_enter = $host[%s];\nconst $aspect_exit = $host[%s];\n", jsString(EnterFunc), jsString(ExitFunc))
 		e.names["X:"+EnterFunc], e.names["X:"+ExitFunc] = "$aspect_enter", "$aspect_exit"
 		for _, fn := range sortedFuncs(e.entries) {
@@ -750,6 +761,31 @@ func (e *emitter) zero(t types.Type) string {
 		}
 	}
 	return "null"
+}
+
+// resultZero returns an expression, which creates the zero value of t for the results of a denied entry point, which
+// a checked program may use: an empty list or map and 0 of a big.Int instead of nil, also in the fields of a record,
+// while a pointer, a function, an interface and another handle are null, see [AsResult].
+func (e *emitter) resultZero(t types.Type) string {
+	if n, ok := types.Unalias(t).(*types.Named); ok && n.Obj().Pkg() != nil {
+		switch n.Obj().Pkg().Path() + "." + n.Obj().Name() {
+		case listPath + ".List", listPath + ".Frozen", msgPath + ".Out":
+			return "[]"
+		case dictPath + ".Map":
+			return "$dnew()"
+		case bigPath + ".Int":
+			return "0n"
+		}
+	}
+	if isStruct(t) {
+		st := t.Underlying().(*types.Struct)
+		vals := make([]string, st.NumFields())
+		for i := range vals {
+			vals[i] = e.resultZero(st.Field(i).Type())
+		}
+		return objectLit(st, vals)
+	}
+	return e.zero(t)
 }
 
 // zeroFn returns a function, which creates the zero value of t.

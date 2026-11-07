@@ -18,7 +18,11 @@ import (
 // header packages find on the stack of the frames, while the program itself never sees it.
 type Aspect interface {
 	// Enter is called before the entry point with its full name, e.g. "example.com/scripts/crm/read.Main". An
-	// error denies the call and aborts the whole call of the instance, like [Abort].
+	// error denies the call and aborts the whole call of the instance, like [Abort], without an Exit of the denied
+	// entry point. An error, which [AsResult] marks, denies the call instead with a value: the entry point returns
+	// zero values, whose lists and maps are empty, and the unmarked error as its results, without its body and
+	// without Exit, so that its caller sees the error like one, which the entry point returned itself. An entry
+	// point, whose last result is not an error, aborts with the unmarked error.
 	Enter(entry string) error
 	// Exit is called, after the entry point has returned or was aborted, with its error result, which is nil, if it
 	// has none, or the error, which aborted it. So the host commits or rolls back a transaction of the frame.
@@ -26,7 +30,8 @@ type Aspect interface {
 }
 
 // EnterFunc and ExitFunc are the functions of the host, which a whole program calls around an entry point, see
-// [Funcs.WithAspect].
+// [Funcs.WithAspect]. EnterFunc takes the full name of the entry point and whether its last result is an error,
+// and returns the error, which the entry point returns instead of running, or nil.
 const (
 	EnterFunc = "$enter"
 	ExitFunc  = "$exit"
@@ -40,9 +45,17 @@ func (f Funcs) WithAspect(a Aspect) Funcs {
 		res = Funcs{}
 	}
 	res[EnterFunc] = func(args []any) []any {
-		if err := a.Enter(args[0].(string)); err != nil {
-			Abort(err)
+		err := a.Enter(args[0].(string))
+		if err == nil {
+			return []any{nil}
 		}
+		if r, ok := err.(*ResultError); ok {
+			if args[1].(bool) {
+				return []any{r.Err}
+			}
+			err = r.Err
+		}
+		Abort(err)
 		return nil
 	}
 	res[ExitFunc] = func(args []any) []any {
@@ -50,6 +63,30 @@ func (f Funcs) WithAspect(a Aspect) Funcs {
 		return nil
 	}
 	return res
+}
+
+// ResultError is the mark of an error of [Aspect.Enter], which the denied entry point returns as its error result,
+// see [AsResult].
+type ResultError struct {
+	Err error
+}
+
+func (e *ResultError) Error() string {
+	return e.Err.Error()
+}
+
+func (e *ResultError) Unwrap() error {
+	return e.Err
+}
+
+// AsResult marks err, which [Aspect.Enter] returns, so that the denied entry point returns zero values and err as
+// its results instead of aborting the whole call, e.g. a denial, which the calling package may handle. Only the mark
+// of the error, which Enter returns itself, counts, not one, which another error wraps. AsResult(nil) is nil.
+func AsResult(err error) error {
+	if err == nil {
+		return nil
+	}
+	return &ResultError{Err: err}
 }
 
 // Aborted is the panic of [Abort].

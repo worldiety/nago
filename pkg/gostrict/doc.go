@@ -275,8 +275,10 @@
 // within its own package. So the host keeps a frame of each call, e.g. with the rights of the callee and a
 // transaction of its area, which its header functions use, while the program neither sees nor bypasses it. A
 // denied call or another failure of the host, see [Abort], ends the whole call, which the program can not catch,
-// and the aspect exits each frame with the error. Imports have no cycles, so the depth of the frames is bounded by
-// the program itself.
+// and the aspect exits each frame with the error. A denial, which the host marks with [AsResult], is instead the
+// error result of the denied entry point with zero values, whose lists and maps are empty, if its last result is an
+// error: its caller handles it like an error, which the entry point returned, while the body and the exit of the
+// entry point do not run. Imports have no cycles, so the depth of the frames is bounded by the program itself.
 //
 // [CompileWhole] checks the whole program once, and [Whole.Bundle] translates a bundle for some entry points, which
 // contains only what they reach. A changed script is a new whole program, while running calls keep their bundles.

@@ -9,14 +9,17 @@ package vmcode
 
 import (
 	"errors"
+	"fmt"
 	"go/token"
 	"go/types"
 )
 
 // The entry points of a whole program run within the aspect of the host, when the host or another package calls
-// them: the hook of an entry point calls $enter with its full name, then the entry point, then $exit with its error
-// result. A failure of $enter, e.g. a denied call, aborts the whole call without an exit of the denied frame. An
-// abort of the entry point, e.g. by a host function, exits its frame with an error, while the abort goes on.
+// them: the hook of an entry point calls $enter with its full name and whether its last result is an error, then the
+// entry point, then $exit with its error result. A failure of $enter, e.g. a denied call, aborts the whole call
+// without an exit of the denied frame. An error, which $enter returns, e.g. a denial, which the aspect marks as a
+// result, is the error result of the entry point with zero values, without its body and without an exit. An abort
+// of the entry point, e.g. by a host function, exits its frame with an error, while the abort goes on.
 
 // Names of the functions of the aspect, see gostrict.EnterFunc and gostrict.ExitFunc.
 const (
@@ -68,7 +71,12 @@ func (c *compiler) aspect(name string) *extern {
 	}
 	str := c.typeOf(types.Typ[types.String])
 	x := &extern{name: name, idx: len(c.out.externs), params: []*tinfo{str}, results: tuple()}
-	if name == exitFunc {
+	switch name {
+	case enterFunc:
+		// whether the last result of the entry point is an error, and the error, which it returns instead of running
+		x.params = append(x.params, c.typeOf(types.Typ[types.Bool]))
+		x.results = c.typeOf(errorType)
+	case exitFunc:
 		x.params = append(x.params, c.typeOf(errorType))
 	}
 	c.externs[name] = x
@@ -76,9 +84,53 @@ func (c *compiler) aspect(name string) *extern {
 	return x
 }
 
-// callEntry calls the entry point of a hook within the aspect at the frame, where its arguments are.
+// resultZero writes the zero value of t into the slots, which a checked program may use, for the results of a denied
+// entry point: an empty list or map instead of nil, also in the fields of a struct, while a pointer, a function, an
+// interface and a handle are nil. A shared struct is a new object, so that no denial shares a list with another.
+func resultZero(t *tinfo, n []uint64, s []string, r []any) {
+	switch t.kind {
+	case kTuple:
+		for i, et := range t.elems {
+			at := t.offs[i]
+			resultZero(et, n[at.n:], s[at.s:], r[at.r:])
+		}
+	case kStruct:
+		for _, f := range t.fields {
+			resultZero(f.t, n[f.off.n:], s[f.off.s:], r[f.off.r:])
+		}
+	case kShared:
+		o := newObject(t, t.obj)
+		for _, f := range t.fields {
+			resultZero(f.t, o.n[f.off.n:], o.s[f.off.s:], o.r[f.off.r:])
+		}
+		r[0] = o
+	case kList, kOut:
+		r[0] = &list{}
+	case kMap:
+		r[0] = newDict(t.key)
+	case kBig:
+		r[0] = bigZero
+	default:
+		clear(n[:t.l.n])
+		clear(s[:t.l.s])
+		clear(r[:t.l.r])
+	}
+}
+
+// callEntry calls the entry point of a hook within the aspect at the frame, where its arguments are. An error, which
+// $enter returns, replaces the arguments with the results of the entry point: zero values, see [resultZero], and the
+// error.
 func (m *Machine) callEntry(e *entryInfo, bn, bs, br int) {
-	m.host.Call(e.enter.idx, []any{e.name})
+	if res := m.host.Call(e.enter.idx, []any{e.name, e.errT != nil}); len(res) > 0 && res[0] != nil {
+		if e.errT == nil {
+			// gostrict.Funcs.WithAspect aborts instead; a host, which implements $enter itself, fails loudly
+			panic(&vmError{err: fmt.Errorf("vm: $enter returned an error for %s, whose last result is no error", e.name)})
+		}
+		resultZero(e.inner.results, m.n[bn:], m.s[bs:], m.r[br:])
+		at := layout{int32(bn), int32(bs), int32(br)}.add(e.errAt)
+		m.write(res[0], e.errT, m.n[at.n:], m.s[at.s:], m.r[at.r:])
+		return
+	}
 	done := false
 	defer func() {
 		if !done {
