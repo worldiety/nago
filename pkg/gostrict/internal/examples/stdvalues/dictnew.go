@@ -17,6 +17,6 @@ func DictNew(a, b int32) int32 {
 	m := f()
 	m.Set("a", a)
 	m.Set("b", b)
-	v, _ := m.Get("b")
+	v := m.GetOr("b", 0)
 	return 10*m.Len() + v
 }

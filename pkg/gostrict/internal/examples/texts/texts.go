@@ -37,7 +37,7 @@ func Words(s string) string {
 		if w == "" {
 			continue
 		}
-		n, _ := counts.Get(w)
+		n := counts.GetOr(w, 0)
 		counts.Set(w, n+1)
 	}
 	out := ""

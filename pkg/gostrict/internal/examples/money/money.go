@@ -54,8 +54,12 @@ func Calc(a, b string, s int32, mode int32) (string, string, string, string, boo
 	if !okA || !okB {
 		return "", "", "", "", false, 0
 	}
+	quo := decimal.String(decimal.Zero())
 	q, ok := decimal.Quo(x, y, s, rounding(mode))
-	return decimal.String(decimal.Add(x, y)), decimal.String(decimal.Sub(x, y)), decimal.String(decimal.Mul(x, y)), decimal.String(q), ok, decimal.Cmp(x, y)
+	if ok {
+		quo = decimal.String(q)
+	}
+	return decimal.String(decimal.Add(x, y)), decimal.String(decimal.Sub(x, y)), decimal.String(decimal.Mul(x, y)), quo, ok, decimal.Cmp(x, y)
 }
 
 // Round rounds each of the amounts to the scale s by each mode.
@@ -89,7 +93,11 @@ func Invoice(lines list.List[string], rate string) (string, string, string, bool
 	if !ok {
 		return "", "", "", false
 	}
-	tax, _ := decimal.Quo(decimal.Mul(net, r), decimal.FromInt32(100), 2, decimal.HalfUp)
+	// the divisor 100 is not zero, so Quo does not fail
+	tax := decimal.Zero()
+	if t, ok := decimal.Quo(decimal.Mul(net, r), decimal.FromInt32(100), 2, decimal.HalfUp); ok {
+		tax = t
+	}
 	net = decimal.Round(net, 2, decimal.HalfUp)
 	return decimal.String(net), decimal.String(tax), decimal.String(decimal.Add(net, tax)), true
 }

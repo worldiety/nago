@@ -18,7 +18,7 @@ var sorter = list.SortFunc[int32]
 func SortVar(a, b int32) int32 {
 	l := list.Of(a, b, a+b)
 	sorter(l, func(x, y int32) int32 { return y - x })
-	v, _ := l.Get(0)
-	w, _ := l.Get(2)
+	v := l.GetOr(0, 0)
+	w := l.GetOr(2, 0)
 	return 10*v + w
 }

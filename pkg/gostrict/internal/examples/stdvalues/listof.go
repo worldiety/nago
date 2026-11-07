@@ -15,6 +15,6 @@ import "go.wdy.de/nago/pkg/gostrict/std/list"
 func ListOf(a, b int32) int32 {
 	f := list.Of[int32]
 	l := f(a, b, a)
-	v, _ := l.Get(1)
+	v := l.GetOr(1, 0)
 	return 10*l.Len() + v
 }

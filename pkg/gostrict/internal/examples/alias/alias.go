@@ -84,7 +84,7 @@ func Run() list.List[string] {
 	s := base
 	s.Bold = true
 	s.Top = Line{Width: 2, Color: "red"}
-	c0, _ := cells.Get(0)
+	c0 := cells.GetOr(0, Cell{})
 	add("style " + yes(c0.Style.Bold) + " " + c0.Style.Top.Color + " " + yes(s.Bold) + " " + s.Top.Color + " " + yes(base.Bold))
 
 	// a chain of fields changes Outer and Inner
@@ -131,15 +131,15 @@ func Run() list.List[string] {
 
 	// := assigns an existing variable
 	keep := thin
-	keep, ok := pick(true)
-	add("define " + keep.Color + " " + yes(ok) + " " + thin.Color)
+	keep, picked := pick(true)
+	add("define " + keep.Color + " " + text.FromInt(picked) + " " + thin.Color)
 
 	// range assigns existing variables
 	var last Node
 	for _, last = range nodes.All() {
 	}
 	last.V = 77
-	again2, _ := nodes.Get(1)
+	again2 := nodes.GetOr(1, Node{})
 	add("range " + text.FromInt(last.V) + " " + text.FromInt(again2.V))
 
 	// a variant of a sealed interface
@@ -156,11 +156,11 @@ func Run() list.List[string] {
 	return out
 }
 
-func pick(b bool) (Line, bool) {
+func pick(b bool) (Line, int32) {
 	if b {
-		return Line{Width: 8, Color: "pink"}, true
+		return Line{Width: 8, Color: "pink"}, 1
 	}
-	return thin, false
+	return thin, 0
 }
 
 func yes(b bool) string {

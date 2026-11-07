@@ -33,22 +33,22 @@ func Render(wnd ui.Window) ui.View {
 		ui.Text("gewählt: "+chosen.Get()),
 		ui.DataViewFromSlice(wnd, people.Len(),
 			ui.DataViewField("Name", func(row int32) ui.View {
-				p, _ := people.Get(row)
+				p := people.GetOr(row, Person{})
 				return ui.Text(p.Name)
 			}).ID("name").Comparator(func(a, b int32) int32 {
-				pa, _ := people.Get(a)
-				pb, _ := people.Get(b)
+				pa := people.GetOr(a, Person{})
+				pb := people.GetOr(b, Person{})
 				return text.Compare(pa.Name, pb.Name)
 			}),
 			ui.DataViewField("Alter", func(row int32) ui.View {
-				p, _ := people.Get(row)
+				p := people.GetOr(row, Person{})
 				return ui.Text(text.FromInt(p.Age))
 			}).ID("age").MinSize(ui.SizeClassMedium),
 		).
 			Style(ui.DataViewTable).
 			ColumnWidth("age", ui.L80).
 			Action(func(row int32) {
-				p, _ := people.Get(row)
+				p := people.GetOr(row, Person{})
 				chosen.Set(p.Name)
 			}).
 			SelectOptions(ui.DataViewSelectOptionDelete(wnd, func(rows list.List[int32]) error {

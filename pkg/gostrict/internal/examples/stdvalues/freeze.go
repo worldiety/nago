@@ -15,6 +15,6 @@ import "go.wdy.de/nago/pkg/gostrict/std/list"
 func Freeze(a, b int32) int32 {
 	f := list.Freeze[int32]
 	l := f(list.Of(a, b))
-	v, _ := l.Get(1)
+	v := l.GetOr(1, 0)
 	return 10*l.Len() + v
 }

@@ -16,7 +16,7 @@ func SortInfer(a, b int32) int32 {
 	l := list.Of(a, b, a+b)
 	var s func(list.List[int32], func(x, y int32) int32) = list.SortFunc
 	s(l, func(x, y int32) int32 { return y - x })
-	v, _ := l.Get(0)
-	w, _ := l.Get(2)
+	v := l.GetOr(0, 0)
+	w := l.GetOr(2, 0)
 	return 10*v + w
 }

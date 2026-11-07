@@ -54,10 +54,7 @@ func Init(n int32) *State {
 	geometry := three.NewSphere(0.25, 24)
 	balls := list.New[Ball]()
 	for i := range n {
-		color, ok := palette.Get(i % 6)
-		if !ok {
-			color = 0xffffff
-		}
+		color := palette.GetOr(i%6, 0xffffff)
 		m := three.NewMesh(geometry, three.NewMaterial(color, 0.1, 0.4))
 		three.Add(scene, m)
 		balls.Append(Ball{Mesh: m, Phase: float64(i) / float64(n) * 2 * math.Pi})

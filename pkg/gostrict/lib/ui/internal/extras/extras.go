@@ -23,7 +23,7 @@ func Render(wnd ui.Window) ui.View {
 	picked := ui.IndicesStateOf(wnd, "picked")
 	names := list.New[string]()
 	for i := range picked.Get().Values() {
-		f, _ := fruits.Get(i)
+		f := fruits.GetOr(i, "")
 		names.Append(f)
 	}
 
@@ -32,7 +32,7 @@ func Render(wnd ui.Window) ui.View {
 		ui.PickerFromSlice("Obst", fruits.Len(), picked).
 			MultiSelect(true).
 			Stringer(func(row int32) string {
-				f, _ := fruits.Get(row)
+				f := fruits.GetOr(row, "")
 				return f
 			}),
 		ui.HStack(ui.Text("Verlauf")).

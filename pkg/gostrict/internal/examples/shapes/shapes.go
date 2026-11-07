@@ -63,7 +63,7 @@ func Area(s Shape) float64 {
 		sum := 0.0
 		n := s.Points.Len()
 		for i, p := range s.Points.All() {
-			q, _ := s.Points.Get((i + 1) % max(n, 1))
+			q := s.Points.GetOr((i+1)%max(n, 1), Point{})
 			sum += p.X*q.Y - q.X*p.Y
 		}
 		return math.Abs(sum) / 2

@@ -208,10 +208,14 @@ func Methods(n int32) string {
 	}
 	p := Pair[string, int32]{First: "a", Second: n}.Swap()
 	lens := Map(list.Of("x", "yy", "zzz"), func(s string) int32 { return text.RuneCount(s) * n })
+	even := int32(0)
 	ev, ok := first(upTo(n))
+	if ok {
+		even = ev
+	}
 	return text.FromFloat(area, 1) + " " + text.FromInt(c.N) + " " + text.FromInt(get()) + " " + kinds + " " +
 		text.FromFloat(b.Size, 0) + " " + errs + " " + text.FromInt(p.First) + p.Second + " " +
-		text.FromInt(lens.Len()) + " " + text.FromInt(ev) + boolStr(ok) + boolStr(same)
+		text.FromInt(lens.Len()) + " " + text.FromInt(even) + boolStr(ok) + boolStr(same)
 }
 
 func boolStr(b bool) string {

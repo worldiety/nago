@@ -89,7 +89,11 @@ func stats(l list.List[int32]) (sum, min, max int32, ok bool) {
 
 // Results passes several results on and returns named results.
 func Results(n int32) (string, int32, int32, int32, bool, bool) {
-	sum, lo, hi, ok := stats(list.Of(n, -n, 2*n, 7))
+	sum, lo, hi := int32(0), int32(0), int32(0)
+	s, l, h, ok := stats(list.Of(n, -n, 2*n, 7))
+	if ok {
+		sum, lo, hi = s, l, h
+	}
 	_, _, _, empty := stats(list.New[int32]())
 	return join(split(n)), sum, lo, hi, ok, empty
 }
@@ -110,13 +114,17 @@ func Lists(n int32) string {
 	for i := range n {
 		l.Set(i, Point{float64(i), float64(n - i)})
 	}
+	x := float64(0)
 	last, ok := l.Pop()
-	out := text.FromFloat(last.X, 0) + yes(ok)
+	if ok {
+		x = last.X
+	}
+	out := text.FromFloat(x, 0) + yes(ok)
 	l.Delete(0)
 	c := l.Clone()
 	c.Set(0, Point{-1, -1})
-	first, _ := l.Get(0)
-	cfirst, _ := c.Get(0)
+	first := l.GetOr(0, Point{})
+	cfirst := c.GetOr(0, Point{})
 	_, missing := l.Get(99)
 	out += "," + text.FromFloat(first.X, 0) + "," + text.FromFloat(cfirst.X, 0) + yes(missing) + "," + text.FromInt(l.Len())
 
@@ -152,8 +160,12 @@ func Maps(n int32) string {
 		out += v + ";"
 	}
 	key := uint32(2654435761)
+	got := ""
 	v, ok := m.Get(key * 2)
-	out += v + yes(ok) + yes(m.Has(1)) + text.FromInt(m.Len())
+	if ok {
+		got = v
+	}
+	out += got + yes(ok) + yes(m.Has(1)) + text.FromInt(m.Len())
 
 	words := dict.New[string, Point]()
 	words.Set("b", Point{1, 2})
@@ -169,7 +181,7 @@ func Maps(n int32) string {
 	flags.Set(true, 1)
 	flags.Set(false, 2)
 	flags.Set(true, 3)
-	t, _ := flags.Get(true)
+	t := flags.GetOr(true, 0)
 	return out + yes(has) + text.FromInt(words.Len()) + text.FromInt(t)
 }
 
@@ -195,12 +207,19 @@ func Options(n int32) string {
 	}
 	p := opt.Some(Point{1, 2})
 	q := opt.None[Point]()
+	y := float64(0)
 	pv, pok := p.Get()
+	if pok {
+		y += pv.Y
+	}
 	qv, qok := q.Get()
+	if qok {
+		y += qv.Y
+	}
 	d := q.Or(Point{7, 8})
 	e := p.Or(Point{7, 8})
 	s := opt.Some("x")
-	return out + text.FromFloat(pv.Y+qv.Y+d.X+e.X, 0) + yes(pok) + yes(qok) + s.Or("y") + opt.None[string]().Or("z")
+	return out + text.FromFloat(y+d.X+e.X, 0) + yes(pok) + yes(qok) + s.Or("y") + opt.None[string]().Or("z")
 }
 
 type Kind int32

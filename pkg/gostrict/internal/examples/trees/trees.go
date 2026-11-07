@@ -96,7 +96,7 @@ func Values() (float64, float64, bool) {
 	p := Point{X: 1, Y: 2}
 	o := opt.Some(p)
 	p.X = 10
-	q, _ := o.Get()
+	q := opt.OrZero(o.Get())
 	q.Y = 20
 	r := o.Or(Point{})
 	empty := opt.None[Point]()

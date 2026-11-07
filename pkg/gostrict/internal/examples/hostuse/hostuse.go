@@ -51,7 +51,8 @@ func Callbacks(n int32, limit float64) (list.List[geom.Rect], float64, string) {
 		return x * float64(n)
 	})
 	if err != nil {
-		return rs, sum, err.Error()
+		// the sum of a failed fold is not valid
+		return rs, 0, err.Error()
 	}
 	return rs, sum, "ok"
 }

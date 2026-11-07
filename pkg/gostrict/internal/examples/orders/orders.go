@@ -43,9 +43,9 @@ func Summarize(o Order, reduced bool) (Summary, error) {
 	if o.Customer == "" {
 		return Summary{Lines: list.New[string]()}, errors.New("the order has no customer")
 	}
-	rate, _ := vat.Get(0)
+	rate := vat.GetOr(0, 0)
 	if reduced {
-		rate, _ = vat.Get(1)
+		rate = vat.GetOr(1, 0)
 	}
 
 	s := Summary{Customer: o.Customer, Lines: list.New[string]()}

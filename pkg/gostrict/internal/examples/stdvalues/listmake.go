@@ -16,6 +16,6 @@ func ListMake(a, b int32) int32 {
 	f := list.Make[int32]
 	l := f(a)
 	l.Set(0, b)
-	v, _ := l.Get(0)
+	v := l.GetOr(0, 0)
 	return 10*l.Len() + v
 }

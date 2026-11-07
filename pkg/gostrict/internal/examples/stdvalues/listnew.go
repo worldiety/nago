@@ -16,6 +16,6 @@ func ListNew(a, b int32) int32 {
 	f := list.New[int32]
 	l := f()
 	l.Append(a, b)
-	v, _ := l.Get(1)
+	v := l.GetOr(1, 0)
 	return 10*l.Len() + v
 }
