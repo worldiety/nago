@@ -221,9 +221,32 @@ func (c *checker) optionalFix(as *ast.AssignStmt, p pairing, g *getCall) (string
 	stmt := c.text(as.Lhs[0]) + " " + as.Tok.String() + " " + rhs
 	c.d.fix(CodeGuard, as.Pos(), as.Pos(), as.End(), stmt)
 	for _, path := range q.added {
-		c.d.fix(CodeGuard, as.Pos(), f.Name.End(), f.Name.End(), "\n\nimport "+strconv.Quote(path))
+		at, text := importEdit(f, path)
+		c.d.fix(CodeGuard, as.Pos(), at, at, text)
 	}
 	return stmt, true
+}
+
+// importEdit returns the position and the text, which import the package path into the file: into its first import
+// declaration with parentheses, after its first import declaration or after the package clause.
+func importEdit(f *ast.File, path string) (token.Pos, string) {
+	var first *ast.GenDecl
+	for _, d := range f.Decls {
+		g, ok := d.(*ast.GenDecl)
+		if !ok || g.Tok != token.IMPORT {
+			continue
+		}
+		if g.Lparen.IsValid() {
+			return g.Lparen + 1, "\n\t" + strconv.Quote(path)
+		}
+		if first == nil {
+			first = g
+		}
+	}
+	if first != nil {
+		return first.End(), "\nimport " + strconv.Quote(path)
+	}
+	return f.Name.End(), "\n\nimport " + strconv.Quote(path)
 }
 
 // text returns the source code of the node.

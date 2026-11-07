@@ -286,8 +286,9 @@ func (c *checker) checkPaired(id *ast.Ident, p *pairInfo) {
 // guardedAfter tells, whether a guard after the position bind proves the property of the partner obj at the use
 // on top of the stack, and obj keeps its value from bind up to the guard.
 func (c *checker) guardedAfter(a atom, obj types.Object, bind token.Pos) bool {
-	depth, from, ok := guardIn(c.stack, a, bind)
-	return ok && c.keptUntil(obj, bind, from, depth)
+	return eachGuard(c.stack, a, bind, func(depth int, from token.Pos) bool {
+		return c.keptUntil(obj, bind, from, depth)
+	})
 }
 
 // keptUntil tells, whether the partner obj keeps the value of its binding, which ends at bind, up to the position
@@ -463,7 +464,7 @@ func (c *checker) checkCallStmt(s *ast.ExprStmt) {
 func (c *checker) reportDiscard(n ast.Node, call *ast.CallExpr) {
 	text := types.ExprString(call)
 	why := "a failed call would go unnoticed"
-	fix := "pass the error on: if err := " + text + "; err != nil { return ..., err }"
+	fix := "pass the error on: if err := " + text + "; err != nil { return ..., err }; opt.OrZeroErr goes on with the zero value deliberately only for a call, which returns a value besides the error"
 	if t, tuple := c.info.TypeOf(call).(*types.Tuple); tuple {
 		why += ", and its other results may be invalid then"
 		fix = "pass the error on: if _, err := " + text + "; err != nil { return ..., err }"

@@ -107,6 +107,17 @@ func (c *checker) guardFor(a atom) (depth int, from token.Pos, ok bool) {
 // guardIn finds the guard of the node on top of the stack like [checker.guardFor], which starts after the position
 // after, e.g. after the binding of a value, whose ok it proves.
 func guardIn(stack []ast.Node, a atom, after token.Pos) (depth int, from token.Pos, ok bool) {
+	eachGuard(stack, a, after, func(d int, f token.Pos) bool {
+		depth, from, ok = d, f, true
+		return true
+	})
+	return depth, from, ok
+}
+
+// eachGuard calls found with each guard of the node on top of the stack after the position after, from the innermost
+// one outwards, until found returns true, e.g. for the first guard, before which a variable keeps its value. It
+// tells, whether found returned true.
+func eachGuard(stack []ast.Node, a atom, after token.Pos, found func(depth int, from token.Pos) bool) bool {
 	for i := len(stack) - 1; i > 0; i-- {
 		child, parent := stack[i], stack[i-1]
 		switch p := parent.(type) {
@@ -114,50 +125,57 @@ func guardIn(stack []ast.Node, a atom, after token.Pos) (depth int, from token.P
 			if p.Cond.Pos() <= after {
 				continue
 			}
-			if child == ast.Node(p.Body) && implies(p.Cond, true, a) {
-				return i - 1, p.Cond.Pos(), true
+			if child == ast.Node(p.Body) && implies(p.Cond, true, a) && found(i-1, p.Cond.Pos()) {
+				return true
 			}
-			if p.Else != nil && child == ast.Node(p.Else) && implies(p.Cond, false, a) {
-				return i - 1, p.Cond.Pos(), true
+			if p.Else != nil && child == ast.Node(p.Else) && implies(p.Cond, false, a) && found(i-1, p.Cond.Pos()) {
+				return true
 			}
 		case *ast.BinaryExpr:
 			if p.X.Pos() <= after {
 				continue
 			}
 			if child == ast.Node(p.Y) {
-				if (p.Op == token.LAND && implies(p.X, true, a)) || (p.Op == token.LOR && implies(p.X, false, a)) {
-					return i - 1, p.X.Pos(), true
+				if ((p.Op == token.LAND && implies(p.X, true, a)) || (p.Op == token.LOR && implies(p.X, false, a))) && found(i-1, p.X.Pos()) {
+					return true
 				}
 			}
 		case *ast.BlockStmt:
-			if pos, ok := earlyExit(p.List, child, a, after); ok {
-				return i - 1, pos, true
+			if earlyExits(p.List, child, a, after, func(pos token.Pos) bool { return found(i-1, pos) }) {
+				return true
 			}
 		case *ast.CaseClause:
-			if pos, ok := earlyExit(p.Body, child, a, after); ok {
-				return i - 1, pos, true
+			if earlyExits(p.Body, child, a, after, func(pos token.Pos) bool { return found(i-1, pos) }) {
+				return true
 			}
 		}
 	}
-	return 0, token.NoPos, false
+	return false
 }
 
-// earlyExit finds an if before child and after the position after, which leaves the block unless the property
-// holds.
-func earlyExit(list []ast.Stmt, child ast.Node, a atom, after token.Pos) (token.Pos, bool) {
-	for _, s := range list {
+// earlyExits calls found with each if before child and after the position after, which leaves the block unless the
+// property holds, from the last one backwards, until found returns true.
+func earlyExits(list []ast.Stmt, child ast.Node, a atom, after token.Pos, found func(token.Pos) bool) bool {
+	end := len(list)
+	for i, s := range list {
 		if ast.Node(s) == child {
-			return token.NoPos, false
+			end = i
+			break
 		}
-		is, ok := s.(*ast.IfStmt)
+	}
+	if end == len(list) {
+		return false
+	}
+	for i := end - 1; i >= 0; i-- {
+		is, ok := list[i].(*ast.IfStmt)
 		if !ok || is.Init != nil || is.Else != nil || !terminates(is.Body) || is.Cond.Pos() <= after {
 			continue
 		}
-		if implies(is.Cond, false, a) {
-			return is.Cond.Pos(), true
+		if implies(is.Cond, false, a) && found(is.Cond.Pos()) {
+			return true
 		}
 	}
-	return token.NoPos, false
+	return false
 }
 
 func terminates(b *ast.BlockStmt) bool {
