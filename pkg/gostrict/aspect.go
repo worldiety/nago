@@ -66,7 +66,7 @@ func (f Funcs) WithAspect(a Aspect) Funcs {
 }
 
 // ResultError is the mark of an error of [Aspect.Enter], which the denied entry point returns as its error result,
-// see [AsResult].
+// see [AsResult], and the panic of [ReturnError].
 type ResultError struct {
 	Err error
 }
@@ -89,6 +89,16 @@ func AsResult(err error) error {
 	return &ResultError{Err: err}
 }
 
+// ReturnError ends the entry point, in which a function of the host runs, from that function with zero values, whose
+// lists and maps are empty, and err as its results, e.g. because the generated code of the entry point rejects its
+// input: the engine unwinds the calls within the entry point, the aspect exits it with err, and its caller handles
+// err like an error, which the entry point returned. Within an entry point, whose last result is not an error, or
+// outside of any entry point, it aborts the whole call with err like [Abort]. Only a function, which the program
+// calls itself, may end its entry point, not one within a callback, which the host calls.
+func ReturnError(err error) {
+	panic(&ResultError{Err: err})
+}
+
 // Aborted is the panic of [Abort].
 type Aborted struct {
 	Err error
@@ -109,10 +119,13 @@ func Abort(err error) {
 	panic(&Aborted{Err: err})
 }
 
-// AbortedErr returns the error of an abort, which an engine has caught, or false.
+// AbortedErr returns the error of an abort, which an engine has caught, or false. A [ReturnError], which no entry
+// point returned, is an abort as well.
 func AbortedErr(v any) (error, bool) {
 	switch v := v.(type) {
 	case *Aborted:
+		return v.Err, true
+	case *ResultError:
 		return v.Err, true
 	case error:
 		var a *Aborted

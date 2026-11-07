@@ -278,7 +278,9 @@
 // and the aspect exits each frame with the error. A denial, which the host marks with [AsResult], is instead the
 // error result of the denied entry point with zero values, whose lists and maps are empty, if its last result is an
 // error: its caller handles it like an error, which the entry point returned, while the body and the exit of the
-// entry point do not run. Imports have no cycles, so the depth of the frames is bounded by the program itself.
+// entry point do not run. A function of the host may end the entry point, in which it runs, in the same way with
+// [ReturnError], after which the aspect exits it with the error. Imports have no cycles, so the depth of the frames
+// is bounded by the program itself.
 //
 // [CompileWhole] checks the whole program once, and [Whole.Bundle] translates a bundle for some entry points, which
 // contains only what they reach. A changed script is a new whole program, while running calls keep their bundles.

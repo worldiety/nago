@@ -276,6 +276,14 @@ func jsError(ex *goja.Exception) error {
 	if err, ok := gostrict.AbortedErr(ex.Unwrap()); ok {
 		return err
 	}
+	if obj, ok := ex.Value().(*goja.Object); ok {
+		// the end of an entry point with an error (gostrict.ReturnError) outside of an entry point, which returns it
+		if v := obj.Get("$go"); v != nil {
+			if err, ok := gostrict.AbortedErr(v.Export()); ok {
+				return err
+			}
+		}
+	}
 	return &Error{Msg: ex.Value().String()}
 }
 
@@ -690,6 +698,18 @@ func (r *Runtime) hostFunc(in *instance, sig gostrict.Func, f gostrict.Fn) func(
 				// the entry points
 				if a, ok := v.(*gostrict.Aborted); ok {
 					panic(r.rt.NewGoError(a))
+				}
+				if ret, ok := v.(*gostrict.ResultError); ok {
+					// the end of the entry point with an error, which the hook of the entry point catches by $ret
+					// (gostrict.ReturnError); the Go value lets an end outside of an entry point abort
+					e, err := c.toJS(ret.Err, gostrict.Error)
+					if err != nil {
+						panic(r.rt.NewGoError(err))
+					}
+					obj := r.rt.NewObject()
+					_ = obj.Set("$ret", e)
+					_ = obj.Set("$go", r.rt.ToValue(ret))
+					panic(obj)
 				}
 				panic(v)
 			}

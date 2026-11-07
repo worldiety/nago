@@ -53,6 +53,13 @@ func (b boundary) TokenValue(v any) (any, bool) {
 	return tok.Value(), true
 }
 
+func (b boundary) Returned(v any) (error, bool) {
+	if r, ok := v.(*gostrict.ResultError); ok {
+		return r.Err, true
+	}
+	return nil, false
+}
+
 func (b boundary) ProgramError(msg string, pos int) error {
 	return b.in.bundle.ProgramError(msg, pos)
 }

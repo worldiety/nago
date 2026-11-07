@@ -247,24 +247,26 @@ func (e *emitter) hook(fn *types.Func) string {
 	errResult := "null"
 	full := jsString(e.entries[fn])
 	// an entry point, whose last result is an error, returns the error of a denial, which the aspect marks as a
-	// result (AsResult), with zero values, without its body and without the exit; any other denial aborts in $enter
+	// result (AsResult), with zero values, without its body and without the exit; any other denial aborts in $enter.
+	// It returns the error of a function of the host, which ends it (ReturnError), with zero values after the exit.
 	enter := fmt.Sprintf("\t$aspect_enter(%s, false);\n", full)
+	catch := ""
 	if n := sig.Results().Len(); n > 0 && isError(sig.Results().At(n-1).Type()) {
 		errResult = "$r"
-		denied := "$e"
+		result := func(err string) string { return err }
 		if n > 1 {
 			errResult = fmt.Sprintf("$r[%d]", n-1)
-			zeros := make([]string, n)
-			for i := range n - 1 {
+			zeros := make([]string, n-1)
+			for i := range zeros {
 				zeros[i] = e.resultZero(sig.Results().At(i).Type())
 			}
-			zeros[n-1] = "$e"
-			denied = "[" + strings.Join(zeros, ", ") + "]"
+			result = func(err string) string { return "[" + strings.Join(append(zeros, err), ", ") + "]" }
 		}
-		enter = fmt.Sprintf("\tconst $e = $aspect_enter(%s, true);\n\tif ($e !== null) {\n\t\treturn %s;\n\t}\n", full, denied)
+		enter = fmt.Sprintf("\tconst $e = $aspect_enter(%s, true);\n\tif ($e !== null) {\n\t\treturn %s;\n\t}\n", full, result("$e"))
+		catch = fmt.Sprintf(" catch ($c) {\n\t\tif ($c === null || typeof $c !== \"object\" || !(\"$ret\" in $c)) {\n\t\t\tthrow $c;\n\t\t}\n\t\t$r = %s;\n\t\t$done = true;\n\t}", result("$c.$ret"))
 	}
-	fmt.Fprintf(&e.out, "function %s(%s) {\n%s\tlet $r, $done = false;\n\ttry {\n\t\t$r = %s(%s);\n\t\t$done = true;\n\t} finally {\n\t\t$aspect_exit(%s, $done ? %s : $errors_New(\"aborted\"));\n\t}\n\treturn $r;\n}\n",
-		name, strings.Join(params, ", "), enter, inner, strings.Join(params, ", "), full, errResult)
+	fmt.Fprintf(&e.out, "function %s(%s) {\n%s\tlet $r, $done = false;\n\ttry {\n\t\t$r = %s(%s);\n\t\t$done = true;\n\t}%s finally {\n\t\t$aspect_exit(%s, $done ? %s : $errors_New(\"aborted\"));\n\t}\n\treturn $r;\n}\n",
+		name, strings.Join(params, ", "), enter, inner, strings.Join(params, ", "), catch, full, errResult)
 	return name
 }
 

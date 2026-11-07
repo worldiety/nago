@@ -119,23 +119,33 @@ func resultZero(t *tinfo, n []uint64, s []string, r []any) {
 
 // callEntry calls the entry point of a hook within the aspect at the frame, where its arguments are. An error, which
 // $enter returns, replaces the arguments with the results of the entry point: zero values, see [resultZero], and the
-// error.
+// error. A function of the host, which ends the entry point with an error (gostrict.ReturnError), unwinds its calls
+// and returns the same results after the exit with the error.
 func (m *Machine) callEntry(e *entryInfo, bn, bs, br int) {
 	if res := m.host.Call(e.enter.idx, []any{e.name, e.errT != nil}); len(res) > 0 && res[0] != nil {
 		if e.errT == nil {
 			// gostrict.Funcs.WithAspect aborts instead; a host, which implements $enter itself, fails loudly
 			panic(&vmError{err: fmt.Errorf("vm: $enter returned an error for %s, whose last result is no error", e.name)})
 		}
-		resultZero(e.inner.results, m.n[bn:], m.s[bs:], m.r[br:])
-		at := layout{int32(bn), int32(bs), int32(br)}.add(e.errAt)
-		m.write(res[0], e.errT, m.n[at.n:], m.s[at.s:], m.r[at.r:])
+		m.returnErr(e, res[0].(error), bn, bs, br)
 		return
 	}
+	s := saved{hi: m.hi, depth: m.depth, ctx: m.ctx}
 	done := false
 	defer func() {
-		if !done {
-			m.host.Call(e.exit.idx, []any{e.name, errAborted})
+		if done {
+			return
 		}
+		v := recover()
+		if err, ok := m.host.Returned(v); ok && e.errT != nil {
+			// a function of the host ended the entry point with an error as its result
+			m.reset(s)
+			m.returnErr(e, err, bn, bs, br)
+			m.host.Call(e.exit.idx, []any{e.name, err})
+			return
+		}
+		m.host.Call(e.exit.idx, []any{e.name, errAborted})
+		panic(v)
 	}()
 	m.enter()
 	m.run(e.inner, bn, bs, br)
@@ -147,4 +157,12 @@ func (m *Machine) callEntry(e *entryInfo, bn, bs, br int) {
 		err = m.neutral(e.errT, m.n[at.n:], m.s[at.s:], m.r[at.r:])
 	}
 	m.host.Call(e.exit.idx, []any{e.name, err})
+}
+
+// returnErr writes the results of an entry point, which returns err without its body: zero values, see [resultZero],
+// and err.
+func (m *Machine) returnErr(e *entryInfo, err error, bn, bs, br int) {
+	resultZero(e.inner.results, m.n[bn:], m.s[bs:], m.r[br:])
+	at := layout{int32(bn), int32(bs), int32(br)}.add(e.errAt)
+	m.write(err, e.errT, m.n[at.n:], m.s[at.s:], m.r[at.r:])
 }

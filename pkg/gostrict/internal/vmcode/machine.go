@@ -36,6 +36,9 @@ type Host interface {
 	// ProgramError returns the error, which the program created at the position with the index pos of the table
 	// of the bundle, see [Source.ErrorPos].
 	ProgramError(msg string, pos int) error
+	// Returned returns the error of a panic of a function of the host, which ends the entry point, in which it runs,
+	// with the error as its result, see gostrict.ReturnError, or false for any other panic.
+	Returned(v any) (error, bool)
 }
 
 // debugPanics lets the panics of the machine through with their stack, e.g. GOSTRICT_VM_PANIC=1 go test.
