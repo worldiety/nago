@@ -82,11 +82,13 @@ type AssistantOptions struct {
 	// current time. Optional; the tool is on by default.
 	DisableCurrentTime bool
 
-	// WebResearch lets the model search the web and read web pages, see [completion.WebResearchTools]. The
-	// provider runs both itself: Anthropic natively, the Nago AI Service also for its other models. Other
-	// providers ignore it, and a model which refuses the tools continues without them. Searches are billed by
-	// the provider apart from the tokens, and the queries leave the application. Optional.
-	WebResearch bool
+	// WebResearch decides whether the model may search the web and read web pages, see
+	// [completion.WebSearchTool] and [completion.WebFetchTool]. The provider runs both itself: Anthropic
+	// natively, the Nago AI Service also for its other models. Other providers ignore them, and a model which
+	// refuses the tools continues without them. Searches are billed by the provider apart from the tokens, and
+	// the queries leave the application. Optional; the zero value follows the operator's
+	// [AssistantSettings.WebSearch] and [AssistantSettings.WebFetch], which are off by default.
+	WebResearch WebResearch
 
 	// Confirmation decides whether the user approves each call of a tool marked [completion.Tool.Mutating]
 	// before it runs, or only the calls of tools marked [completion.Tool.RequiresApproval]. Optional; the zero
@@ -143,6 +145,42 @@ func (c Confirmation) confirmMarked(cfg AssistantSettings) bool {
 	default:
 		return false
 	}
+}
+
+// WebResearch decides whether the assistant may research the web, see [AssistantOptions.WebResearch].
+type WebResearch int
+
+const (
+	// WebResearchGlobal follows the operator's [AssistantSettings.WebSearch] and [AssistantSettings.WebFetch],
+	// which are off by default.
+	WebResearchGlobal WebResearch = iota
+	// WebResearchAlways lets the model search the web and read web pages, regardless of the global settings.
+	WebResearchAlways
+	// WebResearchNever offers neither, regardless of the global settings, e.g. to an assistant whose
+	// conversations must not leave the application in a search query.
+	WebResearchNever
+)
+
+// tools resolves the server tools of the effective behaviour.
+func (w WebResearch) tools(cfg AssistantSettings) []completion.ServerTool {
+	search, fetch := cfg.WebSearch, cfg.WebFetch
+	switch w {
+	case WebResearchAlways:
+		search, fetch = true, true
+	case WebResearchNever:
+		search, fetch = false, false
+	}
+
+	var res []completion.ServerTool
+	if search {
+		res = append(res, completion.WebSearchTool())
+	}
+
+	if fetch {
+		res = append(res, completion.WebFetchTool())
+	}
+
+	return res
 }
 
 var (
@@ -226,7 +264,7 @@ func (a *Assistant) ChatOptions(wnd core.Window, opts AssistantOptions) (uicompl
 		OnAttach:           opts.OnAttach,
 		AskUser:            opts.AskUser,
 		DisableCurrentTime: opts.DisableCurrentTime,
-		ServerTools:        webResearch(opts.WebResearch),
+		ServerTools:        opts.WebResearch.tools(cfg),
 		ReadOnly:           cfg.ReadOnly,
 		ConfirmMutations:   opts.Confirmation.confirm(cfg),
 		ConfirmMarked:      opts.Confirmation.confirmMarked(cfg),
@@ -486,13 +524,4 @@ func (a *Assistant) complain(kind, message string) {
 	}
 
 	slog.Warn(message)
-}
-
-// webResearch returns the server tools of [AssistantOptions.WebResearch].
-func webResearch(enabled bool) []completion.ServerTool {
-	if !enabled {
-		return nil
-	}
-
-	return completion.WebResearchTools()
 }

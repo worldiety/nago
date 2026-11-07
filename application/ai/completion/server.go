@@ -48,21 +48,29 @@ type ServerTool struct {
 	MaxContentTokens int `json:"maxContentTokens,omitzero"`
 }
 
-// Defaults of [WebResearchTools].
+// Defaults of [WebSearchTool] and [WebFetchTool].
 const (
 	DefaultWebSearchMaxUses   = 5
 	DefaultWebFetchMaxUses    = 10
 	DefaultWebFetchMaxContent = 25000
 )
 
-// WebResearchTools returns the server tools of a web research: a search and the fetch of the pages it found.
-// Per turn, the model may search [DefaultWebSearchMaxUses] times and read [DefaultWebFetchMaxUses] pages of up
-// to about [DefaultWebFetchMaxContent] tokens each.
+// WebSearchTool returns the web search, which the model may call [DefaultWebSearchMaxUses] times per turn.
+func WebSearchTool() ServerTool {
+	return ServerTool{Kind: WebSearch, MaxUses: DefaultWebSearchMaxUses}
+}
+
+// WebFetchTool returns the fetch of web pages, of which the model may read [DefaultWebFetchMaxUses] per turn, each
+// truncated to about [DefaultWebFetchMaxContent] tokens. Alone, it reads only the pages whose urls the user wrote
+// or a tool returned.
+func WebFetchTool() ServerTool {
+	return ServerTool{Kind: WebFetch, MaxUses: DefaultWebFetchMaxUses, MaxContentTokens: DefaultWebFetchMaxContent}
+}
+
+// WebResearchTools returns the server tools of a web research: the [WebSearchTool] and the [WebFetchTool], which
+// also reads the pages the search found.
 func WebResearchTools() []ServerTool {
-	return []ServerTool{
-		{Kind: WebSearch, MaxUses: DefaultWebSearchMaxUses},
-		{Kind: WebFetch, MaxUses: DefaultWebFetchMaxUses, MaxContentTokens: DefaultWebFetchMaxContent},
-	}
+	return []ServerTool{WebSearchTool(), WebFetchTool()}
 }
 
 // ServerBlock is a content block of a [ServerTool] in an assistant turn: its call or its result, as the provider

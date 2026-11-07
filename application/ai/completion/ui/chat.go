@@ -145,7 +145,7 @@ type ChatOptions struct {
 	DisableCurrentTime bool
 
 	// ServerTools are the tools the provider runs itself, e.g. a web search, see [completion.ServerTool] and
-	// [WebResearch]. Providers without server-side tools ignore them. Optional.
+	// [completion.WebResearchTools]. Providers without server-side tools ignore them. Optional.
 	ServerTools []completion.ServerTool
 
 	// ReadOnly removes every tool marked [completion.Tool.Mutating] before the turn starts, so the model is

@@ -76,6 +76,14 @@ type AssistantSettings struct {
 	// Hidden removes the button without removing the provider, which is what an operator wants while
 	// investigating something rather than while decommissioning it.
 	Hidden bool `json:"hidden" label:"Assistent ausblenden" section:"Sicherheit" supportingText:"Blendet den Knopf auf allen Seiten aus, ohne den Provider zu entfernen."`
+
+	// WebSearch and WebFetch are off by default, because a search is billed by the provider apart from the
+	// tokens, the queries and the fetched addresses leave the application, and a fetched page brings foreign text
+	// into the conversation. Both are separate flags, because reading a page the user links is a smaller step
+	// than searching for one. An assistant may still deviate through [AssistantOptions.WebResearch].
+	WebSearch bool `json:"webSearch" label:"Websuche erlauben" section:"Web-Recherche" supportingText:"Der Assistent darf im Web suchen. Der Provider führt die Suche aus und rechnet sie zusätzlich zu den Tokens ab, die Suchanfragen verlassen die Anwendung. Ohne Wirkung bei Providern ohne Websuche, etwa einem lokalen Modell. Einzelne Assistenten einer Anwendung können davon abweichen."`
+
+	WebFetch bool `json:"webFetch" label:"Webseiten abrufen erlauben" section:"Web-Recherche" supportingText:"Der Assistent darf Webseiten und PDFs lesen, deren Adresse schon in der Unterhaltung steht: vom Benutzer geschrieben, von einem Werkzeug geliefert oder von der Websuche gefunden. Der Provider ruft sie ab, nicht die Anwendung. Einzelne Assistenten einer Anwendung können davon abweichen."`
 }
 
 // ModelChoice identifies a model of a specific provider as "<provider id>/<model id>", see [NewModelChoice].

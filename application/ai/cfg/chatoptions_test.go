@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"go.wdy.de/nago/application"
+	"go.wdy.de/nago/application/ai/completion"
 	uicompletion "go.wdy.de/nago/application/ai/completion/ui"
 	"go.wdy.de/nago/application/ai/provider/openai"
 	"go.wdy.de/nago/application/group"
@@ -87,6 +88,10 @@ func TestChatOptions(t *testing.T) {
 		t.Fatalf("the operator settings are missing: %+v", opts)
 	}
 
+	if len(opts.ServerTools) != 0 {
+		t.Fatalf("the web research must be off by default: %+v", opts.ServerTools)
+	}
+
 	// an embedded chat keeps its own input field, only the floating assistant follows Assistant.Open
 	if opts.Open != nil || opts.Draft != nil {
 		t.Fatal("ChatOptions must not share the states of the floating assistant")
@@ -98,6 +103,13 @@ func TestChatOptions(t *testing.T) {
 
 	if a := opts.Agents[1]; a.Model != "own" || a.MaxTokens != 7 {
 		t.Fatalf("a pinned agent must keep its model: %+v", a)
+	}
+
+	// the operator may allow reading the linked pages without allowing a search
+	store(AssistantSettings{WebFetch: true})
+	app.Open(t, cfg.SysUser(), "chat")
+	if optsErr != nil || len(opts.ServerTools) != 1 || opts.ServerTools[0].Kind != completion.WebFetch {
+		t.Fatalf("expected the operator's web fetch only: %+v %v", opts.ServerTools, optsErr)
 	}
 
 	store(AssistantSettings{SkipConfirmation: true})

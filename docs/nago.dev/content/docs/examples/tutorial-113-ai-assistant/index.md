@@ -386,23 +386,28 @@ built-in one steps back; `AssistantOptions.DisableCurrentTime` turns it off.
 
 ### Research on the web
 
-`AssistantOptions.WebResearch` lets the model search the web and read pages, e.g. to compare a book with its
-reviews. Nago fetches nothing itself: the provider runs both tools within the request, as server tools of the
-Messages API. Anthropic runs them natively. The Nago AI Service runs them for its other models as well: it reads
-pages from public addresses only, and only those which already appear in the conversation, so a model steered by
-a foreign page cannot send data to an address it made up. A search needs a search service configured there.
+The assistant can search the web and read pages, e.g. to compare a book with its reviews. Both are off by
+default, because searches are billed apart from the tokens and their queries leave the application. The operator
+turns them on in the global settings *KI-Assistent*, section *Web-Recherche*, each on its own: *Websuche erlauben*
+searches, *Webseiten abrufen erlauben* reads pages whose addresses already appear in the conversation, written by
+the user or found by the search. Like the confirmation, a single assistant may deviate from the operator's
+choice:
 
 ```go
 modAI.Assistant.Decorate(wnd, view, cfgai.AssistantOptions{
 	// …
-	WebResearch: true,
+	WebResearch: cfgai.WebResearchAlways, // or cfgai.WebResearchNever; the zero value follows the settings
 })
 ```
 
+Nago fetches nothing itself: the provider runs both tools within the request, as server tools of the Messages
+API. Anthropic runs them natively. The Nago AI Service runs them for its other models as well: it reads pages from
+public addresses only, and only those which already appear in the conversation, so a model steered by a foreign
+page cannot send data to an address it made up. A search needs a search service configured there.
+
 The chat shows each search with its hits and each page read, as links, in the section of the tool calls, and marks
-every cited passage of the answer with a numbered link to its page. Searches are billed apart from the tokens, and their queries leave the application. A model which refuses the tools, e.g.
-because the organization disabled them, continues without them. Other providers, like a local model, ignore the
-option.
+every cited passage of the answer with a numbered link to its page. A model which refuses the tools, e.g. because
+the organization disabled them, continues without them. Other providers, like a local model, ignore the settings.
 
 ## The screen as feedback channel
 
