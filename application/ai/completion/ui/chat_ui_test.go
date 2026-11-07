@@ -202,3 +202,26 @@ func TestChat_HistoryOpensSubTaskTranscript(t *testing.T) {
 		t.Fatalf("expected only the parent session, got %d", n)
 	}
 }
+
+// TestChat_SendSurvivesARendering: a click on "Senden" refers to the tree, which the user saw, but the text field has
+// sent its value right before, when it lost the focus, and the window has been rendered again. The click must still
+// submit, otherwise the user has to click twice.
+func TestChat_SendSurvivesARendering(t *testing.T) {
+	fake := &chatFake{parent: func(context.Context, completion.Options) (completion.Result, error) {
+		return text("Angekommen."), nil
+	}}
+
+	app := nagotest.New(t, func(cfg *application.Configurator) {
+		cfg.SetApplicationID("de.worldiety.uicompletion.test")
+		cfg.RootView("chat", func(wnd core.Window) core.View {
+			return uicompletion.Chat(wnd, uicompletion.ChatOptions{Completions: fake, Provider: echo.New("p", "p"), DisableCurrentTime: true})
+		})
+	})
+
+	w := app.Open(t, user.SU(), "chat", nagotest.StaleRetries(0))
+	send := w.Find(nagotest.Text("Senden"))
+	w.Type(w.Find(nagotest.Label("Nachricht")), "Hallo")
+	w.Click(send)
+
+	w.WaitFor(richText("Angekommen."), 5*time.Second)
+}

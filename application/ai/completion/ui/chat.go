@@ -1045,9 +1045,11 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			ui.HStack(
 				ui.If(uploadEnabled, uploadButton(wnd, staged, busy.Get())),
 				ui.Spacer(),
+				// The keys keep a click, which refers to a former tree: the field sends its value when it loses the
+				// focus right before the click on "Senden", and a running answer renders the window all the time.
 				ui.IfElse(busy.Get(),
-					ui.SecondaryButton(stop).PreIcon(icons.Stop).Title("Stopp").Enabled(cancelRun.Get() != nil || attached.Get() != nil),
-					ui.SecondaryButton(submit).PreIcon(icons.PaperPlane).Title("Senden"),
+					ui.SecondaryButton(stop).PreIcon(icons.Stop).Title("Stopp").Enabled(cancelRun.Get() != nil || attached.Get() != nil).Key("stop", prompt.ID()),
+					ui.SecondaryButton(submit).PreIcon(icons.PaperPlane).Title("Senden").Key("send", prompt.ID()),
 				),
 			).Gap(ui.L8).FullWidth().Alignment(ui.Center),
 			// below the buttons, a narrow panel would squeeze it between them
