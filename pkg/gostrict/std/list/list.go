@@ -94,6 +94,8 @@ func (l List[T]) Append(items ...T) {
 }
 
 // Pop removes and returns the last element and true, or the zero value and false, if the list is empty.
+//
+//gostrict:zero
 func (l List[T]) Pop() (T, bool) {
 	if l.Len() == 0 {
 		var zero T

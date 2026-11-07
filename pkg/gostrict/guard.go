@@ -101,10 +101,19 @@ func implies(cond ast.Expr, positive bool, a atom) bool {
 // guardFor finds the guard of the node on top of the stack. It returns the index of the guarding node in the
 // stack and the position, from which on the variable must not change.
 func (c *checker) guardFor(a atom) (depth int, from token.Pos, ok bool) {
-	for i := len(c.stack) - 1; i > 0; i-- {
-		child, parent := c.stack[i], c.stack[i-1]
+	return guardIn(c.stack, a, token.NoPos)
+}
+
+// guardIn finds the guard of the node on top of the stack like [checker.guardFor], which starts after the position
+// after, e.g. after the binding of a value, whose ok it proves.
+func guardIn(stack []ast.Node, a atom, after token.Pos) (depth int, from token.Pos, ok bool) {
+	for i := len(stack) - 1; i > 0; i-- {
+		child, parent := stack[i], stack[i-1]
 		switch p := parent.(type) {
 		case *ast.IfStmt:
+			if p.Cond.Pos() <= after {
+				continue
+			}
 			if child == ast.Node(p.Body) && implies(p.Cond, true, a) {
 				return i - 1, p.Cond.Pos(), true
 			}
@@ -112,17 +121,20 @@ func (c *checker) guardFor(a atom) (depth int, from token.Pos, ok bool) {
 				return i - 1, p.Cond.Pos(), true
 			}
 		case *ast.BinaryExpr:
+			if p.X.Pos() <= after {
+				continue
+			}
 			if child == ast.Node(p.Y) {
 				if (p.Op == token.LAND && implies(p.X, true, a)) || (p.Op == token.LOR && implies(p.X, false, a)) {
 					return i - 1, p.X.Pos(), true
 				}
 			}
 		case *ast.BlockStmt:
-			if pos, ok := earlyExit(p.List, child, a); ok {
+			if pos, ok := earlyExit(p.List, child, a, after); ok {
 				return i - 1, pos, true
 			}
 		case *ast.CaseClause:
-			if pos, ok := earlyExit(p.Body, child, a); ok {
+			if pos, ok := earlyExit(p.Body, child, a, after); ok {
 				return i - 1, pos, true
 			}
 		}
@@ -130,14 +142,15 @@ func (c *checker) guardFor(a atom) (depth int, from token.Pos, ok bool) {
 	return 0, token.NoPos, false
 }
 
-// earlyExit finds an if before child, which leaves the block unless the property holds.
-func earlyExit(list []ast.Stmt, child ast.Node, a atom) (token.Pos, bool) {
+// earlyExit finds an if before child and after the position after, which leaves the block unless the property
+// holds.
+func earlyExit(list []ast.Stmt, child ast.Node, a atom, after token.Pos) (token.Pos, bool) {
 	for _, s := range list {
 		if ast.Node(s) == child {
 			return token.NoPos, false
 		}
 		is, ok := s.(*ast.IfStmt)
-		if !ok || is.Init != nil || is.Else != nil || !terminates(is.Body) {
+		if !ok || is.Init != nil || is.Else != nil || !terminates(is.Body) || is.Cond.Pos() <= after {
 			continue
 		}
 		if implies(is.Cond, false, a) {
@@ -202,6 +215,18 @@ func (c *checker) nonNil(obj types.Object) atom {
 		}
 		matches := (c.refersTo(b.X, obj) && c.isNilExpr(b.Y)) || (c.refersTo(b.Y, obj) && c.isNilExpr(b.X))
 		return matches && (b.Op == token.NEQ) == positive
+	}
+}
+
+// isNilErr is the property err == nil of an error variable.
+func (c *checker) isNilErr(obj types.Object) atom {
+	return func(cond ast.Expr, positive bool) bool {
+		b, ok := cond.(*ast.BinaryExpr)
+		if !ok || (b.Op != token.NEQ && b.Op != token.EQL) {
+			return false
+		}
+		matches := (c.refersTo(b.X, obj) && c.isNilExpr(b.Y)) || (c.refersTo(b.Y, obj) && c.isNilExpr(b.X))
+		return matches && (b.Op == token.EQL) == positive
 	}
 }
 

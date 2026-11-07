@@ -172,8 +172,9 @@ func Pow10(n int32) Int {
 	return wrap(new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(min(max(n, 0), MaxPow10))), nil))
 }
 
-// Int32 returns a as int32 and false, if it is out of the range of int32.
+// Int32 returns a as int32 and true, or 0 and false, if it is out of the range of int32.
 //
+//gostrict:zero
 //gostrict:js (a) => (a >= -2147483648n && a <= 2147483647n ? [Number(a), true] : [0, false])
 func Int32(a Int) (int32, bool) {
 	v := val(a)

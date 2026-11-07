@@ -47,13 +47,14 @@ func Check(prog *Program) (res Diagnostics) {
 			d:       d,
 			decls:   decls,
 			assigns: collectAssignments(p.Info, p.Files),
-			pairs:   map[types.Object]types.Object{},
+			pairs:   map[types.Object]*pairInfo{},
+
+			funcEvents: map[*ast.FuncDecl]*funcEvents{},
 		}
 		for _, f := range p.Files {
 			c.checkImports(f)
 			c.checkDefs(f)
 			c.checkGlobals(f)
-			c.collectPairs(f)
 			ast.Inspect(f, c.visit)
 			c.collectFixes(f)
 			if prog.terminating(p) {
@@ -101,8 +102,13 @@ type checker struct {
 	decls   map[*types.Func]funcSrc
 	stack   []ast.Node
 	assigns map[types.Object][]assignment
-	// pairs maps the value of v, ok := ... to ok, which must be checked, before v is used.
-	pairs map[types.Object]types.Object
+	// pairs maps the value of v, ok := ... or v, err := ... to its binding, whose ok or err must be checked, before v
+	// is used (GS033, optional.go).
+	pairs map[types.Object]*pairInfo
+	// funcEvents are the events of the functions, which may kill a fact (facts.go).
+	funcEvents map[*ast.FuncDecl]*funcEvents
+	// writeAt is the first assignment, which overwrites an error, see [checker.overwritten].
+	writeAt token.Pos
 }
 
 func (c *checker) report(n ast.Node, code Code, msg, why, fix string) {
@@ -266,6 +272,13 @@ func (c *checker) visitNode(n ast.Node) {
 		c.checkIdent(n)
 	case *ast.ValueSpec:
 		c.checkValueSpec(n)
+		var names []ast.Expr
+		for _, id := range n.Names {
+			names = append(names, id)
+		}
+		c.checkBinding(n, names, n.Values, true)
+	case *ast.ExprStmt:
+		c.checkCallStmt(n)
 	case *ast.IncDecStmt:
 		c.checkGlobalWrite(n.X)
 	case *ast.AssignStmt:
@@ -279,6 +292,8 @@ func (c *checker) visitNode(n ast.Node) {
 			c.checkDivision(n, n.Lhs[0], n.Rhs[0])
 		case token.SHL_ASSIGN, token.SHR_ASSIGN:
 			c.checkShift(n, n.Rhs[0])
+		case token.ASSIGN, token.DEFINE:
+			c.checkBinding(n, n.Lhs, n.Rhs, n.Tok == token.DEFINE)
 		}
 	case *ast.DeclStmt:
 		if g, ok := n.Decl.(*ast.GenDecl); ok && g.Tok == token.TYPE {
@@ -304,6 +319,7 @@ func (c *checker) visitNode(n ast.Node) {
 		c.checkMake(n)
 		c.checkGlobalMethod(n)
 		c.checkConstArgs(n)
+		c.checkPairedArgs(n)
 	case *ast.SelectorExpr:
 		c.checkSelector(n)
 		c.checkConstValue(n)
@@ -533,6 +549,50 @@ func (c *checker) checkConversion(n *ast.CallExpr, to types.Type) {
 	if isStringType(to) && !isStringType(from) {
 		c.report(n, CodeString, "converting a number to a string is not allowed", "string(n) returns the character of a code point, which is easily confused with formatting the number", "use text.FromInt(n) to format a number or text.FromCodePoint(r) for a character")
 	}
+	c.checkListConversion(n, from, to)
+}
+
+// checkListConversion rejects a conversion between list.List and list.Frozen (R-SCRIPT-GS-FROZEN): both have the
+// underlying type struct{p *[]T}, so a conversion, also through a named type or a type parameter, would share the
+// elements of a frozen list with a list, which may change and shrink. Only list.Freeze creates a frozen list, as a
+// copy.
+func (c *checker) checkListConversion(n *ast.CallExpr, from, to types.Type) {
+	if types.Identical(from, to) || (!listUnderlying(from) && !listUnderlying(to)) {
+		return
+	}
+	c.report(n, CodeListConversion, "converting between list.List and list.Frozen is not allowed", "a frozen list never changes, but the conversion would share its elements with a list, which may change and shrink", "use list.Freeze(l) for a frozen copy of a list, or copy the elements of a frozen list into a new list with list.New and Append")
+}
+
+// listUnderlying tells, whether t has the underlying type of list.List and list.Frozen, or is a type parameter,
+// whose type set contains such a type.
+func listUnderlying(t types.Type) bool {
+	if tp, ok := types.Unalias(t).(*types.TypeParam); ok {
+		iface, ok := tp.Constraint().Underlying().(*types.Interface)
+		if !ok {
+			return false
+		}
+		for i := 0; i < iface.NumEmbeddeds(); i++ {
+			switch e := iface.EmbeddedType(i).(type) {
+			case *types.Union:
+				for j := 0; j < e.Len(); j++ {
+					if listUnderlying(e.Term(j).Type()) {
+						return true
+					}
+				}
+			default:
+				if listUnderlying(e) {
+					return true
+				}
+			}
+		}
+		return false
+	}
+	st, ok := t.Underlying().(*types.Struct)
+	if !ok || st.NumFields() != 1 {
+		return false
+	}
+	f := st.Field(0)
+	return f.Name() == "p" && f.Pkg() != nil && f.Pkg().Path() == listPath
 }
 
 func (c *checker) checkSelector(n *ast.SelectorExpr) {

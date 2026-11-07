@@ -50,13 +50,25 @@
 // opt.Option: var p *T without a value, a struct literal without its pointer, function, interface, list or map
 // fields and list.Make of such elements are rejected.
 //
-// Functions, which may have no result, return (T, bool), e.g. l.Get(i) and m.Get(k). If T may contain nil, the
-// value must be used only where ok is true:
+// Functions, which may have no result, return (T, bool) or (T, error), e.g. l.Get(i), m.Get(k) and
+// text.ParseInt(s). Each result before a last bool or error, whoever returns it and whatever its type is, is bound with
+// := to a new variable and used only where a guard proves ok true or the error nil (GS033):
 //
 //	if v, ok := m.Get(k); ok { use(v) }
 //	v, ok := l.Get(i)
 //	if !ok { return }
 //	use(v)
+//	n, err := text.ParseInt(s)
+//	if err != nil { return 0, err }
+//
+// The value may be passed on unchecked: return v, ok with its own ok, return v, false, return v, err with its own
+// err, return v, errors.New(...) and return f(). Get of a list or a dict needs no ok, where a fact within the function
+// proves the index or the key, e.g. in for i := range n after n := l.Len(), in for i := range l.All(), after if
+// l.Len() != 2 { return } for l.Get(1) or inside if m.Has(k); a Delete or Pop of any list of a compatible element type,
+// a call, which may reach such a list, and an assignment to the list, the bound or the index end the fact. An error
+// must not be thrown away: _ in its place, a call as a statement, whose last result is an error, and an error, which
+// is assigned again before it is checked, are rejected. A conversion between list.List and list.Frozen is rejected
+// (GS045): only list.Freeze creates a frozen list, as a copy.
 //
 // Where a default is wanted, l.GetOr(i, def) and m.GetOr(k, def) return it for any T, and opt.OrZero(l.Get(i)) and
 // opt.OrZeroErr(text.ParseInt(s)) return the zero value for a result (T, bool) or (T, error), but only for a T,
@@ -190,7 +202,10 @@
 // //gostrict:calls now or //gostrict:calls later tells the check of recursion of the terminating profile, which of both
 // it does: now during the call, e.g. the function of ui.TBox.WithFrame, or later only after the call returned, e.g. the
 // action of a button. A function without the directive counts as now, and [HeaderCallbacks] lists them, so that a test
-// of a host finds one, which misses the directive. A function with the directive //gostrict:host instead of a binding
+// of a host finds one, which misses the directive. The directive //gostrict:zero declares, that a function, whose last
+// result is a bool or an error, returns the zero value of each other result, if the bool is false or the error is not
+// nil, e.g. text.ParseInt; the fix of GS033 then replaces x, _ := f() by x := opt.OrZero(f()) or opt.OrZeroErr(f()),
+// which returns the same value. A function with the directive //gostrict:host instead of a binding
 // is implemented only by a host in Go, e.g. the views of nago in lib/ui, so its program runs only on a server, whose
 // engine refuses to load the bundle without it. Such a program may return a handle from an exported function, e.g. the
 // ui.View, which the server renders.

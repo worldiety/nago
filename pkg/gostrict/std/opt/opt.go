@@ -42,6 +42,8 @@ func None[T any]() Option[T] {
 }
 
 // Get returns the value and true or the zero value and false, if the option is empty.
+//
+//gostrict:zero
 func (o Option[T]) Get() (T, bool) {
 	return o.v, o.ok
 }

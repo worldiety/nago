@@ -139,64 +139,6 @@ func (c *checker) headerCall(call *ast.CallExpr) *types.Func {
 	return nil
 }
 
-// maybeInvalid tells, whether the call returns (T, bool), where T is a zero value with nil, if the bool is false.
-func (c *checker) maybeInvalid(x ast.Expr) bool {
-	call, ok := ast.Unparen(x).(*ast.CallExpr)
-	if !ok || c.headerCall(call) == nil {
-		return false
-	}
-	t, ok := c.info.TypeOf(call).(*types.Tuple)
-	if !ok || t.Len() != 2 || basicKind(t.At(1).Type()) != types.Bool {
-		return false
-	}
-	return nilable(t.At(0).Type())
-}
-
-// collectPairs finds v, ok := l.Get(i) and similar, whose v may contain nil, unless ok is true.
-func (c *checker) collectPairs(f *ast.File) {
-	ast.Inspect(f, func(n ast.Node) bool {
-		var lhs []ast.Expr
-		var rhs []ast.Expr
-		define := true
-		switch n := n.(type) {
-		case *ast.AssignStmt:
-			lhs, rhs, define = n.Lhs, n.Rhs, n.Tok == token.DEFINE
-		case *ast.ValueSpec:
-			for _, id := range n.Names {
-				lhs = append(lhs, id)
-			}
-			rhs = n.Values
-		default:
-			return true
-		}
-		if len(lhs) != 2 || len(rhs) != 1 || !c.maybeInvalid(rhs[0]) {
-			return true
-		}
-
-		// = may assign a field or an element, := and var only new variables
-		v, isVar := lhs[0].(*ast.Ident)
-		ok, isOk := lhs[1].(*ast.Ident)
-		switch {
-		case !define || !isVar || !isOk:
-			fix := "write v, ok := ... and use v only where ok is true"
-			if !isVar {
-				fix = "write v, ok := ... and assign v inside if ok { ... }, e.g. if v, ok := l.Get(i); ok { r.F = v }"
-			}
-			c.report(n, CodeGuard, "assign the result with := to new variables", "the value may be nil, unless ok is true, and the compiler tracks this only for new variables", fix)
-		case v.Name == "_":
-		case ok.Name == "_":
-			c.report(ok, CodeGuard, "ok must be checked", "the value is nil, if ok is false", "write v, ok := ... and use v inside if ok { ... } or after if !ok { return ... }")
-		default:
-			okObj := c.info.Defs[ok]
-			if okObj == nil {
-				okObj = c.info.Uses[ok]
-			}
-			c.pairs[c.info.Defs[v]] = okObj
-		}
-		return true
-	})
-}
-
 // checkIdent checks the uses of values, which may be nil, and the nil literal.
 func (c *checker) checkIdent(id *ast.Ident) {
 	obj := c.info.Uses[id]
@@ -209,16 +151,8 @@ func (c *checker) checkIdent(id *ast.Ident) {
 		return
 	}
 
-	okObj, paired := c.pairs[obj]
-	if !paired {
-		return
-	}
-	if len(c.assigns[obj]) > 0 {
-		c.report(id, CodeGuard, id.Name+" is assigned again, so the compiler can not prove, that it is not nil", "the value may be nil, unless ok is true", "use a new variable for the new value")
-		return
-	}
-	if _, _, ok := c.guardFor(c.truthy(okObj)); !ok || !c.stable(okObj, obj.Pos()) {
-		c.report(id, CodeGuard, id.Name+" may be nil, because "+okObj.Name()+" is not checked", "the value is the zero value, if "+okObj.Name()+" is false", "use "+id.Name+" inside if "+okObj.Name()+" { ... } or after if !"+okObj.Name()+" { return ... }")
+	if p, paired := c.pairs[obj]; paired && !c.assigned(id) {
+		c.checkPaired(id, p)
 	}
 }
 

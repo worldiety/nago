@@ -182,3 +182,258 @@ func (c *checker) collectFixes(f *ast.File) {
 		return true
 	})
 }
+
+// optionalFix records the fix of x, _ := g() or x, _ = g() (R-SCRIPT-GS-OPTIONAL) with the operator of the original
+// and returns the new statement: x := l.GetOr(i, <zero value>) for Get of a list or a dict, x := opt.OrZero(g()) or
+// opt.OrZeroErr(g()) for a function, which returns the zero value, if it fails, and whose result contains no nil. The
+// fix returns the same value as before. There is none for a function value, a method of an interface or of a type
+// parameter, Invoke, three or more results and a zero value, which the checker can not write.
+func (c *checker) optionalFix(as *ast.AssignStmt, p pairing, g *getCall) (string, bool) {
+	if as == nil || len(as.Lhs) != 2 || p.tuple.Len() != 2 || isBlank(as.Lhs[0]) || !isBlank(as.Lhs[1]) {
+		return "", false
+	}
+	f := c.fileOf(as)
+	if f == nil {
+		return "", false
+	}
+	q := c.newQualifier(f)
+	var rhs string
+	switch {
+	case g != nil:
+		zero, ok := c.zeroText(g.elem, q, map[types.Type]bool{})
+		if !ok {
+			return "", false
+		}
+		rhs = c.text(g.recv) + ".GetOr(" + c.text(g.arg) + ", " + zero + ")"
+	default:
+		if nilable(p.tuple.At(0).Type()) || !c.zeroOnFailure(p) {
+			return "", false
+		}
+		name := "OrZero"
+		if p.errIdx >= 0 {
+			name = "OrZeroErr"
+		}
+		rhs = q.pkg(optPath, "opt") + "." + name + "(" + c.text(p.call) + ")"
+	}
+	if q.failed {
+		return "", false
+	}
+	stmt := c.text(as.Lhs[0]) + " " + as.Tok.String() + " " + rhs
+	c.d.fix(CodeGuard, as.Pos(), as.Pos(), as.End(), stmt)
+	for _, path := range q.added {
+		c.d.fix(CodeGuard, as.Pos(), f.Name.End(), f.Name.End(), "\n\nimport "+strconv.Quote(path))
+	}
+	return stmt, true
+}
+
+// text returns the source code of the node.
+func (c *checker) text(n ast.Node) string {
+	from, to := c.d.fset.Position(n.Pos()), c.d.fset.Position(n.End())
+	src, ok := c.d.sources[from.Filename]
+	if !ok || from.Offset < 0 || to.Offset > len(src) || from.Offset > to.Offset {
+		return types.ExprString(n.(ast.Expr))
+	}
+	return string(src[from.Offset:to.Offset])
+}
+
+// zeroOnFailure tells, whether the function, which the call calls by its name, returns the zero value of each other
+// result, if its last bool is false or its last error is not nil: a function of a header package with the directive
+// //gostrict:zero, or a function of the program, each of whose returns with a last result, which is not the literal
+// true or nil, returns the zero value as a literal.
+func (c *checker) zeroOnFailure(p pairing) bool {
+	fn := c.namedCallee(p.call)
+	if fn == nil {
+		return false
+	}
+	src, ok := c.decls[fn.Origin()]
+	if !ok {
+		return false
+	}
+	if src.pkg.Kind != KindUser {
+		return src.zero
+	}
+	if src.decl.Body == nil {
+		return false
+	}
+	info := src.pkg.Info
+	zero := true
+	ast.Inspect(src.decl.Body, func(n ast.Node) bool {
+		switch n := n.(type) {
+		case *ast.FuncLit:
+			return false
+		case *ast.ReturnStmt:
+			if len(n.Results) != p.tuple.Len() {
+				zero = false
+				return false
+			}
+			last := n.Results[len(n.Results)-1]
+			if (p.okIdx >= 0 && isTrueConst(info, last)) || (p.errIdx >= 0 && isNilIn(info, last)) {
+				return false
+			}
+			for j := range p.values {
+				if !isZeroLiteral(info, n.Results[j]) {
+					zero = false
+				}
+			}
+			return false
+		}
+		return zero
+	})
+	return zero
+}
+
+func isNilIn(info *types.Info, e ast.Expr) bool {
+	tv, ok := info.Types[e]
+	return ok && tv.IsNil()
+}
+
+// isZeroLiteral tells, whether e writes a zero value: a constant 0, "" or false, an empty literal of a struct or
+// opt.None.
+func isZeroLiteral(info *types.Info, e ast.Expr) bool {
+	e = ast.Unparen(e)
+	if tv, ok := info.Types[e]; ok && tv.Value != nil {
+		switch tv.Value.Kind() {
+		case constant.Bool:
+			return !constant.BoolVal(tv.Value)
+		case constant.String:
+			return constant.StringVal(tv.Value) == ""
+		case constant.Int, constant.Float:
+			return constant.Sign(tv.Value) == 0
+		}
+		return false
+	}
+	switch e := e.(type) {
+	case *ast.CompositeLit:
+		_, isStruct := info.TypeOf(e).Underlying().(*types.Struct)
+		return isStruct && len(e.Elts) == 0
+	case *ast.CallExpr:
+		fun := ast.Unparen(e.Fun)
+		if ix, ok := fun.(*ast.IndexExpr); ok {
+			fun = ix.X
+		}
+		se, ok := fun.(*ast.SelectorExpr)
+		if !ok || len(e.Args) != 0 {
+			return false
+		}
+		fn, ok := info.Uses[se.Sel].(*types.Func)
+		return ok && fn.Pkg() != nil && fn.Pkg().Path() == optPath && fn.Name() == "None"
+	}
+	return false
+}
+
+// qualifier names the packages of a file in the text of a fix and collects the imports of std, which it needs.
+type qualifier struct {
+	c     *checker
+	names map[string]string
+	added []string
+	// failed tells, that a type of a package, which the file does not import, is needed
+	failed bool
+}
+
+func (c *checker) newQualifier(f *ast.File) *qualifier {
+	q := &qualifier{c: c, names: map[string]string{}}
+	for _, imp := range f.Imports {
+		if pn := c.info.PkgNameOf(imp); pn != nil {
+			q.names[pn.Imported().Path()] = pn.Name()
+		}
+	}
+	return q
+}
+
+// pkg returns the name of the package of std in the file and imports it, if the file does not.
+func (q *qualifier) pkg(path, name string) string {
+	if n, ok := q.names[path]; ok {
+		return n
+	}
+	q.names[path] = name
+	q.added = append(q.added, path)
+	return name
+}
+
+// typ returns the type as the file names it.
+func (q *qualifier) typ(t types.Type) string {
+	return types.TypeString(t, func(p *types.Package) string {
+		if p == q.c.pkg.Types {
+			return ""
+		}
+		if n, ok := q.names[p.Path()]; ok {
+			return n
+		}
+		switch p.Path() {
+		case listPath, dictPath, optPath, bigPath, decimalPath:
+			return q.pkg(p.Path(), p.Name())
+		}
+		q.failed = true
+		return p.Name()
+	})
+}
+
+// zeroText writes the zero value of t as gostrict accepts it: a constant, an empty literal, and for each field, which
+// contains nil, list.New[T](), list.Freeze(list.New[T]()), dict.New[K, V](), big.Zero(), decimal.Zero() or opt.None,
+// recursively. It fails for a pointer, a function, an interface, a handle, an outbox, a type parameter and a field,
+// which can not be set outside its package.
+func (c *checker) zeroText(t types.Type, q *qualifier, seen map[types.Type]bool) (string, bool) {
+	if seen[t] {
+		return "", false
+	}
+	seen[t] = true
+	defer delete(seen, t)
+	t = types.Unalias(t)
+	if n, ok := t.(*types.Named); ok && n.Obj().Pkg() != nil {
+		args := n.TypeArgs()
+		switch p, name := n.Obj().Pkg().Path(), n.Obj().Name(); {
+		case p == optPath && name == "Option":
+			return q.pkg(optPath, "opt") + ".None[" + q.typ(args.At(0)) + "]()", true
+		case p == listPath && name == "List":
+			return q.pkg(listPath, "list") + ".New[" + q.typ(args.At(0)) + "]()", true
+		case p == listPath && name == "Frozen":
+			l := q.pkg(listPath, "list")
+			return l + ".Freeze(" + l + ".New[" + q.typ(args.At(0)) + "]())", true
+		case p == dictPath && name == "Map":
+			return q.pkg(dictPath, "dict") + ".New[" + q.typ(args.At(0)) + ", " + q.typ(args.At(1)) + "]()", true
+		case p == bigPath && name == "Int":
+			return q.pkg(bigPath, "big") + ".Zero()", true
+		case p == decimalPath && name == "Dec":
+			return q.pkg(decimalPath, "decimal") + ".Zero()", true
+		case p == msgPath:
+			return "", false
+		}
+	}
+	if isHandle(t) {
+		return "", false
+	}
+	if _, ok := t.(*types.TypeParam); ok {
+		return "", false
+	}
+	switch u := t.Underlying().(type) {
+	case *types.Basic:
+		switch {
+		case u.Info()&types.IsBoolean != 0:
+			return "false", true
+		case u.Info()&types.IsString != 0:
+			return `""`, true
+		case u.Info()&types.IsNumeric != 0:
+			return "0", true
+		}
+	case *types.Struct:
+		if _, named := t.(*types.Named); !named {
+			return "", false
+		}
+		var parts []string
+		for f := range u.Fields() {
+			if !nilable(f.Type()) {
+				continue
+			}
+			if !f.Exported() && f.Pkg() != c.pkg.Types {
+				return "", false
+			}
+			z, ok := c.zeroText(f.Type(), q, seen)
+			if !ok {
+				return "", false
+			}
+			parts = append(parts, f.Name()+": "+z)
+		}
+		return q.typ(t) + "{" + strings.Join(parts, ", ") + "}", true
+	}
+	return "", false
+}

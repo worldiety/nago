@@ -181,7 +181,9 @@ func isDigit(c byte) bool {
 }
 
 // ParseInt parses a decimal integer with an optional sign, e.g. "-42". It fails for anything else and for numbers
-// beyond the range of int32.
+// beyond the range of int32 and returns 0 then.
+//
+//gostrict:zero
 func ParseInt(s string) (int32, error) {
 	digits := s
 	neg := false
@@ -217,6 +219,8 @@ func ParseInt(s string) (int32, error) {
 // number of digits and any exponent. The sign holds also for zero, so "-0" and "-1e-400" are -0. It fails for
 // anything else, e.g. a comma, a space, an underscore, "Inf", "NaN" or a hexadecimal number, and for a number, which
 // would round to an infinity, but not for one, which rounds to 0 or to a subnormal number. On failure it returns 0.
+//
+//gostrict:zero
 func ParseFloat(s string) (float64, error) {
 	neg, digits, exp, ok := scanFloat(s)
 	if !ok {

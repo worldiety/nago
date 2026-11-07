@@ -103,7 +103,7 @@ func Parse(s string) (Dec, bool) {
 	switch parts.Len() {
 	case 1:
 	case 2:
-		fraction, _ = parts.Get(1)
+		fraction = parts.GetOr(1, "")
 		if fraction == "" || text.RuneCount(fraction) > MaxScale {
 			return Zero(), false
 		}
@@ -221,8 +221,11 @@ func round(d Dec, s int32, mode Rounding) Dec {
 	if s >= d.S {
 		return rescale(d, s)
 	}
-	m, _ := divRound(d.M, big.Pow10(d.S-s), mode)
-	return Dec{M: m, S: s}
+	if m, ok := divRound(d.M, big.Pow10(d.S-s), mode); ok {
+		return Dec{M: m, S: s}
+	}
+	// a power of ten is never zero, so divRound does not fail; its result would be zero
+	return Dec{M: big.Zero(), S: s}
 }
 
 // Quo returns a / b rounded to the scale s and false, if b is zero. Quo clamps s into 0..MaxScale.

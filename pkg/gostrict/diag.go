@@ -52,7 +52,7 @@ const (
 	CodeDivision        Code = "GS030" // integer division by a divisor, which may be zero
 	CodeFloatConversion Code = "GS031" // converting a float64 into an integer
 	CodeNil             Code = "GS032" // sources of nil
-	CodeGuard           Code = "GS033" // values, which may be nil, without a check
+	CodeGuard           Code = "GS033" // values of optional results without a check and errors, which are thrown away
 	CodeBridge          Code = "GS034" // declarations of header packages, which can not cross the boundary
 	CodeBinding         Code = "GS035" // invalid JavaScript bindings
 	CodeGlobal          Code = "GS036" // package variables, which change or hold mutable values
@@ -64,6 +64,7 @@ const (
 	CodeEntry           Code = "GS042" // an exported function of a root of a whole program, which is no entry point
 	CodeConstArg        Code = "GS043" // arguments of parameters with //gostrict:const, which are not constants
 	CodeConstValue      Code = "GS044" // functions with //gostrict:const parameters used as values
+	CodeListConversion  Code = "GS045" // conversions between list.List and list.Frozen
 	CodeInternal        Code = "GS099" // the compiler can not translate a valid construct
 )
 

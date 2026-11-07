@@ -32,6 +32,12 @@ const constDirective = "//gostrict:const"
 // without the directive, see [HeaderCallbacks].
 const callsDirective = "//gostrict:calls"
 
+// zeroDirective marks a function of a header package, whose last result is a bool or an error, which returns the zero
+// value of each result before it, if the bool is false or the error is not nil, e.g. text.ParseInt. The fix of GS033
+// may then replace x, _ := f() by x := opt.OrZero(f()) or opt.OrZeroErr(f()), which returns the same value. A function
+// of a package in the subset needs no directive: the checker reads its returns.
+const zeroDirective = "//gostrict:zero"
+
 // CallTime tells, when a function of a header package calls the functions, which it takes, see [HeaderCallbacks].
 type CallTime string
 
@@ -58,6 +64,9 @@ type funcSrc struct {
 	// calls is the value of the callsDirective or "" without one, and callsPos the position of the directive.
 	calls    CallTime
 	callsPos token.Pos
+	// zero is set by the zeroDirective, whose position is zeroPos, or token.NoPos without one.
+	zero    bool
+	zeroPos token.Pos
 }
 
 func funcDecls(prog *Program) map[*types.Func]funcSrc {
@@ -75,7 +84,8 @@ func funcDecls(prog *Program) map[*types.Func]funcSrc {
 				}
 				consts, pos := constNames(fd)
 				calls, callsPos := callsTime(fd)
-				res[fn] = funcSrc{pkg: p, decl: fd, js: jsBinding(fd), host: hasDirective(fd, hostDirective), consts: consts, constPos: pos, calls: calls, callsPos: callsPos}
+				zeroPos := directivePos(fd, zeroDirective)
+				res[fn] = funcSrc{pkg: p, decl: fd, js: jsBinding(fd), host: hasDirective(fd, hostDirective), consts: consts, constPos: pos, calls: calls, callsPos: callsPos, zero: zeroPos.IsValid(), zeroPos: zeroPos}
 			}
 		}
 	}
@@ -93,6 +103,20 @@ func hasDirective(fd *ast.FuncDecl, directive string) bool {
 		}
 	}
 	return false
+}
+
+// directivePos returns the position of the directive on a line of its own in the documentation of the function, or
+// token.NoPos without one.
+func directivePos(fd *ast.FuncDecl, directive string) token.Pos {
+	if fd.Doc == nil {
+		return token.NoPos
+	}
+	for _, c := range fd.Doc.List {
+		if strings.TrimSpace(c.Text) == directive {
+			return c.Pos()
+		}
+	}
+	return token.NoPos
 }
 
 // constNames returns the parameters, which the constDirective in the documentation of the function names, e.g. a

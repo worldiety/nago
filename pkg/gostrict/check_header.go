@@ -56,6 +56,7 @@ func checkHeaderFunc(p *Package, d *diagnoser, decls map[*types.Func]funcSrc, de
 	}
 	checkConstDirective(d, decls[fn], fn)
 	checkCallsDirective(d, decls[fn], fn)
+	checkZeroDirective(d, decls[fn], fn)
 
 	const why = "only bool, int32, uint32, float64, string, big.Int, handles, records without handles and lists and maps of them cross the boundary, error only as a result, and functions of such values as parameters"
 	if decl.Recv != nil {
@@ -163,6 +164,17 @@ func checkCallsDirective(d *diagnoser, src funcSrc, fn *types.Func) {
 		report(callsDirective + " takes now or later, not " + strconv.Quote(string(src.calls)))
 	case len(funcParams(fn.Signature())) == 0:
 		report(fn.Name() + " takes no function, so " + callsDirective + " has nothing to tell")
+	}
+}
+
+// checkZeroDirective checks the zeroDirective of a function of a header package: its results pair their values with a
+// last bool or error, see [resultPairing].
+func checkZeroDirective(d *diagnoser, src funcSrc, fn *types.Func) {
+	if !src.zeroPos.IsValid() {
+		return
+	}
+	if _, _, _, ok := resultPairing(fn.Signature().Results()); !ok {
+		d.report(src.zeroPos, token.NoPos, CodeHeader, fn.Name()+" returns no value besides a last bool or error, so "+zeroDirective+" has nothing to tell", zeroDirective+" tells the fix of GS033, that the function returns zero values, if its last bool is false or its last error is not nil", "remove "+zeroDirective+" or declare it on a function like func F(s string) (int32, bool)")
 	}
 }
 
