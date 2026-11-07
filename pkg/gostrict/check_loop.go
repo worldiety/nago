@@ -677,6 +677,12 @@ func (l *loopCheck) compound(b *ast.BinaryExpr) (loopFinding, bool) {
 		return r, true
 	}
 	op, bound, _ := l.compare(ops[0])
+	if tv, ok := l.c.info.Types[bound]; !ok || tv.Value == nil {
+		if _, isID := ast.Unparen(bound).(*ast.Ident); !isID {
+			// an expression is no bound, and its report would reserve the name of a fix, which is not made
+			return r, true
+		}
+	}
 	if _, ok := l.fixedBound(op, bound); !ok {
 		return r, true
 	}
