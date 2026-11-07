@@ -23,121 +23,132 @@
 		@contextmenu="onContextMenu"
 		@dragstart.prevent
 	>
-		<!-- the sizer asks a container, which follows its content, for the width of all days, but, as a replaced
-		     element with a relative maximum, never forces it wider than its place -->
-		<svg class="sizer" aria-hidden="true" :width="minWidth" height="1"></svg>
+		<!-- the sizer asks a container, which follows its content, for a large width, so that the calendar takes the
+		     width of its place by default, but, as a replaced element with a relative maximum, never forces it wider -->
+		<svg class="sizer" aria-hidden="true" :width="PREFERRED_WIDTH" height="1"></svg>
+		<!-- the message sticks to the top of the scroller of the page, where the person acts, also in a long calendar -->
 		<div v-if="ui.message" class="message" role="alert" data-weekcal-message>{{ ui.message }}</div>
 
-		<div class="grid" :style="gridStyle">
-			<div class="corner"></div>
-			<div
-				v-for="(d, i) in days"
-				:key="'head' + i"
-				class="head"
-				:data-weekcal-day="i"
-				:aria-current="d.today ? 'date' : undefined"
-				:data-muted="d.muted ? '' : undefined"
-				:style="{ gridColumn: String(i + 2) }"
-			>
-				<div class="title">{{ d.title }}</div>
-				<div v-if="d.subtitle" class="subtitle">{{ d.subtitle }}</div>
-			</div>
-
-			<div class="axis" :style="{ height: bodyHeight + 'px' }">
-				<span
-					v-for="h in hours"
-					:key="h"
-					class="hour"
-					:class="{ first: h === range.from, last: h === range.to }"
-					:data-weekcal-hour="h"
-					:style="{ top: y(h) + 'px' }"
-					>{{ hhmm(h) }}</span
-				>
-			</div>
-
-			<div
-				ref="body"
-				class="body"
-				:style="bodyStyle"
-				@pointerdown="onPointerDown"
-				@pointermove="onPointerMove"
-				@pointerup="onPointerUp"
-				@pointercancel="onPointerCancel"
-			>
+		<div class="scroller">
+			<div class="grid" :style="gridStyle">
+				<div class="corner"></div>
 				<div
 					v-for="(d, i) in days"
-					:key="'col' + i"
-					class="col"
-					:class="{ today: d.today, muted: d.muted }"
-					:style="columnStyle(i)"
-				></div>
-
-				<div
-					ref="cursorEl"
-					class="cursor"
-					role="button"
-					tabindex="0"
-					data-weekcal-cursor
-					:data-day="cursor.day"
-					:data-minute="cursor.minute"
-					:aria-label="dayTitle(cursor.day) + ', ' + hhmm(cursor.minute)"
-					:style="boxStyle(cursor.day, cursor.minute, cursor.minute + step, 0, 1)"
-				></div>
-
-				<div
-					v-for="b in blocks"
-					:key="b.id"
-					class="event"
-					:class="{ movable: b.movable, clickable: canClick }"
-					role="button"
-					tabindex="0"
-					:data-weekcal-event="b.id"
-					:data-clipped="b.clipped || undefined"
-					:data-fixed="b.fixed ? '' : undefined"
-					:data-dragging="b.id === draggingId ? '' : undefined"
-					:aria-label="eventLabel(b)"
-					:style="eventStyle(b)"
+					:key="'head' + i"
+					class="head"
+					:data-weekcal-day="i"
+					:aria-current="d.today ? 'date' : undefined"
+					:data-muted="d.muted && !d.today ? '' : undefined"
+					:style="{ gridColumn: String(i + 2) }"
 				>
-					<div class="event-title">{{ b.title }}</div>
-					<div class="event-time">{{ hhmm(b.from) }}–{{ hhmm(b.to) }}</div>
-					<div v-if="b.text" class="event-text">{{ b.text }}</div>
-					<div v-if="b.movable && canMove && !ui.disabled" class="resize" :style="resizeStyle(b)"></div>
+					<div class="title">{{ d.title }}</div>
+					<div v-if="d.subtitle" class="subtitle">{{ d.subtitle }}</div>
 				</div>
 
-				<template v-for="(hc, i) in hidden" :key="'hidden' + i">
+				<div class="axis" :class="{ small: hourHeight <= 30 }" :style="{ height: bodyHeight + 'px' }">
 					<span
-						v-if="hc.before > 0"
-						class="hidden-count before"
-						data-weekcal-hidden="before"
-						role="img"
-						:aria-label="t('weekcal.hiddenBefore', { n: hc.before })"
-						:style="hiddenStyle(i, 'before')"
-						>{{ hc.before }}</span
+						v-for="h in hours"
+						:key="h"
+						class="hour"
+						:class="{ first: h === range.from, last: h === range.to }"
+						:data-weekcal-hour="h"
+						:style="{ top: y(h) + 'px' }"
+						>{{ hhmm(h) }}</span
 					>
-					<span
-						v-if="hc.after > 0"
-						class="hidden-count after"
-						data-weekcal-hidden="after"
-						role="img"
-						:aria-label="t('weekcal.hiddenAfter', { n: hc.after })"
-						:style="hiddenStyle(i, 'after')"
-						>{{ hc.after }}</span
-					>
-				</template>
-
-				<div
-					v-if="shownPreview"
-					class="preview"
-					data-weekcal-preview
-					:data-day="shownPreview.day"
-					:data-from="shownPreview.from"
-					:data-to="shownPreview.to"
-					:style="boxStyle(shownPreview.day, shownPreview.from, shownPreview.to, 0, 1)"
-				>
-					<span class="preview-time">{{ hhmm(shownPreview.from) }}–{{ hhmm(shownPreview.to) }}</span>
 				</div>
 
-				<div v-if="nowLine" class="now" data-weekcal-now :style="nowLine"></div>
+				<div
+					ref="body"
+					class="body"
+					:style="bodyStyle"
+					@pointerdown="onPointerDown"
+					@pointermove="onPointerMove"
+					@pointerup="onPointerUp"
+					@pointercancel="onPointerCancel"
+				>
+					<div
+						v-for="(d, i) in days"
+						:key="'col' + i"
+						class="col"
+						:class="{ today: d.today, muted: d.muted && !d.today }"
+						:style="columnStyle(i)"
+					></div>
+
+					<div
+						ref="cursorEl"
+						class="cursor"
+						role="button"
+						tabindex="0"
+						data-weekcal-cursor
+						:data-day="cursor.day"
+						:data-minute="cursor.minute"
+						:aria-label="dayTitle(cursor.day) + ', ' + hhmm(cursor.minute)"
+						:style="boxStyle(cursor.day, cursor.minute, cursor.minute + step, 0, 1)"
+					></div>
+
+					<div
+						v-for="b in blocks"
+						:key="b.id"
+						class="event"
+						:class="{ movable: b.movable, clickable: canClick }"
+						role="button"
+						tabindex="0"
+						:data-weekcal-event="b.id"
+						:data-clipped="b.clipped || undefined"
+						:data-fixed="b.fixed ? '' : undefined"
+						:data-dragging="b.id === draggingId ? '' : undefined"
+						:aria-label="eventLabel(b)"
+						:style="eventStyle(b)"
+					>
+						<div class="event-content" :class="{ single: eventLines(b) <= 1 }" :style="contentStyle(b)">
+							<template v-if="eventLines(b) <= 1">
+								<span class="event-time">{{ hhmm(b.from) + ' ' }}</span
+								><span class="event-title">{{ b.title }}</span>
+							</template>
+							<template v-else>
+								<div class="event-time">{{ hhmm(b.from) }}–{{ hhmm(b.to) }}</div>
+								<div class="event-title">{{ b.title }}</div>
+								<div v-if="b.text" class="event-text">{{ b.text }}</div>
+							</template>
+						</div>
+						<div v-if="b.movable && canMove && !ui.disabled" class="resize" :style="resizeStyle(b)"></div>
+					</div>
+
+					<template v-for="(hc, i) in hidden" :key="'hidden' + i">
+						<span
+							v-if="hc.before > 0"
+							class="hidden-count before"
+							data-weekcal-hidden="before"
+							role="img"
+							:aria-label="t('weekcal.hiddenBefore', { n: hc.before })"
+							:style="hiddenStyle(i, 'before')"
+							>{{ hc.before }}</span
+						>
+						<span
+							v-if="hc.after > 0"
+							class="hidden-count after"
+							data-weekcal-hidden="after"
+							role="img"
+							:aria-label="t('weekcal.hiddenAfter', { n: hc.after })"
+							:style="hiddenStyle(i, 'after')"
+							>{{ hc.after }}</span
+						>
+					</template>
+
+					<div
+						v-if="shownPreview"
+						class="preview"
+						data-weekcal-preview
+						:data-day="shownPreview.day"
+						:data-from="shownPreview.from"
+						:data-to="shownPreview.to"
+						:style="boxStyle(shownPreview.day, shownPreview.from, shownPreview.to, 0, 1)"
+					>
+						<span class="preview-time">{{ hhmm(shownPreview.from) }}–{{ hhmm(shownPreview.to) }}</span>
+					</div>
+
+					<div v-if="nowLine" class="now" data-weekcal-now :style="nowLine"></div>
+				</div>
 			</div>
 		</div>
 
@@ -314,8 +325,11 @@ const rootStyle = computed(() => frameCSS(props.ui.frame).join(';'));
 // The calendar is at most as wide as its place and scrolls itself: a day is at least 96dp wide, the axis stays. Only
 // the width of the grid, a maximum of the place and all days, keeps the days; its percentage leaves the days out of
 // the smallest width, which the calendar asks of a container, so a container, which follows its content, does not
-// widen beyond its place. The sizer asks for the width of all days as the preferred one.
+// widen beyond its place. The sizer asks for a large width as the preferred one, so that the calendar takes the width
+// of its place, also in such a container.
 const minWidth = computed(() => AXIS_WIDTH + MIN_DAY_WIDTH * n.value);
+// the width, which the calendar prefers in a container, which follows its content: the full width of any usual place
+const PREFERRED_WIDTH = 3840;
 const gridStyle = computed(
 	() =>
 		`grid-template-columns:${AXIS_WIDTH}px repeat(${n.value}, minmax(0, 1fr));` +
@@ -361,6 +375,26 @@ function eventStyle(b: Block) {
 		s['--weekcal-event'] = c;
 	}
 	return s;
+}
+
+// a block shows as many whole lines as fit, never a half one: from two lines time, title and text, below one line of
+// the beginning and the title, in a block smaller than one line in a smaller font
+const LINE_PX = 14;
+const PAD_PX = 2;
+
+function blockHeight(b: Block): number {
+	return y(b.bottom) - y(b.top);
+}
+
+function eventLines(b: Block): number {
+	return Math.floor((blockHeight(b) - 2 * PAD_PX) / LINE_PX);
+}
+
+function contentStyle(b: Block) {
+	const lines = eventLines(b);
+	if (lines >= 1) return { maxHeight: lines * LINE_PX + 'px' };
+	const h = Math.max(blockHeight(b) - 2, 1);
+	return { maxHeight: h + 'px', lineHeight: h + 'px', fontSize: Math.min(Math.max(h - 1, 6), 11) + 'px' };
 }
 
 function resizeStyle(b: Block) {
@@ -943,14 +977,26 @@ onBeforeUnmount(() => {
 .weekcal {
 	--weekcal-line: rgb(from var(--M5) r g b / 0.6);
 	--weekcal-hour-line: rgb(from var(--M5) r g b / 0.45);
+	/* today is the warning color of the theme, a yellow in the light and in the dark theme of nago */
+	--weekcal-today: var(--SW0);
 	position: relative;
-	overflow: auto;
-	overscroll-behavior-x: contain;
+	display: flex;
+	flex-direction: column;
 	width: 100%;
 	min-width: 0;
 	max-width: 100%;
+	@apply text-M8;
+}
+
+/* the calendar scrolls itself, horizontally below 96dp per day and vertically within a height of its frame, the head
+   and the axis stay */
+.scroller {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: auto;
+	overscroll-behavior-x: contain;
 	touch-action: manipulation;
-	@apply rounded-md border border-M5 bg-M1 text-M8;
+	@apply rounded-md border border-M5 bg-M1;
 }
 
 .sizer {
@@ -962,7 +1008,10 @@ onBeforeUnmount(() => {
 
 .message {
 	position: sticky;
-	left: 0;
+	top: 0;
+	z-index: 6;
+	margin-bottom: 4px;
+	border-radius: 6px;
 	@apply bg-CBEB px-3 py-2 text-sm text-CBET;
 }
 
@@ -1007,14 +1056,16 @@ onBeforeUnmount(() => {
 	@apply text-xs text-M7;
 }
 
-.head[aria-current='date'] {
-	background-color: rgb(from var(--I0) r g b / 0.12);
-	@apply text-I0;
-}
-
 .head[data-muted] {
 	background-color: rgb(from var(--M5) r g b / 0.35);
 	@apply text-M7;
+}
+
+/* today wins over muted: a day, which is both, is today */
+.head[aria-current='date'] {
+	background-color: color-mix(in srgb, var(--weekcal-today) 30%, var(--M1));
+	box-shadow: inset 0 3px 0 var(--weekcal-today);
+	@apply text-M8;
 }
 
 .axis {
@@ -1026,20 +1077,27 @@ onBeforeUnmount(() => {
 	@apply bg-M1 text-xs text-M7;
 }
 
+/* a label is centered on its line, the first one below and the last one above it; at small hour heights in a
+   smaller font, so that two labels never touch */
 .hour {
 	position: absolute;
 	right: 6px;
 	transform: translateY(-50%);
+	font-size: 11px;
 	font-variant-numeric: tabular-nums;
 	line-height: 1;
 }
 
+.axis.small .hour {
+	font-size: 10px;
+}
+
 .hour.first {
-	transform: translateY(2px);
+	transform: translateY(1px);
 }
 
 .hour.last {
-	transform: translateY(calc(-100% - 2px));
+	transform: translateY(calc(-100% - 1px));
 }
 
 .body {
@@ -1065,12 +1123,12 @@ onBeforeUnmount(() => {
 	pointer-events: none;
 }
 
-.col.today {
-	background-color: rgb(from var(--I0) r g b / 0.05);
-}
-
 .col.muted {
 	background-color: rgb(from var(--M5) r g b / 0.2);
+}
+
+.col.today {
+	background-color: rgb(from var(--weekcal-today) r g b / 0.12);
 }
 
 .cursor {
@@ -1097,10 +1155,19 @@ onBeforeUnmount(() => {
 	border-left: 3px solid var(--weekcal-event);
 	background-color: color-mix(in srgb, var(--weekcal-event) 22%, var(--M1));
 	box-shadow: inset 0 0 0 1px var(--M1);
-	font-size: 0.75rem;
-	line-height: 1.2;
+	font-size: 12px;
+	line-height: 14px;
 	outline: none;
 	z-index: 1;
+}
+
+.event-content {
+	overflow: hidden;
+}
+
+.event-content.single {
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 
 .event.clickable,
@@ -1141,6 +1208,10 @@ onBeforeUnmount(() => {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+.event-content.single .event-title {
+	display: inline;
 }
 
 .event-time {
