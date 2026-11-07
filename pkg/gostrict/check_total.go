@@ -275,6 +275,25 @@ func (c *checker) checkMake(call *ast.CallExpr) {
 	}
 }
 
+// checkOrZero rejects opt.OrZero and opt.OrZeroErr, called or used as a value, for a type, whose zero value contains
+// nil: their result would be nil, if ok is false or the error is not nil (R-SCRIPT-GS-GETOR).
+func (c *checker) checkOrZero(se *ast.SelectorExpr) {
+	fn, ok := c.info.Uses[se.Sel].(*types.Func)
+	if !ok || fn.Pkg() == nil || fn.Pkg().Path() != optPath || (fn.Name() != "OrZero" && fn.Name() != "OrZeroErr") {
+		return
+	}
+	inst, ok := c.info.Instances[se.Sel]
+	if !ok || inst.TypeArgs.Len() != 1 || !nilable(inst.TypeArgs.At(0)) {
+		return
+	}
+	t := types.TypeString(inst.TypeArgs.At(0), func(p *types.Package) string { return p.Name() })
+	fix := "use GetOr of a list or a dict with an explicit default, e.g. l.GetOr(i, def) or m.GetOr(k, def), or check ok: if v, ok := l.Get(i); ok { ... }"
+	if fn.Name() == "OrZeroErr" {
+		fix = "check the error: if v, err := f(); err == nil { ... }, like if v, ok := l.Get(i); ok for a result with ok, or use GetOr of a list or a dict with an explicit default"
+	}
+	c.report(se, CodeNil, "opt."+fn.Name()+" of "+t+" would return nil", "the zero value of "+t+" contains nil", fix)
+}
+
 // checkValueSpec rejects variables without a value, whose zero value contains nil.
 func (c *checker) checkValueSpec(vs *ast.ValueSpec) {
 	if len(vs.Values) > 0 {

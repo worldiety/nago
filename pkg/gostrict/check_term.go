@@ -46,59 +46,122 @@ func (p *Program) terminating(pkg *Package) bool {
 	return false
 }
 
+// loopWhy is the reason of a report of a loop.
+const loopWhy = "the terminating profile requires, that every loop ends"
+
+// loopFix is the fix of a loop, whose reason has no rewrite of its own.
+const loopFix = "count with a bound, e.g. for i := int32(0); i < n; i++, range over a list or a number, or limit the loop with fuel: f := fuel.New(1000); for f.Burn() && cond { ... }"
+
 // checkLoops reports the loops of the package, whose end the compiler can not prove. Every range ends: a range over
-// a list visits the elements, which the list has, when the range starts.
+// a list visits the elements, which the list has, when the range starts. The report of an inclusive bound, an
+// expression as the bound and a compound condition names the rewrite of the loop, and the edits of a mechanical fix,
+// where it keeps the meaning of the loop (R-SCRIPT-GS-LOOP-FIX).
 func (c *checker) checkLoops(f *ast.File) {
-	const why = "the terminating profile requires, that every loop ends"
+	facts := c.loopFacts(f)
 	ast.Inspect(f, func(n ast.Node) bool {
 		switch n := n.(type) {
 		case *ast.ForStmt:
-			if msg := c.boundedFor(n); msg != "" {
-				c.report(n, CodeTermination, msg, why, "count with a bound, e.g. for i := int32(0); i < n; i++, range over a list or a number, or limit the loop with fuel: f := fuel.New(1000); for f.Burn() && cond { ... }")
+			l := &loopCheck{c: c, n: n, facts: facts}
+			r, ok := l.bounded()
+			if ok {
+				break
+			}
+			fix := r.fix
+			if fix == "" {
+				fix = loopFix
+			}
+			p := c.d.fset.Position(n.Pos())
+			if c.d.seen[fmt.Sprintf("%s:%d:%s", p.Filename, p.Line, CodeTermination)] {
+				// a loop on the line is reported already, whose edits must not mix with these
+				break
+			}
+			c.report(n, CodeTermination, r.msg, loopWhy, fix)
+			for _, e := range r.edits {
+				c.d.fix(CodeTermination, n.Pos(), e.from, e.to, e.text)
 			}
 		}
 		return true
 	})
 }
 
-// boundedFor returns, why the loop may not end, or "".
-func (c *checker) boundedFor(n *ast.ForStmt) string {
+// loopFinding tells, why a loop may not end, how to rewrite it, or "" for the general fix, and the edits of its
+// mechanical fix, if the rewrite keeps the meaning of the loop.
+type loopFinding struct {
+	msg, fix string
+	edits    []loopEdit
+}
+
+// loopEdit replaces the source code from up to to by text.
+type loopEdit struct {
+	from, to token.Pos
+	text     string
+}
+
+// loopCheck checks a single for loop.
+type loopCheck struct {
+	c     *checker
+	n     *ast.ForStmt
+	facts *loopFacts
+	// counter is the counter of the post statement and step its step, e.g. 1 for i++ or -2 for i -= 2
+	counter *types.Var
+	step    int64
+}
+
+// bounded tells, whether the loop ends, or returns, why it may not end.
+func (l *loopCheck) bounded() (loopFinding, bool) {
+	c, n := l.c, l.n
 	if n.Cond == nil {
-		return "the loop has no condition"
+		return loopFinding{msg: "the loop has no condition"}, false
 	}
 	if c.burnsFuel(n.Cond) {
-		return ""
+		return loopFinding{}, true
 	}
 
 	// for i := a; i < b; i++ with a counter, which only the post statement changes, and a bound, which does not
 	// change
-	counter, step := c.loopStep(n.Post)
-	if counter == nil {
-		return "the loop has no counter, which its post statement increments or decrements by a constant"
+	l.counter, l.step = c.loopStep(n.Post)
+	if l.counter == nil {
+		return loopFinding{msg: "the loop has no counter, which its post statement increments or decrements by a constant"}, false
 	}
-	if c.assignedIn(counter, n.Body) {
-		return "the body assigns the counter " + counter.Name()
+	if c.assignedIn(l.counter, n.Body) {
+		return loopFinding{msg: "the body assigns the counter " + l.counter.Name()}, false
 	}
-	b, ok := ast.Unparen(n.Cond).(*ast.BinaryExpr)
+	if l.changedByLiteral(l.counter) {
+		return loopFinding{msg: "a function literal, which the loop may call, assigns the counter " + l.counter.Name()}, false
+	}
+	if b, ok := ast.Unparen(n.Cond).(*ast.BinaryExpr); ok && (b.Op == token.LAND || b.Op == token.LOR) {
+		if r, ok := l.compound(b); ok {
+			return r, false
+		}
+	}
+	op, bound, msg := l.compare(n.Cond)
+	if msg != "" {
+		return loopFinding{msg: msg}, false
+	}
+	return l.fixedBound(op, bound)
+}
+
+// compare returns the operator and the bound of the condition x, which compares the counter, as in i < bound, or
+// why x is no comparison, which stops the counter.
+func (l *loopCheck) compare(x ast.Expr) (token.Token, ast.Expr, string) {
+	name := l.counter.Name()
+	b, ok := ast.Unparen(x).(*ast.BinaryExpr)
 	if !ok {
-		return "the condition does not compare the counter " + counter.Name() + " with a bound"
+		return 0, nil, "the condition does not compare the counter " + name + " with a bound"
 	}
 	op, bound := b.Op, b.Y
-	if c.isObj(b.Y, counter) {
+	if l.c.isObj(b.Y, l.counter) {
 		// b > i is i < b
 		op, bound = mirror(op), b.X
-	} else if !c.isObj(b.X, counter) {
-		return "the condition does not compare the counter " + counter.Name() + " with a bound"
+	} else if !l.c.isObj(b.X, l.counter) {
+		return 0, nil, "the condition does not compare the counter " + name + " with a bound"
 	}
 	switch {
-	case step > 0 && (op == token.LSS || op == token.LEQ), step < 0 && (op == token.GTR || op == token.GEQ):
+	case l.step > 0 && (op == token.LSS || op == token.LEQ), l.step < 0 && (op == token.GTR || op == token.GEQ):
 	default:
-		return "the condition does not stop the counter " + counter.Name() + " in its direction"
+		return 0, nil, "the condition does not stop the counter " + name + " in its direction"
 	}
-	if msg := c.fixedBound(bound, n.Body, op == token.LEQ || op == token.GEQ); msg != "" {
-		return msg
-	}
-	return ""
+	return op, bound, ""
 }
 
 func mirror(op token.Token) token.Token {
@@ -115,32 +178,72 @@ func mirror(op token.Token) token.Token {
 	return op
 }
 
-// fixedBound returns, why the bound may change during the loop or let the counter wrap around, or "".
-func (c *checker) fixedBound(bound ast.Expr, body *ast.BlockStmt, inclusive bool) string {
+// fixedBound tells, whether the bound of i op bound does not change during the loop and does not let the counter
+// wrap around, or returns, why it may.
+func (l *loopCheck) fixedBound(op token.Token, bound ast.Expr) (loopFinding, bool) {
+	c := l.c
 	if tv, ok := c.info.Types[bound]; ok && tv.Value != nil {
-		if v, exact := constant.Int64Val(constant.ToInt(tv.Value)); inclusive && (!exact || v >= math.MaxInt32 || v <= math.MinInt32) {
-			return "the counter wraps around at the bound"
+		if l.wraps(tv.Value, op) {
+			return loopFinding{msg: "the counter wraps around at the bound"}, false
 		}
-		return ""
+		return loopFinding{}, true
 	}
-	if inclusive {
-		return "an inclusive bound, which is not a constant, may let the counter wrap around"
+	if op == token.LEQ || op == token.GEQ {
+		// no mechanical fix: whether bound + 1 wraps around, is not known
+		end, b, i := "end", l.operand(bound), l.counter.Name()
+		fix := "put the bound into a variable before the loop and compare without =: " + end + " := " + b + " + 1 and " + i + " < " + end + ", if " + b + " + 1 can not wrap around"
+		if l.step < 0 {
+			fix = "put the bound into a variable before the loop and compare without =: " + end + " := " + b + " - 1 and " + i + " > " + end + ", if " + b + " - 1 can not wrap around"
+		}
+		return loopFinding{msg: "an inclusive bound, which is not a constant, may let the counter wrap around", fix: fix}, false
 	}
 	id, ok := ast.Unparen(bound).(*ast.Ident)
 	if !ok {
-		return "the bound must be a constant or a variable, because an expression may change in the loop"
+		return l.exprBound(op, bound), false
 	}
 	v, ok := c.info.Uses[id].(*types.Var)
-	if !ok || c.assignedIn(v, body) {
-		return "the body assigns the bound " + id.Name
+	if !ok || c.assignedIn(v, l.n.Body) {
+		return loopFinding{msg: "the body assigns the bound " + id.Name}, false
 	}
-	return ""
+	if l.changedByLiteral(v) {
+		return loopFinding{msg: "a function literal, which the loop may call, assigns the bound " + id.Name}, false
+	}
+	return loopFinding{}, true
 }
 
-// loopStep returns the counter and the sign of its step of the post statement i++, i--, i += c or i -= c.
-func (c *checker) loopStep(post ast.Stmt) (*types.Var, int) {
+// wraps tells, whether the counter may wrap around at the constant bound v of i op v: its last value, which passes
+// the condition, plus the step leaves the range of its type.
+func (l *loopCheck) wraps(v constant.Value, op token.Token) bool {
+	b, exact := constant.Int64Val(constant.ToInt(v))
+	if !exact {
+		return true
+	}
+	lo, hi := int64(math.MinInt32), int64(math.MaxInt32)
+	if basicKind(l.counter.Type()) == types.Uint32 {
+		lo, hi = 0, math.MaxUint32
+	}
+	s := l.step
+	if s < 0 {
+		s = -s
+	}
+	switch op {
+	case token.LSS:
+		return b > hi-s+1
+	case token.LEQ:
+		return b > hi-s
+	case token.GTR:
+		return b < lo+s-1
+	case token.GEQ:
+		return b < lo+s
+	}
+	return false
+}
+
+// loopStep returns the counter and the step of the post statement i++, i--, i += c or i -= c, whose constant c is
+// positive.
+func (c *checker) loopStep(post ast.Stmt) (*types.Var, int64) {
 	var x ast.Expr
-	step := 0
+	var step int64
 	switch s := post.(type) {
 	case *ast.IncDecStmt:
 		x = s.X
@@ -157,9 +260,13 @@ func (c *checker) loopStep(post ast.Stmt) (*types.Var, int) {
 			return nil, 0
 		}
 		x = s.Lhs[0]
-		step = 1
+		step, ok = constant.Int64Val(constant.ToInt(tv.Value))
+		if !ok || step > math.MaxUint32 {
+			// beyond the range of every counter, so that it wraps around at any bound
+			step = math.MaxUint32 + 1
+		}
 		if s.Tok == token.SUB_ASSIGN {
-			step = -1
+			step = -step
 		}
 	default:
 		return nil, 0

@@ -275,6 +275,11 @@ func (c *fnCtx) libFunc(fn *types.Func, targs []types.Type, args libArgs) (strin
 		return "{ v: " + args.val(0, targs[0]) + " }", true
 	case optPath + ".None":
 		return "null", true
+	case optPath + ".OrZero":
+		// all passes the results of f(g()) as well, e.g. opt.OrZero(l.Get(i)) or of a function of a header package
+		return "$ozero(" + c.e.zeroFn(targs[0]) + ", " + args.all() + ")", true
+	case optPath + ".OrZeroErr":
+		return "$ozeroerr(" + c.e.zeroFn(targs[0]) + ", " + args.all() + ")", true
 	}
 	return "", false
 }
@@ -777,6 +782,8 @@ func (c *fnCtx) opaqueMethod(named *types.Named, name, r string, a libArgs, pos 
 		return r + ".length"
 	case "List.Get":
 		return "$lget(" + r + ", " + arg(0, nil) + ", " + c.e.zeroFn(args[0]) + ", " + c.e.cloneFn(args[0]) + ")"
+	case "List.GetOr":
+		return "$lgetor(" + r + ", " + arg(0, nil) + ", " + arg(1, args[0]) + ", " + c.e.cloneFn(args[0]) + ")"
 	case "List.Set":
 		return "$lset(" + r + ", " + arg(0, nil) + ", " + arg(1, args[0]) + ")"
 	case "List.Append":
@@ -795,6 +802,8 @@ func (c *fnCtx) opaqueMethod(named *types.Named, name, r string, a libArgs, pos 
 		return r + ".size"
 	case "Map.Get":
 		return "$dget(" + r + ", " + arg(0, nil) + ", " + c.e.zeroFn(args[1]) + ", " + c.e.cloneFn(args[1]) + ")"
+	case "Map.GetOr":
+		return "$dgetor(" + r + ", " + arg(0, nil) + ", " + arg(1, args[1]) + ", " + c.e.cloneFn(args[1]) + ")"
 	case "Map.Has":
 		return r + ".has(" + arg(0, nil) + ")"
 	case "Map.Set":

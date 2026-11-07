@@ -24,7 +24,7 @@
 //     functions, which the host sees as their basic values. The functions of the library take the basic types, so
 //     convert them like in Go: text.FromInt(int32(c)) or strings.HasPrefix(string(id), "c-").
 //   - list.List[T] and dict.Map[K, V] from go.wdy.de/nago/pkg/gostrict/std instead of slices and maps. A dict
-//     iterates in the order of insertion.
+//     iterates in the order of insertion. l.GetOr(i, def) and m.GetOr(k, def) return the element or def.
 //   - opt.Option[T] for a value, which may be missing, e.g. the next node of a list, Next opt.Option[*Node]. Its
 //     zero value is empty, so it may be left out of a struct literal. opt.Some(v) and opt.None[T]() create it,
 //     o.Get() returns (T, bool) and o.Or(def) the value or def.
@@ -57,6 +57,11 @@
 //	v, ok := l.Get(i)
 //	if !ok { return }
 //	use(v)
+//
+// Where a default is wanted, l.GetOr(i, def) and m.GetOr(k, def) return it for any T, and opt.OrZero(l.Get(i)) and
+// opt.OrZeroErr(text.ParseInt(s)) return the zero value for a result (T, bool) or (T, error), but only for a T,
+// whose zero value contains no nil, e.g. a number, a string or a struct of such fields; for another T they are
+// rejected.
 //
 // The same guards prove, that an error is not nil, before its method is called, and that an integer divisor is
 // not zero:
@@ -102,7 +107,11 @@
 // [Program.Terminating], must also prove, that each call ends, e.g. a script, which runs on a server:
 //
 //   - a for loop counts with a counter, which only its post statement changes by a constant, up to a bound, which
-//     is a constant or a variable, which the loop does not change: for i := int32(0); i < n; i++.
+//     is a constant or a variable, which the loop does not change, also not by a function literal, which it calls:
+//     for i := int32(0); i < n; i++. The counter must not wrap around at a constant bound, e.g. a uint32 counter
+//     downwards with i >= 0. For an inclusive bound, an expression as the bound and a condition like i < n && x,
+//     GS040 names the rewrite, e.g. n := l.Len() before the loop and i < n, or if !(x) { break } at the beginning of
+//     the body, and gostrict fix applies it, where it keeps the meaning of the loop.
 //   - a range over a number, a dict.Map, a list.List or an iterator. A range over a list visits the elements, which
 //     the list has, when the range starts, like a range over a slice.
 //   - a loop with another condition burns fuel of package go.wdy.de/nago/pkg/gostrict/std/fuel:

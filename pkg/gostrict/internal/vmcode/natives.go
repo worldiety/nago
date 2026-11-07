@@ -287,11 +287,13 @@ var genericNatives = map[string]func(c *compiler, targs []*tinfo, pos token.Pos)
 		// the variadic argument is a new list already
 		return &native{name: "list.Of", inline: func(g *gen, dst layout, args []layout) { g.move(dst, args[0], layout{r: 1}) }}
 	},
-	listPath + ".List.Len":   listLen,
-	listPath + ".Frozen.Len": listLen,
-	msgPath + ".Out.Len":     listLen,
-	listPath + ".List.Get":   listGet,
-	listPath + ".Frozen.Get": listGet,
+	listPath + ".List.Len":     listLen,
+	listPath + ".Frozen.Len":   listLen,
+	msgPath + ".Out.Len":       listLen,
+	listPath + ".List.Get":     listGet,
+	listPath + ".Frozen.Get":   listGet,
+	listPath + ".List.GetOr":   listGetOr,
+	listPath + ".Frozen.GetOr": listGetOr,
 	listPath + ".List.Set": func(c *compiler, targs []*tinfo, pos token.Pos) *native {
 		el := targs[0].l
 		return &native{name: "List.Set", fn: func(m *Machine, n []uint64, s []string, r []any) {
@@ -380,6 +382,7 @@ var genericNatives = map[string]func(c *compiler, targs []*tinfo, pos token.Pos)
 	dictPath + ".New":        func(c *compiler, t []*tinfo, pos token.Pos) *native { return dictNatives(c, "New", t, pos) },
 	dictPath + ".Map.Len":    func(c *compiler, t []*tinfo, pos token.Pos) *native { return dictNatives(c, "Len", t, pos) },
 	dictPath + ".Map.Get":    func(c *compiler, t []*tinfo, pos token.Pos) *native { return dictNatives(c, "Get", t, pos) },
+	dictPath + ".Map.GetOr":  func(c *compiler, t []*tinfo, pos token.Pos) *native { return dictNatives(c, "GetOr", t, pos) },
 	dictPath + ".Map.Has":    func(c *compiler, t []*tinfo, pos token.Pos) *native { return dictNatives(c, "Has", t, pos) },
 	dictPath + ".Map.Set":    func(c *compiler, t []*tinfo, pos token.Pos) *native { return dictNatives(c, "Set", t, pos) },
 	dictPath + ".Map.Delete": func(c *compiler, t []*tinfo, pos token.Pos) *native { return dictNatives(c, "Delete", t, pos) },
@@ -390,7 +393,9 @@ var genericNatives = map[string]func(c *compiler, targs []*tinfo, pos token.Pos)
 	optPath + ".Option.IsSome": func(c *compiler, t []*tinfo, pos token.Pos) *native {
 		return optNatives(c, "IsSome", t, pos)
 	},
-	listPath + ".Freeze": listClone,
+	optPath + ".OrZero":    func(c *compiler, t []*tinfo, pos token.Pos) *native { return optNatives(c, "OrZero", t, pos) },
+	optPath + ".OrZeroErr": func(c *compiler, t []*tinfo, pos token.Pos) *native { return optNatives(c, "OrZeroErr", t, pos) },
+	listPath + ".Freeze":   listClone,
 }
 
 func listLen(c *compiler, targs []*tinfo, pos token.Pos) *native {
@@ -414,6 +419,21 @@ func listGet(c *compiler, targs []*tinfo, pos token.Pos) *native {
 		}
 		l.get(int(i), el, n, s, r)
 		n[el.n] = 1
+	}}
+}
+
+// listGetOr returns the element at the index or the default, which follows the index and the receiver.
+func listGetOr(c *compiler, targs []*tinfo, pos token.Pos) *native {
+	el := targs[0].l
+	return &native{name: "List.GetOr", fn: func(m *Machine, n []uint64, s []string, r []any) {
+		l := r[0].(*list)
+		i := i32(n[0])
+		if i < 0 || i >= l.len {
+			copy(n, n[1:1+el.n])
+			copy(r, r[1:1+el.r])
+			return
+		}
+		l.get(int(i), el, n, s, r)
 	}}
 }
 

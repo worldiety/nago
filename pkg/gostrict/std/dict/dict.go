@@ -58,6 +58,15 @@ func (m Map[K, V]) Get(k K) (V, bool) {
 	return zero, false
 }
 
+// GetOr returns the value of the key or def, if the key does not exist, e.g. m.GetOr(k, 0) for a wanted default.
+// The subset allows it for any value, also one, whose zero value contains nil, because def is a value.
+func (m Map[K, V]) GetOr(k K, def V) V {
+	if v, ok := m.Get(k); ok {
+		return v
+	}
+	return def
+}
+
 // Has tells, whether the key exists.
 func (m Map[K, V]) Has(k K) bool {
 	_, ok := m.Get(k)

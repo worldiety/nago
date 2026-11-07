@@ -103,6 +103,20 @@ func dictNatives(c *compiler, name string, targs []*tinfo, pos token.Pos) *nativ
 			d.vals.get(int(i), vl, n, s, r)
 			n[vl.n] = 1
 		}}
+	case "GetOr":
+		// the default follows the key and the receiver
+		return &native{name: "Map.GetOr", fn: func(m *Machine, n []uint64, s []string, r []any) {
+			d := r[0].(*dict)
+			i, ok := d.find(kt, n, s)
+			if !ok {
+				kl := kt.l
+				copy(n, n[kl.n:kl.n+vl.n])
+				copy(s, s[kl.s:kl.s+vl.s])
+				copy(r, r[1:1+vl.r])
+				return
+			}
+			d.vals.get(int(i), vl, n, s, r)
+		}}
 	case "Has":
 		return &native{name: "Map.Has", fn: func(m *Machine, n []uint64, s []string, r []any) {
 			_, ok := r[0].(*dict).find(kt, n, s)
@@ -182,6 +196,20 @@ func optNatives(c *compiler, name string, targs []*tinfo, pos token.Pos) *native
 		}}
 	case "IsSome":
 		return &native{name: "Option.IsSome", fn: func(m *Machine, n []uint64, s []string, r []any) { n[0] = fromBool(r[0] != nil) }}
+	case "OrZero":
+		// the value is in place, ok follows its numbers
+		return &native{name: "opt.OrZero", fn: func(m *Machine, n []uint64, s []string, r []any) {
+			if n[l.n] == 0 {
+				zero.copyTo(n, s, r)
+			}
+		}}
+	case "OrZeroErr":
+		// the value is in place, the error follows its references
+		return &native{name: "opt.OrZeroErr", fn: func(m *Machine, n []uint64, s []string, r []any) {
+			if r[l.r] != nil {
+				zero.copyTo(n, s, r)
+			}
+		}}
 	}
 	return nil
 }

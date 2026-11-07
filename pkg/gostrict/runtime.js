@@ -51,6 +51,12 @@ function $lget(a, i, zero, clone) {
 	return [clone(a[i]), true];
 }
 
+// $lgetor returns a copy of the element or the default, which the caller has copied already, see List.GetOr
+function $lgetor(a, i, d, clone) {
+	if (i < 0 || i >= a.length) return d;
+	return clone(a[i]);
+}
+
 function $lset(a, i, v) {
 	if (i < 0 || i >= a.length) return false;
 	a[i] = v;
@@ -108,6 +114,12 @@ function $dnew() {
 function $dget(m, k, zero, clone) {
 	if (m.has(k)) return [clone(m.get(k)), true];
 	return [zero(), false];
+}
+
+// $dgetor returns a copy of the value or the default, which the caller has copied already, see Map.GetOr
+function $dgetor(m, k, d, clone) {
+	if (m.has(k)) return clone(m.get(k));
+	return d;
 }
 
 function $dkeys(m) {
@@ -347,6 +359,16 @@ function $oget(o, zero, clone) {
 
 function $oor(o, d, clone) {
 	return o === null ? d : clone(o.v);
+}
+
+// $ozero returns v or the zero value, unless ok, see opt.OrZero; v is a copy already, e.g. the result of $lget
+function $ozero(zero, v, ok) {
+	return ok ? v : zero();
+}
+
+// $ozeroerr returns v or the zero value, if there is an error, see opt.OrZeroErr
+function $ozeroerr(zero, v, err) {
+	return err === null ? v : zero();
 }
 
 function $text_FromInt(n) {

@@ -307,6 +307,7 @@ func (c *checker) visitNode(n ast.Node) {
 	case *ast.SelectorExpr:
 		c.checkSelector(n)
 		c.checkConstValue(n)
+		c.checkOrZero(n)
 	case *ast.RangeStmt:
 		c.checkRange(n)
 	case *ast.CompositeLit:

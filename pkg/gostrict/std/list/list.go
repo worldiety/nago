@@ -7,8 +7,8 @@
 
 // Package list provides the list of the gostrict subset, which replaces the slices of Go. A list has reference
 // semantics like an array of JavaScript: a copy of a list refers to the same elements. The elements are copied
-// in and out, so a struct, which is read with [List.Get], is a copy. No function panics: an index out of range
-// is reported by the result.
+// in and out, so a struct, which is read with [List.Get] or [List.GetOr], is a copy. No function panics: an index
+// out of range is reported by the result.
 //
 //gostrict:header
 package list
@@ -65,6 +65,15 @@ func (l List[T]) Get(i int32) (T, bool) {
 		return zero, false
 	}
 	return (*l.p)[i], true
+}
+
+// GetOr returns the element at index i or def, if i is out of range, e.g. l.GetOr(i, "") for a wanted default. The
+// subset allows it for any element, also one, whose zero value contains nil, because def is a value.
+func (l List[T]) GetOr(i int32, def T) T {
+	if v, ok := l.Get(i); ok {
+		return v
+	}
+	return def
 }
 
 // Set replaces the element at index i and reports, whether i is in range.
@@ -177,6 +186,11 @@ func (f Frozen[T]) Len() int32 {
 // Get returns the element at index i and true, or the zero value and false, if i is out of range.
 func (f Frozen[T]) Get(i int32) (T, bool) {
 	return List[T](f).Get(i)
+}
+
+// GetOr returns the element at index i or def, if i is out of range, see [List.GetOr].
+func (f Frozen[T]) GetOr(i int32, def T) T {
+	return List[T](f).GetOr(i, def)
 }
 
 // All iterates over the indices and elements.
