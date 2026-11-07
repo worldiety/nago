@@ -365,7 +365,8 @@ func TestOptionalFix(t *testing.T) {
 			if ds := optCheck(t, string(fixed)); len(ds) > 0 {
 				t.Fatalf("the fixed program has findings:\n%s\n%s", ds.Text(), optNumbered(string(fixed)))
 			}
-			form := regexp.MustCompile(`(?m)^\s*` + r.form + `\s*$`)
+			// the fix keeps the comment of the line, e.g. the marker of the row
+			form := regexp.MustCompile(`(?m)^\s*` + r.form + `\s*(//.*)?$`)
 			if !form.Match(fixed) {
 				t.Errorf("no line of the fixed program has the form %s:\n%s", r.form, optNumbered(string(fixed)))
 			}
