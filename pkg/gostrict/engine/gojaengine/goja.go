@@ -709,6 +709,8 @@ func (r *Runtime) hostFunc(in *instance, sig gostrict.Func, f gostrict.Fn) func(
 					obj := r.rt.NewObject()
 					_ = obj.Set("$ret", e)
 					_ = obj.Set("$go", r.rt.ToValue(ret))
+					// the abort, which an entry point without an error result throws instead
+					_ = obj.Set("$abort", r.rt.NewGoError(&gostrict.Aborted{Err: ret.Err}))
 					panic(obj)
 				}
 				panic(v)

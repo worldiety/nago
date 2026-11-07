@@ -60,6 +60,10 @@ func (b boundary) Returned(v any) (error, bool) {
 	return nil, false
 }
 
+func (b boundary) Abort(err error) any {
+	return &gostrict.Aborted{Err: err}
+}
+
 func (b boundary) ProgramError(msg string, pos int) error {
 	return b.in.bundle.ProgramError(msg, pos)
 }

@@ -39,6 +39,8 @@ type Host interface {
 	// Returned returns the error of a panic of a function of the host, which ends the entry point, in which it runs,
 	// with the error as its result, see gostrict.ReturnError, or false for any other panic.
 	Returned(v any) (error, bool)
+	// Abort returns the panic, which aborts the whole call with err, see gostrict.Abort.
+	Abort(err error) any
 }
 
 // debugPanics lets the panics of the machine through with their stack, e.g. GOSTRICT_VM_PANIC=1 go test.

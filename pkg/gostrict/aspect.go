@@ -92,9 +92,10 @@ func AsResult(err error) error {
 // ReturnError ends the entry point, in which a function of the host runs, from that function with zero values, whose
 // lists and maps are empty, and err as its results, e.g. because the generated code of the entry point rejects its
 // input: the engine unwinds the calls within the entry point, the aspect exits it with err, and its caller handles
-// err like an error, which the entry point returned. Within an entry point, whose last result is not an error, or
-// outside of any entry point, it aborts the whole call with err like [Abort]. Only a function, which the program
-// calls itself, may end its entry point, not one within a callback, which the host calls.
+// err like an error, which the entry point returned. Within an entry point, whose last result is not an error, also
+// if an entry point around it has one, or outside of any entry point, it aborts the whole call with err like [Abort].
+// Only a function, which the program calls itself, may end its entry point, not one within a callback, which the
+// host calls.
 func ReturnError(err error) {
 	panic(&ResultError{Err: err})
 }

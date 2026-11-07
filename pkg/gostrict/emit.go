@@ -250,7 +250,9 @@ func (e *emitter) hook(fn *types.Func) string {
 	// result (AsResult), with zero values, without its body and without the exit; any other denial aborts in $enter.
 	// It returns the error of a function of the host, which ends it (ReturnError), with zero values after the exit.
 	enter := fmt.Sprintf("\t$aspect_enter(%s, false);\n", full)
-	catch := ""
+	// without an error result, the end by a function of the host aborts the whole call, also within an entry point
+	// with an error result
+	catch := " catch ($c) {\n\t\tif ($c !== null && typeof $c === \"object\" && \"$ret\" in $c) {\n\t\t\tthrow $c.$abort;\n\t\t}\n\t\tthrow $c;\n\t}"
 	if n := sig.Results().Len(); n > 0 && isError(sig.Results().At(n-1).Type()) {
 		errResult = "$r"
 		result := func(err string) string { return err }
