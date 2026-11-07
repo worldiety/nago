@@ -59,7 +59,9 @@ func (h *markHost) funcs() gostrict.Funcs {
 //   - the mark at an entry point, whose last result is no error, aborts with the unmarked error; counter row: the same
 //     entry point without denial returns its result;
 //   - gostrict.ReturnError in an entry point with (T, error) ends it after Exit with the error with zero values and the
-//     error, which the caller handles; in an entry point without an error result it aborts the whole call.
+//     error, which the caller handles; in an entry point without an error result it aborts the whole call, also when
+//     an entry point with an error result calls that entry point (counter row: the same call of an entry point with
+//     an error result is a value).
 func TestEnterValue(t *testing.T) {
 	for name, e := range map[string]gostrict.Engine{"goja": new(gojaengine.Engine), "vm": new(vm.Engine)} {
 		t.Run(name, func(t *testing.T) { testEnterValue(t, e) })
@@ -67,7 +69,7 @@ func TestEnterValue(t *testing.T) {
 }
 
 func testEnterValue(t *testing.T, e gostrict.Engine) {
-	prog := loadWhole(t, "n10/caller", "n10/target", "n10/plain", "n10/callplain")
+	prog := loadWhole(t, "n10/caller", "n10/target", "n10/plain", "n10/callplain", "n10/callerplain")
 	b, diags := gostrict.Emit(prog)
 	if len(diags) > 0 {
 		t.Fatal(diags.Text())
@@ -131,6 +133,17 @@ func testEnterValue(t *testing.T, e gostrict.Engine) {
 		{
 			name:  "ReturnError in an entry point without an error result aborts the whole call",
 			entry: "n10/callplain.Main", args: []any{true}, abort: "rejected plain",
+		},
+		{
+			name:  "ReturnError in an entry point without an error result, which an entry point with an error result calls, aborts the whole call",
+			entry: "n10/callerplain.Main", args: []any{true}, abort: "rejected plain",
+			absent: []string{"plain"},
+		},
+		{
+			name:  "counter row: ReturnError in an entry point with an error result, which the same kind of entry point calls, is a value",
+			entry: "n10/caller.Main", args: []any{"e", true}, want: "value rejected e zero /0/0",
+			log:     []string{"enter n10/caller.Main", "enter n10/target.Main", "exit n10/target.Main rejected e", "exit n10/caller.Main ok"},
+			present: []string{"target/e"}, absent: []string{"after/e"},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
