@@ -13,6 +13,7 @@ import (
 	"go/constant"
 	"go/token"
 	"go/types"
+	pathpkg "path"
 	"slices"
 	"strconv"
 	"strings"
@@ -196,7 +197,7 @@ func (c *checker) optionalFix(as *ast.AssignStmt, p pairing, g *getCall) (string
 	if f == nil {
 		return "", false
 	}
-	q := c.newQualifier(f)
+	q := c.newQualifier(f, as.Pos())
 	var rhs string
 	switch {
 	case g != nil:
@@ -220,16 +221,20 @@ func (c *checker) optionalFix(as *ast.AssignStmt, p pairing, g *getCall) (string
 	}
 	stmt := c.text(as.Lhs[0]) + " " + as.Tok.String() + " " + rhs
 	c.d.fix(CodeGuard, as.Pos(), as.Pos(), as.End(), stmt)
-	for _, path := range q.added {
-		at, text := importEdit(f, path)
+	for _, imp := range q.added {
+		at, text := importEdit(f, imp.path, imp.name)
 		c.d.fix(CodeGuard, as.Pos(), at, at, text)
 	}
 	return stmt, true
 }
 
-// importEdit returns the position and the text, which import the package path into the file: into its first import
-// declaration with parentheses, after its first import declaration or after the package clause.
-func importEdit(f *ast.File, path string) (token.Pos, string) {
+// importEdit returns the position and the text, which import the package path as name into the file: into its first
+// import declaration with parentheses, after its first import declaration or after the package clause.
+func importEdit(f *ast.File, path, name string) (token.Pos, string) {
+	spec := strconv.Quote(path)
+	if name != pathpkg.Base(path) {
+		spec = name + " " + spec
+	}
 	var first *ast.GenDecl
 	for _, d := range f.Decls {
 		g, ok := d.(*ast.GenDecl)
@@ -237,16 +242,16 @@ func importEdit(f *ast.File, path string) (token.Pos, string) {
 			continue
 		}
 		if g.Lparen.IsValid() {
-			return g.Lparen + 1, "\n\t" + strconv.Quote(path)
+			return g.Lparen + 1, "\n\t" + spec
 		}
 		if first == nil {
 			first = g
 		}
 	}
 	if first != nil {
-		return first.End(), "\nimport " + strconv.Quote(path)
+		return first.End(), "\nimport " + spec
 	}
-	return f.Name.End(), "\n\nimport " + strconv.Quote(path)
+	return f.Name.End(), "\n\nimport " + spec
 }
 
 // text returns the source code of the node.
@@ -348,13 +353,19 @@ func isZeroLiteral(info *types.Info, e ast.Expr) bool {
 type qualifier struct {
 	c     *checker
 	names map[string]string
-	added []string
-	// failed tells, that a type of a package, which the file does not import, is needed
+	added []addedImport
+	// pos is the position of the fix, at which a name must denote its package
+	pos token.Pos
+	// failed tells, that a type of a package, which the file does not import, is needed, or that a name of a package
+	// denotes something else at pos
 	failed bool
 }
 
-func (c *checker) newQualifier(f *ast.File) *qualifier {
-	q := &qualifier{c: c, names: map[string]string{}}
+// addedImport is a package, which a fix imports into the file under the name.
+type addedImport struct{ path, name string }
+
+func (c *checker) newQualifier(f *ast.File, pos token.Pos) *qualifier {
+	q := &qualifier{c: c, names: map[string]string{}, pos: pos}
 	for _, imp := range f.Imports {
 		if pn := c.info.PkgNameOf(imp); pn != nil {
 			q.names[pn.Imported().Path()] = pn.Name()
@@ -363,14 +374,37 @@ func (c *checker) newQualifier(f *ast.File) *qualifier {
 	return q
 }
 
-// pkg returns the name of the package of std in the file and imports it, if the file does not.
+// free tells, whether name denotes nothing at the position of the fix or the package path, so that the fix may use it,
+// e.g. not opt in a package with its own func opt.
+func (q *qualifier) free(name, path string) bool {
+	scope := q.c.pkg.Types.Scope().Innermost(q.pos)
+	if scope == nil {
+		scope = q.c.pkg.Types.Scope()
+	}
+	_, obj := scope.LookupParent(name, q.pos)
+	if obj == nil {
+		return true
+	}
+	pn, ok := obj.(*types.PkgName)
+	return ok && pn.Imported().Path() == path
+}
+
+// pkg returns the name of the package of std in the file and imports it, if the file does not, under its name or,
+// if that denotes something else, e.g. a function opt of the package, under the first free one of name2, name3, ….
 func (q *qualifier) pkg(path, name string) string {
 	if n, ok := q.names[path]; ok {
+		if !q.free(n, path) {
+			q.failed = true
+		}
 		return n
 	}
-	q.names[path] = name
-	q.added = append(q.added, path)
-	return name
+	alias := name
+	for i := 2; !q.free(alias, path); i++ {
+		alias = name + strconv.Itoa(i)
+	}
+	q.names[path] = alias
+	q.added = append(q.added, addedImport{path: path, name: alias})
+	return alias
 }
 
 // typ returns the type as the file names it.
@@ -380,6 +414,9 @@ func (q *qualifier) typ(t types.Type) string {
 			return ""
 		}
 		if n, ok := q.names[p.Path()]; ok {
+			if !q.free(n, p.Path()) {
+				q.failed = true
+			}
 			return n
 		}
 		switch p.Path() {
