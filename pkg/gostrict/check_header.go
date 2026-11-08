@@ -150,20 +150,23 @@ func checkConstDirective(d *diagnoser, src funcSrc, fn *types.Func) {
 	}
 }
 
-// checkCallsDirective checks the callsDirective of a function of a header package: it is now or later, and the
-// function takes a function.
+// checkCallsDirective checks the callsDirective of a function of a header package: now or later on a function, which
+// takes a function, earlier on one, which takes none.
 func checkCallsDirective(d *diagnoser, src funcSrc, fn *types.Func) {
 	if src.callsPos == token.NoPos {
 		return
 	}
 	report := func(msg string) {
-		d.report(src.callsPos, token.NoPos, CodeHeader, msg, callsDirective+" tells the check of recursion, whether the function calls its function arguments during the call or only after it returned", "write "+callsDirective+" now or "+callsDirective+" later on a function, which takes a function")
+		d.report(src.callsPos, token.NoPos, CodeHeader, msg, callsDirective+" tells the checks, whether the function calls its function arguments during the call or only after it returned, or whether it calls functions, which it got earlier", "write "+callsDirective+" now or "+callsDirective+" later on a function, which takes a function, and "+callsDirective+" earlier on one, which takes none, but calls functions, which another call got")
 	}
+	takes := len(funcParams(fn.Signature())) > 0
 	switch {
-	case src.calls != CallsNow && src.calls != CallsLater:
-		report(callsDirective + " takes now or later, not " + strconv.Quote(string(src.calls)))
-	case len(funcParams(fn.Signature())) == 0:
-		report(fn.Name() + " takes no function, so " + callsDirective + " has nothing to tell")
+	case src.calls != CallsNow && src.calls != CallsLater && src.calls != CallsEarlier:
+		report(callsDirective + " takes now, later or earlier, not " + strconv.Quote(string(src.calls)))
+	case src.calls == CallsEarlier && takes:
+		report(fn.Name() + " takes a function, so it calls it now or later, not earlier")
+	case src.calls != CallsEarlier && !takes:
+		report(fn.Name() + " takes no function, so " + callsDirective + " " + string(src.calls) + " has nothing to tell")
 	}
 }
 

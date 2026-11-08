@@ -118,8 +118,15 @@ func (c *checker) returnsError(call *ast.CallExpr) bool {
 func (c *checker) checkBinding(n ast.Node, lhs, rhs []ast.Expr, define bool) {
 	as, _ := n.(*ast.AssignStmt)
 	if len(lhs) == len(rhs) {
-		// a call with only an error
 		for i, r := range rhs {
+			// an error at _, e.g. _ = err, var _ = err or _ = f() with only an error (L-N11-8)
+			if isBlank(lhs[i]) {
+				if t := c.info.TypeOf(r); t != nil && isError(t) {
+					c.reportDiscardExpr(n, r)
+				}
+				continue
+			}
+			// a call with only an error
 			call, ok := ast.Unparen(r).(*ast.CallExpr)
 			if !ok || !c.returnsError(call) {
 				continue
@@ -127,9 +134,7 @@ func (c *checker) checkBinding(n ast.Node, lhs, rhs []ast.Expr, define bool) {
 			if _, tuple := c.info.TypeOf(call).(*types.Tuple); tuple {
 				continue
 			}
-			if isBlank(lhs[i]) {
-				c.reportDiscard(n, call)
-			} else if id, ok := ast.Unparen(lhs[i]).(*ast.Ident); ok && as != nil {
+			if id, ok := ast.Unparen(lhs[i]).(*ast.Ident); ok && as != nil {
 				c.checkOverwrite(id)
 			}
 		}
@@ -473,6 +478,74 @@ func (c *checker) reportDiscard(n ast.Node, call *ast.CallExpr) {
 		}
 	}
 	c.report(n, CodeGuard, "the error of "+calleeText(call)+" is thrown away", why, fix)
+}
+
+// reportDiscardExpr reports an error, which is thrown away: a call like [checker.reportDiscard], another expression,
+// e.g. err of _ = err or of an empty check, with the same message.
+func (c *checker) reportDiscardExpr(n ast.Node, e ast.Expr) {
+	if call, ok := ast.Unparen(e).(*ast.CallExpr); ok {
+		if tv, ok := c.info.Types[call.Fun]; !ok || !tv.IsType() {
+			c.reportDiscard(n, call)
+			return
+		}
+	}
+	c.report(n, CodeGuard, "the error "+types.ExprString(e)+" is thrown away", "a failed call would go unnoticed", "pass the error on: if "+types.ExprString(e)+" != nil { return ..., "+types.ExprString(e)+" }; opt.OrZeroErr(f()) goes on with the zero value deliberately instead of v, err := f()")
+}
+
+// errCheck returns the error, which the condition compares with nil, e.g. err of err != nil or nil == err.
+func (c *checker) errCheck(cond ast.Expr) (ast.Expr, bool) {
+	b, ok := ast.Unparen(cond).(*ast.BinaryExpr)
+	if !ok || (b.Op != token.EQL && b.Op != token.NEQ) {
+		return nil, false
+	}
+	switch {
+	case c.isNilExpr(b.Y) && isError(c.info.TypeOf(b.X)):
+		return b.X, true
+	case c.isNilExpr(b.X) && isError(c.info.TypeOf(b.Y)):
+		return b.Y, true
+	}
+	return nil, false
+}
+
+// emptyStmts tells, whether the statements are none but empty ones; a comment is none.
+func emptyStmts(list []ast.Stmt) bool {
+	for _, s := range list {
+		if _, ok := s.(*ast.EmptyStmt); !ok {
+			return false
+		}
+	}
+	return true
+}
+
+// checkEmptyCheck rejects a check of an error with an empty body and without else in either direction, e.g.
+// if err != nil {} or if err == nil {}, which throws the error away (L-N11-8).
+func (c *checker) checkEmptyCheck(n *ast.IfStmt) {
+	if n.Else != nil || !emptyStmts(n.Body.List) {
+		return
+	}
+	if e, ok := c.errCheck(n.Cond); ok {
+		c.reportDiscardExpr(n, e)
+	}
+}
+
+// checkEmptySwitch rejects a switch, whose only case checks an error and is empty, without default, e.g.
+// switch { case err != nil: } or switch err { case nil: } (L-N11-8).
+func (c *checker) checkEmptySwitch(n *ast.SwitchStmt) {
+	if len(n.Body.List) != 1 {
+		return
+	}
+	cc, ok := n.Body.List[0].(*ast.CaseClause)
+	if !ok || len(cc.List) != 1 || !emptyStmts(cc.Body) {
+		return
+	}
+	switch {
+	case n.Tag == nil:
+		if e, ok := c.errCheck(cc.List[0]); ok {
+			c.reportDiscardExpr(n, e)
+		}
+	case isError(c.info.TypeOf(n.Tag)) && c.isNilExpr(cc.List[0]):
+		c.reportDiscardExpr(n, n.Tag)
+	}
 }
 
 // reportRebind reports a paired value, which is bound with = or by a redeclaration to an existing variable.

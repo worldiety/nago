@@ -25,9 +25,13 @@ import (
 //   - a key: a range over D.Keys() or D.All() and a guard D.Has(k).
 //
 // A list is a reference, so a fact dies by any Delete or Pop of a list.List, whose element type is compatible with
-// the one of L, by a call, whose arguments, receiver or captured variables may reach such a list, and by an
-// assignment to L, to a field on its path, to the bound or to the index. A list.Frozen never shrinks. What is not
-// recognized, is reported, never kept silent.
+// the one of L, by a call of an own function, whose arguments or receiver may reach such a list, by each call of a
+// function value, of a method of an interface or of a type parameter and each range over a function value, which no
+// header returned, by a header only through the functions, which it calls (wokoda R-SCRIPT-GS-HEADER-LISTS), and by an
+// assignment to L, to a field on its path, to the bound or to the index. A list.Frozen never shrinks. A call, in whose
+// arguments, receiver or function the access lies, runs after it, so it kills it only, where everything in the whole
+// body of a loop or of a literal kills, except the header, in whose literal the access lies. What is not recognized, is
+// reported, never kept silent.
 
 type containerKind int
 
@@ -169,8 +173,10 @@ type event struct {
 	shrink bool
 	kind   containerKind
 	elem   types.Type
-	// call is a call, which may change a list, which it reaches
-	call *ast.CallExpr
+	// call is a call, which may change a list, which it reaches, and always tells, that the event kills each fact, e.g.
+	// a range over a function value
+	call   *ast.CallExpr
+	always bool
 	// path is an assigned field path
 	path objPath
 }
@@ -206,6 +212,11 @@ func (c *checker) events(fd *ast.FuncDecl) *funcEvents {
 			if c.mayChange(n) {
 				fe.calls = append(fe.calls, event{pos: n.Pos(), what: "the call of " + types.ExprString(n.Fun), call: n})
 			}
+		case *ast.RangeStmt:
+			// a range over a function value calls it, unless a header returned it, e.g. L.All(), which calls only the body
+			if _, ok := c.info.TypeOf(n.X).Underlying().(*types.Signature); ok && !c.headerResult(n.X) {
+				fe.calls = append(fe.calls, event{pos: n.Pos(), what: "the range over " + types.ExprString(n.X), always: true})
+			}
 		case *ast.AssignStmt:
 			if n.Tok == token.DEFINE && len(n.Lhs) == len(n.Rhs) {
 				for i, l := range n.Lhs {
@@ -230,9 +241,9 @@ func (c *checker) events(fd *ast.FuncDecl) *funcEvents {
 	return fe
 }
 
-// mayChange tells, whether a call may change a list or a dict, which it reaches: a call of a function of the
-// program, of a function value, of a method of an interface or of a type parameter and of a function of a header
-// package, which calls its function arguments now.
+// mayChange tells, whether a call may change a list or a dict: a call of an own function of the program (std/decimal and
+// std/fuel included), of a function value and of a method of an interface or of a type parameter, and a call of a
+// header or of the standard library, which kills by the functions, which it calls, see [checker.headerKills].
 func (c *checker) mayChange(call *ast.CallExpr) bool {
 	if tv, ok := c.info.Types[call.Fun]; ok && (tv.IsType() || tv.IsBuiltin()) {
 		return false
@@ -244,63 +255,83 @@ func (c *checker) mayChange(call *ast.CallExpr) bool {
 	if fn.Pkg() == nil {
 		return false
 	}
-	p := c.prog.Package(fn.Pkg().Path())
-	if p == nil || p.Kind == KindStd {
-		return false
-	}
-	if p.Kind == KindHeader {
-		return len(funcParams(fn.Signature())) > 0 && c.decls[fn.Origin()].calls != CallsLater
+	if p := c.prog.Package(fn.Pkg().Path()); p == nil || p.Kind != KindUser {
+		return c.headerKills(call, fn)
 	}
 	return true
 }
 
-// callReaches tells, whether the call, an event of [checker.mayChange], may reach a container of the kind with the
-// element type elem through its arguments, its receiver or the variables, which a function literal as an argument of
-// a header captures.
-func (c *checker) callReaches(call *ast.CallExpr, elem types.Type, dict bool) bool {
-	fn := c.namedCallee(call)
-	if fn == nil {
+// headerKills tells, whether a call of a function of a header or of the standard library may change a list or a dict
+// of the program: only through the functions, which it calls (R-SCRIPT-GS-HEADER-LISTS). With //gostrict:calls earlier
+// always; with function parameters and now or without a directive through each argument of a function parameter, which
+// is no function literal, whose body counts where it stands; never with later and without function parameters.
+func (c *checker) headerKills(call *ast.CallExpr, fn *types.Func) bool {
+	calls := c.decls[fn.Origin()].calls
+	if calls == CallsEarlier {
 		return true
 	}
-	header := false
-	if p := c.prog.Package(fn.Pkg().Path()); p != nil && p.Kind == KindHeader {
-		header = true
+	sig := fn.Signature()
+	params := funcParams(sig)
+	if len(params) == 0 || calls == CallsLater {
+		return false
 	}
-	if se, ok := ast.Unparen(call.Fun).(*ast.SelectorExpr); ok {
-		if sel := c.info.Selections[se]; sel != nil && sel.Kind() == types.MethodVal && reaches(c.info.TypeOf(se.X), elem, dict, map[types.Type]bool{}) {
-			return true
-		}
-	}
-	for _, a := range call.Args {
-		if lit, ok := ast.Unparen(a).(*ast.FuncLit); ok && header {
-			if c.capturesReach(lit, elem, dict) {
-				return true
-			}
+	for _, i := range params {
+		args := call.Args
+		switch {
+		case sig.Variadic() && i == sig.Params().Len()-1 && i < len(args):
+			args = args[i:]
+		case i < len(args):
+			args = args[i : i+1]
+		default:
 			continue
 		}
-		if reaches(c.info.TypeOf(a), elem, dict, map[types.Type]bool{}) {
-			return true
+		for _, a := range args {
+			if _, lit := ast.Unparen(a).(*ast.FuncLit); !lit {
+				return true
+			}
 		}
 	}
 	return false
 }
 
-// capturesReach tells, whether a variable, which the function literal captures, may reach such a container.
-func (c *checker) capturesReach(lit *ast.FuncLit, elem types.Type, dict bool) bool {
-	found := false
-	ast.Inspect(lit.Body, func(n ast.Node) bool {
-		if found {
-			return false
-		}
-		if id, ok := n.(*ast.Ident); ok {
-			obj := c.info.Uses[id]
-			if v, ok := obj.(*types.Var); ok && c.isLocal(v) && (v.Pos() < lit.Pos() || v.Pos() >= lit.End()) && reaches(v.Type(), elem, dict, map[types.Type]bool{}) {
-				found = true
-			}
-		}
+// headerResult tells, whether e is the result of a call of a header or of the standard library, e.g. L.All().
+func (c *checker) headerResult(e ast.Expr) bool {
+	call, ok := ast.Unparen(e).(*ast.CallExpr)
+	if !ok {
+		return false
+	}
+	fn := c.namedCallee(call)
+	if fn == nil || fn.Pkg() == nil {
+		return false
+	}
+	p := c.prog.Package(fn.Pkg().Path())
+	return p == nil || p.Kind != KindUser
+}
+
+// callReaches tells, whether the event of [checker.mayChange] may reach a container of the kind with the element type
+// elem: a call of an own function through its arguments and its receiver, any other one always.
+func (c *checker) callReaches(e event, elem types.Type, dict bool) bool {
+	if e.always || e.call == nil {
 		return true
-	})
-	return found
+	}
+	fn := c.namedCallee(e.call)
+	if fn == nil {
+		return true
+	}
+	if p := c.prog.Package(fn.Pkg().Path()); p == nil || p.Kind != KindUser {
+		return true
+	}
+	if se, ok := ast.Unparen(e.call.Fun).(*ast.SelectorExpr); ok {
+		if sel := c.info.Selections[se]; sel != nil && sel.Kind() == types.MethodVal && reaches(c.info.TypeOf(se.X), elem, dict, map[types.Type]bool{}) {
+			return true
+		}
+	}
+	for _, a := range e.call.Args {
+		if reaches(c.info.TypeOf(a), elem, dict, map[types.Type]bool{}) {
+			return true
+		}
+	}
+	return false
 }
 
 // reaches tells, whether a value of t may reach a list.List with elements, which are compatible with elem, or, if
@@ -379,8 +410,8 @@ func loopSpans(stack []ast.Node, from int, src token.Pos) []span {
 	return res
 }
 
-// litBetween tells, whether the stack holds a function literal after the index from, which does not run during the
-// call of a header, which takes it: a fact ends at such a literal, which may run later.
+// litBetween tells, whether the stack holds a function literal after the index from, which is no argument of a header
+// with //gostrict:calls now: a fact ends at such a literal, which may run later.
 func (c *checker) litBetween(stack []ast.Node, from int) bool {
 	for k := from + 1; k < len(stack); k++ {
 		lit, ok := stack[k].(*ast.FuncLit)
@@ -392,7 +423,7 @@ func (c *checker) litBetween(stack []ast.Node, from int) bool {
 			return true
 		}
 		fn := c.headerCall(call)
-		if fn == nil || c.decls[fn.Origin()].calls == CallsLater {
+		if fn == nil || c.decls[fn.Origin()].calls != CallsNow {
 			return true
 		}
 	}
@@ -410,19 +441,24 @@ func (c *checker) kept(obj types.Object, spans []span) (token.Pos, bool) {
 	return token.NoPos, true
 }
 
-// killed returns the first event, which kills a fact about the container p of Get g: a shrink or a call in shrink, an
-// assignment to p or a field on its path in assign.
-func (c *checker) killed(fe *funcEvents, g *getCall, p objPath, shrink, assign []span) (token.Pos, string, bool) {
+// killed returns the first event, which kills the fact about the container of the Get: a shrink or a call in shrink,
+// an assignment to the container or a field on its path in assign. A call, in whose arguments, receiver or function
+// the access lies, runs after it, so it kills only in whole, the spans, in which everything in the whole body kills;
+// except the header, in whose function literal the access lies, which counts where it stands.
+func (f *factSearch) killed(shrink, whole, assign []span) (token.Pos, string, bool) {
+	c, g, p := f.c, f.g, f.p
 	if g.kind != kindFrozen {
-		for _, e := range fe.shrinks {
+		for _, e := range f.fe.shrinks {
 			if inSpans(e.pos, shrink) && (e.kind == kindDict) == (g.kind == kindDict) && compatible(e.elem, g.elem) {
 				return e.pos, e.what, true
 			}
 		}
-		for _, e := range fe.calls {
-			// a call of a header, whose function argument holds the access, runs it now: its literal counts as a loop
-			holds := e.call.Pos() <= g.call.Pos() && g.call.Pos() < e.call.End()
-			if !holds && inSpans(e.pos, shrink) && c.callReaches(e.call, g.elem, g.kind == kindDict) {
+		for _, e := range f.fe.calls {
+			spans := shrink
+			if e.call != nil && e.call.Pos() <= f.access && f.access < e.call.End() && !f.lits[e.call] {
+				spans = whole
+			}
+			if inSpans(e.pos, spans) && c.callReaches(e, g.elem, g.kind == kindDict) {
 				return e.pos, e.what, true
 			}
 		}
@@ -430,7 +466,7 @@ func (c *checker) killed(fe *funcEvents, g *getCall, p objPath, shrink, assign [
 	if pos, ok := c.kept(p.root, assign); !ok {
 		return pos, "the assignment to " + p.root.Name(), true
 	}
-	for _, e := range fe.fields {
+	for _, e := range f.fe.fields {
 		if e.path.prefixOf(p) && inSpans(e.pos, assign) {
 			return e.pos, e.what, true
 		}
@@ -455,7 +491,14 @@ func (c *checker) factFor(stack []ast.Node, g *getCall) (bool, *factKill) {
 	if !ok {
 		return false, nil
 	}
-	f := &factSearch{c: c, stack: stack, fdIdx: fdIdx, fe: c.events(stack[fdIdx].(*ast.FuncDecl)), g: g, p: p, access: g.call.Pos()}
+	f := &factSearch{c: c, stack: stack, fdIdx: fdIdx, fe: c.events(stack[fdIdx].(*ast.FuncDecl)), g: g, p: p, access: g.call.Pos(), lits: map[*ast.CallExpr]bool{}}
+	for k := fdIdx + 1; k < len(stack); k++ {
+		if _, ok := stack[k].(*ast.FuncLit); ok {
+			if call, ok := stack[k-1].(*ast.CallExpr); ok {
+				f.lits[call] = true
+			}
+		}
+	}
 	if g.kind == kindDict {
 		return f.keyFacts(), f.kill
 	}
@@ -494,14 +537,17 @@ type factSearch struct {
 	g      *getCall
 	p      objPath
 	access token.Pos
+	// lits are the calls, in whose function literal the access lies
+	lits map[*ast.CallExpr]bool
 	// kill is the first kill of a fact, which would hold
 	kill *factKill
 }
 
-// holds checks, that nothing kills a fact from src, whose bound is in the spans bound, about the container in shrink
-// and assign; it records the kill otherwise.
-func (f *factSearch) holds(src token.Pos, shrink, assign []span, vars map[types.Object][]span) bool {
-	if pos, what, dead := f.c.killed(f.fe, f.g, f.p, shrink, assign); dead {
+// holds checks, that nothing kills a fact from src about the container in shrink (whole are the spans, in which
+// everything in the whole body kills) and assign and that the variables keep their values in their spans; it records
+// the kill otherwise.
+func (f *factSearch) holds(src token.Pos, shrink, whole, assign []span, vars map[types.Object][]span) bool {
+	if pos, what, dead := f.killed(shrink, whole, assign); dead {
 		f.died(src, pos, what)
 		return false
 	}
@@ -595,7 +641,7 @@ func (f *factSearch) countingLoop(k int, n *ast.ForStmt, i types.Object) (ok, do
 		}
 		snap := f.fe.defEnd[nObj]
 		spans := append([]span{{snap, n.End()}}, loopSpans(f.stack, f.fdIdx, snap)...)
-		return f.holds(snap, spans, spans, map[types.Object][]span{nObj: spans, i: body}), true
+		return f.holds(snap, spans, spans, spans, map[types.Object][]span{nObj: spans, i: body}), true
 	}
 
 	// downwards from L.Len() - 1 to 0
@@ -606,7 +652,7 @@ func (f *factSearch) countingLoop(k int, n *ast.ForStmt, i types.Object) (ok, do
 		}
 		snap := init.End()
 		spans := append([]span{{snap, n.End()}}, loopSpans(f.stack, f.fdIdx, snap)...)
-		return f.holds(snap, spans, spans, map[types.Object][]span{i: body}), true
+		return f.holds(snap, spans, spans, spans, map[types.Object][]span{i: body}), true
 	}
 	return false, true
 }
@@ -623,9 +669,10 @@ func (f *factSearch) rangeLoop(k int, n *ast.RangeStmt, i types.Object) bool {
 		if recv, kind, name, _, ok := c.containerMethod(call); ok && name == "All" && kind != kindDict && c.samePath(recv, f.p) {
 			// the iteration yields an index of the list, as it is, when the body starts
 			src := n.Body.Lbrace
-			shrink := append([]span{{src, f.access}}, loopSpans(f.stack, k, src)...)
+			whole := loopSpans(f.stack, k, src)
+			shrink := append([]span{{src, f.access}}, whole...)
 			assign := []span{{n.Body.Pos(), n.Body.End()}}
-			return f.holds(src, shrink, assign, map[types.Object][]span{i: shrink})
+			return f.holds(src, shrink, whole, assign, map[types.Object][]span{i: shrink})
 		}
 	}
 	snap := token.NoPos
@@ -651,7 +698,7 @@ func (f *factSearch) rangeLoop(k int, n *ast.RangeStmt, i types.Object) bool {
 		vars[obj] = spans
 	}
 	vars[i] = []span{{n.Body.Pos(), n.Body.End()}}
-	return f.holds(snap, spans, spans, vars)
+	return f.holds(snap, spans, spans, spans, vars)
 }
 
 // rangeGuard proves the index i by the guards i >= 0 and i < L.Len(), e.g. if i >= 0 && i < l.Len() { ... } or if
@@ -676,7 +723,7 @@ func (f *factSearch) rangeGuard(i types.Object) bool {
 		return false
 	}
 	spans := f.guardSpans(d2, from2)
-	return f.holds(from2, spans, spans, map[types.Object][]span{i: f.guardSpans(depth, src)})
+	return f.holds(from2, spans, loopSpans(f.stack, d2, from2), spans, map[types.Object][]span{i: f.guardSpans(depth, src)})
 }
 
 // lenFacts proves a length of at least min of the list: by list.Of with enough elements or by a guard on L.Len().
@@ -695,7 +742,7 @@ func (f *factSearch) lenFacts(least int64) bool {
 					}
 					if !lit {
 						spans := f.guardSpans(f.fdIdx, src)
-						if f.holds(src, spans, spans, nil) {
+						if f.holds(src, spans, loopSpans(f.stack, f.fdIdx, src), spans, nil) {
 							return true
 						}
 					}
@@ -708,7 +755,7 @@ func (f *factSearch) lenFacts(least int64) bool {
 		return false
 	}
 	spans := f.guardSpans(depth, from)
-	return f.holds(from, spans, spans, nil)
+	return f.holds(from, spans, loopSpans(f.stack, depth, from), spans, nil)
 }
 
 // keyFacts proves the key of D.Get(k) by a range over D.Keys() or D.All() and by a guard D.Has(k).
@@ -741,8 +788,9 @@ func (f *factSearch) keyFacts() bool {
 				return false
 			}
 			src := n.Body.Lbrace
-			shrink := append([]span{{src, f.access}}, loopSpans(f.stack, k, src)...)
-			return f.holds(src, shrink, []span{{n.Body.Pos(), n.Body.End()}}, map[types.Object][]span{key: shrink})
+			whole := loopSpans(f.stack, k, src)
+			shrink := append([]span{{src, f.access}}, whole...)
+			return f.holds(src, shrink, whole, []span{{n.Body.Pos(), n.Body.End()}}, map[types.Object][]span{key: shrink})
 		}
 	}
 	depth, from, ok := guardIn(f.stack, c.hasKey(f.p, arg, key), token.NoPos)
@@ -754,7 +802,7 @@ func (f *factSearch) keyFacts() bool {
 	if key != nil {
 		vars[key] = spans
 	}
-	return f.holds(from, spans, spans, vars)
+	return f.holds(from, spans, loopSpans(f.stack, depth, from), spans, vars)
 }
 
 // cmpConst is the property, that the comparison of obj with a constant, as obj op constant, satisfies want.

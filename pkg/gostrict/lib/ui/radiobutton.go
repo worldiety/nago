@@ -48,9 +48,10 @@ func (s RadioStateGroup) SetSelectedIndex(idx int32) {
 	b2GroupOf(s).SetSelectedIndex(int(idx))
 }
 
-// Notify triggers the observers of all states of the group.
+// Notify triggers the observers of all states of the group, which Observe got, during its call.
 //
 //gostrict:host
+//gostrict:calls earlier
 func (s RadioStateGroup) Notify() {
 	b2GroupOf(s).Notify()
 }

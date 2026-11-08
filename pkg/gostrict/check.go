@@ -250,6 +250,9 @@ func (c *checker) visitNode(n ast.Node) {
 		c.checkTypeSwitch(n)
 	case *ast.SwitchStmt:
 		c.checkEnumSwitch(n)
+		c.checkEmptySwitch(n)
+	case *ast.IfStmt:
+		c.checkEmptyCheck(n)
 	case *ast.TypeAssertExpr:
 		if n.Type != nil {
 			c.report(n, CodeTypeSwitch, "type assertions are not allowed", "an assertion fails at runtime, if the value has another type", "use a type switch over a sealed interface, which the compiler checks, or declare a method in the interface")

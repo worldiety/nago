@@ -29,7 +29,8 @@ const constDirective = "//gostrict:const"
 // callsDirective tells, when a function of a header package calls the functions, which it takes: //gostrict:calls now
 // during the call, e.g. a builder, which changes a frame with a function, //gostrict:calls later only after the call
 // returned, e.g. the action of a button. The check of recursion follows a call, which calls now, and assumes now
-// without the directive, see [HeaderCallbacks].
+// without the directive, see [HeaderCallbacks]. //gostrict:calls earlier marks a function without function parameters,
+// which calls functions, which it got earlier through another call, see [CallsEarlier].
 const callsDirective = "//gostrict:calls"
 
 // zeroDirective marks a function of a header package, whose last result is a bool or an error, which returns the zero
@@ -47,6 +48,10 @@ const (
 	// CallsLater calls them only after the call returned, e.g. the host calls the action of ui.PrimaryButton, when
 	// the user clicks the button.
 	CallsLater CallTime = "later"
+	// CallsEarlier marks a function without function parameters, which calls during its call functions, which another
+	// function of a header got earlier, e.g. ui.RadioStateGroup.Notify, which calls the observers of Observe
+	// (wokoda R-SCRIPT-GS-HEADER-LISTS). A fact of GS033 dies at each of its calls.
+	CallsEarlier CallTime = "earlier"
 )
 
 // funcSrc is the declaration of a function or method.
