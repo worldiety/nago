@@ -179,7 +179,7 @@ func (c *checker) checkBinding(n ast.Node, lhs, rhs []ast.Expr, define bool) {
 		if define && isID && c.info.Defs[id] != nil {
 			continue
 		}
-		c.reportRebind(n, lhs[j], p, as, g, okBlank || errBlank)
+		c.reportRebind(n, lhs, lhs[j], p, as, g, okBlank || errBlank, define)
 		return
 	}
 
@@ -549,22 +549,73 @@ func (c *checker) checkEmptySwitch(n *ast.SwitchStmt) {
 }
 
 // reportRebind reports a paired value, which is bound with = or by a redeclaration to an existing variable.
-func (c *checker) reportRebind(n ast.Node, target ast.Expr, p pairing, as *ast.AssignStmt, g *getCall, blank bool) {
+func (c *checker) reportRebind(n ast.Node, lhs []ast.Expr, target ast.Expr, p pairing, as *ast.AssignStmt, g *getCall, blank, define bool) {
 	what := "ok"
 	if p.errIdx >= 0 && p.okIdx < 0 {
 		what = "err"
 	}
 	t := types.ExprString(target)
-	fix := "write if t, " + what + " := " + types.ExprString(p.call) + "; " + what + " { " + t + " = t }"
-	if p.errIdx >= 0 && p.okIdx < 0 {
-		fix = "write if t, err := " + types.ExprString(p.call) + "; err == nil { " + t + " = t }, or pass the error on"
-	}
+	fix := c.rebindForm(lhs, p, define)
+	text, fixed := "", false
 	if blank {
-		if text, ok := c.optionalFix(as, p, g); ok {
-			fix = "write " + text + ", which takes the zero value, if " + calleeText(p.call) + " fails, or " + fix
-		}
+		text, fixed = c.optionalFix(as, p, g)
+	}
+	if fixed {
+		fix = "write " + text + ", which takes the zero value, if " + calleeText(p.call) + " fails, or " + fix
+	} else {
+		fix += "; " + c.defaultHint(p.call, g, p.errIdx >= 0)
 	}
 	c.report(n, CodeGuard, "bind "+t+" with := to a new variable", "the result of "+calleeText(p.call)+" may be invalid, and the checker tracks the check of "+what+" only for a new variable", fix)
+}
+
+// rebindForm is the way out of a binding of paired values with = or to existing variables: new variables t, t2, … for
+// the values, which are assigned to the targets, where the partner proves them. A partner, which the binding sets, is
+// set as well, e.g. if t, ok := r.Number("revenue"); ok { out.Revenue, out.HasRevenue = t, true } for
+// out.Revenue, out.HasRevenue = r.Number("revenue"), so that the way out keeps the companion field.
+func (c *checker) rebindForm(lhs []ast.Expr, p pairing, define bool) string {
+	call := types.ExprString(p.call)
+	var temps, targets []string
+	for j := range p.values {
+		if isBlank(lhs[j]) {
+			continue
+		}
+		tmp := "t"
+		if len(temps) > 0 {
+			tmp += strconv.Itoa(len(temps) + 1)
+		}
+		temps = append(temps, tmp)
+		targets = append(targets, types.ExprString(lhs[j]))
+	}
+	vals := strings.Join(temps, ", ")
+	assign := strings.Join(targets, ", ") + " = " + vals
+	newIdent := func(e ast.Expr) bool {
+		id, ok := ast.Unparen(e).(*ast.Ident)
+		return ok && define && c.info.Defs[id] != nil
+	}
+	switch {
+	case p.okIdx >= 0 && p.errIdx >= 0:
+		return "write " + vals + ", ok, err := " + call + ", check both with if err != nil || !ok { return ... } and then " + assign
+	case p.okIdx >= 0:
+		okE := lhs[p.okIdx]
+		switch {
+		case isBlank(okE):
+			return "write if " + vals + ", ok := " + call + "; ok { " + assign + " }"
+		case newIdent(okE):
+			ok := types.ExprString(okE)
+			return "write " + vals + ", " + ok + " := " + call + " and if " + ok + " { " + assign + " }"
+		}
+		return "write if " + vals + ", ok := " + call + "; ok { " + strings.Join(targets, ", ") + ", " + types.ExprString(okE) + " = " + vals + ", true }"
+	}
+	errE := lhs[p.errIdx]
+	_, isIdent := ast.Unparen(errE).(*ast.Ident)
+	switch {
+	case isBlank(errE):
+		return "write if " + vals + ", err := " + call + "; err == nil { " + assign + " }, or pass the error on"
+	case isIdent:
+		err := types.ExprString(errE)
+		return "write " + vals + ", " + err + " := " + call + ", pass the error on with if " + err + " != nil { return ..., " + err + " } and then " + assign
+	}
+	return "write " + vals + ", err := " + call + " and " + types.ExprString(errE) + " = err, then if err == nil { " + assign + " }"
 }
 
 // reportBlank reports a paired value, whose ok or error is _.
