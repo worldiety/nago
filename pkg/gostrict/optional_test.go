@@ -69,7 +69,8 @@ func optProgram(decls string) string {
 	var imp strings.Builder
 	for _, p := range []string{"errors", "go.wdy.de/nago/pkg/gostrict/std/big", "go.wdy.de/nago/pkg/gostrict/std/decimal",
 		"go.wdy.de/nago/pkg/gostrict/std/dict", "go.wdy.de/nago/pkg/gostrict/std/list", "go.wdy.de/nago/pkg/gostrict/std/msg",
-		"go.wdy.de/nago/pkg/gostrict/std/opt", "go.wdy.de/nago/pkg/gostrict/std/text", "llm.local/s/lib"} {
+		"go.wdy.de/nago/pkg/gostrict/std/opt", "go.wdy.de/nago/pkg/gostrict/std/text", "go.wdy.de/nago/pkg/gostrict/lib/ui",
+		"llm.local/s/lib", "llm.local/s/h"} {
 		name := p[strings.LastIndex(p, "/")+1:]
 		if regexp.MustCompile(`\b` + name + `\.`).MatchString(decls) {
 			imp.WriteString("\t\"" + p + "\"\n")
@@ -81,9 +82,46 @@ func optProgram(decls string) string {
 	return "package s\n\nimport (\n" + imp.String() + ")\n" + decls + "\n"
 }
 
-// optModule is the module of a program with its library.
+// optHeader is an invented header of the module, trusted only for the rows, which import it: Plain calls its
+// argument without a directive, Now with //gostrict:calls now, Later keeps it with //gostrict:calls later, Two calls
+// both of its arguments with //gostrict:calls now.
+const optHeader = `// Package h is an invented header of the acceptance test of R-SCRIPT-GS-OPTIONAL.
+//
+//gostrict:header
+package h
+
+// Plain calls f during the call, without a directive.
+//
+//gostrict:host
+func Plain(f func(x int32) int32) int32 { return f(1) }
+
+// Now calls f during the call.
+//
+//gostrict:host
+//gostrict:calls now
+func Now(f func(x int32) int32) int32 { return f(1) }
+
+// Later keeps f and calls it after the run.
+//
+//gostrict:host
+//gostrict:calls later
+func Later(f func(x int32) int32) int32 { return 0 }
+
+// Two calls f and g during the call.
+//
+//gostrict:host
+//gostrict:calls now
+func Two(f, g func(x int32) int32) int32 { return f(1) + g(2) }
+`
+
+// optModule is the module of a program with its library and, if the program imports it, the invented header.
 func optModule(src string) gostrict.Module {
-	return gostrict.Module{Path: "llm.local/s", FS: fstest.MapFS{"s.go": {Data: []byte(src)}, "lib/lib.go": {Data: []byte(optLib)}}}
+	fs := fstest.MapFS{"s.go": {Data: []byte(src)}, "lib/lib.go": {Data: []byte(optLib)}}
+	if !strings.Contains(src, `"llm.local/s/h"`) {
+		return gostrict.Module{Path: "llm.local/s", FS: fs}
+	}
+	fs["h/h.go"] = &fstest.MapFile{Data: []byte(optHeader)}
+	return gostrict.Module{Path: "llm.local/s", FS: fs, Trusted: true}
 }
 
 func optCheck(t *testing.T, src string) gostrict.Diagnostics {
@@ -784,6 +822,90 @@ func Run(n int32) int32 {
 func Run(n int32) int32 {
 	y := opt.OrZeroErr(items(n)) // at
 	return y.Len()
+}`},
+
+		// the empty check (Answer „Ablehnen“, L-N11-8)
+		{name: "empty check: if _, err := f(); err != nil {}", discard: true, src: funcs + `
+func Run(n int32) int32 {
+	if _, err := save(n); err != nil {} // at
+	return n
+}`},
+		{name: "empty check: if err == nil {}", discard: true, src: funcs + `
+func Run(n int32) int32 {
+	_, err := save(n)
+	if err == nil {} // at
+	return n
+}`},
+		{name: "empty check: a body with only a comment", discard: true, src: funcs + `
+func Run(n int32) int32 {
+	if _, err := save(n); err != nil { // at
+		// the error does not matter
+	} // at
+	return n
+}`},
+		{name: "empty check: switch { case err != nil: }", discard: true, src: funcs + `
+func Run(n int32) int32 {
+	_, err := save(n)
+	switch { // at
+	case err != nil: // at
+	} // at
+	return n
+}`},
+		{name: "empty check: _ = err", discard: true, src: funcs + `
+func Run(n int32) int32 {
+	_, err := save(n)
+	_ = err // at
+	return n
+}`},
+		{name: "empty check: var _ = err", discard: true, src: funcs + `
+func Run(n int32) int32 {
+	_, err := save(n)
+	var _ = err // at
+	return n
+}`},
+		{name: "empty check: _ = error(err)", discard: true, src: funcs + `
+func Run(n int32) int32 {
+	_, err := save(n)
+	_ = error(err) // at
+	return n
+}`},
+		{name: "counter row: if err == nil { … } without else", src: funcs + `
+func Run(n int32) int32 {
+	s := int32(0)
+	_, err := save(n)
+	if err == nil {
+		s = 1
+	}
+	return s
+}`},
+		{name: "counter row: if err == nil { … } else {}", src: funcs + `
+func Run(n int32) int32 {
+	s := int32(0)
+	_, err := save(n)
+	if err == nil {
+		s = 1
+	} else {
+	}
+	return s
+}`},
+		{name: "counter row: switch { case err != nil: default: … }", src: funcs + `
+func Run(n int32) int32 {
+	s := int32(0)
+	_, err := save(n)
+	switch {
+	case err != nil:
+	default:
+		s = 1
+	}
+	return s
+}`},
+		{name: "counter row: if err != nil { out = err.Error() }", src: funcs + `
+func Run(n int32) string {
+	out := ""
+	if _, err := save(n); err != nil {
+		out = err.Error()
+	}
+	return out
 }`},
 
 		// an error, which is reassigned before each reading
