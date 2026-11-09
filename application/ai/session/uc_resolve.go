@@ -46,20 +46,21 @@ func NewResolve(locks *locker, repo Repository, ledger *usageLedger) Resolve {
 			system = opts.Run.System
 		}
 
+		history, conversation := session.forModel()
 		base := completion.Options{
 			Model:       session.Model,
 			System:      system,
-			Messages:    session.Messages,
+			Messages:    history,
 			MaxTokens:   opts.Run.MaxTokens,
 			Temperature: opts.Run.Temperature,
 			ServerTools: opts.Run.ServerTools,
 		}
 
-		out, rerr := completion.Continue(withSession(repo, subject, session), opts.Run.Completions, runOptions(base, opts.Run), *session.Pending, opts.Resolutions)
+		out, rerr := completion.Continue(withSession(repo, subject, session), opts.Run.Completions, runOptions(base, conversation, opts.Run), *session.Pending, opts.Resolutions)
 		if rerr != nil {
 			// A mismatching decision changed nothing; everything else may already have executed an approved
 			// call, which must be kept.
-			return Session{}, persistFailure(repo, ledger, session, session.Model, out, rerr)
+			return persistFailure(repo, ledger, session, session.Model, out, rerr)
 		}
 
 		return saveOutcome(repo, ledger, session, session.Model, out)
@@ -84,6 +85,12 @@ func NewDismiss(locks *locker, repo Repository, ledger *usageLedger, tasks *comp
 		history, err := completion.Dismiss(session.Messages, *session.Pending)
 		if err != nil {
 			return Session{}, err
+		}
+
+		if len(session.Compacted) > 0 {
+			if session.Compacted, err = completion.Dismiss(session.Compacted, *session.Pending); err != nil {
+				return Session{}, err
+			}
 		}
 
 		session.Messages = history

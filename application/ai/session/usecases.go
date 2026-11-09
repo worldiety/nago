@@ -14,6 +14,9 @@
 // ANY provider that exposes [completion.Completions] - the caller simply passes the desired Completions to
 // [Append] at runtime.
 //
+// A compaction shortens only what the model reads ([Session.Compacted]): the conversation of a session
+// ([Session.Messages]) stays complete, and everything which shows or reads a conversation takes that one.
+//
 // The executable tools of an agentic run are intentionally NOT persisted (Go functions are not
 // serializable). Instead they are supplied per call via [AppendOptions.Tools]; when present, [Append] drives
 // the agentic loop through [completion.Run], otherwise it performs a single [completion.Completions.Complete]
@@ -73,9 +76,17 @@ type Session struct {
 	// grouping by feature area. Optional.
 	Tags []string `json:"tags,omitempty"`
 
-	// Messages is the full, ordered, lossless history including tool calls and tool results. It is exactly
-	// the slice that would be fed back into [completion.Completions.Complete] to continue the session.
+	// Messages is the whole conversation: the ordered, lossless history including tool calls, tool results and
+	// media. A compaction does not shorten it, so everything which shows or reads a conversation takes this list.
+	// Without a compaction, it is exactly the slice that is fed back into [completion.Completions.Complete] to
+	// continue the session, see Compacted. Only a conversation compacted by a former version and a child session
+	// (see ParentID), which summarizes in its own transcript, carry a summary in it.
 	Messages []completion.Message `json:"messages,omitempty"`
+
+	// Compacted is the version of Messages the model reads, once a compaction shortened it. It carries a summary
+	// or a truncation of the older turns and ends like Messages, because everything [Append], [Resolve] and
+	// [Dismiss] add goes to both. Empty without a compaction; the model then reads Messages.
+	Compacted []completion.Message `json:"compacted,omitempty"`
 
 	// Usage accumulates the token usage reported across all turns of the session: every completion of every
 	// run, not only the last turn of each.
@@ -99,9 +110,15 @@ type Session struct {
 	// [Resolve] or [Dismiss]. A session with Pending rejects [Append].
 	Pending *completion.Continuation `json:"pending,omitempty"`
 
-	// PendingRevision increases with every new suspension. [Resolve] and [Dismiss] must name it, so a stale or
-	// duplicate answer (e.g. from a second tab) never lands on a newer question.
+	// PendingRevision increases with every new suspension and every new TurnLimited. [Resolve], [Dismiss] and
+	// [AppendOptions.ContinueRevision] must name it, so a stale or duplicate answer (e.g. from a second tab) never
+	// lands on a newer question.
 	PendingRevision int `json:"pendingRevision,omitempty"`
+
+	// TurnLimited is set after the last run ended at its turn limit (see [completion.TurnLimitExceeded]), so that
+	// a user interface offers to continue it, also on another page or when the conversation is opened again. It
+	// ends with the first answer of the model in the next run.
+	TurnLimited bool `json:"turnLimited,omitempty"`
 
 	CreatedAt xtime.UnixMilliseconds `json:"createdAt,omitempty"`
 	CreatedBy user.ID                `json:"createdBy,omitempty"`
@@ -140,6 +157,27 @@ func (s Session) Preview() string {
 	}
 
 	return "Session " + string(s.ID)
+}
+
+// forModel returns the history the next request is built on and the whole conversation, which is nil as long as the
+// history is the whole conversation.
+func (s Session) forModel() (history, conversation []completion.Message) {
+	if len(s.Compacted) == 0 {
+		return s.Messages, nil
+	}
+
+	return s.Compacted, s.Messages
+}
+
+// keep takes over the lists of a run. A child session keeps the shortened version only: nobody continues a sub-agent,
+// and its transcript is not what the user reads as the conversation.
+func (s *Session) keep(out completion.Outcome) {
+	if out.Conversation == nil || s.ParentID != "" {
+		s.Messages, s.Compacted = out.History, nil
+		return
+	}
+
+	s.Messages, s.Compacted = out.Conversation, out.History
 }
 
 // Repository persists [Session] aggregates locally.
@@ -227,6 +265,16 @@ type AppendOptions struct {
 	// Optional.
 	MaxTurns int
 
+	// MaxCompactions bounds the compactions of the agentic loop (see [completion.RunOptions.MaxCompactions]).
+	// Ignored without tools. Optional.
+	MaxCompactions int
+
+	// ContinueRevision makes this turn the continuation of a run which ended at its turn limit, see
+	// [completion.TurnLimitPrompt]. It must name [Session.PendingRevision] of a session with [Session.TurnLimited],
+	// otherwise [Append] fails with [ErrNoTurnLimit] without any run, so a second click or a second tab never
+	// starts a second run. Zero appends unconditionally. Optional.
+	ContinueRevision int
+
 	// OnBeforeToolCall is forwarded to [completion.Run] and may refuse individual tool calls, e.g. to ask
 	// the user for confirmation before a mutating tool runs. Ignored without tools. Optional.
 	OnBeforeToolCall completion.BeforeToolCallFunc
@@ -272,6 +320,10 @@ var ErrNoPendingDecision = errors.New("session has no matching pending decision"
 // ErrPendingDecision is returned by [Append] while the session waits on a user decision.
 var ErrPendingDecision = errors.New("session waits on a pending decision")
 
+// ErrNoTurnLimit is returned by [Append] when [AppendOptions.ContinueRevision] does not name a run ended at its turn
+// limit (any more), e.g. because it was already continued elsewhere.
+var ErrNoTurnLimit = errors.New("session has no matching run ended at its turn limit")
+
 // Create persists a new, optionally pre-seeded [Session].
 type Create func(subject auth.Subject, opts CreateOptions) (Session, error)
 
@@ -300,10 +352,13 @@ type FindAllOptions struct {
 type FindAll func(subject auth.Subject, opts FindAllOptions) iter.Seq2[Session, error]
 
 // Append adds a user turn, runs the completion (optionally agentic) against the supplied provider capability,
-// appends the produced messages to the history and persists the updated session, which it returns.
+// appends the produced messages to the history and persists the updated session, which it returns. A run which
+// failed but kept what it already did returns the persisted session together with its error; the session is zero
+// if nothing changed.
 type Append func(subject auth.Subject, id ID, opts AppendOptions) (Session, error)
 
-// Resolve answers the pending decisions of a suspended run and continues it. The run may suspend again.
+// Resolve answers the pending decisions of a suspended run and continues it. The run may suspend again. A failed
+// run returns like [Append].
 type Resolve func(subject auth.Subject, id ID, opts ResolveOptions) (Session, error)
 
 // Dismiss closes the pending decisions without an answer and without asking the model, e.g. when the user moves
