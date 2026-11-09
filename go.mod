@@ -14,7 +14,7 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/gosimple/slug v1.15.0
 	github.com/joho/godotenv v1.5.1
-	github.com/klauspost/compress v1.20.1
+	github.com/klauspost/compress v1.20.4
 	github.com/laher/mergefs v0.1.1
 	github.com/landlock-lsm/go-landlock v0.10.1
 	github.com/rogpeppe/go-internal v1.16.0
