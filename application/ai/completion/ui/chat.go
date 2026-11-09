@@ -110,8 +110,13 @@ type ChatOptions struct {
 	// only sessions carrying all of these tags. Ignored when History is false. Optional.
 	Tags []string
 
-	// MaxTurns bounds the agentic loop per submit (see [completion.RunOptions.MaxTurns]). Optional.
+	// MaxTurns bounds the agentic loop per submit (see [completion.RunOptions.MaxTurns]). Optional. When a run
+	// reaches it, the chat keeps what was done and offers to continue with a button instead of reporting a failure.
 	MaxTurns int
+
+	// MaxCompactions bounds how often the agentic loop may shorten the history per submit (see
+	// [completion.RunOptions.MaxCompactions]). Optional.
+	MaxCompactions int
 
 	// Height overrides the height of the scrollable conversation area of an embedded chat. Optional.
 	Height ui.Length
@@ -287,6 +292,16 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		}
 		return nil
 	})
+	// compacted is what the model reads of the conversation of a chat without History, once a compaction shortened
+	// it; the session keeps that with History. history always is the whole conversation.
+	compacted := core.AutoState[[]completion.Message](wnd)
+	// turnLimit mirrors [session.Session.TurnLimited]: the last run ended at its turn limit and can be continued
+	turnLimit := core.AutoState[bool](wnd).Init(func() bool {
+		if r := resumed.Get(); r != nil {
+			return r.TurnLimited
+		}
+		return false
+	})
 	// the own state is always allocated, so the order of the automatic states does not depend on the options
 	prompt := core.AutoState[string](wnd)
 	if opts.Draft != nil {
@@ -408,6 +423,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 	applySession := func(s session.Session) {
 		sessionID.Set(s.ID)
 		history.Set(s.Messages)
+		turnLimit.Set(s.TurnLimited)
 		pending.Set(s.Pending)
 		pendingRev.Set(s.PendingRevision)
 	}
@@ -547,6 +563,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			MaxTokens:       cfg.maxTokens,
 			ServerTools:     opts.ServerTools,
 			MaxTurns:        opts.MaxTurns,
+			MaxCompactions:  opts.MaxCompactions,
 			OnProgress:      run.onProgress,
 			FileUploader:    uploaderFor(sid),
 			ConfirmMutating: cfg.confirm,
@@ -556,7 +573,16 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		}
 	}
 
-	runOptions := func(cfg turnConfig, messages []completion.Message, run runEnv, tools []completion.Tool, beforeFinish func(context.Context) string) completion.RunOptions {
+	// runOptions continues a chat without History: short is what the model reads of the conversation whole, nil as
+	// long as that is the whole conversation, and turn is what comes new.
+	runOptions := func(cfg turnConfig, short, whole []completion.Message, turn []completion.Message, run runEnv, tools []completion.Tool, beforeFinish func(context.Context) string) completion.RunOptions {
+		messages := slices.Concat(whole, turn)
+		var conversation []completion.Message
+		if short != nil {
+			conversation = messages
+			messages = slices.Concat(short, turn)
+		}
+
 		return completion.RunOptions{
 			Options: completion.Options{
 				Model:       cfg.model,
@@ -565,8 +591,10 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 				Messages:    messages,
 				ServerTools: opts.ServerTools,
 			},
+			Conversation:    conversation,
 			Tools:           tools,
 			MaxTurns:        opts.MaxTurns,
+			MaxCompactions:  opts.MaxCompactions,
 			OnProgress:      run.onProgress,
 			FileUploader:    uploaderFor(""), // a chat without History has no session
 			ConfirmMutating: cfg.confirm,
@@ -578,12 +606,18 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 
 	// turnOutcome is what a background run hands back to the UI.
 	type turnOutcome struct {
-		history  []completion.Message
-		pending  *completion.Continuation
-		revision int
-		usage    completion.Usage
+		// history is the whole conversation, compacted what the model reads of it, without History only
+		history   []completion.Message
+		compacted []completion.Message
+		pending   *completion.Continuation
+		revision  int
+		usage     completion.Usage
 		// progressed tells a failed run apart from one that changed nothing (roll back the view then).
 		progressed bool
+		// limited tells that the run ended at its turn limit
+		limited bool
+		// answered tells that the model has answered in this run, which ends the offer to continue an earlier one
+		answered bool
 	}
 
 	// cancelTasks cancels the background tasks of the conversation of key which are still running, once a run
@@ -601,7 +635,9 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 	// run can be stopped via cancelRun. key identifies the background tasks of the conversation.
 	execute := func(key string, optimistic []completion.Message, rollback func(), work func(run runEnv) (turnOutcome, error)) {
 		prevHistory := history.Get()
+		prevLimited := turnLimit.Get()
 		history.Set(optimistic)
+		turnLimit.Set(false)
 		busy.Set(true)
 		status.Set(thinkingLabel(0))
 
@@ -721,10 +757,12 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 				busy.Set(false)
 				status.Set("")
 				cancelRun.Set(nil)
+				turnLimit.Set(out.limited || (prevLimited && !out.answered))
 				if err != nil {
 					if out.progressed {
 						// Keep what already happened (tools with side effects) visible.
 						history.Set(out.history)
+						compacted.Set(out.compacted)
 						pending.Set(out.pending)
 						pendingRev.Set(out.revision)
 					} else {
@@ -740,6 +778,11 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 							Message: "Die KI wurde angehalten. Was bis dahin erledigt war, bleibt erhalten.",
 							Intent:  alert.IntentWarning,
 						})
+						return
+					}
+
+					// no failure: the conversation offers to continue, see turnLimitView
+					if errors.Is(err, completion.TurnLimitExceeded) {
 						return
 					}
 
@@ -764,6 +807,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 					slog.Int("sub_output_tokens", sub.OutputTokens),
 				)
 				history.Set(out.history)
+				compacted.Set(out.compacted)
 				pending.Set(out.pending)
 				pendingRev.Set(out.revision)
 			})
@@ -777,6 +821,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 					status.Set("")
 					cancelRun.Set(nil)
 					history.Set(prevHistory)
+					turnLimit.Set(prevLimited)
 					if rollback != nil {
 						rollback()
 					}
@@ -786,20 +831,25 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		})
 	}
 
-	// fromSession converts a persisted session into a turn outcome; on failure it reloads what the failed
-	// run persisted.
-	fromSession := func(subject auth.Subject, sid session.ID, s session.Session, err error, before int) (turnOutcome, error) {
-		if err != nil {
-			if reloaded, ok := reloadSession(subject, opts.Sessions, sid); ok && len(reloaded.Messages) > before {
-				return turnOutcome{history: reloaded.Messages, pending: reloaded.Pending, revision: reloaded.PendingRevision, progressed: true}, err
-			}
+	// fromSession converts what a run persisted into a turn outcome. A failed run returns the zero session if it
+	// changed nothing; it does not need to be told from the length of its history, because a compaction may change
+	// a conversation without adding anything.
+	fromSession := func(s session.Session, err error) (turnOutcome, error) {
+		if err != nil && s.ID == "" {
 			return turnOutcome{}, err
 		}
-		return turnOutcome{history: s.Messages, pending: s.Pending, revision: s.PendingRevision, usage: s.Usage}, nil
+		return turnOutcome{history: s.Messages, pending: s.Pending, revision: s.PendingRevision, usage: s.Usage, progressed: true, limited: s.TurnLimited, answered: true}, err
 	}
 
+	// fromOutcome converts the outcome of a chat without History, which nothing persists.
 	fromOutcome := func(out completion.Outcome, err error) (turnOutcome, error) {
-		return turnOutcome{history: out.History, pending: out.Suspended, usage: out.Usage, progressed: out.Progressed}, err
+		res := turnOutcome{history: out.History, pending: out.Suspended, usage: out.Usage, progressed: out.Progressed, answered: out.Turns > 0}
+		res.limited = errors.Is(err, completion.TurnLimitExceeded)
+		res.progressed = res.progressed || res.limited
+		if out.Conversation != nil {
+			res.history, res.compacted = out.Conversation, out.History
+		}
+		return res, err
 	}
 
 	submit := func() {
@@ -834,6 +884,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		}
 
 		prevHistory := history.Get()
+		short := compacted.Get()
 		// Optimistic user bubble: the typed text plus a short hint per attached file.
 		optimisticText := question
 		for _, sf := range stagedFiles {
@@ -885,13 +936,13 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 				if err == nil {
 					autoTitle(subject, comps, opts.Sessions, updated, title)
 				}
-				return fromSession(subject, sid, updated, err, len(prevHistory))
+				return fromSession(updated, err)
 			}
 
 			// Transient chat: run the agentic loop directly over the history plus the real
 			// (attachment-aware) user turn, without persisting anything.
-			messages := append(slices.Clone(prevHistory), completion.Message{Role: completion.User, Content: input})
-			return fromOutcome(completion.Start(subject, comps, runOptions(cfg, messages, run, tools, beforeFinish)))
+			turn := []completion.Message{{Role: completion.User, Content: input}}
+			return fromOutcome(completion.Start(subject, comps, runOptions(cfg, short, prevHistory, turn, run, tools, beforeFinish)))
 		})
 	}
 
@@ -904,6 +955,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		sid := sessionID.Get()
 		rev := pendingRev.Get()
 		prevHistory := history.Get()
+		short := compacted.Get()
 
 		optimistic := slices.Clone(prevHistory)
 		if answers := optimisticAnswers(cont, resolutions); len(answers.Content) > 0 {
@@ -933,10 +985,60 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 				if err == nil {
 					autoTitle(subject, comps, opts.Sessions, updated, title)
 				}
-				return fromSession(subject, sid, updated, err, len(prevHistory))
+				return fromSession(updated, err)
 			}
 
-			return fromOutcome(completion.Continue(subject, comps, runOptions(cfg, prevHistory, run, tools, beforeFinish), *cont, resolutions))
+			return fromOutcome(completion.Continue(subject, comps, runOptions(cfg, short, prevHistory, nil, run, tools, beforeFinish), *cont, resolutions))
+		})
+	}
+
+	// continueRun starts a new run on a conversation whose last run ended at its turn limit, without any input of
+	// the user. At most one run results: a second click finds the chat busy, a second tab a run it attaches to
+	// or a turn limit which is not there any more. A run which fails before the model answers keeps the offer.
+	continueRun := func() {
+		if !turnLimit.Get() || busy.Get() || pending.Get() != nil {
+			return
+		}
+
+		sid := sessionID.Get()
+		if _, running := activeRuns.Get(sid); opts.History && running {
+			// the next rendering attaches to it
+			turnLimit.Set(false)
+			return
+		}
+
+		cfg := resolveTurn()
+		rev := pendingRev.Get()
+		prevHistory := history.Get()
+		short := compacted.Get()
+		input := []completion.Content{completion.Text{Text: completion.TurnLimitPrompt}}
+		notice.Set(turnNotice{})
+
+		key := taskKey(sid)
+		execute(key, slices.Clone(prevHistory), nil, func(run runEnv) (turnOutcome, error) {
+			subject := run.subject
+			tools, beforeFinish, release := runTools(cfg, sid, key, run, true)
+			defer release()
+
+			if opts.History {
+				ao := appendOptions(cfg, sid, run, tools, beforeFinish)
+				ao.Input = input
+				ao.ContinueRevision = rev
+				updated, err := opts.Sessions.Append(subject, sid, ao)
+				if errors.Is(err, session.ErrNoTurnLimit) {
+					// continued elsewhere, which is no failure: this chat shows the conversation as it is now
+					if reloaded, ok := reloadSession(subject, opts.Sessions, sid); ok {
+						return fromSession(reloaded, nil)
+					}
+				}
+				if err == nil {
+					autoTitle(subject, comps, opts.Sessions, updated, title)
+				}
+				return fromSession(updated, err)
+			}
+
+			turn := []completion.Message{{Role: completion.User, Content: input}}
+			return fromOutcome(completion.Start(subject, comps, runOptions(cfg, short, prevHistory, turn, run, tools, beforeFinish)))
 		})
 	}
 
@@ -951,6 +1053,14 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			if err != nil {
 				alert.ShowBannerError(wnd, err)
 				return
+			}
+			if short := compacted.Get(); short != nil {
+				dismissedShort, err := completion.Dismiss(short, *cont)
+				if err != nil {
+					alert.ShowBannerError(wnd, err)
+					return
+				}
+				compacted.Set(dismissedShort)
 			}
 			history.Set(dismissed)
 			pending.Set(nil)
@@ -1012,6 +1122,9 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			childID.Set(id)
 			showChild.Set(true)
 		}
+	}
+	if turnLimit.Get() && !busy.Get() {
+		hv.trailing = turnLimitView(continueRun, prompt.ID())
 	}
 
 	conversation := conversationView(wnd, history.Get(),
@@ -1140,6 +1253,20 @@ func withToolResult(history []completion.Message, res completion.ToolResult) []c
 	}
 
 	return append(history, completion.Message{Role: completion.User, Content: []completion.Content{res}})
+}
+
+// turnLimitView tells below the last step, that a run reached its turn limit, and offers to continue it. It stands in
+// the conversation, because this is no failure of the run.
+func turnLimitView(continueRun func(), promptID string) core.View {
+	return ui.VStack(
+		ui.Text("Die Höchstzahl der Schritte ist erreicht. Was bis hierhin erledigt wurde, bleibt erhalten.").Font(ui.BodySmall),
+		ui.SecondaryButton(continueRun).PreIcon(icons.Play).Title("Fortsetzen").Key("continue", promptID),
+	).Gap(ui.L8).
+		Alignment(ui.Leading).
+		FullWidth().
+		BackgroundColor(ui.M3).
+		Border(ui.Border{}.Radius(ui.L8)).
+		Padding(ui.Padding{}.All(ui.L8))
 }
 
 // turnNotice is the reason, why a turn has been refused, see noticeView.

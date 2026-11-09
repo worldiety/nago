@@ -61,6 +61,10 @@ type AssistantOptions struct {
 	// MaxTurns bounds the agentic loop per question. Optional.
 	MaxTurns int
 
+	// MaxCompactions bounds how often the agentic loop may shorten the history per question, see
+	// [completion.RunOptions.MaxCompactions]. Optional.
+	MaxCompactions int
+
 	// History persists conversations and offers a restore button. Optional.
 	History bool
 
@@ -258,6 +262,7 @@ func (a *Assistant) ChatOptions(wnd core.Window, opts AssistantOptions) (uicompl
 		Title:              opts.Title,
 		Tags:               opts.Tags,
 		MaxTurns:           opts.MaxTurns,
+		MaxCompactions:     opts.MaxCompactions,
 		History:            opts.History,
 		FileUpload:         opts.FileUpload,
 		UploadHint:         opts.UploadHint,

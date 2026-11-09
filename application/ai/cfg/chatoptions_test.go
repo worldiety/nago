@@ -36,8 +36,10 @@ func TestChatOptions(t *testing.T) {
 		mgmt = std.Must(Enable(c))
 		c.RootView("chat", func(wnd core.Window) core.View {
 			opts, optsErr = mgmt.Assistant.ChatOptions(wnd, AssistantOptions{
-				Title:  "Hilfe",
-				Agents: []uicompletion.Agent{{Name: "a"}, {Name: "pinned", Model: "own", MaxTokens: 7}},
+				Title:          "Hilfe",
+				MaxTurns:       11,
+				MaxCompactions: 13,
+				Agents:         []uicompletion.Agent{{Name: "a"}, {Name: "pinned", Model: "own", MaxTokens: 7}},
 			})
 			return ui.Text("chat")
 		})
@@ -86,6 +88,10 @@ func TestChatOptions(t *testing.T) {
 
 	if !opts.ReadOnly || !opts.ConfirmMutations || opts.Title != "Hilfe" || opts.Completions == nil || opts.Provider == nil {
 		t.Fatalf("the operator settings are missing: %+v", opts)
+	}
+
+	if opts.MaxTurns != 11 || opts.MaxCompactions != 13 {
+		t.Fatalf("the limits of a run are missing: %d and %d", opts.MaxTurns, opts.MaxCompactions)
 	}
 
 	if len(opts.ServerTools) != 0 {

@@ -54,6 +54,9 @@ func conversationView(wnd core.Window, history []completion.Message, emptyHint s
 	if len(bubbles) == 0 && emptyHint != "" {
 		bubbles = append(bubbles, ui.Text(emptyHint).Font(ui.BodySmall))
 	}
+	if hv.trailing != nil {
+		bubbles = append(bubbles, hv.trailing)
+	}
 
 	return ui.ScrollView(
 		ui.VStack(
@@ -77,6 +80,9 @@ type historyView struct {
 
 	// toolView, when set, returns the view of a successful call, see [completion.Tool.View].
 	toolView func(call completion.ToolCall, result completion.ToolResult) core.View
+
+	// trailing, when set, is shown below the last step.
+	trailing core.View
 }
 
 // renderHistory turns the stateless message history into chat bubbles. Consecutive tool calls are shown as one

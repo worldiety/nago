@@ -94,6 +94,10 @@ func meaningful(messages []completion.Message) bool {
 	attached := false
 	answered := false
 	for _, msg := range messages {
+		if completion.IsLoopPrompt(msg) {
+			continue
+		}
+
 		for _, c := range msg.Content {
 			switch c := c.(type) {
 			case completion.Text:
@@ -142,6 +146,10 @@ func generateTitle(ctx context.Context, subject auth.Subject, comps completion.C
 func transcript(messages []completion.Message) string {
 	var sb strings.Builder
 	for _, msg := range messages {
+		if completion.IsLoopPrompt(msg) {
+			continue
+		}
+
 		var speaker string
 		switch msg.Role {
 		case completion.User:
