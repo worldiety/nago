@@ -40,6 +40,7 @@ type enumDict struct {
 	byStr  map[string]uint32
 	byID   []string
 	endOff int64
+	gone   bool // the column was dropped; a later file of that name belongs to a new column
 }
 
 func openEnumDict(dir string, pool *ndb.FilePool) (*enumDict, error) {
@@ -105,6 +106,9 @@ func (d *enumDict) intern(s string) (uint32, error) {
 
 	d.mu.Lock()
 	defer d.mu.Unlock()
+	if d.gone {
+		return 0, errColumnGone
+	}
 	if id, ok := d.byStr[s]; ok {
 		return id, nil
 	}
@@ -121,6 +125,14 @@ func (d *enumDict) intern(s string) (uint32, error) {
 	d.byStr[s] = id
 	d.endOff += int64(len(frame))
 	return id, nil
+}
+
+// abandon makes each later intern fail, so that a handle of a dropped column can not write to the dictionary of a new
+// column of the same name.
+func (d *enumDict) abandon() {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.gone = true
 }
 
 // lookup resolves an id to its string. ok is false for unknown ids.

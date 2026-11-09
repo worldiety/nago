@@ -36,6 +36,8 @@ type Column struct {
 
 	mu     sync.Mutex // serializes writers and flush/compaction
 	chunks []chunkInfo
+	// dropped is set under mu, after which this handle fails: its files are gone or belong to a new column of that name.
+	dropped bool
 
 	// app is the monotonic-append fast path (bounded memory, no rewrite).
 	app appender
@@ -162,6 +164,10 @@ func (c *Column) putString(ts int64, s string) error {
 // monotonicity, holding c.mu for the whole operation.
 func (c *Column) putRouted(ts, val int64, str string) error {
 	c.mu.Lock()
+	if c.dropped {
+		c.mu.Unlock()
+		return errColumnGone
+	}
 	if !c.haveCurMax || ts > c.curMax {
 		// append fast path: constant memory, no head, no rewrite.
 		if err := c.app.append(ts, val, str); err != nil {
@@ -237,6 +243,69 @@ func (c *Column) DeleteRange(min, max int64) error {
 	}
 	c.enforceHeadBound()
 	return nil
+}
+
+// DropBefore removes every chunk file whose newest point is older than ts and
+// returns how many. It is the cheap way of a retention, because it only reads the
+// names of the files and never opens one: a chunk is only ever removed as a
+// whole, so a chunk with any point at or after ts stays completely. That includes
+// the open pending chunk and its points in memory, which go only when all of them
+// are older than ts.
+//
+// Points in the head (out-of-order writes and overwrites not yet folded into a
+// chunk) stay until a later flush has moved them to a chunk. Reading and appending
+// behave as before afterwards. Safe for concurrent use with writers and readers.
+func (c *Column) DropBefore(ts int64) (removed int, err error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.dropped {
+		return 0, errColumnGone
+	}
+	if pendingRemoved, err := c.app.dropIfBefore(ts); err != nil {
+		return 0, err
+	} else if pendingRemoved {
+		removed++
+	}
+
+	kept := make([]chunkInfo, 0, len(c.chunks))
+	for i, ci := range c.chunks {
+		if ci.maxMillis >= ts {
+			kept = append(kept, ci)
+			continue
+		}
+		c.pool.Evict(ci.path)
+		if err := os.Remove(ci.path); err != nil && !os.IsNotExist(err) {
+			// the chunks from here on are still there, the removed ones must not be read again
+			c.chunks = append(kept, c.chunks[i:]...)
+			return removed, fmt.Errorf("tsdb: remove chunk: %w", err)
+		}
+		removed++
+	}
+	c.chunks = kept
+	return removed, nil
+}
+
+// markDropped makes this handle fail from now on and forgets its open files, whose
+// names a new column may use. Each file in the pool is evicted, because the pool
+// would otherwise hand a new column the descriptor of a deleted file. The caller
+// removes the directory afterwards.
+func (c *Column) markDropped() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.dropped = true
+	c.chunks = nil
+	c.app = appender{c: c}
+	if c.dict != nil {
+		c.dict.abandon()
+	}
+	entries, err := os.ReadDir(c.dir)
+	if err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("tsdb: list column: %w", err)
+	}
+	for _, e := range entries {
+		c.pool.Evict(filepath.Join(c.dir, e.Name()))
+	}
+	return c.head.close()
 }
 
 // enforceHeadBound keeps the in-memory head within the configured hard cap. When
@@ -326,6 +395,9 @@ func (c *Column) mergedRange(min, max int64, fn func(ts []int64, vals []int64, s
 	// reads over immutable files.
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if c.dropped {
+		return errColumnGone
+	}
 	chunks := c.chunksForRead(min, max)
 
 	sc := &c.readScratch
@@ -601,6 +673,9 @@ func (c *Column) emitMerged(min, max int64, chunks []chunkInfo, headEntries []he
 //  2. If the head holds out-of-order corrections, the overlapping chunks are
 //     rewritten to physically apply overwrites/tombstones, then the head resets.
 func (c *Column) flushLocked() error {
+	if c.dropped {
+		return errColumnGone
+	}
 	// Part 1: finalize the monotonic append pending chunk (cheap, no rewrite).
 	if err := c.app.flush(); err != nil {
 		return err

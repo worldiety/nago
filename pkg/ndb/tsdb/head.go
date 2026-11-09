@@ -192,6 +192,9 @@ func (h *head) tombstone(ts int64) error {
 func (h *head) append(kind byte, payload []byte, e headEntry) error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
+	if h.wal == nil {
+		return errColumnGone
+	}
 	rec := make([]byte, headRecHdr+len(payload))
 	rec[0] = kind
 	binary.LittleEndian.PutUint32(rec[1:], uint32(len(payload)))

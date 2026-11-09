@@ -8,6 +8,7 @@
 package tsdb
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -203,6 +204,64 @@ func (db *DB) SeriesColumns() ([]string, error) {
 	}
 	sort.Strings(out)
 	return out, nil
+}
+
+// DropColumn removes the column from the disk and from the open columns. A later
+// call of Column creates it empty again, and a handle of the dropped column only
+// returns errors. A column, which does not exist, is no error.
+func (db *DB) DropColumn(bucket, column string) error {
+	if err := validateName(bucket); err != nil {
+		return err
+	}
+	if err := validateName(column); err != nil {
+		return err
+	}
+	db.createMu.Lock()
+	defer db.createMu.Unlock()
+	if db.closed.Load() {
+		return errClosed
+	}
+	err := db.forget(columnKey(bucket, column))
+	if rmErr := os.RemoveAll(filepath.Join(db.dir, bucket, column)); rmErr != nil {
+		return errors.Join(err, fmt.Errorf("tsdb: remove column: %w", rmErr))
+	}
+	// only an empty bucket goes with its last column; any other error says the same
+	_ = os.Remove(filepath.Join(db.dir, bucket))
+	return err
+}
+
+// DropBucket removes the bucket with all its columns from the disk and from the
+// open columns. See [DB.DropColumn].
+func (db *DB) DropBucket(bucket string) error {
+	if err := validateName(bucket); err != nil {
+		return err
+	}
+	db.createMu.Lock()
+	defer db.createMu.Unlock()
+	if db.closed.Load() {
+		return errClosed
+	}
+	var err error
+	db.columns.Range(func(k, v any) bool {
+		if v.(*Column).bucket == bucket {
+			err = errors.Join(err, db.forget(k.(string)))
+		}
+		return true
+	})
+	if rmErr := os.RemoveAll(filepath.Join(db.dir, bucket)); rmErr != nil {
+		return errors.Join(err, fmt.Errorf("tsdb: remove bucket: %w", rmErr))
+	}
+	return err
+}
+
+// forget removes an open column from the map and makes its handle fail. The caller
+// holds createMu, so that no column of that name is created meanwhile.
+func (db *DB) forget(key string) error {
+	v, ok := db.columns.LoadAndDelete(key)
+	if !ok {
+		return nil
+	}
+	return v.(*Column).markDropped()
 }
 
 // Flush forces a synchronous flush + compaction of the given column, folding

@@ -173,6 +173,25 @@ func (a *appender) flush() error {
 	return a.finalizePending()
 }
 
+// dropIfBefore removes the open pending chunk and the points still in memory, if
+// all of them are older than ts. A pending chunk with a newer point stays
+// untouched, because a chunk is only removed as a whole. Caller holds c.mu.
+func (a *appender) dropIfBefore(ts int64) (bool, error) {
+	if a.pendingPath == "" || a.pendingMax >= ts {
+		return false, nil
+	}
+	a.c.pool.Evict(a.pendingPath)
+	if err := os.Remove(a.pendingPath); err != nil && !os.IsNotExist(err) {
+		return false, fmt.Errorf("tsdb: remove pending chunk: %w", err)
+	}
+	a.pendingPath = ""
+	a.pendingPts = 0
+	a.buf.ts = a.buf.ts[:0]
+	a.buf.vals = a.buf.vals[:0]
+	a.buf.strs = a.buf.strs[:0]
+	return true, nil
+}
+
 // pendingChunk returns a chunkInfo describing the currently open pending chunk
 // file, if any, so the read path can scan the blocks already sealed to it (but
 // not yet finalized). ok is false when there is no pending chunk or it has no

@@ -19,4 +19,5 @@ var (
 	errBadName          = errors.New("tsdb: invalid bucket or column name")
 	errColumnExists     = errors.New("tsdb: column already exists with a different scheme")
 	errUnknownColumn    = errors.New("tsdb: unknown column")
+	errColumnGone       = errors.New("tsdb: column was dropped or closed")
 )
