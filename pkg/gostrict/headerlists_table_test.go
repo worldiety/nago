@@ -54,6 +54,7 @@ func init() {
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.BoolState.Set":                           "c",
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.BoolStateOf":                             "c",
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.Button":                                  "c later",
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.ClipboardSetText":                        "c",
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.ColorState.Get":                          "c",
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.ColorState.Init":                         "c now",
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.ColorState.Observe":                      "c later",

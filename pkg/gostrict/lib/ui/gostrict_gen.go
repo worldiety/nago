@@ -262,6 +262,10 @@ func Host() gostrict.Funcs {
 			r0 := CheckboxField(args[0].(string), args[1].(bool))
 			return []any{r0.ref}
 		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.ClipboardSetText": func(args []any) []any {
+			ClipboardSetText(Window{ref: args[0].(js.Ref)}, args[1].(string))
+			return nil
+		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.CodeEditor": func(args []any) []any {
 			r0 := CodeEditor(args[0].(string))
 			return []any{r0.ref}
