@@ -24,7 +24,7 @@ const GeneratedFile = "gostrict_gen.go"
 // functions of a header package nor construct its handles. A program needs no generated code. The file is excluded
 // from the subset by a build constraint.
 func Generate(prog *Program) ([]byte, error) {
-	g := &generator{pkg: prog.Main, imports: map[string]string{}, helpers: map[string]int{}, fast: map[string]bool{}}
+	g := &generator{pkg: prog.Main, imports: map[string]string{}, helpers: map[string]int{}, fast: map[string]bool{}, decls: funcDecls(prog)}
 	if prog.Main.Kind != KindHeader {
 		return nil, fmt.Errorf("%s is no header package: a program needs no generated code, see native.Reflect, gostrict.Call and gostrict.Router", prog.Main.Path)
 	}
@@ -43,6 +43,7 @@ type generator struct {
 	// fast are the types, whose functions for a fast call are written, see [FastCallback]
 	fast        map[string]bool
 	fastPending []types.Type
+	decls       map[*types.Func]funcSrc
 }
 
 func (g *generator) qual(p *types.Package) string {
@@ -89,6 +90,11 @@ func (g *generator) header() ([]byte, error) {
 	fmt.Fprintf(&body, "// %s implements the functions of this header package natively, e.g. for an engine like goja.\nfunc %s() gostrict.Funcs {\n\treturn gostrict.Funcs{\n", g.name("Host"), g.name("Host"))
 
 	for _, fn := range headerFuncs(p) {
+		if g.decls[fn].calls == CallsConcurrent {
+			// the adapter of a callback calls the instance, which the call runs in, so only the host, which knows the
+			// instance of the end, implements the function, see [Detached]; without it an engine refuses the bundle
+			continue
+		}
 		name := fn.Name()
 		instances, ok := instantiations(fn)
 		if !ok {

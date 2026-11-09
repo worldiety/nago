@@ -202,7 +202,11 @@
 // //gostrict:calls now or //gostrict:calls later tells the check of recursion of the terminating profile, which of both
 // it does: now during the call, e.g. the function of ui.TBox.WithFrame, or later only after the call returned, e.g. the
 // action of a button. A function without the directive counts as now, and [HeaderCallbacks] lists them, so that a test
-// of a host finds one, which misses the directive. The directive //gostrict:zero declares, that a function, whose last
+// of a host finds one, which misses the directive. The directive //gostrict:calls concurrent declares a function, which
+// calls them after it returned on another goroutine, e.g. the end of a request of lib/net. Its function argument
+// is a function literal, whose captured variables never change and hold only values, which can not change, or a function
+// of a package (GS046). The host detaches it with [Detach] and runs it as a call of its own in an instance, which no
+// other call uses, see [Detached]. The directive //gostrict:zero declares, that a function, whose last
 // result is a bool or an error, returns the zero value of each other result, if the bool is false or the error is not
 // nil, e.g. text.ParseInt; the fix of GS033 then replaces x, _ := f() by x := opt.OrZero(f()) or opt.OrZeroErr(f()),
 // which returns the same value. A function with the directive //gostrict:host instead of a binding

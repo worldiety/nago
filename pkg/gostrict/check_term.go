@@ -572,9 +572,9 @@ func (g *recGraph) isUser(fn *types.Func) bool {
 }
 
 // callsNow tells, whether the function of a header package or of the standard library calls its function arguments
-// during the call: unless its directive is //gostrict:calls later.
+// during the call: unless its directive is //gostrict:calls later or concurrent.
 func (g *recGraph) callsNow(fn *types.Func) bool {
-	return g.decls[fn.Origin()].calls != CallsLater
+	return !g.decls[fn.Origin()].calls.afterReturn()
 }
 
 // useHeaderValue notes the function of a header package or of the standard library, which the import group uses as

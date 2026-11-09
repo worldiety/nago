@@ -241,7 +241,7 @@ func recHeaderName(fn *types.Func) string {
 func recUnclassified(cbs []gostrict.HeaderCallback) []string {
 	var res []string
 	for _, cb := range cbs {
-		if cb.Calls != gostrict.CallsNow && cb.Calls != gostrict.CallsLater {
+		if cb.Calls != gostrict.CallsNow && cb.Calls != gostrict.CallsLater && cb.Calls != gostrict.CallsConcurrent {
 			res = append(res, cb.Name)
 		}
 	}
@@ -266,7 +266,7 @@ func TestRecursionHeaderClassified(t *testing.T) {
 			}
 		}
 		if missing := recUnclassified(own); len(missing) > 0 {
-			t.Errorf("%s: functions without //gostrict:calls now or later:\n  %s", path, strings.Join(missing, "\n  "))
+			t.Errorf("%s: functions without //gostrict:calls now, later or concurrent:\n  %s", path, strings.Join(missing, "\n  "))
 		}
 	}
 	want := map[string]bool{}

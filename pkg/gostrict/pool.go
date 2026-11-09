@@ -96,6 +96,35 @@ func (p *Pool) Call(ctx context.Context, name string, args ...any) ([]any, error
 	return p.callIn(ctx, i, name, args)
 }
 
+// CallDetached runs the function as a call of its own in a free instance of the pool or in the instance, which it
+// must run in, see [Detached.Home]. The context of its slot is ctx, see [Slot.Context].
+func (p *Pool) CallDetached(ctx context.Context, d Detached, args ...any) ([]any, error) {
+	if home := d.Home(); home != nil {
+		i := slices.Index(p.all, home)
+		if i < 0 {
+			return nil, errors.New("the function belongs to an instance of another pool")
+		}
+		return p.detachedIn(ctx, i, d, args)
+	}
+
+	var i int
+	select {
+	case i = <-p.free:
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+	defer func() { p.free <- i }()
+	return p.detachedIn(ctx, i, d, args)
+}
+
+func (p *Pool) detachedIn(ctx context.Context, i int, d Detached, args []any) ([]any, error) {
+	p.locks[i].Lock()
+	defer p.locks[i].Unlock()
+	p.slots[i].ctx = ctx
+	defer func() { p.slots[i].ctx = nil }()
+	return d.CallIn(ctx, p.all[i], args...)
+}
+
 func (p *Pool) callIn(ctx context.Context, i int, name string, args []any) ([]any, error) {
 	p.locks[i].Lock()
 	defer p.locks[i].Unlock()

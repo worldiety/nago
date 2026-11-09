@@ -380,6 +380,44 @@ func (cb *callback) Call(args ...any) ([]any, error) {
 	return res, err
 }
 
+var _ gostrict.Detachable = (*callback)(nil)
+
+// Detach returns the function, which stays in its runtime, because a function of JavaScript can not move, see
+// [gostrict.Detached].
+func (cb *callback) Detach() gostrict.Detached {
+	return detached{cb: cb}
+}
+
+type detached struct {
+	cb *callback
+}
+
+// Home returns the instance, which created the function.
+func (d detached) Home() gostrict.Instance {
+	return d.cb.in
+}
+
+// CallIn runs the function in its runtime, whose lock it always waits for: unlike a callback it runs on another
+// goroutine, also during a call of the runtime.
+func (d detached) CallIn(ctx context.Context, target gostrict.Instance, args ...any) ([]any, error) {
+	if target != gostrict.Instance(d.cb.in) {
+		return nil, errors.New("the function belongs to another instance")
+	}
+	r := d.cb.in.rt
+	r.lock()
+	defer r.unlock()
+	var res []any
+	_, err := r.run(ctx, func() (goja.Value, error) {
+		var err error
+		res, err = d.cb.call(args)
+		return nil, err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
 func (cb *callback) call(args []any) ([]any, error) {
 	if err := gostrict.CheckArgs("callback", cb.sig.Params, args); err != nil {
 		return nil, err

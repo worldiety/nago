@@ -419,13 +419,44 @@ type Fn func(args []any) []any
 // its signature, see [Type.Func], e.g. a host function, which renders a table, calls it for each visible cell. A
 // callback is valid as long as its instance. The host calls it on the goroutine, which uses the instance, e.g. the
 // event loop of a window: during a call of the instance, e.g. in the host function itself, or between two calls,
-// e.g. when the window renders the table later.
+// e.g. when the window renders the table later. A function with //gostrict:calls concurrent uses [Detach] instead.
 //
 // A checked program does not fail, but an engine may, e.g. if the instance is closed. Then Call returns the error
 // and the instance returns it once more from its next call, so that the host learns about it, even if a generated
 // adapter, which turns the callback into a Go function, has to drop it and returns zero values.
 type Callback interface {
 	Call(args ...any) ([]any, error)
+}
+
+// Detached is a function of the program, which a function of a header package with //gostrict:calls concurrent has
+// received and which no longer belongs to the call, which created it. It runs as a call of its own, on any goroutine and
+// in an instance, which has no other call at that time. The compiler guarantees, that it shares no memory with the
+// program, see [CodeConcurrent], so a call of it is free of data races, while the program runs further.
+type Detached interface {
+	// Home returns the instance, which must run the function, or nil, if any instance of the bundle may run it. An
+	// engine, whose functions can not move between instances, returns the instance, which created the function, which
+	// keeps it alive until the function has ended.
+	Home() Instance
+	// CallIn calls the function in the instance with values of the types of its signature, see [Callback]. It waits
+	// until the instance is free, so a host calls it on another goroutine than the calls of the instance. The instance
+	// must be an instance of the same bundle and the same engine and [Home], if that is not nil.
+	CallIn(ctx context.Context, in Instance, args ...any) ([]any, error)
+}
+
+// Detachable is a [Callback], which an engine can detach from its call.
+type Detachable interface {
+	// Detach returns the function without a reference to its instance, if the engine can move it.
+	Detach() Detached
+}
+
+// Detach returns the function of the callback, which a function of a header package with //gostrict:calls concurrent
+// has received. A host calls it during that function, and calls the result later, see [Detached].
+func Detach(cb Callback) (Detached, error) {
+	d, ok := cb.(Detachable)
+	if !ok {
+		return nil, fmt.Errorf("the engine can not run the callback %T on another goroutine", cb)
+	}
+	return d.Detach(), nil
 }
 
 // ErrorOf returns the error of the neutral value of an error, which may be nil.
@@ -439,6 +470,21 @@ type CallbackFunc func(args ...any) ([]any, error)
 
 // Call calls the function.
 func (f CallbackFunc) Call(args ...any) ([]any, error) {
+	return f(args...)
+}
+
+// Detach returns the function itself, which needs no instance, e.g. for a test.
+func (f CallbackFunc) Detach() Detached {
+	return detachedFunc(f)
+}
+
+type detachedFunc CallbackFunc
+
+func (f detachedFunc) Home() Instance {
+	return nil
+}
+
+func (f detachedFunc) CallIn(ctx context.Context, in Instance, args ...any) ([]any, error) {
 	return f(args...)
 }
 

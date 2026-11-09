@@ -264,7 +264,8 @@ func (c *checker) mayChange(call *ast.CallExpr) bool {
 // headerKills tells, whether a call of a function of a header or of the standard library may change a list or a dict
 // of the program: only through the functions, which it calls (R-SCRIPT-GS-HEADER-LISTS). With //gostrict:calls earlier
 // always; with function parameters and now or without a directive through each argument of a function parameter, which
-// is no function literal, whose body counts where it stands; never with later and without function parameters.
+// is no function literal, whose body counts where it stands; never with later or concurrent and without function
+// parameters.
 func (c *checker) headerKills(call *ast.CallExpr, fn *types.Func) bool {
 	calls := c.decls[fn.Origin()].calls
 	if calls == CallsEarlier {
@@ -272,7 +273,7 @@ func (c *checker) headerKills(call *ast.CallExpr, fn *types.Func) bool {
 	}
 	sig := fn.Signature()
 	params := funcParams(sig)
-	if len(params) == 0 || calls == CallsLater {
+	if len(params) == 0 || calls.afterReturn() {
 		return false
 	}
 	for _, i := range params {

@@ -150,23 +150,26 @@ func checkConstDirective(d *diagnoser, src funcSrc, fn *types.Func) {
 	}
 }
 
-// checkCallsDirective checks the callsDirective of a function of a header package: now or later on a function, which
-// takes a function, earlier on one, which takes none.
+// checkCallsDirective checks the callsDirective of a function of a header package: now, later or concurrent on a
+// function, which takes a function, earlier on one, which takes none, and concurrent not on a method, because a method
+// may also be called through an interface, which bypasses the check of its arguments.
 func checkCallsDirective(d *diagnoser, src funcSrc, fn *types.Func) {
 	if src.callsPos == token.NoPos {
 		return
 	}
 	report := func(msg string) {
-		d.report(src.callsPos, token.NoPos, CodeHeader, msg, callsDirective+" tells the checks, whether the function calls its function arguments during the call or only after it returned, or whether it calls functions, which it got earlier", "write "+callsDirective+" now or "+callsDirective+" later on a function, which takes a function, and "+callsDirective+" earlier on one, which takes none, but calls functions, which another call got")
+		d.report(src.callsPos, token.NoPos, CodeHeader, msg, callsDirective+" tells the checks, whether the function calls its function arguments during the call, only after it returned or on another goroutine, or whether it calls functions, which it got earlier", "write "+callsDirective+" now, later or concurrent on a function, which takes a function, and "+callsDirective+" earlier on one, which takes none, but calls functions, which another call got")
 	}
 	takes := len(funcParams(fn.Signature())) > 0
 	switch {
-	case src.calls != CallsNow && src.calls != CallsLater && src.calls != CallsEarlier:
-		report(callsDirective + " takes now, later or earlier, not " + strconv.Quote(string(src.calls)))
+	case src.calls != CallsNow && src.calls != CallsLater && src.calls != CallsEarlier && src.calls != CallsConcurrent:
+		report(callsDirective + " takes now, later, earlier or concurrent, not " + strconv.Quote(string(src.calls)))
 	case src.calls == CallsEarlier && takes:
 		report(fn.Name() + " takes a function, so it calls it now or later, not earlier")
 	case src.calls != CallsEarlier && !takes:
 		report(fn.Name() + " takes no function, so " + callsDirective + " " + string(src.calls) + " has nothing to tell")
+	case src.calls == CallsConcurrent && fn.Signature().Recv() != nil:
+		report(callsDirective + " concurrent is only allowed on functions, because a method may also be called through an interface")
 	}
 }
 
@@ -193,7 +196,8 @@ type HeaderCallback struct {
 
 // HeaderCallbacks returns the exported functions and methods of the header packages of the program, which take a
 // function, with the time, at which they call it, sorted by name. The check of recursion follows a call of such a
-// function to its function arguments, unless its directive is //gostrict:calls later, e.g. the action of a button.
+// function to its function arguments, unless its directive is //gostrict:calls later or concurrent, e.g. the action of a
+// button.
 // A function without the directive counts as now, so a test of a host checks, that each of its header functions
 // has one.
 func HeaderCallbacks(prog *Program) []HeaderCallback {

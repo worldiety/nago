@@ -125,6 +125,7 @@ func init() {
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.NavsplitviewNavigateSidebar":             "c",
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.NavsplitviewThreeColumn":                 "c later",
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.NavsplitviewTwoColumn":                   "c later",
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.OnDone":                                  "c later",
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.Pager":                                   "c",
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.ParentScaffoldMenuEntry":                 "c",
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.PickerButton":                            "c later",

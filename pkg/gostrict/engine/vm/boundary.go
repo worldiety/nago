@@ -8,6 +8,9 @@
 package vm
 
 import (
+	"context"
+	"errors"
+
 	"go.wdy.de/nago/pkg/gostrict"
 	"go.wdy.de/nago/pkg/gostrict/internal/vmcode"
 )
@@ -99,6 +102,42 @@ func (cb *callback) Call(args ...any) ([]any, error) {
 		}
 	}
 	return res, err
+}
+
+var _ gostrict.Detachable = (*callback)(nil)
+
+// Detach returns the closure without its instance: any machine of the program can run it, because its captures never
+// change, see [gostrict.Detached].
+func (cb *callback) Detach() gostrict.Detached {
+	return detached{prog: cb.in.prog, fn: cb.fn}
+}
+
+type detached struct {
+	prog *vmcode.Program
+	fn   *vmcode.Closure
+}
+
+// Home returns nil, because any instance of the bundle runs the closure.
+func (d detached) Home() gostrict.Instance {
+	return nil
+}
+
+// CallIn runs the closure in the instance.
+func (d detached) CallIn(ctx context.Context, target gostrict.Instance, args ...any) ([]any, error) {
+	in, ok := target.(*Instance)
+	if !ok || in.prog != d.prog {
+		return nil, errors.New("the function belongs to another bundle or engine")
+	}
+	if err := d.fn.CheckArgs(args); err != nil {
+		return nil, err
+	}
+	in.lock()
+	defer in.unlock()
+	res, err := in.m.Invoke(ctx, d.fn, args)
+	if err != nil {
+		return nil, in.failure(err)
+	}
+	return res, nil
 }
 
 var _ gostrict.FastCallback = (*callback)(nil)

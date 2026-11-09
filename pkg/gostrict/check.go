@@ -109,6 +109,8 @@ type checker struct {
 	funcEvents map[*ast.FuncDecl]*funcEvents
 	// writeAt is the first assignment, which overwrites an error, see [checker.overwritten].
 	writeAt token.Pos
+	// writes are the variables of the package, which change after their declaration, see [checker.concurrentWrites].
+	writes map[types.Object]token.Pos
 }
 
 func (c *checker) report(n ast.Node, code Code, msg, why, fix string) {
@@ -322,10 +324,12 @@ func (c *checker) visitNode(n ast.Node) {
 		c.checkMake(n)
 		c.checkGlobalMethod(n)
 		c.checkConstArgs(n)
+		c.checkConcurrentArgs(n)
 		c.checkPairedArgs(n)
 	case *ast.SelectorExpr:
 		c.checkSelector(n)
 		c.checkConstValue(n)
+		c.checkConcurrentValue(n)
 		c.checkOrZero(n)
 	case *ast.RangeStmt:
 		c.checkRange(n)

@@ -30,7 +30,8 @@ const constDirective = "//gostrict:const"
 // during the call, e.g. a builder, which changes a frame with a function, //gostrict:calls later only after the call
 // returned, e.g. the action of a button. The check of recursion follows a call, which calls now, and assumes now
 // without the directive, see [HeaderCallbacks]. //gostrict:calls earlier marks a function without function parameters,
-// which calls functions, which it got earlier through another call, see [CallsEarlier].
+// which calls functions, which it got earlier through another call, see [CallsEarlier]. //gostrict:calls concurrent
+// marks a function, which calls them after the call returned on another goroutine, see [CallsConcurrent].
 const callsDirective = "//gostrict:calls"
 
 // zeroDirective marks a function of a header package, whose last result is a bool or an error, which returns the zero
@@ -52,7 +53,17 @@ const (
 	// function of a header got earlier, e.g. ui.RadioStateGroup.Notify, which calls the observers of Observe
 	// (wokoda R-SCRIPT-GS-HEADER-LISTS). A fact of GS033 dies at each of its calls.
 	CallsEarlier CallTime = "earlier"
+	// CallsConcurrent calls them only after the call returned and on another goroutine, while the program may run
+	// further, e.g. the end of a network request. The program can not observe an order of such a function and the
+	// rest of the program, so its argument may share no memory with it, see [checker.checkConcurrentArgs], and it
+	// runs as a call of its own in another instance, see [Detached].
+	CallsConcurrent CallTime = "concurrent"
 )
+
+// afterReturn tells, whether a function with the directive calls its function arguments only after it returned.
+func (t CallTime) afterReturn() bool {
+	return t == CallsLater || t == CallsConcurrent
+}
 
 // funcSrc is the declaration of a function or method.
 type funcSrc struct {
@@ -159,6 +170,8 @@ func callsTime(fd *ast.FuncDecl) (CallTime, token.Pos) {
 		if !ok || rest != "" && rest[0] != ' ' && rest[0] != '\t' {
 			continue
 		}
+		// a comment may follow the time
+		rest, _, _ = strings.Cut(rest, "//")
 		return CallTime(strings.TrimSpace(rest)), c.Pos()
 	}
 	return "", token.NoPos
