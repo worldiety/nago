@@ -39,18 +39,29 @@ func forbiddenAddress(ip netip.Addr, allowPrivate bool) bool {
 			return true
 		}
 	}
-	return !allowPrivate && (ip.IsLoopback() || ip.IsPrivate() || sharedAddressSpace.Contains(ip))
+	return !allowPrivate && internalAddress(ip)
 }
 
-// newTransport returns the transport, which each connection decorates. It checks an address after the name was
-// resolved, so a name can not point to a forbidden one later, and it uses no proxy of the environment, which would
-// connect in its place.
-func newTransport(allowPrivate bool) *http.Transport {
+// forbiddenPrivateOnly tells, whether a request of a connection with [Connection.PrivateOnly] must not connect to the
+// address. Such a request keeps every other rule.
+func forbiddenPrivateOnly(ip netip.Addr, allowPrivate bool) bool {
+	return forbiddenAddress(ip, allowPrivate) || !internalAddress(ip)
+}
+
+func internalAddress(ip netip.Addr) bool {
+	ip = ip.Unmap()
+	return ip.IsLoopback() || ip.IsPrivate() || sharedAddressSpace.Contains(ip)
+}
+
+// newTransport returns a transport, which a connection decorates and whose connections all passed the rule. It checks
+// an address after the name was resolved, so a name can not point to a forbidden one later, and it uses no proxy of the
+// environment, which would connect in its place.
+func newTransport(forbidden func(netip.Addr) bool) *http.Transport {
 	dialer := &gonet.Dialer{
 		Timeout: 10 * time.Second,
 		Control: func(network, address string, _ syscall.RawConn) error {
 			ap, err := netip.ParseAddrPort(address)
-			if err != nil || forbiddenAddress(ap.Addr(), allowPrivate) {
+			if err != nil || forbidden(ap.Addr()) {
 				return errForbiddenAddress
 			}
 			return nil

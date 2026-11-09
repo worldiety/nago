@@ -26,11 +26,17 @@
 //
 // A view waits for the end with ui.OnDone(wnd, out.Job, func(failure string) { ... }).
 //
+// Large content does not enter the program. A host may name it: [Request.Source] sends what a name stands for,
+// [Request.Parts] sends a form with such files and [Request.Sink] writes an answer with a status of 2xx there, so that
+// the program only sees [Result.Stored]. A request with one of them is a transfer: instead of [Request.Timeout] it ends
+// when no byte moved for a while or after a very long time, and only the host knows both limits.
+//
 //gostrict:header
 package net
 
 import (
 	"go.wdy.de/nago/pkg/gostrict/std/dict"
+	"go.wdy.de/nago/pkg/gostrict/std/list"
 	"go.wdy.de/nago/pkg/gostrict/std/task"
 )
 
@@ -63,8 +69,30 @@ type Request struct {
 	Header dict.Map[string, string]
 	// Body is the text of the request.
 	Body string
-	// Timeout is the limit in milliseconds, 30 seconds if 0, and the host limits it.
+	// Timeout is the limit in milliseconds, 30 seconds if 0, and the host limits it. A transfer ignores it.
 	Timeout int32
+	// Source names the content, which the host sends instead of Body. The name comes from the host, e.g. from a
+	// function of a file store. A Body and a Source together are [Failed].
+	Source string
+	// Sink names, where the host writes the answer of a status of 2xx. [Result.Body] stays empty then.
+	Sink string
+	// Parts is a form in multipart/form-data, whose Content-Type the host sets. If there is a part, Body and Source must
+	// be empty, otherwise the request is [Failed].
+	Parts list.List[Part]
+}
+
+// Part is a field of a form of [Request.Parts].
+type Part struct {
+	// Name is the name of the field and must not be empty.
+	Name string
+	// Value is the text of the field. A Value and a Source together are [Failed].
+	Value string
+	// Source names the content of the field, like [Request.Source].
+	Source string
+	// FileName is the name of the file, or empty for the name, which the host knows for Source.
+	FileName string
+	// Mime is the type of the content, or empty for the type, which the host knows for Source.
+	Mime string
 }
 
 // Result is the end of a request.
@@ -78,13 +106,15 @@ type Result struct {
 	Header dict.Map[string, string]
 	// Body is the text of the answer, but only with [OK], so that a forgotten check never parses an error page.
 	Body string
+	// Stored is what the host reports about the answer, which it wrote to [Request.Sink], but only with [OK].
+	Stored string
 }
 
-// NewRequest returns a request with empty query parameters and headers, which the program may set.
+// NewRequest returns a request with empty query parameters, headers and parts, which the program may set.
 //
 //gostrict:host
 func NewRequest(method, path, body string) Request {
-	return Request{Method: method, Path: path, Query: dict.New[string, string](), Header: dict.New[string, string](), Body: body}
+	return Request{Method: method, Path: path, Query: dict.New[string, string](), Header: dict.New[string, string](), Body: body, Parts: list.New[Part]()}
 }
 
 // Send sends the request over the connection and returns at once. The function done runs later as a call of its own,

@@ -7,6 +7,7 @@ package net
 import (
 	"go.wdy.de/nago/pkg/gostrict"
 	"go.wdy.de/nago/pkg/gostrict/std/dict"
+	"go.wdy.de/nago/pkg/gostrict/std/list"
 )
 
 // Host implements the functions of this header package natively, e.g. for an engine like goja.
@@ -20,11 +21,11 @@ func Host() gostrict.Funcs {
 }
 
 func gostrictFrom1(v []any) Request {
-	return Request{Method: v[0].(string), Path: v[1].(string), Query: gostrictFrom2(v[2].([]any)), Header: gostrictFrom2(v[3].([]any)), Body: v[4].(string), Timeout: v[5].(int32)}
+	return Request{Method: v[0].(string), Path: v[1].(string), Query: gostrictFrom2(v[2].([]any)), Header: gostrictFrom2(v[3].([]any)), Body: v[4].(string), Timeout: v[5].(int32), Source: v[6].(string), Sink: v[7].(string), Parts: gostrictFrom3(v[8].([]any))}
 }
 
 func gostrictTo1(x Request) []any {
-	return []any{x.Method, x.Path, gostrictTo2(x.Query), gostrictTo2(x.Header), x.Body, x.Timeout}
+	return []any{x.Method, x.Path, gostrictTo2(x.Query), gostrictTo2(x.Header), x.Body, x.Timeout, x.Source, x.Sink, gostrictTo3(x.Parts)}
 }
 
 func gostrictFrom2(v []any) dict.Map[string, string] {
@@ -42,4 +43,28 @@ func gostrictTo2(m dict.Map[string, string]) []any {
 		res = append(res, []any{k, v})
 	}
 	return res
+}
+
+func gostrictFrom3(v []any) list.List[Part] {
+	l := list.New[Part]()
+	for _, e := range v {
+		l.Append(gostrictFrom4(e.([]any)))
+	}
+	return l
+}
+
+func gostrictTo3(l list.List[Part]) []any {
+	res := make([]any, 0, l.Len())
+	for e := range l.Values() {
+		res = append(res, gostrictTo4(e))
+	}
+	return res
+}
+
+func gostrictFrom4(v []any) Part {
+	return Part{Name: v[0].(string), Value: v[1].(string), Source: v[2].(string), FileName: v[3].(string), Mime: v[4].(string)}
+}
+
+func gostrictTo4(x Part) []any {
+	return []any{x.Name, x.Value, x.Source, x.FileName, x.Mime}
 }
