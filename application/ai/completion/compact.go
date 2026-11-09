@@ -41,6 +41,9 @@ const (
 
 	// maxSummaryDepth bounds the divide-and-conquer recursion when even a single chunk overflows the window.
 	maxSummaryDepth = 8
+
+	// summaryMarker opens the synthetic message of a summary.
+	summaryMarker = "[Summary of earlier conversation]\n"
 )
 
 // SummaryCompactorConfig configures [NewSummaryCompactor].
@@ -69,6 +72,8 @@ type SummaryCompactorConfig struct {
 //     (on rune boundaries) and summarized piece-wise (divide and conquer).
 //   - As a final, guaranteed-to-succeed fallback, an oversized leaf chunk is truncated rune-safely via
 //     [xstrings.EllipsisEnd] without calling the model at all.
+//   - When there is nothing older than the kept messages but a former summary, or a summary would not make the
+//     history smaller, the kept messages themselves are too large and the largest one is truncated instead.
 //
 // Because the produced summary is bounded by MaxSummaryTokens (or the truncation budget), the result is
 // strictly smaller than the input whenever there is anything to compact, which guarantees progress for the
@@ -98,7 +103,7 @@ func NewSummaryCompactor(cfg SummaryCompactorConfig) Compactor {
 		prefix := history[:start]
 		tail := history[start:]
 
-		if len(prefix) == 0 {
+		if len(prefix) == 0 || isSummaryOnly(prefix) {
 			// Nothing older to summarize: fall back to rune-truncating the single largest message so the
 			// request still shrinks and the run can make progress.
 			return truncateLargest(history), nil
@@ -112,14 +117,23 @@ func NewSummaryCompactor(cfg SummaryCompactorConfig) Compactor {
 
 		summaryMsg := Message{
 			Role:    User,
-			Content: []Content{Text{Text: "[Summary of earlier conversation]\n" + summary}},
+			Content: []Content{Text{Text: summaryMarker + summary}},
 		}
 
 		out := make([]Message, 0, len(tail)+1)
 		out = append(out, summaryMsg)
 		out = append(out, tail...)
+		if runeLen(out) >= runeLen(history) {
+			return truncateLargest(history), nil
+		}
+
 		return out, nil
 	}
+}
+
+// isSummaryOnly reports whether msgs is just the message of a former summary.
+func isSummaryOnly(msgs []Message) bool {
+	return len(msgs) == 1 && strings.HasPrefix(extractText(msgs[0]), summaryMarker)
 }
 
 // splitIndex computes the index of the first message to keep verbatim. It keeps up to keepLastN trailing
@@ -282,9 +296,10 @@ func hasToolResult(m Message) bool {
 	return false
 }
 
-// truncateLargest returns a copy of history where the longest text-bearing message is rune-truncated to half
-// its size. It is the last-resort path when there is no older prefix to summarize but the request still does
-// not fit. It always shrinks the history, guaranteeing progress.
+// truncateLargest returns a copy of history where the texts and tool results of the longest message are
+// rune-truncated to half their size, but not below [minChunkRunes]. It is the last-resort path when there is no
+// older prefix to summarize but the request still does not fit. A message which holds nothing longer than that is
+// left alone, because it is not what makes a request overflow; [Run] reports it, if nothing shrank.
 func truncateLargest(history []Message) []Message {
 	out := make([]Message, len(history))
 	copy(out, history)
@@ -297,7 +312,7 @@ func truncateLargest(history []Message) []Message {
 
 	idx, maxLen := -1, 0
 	for i, m := range out {
-		if n := runeLenMsg(m); n > maxLen {
+		if n := cuttableRunes(m.Content); n > maxLen {
 			idx, maxLen = i, n
 		}
 	}
@@ -305,20 +320,38 @@ func truncateLargest(history []Message) []Message {
 		return out
 	}
 
-	target := maxLen / 2
-	if target < minChunkRunes {
-		target = minChunkRunes
-	}
+	out[idx] = Message{Role: out[idx].Role, Content: halveTexts(out[idx].Content)}
+	return out
+}
 
-	m := out[idx]
-	newContent := make([]Content, len(m.Content))
-	copy(newContent, m.Content)
-	for i, content := range newContent {
-		if t, ok := content.(Text); ok {
-			newContent[i] = Text{Text: xstrings.EllipsisEnd(t.Text, target)}
+// cuttableRunes returns the rune count of what [halveTexts] may shorten.
+func cuttableRunes(content []Content) int {
+	total := 0
+	for _, c := range content {
+		switch c := c.(type) {
+		case Text:
+			total += utf8.RuneCountInString(c.Text)
+		case ToolResult:
+			total += cuttableRunes(c.Content)
 		}
 	}
-	out[idx] = Message{Role: m.Role, Content: newContent}
+	return total
+}
+
+// halveTexts returns a copy of content with its texts and the texts of its tool results cut to half their size, but
+// not below [minChunkRunes]. A tool call and its result stay a pair.
+func halveTexts(content []Content) []Content {
+	out := make([]Content, len(content))
+	copy(out, content)
+	for i, c := range out {
+		switch c := c.(type) {
+		case Text:
+			out[i] = Text{Text: xstrings.EllipsisEnd(c.Text, max(utf8.RuneCountInString(c.Text)/2, minChunkRunes))}
+		case ToolResult:
+			c.Content = halveTexts(c.Content)
+			out[i] = c
+		}
+	}
 	return out
 }
 

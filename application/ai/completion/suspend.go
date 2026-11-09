@@ -87,14 +87,22 @@ type Resolution struct {
 type Outcome struct {
 	// Result is the last model answer.
 	Result Result
-	// History is the full trace, including all tool calls and results. It is valid to persist at any time.
+	// History is what the model reads: the trace of the run including all tool calls and results, which every
+	// compaction replaced with its shortened version. It is what the next request is built on and valid to
+	// persist at any time.
 	History []Message
+	// Conversation is the whole conversation including all media, once a compaction made it differ from History:
+	// every turn stays as it was, and no summary is part of it. Nil means that History is the whole conversation.
+	// After a compaction, a run is continued with both lists, see [RunOptions.Conversation].
+	Conversation []Message
 	// Suspended is set when the run waits on a user decision. Persist it together with History and resume
 	// via [Continue].
 	Suspended *Continuation
 	// Progressed reports whether History moved beyond the input (model turns, tool results, a resumed
 	// decision or a compaction). A failed run with Progressed set left a history worth persisting.
 	Progressed bool
+	// Turns counts the answers of the model the run received.
+	Turns int
 	// Usage is the token usage summed over every completion of the run, including the ones of a [Compactor],
 	// and also set when the run failed or was cancelled. [Outcome.Result] only carries the usage of the last
 	// turn. Sub-agents started by delegation tools are not included; see [DelegateConfig.OnUsage].

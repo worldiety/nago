@@ -457,7 +457,8 @@ const DefaultMaxCompactions = 4
 
 // Compactor shrinks the conversation history so that a subsequent request fits into the model's context
 // window. It is invoked by [Run] whenever a completion fails with [ContextWindowExceeded]. The returned
-// history replaces the previous one and the failed turn is retried.
+// history replaces the previous one for the model and the failed turn is retried. The whole conversation is kept
+// beside it, see [Outcome.Conversation].
 //
 // A Compactor receives everything it needs to perform its own completion requests (e.g. to summarize older
 // turns): the context of the run, the subject, the [Completions] capability and the in-flight [Options] (which
@@ -486,6 +487,11 @@ const (
 	// PhaseToolCompleted is emitted after a tool finished executing. The [Progress.ToolCall] and
 	// [Progress.ToolResult] fields describe the call and its outcome.
 	PhaseToolCompleted ProgressPhase = "tool_completed"
+
+	// PhaseCompacted is emitted right after a [Compactor] shortened the history for the model. The
+	// [Progress.History] and [Progress.Conversation] fields carry both lists, so a caller can persist them at
+	// once, instead of paying for the same summary again after a restart.
+	PhaseCompacted ProgressPhase = "compacted"
 )
 
 // Progress is a single observability event handed to [RunOptions.OnProgress] while [Run] drives the agentic
@@ -496,6 +502,7 @@ const (
 //   - PhaseModelResponded: Turn, MaxTurns, Result
 //   - PhaseToolStarted: Turn, MaxTurns, ToolCall
 //   - PhaseToolCompleted: Turn, MaxTurns, ToolCall, ToolResult
+//   - PhaseCompacted: Turn, MaxTurns, History, Conversation
 type Progress struct {
 	// Phase identifies which step of the loop produced this event.
 	Phase ProgressPhase
@@ -514,6 +521,14 @@ type Progress struct {
 
 	// ToolResult is the tool outcome for PhaseToolCompleted, nil otherwise.
 	ToolResult *ToolResult
+
+	// History is the shortened version the model reads from now on for PhaseCompacted, nil otherwise, see
+	// [Outcome.History].
+	History []Message
+
+	// Conversation is the whole conversation including its media for PhaseCompacted, nil otherwise, see
+	// [Outcome.Conversation].
+	Conversation []Message
 }
 
 // ProgressFunc receives [Progress] events while [Run] executes. It must not block for long, as it is invoked
@@ -535,6 +550,11 @@ type RunOptions struct {
 	// Options is the base stateless request. Its Tools field is overwritten with the schema of the supplied
 	// Tools, so it does not need to be set by the caller.
 	Options
+
+	// Conversation is the whole conversation, when Messages is a version of it which an earlier compaction
+	// shortened, see [Outcome.Conversation]. It must end like Messages, which a caller guarantees by writing
+	// everything it adds to both. Nil means that Messages is the whole conversation.
+	Conversation []Message
 
 	// Tools are the executable Go functions the model may call. Their [ToolDef]s are advertised to the
 	// provider automatically.
@@ -677,8 +697,8 @@ func runCancelled(err error) error {
 //  3. feed the results back as a follow-up user message,
 //  4. repeat until the model returns a final (non tool_use) answer or the turn limit is hit.
 //
-// It returns the final assistant [Result] together with the complete message history (including all
-// intermediate tool calls and tool results) so callers can inspect or persist the trace.
+// It returns the final assistant [Result] together with the message history (including all intermediate tool calls
+// and tool results, shortened by compactions, see [Outcome.History]) so callers can inspect or persist the trace.
 func Run(subject auth.Subject, c Completions, opts RunOptions) (Result, []Message, error) {
 	out, err := Start(subject, c, opts)
 	if err == nil && out.Suspended != nil {
@@ -722,9 +742,18 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 	// progressed records whether the history moved beyond the caller's input, so a caller knows whether a
 	// failed run left something worth persisting.
 	progressed := false
+	// conversation is the whole conversation, once it differs from history, which the model reads: nil until the
+	// first compaction.
+	var conversation []Message
+	if opts.Conversation != nil {
+		conversation = slices.Clone(opts.Conversation)
+	}
+	turns := 0
 	defer func() {
 		out.Progressed = progressed
 		out.Usage = metered.sum()
+		out.Conversation = conversation
+		out.Turns = turns
 	}()
 
 	maxTurns := opts.MaxTurns
@@ -782,6 +811,15 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 	history := make([]Message, len(req.Messages))
 	copy(history, req.Messages)
 
+	// add writes turns to the end of both lists, which therefore always end alike
+	add := func(msgs ...Message) {
+		history = append(history, msgs...)
+		if conversation != nil {
+			conversation = append(conversation, msgs...)
+		}
+		progressed = true
+	}
+
 	// carried are attachments which could not join the tool results of their turn, see onlyToolResults. They
 	// join the next one.
 	var carried []Content
@@ -798,8 +836,7 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 		if pendingServerCall(history[len(history)-1]) {
 			msg, carried = onlyToolResults(msg)
 		}
-		history = append(history, msg)
-		progressed = true
+		add(msg)
 	}
 
 	tokenRetries := 0
@@ -820,8 +857,7 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 		}
 
 		finishHooks++
-		history = append(history, Message{Role: User, Content: []Content{Text{Text: finishPromptMarker + extra}}})
-		progressed = true
+		add(Message{Role: User, Content: []Content{Text{Text: finishPromptMarker + extra}}})
 		return true
 	}
 
@@ -877,11 +913,16 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 				return Outcome{Result: Result{}, History: history}, fmt.Errorf("compaction did not shrink history (%d runes): %w", before, err)
 			}
 
+			if conversation == nil {
+				conversation = slices.Clone(history)
+			}
 			history = compacted
 			progressed = true
 			req.Messages = history
+			notify(Progress{Phase: PhaseCompacted, Turn: turn, History: slices.Clone(history), Conversation: slices.Clone(conversation)})
 		}
 
+		turns++
 		notify(Progress{Phase: PhaseModelResponded, Turn: turn, Result: &res})
 
 		// Collect any tool calls in this assistant turn up front, decoupled from the stop reason.
@@ -900,8 +941,7 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 			// The provider paused a long-running turn. Sending the assistant message back as-is lets the
 			// model resume exactly where it stopped.
 			if hasContent(res.Message) {
-				history = append(history, res.Message)
-				progressed = true
+				add(res.Message)
 			}
 			continue
 
@@ -922,14 +962,12 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 			cleaned := stripToolCalls(res.Message)
 			if len(calls) == 0 && hasAnswerText(cleaned) && continuations < maxContinuations {
 				continuations++
-				history = append(history, cleaned, Message{Role: User, Content: []Content{Text{Text: continuePrompt}}})
-				progressed = true
+				add(cleaned, Message{Role: User, Content: []Content{Text{Text: continuePrompt}}})
 				continue
 			}
 
 			if hasContent(cleaned) {
-				history = append(history, cleaned)
-				progressed = true
+				add(cleaned)
 			}
 			res.Message = cleaned
 			if finish(res) {
@@ -943,11 +981,9 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 			if len(calls) == 0 && !hasAnswerText(res.Message) && continuations < maxContinuations {
 				continuations++
 				if hasContent(res.Message) {
-					history = append(history, res.Message)
-					progressed = true
+					add(res.Message)
 				}
-				history = append(history, Message{Role: User, Content: []Content{Text{Text: answerPrompt}}})
-				progressed = true
+				add(Message{Role: User, Content: []Content{Text{Text: answerPrompt}}})
 				continue
 			}
 			fallthrough
@@ -957,8 +993,7 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 			// carries tool_use blocks, they were not requested cleanly and must not be executed.
 			cleaned := stripToolCalls(res.Message)
 			if hasContent(cleaned) {
-				history = append(history, cleaned)
-				progressed = true
+				add(cleaned)
 			}
 			res.Message = cleaned
 			if finish(res) {
@@ -971,8 +1006,7 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 		if len(calls) == 0 {
 			// The model signalled tool_use but emitted no actual call we understand; stop to avoid looping.
 			if hasContent(res.Message) {
-				history = append(history, res.Message)
-				progressed = true
+				add(res.Message)
 			}
 			if finish(res) {
 				continue
@@ -980,8 +1014,7 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 			return Outcome{Result: res, History: history}, nil
 		}
 
-		history = append(history, res.Message)
-		progressed = true
+		add(res.Message)
 
 		results := make([]Content, 0, len(calls))
 		// attachments collects Media blocks contributed by OpenFile tools. They are appended to the SAME user
@@ -1006,8 +1039,7 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 				if pendingServerCall(res.Message) {
 					turn, _ = onlyToolResults(turn)
 				}
-				history = append(history, turn)
-				progressed = true
+				add(turn)
 				return Outcome{Result: res, History: history}, runCancelled(cerr)
 			}
 
@@ -1065,8 +1097,7 @@ func drive(subject auth.Subject, c Completions, opts RunOptions, resume *resumeI
 		if pendingServerCall(res.Message) {
 			msg, carried = onlyToolResults(msg)
 		}
-		history = append(history, msg)
-		progressed = true
+		add(msg)
 	}
 
 	return Outcome{Result: Result{}, History: history}, fmt.Errorf("tool loop exceeded %d turns: %w", maxTurns, TurnLimitExceeded)
@@ -1093,7 +1124,7 @@ func cancelledTurn(rest []ToolCall, results []Content, pending []PendingCall, at
 
 // TurnLimitExceeded is returned (wrapped) by [Run] when the model keeps requesting tools beyond
 // [RunOptions.MaxTurns]. The returned history is still valid and should be persisted, because the tools
-// already executed may have had side effects.
+// already executed may have had side effects. A new run on it continues the work, see [TurnLimitPrompt].
 var TurnLimitExceeded = errors.New("turn limit exceeded")
 
 const (
@@ -1116,15 +1147,20 @@ const (
 	answerPrompt   = "You did not provide a visible answer. Please give your answer now."
 )
 
+// TurnLimitPrompt is the user turn which starts a new run on a conversation whose last run ended with
+// [TurnLimitExceeded], so the model continues without the user having to write anything. [IsLoopPrompt] recognizes
+// it, so a UI does not show it.
+const TurnLimitPrompt = "Your last run reached the maximum number of steps and was stopped there, everything done so far is kept. Continue with the task exactly where you stopped."
+
 // IsLoopPrompt reports whether msg is a user turn injected by [Run] itself (asking the model to continue a
-// truncated answer or to provide a missing one, or handing over what [RunOptions.BeforeFinish] returned). UIs
-// should hide such turns, because the user never wrote them.
+// truncated answer or to provide a missing one, or handing over what [RunOptions.BeforeFinish] returned) or a
+// [TurnLimitPrompt]. UIs should hide such turns, because the user never wrote them.
 func IsLoopPrompt(msg Message) bool {
 	if msg.Role != User || len(msg.Content) != 1 {
 		return false
 	}
 	t, ok := msg.Content[0].(Text)
-	return ok && (t.Text == continuePrompt || t.Text == answerPrompt || strings.HasPrefix(t.Text, finishPromptMarker))
+	return ok && (t.Text == continuePrompt || t.Text == answerPrompt || t.Text == TurnLimitPrompt || strings.HasPrefix(t.Text, finishPromptMarker))
 }
 
 // escalateMaxTokens returns the next larger output budget, or current if it cannot grow any further.

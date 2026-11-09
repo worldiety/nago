@@ -171,3 +171,105 @@ func TestSummaryCompactor_TruncatesWhenNoPrefix(t *testing.T) {
 		t.Fatalf("did not expect a summarization call for a single oversized message")
 	}
 }
+
+// A history which overflows again right after a compaction consists of a summary and recent messages which are too
+// large by themselves. The compactor has to cut those, also tool results, without paying for a summary of the summary;
+// a message of normal size is left alone.
+func TestSummaryCompactor_CutsTheRecentMessagesWhenNothingOlderIsLeft(t *testing.T) {
+	big := strings.Repeat("x", 10_000)
+	summary := Message{Role: User, Content: []Content{Text{Text: summaryMarker + "former"}}}
+	call := Message{Role: Assistant, Content: []Content{ToolCall{ID: "1", Name: "read", Arguments: []byte(`{}`)}}}
+
+	tests := []struct {
+		name          string
+		history       []Message
+		wantSummaries int
+		wantShrink    bool
+	}{
+		{
+			name: "a large tool result behind a summary",
+			history: []Message{
+				summary, call,
+				{Role: User, Content: []Content{ToolResult{ToolCallID: "1", Content: []Content{Text{Text: big}}}}},
+				{Role: Assistant, Content: []Content{Text{Text: "a"}}},
+				{Role: User, Content: []Content{Text{Text: "b"}}},
+				{Role: Assistant, Content: []Content{Text{Text: "c"}}},
+				{Role: User, Content: []Content{Text{Text: "d"}}},
+			},
+			wantShrink: true,
+		},
+		{
+			name: "small messages behind a summary",
+			history: []Message{
+				summary, call,
+				{Role: User, Content: []Content{ToolResult{ToolCallID: "1", Content: []Content{Text{Text: "tiny"}}}}},
+				{Role: Assistant, Content: []Content{Text{Text: "a"}}},
+				{Role: User, Content: []Content{Text{Text: "b"}}},
+				{Role: Assistant, Content: []Content{Text{Text: "c"}}},
+				{Role: User, Content: []Content{Text{Text: "d"}}},
+			},
+		},
+		{
+			name: "older messages are summarized",
+			history: []Message{
+				{Role: User, Content: []Content{Text{Text: big}}},
+				{Role: Assistant, Content: []Content{Text{Text: "a"}}},
+				{Role: User, Content: []Content{Text{Text: "b"}}},
+				{Role: Assistant, Content: []Content{Text{Text: "c"}}},
+				{Role: User, Content: []Content{Text{Text: "d"}}},
+				{Role: Assistant, Content: []Content{Text{Text: "e"}}},
+				{Role: User, Content: []Content{Text{Text: "f"}}},
+			},
+			wantSummaries: 1,
+			wantShrink:    true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			fake := &compactFake{}
+			out, err := NewSummaryCompactor(SummaryCompactorConfig{})(context.Background(), nil, fake, Options{}, tc.history)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if fake.summaryCalls != tc.wantSummaries {
+				t.Fatalf("%d summaries, want %d", fake.summaryCalls, tc.wantSummaries)
+			}
+			if got := runeLen(out) < runeLen(tc.history); got != tc.wantShrink {
+				t.Fatalf("shrunk = %v (%d of %d runes), want %v", got, runeLen(out), runeLen(tc.history), tc.wantShrink)
+			}
+		})
+	}
+}
+
+// A summary which is not smaller than what it summarizes does not help, so the largest message is cut instead.
+func TestSummaryCompactor_SummaryWhichDoesNotShrink(t *testing.T) {
+	history := longHistory(7)
+	history[6].Content = []Content{Text{Text: strings.Repeat("x", 10_000)}}
+
+	fake := &wordyFake{}
+	out, err := NewSummaryCompactor(SummaryCompactorConfig{})(context.Background(), nil, fake, Options{}, history)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if runeLen(out) >= runeLen(history) {
+		t.Fatalf("the history did not shrink: %d of %d runes", runeLen(out), runeLen(history))
+	}
+	if fake.calls != 1 || hasText(out, summaryMarker) || len(out) != len(history) {
+		t.Fatalf("the largest message must be cut instead of using the summary: %d calls, %d of %d messages", fake.calls, len(out), len(history))
+	}
+}
+
+// wordyFake answers with a summary longer than what it summarizes.
+type wordyFake struct{ calls int }
+
+func (f *wordyFake) Models(auth.Subject) iter.Seq2[model.Model, error] { return nil }
+
+func (f *wordyFake) Complete(context.Context, auth.Subject, Options) (Result, error) {
+	f.calls++
+	return Result{Message: Message{Role: Assistant, Content: []Content{Text{Text: strings.Repeat("y", 3_000)}}}, StopReason: StopEndTurn}, nil
+}
+
+func (f *wordyFake) Stream(context.Context, auth.Subject, Options) iter.Seq2[Delta, error] {
+	return nil
+}
