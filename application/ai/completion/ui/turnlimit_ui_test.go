@@ -51,6 +51,9 @@ func (f *recording) Complete(ctx context.Context, _ auth.Subject, opts completio
 	if strings.HasPrefix(opts.System, "You are compacting") {
 		return text("SUMMARY"), nil
 	}
+	if strings.HasPrefix(opts.System, "You are a sub-agent.") {
+		return text("Antwort der Teilaufgabe"), nil
+	}
 	if opts.MaxTokens == 64 {
 		return text("Titel"), nil
 	}

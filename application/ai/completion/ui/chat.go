@@ -261,6 +261,11 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		title = prov.Name()
 	}
 
+	// opened is the run of a conversation at the moment the chat opened it. It is looked up before the conversation
+	// is read, otherwise a run which ends in between would be neither in what was read nor found afterwards, and the
+	// chat would stay on an older state. It may be over by now, which just shows the result.
+	opened := core.AutoState[*activeRun](wnd)
+
 	// resumed is the session a freshly mounted chat continues: the one of opts.Session, otherwise one which still
 	// waits on the user, e.g. after the chat was closed to look something up. Evaluated once per mount.
 	resumed := core.AutoState[*session.Session](wnd).Init(func() *session.Session {
@@ -269,7 +274,9 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		}
 
 		if opts.Session != nil && opts.Session.Get() != "" {
+			run, _ := activeRuns.Get(opts.Session.Get())
 			if s, ok := reloadSession(wnd.Subject(), opts.Sessions, opts.Session.Get()); ok && s.ParentID == "" {
+				opened.Set(run)
 				return &s
 			}
 		}
@@ -428,26 +435,52 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		pendingRev.Set(s.PendingRevision)
 	}
 
+	// runToFollow returns the run of the conversation sid: the one seen when the chat opened it, otherwise one which
+	// works now.
+	runToFollow := func(sid session.ID) (*activeRun, bool) {
+		if run := opened.Get(); run != nil {
+			opened.Set(nil)
+			if run.id == sid {
+				return run, true
+			}
+		}
+		return activeRuns.Get(sid)
+	}
+
 	// With History, a run keeps working when the chat is closed, because its answer is persisted anyway. A chat
 	// which shows the conversation while such a run still works, e.g. after a navigation or in another tab, shows
-	// it as busy and lets the user stop it. The run itself belongs to the chat which started it.
+	// it as busy, shows how far it got, follows it and lets the user stop it. The run itself belongs to the chat which
+	// started it.
 	attached := core.AutoState[*activeRun](wnd)
 	if opts.History {
-		if sid := sessionID.Get(); sid != "" && cancelRun.Get() == nil {
-			// only whoever may continue the conversation may stop its run
-			if run, ok := activeRuns.Get(sid); ok && attached.Get() == nil && wnd.Subject().AuditResource(session.Namespace, rebac.Instance(sid), session.PermAppend) == nil {
+		if sid := sessionID.Get(); sid != "" && cancelRun.Get() == nil && attached.Get() == nil {
+			// only whoever may continue the conversation may follow and stop its run
+			if run, ok := runToFollow(sid); ok && wnd.Subject().AuditResource(session.Namespace, rebac.Instance(sid), session.PermAppend) == nil {
 				attached.Set(run)
 				busy.Set(true)
 				status.Set("… die KI arbeitet noch")
+				// the conversation may have been read before the run took up its decision
+				pending.Set(nil)
+				live, _ := run.state()
+				history.Set(live)
 			}
 		}
 
 		if run := attached.Get(); run != nil {
 			core.OnAppear(wnd, fmt.Sprintf("attached-%s-%d", run.id, run.seq), func(ctx context.Context) {
-				select {
-				case <-run.done:
-				case <-ctx.Done():
-					return
+				for over := false; !over; {
+					// every state replaces the whole list, so a step is neither shown twice nor missing; this goroutine
+					// posts in order, so no state lands after the end below and replaces its result
+					live, changed := run.state()
+					wnd.Post(func() { history.Set(live) })
+
+					select {
+					case <-changed:
+					case <-run.done:
+						over = true
+					case <-ctx.Done():
+						return
+					}
 				}
 
 				wnd.Post(func() {
@@ -649,7 +682,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		// other chats of the same conversation see the run and can stop it, see attached
 		var active *activeRun
 		if sid := sessionID.Get(); opts.History && sid != "" {
-			active = &activeRun{id: sid, seq: activeRunSeq.Add(1), cancel: cancel, done: make(chan struct{})}
+			active = newActiveRun(sid, cancel, slices.Clone(optimistic))
 			activeRuns.Put(sid, active)
 		}
 		// finishActive is called on every exit path and may run twice, e.g. after a panic
@@ -707,6 +740,14 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		// answer can be pointed out. Both are only touched on the loop's goroutine.
 		live := slices.Clone(optimistic)
 		var lastStop completion.StopReason
+		// publish shows how far the run got, here and in every other chat of the conversation, see activeRun
+		publish := func() {
+			snapshot := slices.Clone(live)
+			if active != nil {
+				active.publish(snapshot)
+			}
+			wnd.Post(func() { history.Set(snapshot) })
+		}
 		onProgress := func(p completion.Progress) {
 			switch p.Phase {
 			case completion.PhaseTurnStarted:
@@ -721,8 +762,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 					return
 				}
 				live = append(live, p.Result.Message)
-				snapshot := slices.Clone(live)
-				wnd.Post(func() { history.Set(snapshot) })
+				publish()
 			case completion.PhaseToolStarted:
 				name := ""
 				if p.ToolCall != nil {
@@ -730,13 +770,13 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 				}
 				setStatus(toolLabel(name))
 			case completion.PhaseToolCompleted:
-				// the view of a call shows up as soon as the call is done, see completion.Tool.View
-				if p.ToolCall == nil || p.ToolResult == nil || toolViews[p.ToolCall.Name] == nil {
+				// the view of a call shows up as soon as the call is done, see completion.Tool.View, and a call without
+				// a view counts as well: a sub-agent whose result is missing looks as if it still works
+				if p.ToolCall == nil || p.ToolResult == nil {
 					return
 				}
 				live = withToolResult(live, *p.ToolResult)
-				snapshot := slices.Clone(live)
-				wnd.Post(func() { history.Set(snapshot) })
+				publish()
 			}
 		}
 
@@ -1197,7 +1237,13 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 	if opts.History {
 		// files picked for one conversation must never be sent with another one
 		restoreDialog = historyDialog(wnd, opts.Sessions, opts.Tags, title, showHistory, func(s session.Session) {
+			// the list may be older than the conversation, which also may have a run; the run comes first, see opened
+			run, _ := activeRuns.Get(s.ID)
+			if reloaded, ok := reloadSession(wnd.Subject(), opts.Sessions, s.ID); ok {
+				s = reloaded
+			}
 			applySession(s)
+			opened.Set(run)
 			staged.Set(nil)
 			status.Set("")
 		}, func(id session.ID) {
@@ -1312,14 +1358,41 @@ type activeRun struct {
 	// seq tells the runs of one session apart
 	seq    uint64
 	cancel context.CancelFunc
-	// done is closed when the run is over
+	// done is closed when the run is over and has persisted what it did
 	done chan struct{}
+
+	mu sync.Mutex
+	// live is the whole conversation as far as the run got. A run persists it only when it ends or waits on the
+	// user, thus this is the only place which knows the message that started the run and its steps so far.
+	live []completion.Message
+	// changed is closed and replaced by every new state of live
+	changed chan struct{}
+}
+
+func newActiveRun(id session.ID, cancel context.CancelFunc, live []completion.Message) *activeRun {
+	return &activeRun{id: id, seq: activeRunSeq.Add(1), cancel: cancel, done: make(chan struct{}), live: live, changed: make(chan struct{})}
+}
+
+// publish replaces how far the run got and wakes up whoever follows it.
+func (r *activeRun) publish(live []completion.Message) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.live = live
+	close(r.changed)
+	r.changed = make(chan struct{})
+}
+
+// state returns how far the run got, which must not be modified, and the channel which announces the next state.
+func (r *activeRun) state() ([]completion.Message, <-chan struct{}) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.live, r.changed
 }
 
 var activeRunSeq atomic.Uint64
 
 // activeRuns holds the runs of persisted conversations which still work, by session id. A chat which shows
-// such a conversation, e.g. after a reload or in another tab, shows the run as busy and can stop it.
+// such a conversation, e.g. after a reload or in another tab, shows how far the run got, follows it and can stop it.
 var activeRuns concurrent.RWMap[session.ID, *activeRun]
 
 // findResumable returns the newest session of the subject which waits on a user decision and belongs to
