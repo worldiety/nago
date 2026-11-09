@@ -29,7 +29,8 @@ import (
 //
 // Durability follows the no-fsync house rule: the not-yet-sealed block lives in
 // memory and is lost on a hard crash; sealed blocks and finalized chunks are
-// durable. Callers needing the tail on disk call Column.Flush.
+// durable. Callers needing the tail on disk call Column.Sync, which leaves the
+// pending chunk open, or Column.Flush, which finalizes it.
 type appender struct {
 	c *Column
 

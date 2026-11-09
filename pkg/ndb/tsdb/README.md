@@ -238,6 +238,8 @@ single remaining allocation per call is the `"bucket/column"` lookup key.)
 No `fsync`; atomic `pread`/`pwrite`; per-block CRC + sync marker for forward-scan
 recovery; temp-file + atomic-rename for schema, dictionary, and compaction;
 single-process `flock`; monotonic ids never reused. The not-yet-sealed append
-tail block lives in memory and is lost on a hard crash; a pending chunk left over
-from a crash is finalized on the next open, recovering all intact blocks and
+tail block lives in memory and is lost on a hard crash; `Column.Sync` writes it
+into the open pending chunk as a block of its own, without finalizing the chunk,
+so a fixed rhythm of syncs does not add a file each time. A pending chunk left
+over from a crash is finalized on the next open, recovering all intact blocks and
 dropping any torn tail block.

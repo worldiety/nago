@@ -423,6 +423,7 @@ func TestDropColumnAndBucket(t *testing.T) {
 					"put":    c.PutI64(10_000, 1),
 					"delete": c.Delete(5),
 					"flush":  c.Flush(),
+					"sync":   c.Sync(),
 					"scan":   c.ScanI64(minInt64, maxInt64, func(_, _ []int64) bool { return true }),
 					"drop":   dropErr(c),
 				} {

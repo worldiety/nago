@@ -273,6 +273,24 @@ func (c *Column) Flush() error {
 	return c.flushLocked()
 }
 
+// Sync writes the points buffered by the monotonic append path into the open
+// pending chunk, without finalizing that chunk and without starting a new one,
+// so it can be called in a fixed rhythm: however often it runs, the column keeps
+// its one open chunk file and only the split policy ends it. After a crash of the
+// process, the next open recovers every point written by a Sync (a pending chunk
+// is finalized there). No fsync is done (see the durability model in the README),
+// and a split policy is asked at the first append after a Sync, because the block
+// buffer is empty then. With nothing buffered, Sync writes nothing. Out-of-order
+// points are not affected: they are in the write-ahead log of the head already.
+func (c *Column) Sync() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.dropped {
+		return errColumnGone
+	}
+	return c.app.sealBlock()
+}
+
 // Close flushes all columns, stops the compactor, and releases the lock. The
 // shared FilePool is owned by ndb and is not closed here.
 func (db *DB) Close() error {
