@@ -32,3 +32,28 @@ func (s SMTP) GetName() string {
 func (s SMTP) IsZero() bool {
 	return s == SMTP{}
 }
+
+// HTTP is a connection of a program to an HTTP API, see package gostrictnet. A program refers to it by its name and
+// never sees its address or token. Auth is none, bearer for an Authorization Bearer token, basic for a user name and
+// a token as password or header for the token in the header HeaderName.
+type HTTP struct {
+	Name       string   `value:"Meine API" label:"Name" supportingText:"Unter diesem Namen verwendet ein Programm die Verbindung."`
+	BaseURL    string   `label:"Basis-URL" supportingText:"Adresse der API, z.B. https://api.example.com/v1"`
+	Auth       string   `label:"Anmeldung" values:"[\"none\", \"bearer\", \"basic\", \"header\"]"`
+	Username   string   `label:"Benutzername" supportingText:"Nur für die Anmeldung basic."`
+	HeaderName string   `label:"Header" supportingText:"Nur für die Anmeldung header, z.B. X-API-Key."`
+	Token      string   `label:"Token oder Passwort" style:"secret" credentialWriteOnly:"true"`
+	_          struct{} `credentialName:"HTTP-Verbindung" credentialDescription:"Eine Verbindung, über die Programme eine HTTP-API aufrufen, ohne die Zugangsdaten zu sehen."`
+}
+
+func (HTTP) Credentials() bool {
+	return true
+}
+
+func (h HTTP) GetName() string {
+	return h.Name
+}
+
+func (h HTTP) IsZero() bool {
+	return h == HTTP{}
+}
