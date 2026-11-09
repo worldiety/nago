@@ -56,7 +56,7 @@
 </template>
 <script lang="ts" setup>
 import { Stepper, StepperLayoutValues } from '@/shared/proto/nprotoc_gen';
-import { computed, onMounted, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, onUpdated, ref, watch } from 'vue';
 import IconCheck from '@/assets/svg/check.svg';
 import { useI18n } from 'vue-i18n';
 
@@ -173,9 +173,30 @@ function onWindowResize() {
 	calcLineLength();
 }
 
+// the line length depends on the rendered size of the steps, which changes not only with the window, but also with
+// the texts of the steps, the layout or the size of the parent, thus the stepper is observed and remeasured after each
+// update of the component
+const resizeObserver = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => calcLineLength()) : undefined;
+
+watch(stepper, (el, oldEl) => {
+	if (oldEl) resizeObserver?.unobserve(oldEl);
+	if (el) resizeObserver?.observe(el);
+});
+
 onMounted(() => {
+	if (stepper.value) resizeObserver?.observe(stepper.value);
 	calcLineLength();
+	// web fonts may change the size of the texts after the first measurement
+	document.fonts?.ready.then(() => calcLineLength());
 	window.addEventListener('resize', onWindowResize);
+});
+
+onUpdated(() => nextTick(calcLineLength));
+
+onBeforeUnmount(() => {
+	resizeObserver?.disconnect();
+	window.removeEventListener('resize', onWindowResize);
+	if (resizingTimeout.value) clearTimeout(resizingTimeout.value);
 });
 </script>
 <style scoped>
