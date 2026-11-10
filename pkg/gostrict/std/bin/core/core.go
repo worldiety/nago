@@ -21,8 +21,9 @@ import (
 	"unsafe"
 )
 
-// DefaultLimit is the greatest size of a [Buffer] in bytes, if the host sets none.
-const DefaultLimit = 64 << 20
+// MaxReserve is the greatest number of bytes, which [NewBuffer] reserves in advance. A capacity is only a hint, so a
+// larger one must not take the memory at once, and the buffer grows beyond it as needed.
+const MaxReserve = 64 << 20
 
 // Text returns the bytes as UTF-8 and replaces invalid sequences by U+FFFD. Valid bytes share their memory with the
 // string, because neither of them ever changes.
@@ -105,8 +106,8 @@ func FromBase64(s string) ([]byte, bool) {
 }
 
 // Slice returns the bytes in from..to, shared and clamped into the range.
-func Slice(b []byte, from, to int32) []byte {
-	n := int32(len(b))
+func Slice(b []byte, from, to int64) []byte {
+	n := int64(len(b))
 	from, to = max(from, 0), min(to, n)
 	if from >= to {
 		return nil
@@ -115,8 +116,8 @@ func Slice(b []byte, from, to int32) []byte {
 }
 
 // Index returns the index of sub in b or -1.
-func Index(b, sub []byte) int32 {
-	return int32(bytes.Index(b, sub))
+func Index(b, sub []byte) int64 {
+	return int64(bytes.Index(b, sub))
 }
 
 // Reader reads a sequence of values, see package bin.
@@ -159,17 +160,18 @@ func (r *Reader) Failed() bool {
 }
 
 // take returns the next n whole bytes or nil, if they do not exist.
-func (r *Reader) take(n int) []byte {
+func (r *Reader) take(n int64) []byte {
 	r.Align()
 	if r.failed() {
 		return nil
 	}
-	if n < 0 || n > len(r.data)-r.pos {
+	if n < 0 || n > int64(len(r.data)-r.pos) {
 		r.Fail(fmt.Sprintf("reading %d bytes exceeds the length %d", n, len(r.data)))
 		return nil
 	}
-	b := r.data[r.pos : r.pos+n : r.pos+n]
-	r.pos += n
+	end := r.pos + int(n)
+	b := r.data[r.pos:end:end]
+	r.pos = end
 	return b
 }
 
@@ -319,16 +321,17 @@ func (r *Reader) Align() {
 }
 
 // Skip skips n whole bytes.
-func (r *Reader) Skip(n int32) {
-	r.take(int(n))
+func (r *Reader) Skip(n int64) {
+	r.take(n)
 }
 
-// Seek continues at the byte offset.
-func (r *Reader) Seek(offset int32) {
+// SeekTo continues at the byte offset. It is not called Seek, because go vet takes a Seek with an int64 for the one of
+// io.Seeker.
+func (r *Reader) SeekTo(offset int64) {
 	if r.failed() {
 		return
 	}
-	if offset < 0 || int(offset) > len(r.data) {
+	if offset < 0 || offset > int64(len(r.data)) {
 		r.Fail(fmt.Sprintf("seeking to %d exceeds the length %d", offset, len(r.data)))
 		return
 	}
@@ -336,29 +339,29 @@ func (r *Reader) Seek(offset int32) {
 }
 
 // Pos returns the offset of the next whole byte.
-func (r *Reader) Pos() int32 {
+func (r *Reader) Pos() int64 {
 	if r.bit != 0 {
-		return int32(r.pos + 1)
+		return int64(r.pos + 1)
 	}
-	return int32(r.pos)
+	return int64(r.pos)
 }
 
 // Remaining returns the number of whole bytes from [Reader.Pos] on, 0 after a failure.
-func (r *Reader) Remaining() int32 {
+func (r *Reader) Remaining() int64 {
 	if r.failed() {
 		return 0
 	}
-	return int32(len(r.data)) - r.Pos()
+	return int64(len(r.data)) - r.Pos()
 }
 
 // Bytes returns the next n bytes without copying them.
-func (r *Reader) Bytes(n int32) []byte {
-	return r.take(int(n))
+func (r *Reader) Bytes(n int64) []byte {
+	return r.take(n)
 }
 
 // Rest returns all remaining bytes without copying them.
 func (r *Reader) Rest() []byte {
-	return r.take(int(r.Remaining()))
+	return r.take(r.Remaining())
 }
 
 func trimZ(b []byte) []byte {
@@ -369,14 +372,14 @@ func trimZ(b []byte) []byte {
 }
 
 // Text reads n bytes of UTF-8.
-func (r *Reader) Text(n int32) string { return Text(r.take(int(n))) }
+func (r *Reader) Text(n int64) string { return Text(r.take(n)) }
 
 // TextZ reads a field of n bytes of UTF-8, which ends at its first zero.
-func (r *Reader) TextZ(n int32) string { return Text(trimZ(r.take(int(n)))) }
+func (r *Reader) TextZ(n int64) string { return Text(trimZ(r.take(n))) }
 
 // Latin1 reads n bytes of ISO 8859-1, which ends at its first zero, if z is set.
-func (r *Reader) Latin1(n int32, z bool) string {
-	b := r.take(int(n))
+func (r *Reader) Latin1(n int64, z bool) string {
+	b := r.take(n)
 	if z {
 		b = trimZ(b)
 	}
@@ -385,23 +388,27 @@ func (r *Reader) Latin1(n int32, z bool) string {
 
 // Buffer collects bytes, see package bin.
 type Buffer struct {
-	data  []byte
+	data []byte
+	// limit is the greatest number of bytes or 0 for no limit
 	limit int
 	over  bool
 	bit   uint
 }
 
-// NewBuffer returns an empty buffer. A limit of 0 is the [DefaultLimit].
-func NewBuffer(capacity int32, limit int) *Buffer {
-	if limit <= 0 {
-		limit = DefaultLimit
+// NewBuffer returns an empty buffer with room for capacity bytes, at most for the limit and for [MaxReserve]. A
+// limit of 0 or less is no limit: the buffer grows, as long as there is memory.
+func NewBuffer(capacity int64, limit int) *Buffer {
+	limit = max(limit, 0)
+	reserve := int64(MaxReserve)
+	if limit > 0 {
+		reserve = min(reserve, int64(limit))
 	}
-	return &Buffer{data: make([]byte, 0, min(max(int(capacity), 0), limit)), limit: limit}
+	return &Buffer{data: make([]byte, 0, min(max(capacity, 0), reserve)), limit: limit}
 }
 
 // Len returns the number of bytes.
-func (b *Buffer) Len() int32 {
-	return int32(len(b.data))
+func (b *Buffer) Len() int64 {
+	return int64(len(b.data))
 }
 
 // Bytes returns the bytes for reading. The caller must not keep them.
@@ -412,7 +419,7 @@ func (b *Buffer) Bytes() []byte {
 // reserve appends n bytes and returns them or nil beyond the limit.
 func (b *Buffer) reserve(n int) []byte {
 	b.bit = 0
-	if b.over || n > b.limit-len(b.data) {
+	if b.over || (b.limit > 0 && n > b.limit-len(b.data)) {
 		b.over = true
 		return nil
 	}
@@ -527,15 +534,15 @@ func (b *Buffer) AppendBitsLE(v uint64, n uint32) {
 	}
 }
 
-func (b *Buffer) at(i int32, n int) []byte {
-	if i < 0 || int(i) > len(b.data)-n {
+func (b *Buffer) at(i int64, n int) []byte {
+	if i < 0 || i > int64(len(b.data)-n) {
 		return nil
 	}
 	return b.data[i : int(i)+n]
 }
 
 // Set overwrites the byte at i and tells, whether i is in range.
-func (b *Buffer) Set(i int32, v uint32) bool {
+func (b *Buffer) Set(i int64, v uint32) bool {
 	p := b.at(i, 1)
 	if p == nil {
 		return false
@@ -544,7 +551,7 @@ func (b *Buffer) Set(i int32, v uint32) bool {
 	return true
 }
 
-func (b *Buffer) SetU16BE(i int32, v uint32) bool {
+func (b *Buffer) SetU16BE(i int64, v uint32) bool {
 	p := b.at(i, 2)
 	if p == nil {
 		return false
@@ -553,7 +560,7 @@ func (b *Buffer) SetU16BE(i int32, v uint32) bool {
 	return true
 }
 
-func (b *Buffer) SetU16LE(i int32, v uint32) bool {
+func (b *Buffer) SetU16LE(i int64, v uint32) bool {
 	p := b.at(i, 2)
 	if p == nil {
 		return false
@@ -562,7 +569,7 @@ func (b *Buffer) SetU16LE(i int32, v uint32) bool {
 	return true
 }
 
-func (b *Buffer) SetU32BE(i int32, v uint32) bool {
+func (b *Buffer) SetU32BE(i int64, v uint32) bool {
 	p := b.at(i, 4)
 	if p == nil {
 		return false
@@ -571,7 +578,7 @@ func (b *Buffer) SetU32BE(i int32, v uint32) bool {
 	return true
 }
 
-func (b *Buffer) SetU32LE(i int32, v uint32) bool {
+func (b *Buffer) SetU32LE(i int64, v uint32) bool {
 	p := b.at(i, 4)
 	if p == nil {
 		return false
@@ -580,7 +587,7 @@ func (b *Buffer) SetU32LE(i int32, v uint32) bool {
 	return true
 }
 
-func (b *Buffer) SetU64BE(i int32, v uint64) bool {
+func (b *Buffer) SetU64BE(i int64, v uint64) bool {
 	p := b.at(i, 8)
 	if p == nil {
 		return false
@@ -589,7 +596,7 @@ func (b *Buffer) SetU64BE(i int32, v uint64) bool {
 	return true
 }
 
-func (b *Buffer) SetU64LE(i int32, v uint64) bool {
+func (b *Buffer) SetU64LE(i int64, v uint64) bool {
 	p := b.at(i, 8)
 	if p == nil {
 		return false
@@ -609,7 +616,7 @@ func (b *Buffer) Snapshot() []byte {
 }
 
 // Freeze hands the storage over without copying it and empties the buffer, so that no two views of the same memory
-// exist. It returns the reason of the failure or "", if the buffer stayed within its limit.
+// exist. It returns the reason of the failure or "", if the buffer has no limit or stayed within it.
 func (b *Buffer) Freeze() ([]byte, string) {
 	res, over := b.data, b.over
 	b.data, b.over, b.bit = nil, false, 0

@@ -25,8 +25,9 @@ import (
 type Engine struct {
 	// MaxCallDepth limits the depth of calls, which ends an endless recursion with an error, 10000 if zero.
 	MaxCallDepth int
-	// MaxBuffer limits the size of a bin.Buffer of a program in bytes, 64 MiB if zero. The memory of a program has no other
-	// limit, but a buffer is the one place, where a program can allocate much at once.
+	// MaxBuffer limits the size of a bin.Buffer of a program in bytes, beyond which the buffer ignores further bytes and
+	// its Freeze fails. Zero is no limit: the buffer grows, as long as there is memory, like the rest of the memory of a
+	// program.
 	MaxBuffer int
 }
 

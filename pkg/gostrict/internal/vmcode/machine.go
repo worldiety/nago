@@ -73,13 +73,13 @@ func (p *Program) Externs() []string {
 	return names
 }
 
-// NewMachine returns a machine, which executes the program. The package variables of the program are initialized
-// once, by the first machine. An initialization, which ctx ended, is not kept: the next machine runs it again.
-// SetMaxBuffer limits the size of a bin.Buffer in bytes, core.DefaultLimit if zero.
+// SetMaxBuffer limits the size of a bin.Buffer in bytes. Zero is no limit.
 func (m *Machine) SetMaxBuffer(n int) {
 	m.maxBuffer = n
 }
 
+// NewMachine returns a machine, which executes the program. The package variables of the program are initialized
+// once, by the first machine. An initialization, which ctx ended, is not kept: the next machine runs it again.
 func NewMachine(ctx context.Context, p *Program, h Host, maxDepth int) (*Machine, error) {
 	if maxDepth == 0 {
 		maxDepth = 10000

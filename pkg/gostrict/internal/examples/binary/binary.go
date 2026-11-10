@@ -23,7 +23,7 @@ type Header struct {
 	Serial  int64
 	Scale   float64
 	Name    string
-	Offset  int32
+	Offset  int64
 }
 
 var magic = bin.Of(0x57, 0x4b, 0x44, 0x41)
@@ -55,7 +55,7 @@ func Encode(version uint32, serial int64, scale float64, name string, n int32) (
 }
 
 // Decode reads a recording.
-func Decode(hex string, nameLen, samples int32) (Header, int32, error) {
+func Decode(hex string, nameLen int64, samples int32) (Header, int32, error) {
 	data, ok := bin.FromHex(hex)
 	if !ok {
 		return Header{}, 0, errors.New("not hexadecimal")
@@ -88,8 +88,8 @@ func Decode(hex string, nameLen, samples int32) (Header, int32, error) {
 	return h, total, nil
 }
 
-// Shared returns what a concurrent function may capture.
-func Text(s string) (string, int32, string, string, bool, string, bool) {
+// Text returns the conversions of the text.
+func Text(s string) (string, int64, string, string, bool, string, bool) {
 	b := bin.FromText(s)
 	cut := b.Slice(1, b.Len()-1)
 	l1, ok := bin.FromLatin1("Grüße")
@@ -105,13 +105,13 @@ func Text(s string) (string, int32, string, string, bool, string, bool) {
 }
 
 // Invalid returns the replacement of invalid UTF-8.
-func Invalid() (string, int32, int32, bool, bool, uint32, uint32) {
+func Invalid() (string, int64, int64, bool, bool, uint32, uint32) {
 	b := bin.Of(0x61, 0xff, 0xfe, 0x62, 0xe2, 0x82)
 	sub := b.Index(bin.Of(0xfe, 0x62))
 	missing := b.Index(bin.Of(0x01))
 	v := b.GetOr(100, 7)
 	w := uint32(0)
-	if i := int32(3); i < b.Len() {
+	if i := int64(3); i < b.Len() {
 		w = b.GetOr(i, 0)
 	}
 	return b.Text(), sub, missing, b.HasPrefix(bin.Of(0x61)), b.HasSuffix(bin.Of(0x61)), v, w
@@ -130,7 +130,7 @@ func Floats(f float64, u uint32, n uint32) (uint32, float64, uint64, float64, in
 }
 
 // Overrun reads beyond the end.
-func Overrun(n int32) (uint32, string) {
+func Overrun(n int64) (uint32, string) {
 	data := bin.Of(1, 2, 3)
 	v, err := bin.Decode(data, func(r bin.Reader) uint32 {
 		r.Skip(n)
@@ -162,7 +162,7 @@ func LittleBits(v uint64, n uint32) (uint64, string, error) {
 
 // Records writes n records of a timestamp, a channel and a measured value and sums them up again.
 func Records(n int32) (int64, error) {
-	b := bin.NewBuffer(n * 14)
+	b := bin.NewBuffer(int64(n) * 14)
 	for i := range n {
 		b.AppendU64BE(uint64(i) * 1000)
 		b.AppendU16LE(uint32(i) & 7)
@@ -185,4 +185,45 @@ func Records(n int32) (int64, error) {
 		return 0, err
 	}
 	return sum, nil
+}
+
+// Grow appends n bytes one by one, e.g. beyond a limit of the host, and returns the lengths of the buffer, of its
+// snapshot and of the frozen bytes, whether the last byte could be set, the last byte and the bytes, which remain
+// after a seek to the middle.
+func Grow(n int64) (int64, int64, int64, bool, uint32, int64, error) {
+	b := bin.NewBuffer(n)
+	for i := range n {
+		b.AppendU8(uint32(i))
+	}
+	snap := b.Snapshot()
+	set := b.SetU16LE(n-2, 0xabcd)
+	size := b.Len()
+	data, err := b.Freeze()
+	if err != nil {
+		return size, snap.Len(), 0, set, 0, 0, err
+	}
+	rest, err := bin.Decode(data, func(r bin.Reader) int64 {
+		r.Seek(n / 2)
+		r.Skip(int64(1))
+		return r.Remaining()
+	})
+	if err != nil {
+		return size, snap.Len(), data.Len(), set, 0, 0, err
+	}
+	return size, snap.Len(), data.Len(), set, data.GetOr(n-1, 0), rest, nil
+}
+
+// Offsets reads at the offsets of int64 and slices with them, also out of range.
+func Offsets(from, to, at int64) (string, uint32, bool, int64, string, string) {
+	b := bin.FromText("0123456789")
+	v := b.GetOr(at, 99)
+	_, ok := b.Get(at)
+	r, err := bin.Decode(b, func(r bin.Reader) string {
+		r.Seek(at)
+		return r.Text(to - from)
+	})
+	if err != nil {
+		return b.Slice(from, to).Text(), v, ok, b.Index(bin.FromText("45")), "", err.Error()
+	}
+	return b.Slice(from, to).Text(), v, ok, b.Index(bin.FromText("45")), r, ""
 }

@@ -217,7 +217,7 @@ func Written(f float64, s string) (string, error) {
 }
 
 // Points writes n points and returns the size of the document, e.g. to measure the encoding.
-func Points(n int32) (int32, error) {
+func Points(n int32) (int64, error) {
 	points := list.New[Point]()
 	for i := range n {
 		points.Append(Point{X: float64(i) + 0.25, Y: -float64(i) - 0.5})

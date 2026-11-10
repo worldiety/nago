@@ -27,7 +27,7 @@ type Machine struct {
 	hi       layout
 	depth    int
 	maxDepth int
-	// maxBuffer limits the size of a bin.Buffer in bytes, core.DefaultLimit if zero
+	// maxBuffer limits the size of a bin.Buffer in bytes, no limit if zero
 	maxBuffer int
 	fuel      int
 	ctx       context.Context

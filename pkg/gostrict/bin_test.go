@@ -49,10 +49,10 @@ func TestBinRules(t *testing.T) {
 }`, gostrict.CodeConcurrent},
 		{"bytes as a package variable", `var magic = bin.Of(1, 2)
 
-func Run() int32 { return magic.Len() }`, ""},
+func Run() int64 { return magic.Len() }`, ""},
 		{"a buffer as a package variable", `var shared = bin.NewBuffer(0)
 
-func Run() int32 { return shared.Len() }`, gostrict.CodeGlobal},
+func Run() int64 { return shared.Len() }`, gostrict.CodeGlobal},
 		{"== of bytes", `func Run(a, b bin.Bytes) bool { return a == b }`, gostrict.CodeBigEqual},
 		{"a byte without a check", `func Run(b bin.Bytes) uint32 {
 	v, _ := b.Get(3)
@@ -65,6 +65,20 @@ func Run() int32 { return shared.Len() }`, gostrict.CodeGlobal},
 		sum += v
 	}
 	return sum
+}`, ""},
+		{"a byte after a proof of an index of int64", `func Run(b bin.Bytes, i int64) uint32 {
+	if i >= 0 && i < b.Len() {
+		v, _ := b.Get(i)
+		return v
+	}
+	return 0
+}`, ""},
+		{"offsets of int64 in a reader", `func Run(b bin.Bytes) (int64, error) {
+	return bin.Decode(b, func(r bin.Reader) int64 {
+		r.Seek(int64(4))
+		r.Skip(r.Remaining() - 1)
+		return r.Pos()
+	})
 }`, ""},
 		{"a result of Decode without a check", `func Run(b bin.Bytes) uint32 {
 	v, _ := bin.Decode(b, func(r bin.Reader) uint32 { return r.U8() })

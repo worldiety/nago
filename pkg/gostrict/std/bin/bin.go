@@ -24,7 +24,9 @@
 //     return Header{}, err
 //     }
 //
-// A byte is a uint32 from 0 to 255: there is no type byte. A variable shift count is a uint32 or uint64.
+// A byte is a uint32 from 0 to 255: there is no type byte. Lengths, indices, offsets and capacities are int64, so that
+// a file beyond 2 GiB keeps its length: write int64(0) for an index. A number of bits is a uint32. A variable shift
+// count is a uint32 or uint64.
 //
 //gostrict:header
 package bin
@@ -101,16 +103,16 @@ func FromBase64(s string) (Bytes, bool) {
 
 // Len returns the number of bytes.
 //
-//gostrict:js (b) => b.length
-func (b Bytes) Len() int32 { return int32(len(raw(b))) }
+//gostrict:js (b) => $B(b.length)
+func (b Bytes) Len() int64 { return int64(len(raw(b))) }
 
 // Get returns the byte at i and true, or 0 and false, if i is out of range.
 //
 //gostrict:zero
-//gostrict:js (b, i) => (i >= 0 && i < b.length ? [b[i], true] : [0, false])
-func (b Bytes) Get(i int32) (uint32, bool) {
+//gostrict:js (b, i) => ($bin_in(i, b.length) ? [b[$N(i)], true] : [0, false])
+func (b Bytes) Get(i int64) (uint32, bool) {
 	s := raw(b)
-	if i < 0 || int(i) >= len(s) {
+	if i < 0 || i >= int64(len(s)) {
 		return 0, false
 	}
 	return uint32(s[i]), true
@@ -118,8 +120,8 @@ func (b Bytes) Get(i int32) (uint32, bool) {
 
 // GetOr returns the byte at i or def, if i is out of range.
 //
-//gostrict:js (b, i, d) => (i >= 0 && i < b.length ? b[i] : d)
-func (b Bytes) GetOr(i int32, def uint32) uint32 {
+//gostrict:js (b, i, d) => ($bin_in(i, b.length) ? b[$N(i)] : d)
+func (b Bytes) GetOr(i int64, def uint32) uint32 {
 	if v, ok := b.Get(i); ok {
 		return v
 	}
@@ -128,13 +130,13 @@ func (b Bytes) GetOr(i int32, def uint32) uint32 {
 
 // Slice returns the bytes in from..to, clamped into the range, without copying them.
 //
-//gostrict:js (b, from, to) => (from >= to ? b.subarray(0, 0) : b.subarray($M.max(from, 0), $M.max($M.min(to, b.length), 0)))
-func (b Bytes) Slice(from, to int32) Bytes { return wrap(core.Slice(raw(b), from, to)) }
+//gostrict:js (b, from, to) => $bin_slice(b, from, to)
+func (b Bytes) Slice(from, to int64) Bytes { return wrap(core.Slice(raw(b), from, to)) }
 
 // Index returns the index of the first occurrence of sub or -1.
 //
-//gostrict:js (b, sub) => $bin_index(b, sub)
-func (b Bytes) Index(sub Bytes) int32 { return core.Index(raw(b), raw(sub)) }
+//gostrict:js (b, sub) => $B($bin_index(b, sub))
+func (b Bytes) Index(sub Bytes) int64 { return core.Index(raw(b), raw(sub)) }
 
 // Equal tells, whether both have the same bytes.
 //
@@ -316,27 +318,22 @@ func (r Reader) Align() { r.c().Align() }
 // Skip skips n whole bytes.
 //
 //gostrict:js (r, n) => void $bin_take(r, n)
-func (r Reader) Skip(n int32) { r.c().Skip(n) }
-
-// Seek continues at the byte offset.
-//
-//gostrict:js (r, o) => $bin_seek(r, o)
-func (r Reader) Seek(offset int32) { r.c().Seek(offset) }
+func (r Reader) Skip(n int64) { r.c().Skip(n) }
 
 // Pos returns the offset of the next whole byte.
 //
-//gostrict:js (r) => $bin_pos(r)
-func (r Reader) Pos() int32 { return r.c().Pos() }
+//gostrict:js (r) => $B($bin_pos(r))
+func (r Reader) Pos() int64 { return r.c().Pos() }
 
 // Remaining returns the number of whole bytes from [Reader.Pos] on, 0 after a failure.
 //
-//gostrict:js (r) => $bin_remaining(r)
-func (r Reader) Remaining() int32 { return r.c().Remaining() }
+//gostrict:js (r) => $B($bin_remaining(r))
+func (r Reader) Remaining() int64 { return r.c().Remaining() }
 
 // Bytes returns the next n bytes without copying them.
 //
 //gostrict:js (r, n) => $bin_bytes(r, n)
-func (r Reader) Bytes(n int32) Bytes { return wrap(r.c().Bytes(n)) }
+func (r Reader) Bytes(n int64) Bytes { return wrap(r.c().Bytes(n)) }
 
 // Rest returns all remaining bytes without copying them.
 //
@@ -346,22 +343,22 @@ func (r Reader) Rest() Bytes { return wrap(r.c().Rest()) }
 // Text reads n bytes of UTF-8.
 //
 //gostrict:js (r, n) => $bin_text($bin_bytes(r, n))
-func (r Reader) Text(n int32) string { return r.c().Text(n) }
+func (r Reader) Text(n int64) string { return r.c().Text(n) }
 
 // TextZ reads a field of n bytes of UTF-8, which ends at its first zero.
 //
 //gostrict:js (r, n) => $bin_text($bin_trimZ($bin_bytes(r, n)))
-func (r Reader) TextZ(n int32) string { return r.c().TextZ(n) }
+func (r Reader) TextZ(n int64) string { return r.c().TextZ(n) }
 
 // Latin1 reads n bytes of ISO 8859-1.
 //
 //gostrict:js (r, n) => $bin_latin1($bin_bytes(r, n))
-func (r Reader) Latin1(n int32) string { return r.c().Latin1(n, false) }
+func (r Reader) Latin1(n int64) string { return r.c().Latin1(n, false) }
 
 // Latin1Z reads a field of n bytes of ISO 8859-1, which ends at its first zero.
 //
 //gostrict:js (r, n) => $bin_latin1($bin_trimZ($bin_bytes(r, n)))
-func (r Reader) Latin1Z(n int32) string { return r.c().Latin1(n, true) }
+func (r Reader) Latin1Z(n int64) string { return r.c().Latin1(n, true) }
 
 // Fail ends the reading with the reason, which is the error of [Decode], e.g. for a wrong magic number.
 //
@@ -373,30 +370,32 @@ func (r Reader) Fail(reason string) { r.c().Fail(reason) }
 //gostrict:js (r) => $bin_failed(r)
 func (r Reader) Failed() bool { return r.c().Failed() }
 
-// Buffer collects bytes. A buffer never fails while it grows: beyond the limit of the host it ignores all further
-// bytes and [Buffer.Freeze] reports it. The compiler keeps a buffer out of package variables and of functions, which
-// run concurrently.
+// Buffer collects bytes. A buffer has no limit, unless the host sets one, e.g. vm.Engine.MaxBuffer, and grows, as long
+// as there is memory. It never fails while it grows: beyond a limit of the host it ignores all further bytes and
+// [Buffer.Freeze] reports it. The compiler keeps a buffer out of package variables and of functions, which run
+// concurrently.
 type Buffer struct {
 	ref js.Ref
 }
 
-// NewBuffer returns an empty buffer with room for capacity bytes, which it can outgrow.
+// NewBuffer returns an empty buffer with room for capacity bytes, which it can outgrow. The capacity is a hint: the
+// buffer reserves at most 64 MiB in advance.
 //
 //gostrict:js (c) => $bin_newBuffer(c)
-func NewBuffer(capacity int32) Buffer { return Buffer{ref: js.NewRef(core.NewBuffer(capacity, 0))} }
+func NewBuffer(capacity int64) Buffer { return Buffer{ref: js.NewRef(core.NewBuffer(capacity, 0))} }
 
 // Len returns the number of bytes.
 //
-//gostrict:js (b) => b.n
-func (b Buffer) Len() int32 { return b.c().Len() }
+//gostrict:js (b) => $B(b.n)
+func (b Buffer) Len() int64 { return b.c().Len() }
 
 // Get returns the byte at i and true, or 0 and false, if i is out of range.
 //
 //gostrict:zero
-//gostrict:js (b, i) => (i >= 0 && i < b.n ? [b.a[i], true] : [0, false])
-func (b Buffer) Get(i int32) (uint32, bool) {
+//gostrict:js (b, i) => ($bin_in(i, b.n) ? [b.a[$N(i)], true] : [0, false])
+func (b Buffer) Get(i int64) (uint32, bool) {
 	s := b.c().Bytes()
-	if i < 0 || int(i) >= len(s) {
+	if i < 0 || i >= int64(len(s)) {
 		return 0, false
 	}
 	return uint32(s[i]), true
@@ -404,8 +403,8 @@ func (b Buffer) Get(i int32) (uint32, bool) {
 
 // GetOr returns the byte at i or def, if i is out of range.
 //
-//gostrict:js (b, i, d) => (i >= 0 && i < b.n ? b.a[i] : d)
-func (b Buffer) GetOr(i int32, def uint32) uint32 {
+//gostrict:js (b, i, d) => ($bin_in(i, b.n) ? b.a[$N(i)] : d)
+func (b Buffer) GetOr(i int64, def uint32) uint32 {
 	if v, ok := b.Get(i); ok {
 		return v
 	}
@@ -415,37 +414,37 @@ func (b Buffer) GetOr(i int32, def uint32) uint32 {
 // Set overwrites the byte at i with the low 8 bits of v and tells, whether i is in range.
 //
 //gostrict:js (b, i, v) => $bin_set(b, i, 1, false, v)
-func (b Buffer) Set(i int32, v uint32) bool { return b.c().Set(i, v) }
+func (b Buffer) Set(i int64, v uint32) bool { return b.c().Set(i, v) }
 
 // SetU16BE overwrites 2 bytes at i, e.g. a length field, and tells, whether they are in range.
 //
 //gostrict:js (b, i, v) => $bin_set(b, i, 2, false, v)
-func (b Buffer) SetU16BE(i int32, v uint32) bool { return b.c().SetU16BE(i, v) }
+func (b Buffer) SetU16BE(i int64, v uint32) bool { return b.c().SetU16BE(i, v) }
 
 // SetU16LE overwrites 2 bytes at i and tells, whether they are in range.
 //
 //gostrict:js (b, i, v) => $bin_set(b, i, 2, true, v)
-func (b Buffer) SetU16LE(i int32, v uint32) bool { return b.c().SetU16LE(i, v) }
+func (b Buffer) SetU16LE(i int64, v uint32) bool { return b.c().SetU16LE(i, v) }
 
 // SetU32BE overwrites 4 bytes at i and tells, whether they are in range.
 //
 //gostrict:js (b, i, v) => $bin_set(b, i, 4, false, v)
-func (b Buffer) SetU32BE(i int32, v uint32) bool { return b.c().SetU32BE(i, v) }
+func (b Buffer) SetU32BE(i int64, v uint32) bool { return b.c().SetU32BE(i, v) }
 
 // SetU32LE overwrites 4 bytes at i and tells, whether they are in range.
 //
 //gostrict:js (b, i, v) => $bin_set(b, i, 4, true, v)
-func (b Buffer) SetU32LE(i int32, v uint32) bool { return b.c().SetU32LE(i, v) }
+func (b Buffer) SetU32LE(i int64, v uint32) bool { return b.c().SetU32LE(i, v) }
 
 // SetU64BE overwrites 8 bytes at i and tells, whether they are in range.
 //
 //gostrict:js (b, i, v) => $bin_set64(b, i, false, v)
-func (b Buffer) SetU64BE(i int32, v uint64) bool { return b.c().SetU64BE(i, v) }
+func (b Buffer) SetU64BE(i int64, v uint64) bool { return b.c().SetU64BE(i, v) }
 
 // SetU64LE overwrites 8 bytes at i and tells, whether they are in range.
 //
 //gostrict:js (b, i, v) => $bin_set64(b, i, true, v)
-func (b Buffer) SetU64LE(i int32, v uint64) bool { return b.c().SetU64LE(i, v) }
+func (b Buffer) SetU64LE(i int64, v uint64) bool { return b.c().SetU64LE(i, v) }
 
 // AppendU8 appends the low 8 bits of v.
 //
@@ -532,7 +531,7 @@ func (b Buffer) AppendBits(v uint64, n uint32) { b.c().AppendBits(v, n) }
 //gostrict:js (b, v, n) => $bin_appendBits(b, v, n, false)
 func (b Buffer) AppendBitsLE(v uint64, n uint32) { b.c().AppendBitsLE(v, n) }
 
-// Reset empties the buffer and forgets a broken limit.
+// Reset empties the buffer and forgets a broken limit of the host.
 //
 //gostrict:js (b) => $bin_reset(b)
 func (b Buffer) Reset() { b.c().Reset() }
@@ -542,7 +541,7 @@ func (b Buffer) Reset() { b.c().Reset() }
 //gostrict:js (b) => b.a.slice(0, b.n)
 func (b Buffer) Snapshot() Bytes { return wrap(b.c().Snapshot()) }
 
-// Freeze hands the bytes over without copying them and empties the buffer. It fails, if the buffer has exceeded the
+// Freeze hands the bytes over without copying them and empties the buffer. It fails only, if the buffer has exceeded a
 // limit of the host, and returns empty bytes then.
 //
 //gostrict:zero

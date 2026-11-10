@@ -74,26 +74,26 @@ var binNatives = map[string]nativeFn{
 	},
 	binPath + ".Bytes.Len": func(m *Machine, n []uint64, s []string, r []any) { n[0] = uint64(len(bytesOf(r[0]))) },
 	binPath + ".Bytes.Get": func(m *Machine, n []uint64, s []string, r []any) {
-		b, i := bytesOf(r[0]), i32(n[0])
-		if i < 0 || int(i) >= len(b) {
+		b, i := bytesOf(r[0]), int64(n[0])
+		if i < 0 || i >= int64(len(b)) {
 			n[0], n[1] = 0, 0
 			return
 		}
 		n[0], n[1] = uint64(b[i]), 1
 	},
 	binPath + ".Bytes.GetOr": func(m *Machine, n []uint64, s []string, r []any) {
-		b, i := bytesOf(r[0]), i32(n[0])
-		if i < 0 || int(i) >= len(b) {
+		b, i := bytesOf(r[0]), int64(n[0])
+		if i < 0 || i >= int64(len(b)) {
 			n[0] = n[1]
 			return
 		}
 		n[0] = uint64(b[i])
 	},
 	binPath + ".Bytes.Slice": func(m *Machine, n []uint64, s []string, r []any) {
-		r[0] = core.Slice(bytesOf(r[0]), i32(n[0]), i32(n[1]))
+		r[0] = core.Slice(bytesOf(r[0]), int64(n[0]), int64(n[1]))
 	},
 	binPath + ".Bytes.Index": func(m *Machine, n []uint64, s []string, r []any) {
-		n[0] = fromI32(core.Index(bytesOf(r[0]), bytesOf(r[1])))
+		n[0] = uint64(core.Index(bytesOf(r[0]), bytesOf(r[1])))
 	},
 	binPath + ".Bytes.Equal": func(m *Machine, n []uint64, s []string, r []any) {
 		n[0] = fromBool(string(bytesOf(r[0])) == string(bytesOf(r[1])))
@@ -133,56 +133,60 @@ var binNatives = map[string]nativeFn{
 	binPath + ".Reader.Bits":      func(m *Machine, n []uint64, s []string, r []any) { n[0] = r[0].(*core.Reader).Bits(uint32(n[0])) },
 	binPath + ".Reader.BitsLE":    func(m *Machine, n []uint64, s []string, r []any) { n[0] = r[0].(*core.Reader).BitsLE(uint32(n[0])) },
 	binPath + ".Reader.Align":     func(m *Machine, n []uint64, s []string, r []any) { r[0].(*core.Reader).Align() },
-	binPath + ".Reader.Skip":      func(m *Machine, n []uint64, s []string, r []any) { r[0].(*core.Reader).Skip(i32(n[0])) },
-	binPath + ".Reader.Seek":      func(m *Machine, n []uint64, s []string, r []any) { r[0].(*core.Reader).Seek(i32(n[0])) },
-	binPath + ".Reader.Pos":       func(m *Machine, n []uint64, s []string, r []any) { n[0] = fromI32(r[0].(*core.Reader).Pos()) },
-	binPath + ".Reader.Remaining": func(m *Machine, n []uint64, s []string, r []any) { n[0] = fromI32(r[0].(*core.Reader).Remaining()) },
-	binPath + ".Reader.Bytes":     func(m *Machine, n []uint64, s []string, r []any) { r[0] = r[0].(*core.Reader).Bytes(i32(n[0])) },
+	binPath + ".Reader.Skip":      func(m *Machine, n []uint64, s []string, r []any) { r[0].(*core.Reader).Skip(int64(n[0])) },
+	binPath + ".Reader.Seek":      func(m *Machine, n []uint64, s []string, r []any) { r[0].(*core.Reader).SeekTo(int64(n[0])) },
+	binPath + ".Reader.Pos":       func(m *Machine, n []uint64, s []string, r []any) { n[0] = uint64(r[0].(*core.Reader).Pos()) },
+	binPath + ".Reader.Remaining": func(m *Machine, n []uint64, s []string, r []any) { n[0] = uint64(r[0].(*core.Reader).Remaining()) },
+	binPath + ".Reader.Bytes":     func(m *Machine, n []uint64, s []string, r []any) { r[0] = r[0].(*core.Reader).Bytes(int64(n[0])) },
 	binPath + ".Reader.Rest":      func(m *Machine, n []uint64, s []string, r []any) { r[0] = r[0].(*core.Reader).Rest() },
-	binPath + ".Reader.Text":      func(m *Machine, n []uint64, s []string, r []any) { s[0] = r[0].(*core.Reader).Text(i32(n[0])) },
-	binPath + ".Reader.TextZ":     func(m *Machine, n []uint64, s []string, r []any) { s[0] = r[0].(*core.Reader).TextZ(i32(n[0])) },
-	binPath + ".Reader.Latin1":    func(m *Machine, n []uint64, s []string, r []any) { s[0] = r[0].(*core.Reader).Latin1(i32(n[0]), false) },
-	binPath + ".Reader.Latin1Z":   func(m *Machine, n []uint64, s []string, r []any) { s[0] = r[0].(*core.Reader).Latin1(i32(n[0]), true) },
-	binPath + ".Reader.Fail":      func(m *Machine, n []uint64, s []string, r []any) { r[0].(*core.Reader).Fail(s[0]) },
-	binPath + ".Reader.Failed":    func(m *Machine, n []uint64, s []string, r []any) { n[0] = fromBool(r[0].(*core.Reader).Failed()) },
-	binPath + ".NewBuffer":        func(m *Machine, n []uint64, s []string, r []any) { r[0] = core.NewBuffer(i32(n[0]), m.maxBuffer) },
-	binPath + ".Buffer.Len":       func(m *Machine, n []uint64, s []string, r []any) { n[0] = fromI32(r[0].(*core.Buffer).Len()) },
+	binPath + ".Reader.Text":      func(m *Machine, n []uint64, s []string, r []any) { s[0] = r[0].(*core.Reader).Text(int64(n[0])) },
+	binPath + ".Reader.TextZ":     func(m *Machine, n []uint64, s []string, r []any) { s[0] = r[0].(*core.Reader).TextZ(int64(n[0])) },
+	binPath + ".Reader.Latin1": func(m *Machine, n []uint64, s []string, r []any) {
+		s[0] = r[0].(*core.Reader).Latin1(int64(n[0]), false)
+	},
+	binPath + ".Reader.Latin1Z": func(m *Machine, n []uint64, s []string, r []any) {
+		s[0] = r[0].(*core.Reader).Latin1(int64(n[0]), true)
+	},
+	binPath + ".Reader.Fail":   func(m *Machine, n []uint64, s []string, r []any) { r[0].(*core.Reader).Fail(s[0]) },
+	binPath + ".Reader.Failed": func(m *Machine, n []uint64, s []string, r []any) { n[0] = fromBool(r[0].(*core.Reader).Failed()) },
+	binPath + ".NewBuffer":     func(m *Machine, n []uint64, s []string, r []any) { r[0] = core.NewBuffer(int64(n[0]), m.maxBuffer) },
+	binPath + ".Buffer.Len":    func(m *Machine, n []uint64, s []string, r []any) { n[0] = uint64(r[0].(*core.Buffer).Len()) },
 	binPath + ".Buffer.Get": func(m *Machine, n []uint64, s []string, r []any) {
-		b, i := r[0].(*core.Buffer).Bytes(), i32(n[0])
-		if i < 0 || int(i) >= len(b) {
+		b, i := r[0].(*core.Buffer).Bytes(), int64(n[0])
+		if i < 0 || i >= int64(len(b)) {
 			n[0], n[1] = 0, 0
 			return
 		}
 		n[0], n[1] = uint64(b[i]), 1
 	},
 	binPath + ".Buffer.GetOr": func(m *Machine, n []uint64, s []string, r []any) {
-		b, i := r[0].(*core.Buffer).Bytes(), i32(n[0])
-		if i < 0 || int(i) >= len(b) {
+		b, i := r[0].(*core.Buffer).Bytes(), int64(n[0])
+		if i < 0 || i >= int64(len(b)) {
 			n[0] = n[1]
 			return
 		}
 		n[0] = uint64(b[i])
 	},
 	binPath + ".Buffer.Set": func(m *Machine, n []uint64, s []string, r []any) {
-		n[0] = fromBool(r[0].(*core.Buffer).Set(i32(n[0]), uint32(n[1])))
+		n[0] = fromBool(r[0].(*core.Buffer).Set(int64(n[0]), uint32(n[1])))
 	},
 	binPath + ".Buffer.SetU16BE": func(m *Machine, n []uint64, s []string, r []any) {
-		n[0] = fromBool(r[0].(*core.Buffer).SetU16BE(i32(n[0]), uint32(n[1])))
+		n[0] = fromBool(r[0].(*core.Buffer).SetU16BE(int64(n[0]), uint32(n[1])))
 	},
 	binPath + ".Buffer.SetU16LE": func(m *Machine, n []uint64, s []string, r []any) {
-		n[0] = fromBool(r[0].(*core.Buffer).SetU16LE(i32(n[0]), uint32(n[1])))
+		n[0] = fromBool(r[0].(*core.Buffer).SetU16LE(int64(n[0]), uint32(n[1])))
 	},
 	binPath + ".Buffer.SetU32BE": func(m *Machine, n []uint64, s []string, r []any) {
-		n[0] = fromBool(r[0].(*core.Buffer).SetU32BE(i32(n[0]), uint32(n[1])))
+		n[0] = fromBool(r[0].(*core.Buffer).SetU32BE(int64(n[0]), uint32(n[1])))
 	},
 	binPath + ".Buffer.SetU32LE": func(m *Machine, n []uint64, s []string, r []any) {
-		n[0] = fromBool(r[0].(*core.Buffer).SetU32LE(i32(n[0]), uint32(n[1])))
+		n[0] = fromBool(r[0].(*core.Buffer).SetU32LE(int64(n[0]), uint32(n[1])))
 	},
 	binPath + ".Buffer.SetU64BE": func(m *Machine, n []uint64, s []string, r []any) {
-		n[0] = fromBool(r[0].(*core.Buffer).SetU64BE(i32(n[0]), n[1]))
+		n[0] = fromBool(r[0].(*core.Buffer).SetU64BE(int64(n[0]), n[1]))
 	},
 	binPath + ".Buffer.SetU64LE": func(m *Machine, n []uint64, s []string, r []any) {
-		n[0] = fromBool(r[0].(*core.Buffer).SetU64LE(i32(n[0]), n[1]))
+		n[0] = fromBool(r[0].(*core.Buffer).SetU64LE(int64(n[0]), n[1]))
 	},
 	binPath + ".Buffer.AppendU8":    func(m *Machine, n []uint64, s []string, r []any) { r[0].(*core.Buffer).AppendU8(uint32(n[0])) },
 	binPath + ".Buffer.AppendU16BE": func(m *Machine, n []uint64, s []string, r []any) { r[0].(*core.Buffer).AppendU16BE(uint32(n[0])) },

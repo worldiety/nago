@@ -576,21 +576,38 @@ function $bin_align(r) {
 	}
 }
 
+// A length, an index or an offset of a program is an int64, whose Number is exact within the length of an array and
+// beyond it still out of range, so the functions convert it once with $N and compare it as a Number. An internal
+// length is a Number already.
+
+function $bin_in(i, n) {
+	const k = $N(i);
+	return k >= 0 && k < n;
+}
+
+function $bin_slice(b, from, to) {
+	const f = $M.max($N(from), 0);
+	const t = $M.min($N(to), b.length);
+	return f >= t ? b.subarray(0, 0) : b.subarray(f, t);
+}
+
+// $bin_take returns the offset of the next n whole bytes or -1, if they do not exist
 function $bin_take(r, n) {
 	$bin_align(r);
 	if ($bin_failed(r)) return -1;
-	if (n < 0 || n > r.b.length - r.p) {
+	const k = $N(n);
+	if (k < 0 || k > r.b.length - r.p) {
 		$bin_fail(r, "reading " + n + " bytes exceeds the length " + r.b.length);
 		return -1;
 	}
 	const at = r.p;
-	r.p += n;
+	r.p += k;
 	return at;
 }
 
 function $bin_bytes(r, n) {
 	const at = $bin_take(r, n);
-	return at < 0 ? new Uint8Array(0) : r.b.subarray(at, at + n);
+	return at < 0 ? new Uint8Array(0) : r.b.subarray(at, at + $N(n));
 }
 
 function $bin_u8(r) {
@@ -687,11 +704,12 @@ function $bin_bitsLE(r, n) {
 
 function $bin_seek(r, o) {
 	if ($bin_failed(r)) return;
-	if (o < 0 || o > r.b.length) {
+	const k = $N(o);
+	if (k < 0 || k > r.b.length) {
 		$bin_fail(r, "seeking to " + o + " exceeds the length " + r.b.length);
 		return;
 	}
-	r.p = o;
+	r.p = k;
 	r.bit = 0;
 }
 
@@ -703,18 +721,15 @@ function $bin_remaining(r) {
 	return $bin_failed(r) ? 0 : r.b.length - $bin_pos(r);
 }
 
-const $bin_limit = 67108864;
+// A buffer has no limit in the browser. The capacity is a hint, of which it reserves at most 64 MiB in advance.
+const $bin_maxReserve = 67108864;
 
 function $bin_newBuffer(c) {
-	return { a: new Uint8Array($M.max($M.min(c, $bin_limit), 16)), n: 0, bit: 0, over: false };
+	return { a: new Uint8Array($M.max($M.min($N(c), $bin_maxReserve), 16)), n: 0, bit: 0 };
 }
 
 function $bin_reserve(b, n) {
 	b.bit = 0;
-	if (b.over || n > $bin_limit - b.n) {
-		b.over = true;
-		return -1;
-	}
 	if (b.n + n > b.a.length) {
 		const a = new Uint8Array($M.max(b.a.length * 2, b.n + n));
 		a.set(b.a.subarray(0, b.n));
@@ -733,35 +748,39 @@ function $bin_put64(a, at, le, v) {
 	for (let i = 0; i < 8; i++) a[le ? at + i : at + 7 - i] = $N((v >> $B(i * 8)) & 255n);
 }
 
+// $bin_reserve may replace b.a, so the callers read b.a after it
+
 function $bin_append(b, n, le, v) {
 	const at = $bin_reserve(b, n);
-	if (at >= 0) $bin_put(b.a, at, n, le, v);
+	$bin_put(b.a, at, n, le, v);
 }
 
 function $bin_append64(b, le, v) {
 	const at = $bin_reserve(b, 8);
-	if (at >= 0) $bin_put64(b.a, at, le, v);
+	$bin_put64(b.a, at, le, v);
 }
 
 function $bin_set(b, i, n, le, v) {
-	if (i < 0 || i > b.n - n) return false;
-	$bin_put(b.a, i, n, le, v);
+	const k = $N(i);
+	if (k < 0 || k > b.n - n) return false;
+	$bin_put(b.a, k, n, le, v);
 	return true;
 }
 
 function $bin_set64(b, i, le, v) {
-	if (i < 0 || i > b.n - 8) return false;
-	$bin_put64(b.a, i, le, v);
+	const k = $N(i);
+	if (k < 0 || k > b.n - 8) return false;
+	$bin_put64(b.a, k, le, v);
 	return true;
 }
 
 function $bin_appendBytes(b, p) {
 	const at = $bin_reserve(b, p.length);
-	if (at >= 0) b.a.set(p, at);
+	b.a.set(p, at);
 }
 
 function $bin_appendBit(b, v, msb) {
-	if (b.bit === 0 && $bin_reserve(b, 1) < 0) return;
+	if (b.bit === 0) $bin_reserve(b, 1);
 	if (v) b.a[b.n - 1] |= msb ? 1 << (7 - b.bit) : 1 << b.bit;
 	b.bit = (b.bit + 1) % 8;
 }
@@ -777,15 +796,12 @@ function $bin_appendBits(b, v, n, msb) {
 function $bin_reset(b) {
 	b.n = 0;
 	b.bit = 0;
-	b.over = false;
 }
 
 function $bin_freeze(b) {
 	const res = b.a.subarray(0, b.n);
-	const over = b.over;
 	b.a = new Uint8Array(16);
 	$bin_reset(b);
-	if (over) return [new Uint8Array(0), $errors_New("bin: the buffer exceeds its limit of " + $bin_limit + " bytes", -1)];
 	return [res, null];
 }
 

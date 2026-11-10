@@ -17,13 +17,15 @@
 //   - bool, string, float64, int32 (alias rune), uint32, int64 and uint64. There is no int, because its width depends
 //     on the platform, and no byte: a byte is a uint32 and binary data a bin.Bytes. All integers wrap around like in
 //     Go. Write int32(0) or var n int32 for an integer constant. An int64 is a BigInt in JavaScript, so it is exact
-//     there too, but slow: use it for what needs 64 bits, and int32 for counters and indices.
+//     there too, but slow: use it for what needs 64 bits, and int32 for counters and indices of lists. The lengths,
+//     indices and offsets of bin are int64, so that a file beyond 2 GiB keeps its length.
 //   - a shift count is a constant within the width of the value or a variable uint32 or uint64, from the width on
 //     the bits are gone, like in Go. A negative count would panic in Go, so a signed count is rejected.
 //   - named struct types, pointers to them, created only by &T{...}, functions and interfaces with methods.
 //   - bin.Bytes and bin.Buffer of go.wdy.de/nago/pkg/gostrict/std/bin for binary data, see there. Bytes never change, may
 //     be shared without copying and enter concurrent functions and package variables, a Buffer collects bytes and is
-//     rejected there. bin.Decode reads a binary format field by field and reports a read beyond the end as its error.
+//     rejected there. A Buffer has no limit, unless the host sets one, e.g. vm.Engine.MaxBuffer. bin.Decode reads a
+//     binary format field by field and reports a read beyond the end as its error.
 //   - json.Decode[T](data) of go.wdy.de/nago/pkg/gostrict/std/json reads JSON from a bin.Bytes, e.g. the body of a
 //     response, directly into T: bool, string, the integers, float64, big.Int, bin.Bytes as Base64, list.List, dict.Map
 //     with string keys, opt.Option and structs of them. A field takes the key of its tag json:"key" or its name,
