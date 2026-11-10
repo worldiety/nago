@@ -58,6 +58,7 @@ import { call as callProgram } from '@/components/gostrict/engine';
 import { type InputSample, listenInput } from '@/shared/inputEvents';
 import { capture } from '@/shared/screenshot';
 import ThemeManager, { ThemeKey } from '@/shared/themeManager';
+import { withUserGesture } from '@/shared/userGestureBridge';
 
 let nextRequestTracingID: number = 1;
 
@@ -426,7 +427,7 @@ export function navigateForward(chan: Channel, evt: NavigationForwardToRequested
 
 	if (evt.target === '_blank') {
 		// special case without manipulating our history, instead open in new tab
-		window.open(url, '_blank');
+		withUserGesture(() => window.open(url, '_blank'));
 		return;
 	}
 
@@ -610,7 +611,7 @@ export function applyRootViewState(chan: Channel, state: any) {
  * @param evt
  */
 export function openHttpLink(evt: OpenHttpLink) {
-	window.open(evt.url, evt.target);
+	withUserGesture(() => window.open(evt.url, evt.target));
 }
 
 /**
@@ -646,20 +647,26 @@ export function setTheme(chan: Channel, themeManager: ThemeManager, evt: ThemeRe
 	windowInfoChanged(chan, themeManager);
 }
 
-export function clipboardWriteText(evt: ClipboardWriteTextRequested) {
-	return navigator.clipboard
-		.writeText(evt.text!)
-		.then(() => {
-			console.log('text written to clipboard');
-			return '';
-		})
-		.catch((reason) => {
-			console.log('failed to copy text into clipboard', reason);
-			if (reason.toString().lastIndexOf('NotAllowed') >= 0) {
-				return evt.text!;
-			}
-			return '';
+export function clipboardWriteText(evt: ClipboardWriteTextRequested): Promise<string> {
+	return new Promise((resolve) => {
+		withUserGesture(() => {
+			resolve(
+				navigator.clipboard
+					.writeText(evt.text!)
+					.then(() => {
+						console.log('text written to clipboard');
+						return '';
+					})
+					.catch((reason) => {
+						console.log('failed to copy text into clipboard', reason);
+						if (reason.toString().lastIndexOf('NotAllowed') >= 0) {
+							return evt.text!;
+						}
+						return '';
+					})
+			);
 		});
+	});
 }
 
 export async function callRequested(chan: Channel, evt: CallRequested) {
