@@ -78,6 +78,29 @@ describe('TextFieldSync', () => {
 		assert.equal(sync.adopt('hello', '', 9), true); // answers 7 or later, the submit handler emptied it
 	});
 
+	test('another bound state starts over with its server value', () => {
+		// the text field of "t-7" moves on to an integer field, for which the same text parses to "-7"
+		const sync = new TextFieldSync('t-7', 1);
+		assert.equal(sync.rebind(2, '500'), true);
+		assert.equal(sync.hasUnsentInput('500'), false);
+		assert.equal(sync.adopt('500', '500', 0), false);
+	});
+
+	test('another bound state forgets what has been transmitted to the previous one', () => {
+		const sync = new TextFieldSync('', 1);
+		sync.sent('hello', 9);
+		assert.equal(sync.rebind(2, 'other'), true);
+		// no rendering has answered 9 yet, but that request does not concern this state
+		assert.equal(sync.adopt('other', 'changed', 0), true);
+	});
+
+	test('the same bound state keeps what has been typed', () => {
+		const sync = new TextFieldSync('a', 1);
+		assert.equal(sync.rebind(1, 'b'), false);
+		assert.equal(sync.hasUnsentInput('a'), false);
+		assert.equal(sync.adopt('typed', 'b', 0), false);
+	});
+
 	test('a rendering carrying the sent value ends the flight without an answer of its own', () => {
 		// e.g. enter without a change, which the server does not answer with a rendering of its rid
 		const sync = new TextFieldSync('a');

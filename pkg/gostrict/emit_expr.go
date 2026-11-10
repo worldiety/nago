@@ -99,6 +99,9 @@ func (c *fnCtx) expr(x ast.Expr) string {
 }
 
 func constJS(v constant.Value, t types.Type) string {
+	if t != nil && isBigIntKind(basicKind(t)) {
+		return wrapNeg(constant.ToInt(v).ExactString() + "n")
+	}
 	switch v.Kind() {
 	case constant.Bool:
 		return strconv.FormatBool(constant.BoolVal(v))
@@ -224,6 +227,8 @@ type libArgs struct {
 	rest func(i int, t types.Type) string
 	// all returns the arguments for all parameters like the call of a function value
 	all func() string
+	// pos returns the position of the call for an error, which the function creates
+	pos func() string
 }
 
 // callArgs returns the arguments of the call of a function of the library with the signature sig.
@@ -239,6 +244,7 @@ func (c *fnCtx) callArgs(call *ast.CallExpr, sig *types.Signature) libArgs {
 			return "[" + strings.Join(vals, ", ") + "]"
 		},
 		all: func() string { return c.args(call, sig) },
+		pos: func() string { return c.e.errorPos(call.Pos()) },
 	}
 }
 
@@ -252,6 +258,7 @@ func paramArgs(params []string) libArgs {
 		val:  param,
 		rest: param,
 		all:  func() string { return strings.Join(params, ", ") },
+		pos:  func() string { return "-1" },
 	}
 }
 
@@ -280,6 +287,12 @@ func (c *fnCtx) libFunc(fn *types.Func, targs []types.Type, args libArgs) (strin
 		return "$ozero(" + c.e.zeroFn(targs[0]) + ", " + args.all() + ")", true
 	case optPath + ".OrZeroErr":
 		return "$ozeroerr(" + c.e.zeroFn(targs[0]) + ", " + args.all() + ")", true
+	case binPath + ".Decode":
+		return "$bin_Decode(" + args.all() + ", " + args.pos() + ")", true
+	case jsonPath + ".Decode":
+		return "$json_Decode(" + args.expr(0) + ", " + c.e.jsonType(targs[0]) + ", " + args.pos() + ")", true
+	case jsonPath + ".Encode":
+		return "$json_Encode(" + args.expr(0) + ", " + c.e.jsonType(targs[0]) + ", " + args.pos() + ")", true
 	}
 	return "", false
 }
@@ -522,17 +535,31 @@ func (c *fnCtx) unary(u *ast.UnaryExpr) string {
 			return "((0 - " + x + ") | 0)"
 		case types.Uint32:
 			return "((0 - " + x + ") >>> 0)"
+		case types.Int64:
+			return "$i64(-" + x + ")"
+		case types.Uint64:
+			return "$u64(-" + x + ")"
 		default:
 			return "(-" + x + ")"
 		}
 	case token.XOR:
-		if basicKind(c.typeOf(u.X)) == types.Uint32 {
+		switch basicKind(c.typeOf(u.X)) {
+		case types.Uint32:
 			return "(~" + x + " >>> 0)"
+		case types.Int64:
+			return "$i64(~" + x + ")"
+		case types.Uint64:
+			return "$u64(~" + x + ")"
 		}
 		return "(~" + x + ")"
 	}
 	fail(u.Pos(), "operator %s is not supported", u.Op)
 	return ""
+}
+
+// isBigIntKind tells, whether a number of the kind is a BigInt in JavaScript.
+func isBigIntKind(k types.BasicKind) bool {
+	return k == types.Int64 || k == types.Uint64
 }
 
 func basicKind(t types.Type) types.BasicKind {
@@ -590,18 +617,7 @@ func (c *fnCtx) binaryJS(op token.Token, x, y string, xt, yt types.Type, pos tok
 		}
 		return "(" + x + " " + op.String() + " " + y + ")"
 	case token.SHL, token.SHR:
-		// the checker allows only constant shift counts from 0 to 31, which JavaScript shifts like Go
-		switch {
-		case k == types.Int32 && op == token.SHL:
-			return "(" + x + " << " + y + ")"
-		case k == types.Int32:
-			return "(" + x + " >> " + y + ")"
-		case k == types.Uint32 && op == token.SHL:
-			return "((" + x + " << " + y + ") >>> 0)"
-		case k == types.Uint32:
-			return "(" + x + " >>> " + y + ")"
-		}
-		fail(pos, "shift of %s is not supported", xt)
+		return shiftJS(op, x, y, k, yt, pos, xt)
 	}
 
 	switch k {
@@ -630,9 +646,79 @@ func (c *fnCtx) binaryJS(op token.Token, x, y string, xt, yt types.Type, pos tok
 			// the checker proves, that the divisor is not zero
 			return "((" + x + " " + op.String() + " " + y + ")" + conv
 		}
+	case types.Int64, types.Uint64:
+		wrap := "$i64("
+		if k == types.Uint64 {
+			wrap = "$u64("
+		}
+		switch op {
+		case token.ADD, token.SUB, token.MUL, token.AND, token.OR, token.XOR, token.QUO, token.REM:
+			// a BigInt divides like Go and the checker proves, that the divisor is not zero
+			return wrap + x + " " + op.String() + " " + y + ")"
+		case token.AND_NOT:
+			return wrap + x + " & ~" + y + ")"
+		}
 	}
 	fail(pos, "operator %s on %s is not supported", op, xt)
 	return ""
+}
+
+// shiftJS translates a shift. JavaScript shifts a 32 bit integer like Go only for the constant counts within its width,
+// which the checker demands, so that the runtime guards a variable count, which may be any uint32 or uint64.
+func shiftJS(op token.Token, x, y string, k types.BasicKind, yt types.Type, pos token.Pos, xt types.Type) string {
+	constant := isDigits(strings.TrimSuffix(y, "n"))
+	left := op == token.SHL
+	switch k {
+	case types.Int32, types.Uint32:
+		if !constant {
+			if isBigIntKind(basicKind(yt)) {
+				y = "$N(" + y + ")"
+			}
+			switch {
+			case k == types.Int32 && left:
+				return "$shl32(" + x + ", " + y + ")"
+			case k == types.Int32:
+				return "$sar32(" + x + ", " + y + ")"
+			case left:
+				return "$shlu32(" + x + ", " + y + ")"
+			}
+			return "$shru32(" + x + ", " + y + ")"
+		}
+		y = strings.TrimSuffix(y, "n")
+		switch {
+		case k == types.Int32 && left:
+			return "(" + x + " << " + y + ")"
+		case k == types.Int32:
+			return "(" + x + " >> " + y + ")"
+		case left:
+			return "((" + x + " << " + y + ") >>> 0)"
+		}
+		return "(" + x + " >>> " + y + ")"
+	case types.Int64, types.Uint64:
+		switch {
+		case k == types.Int64 && left:
+			return "$shl64(" + x + ", " + y + ")"
+		case k == types.Int64:
+			return "$sar64(" + x + ", " + y + ")"
+		case left:
+			return "$shlu64(" + x + ", " + y + ")"
+		}
+		return "$shru64(" + x + ", " + y + ")"
+	}
+	fail(pos, "shift of %s is not supported", xt)
+	return ""
+}
+
+func isDigits(s string) bool {
+	if s == "" {
+		return false
+	}
+	for _, c := range s {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 func (c *fnCtx) call(call *ast.CallExpr) string {
@@ -846,6 +932,9 @@ func (c *fnCtx) builtin(b *types.Builtin, call *ast.CallExpr) string {
 		for _, a := range call.Args {
 			args = append(args, c.expr(a))
 		}
+		if isBigIntKind(basicKind(c.typeOf(call))) {
+			return "$i" + b.Name() + "(" + strings.Join(args, ", ") + ")"
+		}
 		return "$M." + b.Name() + "(" + strings.Join(args, ", ") + ")"
 	}
 	fail(call.Pos(), "builtin %s is not supported", b.Name())
@@ -865,6 +954,22 @@ func (c *fnCtx) conversion(call *ast.CallExpr, to types.Type) string {
 	x := c.expr(a)
 	fk, tk := basicKind(from), basicKind(to)
 	switch {
+	case isBigIntKind(fk) && tk == types.Int32:
+		return "$N($B.asIntN(32, " + x + "))"
+	case isBigIntKind(fk) && tk == types.Uint32:
+		return "$N($B.asUintN(32, " + x + "))"
+	case fk == types.Int64 && tk == types.Float64:
+		return "$N(" + x + ")"
+	case fk == types.Uint64 && tk == types.Float64:
+		return "$uf(" + x + ")"
+	case fk == types.Int64 && tk == types.Uint64:
+		return "$u64(" + x + ")"
+	case fk == types.Uint64 && tk == types.Int64:
+		return "$i64(" + x + ")"
+	case isBigIntKind(tk) && fk == types.Int32 && tk == types.Uint64:
+		return "$u64($B(" + x + "))"
+	case isBigIntKind(tk) && (fk == types.Int32 || fk == types.Uint32):
+		return "$B(" + x + ")"
 	case tk == types.Int32 && fk == types.Uint32:
 		return "(" + x + " | 0)"
 	case tk == types.Uint32 && fk == types.Int32:

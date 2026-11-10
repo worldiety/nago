@@ -19,6 +19,9 @@ func valueKind(t types.Type) ValueKind {
 	if isBig(t) {
 		return ValueBig
 	}
+	if isBytes(t) {
+		return ValueBytes
+	}
 	if isHandle(t) {
 		return ValueHandle
 	}
@@ -29,6 +32,10 @@ func valueKind(t types.Type) ValueKind {
 		return ValueInt32
 	case types.Uint32:
 		return ValueUint32
+	case types.Int64:
+		return ValueInt64
+	case types.Uint64:
+		return ValueUint64
 	case types.Float64:
 		return ValueFloat64
 	case types.String:

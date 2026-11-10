@@ -137,6 +137,22 @@ func sample(rnd *rand.Rand, k gostrict.ValueKind, i int) any {
 			return []uint32{0, 1, 2, 255, 1 << 31, math.MaxUint32, 1000, 7}[i]
 		}
 		return rnd.Uint32()
+	case gostrict.ValueInt64:
+		if edge {
+			return []int64{0, 1, -1, 2, -2, math.MaxInt64, math.MinInt64, 1 << 53}[i]
+		}
+		return int64(rnd.Uint64())
+	case gostrict.ValueUint64:
+		if edge {
+			return []uint64{0, 1, 2, 255, 1 << 63, math.MaxUint64, 1 << 53, 7}[i]
+		}
+		return rnd.Uint64()
+	case gostrict.ValueBytes:
+		b := make([]byte, rnd.IntN(8))
+		for k := range b {
+			b[k] = byte(rnd.Uint32())
+		}
+		return b
 	case gostrict.ValueFloat64:
 		if edge {
 			return []float64{0, math.Copysign(0, -1), 0.5, -2.5, math.NaN(), math.Inf(1), math.Inf(-1), math.MaxFloat64}[i]

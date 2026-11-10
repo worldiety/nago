@@ -59,6 +59,20 @@ func FromUint32(n uint32) Int {
 	return wrap(new(big.Int).SetUint64(uint64(n)))
 }
 
+// FromInt64 returns n.
+//
+//gostrict:js (n) => n
+func FromInt64(n int64) Int {
+	return wrap(big.NewInt(n))
+}
+
+// FromUint64 returns n.
+//
+//gostrict:js (n) => n
+func FromUint64(n uint64) Int {
+	return wrap(new(big.Int).SetUint64(n))
+}
+
 var digits = regexp.MustCompile(`^[+-]?[0-9]+$`)
 
 // Parse parses a decimal integer with an optional sign, e.g. "-1234". It returns false for anything else.
@@ -182,6 +196,30 @@ func Int32(a Int) (int32, bool) {
 		return 0, false
 	}
 	return int32(v.Int64()), true
+}
+
+// Int64 returns a and true, or 0 and false, if a is beyond the range of int64.
+//
+//gostrict:zero
+//gostrict:js (a) => (a >= -9223372036854775808n && a <= 9223372036854775807n ? [a, true] : [0n, false])
+func Int64(a Int) (int64, bool) {
+	v := val(a)
+	if !v.IsInt64() {
+		return 0, false
+	}
+	return v.Int64(), true
+}
+
+// Uint64 returns a and true, or 0 and false, if a is beyond the range of uint64.
+//
+//gostrict:zero
+//gostrict:js (a) => (a >= 0n && a <= 18446744073709551615n ? [a, true] : [0n, false])
+func Uint64(a Int) (uint64, bool) {
+	v := val(a)
+	if !v.IsUint64() {
+		return 0, false
+	}
+	return v.Uint64(), true
 }
 
 // Float64 returns the nearest float64 of a, ±Inf beyond its range.

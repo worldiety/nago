@@ -31,6 +31,10 @@ type (
 		HostString() string
 		HostFromString(s string) any
 	}
+	hostBytes interface {
+		HostBytes() []byte
+		HostFromBytes(b []byte) any
+	}
 	// hostHandle is a handle of a header package, which a server returns from a program, e.g. a view of nago
 	hostHandle interface {
 		HostRef() js.Ref
@@ -55,6 +59,7 @@ var (
 	tokenType      = reflect.TypeFor[Token]()
 	hostSeqType    = reflect.TypeFor[hostSeq]()
 	hostBigType    = reflect.TypeFor[hostBig]()
+	hostBytesType  = reflect.TypeFor[hostBytes]()
 	hostHandleType = reflect.TypeFor[hostHandle]()
 	hostMapType    = reflect.TypeFor[hostMap]()
 	typedStateType = reflect.TypeFor[typedState]()
@@ -128,6 +133,8 @@ func toNeutral(v reflect.Value) (any, error) {
 		return v.Interface().(typedState).token(), nil
 	case t.Implements(hostBigType):
 		return v.Interface().(hostBig).HostString(), nil
+	case t.Implements(hostBytesType):
+		return v.Interface().(hostBytes).HostBytes(), nil
 	case t.Implements(hostHandleType):
 		return v.Interface().(hostHandle).HostRef(), nil
 	case t.Implements(hostSeqType):
@@ -166,6 +173,10 @@ func toNeutral(v reflect.Value) (any, error) {
 		return int32(v.Int()), nil
 	case reflect.Uint32:
 		return uint32(v.Uint()), nil
+	case reflect.Int64:
+		return v.Int(), nil
+	case reflect.Uint64:
+		return v.Uint(), nil
 	case reflect.Float64:
 		return v.Float(), nil
 	case reflect.String:
@@ -250,6 +261,12 @@ func fromNeutral(n any, t reflect.Type) (reflect.Value, error) {
 			return zero, fmt.Errorf("%T is no decimal of a big.Int", n)
 		}
 		return reflect.ValueOf(zero.Interface().(hostBig).HostFromString(s)), nil
+	case t.Implements(hostBytesType):
+		b, ok := n.([]byte)
+		if !ok && n != nil {
+			return zero, fmt.Errorf("%T is no bytes", n)
+		}
+		return reflect.ValueOf(zero.Interface().(hostBytes).HostFromBytes(b)), nil
 	case t.Implements(hostHandleType):
 		ref, ok := n.(js.Ref)
 		if !ok {
@@ -291,7 +308,7 @@ func fromNeutral(n any, t reflect.Type) (reflect.Value, error) {
 	}
 
 	switch t.Kind() {
-	case reflect.Bool, reflect.Int32, reflect.Uint32, reflect.Float64, reflect.String:
+	case reflect.Bool, reflect.Int32, reflect.Uint32, reflect.Int64, reflect.Uint64, reflect.Float64, reflect.String:
 		if n == nil {
 			return zero, nil
 		}

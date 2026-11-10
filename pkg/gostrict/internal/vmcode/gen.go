@@ -108,7 +108,7 @@ func (g *gen) ifStmt(s *sIf) {
 func (g *gen) target(pc int) bool {
 	for _, in := range g.code {
 		switch in.op {
-		case opJmp, opJmpT, opJmpF, opJNltI, opJNleI, opJNeqI, opJNneI, opJNltF, opJNleF, opJEqIK, opJNeIK, opJNltLen:
+		case opJmp, opJmpT, opJmpF, opJNltI, opJNleI, opJNeqI, opJNneI, opJNltF, opJNleF, opJEqIK, opJNeIK, opJNltLen, opJNltL, opJNleL, opJNeqL, opJNneL, opJNltUL, opJNleUL, opJEqLK, opJNeLK:
 			if int(in.a) == pc {
 				return true
 			}
@@ -160,15 +160,20 @@ func (g *gen) condJump(cond expr, when bool) []int {
 		g.patchAll(skip, g.pc())
 		return res
 	case *eBinary:
-		if c, ok := e.y.(*eConst); ok && !e.swap && (e.op == opEqI || e.op == opNeI) && int64(int32(c.n)) == int64(c.n) {
+		if c, ok := e.y.(*eConst); ok && !e.swap && (e.op == opEqI || e.op == opNeI || e.op == opEqL || e.op == opNeL) && int64(int32(c.n)) == int64(c.n) {
 			// a comparison with a small constant: jump if equal, or not
-			eq := (e.op == opEqI) == when
+			eq := (e.op == opEqI || e.op == opEqL) == when
 			saved := g.top
 			x := g.expr(e.x)
 			g.top = saved
 			op := opJNeIK
-			if eq {
+			switch {
+			case eq && (e.op == opEqI || e.op == opNeI):
 				op = opJEqIK
+			case eq:
+				op = opJEqLK
+			case e.op == opEqL || e.op == opNeL:
+				op = opJNeLK
 			}
 			return []int{g.emit(op, 0, x.n, int32(c.n))}
 		}
@@ -205,7 +210,8 @@ func (g *gen) condJump(cond expr, when bool) []int {
 	return []int{g.emit(opJmpF, 0, v.n, 0)}
 }
 
-var fusedJump = map[op]op{opLtI: opJNltI, opLeI: opJNleI, opEqI: opJNeqI, opNeI: opJNneI, opLtF: opJNltF, opLeF: opJNleF}
+var fusedJump = map[op]op{opLtI: opJNltI, opLeI: opJNleI, opEqI: opJNeqI, opNeI: opJNneI, opLtF: opJNltF, opLeF: opJNleF,
+	opLtL: opJNltL, opLeL: opJNleL, opEqL: opJNeqL, opNeL: opJNneL, opLtUL: opJNltUL, opLeUL: opJNleUL}
 
 func (g *gen) ret(s *sReturn) {
 	res := g.f.results
@@ -744,6 +750,14 @@ func (g *gen) binary(e *eBinary, dst layout) {
 		case opMulI:
 			g.emit(opMulIK, dst.n, x.n, int32(c.n))
 			return
+		case opAddL:
+			g.emit(opAddLK, dst.n, x.n, int32(c.n))
+			return
+		case opSubL:
+			if c.n != 1<<63 && int32(c.n) != math.MinInt32 {
+				g.emit(opAddLK, dst.n, x.n, -int32(c.n))
+				return
+			}
 		}
 	}
 	y := g.expr(e.y)

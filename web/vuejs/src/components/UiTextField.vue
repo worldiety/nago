@@ -31,7 +31,9 @@ const props = defineProps<{
 	ui: TextField;
 }>();
 
-const id = props.ui.id || randomStr(16);
+// All properties may change, because a stack reuses this instance for whichever field moves to its place.
+const fallbackId = randomStr(16);
+const id = computed<string>(() => props.ui.id || fallbackId);
 
 const serviceAdapter = useServiceAdapter();
 
@@ -43,15 +45,15 @@ const clearButton = ref<HTMLButtonElement>();
 const leadingWidth = ref(0);
 const trailingWidth = ref(0);
 
-const showZero = !!props.ui.showZero;
-const step = props.ui.step || 0;
-const inputValue = ref<string>(props.ui.value ? formatValue(props.ui.value) : '');
+const showZero = computed<boolean>(() => !!props.ui.showZero);
+const step = computed<number>(() => props.ui.step || 0);
+const inputValue = ref<string>(initialInput());
 let timer: number = 0;
 // unmounting tells a focusout caused by our own destruction apart from the user really leaving the field.
 // See onFocusOut for why this matters.
 let unmounting = false;
 // sync decides, whether a server rendering replaces the input or the text typed by the user wins, see TextFieldSync.
-const sync = new TextFieldSync(parseValue(inputValue.value));
+const sync = new TextFieldSync(parseValue(inputValue.value), props.ui.inputValue);
 
 const textarea = ref<HTMLTextAreaElement>();
 const textareaHeight = ref('auto');
@@ -125,14 +127,14 @@ function formatFloat(input: string) {
 	let finalValue = parts.join('').replaceAll(/\D/g, '');
 	finalValue = /^0+$/g.test(finalValue) ? '0' : finalValue;
 
-	if (decimals === '' && !showZero) {
+	if (decimals === '' && !showZero.value) {
 		finalValue += fractionSeparator; // There is a tailing separator symbol
 	} else if (decimals && decimals.length > 0) {
 		finalValue += fractionSeparator + decimals;
 	}
 
 	if (finalValue === '') {
-		finalValue = showZero ? '0' : '';
+		finalValue = showZero.value ? '0' : '';
 	} else {
 		finalValue = negative ? '-' + finalValue : finalValue;
 	}
@@ -165,12 +167,16 @@ function formatInt(input: string) {
 		}
 	}
 	if (finalValue === '') {
-		finalValue = showZero ? '0' : '';
+		finalValue = showZero.value ? '0' : '';
 	} else {
 		finalValue = negative ? '-' + finalValue : finalValue;
 	}
 
 	return finalValue;
+}
+
+function initialInput(): string {
+	return props.ui.value ? formatValue(props.ui.value) : '';
 }
 
 function parseValue(value: string) {
@@ -266,11 +272,11 @@ function handleKeydownEnter(event: KeyboardEvent) {
 }
 
 function onInputUp() {
-	if (isNumerical()) changeValue(step);
+	if (isNumerical()) changeValue(step.value);
 }
 
 function onInputDown() {
-	if (isNumerical()) changeValue(-step);
+	if (isNumerical()) changeValue(-step.value);
 }
 
 function resizeTextarea() {
@@ -352,7 +358,7 @@ function onInputWheel(e: WheelEvent) {
 	const down = e.deltaY > 0;
 	if (!up && !down) return;
 
-	changeValue(up ? step : -step);
+	changeValue(up ? step.value : -step.value);
 }
 
 function changeValue(amount: number) {
@@ -391,7 +397,7 @@ function isLanguageGerman() {
 function onInputFocus() {
 	if (!isNumerical()) return;
 
-	const input = document.getElementById(id) as HTMLInputElement;
+	const input = document.getElementById(id.value) as HTMLInputElement;
 	if (input) input.select();
 }
 
@@ -489,10 +495,20 @@ watch(inputValue, (newValue, oldValue) => {
  * This is what makes a server side reset work while the field keeps the focus, e.g. a chat input which is emptied
  * by its own submit handler. Note that an empty value is not transmitted at all by the protocol and thus arrives
  * as undefined, which is why a plain watcher on props.ui.value cannot observe a reset to the empty string.
+ *
+ * All of this only applies to the same field. An instance which now shows another bound state starts like a new one,
+ * and text which has not been transmitted yet is dropped like the text of a removed field, see onFocusOut.
  */
 watch(
 	() => props.ui,
 	(newValue) => {
+		const initial = initialInput();
+		if (sync.rebind(newValue.inputValue, parseValue(initial))) {
+			clearTimeout(timer);
+			inputValue.value = initial;
+			return;
+		}
+
 		const serverValue = formatValue(newValue.value ?? '');
 		if (!sync.adopt(parseValue(inputValue.value), parseValue(serverValue), renderedRID())) {
 			return;

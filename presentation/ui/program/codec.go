@@ -8,10 +8,12 @@
 package program
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
+	"strconv"
 
 	"go.wdy.de/nago/pkg/gostrict"
 )
@@ -23,7 +25,8 @@ import (
 //	{"$m": [[k, v], ...]}       a map in the order of its entries
 //	{"$": "pkg.Circle", ...}    a variant of a sealed interface with the fields of its record
 //	{"$f": "NaN"}               NaN, "Inf" or "-Inf"
-//	{"$b": "-1234"}             a big.Int, which is a BigInt in the browser
+//	{"$b": "-1234"}             a big.Int, int64 or uint64, which is a BigInt in the browser
+//	{"$y": "AAEC"}              a bin.Bytes in Base64, which is a Uint8Array in the browser
 //	{"$e": "message"}           an error, which is not nil
 //	{"$r": 7}                   a state, which the program in the browser holds
 //
@@ -85,6 +88,15 @@ func (c codec) tree(v any, t gostrict.Type) (any, error) {
 		return map[string]any{"$e": v.(error).Error()}, nil
 	case gostrict.ValueBig:
 		return map[string]any{"$b": v}, nil
+	case gostrict.ValueInt64:
+		i, _ := v.(int64)
+		return map[string]any{"$b": strconv.FormatInt(i, 10)}, nil
+	case gostrict.ValueUint64:
+		u, _ := v.(uint64)
+		return map[string]any{"$b": strconv.FormatUint(u, 10)}, nil
+	case gostrict.ValueBytes:
+		b, _ := v.([]byte)
+		return map[string]any{"$y": base64.StdEncoding.EncodeToString(b)}, nil
 	case gostrict.ValueState:
 		if c.state == nil {
 			return nil, errors.New("a state can not cross the protocol")
@@ -206,6 +218,30 @@ func (c codec) value(x any, t gostrict.Type) (any, error) {
 			return nil, err
 		}
 		return s, nil
+	case gostrict.ValueInt64:
+		m, _ := x.(map[string]any)
+		s, _ := m["$b"].(string)
+		i, err := strconv.ParseInt(s, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("expected an int64, got %q", s)
+		}
+		return i, nil
+	case gostrict.ValueUint64:
+		m, _ := x.(map[string]any)
+		s, _ := m["$b"].(string)
+		u, err := strconv.ParseUint(s, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("expected a uint64, got %q", s)
+		}
+		return u, nil
+	case gostrict.ValueBytes:
+		m, _ := x.(map[string]any)
+		s, _ := m["$y"].(string)
+		b, err := base64.StdEncoding.DecodeString(s)
+		if err != nil {
+			return nil, errors.New("expected bytes in Base64")
+		}
+		return b, nil
 	case gostrict.ValueError:
 		if m, ok := x.(map[string]any); ok {
 			msg, _ := m["$e"].(string)

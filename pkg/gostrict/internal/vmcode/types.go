@@ -42,6 +42,8 @@ const (
 	kBool
 	kI32
 	kU32
+	kI64
+	kU64
 	kF64
 	kStr
 	// kStruct is a struct, whose fields occupy its slots
@@ -62,6 +64,8 @@ const (
 	kHandle
 	// kBig is the big.Int of std/big, whose slot holds a *math/big.Int
 	kBig
+	// kBytes is the bin.Bytes of std/bin, whose slot holds a []byte
+	kBytes
 	// kTuple are the results of a call
 	kTuple
 )
@@ -138,6 +142,7 @@ const (
 	msgPath   = stdPrefix + "msg"
 	jsPath    = stdPrefix + "js"
 	bigPath   = stdPrefix + "big"
+	binPath   = stdPrefix + "bin"
 	textPath  = stdPrefix + "text"
 	numPath   = stdPrefix + "num"
 )
@@ -189,6 +194,9 @@ func (c *compiler) describe(ti *tinfo) {
 			case p == bigPath && name == "Int":
 				ti.kind, ti.l = kBig, layout{r: 1}
 				return
+			case p == binPath && name == "Bytes":
+				ti.kind, ti.l = kBytes, layout{r: 1}
+				return
 			}
 			if isHandle(t) {
 				ti.kind, ti.l = kHandle, layout{r: 1}
@@ -211,6 +219,10 @@ func (c *compiler) describe(ti *tinfo) {
 			ti.kind, ti.l = kI32, layout{n: 1}
 		case types.Uint32:
 			ti.kind, ti.l = kU32, layout{n: 1}
+		case types.Int64:
+			ti.kind, ti.l = kI64, layout{n: 1}
+		case types.Uint64:
+			ti.kind, ti.l = kU64, layout{n: 1}
 		case types.Float64, types.UntypedFloat:
 			ti.kind, ti.l = kF64, layout{n: 1}
 		case types.String, types.UntypedString:

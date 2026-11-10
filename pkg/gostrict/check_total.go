@@ -12,6 +12,7 @@ import (
 	"go/constant"
 	"go/token"
 	"go/types"
+	"strconv"
 	"strings"
 )
 
@@ -73,14 +74,32 @@ func (c *checker) isLocal(obj types.Object) bool {
 	return ok && v.Pkg() != nil && v.Parent() != v.Pkg().Scope()
 }
 
-func (c *checker) checkShift(n ast.Node, count ast.Expr) {
-	tv, ok := c.info.Types[count]
-	if ok && tv.Value != nil {
-		if v, exact := constant.Int64Val(constant.ToInt(tv.Value)); exact && v >= 0 && v < 32 {
+// checkShift checks the count of a shift of x. A constant expression is computed by the compiler. A constant count
+// must be smaller than the width of x, because a larger one is most likely a mistake. A variable count must be
+// unsigned, because a negative count panics in Go, and Go defines every count from the width on: the result is 0, or
+// the sign of a signed x for a shift to the right.
+func (c *checker) checkShift(n ast.Node, x, count ast.Expr) {
+	if e, ok := n.(ast.Expr); ok {
+		if tv, ok := c.info.Types[e]; ok && tv.Value != nil {
 			return
 		}
 	}
-	c.report(n, CodeBits, "the shift count must be a constant from 0 to 31", "Go and JavaScript treat counts from 32 on and negative counts differently", "shift by a constant, e.g. x << 3, or use a loop for variable counts")
+	width := int64(32)
+	if k := basicKind(c.info.TypeOf(x)); k == types.Int64 || k == types.Uint64 {
+		width = 64
+	}
+	const why = "a negative count panics in Go"
+	if tv, ok := c.info.Types[count]; ok && tv.Value != nil {
+		if v, exact := constant.Int64Val(constant.ToInt(tv.Value)); exact && v >= 0 && v < width {
+			return
+		}
+		c.report(n, CodeBits, "a constant shift count must be from 0 to "+strconv.FormatInt(width-1, 10), "a larger count always gives the same result, so it is most likely a mistake", "use a count within the width of the value")
+		return
+	}
+	if k := basicKind(c.info.TypeOf(count)); k == types.Uint32 || k == types.Uint64 {
+		return
+	}
+	c.report(n, CodeBits, "a variable shift count must be a uint32 or uint64", why, "convert the count after a check, e.g. if n >= 0 { x = x << uint32(n) }")
 }
 
 func (c *checker) checkDivision(n ast.Node, x, y ast.Expr) {

@@ -6,6 +6,7 @@ package net
 
 import (
 	"go.wdy.de/nago/pkg/gostrict"
+	"go.wdy.de/nago/pkg/gostrict/std/bin"
 	"go.wdy.de/nago/pkg/gostrict/std/dict"
 	"go.wdy.de/nago/pkg/gostrict/std/list"
 )
@@ -14,18 +15,30 @@ import (
 func Host() gostrict.Funcs {
 	return gostrict.Funcs{
 		"go.wdy.de/nago/pkg/gostrict/lib/net.NewRequest": func(args []any) []any {
-			r0 := NewRequest(args[0].(string), args[1].(string), args[2].(string))
+			r0 := NewRequest(args[0].(string), args[1].(string), bin.Bytes{}.HostFromBytes(args[2].([]byte)).(bin.Bytes))
 			return []any{gostrictTo1(r0)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/net.NewTextRequest": func(args []any) []any {
+			r0 := NewTextRequest(args[0].(string), args[1].(string), args[2].(string))
+			return []any{gostrictTo1(r0)}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/net.Value": func(args []any) []any {
+			r0, r1 := Value(args[0].(string), args[1].(string))
+			return []any{r0, r1}
+		},
+		"go.wdy.de/nago/pkg/gostrict/lib/net.Values": func(args []any) []any {
+			r0 := Values(args[0].(string))
+			return []any{gostrictTo2(r0)}
 		},
 	}
 }
 
 func gostrictFrom1(v []any) Request {
-	return Request{Method: v[0].(string), Path: v[1].(string), Query: gostrictFrom2(v[2].([]any)), Header: gostrictFrom2(v[3].([]any)), Body: v[4].(string), Timeout: v[5].(int32), Source: v[6].(string), Sink: v[7].(string), Parts: gostrictFrom3(v[8].([]any))}
+	return Request{Method: v[0].(string), Path: v[1].(string), Query: gostrictFrom2(v[2].([]any)), Header: gostrictFrom2(v[3].([]any)), Body: bin.Bytes{}.HostFromBytes(v[4].([]byte)).(bin.Bytes), Timeout: v[5].(int32), Source: v[6].(string), Sink: v[7].(string), Parts: gostrictFrom3(v[8].([]any))}
 }
 
 func gostrictTo1(x Request) []any {
-	return []any{x.Method, x.Path, gostrictTo2(x.Query), gostrictTo2(x.Header), x.Body, x.Timeout, x.Source, x.Sink, gostrictTo3(x.Parts)}
+	return []any{x.Method, x.Path, gostrictTo2(x.Query), gostrictTo2(x.Header), x.Body.HostBytes(), x.Timeout, x.Source, x.Sink, gostrictTo3(x.Parts)}
 }
 
 func gostrictFrom2(v []any) dict.Map[string, string] {

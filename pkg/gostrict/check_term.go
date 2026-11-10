@@ -219,8 +219,14 @@ func (l *loopCheck) wraps(v constant.Value, op token.Token) bool {
 		return true
 	}
 	lo, hi := int64(math.MinInt32), int64(math.MaxInt32)
-	if basicKind(l.counter.Type()) == types.Uint32 {
+	switch basicKind(l.counter.Type()) {
+	case types.Uint32:
 		lo, hi = 0, math.MaxUint32
+	case types.Int64:
+		lo, hi = math.MinInt64, math.MaxInt64
+	case types.Uint64:
+		// a bound beyond this has no exact int64 and is reported above
+		lo, hi = 0, math.MaxInt64
 	}
 	s := l.step
 	if s < 0 {

@@ -38,20 +38,57 @@ import (
 	"errors"
 
 	"go.wdy.de/nago/pkg/gostrict/lib/net"
+	"go.wdy.de/nago/pkg/gostrict/std/bin"
 	"go.wdy.de/nago/pkg/gostrict/std/task"
+	"go.wdy.de/nago/pkg/gostrict/std/text"
 )
 
+// Binary sends bytes, which are no text, and reads the answer as a binary format.
+func Binary() task.ID {
+	return net.Send("crm", net.NewRequest("POST", "/bin", bin.Of(0, 255, 16)), func(r net.Result) error {
+		v, err := bin.Decode(r.Body, func(rd bin.Reader) uint32 { return rd.U32BE() })
+		if err != nil {
+			return err
+		}
+		return errors.New("bin|" + r.Body.Hex() + "|" + text.FromUint64(uint64(v)))
+	})
+}
+
+func Val(key string) (string, bool) {
+	v, ok := net.Value("crm", key)
+	if !ok {
+		return "", false
+	}
+	return v, true
+}
+
+func Unavailable() (string, bool) {
+	v, ok := net.Value("other", "TENANT")
+	if !ok {
+		return "", false
+	}
+	return v, true
+}
+
+func AllValues() string {
+	var res string
+	for k, v := range net.Values("crm").All() {
+		res += k + "=" + v + ";"
+	}
+	return res
+}
+
 func Get(path string) task.ID {
-	return net.Send("crm", net.NewRequest("GET", path, ""), func(r net.Result) error {
+	return net.Send("crm", net.NewTextRequest("GET", path, ""), func(r net.Result) error {
 		if r.Outcome != net.OK {
 			return errors.New(string(r.Outcome) + "|" + path + "|" + r.Reason)
 		}
-		return errors.New("ok|" + path + "|" + r.Body)
+		return errors.New("ok|" + path + "|" + r.Body.Text())
 	})
 }
 
 func Unknown() task.ID {
-	return net.Send("other", net.NewRequest("GET", "/", ""), report)
+	return net.Send("other", net.NewTextRequest("GET", "/", ""), report)
 }
 
 func report(r net.Result) error {
@@ -59,17 +96,17 @@ func report(r net.Result) error {
 }
 
 func WithHeader(name, value string) task.ID {
-	r := net.NewRequest("GET", "/x", "")
+	r := net.NewTextRequest("GET", "/x", "")
 	r.Header.Set(name, value)
 	return net.Send("crm", r, report)
 }
 
 func Post(body string, timeout int32) task.ID {
-	req := net.NewRequest("POST", "/p", body)
+	req := net.NewTextRequest("POST", "/p", body)
 	req.Query.Set("a", "b c")
 	req.Timeout = timeout
 	return net.Send("crm", req, func(r net.Result) error {
-		return errors.New(string(r.Outcome) + "|" + r.Body)
+		return errors.New(string(r.Outcome) + "|" + r.Body.Text())
 	})
 }
 `
@@ -115,7 +152,7 @@ func setupGuarded(t *testing.T, e gostrict.Engine, opts nethost.Options, srv *ht
 		if name != "crm" {
 			return nethost.Connection{}, errors.New("unknown " + name)
 		}
-		return nethost.Connection{BaseURL: base, Secrets: []string{token}, Decorate: func(next http.RoundTripper) http.RoundTripper {
+		return nethost.Connection{BaseURL: base, Secrets: []string{token}, Values: map[string]string{"TENANT": "t-7", "API": "v2"}, Decorate: func(next http.RoundTripper) http.RoundTripper {
 			return roundTripper(func(r *http.Request) (*http.Response, error) {
 				r = r.Clone(r.Context())
 				r.Header.Set("Authorization", "Bearer "+token)
@@ -167,6 +204,55 @@ func (f *fixture) end(t *testing.T) string {
 
 func engines() map[string]gostrict.Engine {
 	return map[string]gostrict.Engine{"vm": &vm.Engine{}, "goja": &gojaengine.Engine{}}
+}
+
+func TestBinaryBody(t *testing.T) {
+	var got []byte
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got, _ = io.ReadAll(r.Body)
+		_, _ = w.Write([]byte{0xff, 0x00, 0x01, 0x02})
+	}))
+	t.Cleanup(srv.Close)
+
+	for name, e := range engines() {
+		t.Run(name, func(t *testing.T) {
+			f := setup(t, e, nethost.Options{}, srv)
+			f.call(t, "Binary")
+			if end := f.end(t); end != "bin|ff000102|4278190338" {
+				t.Errorf("the answer is %q", end)
+			}
+			if string(got) != "\x00\xff\x10" {
+				t.Errorf("the server got %x", got)
+			}
+		})
+	}
+}
+
+func TestValues(t *testing.T) {
+	srv := httptest.NewServer(http.NotFoundHandler())
+	t.Cleanup(srv.Close)
+
+	for name, e := range engines() {
+		t.Run(name, func(t *testing.T) {
+			f := setup(t, e, nethost.Options{}, srv)
+			res, err := f.pool.Call(t.Context(), "Val", "TENANT")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if res[0] != "t-7" || res[1] != true {
+				t.Errorf("got %v", res)
+			}
+			if res, err = f.pool.Call(t.Context(), "Val", "HEADER_BEARER_AUTH"); err != nil || res[1] != false {
+				t.Errorf("a key, which the connection does not offer, returned %v, %v", res, err)
+			}
+			if res, err = f.pool.Call(t.Context(), "Unavailable"); err != nil || res[1] != false {
+				t.Errorf("an unknown connection returned %v, %v", res, err)
+			}
+			if res, err = f.pool.Call(t.Context(), "AllValues"); err != nil || res[0] != "API=v2;TENANT=t-7;" {
+				t.Errorf("got %v, %v", res, err)
+			}
+		})
+	}
 }
 
 func TestSend(t *testing.T) {

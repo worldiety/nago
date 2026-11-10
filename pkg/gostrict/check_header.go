@@ -58,7 +58,7 @@ func checkHeaderFunc(p *Package, d *diagnoser, decls map[*types.Func]funcSrc, de
 	checkCallsDirective(d, decls[fn], fn)
 	checkZeroDirective(d, decls[fn], fn)
 
-	const why = "only bool, int32, uint32, float64, string, big.Int, handles, records without handles and lists and maps of them cross the boundary, error only as a result, and functions of such values as parameters"
+	const why = "only bool, int32, uint32, int64, uint64, float64, string, big.Int, bin.Bytes, handles, records without handles and lists and maps of them cross the boundary, error only as a result, and functions of such values as parameters"
 	if decl.Recv != nil {
 		recv := fn.Signature().Recv().Type()
 		if _, ptr := recv.(*types.Pointer); ptr || types.Unalias(recv).(*types.Named).TypeParams().Len() > 0 {

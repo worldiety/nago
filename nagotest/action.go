@@ -133,7 +133,31 @@ func callbackOf(n Node, fields ...string) (proto.Ptr, Node) {
 				return ptr, Node{Component: c, Parents: n.Parents[:i]}
 			}
 		}
+
+		// an entry of a menu is no component of its own, so that its callback is only known to the menu
+		if menu, ok := c.(*proto.Menu); ok && i < len(n.Parents) {
+			child := n.Component
+			if i+1 < len(n.Parents) {
+				child = n.Parents[i+1]
+			}
+
+			if ptr := menuItemAction(menu, child); ptr != 0 {
+				return ptr, Node{Component: c, Parents: n.Parents[:i]}
+			}
+		}
 	}
 
 	return 0, Node{}
+}
+
+func menuItemAction(menu *proto.Menu, content proto.Component) proto.Ptr {
+	for _, group := range menu.Groups {
+		for _, item := range group.Items {
+			if item.Content == content {
+				return item.Action
+			}
+		}
+	}
+
+	return 0
 }

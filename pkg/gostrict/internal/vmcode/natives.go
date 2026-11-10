@@ -48,8 +48,11 @@ func (e *progError) Error() string {
 // last result at the reference r[at].
 func errorNative(nat *native, at int32, pos int) *native {
 	fn := nat.fn
-	return &native{name: nat.name, fn: func(m *Machine, n []uint64, s []string, r []any) {
+	return &native{name: nat.name, reenters: nat.reenters, fn: func(m *Machine, n []uint64, s []string, r []any) {
+		frame := cap(m.r) - cap(r)
 		fn(m, n, s, r)
+		// a native, which calls the program, may have grown the banks
+		r = m.r[frame:]
 		if err, ok := r[at].(error); ok && err != nil {
 			r[at] = &progError{msg: err.Error(), pos: pos}
 		}
@@ -172,6 +175,10 @@ var simpleNatives = map[string]nativeFn{
 	"max.int32":   func(m *Machine, n []uint64, s []string, r []any) { n[0] = fromI32(max(i32(n[0]), i32(n[1]))) },
 	"min.uint32":  func(m *Machine, n []uint64, s []string, r []any) { n[0] = uint64(min(uint32(n[0]), uint32(n[1]))) },
 	"max.uint32":  func(m *Machine, n []uint64, s []string, r []any) { n[0] = uint64(max(uint32(n[0]), uint32(n[1]))) },
+	"min.int64":   func(m *Machine, n []uint64, s []string, r []any) { n[0] = uint64(min(int64(n[0]), int64(n[1]))) },
+	"max.int64":   func(m *Machine, n []uint64, s []string, r []any) { n[0] = uint64(max(int64(n[0]), int64(n[1]))) },
+	"min.uint64":  func(m *Machine, n []uint64, s []string, r []any) { n[0] = min(n[0], n[1]) },
+	"max.uint64":  func(m *Machine, n []uint64, s []string, r []any) { n[0] = max(n[0], n[1]) },
 	"min.float64": func(m *Machine, n []uint64, s []string, r []any) { n[0] = fbits(min(ffrom(n[0]), ffrom(n[1]))) },
 	"max.float64": func(m *Machine, n []uint64, s []string, r []any) { n[0] = fbits(max(ffrom(n[0]), ffrom(n[1]))) },
 	"min.string":  func(m *Machine, n []uint64, s []string, r []any) { s[0] = min(s[0], s[1]) },
@@ -185,6 +192,8 @@ var simpleNatives = map[string]nativeFn{
 	textPath + ".Repeat":        func(m *Machine, n []uint64, s []string, r []any) { s[0] = text.Repeat(s[0], i32(n[0])) },
 	textPath + ".Index":         func(m *Machine, n []uint64, s []string, r []any) { n[0] = fromI32(text.Index(s[0], s[1])) },
 	textPath + ".FromInt":       func(m *Machine, n []uint64, s []string, r []any) { s[0] = text.FromInt(i32(n[0])) },
+	textPath + ".FromInt64":     func(m *Machine, n []uint64, s []string, r []any) { s[0] = text.FromInt64(int64(n[0])) },
+	textPath + ".FromUint64":    func(m *Machine, n []uint64, s []string, r []any) { s[0] = text.FromUint64(n[0]) },
 	textPath + ".FromFloat":     func(m *Machine, n []uint64, s []string, r []any) { s[0] = text.FromFloat(ffrom(n[0]), i32(n[1])) },
 	textPath + ".UpperASCII":    func(m *Machine, n []uint64, s []string, r []any) { s[0] = text.UpperASCII(s[0]) },
 	textPath + ".LowerASCII":    func(m *Machine, n []uint64, s []string, r []any) { s[0] = text.LowerASCII(s[0]) },
@@ -193,6 +202,14 @@ var simpleNatives = map[string]nativeFn{
 	textPath + ".ParseInt": func(m *Machine, n []uint64, s []string, r []any) {
 		v, err := text.ParseInt(s[0])
 		n[0], r[0] = fromI32(v), err
+	},
+	textPath + ".ParseInt64": func(m *Machine, n []uint64, s []string, r []any) {
+		v, err := text.ParseInt64(s[0])
+		n[0], r[0] = uint64(v), err
+	},
+	textPath + ".ParseUint64": func(m *Machine, n []uint64, s []string, r []any) {
+		v, err := text.ParseUint64(s[0])
+		n[0], r[0] = v, err
 	},
 	textPath + ".ParseFloat": func(m *Machine, n []uint64, s []string, r []any) {
 		v, err := text.ParseFloat(s[0])
@@ -222,6 +239,27 @@ var simpleNatives = map[string]nativeFn{
 	numPath + ".Trunc32":  func(m *Machine, n []uint64, s []string, r []any) { n[0] = fromI32(num.Trunc32(ffrom(n[0]))) },
 	numPath + ".TruncU32": func(m *Machine, n []uint64, s []string, r []any) { n[0] = uint64(num.TruncU32(ffrom(n[0]))) },
 	numPath + ".Round32":  func(m *Machine, n []uint64, s []string, r []any) { n[0] = fromI32(num.Round32(ffrom(n[0]))) },
+
+	numPath + ".Trunc64":  func(m *Machine, n []uint64, s []string, r []any) { n[0] = uint64(num.Trunc64(ffrom(n[0]))) },
+	numPath + ".TruncU64": func(m *Machine, n []uint64, s []string, r []any) { n[0] = num.TruncU64(ffrom(n[0])) },
+	numPath + ".Round64":  func(m *Machine, n []uint64, s []string, r []any) { n[0] = uint64(num.Round64(ffrom(n[0]))) },
+
+	bigPath + ".FromInt64":  func(m *Machine, n []uint64, s []string, r []any) { r[0] = big.NewInt(int64(n[0])) },
+	bigPath + ".FromUint64": func(m *Machine, n []uint64, s []string, r []any) { r[0] = new(big.Int).SetUint64(n[0]) },
+	bigPath + ".Int64": func(m *Machine, n []uint64, s []string, r []any) {
+		if v := bigOf(r[0]); v.IsInt64() {
+			n[0], n[1] = uint64(v.Int64()), 1
+			return
+		}
+		n[0], n[1] = 0, 0
+	},
+	bigPath + ".Uint64": func(m *Machine, n []uint64, s []string, r []any) {
+		if v := bigOf(r[0]); v.IsUint64() {
+			n[0], n[1] = v.Uint64(), 1
+			return
+		}
+		n[0], n[1] = 0, 0
+	},
 
 	bigPath + ".Zero":       func(m *Machine, n []uint64, s []string, r []any) { r[0] = bigZero },
 	bigPath + ".FromInt32":  func(m *Machine, n []uint64, s []string, r []any) { r[0] = big.NewInt(int64(i32(n[0]))) },

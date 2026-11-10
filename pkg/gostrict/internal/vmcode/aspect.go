@@ -110,6 +110,8 @@ func resultZero(t *tinfo, n []uint64, s []string, r []any) {
 		r[0] = newDict(t.key)
 	case kBig:
 		r[0] = bigZero
+	case kBytes:
+		r[0] = []byte(nil)
 	default:
 		clear(n[:t.l.n])
 		clear(s[:t.l.s])

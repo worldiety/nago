@@ -17,6 +17,8 @@ const (
 	msgPath     = stdPrefix + "msg"
 	optPath     = stdPrefix + "opt"
 	bigPath     = stdPrefix + "big"
+	binPath     = stdPrefix + "bin"
+	jsonPath    = stdPrefix + "json"
 	decimalPath = stdPrefix + "decimal"
 )
 
@@ -75,9 +77,13 @@ var importHints = map[string]hint{
 		"the tables of Unicode differ between Go and JavaScript",
 		`compare code points from text.CodePoints, or use text.UpperASCII and text.LowerASCII`,
 	},
+	"encoding/json": {
+		"encoding/json reads with reflection, which the subset does not have",
+		`use json.Decode[T](data) from "go.wdy.de/nago/pkg/gostrict/std/json" with a bin.Bytes, e.g. the body of a response`,
+	},
 	"bytes": {
-		"the subset has no bytes",
-		`use strings and the functions of "go.wdy.de/nago/pkg/gostrict/std/text"`,
+		"the subset replaces []byte by bin.Bytes and bin.Buffer",
+		`use "go.wdy.de/nago/pkg/gostrict/std/bin" for binary data and "go.wdy.de/nago/pkg/gostrict/std/text" for strings`,
 	},
 	"time": {
 		"time is not deterministic and differs between the targets",
@@ -117,5 +123,5 @@ var stdFuncHints = map[string]hint{
 	"strings.Repeat":    {"it panics for a negative count", `use text.Repeat(s, n), which returns "" for n <= 0`},
 	"errors.Is":         {"errors are compared by identity, which the subset does not support", "return a distinct result, e.g. a bool or an int code, instead of comparing errors"},
 	"errors.As":         {"it needs type assertions", "return a distinct result instead of inspecting the error"},
-	"math.Float64bits":  {"it needs uint64", "the subset has no 64 bit integers"},
+	"math.Float64bits":  {"its result depends on the machine in no way, but the subset names it differently", `use bin.Float64Bits(f) and bin.Float64FromBits(u) from "go.wdy.de/nago/pkg/gostrict/std/bin"`},
 }

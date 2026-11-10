@@ -220,6 +220,36 @@ const (
 	opLeI
 	opLtU
 	opLeU
+	// variable shift counts, which Go defines also from the width on
+	opShlIV // n[a] = n[b] << n[c]
+	opShrIV
+	opShrUV
+
+	// the 64 bit integers use all bits of their slot, opAndI to opAndNotI work for them as well
+	opAddL
+	opAddLK // n[a] = n[b] + c
+	opSubL
+	opMulL
+	opDivL
+	opRemL
+	opDivUL
+	opRemUL
+	opShlL // n[a] = n[b] << c
+	opShrL
+	opShrUL
+	opShlLV // n[a] = n[b] << n[c]
+	opShrLV
+	opShrULV
+	opNegL
+	opNotL
+	opEqL
+	opNeL
+	opLtL
+	opLeL
+	opLtUL
+	opLeUL
+	opSxt32 // n[a] = n[b] as the int64 of an int32
+	opZxt32 // n[a] = n[b] as the uint64 of a uint32
 
 	opAddF
 	opSubF
@@ -232,6 +262,8 @@ const (
 	opLeF
 	opI2F
 	opU2F
+	opL2F
+	opUL2F
 
 	opNotB
 	opIsNil // n[a] = r[b] == nil
@@ -260,6 +292,14 @@ const (
 	opJNleF
 	opJEqIK // if n[b] == c { pc = a }
 	opJNeIK // if n[b] != c { pc = a }
+	opJNltL
+	opJNleL
+	opJNeqL
+	opJNneL
+	opJNltUL
+	opJNleUL
+	opJEqLK
+	opJNeLK
 
 	opCall        // calls[a]
 	opCallNative  // calls[a]

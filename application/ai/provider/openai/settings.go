@@ -55,7 +55,7 @@ type Settings struct {
 	// Token is the API key sent as Bearer token. Optional, because local servers usually do not require one.
 	Token string `label:"nago.ai.openai.settings_token" supportingText:"nago.ai.openai.settings_token_desc" style:"secret" credentialWriteOnly:"true"`
 	// BaseURL is the API endpoint including the version path. Empty means [DefaultBaseURL].
-	BaseURL string `label:"nago.ai.openai.settings_base_url" supportingText:"nago.ai.openai.settings_base_url_desc" json:"baseUrl"`
+	BaseURL string `label:"nago.ai.openai.settings_base_url" supportingText:"nago.ai.openai.settings_base_url_desc" json:"baseUrl" credentialAddress:"true"`
 	// MaxTokens is the output token limit used when [completion.Options.MaxTokens] is not set. Zero omits the
 	// limit, so the server default applies.
 	MaxTokens int      `label:"nago.ai.openai.settings_max_tokens" supportingText:"nago.ai.openai.settings_max_tokens_desc" json:"maxTokens"`

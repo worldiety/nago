@@ -138,6 +138,18 @@ func (rd *Reader) Uint32() uint32 {
 	return uint32(n[0])
 }
 
+func (rd *Reader) Int64() int64 {
+	return int64(rd.Uint64())
+}
+
+func (rd *Reader) Uint64() uint64 {
+	if o, ok := rd.field(); ok {
+		return rd.top.n[o.n]
+	}
+	_, n, _, _ := rd.next()
+	return n[0]
+}
+
 func (rd *Reader) Float64() float64 {
 	if o, ok := rd.field(); ok {
 		return math.Float64frombits(rd.top.n[o.n])
@@ -170,6 +182,14 @@ func (rd *Reader) Error() error {
 func (rd *Reader) Handle() js.Ref {
 	_, _, _, r := rd.next()
 	return js.NewRef(r[0])
+}
+
+func (rd *Reader) Bytes() []byte {
+	if o, ok := rd.field(); ok {
+		return bytesOf(rd.top.r[o.r])
+	}
+	_, _, _, r := rd.next()
+	return bytesOf(r[0])
 }
 
 func (rd *Reader) Big() string {
@@ -290,6 +310,15 @@ func (w *Writer) Uint32(v uint32) {
 	n[0] = uint64(v)
 }
 
+func (w *Writer) Int64(v int64) {
+	w.Uint64(uint64(v))
+}
+
+func (w *Writer) Uint64(v uint64) {
+	_, n, _, _ := w.next()
+	n[0] = v
+}
+
 func (w *Writer) Float64(v float64) {
 	_, n, _, _ := w.next()
 	n[0] = math.Float64bits(v)
@@ -312,6 +341,11 @@ func (w *Writer) Error(err error) {
 func (w *Writer) Handle(ref js.Ref) {
 	_, _, _, r := w.next()
 	r[0] = ref.Value()
+}
+
+func (w *Writer) Bytes(b []byte) {
+	_, _, _, r := w.next()
+	r[0] = b
 }
 
 func (w *Writer) Big(decimal string) {

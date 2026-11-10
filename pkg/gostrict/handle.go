@@ -58,6 +58,24 @@ func isBig(t types.Type) bool {
 	return ok && n.Obj().Pkg() != nil && n.Obj().Pkg().Path() == bigPath && n.Obj().Name() == "Int"
 }
 
+// isBytes tells, whether t is the bin.Bytes of package std/bin, a handle, which never changes and crosses the boundary
+// as a value.
+func isBytes(t types.Type) bool {
+	n, ok := types.Unalias(t).(*types.Named)
+	return ok && n.Obj().Pkg() != nil && n.Obj().Pkg().Path() == binPath && n.Obj().Name() == "Bytes"
+}
+
+// isBinBuffer tells, whether t is the bin.Buffer of package std/bin.
+func isBinBuffer(t types.Type) bool {
+	n, ok := types.Unalias(t).(*types.Named)
+	return ok && n.Obj().Pkg() != nil && n.Obj().Pkg().Path() == binPath && n.Obj().Name() == "Buffer"
+}
+
+// isValueHandle tells, whether t is a handle of the library, which is a value, because it never changes.
+func isValueHandle(t types.Type) bool {
+	return isBig(t) || isBytes(t)
+}
+
 // boundaryTerms returns the types of the constraint of a type parameter of a header function, which must be a
 // union of types, which cross the boundary, or false.
 func boundaryTerms(tp *types.TypeParam) ([]types.Type, bool) {

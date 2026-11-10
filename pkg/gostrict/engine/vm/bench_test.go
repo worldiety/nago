@@ -9,6 +9,7 @@ package vm_test
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -35,6 +36,9 @@ func BenchmarkCompute(b *testing.B) {
 		{"physics", "Simulate", []any{int32(10000), int32(45)}},
 		{"ints", "Xorshift", []any{uint32(2463534242), int32(100000)}},
 		{"ints", "Hash", []any{strings.Repeat("Grüße 😀", 1000)}},
+		{"binary", "Records", []any{int32(10000)}},
+		{"jsons", "Sum", []any{points(10000)}},
+		{"jsons", "Points", []any{int32(10000)}},
 		{"money", "Factorial", []any{int32(300)}},
 		{"money", "Invoice", []any{[]any{"19.99", "0.333", "1234567890.12", "7", "0.01"}, "19"}},
 	} {
@@ -53,4 +57,18 @@ func BenchmarkCompute(b *testing.B) {
 			})
 		}
 	}
+}
+
+// points returns a JSON array of n points with an unknown key each.
+func points(n int) string {
+	var sb strings.Builder
+	sb.WriteString("[")
+	for i := range n {
+		if i > 0 {
+			sb.WriteString(",")
+		}
+		fmt.Fprintf(&sb, `{"x":%d.25,"y":-%d.5,"label":"p%d"}`, i, i, i)
+	}
+	sb.WriteString("]")
+	return sb.String()
 }

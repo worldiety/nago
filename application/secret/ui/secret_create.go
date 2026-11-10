@@ -91,6 +91,15 @@ func (s credentialTypeSpec) LogoView() core.View {
 	return ico
 }
 
+// instanceLogoSVG returns the logo of the secret itself, which only a [secret.KeyValues] has.
+func instanceLogoSVG(scr secret.Secret) string {
+	if kv, ok := scr.Credentials.(secret.KeyValues); ok {
+		return kv.LogoSVG
+	}
+
+	return ""
+}
+
 func newCredentialTypeSpec(rtype reflect.Type) credentialTypeSpec {
 	var name string
 	var description string

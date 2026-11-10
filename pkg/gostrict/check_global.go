@@ -56,6 +56,8 @@ func mutableTypeSeen(t types.Type, seen map[types.Type]bool) string {
 	seen[t] = true
 
 	switch {
+	case isBinBuffer(t):
+		return "a bin.Buffer, which can change"
 	case isHandle(t), isError(t):
 		return ""
 	case isOpaque(t):

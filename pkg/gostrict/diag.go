@@ -25,7 +25,7 @@ const (
 	CodeSlice           Code = "GS003" // slices
 	CodeMap             Code = "GS004" // maps
 	CodeArray           Code = "GS005" // arrays
-	CodeNumber          Code = "GS006" // numeric types other than int, int32, uint32 and float64
+	CodeNumber          Code = "GS006" // numeric types other than int32, uint32, int64, uint64 and float64
 	CodeBits            Code = "GS007" // bit operations on int
 	CodeString          Code = "GS008" // byte based string operations
 	CodeAddress         Code = "GS009" // taking the address of a variable or field
@@ -66,6 +66,7 @@ const (
 	CodeConstValue      Code = "GS044" // functions with //gostrict:const parameters used as values
 	CodeListConversion  Code = "GS045" // conversions between list.List and list.Frozen
 	CodeConcurrent      Code = "GS046" // arguments of functions with //gostrict:calls concurrent, which may share memory
+	CodeJSON            Code = "GS047" // types, which json.Decode can not read or json.Encode can not write
 	CodeInternal        Code = "GS099" // the compiler can not translate a valid construct
 )
 

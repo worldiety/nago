@@ -25,7 +25,7 @@ import (
 type FindMySecrets func(subject auth.Subject) iter.Seq2[Secret, error]
 
 // CreateSecret creates a new secret with the given subject as owner. The options share it at once, so that a
-// secret is never stored half way.
+// secret is never stored half way. A [Validatable] type must be valid.
 type CreateSecret func(subject auth.Subject, credentials Credentials, opts ...CreateOptions) (ID, error)
 
 // CreateOptions share a new secret. Sharing into groups requires [PermUpdateMySecretGroups] and the membership of
@@ -52,7 +52,9 @@ type UpdateMySecretGroups func(subject auth.Subject, id ID, groups []group.ID) e
 type UpdateMySecretOwners func(subject auth.Subject, id ID, owners []user.ID) error
 
 // UpdateMyCredentials updates the secret with the given credentials, if the subject has access to it,
-// see [Secret.HasAccess]. An empty write-only field keeps its stored value, see [WithoutWriteOnly].
+// see [Secret.HasAccess]. An empty write-only field keeps its stored value, see [WithoutWriteOnly], unless the
+// address of the secret changes, so that nobody can redirect a stored token to a server of its own. A [Validatable]
+// type must be valid after that merge.
 type UpdateMyCredentials func(subject auth.Subject, id ID, credentials Credentials) error
 
 // DeleteMySecretByID removes the secret, if the subject has access to it, see [Secret.HasAccess].

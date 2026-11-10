@@ -15,10 +15,12 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"maps"
 	"net/http"
 	"net/netip"
 	"net/url"
 	"runtime"
+	"slices"
 	"sync/atomic"
 	"time"
 
@@ -30,6 +32,12 @@ import (
 
 // SendFunc is the full name of the function net.Send.
 const SendFunc = "go.wdy.de/nago/pkg/gostrict/lib/net.Send"
+
+// The full names of the functions, which read the values of a connection.
+const (
+	ValueFunc  = "go.wdy.de/nago/pkg/gostrict/lib/net.Value"
+	ValuesFunc = "go.wdy.de/nago/pkg/gostrict/lib/net.Values"
+)
 
 // Connection is what the name of a connection stands for. It never reaches the program.
 type Connection struct {
@@ -49,6 +57,8 @@ type Connection struct {
 	// credentials without TLS. It is checked after the name was resolved and does not widen
 	// [Options.AllowPrivateNetworks]: without that option such a connection reaches nothing.
 	PrivateOnly bool
+	// Values are the keys and values, which the program may read with net.Value. They must not contain a secret.
+	Values map[string]string
 	// Context stops all requests of the connection, when it ends, e.g. when the data, which they belong to, is removed.
 	// Such a request ends without its function done and without an [Observation], and its job fails. Nil means, that only
 	// the context of the [Host] stops the request.
@@ -252,7 +262,33 @@ func (h *Host) Funcs(b Binding) gostrict.Funcs {
 	}
 	funcs := net.Host()
 	funcs[SendFunc] = func(args []any) []any { return h.send(b, args) }
+	funcs[ValueFunc] = func(args []any) []any {
+		v, ok := h.values(b, args[0].(string))[args[1].(string)]
+		return []any{v, ok}
+	}
+	funcs[ValuesFunc] = func(args []any) []any {
+		values := h.values(b, args[0].(string))
+		keys := slices.Sorted(maps.Keys(values))
+		entries := make([]any, len(keys))
+		for i, k := range keys {
+			entries[i] = []any{k, values[k]}
+		}
+		return []any{entries}
+	}
 	return funcs
+}
+
+// values returns the values of the connection, which the program may read, and nil, if it can not be resolved.
+func (h *Host) values(b Binding, name string) map[string]string {
+	conn, err := b.Resolve(name)
+	if err != nil {
+		var refused Refused
+		if !errors.As(err, &refused) {
+			slog.Error("cannot resolve the values of a connection", "connection", name, "err", err)
+		}
+		return nil
+	}
+	return conn.Values
 }
 
 // call is a single net.Send from its acceptance until its end.

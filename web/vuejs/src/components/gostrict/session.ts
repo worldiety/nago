@@ -19,7 +19,7 @@ import { GostrictMessage, GostrictProgram, InputEventTypeValues } from '@/shared
  * The values cross the protocol as JSON, see package presentation/ui/program: a record is an object with the
  * names of its fields, which the translated program reads as they are, a list is an array, and the values, which
  * JSON can not express, are objects with a key starting with $: {"$m": entries} for a map, {"$": tag, ...fields}
- * for a variant of a sealed interface, {"$f": "NaN"} for NaN, the infinities and -0, {"$b": "123"} for a big.Int,
+ * for a variant of a sealed interface, {"$f": "NaN"} for NaN, the infinities and -0, {"$b": "123"} for a big.Int, int64 or uint64, {"$y": base64} for bin.Bytes,
  * {"$e": message} for an error
  * and {"$r": ref} for a state of the engine of the browser. So a reviver of JSON.parse and a replacer of
  * JSON.stringify convert all values without a schema.
@@ -490,6 +490,7 @@ export class Session {
 			if (v === null || typeof v !== 'object' || Array.isArray(v)) return v;
 			if ('$f' in v) return special[v.$f as string] ?? 0;
 			if ('$b' in v) return BigInt(v.$b);
+			if ('$y' in v) return fromBase64(v.$y);
 			if ('$m' in v) return new Map(v.$m);
 			if ('$r' in v && state) return state(v.$r);
 			if ('$' in v) {
@@ -508,6 +509,7 @@ export class Session {
 		const tags = this.tags;
 		return JSON.stringify(value, (_key, v) => {
 			if (typeof v === 'bigint') return { $b: v.toString() };
+			if (v instanceof Uint8Array) return { $y: toBase64(v) };
 			if (typeof v === 'number') {
 				if (v !== v) return { $f: 'NaN' };
 				if (v === Infinity) return { $f: 'Inf' };
@@ -524,6 +526,19 @@ export class Session {
 			return v;
 		});
 	}
+}
+
+function fromBase64(s: string): Uint8Array {
+	const raw = atob(s);
+	const res = new Uint8Array(raw.length);
+	for (let i = 0; i < raw.length; i++) res[i] = raw.charCodeAt(i);
+	return res;
+}
+
+function toBase64(b: Uint8Array): string {
+	let raw = '';
+	for (let i = 0; i < b.length; i++) raw += String.fromCharCode(b[i]);
+	return btoa(raw);
 }
 
 // special are the floats, which JSON can not express

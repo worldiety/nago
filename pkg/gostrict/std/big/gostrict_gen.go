@@ -31,12 +31,24 @@ func Host() gostrict.Funcs {
 			r0 := FromInt32(args[0].(int32))
 			return []any{r0.HostString()}
 		},
+		"go.wdy.de/nago/pkg/gostrict/std/big.FromInt64": func(args []any) []any {
+			r0 := FromInt64(args[0].(int64))
+			return []any{r0.HostString()}
+		},
 		"go.wdy.de/nago/pkg/gostrict/std/big.FromUint32": func(args []any) []any {
 			r0 := FromUint32(args[0].(uint32))
 			return []any{r0.HostString()}
 		},
+		"go.wdy.de/nago/pkg/gostrict/std/big.FromUint64": func(args []any) []any {
+			r0 := FromUint64(args[0].(uint64))
+			return []any{r0.HostString()}
+		},
 		"go.wdy.de/nago/pkg/gostrict/std/big.Int32": func(args []any) []any {
 			r0, r1 := Int32(Int{}.HostFromString(args[0].(string)).(Int))
+			return []any{r0, r1}
+		},
+		"go.wdy.de/nago/pkg/gostrict/std/big.Int64": func(args []any) []any {
+			r0, r1 := Int64(Int{}.HostFromString(args[0].(string)).(Int))
 			return []any{r0, r1}
 		},
 		"go.wdy.de/nago/pkg/gostrict/std/big.Mul": func(args []any) []any {
@@ -78,6 +90,10 @@ func Host() gostrict.Funcs {
 		"go.wdy.de/nago/pkg/gostrict/std/big.Sub": func(args []any) []any {
 			r0 := Sub(Int{}.HostFromString(args[0].(string)).(Int), Int{}.HostFromString(args[1].(string)).(Int))
 			return []any{r0.HostString()}
+		},
+		"go.wdy.de/nago/pkg/gostrict/std/big.Uint64": func(args []any) []any {
+			r0, r1 := Uint64(Int{}.HostFromString(args[0].(string)).(Int))
+			return []any{r0, r1}
 		},
 		"go.wdy.de/nago/pkg/gostrict/std/big.Zero": func(args []any) []any {
 			r0 := Zero()

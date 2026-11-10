@@ -8,6 +8,7 @@
 package nethost
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -22,6 +23,7 @@ import (
 
 	"go.wdy.de/nago/pkg/gostrict"
 	"go.wdy.de/nago/pkg/gostrict/lib/net"
+	"go.wdy.de/nago/pkg/gostrict/std/bin"
 	"go.wdy.de/nago/pkg/gostrict/std/dict"
 	"golang.org/x/net/http/httpguts"
 )
@@ -210,10 +212,10 @@ func isTransfer(req net.Request) bool {
 
 // checkContent returns, why the content of the request is contradictory, or "".
 func checkContent(req net.Request) string {
-	if req.Body != "" && req.Source != "" {
+	if req.Body.Len() > 0 && req.Source != "" {
 		return reasonSourceBody
 	}
-	if req.Parts.Len() > 0 && (req.Body != "" || req.Source != "") {
+	if req.Parts.Len() > 0 && (req.Body.Len() > 0 || req.Source != "") {
 		return reasonPartsBody
 	}
 	for p := range req.Parts.Values() {
@@ -401,8 +403,8 @@ func (h *Host) do(r *prepared) (e ending) {
 	x.ctx = ctx
 
 	var body io.Reader
-	if r.req.Body != "" {
-		body = strings.NewReader(r.req.Body)
+	if r.req.Body.Len() > 0 {
+		body = bytes.NewReader(r.req.Body.HostBytes())
 	}
 	req, err := http.NewRequestWithContext(ctx, r.req.Method, r.target.String(), body)
 	if err != nil {
@@ -529,7 +531,7 @@ func (x *exchange) answer(resp *http.Response) ending {
 		res.Outcome, res.Reason = net.Unknown, reasonTooLarge
 		return x.finish(res, Answered)
 	}
-	res.Outcome, res.Body = net.OK, strings.ToValidUTF8(string(text), "�")
+	res.Outcome, res.Body = net.OK, bin.OfSlice(text)
 	return x.finish(res, Answered)
 }
 
@@ -582,11 +584,21 @@ func scrubResult(r net.Result, secrets []string) net.Result {
 	if len(secrets) == 0 {
 		return r
 	}
-	r.Reason, r.Body, r.Stored = scrub(r.Reason, secrets), scrub(r.Body, secrets), scrub(r.Stored, secrets)
+	r.Reason, r.Body, r.Stored = scrub(r.Reason, secrets), scrubBytes(r.Body, secrets), scrub(r.Stored, secrets)
 	for k, v := range r.Header.All() {
 		r.Header.Set(k, scrub(v, secrets))
 	}
 	return r
+}
+
+func scrubBytes(b bin.Bytes, secrets []string) bin.Bytes {
+	res := b.HostBytes()
+	for _, secret := range secrets {
+		if secret != "" && bytes.Contains(res, []byte(secret)) {
+			res = bytes.ReplaceAll(res, []byte(secret), []byte("***"))
+		}
+	}
+	return bin.OfSlice(res)
 }
 
 func scrub(s string, secrets []string) string {

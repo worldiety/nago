@@ -69,7 +69,7 @@ func TestCreateStoresNothingUntilSaved(t *testing.T) {
 // The stored password is never sent to the browser, and saving the form without a new password keeps it.
 func TestEditDoesNotRevealPasswords(t *testing.T) {
 	app, secrets := newApp(t)
-	id := std.Must(secrets.UseCases.CreateSecret(user.SU(), secret.SMTP{Name: "Mail", Host: "smtp.example.com", Password: "very-secret-pw"}))
+	id := std.Must(secrets.UseCases.CreateSecret(user.SU(), secret.SMTP{Name: "Mail", Host: "smtp.example.com", Port: 587, Password: "very-secret-pw"}))
 
 	wnd := app.Open(t, user.SU(), secrets.Pages.EditSecret, nagotest.Values(core.Values{"id": string(id)}))
 	tree := string(std.Must(json.Marshal(wnd.Tree())))
@@ -85,11 +85,30 @@ func TestEditDoesNotRevealPasswords(t *testing.T) {
 		t.Fatal("expected a hint below the password field, that an empty field keeps the stored value")
 	}
 
+	wnd.Type(wnd.Find(nagotest.Label("Username")), "mailer")
+	wnd.Click(wnd.Find(nagotest.Text("Speichern")))
+
+	stored := std.Must(secrets.UseCases.FindMySecretByID(user.SU(), id)).Unwrap().Credentials.(secret.SMTP)
+	if stored.Username != "mailer" || stored.Password != "very-secret-pw" {
+		t.Fatalf("expected the new user name and the stored password, got %+v", stored)
+	}
+}
+
+// A new host must not receive the stored password, the form says so and the use case drops it.
+func TestEditDropsPasswordWhenHostChanges(t *testing.T) {
+	app, secrets := newApp(t)
+	id := std.Must(secrets.UseCases.CreateSecret(user.SU(), secret.SMTP{Name: "Mail", Host: "smtp.example.com", Port: 587, Password: "very-secret-pw"}))
+
+	wnd := app.Open(t, user.SU(), secrets.Pages.EditSecret, nagotest.Values(core.Values{"id": string(id)}))
+	if !strings.Contains(string(std.Must(json.Marshal(wnd.Tree()))), "Wird die Adresse geändert") {
+		t.Fatal("expected a hint, that a new address needs the password again")
+	}
+
 	wnd.Type(wnd.Find(nagotest.Label("Host")), "mail.example.com")
 	wnd.Click(wnd.Find(nagotest.Text("Speichern")))
 
 	stored := std.Must(secrets.UseCases.FindMySecretByID(user.SU(), id)).Unwrap().Credentials.(secret.SMTP)
-	if stored.Host != "mail.example.com" || stored.Password != "very-secret-pw" {
-		t.Fatalf("expected the new host and the stored password, got %+v", stored)
+	if stored.Host != "mail.example.com" || stored.Password != "" {
+		t.Fatalf("expected the new host without the password, got %+v", stored)
 	}
 }

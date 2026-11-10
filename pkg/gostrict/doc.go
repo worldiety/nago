@@ -14,10 +14,25 @@
 // # The subset
 //
 // Types:
-//   - bool, string, float64, int32 (alias rune) and uint32. There is no int: it has 64 bits in Go, while
-//     JavaScript computes with float64. int32 and uint32 wrap around in both. Write int32(0) or var n int32 for
-//     an integer constant.
+//   - bool, string, float64, int32 (alias rune), uint32, int64 and uint64. There is no int, because its width depends
+//     on the platform, and no byte: a byte is a uint32 and binary data a bin.Bytes. All integers wrap around like in
+//     Go. Write int32(0) or var n int32 for an integer constant. An int64 is a BigInt in JavaScript, so it is exact
+//     there too, but slow: use it for what needs 64 bits, and int32 for counters and indices.
+//   - a shift count is a constant within the width of the value or a variable uint32 or uint64, from the width on
+//     the bits are gone, like in Go. A negative count would panic in Go, so a signed count is rejected.
 //   - named struct types, pointers to them, created only by &T{...}, functions and interfaces with methods.
+//   - bin.Bytes and bin.Buffer of go.wdy.de/nago/pkg/gostrict/std/bin for binary data, see there. Bytes never change, may
+//     be shared without copying and enter concurrent functions and package variables, a Buffer collects bytes and is
+//     rejected there. bin.Decode reads a binary format field by field and reports a read beyond the end as its error.
+//   - json.Decode[T](data) of go.wdy.de/nago/pkg/gostrict/std/json reads JSON from a bin.Bytes, e.g. the body of a
+//     response, directly into T: bool, string, the integers, float64, big.Int, bin.Bytes as Base64, list.List, dict.Map
+//     with string keys, opt.Option and structs of them. A field takes the key of its tag json:"key" or its name,
+//     json:"-" leaves it out and other keys are skipped. A missing key or null leaves the zero value, an empty list
+//     and None of an option. An integer must fit its type and has no fraction. Name T at the call, e.g.
+//     json.Decode[Forecast](res.Body), not a type parameter; the error tells what is wrong at which offset.
+//     json.Encode(v) writes the same types as a compact bin.Bytes, e.g. the body of a request: the fields in their
+//     order, None as null, a field with json:"key,omitempty" not at all, if it is null, "", [] or {}. Its error tells
+//     about a float64, which is NaN or infinite.
 //   - named types of bool, string, float64, int32 and uint32 for the values of a domain, e.g. type CustomerID
 //     string, type Cents int32 or type Rate float64, also without constants and with methods like any named type.
 //     They are fields of structs and records, keys of a dict.Map and parameters and results of exported
@@ -36,7 +51,7 @@
 //     sealed interface, e.g. Result[T], has the generic types of its package as variants, e.g. Ok[T]. Two values
 //     compare like in Go, if all variants are comparable. A type switch over another interface and type
 //     assertions are not allowed.
-//   - enums: a named int32, uint32 or string type with constants of it. A switch over it must cover all constants
+//   - enums: a named integer or string type with constants of it. A switch over it must cover all constants
 //     or have a default case.
 //   - big.Int of go.wdy.de/nago/pkg/gostrict/std/big for integers of any size and decimal.Dec of std/decimal for
 //     exact decimals, e.g. amounts of money. Both never change, functions return new values, and == is not
@@ -109,7 +124,7 @@
 // Packages of the standard library: math (without Frexp, Ldexp and the functions of int; a constant argument like
 // the sign of math.IsInf(x, 0) is fine), strings (Contains, HasPrefix, HasSuffix, ReplaceAll, TrimPrefix,
 // TrimSpace, TrimSuffix), errors (New) and iter. Anything else comes from the packages list, dict, opt, text,
-// num, fuel, big and decimal of go.wdy.de/nago/pkg/gostrict/std, whose functions never panic. In a browser,
+// num, fuel, big, bin and decimal of go.wdy.de/nago/pkg/gostrict/std, whose functions never panic. In a browser,
 // math.Min and math.Max follow Go also for NaN and the infinities, while math.Pow, Exp, Log and the other functions
 // use Math of JavaScript and may differ from Go in the last bit, and the sign of a NaN is not defined.
 //
@@ -168,7 +183,7 @@
 // run natively in Go, the loader uses only its declarations. Only a trusted module may contain header packages,
 // see [Module.Trusted], so a program, which a language model writes, uses the built-in libraries, e.g.
 // go.wdy.de/nago/pkg/gostrict/lib/three, and can not bind JavaScript itself. Its boundary is checked: it exports
-// only functions, whose parameters are bool, int32, uint32, float64, string, big.Int, records of another package,
+// only functions, whose parameters are bool, int32, uint32, int64, uint64, float64, string, big.Int, bin.Bytes, records of another package,
 // lists and maps of them or functions of such values, and whose results may also be an error, and each declares
 // its JavaScript binding as a function expression with the same number of parameters. A record is a plain object
 // with its fields in JavaScript:
@@ -232,7 +247,7 @@
 // disagree about them. The variants of a sealed interface, which the backend decodes, are registered once with
 // [Variants].
 //
-// The fields of a record are bool, int32, uint32, float64, string, named types of them like enums, list.List and
+// The fields of a record are bool, int32, uint32, int64, uint64, float64, string, bin.Bytes, named types of them like enums, list.List and
 // dict.Map of such values and other records; opt.Option, pointers, functions and interfaces stay inside the program.
 // A message may also be a sealed interface, whose variants are records: msg.Out[messages.Event] sends any variant,
 // and a handler of the interface receives each of them:

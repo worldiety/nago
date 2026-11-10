@@ -27,8 +27,10 @@ type Machine struct {
 	hi       layout
 	depth    int
 	maxDepth int
-	fuel     int
-	ctx      context.Context
+	// maxBuffer limits the size of a bin.Buffer in bytes, core.DefaultLimit if zero
+	maxBuffer int
+	fuel      int
+	ctx       context.Context
 	// peak is the end of the frames since the outermost call, whose references it releases
 	peak layout
 	// xn, xs and xr are the package variables of the instance, see [global.inst]
@@ -286,6 +288,61 @@ func (m *Machine) exec(f *Func, bn, bs, br int) {
 			n[in.a] = fromBool(uint32(n[in.b]) < uint32(n[in.c]))
 		case opLeU:
 			n[in.a] = fromBool(uint32(n[in.b]) <= uint32(n[in.c]))
+		case opShlIV:
+			n[in.a] = fromI32(int32(n[in.b]) << n[in.c])
+		case opShrIV:
+			n[in.a] = fromI32(int32(n[in.b]) >> n[in.c])
+		case opShrUV:
+			n[in.a] = uint64(uint32(n[in.b]) >> n[in.c])
+
+		case opAddL:
+			n[in.a] = n[in.b] + n[in.c]
+		case opAddLK:
+			n[in.a] = n[in.b] + uint64(int64(in.c))
+		case opSubL:
+			n[in.a] = n[in.b] - n[in.c]
+		case opMulL:
+			n[in.a] = n[in.b] * n[in.c]
+		case opDivL:
+			n[in.a] = uint64(int64(n[in.b]) / int64(n[in.c]))
+		case opRemL:
+			n[in.a] = uint64(int64(n[in.b]) % int64(n[in.c]))
+		case opDivUL:
+			n[in.a] = n[in.b] / n[in.c]
+		case opRemUL:
+			n[in.a] = n[in.b] % n[in.c]
+		case opShlL:
+			n[in.a] = n[in.b] << in.c
+		case opShrL:
+			n[in.a] = uint64(int64(n[in.b]) >> in.c)
+		case opShrUL:
+			n[in.a] = n[in.b] >> in.c
+		case opShlLV:
+			n[in.a] = n[in.b] << n[in.c]
+		case opShrLV:
+			n[in.a] = uint64(int64(n[in.b]) >> n[in.c])
+		case opShrULV:
+			n[in.a] = n[in.b] >> n[in.c]
+		case opNegL:
+			n[in.a] = -n[in.b]
+		case opNotL:
+			n[in.a] = ^n[in.b]
+		case opEqL:
+			n[in.a] = fromBool(n[in.b] == n[in.c])
+		case opNeL:
+			n[in.a] = fromBool(n[in.b] != n[in.c])
+		case opLtL:
+			n[in.a] = fromBool(int64(n[in.b]) < int64(n[in.c]))
+		case opLeL:
+			n[in.a] = fromBool(int64(n[in.b]) <= int64(n[in.c]))
+		case opLtUL:
+			n[in.a] = fromBool(n[in.b] < n[in.c])
+		case opLeUL:
+			n[in.a] = fromBool(n[in.b] <= n[in.c])
+		case opSxt32:
+			n[in.a] = fromI32(int32(n[in.b]))
+		case opZxt32:
+			n[in.a] = uint64(uint32(n[in.b]))
 
 		case opAddF:
 			n[in.a] = math.Float64bits(math.Float64frombits(n[in.b]) + math.Float64frombits(n[in.c]))
@@ -309,6 +366,10 @@ func (m *Machine) exec(f *Func, bn, bs, br int) {
 			n[in.a] = math.Float64bits(float64(int32(n[in.b])))
 		case opU2F:
 			n[in.a] = math.Float64bits(float64(uint32(n[in.b])))
+		case opL2F:
+			n[in.a] = math.Float64bits(float64(int64(n[in.b])))
+		case opUL2F:
+			n[in.a] = math.Float64bits(float64(n[in.b]))
 
 		case opNotB:
 			n[in.a] = n[in.b] ^ 1
@@ -381,6 +442,38 @@ func (m *Machine) exec(f *Func, bn, bs, br int) {
 			}
 		case opJNeIK:
 			if int32(n[in.b]) != in.c {
+				pc = int(in.a)
+			}
+		case opJNltL:
+			if !(int64(n[in.b]) < int64(n[in.c])) {
+				pc = int(in.a)
+			}
+		case opJNleL:
+			if !(int64(n[in.b]) <= int64(n[in.c])) {
+				pc = int(in.a)
+			}
+		case opJNeqL:
+			if n[in.b] != n[in.c] {
+				pc = int(in.a)
+			}
+		case opJNneL:
+			if n[in.b] == n[in.c] {
+				pc = int(in.a)
+			}
+		case opJNltUL:
+			if !(n[in.b] < n[in.c]) {
+				pc = int(in.a)
+			}
+		case opJNleUL:
+			if !(n[in.b] <= n[in.c]) {
+				pc = int(in.a)
+			}
+		case opJEqLK:
+			if n[in.b] == uint64(int64(in.c)) {
+				pc = int(in.a)
+			}
+		case opJNeLK:
+			if n[in.b] != uint64(int64(in.c)) {
 				pc = int(in.a)
 			}
 		case opJNltF:
@@ -490,6 +583,8 @@ func equal(t *tinfo, an []uint64, as []string, ar []any, bn []uint64, bs []strin
 	switch t.kind {
 	case kBool, kI32, kU32:
 		return int32(an[0]) == int32(bn[0])
+	case kI64, kU64:
+		return an[0] == bn[0]
 	case kF64:
 		return math.Float64frombits(an[0]) == math.Float64frombits(bn[0])
 	case kStr:

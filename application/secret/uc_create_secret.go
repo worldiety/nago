@@ -59,6 +59,11 @@ func NewCreateSecret(mutex *sync.Mutex, bus events.Bus, secrets Repository) Crea
 			}
 		}
 
+		credentials, err := validated(credentials)
+		if err != nil {
+			return "", err
+		}
+
 		mutex.Lock()
 		defer mutex.Unlock()
 

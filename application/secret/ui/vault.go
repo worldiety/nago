@@ -136,8 +136,13 @@ func addButton(wnd core.Window, pages Pages) core.View {
 }
 
 func itemEntry(wnd core.Window, pages Pages, uc UseCases, scr secret.Secret, spec credentialTypeSpec) list.TEntry {
+	logo := spec.LogoView()
+	if svg := instanceLogoSVG(scr); svg != "" {
+		logo = logoImage(svg, ui.L40)
+	}
+
 	return list.Entry().
-		Leading(spec.LogoView()).
+		Leading(logo).
 		Headline(wnd.Bundle().Resolve(secretName(scr))).
 		SupportingText(wnd.Bundle().Resolve(spec.name) + " · " + accessSummary(wnd.Subject(), uc.FindGroupByID, scr)).
 		Trailing(ui.ImageIcon(heroOutline.ChevronRight)).

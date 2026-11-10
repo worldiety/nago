@@ -156,12 +156,12 @@ func (c *checker) concurrentWrites() map[types.Object]token.Pos {
 }
 
 // concurrentType describes, why a value of t may share memory with the program, or returns "". Only a whitelist of
-// types passes: basic values and their enums, big.Int, decimal.Dec and structs, opt.Option and list.Frozen of them.
+// types passes: basic values and their enums, big.Int, bin.Bytes, decimal.Dec and structs, opt.Option and list.Frozen of them.
 func concurrentType(t types.Type, seen map[types.Type]bool) string {
 	if _, ok := t.(*types.TypeParam); ok {
 		return "a value of a type parameter, which may be anything"
 	}
-	if isBig(t) {
+	if isValueHandle(t) {
 		return ""
 	}
 	if seen[t] {

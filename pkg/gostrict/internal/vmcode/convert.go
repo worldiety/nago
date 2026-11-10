@@ -27,6 +27,10 @@ func (m *Machine) neutral(t *tinfo, n []uint64, s []string, r []any) any {
 		return int32(n[0])
 	case kU32:
 		return uint32(n[0])
+	case kI64:
+		return int64(n[0])
+	case kU64:
+		return n[0]
 	case kF64:
 		return math.Float64frombits(n[0])
 	case kStr:
@@ -46,6 +50,8 @@ func (m *Machine) neutral(t *tinfo, n []uint64, s []string, r []any) any {
 		return js.NewRef(r[0])
 	case kBig:
 		return bigString(r[0])
+	case kBytes:
+		return bytesOf(r[0])
 	case kPtr:
 		return m.host.Token(t.elem.name, r[0])
 	case kFunc:
@@ -115,6 +121,10 @@ func (m *Machine) write(v any, t *tinfo, n []uint64, s []string, r []any) {
 		n[0] = fromI32(v.(int32))
 	case kU32:
 		n[0] = uint64(v.(uint32))
+	case kI64:
+		n[0] = uint64(v.(int64))
+	case kU64:
+		n[0] = v.(uint64)
 	case kF64:
 		n[0] = math.Float64bits(v.(float64))
 	case kStr:
@@ -129,6 +139,8 @@ func (m *Machine) write(v any, t *tinfo, n []uint64, s []string, r []any) {
 		r[0] = v.(js.Ref).Value()
 	case kBig:
 		r[0] = bigParse(v.(string))
+	case kBytes:
+		r[0] = v.([]byte)
 	case kPtr:
 		o, ok := m.host.TokenValue(v)
 		if _, isObj := o.(*object); !ok || !isObj {
@@ -214,10 +226,16 @@ func (c *Closure) CheckArgs(args []any) error {
 			_, ok = args[i].(int32)
 		case kU32:
 			_, ok = args[i].(uint32)
+		case kI64:
+			_, ok = args[i].(int64)
+		case kU64:
+			_, ok = args[i].(uint64)
 		case kF64:
 			_, ok = args[i].(float64)
 		case kStr, kBig:
 			_, ok = args[i].(string)
+		case kBytes:
+			_, ok = args[i].([]byte)
 		case kList, kOut, kMap, kStruct, kShared:
 			_, ok = args[i].([]any)
 		case kHandle:

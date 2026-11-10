@@ -40,27 +40,27 @@ import (
 )
 
 func report(r net.Result) error {
-	return errors.New(string(r.Outcome) + "|" + text.FromInt(r.Status) + "|" + r.Reason + "|" + r.Body + "|" + r.Stored)
+	return errors.New(string(r.Outcome) + "|" + text.FromInt(r.Status) + "|" + r.Reason + "|" + r.Body.Text() + "|" + r.Stored)
 }
 
 func Send(method, path string) task.ID {
-	return net.Send("api", net.NewRequest(method, path, ""), report)
+	return net.Send("api", net.NewTextRequest(method, path, ""), report)
 }
 
 func Header(path, name, value string) task.ID {
-	r := net.NewRequest("GET", path, "")
+	r := net.NewTextRequest("GET", path, "")
 	r.Header.Set(name, value)
 	return net.Send("api", r, report)
 }
 
 func Timed(path string, timeout int32) task.ID {
-	r := net.NewRequest("GET", path, "")
+	r := net.NewTextRequest("GET", path, "")
 	r.Timeout = timeout
 	return net.Send("api", r, report)
 }
 
 func Transfer(method, path, body, source, sink, contentType string, timeout int32) task.ID {
-	r := net.NewRequest(method, path, body)
+	r := net.NewTextRequest(method, path, body)
 	r.Source = source
 	r.Sink = sink
 	r.Timeout = timeout
@@ -79,7 +79,7 @@ func Upload(path, source string) task.ID {
 }
 
 func Form(path, value, source, fileName, mime string, timeout int32) task.ID {
-	r := net.NewRequest("POST", path, "")
+	r := net.NewTextRequest("POST", path, "")
 	r.Timeout = timeout
 	r.Parts.Append(net.Part{Name: "field", Value: value})
 	if source != "" {
@@ -89,14 +89,14 @@ func Form(path, value, source, fileName, mime string, timeout int32) task.ID {
 }
 
 func FormTyped(path, value, contentType string) task.ID {
-	r := net.NewRequest("POST", path, "")
+	r := net.NewTextRequest("POST", path, "")
 	r.Header.Set("content-type", contentType)
 	r.Parts.Append(net.Part{Name: "field", Value: value})
 	return net.Send("api", r, report)
 }
 
 func OnePart(path, name, value, source, fileName, mime, body, topSource string) task.ID {
-	r := net.NewRequest("POST", path, body)
+	r := net.NewTextRequest("POST", path, body)
 	r.Source = topSource
 	r.Parts.Append(net.Part{Name: name, Value: value, Source: source, FileName: fileName, Mime: mime})
 	return net.Send("api", r, report)

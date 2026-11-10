@@ -21,6 +21,7 @@ import (
 	"go.wdy.de/nago/pkg/gostrict/engine/vm"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/alias"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/arena"
+	"go.wdy.de/nago/pkg/gostrict/internal/examples/binary"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/core"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/draw"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/errs"
@@ -31,6 +32,8 @@ import (
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/hostuse"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/ints"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/iters"
+	"go.wdy.de/nago/pkg/gostrict/internal/examples/jsons"
+	"go.wdy.de/nago/pkg/gostrict/internal/examples/longs"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/money"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/orders"
 	"go.wdy.de/nago/pkg/gostrict/internal/examples/physics"
@@ -53,6 +56,24 @@ type diffCase struct {
 	args []any
 }
 
+// jsonDoc has every type, which json.Decode reads, unknown keys, a duplicate key and a key of a field without JSON.
+const jsonDoc = `{"name":"Grüße ä😀","id":-9223372036854775808,"max":18446744073709551615,"Count":-7,
+	"mask":4294967295,"ratio":-0,"ok":true,"tags":["a","b"],"points":[{"x":1.5,"y":-2},{"x":0,"y":1e-3,"extra":[1,{"z":null}]}],
+	"frozen":[1,2,3],"index":{"b":2,"a":1,"b":3},"note":"hello","shape":{"x":3,"y":4},"data":"AAEC/w==",
+	"big":-123456789012345678901234567890,
+	"tree":{"name":"root","children":[{"name":"a","children":[{"name":"a1"}]},{"name":"b","children":null}]},
+	"Skip":"no","-":"no","hidden":[1],"unknown":{"deep":[true,false,null,"x",-1.5e3]}}`
+
+// jsonErrors are documents, which json.Decode refuses with the same message at the same offset in every engine.
+var jsonErrors = []string{
+	``, `{`, `{"id":1.5}`, `{"id":"1"}`, `{"max":-1}`, `{"id":9223372036854775808}`, `{"ratio":1e999}`, `{"name":1}`,
+	"{\"name\":\"a\x01\"}", `{"name":"\x"}`, `{"name":"\ud83d\u12"}`, `{"tags":["a",1]}`, `{"tags":["a",]}`, `{"a":1,}`,
+	`{"ok":tru}`, `{"data":"!!!!"}`, `{} x`, `{"id":01}`, `{"id":-}`, `{"ratio":1.}`, `{"ratio":1e}`, `{"tags":{}}`,
+	`{"index":[]}`, `{"points":[{"x":"1"}]}`, `{"Count":2147483648}`, `{"mask":4294967296}`, `[1]`, `"x"`, `{"a" 1}`,
+	`{1:2}`, `{"name":"abc`, "{\"name\":\"\xff\"}", "\xef\xbb\xbf{}", `{"big":1.5}`, `{"note":5}`, `{"shape":[]}`,
+	`{"x":` + strings.Repeat("[", 600) + `}`,
+}
+
 // goEngine is shared by the tests, so that they use its cache of compiled programs.
 var goEngine = &gojaengine.Engine{}
 
@@ -68,6 +89,9 @@ var exports = map[string]gostrict.Funcs{
 	"handlevalues": native.Reflect(map[string]any{"ImageFrame": handlevalues.ImageFrame, "PassFrame": handlevalues.PassFrame, "TextFrame": handlevalues.TextFrame, "WithFrame": handlevalues.WithFrame}),
 	"hostuse":      native.Reflect(map[string]any{"Callbacks": hostuse.Callbacks, "Records": hostuse.Records, "Run": hostuse.Run}),
 	"ints":         native.Reflect(map[string]any{"Bits": ints.Bits, "Conv": ints.Conv, "Div": ints.Div, "DivU": ints.DivU, "Hash": ints.Hash, "Wrap": ints.Wrap, "Xorshift": ints.Xorshift}),
+	"binary":       native.Reflect(map[string]any{"Bits": binary.Bits, "Decode": binary.Decode, "Encode": binary.Encode, "Floats": binary.Floats, "Invalid": binary.Invalid, "LittleBits": binary.LittleBits, "Overrun": binary.Overrun, "Records": binary.Records, "Text": binary.Text}),
+	"jsons":        native.Reflect(map[string]any{"Containers": jsons.Containers, "Encoded": jsons.Encoded, "Floats": jsons.Floats, "Nodes": jsons.Nodes, "Numbers": jsons.Numbers, "Points": jsons.Points, "Raw": jsons.Raw, "Scalars": jsons.Scalars, "Small": jsons.Small, "Sum": jsons.Sum, "Text": jsons.Text, "Values": jsons.Values, "Written": jsons.Written}),
+	"longs":        native.Reflect(map[string]any{"Bits": longs.Bits, "Containers": longs.Containers, "Conv": longs.Conv, "Div": longs.Div, "DivU": longs.DivU, "Floats": longs.Floats, "MinMax": longs.MinMax, "Parse": longs.Parse, "Ranges": longs.Ranges, "Shifts": longs.Shifts, "Text": longs.Text, "Wrap": longs.Wrap}),
 	"iters":        native.Reflect(map[string]any{"FirstOver": iters.FirstOver, "Live": iters.Live, "Nested": iters.Nested, "Sum": iters.Sum, "Switch": iters.Switch}),
 	"money":        native.Reflect(map[string]any{"Calc": money.Calc, "Factorial": money.Factorial, "Ints": money.Ints, "Invoice": money.Invoice, "Limits": money.Limits, "Parse": money.Parse, "Round": money.Round}),
 	"orders":       native.Reflect(map[string]any{"NewGame": orders.NewGame, "Snapshot": orders.Snapshot, "Step": orders.Step, "Summarize": orders.Summarize}),
@@ -161,6 +185,87 @@ func TestDifferential(t *testing.T) {
 		{"texts", "Parse", []any{"12x"}},
 		{"texts", "Parse", []any{"1073741824"}},
 		{"texts", "Misc", []any{"\u0085 ab😀a \uFEFF"}},
+		{"jsons", "Scalars", []any{jsonDoc}},
+		{"jsons", "Containers", []any{jsonDoc}},
+		{"jsons", "Values", []any{jsonDoc}},
+		{"jsons", "Nodes", []any{jsonDoc}},
+		{"jsons", "Scalars", []any{`{}`}},
+		{"jsons", "Containers", []any{`null`}},
+		{"jsons", "Values", []any{` {} `}},
+		{"jsons", "Nodes", []any{`{"tree":null}`}},
+		{"jsons", "Text", []any{`"aä😀\ud800x\udc00\"\\\/\b\f\n\r\t"`}},
+		{"jsons", "Raw", []any{"2261fffe5c6eff22"}},
+		{"jsons", "Raw", []any{"22e282ac2061e28222"}},
+		{"jsons", "Numbers", []any{`[0, -0, 9223372036854775807, -9223372036854775808]`}},
+		{"jsons", "Numbers", []any{`[9223372036854775808]`}},
+		{"jsons", "Floats", []any{`[0, -0, 1.5e300, 4.9e-324, 1e-400, 0.1, 123456789012345678901234567890, -1E+2]`}},
+		{"jsons", "Floats", []any{`[1e309]`}},
+		{"jsons", "Small", []any{`[2147483647,-2147483648]`, `[4294967295,0,-0]`}},
+		{"jsons", "Small", []any{`[2147483648]`, `[-1]`}},
+		{"jsons", "Sum", []any{`[{"x":1,"y":2},{"y":0.5},null]`}},
+		{"jsons", "Encoded", []any{jsonDoc}},
+		{"jsons", "Encoded", []any{`{}`}},
+		{"jsons", "Written", []any{1.5, "a\"\\\n\x01\x7fä😀\u2028"}},
+		{"jsons", "Written", []any{0.0, ""}},
+		{"jsons", "Written", []any{math.Copysign(0, -1), "x"}},
+		{"jsons", "Written", []any{5e-324, "x"}},
+		{"jsons", "Written", []any{1.2345678901234567e-7, "x"}},
+		{"jsons", "Written", []any{math.Pi * 1e20, "x"}},
+		{"jsons", "Written", []any{math.MaxFloat64, "x"}},
+		{"jsons", "Written", []any{math.NaN(), "x"}},
+		{"jsons", "Written", []any{math.Inf(-1), "x"}},
+		{"jsons", "Points", []any{int32(3)}},
+		{"binary", "Encode", []any{uint32(7), int64(-42), 1.5, "Grüße", int32(5)}},
+		{"binary", "Decode", []any{"", int32(0), int32(0)}},
+		{"binary", "Decode", []any{"xx", int32(0), int32(0)}},
+		{"binary", "Decode", []any{"00112233", int32(0), int32(0)}},
+		{"binary", "Decode", []any{"574b444108000701a0ffffffffffffd63fc00000000000000000f83f4772c3bcc39f6500f9cfebfa1f90000000000000", int32(8), int32(5)}},
+		{"binary", "Text", []any{"Grüße 😀!"}},
+		{"binary", "Text", []any{""}},
+		{"binary", "Invalid", nil},
+		{"binary", "Bits", []any{uint32(0xDEADBEEF), uint64(0xDEADBEEFCAFEBABE), uint32(7)}},
+		{"binary", "Bits", []any{uint32(0), uint64(0), uint32(0)}},
+		{"binary", "Bits", []any{uint32(1), uint64(1 << 40), uint32(100)}},
+		{"binary", "Floats", []any{1.5, uint32(0xC0490FDB), uint32(12)}},
+		{"binary", "Floats", []any{math.Inf(-1), uint32(0xFFF), uint32(12)}},
+		{"binary", "Floats", []any{-0.1, uint32(0x7F), uint32(0)}},
+		{"binary", "Floats", []any{1e300, uint32(0x80000000), uint32(40)}},
+		{"binary", "Records", []any{int32(1000)}},
+		{"binary", "Overrun", []any{int32(0)}},
+		{"binary", "Overrun", []any{int32(2)}},
+		{"binary", "Overrun", []any{int32(-1)}},
+		{"binary", "LittleBits", []any{uint64(0xABCDEF), uint32(21)}},
+		{"binary", "LittleBits", []any{uint64(0xFFFFFFFFFFFFFFFF), uint32(64)}},
+		{"longs", "Wrap", []any{int64(math.MaxInt64), int64(7)}},
+		{"longs", "Wrap", []any{int64(math.MinInt64), int64(-1)}},
+		{"longs", "Div", []any{int64(-7), int64(2)}},
+		{"longs", "Div", []any{int64(math.MinInt64), int64(-1)}},
+		{"longs", "Div", []any{int64(5), int64(0)}},
+		{"longs", "DivU", []any{uint64(math.MaxUint64), uint64(7)}},
+		{"longs", "Bits", []any{uint64(0xDEADBEEFCAFEBABE)}},
+		{"longs", "Shifts", []any{int32(-5), uint32(0xF0000001), int64(-5), uint64(0xF000000000000001), uint32(4)}},
+		{"longs", "Shifts", []any{int32(-5), uint32(0xF0000001), int64(-5), uint64(0xF000000000000001), uint32(31)}},
+		{"longs", "Shifts", []any{int32(-5), uint32(0xF0000001), int64(-5), uint64(0xF000000000000001), uint32(32)}},
+		{"longs", "Shifts", []any{int32(-5), uint32(0xF0000001), int64(-5), uint64(0xF000000000000001), uint32(63)}},
+		{"longs", "Shifts", []any{int32(-5), uint32(0xF0000001), int64(-5), uint64(0xF000000000000001), uint32(64)}},
+		{"longs", "Shifts", []any{int32(-5), uint32(0xF0000001), int64(-5), uint64(0xF000000000000001), uint32(4000000000)}},
+		{"longs", "Conv", []any{int32(-1), uint32(math.MaxUint32), int64(-1), uint64(math.MaxUint64)}},
+		{"longs", "Conv", []any{int32(math.MinInt32), uint32(1 << 31), int64(1 << 40), uint64(1 << 63)}},
+		{"longs", "Floats", []any{-2.5}},
+		{"longs", "Floats", []any{math.NaN()}},
+		{"longs", "Floats", []any{1e30}},
+		{"longs", "Floats", []any{math.Inf(-1)}},
+		{"longs", "Floats", []any{1e15 + 0.5}},
+		{"longs", "Text", []any{int64(math.MinInt64), uint64(math.MaxUint64)}},
+		{"longs", "Parse", []any{"-9223372036854775808"}},
+		{"longs", "Parse", []any{"9223372036854775808"}},
+		{"longs", "Parse", []any{"18446744073709551615"}},
+		{"longs", "Parse", []any{"18446744073709551616"}},
+		{"longs", "Parse", []any{"+12"}},
+		{"longs", "Parse", []any{"1x"}},
+		{"longs", "Ranges", []any{int64(5), uint64(4)}},
+		{"longs", "Containers", []any{int64(1 << 53), uint64(1<<64 - 1)}},
+		{"longs", "MinMax", []any{int64(-3), int64(9), uint64(1 << 63), uint64(4)}},
 		{"ints", "Hash", []any{"Grüße 😀"}},
 		{"ints", "Wrap", []any{int32(math.MaxInt32), int32(7)}},
 		{"ints", "Wrap", []any{int32(math.MinInt32), int32(-1)}},
@@ -221,6 +326,9 @@ func TestDifferential(t *testing.T) {
 		{"money", "Limits", []any{"-" + strings.Repeat("9", 400), uint32(1), int32(0)}},
 		{"money", "Limits", []any{"18446744073709553664", uint32(1), int32(0)}},
 		{"money", "Limits", []any{"-" + strings.Repeat("7", 300), uint32(1), int32(0)}},
+	}
+	for _, src := range jsonErrors {
+		cases = append(cases, diffCase{"jsons", "Scalars", []any{src}})
 	}
 
 	ctx := context.Background()

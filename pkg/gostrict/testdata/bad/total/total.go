@@ -40,7 +40,7 @@ func Float(f float64) int32 {
 	return int32(f) // want GS031
 }
 
-func Shift(x uint32, n uint32) uint32 {
+func Shift(x uint32, n int32) uint32 {
 	return x << n // want GS007
 }
 

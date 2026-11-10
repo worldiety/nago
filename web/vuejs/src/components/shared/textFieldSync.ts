@@ -37,9 +37,28 @@ export class TextFieldSync {
 	// inFlight is the request tracing id, which has transmitted the anchor, as long as no rendering has shown that
 	// the server has processed it, otherwise 0.
 	private inFlight: number = 0;
+	private state: number | undefined;
 
-	constructor(initialValue: string) {
+	constructor(initialValue: string, state?: number) {
 		this.anchor = initialValue;
+		this.state = state;
+	}
+
+	/**
+	 * rebind tells, whether the text field shows another bound state than before, and starts over with its server value
+	 * if so. A stack patches its children by their position, so an instance is reused for whichever field moves to its
+	 * place. Neither its text nor what it has transmitted belong to the new state. Comparing them would mistake the text
+	 * of the previous field for unsent input, keep showing it and finally transmit it to the wrong state.
+	 */
+	rebind(state: number | undefined, serverValue: string): boolean {
+		if (state === this.state) {
+			return false;
+		}
+
+		this.state = state;
+		this.anchor = serverValue;
+		this.inFlight = 0;
+		return true;
 	}
 
 	/**

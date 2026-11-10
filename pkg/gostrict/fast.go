@@ -39,12 +39,16 @@ type Reader interface {
 	Bool() bool
 	Int32() int32
 	Uint32() uint32
+	Int64() int64
+	Uint64() uint64
 	Float64() float64
 	String() string
 	Error() error
 	Handle() js.Ref
 	// Big returns a big.Int as its decimal.
 	Big() string
+	// Bytes returns a bin.Bytes, which must not change.
+	Bytes() []byte
 	State() Token
 	Func() Callback
 	// Record begins a record, whose fields follow. If the record never changes and the reader has kept its Go value,
@@ -67,11 +71,14 @@ type Writer interface {
 	Bool(v bool)
 	Int32(v int32)
 	Uint32(v uint32)
+	Int64(v int64)
+	Uint64(v uint64)
 	Float64(v float64)
 	String(v string)
 	Error(err error)
 	Handle(r js.Ref)
 	Big(decimal string)
+	Bytes(b []byte)
 	State(t Token)
 	Record()
 	List(n int)

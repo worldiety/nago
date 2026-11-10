@@ -454,7 +454,7 @@ func (e *emitter) frozen(t types.Type, records map[string]Record, seen map[strin
 			if !ok || !e.frozen(ft, records, seen) {
 				return false
 			}
-		case ValueBool, ValueInt32, ValueUint32, ValueFloat64, ValueString, ValueBig:
+		case ValueBool, ValueInt32, ValueUint32, ValueInt64, ValueUint64, ValueFloat64, ValueString, ValueBig, ValueBytes:
 		default:
 			return false
 		}
@@ -760,6 +760,8 @@ func (e *emitter) zero(t types.Type) string {
 			return `""`
 		case u.Info()&types.IsBoolean != 0:
 			return "false"
+		case isBigIntKind(u.Kind()):
+			return "0n"
 		case u.Info()&types.IsNumeric != 0:
 			return "0"
 		}
@@ -779,6 +781,8 @@ func (e *emitter) resultZero(t types.Type) string {
 			return "$dnew()"
 		case bigPath + ".Int":
 			return "0n"
+		case binPath + ".Bytes":
+			return "new Uint8Array(0)"
 		}
 	}
 	if isStruct(t) {

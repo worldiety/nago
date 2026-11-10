@@ -55,7 +55,7 @@ import (
 
 func button(wnd ui.Window, title, path string, status ui.StringState) ui.TButton {
 	return ui.PrimaryButton(func() {
-		id := net.Send("api", net.NewRequest("GET", path, ""), func(r net.Result) error {
+		id := net.Send("api", net.NewTextRequest("GET", path, ""), func(r net.Result) error {
 			if r.Outcome != net.OK {
 				return errors.New(string(r.Outcome) + " for " + path)
 			}

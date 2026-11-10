@@ -19,7 +19,7 @@ import (
 
 // Key is a type, which compares by value in Go and in JavaScript.
 type Key interface {
-	~string | ~int32 | ~uint32 | ~bool
+	~string | ~int32 | ~uint32 | ~int64 | ~uint64 | ~bool
 }
 
 type store[K Key, V any] struct {

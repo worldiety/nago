@@ -8,18 +8,19 @@
 // Package net sends HTTP requests of a program on a server. A program never sees an address or a credential: it names
 // a connection, which an administrator has set up, and a path of it. The host adds the credentials outside of the
 // program, so a defect or an injected instruction can not send them elsewhere. A connection to a public API simply has
-// no credentials.
+// no credentials. A connection may offer further values, e.g. the number of a tenant, which the program builds into a
+// request, see [Value].
 //
 // Send returns at once, and the function of its last parameter runs later as a call of its own with its own
 // transaction, e.g. to save the result. It runs on another goroutine, so it can only use what can not change:
 // the compiler rejects anything else (GS046).
 //
 //	func invoke(in Input) (Output, error) {
-//		id := net.Send("crm", net.NewRequest("GET", "/customers/"+in.ID, ""), func(r net.Result) error {
+//		id := net.Send("crm", net.NewRequest("GET", "/customers/"+in.ID, bin.Empty()), func(r net.Result) error {
 //			if r.Outcome != net.OK {
 //				return errors.New(r.Reason)
 //			}
-//			return save(r.Body)
+//			return save(r.Body.Text())
 //		})
 //		return Output{Job: id}, nil
 //	}
@@ -35,6 +36,7 @@
 package net
 
 import (
+	"go.wdy.de/nago/pkg/gostrict/std/bin"
 	"go.wdy.de/nago/pkg/gostrict/std/dict"
 	"go.wdy.de/nago/pkg/gostrict/std/list"
 	"go.wdy.de/nago/pkg/gostrict/std/task"
@@ -67,8 +69,9 @@ type Request struct {
 	Query dict.Map[string, string]
 	// Header are additional headers, which must not be credentials: Authorization, Cookie and Host are rejected.
 	Header dict.Map[string, string]
-	// Body is the text of the request.
-	Body string
+	// Body is the content of the request, which may be binary. Use bin.FromText for a text and json.Encode(v) for
+	// JSON.
+	Body bin.Bytes
 	// Timeout is the limit in milliseconds, 30 seconds if 0, and the host limits it. A transfer ignores it.
 	Timeout int32
 	// Source names the content, which the host sends instead of Body. The name comes from the host, e.g. from a
@@ -104,8 +107,10 @@ type Result struct {
 	Status int32
 	// Header are the headers of the answer.
 	Header dict.Map[string, string]
-	// Body is the text of the answer, but only with [OK], so that a forgotten check never parses an error page.
-	Body string
+	// Body is the content of the answer, which may be binary, but only with [OK], so that a forgotten check never parses
+	// an error page. Body.Text() returns it as text, json.Decode[T](r.Body) reads JSON into T and a program reads a
+	// binary format with bin.Decode(r.Body, ...).
+	Body bin.Bytes
 	// Stored is what the host reports about the answer, which it wrote to [Request.Sink], but only with [OK].
 	Stored string
 }
@@ -113,8 +118,15 @@ type Result struct {
 // NewRequest returns a request with empty query parameters, headers and parts, which the program may set.
 //
 //gostrict:host
-func NewRequest(method, path, body string) Request {
+func NewRequest(method, path string, body bin.Bytes) Request {
 	return Request{Method: method, Path: path, Query: dict.New[string, string](), Header: dict.New[string, string](), Body: body, Parts: list.New[Part]()}
+}
+
+// NewTextRequest returns a request like [NewRequest], whose content is the UTF-8 of the text.
+//
+//gostrict:host
+func NewTextRequest(method, path, text string) Request {
+	return NewRequest(method, path, bin.FromText(text))
 }
 
 // Send sends the request over the connection and returns at once. The function done runs later as a call of its own,
@@ -126,4 +138,24 @@ func NewRequest(method, path, body string) Request {
 //gostrict:calls concurrent
 func Send(connection string, req Request, done func(r Result) error) task.ID {
 	panic("net.Send needs a host, see package nethost")
+}
+
+// Value returns the value of the key of the connection and true, or "" and false, if the connection does not exist or
+// does not offer this key: a program never gets a value, which its administrator has marked as write-only, and none of
+// the keys, which the host itself applies to each request, e.g. the address and the headers of the login. So the value
+// may be built into a header, a parameter or the content of a request, but it is no secret: the program can show it.
+//
+//gostrict:host
+//gostrict:const connection
+//gostrict:zero
+func Value(connection, key string) (string, bool) {
+	panic("net.Value needs a host, see package nethost")
+}
+
+// Values returns all keys and values of the connection, which [Value] finds, and is empty for an unknown connection.
+//
+//gostrict:host
+//gostrict:const connection
+func Values(connection string) dict.Map[string, string] {
+	panic("net.Values needs a host, see package nethost")
 }

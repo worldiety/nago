@@ -296,7 +296,7 @@ func (c *checker) visitNode(n ast.Node) {
 		case token.QUO_ASSIGN, token.REM_ASSIGN:
 			c.checkDivision(n, n.Lhs[0], n.Rhs[0])
 		case token.SHL_ASSIGN, token.SHR_ASSIGN:
-			c.checkShift(n, n.Rhs[0])
+			c.checkShift(n, n.Lhs[0], n.Rhs[0])
 		case token.ASSIGN, token.DEFINE:
 			c.checkBinding(n, n.Lhs, n.Rhs, n.Tok == token.DEFINE)
 		}
@@ -436,7 +436,7 @@ func (c *checker) checkUnary(n *ast.UnaryExpr) {
 func (c *checker) checkBinary(n *ast.BinaryExpr) {
 	switch n.Op {
 	case token.SHL, token.SHR:
-		c.checkShift(n, n.Y)
+		c.checkShift(n, n.X, n.Y)
 	case token.QUO, token.REM:
 		c.checkDivision(n, n.X, n.Y)
 	case token.EQL, token.NEQ:
@@ -474,6 +474,8 @@ func (c *checker) checkCall(n *ast.CallExpr) {
 	if tv, ok := c.info.Types[n]; ok && !c.isForbiddenStdCall(n) {
 		c.checkType(n, tv.Type)
 	}
+
+	c.checkJSON(n)
 
 	id, ok := ast.Unparen(n.Fun).(*ast.Ident)
 	if !ok {
@@ -540,6 +542,80 @@ func (c *checker) checkCall(n *ast.CallExpr) {
 	}
 }
 
+// checkJSON rejects a type of json.Decode or json.Encode, which it can not read or write, because each engine reads
+// and writes the type, which the program names, without a value in between.
+func (c *checker) checkJSON(n *ast.CallExpr) {
+	fun := ast.Unparen(n.Fun)
+	if ix, ok := fun.(*ast.IndexExpr); ok {
+		fun = ix.X
+	}
+	var id *ast.Ident
+	switch f := fun.(type) {
+	case *ast.SelectorExpr:
+		id = f.Sel
+	case *ast.Ident:
+		id = f
+	default:
+		return
+	}
+	fn, ok := c.info.Uses[id].(*types.Func)
+	if !ok || fn.Pkg() == nil || fn.Pkg().Path() != jsonPath || (fn.Name() != "Decode" && fn.Name() != "Encode") {
+		return
+	}
+	inst, ok := c.info.Instances[id]
+	if !ok || inst.TypeArgs.Len() != 1 {
+		return
+	}
+	t := inst.TypeArgs.At(0)
+	if why := jsonProblem(t, map[types.Type]bool{}); why != "" {
+		verb := "read"
+		if fn.Name() == "Encode" {
+			verb = "write"
+		}
+		c.report(n, CodeJSON, "json."+fn.Name()+" can not "+verb+" "+types.TypeString(t, types.RelativeTo(c.pkg.Types)), why,
+			"use bool, string, int32, uint32, int64, uint64, float64, big.Int, bin.Bytes, list.List, list.Frozen, dict.Map with string keys, opt.Option and structs of them, and name the type at the call")
+	}
+}
+
+// jsonProblem returns, why json.Decode can not read t, or "".
+func jsonProblem(t types.Type, seen map[types.Type]bool) string {
+	if _, ok := types.Unalias(t).(*types.TypeParam); ok {
+		return "the type parameter " + t.String() + " is not known, when the program is translated"
+	}
+	if n, ok := types.Unalias(t).(*types.Named); ok && n.Obj().Pkg() != nil {
+		targs := n.TypeArgs()
+		switch n.Obj().Pkg().Path() + "." + n.Obj().Name() {
+		case listPath + ".List", listPath + ".Frozen", optPath + ".Option":
+			return jsonProblem(targs.At(0), seen)
+		case dictPath + ".Map":
+			if basicKind(targs.At(0)) != types.String {
+				return "a key of an object is a string, but " + t.String() + " has other keys"
+			}
+			return jsonProblem(targs.At(1), seen)
+		case binPath + ".Bytes", bigPath + ".Int":
+			return ""
+		}
+	}
+	if isStruct(t) {
+		if seen[t] {
+			return ""
+		}
+		seen[t] = true
+		st := t.Underlying().(*types.Struct)
+		for i := range st.NumFields() {
+			if why := jsonProblem(st.Field(i).Type(), seen); why != "" {
+				return why
+			}
+		}
+		return ""
+	}
+	switch basicKind(t) {
+	case types.Bool, types.Int32, types.Uint32, types.Int64, types.Uint64, types.Float64, types.String:
+		return ""
+	}
+	return t.String() + " has no form in JSON"
+}
+
 func (c *checker) checkConversion(n *ast.CallExpr, to types.Type) {
 	c.checkType(n, to)
 	if len(n.Args) != 1 {
@@ -551,7 +627,7 @@ func (c *checker) checkConversion(n *ast.CallExpr, to types.Type) {
 		return
 	}
 	if isFloat(from) && isInteger(to) {
-		c.report(n, CodeFloatConversion, "converting a float64 into an integer is not allowed", "Go leaves the result undefined for NaN and values out of range", "use num.Trunc32(f) or num.Round32(f) from \"go.wdy.de/nago/pkg/gostrict/std/num\", which are defined for every value")
+		c.report(n, CodeFloatConversion, "converting a float64 into an integer is not allowed", "Go leaves the result undefined for NaN and values out of range", "use num.Trunc32(f), num.Round32(f), num.Trunc64(f) or num.Round64(f) from \"go.wdy.de/nago/pkg/gostrict/std/num\", which are defined for every value")
 	}
 	if isStringType(to) && !isStringType(from) {
 		c.report(n, CodeString, "converting a number to a string is not allowed", "string(n) returns the character of a code point, which is easily confused with formatting the number", "use text.FromInt(n) to format a number or text.FromCodePoint(r) for a character")
@@ -689,19 +765,19 @@ func typeProblem(t types.Type) *problem {
 	switch t := types.Unalias(t).(type) {
 	case *types.Basic:
 		switch t.Kind() {
-		case types.Bool, types.Int32, types.Uint32, types.Float64, types.String,
+		case types.Bool, types.Int32, types.Uint32, types.Int64, types.Uint64, types.Float64, types.String,
 			types.UntypedBool, types.UntypedInt, types.UntypedRune, types.UntypedFloat, types.UntypedString, types.UntypedNil:
 			return nil
 		case types.UnsafePointer:
 			return &problem{CodeUnsupported, "unsafe.Pointer is not allowed", "it is not part of the subset", ""}
 		case types.Uint8:
-			return &problem{CodeNumber, "byte is not allowed", "the subset has no bytes, because strings are not byte based in JavaScript", "use int32 for numbers and the functions of text for strings"}
+			return &problem{CodeNumber, "byte is not allowed", "a single byte has no type of its own in the subset", "use uint32 for the value of a byte, bin.Bytes and bin.Buffer of \"go.wdy.de/nago/pkg/gostrict/std/bin\" for binary data and the functions of text for strings"}
 		case types.Int:
-			return &problem{CodeNumber, "int is not allowed", "int has 64 bits in Go but JavaScript computes with float64, so an overflow would differ", "use int32, which wraps around in Go and JavaScript alike, or float64; write int32(0) or var n int32 for a constant, and range over int32(n)"}
-		case types.Int64, types.Uint64, types.Uint, types.Uintptr:
-			return &problem{CodeNumber, t.Name() + " is not allowed", "JavaScript represents numbers as float64, which holds only 53 bits of an integer", "use int32 or uint32 for integers and float64 for anything larger"}
+			return &problem{CodeNumber, "int is not allowed", "the width of int depends on the platform", "use int32 or int64, which wrap around in Go and JavaScript alike, or float64; write int32(0) or var n int32 for a constant, and range over int32(n)"}
+		case types.Uint, types.Uintptr:
+			return &problem{CodeNumber, t.Name() + " is not allowed", "the width of " + t.Name() + " depends on the platform", "use uint32 or uint64"}
 		default:
-			return &problem{CodeNumber, t.Name() + " is not allowed", "the subset allows only int32, uint32 and float64 as numbers", "use int32 for integers, float64 for decimals and uint32 for bit operations"}
+			return &problem{CodeNumber, t.Name() + " is not allowed", "the subset allows only int32, uint32, int64, uint64 and float64 as numbers", "use int32 or int64 for integers, float64 for decimals and uint32 or uint64 for bit operations"}
 		}
 	case *types.Pointer:
 		elem := types.Unalias(t.Elem())
@@ -899,7 +975,7 @@ func containsBig(t types.Type, seen map[types.Type]bool) bool {
 		return false
 	}
 	seen[t] = true
-	if isBig(t) {
+	if isValueHandle(t) {
 		return true
 	}
 	if st, ok := t.Underlying().(*types.Struct); ok && !isOpaque(t) {

@@ -8,6 +8,7 @@
 package gostrict
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -27,6 +28,10 @@ const (
 	ValueBool
 	ValueInt32
 	ValueUint32
+	// ValueInt64 is an int64, which is a BigInt in JavaScript.
+	ValueInt64
+	// ValueUint64 is a uint64, which is a BigInt in JavaScript.
+	ValueUint64
 	ValueFloat64
 	ValueString
 	// ValueError is an error, which may be nil. Its message crosses the boundary.
@@ -52,6 +57,9 @@ const (
 	ValueUnion
 	// ValueBig is a big.Int of package std/big, an integer of any size, whose value in Go is its decimal string.
 	ValueBig
+	// ValueBytes is a bin.Bytes of package std/bin, which never changes, whose value in Go is a []byte, which must not
+	// change either.
+	ValueBytes
 	// ValueFunc is a function of the program, which a function of a header package takes, e.g. the callback, which
 	// renders a cell of a table. Its value in Go is a [Callback], its signature is [Type.Func].
 	ValueFunc
@@ -65,6 +73,10 @@ func (k ValueKind) String() string {
 		return "int32"
 	case ValueUint32:
 		return "uint32"
+	case ValueInt64:
+		return "int64"
+	case ValueUint64:
+		return "uint64"
 	case ValueFloat64:
 		return "float64"
 	case ValueString:
@@ -87,6 +99,8 @@ func (k ValueKind) String() string {
 		return "union"
 	case ValueBig:
 		return "big.Int"
+	case ValueBytes:
+		return "bin.Bytes"
 	case ValueFunc:
 		return "func"
 	}
@@ -111,6 +125,8 @@ var (
 	Bool    = Type{Kind: ValueBool}
 	Int32   = Type{Kind: ValueInt32}
 	Uint32  = Type{Kind: ValueUint32}
+	Int64   = Type{Kind: ValueInt64}
+	Uint64  = Type{Kind: ValueUint64}
 	Float64 = Type{Kind: ValueFloat64}
 	String  = Type{Kind: ValueString}
 	Error   = Type{Kind: ValueError}
@@ -286,6 +302,10 @@ func checkValue(t Type, v any) error {
 		_, ok = v.(int32)
 	case ValueUint32:
 		_, ok = v.(uint32)
+	case ValueInt64:
+		_, ok = v.(int64)
+	case ValueUint64:
+		_, ok = v.(uint64)
 	case ValueFloat64:
 		_, ok = v.(float64)
 	case ValueString:
@@ -322,6 +342,8 @@ func checkValue(t Type, v any) error {
 		}
 	case ValueUnion:
 		_, ok = v.(Variant)
+	case ValueBytes:
+		_, ok = v.([]byte)
 	case ValueBig:
 		var s string
 		if s, ok = v.(string); ok && !isDecimal(s) {
@@ -386,6 +408,12 @@ func compareValues(a, b []any, floats func(x, y float64) bool) bool {
 		case []any:
 			y, ok := b[i].([]any)
 			if !ok || !compareValues(x, y, floats) {
+				return false
+			}
+		case []byte:
+			// a bin.Bytes, which is empty, may be nil in one engine and not in another
+			y, ok := b[i].([]byte)
+			if !ok || !bytes.Equal(x, y) {
 				return false
 			}
 		case Variant:

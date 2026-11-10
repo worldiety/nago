@@ -324,7 +324,11 @@ func (c *fnCtx) stmt(s ast.Stmt) {
 		if s.Tok == token.DEC {
 			op = token.SUB
 		}
-		c.opAssign(s.X, op, "1", c.typeOf(s.X))
+		one := "1"
+		if isBigIntKind(basicKind(c.typeOf(s.X))) {
+			one = "1n"
+		}
+		c.opAssign(s.X, op, one, c.typeOf(s.X))
 	case *ast.DeclStmt:
 		c.declStmt(s)
 	case *ast.BlockStmt:
@@ -760,8 +764,11 @@ func (c *fnCtx) rangeStmt(s *ast.RangeStmt, label string) {
 	xt := c.typeOf(s.X)
 
 	if b, ok := xt.Underlying().(*types.Basic); ok && b.Info()&types.IsInteger != 0 {
-		i, n := c.tmp(), c.tmp()
-		c.line("%sfor (let %s = 0, %s = %s; %s < %s; %s++) {", c.labelPrefix(label), i, n, c.expr(s.X), i, n, i)
+		i, n, zero := c.tmp(), c.tmp(), "0"
+		if isBigIntKind(b.Kind()) {
+			zero = "0n"
+		}
+		c.line("%sfor (let %s = %s, %s = %s; %s < %s; %s++) {", c.labelPrefix(label), i, zero, n, c.expr(s.X), i, n, i)
 		c.ind++
 		c.bindRange(s.Key, i, define)
 		c.ind--

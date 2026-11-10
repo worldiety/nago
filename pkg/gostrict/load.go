@@ -247,6 +247,11 @@ func (l *loader) Import(importPath string) (*types.Package, error) {
 		}
 	}
 
+	if importPath == binPath+"/core" && l.importer != nil && l.importer.Kind == KindHeader {
+		// the implementation of package bin for a host in Go, which only the bodies of its functions refer to
+		return types.NewPackage(importPath, "core"), nil
+	}
+
 	importer := l.importer
 	p, err := l.load(importPath)
 	l.importer = importer

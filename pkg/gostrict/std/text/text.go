@@ -127,6 +127,16 @@ func FromInt(n int32) string {
 	return strconv.Itoa(int(n))
 }
 
+// FromInt64 formats n in decimal, e.g. "-42".
+func FromInt64(n int64) string {
+	return strconv.FormatInt(n, 10)
+}
+
+// FromUint64 formats n in decimal, e.g. "42".
+func FromUint64(n uint64) string {
+	return strconv.FormatUint(n, 10)
+}
+
 // FromFloat formats f with the number of decimals from 0 to 100, e.g. "3.14" for FromFloat(3.14159, 2). It rounds
 // the exact binary value of f half to even, e.g. "0.12" for 0.125, which is exact, and "0.13" for 0.135, which is
 // slightly more in binary. It writes no exponent, NaN as "NaN" and the infinities as "+Inf" and "-Inf".
@@ -212,6 +222,49 @@ func ParseInt(s string) (int32, error) {
 		return 0, errors.New("text.ParseInt: value out of range: " + s)
 	}
 	return int32(n), nil
+}
+
+// ParseInt64 parses a decimal integer with an optional sign, like [ParseInt], for the range of int64.
+//
+//gostrict:zero
+func ParseInt64(s string) (int64, error) {
+	if !isDecimalInt(s) {
+		return 0, errors.New("text.ParseInt64: invalid syntax: " + s)
+	}
+	v, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return 0, errors.New("text.ParseInt64: value out of range: " + s)
+	}
+	return v, nil
+}
+
+// ParseUint64 parses a decimal integer with an optional +, for the range of uint64.
+//
+//gostrict:zero
+func ParseUint64(s string) (uint64, error) {
+	if !isDecimalInt(s) || strings.HasPrefix(s, "-") {
+		return 0, errors.New("text.ParseUint64: invalid syntax: " + s)
+	}
+	v, err := strconv.ParseUint(strings.TrimPrefix(s, "+"), 10, 64)
+	if err != nil {
+		return 0, errors.New("text.ParseUint64: value out of range: " + s)
+	}
+	return v, nil
+}
+
+func isDecimalInt(s string) bool {
+	if len(s) > 0 && (s[0] == '+' || s[0] == '-') {
+		s = s[1:]
+	}
+	if s == "" {
+		return false
+	}
+	for i := 0; i < len(s); i++ {
+		if s[i] < '0' || s[i] > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 // ParseFloat parses a decimal number with an optional sign, digits with an optional point and an optional exponent

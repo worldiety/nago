@@ -244,7 +244,7 @@ func (g *generator) writeHandles(body *bytes.Buffer) {
 	}
 	for _, name := range scope.Names() {
 		tn, ok := scope.Lookup(name).(*types.TypeName)
-		if !ok || tn.IsAlias() || !tn.Exported() || !isHandle(tn.Type()) || isBig(tn.Type()) {
+		if !ok || tn.IsAlias() || !tn.Exported() || !isHandle(tn.Type()) || isValueHandle(tn.Type()) {
 			continue
 		}
 		f := handleField(tn.Type())
@@ -270,7 +270,7 @@ func (g *generator) toBoundary(expr string, t types.Type) (string, error) {
 // handle returns the field of a handle of the package or nil, if t is no handle.
 func (g *generator) handle(t types.Type) *types.Var {
 	f := handleField(t)
-	if f == nil || isBig(t) {
+	if f == nil || isValueHandle(t) {
 		return nil
 	}
 	if f.Pkg() != g.pkg.Types && g.err == nil {
@@ -318,6 +318,10 @@ func (g *generator) fromNeutral(expr string, t types.Type) string {
 		ts := g.typeString(t)
 		return fmt.Sprintf("%s{}.HostFromString(%s.(string)).(%s)", ts, expr, ts)
 	}
+	if isBytes(t) {
+		ts := g.typeString(t)
+		return fmt.Sprintf("%s{}.HostFromBytes(%s.([]byte)).(%s)", ts, expr, ts)
+	}
 	if isSealed(t) {
 		return fmt.Sprintf("gostrictFrom%d(%s.(gostrict.Variant))", g.helper(t), expr)
 	}
@@ -344,6 +348,9 @@ func (g *generator) toNeutral(expr string, t types.Type) string {
 	}
 	if isBig(t) {
 		return expr + ".HostString()"
+	}
+	if isBytes(t) {
+		return expr + ".HostBytes()"
 	}
 	if isSealed(t) {
 		return fmt.Sprintf("gostrictTo%d(%s)", g.helper(t), expr)
@@ -460,6 +467,10 @@ func (g *generator) readValue(r string, t types.Type) string {
 		ts := g.typeString(t)
 		return fmt.Sprintf("%s{}.HostFromString(%s.Big()).(%s)", ts, r, ts)
 	}
+	if isBytes(t) {
+		ts := g.typeString(t)
+		return fmt.Sprintf("%s{}.HostFromBytes(%s.Bytes()).(%s)", ts, r, ts)
+	}
 	if _, ok := stateElem(t); ok {
 		return fmt.Sprintf("%s.State().Value().(%s)", r, g.typeString(t))
 	}
@@ -488,6 +499,9 @@ func (g *generator) writeValue(w, expr string, t types.Type) string {
 	if isBig(t) {
 		return fmt.Sprintf("%s.Big(%s.HostString())", w, expr)
 	}
+	if isBytes(t) {
+		return fmt.Sprintf("%s.Bytes(%s.HostBytes())", w, expr)
+	}
 	if elem, ok := stateElem(t); ok {
 		return fmt.Sprintf("%s.State(gostrict.NewToken(%q, %s))", w, typeKey(elem), expr)
 	}
@@ -509,6 +523,10 @@ func fastMethod(basic string) string {
 		return "Int32"
 	case "uint32":
 		return "Uint32"
+	case "int64":
+		return "Int64"
+	case "uint64":
+		return "Uint64"
 	case "float64":
 		return "Float64"
 	}
@@ -804,8 +822,10 @@ func tsType(k ValueKind) string {
 		return "string"
 	case ValueError:
 		return "GoError"
-	case ValueBig:
+	case ValueBig, ValueInt64, ValueUint64:
 		return "bigint"
+	case ValueBytes:
+		return "Uint8Array"
 	}
 	return "number"
 }

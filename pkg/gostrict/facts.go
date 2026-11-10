@@ -62,7 +62,18 @@ func (c *checker) containerMethod(call *ast.CallExpr) (recv ast.Expr, kind conta
 		return nil, 0, "", nil, false
 	}
 	n, ok := types.Unalias(derefType(sel.Recv())).(*types.Named)
-	if !ok || n.Obj().Pkg() == nil || n.TypeArgs().Len() == 0 {
+	if !ok || n.Obj().Pkg() == nil {
+		return nil, 0, "", nil, false
+	}
+	if n.Obj().Pkg().Path() == binPath && (n.Obj().Name() == "Bytes" || n.Obj().Name() == "Buffer") {
+		// a sequence of bytes, whose elements are uint32 like those of a list
+		kind = kindFrozen
+		if n.Obj().Name() == "Buffer" {
+			kind = kindList
+		}
+		return se.X, kind, se.Sel.Name, types.Typ[types.Uint32], true
+	}
+	if n.TypeArgs().Len() == 0 {
 		return nil, 0, "", nil, false
 	}
 	switch p, name := n.Obj().Pkg().Path(), n.Obj().Name(); {
@@ -204,7 +215,7 @@ func (c *checker) events(fd *ast.FuncDecl) *funcEvents {
 		switch n := n.(type) {
 		case *ast.CallExpr:
 			if _, kind, name, elem, ok := c.containerMethod(n); ok {
-				if (name == "Delete" && kind != kindFrozen) || (name == "Pop" && kind == kindList) {
+				if (name == "Delete" && kind != kindFrozen) || (name == "Pop" && kind == kindList) || name == "Freeze" || name == "Reset" {
 					fe.shrinks = append(fe.shrinks, event{pos: n.Pos(), what: "the call of " + types.ExprString(n.Fun), shrink: true, kind: kind, elem: elem})
 				}
 				return true
@@ -343,7 +354,7 @@ func reaches(t types.Type, elem types.Type, dict bool, seen map[types.Type]bool)
 		return false
 	}
 	seen[t] = true
-	if isBig(t) {
+	if isValueHandle(t) {
 		return false
 	}
 	if n, ok := types.Unalias(t).(*types.Named); ok && n.Obj().Pkg() != nil && n.TypeArgs().Len() > 0 {

@@ -105,6 +105,7 @@ func secretEditor(wnd core.Window, pages Pages, uc UseCases, scr secret.Secret, 
 	}
 
 	deletePresented := core.AutoState[bool](wnd)
+	_, isKeyValues := credentials.Get().(secret.KeyValues)
 
 	return ui.VStack(
 		ui.If(!create, alert.Dialog(
@@ -128,12 +129,9 @@ func secretEditor(wnd core.Window, pages Pages, uc UseCases, scr secret.Secret, 
 			FullWidth().
 			Alignment(ui.Trailing)),
 
-		typeCard(wnd, scr),
+		ui.If(!isKeyValues, typeCard(wnd, scr)),
 
-		cardlayout.Card("Zugangsdaten").
-			Style(cardlayout.TitleCompact).
-			Body(form.Auto[secret.Credentials](credentialsFormOptions(scr, create), credentials)).
-			Frame(ui.Frame{}.FullWidth()),
+		credentialsSection(scr, create, credentials),
 
 		accessCard(availGroups, selectedGroups, foreignGroups, availUsers, selectedUsers, access),
 
@@ -181,19 +179,50 @@ func secretEditor(wnd core.Window, pages Pages, uc UseCases, scr secret.Secret, 
 	).Gap(ui.L16).Alignment(ui.Leading).Frame(ui.Frame{Width: ui.Full, MaxWidth: ui.L560})
 }
 
+// credentialsSection dispatches to the editor of a [secret.KeyValues], which works on the concrete type and brings its
+// own cards and logo, and otherwise generates the form from the type. The page keeps comparing and saving the
+// credentials state.
+func credentialsSection(scr secret.Secret, create bool, credentials *core.State[secret.Credentials]) core.View {
+	if _, ok := credentials.Get().(secret.KeyValues); !ok {
+		return cardlayout.Card("Zugangsdaten").
+			Style(cardlayout.TitleCompact).
+			Body(form.Auto[secret.Credentials](credentialsFormOptions(scr, create), credentials)).
+			Frame(ui.Frame{}.FullWidth())
+	}
+
+	state := core.DerivedState[secret.KeyValues](credentials, ".keyvalues").Init(func() secret.KeyValues {
+		return credentials.Get().(secret.KeyValues)
+	})
+
+	state.Observe(func(kv secret.KeyValues) {
+		credentials.Set(kv)
+	})
+
+	stored, _ := scr.Credentials.(secret.KeyValues)
+	return KeyValuesEditor(state).Stored(stored)
+}
+
 func typeCard(wnd core.Window, scr secret.Secret) core.View {
 	spec := newCredentialTypeSpec(reflect.TypeOf(scr.Credentials))
-	logo := spec.LogoView()
-	avtLogo, ok := logo.(avatar.TAvatar)
-	if !ok {
-		return logo
+
+	var logo core.View
+	if svg := instanceLogoSVG(scr); svg != "" {
+		logo = logoImage(svg, ui.L80)
+	} else {
+		typeLogo := spec.LogoView()
+		avtLogo, ok := typeLogo.(avatar.TAvatar)
+		if !ok {
+			return typeLogo
+		}
+
+		logo = avtLogo.Size(ui.L80)
 	}
 
 	return cardlayout.Card(wnd.Bundle().Resolve(spec.name)).
 		Style(cardlayout.TitleCompact).
 		Body(
 			ui.VStack(
-				avtLogo.Size(ui.L80),
+				logo,
 				ui.Text(wnd.Bundle().Resolve(spec.description)).TextAlignment(ui.TextAlignCenter),
 			).Gap(ui.L16).
 				FullWidth(),
@@ -215,7 +244,7 @@ func credentialsFormOptions(scr secret.Secret, create bool) form.AutoOptions {
 
 	return form.AutoOptions{
 		Renderers: func(yield func(form.Renderer) bool) {
-			if !yield(writeOnlyRenderer(stored)) {
+			if !yield(writeOnlyRenderer(stored, secret.HasAddressFields(scr.Credentials))) {
 				return
 			}
 
@@ -229,8 +258,8 @@ func credentialsFormOptions(scr secret.Secret, create bool) form.AutoOptions {
 }
 
 // writeOnlyRenderer renders a write-only field like [form.RenderText] renders a secret field, but explains below
-// the field, whether a value is stored and that an empty field keeps it.
-func writeOnlyRenderer(stored map[string]bool) form.Renderer {
+// the field, whether a value is stored and that an empty field keeps it, unless the address changes.
+func writeOnlyRenderer(stored map[string]bool, hasAddress bool) form.Renderer {
 	return func(ctx form.FieldContext) core.View {
 		isStored, ok := stored[ctx.Field().Name]
 		if !ok {
@@ -248,6 +277,9 @@ func writeOnlyRenderer(stored map[string]bool) form.Renderer {
 		hint := "Es ist noch kein Wert gespeichert."
 		if isStored {
 			hint = "Ein Wert ist gespeichert und wird aus Sicherheitsgründen nicht angezeigt. Bleibt das Feld leer, wird er nicht geändert."
+			if hasAddress {
+				hint += " Wird die Adresse geändert, geht er verloren und muss neu eingegeben werden."
+			}
 		}
 
 		if text := ctx.SupportingText(); text != "" {

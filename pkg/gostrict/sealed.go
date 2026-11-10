@@ -134,7 +134,7 @@ func isSealed(t types.Type) bool {
 	return ok
 }
 
-// enumConstants returns the constants of an enum: a named type of int32, uint32 or string, for which its package
+// enumConstants returns the constants of an enum: a named type of an integer or string, for which its package
 // declares constants of exactly this type, in the order of their declaration.
 func enumConstants(t types.Type) ([]*types.Const, bool) {
 	n, ok := types.Unalias(t).(*types.Named)
@@ -142,7 +142,7 @@ func enumConstants(t types.Type) ([]*types.Const, bool) {
 		return nil, false
 	}
 	switch basicKind(n) {
-	case types.Int32, types.Uint32, types.String:
+	case types.Int32, types.Uint32, types.Int64, types.Uint64, types.String:
 	default:
 		return nil, false
 	}

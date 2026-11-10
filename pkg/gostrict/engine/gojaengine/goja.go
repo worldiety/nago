@@ -88,6 +88,8 @@ func (e *Engine) NewRuntime() *Runtime {
 	r := &Runtime{engine: e, rt: rt, frozen: map[*goja.Object]any{}}
 	r.newMap = r.helper(`(entries) => new Map(entries)`)
 	r.newBig = r.helper(`(s) => BigInt(s)`)
+	r.newBytes = r.helper(`(b) => new Uint8Array(b)`)
+	r.toList = r.helper(`(b) => Array.from(b)`)
 	r.mapEntries = r.helper(`(m) => Array.from(m.entries())`)
 	errFn, err := rt.RunString(`(s) => ({ v: { s: s }, m: { Error: (e) => e.s } })`)
 	if err != nil {
@@ -113,6 +115,8 @@ type Runtime struct {
 	newErr     goja.Callable
 	newMap     goja.Callable
 	newBig     goja.Callable
+	newBytes   goja.Callable
+	toList     goja.Callable
 	mapEntries goja.Callable
 }
 
@@ -450,6 +454,24 @@ type converter struct {
 	owner *instance
 }
 
+// bytesOf returns a copy of the bytes of a Uint8Array.
+func (c converter) bytesOf(v goja.Value) (any, error) {
+	l, err := c.r.toList(goja.Undefined(), v)
+	if err != nil {
+		return nil, err
+	}
+	values, ok := l.Export().([]any)
+	if !ok {
+		return nil, fmt.Errorf("expected bytes, got %s", v)
+	}
+	res := make([]byte, len(values))
+	for i, e := range values {
+		n, _ := e.(int64)
+		res[i] = byte(n)
+	}
+	return res, nil
+}
+
 func (c converter) toGo(v goja.Value, t gostrict.Type) (any, error) {
 	rt := c.r.rt
 	switch t.Kind {
@@ -459,6 +481,11 @@ func (c converter) toGo(v goja.Value, t gostrict.Type) (any, error) {
 		return int32(v.ToInteger()), nil
 	case gostrict.ValueUint32:
 		return uint32(v.ToInteger()), nil
+	case gostrict.ValueInt64:
+		// a BigInt formats as its decimal
+		return strconv.ParseInt(v.String(), 10, 64)
+	case gostrict.ValueUint64:
+		return strconv.ParseUint(v.String(), 10, 64)
 	case gostrict.ValueFloat64:
 		return v.ToFloat(), nil
 	case gostrict.ValueString:
@@ -475,6 +502,8 @@ func (c converter) toGo(v goja.Value, t gostrict.Type) (any, error) {
 	case gostrict.ValueBig:
 		// a BigInt formats as its decimal
 		return v.String(), nil
+	case gostrict.ValueBytes:
+		return c.bytesOf(v)
 	case gostrict.ValueFunc:
 		fn, ok := goja.AssertFunction(v)
 		if !ok || c.owner == nil {
@@ -620,6 +649,12 @@ func (c converter) toJS(v any, t gostrict.Type) (goja.Value, error) {
 		return c.r.newErr(goja.Undefined(), rt.ToValue(v.(error).Error()))
 	case gostrict.ValueBig:
 		return c.r.newBig(goja.Undefined(), rt.ToValue(v.(string)))
+	case gostrict.ValueBytes:
+		return c.r.newBytes(goja.Undefined(), rt.ToValue(rt.NewArrayBuffer(slices.Clone(v.([]byte)))))
+	case gostrict.ValueInt64:
+		return c.r.newBig(goja.Undefined(), rt.ToValue(strconv.FormatInt(v.(int64), 10)))
+	case gostrict.ValueUint64:
+		return c.r.newBig(goja.Undefined(), rt.ToValue(strconv.FormatUint(v.(uint64), 10)))
 	case gostrict.ValueState:
 		tok := v.(gostrict.Token)
 		gv, ok := tok.Value().(goja.Value)

@@ -815,6 +815,26 @@ func (l *fnLower) rangeStmt(s *ast.RangeStmt, label string) {
 			l.body = saved
 		})
 		return
+	case xt.kind == kI64 || xt.kind == kU64:
+		n := l.newLocal("$n", xt)
+		l.emit(&sAssign{lhs: []lval{&lLocal{t: xt, v: n}}, rhs: []expr{l.expr(s.X)}})
+		i := l.newLocal("$i", xt)
+		l.emit(&sAssign{lhs: []lval{&lLocal{t: xt, v: i}}, rhs: []expr{&eConst{t: xt}}})
+		ltop := opLtL
+		if xt.kind == kU64 {
+			ltop = opLtUL
+		}
+		post := []stmt{&sAssign{lhs: []lval{&lLocal{t: xt, v: i}}, rhs: []expr{&eBinary{t: xt, op: opAddL, x: &eLocal{t: xt, v: i}, y: &eConst{t: xt, n: 1}}}}}
+		loop := &sLoop{pos: s.Pos(), cond: &eBinary{t: l.c.boolType(), op: ltop, x: &eLocal{t: xt, v: i}, y: &eLocal{t: xt, v: n}}, post: post}
+		l.loop(label, loop, func() {
+			saved := l.body
+			l.body = nil
+			bind(s.Key, &eLocal{t: xt, v: i})
+			l.stmts(s.Body.List)
+			loop.body = l.body
+			l.body = saved
+		})
+		return
 	}
 
 	call, ok := ast.Unparen(s.X).(*ast.CallExpr)
@@ -1012,7 +1032,7 @@ func (c *compiler) boolType() *tinfo {
 // zero returns the zero value of t.
 func (c *compiler) zero(t *tinfo, pos token.Pos) expr {
 	switch t.kind {
-	case kBool, kI32, kU32, kF64, kStr, kError, kIface, kOpt:
+	case kBool, kI32, kU32, kI64, kU64, kF64, kStr, kError, kIface, kOpt:
 		return &eConst{t: t}
 	case kStruct:
 		var fields []expr
@@ -1033,7 +1053,7 @@ func (c *compiler) zero(t *tinfo, pos token.Pos) expr {
 // which a checked program assigns before it returns it.
 func (c *compiler) zeroOrNil(t *tinfo) expr {
 	switch t.kind {
-	case kStruct, kShared, kBool, kI32, kU32, kF64, kStr:
+	case kStruct, kShared, kBool, kI32, kU32, kI64, kU64, kF64, kStr:
 		return c.zero(t, token.NoPos)
 	}
 	return &eConst{t: t}
@@ -1068,10 +1088,10 @@ func (c *compiler) constant(v constant.Value, t *tinfo) expr {
 			return &eConst{t: t, n: 1}
 		}
 		return &eConst{t: t}
-	case kI32:
+	case kI32, kI64:
 		n, _ := constant.Int64Val(constant.ToInt(v))
 		return &eConst{t: t, n: uint64(n)}
-	case kU32:
+	case kU32, kU64:
 		n, _ := constant.Uint64Val(constant.ToInt(v))
 		return &eConst{t: t, n: n}
 	case kF64:
@@ -1274,11 +1294,11 @@ func (l *fnLower) binary(x *ast.BinaryExpr) expr {
 	return l.arith(x.Pos(), x.Op, l.val(x.X, t), l.val(x.Y, t), t)
 }
 
-// shiftCount returns the count of a shift, which the subset requires to be constant.
+// shiftCount returns the count of a shift: a constant or an unsigned value.
 func (l *fnLower) shiftCount(x ast.Expr) expr {
 	tv := l.info.Types[x]
 	if tv.Value == nil {
-		l.fail(x.Pos(), "shift by a variable count")
+		return l.expr(x)
 	}
 	n, _ := constant.Uint64Val(constant.ToInt(tv.Value))
 	return &eConst{t: l.ty(types.Typ[types.Uint32]), n: n}
@@ -1301,6 +1321,10 @@ func (l *fnLower) compare(pos token.Pos, tok token.Token, a, b expr) expr {
 		o = map[token.Token]op{token.EQL: opEqI, token.NEQ: opNeI, token.LSS: opLtI, token.LEQ: opLeI}[tok]
 	case kU32:
 		o = map[token.Token]op{token.EQL: opEqI, token.NEQ: opNeI, token.LSS: opLtU, token.LEQ: opLeU}[tok]
+	case kI64:
+		o = map[token.Token]op{token.EQL: opEqL, token.NEQ: opNeL, token.LSS: opLtL, token.LEQ: opLeL}[tok]
+	case kU64:
+		o = map[token.Token]op{token.EQL: opEqL, token.NEQ: opNeL, token.LSS: opLtUL, token.LEQ: opLeUL}[tok]
 	case kF64:
 		o = map[token.Token]op{token.EQL: opEqF, token.NEQ: opNeF, token.LSS: opLtF, token.LEQ: opLeF}[tok]
 	case kStr:
@@ -1346,11 +1370,51 @@ func (l *fnLower) arith(pos token.Pos, tok token.Token, a, b expr, t *tinfo) exp
 		case token.SHL, token.SHR:
 			cv, ok := b.(*eConst)
 			if !ok {
-				l.fail(pos, "shift by a variable count")
+				o = opShlIV
+				if tok == token.SHR {
+					o = map[bool]op{true: opShrIV, false: opShrUV}[signed]
+				}
+				return &eBinary{t: t, op: o, x: a, y: b}
 			}
 			o = opShlI
 			if tok == token.SHR {
 				o = map[bool]op{true: opShrI, false: opShrU}[signed]
+			}
+			return &eBinary{t: t, op: o, x: a, y: &eConst{t: t, n: cv.n}, imm: true}
+		}
+	case kI64, kU64:
+		signed := t.kind == kI64
+		switch tok {
+		case token.ADD:
+			o = opAddL
+		case token.SUB:
+			o = opSubL
+		case token.MUL:
+			o = opMulL
+		case token.QUO:
+			o = map[bool]op{true: opDivL, false: opDivUL}[signed]
+		case token.REM:
+			o = map[bool]op{true: opRemL, false: opRemUL}[signed]
+		case token.AND:
+			o = opAndI
+		case token.OR:
+			o = opOrI
+		case token.XOR:
+			o = opXorI
+		case token.AND_NOT:
+			o = opAndNotI
+		case token.SHL, token.SHR:
+			cv, ok := b.(*eConst)
+			if !ok {
+				o = opShlLV
+				if tok == token.SHR {
+					o = map[bool]op{true: opShrLV, false: opShrULV}[signed]
+				}
+				return &eBinary{t: t, op: o, x: a, y: b}
+			}
+			o = opShlL
+			if tok == token.SHR {
+				o = map[bool]op{true: opShrL, false: opShrUL}[signed]
 			}
 			return &eBinary{t: t, op: o, x: a, y: &eConst{t: t, n: cv.n}, imm: true}
 		}
@@ -1372,8 +1436,11 @@ func (l *fnLower) unary(x *ast.UnaryExpr) expr {
 	switch x.Op {
 	case token.SUB:
 		e := l.expr(x.X)
-		if t.kind == kF64 {
+		switch t.kind {
+		case kF64:
 			return &eUnary{t: t, op: opNegF, x: e}
+		case kI64, kU64:
+			return &eUnary{t: t, op: opNegL, x: e}
 		}
 		return &eUnary{t: t, op: opNegI, x: e}
 	case token.ADD:
@@ -1381,6 +1448,9 @@ func (l *fnLower) unary(x *ast.UnaryExpr) expr {
 	case token.NOT:
 		return &eUnary{t: t, op: opNotB, x: l.expr(x.X)}
 	case token.XOR:
+		if t.kind == kI64 || t.kind == kU64 {
+			return &eUnary{t: t, op: opNotL, x: l.expr(x.X)}
+		}
 		return &eUnary{t: t, op: opNotI, x: l.expr(x.X)}
 	case token.AND:
 		lit, ok := ast.Unparen(x.X).(*ast.CompositeLit)
@@ -1759,7 +1829,7 @@ func (l *fnLower) methodCall(se *ast.SelectorExpr, sel *types.Selection, call *a
 	var recv expr
 	_, ptrRecv := fn.Signature().Recv().Type().(*types.Pointer)
 	switch {
-	case ptrRecv && recvT.kind != kPtr && recvT.kind != kHandle && recvT.kind != kList && recvT.kind != kMap && recvT.kind != kOut && recvT.kind != kOpt && recvT.kind != kBig:
+	case ptrRecv && recvT.kind != kPtr && recvT.kind != kHandle && recvT.kind != kList && recvT.kind != kMap && recvT.kind != kOut && recvT.kind != kOpt && recvT.kind != kBig && recvT.kind != kBytes:
 		recv = l.addr(se.X)
 	case !ptrRecv && recvT.kind == kPtr:
 		recv = l.deref(l.expr(se.X))
@@ -1813,6 +1883,10 @@ func kindName(k kind) string {
 		return "int32"
 	case kU32:
 		return "uint32"
+	case kI64:
+		return "int64"
+	case kU64:
+		return "uint64"
 	case kF64:
 		return "float64"
 	case kStr:
@@ -1831,8 +1905,20 @@ func (l *fnLower) conversion(call *ast.CallExpr, to *tinfo) expr {
 		return &eUnary{t: to, op: opI2F, x: a}
 	case to.kind == kF64 && from.kind == kU32:
 		return &eUnary{t: to, op: opU2F, x: a}
-	case (to.kind == kI32 || to.kind == kU32) && from.kind == kF64:
+	case to.kind == kF64 && from.kind == kI64:
+		return &eUnary{t: to, op: opL2F, x: a}
+	case to.kind == kF64 && from.kind == kU64:
+		return &eUnary{t: to, op: opUL2F, x: a}
+	case (to.kind == kI32 || to.kind == kU32 || to.kind == kI64 || to.kind == kU64) && from.kind == kF64:
 		l.fail(call.Pos(), "conversion of float64 to %s", to)
+	case (to.kind == kI64 || to.kind == kU64) && from.kind == kI32:
+		return &eUnary{t: to, op: opSxt32, x: a}
+	case (to.kind == kI64 || to.kind == kU64) && from.kind == kU32:
+		return &eUnary{t: to, op: opZxt32, x: a}
+	case to.kind == kI32 && (from.kind == kI64 || from.kind == kU64):
+		return &eUnary{t: to, op: opSxt32, x: a}
+	case to.kind == kU32 && (from.kind == kI64 || from.kind == kU64):
+		return &eUnary{t: to, op: opZxt32, x: a}
 	}
 	// the representation stays, a 32 bit integer is read in the width of its type
 	return retype(a, to)
