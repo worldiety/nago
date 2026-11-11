@@ -113,7 +113,7 @@ func NewUseCases(
 
 	// the reverse lookup keeps all plaintext tokens in memory and makes an O(1) lookup for the token so that
 	// a potential REST api can be as fast as possible and only the initial call is slow
-	subjectLookup := &concurrent.RWMap[Plaintext, user.Subject]{}
+	subjectLookup := &concurrent.RWMap[Plaintext, authenticated]{}
 
 	reverseHashLookup := &concurrent.RWMap[Hash, ID]{}
 
@@ -149,8 +149,9 @@ func NewUseCases(
 	repo.AddDeletedObserver(func(repository data.Repository[Token, ID], deleted data.Deleted[ID]) error {
 		// note, that these clean up functions are all O(n), but at least it is in memory and probably
 		// fast enough for anything a nago app will ever serve.
-		subjectLookup.DeleteFunc(func(t Plaintext, token user.Subject) bool {
-			return ID(token.ID()) == deleted.ID
+		// by the token and not by the subject: the subject of an impersonating token is the user
+		subjectLookup.DeleteFunc(func(t Plaintext, a authenticated) bool {
+			return a.token == deleted.ID
 		})
 
 		reverseHashLookup.DeleteFunc(func(hash Hash, id ID) bool {
@@ -166,8 +167,8 @@ func NewUseCases(
 		Delete:              NewDelete(&mutex, repo),
 		FindAll:             NewFindAll(repo),
 		Create:              NewCreate(&mutex, repo, algo, reverseHashLookup, rdb),
-		AuthenticateSubject: NewAuthenticateSubject(ctx, repo, algo, reverseHashLookup, subjectFromUser, subjectLookup, getAnonUser, findRoleByID, rdb),
-		Rotate:              NewRotate(&mutex, repo, algo, reverseHashLookup),
+		AuthenticateSubject: NewAuthenticateSubject(ctx, &mutex, repo, algo, reverseHashLookup, subjectFromUser, subjectLookup, getAnonUser, findRoleByID, rdb),
+		Rotate:              NewRotate(&mutex, repo, algo, reverseHashLookup, subjectLookup),
 		FindByID:            NewFindByID(repo),
 		ResolveTokenRights: NewResolveTokenRights(
 			repo,

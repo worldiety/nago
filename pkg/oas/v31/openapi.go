@@ -14,6 +14,10 @@ type OpenAPI struct {
 	// Info is REQUIRED. Provides metadata about the API. The metadata MAY be used by tooling as required.
 	Info Info `json:"info"`
 
+	// Servers are the connectivity information to a target server. A path of [Paths] is relative to the URL of a
+	// server; without servers, it is relative to the document.
+	Servers []Server `json:"servers,omitempty"`
+
 	// The available paths and operations for the API. Required.
 	Paths Paths `json:"paths"`
 
@@ -76,4 +80,13 @@ func (api *OpenAPI) AddSchemaIfUnknown(s *Schema) {
 	}
 
 	m[s.RefPlainName()] = s
+}
+
+// Server is an object representing a server.
+type Server struct {
+	// URL is REQUIRED. A URL to the target host. It may be relative, to indicate that the host location is relative
+	// to the location where the document is being served.
+	URL string `json:"url"`
+	// Description is an optional string describing the host designated by the URL.
+	Description string `json:"description,omitempty"`
 }

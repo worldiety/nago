@@ -19,7 +19,7 @@ import (
 	"go.wdy.de/nago/pkg/std/concurrent"
 )
 
-func NewRotate(mutex *sync.Mutex, repo Repository, algo user.HashAlgorithm, reverseHashLookup *concurrent.RWMap[Hash, ID]) Rotate {
+func NewRotate(mutex *sync.Mutex, repo Repository, algo user.HashAlgorithm, reverseHashLookup *concurrent.RWMap[Hash, ID], subjectLookup *concurrent.RWMap[Plaintext, authenticated]) Rotate {
 	return func(subject auth.Subject, id ID) (Plaintext, error) {
 		mutex.Lock()
 		defer mutex.Unlock()
@@ -65,9 +65,13 @@ func NewRotate(mutex *sync.Mutex, repo Repository, algo user.HashAlgorithm, reve
 			return "", err
 		}
 
-		// security note: delete is important to immediately disable any future token requests using the old token
+		// security note: delete is important to immediately disable any future token requests using the old token,
+		// also those, which already authenticated with it and are served from the in-memory lookup of the subjects
 		reverseHashLookup.Delete(oldHash)
 		reverseHashLookup.Put(hash, token.ID)
+		subjectLookup.DeleteFunc(func(_ Plaintext, a authenticated) bool {
+			return a.token == token.ID
+		})
 
 		return plaintext, nil
 	}
