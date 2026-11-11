@@ -289,3 +289,98 @@ func TestGroupReplaceAtomic(t *testing.T) {
 	default:
 	}
 }
+
+// TestGroupSetTexts: the details of the 404 for a path, which no endpoint takes, and of the 405 for a path, which only
+// endpoints of other methods take, are those of Group.SetTexts for every request from then on, also after a Replace
+// and before the first one; an empty text is its default, while the other text stays. An endpoint still answers.
+func TestGroupSetTexts(t *testing.T) {
+	const (
+		unknownDE = "Diesen Endpunkt gibt es nicht."
+		methodDE  = "Diesen Endpunkt gibt es nicht mit dieser Methode."
+	)
+
+	detail := func(t *testing.T, g *Group, method, target string, status int) string {
+		t.Helper()
+		rec := serve(g, method, target)
+		if rec.Code != status {
+			t.Fatalf("%s %s: status = %d, want %d: %s", method, target, rec.Code, status, rec.Body)
+		}
+
+		if status == http.StatusMethodNotAllowed && rec.Header().Get("Allow") != "GET" {
+			t.Errorf("%s %s: Allow = %q, want GET", method, target, rec.Header().Get("Allow"))
+		}
+
+		var p ProblemDetails
+		if err := json.Unmarshal(rec.Body.Bytes(), &p); err != nil {
+			t.Fatalf("no problem details: %v: %s", err, rec.Body)
+		}
+
+		if p.Status != status {
+			t.Errorf("problem details %+v, want status %d", p, status)
+		}
+
+		return p.Detail
+	}
+
+	g := NewGroup("/api/areas/sales")
+	mustReplace(t, g, echoSpec(http.MethodGet, "/orders", "get"))
+
+	tests := []struct {
+		name            string
+		texts           *GroupTexts // nil: no SetTexts
+		unknown, method string
+	}{
+		{"defaults without SetTexts", nil, StrUnknownPath, StrMethodNotAllowed},
+		{"both texts", &GroupTexts{UnknownPath: unknownDE, MethodNotAllowed: methodDE}, unknownDE, methodDE},
+		{"empty UnknownPath is its default", &GroupTexts{MethodNotAllowed: methodDE}, StrUnknownPath, methodDE},
+		{"empty MethodNotAllowed is its default", &GroupTexts{UnknownPath: unknownDE}, unknownDE, StrMethodNotAllowed},
+		{"both empty are the defaults again", &GroupTexts{}, StrUnknownPath, StrMethodNotAllowed},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.texts != nil {
+				g.SetTexts(*tt.texts)
+			}
+
+			for _, target := range []string{"/api/areas/sales/customers", "/api/areas/salesx/orders", "/orders"} {
+				if got := detail(t, g, http.MethodGet, target, http.StatusNotFound); got != tt.unknown {
+					t.Errorf("404 at %s: detail = %q, want %q", target, got, tt.unknown)
+				}
+			}
+
+			if got := detail(t, g, http.MethodPost, "/api/areas/sales/orders", http.StatusMethodNotAllowed); got != tt.method {
+				t.Errorf("405: detail = %q, want %q", got, tt.method)
+			}
+
+			// counter row: the endpoint itself still answers
+			if rec := serve(g, http.MethodGet, "/api/areas/sales/orders"); rec.Code != http.StatusOK || rec.Body.String() != "get" {
+				t.Errorf("endpoint: %d %q, want 200 get", rec.Code, rec.Body)
+			}
+		})
+	}
+
+	t.Run("texts stay after Replace", func(t *testing.T) {
+		g.SetTexts(GroupTexts{UnknownPath: unknownDE, MethodNotAllowed: methodDE})
+		mustReplace(t, g, echoSpec(http.MethodGet, "/orders", "get"), echoSpec(http.MethodGet, "/items", "items"))
+		if got := detail(t, g, http.MethodGet, "/api/areas/sales/customers", http.StatusNotFound); got != unknownDE {
+			t.Errorf("404 after Replace: detail = %q, want %q", got, unknownDE)
+		}
+
+		if got := detail(t, g, http.MethodDelete, "/api/areas/sales/items", http.StatusMethodNotAllowed); got != methodDE {
+			t.Errorf("405 after Replace: detail = %q, want %q", got, methodDE)
+		}
+	})
+
+	t.Run("texts before the first Replace", func(t *testing.T) {
+		empty := NewGroup("/api/areas/empty")
+		if got := detail(t, empty, http.MethodGet, "/api/areas/empty/orders", http.StatusNotFound); got != StrUnknownPath {
+			t.Errorf("404 without SetTexts: detail = %q, want %q", got, StrUnknownPath)
+		}
+
+		empty.SetTexts(GroupTexts{UnknownPath: unknownDE})
+		if got := detail(t, empty, http.MethodGet, "/api/areas/empty/orders", http.StatusNotFound); got != unknownDE {
+			t.Errorf("404 with SetTexts: detail = %q, want %q", got, unknownDE)
+		}
+	})
+}
