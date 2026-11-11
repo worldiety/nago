@@ -106,20 +106,24 @@ onUnmounted(() => {
 
 <style scoped>
 @reference '@/assets/css/tailwind.css';
+/*
+ * Every rule addresses the own parts of an accordion with child combinators: an accordion within the body of another
+ * one is a descendant as well, and must neither open with its parent nor take its size.
+ */
 .accordion-container {
 	@apply text-M8;
 
-	.accordion {
+	& > .accordion {
 		@apply relative w-full;
 
-		.header {
+		& > .header {
 			@apply w-full flex items-center py-3;
 
-			.header-content {
+			& > .header-content {
 				@apply grow text-left;
 			}
 
-			.header-icon {
+			& > .header-icon {
 				@apply px-4;
 
 				svg {
@@ -128,54 +132,42 @@ onUnmounted(() => {
 			}
 		}
 
-		.body {
+		& > .body {
 			@apply w-full overflow-clip duration-300 opacity-0 pt-2 px-2 -ml-2 -mt-2 pointer-events-none;
 
-			.body-inner {
+			& > .body-inner {
 				@apply w-full pointer-events-auto;
 			}
 		}
 
-		.body-dummy {
+		& > .body-dummy {
 			@apply absolute left-0 w-full opacity-0 pointer-events-none p-2;
 		}
 	}
 
-	&.small {
-		.accordion {
-			.header {
-				@apply py-0;
+	&.small > .accordion > .header {
+		@apply py-0;
 
-				.header-icon {
-					@apply px-2;
+		& > .header-icon {
+			@apply px-2;
 
-					svg {
-						@apply size-2 duration-300;
-					}
-				}
+			svg {
+				@apply size-2 duration-300;
 			}
 		}
 	}
 
-	&.separator {
-		.accordion {
-			@apply border-b border-M5;
-		}
+	&.separator > .accordion {
+		@apply border-b border-M5;
 	}
 
-	&.open {
-		.accordion {
-			.header {
-				.header-icon {
-					svg {
-						@apply -scale-y-100;
-					}
-				}
-			}
+	&.open > .accordion {
+		& > .header > .header-icon svg {
+			@apply -scale-y-100;
+		}
 
-			.body {
-				@apply pb-2 opacity-100;
-			}
+		& > .body {
+			@apply pb-2 opacity-100;
 		}
 	}
 }
