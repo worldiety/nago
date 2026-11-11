@@ -22,7 +22,22 @@ import (
 	"go.wdy.de/nago/presentation/ui/list"
 )
 
+// PageCrudOptions are the options of [PageCrudWithOptions].
+type PageCrudOptions struct {
+	// APIDoc is the address of the OpenAPI documentation of the application, which a button of the page opens in a
+	// new tab. Empty means none, and the page has no such button.
+	APIDoc core.URI
+}
+
+// PageCrud is the page of the tokens with a button, which opens the OpenAPI documentation below /api/doc, whether the
+// application has one or not. See [PageCrudWithOptions].
 func PageCrud(wnd core.Window, uc token.UseCases) core.View {
+	return PageCrudWithOptions(wnd, uc, PageCrudOptions{APIDoc: "/api/doc"})
+}
+
+// PageCrudWithOptions is the page of the tokens: list, create, rotate, delete and see their rights, and a button for
+// the OpenAPI documentation, if opts names it.
+func PageCrudWithOptions(wnd core.Window, uc token.UseCases, opts PageCrudOptions) core.View {
 	if !wnd.Subject().Valid() {
 		return alert.BannerError(user.InvalidSubjectErr)
 	}
@@ -80,9 +95,9 @@ func PageCrud(wnd core.Window, uc token.UseCases) core.View {
 		rotateDialog(wnd, rotatePresented, selectedToken.Get(), plainToken, uc),
 		PlainTokenDialog(wnd, plainTokenPresented, plainToken),
 		ui.HStack(
-			ui.SecondaryButton(func() {
-				core.HTTPOpen(wnd.Navigation(), "/api/doc", "_blank")
-			}).PreIcon(flowbiteOutline.BookOpen).AccessibilityLabel("Open API Dokumentation anzeigen"),
+			ui.If(opts.APIDoc != "", ui.SecondaryButton(func() {
+				core.HTTPOpen(wnd.Navigation(), opts.APIDoc, "_blank")
+			}).PreIcon(flowbiteOutline.BookOpen).AccessibilityLabel("Open API Dokumentation anzeigen")),
 			ui.PrimaryButton(func() {
 				createPresented.Set(true)
 			}).Title("Access Token hinzufügen"),

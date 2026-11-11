@@ -27,10 +27,22 @@ import (
 // is served either by the old or by the new set, never by a mix of both. The group is a [http.Handler], which
 // distributes a request to the endpoint of its method and path: a path, which no endpoint takes, is a 404, a path,
 // which an endpoint of another method takes, is a 405 with the header Allow. Both are written by [WriteError] as
-// problem+json. HEAD and OPTIONS are methods like any other, a GET endpoint does not take them.
+// problem+json, with the details of [GroupTexts]. HEAD and OPTIONS are methods like any other, a GET endpoint does not
+// take them.
 type Group struct {
 	prefix string
 	state  atomic.Pointer[groupState]
+	texts  atomic.Pointer[GroupTexts]
+}
+
+// GroupTexts are the details of the answers of a [Group], which no endpoint gives, e.g. in the language of its
+// clients or equal to the answers of the application around the group.
+type GroupTexts struct {
+	// UnknownPath is the detail of the 404 for a path, which no endpoint takes, by default [StrUnknownPath].
+	UnknownPath string
+	// MethodNotAllowed is the detail of the 405 for a path, which only endpoints of other methods take, by default
+	// [StrMethodNotAllowed].
+	MethodNotAllowed string
 }
 
 type groupState struct {
@@ -43,6 +55,21 @@ type groupState struct {
 // and has none at its end; the empty prefix is the root.
 func NewGroup(prefix string) *Group {
 	return &Group{prefix: strings.TrimSuffix(prefix, "/")}
+}
+
+// SetTexts replaces the details of the answers of the group without an endpoint for every request from now on; an
+// empty text is its default.
+func (g *Group) SetTexts(texts GroupTexts) {
+	g.texts.Store(&texts)
+}
+
+// text is the detail of an answer without an endpoint: the one of [Group.SetTexts], else def.
+func (g *Group) text(of func(GroupTexts) string, def string) string {
+	if t := g.texts.Load(); t != nil && of(*t) != "" {
+		return of(*t)
+	}
+
+	return def
 }
 
 // Prefix returns the path prefix of the group.
@@ -118,7 +145,8 @@ func (g *Group) ServeDocument(writer http.ResponseWriter, request *http.Request)
 	}
 }
 
-// StrUnknownPath and StrMethodNotAllowed are the details of the answers of a [Group] without an endpoint.
+// StrUnknownPath and StrMethodNotAllowed are the details of the answers of a [Group] without an endpoint, unless
+// [Group.SetTexts] replaces them.
 const (
 	StrUnknownPath      = "There is no endpoint at this path."
 	StrMethodNotAllowed = "The endpoint at this path does not take this method."
@@ -129,9 +157,10 @@ const (
 // The handler of the endpoint reads the values of the placeholders with [http.Request.PathValue].
 func (g *Group) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	st := g.state.Load()
+	unknown := g.text(func(t GroupTexts) string { return t.UnknownPath }, StrUnknownPath)
 	segs, ok := g.segments(request)
 	if st == nil || !ok {
-		WriteError(writer, request, NewStatusError(http.StatusNotFound, StrUnknownPath))
+		WriteError(writer, request, NewStatusError(http.StatusNotFound, unknown))
 		return
 	}
 
@@ -154,13 +183,13 @@ func (g *Group) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 
 	if best == nil {
 		if len(allow) == 0 {
-			WriteError(writer, request, NewStatusError(http.StatusNotFound, StrUnknownPath))
+			WriteError(writer, request, NewStatusError(http.StatusNotFound, unknown))
 			return
 		}
 
 		slices.Sort(allow)
 		writer.Header().Set("Allow", strings.Join(allow, ", "))
-		WriteError(writer, request, NewStatusError(http.StatusMethodNotAllowed, StrMethodNotAllowed))
+		WriteError(writer, request, NewStatusError(http.StatusMethodNotAllowed, g.text(func(t GroupTexts) string { return t.MethodNotAllowed }, StrMethodNotAllowed)))
 		return
 	}
 

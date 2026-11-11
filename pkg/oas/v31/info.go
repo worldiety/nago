@@ -12,13 +12,14 @@ type Info struct {
 	Title string `json:"title"`
 
 	// Summary is a short summary of the API.
-	Summary string `json:"summary"`
+	Summary string `json:"summary,omitempty"`
 
 	// Description is a description of the API. CommonMark syntax MAY be used for rich text representation.
-	Description string `json:"description"`
+	Description string `json:"description,omitempty"`
 
-	// TermsOfService is a URI for the Terms of Service for the API. This MUST be in the form of a URI.
-	TermsOfService string `json:"termsOfService"`
+	// TermsOfService is a URI for the Terms of Service for the API. This MUST be in the form of a URI, so an empty
+	// one is left out.
+	TermsOfService string `json:"termsOfService,omitempty"`
 
 	// Version is REQUIRED. The version of the OpenAPI Document (which is distinct from the OpenAPI Specification version or the version of the API being described or the version of the OpenAPI Description).
 	Version string `json:"version"`
@@ -32,11 +33,12 @@ type Info struct {
 
 type Contact struct {
 	// The identifying name of the contact person/organization.
-	Name string `json:"name"`
-	// The URL for the contact information. This MUST be in the form of a URL.
-	URL string `json:"url"`
-	// The email address of the contact person/organization. This MUST be in the form of an email address.
-	Email string `json:"email"`
+	Name string `json:"name,omitempty"`
+	// The URL for the contact information. This MUST be in the form of a URL, so an empty one is left out.
+	URL string `json:"url,omitempty"`
+	// The email address of the contact person/organization. This MUST be in the form of an email address, so an
+	// empty one is left out.
+	Email string `json:"email,omitempty"`
 }
 
 type License struct {
@@ -44,8 +46,8 @@ type License struct {
 	Name string `json:"name"`
 
 	// URL is a URI for the license used for the API. This MUST be in the form of a URI. The url field is mutually exclusive of the identifier field.
-	URL string `json:"url"`
+	URL string `json:"url,omitempty"`
 
 	// Identifier is a SPDX license expression for the API. The identifier field is mutually exclusive of the url field.
-	Identifier string `json:"identifier"`
+	Identifier string `json:"identifier,omitempty"`
 }

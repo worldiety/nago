@@ -8,6 +8,6 @@
 package oas
 
 type Components struct {
-	Schemas         map[string]*Schema         `json:"schemas"`
-	SecuritySchemes map[string]*SecurityScheme `json:"securitySchemes"`
+	Schemas         map[string]*Schema         `json:"schemas,omitempty"`
+	SecuritySchemes map[string]*SecurityScheme `json:"securitySchemes,omitempty"`
 }
