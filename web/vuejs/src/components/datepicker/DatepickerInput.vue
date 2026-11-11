@@ -19,7 +19,7 @@
 						min="1"
 						:max="totalDaysForEditableStartMonth"
 						class="input-day arrows-none"
-						:aria-label="rangeMode ? 'Startdatum Tag auswählen' : 'Datum Tag auswählen'"
+						:aria-label="`${label ?? ''} ${rangeMode ? 'Start Tag auswählen' : 'Tag auswählen'}`"
 						onfocus="this.select()"
 						:disabled="disabled"
 						:aria-valuetext="`${editableStartDay}`"
@@ -37,7 +37,7 @@
 						min="1"
 						max="12"
 						class="input-month arrows-none"
-						:aria-label="rangeMode ? 'Startdatum Monat auswählen' : 'Datum Monat auswählen'"
+						:aria-label="`${label ?? ''} ${rangeMode ? 'Start Monat auswählen' : 'Monat auswählen'}`"
 						onfocus="this.select()"
 						:disabled="disabled"
 						:aria-valuetext="`${getMonthName(editableStartMonth)}`"
@@ -55,7 +55,7 @@
 						:min="minYear || 0"
 						:max="maxYear"
 						class="input-year arrows-none"
-						:aria-label="rangeMode ? 'Startdatum Jahr eingeben' : 'Datum Jahr eingeben'"
+						:aria-label="`${label ?? ''} ${rangeMode ? 'Start Jahr eingeben' : 'Jahr eingeben'}`"
 						onfocus="this.select()"
 						:disabled="disabled"
 						:aria-valuetext="`${editableStartYear}`"
@@ -78,7 +78,7 @@
 						:max="totalDaysForEditableEndMonth"
 						class="input-day arrows-none"
 						:disabled="disabled"
-						aria-label="Enddatum Tag auswählen"
+						:aria-label="`${label ?? ''} Ende Tag auswählen`"
 						:aria-valuetext="`${editableEndDay}`"
 						:aria-invalid="!!errorText"
 						:aria-description="errorText || supportingText"
@@ -96,7 +96,7 @@
 						max="12"
 						class="input-month arrows-none"
 						:disabled="disabled"
-						aria-label="Enddatum Monat auswählen"
+						:aria-label="`${label ?? ''} Ende Monat auswählen`"
 						:aria-valuetext="`${getMonthName(editableEndMonth)}`"
 						:aria-invalid="!!errorText"
 						:aria-description="errorText || supportingText"
@@ -114,7 +114,7 @@
 						:max="maxYear || 9999"
 						class="input-year arrows-none"
 						:disabled="disabled"
-						aria-label="Enddatum Jahr eingeben"
+						:aria-label="`${label ?? ''} Ende Jahr eingeben`"
 						:aria-valuetext="`${editableEndYear}`"
 						:aria-invalid="!!errorText"
 						:aria-description="errorText || supportingText"
@@ -218,9 +218,9 @@ const dateSelected = computed((): boolean => {
 
 const datepickerCalendarAriaLabel = computed((): string => {
 	if (props.rangeMode) {
-		return `Zeitraumauswahldialog öffnen, ${screenreaderDateFormatted.value}`;
+		return `${props.label ?? ''} Zeitraumauswahldialog öffnen, ${screenreaderDateFormatted.value}`;
 	}
-	return `Datumsauswahldialog öffnen, ${screenreaderDateFormatted.value}`;
+	return `${props.label ?? ''} Datumsauswahldialog öffnen, ${screenreaderDateFormatted.value}`;
 });
 
 const screenreaderDateFormatted = computed((): string => {
