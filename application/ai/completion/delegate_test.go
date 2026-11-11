@@ -637,7 +637,7 @@ func TestDelegate_EventsAndSuspendedSubIsError(t *testing.T) {
 	if res.Results[0].Status != TaskFailed {
 		t.Fatalf("a suspended sub-agent must fail its task: %+v", res.Results[0])
 	}
-	if !slices.Equal(kinds, []SubEventKind{SubStarted, SubFinished}) {
+	if !slices.Equal(kinds, []SubEventKind{SubStarted, SubRunning, SubFinished}) {
 		t.Fatalf("unexpected events %v", kinds)
 	}
 }

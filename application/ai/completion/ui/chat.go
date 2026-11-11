@@ -17,6 +17,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"go.wdy.de/nago/application/ai/completion"
 	"go.wdy.de/nago/application/ai/model"
@@ -360,6 +361,10 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 	// the current one, because background tasks may still report after their run ended.
 	cancelRun := core.AutoState[context.CancelFunc](wnd)
 	runGen := core.AutoState[int](wnd)
+	// board knows what the delegated tasks do, see taskBoard, and tick renders the window anew while they work, so
+	// that their clocks move on. A window which follows a run shows the board of the run.
+	board := core.AutoState[*boardRef](wnd).Init(newBoardRef).Get()
+	tick := core.AutoState[int](wnd)
 	// transientKey groups the background tasks of a chat without History, which has no session id for that.
 	transientKey := core.AutoState[string](wnd).Init(func() string { return data.RandIdent[string]() })
 	registry := taskRegistry(opts.Sessions)
@@ -457,22 +462,43 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			// only whoever may continue the conversation may follow and stop its run
 			if run, ok := runToFollow(sid); ok && wnd.Subject().AuditResource(session.Namespace, rebac.Instance(sid), session.PermAppend) == nil {
 				attached.Set(run)
+				board.set(run.board)
 				busy.Set(true)
-				status.Set("… die KI arbeitet noch")
+				status.Set(followingLabel)
 				// the conversation may have been read before the run took up its decision
 				pending.Set(nil)
-				live, _ := run.state()
+				live, _, _ := run.state()
 				history.Set(live)
 			}
 		}
 
 		if run := attached.Get(); run != nil {
 			core.OnAppear(wnd, fmt.Sprintf("attached-%s-%d", run.id, run.seq), func(ctx context.Context) {
+				// shown tells whether the progress line shows the tasks of the run, it is only touched on the event loop
+				shown := false
+				seen := ^uint64(0)
 				for over := false; !over; {
 					// every state replaces the whole list, so a step is neither shown twice nor missing; this goroutine
-					// posts in order, so no state lands after the end below and replaces its result
-					live, changed := run.state()
-					wnd.Post(func() { history.Set(live) })
+					// posts in order, so no state lands after the end below and replaces its result. A state which only
+					// tells that the tasks of the run moved on keeps the list.
+					live, version, changed := run.state()
+					if version != seen {
+						seen = version
+						wnd.Post(func() { history.Set(live) })
+					}
+					wnd.Post(func() {
+						if attached.Get() != run {
+							return
+						}
+						tick.Set(tick.Get() + 1)
+						if label, ok := run.board.status(); ok {
+							status.Set(label)
+							shown = true
+						} else if shown {
+							status.Set(followingLabel)
+							shown = false
+						}
+					})
 
 					select {
 					case <-changed:
@@ -679,10 +705,14 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		gen := runGen.Get() + 1
 		runGen.Set(gen)
 
+		// the tasks of this run count from here, see taskBoard.begin
+		tasks := board.get()
+		tasks.begin()
+
 		// other chats of the same conversation see the run and can stop it, see attached
 		var active *activeRun
 		if sid := sessionID.Get(); opts.History && sid != "" {
-			active = newActiveRun(sid, cancel, slices.Clone(optimistic))
+			active = newActiveRun(sid, cancel, slices.Clone(optimistic), tasks)
 			activeRuns.Put(sid, active)
 		}
 		// finishActive is called on every exit path and may run twice, e.g. after a panic
@@ -721,18 +751,24 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		}
 
 		// Sub-agents report from their own goroutines, and never through onProgress: their turns and tools
-		// are not the ones of this conversation.
-		var started, finished atomic.Int64
-		onEvent := func(e completion.SubEvent) {
-			switch e.Kind {
-			case completion.SubStarted:
-				started.Add(1)
-			case completion.SubFinished:
-				finished.Add(1)
-			default:
-				return
-			}
-			setStatus(taskProgressLabel(int(finished.Load()), int(started.Load())))
+		// are not the ones of this conversation. The board collects what they do, and pulseTasks renders it, here and
+		// in every chat which follows the run.
+		onEvent := tasks.observe
+		if opts.Delegation != nil {
+			go pulseTasks(ctx, tasks, func() {
+				if active != nil {
+					active.touch()
+				}
+				wnd.Post(func() {
+					if !busy.Get() || runGen.Get() != gen {
+						return
+					}
+					tick.Set(tick.Get() + 1)
+					if label, ok := tasks.status(); ok {
+						status.Set(label)
+					}
+				})
+			})
 		}
 
 		// live mirrors the growing conversation while the loop runs so each assistant turn appears the moment
@@ -768,8 +804,10 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 				if p.ToolCall != nil {
 					name = p.ToolCall.Name
 				}
+				tasks.setWaits(waitsOnTasks(name))
 				setStatus(toolLabel(name))
 			case completion.PhaseToolCompleted:
+				tasks.setWaits(false)
 				// the view of a call shows up as soon as the call is done, see completion.Tool.View, and a call without
 				// a view counts as well: a sub-agent whose result is missing looks as if it still works
 				if p.ToolCall == nil || p.ToolResult == nil {
@@ -1156,7 +1194,7 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			return fn(wnd, call.Arguments, toolResultJSON(result))
 		}
 		return nil
-	}}
+	}, live: board.get().snapshot(), now: time.Now()}
 	if opts.History {
 		hv.openChild = func(id session.ID) {
 			childID.Set(id)
@@ -1361,16 +1399,21 @@ type activeRun struct {
 	// done is closed when the run is over and has persisted what it did
 	done chan struct{}
 
+	// board knows what the delegated tasks of the run do, see taskBoard
+	board *taskBoard
+
 	mu sync.Mutex
 	// live is the whole conversation as far as the run got. A run persists it only when it ends or waits on the
 	// user, thus this is the only place which knows the message that started the run and its steps so far.
 	live []completion.Message
-	// changed is closed and replaced by every new state of live
+	// version counts the states of live
+	version uint64
+	// changed is closed and replaced by every new state of live and whenever the tasks of the run moved on
 	changed chan struct{}
 }
 
-func newActiveRun(id session.ID, cancel context.CancelFunc, live []completion.Message) *activeRun {
-	return &activeRun{id: id, seq: activeRunSeq.Add(1), cancel: cancel, done: make(chan struct{}), live: live, changed: make(chan struct{})}
+func newActiveRun(id session.ID, cancel context.CancelFunc, live []completion.Message, board *taskBoard) *activeRun {
+	return &activeRun{id: id, seq: activeRunSeq.Add(1), cancel: cancel, done: make(chan struct{}), board: board, live: live, changed: make(chan struct{})}
 }
 
 // publish replaces how far the run got and wakes up whoever follows it.
@@ -1378,15 +1421,28 @@ func (r *activeRun) publish(live []completion.Message) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.live = live
+	r.version++
+	r.wake()
+}
+
+// touch wakes up whoever follows the run, because its tasks moved on, see taskBoard.
+func (r *activeRun) touch() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.wake()
+}
+
+func (r *activeRun) wake() {
 	close(r.changed)
 	r.changed = make(chan struct{})
 }
 
-// state returns how far the run got, which must not be modified, and the channel which announces the next state.
-func (r *activeRun) state() ([]completion.Message, <-chan struct{}) {
+// state returns how far the run got, which must not be modified, its version and the channel which announces the
+// next state.
+func (r *activeRun) state() ([]completion.Message, uint64, <-chan struct{}) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	return r.live, r.changed
+	return r.live, r.version, r.changed
 }
 
 var activeRunSeq atomic.Uint64

@@ -204,6 +204,9 @@ type SubEventKind string
 const (
 	// SubStarted is reported when a task was accepted. It may still wait for a free slot.
 	SubStarted SubEventKind = "started"
+	// SubRunning is reported when the sub-agent of a task got a free slot and starts to work. Its time limit,
+	// [DelegateConfig.SubTimeout], runs from here. A task which never gets a slot is not reported as running.
+	SubRunning SubEventKind = "running"
 	// SubProgressed forwards a [Progress] event of the sub-agent.
 	SubProgressed SubEventKind = "progress"
 	// SubFinished is reported once the task reached its final status.
@@ -219,6 +222,8 @@ type SubEvent struct {
 	Title string
 	// Background is set for tasks of [NewTaskTools].
 	Background bool
+	// Timeout is the time limit of the sub-agent, set for [SubRunning].
+	Timeout time.Duration
 	// Progress is set for [SubProgressed].
 	Progress *Progress
 	// Result is set for [SubFinished].
@@ -833,6 +838,8 @@ func (d *delegator) execute(parent context.Context, subject auth.Subject, p task
 
 	ctx, cancel := context.WithTimeout(parent, d.cfg.SubTimeout)
 	defer cancel()
+
+	d.emit(SubEvent{Kind: SubRunning, TaskID: taskID, Title: p.title, Background: background, Timeout: d.cfg.SubTimeout})
 
 	req := p.req
 	req.OnProgress = func(pr Progress) {

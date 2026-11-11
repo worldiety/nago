@@ -27,6 +27,7 @@ import (
 	"net/url"
 	"slices"
 	"strings"
+	"time"
 
 	"go.wdy.de/nago/application/ai/completion"
 	"go.wdy.de/nago/application/ai/session"
@@ -83,6 +84,11 @@ type historyView struct {
 
 	// trailing, when set, is shown below the last step.
 	trailing core.View
+
+	// live is what the delegated tasks do by task id, see taskBoard, and now is the moment of the rendering, which
+	// their clocks show.
+	live map[string]liveTask
+	now  time.Time
 }
 
 // renderHistory turns the stateless message history into chat bubbles. Consecutive tool calls are shown as one
@@ -435,16 +441,21 @@ const (
 
 // busyLine shows the progress of a run behind a small spinning ring, so that a long run visibly keeps working.
 func busyLine(label string) core.View {
+	return ui.HStack(
+		spinner(ui.L12),
+		ui.Text(label).Font(ui.BodySmall),
+	).Gap(ui.L8).Alignment(ui.Center)
+}
+
+// spinner is a small spinning ring of the given size.
+func spinner(size ui.Length) core.View {
 	ring := ui.Border{}.Circle().Width(ui.L2).Color(ui.M5)
 	ring.TopColor = ui.I0
 
-	return ui.HStack(
-		ui.VStack().
-			Animation(ui.AnimateSpin).
-			Border(ring).
-			Frame(ui.Frame{}.Size(ui.L12, ui.L12)),
-		ui.Text(label).Font(ui.BodySmall),
-	).Gap(ui.L8).Alignment(ui.Center)
+	return ui.VStack().
+		Animation(ui.AnimateSpin).
+		Border(ring).
+		Frame(ui.Frame{}.Size(size, size))
 }
 
 // thinkingLabel builds the progress line shown while the model is composing the next turn. From the second
@@ -459,11 +470,22 @@ func thinkingLabel(turn int) string {
 
 // toolLabel builds the progress line shown while a single tool call is executing.
 func toolLabel(name string) string {
-	if name == "" {
+	switch name {
+	case "":
 		return "… die KI führt ein Werkzeug aus"
+	case completion.DelegateToolName, completion.StartTasksToolName:
+		return "… die KI verteilt Hintergrundaufgaben"
+	case completion.AwaitTasksToolName:
+		return "… die KI wartet auf Hintergrundaufgaben"
+	case completion.CancelTasksToolName:
+		return "… die KI bricht Hintergrundaufgaben ab"
+	default:
+		return fmt.Sprintf("… die KI führt das Werkzeug „%s“ aus", name)
 	}
-	return fmt.Sprintf("… die KI führt das Werkzeug „%s“ aus", name)
 }
+
+// followingLabel is the progress line of a chat which follows a run another chat started, see activeRun.
+const followingLabel = "… die KI arbeitet noch"
 
 // serverCallLabel names the call of a server tool, e.g. the query of a search.
 func serverCallLabel(call completion.ServerCall) string {

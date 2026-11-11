@@ -60,11 +60,17 @@ func TestRenderHistory_DelegationAsTaskList(t *testing.T) {
 }
 
 func TestTaskLabels(t *testing.T) {
-	if got := taskProgressLabel(1, 3); got != "… 1 von 3 Teilaufgaben erledigt" {
+	if got := tasksStatusLabel(2, 1, 1, "save_view"); got != "… 2 Hintergrundaufgaben arbeiten, 1 wartet, 1 erledigt, zuletzt: save_view" {
 		t.Fatalf("label = %q", got)
 	}
-	if !strings.HasPrefix(tasksHeading(completion.StartTasksToolName, 2), "Teilaufgaben gestartet") {
-		t.Fatal("unexpected heading")
+	if got := tasksStatusLabel(1, 0, 0, ""); got != "… 1 Hintergrundaufgabe arbeitet" {
+		t.Fatalf("label = %q", got)
+	}
+	if got := tasksHeading(completion.StartTasksToolName, 2); got != "2 Hintergrundaufgaben gestartet" {
+		t.Fatalf("heading = %q", got)
+	}
+	if got := tasksHeading(completion.DelegateToolName, 1); got != "1 Hintergrundaufgabe" {
+		t.Fatalf("heading = %q", got)
 	}
 	for _, s := range []completion.TaskStatus{completion.TaskRunning, completion.TaskCompleted, completion.TaskFailed, completion.TaskTimeout, completion.TaskCancelled, completion.TaskLost} {
 		if taskStatusLabel(s) == string(s) {
@@ -139,5 +145,22 @@ func TestLatestTasks_HandedOver(t *testing.T) {
 	// user prompt, task list, answer, answer; the hidden prompt stays hidden
 	if views := renderHistory(nil, history, historyView{}); len(views) != 4 {
 		t.Fatalf("expected 4 views, got %d", len(views))
+	}
+}
+
+// The rows find what their sub-agents do under the id of the events: the id of a background task, or the call and the
+// index of a task of the delegate tool.
+func TestTaskKey(t *testing.T) {
+	delegate := completion.ToolCall{ID: "d1", Name: completion.DelegateToolName}
+	if got := taskKey(delegate, 1, completion.TaskResult{Title: "two"}); got != "d1/1" {
+		t.Fatalf("key = %q", got)
+	}
+
+	await := completion.ToolCall{ID: "a1", Name: completion.AwaitTasksToolName}
+	if got := taskKey(await, 0, completion.TaskResult{ID: "task_1"}); got != "task_1" {
+		t.Fatalf("key = %q", got)
+	}
+	if got := taskKey(await, 0, completion.TaskResult{}); got != "" {
+		t.Fatalf("a task without id of another tool has no key, got %q", got)
 	}
 }

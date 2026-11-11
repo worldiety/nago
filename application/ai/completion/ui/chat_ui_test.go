@@ -136,7 +136,7 @@ func TestChat_DelegationShowsSubTasks(t *testing.T) {
 	w.Click(w.Find(nagotest.Text("Senden")))
 
 	w.WaitFor(richText("Alles erledigt."), 10*time.Second)
-	w.Find(nagotest.TextContains("Teilaufgaben (2)")).Visible()
+	w.Find(nagotest.TextContains("2 Hintergrundaufgaben")).Visible()
 	if got := fake.calls.Load(); got != 4 {
 		t.Fatalf("expected 2 parent and 2 sub requests, got %d", got)
 	}
@@ -176,6 +176,13 @@ func TestChat_StopCancelsTheRun(t *testing.T) {
 	w.WaitFor(nagotest.Text("Senden"), 5*time.Second)
 }
 
+// openTasks opens the list of the tasks of a call, which is closed, when it was done before it showed up first.
+func openTasks(w *nagotest.Window, heading string) {
+	if w.FindAll(nagotest.Label("Verlauf der Hintergrundaufgabe anzeigen")).Len() == 0 {
+		w.Click(w.Find(nagotest.Text(heading)))
+	}
+}
+
 func TestChat_HistoryOpensSubTaskTranscript(t *testing.T) {
 	sessions := testSessions(t)
 	w := openChatWith(t, &chatFake{parent: delegatingParent}, sessions, true)
@@ -184,8 +191,9 @@ func TestChat_HistoryOpensSubTaskTranscript(t *testing.T) {
 	w.Click(w.Find(nagotest.Text("Senden")))
 	w.WaitFor(richText("Alles erledigt."), 10*time.Second)
 
-	// Each sub task was persisted as a child session and can be opened from the task list.
-	open := w.FindAll(nagotest.Label("Verlauf der Teilaufgabe anzeigen")).Exactly(2)
+	// Each sub task was persisted as a child session and can be opened from its row.
+	openTasks(w, "2 Hintergrundaufgaben")
+	open := w.FindAll(nagotest.Label("Verlauf der Hintergrundaufgabe anzeigen")).Exactly(2)
 	w.FindAll(nagotest.Type[*proto.Modal]()).None()
 	w.Click(open.At(0))
 	w.WaitFor(nagotest.And(nagotest.Type[*proto.Modal](), nagotest.Containing(richText("Antwort auf "))), 5*time.Second)

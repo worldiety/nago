@@ -349,8 +349,9 @@ func TestChat_ForgottenTasksShowTheirResult(t *testing.T) {
 	w.WaitFor(richText("Nachtrag: 42."), 10*time.Second)
 
 	// the start block shows the final state and offers the transcript
-	w.Find(nagotest.TextContains("erledigt"))
-	w.FindAll(nagotest.Label("Verlauf der Teilaufgabe anzeigen")).Exactly(1)
+	w.Find(nagotest.TextContains("1 erledigt"))
+	openTasks(w, "1 Hintergrundaufgabe gestartet")
+	w.FindAll(nagotest.Label("Verlauf der Hintergrundaufgabe anzeigen")).Exactly(1)
 }
 
 // Hiding a chat without History destroys its states, which cancels the run and must not block the window.

@@ -360,14 +360,21 @@ func TestChat_RunningRun_FinishedSubAgent(t *testing.T) {
 
 	settled := inBackground(page.Reload)
 	for _, w := range []*nagotest.Window{starter, page} {
-		shown(t, w, "the finished sub-agent", nagotest.TextContains("• erledigt"))
-		shown(t, w, "its answer", richText("Antwort der Teilaufgabe"))
-		w.FindAll(nagotest.TextContains("• läuft")).None()
+		shown(t, w, "the finished sub-agent", nagotest.TextContains("1 erledigt"))
+		w.FindAll(nagotest.Text("läuft")).None()
+		w.FindAll(nagotest.TextContains(" · Schritt ")).None()
 	}
 
 	close(h.release)
 	<-settled
 	page.WaitFor(richText("Alles fertig."), 10*time.Second)
+
+	// the answer of a task stands in its row, once it is open; a click settles, which a following window only does now.
+	// The list was done, when the window showed it first, thus it is closed.
+	page.FindAll(richText("Antwort der Teilaufgabe")).None()
+	page.Click(page.Find(nagotest.Text("1 Hintergrundaufgabe")))
+	page.Click(page.Find(nagotest.Text("Erste")))
+	page.Find(richText("Antwort der Teilaufgabe"))
 }
 
 // Several windows show the same steps, none twice and none missing.

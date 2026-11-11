@@ -21,8 +21,8 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	"go.wdy.de/nago/presentation/ui"
-	"go.wdy.de/nago/presentation/ui/accordion"
 	"go.wdy.de/nago/presentation/ui/alert"
+	"go.wdy.de/nago/presentation/ui/progress"
 )
 
 // DelegationOptions lets the model of a [Chat] hand independent tasks to sub-agents, which work on them in
@@ -146,11 +146,6 @@ func delegationTools(r delegationRun) ([]completion.Tool, func(ctx context.Conte
 	return tools, r.group.BeforeFinish(d.SubTimeout)
 }
 
-// taskProgressLabel is the status line while sub-agents work.
-func taskProgressLabel(finished, started int) string {
-	return fmt.Sprintf("… %d von %d Teilaufgaben erledigt", finished, started)
-}
-
 // tasksOf returns the tasks of a delegation call: the results once they exist, otherwise the tasks the model
 // asked for, still running. A call which failed as a whole, e.g. because the budget was exhausted, shows its
 // tasks as failed with the reason. latest holds the newest known state of the background tasks by id, see
@@ -254,17 +249,25 @@ func latestTasks(history []completion.Message) map[string]completion.TaskResult 
 	return latest
 }
 
-// tasksHeading is the label of the sub task list of a delegation call.
+// tasksHeading is the label of the tasks of a delegation call.
 func tasksHeading(name string, n int) string {
+	tasks := fmt.Sprintf("%d Hintergrundaufgaben", n)
+	if n == 1 {
+		tasks = "1 Hintergrundaufgabe"
+	}
+
 	switch name {
 	case completion.StartTasksToolName:
-		return fmt.Sprintf("Teilaufgaben gestartet (%d)", n)
+		return tasks + " gestartet"
 	case completion.AwaitTasksToolName:
-		return fmt.Sprintf("Ergebnisse der Teilaufgaben (%d)", n)
+		if n == 1 {
+			return "Ergebnis einer Hintergrundaufgabe"
+		}
+		return fmt.Sprintf("Ergebnisse von %d Hintergrundaufgaben", n)
 	case completion.CancelTasksToolName:
-		return fmt.Sprintf("Teilaufgaben abgebrochen (%d)", n)
+		return tasks + " abgebrochen"
 	default:
-		return fmt.Sprintf("Teilaufgaben (%d)", n)
+		return tasks
 	}
 }
 
@@ -278,7 +281,7 @@ func taskStatusLabel(s completion.TaskStatus) string {
 	case completion.TaskFailed:
 		return "fehlgeschlagen"
 	case completion.TaskTimeout:
-		return "Zeit überschritten"
+		return "Zeitlimit erreicht"
 	case completion.TaskCancelled:
 		return "abgebrochen"
 	case completion.TaskLost:
@@ -305,69 +308,337 @@ func taskStatusIcon(s completion.TaskStatus) core.SVG {
 	}
 }
 
-// tasksView renders a delegation call as a collapsible list of its sub tasks. Returns nil when the call carries
-// no recognizable tasks, so the caller falls back to a plain tool hint.
+func taskStatusColor(s completion.TaskStatus) ui.Color {
+	switch s {
+	case completion.TaskCompleted:
+		return ui.ColorSemanticGood
+	case completion.TaskTimeout:
+		return ui.ColorSemanticWarn
+	case completion.TaskFailed:
+		return ui.ColorSemanticError
+	default:
+		return ui.M7
+	}
+}
+
+// shownTask is a task of a delegation call with what the chat knows about its sub-agent, see taskBoard.
+type shownTask struct {
+	completion.TaskResult
+	live    liveTask
+	hasLive bool
+}
+
+// status is the state of the task. The sub-agent of a task of the delegate tool is done before the call, which
+// reports the results of all of them.
+func (t shownTask) status() completion.TaskStatus {
+	if t.Status == completion.TaskRunning && t.hasLive && t.live.Status != completion.TaskRunning {
+		return t.live.Status
+	}
+	return t.Status
+}
+
+// working tells, whether the sub-agent of the task works right now, rather than waiting for a free slot.
+func (t shownTask) working() bool {
+	return t.status() == completion.TaskRunning && t.hasLive && !t.live.Waiting
+}
+
+// taskKey is the id, under which the events of the i-th task of a call report it, see
+// [completion.SubEvent.TaskID]: the id of a background task, or the call and the index for the delegate tool.
+func taskKey(call completion.ToolCall, i int, t completion.TaskResult) string {
+	if t.ID != "" {
+		return t.ID
+	}
+	if call.Name == completion.DelegateToolName {
+		return fmt.Sprintf("%s/%d", call.ID, i)
+	}
+	return ""
+}
+
+// The look of the task list: rows like cards with a hairline on the background of the chat, the title a little larger
+// than what tells about it.
+var (
+	tasksHeadingFont = ui.Font{Name: ui.DefaultFontName, Size: "0.8125rem", Weight: 500, LineHeight: "1.125rem"}
+	taskTitleFont    = ui.Font{Name: ui.DefaultFontName, Size: "0.8125rem", Weight: ui.BodyFontWeight, LineHeight: "1.125rem"}
+	taskTextFont     = ui.BodySmall
+	taskRowGap       = ui.Length("0.375rem")
+	taskBarHeight    = ui.Length("0.1875rem")
+)
+
+// tasksView renders a delegation call as a collapsible list of its tasks: a heading with how many are done and
+// since when they work, and a row for each task with what its sub-agent does right now. Returns nil when the call
+// carries no recognizable tasks, so the caller falls back to a plain tool hint.
 func tasksView(wnd core.Window, hv historyView, call completion.ToolCall, res completion.ToolResult, done bool, latest map[string]completion.TaskResult) core.View {
-	tasks := tasksOf(call, res, done, latest)
-	if len(tasks) == 0 {
+	results := tasksOf(call, res, done, latest)
+	if len(results) == 0 {
 		return nil
 	}
 
-	rows := make([]core.View, 0, len(tasks))
-	for _, t := range tasks {
-		rows = append(rows, taskRow(hv, t))
+	tasks := make([]shownTask, len(results))
+	for i, r := range results {
+		tasks[i] = shownTask{TaskResult: r}
+		if key := taskKey(call, i, r); key != "" {
+			tasks[i].live, tasks[i].hasLive = hv.live[key]
+		}
 	}
 
-	header := ui.Text("→ " + tasksHeading(call.Name, len(tasks))).Font(ui.Small)
-	body := ui.VStack(rows...).Gap(ui.L8).FullWidth().Alignment(ui.Leading)
-
-	var box core.View
-	if wnd == nil {
-		box = ui.VStack(header, body).Alignment(ui.Leading)
-	} else {
-		open := core.StateOf[bool](wnd, hv.idPrefix+"uicompletion-tasks-"+call.ID)
-		box = accordion.Accordion(header, body, open).Small().HideSeparator().Frame(ui.Frame{MaxWidth: "85%"})
+	// the list is open while its tasks work, and closed once they are done when it shows up first, e.g. in the history
+	id := hv.idPrefix + "uicompletion-tasks-" + call.ID
+	open := true
+	var toggle func()
+	if wnd != nil {
+		running := slices.ContainsFunc(tasks, func(t shownTask) bool { return t.status() == completion.TaskRunning })
+		state := core.StateOf[bool](wnd, id).Init(func() bool { return running })
+		open = state.Get()
+		toggle = func() { state.Set(!state.Get()) }
 	}
 
-	return ui.HStack(box, ui.Spacer()).FullWidth()
+	meta := tasksMeta(tasks, hv.now)
+	header := ui.HStack(
+		ui.ImageIcon(chevron(open)).StrokeColor(ui.M7).Frame(ui.Frame{}.Size(ui.L12, ui.L12)),
+		ui.Text(tasksHeading(call.Name, len(tasks))).Font(tasksHeadingFont),
+		ui.If(meta != "", ui.Text("· "+meta).Font(taskTextFont).Color(ui.M7)),
+	).Gap(taskRowGap).Alignment(ui.Center)
+	if toggle != nil {
+		// the key keeps a click, which refers to a former tree: the window renders every second while tasks work
+		header = header.Action(toggle).Key("uicompletion-tasks", id)
+	}
+
+	lines := []core.View{header}
+	if open {
+		for i, t := range tasks {
+			lines = append(lines, taskRow(wnd, hv, fmt.Sprintf("%suicompletion-task-%s-%d", hv.idPrefix, call.ID, i), t))
+		}
+	}
+
+	return ui.HStack(
+		ui.VStack(lines...).Gap(taskRowGap).Alignment(ui.Leading).Frame(ui.Frame{Width: ui.Full, MaxWidth: "88%"}),
+		ui.Spacer(),
+	).FullWidth()
 }
 
-// taskRow renders one sub task: status, title, a button to its transcript and its answer or error.
-func taskRow(hv historyView, t completion.TaskResult) core.View {
+func chevron(open bool) core.SVG {
+	if open {
+		return icons.ChevronUp
+	}
+	return icons.ChevronDown
+}
+
+// tasksMeta summarizes the tasks of a call: how many are done and since when they work, or how long they took.
+func tasksMeta(tasks []shownTask, now time.Time) string {
+	var completed, other, running int
+	var first, last time.Time
+	timed := true
+	for _, t := range tasks {
+		switch t.status() {
+		case completion.TaskRunning:
+			running++
+		case completion.TaskCompleted:
+			completed++
+		default:
+			other++
+		}
+
+		if !t.hasLive {
+			timed = false
+			continue
+		}
+		if first.IsZero() || t.live.Queued.Before(first) {
+			first = t.live.Queued
+		}
+		if t.live.Ended.After(last) {
+			last = t.live.Ended
+		}
+	}
+
+	var parts []string
+	if completed > 0 {
+		parts = append(parts, fmt.Sprintf("%d erledigt", completed))
+	}
+	if other > 0 {
+		parts = append(parts, fmt.Sprintf("%d nicht erledigt", other))
+	}
+	if timed && !first.IsZero() {
+		if running > 0 {
+			parts = append(parts, "seit "+clock(now.Sub(first)))
+		} else if !last.IsZero() {
+			parts = append(parts, "in "+clock(last.Sub(first)))
+		}
+	}
+
+	return strings.Join(parts, " · ")
+}
+
+// taskRow renders one task as a card: status, title and how long it works or worked, the button to its transcript,
+// and what its sub-agent does right now. A click opens its latest steps and its time limit, or its answer or error.
+// The card is no accordion, because an accordion within the body of another one takes its styles, and the detail
+// is only rendered while it is open, because the window renders every second while tasks work.
+func taskRow(wnd core.Window, hv historyView, id string, t shownTask) core.View {
 	title := t.Title
 	if title == "" {
 		title = t.ID
 	}
 
-	var open core.View
+	detail := taskDetail(hv, t)
+	open := wnd == nil
+	var state *core.State[bool]
+	if wnd != nil && detail != nil {
+		state = core.StateOf[bool](wnd, id)
+		open = state.Get()
+	}
+
+	var transcript core.View
 	if hv.openChild != nil && t.SessionID != "" {
 		sid := session.ID(t.SessionID)
-		open = ui.TertiaryButton(func() { hv.openChild(sid) }).PreIcon(icons.Eye).AccessibilityLabel("Verlauf der Teilaufgabe anzeigen")
+		transcript = ui.TertiaryButton(func() { hv.openChild(sid) }).
+			PreIcon(icons.Eye).
+			Key("uicompletion-task-transcript", t.SessionID).
+			AccessibilityLabel("Verlauf der Hintergrundaufgabe anzeigen")
 	}
 
-	var detail core.View
-	switch {
-	case t.Status == completion.TaskCompleted && strings.TrimSpace(t.Answer) != "":
-		detail = ui.VStack(modelText(t.Answer)).Alignment(ui.Leading).Font(ui.Small)
-	case t.Error != "":
-		detail = ui.Text(t.Error).Font(ui.Small)
+	head := ui.HStack(
+		taskIcon(t),
+		ui.Text(title).Font(taskTitleFont),
+		ui.Spacer(),
+		ui.Text(taskMeta(t, hv.now)).Font(taskTextFont).Color(ui.M7).WhiteSpace(ui.WhiteSpaceNoWrap),
+		ui.If(transcript != nil, transcript),
+		ui.If(state != nil, ui.ImageIcon(chevron(open)).StrokeColor(ui.M7).Frame(ui.Frame{}.Size(ui.L12, ui.L12))),
+	).Gap(ui.L8).FullWidth().Alignment(ui.Center)
+
+	summary := []core.View{head}
+	if activity := taskActivity(t); activity != "" {
+		summary = append(summary, ui.Text(activity).Font(taskTextFont).Color(ui.M7).Padding(ui.Padding{Left: ui.L24}))
 	}
 
-	return ui.VStack(
-		ui.HStack(
-			ui.ImageIcon(taskStatusIcon(t.Status)).AccessibilityLabel(taskStatusLabel(t.Status)),
-			ui.Text(title).Font(ui.Small),
-			ui.Text("• "+taskStatusLabel(t.Status)).Font(ui.Small),
-			ui.Spacer(),
-			ui.If(open != nil, open),
-		).Gap(ui.L4).FullWidth().Alignment(ui.Center),
-		ui.If(detail != nil, detail),
-	).Gap(ui.L4).
+	top := ui.VStack(summary...).Gap(ui.L2).FullWidth().Alignment(ui.Leading)
+	if state != nil {
+		top = top.Action(func() { state.Set(!state.Get()) }).Key("uicompletion-task", id)
+	}
+
+	lines := []core.View{top}
+	if open && detail != nil {
+		lines = append(lines, detail)
+	}
+
+	return ui.VStack(lines...).
+		Gap(taskRowGap).
 		FullWidth().
 		Alignment(ui.Leading).
-		BackgroundColor(ui.M2).
-		Border(ui.Border{}.Radius(ui.L8)).
-		Padding(ui.Padding{}.All(ui.L8))
+		BackgroundColor(ui.M1).
+		Border(ui.Border{}.Radius(ui.L8).Width(ui.L1).Color(ui.M3)).
+		Padding(ui.Padding{Top: ui.L8, Bottom: ui.L8, Left: "0.625rem", Right: "0.625rem"})
+}
+
+// taskIcon is a spinning ring while the sub-agent of the task works, otherwise the icon of its status.
+func taskIcon(t shownTask) core.View {
+	status := t.status()
+	if t.working() {
+		return ui.VStack(spinner(ui.L16)).AccessibilityLabel(taskStatusLabel(status))
+	}
+
+	return ui.ImageIcon(taskStatusIcon(status)).
+		StrokeColor(taskStatusColor(status)).
+		Frame(ui.Frame{}.Size(ui.L16, ui.L16)).
+		AccessibilityLabel(taskStatusLabel(status))
+}
+
+// taskMeta tells how long a task works and in which step, or how it ended, e.g. "2:14 · Schritt 6".
+func taskMeta(t shownTask, now time.Time) string {
+	l := t.live
+	switch status := t.status(); {
+	case status == completion.TaskRunning && t.hasLive && l.Waiting:
+		return "wartet auf einen freien Platz"
+	case status == completion.TaskRunning && t.hasLive:
+		meta := clock(l.elapsed(now))
+		if l.Turn > 0 {
+			meta += fmt.Sprintf(" · Schritt %d", l.Turn)
+		}
+		return meta
+	case status == completion.TaskCompleted && t.hasLive && !l.Started.IsZero():
+		return "erledigt nach " + clock(l.elapsed(now))
+	case status == completion.TaskTimeout && t.hasLive && l.Timeout > 0:
+		return "Zeitlimit von " + clock(l.Timeout) + " erreicht"
+	default:
+		return taskStatusLabel(status)
+	}
+}
+
+// taskActivity tells what the sub-agent of a working task does right now, e.g. "führt save_view aus".
+func taskActivity(t shownTask) string {
+	if !t.working() {
+		return ""
+	}
+	return t.live.Activity
+}
+
+// taskDetail shows the latest steps and the time limit of a working sub-agent, or the answer or error of a finished
+// one. Returns nil when there is nothing to show.
+func taskDetail(hv historyView, t shownTask) core.View {
+	var lines []core.View
+	l := t.live
+	if t.working() {
+		if len(l.Steps) > 0 {
+			steps := make([]core.View, 0, len(l.Steps))
+			for _, s := range l.Steps {
+				steps = append(steps, stepView(s))
+			}
+			// a line on the left, like a quote of what the sub-agent did
+			lines = append(lines, ui.VStack(steps...).
+				Gap(ui.L2).
+				FullWidth().
+				Alignment(ui.Leading).
+				Border(ui.Border{LeftWidth: ui.L2, LeftColor: ui.M3}).
+				Padding(ui.Padding{Left: "0.625rem"}))
+		}
+
+		if l.Timeout > 0 {
+			elapsed := l.elapsed(hv.now)
+			lines = append(lines, ui.HStack(
+				progress.LinearProgress().
+					Progress(float64(elapsed)/float64(l.Timeout)).
+					Color(ui.M7).
+					BackgroundColor(ui.M3).
+					Frame(ui.Frame{Height: taskBarHeight, Width: ui.Full}),
+				ui.Text("Zeitlimit "+clock(l.Timeout)).Font(taskTextFont).Color(ui.M7).WhiteSpace(ui.WhiteSpaceNoWrap),
+			).Gap(ui.L8).FullWidth().Alignment(ui.Center))
+		}
+	}
+
+	switch status := t.status(); {
+	case status == completion.TaskCompleted && strings.TrimSpace(t.Answer) != "":
+		lines = append(lines, ui.VStack(modelText(t.Answer)).Alignment(ui.Leading).Font(taskTextFont))
+	case status == completion.TaskTimeout:
+		lines = append(lines, ui.Text("Der Unteragent wurde nach Ablauf seines Zeitlimits beendet. Was er bis dahin getan hat, steht im Verlauf.").Font(taskTextFont))
+	case status == completion.TaskRunning || status == completion.TaskCancelled:
+	case t.Error != "":
+		lines = append(lines, ui.Text(t.Error).Font(taskTextFont))
+	}
+
+	if len(lines) == 0 {
+		return nil
+	}
+
+	return ui.VStack(lines...).
+		Gap(taskRowGap).
+		Alignment(ui.Leading).
+		FullWidth().
+		Padding(ui.Padding{Left: ui.L24})
+}
+
+// stepView shows what a sub-agent wrote or a tool it called, with its duration once it is done.
+func stepView(s liveStep) core.View {
+	if s.Tool == "" {
+		return ui.Text(s.Text).Font(taskTextFont).Color(ui.M7)
+	}
+
+	if !s.Done {
+		return ui.HStack(spinner(ui.L12), ui.Text(s.Tool).Font(taskTextFont).Color(ui.M7)).Gap(ui.L4).Alignment(ui.Center)
+	}
+
+	label := "→ " + s.Tool + " · " + seconds(s.Took)
+	if s.Failed {
+		label = "→ " + s.Tool + " · fehlgeschlagen nach " + seconds(s.Took)
+	}
+	return ui.Text(label).Font(taskTextFont).Color(ui.M7)
 }
 
 // childDialog shows the persisted transcript of a sub-agent read-only while present is set.
