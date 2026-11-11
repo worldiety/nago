@@ -96,48 +96,34 @@ function onBackdropClick(e: MouseEvent) {
 	if (onBackdrop) sendDismissEvent();
 }
 
-// returns the dialogs main content section. It is evaluated on each use, because the dialog content may change while
-// it is open.
-function getDialogContentSection(): HTMLElement | undefined {
-	if (!dialogContainer.value) return undefined;
-
-	const dialog = dialogContainer.value.querySelector('dialog');
-	if (!dialog) return undefined;
-
-	// find the highest dialog section and assume it contains the dialogs main content
-	let highestDialogSection: HTMLElement | undefined;
-	for (let child of dialog.children) {
-		if (!highestDialogSection || child.clientHeight > highestDialogSection.clientHeight) {
-			highestDialogSection = child as HTMLElement;
-		}
-	}
-
-	return highestDialogSection ?? (dialog as HTMLElement);
+// returns the dialog element. It is evaluated on each use, because the dialog content may change while it is open.
+function getDialog(): HTMLElement | undefined {
+	return dialogContainer.value?.querySelector('dialog') ?? undefined;
 }
 
-// Moves the focus to the start of the dialog content without focusing an interactive element. The content section
+// Moves the focus to the start of the dialog (usually its title) without focusing an interactive element. The dialog
 // is made programmatically focusable (but not tabbable), thus the next tab key press or the next screen reader
-// navigation step starts at the beginning of the dialog content.
-// The section is only focusable temporarily: once the focus leaves it, the tabindex is removed again. Otherwise,
-// VoiceOver treats the section as a focusable group and gets stuck at its boundary, when navigating backwards into
-// it from outside, e.g. from the dialog buttons.
+// navigation step starts at the top of the dialog.
+// The dialog is only focusable temporarily: once the focus leaves it, the tabindex is removed again. Otherwise,
+// VoiceOver treats the dialog as a focusable group and gets stuck at its boundary, when navigating backwards into
+// it from outside.
 function captureFocusInDialog(): void {
-	const section = getDialogContentSection();
-	if (!section) return;
+	const dialog = getDialog();
+	if (!dialog) return;
 
-	const addedTabIndex = !section.hasAttribute('tabindex');
-	if (addedTabIndex) section.setAttribute('tabindex', '-1');
-	section.setAttribute('data-modal-focus-start', '');
+	const addedTabIndex = !dialog.hasAttribute('tabindex');
+	if (addedTabIndex) dialog.setAttribute('tabindex', '-1');
+	dialog.setAttribute('data-modal-focus-start', '');
 
 	const release = () => {
-		section.removeEventListener('blur', release);
-		section.removeAttribute('data-modal-focus-start');
-		if (addedTabIndex) section.removeAttribute('tabindex');
+		dialog.removeEventListener('blur', release);
+		dialog.removeAttribute('data-modal-focus-start');
+		if (addedTabIndex) dialog.removeAttribute('tabindex');
 	};
-	section.addEventListener('blur', release);
+	dialog.addEventListener('blur', release);
 
-	section.focus({ preventScroll: true });
-	if (document.activeElement !== section) release();
+	dialog.focus({ preventScroll: true });
+	if (document.activeElement !== dialog) release();
 }
 
 function onKeydown(e: KeyboardEvent) {
@@ -197,7 +183,7 @@ onUnmounted(() => {
 	opacity: 0;
 }
 
-/* the content section is only focused as starting point for the tab order, it is not interactive */
+/* the dialog is only focused as starting point for the tab order, it is not interactive */
 [data-modal-focus-start]:focus {
 	outline: none;
 }
