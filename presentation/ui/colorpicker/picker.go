@@ -157,7 +157,7 @@ func (c TPalettePicker) Render(ctx core.RenderContext) core.RenderNode {
 
 	accessibilityLabel := c.label
 	if value != "" {
-		accessibilityLabel += fmt.Sprintf(", aktuell %s", ColorName(ctx.Window(), string(value)))
+		accessibilityLabel += fmt.Sprintf(", aktuell %s", c.colorName(ctx.Window(), value))
 	} else {
 		accessibilityLabel += ", nichts ausgewählt"
 	}
@@ -216,7 +216,27 @@ func (c TPalettePicker) Render(ctx core.RenderContext) core.RenderNode {
 		Render(ctx)
 }
 
+// colorName returns the distinguishable name of the given color within the palette, or its plain name if
+// the color is not part of the palette.
+func (c TPalettePicker) colorName(wnd core.Window, color ui.Color) string {
+	if idx := slices.Index(c.palette, color); idx >= 0 {
+		return c.paletteColorNames(wnd)[idx]
+	}
+
+	return ColorName(wnd, string(color))
+}
+
+func (c TPalettePicker) paletteColorNames(wnd core.Window) []string {
+	hexColors := make([]string, len(c.palette))
+	for i, color := range c.palette {
+		hexColors[i] = string(color)
+	}
+
+	return ColorNames(wnd, hexColors)
+}
+
 func (c TPalettePicker) pickerTable(wnd core.Window) core.View {
+	names := c.paletteColorNames(wnd)
 	return accessibility.Accessible(
 		ui.VStack(
 			ui.Grid(
@@ -242,7 +262,7 @@ func (c TPalettePicker) pickerTable(wnd core.Window) core.View {
 							Padding(ui.Padding{}.All(ui.L2)),
 					).
 						Role(accessibility.RoleOption).
-						Label(ColorName(wnd, string(t))).
+						Label(names[slices.Index(c.palette, t)]).
 						Selected(isSelected),
 					)
 				})...,
