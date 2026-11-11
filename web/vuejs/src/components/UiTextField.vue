@@ -55,6 +55,7 @@ let unmounting = false;
 // sync decides, whether a server rendering replaces the input or the text typed by the user wins, see TextFieldSync.
 const sync = new TextFieldSync(parseValue(inputValue.value), props.ui.inputValue);
 
+const input = ref<HTMLInputElement>();
 const textarea = ref<HTMLTextAreaElement>();
 const textareaHeight = ref('auto');
 
@@ -428,6 +429,11 @@ function onFocusOut(): void {
 function clearInputValue(): void {
 	inputValue.value = '';
 	submitInputValue(true);
+	focusInput();
+}
+
+function focusInput(): void {
+	(input.value ?? textarea.value)?.focus();
 }
 
 function deserializeGoDuration(durationInNanoseconds: number): number {
@@ -555,6 +561,7 @@ onMounted(() => {
 				<input
 					v-if="!props.ui.lines"
 					:id="id"
+					ref="input"
 					v-model="inputValue"
 					:autocomplete="ui.autocomplete"
 					class="input-field"
