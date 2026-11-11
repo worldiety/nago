@@ -25,6 +25,9 @@ type Options struct {
 	Window        core.Window // the Window is required for links to work properly
 	RichText      bool
 	TrimParagraph bool
+	// LabelFor turns the plain texts into labels of the component with the given ID, e.g. of a checkbox, so that a
+	// click on the text toggles it. Links stay links. It is ignored for RichText.
+	LabelFor string
 }
 
 // RichText is a little helper factory to get some markdown text into a RichText.
@@ -92,7 +95,7 @@ func Render(opts Options, source []byte) core.View {
 			}
 		case *ast.Text:
 			if entering {
-				r.Push(&mutText{value: string(n.Value(source)), linebreak: n.HardLineBreak()})
+				r.Push(&mutText{value: string(n.Value(source)), linebreak: n.HardLineBreak(), labelFor: opts.LabelFor})
 			} else {
 				r.Pop()
 			}
@@ -201,6 +204,7 @@ func (c *mutHeading) Render(wnd core.Window) core.View {
 type mutText struct {
 	value     string
 	linebreak bool
+	labelFor  string
 }
 
 func (c *mutText) Add(view mutView) {
@@ -208,7 +212,12 @@ func (c *mutText) Add(view mutView) {
 }
 
 func (c *mutText) Render(wnd core.Window) core.View {
-	return ui.Text(c.value).LineBreak(c.linebreak)
+	text := ui.Text(c.value).LineBreak(c.linebreak)
+	if c.labelFor != "" {
+		return text.LabelFor(c.labelFor)
+	}
+
+	return text
 }
 
 // mutTextLayout groups inline text fragments into a paragraph.

@@ -23,6 +23,12 @@ const (
 
 	OnboardingCode        template.DefinedTemplateName = "OnboardingCode"
 	OnboardingCodeSubject template.DefinedTemplateName = "OnboardingCodeSubject"
+
+	RegistrationLink        template.DefinedTemplateName = "RegistrationLink"
+	RegistrationLinkSubject template.DefinedTemplateName = "RegistrationLinkSubject"
+
+	AlreadyRegistered        template.DefinedTemplateName = "AlreadyRegistered"
+	AlreadyRegisteredSubject template.DefinedTemplateName = "AlreadyRegisteredSubject"
 )
 
 //go:embed *.gohtml

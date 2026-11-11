@@ -515,3 +515,36 @@ func TestFlowChartActions(t *testing.T) {
 	w.Settle()
 	w.Find(nagotest.Text("node: a edge:  right: true"))
 }
+
+func TestMultiStepsStepperPositionLeading(t *testing.T) {
+	app := nagotest.New(t, func(cfg *application.Configurator) {
+		cfg.SetApplicationID("de.worldiety.nagotest")
+		cfg.RootView("wizard", func(wnd core.Window) core.View {
+			return form.MultiSteps(
+				form.Step(ui.Text("body 1")).Headline("one"),
+				form.Step(ui.Text("body 2")).Headline("two"),
+			).StepperPosition(form.StepperPositionLeading)
+		})
+	})
+
+	// the stepper and the body share a row, if there is room for it
+	beside := nagotest.And(
+		nagotest.Where("horizontal stack", func(n nagotest.Node) bool {
+			stack, ok := n.Component.(*proto.Stack)
+			return ok && stack.Orientation == proto.Horizontal
+		}),
+		nagotest.Containing(nagotest.Type[*proto.Stepper]()),
+		nagotest.Containing(nagotest.Text("body 1")),
+	)
+
+	wide := app.Open(t, nil, "wizard", nagotest.Size(1280, 800))
+	if wide.FindAll(beside).Len() == 0 {
+		t.Fatal("expected the stepper beside the body")
+	}
+
+	small := app.Open(t, nil, "wizard", nagotest.Size(375, 812))
+	small.Find(nagotest.Text("body 1"))
+	if small.FindAll(beside).Len() != 0 {
+		t.Fatal("expected the stepper above the body in a small window")
+	}
+}

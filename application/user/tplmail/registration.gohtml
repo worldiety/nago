@@ -1,0 +1,48 @@
+{{define "RegistrationLink"}}
+    {{template "header"}}
+    {{- /*gotype: go.wdy.de/nago/application/user/tplmail.RegistrationLinkModel*/ -}}
+                    <tr>
+                        <td class="wrapper">
+                            <p>Hallo,</p>
+
+                            <p>für {{.ApplicationName}} wurde ein Konto mit dieser E-Mail-Adresse angefragt.
+                                Öffne den folgenden Link, um Deine Angaben zu ergänzen und das Konto zu erstellen:</p>
+
+                            <p><a href="{{.RegisterURL}}">Konto jetzt erstellen</a></p>
+
+                            <p>Der Link ist {{.ValidHours}} Stunden gültig. Falls Du kein Konto angefragt hast, kannst
+                                Du diese E-Mail ignorieren.</p>
+                        </td>
+                    </tr>
+
+    {{template "footer"}}
+{{end}}
+
+{{define "RegistrationLinkSubject" -}}
+    Konto erstellen bei {{.ApplicationName}}
+{{- end}}
+
+{{define "AlreadyRegistered"}}
+    {{template "header"}}
+    {{- /*gotype: go.wdy.de/nago/application/user/tplmail.AlreadyRegisteredModel*/ -}}
+                    <tr>
+                        <td class="wrapper">
+                            <p>Hallo,</p>
+
+                            <p>für {{.ApplicationName}} wurde ein Konto mit dieser E-Mail-Adresse angefragt. Für diese
+                                Adresse gibt es bereits ein Konto, Du kannst Dich direkt anmelden:</p>
+
+                            <p><a href="{{.LoginURL}}">Zur Anmeldung</a></p>
+
+                            <p>Falls Du Dein Kennwort vergessen hast, nutze auf der Anmeldeseite die Funktion
+                                „Passwort vergessen“. Falls Du kein Konto angefragt hast, kannst Du diese E-Mail
+                                ignorieren.</p>
+                        </td>
+                    </tr>
+
+    {{template "footer"}}
+{{end}}
+
+{{define "AlreadyRegisteredSubject" -}}
+    Dein Konto bei {{.ApplicationName}}
+{{- end}}
