@@ -212,33 +212,78 @@ func findNextSync(buf []byte, from int) int {
 	return -1
 }
 
-// finalizeOrphanPending finalizes a pending chunk left over from a prior crash:
-// it scans the intact blocks to find the true min/max timestamps (skipping any
-// torn tail block via the CRC/sync-marker scan), then renames the file to its
-// final <min>_<max>.tsb name. ok is false if the pending chunk contains no
-// readable block (it is then skipped and left on disk).
-func finalizeOrphanPending(pool *ndb.FilePool, ci chunkInfo) (chunkInfo, bool) {
-	var minTs, maxTs int64
-	var have bool
-	var lastGoodEnd int64 = chunkHeaderLen
-	_ = scanChunkBlocks(pool, ci.path, func(frame []byte, h blockHeader) bool {
-		if !have || h.minMillis < minTs {
-			minTs = h.minMillis
+// recoverPendingChunk reads a pending chunk left by an earlier process, after
+// DB.Close or a crash, so that the column can continue it. Only intact blocks
+// count (sync marker, length and CRC match): rec carries their time bounds and
+// in sizeBytes the end of the last of them, points their number of points. A
+// torn tail block behind it is no data; the caller cuts it off before appending
+// (see truncatePendingChunk). A corrupt block between intact ones is skipped by
+// every read, as in a finalized chunk. ok is false if the chunk holds no intact
+// block; the file is then left on disk untouched.
+func recoverPendingChunk(pool *ndb.FilePool, ci chunkInfo) (rec chunkInfo, points int64, ok bool) {
+	fi, err := pool.Stat(ci.path)
+	if err != nil || fi.Size() <= chunkHeaderLen {
+		return chunkInfo{}, 0, false
+	}
+	buf := make([]byte, fi.Size()-chunkHeaderLen)
+	if _, err := pool.ReadAt(ci.path, buf, chunkHeaderLen); err != nil {
+		return chunkInfo{}, 0, false
+	}
+	rec = chunkInfo{path: ci.path, pending: true}
+	off := 0
+	for off < len(buf) {
+		h, err := parseBlockHeader(buf[off:])
+		if err != nil || !blockIntact(buf[off:], h) {
+			// forward-scan to the next sync marker, as scanChunkBlocksBuf does
+			next := findNextSync(buf, off+1)
+			if next < 0 {
+				break
+			}
+			off = next
+			continue
 		}
-		if !have || h.maxMillis > maxTs {
-			maxTs = h.maxMillis
+		if !ok || h.minMillis < rec.minMillis {
+			rec.minMillis = h.minMillis
 		}
-		have = true
-		lastGoodEnd += int64(h.frameLen)
-		return true
-	})
-	if !have {
+		if !ok || h.maxMillis > rec.maxMillis {
+			rec.maxMillis = h.maxMillis
+		}
+		ok = true
+		points += int64(h.count)
+		off += h.frameLen
+		rec.sizeBytes = chunkHeaderLen + int64(off)
+	}
+	if !ok {
+		return chunkInfo{}, 0, false
+	}
+	return rec, points, true
+}
+
+// truncatePendingChunk cuts a recovered pending chunk behind its last intact
+// block, so that the next block is appended right there and no torn rest stays
+// behind it in the file.
+func truncatePendingChunk(rec chunkInfo) error {
+	fi, err := os.Stat(rec.path)
+	if err != nil {
+		return fmt.Errorf("tsdb: stat pending chunk: %w", err)
+	}
+	if fi.Size() == rec.sizeBytes {
+		return nil
+	}
+	if err := os.Truncate(rec.path, rec.sizeBytes); err != nil {
+		return fmt.Errorf("tsdb: cut torn pending chunk: %w", err)
+	}
+	return nil
+}
+
+// finalizeRecoveredPending renames a recovered pending chunk, which the column
+// does not continue, to its final <min>_<max>.tsb name. ok is false if the
+// rename fails (the file is then skipped and left on disk).
+func finalizeRecoveredPending(pool *ndb.FilePool, rec chunkInfo) (chunkInfo, bool) {
+	finalPath := filepath.Join(filepath.Dir(rec.path), finalChunkName(rec.minMillis, rec.maxMillis))
+	pool.Evict(rec.path)
+	if err := os.Rename(rec.path, finalPath); err != nil {
 		return chunkInfo{}, false
 	}
-	finalPath := filepath.Join(filepath.Dir(ci.path), finalChunkName(minTs, maxTs))
-	pool.Evict(ci.path)
-	if err := os.Rename(ci.path, finalPath); err != nil {
-		return chunkInfo{}, false
-	}
-	return chunkInfo{path: finalPath, minMillis: minTs, maxMillis: maxTs, sizeBytes: lastGoodEnd}, true
+	return chunkInfo{path: finalPath, minMillis: rec.minMillis, maxMillis: rec.maxMillis, sizeBytes: rec.sizeBytes}, true
 }

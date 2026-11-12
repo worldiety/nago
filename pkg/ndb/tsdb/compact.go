@@ -82,7 +82,7 @@ func (c *compactor) drain() {
 		// re-check under lock: the head may have been reset by a concurrent
 		// synchronous Flush, and the column may have been dropped meanwhile.
 		if !col.dropped && col.needsFlush() {
-			if err := col.flushLocked(); err != nil {
+			if err := col.compactLocked(); err != nil {
 				slog.Error("tsdb: compaction failed", "bucket", col.bucket, "column", col.name, "err", err)
 			}
 		}

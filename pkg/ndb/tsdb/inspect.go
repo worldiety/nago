@@ -18,10 +18,11 @@ type ColumnStats struct {
 	// Scheme and Decimals are the column's immutable schema.
 	Scheme   Scheme
 	Decimals uint8
-	// Chunks is the number of sealed chunk files (the open pending chunk is not
-	// counted here; its data is still reflected in MaxMillis).
+	// Chunks is the number of chunk files, the open pending chunk included: it
+	// lives on over DB.Close and a restart until the split policy ends it.
 	Chunks int
-	// Bytes is the total on-disk size of the sealed chunks (finalized files).
+	// Bytes is the total on-disk size of the chunk files, of the pending chunk
+	// what is written to it so far (points in memory are not on disk yet).
 	Bytes int64
 	// MinMillis / MaxMillis bound the time range that currently holds data
 	// (inclusive, unix milliseconds). Valid only when HasData is true.
@@ -63,8 +64,15 @@ func (c *Column) Stats() ColumnStats {
 		setMin(ci.minMillis)
 		setMax(ci.maxMillis)
 	}
+	// The open pending chunk, with its points in memory, is the newest data.
+	if pc, ok := c.app.openChunk(); ok {
+		st.Chunks++
+		st.Bytes += pc.sizeBytes
+		setMin(pc.minMillis)
+		setMax(pc.maxMillis)
+	}
 
-	// The append buffer / head may hold data beyond the sealed chunks.
+	// The head may hold data beyond the chunks.
 	if hmin, ok := c.head.minTS(); ok {
 		setMin(hmin)
 	}

@@ -83,25 +83,28 @@ func openColumn(db *DB, bucket, name, dir string, schema Schema) (*Column, error
 		return nil, err
 	}
 	// validate headers of existing chunks; drop unreadable ones from the set.
-	// A leftover pending chunk (<min>_.tsb) from a prior crash is finalized here
-	// so appends resume cleanly and the tail is recovered up to the last intact
-	// block (torn tail blocks are skipped by the block CRC/sync-marker scan).
 	valid := chunks[:0]
+	var pending []chunkInfo
+	var pendingPts []int64
 	for _, ci := range chunks {
 		if err := validateChunkHeader(c.pool, ci.path); err != nil {
 			// leave the file on disk but skip it (house rule: keep operating)
 			continue
 		}
 		if ci.pending {
-			fci, ok := finalizeOrphanPending(c.pool, ci)
+			rec, points, ok := recoverPendingChunk(c.pool, ci)
 			if !ok {
 				continue // empty/unreadable pending: skip
 			}
-			ci = fci
+			pending = append(pending, rec)
+			pendingPts = append(pendingPts, points)
+			continue
 		}
 		valid = append(valid, ci)
 	}
 	c.chunks = valid
+	c.app.c = c
+	c.resumePending(pending, pendingPts)
 
 	if schema.Scheme == SchemeEnum {
 		d, err := openEnumDict(dir, c.pool)
@@ -116,18 +119,18 @@ func openColumn(db *DB, bucket, name, dir string, schema Schema) (*Column, error
 		return nil, err
 	}
 	c.head = h
-	c.app.c = c
 
-	// Recover curMax from the finalized chunk set and the head so the append
-	// fast-path routing is correct after reopen. Any leftover pending chunk from
-	// a prior crash is left on disk as a finalized-name-less file and will be
-	// picked up by listChunks only once renamed; to keep recovery simple we scan
-	// the finalized chunks (which listChunks already returned) for the max.
+	// Recover curMax from the finalized chunk set, the continued pending chunk
+	// and the head so the append fast-path routing is correct after reopen.
 	for _, ci := range c.chunks {
 		if !c.haveCurMax || ci.maxMillis > c.curMax {
 			c.curMax = ci.maxMillis
 			c.haveCurMax = true
 		}
+	}
+	if pc, ok := c.app.pendingChunk(); ok && (!c.haveCurMax || pc.maxMillis > c.curMax) {
+		c.curMax = pc.maxMillis
+		c.haveCurMax = true
 	}
 	if hmax, ok := c.head.maxTS(); ok {
 		if !c.haveCurMax || hmax > c.curMax {
@@ -136,6 +139,37 @@ func openColumn(db *DB, bucket, name, dir string, schema Schema) (*Column, error
 		}
 	}
 	return c, nil
+}
+
+// resumePending lets the appender continue the pending chunk, which an earlier
+// process left open by DB.Close or a crash, so that a restart does not begin a
+// new chunk file: its intact blocks stay, a torn tail block is cut off, and the
+// split policy ends it as if the process had never stopped. Normally there is
+// at most one, holding the newest points. Any other pending chunk, and one with
+// a point not after every finalized chunk (it would not be the newest), is
+// finalized as before, so that reads keep their order. points holds the number
+// of points of each pending chunk. Called by openColumn only.
+func (c *Column) resumePending(pending []chunkInfo, points []int64) {
+	last := len(pending) - 1 // pending is in the order of listChunks: the newest is last
+	var newestBefore int64 = minInt64
+	for _, ci := range c.chunks {
+		newestBefore = max(newestBefore, ci.maxMillis)
+	}
+	for i, rec := range pending {
+		if i != last {
+			newestBefore = max(newestBefore, rec.maxMillis)
+		}
+	}
+	for i, rec := range pending {
+		if i == last && rec.minMillis > newestBefore && truncatePendingChunk(rec) == nil {
+			c.app.adopt(rec, points[i])
+			continue
+		}
+		if fci, ok := finalizeRecoveredPending(c.pool, rec); ok {
+			c.chunks = append(c.chunks, fci)
+		}
+	}
+	sort.Slice(c.chunks, func(i, j int) bool { return c.chunks[i].minMillis < c.chunks[j].minMillis })
 }
 
 // Schema returns the column's immutable schema.
@@ -319,7 +353,7 @@ func (c *Column) enforceHeadBound() {
 		c.mu.Lock()
 		// re-check under lock; a concurrent flush may have drained it already.
 		if c.head.len() >= c.db.opts.MaxHeadPoints {
-			_ = c.flushLocked()
+			_ = c.compactLocked()
 		}
 		c.mu.Unlock()
 		return
@@ -667,17 +701,37 @@ func (c *Column) emitMerged(min, max int64, chunks []chunkInfo, headEntries []he
 }
 
 // flushLocked makes all buffered/append data durable and folds the out-of-order
-// head into sealed chunks. Caller holds c.mu. Two parts:
+// head into sealed chunks, for Column.Flush. Caller holds c.mu. Two parts:
 //
 //  1. The append fast-path pending chunk is finalized so its tail is on disk.
 //  2. If the head holds out-of-order corrections, the overlapping chunks are
 //     rewritten to physically apply overwrites/tombstones, then the head resets.
-func (c *Column) flushLocked() error {
+func (c *Column) flushLocked() error { return c.foldLocked(true) }
+
+// compactLocked is flushLocked without finalizing the pending chunk, for
+// DB.Close and for the compaction of the head, so that only the split policy
+// (and an explicit Column.Flush) ends a chunk, and the next open continues it:
+//
+//  1. The buffered tail is written into the pending chunk as a block, as by Sync.
+//  2. The head is folded as in flushLocked. If it reaches into the pending chunk,
+//     that chunk is rewritten with it, and the newest of the rewritten chunks
+//     stays open as the new pending chunk; otherwise the pending chunk is not
+//     touched.
+//
+// Caller holds c.mu.
+func (c *Column) compactLocked() error { return c.foldLocked(false) }
+
+// foldLocked is flushLocked (finalize) or compactLocked (!finalize).
+func (c *Column) foldLocked(finalize bool) error {
 	if c.dropped {
 		return errColumnGone
 	}
-	// Part 1: finalize the monotonic append pending chunk (cheap, no rewrite).
-	if err := c.app.flush(); err != nil {
+	// Part 1: the monotonic append tail (cheap, no rewrite).
+	if finalize {
+		if err := c.app.flush(); err != nil {
+			return err
+		}
+	} else if err := c.app.sealBlock(); err != nil {
 		return err
 	}
 
@@ -700,6 +754,13 @@ func (c *Column) flushLocked() error {
 	}
 
 	overlap := c.chunksOverlapping(hmin, hmax)
+	// A pending chunk is only left here for compactLocked. It holds the newest
+	// points, so the head reaches into it exactly when hmax is not before it.
+	pc, rewritePending := c.app.pendingChunk()
+	rewritePending = rewritePending && hmax >= pc.minMillis
+	if rewritePending {
+		overlap = append(overlap, pc)
+	}
 
 	// Expand the rewrite window to the full extent of the overlapping chunks so
 	// that points inside those chunks but outside the head's span are carried
@@ -717,8 +778,11 @@ func (c *Column) flushLocked() error {
 	// sealed chunks + head (head wins, tombstones drop).
 	merged := map[int64]mergedPoint{}
 	var bd blockData
+	var fileBuf []byte
 	for _, ci := range overlap {
-		if err := scanChunkBlocks(c.pool, ci.path, func(frame []byte, h blockHeader) bool {
+		// sizeBytes bounds the read like on the read path: a pending chunk is valid
+		// up to what the appender has written to it.
+		if err := scanChunkBlocksBuf(c.pool, ci.path, ci.sizeBytes, &fileBuf, func(frame []byte, h blockHeader) bool {
 			if decodeBlockBody(frame, h, c.schema.Scheme, &bd) != nil {
 				return true
 			}
@@ -755,11 +819,18 @@ func (c *Column) flushLocked() error {
 			return fmt.Errorf("tsdb: remove old chunk: %w", err)
 		}
 	}
+	if rewritePending {
+		c.app.forgetPending()
+	}
 
-	// write new chunk files for the merged range, respecting the split policy
-	newChunks, err := c.writeChunks(order, merged)
+	// write new chunk files for the merged range, respecting the split policy;
+	// the newest of them stays open in place of a rewritten pending chunk
+	newChunks, open, openPts, err := c.writeChunks(order, merged, rewritePending)
 	if err != nil {
 		return err
+	}
+	if openPts > 0 {
+		c.app.adopt(open, openPts)
 	}
 
 	kept := make([]chunkInfo, 0, len(c.chunks))
@@ -787,16 +858,17 @@ func sealedPoint(bd *blockData, s Scheme, i int) mergedPoint {
 }
 
 // writeChunks writes the ordered points into new chunk files, sealing per the
-// split policy, and returns the created chunkInfos.
-func (c *Column) writeChunks(order []int64, merged map[int64]mergedPoint) ([]chunkInfo, error) {
-	var out []chunkInfo
+// split policy, and returns the created chunkInfos. With keepOpen the last chunk
+// is not finalized: it is returned as open with its number of points (0 for no
+// points), for the appender to continue, and is not part of out.
+func (c *Column) writeChunks(order []int64, merged map[int64]mergedPoint, keepOpen bool) (out []chunkInfo, open chunkInfo, openPoints int64, err error) {
 	i := 0
 	for i < len(order) {
 		startTs := order[i]
 		name := pendingChunkName(startTs)
 		path := filepath.Join(c.dir, name)
 		if err := writeChunkHeader(c.pool, path); err != nil {
-			return nil, err
+			return nil, chunkInfo{}, 0, err
 		}
 		var fileOff int64 = chunkHeaderLen
 		var points int64
@@ -848,12 +920,18 @@ func (c *Column) writeChunks(order []int64, merged map[int64]mergedPoint) ([]chu
 			i++
 			if bd.count() >= c.db.opts.BlockPoints {
 				if err := flushBlock(); err != nil {
-					return nil, err
+					return nil, chunkInfo{}, 0, err
 				}
 			}
 		}
 		if err := flushBlock(); err != nil {
-			return nil, err
+			return nil, chunkInfo{}, 0, err
+		}
+
+		if keepOpen && i == len(order) {
+			// the newest chunk stays pending under its <min>_.tsb name
+			open = chunkInfo{path: path, minMillis: startTs, maxMillis: lastTs, pending: true, sizeBytes: fileOff}
+			return out, open, points, nil
 		}
 
 		// finalize: rename pending -> final with true min/max
@@ -861,12 +939,12 @@ func (c *Column) writeChunks(order []int64, merged map[int64]mergedPoint) ([]chu
 		finalPath := filepath.Join(c.dir, finalName)
 		c.pool.Evict(path)
 		if err := os.Rename(path, finalPath); err != nil {
-			return nil, fmt.Errorf("tsdb: finalize chunk: %w", err)
+			return nil, chunkInfo{}, 0, fmt.Errorf("tsdb: finalize chunk: %w", err)
 		}
 		out = append(out, chunkInfo{path: finalPath, minMillis: startTs, maxMillis: lastTs, sizeBytes: fileOff})
 		_ = sealed
 	}
-	return out, nil
+	return out, chunkInfo{}, 0, nil
 }
 
 func (c *Column) close() error {

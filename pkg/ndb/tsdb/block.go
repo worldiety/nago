@@ -200,9 +200,7 @@ func parseBlockHeader(buf []byte) (blockHeader, error) {
 // interface and no per-block temporary. bd.decompBuf is reused for compressed
 // blocks so decompression allocates at most once per column read (grow-once).
 func decodeBlockBody(buf []byte, h blockHeader, s Scheme, bd *blockData) error {
-	crcRegion := buf[blkHeaderSz : blkHeaderSz+blkPreBodySz+h.bodyLen]
-	want := binary.LittleEndian.Uint32(buf[h.frameLen-blkCRC : h.frameLen])
-	if crc32.ChecksumIEEE(crcRegion) != want {
+	if !blockIntact(buf, h) {
 		return errCorruptBlock
 	}
 	body := buf[h.bodyOff : h.bodyOff+h.bodyLen]
@@ -242,6 +240,15 @@ func decodeBlockBody(buf []byte, h blockHeader, s Scheme, bd *blockData) error {
 		return errCorruptBlock
 	}
 	return nil
+}
+
+// blockIntact reports whether the CRC of the frame in buf (at least h.frameLen
+// long) matches, i.e. whether the block was written completely and has not
+// changed since. A block torn by a crash fails here even if its length fits.
+func blockIntact(buf []byte, h blockHeader) bool {
+	crcRegion := buf[blkHeaderSz : blkHeaderSz+blkPreBodySz+h.bodyLen]
+	want := binary.LittleEndian.Uint32(buf[h.frameLen-blkCRC : h.frameLen])
+	return crc32.ChecksumIEEE(crcRegion) == want
 }
 
 func writeU64(b *xbytes.Buffer, v uint64) {

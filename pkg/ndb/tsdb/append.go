@@ -30,7 +30,10 @@ import (
 // Durability follows the no-fsync house rule: the not-yet-sealed block lives in
 // memory and is lost on a hard crash; sealed blocks and finalized chunks are
 // durable. Callers needing the tail on disk call Column.Sync, which leaves the
-// pending chunk open, or Column.Flush, which finalizes it.
+// pending chunk open, or Column.Flush, which finalizes it. DB.Close leaves it
+// open as well, and the next open of the column continues it (see adopt), so
+// only the split policy ends a chunk of a monotonic column, however often the
+// process restarts.
 type appender struct {
 	c *Column
 
@@ -114,6 +117,29 @@ func (a *appender) openPending(minTs int64) error {
 	return nil
 }
 
+// adopt makes the open chunk ci, which holds points points in sealed blocks up to
+// ci.sizeBytes, the pending chunk, so that the next appends continue it instead of
+// beginning a new file. The split policy is asked before the next point, as after
+// a Sync. Used for a pending chunk of an earlier process and for the open rest of
+// a rewrite in Close. Caller holds c.mu or is opening the column.
+func (a *appender) adopt(ci chunkInfo, points int64) {
+	a.pendingPath = ci.path
+	a.pendingMin = ci.minMillis
+	a.pendingMax = ci.maxMillis
+	a.pendingOff = ci.sizeBytes
+	a.pendingPts = points
+}
+
+// forgetPending drops the state of the pending chunk and the points in memory,
+// whose file the caller has removed. Caller holds c.mu.
+func (a *appender) forgetPending() {
+	a.pendingPath = ""
+	a.pendingPts = 0
+	a.buf.ts = a.buf.ts[:0]
+	a.buf.vals = a.buf.vals[:0]
+	a.buf.strs = a.buf.strs[:0]
+}
+
 // sealBlock encodes the in-memory buffer into a block and appends it to the
 // pending chunk file, then clears the buffer.
 func (a *appender) sealBlock() error {
@@ -185,11 +211,7 @@ func (a *appender) dropIfBefore(ts int64) (bool, error) {
 	if err := os.Remove(a.pendingPath); err != nil && !os.IsNotExist(err) {
 		return false, fmt.Errorf("tsdb: remove pending chunk: %w", err)
 	}
-	a.pendingPath = ""
-	a.pendingPts = 0
-	a.buf.ts = a.buf.ts[:0]
-	a.buf.vals = a.buf.vals[:0]
-	a.buf.strs = a.buf.strs[:0]
+	a.forgetPending()
 	return true, nil
 }
 
@@ -201,6 +223,23 @@ func (a *appender) dropIfBefore(ts int64) (bool, error) {
 // sealed block; points still in the in-memory buffer are read separately.
 func (a *appender) pendingChunk() (chunkInfo, bool) {
 	if a.pendingPath == "" || a.pendingPts == 0 {
+		return chunkInfo{}, false
+	}
+	return chunkInfo{
+		path:      a.pendingPath,
+		minMillis: a.pendingMin,
+		maxMillis: a.pendingMax,
+		pending:   true,
+		sizeBytes: a.pendingOff,
+	}, true
+}
+
+// openChunk describes the open pending chunk for the statistics: its bounds
+// include the points still in memory and sizeBytes is what its file holds so
+// far. ok is false when there is no pending chunk. A pending chunk always holds
+// at least one point, sealed or in memory.
+func (a *appender) openChunk() (chunkInfo, bool) {
+	if a.pendingPath == "" {
 		return chunkInfo{}, false
 	}
 	return chunkInfo{

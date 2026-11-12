@@ -22,7 +22,7 @@ It registers itself with `ndb` under the engine kind `"tsdb"` and shares the
       enum.dict                 # append-only enum dictionary (enum scheme)
       head.wal                  # out-of-order corrections log
       1700000000000_1700019999980.tsb   # finalized chunk: <minMillis>_<maxMillis>
-      1700020000000_.tsb                 # pending (open) chunk
+      1700020000000_.tsb                 # pending (open) chunk, continued across restarts
 ```
 
 * **Bucket / column** — the only grouping. Each column is a single typed signal
@@ -37,6 +37,12 @@ It registers itself with `ndb` under the engine kind `"tsdb"` and shares the
   without opening them. The naming is **timezone-free**; any calendar
   interpretation lives only inside the pluggable `SplitFunc` partitioning policy
   (default: German-quarter *or* 64 MiB, whichever first).
+* **Pending chunk** — each column has at most one open chunk `<minMillis>_.tsb`,
+  which holds its newest points. The append path adds blocks to it until the
+  split policy finalizes it under its `<minMillis>_<maxMillis>` name; from then
+  on it is immutable like every finalized chunk. `Column.Sync`, `DB.Close` and a
+  restart leave it open, so a process that starts once a day does not begin a
+  new file per column and day. Only `Column.Flush` finalizes it early.
 
 ## Encoding
 
@@ -240,6 +246,17 @@ recovery; temp-file + atomic-rename for schema, dictionary, and compaction;
 single-process `flock`; monotonic ids never reused. The not-yet-sealed append
 tail block lives in memory and is lost on a hard crash; `Column.Sync` writes it
 into the open pending chunk as a block of its own, without finalizing the chunk,
-so a fixed rhythm of syncs does not add a file each time. A pending chunk left
-over from a crash is finalized on the next open, recovering all intact blocks and
-dropping any torn tail block.
+so a fixed rhythm of syncs does not add a file each time. `DB.Close` does the
+same for every column and folds the head into chunks; a head that reaches into
+the pending chunk rewrites that chunk, and the newest of the rewritten chunks
+stays open. The background compaction of the head works the same way.
+
+The next open continues the pending chunk, whether `DB.Close` or a crash left it:
+it is taken up to its last intact block (sync marker, length and CRC), a torn
+tail behind it is cut off, and appends go on in the same file until the split
+policy finalizes it. No intact point is lost and the torn rest does not count.
+Should a column hold more than one pending chunk with intact blocks, only the
+newest is continued and the others are finalized, as is a pending chunk whose
+points are not newer than every finalized chunk, so that reads keep their order.
+Retention (`DropBefore`) removes a continued pending chunk like any other, only
+as a whole and only when all its points, in memory or on disk, are too old.

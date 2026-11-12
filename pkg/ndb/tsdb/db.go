@@ -265,8 +265,9 @@ func (db *DB) forget(key string) error {
 }
 
 // Flush forces a synchronous flush + compaction of the given column, folding
-// its head into sealed chunks and reclaiming space. Useful right after a known
-// bulk rewrite.
+// its head into sealed chunks and reclaiming space. Unlike Sync, DB.Close and the
+// background compaction, it also finalizes the open pending chunk, so that the
+// next point begins a new chunk file. Useful right after a known bulk rewrite.
 func (c *Column) Flush() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -277,9 +278,9 @@ func (c *Column) Flush() error {
 // pending chunk, without finalizing that chunk and without starting a new one,
 // so it can be called in a fixed rhythm: however often it runs, the column keeps
 // its one open chunk file and only the split policy ends it. After a crash of the
-// process, the next open recovers every point written by a Sync (a pending chunk
-// is finalized there). No fsync is done (see the durability model in the README),
-// and a split policy is asked at the first append after a Sync, because the block
+// process, the next open recovers every point written by a Sync and continues the
+// pending chunk. No fsync is done (see the durability model in the README), and a
+// split policy is asked at the first append after a Sync, because the block
 // buffer is empty then. With nothing buffered, Sync writes nothing. Out-of-order
 // points are not affected: they are in the write-ahead log of the head already.
 func (c *Column) Sync() error {
@@ -291,8 +292,13 @@ func (c *Column) Sync() error {
 	return c.app.sealBlock()
 }
 
-// Close flushes all columns, stops the compactor, and releases the lock. The
-// shared FilePool is owned by ndb and is not closed here.
+// Close writes the buffered points of every column into its open pending chunk,
+// folds the head of every column into chunks, stops the compactor, and releases
+// the lock. It does not finalize a pending chunk: the next Open continues it, so
+// that only the split policy ends a chunk and a restart does not begin a new file
+// per column. Only a head reaching into the pending chunk rewrites it, and the
+// newest of the rewritten chunks stays open. The shared FilePool is owned by ndb
+// and is not closed here.
 func (db *DB) Close() error {
 	if !db.closed.CompareAndSwap(false, true) {
 		return nil // already closed
@@ -312,7 +318,7 @@ func (db *DB) Close() error {
 	var firstErr error
 	for _, c := range cols {
 		c.mu.Lock()
-		if err := c.flushLocked(); err != nil && firstErr == nil {
+		if err := c.compactLocked(); err != nil && firstErr == nil {
 			firstErr = err
 		}
 		if err := c.close(); err != nil && firstErr == nil {
