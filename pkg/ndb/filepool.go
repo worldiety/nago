@@ -49,6 +49,12 @@ type poolShard struct {
 type poolEntry struct {
 	path string
 	file *os.File
+	// refs counts the reads, writes and stats running on file. An entry, which leaves the pool while refs > 0, is
+	// marked evicted, and the last of these operations closes the file, so that no operation finds its handle closed by
+	// another path of the same shard. The pool may therefore hold more open files than maxOpen for as long as such
+	// operations run, at most one per operation.
+	refs    int
+	evicted bool
 }
 
 // NewFilePool creates a FilePool that keeps at most maxOpen files open
@@ -106,13 +112,14 @@ func (p *FilePool) shardFor(path string) *poolShard {
 	return p.shards[h.Sum64()&p.mask]
 }
 
-// get returns a cached or freshly opened *os.File for path.
-// flags are passed to os.OpenFile (e.g. os.O_RDWR or os.O_RDWR|os.O_CREATE).
-// Caller must hold s.mu.
-func (s *poolShard) get(path string, flags int) (*os.File, error) {
+// acquire returns the entry of path, cached or freshly opened, with a reference for one operation, which release
+// ends. flags are passed to os.OpenFile (e.g. os.O_RDWR or os.O_RDWR|os.O_CREATE). Caller must hold s.mu.
+func (s *poolShard) acquire(path string, flags int) (*poolEntry, error) {
 	if elem, ok := s.files[path]; ok {
 		s.lru.MoveToFront(elem)
-		return elem.Value.(*poolEntry).file, nil
+		e := elem.Value.(*poolEntry)
+		e.refs++
+		return e, nil
 	}
 
 	// evict least recently used handles until we are below the limit
@@ -121,10 +128,7 @@ func (s *poolShard) get(path string, flags int) (*os.File, error) {
 		if back == nil {
 			break
 		}
-		evict := back.Value.(*poolEntry)
-		evict.file.Close()
-		delete(s.files, evict.path)
-		s.lru.Remove(back)
+		_ = s.drop(back)
 	}
 
 	f, err := os.OpenFile(path, flags, 0644)
@@ -132,36 +136,73 @@ func (s *poolShard) get(path string, flags int) (*os.File, error) {
 		return nil, err
 	}
 
-	entry := &poolEntry{path: path, file: f}
+	entry := &poolEntry{path: path, file: f, refs: 1}
 	elem := s.lru.PushFront(entry)
 	s.files[path] = elem
-	return f, nil
+	return entry, nil
+}
+
+// drop removes elem from the pool and closes its file, or leaves the close to the last running operation on it.
+// Caller must hold s.mu.
+func (s *poolShard) drop(elem *list.Element) error {
+	e := elem.Value.(*poolEntry)
+	delete(s.files, e.path)
+	s.lru.Remove(elem)
+	if e.refs > 0 {
+		e.evicted = true
+		return nil
+	}
+	return e.file.Close()
+}
+
+// release ends the operation of acquire and closes the file of an entry, which left the pool meanwhile, after its last
+// operation. Caller must hold s.mu.
+func (s *poolShard) release(e *poolEntry) {
+	e.refs--
+	if e.refs == 0 && e.evicted {
+		_ = e.file.Close()
+	}
+}
+
+// with runs op on the file of path, which the pool does not close until op returns.
+func (p *FilePool) with(path string, flags int, what string, op func(f *os.File) error) error {
+	s := p.shardFor(path)
+	s.mu.Lock()
+	e, err := s.acquire(path, flags)
+	s.mu.Unlock()
+	if err != nil {
+		return fmt.Errorf("filepool: open %s for %s: %w", path, what, err)
+	}
+	defer func() {
+		s.mu.Lock()
+		s.release(e)
+		s.mu.Unlock()
+	}()
+	return op(e.file)
 }
 
 // ReadAt reads len(buf) bytes from the file at path starting at byte offset off.
 // The file is opened on first access and kept in the pool for reuse.
 func (p *FilePool) ReadAt(path string, buf []byte, off int64) (int, error) {
-	s := p.shardFor(path)
-	s.mu.Lock()
-	f, err := s.get(path, os.O_RDWR)
-	s.mu.Unlock()
-	if err != nil {
-		return 0, fmt.Errorf("filepool: open %s for read: %w", path, err)
-	}
-	return f.ReadAt(buf, off)
+	var n int
+	err := p.with(path, os.O_RDWR, "read", func(f *os.File) error {
+		var err error
+		n, err = f.ReadAt(buf, off)
+		return err
+	})
+	return n, err
 }
 
 // WriteAt writes len(buf) bytes to the file at path starting at byte offset off.
 // The file is created if it does not exist.
 func (p *FilePool) WriteAt(path string, buf []byte, off int64) (int, error) {
-	s := p.shardFor(path)
-	s.mu.Lock()
-	f, err := s.get(path, os.O_RDWR|os.O_CREATE)
-	s.mu.Unlock()
-	if err != nil {
-		return 0, fmt.Errorf("filepool: open %s for write: %w", path, err)
-	}
-	return f.WriteAt(buf, off)
+	var n int
+	err := p.with(path, os.O_RDWR|os.O_CREATE, "write", func(f *os.File) error {
+		var err error
+		n, err = f.WriteAt(buf, off)
+		return err
+	})
+	return n, err
 }
 
 // Stat returns the FileInfo for the file at path.
@@ -169,17 +210,24 @@ func (p *FilePool) WriteAt(path string, buf []byte, off int64) (int, error) {
 func (p *FilePool) Stat(path string) (os.FileInfo, error) {
 	s := p.shardFor(path)
 	s.mu.Lock()
-	if elem, ok := s.files[path]; ok {
-		s.lru.MoveToFront(elem)
-		f := elem.Value.(*poolEntry).file
+	elem, ok := s.files[path]
+	if !ok {
 		s.mu.Unlock()
-		return f.Stat()
+		return os.Stat(path)
 	}
+	s.lru.MoveToFront(elem)
+	e := elem.Value.(*poolEntry)
+	e.refs++
 	s.mu.Unlock()
-	return os.Stat(path)
+	defer func() {
+		s.mu.Lock()
+		s.release(e)
+		s.mu.Unlock()
+	}()
+	return e.file.Stat()
 }
 
-// Evict closes and removes the file at path from the pool.
+// Evict closes and removes the file at path from the pool; a read or write running on it closes it when it ends.
 // This must be called before renaming or deleting a file so that stale
 // handles do not remain in the pool.
 func (p *FilePool) Evict(path string) {
@@ -187,9 +235,7 @@ func (p *FilePool) Evict(path string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if elem, ok := s.files[path]; ok {
-		elem.Value.(*poolEntry).file.Close()
-		delete(s.files, path)
-		s.lru.Remove(elem)
+		_ = s.drop(elem)
 	}
 }
 
@@ -199,12 +245,10 @@ func (p *FilePool) Close() error {
 	for _, s := range p.shards {
 		s.mu.Lock()
 		for _, elem := range s.files {
-			if err := elem.Value.(*poolEntry).file.Close(); err != nil && firstErr == nil {
+			if err := s.drop(elem); err != nil && firstErr == nil {
 				firstErr = err
 			}
 		}
-		s.files = make(map[string]*list.Element)
-		s.lru.Init()
 		s.mu.Unlock()
 	}
 	return firstErr
