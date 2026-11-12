@@ -842,7 +842,8 @@ func (c *Column) foldLocked(finalize bool) error {
 	c.chunks = append(kept, newChunks...)
 	sort.Slice(c.chunks, func(i, j int) bool { return c.chunks[i].minMillis < c.chunks[j].minMillis })
 
-	return c.head.reset()
+	// only what the snapshot held: a correction written meanwhile stays in the head
+	return c.head.resetFolded(foldMark(headEntries))
 }
 
 type mergedPoint struct {
