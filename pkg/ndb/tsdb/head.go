@@ -48,10 +48,12 @@ type head struct {
 	pool   *ndb.FilePool
 	scheme Scheme
 
-	mu    sync.RWMutex
-	tree  *btree.BTreeG[headEntry]
-	wal   *os.File
-	walSz int64
+	mu   sync.RWMutex
+	tree *btree.BTreeG[headEntry]
+	// closed is set by close; the WAL itself has no handle of its own, it is read and written through the shared
+	// FilePool like every chunk, so that an open column holds no descriptor outside the pool
+	closed bool
+	walSz  int64
 	// bytesLogged is the raw payload volume appended since the last flush to a
 	// chunk; used by the compaction threshold.
 	bytesLogged int64
@@ -87,15 +89,13 @@ func openHead(dir string, pool *ndb.FilePool, scheme Scheme) (*head, error) {
 	if err := h.replay(); err != nil {
 		return nil, err
 	}
-	f, err := os.OpenFile(h.path, os.O_RDWR|os.O_CREATE, 0644)
-	if err != nil {
-		return nil, fmt.Errorf("tsdb: open head wal: %w", err)
+	if _, err := os.Stat(h.path); os.IsNotExist(err) {
+		if err := os.WriteFile(h.path, nil, 0644); err != nil {
+			return nil, fmt.Errorf("tsdb: create head wal: %w", err)
+		}
+	} else if err != nil {
+		return nil, fmt.Errorf("tsdb: stat head wal: %w", err)
 	}
-	if _, err := f.Seek(h.walSz, 0); err != nil {
-		f.Close()
-		return nil, fmt.Errorf("tsdb: seek head wal: %w", err)
-	}
-	h.wal = f
 	return h, nil
 }
 
@@ -220,11 +220,11 @@ func (h *head) append(e headEntry) error {
 	kind, payload := h.record(e)
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	if h.wal == nil {
+	if h.closed {
 		return errColumnGone
 	}
 	rec := frame(nil, kind, payload)
-	if _, err := h.wal.WriteAt(rec, h.walSz); err != nil {
+	if err := h.writeAt(rec, h.walSz); err != nil {
 		return fmt.Errorf("tsdb: append head wal: %w", err)
 	}
 	h.walSz += int64(len(rec))
@@ -352,11 +352,11 @@ func (h *head) resetFolded(mark uint64) error {
 			tombstones++
 		}
 	}
-	if err := h.wal.Truncate(0); err != nil {
+	if err := os.Truncate(h.path, 0); err != nil {
 		return fmt.Errorf("tsdb: truncate head wal: %w", err)
 	}
 	if len(wal) > 0 {
-		if _, err := h.wal.WriteAt(wal, 0); err != nil {
+		if err := h.writeAt(wal, 0); err != nil {
 			return fmt.Errorf("tsdb: rewrite head wal: %w", err)
 		}
 	}
@@ -370,10 +370,15 @@ func (h *head) resetFolded(mark uint64) error {
 func (h *head) close() error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	if h.wal != nil {
-		err := h.wal.Close()
-		h.wal = nil
-		return err
+	if !h.closed {
+		h.closed = true
+		h.pool.Evict(h.path)
 	}
 	return nil
+}
+
+// writeAt writes buf at off of the WAL through the pool, which keeps the handle open for the write.
+func (h *head) writeAt(buf []byte, off int64) error {
+	_, err := h.pool.WriteAt(h.path, buf, off)
+	return err
 }
