@@ -44,3 +44,16 @@ type OnboardingCodeModel struct {
 	ValidMinutes    int
 	ApplicationName string
 }
+
+type RegistrationLinkModel struct {
+	Email           user.Email
+	RegisterURL     core.URI
+	ValidHours      int
+	ApplicationName string
+}
+
+type AlreadyRegisteredModel struct {
+	Email           user.Email
+	LoginURL        core.URI
+	ApplicationName string
+}

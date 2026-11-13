@@ -38,7 +38,9 @@ import (
 //   - Email verification and account activation notifications
 type UserManagement struct {
 	UseCases user.UseCases
-	Pages    uiuser.Pages
+	// Registration is the self registration, which starts with the mail address, see [user.Settings.SelfRegistration].
+	Registration user.Registration
+	Pages        uiuser.Pages
 }
 
 func (c *Configurator) UserManagement() (UserManagement, error) {
@@ -49,6 +51,11 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 		}
 
 		userRepo := data.NewNotifyRepository(nil, json.NewSloppyJSONRepository[user.User, user.ID](userStore))
+
+		registrationStore, err := c.EntityStore("nago.iam.user.registration")
+		if err != nil {
+			return UserManagement{}, fmt.Errorf("cannot get entity store: %w", err)
+		}
 
 		roleUseCases, err := c.RoleManagement()
 		if err != nil {
@@ -144,6 +151,15 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 
 		rdb.RegisterResources(c.userManagement.UseCases.Resources)
 
+		c.userManagement.Registration = user.NewRegistration(user.RegistrationOptions{}, user.RegistrationDeps{
+			Repository:        json.NewSloppyJSONRepository[user.RegistrationRequest, user.RegistrationID](registrationStore),
+			LoadGlobal:        sets.UseCases.LoadGlobal,
+			EMailUsed:         c.userManagement.UseCases.EMailUsed,
+			Create:            c.userManagement.UseCases.Create,
+			Deliver:           c.sendRegistrationLink,
+			DeliverRegistered: c.sendAlreadyRegistered,
+		})
+
 		c.RootViewWithDecoration(c.userManagement.Pages.MyProfile, func(wnd core.Window) core.View {
 			return layout.WithBackButton(wnd, uiuser.ProfilePage(
 				wnd,
@@ -198,7 +214,7 @@ func (c *Configurator) UserManagement() (UserManagement, error) {
 		})
 
 		c.RootView(c.userManagement.Pages.Register, func(wnd core.Window) core.View {
-			return uiuser.PageSelfRegister(wnd, c.userManagement.UseCases.EMailUsed, c.userManagement.UseCases.Create, c.sessionManagement.Pages.Login)
+			return uiuser.PageSelfRegister(wnd, c.userManagement.Registration, c.sessionManagement.Pages.Login, c.sessionManagement.UseCases.LoginUser, c.userManagement.UseCases.SubjectFromUser)
 		})
 
 		c.RootViewWithDecoration(c.userManagement.Pages.Users, func(wnd core.Window) core.View {

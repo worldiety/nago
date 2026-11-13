@@ -19,9 +19,10 @@ Management, which in turn enables [Role](../role_management/), [Permission](../p
 [Group](../group_management/), [Settings](../settings_management/) and [Image](../image_management/)
 Management.
 
-`application.UserManagement` has two fields:
+`application.UserManagement` has three fields:
 
 - `UseCases user.UseCases` (package `go.wdy.de/nago/application/user`)
+- `Registration user.Registration` with the use cases of the self-registration, see below
 - `Pages uiuser.Pages` with the paths `Users`, `MyProfile`, `MyContact`, `ConfirmMail`, `ResetPassword` and
   `Register`
 
@@ -40,7 +41,7 @@ Permissions of your own application are not included, assign them to the admin t
 
 | Use case                                                                 | Description                                                                         |
 |--------------------------------------------------------------------------|-------------------------------------------------------------------------------------|
-| `Create`                                                                 | Creates a user, also used by the self-registration.                                 |
+| `Create`                                                                 | Creates a user, also used at the end of the self-registration.                      |
 | `FindByID`, `FindByMail`, `FindAll`, `FindAllIdentifiers`, `CountUsers`  | Look up users.                                                                      |
 | `Delete`                                                                 | Deletes an account and publishes `user.Deleted`, so that modules can remove data.   |
 | `ChangeMyPassword`, `ChangeOtherPassword`, `ChangePasswordWithCode`      | Change the own password, another user's password, or reset it with a code.        |
@@ -92,6 +93,27 @@ self-registration, self-service password reset, allowed mail domains, default an
 the GDPR consents shown at registration and in the profile, required contact fields and the single sign-on
 via the Nago Login Service. See [Settings Management](../settings_management/).
 
+## Self-registration
+
+If `user.Settings.SelfRegistration` is on, the login page links to `account/register`. The registration starts
+with the mail address only:
+
+1. The visitor enters the mail address and gets a link by mail (`Registration.Request`). An address which is
+   already registered gets a notice which points to the login and the password reset instead, so the page does
+   not tell registered addresses apart.
+2. The link opens the rest of the registration on the same page: contact, password and a last step, which shows
+   the data together with the consents of `user.Settings.Consents` (`Registration.Find`).
+3. At the end, the account is created already verified, gets the default roles and groups and the session is
+   logged in (`Registration.Complete`). The link is used up.
+
+A link is valid for 24 hours, a new link makes the former one invalid. The links are limited per address, per
+session and for the whole instance. The requests are stored in `nago.iam.user.registration` and hold only the
+mail address and a salted hash of the code.
+
+The self-registration needs a working mail delivery, because the account is only created after the link has
+been opened. Instances which have been created by an older version lack the templates `RegistrationLink` and
+`AlreadyRegistered` in the mail template project and send a plain text mail instead.
+
 ## UI
 
 | Path                      | Page                                     |
@@ -99,7 +121,7 @@ via the Nago Login Service. See [Settings Management](../settings_management/).
 | `admin/accounts`          | user list for administrators             |
 | `account/profile`         | own profile                              |
 | `account/profile/contact` | own contact data                         |
-| `account/register`        | self-registration                        |
+| `account/register`        | self-registration, also opens the link   |
 | `account/confirm`         | mail confirmation                        |
 | `account/password/reset`  | password reset                           |
 

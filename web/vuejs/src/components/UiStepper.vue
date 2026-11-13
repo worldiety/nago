@@ -85,7 +85,12 @@ const ariaLabelStepper = computed<string>(() => {
 });
 
 const stepperContainerStyles = computed<string>(() => {
-	return `padding-left: ${bubbleSize.value / 2}px; padding-right: ${bubbleSize.value / 2}px;`;
+	const styles = `padding-left: ${bubbleSize.value / 2}px; padding-right: ${bubbleSize.value / 2}px;`;
+	// the bubbles and the texts of a vertical stepper are centered on the start of their step and would be clipped at
+	// the top, the texts are higher than the small bubbles of a simple list
+	if (isVertical.value || isSimpleList.value)
+		return `${styles} padding-top: ${Math.max(bubbleSize.value / 2, 10)}px;`;
+	return styles;
 });
 
 const stepperStyles = computed<string>(() => {
