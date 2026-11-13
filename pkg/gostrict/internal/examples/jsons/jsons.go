@@ -12,6 +12,7 @@ package jsons
 import (
 	"go.wdy.de/nago/pkg/gostrict/std/big"
 	"go.wdy.de/nago/pkg/gostrict/std/bin"
+	"go.wdy.de/nago/pkg/gostrict/std/decimal"
 	"go.wdy.de/nago/pkg/gostrict/std/dict"
 	"go.wdy.de/nago/pkg/gostrict/std/json"
 	"go.wdy.de/nago/pkg/gostrict/std/list"
@@ -227,4 +228,84 @@ func Points(n int32) (int64, error) {
 		return 0, err
 	}
 	return b.Len(), nil
+}
+
+// Price has decimals, which json reads from numbers and strings and writes as strings with their scale.
+type Price struct {
+	Net   decimal.Dec             `json:"net"`
+	Rates list.List[decimal.Dec]  `json:"rates"`
+	Tax   opt.Option[decimal.Dec] `json:"tax,omitempty"`
+}
+
+// Decimals reads a price and returns its decimals as text, their exact sum and the price written again.
+func Decimals(src string) (string, string, string, error) {
+	p, err := json.Decode[Price](bin.FromText(src))
+	if err != nil {
+		return "", "", "", err
+	}
+	parts := list.New[string]()
+	sum := p.Net
+	for _, r := range p.Rates.All() {
+		parts.Append(decimal.String(r))
+		sum = decimal.Add(sum, r)
+	}
+	b, err := json.Encode(p)
+	if err != nil {
+		return "", "", "", err
+	}
+	return decimal.String(p.Net) + "|" + text.Join(parts, ","), decimal.String(sum), b.Text(), nil
+}
+
+// Scaled writes the decimal m * 10^-s, also with a scale out of range, which only a literal creates.
+func Scaled(m string, s int32) (string, error) {
+	n, ok := big.Parse(m)
+	if !ok {
+		return "", nil
+	}
+	b, err := json.Encode(list.Of(decimal.Dec{M: n, S: s}))
+	if err != nil {
+		return "", err
+	}
+	return b.Text(), nil
+}
+
+// Envelope carries data of any type, which json reads and writes.
+type Envelope[T any] struct {
+	Kind string `json:"kind"`
+	Data T      `json:"data"`
+}
+
+func (e Envelope[T]) write() (string, error) {
+	b, err := json.Encode(e)
+	if err != nil {
+		return "", err
+	}
+	return b.Text(), nil
+}
+
+func read[T any](src string) (T, error) {
+	return json.Decode[T](bin.FromText(src))
+}
+
+// wrap reads an envelope through the generic function read and writes it again through the method of the generic type.
+func wrap[T any](kind, src string) (string, error) {
+	env, err := read[Envelope[T]](src)
+	if err != nil {
+		return "", err
+	}
+	env.Kind = kind
+	return env.write()
+}
+
+// Generic reads and writes documents of different types through generic functions.
+func Generic(points, price string) (string, string, error) {
+	a, err := wrap[list.List[Point]]("points", points)
+	if err != nil {
+		return "", "", err
+	}
+	b, err := wrap[Price]("price", price)
+	if err != nil {
+		return "", "", err
+	}
+	return a, b, nil
 }

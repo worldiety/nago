@@ -83,6 +83,30 @@ func (e *Encoder) Digits(s string) {
 	e.buf = append(e.buf, s...)
 }
 
+// Decimal writes the integer of digits, with an optional sign, scaled by 10^-scale as a string like decimal.String
+// does, with its scale clamped into 0..[MaxDecimalScale], e.g. "12.30" for "1230" and 2. A string keeps the digits and
+// the scale for every reader, also for one, which reads a number as a float, like JavaScript does.
+func (e *Encoder) Decimal(digits string, scale int32) {
+	scale = min(max(scale, 0), MaxDecimalScale)
+	e.buf = append(e.buf, '"')
+	if strings.HasPrefix(digits, "-") {
+		e.buf = append(e.buf, '-')
+		digits = digits[1:]
+	}
+	if scale > 0 {
+		// the whole part has at least one digit
+		if missing := int(scale) + 1 - len(digits); missing > 0 {
+			digits = strings.Repeat("0", missing) + digits
+		}
+		split := len(digits) - int(scale)
+		e.buf = append(e.buf, digits[:split]...)
+		e.buf = append(e.buf, '.')
+		digits = digits[split:]
+	}
+	e.buf = append(e.buf, digits...)
+	e.buf = append(e.buf, '"')
+}
+
 // Float writes a number like Number.prototype.toString of JavaScript, but -0 as -0.
 func (e *Encoder) Float(f float64) {
 	switch {

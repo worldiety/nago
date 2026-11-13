@@ -33,6 +33,7 @@ func Check(prog *Program) (res Diagnostics) {
 	}()
 
 	decls := funcDecls(prog)
+	demands := newJSONDemands()
 	for _, p := range prog.Packages {
 		if p.Kind == KindHeader && !strings.HasPrefix(p.Path, stdPrefix) {
 			checkHeader(p, d, decls)
@@ -46,6 +47,7 @@ func Check(prog *Program) (res Diagnostics) {
 			info:    p.Info,
 			d:       d,
 			decls:   decls,
+			json:    demands,
 			assigns: collectAssignments(p.Info, p.Files),
 			pairs:   map[types.Object]*pairInfo{},
 
@@ -70,6 +72,7 @@ func Check(prog *Program) (res Diagnostics) {
 		checkHandlers(prog.Main, d)
 	}
 	checkRecursion(prog, d, decls)
+	checkJSONInstances(prog, d, demands)
 	d.attachEdits()
 	return dropFollowUps(d.sorted())
 }
@@ -111,6 +114,8 @@ type checker struct {
 	writeAt token.Pos
 	// writes are the variables of the package, which change after their declaration, see [checker.concurrentWrites].
 	writes map[types.Object]token.Pos
+	// json are the type parameters of the program, which json reads or writes, see checkJSONInstances.
+	json *jsonDemands
 }
 
 func (c *checker) report(n ast.Node, code Code, msg, why, fix string) {
@@ -540,80 +545,6 @@ func (c *checker) checkCall(n *ast.CallExpr) {
 	default:
 		c.report(n, CodeBuiltin, b.Name()+" is not allowed", "the builtin is not part of the subset", "")
 	}
-}
-
-// checkJSON rejects a type of json.Decode or json.Encode, which it can not read or write, because each engine reads
-// and writes the type, which the program names, without a value in between.
-func (c *checker) checkJSON(n *ast.CallExpr) {
-	fun := ast.Unparen(n.Fun)
-	if ix, ok := fun.(*ast.IndexExpr); ok {
-		fun = ix.X
-	}
-	var id *ast.Ident
-	switch f := fun.(type) {
-	case *ast.SelectorExpr:
-		id = f.Sel
-	case *ast.Ident:
-		id = f
-	default:
-		return
-	}
-	fn, ok := c.info.Uses[id].(*types.Func)
-	if !ok || fn.Pkg() == nil || fn.Pkg().Path() != jsonPath || (fn.Name() != "Decode" && fn.Name() != "Encode") {
-		return
-	}
-	inst, ok := c.info.Instances[id]
-	if !ok || inst.TypeArgs.Len() != 1 {
-		return
-	}
-	t := inst.TypeArgs.At(0)
-	if why := jsonProblem(t, map[types.Type]bool{}); why != "" {
-		verb := "read"
-		if fn.Name() == "Encode" {
-			verb = "write"
-		}
-		c.report(n, CodeJSON, "json."+fn.Name()+" can not "+verb+" "+types.TypeString(t, types.RelativeTo(c.pkg.Types)), why,
-			"use bool, string, int32, uint32, int64, uint64, float64, big.Int, bin.Bytes, list.List, list.Frozen, dict.Map with string keys, opt.Option and structs of them, and name the type at the call")
-	}
-}
-
-// jsonProblem returns, why json.Decode can not read t, or "".
-func jsonProblem(t types.Type, seen map[types.Type]bool) string {
-	if _, ok := types.Unalias(t).(*types.TypeParam); ok {
-		return "the type parameter " + t.String() + " is not known, when the program is translated"
-	}
-	if n, ok := types.Unalias(t).(*types.Named); ok && n.Obj().Pkg() != nil {
-		targs := n.TypeArgs()
-		switch n.Obj().Pkg().Path() + "." + n.Obj().Name() {
-		case listPath + ".List", listPath + ".Frozen", optPath + ".Option":
-			return jsonProblem(targs.At(0), seen)
-		case dictPath + ".Map":
-			if basicKind(targs.At(0)) != types.String {
-				return "a key of an object is a string, but " + t.String() + " has other keys"
-			}
-			return jsonProblem(targs.At(1), seen)
-		case binPath + ".Bytes", bigPath + ".Int":
-			return ""
-		}
-	}
-	if isStruct(t) {
-		if seen[t] {
-			return ""
-		}
-		seen[t] = true
-		st := t.Underlying().(*types.Struct)
-		for i := range st.NumFields() {
-			if why := jsonProblem(st.Field(i).Type(), seen); why != "" {
-				return why
-			}
-		}
-		return ""
-	}
-	switch basicKind(t) {
-	case types.Bool, types.Int32, types.Uint32, types.Int64, types.Uint64, types.Float64, types.String:
-		return ""
-	}
-	return t.String() + " has no form in JSON"
 }
 
 func (c *checker) checkConversion(n *ast.CallExpr, to types.Type) {

@@ -1195,6 +1195,13 @@ function $j_value(d, td) {
 			return $j_base64(d);
 		case "n":
 			return $j_big(d);
+		case "d": {
+			const r = $j_decimal(d);
+			const o = t.z();
+			o[t.m] = r[0];
+			o[t.s] = r[1];
+			return o;
+		}
 		case "o":
 			return { v: $j_value(d, t.e) };
 		case "l": {
@@ -1404,6 +1411,83 @@ function $j_big(d) {
 		return 0n;
 	}
 	return BigInt($j_ascii(d.b, n[0], n[1]));
+}
+
+// $j_decimal reads a decimal like Decoder.Decimal of package core: a number or a string, which holds one, exactly, as
+// its integer and its scale
+function $j_decimal(d) {
+	if (d.e !== "") return [0n, 0];
+	$j_ws(d);
+	const start = d.p;
+	let text;
+	if (d.p < d.b.length && d.b[d.p] === 34) {
+		const str = $j_str(d, "a decimal");
+		if (str === null) return [0n, 0];
+		// the string holds a JSON number, nothing around it, not even white space
+		const b = [];
+		for (let i = 0; i < str.length; i++) b.push(str.charCodeAt(i));
+		const sub = { b: b, p: 0, depth: 0, e: "" };
+		let n = null;
+		if (b.length > 0 && (b[0] === 45 || (b[0] >= 48 && b[0] <= 57))) n = $j_number(sub, "a decimal");
+		if (n === null || sub.e !== "" || sub.p !== b.length) {
+			$j_fail(d, start, "expected a decimal");
+			return [0n, 0];
+		}
+		text = str;
+	} else {
+		const n = $j_number(d, "a decimal");
+		if (n === null || d.e !== "") return [0n, 0];
+		text = $j_ascii(d.b, n[0], n[1]);
+	}
+	const r = $j_decimalOf(text);
+	if (r === null) {
+		$j_fail(d, start, "number out of range");
+		return [0n, 0];
+	}
+	return r;
+}
+
+// $j_decimalOf returns the integer and the scale of a valid JSON number, or null, if it is out of range, see decimalOf
+// of package core
+function $j_decimalOf(text) {
+	let i = 0;
+	const neg = text.charCodeAt(0) === 45;
+	if (neg) i++;
+	const isDigit = (j) => j < text.length && text.charCodeAt(j) >= 48 && text.charCodeAt(j) <= 57;
+	let m = "";
+	while (isDigit(i)) m += text[i++];
+	let frac = 0;
+	if (i < text.length && text[i] === ".") {
+		i++;
+		while (isDigit(i)) {
+			m += text[i++];
+			frac++;
+		}
+	}
+	let exp = 0;
+	if (i < text.length) {
+		// e or E
+		i++;
+		let expNeg = false;
+		if (text[i] === "+" || text[i] === "-") {
+			expNeg = text[i] === "-";
+			i++;
+		}
+		for (; i < text.length; i++) {
+			exp = exp * 10 + (text.charCodeAt(i) - 48);
+			if (exp > 1048576) return null;
+		}
+		if (expNeg) exp = -exp;
+	}
+	let scale = frac - exp;
+	if (scale < 0) {
+		if (-scale > 1000) return null;
+		m += "0".repeat(-scale);
+		scale = 0;
+	}
+	if (scale > 1000) return null;
+	const v = BigInt(m);
+	return [neg ? -v : v, scale];
 }
 
 // $j_str reads a string or returns null. Each segment between escapes is decoded like bin.Bytes.Text.
@@ -1638,6 +1722,9 @@ function $je_value(e, v, td) {
 		case "y":
 			e.o.push('"' + $bin_base64(v) + '"');
 			return;
+		case "d":
+			$je_decimal(e, v[t.m], v[t.s]);
+			return;
 		case "o":
 			if (v === null) e.o.push("null");
 			else $je_value(e, v.v, t.e);
@@ -1686,6 +1773,23 @@ function $je_value(e, v, td) {
 		}
 	}
 	throw new Error("json: unknown type " + t.k);
+}
+
+// $je_decimal writes the integer m scaled by 10^-s as a string like decimal.String, with s clamped into 0..1000, see
+// Encoder.Decimal of package core
+function $je_decimal(e, m, s) {
+	s = Math.min(Math.max(s, 0), 1000);
+	let sign = "";
+	let digits = m.toString();
+	if (digits.startsWith("-")) {
+		sign = "-";
+		digits = digits.slice(1);
+	}
+	if (s > 0) {
+		if (digits.length < s + 1) digits = "0".repeat(s + 1 - digits.length) + digits;
+		digits = digits.slice(0, digits.length - s) + "." + digits.slice(digits.length - s);
+	}
+	e.o.push('"' + sign + digits + '"');
 }
 
 // $je_float writes like Number.prototype.toString, but -0 as -0

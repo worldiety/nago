@@ -13,8 +13,10 @@ import (
 
 	"go.wdy.de/nago/pkg/gostrict/std/big"
 	"go.wdy.de/nago/pkg/gostrict/std/bin"
+	"go.wdy.de/nago/pkg/gostrict/std/decimal"
 	"go.wdy.de/nago/pkg/gostrict/std/dict"
 	"go.wdy.de/nago/pkg/gostrict/std/json"
+	"go.wdy.de/nago/pkg/gostrict/std/json/core"
 	"go.wdy.de/nago/pkg/gostrict/std/list"
 	"go.wdy.de/nago/pkg/gostrict/std/opt"
 )
@@ -188,5 +190,42 @@ func TestEncodeRejectsNaN(t *testing.T) {
 		if err == nil || err.Error() != "json: unsupported value "+want || b.Len() != 0 {
 			t.Errorf("%v: got %q %v", f, b.Text(), err)
 		}
+	}
+}
+
+// The decoder bounds the scale like package decimal does.
+func TestDecimalScale(t *testing.T) {
+	if core.MaxDecimalScale != decimal.MaxScale {
+		t.Fatalf("core.MaxDecimalScale is %d, decimal.MaxScale %d", core.MaxDecimalScale, decimal.MaxScale)
+	}
+}
+
+// A decimal is read exactly from a number or a string and written as a string with its scale.
+func TestDecimal(t *testing.T) {
+	type price struct {
+		Net   decimal.Dec            `json:"net"`
+		Rates list.List[decimal.Dec] `json:"rates"`
+	}
+	p, err := json.Decode[price](bin.FromText(`{"net":"12.30","rates":[0.1,1.5e3,"-0.005"]}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := decimal.String(p.Net); got != "12.30" {
+		t.Fatalf("net = %s", got)
+	}
+	b, err := json.Encode(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := b.Text(), `{"net":"12.30","rates":["0.1","1500","-0.005"]}`; got != want {
+		t.Fatalf("encoded %s, want %s", got, want)
+	}
+
+	var zero price
+	if _, err := json.Decode[price](bin.FromText(`{"net":"1,5"}`)); err == nil || err.Error() != "json: expected a decimal at offset 7" {
+		t.Fatalf("err = %v", err)
+	}
+	if zero, err = json.Decode[price](bin.FromText(`{}`)); err != nil || decimal.String(zero.Net) != "0" || zero.Rates.Len() != 0 {
+		t.Fatalf("zero = %+v, %v", zero, err)
 	}
 }

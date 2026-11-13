@@ -24,7 +24,7 @@ import (
 var exports = map[string]gostrict.Funcs{
 	"money":   native.Reflect(map[string]any{"Calc": money.Calc, "Factorial": money.Factorial, "Ints": money.Ints, "Invoke": money.Invoice, "Invoice": money.Invoice, "Limits": money.Limits, "Parse": money.Parse, "Round": money.Round}),
 	"errs":    native.Reflect(map[string]any{"Average": errs.Average, "Run": errs.Run}),
-	"jsons":   native.Reflect(map[string]any{"Containers": jsons.Containers, "Encoded": jsons.Encoded, "Floats": jsons.Floats, "Nodes": jsons.Nodes, "Numbers": jsons.Numbers, "Points": jsons.Points, "Raw": jsons.Raw, "Scalars": jsons.Scalars, "Small": jsons.Small, "Sum": jsons.Sum, "Text": jsons.Text, "Values": jsons.Values, "Written": jsons.Written}),
+	"jsons":   native.Reflect(map[string]any{"Containers": jsons.Containers, "Decimals": jsons.Decimals, "Encoded": jsons.Encoded, "Generic": jsons.Generic, "Scaled": jsons.Scaled, "Floats": jsons.Floats, "Nodes": jsons.Nodes, "Numbers": jsons.Numbers, "Points": jsons.Points, "Raw": jsons.Raw, "Scalars": jsons.Scalars, "Small": jsons.Small, "Sum": jsons.Sum, "Text": jsons.Text, "Values": jsons.Values, "Written": jsons.Written}),
 	"binary":  native.Reflect(map[string]any{"Bits": binary.Bits, "Decode": binary.Decode, "Encode": binary.Encode, "Floats": binary.Floats, "Invalid": binary.Invalid, "LittleBits": binary.LittleBits, "Grow": binary.Grow, "Offsets": binary.Offsets, "Overrun": binary.Overrun, "Records": binary.Records, "Text": binary.Text}),
 	"ints":    native.Reflect(map[string]any{"Bits": ints.Bits, "Conv": ints.Conv, "Div": ints.Div, "DivU": ints.DivU, "Hash": ints.Hash, "Wrap": ints.Wrap, "Xorshift": ints.Xorshift}),
 	"physics": native.Reflect(map[string]any{"Simulate": physics.Simulate, "Speed": physics.Speed}),

@@ -16,9 +16,14 @@ import (
 	"sync"
 	"unsafe"
 
+	"go.wdy.de/nago/pkg/gostrict/std/big"
 	"go.wdy.de/nago/pkg/gostrict/std/bin"
+	"go.wdy.de/nago/pkg/gostrict/std/decimal"
 	"go.wdy.de/nago/pkg/gostrict/std/json/core"
 )
+
+// decimalType is decimal.Dec, which JSON reads and writes as a decimal number, not as its fields.
+var decimalType = reflect.TypeFor[decimal.Dec]()
 
 // decode is Decode in native Go. The register machine and JavaScript have their own, see package core.
 func decode[T any](data bin.Bytes) (T, error) {
@@ -109,6 +114,11 @@ func value(d *core.Decoder, v reflect.Value) {
 	}
 	if h, ok := hostOf[bigHost](t); ok {
 		v.Set(reflect.ValueOf(h.HostFromString(d.BigInt())))
+		return
+	}
+	if t == decimalType {
+		digits, scale := d.Decimal()
+		v.Set(reflect.ValueOf(decimal.Dec{M: big.Int{}.HostFromString(digits).(big.Int), S: scale}))
 		return
 	}
 
@@ -283,6 +293,9 @@ func write(e *core.Encoder, v reflect.Value) {
 		return
 	case bigValue:
 		e.Digits(h.HostString())
+		return
+	case decimal.Dec:
+		e.Decimal(h.M.HostString(), h.S)
 		return
 	}
 

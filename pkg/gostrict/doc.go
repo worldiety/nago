@@ -27,11 +27,13 @@
 //     rejected there. A Buffer has no limit, unless the host sets one, e.g. vm.Engine.MaxBuffer. bin.Decode reads a
 //     binary format field by field and reports a read beyond the end as its error.
 //   - json.Decode[T](data) of go.wdy.de/nago/pkg/gostrict/std/json reads JSON from a bin.Bytes, e.g. the body of a
-//     response, directly into T: bool, string, the integers, float64, big.Int, bin.Bytes as Base64, list.List, dict.Map
-//     with string keys, opt.Option and structs of them. A field takes the key of its tag json:"key" or its name,
-//     json:"-" leaves it out and other keys are skipped. A missing key or null leaves the zero value, an empty list
-//     and None of an option. An integer must fit its type and has no fraction. Name T at the call, e.g.
-//     json.Decode[Forecast](res.Body), not a type parameter; the error tells what is wrong at which offset.
+//     response, directly into T: bool, string, the integers, float64, big.Int, decimal.Dec, bin.Bytes as Base64,
+//     list.List, dict.Map with string keys, opt.Option and structs of them. A field takes the key of its tag
+//     json:"key" or its name, json:"-" leaves it out and other keys are skipped. A missing key or null leaves the zero
+//     value, an empty list and None of an option. An integer must fit its type and has no fraction. A decimal.Dec is
+//     read exactly from a number or a string, e.g. 12.30 or "12.30", and written as a string with its scale. T may be
+//     a type parameter, e.g. of func load[T any](b bin.Bytes) (T, error): every instantiation must name a type, which
+//     json can read, also through other generic functions; the error tells what is wrong at which offset.
 //     json.Encode(v) writes the same types as a compact bin.Bytes, e.g. the body of a request: the fields in their
 //     order, None as null, a field with json:"key,omitempty" not at all, if it is null, "", [] or {}. Its error tells
 //     about a float64, which is NaN or infinite.

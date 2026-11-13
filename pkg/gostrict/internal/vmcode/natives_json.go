@@ -17,7 +17,10 @@ import (
 	"go.wdy.de/nago/pkg/gostrict/std/json/core"
 )
 
-const jsonPath = stdPrefix + "json"
+const (
+	jsonPath    = stdPrefix + "json"
+	decimalPath = stdPrefix + "decimal"
+)
 
 func init() {
 	genericNatives[jsonPath+".Decode"] = jsonDecode
@@ -33,6 +36,16 @@ type jtype struct {
 	byName map[string]int
 	// keys are the exported fields with a key in their order, which json.Encode writes
 	keys []jkey
+	// dec is set for decimal.Dec, which JSON reads and writes as a decimal number, whose integer is the field at m and
+	// whose scale is the field at s
+	dec  bool
+	m, s layout
+}
+
+// isDecimal tells, whether t is decimal.Dec.
+func isDecimal(t types.Type) bool {
+	n, ok := types.Unalias(t).(*types.Named)
+	return ok && n.Obj().Pkg() != nil && n.Obj().Pkg().Path() == decimalPath && n.Obj().Name() == "Dec"
 }
 
 type jkey struct {
@@ -59,9 +72,16 @@ func jsonType(t *tinfo, memo map[*tinfo]*jtype) *jtype {
 	case kStruct, kShared:
 		st := t.t.Underlying().(*types.Struct)
 		jt.byName = map[string]int{}
+		jt.dec = isDecimal(t.t)
 		for i, f := range t.fields {
 			jt.fields = append(jt.fields, jfield{t: jsonType(f.t, memo), off: f.off})
 			sf := st.Field(i)
+			switch {
+			case jt.dec && sf.Name() == "M":
+				jt.m = f.off
+			case jt.dec && sf.Name() == "S":
+				jt.s = f.off
+			}
 			if !sf.Exported() {
 				continue
 			}
@@ -169,6 +189,12 @@ func jsonValue(d *core.Decoder, jt *jtype, n []uint64, s []string, r []any) {
 }
 
 func jsonRecord(d *core.Decoder, jt *jtype, n []uint64, s []string, r []any) {
+	if jt.dec {
+		digits, scale := d.Decimal()
+		r[jt.m.r] = bigParse(digits)
+		n[jt.s.n] = fromI32(scale)
+		return
+	}
 	jsonEmptyFields(jt, n, s, r)
 	if !d.Object() {
 		return
@@ -304,6 +330,10 @@ func jsonWrite(e *core.Encoder, jt *jtype, n []uint64, s []string, r []any) {
 }
 
 func jsonWriteFields(e *core.Encoder, jt *jtype, n []uint64, s []string, r []any) {
+	if jt.dec {
+		e.Decimal(bigString(r[jt.m.r]), int32(n[jt.s.n]))
+		return
+	}
 	e.Byte('{')
 	first := true
 	for _, k := range jt.keys {
