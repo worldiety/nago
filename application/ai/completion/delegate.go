@@ -101,6 +101,9 @@ type SubRunRequest struct {
 	Title string
 	// ParentCallID is the id of the tool call which started the task.
 	ParentCallID string
+	// TaskID identifies the task like [SubEvent.TaskID]: the background task id, or "<call id>/<index>" for the
+	// delegate tool. A runner relates the sub-agent it runs to the events and the result of its task by it.
+	TaskID string
 	// Completions runs the sub-agent. It retries rate limited requests on its own.
 	Completions Completions
 	// Options carries model, system prompt and token budget. Messages is empty; the first user turn is Input.
@@ -842,6 +845,7 @@ func (d *delegator) execute(parent context.Context, subject auth.Subject, p task
 	d.emit(SubEvent{Kind: SubRunning, TaskID: taskID, Title: p.title, Background: background, Timeout: d.cfg.SubTimeout})
 
 	req := p.req
+	req.TaskID = taskID
 	req.OnProgress = func(pr Progress) {
 		d.emit(SubEvent{Kind: SubProgressed, TaskID: taskID, Title: p.title, Background: background, Progress: &pr})
 	}
