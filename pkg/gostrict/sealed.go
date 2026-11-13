@@ -9,7 +9,6 @@ package gostrict
 
 import (
 	"go/constant"
-	gotoken "go/token"
 	"go/types"
 	"slices"
 	"strings"
@@ -46,39 +45,79 @@ func sealedVariants(t types.Type) ([]types.Type, bool) {
 	}
 
 	scope := n.Obj().Pkg().Scope()
-	var variants []types.Type
-	for _, name := range scope.Names() {
-		tn, ok := scope.Lookup(name).(*types.TypeName)
-		if !ok || tn.IsAlias() {
-			continue
+	refs := variantCache.get(n, func() []variantRef {
+		var variants []types.Type
+		for _, name := range scope.Names() {
+			v, ok := variantOf(scope, name, n)
+			if !ok {
+				continue
+			}
+			if _, isIface := v.Underlying().(*types.Interface); isIface {
+				continue
+			}
+			switch {
+			case types.Implements(v, iface):
+				variants = append(variants, v)
+			case types.Implements(types.NewPointer(v), iface):
+				variants = append(variants, types.NewPointer(v))
+			}
 		}
-		v, ok := tn.Type().(*types.Named)
+		slices.SortFunc(variants, func(a, b types.Type) int { return int(variantObj(a).Pos() - variantObj(b).Pos()) })
+		refs := make([]variantRef, 0, len(variants))
+		for _, v := range variants {
+			_, ptr := v.(*types.Pointer)
+			refs = append(refs, variantRef{name: variantObj(v).Name(), ptr: ptr})
+		}
+		return refs
+	})
+
+	variants := make([]types.Type, 0, len(refs))
+	for _, r := range refs {
+		v, ok := variantOf(scope, r.name, n)
 		if !ok {
 			continue
 		}
-		if v.TypeParams().Len() > 0 {
-			// a generic variant of a generic interface has its type arguments, e.g. Ok[T] of Result[T]
-			if v.TypeParams().Len() != n.TypeArgs().Len() {
-				continue
-			}
-			inst, err := types.Instantiate(nil, v, typeArgs(n.TypeArgs()), true)
-			if err != nil {
-				continue
-			}
-			v = inst.(*types.Named)
-		}
-		if _, isIface := v.Underlying().(*types.Interface); isIface {
-			continue
-		}
-		switch {
-		case types.Implements(v, iface):
-			variants = append(variants, v)
-		case types.Implements(types.NewPointer(v), iface):
+		if r.ptr {
 			variants = append(variants, types.NewPointer(v))
+		} else {
+			variants = append(variants, v)
 		}
 	}
-	slices.SortFunc(variants, func(a, b types.Type) int { return int(variantObj(a).Pos() - variantObj(b).Pos()) })
 	return variants, true
+}
+
+// variantRef is a variant of a sealed interface by the name of its type in the package of the interface and whether
+// its pointer is the variant, see variantCache.
+type variantRef struct {
+	name string
+	ptr  bool
+}
+
+// variantCache memoizes the variants of a sealed interface by their names, see [typeCache].
+var variantCache typeCache[[]variantRef]
+
+// variantOf returns the named type of the name in the scope of the sealed interface n, a generic one with the type
+// arguments of n, e.g. Ok[T] of Result[T], or false, if the name is no such type.
+func variantOf(scope *types.Scope, name string, n *types.Named) (*types.Named, bool) {
+	tn, ok := scope.Lookup(name).(*types.TypeName)
+	if !ok || tn.IsAlias() {
+		return nil, false
+	}
+	v, ok := tn.Type().(*types.Named)
+	if !ok {
+		return nil, false
+	}
+	if v.TypeParams().Len() > 0 {
+		if v.TypeParams().Len() != n.TypeArgs().Len() {
+			return nil, false
+		}
+		inst, err := types.Instantiate(nil, v, typeArgs(n.TypeArgs()), true)
+		if err != nil {
+			return nil, false
+		}
+		v = inst.(*types.Named)
+	}
+	return v, true
 }
 
 // variantObj returns the declaration of the type of a variant.
@@ -134,9 +173,18 @@ func isSealed(t types.Type) bool {
 	return ok
 }
 
+// enumConst is a constant of an enum by its name and value, see enumConstants.
+type enumConst struct {
+	name string
+	val  constant.Value
+}
+
+// enumCache memoizes the constants of an enum by their names and values, see [typeCache].
+var enumCache typeCache[[]enumConst]
+
 // enumConstants returns the constants of an enum: a named type of an integer or string, for which its package
 // declares constants of exactly this type, in the order of their declaration.
-func enumConstants(t types.Type) ([]*types.Const, bool) {
+func enumConstants(t types.Type) ([]enumConst, bool) {
 	n, ok := types.Unalias(t).(*types.Named)
 	if !ok || n.Obj().Pkg() == nil {
 		return nil, false
@@ -147,36 +195,52 @@ func enumConstants(t types.Type) ([]*types.Const, bool) {
 		return nil, false
 	}
 
-	scope := n.Obj().Pkg().Scope()
-	var consts []*types.Const
-	for _, name := range scope.Names() {
-		if c, ok := scope.Lookup(name).(*types.Const); ok && types.Identical(c.Type(), n) {
-			consts = append(consts, c)
+	consts := enumCache.get(n, func() []enumConst {
+		scope := n.Obj().Pkg().Scope()
+		var objs []*types.Const
+		for _, name := range scope.Names() {
+			if c, ok := scope.Lookup(name).(*types.Const); ok && types.Identical(c.Type(), n) {
+				objs = append(objs, c)
+			}
 		}
-	}
-	slices.SortFunc(consts, func(a, b *types.Const) int { return int(a.Pos() - b.Pos()) })
+		slices.SortFunc(objs, func(a, b *types.Const) int { return int(a.Pos() - b.Pos()) })
+		consts := make([]enumConst, 0, len(objs))
+		for _, c := range objs {
+			consts = append(consts, enumConst{name: c.Name(), val: c.Val()})
+		}
+		return consts
+	})
 	return consts, len(consts) > 0
 }
 
 // missingConstants returns the names of the constants, whose values the covered values miss.
-func missingConstants(consts []*types.Const, covered []constant.Value) []string {
+func missingConstants(consts []enumConst, covered []constant.Value) []string {
+	have := make(map[string]bool, len(covered))
+	for _, v := range covered {
+		have[constKey(v)] = true
+	}
 	var missing []string
 	seen := map[string]bool{}
 	for _, c := range consts {
-		key := c.Val().ExactString()
-		if seen[key] {
+		key := constKey(c.val)
+		if have[key] || seen[key] {
 			continue
 		}
-		found := false
-		for _, v := range covered {
-			found = found || constant.Compare(v, gotoken.EQL, c.Val())
-		}
-		if !found {
-			missing = append(missing, c.Name())
-			seen[key] = true
-		}
+		missing = append(missing, c.name)
+		seen[key] = true
 	}
 	return missing
+}
+
+// constKey identifies the value of a constant: two values are equal, if their keys are, also an integer, which a
+// float denotes exactly.
+func constKey(v constant.Value) string {
+	if v.Kind() == constant.Float {
+		if i := constant.ToInt(v); i.Kind() == constant.Int {
+			v = i
+		}
+	}
+	return v.ExactString()
 }
 
 func joinNames(names []string) string {

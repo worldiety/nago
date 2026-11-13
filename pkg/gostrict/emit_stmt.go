@@ -70,6 +70,8 @@ func (p pendingBranch) code() string {
 type localNames struct {
 	m    map[types.Object]string
 	used map[string]bool
+	// next is the suffix, at which the search for a free name of a base continues, see local
+	next map[string]int
 	tmp  int
 }
 
@@ -79,7 +81,7 @@ func newCtx(e *emitter, p *Package, subst map[*types.TypeParam]types.Type) *fnCt
 		pkg:   p,
 		info:  p.Info,
 		subst: subst,
-		names: &localNames{m: map[types.Object]string{}, used: map[string]bool{}},
+		names: &localNames{m: map[types.Object]string{}, used: map[string]bool{}, next: map[string]int{}},
 	}
 }
 
@@ -103,9 +105,12 @@ func (c *fnCtx) local(obj types.Object) string {
 	if jsReserved[base] {
 		base += "$"
 	}
+	// a name is never freed, so the search continues after the suffixes, which it found taken before; otherwise many
+	// variables of the same name in a function, e.g. err or v of a type switch, would try all former suffixes again
 	name := base
-	for i := 2; c.names.used[name]; i++ {
+	for i := max(c.names.next[base], 2); c.names.used[name]; i++ {
 		name = fmt.Sprintf("%s$%d", base, i)
+		c.names.next[base] = i + 1
 	}
 	c.names.used[name] = true
 	c.names.m[obj] = name

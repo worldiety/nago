@@ -92,6 +92,19 @@ Interpreter), eine direkte Umwandlung goja → Go-Struct spart höchstens ein Vi
 Reflection 3,3 ms mit 20.029, goja 650 ms. `json.Encode` derselben Menge samt Aufbau der Liste
 (`BenchmarkCompute/jsons.Points`): VM 1,2 ms mit 51 Allokationen, nativ 1,2 ms mit 10.056, goja 258 ms.
 
+Große Pakete (erzeugte Pakete mit 500 bis 8000 Konstanten, Enums, Funktionen, Typen und Variablen, importiert von 1
+bis 100 Paketen): Laden und Typprüfung wachsen linear (8000 Symbole 70 bis 140 ms), ein Paket wird je Programm einmal
+geladen, egal wie viele es importieren, und übersetzt werden nur erreichte Funktionen. Quadratisch waren Suchen über
+den ganzen Paket-Scope bei jeder Verwendung eines Typs: `enumConstants` bei jedem `switch` über ein Enum (2000
+`switch` in einem Paket mit 16.000 Symbolen 3,9 s, jetzt 8 ms), `sealedVariants` bei jeder Signatur mit einem
+versiegelten Interface und `variantType` im VM-Compiler je Variante (eine kleine Ansicht mit `lib/ui` kompilierte in
+41 ms, jetzt 14 ms). Beide merken sich ihr Ergebnis je Typ in `typeCache` mit schwachen Schlüsseln und Werten ohne
+Verweis auf Typen (Namen, konstante Werte), damit ein Host die Typen früherer Programme nicht festhält; der VM-Compiler
+indiziert den Scope einmal je Union. Ebenso linear statt quadratisch: `missingConstants` (Menge statt Doppelschleife),
+gleichnamige lokale und globale Namen (`local`, `ident` mit Zähler je Grundname, gleiche Ausgabe) und `ErrorPos`
+(Map). Offen: ein `switch` mit n konstanten Fällen vergleicht in der VM n-mal statt mit Sprungtabelle oder binärer
+Suche; jedes Kompilieren lädt und prüft `std` und `lib` neu (`lib/ui` etwa 8 ms).
+
 ### Spike des Interpreters `engine/vm` (Phase 0)
 
 Typisierte Baum-IR aus geprüftem AST und `go/types`, daraus Register-Bytecode (`gen.go`, `interp.go`) und zum

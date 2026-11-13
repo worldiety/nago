@@ -41,13 +41,14 @@ func (e *emitter) emitVM(b *Bundle, exports map[string]*types.Func) (p *vmcode.P
 		Records:   map[string][]string{},
 		Unions:    map[string]vmcode.Union{},
 		ErrorPos: func(pos token.Pos) int {
-			for i, p := range e.errPositions {
-				if p == pos {
-					return i
-				}
+			// the first index of the position, also one, which the JavaScript of the bundle created
+			if i, ok := e.errIndex[pos]; ok {
+				return i
 			}
 			e.errPositions = append(e.errPositions, pos)
-			return len(e.errPositions) - 1
+			i := len(e.errPositions) - 1
+			e.errIndex[pos] = i
+			return i
 		},
 	}
 	for _, p := range e.prog.Packages {
