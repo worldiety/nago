@@ -10,11 +10,13 @@ package tsdb
 import "time"
 
 // ChunkStats is the state of the current pending chunk passed to a SplitFunc so
-// it can decide whether to seal it and start a new one.
+// it can decide whether to seal it and start a new one. The policy is asked at the first point after the open of the
+// column and after a Sync, and at block boundaries.
 type ChunkStats struct {
-	// SizeBytes is the current on-disk size of the pending chunk.
+	// SizeBytes is the current size of the file of the pending chunk, its continuation records included.
 	SizeBytes int64
-	// Points is the number of points written to the pending chunk so far.
+	// Points is the number of saved points of the pending chunk: those of its sealed blocks and those a Sync wrote
+	// into its continuation records.
 	Points int64
 	// MinMillis / MaxMillis are the time bounds of the pending chunk.
 	MinMillis int64
@@ -24,7 +26,8 @@ type ChunkStats struct {
 }
 
 // SplitFunc decides, before a point is appended to the pending chunk, whether
-// that chunk should first be sealed (finalized) so the point starts a new one.
+// that chunk should first be sealed (finalized) so the point starts a new one. When it ends the chunk, the open block
+// is sealed there as a block of its own.
 // It is the sole partitioning policy: the on-disk format itself is timezone
 // free (chunks are named by raw epoch millis), so any calendar interpretation
 // lives entirely inside the SplitFunc.

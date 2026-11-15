@@ -9,71 +9,90 @@ package tsdb
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 )
 
 // appender is the monotonic-append fast path of a column. Points whose
 // timestamp is strictly greater than everything already stored bypass the
-// in-memory head entirely and stream directly into sealed chunk files:
+// in-memory head entirely and stream directly into chunk files:
 //
-//   - Incoming points accumulate in an in-memory block buffer (blockData).
-//   - When the buffer reaches BlockPoints, it is encoded and appended to the
-//     current pending .tsb chunk file (one pwrite), and the buffer is cleared.
-//   - When the split policy fires, the pending chunk is finalized (rename to its
-//     <min>_<max>.tsb name) and a new pending chunk begins.
+//   - Incoming points form the open block. Those not yet saved are held encoded in memory (pointEnc, a few bytes per
+//     point).
+//   - Column.Sync appends them as a continuation record behind the sealed blocks of the open chunk (one pwrite) and
+//     forgets them; the open block goes on with the next point.
+//   - When the open block reaches BlockPoints, its saved points from the records and those in memory are sealed as one
+//     block, which takes the place of the records (see sealBlock), so that a block is the same with or without Sync.
+//   - When the split policy fires, the open chunk is finalized (rename to its
+//     <min>_<max>.tsb name) and a new open chunk begins.
 //
-// Memory is therefore bounded to a single block per column regardless of how
-// many points are ingested — a 20-billion-point burst runs in constant memory
-// with no btree and no chunk rewrite. This mirrors the msgstore ingest model.
+// Memory is therefore bounded to the unsaved points of one block per column regardless of how many points are
+// ingested, and a Sync or a sealed block leaves none of it. This mirrors the msgstore ingest model.
 //
-// Durability follows the no-fsync house rule: the not-yet-sealed block lives in
-// memory and is lost on a hard crash; sealed blocks and finalized chunks are
-// durable. Callers needing the tail on disk call Column.Sync, which leaves the
-// pending chunk open, or Column.Flush, which finalizes it. DB.Close leaves it
-// open as well, and the next open of the column continues it (see adopt), so
-// only the split policy ends a chunk of a monotonic column, however often the
-// process restarts.
+// Durability follows the no-fsync house rule: the unsaved points live in memory and are lost on a crash of the
+// process; records, sealed blocks and finalized chunks are written. DB.Close seals the open block, and the next open of
+// the column continues the open chunk (see adopt), so only the split policy ends a chunk of a monotonic column,
+// however often the process restarts.
 type appender struct {
 	c *Column
 
-	buf blockData // in-memory accumulation block
-
 	pendingPath string // path of the open pending chunk, "" if none
-	pendingMin  int64  // min ts of the pending chunk
-	pendingMax  int64  // max ts written so far to the pending chunk
-	pendingOff  int64  // current append offset in the pending chunk file
-	pendingPts  int64  // points written to the pending chunk (sealed blocks only)
+	pendingMin  int64  // min ts of the pending chunk, from its name
+	dataOff     int64  // where its blocks begin
+	salt        uint64 // the key of its masks
+	masked      bool   // version 2: bodies are masked
+	slotSeq     uint32 // the newest slot of its header
+	blocksEnd   int64  // end of its sealed blocks
+	blocksPts   int64  // points of its sealed blocks
+	blocksMax   int64  // newest time of its sealed blocks, valid if blocksPts > 0
+	fileEnd     int64  // its size: the sealed blocks and the continuation records behind them
+	savedPts    int64  // points of the open block in those records
+	savedMin    int64
+	savedMax    int64
 
-	frameScratch []byte // reusable encode buffer
+	mem pointEnc // the points of the open block, which are not saved yet
 }
 
-// bufferedCount returns the number of points currently in the in-memory block
-// buffer (not yet appended to the pending chunk file).
-func (a *appender) bufferedCount() int { return a.buf.count() }
+// unsynced is the number of points only the memory holds.
+func (a *appender) unsynced() int { return a.mem.n }
 
-// bufferedMinTS returns the smallest timestamp in the in-memory buffer, if any.
-func (a *appender) bufferedMinTS() (int64, bool) {
-	if a.buf.count() == 0 {
-		return 0, false
+// blockPoints is the number of points of the open block, saved or not.
+func (a *appender) blockPoints() int64 { return a.savedPts + int64(a.mem.n) }
+
+// newest returns the newest time of the open chunk, in memory or on disk.
+func (a *appender) newest() int64 {
+	switch {
+	case a.mem.n > 0:
+		return a.mem.maxTs
+	case a.savedPts > 0:
+		return a.savedMax
 	}
-	return a.buf.ts[0], true
+	return a.blocksMax
 }
 
-// append adds one monotonic point (ts strictly greater than the column max).
-// scheme-specific value is placed via the provided setter closure semantics
-// inlined here to avoid an interface. Caller holds c.mu.
+// openBlockMin returns the oldest time of the open block, if it has a point.
+func (a *appender) openBlockMin() (int64, bool) {
+	switch {
+	case a.savedPts > 0:
+		return a.savedMin, true
+	case a.mem.n > 0:
+		return a.mem.minTs, true
+	}
+	return 0, false
+}
+
+// append adds one monotonic point (ts strictly greater than the column max). Caller holds c.mu.
 func (a *appender) append(ts, val int64, str string) error {
-	// split decision is evaluated against the pending chunk before adding.
-	if a.pendingPath != "" && a.buf.count() == 0 {
+	// The split policy is asked at the first point after a Sync, after the open and at a block boundary: whenever no
+	// point waits in memory.
+	if a.pendingPath != "" && a.mem.n == 0 {
 		stats := ChunkStats{
-			SizeBytes:  a.pendingOff,
-			Points:     a.pendingPts,
+			SizeBytes:  a.fileEnd,
+			Points:     a.blocksPts + a.savedPts,
 			MinMillis:  a.pendingMin,
-			MaxMillis:  a.pendingMax,
+			MaxMillis:  a.newest(),
 			NextMillis: ts,
 		}
-		if a.pendingPts > 0 && a.c.db.opts.Split(stats) {
+		if stats.Points > 0 && a.c.db.opts.Split(stats) {
 			if err := a.finalizePending(); err != nil {
 				return err
 			}
@@ -86,84 +105,176 @@ func (a *appender) append(ts, val int64, str string) error {
 		}
 	}
 
-	a.buf.ts = append(a.buf.ts, ts)
-	switch a.c.schema.Scheme {
-	case SchemeDecimal, SchemeEnum:
-		a.buf.vals = append(a.buf.vals, val)
-	case SchemeString:
-		a.buf.strs = append(a.buf.strs, str)
-	}
-	if ts > a.pendingMax {
-		a.pendingMax = ts
-	}
-
-	if a.buf.count() >= a.c.db.opts.BlockPoints {
+	a.mem.add(a.c.schema.Scheme, ts, val, str)
+	if a.blockPoints() >= int64(a.c.db.opts.BlockPoints) {
 		return a.sealBlock()
 	}
 	return nil
 }
 
 func (a *appender) openPending(minTs int64) error {
-	name := pendingChunkName(minTs)
-	path := filepath.Join(a.c.dir, name)
-	if err := writeChunkHeader(a.c.pool, path); err != nil {
-		return err
+	path := filepath.Join(a.c.dir, pendingChunkName(minTs))
+	slot := chunkSlot{seq: 1, end: chunkDataOff}
+	salt := newSalt()
+	if _, err := a.c.pool.WriteAt(path, chunkHeader(slot, salt), 0); err != nil {
+		return fmt.Errorf("tsdb: write chunk header: %w", err)
 	}
-	a.pendingPath = path
-	a.pendingMin = minTs
-	a.pendingMax = minTs
-	a.pendingOff = chunkHeaderLen
-	a.pendingPts = 0
+	// a file of that name, which was no chunk, has nothing behind the header
+	if err := a.c.pool.Truncate(path, chunkDataOff); err != nil {
+		return fmt.Errorf("tsdb: write chunk header: %w", err)
+	}
+	a.adopt(openState{path: path, minMillis: minTs, dataOff: chunkDataOff, salt: salt, masked: true, slotSeq: slot.seq,
+		blocksEnd: chunkDataOff, fileEnd: chunkDataOff})
 	return nil
 }
 
-// adopt makes the open chunk ci, which holds points points in sealed blocks up to
-// ci.sizeBytes, the pending chunk, so that the next appends continue it instead of
-// beginning a new file. The split policy is asked before the next point, as after
-// a Sync. Used for a pending chunk of an earlier process and for the open rest of
-// a rewrite in Close. Caller holds c.mu or is opening the column.
-func (a *appender) adopt(ci chunkInfo, points int64) {
-	a.pendingPath = ci.path
-	a.pendingMin = ci.minMillis
-	a.pendingMax = ci.maxMillis
-	a.pendingOff = ci.sizeBytes
-	a.pendingPts = points
+// adopt makes the open chunk of st the pending chunk, so that the next appends continue it instead of beginning a new
+// file. The split policy is asked before the next point, as after a Sync. Used for the open chunk of an earlier life
+// and for the open rest of a rewrite by a compaction. Caller holds c.mu or is opening the column.
+func (a *appender) adopt(st openState) {
+	a.pendingPath = st.path
+	a.pendingMin = st.minMillis
+	a.dataOff = st.dataOff
+	a.salt = st.salt
+	a.masked = st.masked
+	a.slotSeq = st.slotSeq
+	a.blocksEnd = st.blocksEnd
+	a.blocksPts = st.blocksPts
+	a.blocksMax = st.blocksMax
+	a.fileEnd = st.fileEnd
+	a.savedPts = st.savedPts
+	a.savedMin = st.savedMin
+	a.savedMax = st.savedMax
+	a.mem.release()
 }
 
 // forgetPending drops the state of the pending chunk and the points in memory,
 // whose file the caller has removed. Caller holds c.mu.
 func (a *appender) forgetPending() {
-	a.pendingPath = ""
-	a.pendingPts = 0
-	a.buf.ts = a.buf.ts[:0]
-	a.buf.vals = a.buf.vals[:0]
-	a.buf.strs = a.buf.strs[:0]
+	*a = appender{c: a.c}
 }
 
-// sealBlock encodes the in-memory buffer into a block and appends it to the
-// pending chunk file, then clears the buffer.
-func (a *appender) sealBlock() error {
-	if a.buf.count() == 0 {
+// sync appends the points in memory as a continuation record behind the open chunk and forgets them. It writes one
+// frame into one file and changes nothing else, so that a crash in its middle costs only these points: the next open
+// cuts the torn record off. Caller holds c.mu.
+func (a *appender) sync() error {
+	if a.mem.n == 0 {
 		return nil
 	}
-	a.frameScratch = a.frameScratch[:0]
-	frame, err := encodeBlock(a.frameScratch, &a.buf, a.c.schema.Scheme, a.c.db.opts.Compress)
-	if err != nil {
-		return err
+	rec := appendRecord(nil, recordDelta, a.mem.n, a.mem.buf, a.masked, a.salt, a.fileEnd)
+	if _, err := a.c.pool.WriteAt(a.pendingPath, rec, a.fileEnd); err != nil {
+		return fmt.Errorf("tsdb: append continuation record: %w", err)
 	}
-	a.frameScratch = frame
-	if _, err := a.c.pool.WriteAt(a.pendingPath, frame, a.pendingOff); err != nil {
-		return fmt.Errorf("tsdb: append block: %w", err)
+	a.fileEnd += int64(len(rec))
+	if a.savedPts == 0 {
+		a.savedMin = a.mem.minTs
 	}
-	a.pendingOff += int64(len(frame))
-	a.pendingPts += int64(a.buf.count())
-	a.buf.ts = a.buf.ts[:0]
-	a.buf.vals = a.buf.vals[:0]
-	a.buf.strs = a.buf.strs[:0]
+	a.savedPts += int64(a.mem.n)
+	a.savedMax = a.mem.maxTs
+	a.mem.release()
 	return nil
 }
 
-// finalizePending seals any buffered block and renames the pending chunk to its
+// loadOpenBlock appends the points of the open block, the saved ones from its records and those in memory, to bd in
+// ascending order. Caller holds c.mu.
+func (a *appender) loadOpenBlock(bd *blockData, r *frameReader) error {
+	if a.savedPts > 0 {
+		r.reset(a.c.pool, a.pendingPath, a.blocksEnd, a.fileEnd)
+		for {
+			kind, at, frame, err := r.next(frameRecord)
+			if err != nil {
+				return err
+			}
+			if kind == frameNone {
+				break
+			}
+			_, count, body, _ := parseRecord(frame, len(frame), a.salt, at)
+			n := len(bd.ts)
+			if !decodePoints(body, count, a.c.schema.Scheme, bd) {
+				bd.ts, bd.vals, bd.strs = bd.ts[:n], bd.vals[:min(n, len(bd.vals))], bd.strs[:min(n, len(bd.strs))]
+			}
+		}
+	}
+	if a.mem.n > 0 && !decodePoints(a.mem.buf, a.mem.n, a.c.schema.Scheme, bd) {
+		return fmt.Errorf("tsdb: open block in memory: %w", errCorruptBlock)
+	}
+	return nil
+}
+
+// sealBlock seals the open block, its saved and its unsaved points, as one block at the end of the sealed blocks and
+// clears the memory. Without saved points the block is just appended. With them, the block takes the place of their
+// records: a copy record of the saved points first goes behind both, then the block is written over the records, then
+// the file is cut behind the block. A crash at any byte of that leaves the saved points readable, as the records, the
+// copy or the block (see recoverOpenChunk), and the file is the same as if no Sync had run. Then the newer slot of the
+// header says where the blocks end. Caller holds c.mu.
+func (a *appender) sealBlock() error {
+	if a.blockPoints() == 0 {
+		return nil
+	}
+	sc := getScratch()
+	defer putScratch(sc)
+	bd := &sc.ob
+	if err := a.loadOpenBlock(bd, &sc.rd); err != nil {
+		return err
+	}
+	saved := int(a.savedPts)
+	if len(bd.ts) < saved {
+		saved = len(bd.ts) // a record, which can not be read any more, is gone
+	}
+	if len(bd.ts) == 0 {
+		if err := a.c.pool.Truncate(a.pendingPath, a.blocksEnd); err != nil {
+			return fmt.Errorf("tsdb: cut unreadable records: %w", err)
+		}
+		a.fileEnd, a.savedPts = a.blocksEnd, 0
+		return nil
+	}
+	frame, err := encodeBlock(sc.frame[:0], bd, a.c.schema.Scheme, a.c.db.opts.Compress)
+	if err != nil {
+		return err
+	}
+	sc.frame = frame
+	if a.masked {
+		maskBlock(frame, a.salt, a.blocksEnd)
+	}
+	var copyRec []byte
+	if a.fileEnd > a.blocksEnd && saved > 0 {
+		copyAt := max(a.fileEnd, a.blocksEnd+int64(len(frame))) // see overwriteRecords
+		body := encodePoints(&blockData{ts: bd.ts[:saved], vals: sliceTo(bd.vals, saved), strs: sliceTo(bd.strs, saved)}, 0, a.c.schema.Scheme)
+		copyRec = appendRecord(nil, recordCopy, saved, body, a.masked, a.salt, copyAt)
+	}
+	if err := overwriteRecords(a.c.pool, a.pendingPath, a.blocksEnd, a.fileEnd, copyRec, frame); err != nil {
+		return err
+	}
+	if copyRec == nil && a.fileEnd > a.blocksEnd+int64(len(frame)) {
+		// unreadable records behind the block: cut them off
+		if err := a.c.pool.Truncate(a.pendingPath, a.blocksEnd+int64(len(frame))); err != nil {
+			return fmt.Errorf("tsdb: cut behind block: %w", err)
+		}
+	}
+	a.blocksEnd += int64(len(frame))
+	a.fileEnd = a.blocksEnd
+	a.blocksPts += int64(len(bd.ts))
+	a.blocksMax = bd.ts[len(bd.ts)-1]
+	a.savedPts = 0
+	a.mem.release()
+	if a.dataOff == chunkDataOff {
+		next := chunkSlot{seq: a.slotSeq + 1, end: a.blocksEnd, points: a.blocksPts, max: a.blocksMax}
+		if err := writeSlot(a.c.pool, a.pendingPath, next); err != nil {
+			return err
+		}
+		a.slotSeq = next.seq
+	}
+	return nil
+}
+
+func sliceTo[T any](s []T, n int) []T {
+	if len(s) < n {
+		return s
+	}
+	return s[:n]
+}
+
+// finalizePending seals the open block and renames the pending chunk to its
 // final <min>_<max>.tsb name, registering it in the column's chunk set.
 func (a *appender) finalizePending() error {
 	if a.pendingPath == "" {
@@ -172,72 +283,66 @@ func (a *appender) finalizePending() error {
 	if err := a.sealBlock(); err != nil {
 		return err
 	}
-	if a.pendingPts == 0 {
+	if a.blocksPts == 0 {
 		// empty pending chunk (never happens in practice) — remove it
-		a.c.pool.Evict(a.pendingPath)
-		_ = os.Remove(a.pendingPath)
-		a.pendingPath = ""
+		_ = a.c.pool.Remove(a.pendingPath)
+		a.forgetPending()
 		return nil
 	}
-	finalPath := filepath.Join(a.c.dir, finalChunkName(a.pendingMin, a.pendingMax))
-	a.c.pool.Evict(a.pendingPath)
-	if err := os.Rename(a.pendingPath, finalPath); err != nil {
+	finalPath := filepath.Join(a.c.dir, finalChunkName(a.pendingMin, a.blocksMax))
+	if err := a.c.pool.Rename(a.pendingPath, finalPath); err != nil {
 		return fmt.Errorf("tsdb: finalize appended chunk: %w", err)
 	}
 	a.c.chunks = append(a.c.chunks, chunkInfo{
 		path:      finalPath,
 		minMillis: a.pendingMin,
-		maxMillis: a.pendingMax,
-		sizeBytes: a.pendingOff,
+		maxMillis: a.blocksMax,
+		sizeBytes: a.blocksEnd,
+		dataOff:   a.dataOff,
+		salt:      a.salt,
+		masked:    a.masked,
 	})
-	a.pendingPath = ""
+	a.forgetPending()
 	return nil
-}
-
-// flush finalizes the pending chunk so all appended data is durable on disk.
-// Caller holds c.mu.
-func (a *appender) flush() error {
-	return a.finalizePending()
 }
 
 // dropIfBefore removes the open pending chunk and the points still in memory, if
 // all of them are older than ts. A pending chunk with a newer point stays
 // untouched, because a chunk is only removed as a whole. Caller holds c.mu.
 func (a *appender) dropIfBefore(ts int64) (bool, error) {
-	if a.pendingPath == "" || a.pendingMax >= ts {
+	if a.pendingPath == "" || a.newest() >= ts {
 		return false, nil
 	}
-	a.c.pool.Evict(a.pendingPath)
-	if err := os.Remove(a.pendingPath); err != nil && !os.IsNotExist(err) {
+	if err := a.c.pool.Remove(a.pendingPath); err != nil {
 		return false, fmt.Errorf("tsdb: remove pending chunk: %w", err)
 	}
 	a.forgetPending()
 	return true, nil
 }
 
-// pendingChunk returns a chunkInfo describing the currently open pending chunk
-// file, if any, so the read path can scan the blocks already sealed to it (but
-// not yet finalized). ok is false when there is no pending chunk or it has no
-// sealed block yet. sizeBytes is the exact number of bytes already written
-// (pendingOff), so the reader needs no Fstat. The returned max reflects the last
-// sealed block; points still in the in-memory buffer are read separately.
+// pendingChunk returns a chunkInfo describing the sealed blocks of the open pending chunk, if it has any, so the read
+// path scans them like those of a finalized chunk. sizeBytes is where they end, so the reader needs no Fstat. The open
+// block, saved or in memory, is read separately (loadOpenBlock).
 func (a *appender) pendingChunk() (chunkInfo, bool) {
-	if a.pendingPath == "" || a.pendingPts == 0 {
+	if a.pendingPath == "" || a.blocksPts == 0 {
 		return chunkInfo{}, false
 	}
 	return chunkInfo{
 		path:      a.pendingPath,
 		minMillis: a.pendingMin,
-		maxMillis: a.pendingMax,
+		maxMillis: a.blocksMax,
 		pending:   true,
-		sizeBytes: a.pendingOff,
+		sizeBytes: a.blocksEnd,
+		dataOff:   a.dataOff,
+		salt:      a.salt,
+		masked:    a.masked,
 	}, true
 }
 
 // openChunk describes the open pending chunk for the statistics: its bounds
 // include the points still in memory and sizeBytes is what its file holds so
 // far. ok is false when there is no pending chunk. A pending chunk always holds
-// at least one point, sealed or in memory.
+// at least one point, sealed, saved or in memory.
 func (a *appender) openChunk() (chunkInfo, bool) {
 	if a.pendingPath == "" {
 		return chunkInfo{}, false
@@ -245,88 +350,8 @@ func (a *appender) openChunk() (chunkInfo, bool) {
 	return chunkInfo{
 		path:      a.pendingPath,
 		minMillis: a.pendingMin,
-		maxMillis: a.pendingMax,
+		maxMillis: a.newest(),
 		pending:   true,
-		sizeBytes: a.pendingOff,
+		sizeBytes: a.fileEnd,
 	}, true
-}
-
-// snapshotBuffered appends the in-memory (not yet sealed) buffered points that
-// fall in [min,max] to the read output via the provided callback. Used by the
-// read path to include the newest tail that has not been written to a chunk yet.
-func (a *appender) snapshotBuffered(min, max int64, fn func(ts, vals []int64, strs []string) bool) bool {
-	n := a.buf.count()
-	if n == 0 {
-		return true
-	}
-	// buffer is monotonic ascending; find the in-range window.
-	lo := 0
-	for lo < n && a.buf.ts[lo] < min {
-		lo++
-	}
-	hi := n
-	for hi > lo && a.buf.ts[hi-1] > max {
-		hi--
-	}
-	if lo >= hi {
-		return true
-	}
-	if a.c.schema.Scheme == SchemeString {
-		return fn(a.buf.ts[lo:hi], nil, a.buf.strs[lo:hi])
-	}
-	return fn(a.buf.ts[lo:hi], sealedVals(&a.buf, true)[lo:hi], nil)
-}
-
-// snapshotBufferedFilter emits buffered points in [min,max], consulting override
-// for each timestamp: override returns (val, str, tombstone, present). Present
-// tombstones drop the point; present non-tombstones replace its value. This is
-// used only on the slow read path where the head may target a buffered (unsealed)
-// point, so per-point emission is acceptable (buffer is bounded to one block).
-func (a *appender) snapshotBufferedFilter(min, max int64,
-	override func(ts int64) (val int64, str string, tomb bool, present bool),
-	numeric bool, fn func(ts, vals []int64, strs []string) bool) {
-
-	n := a.buf.count()
-	if n == 0 {
-		return
-	}
-	var ts [1]int64
-	var vals [1]int64
-	var strs [1]string
-	for i := 0; i < n; i++ {
-		t := a.buf.ts[i]
-		if t < min || t > max {
-			continue
-		}
-		if ov, os, tomb, present := override(t); present {
-			if tomb {
-				continue
-			}
-			ts[0] = t
-			if numeric {
-				vals[0] = ov
-				if !fn(ts[:], vals[:], nil) {
-					return
-				}
-			} else {
-				strs[0] = os
-				if !fn(ts[:], nil, strs[:]) {
-					return
-				}
-			}
-			continue
-		}
-		ts[0] = t
-		if numeric {
-			vals[0] = sealedVal(&a.buf, i)
-			if !fn(ts[:], vals[:], nil) {
-				return
-			}
-		} else {
-			strs[0] = a.buf.strs[i]
-			if !fn(ts[:], nil, strs[:]) {
-				return
-			}
-		}
-	}
 }

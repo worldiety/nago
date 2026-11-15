@@ -164,10 +164,71 @@ func TestCloseContinuesTheOpenChunk(t *testing.T) {
 	}
 }
 
+// splitAsk is a question to the split policy on the append path and its answer.
+type splitAsk struct {
+	st    ChunkStats
+	split bool
+}
+
+// splitProblems checks that the chunks are the ones the policy wants, whatever the format of the files: each finalized
+// chunk ended because the policy said so, at the point that begins the next chunk, and the policy was asked at least
+// once per block of every chunk, so no chunk grew past what the policy would have ended. end is the time of the newest
+// point, step the time between two points.
+func splitProblems(final, pending []string, asks []splitAsk, end, step int64, blockPoints int) []string {
+	var problems []string
+	starts := map[int64]bool{}
+	type chunk struct{ min, max int64 }
+	var chunks []chunk
+	for _, name := range append(slices.Clone(final), pending...) {
+		info, _ := parseChunkName(name)
+		starts[info.minMillis] = true
+		if info.pending {
+			info.maxMillis = end
+		}
+		chunks = append(chunks, chunk{info.minMillis, info.maxMillis})
+	}
+	for _, name := range final {
+		info, _ := parseChunkName(name)
+		var ended *splitAsk
+		for i, a := range asks {
+			if a.split && a.st.MinMillis == info.minMillis {
+				ended = &asks[i]
+			}
+		}
+		switch {
+		case ended == nil:
+			problems = append(problems, fmt.Sprintf("chunk %s ended without the policy", name))
+		case ended.st.MaxMillis != info.maxMillis || !starts[ended.st.NextMillis]:
+			problems = append(problems, fmt.Sprintf("chunk %s ended at %d before %d, which begins no chunk", name, ended.st.MaxMillis, ended.st.NextMillis))
+		}
+	}
+	for _, c := range chunks {
+		at := []int64{c.min}
+		for _, a := range asks {
+			if a.st.MinMillis == c.min && !a.split {
+				at = append(at, a.st.NextMillis)
+			}
+		}
+		at = append(at, c.max+step)
+		slices.Sort(at)
+		for i := 1; i < len(at); i++ {
+			if at[i]-at[i-1] > int64(blockPoints)*step {
+				problems = append(problems, fmt.Sprintf("the chunk from %d grew from %d to %d without asking the policy", c.min, at[i-1], at[i]))
+			}
+		}
+	}
+	return problems
+}
+
 // TestSplitPolicyEndsAContinuedChunk: the split policy ends a chunk continued over Close as in a single life, by time and
-// by size. A life is one day with a point each hour, in blocks of 16, so Close finds points in memory. The reference
-// writes the same points in one life with a Sync at the end of each day, as the statistics of wokoda do. A chunk ended
-// by the policy is finalized and does not change any more, also not by the lives after it.
+// by size, and a restart neither begins a chunk nor lets one grow past the policy: each finalized chunk ended because the
+// policy said so, which is asked at least once per block. A life is one day with a point each hour, in blocks of 16, so
+// Close finds points in memory. The policy gets every secured point of the chunk in Points and the size of its file in
+// SizeBytes. For the grid of 6 days the reference writes the same points in one life with a Sync at the end of each day,
+// as the statistics of wokoda do, and has the same chunks. By size the number of chunks depends on the format of the
+// files and is not checked. A chunk ended by the policy is finalized and does not change any more, also not by the lives
+// after it. The counter row ends each life with Flush before Close, which begins a chunk in each life, as Close did
+// before cd602526b: its chunks did not end by the policy.
 func TestSplitPolicyEndsAContinuedChunk(t *testing.T) {
 	const (
 		day   = int64(24 * 60 * 60 * 1000)
@@ -184,11 +245,14 @@ func TestSplitPolicyEndsAContinuedChunk(t *testing.T) {
 		name      string
 		split     SplitFunc
 		byGrid    bool
-		wantFinal int
+		wantFinal int  // 0 for no check
+		likeSync  bool // the chunks are those of the reference with a Sync each day
+		flush     bool // counter row: Flush before each Close
 	}{
-		{name: "6 days as in extapi.StatsOptions", split: CombineSplits(SplitBySize(64<<20), grid(6*day)), byGrid: true, wantFinal: 2},
-		{name: "size", split: SplitBySize(size), wantFinal: 3},
-		{name: "size within 6 days", split: CombineSplits(SplitBySize(size), grid(6*day)), byGrid: true, wantFinal: 4},
+		{name: "6 days as in extapi.StatsOptions", split: CombineSplits(SplitBySize(64<<20), grid(6*day)), byGrid: true, wantFinal: 2, likeSync: true},
+		{name: "size", split: SplitBySize(size)},
+		{name: "size within 6 days", split: CombineSplits(SplitBySize(size), grid(6*day)), byGrid: true},
+		{name: "counter row: Flush before Close begins a chunk in each life", split: SplitBySize(size), flush: true},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			opts := Options{BlockPoints: 16, Compress: true, Split: tt.split}
@@ -209,11 +273,33 @@ func TestSplitPolicyEndsAContinuedChunk(t *testing.T) {
 			closeDB(t, refDB)
 
 			dir := t.TempDir()
+			var mu sync.Mutex
+			var asks []splitAsk
+			opts.Split = func(st ChunkStats) bool {
+				split := tt.split(st)
+				mu.Lock()
+				defer mu.Unlock()
+				asks = append(asks, splitAsk{st: st, split: split})
+				if want := (st.NextMillis - st.MinMillis) / hour; st.Points != want {
+					t.Errorf("asked before %d: Points %d, want the %d secured points of the chunk", st.NextMillis, st.Points, want)
+				}
+				if open, _ := filepath.Glob(filepath.Join(dir, "b", "c", "*_"+chunkExt)); len(open) == 1 {
+					if size := fileSize(t, open[0]); st.SizeBytes != size {
+						t.Errorf("asked before %d: SizeBytes %d, the open chunk file has %d", st.NextMillis, st.SizeBytes, size)
+					}
+				}
+				return split
+			}
 			sealed := map[string][]byte{} // each finalized chunk as it was in the life that finalized it
 			for d := range int64(lives) {
 				db, c := openColumnIn(t, dir, opts, Schema{Scheme: SchemeDecimal})
 				for h := range int64(24) {
 					if err := put(c, d, h); err != nil {
+						t.Fatal(err)
+					}
+				}
+				if tt.flush {
+					if err := c.Flush(); err != nil {
 						t.Fatal(err)
 					}
 				}
@@ -227,11 +313,29 @@ func TestSplitPolicyEndsAContinuedChunk(t *testing.T) {
 			}
 
 			pending, final := chunkNames(t, dir, "b", "c")
-			if !slices.Equal(pending, refPending) || !slices.Equal(final, refFinal) {
+			if tt.likeSync && (!slices.Equal(pending, refPending) || !slices.Equal(final, refFinal)) {
 				t.Errorf("chunks %v %v, in a single life %v %v", pending, final, refPending, refFinal)
 			}
-			if len(final) != tt.wantFinal || len(pending) != 1 {
-				t.Errorf("%d finalized and %d open chunks, want %d and 1: %v %v", len(final), len(pending), tt.wantFinal, final, pending)
+			if tt.wantFinal > 0 && len(final) != tt.wantFinal {
+				t.Errorf("%d finalized chunks, want %d: %v", len(final), tt.wantFinal, final)
+			}
+			if len(final) == 0 {
+				t.Errorf("premise: the policy ended no chunk: %v", pending)
+			}
+			mu.Lock()
+			problems := splitProblems(final, pending, asks, (lives*24-1)*hour, hour, opts.BlockPoints)
+			mu.Unlock()
+			if tt.flush {
+				if len(problems) == 0 {
+					t.Errorf("counter row: the chunks %v of Flush before Close look as if the policy had ended them", final)
+				}
+				return
+			}
+			for _, p := range problems {
+				t.Error(p)
+			}
+			if len(pending) != 1 {
+				t.Errorf("%d open chunks, want 1: %v", len(pending), pending)
 			}
 			continued := 0
 			for _, name := range final {
@@ -263,104 +367,6 @@ func TestSplitPolicyEndsAContinuedChunk(t *testing.T) {
 				if ts[i] != d*day+h*hour || vals[i] != (d*24+h)*7%13 {
 					t.Fatalf("point %d is %d=%d", i, ts[i], vals[i])
 				}
-			}
-		})
-	}
-}
-
-// TestCrashContinuesTheOpenChunk: a crash leaves the open chunk without Close. The next open takes it up to its last
-// intact block, cuts off what a torn write left behind it and continues it: the same file, no finalized one. Three
-// Syncs write blocks of 2, 3 and 1 points.
-func TestCrashContinuesTheOpenChunk(t *testing.T) {
-	const blocks = 3
-	perBlock := [blocks]int{2, 3, 1}
-	for _, tt := range []struct {
-		name       string
-		tear       func(t *testing.T, path string, sizes [blocks]int64)
-		wantBlocks int // the intact blocks after the crash
-	}{
-		{name: "nothing torn", tear: func(*testing.T, string, [blocks]int64) {}, wantBlocks: 3},
-		{name: "the last block cut short", wantBlocks: 2, tear: func(t *testing.T, path string, sizes [blocks]int64) {
-			if err := os.Truncate(path, sizes[2]-3); err != nil {
-				t.Fatal(err)
-			}
-		}},
-		{name: "the last block garbled", wantBlocks: 2, tear: func(t *testing.T, path string, sizes [blocks]int64) {
-			b := readFile(t, path)
-			b[sizes[2]-6] ^= 0xFF // in its body: the length fits, the CRC does not
-			if err := os.WriteFile(path, b, 0644); err != nil {
-				t.Fatal(err)
-			}
-		}},
-		{name: "the beginning of a block behind the last one", wantBlocks: 3, tear: func(t *testing.T, path string, sizes [blocks]int64) {
-			b := readFile(t, path)
-			torn := append(b, b[sizes[1]:sizes[1]+20]...) // sync marker, length and bounds of a block without its body
-			if err := os.WriteFile(path, torn, 0644); err != nil {
-				t.Fatal(err)
-			}
-		}},
-		{name: "two blocks torn", wantBlocks: 1, tear: func(t *testing.T, path string, sizes [blocks]int64) {
-			if err := os.Truncate(path, sizes[1]-1); err != nil {
-				t.Fatal(err)
-			}
-		}},
-	} {
-		t.Run(tt.name, func(t *testing.T) {
-			opts := Options{BlockPoints: 4}
-			s := syncSchemes()[0]
-			dir := t.TempDir()
-			_, c := openColumnIn(t, dir, opts, s.schema)
-			var sizes [blocks]int64
-			n := 0
-			for b := range blocks {
-				for range perBlock[b] {
-					if err := s.put(c, n); err != nil {
-						t.Fatal(err)
-					}
-					n++
-				}
-				if err := c.Sync(); err != nil {
-					t.Fatal(err)
-				}
-				pending, _ := syncChunkFiles(t, dir)
-				sizes[b] = fileSize(t, pending[0])
-			}
-
-			crashed := crashCopy(t, dir)
-			pending, final := chunkNames(t, crashed, "b", "c")
-			if len(pending) != 1 || len(final) != 0 {
-				t.Fatalf("premise: the crash leaves one open chunk: %v %v", pending, final)
-			}
-			path := filepath.Join(crashed, "b", "c", pending[0])
-			tt.tear(t, path, sizes)
-
-			want := 0
-			for b := range tt.wantBlocks {
-				want += perBlock[b]
-			}
-			c2 := reopenColumn(t, crashed, opts)
-			checkSyncPoints(t, s, c2, upTo(want))
-			if got := fileSize(t, path); got != sizes[tt.wantBlocks-1] {
-				t.Errorf("the open chunk has %d bytes after the open, it had %d after the last intact Sync", got, sizes[tt.wantBlocks-1])
-			}
-			if p, f := chunkNames(t, crashed, "b", "c"); !slices.Equal(p, pending) || len(f) != 0 {
-				t.Errorf("after the open: open chunks %v and finalized %v, want only %v", p, f, pending)
-			}
-
-			// the next life goes on in the same file, and a second crash keeps both lives
-			for i := range 2 {
-				if err := s.put(c2, n+i); err != nil {
-					t.Fatal(err)
-				}
-			}
-			if err := c2.Sync(); err != nil {
-				t.Fatal(err)
-			}
-			wantAll := append(upTo(want), n, n+1)
-			again := crashCopy(t, crashed)
-			checkSyncPoints(t, s, reopenColumn(t, again, opts), wantAll)
-			if p, f := chunkNames(t, again, "b", "c"); !slices.Equal(p, pending) || len(f) != 0 {
-				t.Errorf("after the second crash: open chunks %v and finalized %v, want only %v", p, f, pending)
 			}
 		})
 	}

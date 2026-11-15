@@ -56,6 +56,9 @@ const (
 	// varint and the reader fills the whole slice with it. Set only when every
 	// value in the block is identical. Not used for string columns.
 	flagConstVal byte = 1 << 2
+	// flagMasked marks a body masked with the key stream of its file (see maskBlock); readers unmask it before they
+	// decode it.
+	flagMasked byte = 1 << 3
 )
 
 // blockData is the decoded, in-memory content of a block. For numeric schemes
@@ -203,6 +206,11 @@ func decodeBlockBody(buf []byte, h blockHeader, s Scheme, bd *blockData) error {
 	if !blockIntact(buf, h) {
 		return errCorruptBlock
 	}
+	return decodeBlockData(buf, h, s, bd)
+}
+
+// decodeBlockData is decodeBlockBody without the check of the CRC, for a frame that was checked and unmasked.
+func decodeBlockData(buf []byte, h blockHeader, s Scheme, bd *blockData) error {
 	body := buf[h.bodyOff : h.bodyOff+h.bodyLen]
 	if h.flags&flagCompressed != 0 {
 		dec, err := s2.Decode(bd.decompBuf[:cap(bd.decompBuf)], body)

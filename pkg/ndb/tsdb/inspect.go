@@ -22,7 +22,7 @@ type ColumnStats struct {
 	// lives on over DB.Close and a restart until the split policy ends it.
 	Chunks int
 	// Bytes is the total on-disk size of the chunk files, of the pending chunk
-	// what is written to it so far (points in memory are not on disk yet).
+	// what is written to it so far, its continuation records included (points in memory are not on disk yet).
 	Bytes int64
 	// MinMillis / MaxMillis bound the time range that currently holds data
 	// (inclusive, unix milliseconds). Valid only when HasData is true.
@@ -30,11 +30,15 @@ type ColumnStats struct {
 	MaxMillis int64
 	// HasData reports whether the column holds any point (sealed or buffered).
 	HasData bool
+	// Unsynced is the number of points only the memory holds: written by the append path and not yet saved by a
+	// Sync, ReleaseIdle, a sealed block or Close. A crash of the process loses them.
+	Unsynced int64
 }
 
 // Stats returns cheap, metadata-only statistics for the column. It reads only
 // the in-memory chunk set and the recovered max timestamp under the column
-// lock; it never decodes a block, so it is O(chunks), not O(points).
+// lock; it never decodes a block, so it is O(chunks), not O(points). It reads the head, if no write or read did
+// before.
 func (c *Column) Stats() ColumnStats {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -43,7 +47,9 @@ func (c *Column) Stats() ColumnStats {
 		Scheme:   c.schema.Scheme,
 		Decimals: c.schema.Decimals,
 		Chunks:   len(c.chunks),
+		Unsynced: int64(c.app.unsynced()),
 	}
+	_ = c.ensureHeadMax() // an unreadable head adds nothing here; a read reports it
 
 	var haveMin bool
 	setMin := func(v int64) {

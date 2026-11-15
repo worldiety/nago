@@ -65,6 +65,9 @@ func (c *Column) ScanString(min, max int64, fn func(ts []int64, vals []string) b
 			return fn(ts, strs)
 		})
 	case SchemeEnum:
+		if err := c.dict.loadErr(); err != nil {
+			return err
+		}
 		var sbuf []string
 		return c.mergedRange(min, max, func(ts []int64, ids []int64, _ []string) bool {
 			if cap(sbuf) < len(ids) {
