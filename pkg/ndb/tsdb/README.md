@@ -239,9 +239,17 @@ compacts nothing of it:
 Appending, `Sync` and putting a correction into the WAL do not read old blocks and
 go on. The dictionary has no version or kind of its own; its entries are read as
 before. A wrong marker or magic, or a CRC, which does not match, is corrupt data
-and skipped as before. Every later change of the continuation records, the WAL or
-the dictionary increases the version of the chunk; new block encodings get a flag
-of their own.
+and skipped as before. A skipped block, one with a wrong CRC or one, which does not
+decode, is logged once per column and place with `slog.Warn` ("tsdb: damaged block
+skipped", attributes `bucket`, `column`, `file` and `offset`), by a read, the open
+of a column and a compaction, which logs it before it writes the chunk without it;
+a later read of the same place logs nothing, until the DB is opened again. A chunk,
+whose header is not one of a chunk, is logged at offset 0. When the open of a column
+reads its open chunk after a crash, a frame, which runs over the end, is the torn
+rest, and bytes before the records of the open block may be the remains of records
+written over; neither is logged, but bytes between two of these records are. Every
+later change of the continuation records, the WAL or the dictionary increases the
+version of the chunk; new block encodings get a flag of their own.
 
 ## Benchmarks
 

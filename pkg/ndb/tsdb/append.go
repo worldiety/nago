@@ -179,7 +179,7 @@ func (a *appender) sync() error {
 // ascending order. Caller holds c.mu.
 func (a *appender) loadOpenBlock(bd *blockData, r *frameReader) error {
 	if a.savedPts > 0 {
-		r.reset(a.c.pool, a.pendingPath, a.blocksEnd, a.fileEnd)
+		r.reset(a.c, a.pendingPath, a.blocksEnd, a.fileEnd, false)
 		for {
 			kind, at, frame, err := r.next(frameRecord)
 			if err != nil {
@@ -193,6 +193,7 @@ func (a *appender) loadOpenBlock(bd *blockData, r *frameReader) error {
 			n := len(bd.ts)
 			if !decodePoints(body, count, a.c.schema.Scheme, bd) {
 				bd.ts, bd.vals, bd.strs = bd.ts[:n], bd.vals[:min(n, len(bd.vals))], bd.strs[:min(n, len(bd.strs))]
+				a.c.reportDamaged(a.pendingPath, at)
 			}
 		}
 	}

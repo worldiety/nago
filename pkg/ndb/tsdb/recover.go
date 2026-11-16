@@ -75,7 +75,8 @@ const (
 // Then it cleans up, so that the file holds exactly that: a torn rest is cut off, and a file that holds more than its
 // records (a copy behind the remains of others) gets its open block written anew as one record, in the same order as a
 // seal writes a block over records (see overwriteRecords).
-func recoverOpenChunk(fs *ndb.FilePool, scheme Scheme, path string, minMillis int64, r *frameReader) (st openState, res recovered, err error) {
+func recoverOpenChunk(c *Column, path string, minMillis int64, r *frameReader) (st openState, res recovered, err error) {
+	fs, scheme := c.pool, c.schema.Scheme
 	st = openState{path: path, minMillis: minMillis}
 	size, err := statSize(fs, path)
 	if err != nil {
@@ -89,6 +90,7 @@ func recoverOpenChunk(fs *ndb.FilePool, scheme Scheme, path string, minMillis in
 			if size < chunkDataOff {
 				return st, recoveredEmpty, nil // the header of a new chunk, torn by a crash
 			}
+			c.reportDamaged(path, 0) // not a chunk: left on disk and skipped with every block in it
 			return st, recoveredNothing, nil
 		}
 		return st, recoveredNothing, err // also a chunk of a later version, which is left as it is
@@ -106,7 +108,7 @@ func recoverOpenChunk(fs *ndb.FilePool, scheme Scheme, path string, minMillis in
 	st.blocksEnd = start
 
 	var recs []foundRecord
-	r.reset(fs, path, start, size)
+	r.reset(c, path, start, size, true)
 	for {
 		kind, at, frame, err := r.next(frameBlock | frameRecord)
 		if err != nil {
@@ -133,7 +135,11 @@ func recoverOpenChunk(fs *ndb.FilePool, scheme Scheme, path string, minMillis in
 		}
 		rk, count, body, _ := parseRecord(frame, len(frame), st.salt, at)
 		fr := foundRecord{at: at, end: at + int64(len(frame)), kind: rk}
-		if count == 0 || !decodePoints(body, count, scheme, &fr.pts) {
+		if count == 0 {
+			continue
+		}
+		if !decodePoints(body, count, scheme, &fr.pts) {
+			c.reportDamaged(path, at)
 			continue
 		}
 		recs = append(recs, fr)
@@ -163,7 +169,12 @@ func recoverOpenChunk(fs *ndb.FilePool, scheme Scheme, path string, minMillis in
 
 	clean := true
 	expect := st.blocksEnd
-	for _, fr := range chosen {
+	for i, fr := range chosen {
+		if i > 0 && fr.at != expect {
+			// a Sync appends each record behind the one before, and no crash leaves bytes between two of them: what lies
+			// there is a damaged record, which the rewrite below drops
+			c.reportDamaged(path, expect)
+		}
 		clean = clean && fr.at == expect
 		expect = fr.end
 	}

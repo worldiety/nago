@@ -248,6 +248,9 @@ func (c *Column) prepareFold(finalize bool) (*compaction, error) {
 				// a block of a later version: the compaction stops before it writes anything
 				unknown = err
 				return false
+			default:
+				// a block, which does not decode, is reported before the compaction writes the chunk without it
+				c.reportDamaged(ci.path, at)
 			}
 			return true
 		})

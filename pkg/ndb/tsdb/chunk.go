@@ -422,9 +422,14 @@ var (
 // frameReader reads the frames of a file between two offsets through the pool, a window at a time, so that a scan
 // holds at most a window and a frame in memory and reads only the part of the file it needs.
 type frameReader struct {
+	col  *Column // whose damaged frames r reports
 	fs   *ndb.FilePool
 	path string
 	end  int64 // where the frames end
+	// torn: the frames are those of an open chunk after an earlier life (recoverOpenChunk), where a frame may run over
+	// the end, torn by a crash, and bytes between frames may be the rest of records written over; elsewhere the frames
+	// follow each other up to the end
+	torn bool
 
 	buf   []byte // the bytes of the file from base on
 	base  int64
@@ -432,8 +437,9 @@ type frameReader struct {
 	batch int
 }
 
-func (r *frameReader) reset(fs *ndb.FilePool, path string, pos, end int64) {
-	r.fs, r.path, r.end = fs, path, end
+// reset makes r read the frames of the file path of c from pos to end; torn as at frameReader.torn.
+func (r *frameReader) reset(c *Column, path string, pos, end int64, torn bool) {
+	r.col, r.fs, r.path, r.end, r.torn = c, c.pool, path, end, torn
 	r.buf, r.base, r.pos, r.batch = r.buf[:0], pos, pos, readerFirstBatch
 }
 
@@ -478,7 +484,10 @@ func (r *frameReader) nextBatch() int {
 }
 
 // next returns the next intact frame from pos on, of the kinds in want, skipping everything that is not one, and
-// moves pos behind it. kind is frameNone at the end. The returned frame is valid until the next call.
+// moves pos behind it. kind is frameNone at the end. The returned frame is valid until the next call. Where it skips a
+// damaged frame, it reports the place (Column.reportDamaged): a frame of a wanted kind, which fails its CRC, and
+// without torn also one, which runs over the end, and bytes, which are no frame at all (with torn, recoverOpenChunk
+// reports bytes between two records). A frame of a kind not wanted is skipped without a report.
 func (r *frameReader) next(want int) (kind int, at int64, frame []byte, err error) {
 	for r.pos < r.end {
 		win, err := r.fill(recHeadLen, r.nextBatch())
@@ -489,15 +498,22 @@ func (r *frameReader) next(want int) (kind int, at int64, frame []byte, err erro
 			return frameNone, 0, nil, nil
 		}
 		k, frameLen := peekFrame(win)
+		damaged := !r.torn && (k == frameNone || k&want != 0) // no frame, or one over the end
 		if k != frameNone && k&want != 0 && r.pos+int64(frameLen) <= r.end {
 			if win, err = r.fill(frameLen, r.nextBatch()); err != nil {
 				return frameNone, 0, nil, err
 			}
-			if len(win) >= frameLen && frameIntact(k, win[:frameLen]) {
-				at = r.pos
-				r.pos += int64(frameLen)
-				return k, at, win[:frameLen], nil
+			if len(win) >= frameLen {
+				if frameIntact(k, win[:frameLen]) {
+					at = r.pos
+					r.pos += int64(frameLen)
+					return k, at, win[:frameLen], nil
+				}
+				damaged = true // a wrong CRC
 			}
+		}
+		if damaged {
+			r.col.reportDamaged(r.path, r.pos)
 		}
 		if err := r.skip(want); err != nil {
 			return frameNone, 0, nil, err

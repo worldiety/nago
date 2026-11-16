@@ -47,6 +47,10 @@ type DB struct {
 	compactor *compactor
 	idleStop  chan struct{}
 	idleDone  chan struct{}
+
+	// damaged holds every place of a damaged block, which a read skipped and reported (Column.reportDamaged), until
+	// the DB is opened again.
+	damaged sync.Map // map[damagedPlace]struct{}
 }
 
 // columnSlot is the place of one column in DB.columns. The first caller opens the column, the others of the same name

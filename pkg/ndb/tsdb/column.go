@@ -86,7 +86,7 @@ func putScratch(sc *readScratch) {
 	if cap(sc.rd.buf) > maxPooledBuffer {
 		sc.rd.buf = nil
 	}
-	sc.rd.fs, sc.rd.path = nil, ""
+	sc.rd.col, sc.rd.fs, sc.rd.path = nil, nil, ""
 	clear(sc.chunks[:cap(sc.chunks)])
 	sc.chunks = sc.chunks[:0]
 	sc.pc = chunkInfo{}
@@ -213,7 +213,7 @@ func (c *Column) resumePending(pending []chunkInfo) error {
 	defer putScratch(sc)
 	var states []openState
 	for _, p := range pending {
-		st, res, err := recoverOpenChunk(c.pool, c.schema.Scheme, p.path, p.minMillis, &sc.rd)
+		st, res, err := recoverOpenChunk(c, p.path, p.minMillis, &sc.rd)
 		if err != nil {
 			return err
 		}
@@ -520,7 +520,8 @@ func (c *Column) scanBlocks(ci *chunkInfo, qmin, qmax int64, sc *readScratch, fn
 	if ci.dataOff == 0 {
 		head, err := readChunkHeader(c.pool, ci.path)
 		if errors.Is(err, errCorruptChunk) {
-			ci.bad = true // not a chunk: skipped as before
+			ci.bad = true // not a chunk: skipped as before, its blocks reported at the header
+			c.reportDamaged(ci.path, 0)
 			return true, nil
 		}
 		if err != nil {
@@ -536,7 +537,7 @@ func (c *Column) scanBlocks(ci *chunkInfo, qmin, qmax int64, sc *readScratch, fn
 		ci.sizeBytes = end
 	}
 	r := &sc.rd
-	r.reset(c.pool, ci.path, ci.dataOff, end)
+	r.reset(c, ci.path, ci.dataOff, end, false)
 	// only a masked chunk is searched: in an unmasked one (version 1), the bytes of a value could look like a block
 	if ci.masked && end-ci.dataOff > chunkSearchFrom && ci.minMillis < qmin {
 		from, err := r.search(ci.dataOff, end, qmin, ci.minMillis, ci.maxMillis)
@@ -570,6 +571,24 @@ func (c *Column) scanBlocks(ci *chunkInfo, qmin, qmax int64, sc *readScratch, fn
 func (c *Column) decodeFrame(ci *chunkInfo, at int64, frame []byte, h blockHeader, bd *blockData) error {
 	unmaskBlock(frame, h, ci.salt, at)
 	return decodeBlockData(frame, h, c.schema.Scheme, bd)
+}
+
+// damagedPlace is the place of a damaged block: its column, the name of its chunk file and its offset in it.
+type damagedPlace struct {
+	bucket, column, file string
+	offset               int64
+}
+
+// reportDamaged writes the place of a block, which a read skips because it fails its CRC or does not decode, to the
+// log once until the DB is opened again: a later read of the same place stays silent. A chunk, which gets a new name
+// when it is sealed, is a new place. The offset 0 is the header of a chunk, which is none, so that every block of it
+// is skipped.
+func (c *Column) reportDamaged(path string, offset int64) {
+	p := damagedPlace{bucket: c.bucket, column: c.name, file: filepath.Base(path), offset: offset}
+	if _, seen := c.db.damaged.LoadOrStore(p, struct{}{}); seen {
+		return
+	}
+	slog.Warn("tsdb: damaged block skipped", "bucket", p.bucket, "column", p.column, "file", p.file, "offset", p.offset)
 }
 
 // trim returns the points of bd within [min, max] as the slices a read hands out: vals for the numeric schemes, strs
@@ -636,6 +655,7 @@ func (c *Column) mergedRange(min, max int64, fn func(ts []int64, vals []int64, s
 						unknown = err
 						return false
 					}
+					c.reportDamaged(ci.path, at)
 					return true // skip corrupt block
 				}
 				ts, vals, strs := trim(&sc.bd, min, max, numeric)
@@ -669,6 +689,7 @@ func (c *Column) mergedRange(min, max int64, fn func(ts []int64, vals []int64, s
 					unknown = err
 					return false
 				}
+				c.reportDamaged(ci.path, at)
 				return true // skip corrupt block
 			}
 			return m.block(trim(&sc.bd, min, max, numeric))
