@@ -1,0 +1,50 @@
+// Copyright (c) 2026 worldiety GmbH
+//
+// This file is part of the NAGO Low-Code Platform.
+// Licensed under the terms specified in the LICENSE file.
+//
+// SPDX-License-Identifier: Custom-License
+
+package gostrict_test
+
+import "go.wdy.de/nago/pkg/gostrict"
+
+// Replacement of n22_names_test.go for the counter run against nago f4aca80c5 only (go test -overlay, see
+// testdata/n22/overlay.json): the lists go element by element over the fast writer and reader, as a host wrote and read
+// them before N22. It is no part of the suite.
+
+func n22WriteFloat64s(w gostrict.Writer, v []float64) {
+	w.List(len(v))
+	for _, x := range v {
+		w.Float64(x)
+	}
+	w.End()
+}
+
+func n22WriteInt64s(w gostrict.Writer, v []int64) {
+	w.List(len(v))
+	for _, x := range v {
+		w.Int64(x)
+	}
+	w.End()
+}
+
+func n22ReadFloat64s(r gostrict.Reader) []float64 {
+	n := r.List()
+	v := make([]float64, n)
+	for i := range v {
+		v[i] = r.Float64()
+	}
+	r.End()
+	return v
+}
+
+func n22ReadInt64s(r gostrict.Reader) []int64 {
+	n := r.List()
+	v := make([]int64, n)
+	for i := range v {
+		v[i] = r.Int64()
+	}
+	r.End()
+	return v
+}

@@ -274,7 +274,7 @@ func fromNeutral(n any, t reflect.Type) (reflect.Value, error) {
 		}
 		return reflect.ValueOf(zero.Interface().(hostHandle).HostFromRef(ref)), nil
 	case t.Implements(hostSeqType):
-		elems, _ := n.([]any)
+		elems, _ := anyList(n) // also a typed list, see ValueList
 		seq := zero.Interface().(hostSeq)
 		values := make([]any, len(elems))
 		for i, e := range elems {

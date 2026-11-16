@@ -130,7 +130,8 @@ func (h *head) ensureLocked() error {
 }
 
 // replay rebuilds the in-memory tree from the WAL, stopping at the first
-// corrupt/truncated record (house rule: continue operating, drop torn tail).
+// corrupt/truncated record (house rule: continue operating, drop torn tail). A record with its CRC and a kind of a
+// later version is errUnknownFormat: the head does not load, and nothing behind it is overwritten.
 func (h *head) replay() error {
 	data, err := h.fs.ReadFile(h.path)
 	if err != nil {
@@ -152,6 +153,10 @@ func (h *head) replay() error {
 		if crc32.ChecksumIEEE(payload) != crc {
 			break
 		}
+		if kind != headKindPut && kind != headKindTomb {
+			// a record of a later version: the head fails to load, so that no write goes over it
+			return fmt.Errorf("%w: record of kind %d in %s at %d", errUnknownFormat, kind, h.path, off)
+		}
 		if err := h.applyRecord(kind, payload); err != nil {
 			break
 		}
@@ -161,6 +166,7 @@ func (h *head) replay() error {
 	return nil
 }
 
+// applyRecord applies a record of a known kind (see replay).
 func (h *head) applyRecord(kind byte, payload []byte) error {
 	rb := xbytes.Buffer{Buf: payload}
 	ts, err := readVarint(&rb)
@@ -187,8 +193,6 @@ func (h *head) applyRecord(kind byte, payload []byte) error {
 			e.val = v
 		}
 		h.setEntry(e)
-	default:
-		return errCorruptBlock
 	}
 	return nil
 }

@@ -16,7 +16,9 @@ import (
 )
 
 // The neutral values are those of gostrict.ValueKind: basic values, nil or an error, js.Ref, []any of lists, maps
-// and records, the decimal string of a big.Int and the variants, tokens and callbacks of the host.
+// and records, the decimal string of a big.Int and the variants, tokens and callbacks of the host. A list of float64
+// or int64 may also be a []float64 or []int64, a typed list: the arguments of a host function, which are such lists,
+// are typed lists (hostArg), and write takes either form.
 
 // neutral converts the value of type t at the slots.
 func (m *Machine) neutral(t *tinfo, n []uint64, s []string, r []any) any {
@@ -148,7 +150,7 @@ func (m *Machine) write(v any, t *tinfo, n []uint64, s []string, r []any) {
 		}
 		r[0] = o
 	case kList, kOut:
-		r[0] = m.newList(t.elem, v.([]any))
+		r[0] = m.listOf(t, v)
 	case kMap:
 		entries := v.([]any)
 		d := newDict(t.key)
@@ -186,6 +188,73 @@ func (m *Machine) write(v any, t *tinfo, n []uint64, s []string, r []any) {
 	}
 }
 
+// typedList tells, whether the elements of a list of t cross the boundary of a host function as a typed list: a
+// []float64 or a []int64.
+func typedList(t *tinfo) bool {
+	return t.kind == kList && (t.elem.kind == kF64 || t.elem.kind == kI64)
+}
+
+// hostArg converts the argument of type t at the slots for a function of the host: a typed list for a list of float64
+// or int64, else its neutral value.
+func (m *Machine) hostArg(t *tinfo, n []uint64, s []string, r []any) any {
+	if typedList(t) {
+		return typedOf(t.elem, r[0].(*list))
+	}
+	return m.neutral(t, n, s, r)
+}
+
+// typedOf returns a copy of the elements of a list of float64 or int64 as a typed list.
+func typedOf(el *tinfo, l *list) any {
+	bits := l.n[:l.len]
+	if el.kind == kF64 {
+		res := make([]float64, len(bits))
+		for i, b := range bits {
+			res[i] = math.Float64frombits(b)
+		}
+		return res
+	}
+	res := make([]int64, len(bits))
+	for i, b := range bits {
+		res[i] = int64(b)
+	}
+	return res
+}
+
+// listOf returns a list of type t of the neutral value v: a []any or, for a list of float64 or int64, a typed list.
+func (m *Machine) listOf(t *tinfo, v any) *list {
+	if typedList(t) {
+		switch vs := v.(type) {
+		case []float64:
+			if t.elem.kind == kF64 {
+				return listOfFloat64s(vs)
+			}
+		case []int64:
+			if t.elem.kind == kI64 {
+				return listOfInt64s(vs)
+			}
+		}
+	}
+	return m.newList(t.elem, v.([]any))
+}
+
+// listOfFloat64s returns a list of a copy of vs.
+func listOfFloat64s(vs []float64) *list {
+	n := make([]uint64, len(vs))
+	for i, v := range vs {
+		n[i] = math.Float64bits(v)
+	}
+	return &list{n: n, len: int32(len(vs))}
+}
+
+// listOfInt64s returns a list of a copy of vs.
+func listOfInt64s(vs []int64) *list {
+	n := make([]uint64, len(vs))
+	for i, v := range vs {
+		n[i] = uint64(v)
+	}
+	return &list{n: n, len: int32(len(vs))}
+}
+
 func (m *Machine) newList(el *tinfo, vs []any) *list {
 	l := &list{len: int32(len(vs))}
 	if el.l.n > 0 {
@@ -211,7 +280,7 @@ func (m *Machine) writeFields(fs []any, t *tinfo, n []uint64, s []string, r []an
 }
 
 // CheckArgs reports, whether the neutral values fit the parameters of the function, e.g. of a callback, which the
-// host calls with values of its own.
+// host calls with values of its own. A list of float64 or int64 may be a typed list.
 func (c *Closure) CheckArgs(args []any) error {
 	f := c.fn
 	if len(args) != len(f.params.elems) {
@@ -236,7 +305,17 @@ func (c *Closure) CheckArgs(args []any) error {
 			_, ok = args[i].(string)
 		case kBytes:
 			_, ok = args[i].([]byte)
-		case kList, kOut, kMap, kStruct, kShared:
+		case kList:
+			switch args[i].(type) {
+			case []any:
+			case []float64:
+				ok = t.elem.kind == kF64
+			case []int64:
+				ok = t.elem.kind == kI64
+			default:
+				ok = false
+			}
+		case kOut, kMap, kStruct, kShared:
 			_, ok = args[i].([]any)
 		case kHandle:
 			_, ok = args[i].(js.Ref)

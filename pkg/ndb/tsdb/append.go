@@ -188,6 +188,7 @@ func (a *appender) loadOpenBlock(bd *blockData, r *frameReader) error {
 			if kind == frameNone {
 				break
 			}
+			// a record of a later version failed the open of the column already (recoverOpenChunk)
 			_, count, body, _ := parseRecord(frame, len(frame), a.salt, at)
 			n := len(bd.ts)
 			if !decodePoints(body, count, a.c.schema.Scheme, bd) {

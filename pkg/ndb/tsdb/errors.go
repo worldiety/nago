@@ -20,4 +20,8 @@ var (
 	errColumnExists     = errors.New("tsdb: column already exists with a different scheme")
 	errUnknownColumn    = errors.New("tsdb: unknown column")
 	errColumnGone       = errors.New("tsdb: column was dropped or closed")
+	// errUnknownFormat is the error of a chunk, block or continuation record with its marker, its format and its CRC,
+	// whose version, flag or kind this version does not know, and of a schema.json of an unknown version: a later
+	// version of tsdb wrote it. Nothing of it is removed, cut or compacted.
+	errUnknownFormat = errors.New("tsdb: written by a newer version of tsdb")
 )

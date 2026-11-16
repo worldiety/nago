@@ -193,12 +193,13 @@ func (m *Machine) reset(s saved) {
 	}
 }
 
-// callHost calls a function of the host with the arguments at base and writes its results over them.
+// callHost calls a function of the host with the arguments at base and writes its results over them. A list of
+// float64 or int64 goes to the host as a typed list (hostArg), a result may be one.
 func (m *Machine) callHost(x *extern, base layout) {
 	args := make([]any, len(x.params))
 	off := base
 	for i, t := range x.params {
-		args[i] = m.neutral(t, m.n[off.n:], m.s[off.s:], m.r[off.r:])
+		args[i] = m.hostArg(t, m.n[off.n:], m.s[off.s:], m.r[off.r:])
 		off = off.add(t.l)
 	}
 	res := m.host.Call(x.idx, args)

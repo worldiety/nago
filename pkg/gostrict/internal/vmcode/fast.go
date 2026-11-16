@@ -230,6 +230,18 @@ func (rd *Reader) List() int {
 	return int(l.len)
 }
 
+// Float64s reads a whole list of float64. The slice is valid until End; this one is a copy.
+func (rd *Reader) Float64s() []float64 {
+	t, _, _, r := rd.next()
+	return typedOf(t.elem, r[0].(*list)).([]float64)
+}
+
+// Int64s reads a whole list of int64. The slice is valid until End; this one is a copy.
+func (rd *Reader) Int64s() []int64 {
+	t, _, _, r := rd.next()
+	return typedOf(t.elem, r[0].(*list)).([]int64)
+}
+
 func (rd *Reader) Map() int {
 	t, _, _, r := rd.next()
 	d := r[0].(*dict)
@@ -380,6 +392,18 @@ func (w *Writer) List(n int) {
 	l := &list{len: int32(n), n: make([]uint64, n*int(el.l.n)), s: make([]string, n*int(el.l.s)), r: make([]any, n*int(el.l.r))}
 	r[0] = l
 	w.stack = append(w.stack, level{kind: lvList, t: el, l: l})
+}
+
+// Float64s writes a whole list of float64, whose elements it copies.
+func (w *Writer) Float64s(v []float64) {
+	_, _, _, r := w.next()
+	r[0] = listOfFloat64s(v)
+}
+
+// Int64s writes a whole list of int64, whose elements it copies.
+func (w *Writer) Int64s(v []int64) {
+	_, _, _, r := w.next()
+	r[0] = listOfInt64s(v)
 }
 
 func (w *Writer) Map(int) {

@@ -624,6 +624,32 @@ func (c converter) toGo(v goja.Value, t gostrict.Type) (any, error) {
 	return nil, fmt.Errorf("unsupported type %s", t)
 }
 
+// hostArg converts the argument of a function of the host like the vm does: a list of float64 or int64 as a typed
+// list (see gostrict.ValueList), everything else as its neutral value.
+func (c converter) hostArg(v goja.Value, t gostrict.Type) (any, error) {
+	if t.Kind != gostrict.ValueList || (t.Elem.Kind != gostrict.ValueFloat64 && t.Elem.Kind != gostrict.ValueInt64) {
+		return c.toGo(v, t)
+	}
+	obj := v.ToObject(c.r.rt)
+	n := int(obj.Get("length").ToInteger())
+	if t.Elem.Kind == gostrict.ValueFloat64 {
+		res := make([]float64, n)
+		for i := range n {
+			res[i] = obj.Get(strconv.Itoa(i)).ToFloat()
+		}
+		return res, nil
+	}
+	res := make([]int64, n)
+	for i := range n {
+		e, err := c.toGo(obj.Get(strconv.Itoa(i)), gostrict.Int64)
+		if err != nil {
+			return nil, err
+		}
+		res[i] = e.(int64)
+	}
+	return res, nil
+}
+
 func (c converter) record(t gostrict.Type) (gostrict.Record, error) {
 	rec, ok := c.b.Records[t.Name]
 	if !ok {
@@ -679,6 +705,26 @@ func (c converter) toJS(v any, t gostrict.Type) (goja.Value, error) {
 		}
 		return c.r.newMap(goja.Undefined(), rt.NewArray(pairs...))
 	case gostrict.ValueList, gostrict.ValueOut:
+		switch list := v.(type) {
+		case []float64:
+			// a typed list (see gostrict.ValueList): the same numbers as of its []any; an array of JavaScript holds a
+			// value for each element, so its allocations grow with the length, unlike in the vm
+			values := make([]any, len(list))
+			for i, e := range list {
+				values[i] = rt.ToValue(e)
+			}
+			return rt.NewArray(values...), nil
+		case []int64:
+			values := make([]any, len(list))
+			for i, e := range list {
+				ev, err := c.toJS(e, gostrict.Int64)
+				if err != nil {
+					return nil, err
+				}
+				values[i] = ev
+			}
+			return rt.NewArray(values...), nil
+		}
 		list := v.([]any)
 		values := make([]any, len(list))
 		for i, e := range list {
@@ -791,7 +837,7 @@ func (r *Runtime) hostFunc(in *instance, sig gostrict.Func, f gostrict.Fn) func(
 		}()
 		args := make([]any, len(sig.Params))
 		for i, k := range sig.Params {
-			v, err := c.toGo(call.Argument(i), k)
+			v, err := c.hostArg(call.Argument(i), k)
 			if err != nil {
 				panic(r.rt.NewGoError(err))
 			}

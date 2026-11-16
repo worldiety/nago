@@ -231,7 +231,8 @@ func (db *DB) LookupColumn(bucket, column string) (*Column, bool, error) {
 	return c, true, nil
 }
 
-// SeriesColumns lists all columns present on disk as "bucket/column".
+// SeriesColumns lists all columns present on disk as "bucket/column". A directory without a readable schema.json is
+// no column; one, whose schema.json a later version of tsdb wrote, fails the listing.
 func (db *DB) SeriesColumns() ([]string, error) {
 	entries, err := os.ReadDir(db.dir)
 	if err != nil {
@@ -251,7 +252,11 @@ func (db *DB) SeriesColumns() ([]string, error) {
 			if !ce.IsDir() {
 				continue
 			}
-			if _, ok, _ := loadSchema(db.fs, filepath.Join(db.dir, bucket, ce.Name())); ok {
+			_, ok, err := loadSchema(db.fs, filepath.Join(db.dir, bucket, ce.Name()))
+			if errors.Is(err, errUnknownFormat) {
+				return nil, err
+			}
+			if ok {
 				out = append(out, bucket+"/"+ce.Name())
 			}
 		}

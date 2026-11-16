@@ -9,7 +9,9 @@ package tsdb
 
 import (
 	"encoding/binary"
+	"fmt"
 	"hash/crc32"
+	"sync"
 
 	"github.com/klauspost/compress/s2"
 	"go.wdy.de/nago/pkg/xbytes"
@@ -27,7 +29,7 @@ const syncMarker uint64 = 0xDEAD54534442BEEF // "…TSDB…"
 //	| MinMillis   8 | smallest timestamp in the block (range-skip without decoding)
 //	| MaxMillis   8 | largest timestamp in the block
 //	| Count       4 | number of points
-//	| Flags       1 | bit0: body is s2-compressed
+//	| Flags       1 | see flagCompressed .. flagFORVals
 //	| Body        n | timestamps stream + values stream (optionally compressed)
 //	| CRC32       4 | IEEE over [MinMillis .. Body]
 const (
@@ -59,6 +61,12 @@ const (
 	// flagMasked marks a body masked with the key stream of its file (see maskBlock); readers unmask it before they
 	// decode it.
 	flagMasked byte = 1 << 3
+	// flagFORVals marks the numeric value stream as the frame-of-reference stream of forcodec.go instead of the
+	// delta + zig-zag varint stream. A block holds it, if it is not larger than the varint stream (see encodeBlock).
+	flagFORVals byte = 1 << 4
+	// flagsKnown are the flags of this version. A block, which is intact and has another flag, was written by a later
+	// version: a read reports errUnknownFormat instead of skipping it.
+	flagsKnown = flagCompressed | flagEquidistantTS | flagConstVal | flagMasked | flagFORVals
 )
 
 // blockData is the decoded, in-memory content of a block. For numeric schemes
@@ -75,9 +83,30 @@ type blockData struct {
 
 func (b *blockData) count() int { return len(b.ts) }
 
+// encodeScratch holds the buffers of encodeBlock, so that sealing a block allocates nothing per block.
+type encodeScratch struct {
+	body, alt   []byte // the varint body and the body with the frame-of-reference values
+	zBody, zAlt []byte // their s2-compressed forms
+	fs          forScratch
+}
+
+var encodePool = sync.Pool{New: func() any { return new(encodeScratch) }}
+
+const maxPooledEncode = 1 << 20 // a larger encode buffer is not kept
+
 // encodeBlock serializes bd into a self-describing block frame appended to out
 // and returns the extended slice. compress controls s2 compression of the body.
+//
+// The values of a numeric block, which are not all the same, are encoded in two ways, as delta + zig-zag varints and
+// as the frame-of-reference stream (see forcodec.go), each s2-compressed if that makes it smaller, and the block takes
+// the smaller one, the frame-of-reference stream on a tie. So no block is larger than with varints alone.
 func encodeBlock(out []byte, bd *blockData, s Scheme, compress bool) ([]byte, error) {
+	if !s.valid() {
+		return out, errInvalidScheme
+	}
+	es := encodePool.Get().(*encodeScratch)
+	defer putEncodeScratch(es)
+
 	// choose the timestamp codec: a block whose timestamps have a single
 	// constant step (equidistant, no holes) is stored as just (start, step),
 	// which the reader reconstructs by ts[i] = start + i*step. This drops the
@@ -92,26 +121,26 @@ func encodeBlock(out []byte, bd *blockData, s Scheme, compress bool) ([]byte, er
 	numeric := s != SchemeString
 	constVal := numeric && allEqualI64(bd.vals)
 
-	// encode body (timestamps + values) into a scratch buffer
-	body := xbytes.Buffer{}
+	body := es.body[:0]
 	if equi {
-		encodeEquidistantTimestamps(&body, bd.ts, step)
+		body = appendVarint(body, bd.ts[0])
+		body = appendVarint(body, step)
 	} else {
-		encodeTimestamps(&body, bd.ts)
+		body = appendTimestamps(body, bd.ts)
 	}
-	switch s {
-	case SchemeDecimal, SchemeEnum:
-		if constVal {
-			encodeConstValue(&body, firstI64(bd.vals))
-		} else {
-			encodeValues(&body, bd.vals)
+	tsLen := len(body)
+	switch {
+	case !numeric:
+		for _, str := range bd.strs {
+			body = binary.AppendUvarint(body, uint64(len(str)))
+			body = append(body, str...)
 		}
-	case SchemeString:
-		encodeStrings(&body, bd.strs)
+	case constVal:
+		body = appendVarint(body, firstI64(bd.vals))
 	default:
-		return out, errInvalidScheme
+		body = appendValueDeltas(body, bd.vals)
 	}
-	bodyBytes := body.Buf[:body.Pos]
+	es.body = body
 
 	flags := byte(0)
 	if equi {
@@ -120,11 +149,26 @@ func encodeBlock(out []byte, bd *blockData, s Scheme, compress bool) ([]byte, er
 	if constVal {
 		flags |= flagConstVal
 	}
-	if compress && len(bodyBytes) > 512 {
-		c := s2.Encode(nil, bodyBytes)
-		if len(c) < len(bodyBytes) {
-			bodyBytes = c
-			flags |= flagCompressed
+	payload, pflags := body, flags
+	if compress && len(body) > 512 {
+		es.zBody = s2.Encode(es.zBody[:cap(es.zBody)], body)
+		if len(es.zBody) < len(body) {
+			payload, pflags = es.zBody, flags|flagCompressed
+		}
+	}
+	if numeric && !constVal {
+		alt := append(es.alt[:0], body[:tsLen]...)
+		alt = appendFORValues(alt, bd.vals, &es.fs)
+		es.alt = alt
+		altPayload, altFlags := alt, flags|flagFORVals
+		if len(alt) > len(payload) && compress && len(alt) > 512 {
+			es.zAlt = s2.Encode(es.zAlt[:cap(es.zAlt)], alt)
+			if len(es.zAlt) < len(alt) {
+				altPayload, altFlags = es.zAlt, altFlags|flagCompressed
+			}
+		}
+		if len(altPayload) <= len(payload) {
+			payload, pflags = altPayload, altFlags
 		}
 	}
 
@@ -135,21 +179,65 @@ func encodeBlock(out []byte, bd *blockData, s Scheme, compress bool) ([]byte, er
 	}
 
 	// assemble frame
-	frame := xbytes.Buffer{Buf: out, Pos: len(out)}
-	writeU64(&frame, syncMarker)
-	bodyLen := uint32(blkPreBodySz + len(bodyBytes))
-	_ = frame.WriteUint32(bodyLen)
+	frame := binary.LittleEndian.AppendUint64(out, syncMarker)
+	frame = binary.LittleEndian.AppendUint32(frame, uint32(blkPreBodySz+len(payload)))
+	crcStart := len(frame)
+	frame = binary.LittleEndian.AppendUint64(frame, uint64(minT))
+	frame = binary.LittleEndian.AppendUint64(frame, uint64(maxT))
+	frame = binary.LittleEndian.AppendUint32(frame, uint32(len(bd.ts)))
+	frame = append(frame, pflags)
+	frame = append(frame, payload...)
+	return binary.LittleEndian.AppendUint32(frame, crc32.ChecksumIEEE(frame[crcStart:])), nil
+}
 
-	crcStart := frame.Pos
-	writeU64(&frame, uint64(minT))
-	writeU64(&frame, uint64(maxT))
-	_ = frame.WriteUint32(uint32(len(bd.ts)))
-	_ = frame.WriteByte(flags)
-	_, _ = frame.Write(bodyBytes)
-	crc := crc32.ChecksumIEEE(frame.Buf[crcStart:frame.Pos])
-	_ = frame.WriteUint32(crc)
+func putEncodeScratch(es *encodeScratch) {
+	for _, b := range []*[]byte{&es.body, &es.alt, &es.zBody, &es.zAlt} {
+		if cap(*b) > maxPooledEncode {
+			*b = nil
+		}
+	}
+	if cap(es.fs.w) > maxPooledEncode/8 {
+		es.fs = forScratch{}
+	}
+	encodePool.Put(es)
+}
 
-	return frame.Buf[:frame.Pos], nil
+// appendVarint appends v as zig-zag uvarint, like writeVarint.
+func appendVarint(dst []byte, v int64) []byte {
+	return binary.AppendUvarint(dst, zigzag(v))
+}
+
+// appendTimestamps appends the delta-of-delta stream of ts, like encodeTimestamps.
+func appendTimestamps(dst []byte, ts []int64) []byte {
+	if len(ts) == 0 {
+		return dst
+	}
+	dst = appendVarint(dst, ts[0])
+	if len(ts) == 1 {
+		return dst
+	}
+	prevDelta := ts[1] - ts[0]
+	dst = appendVarint(dst, prevDelta)
+	for i := 2; i < len(ts); i++ {
+		delta := ts[i] - ts[i-1]
+		dst = appendVarint(dst, delta-prevDelta)
+		prevDelta = delta
+	}
+	return dst
+}
+
+// appendValueDeltas appends the delta + zig-zag varint stream of vals, like encodeValues.
+func appendValueDeltas(dst []byte, vals []int64) []byte {
+	if len(vals) == 0 {
+		return dst
+	}
+	dst = appendVarint(dst, vals[0])
+	prev := vals[0]
+	for _, v := range vals[1:] {
+		dst = appendVarint(dst, v-prev)
+		prev = v
+	}
+	return dst
 }
 
 // blockHeader is the cheaply-parsed frame header used to skip or read a block.
@@ -209,8 +297,12 @@ func decodeBlockBody(buf []byte, h blockHeader, s Scheme, bd *blockData) error {
 	return decodeBlockData(buf, h, s, bd)
 }
 
-// decodeBlockData is decodeBlockBody without the check of the CRC, for a frame that was checked and unmasked.
+// decodeBlockData is decodeBlockBody without the check of the CRC, for a frame that was checked and unmasked. A flag
+// of a later version is errUnknownFormat, a body, which does not decode, errCorruptBlock.
 func decodeBlockData(buf []byte, h blockHeader, s Scheme, bd *blockData) error {
+	if h.flags&^flagsKnown != 0 {
+		return fmt.Errorf("%w: block flags 0x%02x", errUnknownFormat, h.flags)
+	}
 	body := buf[h.bodyOff : h.bodyOff+h.bodyLen]
 	if h.flags&flagCompressed != 0 {
 		dec, err := s2.Decode(bd.decompBuf[:cap(bd.decompBuf)], body)
@@ -232,14 +324,23 @@ func decodeBlockData(buf []byte, h blockHeader, s Scheme, bd *blockData) error {
 		return errCorruptBlock
 	}
 	constVal := h.flags&flagConstVal != 0
+	forVals := h.flags&flagFORVals != 0
 	switch s {
 	case SchemeDecimal, SchemeEnum:
-		if constVal {
+		switch {
+		case constVal && forVals:
+			return errCorruptBlock
+		case constVal:
 			bd.vals, _, ok = decodeConstI64Into(body, off, h.count, bd.vals)
-		} else {
+		case forVals:
+			bd.vals, _, ok = decodeFORInto(body, off, h.count, bd.vals)
+		default:
 			bd.vals, _, ok = decodeValuesInto(body, off, h.count, bd.vals)
 		}
 	case SchemeString:
+		if forVals {
+			return errCorruptBlock
+		}
 		bd.strs, _, ok = decodeStringsInto(body, off, h.count, bd.strs)
 	default:
 		return errInvalidScheme
@@ -257,20 +358,6 @@ func blockIntact(buf []byte, h blockHeader) bool {
 	crcRegion := buf[blkHeaderSz : blkHeaderSz+blkPreBodySz+h.bodyLen]
 	want := binary.LittleEndian.Uint32(buf[h.frameLen-blkCRC : h.frameLen])
 	return crc32.ChecksumIEEE(crcRegion) == want
-}
-
-func writeU64(b *xbytes.Buffer, v uint64) {
-	var tmp [8]byte
-	binary.LittleEndian.PutUint64(tmp[:], v)
-	_, _ = b.Write(tmp[:])
-}
-
-// encodeStrings stores length-prefixed raw strings. The whole block body is
-// typically s2-compressed by encodeBlock, so no per-string compression here.
-func encodeStrings(b *xbytes.Buffer, strs []string) {
-	for _, s := range strs {
-		_, _ = b.WriteString(s)
-	}
 }
 
 func decodeStrings(b *xbytes.Buffer, count int, dst []string) ([]string, error) {

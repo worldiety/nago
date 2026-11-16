@@ -10,6 +10,7 @@ package tsdb
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"slices"
@@ -440,7 +441,11 @@ func (c *Column) enforceHeadBound() {
 		c.mu.Lock()
 		// re-check under lock; a concurrent flush may have drained it already.
 		if !c.dropped && c.head.len() >= c.db.opts.MaxHeadPoints {
-			_ = c.compactLocked()
+			// the point of the put is in the WAL already; a compaction, which fails, e.g. on a block of a later
+			// version, removes nothing, and the next Flush or Close reports it again
+			if err := c.compactLocked(); err != nil {
+				slog.Error("tsdb: compaction failed", "bucket", c.bucket, "column", c.name, "err", err)
+			}
 		}
 		c.mu.Unlock()
 		return
@@ -505,8 +510,9 @@ func (c *Column) chunksForRead(min, max int64, sc *readScratch) []*chunkInfo {
 // scanBlocks calls fn with every intact block of ci that overlaps [qmin, qmax], in ascending order. It reads only
 // these blocks and a little around them: a chunk whose blocks take more than chunkSearchFrom and which begins before
 // qmin is searched for the first of them (frameReader.search), and the scan stops at the first block after qmax.
-// cont is false when fn stopped it. A chunk whose header is not one of a chunk is skipped, as is a corrupt block. fn
-// gets each block at its offset at, checked against its CRC and still masked (see decodeFrame).
+// cont is false when fn stopped it. A chunk whose header is not one of a chunk is skipped, as is a corrupt block; a
+// chunk of a later version is errUnknownFormat. fn gets each block at its offset at, checked against its CRC and still
+// masked (see decodeFrame).
 func (c *Column) scanBlocks(ci *chunkInfo, qmin, qmax int64, sc *readScratch, fn func(at int64, frame []byte, h blockHeader) bool) (cont bool, err error) {
 	if ci.bad {
 		return true, nil
@@ -514,7 +520,7 @@ func (c *Column) scanBlocks(ci *chunkInfo, qmin, qmax int64, sc *readScratch, fn
 	if ci.dataOff == 0 {
 		head, err := readChunkHeader(c.pool, ci.path)
 		if errors.Is(err, errCorruptChunk) {
-			ci.bad = true
+			ci.bad = true // not a chunk: skipped as before
 			return true, nil
 		}
 		if err != nil {
@@ -623,8 +629,13 @@ func (c *Column) mergedRange(min, max int64, fn func(ts []int64, vals []int64, s
 	if !c.head.hasRange(min, max) {
 		stop := false
 		for _, ci := range chunks {
+			var unknown error
 			cont, err := c.scanBlocks(ci, min, max, sc, func(at int64, frame []byte, h blockHeader) bool {
-				if c.decodeFrame(ci, at, frame, h, &sc.bd) != nil {
+				if err := c.decodeFrame(ci, at, frame, h, &sc.bd); err != nil {
+					if errors.Is(err, errUnknownFormat) {
+						unknown = err
+						return false
+					}
 					return true // skip corrupt block
 				}
 				ts, vals, strs := trim(&sc.bd, min, max, numeric)
@@ -634,7 +645,7 @@ func (c *Column) mergedRange(min, max int64, fn func(ts []int64, vals []int64, s
 				}
 				return true
 			})
-			if err != nil {
+			if err = errors.Join(err, unknown); err != nil {
 				return err
 			}
 			if !cont || stop {
@@ -651,13 +662,18 @@ func (c *Column) mergedRange(min, max int64, fn func(ts []int64, vals []int64, s
 	// replaces it, a tombstone removes it.
 	m := merger{he: c.head.snapshot(min, max), numeric: numeric, out: &sc.out, fn: fn}
 	for _, ci := range chunks {
+		var unknown error
 		cont, err := c.scanBlocks(ci, min, max, sc, func(at int64, frame []byte, h blockHeader) bool {
-			if c.decodeFrame(ci, at, frame, h, &sc.bd) != nil {
-				return true
+			if err := c.decodeFrame(ci, at, frame, h, &sc.bd); err != nil {
+				if errors.Is(err, errUnknownFormat) {
+					unknown = err
+					return false
+				}
+				return true // skip corrupt block
 			}
 			return m.block(trim(&sc.bd, min, max, numeric))
 		})
-		if err != nil {
+		if err = errors.Join(err, unknown); err != nil {
 			return err
 		}
 		if !cont {

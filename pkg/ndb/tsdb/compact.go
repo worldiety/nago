@@ -238,13 +238,20 @@ func (c *Column) prepareFold(finalize bool) (*compaction, error) {
 		}
 	}
 	scan := func(ci *chunkInfo) error {
+		var unknown error
 		_, err := c.scanBlocks(ci, minInt64, maxInt64, sc, func(at int64, frame []byte, h blockHeader) bool {
-			if c.decodeFrame(ci, at, frame, h, &sc.bd) == nil {
+			err := c.decodeFrame(ci, at, frame, h, &sc.bd)
+			switch {
+			case err == nil:
 				take(&sc.bd)
+			case errors.Is(err, errUnknownFormat):
+				// a block of a later version: the compaction stops before it writes anything
+				unknown = err
+				return false
 			}
 			return true
 		})
-		return err
+		return errors.Join(err, unknown)
 	}
 	var replaced []string
 	for i := range overlap {

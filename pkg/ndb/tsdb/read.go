@@ -9,6 +9,8 @@ package tsdb
 
 import (
 	"iter"
+	"math"
+	"sync"
 
 	"go.wdy.de/nago/pkg/timeseries"
 )
@@ -37,23 +39,45 @@ func (c *Column) ScanI64(min, max int64, fn func(ts []int64, vals []int64) bool)
 }
 
 // ScanF64 is like ScanI64 but unscales values to float64 using the column's
-// decimals. The vals slice is engine-owned scratch, valid only during fn.
+// decimals: NA is math.NaN(), every other value float64(v)/10^decimals, bit for bit like unscale. The divisor is
+// determined once per read. The vals slice is engine-owned scratch, valid only during fn.
 func (c *Column) ScanF64(min, max int64, fn func(ts []int64, vals []float64) bool) error {
 	if c.schema.Scheme != SchemeDecimal {
 		return errSchemeMismatch
 	}
-	dec := c.schema.Decimals
-	var fbuf []float64
+	div := pow10(c.schema.Decimals)
+	fb := f64Pool.Get().(*[]float64)
+	defer putF64(fb)
 	return c.mergedRange(min, max, func(ts []int64, vals []int64, _ []string) bool {
-		if cap(fbuf) < len(vals) {
-			fbuf = make([]float64, len(vals))
+		if cap(*fb) < len(vals) {
+			*fb = make([]float64, len(vals))
 		}
-		fbuf = fbuf[:len(vals)]
-		for i, v := range vals {
-			fbuf[i] = unscale(v, dec)
-		}
-		return fn(ts, fbuf)
+		return fn(ts, unscaleInto((*fb)[:len(vals)], vals, div))
 	})
+}
+
+// unscaleInto sets dst[i] to unscale(vals[i], decimals) for the divisor div = pow10(decimals) and returns dst.
+func unscaleInto(dst []float64, vals []int64, div float64) []float64 {
+	dst = dst[:len(vals)]
+	nan := math.NaN()
+	for i, v := range vals {
+		f := float64(v) / div
+		if v == NA {
+			f = nan
+		}
+		dst[i] = f
+	}
+	return dst
+}
+
+// f64Pool holds the float64 buffers of ScanF64, so that a read allocates none.
+var f64Pool = sync.Pool{New: func() any { return new([]float64) }}
+
+func putF64(fb *[]float64) {
+	if cap(*fb) > maxPooledBuffer/8 {
+		*fb = nil
+	}
+	f64Pool.Put(fb)
 }
 
 // ScanString invokes fn for each decoded block of string values. Valid for

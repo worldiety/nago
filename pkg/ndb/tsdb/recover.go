@@ -64,7 +64,8 @@ const (
 // recoverOpenChunk reads the open chunk at path left by an earlier life, ended by Close or by a crash, so that the
 // column continues it. It reads the header and, from where its newer slot says the sealed blocks end, the rest of the
 // file; a chunk of version 1 or without an intact slot is read from its first block on. Only intact frames count
-// (marker, length and CRC). The saved points of the open block are those of the records behind the last intact block:
+// (marker, length and CRC); an intact block or record of a later version is errUnknownFormat, and the file stays as it
+// is. The saved points of the open block are those of the records behind the last intact block:
 //
 //   - A record, whose points are not newer than that block, belongs to it: a crash came after the block was written
 //     over its records and before the file was cut behind it.
@@ -90,7 +91,7 @@ func recoverOpenChunk(fs *ndb.FilePool, scheme Scheme, path string, minMillis in
 			}
 			return st, recoveredNothing, nil
 		}
-		return st, recoveredNothing, err
+		return st, recoveredNothing, err // also a chunk of a later version, which is left as it is
 	}
 	st.dataOff = dataOff
 	start := dataOff
@@ -116,11 +117,19 @@ func recoverOpenChunk(fs *ndb.FilePool, scheme Scheme, path string, minMillis in
 		}
 		if kind == frameBlock {
 			h, _ := parseBlockHeader(frame)
+			if h.flags&^flagsKnown != 0 {
+				// an intact block of a later version: nothing is cut, and the slot is not moved over it
+				return st, recoveredNothing, fmt.Errorf("%w: block flags 0x%02x in %s at %d", errUnknownFormat, h.flags, path, at)
+			}
 			st.blocksPts += int64(h.count)
 			st.blocksMax = h.maxMillis
 			st.blocksEnd = at + int64(h.frameLen)
 			recs = recs[:0] // a record before a block is older than it
 			continue
+		}
+		if unknownRecord(frame, len(frame)) {
+			// a record of a later version: nothing is cut or rewritten
+			return st, recoveredNothing, fmt.Errorf("%w: record of kind 0x%02x in %s at %d", errUnknownFormat, frame[recHeadLen], path, at)
 		}
 		rk, count, body, _ := parseRecord(frame, len(frame), st.salt, at)
 		fr := foundRecord{at: at, end: at + int64(len(frame)), kind: rk}

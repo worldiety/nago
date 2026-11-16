@@ -18,7 +18,7 @@ import (
 const schemaFileName = "schema.json"
 
 // loadSchema reads and validates the schema.json in dir through the pool. The bool is false if the file does not
-// exist yet.
+// exist yet. A version larger than schemaVersion is errUnknownFormat: a later version of tsdb wrote it.
 func loadSchema(fs *ndb.FilePool, dir string) (Schema, bool, error) {
 	data, err := fs.ReadFile(filepath.Join(dir, schemaFileName))
 	if err != nil {
@@ -30,6 +30,9 @@ func loadSchema(fs *ndb.FilePool, dir string) (Schema, bool, error) {
 	var s Schema
 	if err := json.Unmarshal(data, &s); err != nil {
 		return Schema{}, false, fmt.Errorf("tsdb: parse schema: %w", err)
+	}
+	if s.Version > schemaVersion {
+		return Schema{}, false, fmt.Errorf("%w: %s has version %d", errUnknownFormat, filepath.Join(dir, schemaFileName), s.Version)
 	}
 	if err := s.validate(); err != nil {
 		return Schema{}, false, err

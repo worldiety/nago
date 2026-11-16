@@ -48,7 +48,9 @@ import (
 // blocks and continuation records of a version 2 file are masked with a key stream of the salt and their offset, so
 // that no value, which a caller writes, appears in the file as written: the search for blocks and the recovery, which
 // look for markers, can not take the bytes of a value for a frame. Every file tsdb writes has version 2; it reads
-// both, and continues a version 1 file unmasked.
+// both, and continues a version 1 file unmasked. Every later version keeps the prefix of version 2 up to its CRC, so
+// that a chunk of a later version is errUnknownFormat, not a corrupt file (readChunkHeader); every later change of the
+// continuation records, the WAL or the dictionary increases the version, a new encoding of a block gets a flag.
 const (
 	chunkMagic      uint32 = 0x4E41474F // "NAGO"
 	chunkFormat     uint32 = 0x4E545342 // "NTSB"
@@ -187,7 +189,10 @@ func writeSlot(fs *ndb.FilePool, path string, s chunkSlot) error {
 }
 
 // readChunkHeader reads the header of path: where the blocks begin, the salt and, for version 2, the newer intact
-// slot. errCorruptChunk reports a file that is not a chunk.
+// slot. errCorruptChunk reports a file that is not a chunk, errUnknownFormat one of a later version: its magic and its
+// format match, its version is larger than 2, and the CRC of the prefix of version 2 (magic .. salt) matches or the
+// file is shorter than a header of version 2, so that the open of a column does not remove it as a torn header. Every
+// later version keeps that prefix.
 func readChunkHeader(fs *ndb.FilePool, path string) (chunkHead, error) {
 	var hdr [chunkDataOff]byte
 	n, rerr := fs.ReadAt(path, hdr[:], 0)
@@ -220,6 +225,12 @@ func readChunkHeader(fs *ndb.FilePool, path string) (chunkHead, error) {
 		}
 		return h, nil
 	}
+	if hdr[8] > chunkVersion && (n < int(chunkDataOff) ||
+		crc32.ChecksumIEEE(hdr[:chunkPrefixLen+8]) == binary.LittleEndian.Uint32(hdr[chunkPrefixLen+8:])) {
+		// a later version, which keeps the prefix of version 2 with its CRC, or a file of a later version, which is
+		// shorter than a header of version 2 and is not taken for a torn header
+		return chunkHead{}, fmt.Errorf("%w: chunk %s has version %d", errUnknownFormat, path, hdr[8])
+	}
 	return chunkHead{}, errCorruptChunk
 }
 
@@ -227,24 +238,39 @@ func readChunkHeader(fs *ndb.FilePool, path string) (chunkHead, error) {
 // its own inverse. The stream is not secret against someone who reads the file; it keeps a writer of values, who does
 // not know the salt, from placing chosen bytes into the file.
 func maskStream(b []byte, salt uint64, off int64) {
-	x := salt ^ uint64(off)*0x9E3779B97F4A7C15
-	next := func() uint64 {
-		x += 0x9E3779B97F4A7C15
-		z := x
-		z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9
-		z = (z ^ (z >> 27)) * 0x94D049BB133111EB
-		return z ^ (z >> 31)
+	golden := uint64(0x9E3779B97F4A7C15)
+	g2, g3, g4 := golden*2, golden*3, golden*4 // wrapping like the additions of splitmix64
+	x := salt ^ uint64(off)*golden
+	// four words at a time: the words of the stream do not depend on each other, only on their number
+	for len(b) >= 32 {
+		x0, x1, x2, x3 := x+golden, x+g2, x+g3, x+g4
+		x += g4
+		w := b[:32]
+		binary.LittleEndian.PutUint64(w[0:], binary.LittleEndian.Uint64(w[0:])^splitmix(x0))
+		binary.LittleEndian.PutUint64(w[8:], binary.LittleEndian.Uint64(w[8:])^splitmix(x1))
+		binary.LittleEndian.PutUint64(w[16:], binary.LittleEndian.Uint64(w[16:])^splitmix(x2))
+		binary.LittleEndian.PutUint64(w[24:], binary.LittleEndian.Uint64(w[24:])^splitmix(x3))
+		b = b[32:]
 	}
 	for len(b) >= 8 {
-		binary.LittleEndian.PutUint64(b, binary.LittleEndian.Uint64(b)^next())
+		x += golden
+		binary.LittleEndian.PutUint64(b, binary.LittleEndian.Uint64(b)^splitmix(x))
 		b = b[8:]
 	}
 	if len(b) > 0 {
-		z := next()
+		x += golden
+		z := splitmix(x)
 		for i := range b {
 			b[i] ^= byte(z >> (8 * i))
 		}
 	}
+}
+
+// splitmix is the output function of splitmix64 for the state x.
+func splitmix(x uint64) uint64 {
+	z := (x ^ (x >> 30)) * 0xBF58476D1CE4E5B9
+	z = (z ^ (z >> 27)) * 0x94D049BB133111EB
+	return z ^ (z >> 31)
 }
 
 // maskBlock masks the body of the encoded block frame, which goes to offset at, sets flagMasked and renews its CRC,
@@ -339,7 +365,8 @@ func peekFrame(buf []byte) (kind int, frameLen int) {
 }
 
 // parseRecord checks the record frame of length frameLen at buf[0], which lies at offset at of a file with salt, and
-// returns its kind, count and body, unmasked in place.
+// returns its kind, count and body, unmasked in place. See unknownRecord for an intact record of a kind of a later
+// version.
 func parseRecord(buf []byte, frameLen int, salt uint64, at int64) (kind byte, count int, body []byte, ok bool) {
 	if len(buf) < frameLen || frameLen < recOverhead {
 		return 0, 0, nil, false
@@ -350,7 +377,7 @@ func parseRecord(buf []byte, frameLen int, salt uint64, at int64) (kind byte, co
 	}
 	kind = region[0] &^ recordMasked
 	if kind != recordDelta && kind != recordCopy {
-		return 0, 0, nil, false
+		return kind, 0, nil, false
 	}
 	body = region[recPreLen:]
 	if region[0]&recordMasked != 0 {
@@ -358,6 +385,16 @@ func parseRecord(buf []byte, frameLen int, salt uint64, at int64) (kind byte, co
 		region[0] &^= recordMasked // unmasked now; a second parse would fail its CRC anyway
 	}
 	return kind, int(binary.LittleEndian.Uint32(region[1:])), body, true
+}
+
+// unknownRecord reports, whether the record frame at buf[0] has its CRC and a kind, which this version does not know:
+// a later version wrote it. The CRC covers the kind.
+func unknownRecord(buf []byte, frameLen int) bool {
+	if !recordIntact(buf, frameLen) {
+		return false
+	}
+	kind := buf[recHeadLen] &^ recordMasked
+	return kind != recordDelta && kind != recordCopy
 }
 
 // recordIntact reports whether the record frame at buf[0] has its CRC.

@@ -1,0 +1,113 @@
+{
+  "const": {
+    "points": 16484,
+    "scanI64": "23ad4b029f419c86834a4b8ed87e393503f1bbbe7acfcc401081a9defb2f09a8",
+    "scanF64": "0027d6d267f2ece80ddaced732af00978a275e56f5d6641295d43533e7676e1a",
+    "iterF64": "0027d6d267f2ece80ddaced732af00978a275e56f5d6641295d43533e7676e1a"
+  },
+  "counter": {
+    "points": 5096,
+    "scanI64": "2c9605969de629552955c40e2a96c09a1d8fdf01740f7d386b488d07dc1967cd",
+    "scanF64": "d915a488b107f8f838e49a83e631d53ff99ead392c71e17344429bebc87153df",
+    "iterF64": "d915a488b107f8f838e49a83e631d53ff99ead392c71e17344429bebc87153df"
+  },
+  "enum": {
+    "points": 8269,
+    "scanString": "30eb37940c33a03b4e3faf7d0bed9169de683660103356432545e8da88b8bccc",
+    "iterString": "30eb37940c33a03b4e3faf7d0bed9169de683660103356432545e8da88b8bccc"
+  },
+  "gaps": {
+    "points": 12305,
+    "scanI64": "d605a9beca0b41894a620b42c435c53d3a826887f793e0f9862ccd494f6a2614",
+    "scanF64": "f1ea7be5538be88da3f8dfab98a75f9d9d6b112ca161704e0ec1d4af0277deed",
+    "iterF64": "f1ea7be5538be88da3f8dfab98a75f9d9d6b112ca161704e0ec1d4af0277deed"
+  },
+  "limits": {
+    "points": 8197,
+    "scanI64": "b73ee060a82e7e7d3a61a008585e582c5901ca9b0763996ea8f5ea108dba9cf3",
+    "scanF64": "69de8f75c6c711b73e736a64e09907ab9c4db7601c1c0f113a29f9eba89d3151",
+    "iterF64": "69de8f75c6c711b73e736a64e09907ab9c4db7601c1c0f113a29f9eba89d3151"
+  },
+  "multi": {
+    "points": 10000,
+    "scanI64": "c59eef66b03d0a18a929c87c5b118b9109f5a518175b1ae81881336660a9a51f",
+    "scanF64": "f8e04cc3811e93b2ebc38c1a0a02df2fdd1606a79019554c42ee1748c1a4c5a2",
+    "iterF64": "f8e04cc3811e93b2ebc38c1a0a02df2fdd1606a79019554c42ee1748c1a4c5a2"
+  },
+  "na": {
+    "points": 8225,
+    "scanI64": "9a88a2625b4bc9504a895c61e3c2b650970a485f97cc112b17e39798c1c1eab8",
+    "scanF64": "bb5e32c45424099457ecce472552fd0388bf8666ede28f8843f0eb9531ebe376",
+    "iterF64": "bb5e32c45424099457ecce472552fd0388bf8666ede28f8843f0eb9531ebe376"
+  },
+  "noise": {
+    "points": 5096,
+    "scanI64": "38fc5263aa676e952bc63af97272181c146c151ebb226fd736cc6f5b33a9439a",
+    "scanF64": "e9c7a92f24fea69561e172038e9b940ac269978cf2e6d64a1dc0453522bad5c8",
+    "iterF64": "e9c7a92f24fea69561e172038e9b940ac269978cf2e6d64a1dc0453522bad5c8"
+  },
+  "power": {
+    "points": 5096,
+    "scanI64": "17d20a691c733593768e03bae95db2e33b7aae419d4e4d4f382a2ee20f992e32",
+    "scanF64": "2f8de3ffdaf6bcfbe11e3265d8284e6baf772d973dee4c61cbe1397b88ed8fef",
+    "iterF64": "2f8de3ffdaf6bcfbe11e3265d8284e6baf772d973dee4c61cbe1397b88ed8fef"
+  },
+  "power_na01": {
+    "points": 5096,
+    "scanI64": "47a2f0d7d0b8abe31f1ad1f35f992f4d46e179806b990341411befc43cf3ddc9",
+    "scanF64": "b288d7e1f2523d814a504644c403807358c5aa3a0e4b9b09465baf39e8d9b652",
+    "iterF64": "b288d7e1f2523d814a504644c403807358c5aa3a0e4b9b09465baf39e8d9b652"
+  },
+  "power_na1": {
+    "points": 5096,
+    "scanI64": "e0636ae564ea64072e5e49b3664e0d53e3540c31a3c19c40caf778fcb341be8a",
+    "scanF64": "d444b009508367f410ff553e8a88ab75fe563c588f0f34b8e479b653bdeb9b1f",
+    "iterF64": "d444b009508367f410ff553e8a88ab75fe563c588f0f34b8e479b653bdeb9b1f"
+  },
+  "power_raw": {
+    "points": 5096,
+    "scanI64": "17d20a691c733593768e03bae95db2e33b7aae419d4e4d4f382a2ee20f992e32",
+    "scanF64": "2f8de3ffdaf6bcfbe11e3265d8284e6baf772d973dee4c61cbe1397b88ed8fef",
+    "iterF64": "2f8de3ffdaf6bcfbe11e3265d8284e6baf772d973dee4c61cbe1397b88ed8fef"
+  },
+  "resume": {
+    "points": 9192,
+    "scanI64": "61598290d9bb825d4ded0e1d04a3b7c18de3b36ec9c1ba26769bc26c54ebaa3f",
+    "scanF64": "ce7f7f24920c0117676c2e9657d4c5ffcedf86fea5372bea3eec7b143d4cb0e1",
+    "iterF64": "ce7f7f24920c0117676c2e9657d4c5ffcedf86fea5372bea3eec7b143d4cb0e1"
+  },
+  "sizes": {
+    "points": 12672,
+    "scanI64": "d209108554b31c9be4a048ac8fa8f79ce8482f846f5488ac351b0a8bc17e0016",
+    "scanF64": "f2b506e7abbbeddbb3c2542de23c91cb73d586b0dd728b38c1c10a9eeae4999e",
+    "iterF64": "f2b506e7abbbeddbb3c2542de23c91cb73d586b0dd728b38c1c10a9eeae4999e"
+  },
+  "status": {
+    "points": 5096,
+    "scanString": "17c678bc0aa05efd504485a148c5cbf5bbb2ea078fa93be87b0a50625115e3ff",
+    "iterString": "17c678bc0aa05efd504485a148c5cbf5bbb2ea078fa93be87b0a50625115e3ff"
+  },
+  "temp": {
+    "points": 5096,
+    "scanI64": "60fa47eb308583ca7e237e51339a1383531bdd44597f178fc6b1188914593eb7",
+    "scanF64": "3b6bed2eb285cfa0653f7387c3ce85e4e424d6b4e9ae69cb14e26ce27578a9a1",
+    "iterF64": "3b6bed2eb285cfa0653f7387c3ce85e4e424d6b4e9ae69cb14e26ce27578a9a1"
+  },
+  "text": {
+    "points": 4146,
+    "scanString": "d0b690dbef190e373dc01b41c62f4ac5307d88866b7e994a8aaff5be1b6d2853",
+    "iterString": "d0b690dbef190e373dc01b41c62f4ac5307d88866b7e994a8aaff5be1b6d2853"
+  },
+  "voltage": {
+    "points": 5096,
+    "scanI64": "0f53084fd3833b4114116a61ef492281eb2ff3288d858972b036f89973137a1e",
+    "scanF64": "0959d6b5d05c12b203e4ee313e41e30c1782c53879c2a21ec6c217bc4c498986",
+    "iterF64": "0959d6b5d05c12b203e4ee313e41e30c1782c53879c2a21ec6c217bc4c498986"
+  },
+  "wal": {
+    "points": 4194,
+    "scanI64": "8a2ba101c42b9563b96bbb718b9390933ddb10c15bce1038de8291c687f4bba1",
+    "scanF64": "bfb246f7c933766953c24ba0a5454358ba3b687b6a04d4616e7ee032097803e5",
+    "iterF64": "bfb246f7c933766953c24ba0a5454358ba3b687b6a04d4616e7ee032097803e5"
+  }
+}
