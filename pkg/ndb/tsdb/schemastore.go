@@ -10,18 +10,19 @@ package tsdb
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
+
+	"go.wdy.de/nago/pkg/ndb"
 )
 
 const schemaFileName = "schema.json"
 
-// loadSchema reads and validates the schema.json in dir. The bool is false if
-// the file does not exist yet.
-func loadSchema(dir string) (Schema, bool, error) {
-	data, err := os.ReadFile(filepath.Join(dir, schemaFileName))
+// loadSchema reads and validates the schema.json in dir through the pool. The bool is false if the file does not
+// exist yet. A version larger than schemaVersion is errUnknownFormat: a later version of tsdb wrote it.
+func loadSchema(fs *ndb.FilePool, dir string) (Schema, bool, error) {
+	data, err := fs.ReadFile(filepath.Join(dir, schemaFileName))
 	if err != nil {
-		if os.IsNotExist(err) {
+		if isNotExist(err) {
 			return Schema{}, false, nil
 		}
 		return Schema{}, false, fmt.Errorf("tsdb: read schema: %w", err)
@@ -30,15 +31,18 @@ func loadSchema(dir string) (Schema, bool, error) {
 	if err := json.Unmarshal(data, &s); err != nil {
 		return Schema{}, false, fmt.Errorf("tsdb: parse schema: %w", err)
 	}
+	if s.Version > schemaVersion {
+		return Schema{}, false, fmt.Errorf("%w: %s has version %d", errUnknownFormat, filepath.Join(dir, schemaFileName), s.Version)
+	}
 	if err := s.validate(); err != nil {
 		return Schema{}, false, err
 	}
 	return s, true, nil
 }
 
-// storeSchema writes schema.json atomically (temp file + rename), honoring the
-// house rule that any non-append rewrite goes through a temp file.
-func storeSchema(dir string, s Schema) error {
+// storeSchema writes schema.json atomically (new file + rename), honoring the
+// house rule that any non-append rewrite goes through a file of another name.
+func storeSchema(fs *ndb.FilePool, dir string, s Schema) error {
 	if err := s.validate(); err != nil {
 		return err
 	}
@@ -46,30 +50,15 @@ func storeSchema(dir string, s Schema) error {
 	if err != nil {
 		return fmt.Errorf("tsdb: marshal schema: %w", err)
 	}
-	return atomicWrite(filepath.Join(dir, schemaFileName), data)
-}
-
-// atomicWrite writes data to a temp file in the same directory and renames it
-// into place, so a reader never observes a partially written file.
-func atomicWrite(path string, data []byte) error {
-	dir := filepath.Dir(path)
-	tmp, err := os.CreateTemp(dir, ".tmp-*")
-	if err != nil {
-		return fmt.Errorf("tsdb: create temp: %w", err)
+	path := filepath.Join(dir, schemaFileName)
+	tmp := path + newSuffix
+	if err := fs.WriteFile(tmp, data); err != nil {
+		_ = fs.Remove(tmp)
+		return fmt.Errorf("tsdb: write schema: %w", err)
 	}
-	tmpName := tmp.Name()
-	if _, err := tmp.Write(data); err != nil {
-		tmp.Close()
-		os.Remove(tmpName)
-		return fmt.Errorf("tsdb: write temp: %w", err)
-	}
-	if err := tmp.Close(); err != nil {
-		os.Remove(tmpName)
-		return fmt.Errorf("tsdb: close temp: %w", err)
-	}
-	if err := os.Rename(tmpName, path); err != nil {
-		os.Remove(tmpName)
-		return fmt.Errorf("tsdb: rename temp: %w", err)
+	if err := fs.Rename(tmp, path); err != nil {
+		_ = fs.Remove(tmp)
+		return fmt.Errorf("tsdb: rename schema: %w", err)
 	}
 	return nil
 }

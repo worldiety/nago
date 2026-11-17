@@ -9,6 +9,7 @@ package token
 
 import (
 	"context"
+	"sync"
 
 	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/role"
@@ -17,26 +18,34 @@ import (
 	"go.wdy.de/nago/pkg/std/concurrent"
 )
 
+// authenticated is the subject, which [AuthenticateSubject] found for a plaintext, with the token, to which the
+// plaintext belongs. The subject of an impersonating token is the user, so its ID does not name the token.
+type authenticated struct {
+	token   ID
+	subject user.Subject
+}
+
 func NewAuthenticateSubject(
 	ctx context.Context,
+	mutex *sync.Mutex,
 	repo Repository,
 	algo user.HashAlgorithm,
 	reverseHashLookup *concurrent.RWMap[Hash, ID],
 	subjectFromUser user.SubjectFromUser,
-	subjectLookup *concurrent.RWMap[Plaintext, user.Subject],
+	subjectLookup *concurrent.RWMap[Plaintext, authenticated],
 	anonUser user.GetAnonUser,
 	findRoleByID role.FindByID,
 	rdb *rebac.DB,
 ) AuthenticateSubject {
 	return func(plaintext Plaintext) (auth.Subject, error) {
-		subj, ok := subjectLookup.Get(plaintext)
+		cached, ok := subjectLookup.Get(plaintext)
 		if ok {
 			// security note: we trade security (keeping all authenticated plaintext token in-memory) against
 			// speed. REST APIs must be as fast as possible and this is a reasonable compromise.
 			// If we would not do this, we would limit our amount of requests to a few hundred per second at best
 			// because the password hash algorithm is intentionally very expensive. Note, that the subjects
 			// will enable or disable themselves automatically even though we leak them infinitely.
-			return subj, nil
+			return cached.subject, nil
 		}
 
 		// security note: we currently expect that all hash algorithms are of the same and given kind. Otherwise,
@@ -49,6 +58,13 @@ func NewAuthenticateSubject(
 		}
 
 		hash := HashString(hbytes)
+
+		// security note: the expensive hash is computed above without the lock, but the lookup and the caching
+		// below hold it, so that a rotation or a deletion of the token cannot happen in between and leave the
+		// old plaintext in the lookup of the subjects
+		mutex.Lock()
+		defer mutex.Unlock()
+
 		tid, ok := reverseHashLookup.Get(hash)
 		if !ok {
 			//
@@ -70,7 +86,7 @@ func NewAuthenticateSubject(
 
 		if token.Impersonation.IsNone() {
 			s := newSubject(ctx, findRoleByID, repo, token, rdb)
-			subjectLookup.Put(plaintext, s)
+			subjectLookup.Put(plaintext, authenticated{token: tid, subject: s})
 			return s, nil
 		}
 
@@ -85,7 +101,7 @@ func NewAuthenticateSubject(
 		}
 
 		usr := optUsr.Unwrap()
-		subjectLookup.Put(plaintext, usr)
+		subjectLookup.Put(plaintext, authenticated{token: tid, subject: usr})
 
 		return usr, nil
 	}

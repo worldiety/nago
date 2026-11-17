@@ -9,6 +9,10 @@ package application
 
 import (
 	"fmt"
+	"io/fs"
+	"net/http"
+	"slices"
+	"strings"
 
 	"go.wdy.de/nago/application/admin"
 	"go.wdy.de/nago/application/group"
@@ -146,10 +150,40 @@ func (c *Configurator) TokenManagement() (TokenManagement, error) {
 		})
 
 		c.RootViewWithDecoration(c.tokenManagement.Pages.Tokens, func(wnd core.Window) core.View {
-			return layout.WithBackButton(wnd, uitoken.PageCrud(wnd, c.tokenManagement.UseCases))
+			var opts uitoken.PageCrudOptions
+			if c.servesAPIDoc() {
+				opts.APIDoc = apiDocPath
+			}
+
+			return layout.WithBackButton(wnd, uitoken.PageCrudWithOptions(wnd, c.tokenManagement.UseCases, opts))
 		})
 
 	}
 
 	return *c.tokenManagement, nil
+}
+
+// apiDocPath is the documentation of the OpenAPI document of the application: a frontend like pkg/stoplight below
+// /api/doc/, which shows the document /api/doc/spec.json of cfghapi.
+const apiDocPath = "/api/doc"
+
+// servesAPIDoc reports whether the application has the documentation of apiDocPath at this moment: the document
+// /api/doc/spec.json, which cfghapi registers, and a page /api/doc/index.html of a served frontend. Without both, the
+// button of the token page would open a page, which cannot load a document, or a 404.
+func (c *Configurator) servesAPIDoc() bool {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	spec := slices.ContainsFunc(c.rawEndpoint, func(e rawEndpoint) bool {
+		return e.pattern == apiDocPath+"/spec.json" && (e.method == "" || e.method == http.MethodGet)
+	})
+
+	if !spec {
+		return false
+	}
+
+	return slices.ContainsFunc(c.fsys, func(fsys fs.FS) bool {
+		_, err := fs.Stat(fsys, strings.TrimPrefix(apiDocPath, "/")+"/index.html")
+		return err == nil
+	})
 }

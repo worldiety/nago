@@ -10,10 +10,13 @@ package completion
 import (
 	"context"
 	"encoding/json"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
 	"time"
+
+	"go.wdy.de/nago/auth"
 )
 
 // toolsByName indexes tools for direct invocation in tests.
@@ -272,5 +275,58 @@ func TestTasks_RegistryExpiresResults(t *testing.T) {
 	}
 	if kept {
 		t.Fatal("idle expired group kept")
+	}
+}
+
+// A runner learns the id of its task: "<call id>/<index>" for the delegate tool and the background task id for
+// start_tasks, the same ids the events of the task carry.
+func TestSubRunRequest_TaskID(t *testing.T) {
+	var mu sync.Mutex
+	var ran []string
+	runner := func(ctx context.Context, subject auth.Subject, req SubRunRequest) (SubRunResult, error) {
+		mu.Lock()
+		ran = append(ran, req.TaskID)
+		mu.Unlock()
+		return DefaultSubRunner(ctx, subject, req)
+	}
+	var evs []string
+	onEvent := func(e SubEvent) {
+		if e.Kind == SubRunning {
+			mu.Lock()
+			evs = append(evs, e.TaskID)
+			mu.Unlock()
+		}
+	}
+
+	fake := &scriptFake{respond: echoSub}
+	out := decode[delegateOut](t, invoke(t, NewDelegateTool(DelegateConfig{Runner: runner, OnEvent: onEvent}), fake,
+		delegateIn{Tasks: []delegateTaskIn{{Title: "a", Task: "A"}, {Title: "b", Task: "B"}}}))
+	if len(out.Results) != 2 || out.Results[0].Status != TaskCompleted || out.Results[1].Status != TaskCompleted {
+		t.Fatalf("unexpected result %+v", out)
+	}
+	slices.Sort(ran)
+	slices.Sort(evs)
+	if want := []string{"call/0", "call/1"}; !slices.Equal(ran, want) || !slices.Equal(evs, want) {
+		t.Fatalf("delegate: runner saw %v, events %v, want %v", ran, evs, want)
+	}
+
+	mu.Lock()
+	ran, evs = nil, nil
+	mu.Unlock()
+	subs := newGatedSubs(nil)
+	close(subs.release)
+	tools := toolsByName(NewTaskTools(DelegateConfig{Runner: runner, OnEvent: onEvent}, NewTaskRegistry().Group("ids")))
+	started := decode[startTasksOut](t, invoke(t, tools[StartTasksToolName], subs, delegateIn{Tasks: []delegateTaskIn{{Title: "c", Task: "C"}}}))
+	if len(started.Tasks) != 1 || started.Tasks[0].ID == "" {
+		t.Fatalf("unexpected start result %+v", started)
+	}
+	done := decode[awaitOut](t, invoke(t, tools[AwaitTasksToolName], subs, awaitIn{IDs: []string{started.Tasks[0].ID}, TimeoutSeconds: 5}))
+	if len(done.Finished) != 1 || done.Finished[0].Status != TaskCompleted {
+		t.Fatalf("unexpected await result %+v", done)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if want := []string{started.Tasks[0].ID}; !slices.Equal(ran, want) || !slices.Equal(evs, want) {
+		t.Fatalf("start_tasks: runner saw %v, events %v, want %v", ran, evs, want)
 	}
 }

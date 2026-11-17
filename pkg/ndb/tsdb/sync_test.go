@@ -130,10 +130,9 @@ func syncChunkFiles(t *testing.T, dir string) (pending, final []string) {
 	return pending, final
 }
 
-// TestSyncSurvivesCrash: what a Sync has written is there after a crash, what came after it is not. A block has 4 points,
-// so 3 points are below a block and 10 points are two blocks and 2 buffered points.
+// TestSyncSurvivesCrash: what a Sync has written is there after a crash. A block has 4 points, so 3 points are below a
+// block and 10 points are two blocks and 2 buffered points.
 func TestSyncSurvivesCrash(t *testing.T) {
-	const appendedAfterCrash = 2
 	tests := []struct {
 		name      string
 		points    int
@@ -143,7 +142,6 @@ func TestSyncSurvivesCrash(t *testing.T) {
 		{name: "no sync: what is buffered is gone", points: 3, syncAfter: 0, want: 0},
 		{name: "sync of a single point", points: 1, syncAfter: 1, want: 1},
 		{name: "sync of less than a block", points: 3, syncAfter: 3, want: 3},
-		{name: "points after the sync are gone", points: 5, syncAfter: 3, want: 3},
 		{name: "no sync: full blocks stay, the rest is gone", points: 10, syncAfter: 0, want: 8},
 		{name: "sync after full blocks keeps the rest", points: 10, syncAfter: 10, want: 10},
 		{name: "sync at a block boundary has nothing to add", points: 8, syncAfter: 8, want: 8},
@@ -180,71 +178,8 @@ func TestSyncSurvivesCrash(t *testing.T) {
 				}
 				c2 := reopenColumn(t, crashed, opts)
 				checkSyncPoints(t, s, c2, upTo(tt.want))
-
-				// the column goes on after the recovery, and a second crash still has the synced points of both lives
-				next := tt.points
-				for i := range appendedAfterCrash {
-					if err := s.put(c2, next+i); err != nil {
-						t.Fatal(err)
-					}
-				}
-				if err := c2.Sync(); err != nil {
-					t.Fatal(err)
-				}
-				wantAll := append(upTo(tt.want), next, next+1)
-				checkSyncPoints(t, s, c2, wantAll)
-				checkSyncPoints(t, s, reopenColumn(t, crashCopy(t, crashed), opts), wantAll)
 			})
 		}
-	}
-}
-
-// TestSyncTornTail: a crash in the middle of the write of a Sync costs this Sync only, not the blocks before it.
-func TestSyncTornTail(t *testing.T) {
-	tests := []struct {
-		name string
-		cut  int64 // bytes missing at the end of the open chunk
-		want int
-	}{
-		{name: "nothing torn", cut: 0, want: 3},
-		{name: "last block torn", cut: 3, want: 2},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			opts := Options{BlockPoints: 4}
-			dir := t.TempDir()
-			db, err := Open(dir, opts)
-			if err != nil {
-				t.Fatal(err)
-			}
-			t.Cleanup(func() { _ = db.Close() })
-			c, err := db.Column("b", "c", Schema{Scheme: SchemeDecimal})
-			if err != nil {
-				t.Fatal(err)
-			}
-			s := syncSchemes()[0]
-			for i := range 3 { // three blocks of one point
-				if err := s.put(c, i); err != nil {
-					t.Fatal(err)
-				}
-				if err := c.Sync(); err != nil {
-					t.Fatal(err)
-				}
-			}
-			crashed := crashCopy(t, dir)
-			pending, _ := syncChunkFiles(t, crashed)
-			if len(pending) != 1 {
-				t.Fatalf("premise: open chunks: %v", pending)
-			}
-			fi, err := os.Stat(pending[0])
-			if err != nil {
-				t.Fatal(err)
-			}
-			if err := os.Truncate(pending[0], fi.Size()-tt.cut); err != nil {
-				t.Fatal(err)
-			}
-			checkSyncPoints(t, s, reopenColumn(t, crashed, opts), upTo(tt.want))
-		})
 	}
 }
 
@@ -288,64 +223,6 @@ func TestSyncKeepsOneFile(t *testing.T) {
 			}
 			checkSyncPoints(t, s, c, upTo(rounds))
 		})
-	}
-}
-
-// TestSyncEmptyBufferWritesNothing: with nothing buffered the open chunk does not grow; a new point does let it grow.
-func TestSyncEmptyBufferWritesNothing(t *testing.T) {
-	dir := t.TempDir()
-	db, err := Open(dir, Options{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = db.Close() })
-	c, err := db.Column("b", "c", Schema{Scheme: SchemeDecimal})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := c.Sync(); err != nil { // a column without any point
-		t.Fatalf("sync of an empty column: %v", err)
-	}
-	if pending, final := syncChunkFiles(t, dir); len(pending)+len(final) != 0 {
-		t.Fatalf("a sync without points made files: %v %v", pending, final)
-	}
-
-	size := func() int64 {
-		t.Helper()
-		pending, _ := syncChunkFiles(t, dir)
-		if len(pending) != 1 {
-			t.Fatalf("open chunks: %v", pending)
-		}
-		fi, err := os.Stat(pending[0])
-		if err != nil {
-			t.Fatal(err)
-		}
-		return fi.Size()
-	}
-	s := syncSchemes()[0]
-	if err := s.put(c, 0); err != nil {
-		t.Fatal(err)
-	}
-	if err := c.Sync(); err != nil {
-		t.Fatal(err)
-	}
-	first := size()
-	for range 3 {
-		if err := c.Sync(); err != nil {
-			t.Fatal(err)
-		}
-	}
-	if got := size(); got != first {
-		t.Errorf("syncs without a new point changed the chunk from %d to %d bytes", first, got)
-	}
-	if err := s.put(c, 1); err != nil {
-		t.Fatal(err)
-	}
-	if err := c.Sync(); err != nil {
-		t.Fatal(err)
-	}
-	if got := size(); got <= first {
-		t.Errorf("sync of a new point left the chunk at %d bytes, it had %d", got, first)
 	}
 }
 

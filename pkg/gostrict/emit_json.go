@@ -42,6 +42,14 @@ func (e *emitter) jsonType(t types.Type) string {
 			desc = `{ k: "y" }`
 		case bigPath + ".Int":
 			desc = `{ k: "n" }`
+		case decimalPath + ".Dec":
+			// a decimal number, whose integer and scale are the fields M and S of the record
+			st := t.Underlying().(*types.Struct)
+			props := map[string]string{}
+			for i := range st.NumFields() {
+				props[st.Field(i).Name()] = fieldName(st.Field(i), i)
+			}
+			desc = `{ k: "d", z: () => ` + e.resultZero(t) + `, m: ` + jsString(props["M"]) + `, s: ` + jsString(props["S"]) + ` }`
 		}
 	}
 	if desc == "" && isStruct(t) {

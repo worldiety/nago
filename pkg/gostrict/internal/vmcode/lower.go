@@ -207,10 +207,15 @@ func (c *compiler) hostVariants() {
 		if !ok || ut.t == nil {
 			continue
 		}
+		// the package of the union is searched once for all its variants, not once for each
+		var index map[string]types.Type
 		for _, v := range u.Variants {
 			vt, ok := c.types[v]
 			if !ok {
-				t := variantType(ut.t, v)
+				if index == nil {
+					index = variantIndex(ut.t)
+				}
+				t := index[v]
 				if t == nil {
 					continue
 				}
@@ -221,12 +226,13 @@ func (c *compiler) hostVariants() {
 	}
 }
 
-// variantType returns the variant of the sealed interface u by its full name, or nil. The variants are declared in
-// the package of u, a generic one with the type arguments of u.
-func variantType(u types.Type, name string) types.Type {
+// variantIndex returns the types of the package of the sealed interface u by their full names, which are the names of
+// its variants. The variants are declared in the package of u, a generic one with the type arguments of u.
+func variantIndex(u types.Type) map[string]types.Type {
+	index := map[string]types.Type{}
 	n, ok := types.Unalias(u).(*types.Named)
 	if !ok || n.Obj().Pkg() == nil {
-		return nil
+		return index
 	}
 	scope := n.Obj().Pkg().Scope()
 	for _, tn := range scope.Names() {
@@ -249,11 +255,11 @@ func variantType(u types.Type, name string) types.Type {
 			}
 			t = inst
 		}
-		if typeKey(t) == name {
-			return t
+		if k := typeKey(t); index[k] == nil {
+			index[k] = t
 		}
 	}
-	return nil
+	return index
 }
 
 // plan prepares the conversion of the records and unions of the boundary.

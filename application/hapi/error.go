@@ -8,7 +8,9 @@
 package hapi
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 
@@ -81,6 +83,14 @@ func WriteError(writer http.ResponseWriter, request *http.Request, err error) {
 		body.Fields = p.Fields
 	}
 
+	// An explicit status wins over the classification: its text was written for the client.
+	var se *StatusError
+	explicit := errors.As(err, &se) && se.Status >= 400 && se.Status <= 599
+	if explicit {
+		status = se.Status
+		body = ProblemDetails{Title: se.title(), Detail: se.Detail, Status: status, Code: p.Token()}
+	}
+
 	buf, mErr := json.Marshal(body)
 	if mErr != nil {
 		slog.Error("hapi: cannot encode problem details", "err", mErr.Error())
@@ -88,7 +98,13 @@ func WriteError(writer http.ResponseWriter, request *http.Request, err error) {
 		return
 	}
 
-	slog.Error("hapi: failed to handle request",
+	// an explicit client error is an answer the endpoint chose, not a failure of the server
+	level := slog.LevelError
+	if explicit && status < 500 {
+		level = slog.LevelInfo
+	}
+
+	slog.Log(contextOf(request), level, "hapi: failed to handle request",
 		"err", err.Error(),
 		"kind", p.Kind.String(),
 		"status", status,
@@ -102,6 +118,14 @@ func WriteError(writer http.ResponseWriter, request *http.Request, err error) {
 	if _, wErr := writer.Write(buf); wErr != nil {
 		slog.Error("hapi: cannot write problem details", "err", wErr.Error())
 	}
+}
+
+func contextOf(r *http.Request) context.Context {
+	if r == nil {
+		return context.Background()
+	}
+
+	return r.Context()
 }
 
 func requestPath(r *http.Request) string {
@@ -126,4 +150,38 @@ func bundlerOf(r *http.Request) i18n.Bundler {
 	}
 
 	return nil
+}
+
+// StatusError is an error with an explicit HTTP status and a text for the client. [WriteError] writes it with exactly
+// this status, Detail as detail and Title (by default the text of the status) as title instead of classifying it.
+// Use it, where the endpoint itself decides the status, e.g. a 404 for an unknown path of a [Group] or a 409, which a
+// script reports in its own words. Detail is shown to the client as it is, so it must not contain anything secret.
+type StatusError struct {
+	// Status is the HTTP status code from 400 to 599.
+	Status int
+	// Detail is the explanation for the client.
+	Detail string
+	// Title is the short summary, by default [http.StatusText] of Status.
+	Title string
+}
+
+// NewStatusError returns an error which [WriteError] writes with the status and the detail.
+func NewStatusError(status int, detail string) *StatusError {
+	return &StatusError{Status: status, Detail: detail}
+}
+
+func (e *StatusError) title() string {
+	if e.Title != "" {
+		return e.Title
+	}
+
+	return http.StatusText(e.Status)
+}
+
+func (e *StatusError) Error() string {
+	if e.Detail == "" {
+		return e.title()
+	}
+
+	return e.title() + ": " + e.Detail
 }

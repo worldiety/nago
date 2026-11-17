@@ -307,6 +307,10 @@ func (g *generator) fromNeutral(expr string, t types.Type) string {
 		g.imports[jsPath] = "js"
 		return fmt.Sprintf("%s{%s: %s.(js.Ref)}", g.typeString(t), f.Name(), expr)
 	}
+	if _, _, ok := typedListElem(t); ok {
+		// a []any or a typed list, see ValueList
+		return fmt.Sprintf("gostrictFrom%d(%s)", g.helper(t), expr)
+	}
 	if _, ok := t.(*types.Slice); ok {
 		// the variadic arguments of a header function
 		return fmt.Sprintf("gostrictFrom%d(%s.([]any))", g.helper(t), expr)
@@ -393,6 +397,11 @@ func (g *generator) writeHelpers() error {
 			if err := g.writeCallback(n, ts, fs); err != nil {
 				return err
 			}
+			continue
+		}
+
+		if elem, basic, ok := typedListElem(t); ok {
+			g.writeTypedHelpers(n, t, ts, elem, basic)
 			continue
 		}
 
@@ -552,7 +561,9 @@ func (g *generator) writeFast() {
 		n := g.helpers[typeKey(t)]
 		ts := g.typeString(t)
 		var read, write string
-		switch {
+		switch elem, basic, typed := typedListElem(t); {
+		case typed:
+			read, write = g.typedFast(n, t, ts, elem, basic)
 		case isSealed(t):
 			variants, _ := sealedVariants(t)
 			var rc, wc strings.Builder
@@ -598,6 +609,73 @@ func (g *generator) writeFast() {
 		fmt.Fprintf(&g.code, "\nfunc gostrictRead%d(r gostrict.Reader) %s {\n%s}\n", n, ts, read)
 		fmt.Fprintf(&g.code, "\nfunc gostrictWrite%d(w gostrict.Writer, x %s) {\n%s}\n", n, ts, write)
 	}
+}
+
+// typedListElem returns the element of a list.List or of the slice of variadic arguments, which crosses the boundary
+// as a typed list, see [ValueList], and the name of its basic type, float64 or int64.
+func typedListElem(t types.Type) (elem types.Type, basic string, ok bool) {
+	switch x := types.Unalias(t).(type) {
+	case *types.Slice:
+		elem = x.Elem()
+	case *types.Named:
+		if !isOpaque(t) || x.Obj().Pkg().Path() != listPath || x.Obj().Name() != "List" {
+			return nil, "", false
+		}
+		elem = x.TypeArgs().At(0)
+	default:
+		return nil, "", false
+	}
+	switch valueKind(elem) {
+	case ValueFloat64:
+		return elem, "float64", true
+	case ValueInt64:
+		return elem, "int64", true
+	}
+	return nil, "", false
+}
+
+// writeTypedHelpers writes the conversions of a list or variadic slice of float64 or int64: from a []any or a typed
+// list, to a typed list.
+func (g *generator) writeTypedHelpers(n int, t types.Type, ts string, elem types.Type, basic string) {
+	es := g.typeString(elem)
+	plain := es == basic // else a named type of float64 or int64
+	if isSlice(t) {
+		typed := fmt.Sprintf("res := make(%s, len(x))\n\t\tcopy(res, x)\n\t\treturn res", ts)
+		if !plain {
+			typed = fmt.Sprintf("res := make(%s, len(x))\n\t\tfor i, e := range x {\n\t\t\tres[i] = %s(e)\n\t\t}\n\t\treturn res", ts, es)
+		}
+		fmt.Fprintf(&g.code, "\nfunc gostrictFrom%d(v any) %s {\n\tif x, ok := v.([]%s); ok {\n\t\t%s\n\t}\n\tvs := v.([]any)\n\tres := make(%s, len(vs))\n\tfor i, e := range vs {\n\t\tres[i] = %s\n\t}\n\treturn res\n}\n",
+			n, ts, basic, typed, ts, g.fromNeutral("e", elem))
+		return
+	}
+	g.imports[listPath] = "list"
+	typed, back := "return list.Of(x...)", "e"
+	if !plain {
+		typed = fmt.Sprintf("l := list.Make[%s](int32(len(x)))\n\t\tfor i, e := range x {\n\t\t\tl.Set(int32(i), %s(e))\n\t\t}\n\t\treturn l", es, es)
+		back = basic + "(e)"
+	}
+	fmt.Fprintf(&g.code, "\nfunc gostrictFrom%d(v any) %s {\n\tif x, ok := v.([]%s); ok {\n\t\t%s\n\t}\n\tl := list.New[%s]()\n\tfor _, e := range v.([]any) {\n\t\tl.Append(%s)\n\t}\n\treturn l\n}\n",
+		n, ts, basic, typed, es, g.fromNeutral("e", elem))
+	fmt.Fprintf(&g.code, "\nfunc gostrictTo%d(l %s) []%s {\n\tres := make([]%s, 0, l.Len())\n\tfor e := range l.Values() {\n\t\tres = append(res, %s)\n\t}\n\treturn res\n}\n",
+		n, ts, basic, basic, back)
+}
+
+// typedFast returns the bodies of the functions, which read and write a list or variadic slice of float64 or int64
+// in a fast call as a whole.
+func (g *generator) typedFast(n int, t types.Type, ts string, elem types.Type, basic string) (read, write string) {
+	method := "Float64s"
+	if basic == "int64" {
+		method = "Int64s"
+	}
+	if isSlice(t) {
+		es := g.typeString(elem)
+		if es == basic {
+			return fmt.Sprintf("\treturn r.%s()\n", method), fmt.Sprintf("\tw.%s(x)\n", method)
+		}
+		return fmt.Sprintf("\tx := r.%s()\n\tres := make(%s, len(x))\n\tfor i, e := range x {\n\t\tres[i] = %s(e)\n\t}\n\treturn res\n", method, ts, es),
+			fmt.Sprintf("\tv := make([]%s, len(x))\n\tfor i, e := range x {\n\t\tv[i] = %s(e)\n\t}\n\tw.%s(v)\n", basic, basic, method)
+	}
+	return fmt.Sprintf("\treturn gostrictFrom%d(r.%s())\n", n, method), fmt.Sprintf("\tw.%s(gostrictTo%d(x))\n", method, n)
 }
 
 func isSlice(t types.Type) bool {

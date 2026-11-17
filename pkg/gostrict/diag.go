@@ -66,7 +66,7 @@ const (
 	CodeConstValue      Code = "GS044" // functions with //gostrict:const parameters used as values
 	CodeListConversion  Code = "GS045" // conversions between list.List and list.Frozen
 	CodeConcurrent      Code = "GS046" // arguments of functions with //gostrict:calls concurrent, which may share memory
-	CodeJSON            Code = "GS047" // types, which json.Decode can not read or json.Encode can not write
+	CodeJSON            Code = "GS047" // types, which json.Decode can not read or json.Encode can not write, also as type arguments
 	CodeInternal        Code = "GS099" // the compiler can not translate a valid construct
 )
 

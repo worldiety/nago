@@ -7,7 +7,11 @@
 
 package tsdb
 
-import "go.wdy.de/nago/pkg/ndb"
+import (
+	"time"
+
+	"go.wdy.de/nago/pkg/ndb"
+)
 
 // Options configures a tsdb engine instance.
 type Options struct {
@@ -43,6 +47,14 @@ type Options struct {
 	// of head entries that are tombstones or overwrites exceeds this value.
 	// 0 defaults to 0.25.
 	CompactTombstoneRatio float64
+
+	// IdleAfter is the time without a write, after which DB.ReleaseIdle saves a column like Column.Sync and frees the
+	// memory of its unsaved points. With it, the DB calls ReleaseIdle every IdleAfter. 0 (the default) turns it off:
+	// no timer runs and ReleaseIdle does nothing.
+	IdleAfter time.Duration
+
+	// Now is the clock of IdleAfter. nil defaults to time.Now.
+	Now func() time.Time
 }
 
 const (
@@ -70,5 +82,8 @@ func (o *Options) resolve() {
 	}
 	if o.CompactTombstoneRatio <= 0 {
 		o.CompactTombstoneRatio = defaultTombstoneRatio
+	}
+	if o.Now == nil {
+		o.Now = time.Now
 	}
 }

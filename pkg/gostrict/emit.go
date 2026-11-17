@@ -107,16 +107,18 @@ func Emit(prog *Program) (b *Bundle, diags Diagnostics) {
 // packages and functions, which they reach, so it is small and loads fast, while the program is checked once.
 func EmitEntries(prog *Program, entries ...string) (b *Bundle, diags Diagnostics) {
 	e := &emitter{
-		prog:    prog,
-		decls:   funcDecls(prog),
-		tctx:    types.NewContext(),
-		names:   map[string]string{},
-		used:    map[string]bool{},
-		prefix:  map[*types.Package]string{},
-		globals: map[*types.Var]string{},
-		diag:    &diagnoser{fset: prog.Fset, sources: prog.sources},
-		mut:     analyzeMutation(prog),
-		entries: entryPoints(prog),
+		prog:     prog,
+		decls:    funcDecls(prog),
+		tctx:     types.NewContext(),
+		names:    map[string]string{},
+		used:     map[string]bool{},
+		next:     map[string]int{},
+		errIndex: map[token.Pos]int{},
+		prefix:   map[*types.Package]string{},
+		globals:  map[*types.Var]string{},
+		diag:     &diagnoser{fset: prog.Fset, sources: prog.sources},
+		mut:      analyzeMutation(prog),
+		entries:  entryPoints(prog),
 		// the initializers of the package variables may call functions of header packages already
 		bnd: newBoundary(),
 	}
@@ -162,6 +164,8 @@ type emitter struct {
 	externs strings.Builder
 	names   map[string]string
 	used    map[string]bool
+	// next is the suffix, at which the search for a free identifier of a base continues, see ident
+	next    map[string]int
 	prefix  map[*types.Package]string
 	globals map[*types.Var]string
 	queue   []func()
@@ -173,8 +177,10 @@ type emitter struct {
 	readonlyCache map[*types.Func]readonlyInfo
 	// positions are the positions of the marks of the source map, see mark
 	positions []token.Pos
-	// errPositions are the positions, where the program creates errors, see errorPos
+	// errPositions are the positions, where the program creates errors, see errorPos, and errIndex is the first index
+	// of each position, see emitVM
 	errPositions []token.Pos
+	errIndex     map[token.Pos]int
 	// mut tells, which struct types the program never changes, so that their values need no copy
 	mut *mutation
 	// hvars are the bindings of the variables of header packages, see headerVars
@@ -465,9 +471,11 @@ func (e *emitter) frozen(t types.Type, records map[string]Record, seen map[strin
 // ident returns a unique identifier of the bundle based on base.
 func (e *emitter) ident(base string) string {
 	base = sanitize(base)
+	// an identifier is never freed, so the search continues after the suffixes, which it found taken before
 	name := base
-	for i := 2; e.used[name]; i++ {
+	for i := max(e.next[base], 2); e.used[name]; i++ {
 		name = fmt.Sprintf("%s$%d", base, i)
+		e.next[base] = i + 1
 	}
 	e.used[name] = true
 	return name

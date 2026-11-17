@@ -29,7 +29,7 @@ func viewEtc(wnd core.Window, ucUsers user.UseCases, usr *core.State[UserModel])
 			user.PublishUserCreated(bus, usr.Get().IntoUser(), true)
 			alert.ShowBannerMessage(wnd, alert.Message{
 				Title:    "Nutzer erstellt",
-				Message:  "Ereignis für " + usr.String() + " erstellt.",
+				Message:  "Ereignis für " + usr.Get().String() + " erstellt.",
 				Intent:   alert.IntentOk,
 				Duration: time.Second * 2,
 			})
@@ -56,7 +56,7 @@ func viewEtc(wnd core.Window, ucUsers user.UseCases, usr *core.State[UserModel])
 
 					alert.ShowBannerMessage(wnd, alert.Message{
 						Title:   "Nutzer deaktiviert",
-						Message: "Der Nutzer " + usr.String() + " wurde deaktiviert.",
+						Message: "Der Nutzer " + usr.Get().String() + " wurde deaktiviert.",
 						Intent:  alert.IntentOk,
 					})
 				},
@@ -78,7 +78,7 @@ func viewEtc(wnd core.Window, ucUsers user.UseCases, usr *core.State[UserModel])
 
 					alert.ShowBannerMessage(wnd, alert.Message{
 						Title:   "Nutzer aktiviert",
-						Message: "Der Nutzer " + usr.String() + " wurde aktiviert.",
+						Message: "Der Nutzer " + usr.Get().String() + " wurde aktiviert.",
 						Intent:  alert.IntentOk,
 					})
 				},
@@ -108,7 +108,7 @@ func viewEtc(wnd core.Window, ucUsers user.UseCases, usr *core.State[UserModel])
 
 					alert.ShowBannerMessage(wnd, alert.Message{
 						Title:   "Nutzer bestätigt",
-						Message: "Der Nutzer " + usr.String() + " wurde bestätigt.",
+						Message: "Der Nutzer " + usr.Get().String() + " wurde bestätigt.",
 						Intent:  alert.IntentOk,
 					})
 				},

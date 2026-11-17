@@ -43,7 +43,11 @@ func (e *emitter) sourceName(filename string) string {
 // error, so that an engine finds the position in [Bundle.Positions].
 func (e *emitter) errorPos(pos token.Pos) string {
 	e.errPositions = append(e.errPositions, pos)
-	return strconv.Itoa(len(e.errPositions) - 1)
+	i := len(e.errPositions) - 1
+	if _, ok := e.errIndex[pos]; !ok {
+		e.errIndex[pos] = i
+	}
+	return strconv.Itoa(i)
 }
 
 // errorPositions returns the positions of errorPos.

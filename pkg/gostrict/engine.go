@@ -39,6 +39,19 @@ const (
 	// ValueHandle is a handle of a header package, see package std/js, whose value in Go is a js.Ref.
 	ValueHandle
 	// ValueList is a list.List, whose value in Go is a []any of its elements.
+	//
+	// A list.List of float64 or int64, also of a named type of them, may also be a []float64 or a []int64, a typed
+	// list, which crosses the boundary without a value of its own for each element. The engines vm and goja pass the
+	// arguments of a function of a header package, which are such lists, as typed lists. The results of a function of
+	// a header package, the arguments of a [Callback] and every other value, which goes into an engine, may be either,
+	// also within a record, a list or a map. The values, which come out of an engine otherwise, the results of an
+	// exported function or of a callback, are []any as before, so a []any stays valid everywhere. A program never
+	// shares a typed list: it gets a list of its own, which a later change of the slice does not change, and a host
+	// function gets a slice of its own. A program sees no difference: the same values, also NaN, ±Inf, -0 and the
+	// bounds of int64, and the same length; [CheckArgs] reports a value of a wrong type, which vm and goja both use.
+	// It does not look at the elements of a typed list. In the vm, its conversion allocates the same number of times
+	// for every length; goja needs a value of JavaScript for each element. A fast callback writes and reads it with
+	// [Writer.Float64s], [Writer.Int64s], [Reader.Float64s] and [Reader.Int64s].
 	ValueList
 	// ValueRecord is a struct of the program, whose fields cross the boundary, e.g. the input of a use case. Its
 	// value in Go is a []any of its fields in the order of the [Record].
@@ -316,13 +329,18 @@ func checkValue(t Type, v any) error {
 	case ValueHandle:
 		_, ok = v.(js.Ref)
 	case ValueList, ValueOut:
-		var list []any
-		if list, ok = v.([]any); ok {
+		switch list := v.(type) {
+		case []any:
+			ok = true
 			for i, e := range list {
 				if err := checkValue(*t.Elem, e); err != nil {
 					return fmt.Errorf("element %d: %w", i, err)
 				}
 			}
+		case []float64:
+			ok = t.Kind == ValueList && t.Elem.Kind == ValueFloat64
+		case []int64:
+			ok = t.Kind == ValueList && t.Elem.Kind == ValueInt64
 		}
 	case ValueMap:
 		var entries []any
@@ -394,6 +412,14 @@ func compareValues(a, b []any, floats func(x, y float64) bool) bool {
 		return false
 	}
 	for i := range a {
+		// a list may be a []any or a typed list in either value, see [ValueList]
+		if x, ok := anyList(a[i]); ok {
+			y, ok := anyList(b[i])
+			if !ok || !compareValues(x, y, floats) {
+				return false
+			}
+			continue
+		}
 		switch x := a[i].(type) {
 		case float64:
 			y, ok := b[i].(float64)
@@ -403,11 +429,6 @@ func compareValues(a, b []any, floats func(x, y float64) bool) bool {
 		case error:
 			y, ok := b[i].(error)
 			if !ok || x.Error() != y.Error() {
-				return false
-			}
-		case []any:
-			y, ok := b[i].([]any)
-			if !ok || !compareValues(x, y, floats) {
 				return false
 			}
 		case []byte:
@@ -434,6 +455,27 @@ func compareValues(a, b []any, floats func(x, y float64) bool) bool {
 		}
 	}
 	return true
+}
+
+// anyList returns the elements of a list, which is a []any or a typed list, see [ValueList], as a []any.
+func anyList(v any) ([]any, bool) {
+	switch x := v.(type) {
+	case []any:
+		return x, true
+	case []float64:
+		return boxAll(x), true
+	case []int64:
+		return boxAll(x), true
+	}
+	return nil, false
+}
+
+func boxAll[T float64 | int64](x []T) []any {
+	res := make([]any, len(x))
+	for i, e := range x {
+		res[i] = e
+	}
+	return res
 }
 
 // ErrStackExhausted is the error of a call, which exceeded the depth of calls of its engine, e.g. a recursion, which

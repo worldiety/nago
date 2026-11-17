@@ -8,11 +8,16 @@
 package tsdb
 
 import (
+	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
+	"strings"
 	"sync"
+	"sync/atomic"
 
 	"go.wdy.de/nago/pkg/ndb"
 )
@@ -46,29 +51,52 @@ type Column struct {
 	// path; ts <= curMax is an out-of-order correction handled by the head.
 	curMax     int64
 	haveCurMax bool
+	// headInMax is set once the newest time of the head is part of curMax: the head is read by the first write, not by
+	// the open of the column.
+	headInMax bool
 
-	// readScratch holds reusable buffers for the read hot path. It is guarded by
-	// mu (reads hold mu for the whole scan), so a single scratch per column is
-	// safe and gives constant, one-time-per-read allocation.
-	readScratch readScratch
+	// lastWrite is the time of the last write by Options.Now, in unix nanoseconds, kept only with Options.IdleAfter.
+	lastWrite atomic.Int64
 }
 
-// readScratch is the per-column reusable buffer set for reads. All fields grow
-// once to the working-set size and are then reused across reads, so a scan of
-// billions of points performs no per-block or per-point heap allocation.
+// readScratch is the reusable buffer set of a read. It comes from a pool shared by all columns and goes back when the
+// read ends, so that a column holds no read buffer between reads and a scan of billions of points still performs no
+// per-block or per-point heap allocation.
 type readScratch struct {
-	fileBuf []byte    // reused chunk-file read buffer (grows to largest chunk)
-	bd      blockData // reused decode target (ts/vals/strs)
-
-	// slow-path (head overlaps range) scratch:
-	headByTs    map[int64]headEntry
-	emittedHead map[int64]struct{}
-	outTs       []int64
-	outVals     []int64
-	outStrs     []string
-	extra       []headEntry
+	bd     blockData // decode target of a block
+	ob     blockData // the points of the open block
+	out    blockData // merged output of the slow path
+	rd     frameReader
+	frame  []byte
+	chunks []*chunkInfo
+	pc     chunkInfo
 }
 
+var scratchPool = sync.Pool{New: func() any { return new(readScratch) }}
+
+const maxPooledBuffer = 4 << 20 // a larger read buffer is not kept for the next read
+
+func getScratch() *readScratch { return scratchPool.Get().(*readScratch) }
+
+func putScratch(sc *readScratch) {
+	for _, bd := range []*blockData{&sc.bd, &sc.ob, &sc.out} {
+		clear(bd.strs[:cap(bd.strs)])
+		bd.ts, bd.vals, bd.strs = bd.ts[:0], bd.vals[:0], bd.strs[:0]
+	}
+	if cap(sc.rd.buf) > maxPooledBuffer {
+		sc.rd.buf = nil
+	}
+	sc.rd.col, sc.rd.fs, sc.rd.path = nil, nil, ""
+	clear(sc.chunks[:cap(sc.chunks)])
+	sc.chunks = sc.chunks[:0]
+	sc.pc = chunkInfo{}
+	scratchPool.Put(sc)
+}
+
+// openColumn opens the column in dir. It lists the directory, finishes a committed compaction, removes the files a
+// crash left behind, takes the chunks from their names and continues the open chunk, which it reads from where its
+// header says the sealed blocks end. Other chunks, the dictionary and the head are read when a read or a write needs
+// them.
 func openColumn(db *DB, bucket, name, dir string, schema Schema) (*Column, error) {
 	c := &Column{
 		db:     db,
@@ -78,64 +106,149 @@ func openColumn(db *DB, bucket, name, dir string, schema Schema) (*Column, error
 		schema: schema,
 		pool:   db.opts.FilePool,
 	}
-	chunks, err := listChunks(dir)
+	c.app.c = c
+	entries, err := listDir(dir)
 	if err != nil {
 		return nil, err
 	}
-	// validate headers of existing chunks; drop unreadable ones from the set.
-	// A leftover pending chunk (<min>_.tsb) from a prior crash is finalized here
-	// so appends resume cleanly and the tail is recovered up to the last intact
-	// block (torn tail blocks are skipped by the block CRC/sync-marker scan).
-	valid := chunks[:0]
-	for _, ci := range chunks {
-		if err := validateChunkHeader(c.pool, ci.path); err != nil {
-			// leave the file on disk but skip it (house rule: keep operating)
-			continue
-		}
-		if ci.pending {
-			fci, ok := finalizeOrphanPending(c.pool, ci)
-			if !ok {
-				continue // empty/unreadable pending: skip
-			}
-			ci = fci
-		}
-		valid = append(valid, ci)
-	}
-	c.chunks = valid
-
-	if schema.Scheme == SchemeEnum {
-		d, err := openEnumDict(dir, c.pool)
-		if err != nil {
+	if slices.ContainsFunc(entries, func(e os.DirEntry) bool { return e.Name() == compactLogName }) {
+		if err := c.redoCompaction(); err != nil {
 			return nil, err
 		}
-		c.dict = d
+		if entries, err = listDir(dir); err != nil {
+			return nil, err
+		}
 	}
-
-	h, err := openHead(dir, c.pool, schema.Scheme)
-	if err != nil {
+	var pending []chunkInfo
+	headSize, dictSize := int64(0), int64(0)
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		fname := e.Name()
+		path := filepath.Join(dir, fname)
+		switch {
+		case strings.HasSuffix(fname, newSuffix) || strings.HasPrefix(fname, ".tmp-"):
+			// a compaction or a schema, which was not committed
+			if err := c.pool.Remove(path); err != nil {
+				return nil, fmt.Errorf("tsdb: remove rest: %w", err)
+			}
+			continue
+		case fname == headWALName:
+			headSize = entrySize(e)
+		case fname == enumDictName:
+			dictSize = entrySize(e)
+		}
+		info, ok := parseChunkName(fname)
+		if !ok {
+			continue
+		}
+		info.path = path
+		if info.pending {
+			pending = append(pending, info)
+			continue
+		}
+		info.sizeBytes = max(0, entrySize(e))
+		c.chunks = append(c.chunks, info)
+	}
+	c.head = newHead(dir, c.pool, schema.Scheme, headSize)
+	if schema.Scheme == SchemeEnum {
+		c.dict = newEnumDict(dir, c.pool, dictSize)
+	}
+	if err := c.resumePending(pending); err != nil {
 		return nil, err
 	}
-	c.head = h
-	c.app.c = c
 
-	// Recover curMax from the finalized chunk set and the head so the append
-	// fast-path routing is correct after reopen. Any leftover pending chunk from
-	// a prior crash is left on disk as a finalized-name-less file and will be
-	// picked up by listChunks only once renamed; to keep recovery simple we scan
-	// the finalized chunks (which listChunks already returned) for the max.
+	// curMax from the finalized chunks and the continued open chunk; the head adds to it at the first write
 	for _, ci := range c.chunks {
 		if !c.haveCurMax || ci.maxMillis > c.curMax {
 			c.curMax = ci.maxMillis
 			c.haveCurMax = true
 		}
 	}
-	if hmax, ok := c.head.maxTS(); ok {
-		if !c.haveCurMax || hmax > c.curMax {
-			c.curMax = hmax
-			c.haveCurMax = true
-		}
+	if c.app.pendingPath != "" && (!c.haveCurMax || c.app.newest() > c.curMax) {
+		c.curMax = c.app.newest()
+		c.haveCurMax = true
 	}
 	return c, nil
+}
+
+func listDir(dir string) ([]os.DirEntry, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil && !os.IsNotExist(err) {
+		return nil, fmt.Errorf("tsdb: list column: %w", err)
+	}
+	return entries, nil
+}
+
+// entrySize is the size of a listed file, -1 if it is not known.
+func entrySize(e os.DirEntry) int64 {
+	fi, err := e.Info()
+	if err != nil {
+		return -1
+	}
+	return fi.Size()
+}
+
+func sortChunks(chunks []chunkInfo) {
+	sort.Slice(chunks, func(i, j int) bool {
+		if chunks[i].minMillis != chunks[j].minMillis {
+			return chunks[i].minMillis < chunks[j].minMillis
+		}
+		return chunks[i].maxMillis < chunks[j].maxMillis
+	})
+}
+
+// resumePending lets the appender continue the pending chunk, which an earlier
+// process left open by DB.Close or a crash, so that a restart does not begin a
+// new chunk file: its intact blocks and records stay, a torn rest is cut off, and the
+// split policy ends it as if the process had never stopped. Normally there is
+// at most one, holding the newest points. Any other pending chunk, and one with
+// a point not after every finalized chunk (it would not be the newest), is
+// finalized as before, so that reads keep their order. A pending chunk without an intact point is removed, one whose
+// header is not one of a chunk is left on disk and skipped. Called by openColumn only.
+func (c *Column) resumePending(pending []chunkInfo) error {
+	sortChunks(pending)
+	sc := getScratch()
+	defer putScratch(sc)
+	var states []openState
+	for _, p := range pending {
+		st, res, err := recoverOpenChunk(c, p.path, p.minMillis, &sc.rd)
+		if err != nil {
+			return err
+		}
+		switch res {
+		case recoveredEmpty:
+			if err := c.pool.Remove(p.path); err != nil {
+				return fmt.Errorf("tsdb: remove empty open chunk: %w", err)
+			}
+			continue
+		case recoveredNothing:
+			continue
+		}
+		states = append(states, st)
+	}
+	last := len(states) - 1
+	newestBefore := minInt64
+	for _, ci := range c.chunks {
+		newestBefore = max(newestBefore, ci.maxMillis)
+	}
+	for i := range last {
+		newestBefore = max(newestBefore, states[i].newest())
+	}
+	for i, st := range states {
+		if i == last && st.minMillis > newestBefore {
+			c.app.adopt(st)
+			continue
+		}
+		other := appender{c: c}
+		other.adopt(st)
+		if err := other.finalizePending(); err != nil {
+			return err
+		}
+	}
+	sortChunks(c.chunks)
+	return nil
 }
 
 // Schema returns the column's immutable schema.
@@ -160,6 +273,30 @@ func (c *Column) putString(ts int64, s string) error {
 	return c.putRouted(ts, 0, s)
 }
 
+// ensureHeadMax adds the newest time of the head to curMax, reading the head if that did not happen yet. Caller holds
+// c.mu.
+func (c *Column) ensureHeadMax() error {
+	if c.headInMax {
+		return nil
+	}
+	if err := c.head.ensure(); err != nil {
+		return err
+	}
+	if hmax, ok := c.head.maxTS(); ok && (!c.haveCurMax || hmax > c.curMax) {
+		c.curMax = hmax
+		c.haveCurMax = true
+	}
+	c.headInMax = true
+	return nil
+}
+
+// touch records the time of a write for ReleaseIdle.
+func (c *Column) touch() {
+	if c.db.opts.IdleAfter > 0 {
+		c.lastWrite.Store(c.db.opts.Now().UnixNano())
+	}
+}
+
 // putRouted dispatches a write to the append fast path or the head based on
 // monotonicity, holding c.mu for the whole operation.
 func (c *Column) putRouted(ts, val int64, str string) error {
@@ -168,6 +305,11 @@ func (c *Column) putRouted(ts, val int64, str string) error {
 		c.mu.Unlock()
 		return errColumnGone
 	}
+	if err := c.ensureHeadMax(); err != nil {
+		c.mu.Unlock()
+		return err
+	}
+	c.touch()
 	if !c.haveCurMax || ts > c.curMax {
 		// append fast path: constant memory, no head, no rewrite.
 		if err := c.app.append(ts, val, str); err != nil {
@@ -191,7 +333,11 @@ func (c *Column) putRouted(ts, val int64, str string) error {
 
 // Delete removes the value at exactly ts (writes a tombstone that masks any
 // sealed value until compaction physically removes it).
+//
+// It does not take the lock of the column, so that it does not wait for a compaction; a dropped column has a closed
+// head, which refuses it.
 func (c *Column) Delete(ts int64) error {
+	c.touch()
 	if err := c.head.tombstone(ts); err != nil {
 		return err
 	}
@@ -203,40 +349,17 @@ func (c *Column) Delete(ts int64) error {
 // and sealed values in the range are masked; compaction reclaims the space.
 // For bulk range rewrites this tombstones the whole range in the head.
 func (c *Column) DeleteRange(min, max int64) error {
-	// tombstone every currently-known ts in range (head + sealed) so reads are
-	// masked immediately; unknown future ts in range are not affected.
-	seen := map[int64]struct{}{}
-	for _, e := range c.head.snapshot(min, max) {
-		seen[e.ts] = struct{}{}
-	}
-	c.mu.Lock()
-	relevant := c.chunksForRead(min, max)
-	var bd blockData
-	for _, ci := range relevant {
-		_ = scanChunkBlocks(c.pool, ci.path, func(frame []byte, h blockHeader) bool {
-			if h.maxMillis < min || h.minMillis > max {
-				return true
-			}
-			if decodeBlockBody(frame, h, c.schema.Scheme, &bd) != nil {
-				return true
-			}
-			for _, t := range bd.ts {
-				if t >= min && t <= max {
-					seen[t] = struct{}{}
-				}
-			}
-			return true
-		})
-	}
-	// also tombstone in-memory buffered points in range (not yet on disk)
-	c.app.snapshotBuffered(min, max, func(ts, _ []int64, _ []string) bool {
-		for _, t := range ts {
-			seen[t] = struct{}{}
-		}
+	// tombstone every currently-known ts in range (head, sealed and the open block) so reads are masked immediately;
+	// unknown future ts in range are not affected.
+	var seen []int64
+	if err := c.mergedRange(min, max, func(ts, _ []int64, _ []string) bool {
+		seen = append(seen, ts...)
 		return true
-	})
-	c.mu.Unlock()
-	for t := range seen {
+	}); err != nil {
+		return err
+	}
+	c.touch()
+	for _, t := range seen {
 		if err := c.head.tombstone(t); err != nil {
 			return err
 		}
@@ -273,8 +396,7 @@ func (c *Column) DropBefore(ts int64) (removed int, err error) {
 			kept = append(kept, ci)
 			continue
 		}
-		c.pool.Evict(ci.path)
-		if err := os.Remove(ci.path); err != nil && !os.IsNotExist(err) {
+		if err := c.pool.Remove(ci.path); err != nil {
 			// the chunks from here on are still there, the removed ones must not be read again
 			c.chunks = append(kept, c.chunks[i:]...)
 			return removed, fmt.Errorf("tsdb: remove chunk: %w", err)
@@ -288,7 +410,7 @@ func (c *Column) DropBefore(ts int64) (removed int, err error) {
 // markDropped makes this handle fail from now on and forgets its open files, whose
 // names a new column may use. Each file in the pool is evicted, because the pool
 // would otherwise hand a new column the descriptor of a deleted file. The caller
-// removes the directory afterwards.
+// removes the files afterwards.
 func (c *Column) markDropped() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -298,9 +420,9 @@ func (c *Column) markDropped() error {
 	if c.dict != nil {
 		c.dict.abandon()
 	}
-	entries, err := os.ReadDir(c.dir)
-	if err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("tsdb: list column: %w", err)
+	entries, err := listDir(c.dir)
+	if err != nil {
+		return err
 	}
 	for _, e := range entries {
 		c.pool.Evict(filepath.Join(c.dir, e.Name()))
@@ -318,8 +440,12 @@ func (c *Column) enforceHeadBound() {
 	if n >= c.db.opts.MaxHeadPoints {
 		c.mu.Lock()
 		// re-check under lock; a concurrent flush may have drained it already.
-		if c.head.len() >= c.db.opts.MaxHeadPoints {
-			_ = c.flushLocked()
+		if !c.dropped && c.head.len() >= c.db.opts.MaxHeadPoints {
+			// the point of the put is in the WAL already; a compaction, which fails, e.g. on a block of a later
+			// version, removes nothing, and the next Flush or Close reports it again
+			if err := c.compactLocked(); err != nil {
+				slog.Error("tsdb: compaction failed", "bucket", c.bucket, "column", c.name, "err", err)
+			}
 		}
 		c.mu.Unlock()
 		return
@@ -332,6 +458,9 @@ func (c *Column) enforceHeadBound() {
 // needsFlush reports whether the head has grown enough to warrant folding into
 // a chunk, or accumulated enough tombstones/overwrites to warrant compaction.
 func (c *Column) needsFlush() bool {
+	if c.head.ensure() != nil {
+		return false
+	}
 	c.head.mu.RLock()
 	bytes := c.head.bytesLogged
 	tomb := c.head.tombstones
@@ -358,35 +487,136 @@ func (c *Column) chunksOverlapping(min, max int64) []chunkInfo {
 }
 
 // chunksForRead returns the finalized overlapping chunks plus, appended last,
-// the appender's still-open pending chunk when it overlaps the range. The
-// pending chunk holds monotonic blocks already sealed to disk but not yet
-// finalized; reads must include it so data written during a large burst is
-// visible before an explicit Flush. Its blocks are the newest on disk, so it is
-// scanned after the finalized chunks; the in-memory append buffer (newer still)
-// is emitted separately by the caller.
-func (c *Column) chunksForRead(min, max int64) []chunkInfo {
-	out := c.chunksOverlapping(min, max)
-	if pc, ok := c.app.pendingChunk(); ok {
-		if !(pc.maxMillis < min || pc.minMillis > max) {
-			out = append(out, pc)
+// the sealed blocks of the appender's still-open pending chunk when they overlap the range. Its blocks are the newest
+// on disk, so they are scanned after the finalized chunks; the open block (newer still) is emitted separately by the
+// caller. The pointers into c.chunks let a read keep what it learns of a chunk (where its blocks begin).
+func (c *Column) chunksForRead(min, max int64, sc *readScratch) []*chunkInfo {
+	out := sc.chunks[:0]
+	for i := range c.chunks {
+		ci := &c.chunks[i]
+		if ci.maxMillis < min || ci.minMillis > max {
+			continue
 		}
+		out = append(out, ci)
 	}
+	if pc, ok := c.app.pendingChunk(); ok && !(pc.maxMillis < min || pc.minMillis > max) {
+		sc.pc = pc
+		out = append(out, &sc.pc)
+	}
+	sc.chunks = out
 	return out
 }
 
+// scanBlocks calls fn with every intact block of ci that overlaps [qmin, qmax], in ascending order. It reads only
+// these blocks and a little around them: a chunk whose blocks take more than chunkSearchFrom and which begins before
+// qmin is searched for the first of them (frameReader.search), and the scan stops at the first block after qmax.
+// cont is false when fn stopped it. A chunk whose header is not one of a chunk is skipped, as is a corrupt block; a
+// chunk of a later version is errUnknownFormat. fn gets each block at its offset at, checked against its CRC and still
+// masked (see decodeFrame).
+func (c *Column) scanBlocks(ci *chunkInfo, qmin, qmax int64, sc *readScratch, fn func(at int64, frame []byte, h blockHeader) bool) (cont bool, err error) {
+	if ci.bad {
+		return true, nil
+	}
+	if ci.dataOff == 0 {
+		head, err := readChunkHeader(c.pool, ci.path)
+		if errors.Is(err, errCorruptChunk) {
+			ci.bad = true // not a chunk: skipped as before, its blocks reported at the header
+			c.reportDamaged(ci.path, 0)
+			return true, nil
+		}
+		if err != nil {
+			return false, err
+		}
+		ci.dataOff, ci.salt, ci.masked = head.dataOff, head.salt, head.masked
+	}
+	end := ci.sizeBytes
+	if end <= 0 {
+		if end, err = statSize(c.pool, ci.path); err != nil {
+			return false, fmt.Errorf("tsdb: stat chunk: %w", err)
+		}
+		ci.sizeBytes = end
+	}
+	r := &sc.rd
+	r.reset(c, ci.path, ci.dataOff, end, false)
+	// only a masked chunk is searched: in an unmasked one (version 1), the bytes of a value could look like a block
+	if ci.masked && end-ci.dataOff > chunkSearchFrom && ci.minMillis < qmin {
+		from, err := r.search(ci.dataOff, end, qmin, ci.minMillis, ci.maxMillis)
+		if err != nil {
+			return false, err
+		}
+		r.pos, r.batch = from, readerFirstBatch
+	}
+	for {
+		kind, at, frame, err := r.next(frameBlock)
+		if err != nil {
+			return false, err
+		}
+		if kind == frameNone {
+			return true, nil
+		}
+		h, _ := parseBlockHeader(frame)
+		if h.maxMillis < qmin {
+			continue
+		}
+		if h.minMillis > qmax {
+			return true, nil
+		}
+		if !fn(at, frame, h) {
+			return false, nil
+		}
+	}
+}
+
+// decodeFrame unmasks the intact block frame of ci at offset at in place and decodes it into bd.
+func (c *Column) decodeFrame(ci *chunkInfo, at int64, frame []byte, h blockHeader, bd *blockData) error {
+	unmaskBlock(frame, h, ci.salt, at)
+	return decodeBlockData(frame, h, c.schema.Scheme, bd)
+}
+
+// damagedPlace is the place of a damaged block: its column, the name of its chunk file and its offset in it.
+type damagedPlace struct {
+	bucket, column, file string
+	offset               int64
+}
+
+// reportDamaged writes the place of a block, which a read skips because it fails its CRC or does not decode, to the
+// log once until the DB is opened again: a later read of the same place stays silent. A chunk, which gets a new name
+// when it is sealed, is a new place. The offset 0 is the header of a chunk, which is none, so that every block of it
+// is skipped.
+func (c *Column) reportDamaged(path string, offset int64) {
+	p := damagedPlace{bucket: c.bucket, column: c.name, file: filepath.Base(path), offset: offset}
+	if _, seen := c.db.damaged.LoadOrStore(p, struct{}{}); seen {
+		return
+	}
+	slog.Warn("tsdb: damaged block skipped", "bucket", p.bucket, "column", p.column, "file", p.file, "offset", p.offset)
+}
+
+// trim returns the points of bd within [min, max] as the slices a read hands out: vals for the numeric schemes, strs
+// for the string scheme.
+func trim(bd *blockData, min, max int64, numeric bool) (ts, vals []int64, strs []string) {
+	lo, hi := 0, len(bd.ts)
+	for lo < hi && bd.ts[lo] < min {
+		lo++
+	}
+	for hi > lo && bd.ts[hi-1] > max {
+		hi--
+	}
+	if numeric {
+		return bd.ts[lo:hi], bd.vals[lo:hi], nil
+	}
+	return bd.ts[lo:hi], nil, bd.strs[lo:hi]
+}
+
 // mergedRange yields every non-deleted point with min <= ts <= max in ascending
-// timestamp order, merging sealed chunks with the head (head wins). It decodes
+// timestamp order, merging sealed chunks and the open block with the head (head wins). It decodes
 // block by block and calls fn with parallel slices; fn returns false to stop.
 // For enum columns vals carries dictionary ids; string resolution is the
 // caller's job. For string columns strs is populated and vals is nil.
 //
-// This is the single read primitive shared by the public API and compaction.
+// This is the single read primitive shared by the public API and DeleteRange.
 //
-// Allocation profile: at most a constant, one-time set of scratch buffers per
-// call (the reusable file-read buffer plus, only when the head overlaps the
-// range, the override maps). The common post-flush read (empty head) takes a
-// fast path that performs zero heap allocation beyond growing the single file
-// buffer once, and streams decoded blocks straight to fn without copying.
+// Allocation profile: the buffers of a read come from a pool shared by all columns and go back when it ends. The
+// common read (the head does not overlap the range) streams decoded blocks straight to fn without copying.
 func (c *Column) mergedRange(min, max int64, fn func(ts []int64, vals []int64, strs []string) bool) error {
 	// Hold c.mu for the whole read so chunk files cannot be removed by a
 	// concurrent flush/compaction while we scan them. Compaction is off the
@@ -398,124 +628,149 @@ func (c *Column) mergedRange(min, max int64, fn func(ts []int64, vals []int64, s
 	if c.dropped {
 		return errColumnGone
 	}
-	chunks := c.chunksForRead(min, max)
-
-	sc := &c.readScratch
-	numeric := c.schema.Scheme != SchemeString
-
-	// Fast path: the head does not overlap the query range. This is the
-	// dominant read case after a flush. We stream each decoded block directly
-	// to fn with no per-point copy and no maps.
-	if !c.head.hasRange(min, max) {
-		if err := c.streamSealed(min, max, chunks, numeric, sc, fn); err != nil {
+	if err := c.head.ensure(); err != nil {
+		return err
+	}
+	sc := getScratch()
+	defer putScratch(sc)
+	scheme := c.schema.Scheme
+	numeric := scheme != SchemeString
+	chunks := c.chunksForRead(min, max, sc)
+	ob := &sc.ob
+	if lo, ok := c.app.openBlockMin(); ok && lo <= max && c.app.newest() >= min {
+		if err := c.app.loadOpenBlock(ob, &sc.rd); err != nil {
 			return err
 		}
-		// include the newest monotonic tail still buffered in the appender.
-		c.app.snapshotBuffered(min, max, fn)
+	}
+
+	// Fast path: the head does not overlap the query range. This is the dominant read case. Each decoded block goes
+	// directly to fn with no per-point copy.
+	if !c.head.hasRange(min, max) {
+		stop := false
+		for _, ci := range chunks {
+			var unknown error
+			cont, err := c.scanBlocks(ci, min, max, sc, func(at int64, frame []byte, h blockHeader) bool {
+				if err := c.decodeFrame(ci, at, frame, h, &sc.bd); err != nil {
+					if errors.Is(err, errUnknownFormat) {
+						unknown = err
+						return false
+					}
+					c.reportDamaged(ci.path, at)
+					return true // skip corrupt block
+				}
+				ts, vals, strs := trim(&sc.bd, min, max, numeric)
+				if len(ts) > 0 && !fn(ts, vals, strs) {
+					stop = true
+					return false
+				}
+				return true
+			})
+			if err = errors.Join(err, unknown); err != nil {
+				return err
+			}
+			if !cont || stop {
+				return nil
+			}
+		}
+		if ts, vals, strs := trim(ob, min, max, numeric); len(ts) > 0 {
+			fn(ts, vals, strs)
+		}
 		return nil
 	}
 
-	// Slow path: the head overlaps; fall back to the map-based merge.
-	headEntries := c.head.snapshot(min, max)
-	// Head entries whose timestamp lies within the buffered (unsealed) range are
-	// overrides of buffered points and are emitted by the buffered pass below, so
-	// exclude them from emitMerged's head-only emission to avoid duplicates.
-	bufMin, bufOK := c.app.bufferedMinTS()
-	emitMax := max
-	if bufOK && bufMin-1 < emitMax {
-		emitMax = bufMin - 1
-	}
-	if err := c.emitMerged(min, emitMax, chunks, headEntries, numeric, sc, fn); err != nil {
-		return err
-	}
-	// The buffered (unsealed) tail may be overridden or tombstoned by head
-	// entries (an overwrite/delete of a just-appended point). Apply those.
-	c.snapshotBufferedMasked(min, max, headEntries, numeric, fn)
-	return nil
-}
-
-// snapshotBufferedMasked emits the appender's buffered points in [min,max],
-// applying any head override/tombstone that targets a buffered timestamp.
-func (c *Column) snapshotBufferedMasked(min, max int64, headEntries []headEntry,
-	numeric bool, fn func(ts, vals []int64, strs []string) bool) {
-
-	if c.app.bufferedCount() == 0 {
-		return
-	}
-	// small linear apply: buffered set is bounded by one block; head slice is
-	// bounded by the query. Build a tiny override lookup only over the buffered
-	// range to stay allocation-light.
-	c.app.snapshotBufferedFilter(min, max, func(ts int64) (int64, string, bool, bool) {
-		for i := range headEntries {
-			if headEntries[i].ts == ts {
-				e := headEntries[i]
-				return e.val, e.str, e.tombstone, true
-			}
-		}
-		return 0, "", false, false
-	}, numeric, fn)
-}
-
-// streamSealed emits sealed points in [min,max] with no head overrides. Each
-// decoded block is passed straight to fn; the only trimming is when a block
-// straddles the query bounds (rare, at the two ends of the range).
-func (c *Column) streamSealed(min, max int64, chunks []chunkInfo, numeric bool,
-	sc *readScratch, fn func(ts []int64, vals []int64, strs []string) bool) error {
-
-	scheme := c.schema.Scheme
-	bd := &sc.bd
-	stop := false
+	// Slow path: the head overlaps; its entries go between the points in time order, an entry at the time of a point
+	// replaces it, a tombstone removes it.
+	m := merger{he: c.head.snapshot(min, max), numeric: numeric, out: &sc.out, fn: fn}
 	for _, ci := range chunks {
-		if stop {
-			break
-		}
-		err := scanChunkBlocksBuf(c.pool, ci.path, ci.sizeBytes, &sc.fileBuf, func(frame []byte, h blockHeader) bool {
-			if h.maxMillis < min || h.minMillis > max {
-				return true
-			}
-			if decodeBlockBody(frame, h, scheme, bd) != nil {
+		var unknown error
+		cont, err := c.scanBlocks(ci, min, max, sc, func(at int64, frame []byte, h blockHeader) bool {
+			if err := c.decodeFrame(ci, at, frame, h, &sc.bd); err != nil {
+				if errors.Is(err, errUnknownFormat) {
+					unknown = err
+					return false
+				}
+				c.reportDamaged(ci.path, at)
 				return true // skip corrupt block
 			}
-			ts := bd.ts
-			// If the whole block is inside the query bounds (the common case),
-			// hand the decoded slices to fn without any copy.
-			if ts[0] >= min && ts[len(ts)-1] <= max {
-				if !fn(ts, sealedVals(bd, numeric), sealedStrs(bd, numeric)) {
-					stop = true
-					return false
-				}
-				return true
-			}
-			// Partial-overlap block: trim to [min,max] into reusable out slices.
-			lo := 0
-			for lo < len(ts) && ts[lo] < min {
-				lo++
-			}
-			hi := len(ts)
-			for hi > lo && ts[hi-1] > max {
-				hi--
-			}
-			if lo >= hi {
-				return true
-			}
-			if numeric {
-				if !fn(ts[lo:hi], sealedVals(bd, true)[lo:hi], nil) {
-					stop = true
-					return false
-				}
-			} else {
-				if !fn(ts[lo:hi], nil, bd.strs[lo:hi]) {
-					stop = true
-					return false
-				}
-			}
-			return true
+			return m.block(trim(&sc.bd, min, max, numeric))
 		})
-		if err != nil {
+		if err = errors.Join(err, unknown); err != nil {
 			return err
 		}
+		if !cont {
+			return nil
+		}
 	}
+	if !m.block(trim(ob, min, max, numeric)) {
+		return nil
+	}
+	m.rest()
 	return nil
+}
+
+// merger merges the entries of the head into the points of a read, which come block by block in ascending order.
+type merger struct {
+	he      []headEntry // ascending
+	next    int
+	numeric bool
+	out     *blockData
+	fn      func(ts []int64, vals []int64, strs []string) bool
+}
+
+func (m *merger) block(ts, vals []int64, strs []string) bool {
+	o := m.out
+	o.ts, o.vals, o.strs = o.ts[:0], o.vals[:0], o.strs[:0]
+	for i, t := range ts {
+		for m.next < len(m.he) && m.he[m.next].ts < t {
+			m.emitHead()
+		}
+		if m.next < len(m.he) && m.he[m.next].ts == t {
+			m.emitHead() // the head wins
+			continue
+		}
+		o.ts = append(o.ts, t)
+		if m.numeric {
+			o.vals = append(o.vals, vals[i])
+		} else {
+			o.strs = append(o.strs, strs[i])
+		}
+	}
+	return m.flush()
+}
+
+func (m *merger) emitHead() {
+	e := m.he[m.next]
+	m.next++
+	if e.tombstone {
+		return
+	}
+	m.out.ts = append(m.out.ts, e.ts)
+	if m.numeric {
+		m.out.vals = append(m.out.vals, e.val)
+	} else {
+		m.out.strs = append(m.out.strs, e.str)
+	}
+}
+
+// rest emits the entries of the head after the last point.
+func (m *merger) rest() bool {
+	o := m.out
+	o.ts, o.vals, o.strs = o.ts[:0], o.vals[:0], o.strs[:0]
+	for m.next < len(m.he) {
+		m.emitHead()
+	}
+	return m.flush()
+}
+
+func (m *merger) flush() bool {
+	o := m.out
+	if len(o.ts) == 0 {
+		return true
+	}
+	if m.numeric {
+		return m.fn(o.ts, o.vals, nil)
+	}
+	return m.fn(o.ts, nil, o.strs)
 }
 
 // sealedVals returns the numeric value slice for the decoded block. Enum ids
@@ -528,345 +783,8 @@ func sealedVals(bd *blockData, numeric bool) []int64 {
 	return bd.vals
 }
 
-func sealedStrs(bd *blockData, numeric bool) []string {
-	if numeric {
-		return nil
-	}
-	return bd.strs
-}
-
 func sealedVal(bd *blockData, i int) int64 {
 	return bd.vals[i]
-}
-
-// emitMerged is the slow path used only when the head overlaps the query range.
-// It applies head overrides and tombstones over the sealed blocks. All scratch
-// (override map, seen-set, out buffers) is reused from sc, so repeated reads do
-// not re-allocate. Correctness matches the fast path; only the head-overlap
-// case pays for the maps.
-func (c *Column) emitMerged(min, max int64, chunks []chunkInfo, headEntries []headEntry,
-	numeric bool, sc *readScratch, fn func(ts []int64, vals []int64, strs []string) bool) error {
-
-	scheme := c.schema.Scheme
-
-	if sc.headByTs == nil {
-		sc.headByTs = make(map[int64]headEntry, len(headEntries))
-	} else {
-		clear(sc.headByTs)
-	}
-	if sc.emittedHead == nil {
-		sc.emittedHead = make(map[int64]struct{}, len(headEntries))
-	} else {
-		clear(sc.emittedHead)
-	}
-	headByTs := sc.headByTs
-	emittedHead := sc.emittedHead
-	for _, e := range headEntries {
-		headByTs[e.ts] = e
-	}
-
-	bd := &sc.bd
-	outTs := sc.outTs[:0]
-	outVals := sc.outVals[:0]
-	outStrs := sc.outStrs[:0]
-
-	flush := func() bool {
-		if len(outTs) == 0 {
-			return true
-		}
-		var vals []int64
-		var strs []string
-		if numeric {
-			vals = outVals
-		} else {
-			strs = outStrs
-		}
-		ok := fn(outTs, vals, strs)
-		outTs = outTs[:0]
-		outVals = outVals[:0]
-		outStrs = outStrs[:0]
-		return ok
-	}
-
-	stop := false
-	for _, ci := range chunks {
-		if stop {
-			break
-		}
-		err := scanChunkBlocksBuf(c.pool, ci.path, ci.sizeBytes, &sc.fileBuf, func(frame []byte, h blockHeader) bool {
-			if h.maxMillis < min || h.minMillis > max {
-				return true
-			}
-			if decodeBlockBody(frame, h, scheme, bd) != nil {
-				return true
-			}
-			for i, t := range bd.ts {
-				if t < min || t > max {
-					continue
-				}
-				if he, ok := headByTs[t]; ok {
-					emittedHead[t] = struct{}{}
-					if he.tombstone {
-						continue
-					}
-					outTs = append(outTs, t)
-					if numeric {
-						outVals = append(outVals, he.val)
-					} else {
-						outStrs = append(outStrs, he.str)
-					}
-					continue
-				}
-				outTs = append(outTs, t)
-				if numeric {
-					outVals = append(outVals, sealedVal(bd, i))
-				} else {
-					outStrs = append(outStrs, bd.strs[i])
-				}
-			}
-			if !flush() {
-				stop = true
-				return false
-			}
-			return true
-		})
-		if err != nil {
-			sc.outTs, sc.outVals, sc.outStrs = outTs, outVals, outStrs
-			return err
-		}
-	}
-	if stop {
-		sc.outTs, sc.outVals, sc.outStrs = outTs, outVals, outStrs
-		return nil
-	}
-
-	// emit head-only entries (not present in any sealed block) in ascending
-	// order, bounded by max (buffered-range overrides are emitted separately).
-	extra := sc.extra[:0]
-	for _, e := range headEntries {
-		if e.ts > max {
-			continue
-		}
-		if _, done := emittedHead[e.ts]; done || e.tombstone {
-			continue
-		}
-		extra = append(extra, e)
-	}
-	sort.Slice(extra, func(i, j int) bool { return extra[i].ts < extra[j].ts })
-	for _, e := range extra {
-		outTs = append(outTs, e.ts)
-		if numeric {
-			outVals = append(outVals, e.val)
-		} else {
-			outStrs = append(outStrs, e.str)
-		}
-	}
-	flush()
-	sc.outTs, sc.outVals, sc.outStrs, sc.extra = outTs, outVals, outStrs, extra
-	return nil
-}
-
-// flushLocked makes all buffered/append data durable and folds the out-of-order
-// head into sealed chunks. Caller holds c.mu. Two parts:
-//
-//  1. The append fast-path pending chunk is finalized so its tail is on disk.
-//  2. If the head holds out-of-order corrections, the overlapping chunks are
-//     rewritten to physically apply overwrites/tombstones, then the head resets.
-func (c *Column) flushLocked() error {
-	if c.dropped {
-		return errColumnGone
-	}
-	// Part 1: finalize the monotonic append pending chunk (cheap, no rewrite).
-	if err := c.app.flush(); err != nil {
-		return err
-	}
-
-	// Part 2: fold the out-of-order head, if any.
-	headEntries := c.head.snapshot(minInt64, maxInt64)
-	if len(headEntries) == 0 {
-		return nil
-	}
-
-	// Determine the time span the head touches, then rewrite the union of that
-	// span with any overlapping sealed chunks into fresh chunk files.
-	var hmin, hmax int64 = maxInt64, minInt64
-	for _, e := range headEntries {
-		if e.ts < hmin {
-			hmin = e.ts
-		}
-		if e.ts > hmax {
-			hmax = e.ts
-		}
-	}
-
-	overlap := c.chunksOverlapping(hmin, hmax)
-
-	// Expand the rewrite window to the full extent of the overlapping chunks so
-	// that points inside those chunks but outside the head's span are carried
-	// over rather than dropped when the old chunk files are replaced.
-	for _, ci := range overlap {
-		if ci.minMillis < hmin {
-			hmin = ci.minMillis
-		}
-		if ci.maxMillis > hmax {
-			hmax = ci.maxMillis
-		}
-	}
-
-	// Build the merged, ordered, de-duplicated point set across overlapping
-	// sealed chunks + head (head wins, tombstones drop).
-	merged := map[int64]mergedPoint{}
-	var bd blockData
-	for _, ci := range overlap {
-		if err := scanChunkBlocks(c.pool, ci.path, func(frame []byte, h blockHeader) bool {
-			if decodeBlockBody(frame, h, c.schema.Scheme, &bd) != nil {
-				return true
-			}
-			for i, t := range bd.ts {
-				merged[t] = sealedPoint(&bd, c.schema.Scheme, i)
-			}
-			return true
-		}); err != nil {
-			return err
-		}
-	}
-	for _, e := range headEntries {
-		if e.tombstone {
-			delete(merged, e.ts)
-			continue
-		}
-		merged[e.ts] = mergedPoint{val: e.val, str: e.str}
-	}
-
-	// also carry sealed chunks that are fully outside [hmin,hmax] untouched
-	order := make([]int64, 0, len(merged))
-	for t := range merged {
-		order = append(order, t)
-	}
-	sort.Slice(order, func(i, j int) bool { return order[i] < order[j] })
-
-	// Remove the old overlapping chunk files BEFORE writing the replacements.
-	// A replacement may legitimately reuse the same <min>_<max>.tsb name (e.g.
-	// an in-place overwrite that does not change the range), so writing first
-	// and deleting after would delete the fresh file.
-	for _, ci := range overlap {
-		c.pool.Evict(ci.path)
-		if err := os.Remove(ci.path); err != nil && !os.IsNotExist(err) {
-			return fmt.Errorf("tsdb: remove old chunk: %w", err)
-		}
-	}
-
-	// write new chunk files for the merged range, respecting the split policy
-	newChunks, err := c.writeChunks(order, merged)
-	if err != nil {
-		return err
-	}
-
-	kept := make([]chunkInfo, 0, len(c.chunks))
-	for _, ci := range c.chunks {
-		if ci.maxMillis < hmin || ci.minMillis > hmax {
-			kept = append(kept, ci)
-		}
-	}
-	c.chunks = append(kept, newChunks...)
-	sort.Slice(c.chunks, func(i, j int) bool { return c.chunks[i].minMillis < c.chunks[j].minMillis })
-
-	return c.head.reset()
-}
-
-type mergedPoint struct {
-	val int64
-	str string
-}
-
-func sealedPoint(bd *blockData, s Scheme, i int) mergedPoint {
-	if s == SchemeString {
-		return mergedPoint{str: bd.strs[i]}
-	}
-	return mergedPoint{val: sealedVal(bd, i)}
-}
-
-// writeChunks writes the ordered points into new chunk files, sealing per the
-// split policy, and returns the created chunkInfos.
-func (c *Column) writeChunks(order []int64, merged map[int64]mergedPoint) ([]chunkInfo, error) {
-	var out []chunkInfo
-	i := 0
-	for i < len(order) {
-		startTs := order[i]
-		name := pendingChunkName(startTs)
-		path := filepath.Join(c.dir, name)
-		if err := writeChunkHeader(c.pool, path); err != nil {
-			return nil, err
-		}
-		var fileOff int64 = chunkHeaderLen
-		var points int64
-		var lastTs int64 = startTs
-
-		var bd blockData
-		frameBuf := make([]byte, 0, 64<<10)
-
-		flushBlock := func() error {
-			if bd.count() == 0 {
-				return nil
-			}
-			frameBuf = frameBuf[:0]
-			f, err := encodeBlock(frameBuf, &bd, c.schema.Scheme, c.db.opts.Compress)
-			if err != nil {
-				return err
-			}
-			if _, err := c.pool.WriteAt(path, f, fileOff); err != nil {
-				return err
-			}
-			fileOff += int64(len(f))
-			bd.ts = bd.ts[:0]
-			bd.vals = bd.vals[:0]
-			bd.strs = bd.strs[:0]
-			return nil
-		}
-
-		sealed := false
-		for i < len(order) {
-			ts := order[i]
-			stats := ChunkStats{
-				SizeBytes: fileOff, Points: points,
-				MinMillis: startTs, MaxMillis: lastTs, NextMillis: ts,
-			}
-			if points > 0 && c.db.opts.Split(stats) {
-				sealed = true
-				break
-			}
-			mp := merged[ts]
-			bd.ts = append(bd.ts, ts)
-			switch c.schema.Scheme {
-			case SchemeDecimal, SchemeEnum:
-				bd.vals = append(bd.vals, mp.val)
-			case SchemeString:
-				bd.strs = append(bd.strs, mp.str)
-			}
-			lastTs = ts
-			points++
-			i++
-			if bd.count() >= c.db.opts.BlockPoints {
-				if err := flushBlock(); err != nil {
-					return nil, err
-				}
-			}
-		}
-		if err := flushBlock(); err != nil {
-			return nil, err
-		}
-
-		// finalize: rename pending -> final with true min/max
-		finalName := finalChunkName(startTs, lastTs)
-		finalPath := filepath.Join(c.dir, finalName)
-		c.pool.Evict(path)
-		if err := os.Rename(path, finalPath); err != nil {
-			return nil, fmt.Errorf("tsdb: finalize chunk: %w", err)
-		}
-		out = append(out, chunkInfo{path: finalPath, minMillis: startTs, maxMillis: lastTs, sizeBytes: fileOff})
-		_ = sealed
-	}
-	return out, nil
 }
 
 func (c *Column) close() error {

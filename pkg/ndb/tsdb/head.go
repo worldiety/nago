@@ -8,12 +8,14 @@
 package tsdb
 
 import (
+	"cmp"
 	"encoding/binary"
 	"fmt"
 	"hash/crc32"
-	"os"
 	"path/filepath"
+	"slices"
 	"sync"
+	"sync/atomic"
 
 	"github.com/tidwall/btree"
 	"go.wdy.de/nago/pkg/ndb"
@@ -30,25 +32,40 @@ type headEntry struct {
 	val       int64  // numeric value or enum id (as int64); ignored for tombstones
 	str       string // string scheme value
 	tombstone bool
+	// seq orders the mutations of the head: every put or tombstone gets the next number, also in replay. It lives only
+	// in memory, so that a fold removes exactly the entries of its snapshot and keeps every later one (resetFolded).
+	seq uint64
 }
 
 // head is the mutable write layer of a column: an append-only WAL plus an
 // in-memory btree keyed by timestamp (newest-wins). Reads merge the head over
-// the sealed chunks. Not safe for concurrent use on its own; the owning column
-// serializes access under its write lock, and reads take a read lock.
+// the sealed chunks. Its own lock guards the tree and the WAL. Writers of
+// corrections and tombstones do not hold the lock of the column, so they may
+// write while a compaction folds a snapshot of the head; the compaction
+// therefore removes only the entries of its snapshot (resetFolded).
+//
+// The WAL is read when the head is needed first, by a write, a read or a compaction, not when the column is opened.
 type head struct {
 	path   string
-	pool   *ndb.FilePool
+	fs     *ndb.FilePool
 	scheme Scheme
 
-	mu    sync.RWMutex
+	mu sync.RWMutex
+	// ready is set once the WAL is replayed; size is what the listing of the column found of it, so that an empty or
+	// missing WAL is not opened at all
+	ready atomic.Bool
+	size  int64
 	tree  *btree.BTreeG[headEntry]
-	wal   *os.File
-	walSz int64
+	// closed is set by close; the WAL itself has no handle of its own, it is read and written through the shared
+	// FilePool like every chunk, so that an open column holds no descriptor outside the pool
+	closed bool
+	walSz  int64
 	// bytesLogged is the raw payload volume appended since the last flush to a
 	// chunk; used by the compaction threshold.
 	bytesLogged int64
 	tombstones  int
+	// seq is the number of the newest mutation (headEntry.seq)
+	seq uint64
 }
 
 func lessHeadEntry(a, b headEntry) bool { return a.ts < b.ts }
@@ -68,34 +85,57 @@ const (
 	headRecHdr        = 9 // kind(1)+len(4)+crc(4)
 )
 
+// openHead opens the head of the column in dir and replays its WAL at once.
 func openHead(dir string, pool *ndb.FilePool, scheme Scheme) (*head, error) {
-	h := &head{
-		path:   filepath.Join(dir, headWALName),
-		pool:   pool,
-		scheme: scheme,
-		tree:   btree.NewBTreeG[headEntry](lessHeadEntry),
-	}
-	if err := h.replay(); err != nil {
+	h := newHead(dir, pool, scheme, -1)
+	if err := h.ensure(); err != nil {
 		return nil, err
 	}
-	f, err := os.OpenFile(h.path, os.O_RDWR|os.O_CREATE, 0644)
-	if err != nil {
-		return nil, fmt.Errorf("tsdb: open head wal: %w", err)
-	}
-	if _, err := f.Seek(h.walSz, 0); err != nil {
-		f.Close()
-		return nil, fmt.Errorf("tsdb: seek head wal: %w", err)
-	}
-	h.wal = f
 	return h, nil
 }
 
+// newHead returns the head of the column in dir, whose WAL is replayed when it is needed first. size is the size of
+// the WAL from the listing of the column, 0 for none, -1 for unknown.
+func newHead(dir string, fs *ndb.FilePool, scheme Scheme, size int64) *head {
+	return &head{
+		path:   filepath.Join(dir, headWALName),
+		fs:     fs,
+		scheme: scheme,
+		size:   size,
+	}
+}
+
+// ensure replays the WAL, if that did not happen yet.
+func (h *head) ensure() error {
+	if h.ready.Load() {
+		return nil
+	}
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	return h.ensureLocked()
+}
+
+func (h *head) ensureLocked() error {
+	if h.ready.Load() {
+		return nil
+	}
+	h.tree = btree.NewBTreeG[headEntry](lessHeadEntry)
+	if h.size != 0 {
+		if err := h.replay(); err != nil {
+			return err
+		}
+	}
+	h.ready.Store(true)
+	return nil
+}
+
 // replay rebuilds the in-memory tree from the WAL, stopping at the first
-// corrupt/truncated record (house rule: continue operating, drop torn tail).
+// corrupt/truncated record (house rule: continue operating, drop torn tail). A record with its CRC and a kind of a
+// later version is errUnknownFormat: the head does not load, and nothing behind it is overwritten.
 func (h *head) replay() error {
-	data, err := os.ReadFile(h.path)
+	data, err := h.fs.ReadFile(h.path)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if isNotExist(err) {
 			return nil
 		}
 		return fmt.Errorf("tsdb: read head wal: %w", err)
@@ -113,6 +153,10 @@ func (h *head) replay() error {
 		if crc32.ChecksumIEEE(payload) != crc {
 			break
 		}
+		if kind != headKindPut && kind != headKindTomb {
+			// a record of a later version: the head fails to load, so that no write goes over it
+			return fmt.Errorf("%w: record of kind %d in %s at %d", errUnknownFormat, kind, h.path, off)
+		}
 		if err := h.applyRecord(kind, payload); err != nil {
 			break
 		}
@@ -122,6 +166,7 @@ func (h *head) replay() error {
 	return nil
 }
 
+// applyRecord applies a record of a known kind (see replay).
 func (h *head) applyRecord(kind byte, payload []byte) error {
 	rb := xbytes.Buffer{Buf: payload}
 	ts, err := readVarint(&rb)
@@ -148,15 +193,16 @@ func (h *head) applyRecord(kind byte, payload []byte) error {
 			e.val = v
 		}
 		h.setEntry(e)
-	default:
-		return errCorruptBlock
 	}
 	return nil
 }
 
 // setEntry inserts or replaces an entry in the tree, maintaining the tombstone
-// counter. Caller holds the appropriate lock (or is in replay, single-threaded).
+// counter, and gives it the next sequence number. Caller holds the appropriate
+// lock (or is in replay, single-threaded).
 func (h *head) setEntry(e headEntry) {
+	h.seq++
+	e.seq = h.seq
 	prev, replaced := h.tree.Set(e)
 	if replaced {
 		if prev.tombstone && !e.tombstone {
@@ -172,35 +218,50 @@ func (h *head) setEntry(e headEntry) {
 // put appends a put record and updates the tree. For string scheme str is used;
 // otherwise val (numeric value or enum id).
 func (h *head) put(ts int64, val int64, str string) error {
-	pb := xbytes.Buffer{}
-	writeVarint(&pb, ts)
-	if h.scheme == SchemeString {
-		_, _ = pb.WriteString(str)
-	} else {
-		writeVarint(&pb, val)
-	}
-	return h.append(headKindPut, pb.Buf[:pb.Pos], headEntry{ts: ts, val: val, str: str})
+	return h.append(headEntry{ts: ts, val: val, str: str})
 }
 
 // tombstone appends a tombstone record and updates the tree.
 func (h *head) tombstone(ts int64) error {
-	pb := xbytes.Buffer{}
-	writeVarint(&pb, ts)
-	return h.append(headKindTomb, pb.Buf[:pb.Pos], headEntry{ts: ts, tombstone: true})
+	return h.append(headEntry{ts: ts, tombstone: true})
 }
 
-func (h *head) append(kind byte, payload []byte, e headEntry) error {
+// record is the WAL record of e: its kind and its payload.
+func (h *head) record(e headEntry) (byte, []byte) {
+	pb := xbytes.Buffer{}
+	writeVarint(&pb, e.ts)
+	if e.tombstone {
+		return headKindTomb, pb.Buf[:pb.Pos]
+	}
+	if h.scheme == SchemeString {
+		_, _ = pb.WriteString(e.str)
+	} else {
+		writeVarint(&pb, e.val)
+	}
+	return headKindPut, pb.Buf[:pb.Pos]
+}
+
+// frame appends the framed WAL record of kind and payload to dst.
+func frame(dst []byte, kind byte, payload []byte) []byte {
+	var hdr [headRecHdr]byte
+	hdr[0] = kind
+	binary.LittleEndian.PutUint32(hdr[1:], uint32(len(payload)))
+	binary.LittleEndian.PutUint32(hdr[5:], crc32.ChecksumIEEE(payload))
+	return append(append(dst, hdr[:]...), payload...)
+}
+
+func (h *head) append(e headEntry) error {
+	kind, payload := h.record(e)
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	if h.wal == nil {
+	if h.closed {
 		return errColumnGone
 	}
-	rec := make([]byte, headRecHdr+len(payload))
-	rec[0] = kind
-	binary.LittleEndian.PutUint32(rec[1:], uint32(len(payload)))
-	binary.LittleEndian.PutUint32(rec[5:], crc32.ChecksumIEEE(payload))
-	copy(rec[headRecHdr:], payload)
-	if _, err := h.wal.WriteAt(rec, h.walSz); err != nil {
+	if err := h.ensureLocked(); err != nil {
+		return err
+	}
+	rec := frame(nil, kind, payload)
+	if err := h.writeAt(rec, h.walSz); err != nil {
 		return fmt.Errorf("tsdb: append head wal: %w", err)
 	}
 	h.walSz += int64(len(rec))
@@ -213,6 +274,7 @@ func (h *head) append(kind byte, payload []byte, e headEntry) error {
 // [min,max] (inclusive). Used by reads and by compaction. Cheap relative to
 // chunk data because the head is bounded by the flush threshold.
 func (h *head) snapshot(min, max int64) []headEntry {
+	_ = h.ensure() // an unreadable WAL is an empty head here; the callers, which can report it, call ensure first
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 	var out []headEntry
@@ -230,6 +292,7 @@ func (h *head) snapshot(min, max int64) []headEntry {
 // min <= ts <= max. It is a cheap check used to select the allocation-free read
 // fast path when the head does not overlap the query range.
 func (h *head) hasRange(min, max int64) bool {
+	_ = h.ensure() // an unreadable WAL is an empty head here; the callers, which can report it, call ensure first
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 	if h.tree.Len() == 0 {
@@ -248,6 +311,7 @@ func (h *head) hasRange(min, max int64) bool {
 
 // lookup returns the head entry for exactly ts, if any.
 func (h *head) lookup(ts int64) (headEntry, bool) {
+	_ = h.ensure() // an unreadable WAL is an empty head here; the callers, which can report it, call ensure first
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 	return h.tree.Get(headEntry{ts: ts})
@@ -255,6 +319,7 @@ func (h *head) lookup(ts int64) (headEntry, bool) {
 
 // maxTS returns the largest timestamp held in the head, if any.
 func (h *head) maxTS() (int64, bool) {
+	_ = h.ensure() // an unreadable WAL is an empty head here; the callers, which can report it, call ensure first
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 	if h.tree.Len() == 0 {
@@ -266,6 +331,7 @@ func (h *head) maxTS() (int64, bool) {
 
 // minTS returns the smallest timestamp held in the head, if any.
 func (h *head) minTS() (int64, bool) {
+	_ = h.ensure() // an unreadable WAL is an empty head here; the callers, which can report it, call ensure first
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 	if h.tree.Len() == 0 {
@@ -276,40 +342,164 @@ func (h *head) minTS() (int64, bool) {
 }
 
 func (h *head) len() int {
+	_ = h.ensure() // an unreadable WAL is an empty head here; the callers, which can report it, call ensure first
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 	return h.tree.Len()
 }
 
 func (h *head) tombstoneCount() int {
+	_ = h.ensure() // an unreadable WAL is an empty head here; the callers, which can report it, call ensure first
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 	return h.tombstones
 }
 
-// reset truncates the WAL and clears the in-memory tree after its contents have
-// been folded into sealed chunks by compaction. Caller must ensure no
-// concurrent writes.
-func (h *head) reset() error {
+// foldMark is the sequence number of the newest entry of a snapshot: a fold of
+// that snapshot removes exactly the entries up to it (resetFolded).
+func foldMark(entries []headEntry) uint64 {
+	var m uint64
+	for _, e := range entries {
+		m = max(m, e.seq)
+	}
+	return m
+}
+
+// resetFolded removes the entries up to mark from the tree and the WAL after a
+// compaction has folded them into sealed chunks. A put or tombstone with a
+// larger sequence number came after the snapshot of that compaction, because
+// writers do not hold the lock of the column while they write the head; it
+// stays in the tree and in the new WAL, in the order of
+// its sequence numbers, so that replay rebuilds the same tree. The new WAL replaces the old one by a rename after it
+// is on the disk, so that a crash leaves one of both (see foldBegin).
+func (h *head) resetFolded(mark uint64) error {
+	dir := filepath.Dir(h.path)
+	f, err := h.foldBegin(mark, filepath.Join(dir, headWALName+".fold"+newSuffix))
+	if err != nil {
+		return err
+	}
+	if err := h.fs.SyncAll(f.newPath, dir); err != nil {
+		f.abort()
+		return fmt.Errorf("tsdb: sync new head wal: %w", err)
+	}
+	if err := f.finish(); err != nil {
+		return err
+	}
+	if err := h.fs.SyncAll(dir); err != nil {
+		return fmt.Errorf("tsdb: sync column dir: %w", err)
+	}
+	return nil
+}
+
+// headFold is a fold of the head in progress: the new WAL holds the entries after mark as they were at foldBegin.
+// Writers go on meanwhile, into the old WAL; finish moves what they wrote behind the new WAL before it replaces the
+// old one.
+type headFold struct {
+	h       *head
+	mark    uint64
+	oldSize int64 // the size of the valid part of the old WAL at foldBegin
+	newPath string
+	newSize int64
+}
+
+// foldBegin writes the entries after mark, in the order of their sequence numbers, as a new WAL at newPath; the
+// caller syncs it before it replaces the old one. It holds the lock of the head only to take them.
+func (h *head) foldBegin(mark uint64, newPath string) (*headFold, error) {
+	h.mu.Lock()
+	if err := h.ensureLocked(); err != nil {
+		h.mu.Unlock()
+		return nil, err
+	}
+	var kept []headEntry
+	h.tree.Scan(func(e headEntry) bool {
+		if e.seq > mark {
+			kept = append(kept, e)
+		}
+		return true
+	})
+	f := &headFold{h: h, mark: mark, oldSize: h.walSz, newPath: newPath}
+	h.mu.Unlock()
+
+	slices.SortFunc(kept, func(a, b headEntry) int { return cmp.Compare(a.seq, b.seq) })
+	var wal []byte
+	for _, e := range kept {
+		kind, payload := h.record(e)
+		wal = frame(wal, kind, payload)
+	}
+	f.newSize = int64(len(wal))
+	if err := h.fs.WriteFile(newPath, wal); err != nil {
+		f.abort()
+		return nil, fmt.Errorf("tsdb: write new head wal: %w", err)
+	}
+	return f, nil
+}
+
+// finish appends what was written to the old WAL since foldBegin to the new one, renames the new one over the old
+// one and removes the entries up to mark from the tree. It holds the lock of the head, so that no writer comes in
+// between. The appended records were not synced in the old WAL either.
+func (f *headFold) finish() error {
+	h := f.h
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	if err := h.wal.Truncate(0); err != nil {
-		return fmt.Errorf("tsdb: truncate head wal: %w", err)
+	if err := appendWALTail(h.fs, h.path, f.oldSize, h.walSz, f.newPath, f.newSize); err != nil {
+		return err
 	}
-	h.walSz = 0
-	h.bytesLogged = 0
-	h.tombstones = 0
-	h.tree = btree.NewBTreeG[headEntry](lessHeadEntry)
+	f.newSize += h.walSz - f.oldSize
+	if err := h.fs.Rename(f.newPath, h.path); err != nil {
+		return fmt.Errorf("tsdb: replace head wal: %w", err)
+	}
+	tree := btree.NewBTreeG[headEntry](lessHeadEntry)
+	var logged int64
+	tombstones := 0
+	h.tree.Scan(func(e headEntry) bool {
+		if e.seq > f.mark {
+			tree.Set(e)
+			_, payload := h.record(e)
+			logged += int64(len(payload))
+			if e.tombstone {
+				tombstones++
+			}
+		}
+		return true
+	})
+	h.tree = tree
+	h.walSz = f.newSize
+	h.size = f.newSize
+	h.bytesLogged = logged
+	h.tombstones = tombstones
+	return nil
+}
+
+// abort removes the new WAL; the head stays as it was.
+func (f *headFold) abort() { _ = f.h.fs.Remove(f.newPath) }
+
+// appendWALTail appends the bytes from..to of the WAL at path to the WAL at newPath, which has newSize bytes.
+func appendWALTail(fs *ndb.FilePool, path string, from, to int64, newPath string, newSize int64) error {
+	if to <= from {
+		return nil
+	}
+	tail := make([]byte, to-from)
+	if _, err := fs.ReadAt(path, tail, from); err != nil {
+		return fmt.Errorf("tsdb: read head wal: %w", err)
+	}
+	if _, err := fs.WriteAt(newPath, tail, newSize); err != nil {
+		return fmt.Errorf("tsdb: append to new head wal: %w", err)
+	}
 	return nil
 }
 
 func (h *head) close() error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	if h.wal != nil {
-		err := h.wal.Close()
-		h.wal = nil
-		return err
+	if !h.closed {
+		h.closed = true
+		h.fs.Evict(h.path)
 	}
 	return nil
+}
+
+// writeAt writes buf at off of the WAL through the pool, which keeps the handle open for the write.
+func (h *head) writeAt(buf []byte, off int64) error {
+	_, err := h.fs.WriteAt(h.path, buf, off)
+	return err
 }

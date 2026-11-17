@@ -1,0 +1,130 @@
+{
+  "counter/compress=false/1048576": {
+    "sizeBytes": 1060947,
+    "points": 1048576
+  },
+  "counter/compress=false/65536": {
+    "sizeBytes": 66387,
+    "points": 65536
+  },
+  "counter/compress=true/1048576": {
+    "sizeBytes": 1060947,
+    "points": 1048576
+  },
+  "counter/compress=true/65536": {
+    "sizeBytes": 66387,
+    "points": 65536
+  },
+  "noise/compress=false/1048576": {
+    "sizeBytes": 9968954,
+    "points": 1048576
+  },
+  "noise/compress=false/65536": {
+    "sizeBytes": 623248,
+    "points": 65536
+  },
+  "noise/compress=true/1048576": {
+    "sizeBytes": 9968954,
+    "points": 1048576
+  },
+  "noise/compress=true/65536": {
+    "sizeBytes": 623248,
+    "points": 65536
+  },
+  "power/compress=false/1048576": {
+    "sizeBytes": 1979431,
+    "points": 1048576
+  },
+  "power/compress=false/65536": {
+    "sizeBytes": 123770,
+    "points": 65536
+  },
+  "power/compress=true/1048576": {
+    "sizeBytes": 1979431,
+    "points": 1048576
+  },
+  "power/compress=true/65536": {
+    "sizeBytes": 123770,
+    "points": 65536
+  },
+  "power_na01/compress=false/1048576": {
+    "sizeBytes": 1995640,
+    "points": 1048576
+  },
+  "power_na01/compress=false/65536": {
+    "sizeBytes": 124953,
+    "points": 65536
+  },
+  "power_na01/compress=true/1048576": {
+    "sizeBytes": 1995640,
+    "points": 1048576
+  },
+  "power_na01/compress=true/65536": {
+    "sizeBytes": 124953,
+    "points": 65536
+  },
+  "power_na1/compress=false/1048576": {
+    "sizeBytes": 2145180,
+    "points": 1048576
+  },
+  "power_na1/compress=false/65536": {
+    "sizeBytes": 134793,
+    "points": 65536
+  },
+  "power_na1/compress=true/1048576": {
+    "sizeBytes": 2132659,
+    "points": 1048576
+  },
+  "power_na1/compress=true/65536": {
+    "sizeBytes": 133482,
+    "points": 65536
+  },
+  "status/compress=false/1048576": {
+    "sizeBytes": 1060181,
+    "points": 1048576
+  },
+  "status/compress=false/65536": {
+    "sizeBytes": 66341,
+    "points": 65536
+  },
+  "status/compress=true/1048576": {
+    "sizeBytes": 42523,
+    "points": 1048576
+  },
+  "status/compress=true/65536": {
+    "sizeBytes": 3022,
+    "points": 65536
+  },
+  "temp/compress=false/1048576": {
+    "sizeBytes": 1217241,
+    "points": 1048576
+  },
+  "temp/compress=false/65536": {
+    "sizeBytes": 76274,
+    "points": 65536
+  },
+  "temp/compress=true/1048576": {
+    "sizeBytes": 1217241,
+    "points": 1048576
+  },
+  "temp/compress=true/65536": {
+    "sizeBytes": 76274,
+    "points": 65536
+  },
+  "voltage/compress=false/1048576": {
+    "sizeBytes": 2073972,
+    "points": 1048576
+  },
+  "voltage/compress=false/65536": {
+    "sizeBytes": 129726,
+    "points": 65536
+  },
+  "voltage/compress=true/1048576": {
+    "sizeBytes": 2073972,
+    "points": 1048576
+  },
+  "voltage/compress=true/65536": {
+    "sizeBytes": 129726,
+    "points": 65536
+  }
+}

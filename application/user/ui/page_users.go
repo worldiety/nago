@@ -81,6 +81,12 @@ type UserModel struct {
 	GlobalPermissions []permission.ID
 }
 
+// String names the account by its name and mail address, just like [user.User.String]. The model also holds
+// its verification code, thus formatting it, e.g. by a [core.State] in a message, must never show its fields.
+func (u UserModel) String() string {
+	return u.IntoUser().String()
+}
+
 func (u UserModel) IntoUser() user.User {
 	return user.User{
 		ID:                    u.ID,

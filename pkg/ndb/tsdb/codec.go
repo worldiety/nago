@@ -9,6 +9,7 @@ package tsdb
 
 import (
 	"math"
+	"slices"
 
 	"go.wdy.de/nago/pkg/xbytes"
 )
@@ -101,15 +102,6 @@ func isEquidistant(ts []int64) (equi bool, step int64) {
 	return true, step
 }
 
-// encodeEquidistantTimestamps writes an equidistant timestamp run as two zig-zag
-// varints: the start timestamp and the constant step. The reader reconstructs
-// every timestamp as start + i*step. This replaces the whole per-point stream
-// (~1 byte/point) with a fixed ~10-16 bytes per block.
-func encodeEquidistantTimestamps(b *xbytes.Buffer, ts []int64, step int64) {
-	writeVarint(b, ts[0])
-	writeVarint(b, step)
-}
-
 // decodeEquidistantTimestampsInto reconstructs count equidistant timestamps from
 // the (start, step) pair at buf[off:] into dst, returning dst, the new offset,
 // and ok. Pure arithmetic, no per-point varint.
@@ -131,9 +123,10 @@ func decodeEquidistantTimestampsInto(buf []byte, off, count int, dst []int64) (o
 		return dst, off, false
 	}
 	step := unzigzag(u)
+	dst = slices.Grow(dst, count)[:count]
 	t := start
-	for i := 0; i < count; i++ {
-		dst = append(dst, t)
+	for i := range dst {
+		dst[i] = t
 		t += step
 	}
 	return dst, off, true
@@ -367,11 +360,6 @@ func firstI64(v []int64) int64 {
 	return v[0]
 }
 
-// encodeConstValue writes a single zig-zag varint holding the constant value.
-func encodeConstValue(b *xbytes.Buffer, v int64) {
-	writeVarint(b, v)
-}
-
 // decodeConstI64Into reads the single constant int64 at buf[off:] and fills dst
 // with count copies of it.
 func decodeConstI64Into(buf []byte, off, count int, dst []int64) (out []int64, next int, ok bool) {
@@ -384,8 +372,9 @@ func decodeConstI64Into(buf []byte, off, count int, dst []int64) (out []int64, n
 		return dst, off, false
 	}
 	v := unzigzag(u)
-	for i := 0; i < count; i++ {
-		dst = append(dst, v)
+	dst = slices.Grow(dst, count)[:count]
+	for i := range dst {
+		dst[i] = v
 	}
 	return dst, off, true
 }

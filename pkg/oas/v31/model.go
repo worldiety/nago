@@ -13,14 +13,14 @@ type Tag struct {
 	// REQUIRED. The name of the tag.
 	Name string `json:"name"`
 	// A description for the tag. [CommonMark] syntax MAY be used for rich text representation.
-	Description string `json:"description"`
+	Description string `json:"description,omitempty"`
 	//  	Additional external documentation for this tag.
 	ExternalDocs *ExternalDocumentation `json:"externalDocs,omitempty"`
 }
 
 type ExternalDocumentation struct {
 	// A description of the target documentation. [CommonMark] syntax MAY be used for rich text representation.
-	Description string `json:"description"`
+	Description string `json:"description,omitempty"`
 	// REQUIRED. The URL for the target documentation. This MUST be in the form of a URL.
 	URL string `json:"url"`
 }
@@ -102,16 +102,16 @@ type Parameter struct {
 	In Location `json:"in"`
 
 	// A brief description of the parameter. This could contain examples of use. [CommonMark] syntax MAY be used for rich text representation.
-	Description string `json:"description"`
+	Description string `json:"description,omitempty"`
 
 	// Determines whether this parameter is mandatory. If the parameter location is "path", this field is REQUIRED and its value MUST be true. Otherwise, the field MAY be included and its default value is false.
-	Required bool `json:"required"`
+	Required bool `json:"required,omitempty"`
 
 	// Specifies that a parameter is deprecated and SHOULD be transitioned out of usage. Default value is false.
-	Deprecated bool `json:"deprecated"`
+	Deprecated bool `json:"deprecated,omitempty"`
 
 	// If true, clients MAY pass a zero-length string value in place of parameters that would otherwise be omitted entirely, which the server SHOULD interpret as the parameter being unused. Default value is false. If style is used, and if behavior is n/a (cannot be serialized), the value of allowEmptyValue SHALL be ignored. Interactions between this field and the parameter’s Schema Object are implementation-defined. This field is valid only for query parameters. Use of this field is NOT RECOMMENDED, and it is likely to be removed in a later revision.
-	AllowEmptyValue bool `json:"allowEmptyValue"`
+	AllowEmptyValue bool `json:"allowEmptyValue,omitempty"`
 	//  	The schema defining the type used for the parameter.
 	Schema   *Schema        `json:"schema,omitempty"`
 	Examples map[string]any `json:"examples,omitempty"`

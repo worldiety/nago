@@ -26,7 +26,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watchEffect } from 'vue';
 import UiGeneric from '@/components/UiGeneric.vue';
 import NavigationBar from '@/components/scaffold/NavigationBar.vue';
 import Sidebar from '@/components/scaffold/Sidebar.vue';
@@ -54,6 +54,7 @@ onMounted(() => {
 
 onUnmounted(() => {
 	window.removeEventListener('resize', updateWindowWidth);
+	document.documentElement.style.removeProperty('scroll-padding-top');
 });
 
 const navigationBarVisible = computed((): boolean => {
@@ -83,6 +84,26 @@ const bodyWrapperClass = computed((): string | undefined => {
 		return 'pl-32'; // py-8 would cause to introduce scrollbar with 100dvh
 	}
 	return undefined;
+});
+
+// keeps focused elements (e.g. when navigating with a screen reader) from being hidden behind the fixed header
+const scrollPaddingTop = computed((): string | undefined => {
+	if (navigationBarVisible.value) {
+		return `calc(${props.ui.height || '6rem'} + 1rem)`;
+	}
+	if (burgerMenuVisible.value) {
+		return 'calc(6rem + 1rem)';
+	}
+	return undefined;
+});
+
+watchEffect(() => {
+	const html = document.documentElement;
+	if (scrollPaddingTop.value) {
+		html.style.scrollPaddingTop = scrollPaddingTop.value;
+	} else {
+		html.style.removeProperty('scroll-padding-top');
+	}
 });
 
 console.log(props.ui);

@@ -22,11 +22,14 @@
 
 		<input
 			:id="id"
+			ref="combobox"
 			:value="valueLabel"
 			class="input-field !pr-8 cursor-pointer"
 			:disabled="props.ui.disabled"
 			:style="{ paddingLeft: paddingLeft ? `${paddingLeft}px` : undefined }"
 			:aria-expanded="dropdownVisible"
+			aria-haspopup="menu"
+			:aria-controls="`${id}-dropdown`"
 			:aria-description="ui.errorText || ui.supportingText"
 			:aria-invalid="!!ui.errorText"
 			role="combobox"
@@ -39,10 +42,13 @@
 		</div>
 
 		<div
+			:id="`${id}-dropdown`"
 			ref="dropdown"
 			class="dropdown"
 			:class="{ visible: dropdownVisible }"
 			:style="{ ...floatingStyles, minWidth: `${dropdownMinWidth}px` }"
+			aria-modal="true"
+			:aria-label="ui.label || undefined"
 		>
 			<div v-if="ui.dropdownInfo || ui.searchable" class="adds">
 				<div v-if="ui.dropdownInfo" class="info">
@@ -61,7 +67,7 @@
 					<MagnifierIcon aria-hidden="true" />
 				</div>
 			</div>
-			<div ref="options" class="options overflow-y-auto">
+			<div ref="options" class="options overflow-y-auto" role="listbox" :aria-label="ui.label || undefined">
 				<template v-if="filteredOptions.length">
 					<button
 						v-for="option in filteredOptions"
@@ -98,6 +104,7 @@ import MagnifierIcon from '@/assets/svg/magnifier.svg';
 import { InputWrapperStyle } from '@/components/shared/inputWrapperStyle';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import UiGeneric from '@/components/UiGeneric.vue';
+import { ModalManager } from '@/components/shared/modalManager';
 
 interface Props {
 	ui: Select;
@@ -114,6 +121,7 @@ const emit = defineEmits<Emits>();
 const container = ref();
 const leading = useTemplateRef('leading');
 const searchInput = useTemplateRef<HTMLInputElement>('searchInput');
+const combobox = useTemplateRef<HTMLInputElement>('combobox');
 const dropdown = ref();
 const options = ref();
 const dropdownVisible = ref(false);
@@ -171,10 +179,22 @@ function toggleDropdown(visible?: boolean) {
 	dropdownVisible.value = visible ?? !dropdownVisible.value;
 
 	if (dropdownVisible.value) {
-		addEventListener('keydown', onWindowKeyDown);
-		if (props.ui.searchable) nextTick(() => searchInput.value?.focus());
+		// capture phase, so that the dropdown's own tab handling runs before the one of the ModalManager
+		addEventListener('keydown', onWindowKeyDown, true);
+		nextTick(() => {
+			if (!dropdownVisible.value) return;
+			// like a modal dialog, the background becomes inert, so that screen readers cannot leave the dropdown
+			ModalManager.pushDialog(dropdown.value);
+			if (props.ui.searchable) searchInput.value?.focus();
+			else focusInitialOption();
+		});
 	}
-	if (!dropdownVisible.value) resetDropdown();
+	if (!dropdownVisible.value) {
+		const hadFocus = !!dropdown.value?.contains(document.activeElement);
+		if (dropdown.value) ModalManager.popDialog(dropdown.value);
+		resetDropdown();
+		if (hadFocus) combobox.value?.focus();
+	}
 }
 
 function onComboboxSpace() {
@@ -189,7 +209,7 @@ function selectOption(option: SelectOption) {
 }
 
 function resetDropdown() {
-	removeEventListener('keydown', onWindowKeyDown);
+	removeEventListener('keydown', onWindowKeyDown, true);
 	filter.value = '';
 	resetTypeahead();
 	if (options.value) (options.value as HTMLElement).scrollTo(0, 0);
@@ -203,6 +223,9 @@ function resetTypeahead() {
 
 function onWindowKeyDown(event: KeyboardEvent) {
 	if (event.key === 'Escape') {
+		// an underlying modal must not be dismissed as well
+		event.preventDefault();
+		event.stopPropagation();
 		toggleDropdown(false);
 		return;
 	}
@@ -278,6 +301,13 @@ function focusFirstAvailableOption() {
 	if (firstOption) focusOptionButton(firstOption);
 }
 
+function focusInitialOption() {
+	const selectedIndex = filteredOptions.value.findIndex((o) => o.value === props.ui.value);
+	const selectedButton = getOptionButtons()[selectedIndex];
+	if (selectedButton && !selectedButton.disabled) focusOptionButton(selectedButton);
+	else focusFirstAvailableOption();
+}
+
 function focusAdjacentOption(direction: 1 | -1) {
 	const optionButtons = getOptionButtons().filter((b) => !b.disabled);
 	if (!optionButtons.length) return;
@@ -308,21 +338,26 @@ function calcDropdownMinWidth() {
 	dropdownMinWidth.value = minWidth;
 }
 
-function onWindowPointerDown(event: MouseEvent) {
-	if (isTargetInSelect(event.target as HTMLElement)) return;
+function onWindowPointerDown(event: PointerEvent) {
+	if (!dropdownVisible.value) return;
+	// the inert combobox receives no events, so a click on it has to be detected by its position
+	if (!isPointOnCombobox(event) && isTargetInDropdown(event.target as Node | null)) return;
 	toggleDropdown(false);
 }
 
-function isTargetInSelect(target?: HTMLElement): boolean {
-	if (!target || !container.value) return false;
+function isTargetInDropdown(target: Node | null): boolean {
+	return !!target && !!dropdown.value?.contains(target);
+}
 
-	let temp: HTMLElement | null = target;
-	while (temp) {
-		if (temp === container.value) return true;
-		temp = temp.parentElement;
-	}
-
-	return false;
+function isPointOnCombobox(event: PointerEvent): boolean {
+	if (!combobox.value) return false;
+	const rect = combobox.value.getBoundingClientRect();
+	return (
+		event.clientX >= rect.left &&
+		event.clientX <= rect.right &&
+		event.clientY >= rect.top &&
+		event.clientY <= rect.bottom
+	);
 }
 
 function onWindowBlur() {
@@ -341,7 +376,8 @@ onMounted(() => {
 onUnmounted(() => {
 	window.removeEventListener('pointerdown', onWindowPointerDown);
 	window.removeEventListener('blur', onWindowBlur);
-	removeEventListener('keydown', onWindowKeyDown);
+	removeEventListener('keydown', onWindowKeyDown, true);
+	if (dropdown.value) ModalManager.popDialog(dropdown.value);
 	resetTypeahead();
 });
 </script>

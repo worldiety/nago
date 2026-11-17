@@ -304,6 +304,119 @@ func (d *Decoder) BigInt() string {
 	return string(text)
 }
 
+// MaxDecimalScale is the greatest scale of a decimal, the same as decimal.MaxScale.
+const MaxDecimalScale = 1000
+
+// maxDecimalExponent bounds the exponent of a decimal far beyond any scale, so that reading it can not overflow.
+const maxDecimalExponent = 1 << 20
+
+// Decimal reads a decimal number exactly, without a float in between: a JSON number or a string, which contains one,
+// e.g. 12.30, 1.5e3 or "12.30". It returns the digits of the integer M with its sign, without a negative zero, and the
+// scale S, so that the number is M * 10^-S, e.g. "1230" and 2. The scale is the number of digits of the fraction less
+// the exponent and at least 0, e.g. 1.5e3 is "1500" and 0. A scale above [MaxDecimalScale] and an exponent, which
+// would append more zeros, are out of range.
+func (d *Decoder) Decimal() (digits string, scale int32) {
+	if d.err != "" {
+		return "0", 0
+	}
+	d.ws()
+	start := d.pos
+	var text []byte
+	if d.pos < len(d.data) && d.data[d.pos] == '"' {
+		b, ok := d.str("a decimal")
+		if !ok {
+			return "0", 0
+		}
+		// the string holds a JSON number, nothing around it, not even white space
+		sub := Decoder{data: b}
+		if len(b) > 0 && (b[0] == '-' || (b[0] >= '0' && b[0] <= '9')) {
+			text, _, _ = sub.number("a decimal")
+		}
+		if text == nil || sub.err != "" || sub.pos != len(b) {
+			d.failAt(start, "expected a decimal")
+			return "0", 0
+		}
+	} else {
+		text, start, _ = d.number("a decimal")
+		if d.err != "" {
+			return "0", 0
+		}
+	}
+
+	digits, scale, ok := decimalOf(text)
+	if !ok {
+		d.failAt(start, "number out of range")
+		return "0", 0
+	}
+	return digits, scale
+}
+
+// decimalOf returns the digits and the scale of a valid JSON number, see [Decoder.Decimal], or false, if it is out of
+// range.
+func decimalOf(text []byte) (string, int32, bool) {
+	neg := text[0] == '-'
+	if neg {
+		text = text[1:]
+	}
+
+	i := 0
+	for i < len(text) && text[i] >= '0' && text[i] <= '9' {
+		i++
+	}
+	m := append([]byte(nil), text[:i]...)
+	frac := 0
+	if i < len(text) && text[i] == '.' {
+		i++
+		for i < len(text) && text[i] >= '0' && text[i] <= '9' {
+			m = append(m, text[i])
+			frac++
+			i++
+		}
+	}
+
+	exp := 0
+	if i < len(text) {
+		// e or E
+		i++
+		expNeg := false
+		if text[i] == '+' || text[i] == '-' {
+			expNeg = text[i] == '-'
+			i++
+		}
+		for ; i < len(text); i++ {
+			exp = exp*10 + int(text[i]-'0')
+			if exp > maxDecimalExponent {
+				return "", 0, false
+			}
+		}
+		if expNeg {
+			exp = -exp
+		}
+	}
+
+	scale := frac - exp
+	if scale < 0 {
+		if -scale > MaxDecimalScale {
+			return "", 0, false
+		}
+		m = append(m, strings.Repeat("0", -scale)...)
+		scale = 0
+	}
+	if scale > MaxDecimalScale {
+		return "", 0, false
+	}
+
+	k := 0
+	for k < len(m)-1 && m[k] == '0' {
+		k++
+	}
+	m = m[k:]
+	if neg && (len(m) != 1 || m[0] != '0') {
+		return "-" + string(m), int32(scale), true
+	}
+	return string(m), int32(scale), true
+}
+
 // String reads a string.
 func (d *Decoder) String() string {
 	b, ok := d.str("a string")

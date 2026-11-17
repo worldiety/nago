@@ -67,7 +67,8 @@ type Schema struct {
 	// The developer chooses this to truncate float noise.
 	Decimals uint8 `json:"decimals,omitempty"`
 
-	// Version of the on-disk format for this column.
+	// Version of the on-disk format for this column. A schema.json of a version larger than schemaVersion was
+	// written by a later version of tsdb and fails the open of its column.
 	Version uint8 `json:"version"`
 }
 

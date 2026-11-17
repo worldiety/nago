@@ -81,11 +81,8 @@ func (c *checker) checkEnumSwitch(n *ast.SwitchStmt) {
 	if n.Tag == nil {
 		return
 	}
-	consts, ok := enumConstants(c.info.TypeOf(n.Tag))
-	if !ok {
-		return
-	}
 
+	// the cases come first: a switch with a default case or a case, which is not a constant, needs no constants
 	var covered []constant.Value
 	for _, st := range n.Body.List {
 		cc := st.(*ast.CaseClause)
@@ -102,6 +99,10 @@ func (c *checker) checkEnumSwitch(n *ast.SwitchStmt) {
 		}
 	}
 
+	consts, ok := enumConstants(c.info.TypeOf(n.Tag))
+	if !ok {
+		return
+	}
 	if missing := missingConstants(consts, covered); len(missing) > 0 {
 		c.report(n, CodeExhaustive, "the switch misses the constants "+joinNames(missing)+" of "+c.info.TypeOf(n.Tag).String(), "a switch over an enum handles each constant, so that a new constant shows every place, which must handle it", "add a case for each missing constant")
 	}
