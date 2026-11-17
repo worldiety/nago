@@ -120,6 +120,10 @@
 		"error": "Fehler",
 		"optional": "optional"
 	},
+	"passwordField": {
+		"showPassword": "Passwort anzeigen",
+		"hidePassword": "Passwort verbergen"
+	},
 	"uploadField": {
 		"size": "Größe",
 		"unknown": "Unbekannt",

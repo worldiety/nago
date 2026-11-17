@@ -1,5 +1,5 @@
 <!--
- Copyright (c) 2025 worldiety GmbH
+ Copyright (c) 2026 worldiety GmbH
 
  This file is part of the NAGO Low-Code Platform.
  Licensed under the terms specified in the LICENSE file.
@@ -18,10 +18,14 @@ import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
 import { PasswordField, UpdateStateValueRequested } from '@/shared/proto/nprotoc_gen';
 import { PRE_SUBMIT_GROUP, PreSubmitGroup } from '@/components/form/preSubmitGroup';
+import { randomStr } from '@/components/shared/util';
 
 const props = defineProps<{
 	ui: PasswordField;
 }>();
+
+const fallbackId = randomStr(16);
+const id = computed<string>(() => props.ui.id || fallbackId);
 
 const serviceAdapter = useServiceAdapter();
 
@@ -124,16 +128,19 @@ onMounted(() => {
 			:error="props.ui.errorText"
 			:help="props.ui.supportingText"
 			:disabled="props.ui.disabled"
+			:input-id="id"
 		>
 			<div class="relative hover:text-primary focus-within:text-primary">
 				<input
-					:id="ui.id"
+					:id="id"
 					ref="passwordInput"
 					v-model="inputValue"
 					:autocomplete="props.ui.disableAutocomplete ? 'off' : ui.autocomplete"
 					class="input-field !pr-10"
 					:disabled="props.ui.disabled"
 					:type="revealed ? 'text' : 'password'"
+					:aria-description="ui.errorText || ui.supportingText"
+					:aria-invalid="!!ui.errorText"
 					@keydown.enter="handleKeydownEnter"
 					@focusout="submitInputValue(true)"
 					@input="submitInputValue(false)"
@@ -143,6 +150,7 @@ onMounted(() => {
 						type="button"
 						class="button-tertiary square small reveal-button"
 						:disabled="ui.disabled"
+						:aria-label="revealed ? $t('passwordField.hidePassword') : $t('passwordField.showPassword')"
 						@click="toggleRevealed"
 						@keydown.enter="toggleRevealed"
 					>
