@@ -21,7 +21,6 @@ import (
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/std"
-	"golang.org/x/image/draw"
 )
 
 type File interface {
@@ -193,7 +192,8 @@ func NewCreateSrcSet(opts Options, srcSets Repository, images blob.Store) Create
 			return SrcSet{}, std.NewLocalizedError("Fehler bei der Dekodierung", fmt.Sprintf("Das Bild '%s' kann nicht dekodiert werden, da es möglicherweise defekt ist oder Features enthält, die wir nicht unterstützen.", img.Name()))
 		}
 
-		// now with the in-memory image, build our pyramid using 1/2 billinear sampling.
+		// now with the in-memory image, build our pyramid using 1/2 billinear sampling, streamed row by row
+		// to avoid the large temporary buffer of draw.BiLinear.
 		// we first round down to a multiple of 8, so that we always optimize DCT matching
 		// for JPEG compression, if not already done.
 		srcSet := SrcSet{
@@ -208,7 +208,7 @@ func NewCreateSrcSet(opts Options, srcSets Repository, images blob.Store) Create
 			Data:   srcImgId,
 		})
 
-		thumbWidth, thumbHeight := src.Bounds().Max.X, src.Bounds().Max.Y
+		thumbWidth, thumbHeight := src.Bounds().Dx(), src.Bounds().Dy()
 		tmp := bytes.NewBuffer(make([]byte, 0, encodedNumSrcBytes)) // pre-alloc, probably not larger than source (well depends...)
 		for {
 			thumbWidth, thumbHeight = nextLowerMultipleOfEight(thumbWidth/2), nextLowerMultipleOfEight(thumbHeight/2)
@@ -218,8 +218,7 @@ func NewCreateSrcSet(opts Options, srcSets Repository, images blob.Store) Create
 
 			dst := image.NewRGBA(image.Rect(0, 0, thumbWidth, thumbHeight))
 
-			// Resize:
-			draw.BiLinear.Scale(dst, dst.Rect, src, src.Bounds(), draw.Over, nil)
+			shrink(dst, src)
 
 			// reuse our in-mem buffer
 			tmp.Reset()
