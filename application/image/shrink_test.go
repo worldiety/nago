@@ -12,6 +12,7 @@ import (
 	"image"
 	"image/color"
 	"image/jpeg"
+	"image/png"
 	"math/rand/v2"
 	"runtime"
 	"testing"
@@ -163,5 +164,51 @@ func TestCreateSrcSetBuildsThePyramid(t *testing.T) {
 	}
 	if c, _, _, _ := thumb.At(20, 10).RGBA(); c>>8 < 195 || c>>8 > 205 {
 		t.Fatalf("color changed: %d", c>>8)
+	}
+}
+
+func TestCreateSrcSetScalesFromTwoStepsAbove(t *testing.T) {
+	// an opaque PNG stores every step without loss and without a conversion of alpha
+	rng := rand.New(rand.NewPCG(3, 4))
+	orig := image.NewRGBA(image.Rect(0, 0, 1024, 768))
+	for i := 0; i < len(orig.Pix); i += 4 {
+		orig.Pix[i], orig.Pix[i+1], orig.Pix[i+2], orig.Pix[i+3] = uint8(rng.UintN(256)), uint8(rng.UintN(256)), uint8(rng.UintN(256)), 255
+	}
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, orig); err != nil {
+		t.Fatal(err)
+	}
+
+	images := mem.NewBlobStore("images")
+	create := NewCreateSrcSet(Options{}, json.NewSloppyJSONRepository[SrcSet, ID](mem.NewBlobStore("sets")), images)
+	set, err := create(permission.SU(), Options{}, MemFile{Filename: "a.png", Bytes: buf.Bytes()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(set.Images) != 5 {
+		t.Fatalf("got %d steps: %+v", len(set.Images), set.Images)
+	}
+
+	// the steps 1 and 2 are scaled from the original, which is step 0, every further one from the step
+	// two levels above it
+	steps := []image.Image{orig}
+	for n := 1; n < len(set.Images); n++ {
+		from := max(0, n-2)
+		want := image.NewRGBA(image.Rect(0, 0, set.Images[n].Width, set.Images[n].Height))
+		shrink(want, steps[from])
+		steps = append(steps, want)
+
+		r, err := images.NewReader(t.Context(), string(set.Images[n].Data))
+		if err != nil {
+			t.Fatal(err)
+		}
+		got, err := png.Decode(r.Unwrap())
+		_ = r.Unwrap().Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if rgba, ok := got.(*image.RGBA); !ok || !bytes.Equal(rgba.Pix, want.Pix) {
+			t.Fatalf("step %d with %dx%d is not scaled from step %d", n, want.Rect.Dx(), want.Rect.Dy(), from)
+		}
 	}
 }
