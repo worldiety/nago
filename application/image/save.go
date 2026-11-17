@@ -21,7 +21,6 @@ import (
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/std"
-	"golang.org/x/image/draw"
 )
 
 type File interface {
@@ -193,7 +192,8 @@ func NewCreateSrcSet(opts Options, srcSets Repository, images blob.Store) Create
 			return SrcSet{}, std.NewLocalizedError("Fehler bei der Dekodierung", fmt.Sprintf("Das Bild '%s' kann nicht dekodiert werden, da es möglicherweise defekt ist oder Features enthält, die wir nicht unterstützen.", img.Name()))
 		}
 
-		// now with the in-memory image, build our pyramid using 1/2 billinear sampling.
+		// now with the in-memory image, build our pyramid using 1/2 billinear sampling, streamed row by row
+		// to avoid the large temporary buffer of draw.BiLinear.
 		// we first round down to a multiple of 8, so that we always optimize DCT matching
 		// for JPEG compression, if not already done.
 		srcSet := SrcSet{
@@ -208,8 +208,15 @@ func NewCreateSrcSet(opts Options, srcSets Repository, images blob.Store) Create
 			Data:   srcImgId,
 		})
 
-		thumbWidth, thumbHeight := src.Bounds().Max.X, src.Bounds().Max.Y
+		thumbWidth, thumbHeight := src.Bounds().Dx(), src.Bounds().Dy()
 		tmp := bytes.NewBuffer(make([]byte, 0, encodedNumSrcBytes)) // pre-alloc, probably not larger than source (well depends...)
+
+		// each step is scaled from the step two levels above it, so that only the first two steps read the
+		// original. The result stays within a few gray levels of scaling every step from the original, which
+		// takes about three times as long for a large image. Scaling from the step directly above would be
+		// faster again, but it is visibly softer and draws thin lines unevenly.
+		// After the second step nothing refers to the original anymore, so that it can be collected.
+		from, next := src, src // the source of this step and of the one after it
 		for {
 			thumbWidth, thumbHeight = nextLowerMultipleOfEight(thumbWidth/2), nextLowerMultipleOfEight(thumbHeight/2)
 			if thumbWidth < 32 || thumbHeight < 32 {
@@ -218,8 +225,8 @@ func NewCreateSrcSet(opts Options, srcSets Repository, images blob.Store) Create
 
 			dst := image.NewRGBA(image.Rect(0, 0, thumbWidth, thumbHeight))
 
-			// Resize:
-			draw.BiLinear.Scale(dst, dst.Rect, src, src.Bounds(), draw.Over, nil)
+			shrink(dst, from)
+			from, next = next, dst
 
 			// reuse our in-mem buffer
 			tmp.Reset()

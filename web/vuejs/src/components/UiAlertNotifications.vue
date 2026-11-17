@@ -37,6 +37,7 @@
 					class="notification"
 					:style="getNotificationStyles(i)"
 					:inert="stacked && i > 0"
+					role="alert"
 				>
 					<UiGeneric :ui="noti" />
 				</div>

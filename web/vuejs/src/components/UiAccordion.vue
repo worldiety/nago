@@ -1,5 +1,5 @@
 <!--
- Copyright (c) 2025 worldiety GmbH
+ Copyright (c) 2026 worldiety GmbH
 
  This file is part of the NAGO Low-Code Platform.
  Licensed under the terms specified in the LICENSE file.
@@ -81,6 +81,8 @@ onUnmounted(() => {
 		<div class="accordion">
 			<button
 				class="header"
+				:aria-controls="`body-${id}`"
+				:aria-expanded="!!ui.value"
 				@click="toggle()"
 				@keydown.down.exact="toggle(true)"
 				@keydown.up.exact="toggle(false)"
@@ -92,7 +94,7 @@ onUnmounted(() => {
 					<ArrowDownIcon />
 				</span>
 			</button>
-			<div class="body" :style="`height: ${bodyHeight}px;`" :inert="!ui.value">
+			<div :id="`body-${id}`" class="body" :style="`height: ${bodyHeight}px;`" :inert="!ui.value">
 				<div class="body-inner">
 					<UiGeneric :ui="ui.content" />
 				</div>
