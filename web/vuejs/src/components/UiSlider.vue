@@ -12,6 +12,7 @@
 		<InputWrapper
 			:wrapper-style="InputWrapperStyle.BASIC"
 			:label="ui.label"
+			:label-id="labelId"
 			:error="ui.errorText"
 			:help="ui.supportingText"
 			:disabled="ui.disabled"
@@ -19,15 +20,14 @@
 			<div
 				class="slider"
 				:class="{ 'disabled': ui.disabled, 'error': ui.errorText, 'range-mode': isRangeMode }"
-				:aria-valuemin="(ui.min ?? 0) + (ui.unit ?? '')"
-				:aria-valuemax="(ui.max ?? 0) + (ui.unit ?? '')"
-				:aria-valuenow="
-					isRangeMode
-						? `${$t('slider.from')} ${valueFrom}${ui.unit ?? ''} ${$t('slider.to')} ${valueTo}${ui.unit ?? ''}`
-						: valueFrom + (ui.unit ?? '')
-				"
-				role="slider"
+				:role="isRangeMode ? 'group' : undefined"
+				:aria-labelledby="isRangeMode && ui.label ? labelId : undefined"
 			>
+				<template v-if="isRangeMode">
+					<span :id="fromLabelId" hidden>{{ $t('slider.from') }}</span>
+					<span :id="toLabelId" hidden>{{ $t('slider.to') }}</span>
+				</template>
+
 				<div ref="bar" class="bar">
 					<template v-if="ui.showMarkers">
 						<div
@@ -36,40 +36,62 @@
 							class="step"
 							:class="{ active: isStepActive(i) }"
 							:style="`left: ${i * stepWidth * 100}%;`"
+							aria-hidden="true"
 						></div>
 					</template>
 
-					<div class="bar-left" :style="barLeftStyles"></div>
-					<div v-if="isRangeMode" class="bar-middle" :style="barMiddleStyles"></div>
-					<div class="bar-right" :style="barRightStyles"></div>
+					<div class="bar-left" :style="barLeftStyles" aria-hidden="true"></div>
+					<div v-if="isRangeMode" class="bar-middle" :style="barMiddleStyles" aria-hidden="true"></div>
+					<div class="bar-right" :style="barRightStyles" aria-hidden="true"></div>
+
+					<!-- Enlarged hit area: clicking the rail moves the nearest thumb there and focuses it -->
+					<div class="rail" aria-hidden="true" @pointerdown.prevent="onRailPointerDown"></div>
 
 					<!-- From grabber (single grabber in non-range mode, left grabber in range mode) -->
 					<div
-						class="grabber"
+						ref="grabberFrom"
+						class="grabber custom-focus"
 						:style="grabberFromStyles"
-						:class="{ dragging: isDraggingFrom }"
+						:class="{ dragging: draggingGrabber === 'from' }"
+						role="slider"
+						:aria-labelledby="grabberFromLabelledBy"
+						:aria-description="ui.errorText || ui.supportingText"
+						:aria-valuemin="boundsFrom.min"
+						:aria-valuemax="boundsFrom.max"
+						:aria-valuenow="valueFrom"
+						:aria-valuetext="formatValue(valueFrom)"
+						:aria-disabled="ui.disabled"
+						:aria-invalid="!!ui.errorText"
 						:tabindex="ui.disabled ? -1 : 0"
-						@pointerdown.prevent="onPointerDownFrom"
-						@keydown.left="prevStepFrom"
-						@keydown.right="nextStepFrom"
+						@pointerdown.prevent="onGrabberPointerDown($event, 'from')"
+						@keydown="onKeyDown($event, 'from')"
 					>
-						<span ref="grabberDot" class="dot"></span>
-						<span class="value">{{ valueFrom }}{{ ui.unit }}</span>
+						<span ref="grabberDot" class="dot" aria-hidden="true"></span>
+						<span class="value" aria-hidden="true">{{ formatValue(valueFrom) }}</span>
 					</div>
 
 					<!-- To grabber (only in range mode) -->
 					<div
 						v-if="isRangeMode"
-						class="grabber"
+						ref="grabberTo"
+						class="grabber custom-focus"
 						:style="grabberToStyles"
-						:class="{ dragging: isDraggingTo }"
+						:class="{ dragging: draggingGrabber === 'to' }"
+						role="slider"
+						:aria-labelledby="grabberToLabelledBy"
+						:aria-description="ui.errorText || ui.supportingText"
+						:aria-valuemin="boundsTo.min"
+						:aria-valuemax="boundsTo.max"
+						:aria-valuenow="valueTo"
+						:aria-valuetext="formatValue(valueTo)"
+						:aria-disabled="ui.disabled"
+						:aria-invalid="!!ui.errorText"
 						:tabindex="ui.disabled ? -1 : 0"
-						@pointerdown.prevent="onPointerDownTo"
-						@keydown.left="prevStepTo"
-						@keydown.right="nextStepTo"
+						@pointerdown.prevent="onGrabberPointerDown($event, 'to')"
+						@keydown="onKeyDown($event, 'to')"
 					>
-						<span class="dot"></span>
-						<span class="value">{{ valueTo }}{{ ui.unit }}</span>
+						<span class="dot" aria-hidden="true"></span>
+						<span class="value" aria-hidden="true">{{ formatValue(valueTo) }}</span>
 					</div>
 				</div>
 			</div>
@@ -81,9 +103,15 @@ import { computed, ref, onUnmounted, watch } from 'vue';
 import InputWrapper from '@/components/shared/InputWrapper.vue';
 import { frameCSS } from '@/components/shared/frame';
 import { InputWrapperStyle } from '@/components/shared/inputWrapperStyle';
+import { randomStr } from '@/components/shared/util';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID } from '@/eventhandling';
 import { Slider, UpdateStateValueRequested } from '@/shared/proto/nprotoc_gen';
+
+type Grabber = 'from' | 'to';
+
+// Number of steps for PageUp/PageDown, as in the WAI-ARIA APG slider examples.
+const PAGE_STEPS = 10;
 
 const props = defineProps<{
 	ui: Slider;
@@ -91,8 +119,15 @@ const props = defineProps<{
 
 const serviceAdapter = useServiceAdapter();
 
+const idPrefix = `slider-${randomStr(16)}`;
+const labelId = `${idPrefix}-label`;
+const fromLabelId = `${idPrefix}-from`;
+const toLabelId = `${idPrefix}-to`;
+
 const bar = ref<HTMLElement>();
 const grabberDot = ref<HTMLElement>();
+const grabberFrom = ref<HTMLElement>();
+const grabberTo = ref<HTMLElement>();
 
 const step = ref(props.ui.step ?? 1);
 const valueFrom = ref(props.ui.value?.from ?? 0);
@@ -100,10 +135,8 @@ const valueTo = ref(props.ui.value?.to ?? 0);
 
 const isRangeMode = computed<boolean>(() => !!props.ui.rangeMode);
 
-const isDraggingFrom = ref(false);
-const isDraggingTo = ref(false);
-let lastSnappedFrom: number | null = null;
-let lastSnappedTo: number | null = null;
+const draggingGrabber = ref<Grabber | null>(null);
+let dragStartValue: number | null = null;
 
 const stepsBetween = computed<number>(() => {
 	const min = props.ui.min ?? 0;
@@ -115,6 +148,26 @@ const stepWidth = computed<number>(() => {
 	const min = props.ui.min ?? 0;
 	const max = props.ui.max ?? 0;
 	return step.value / (max - min);
+});
+
+// In range mode each thumb can only move up to its sibling, so the announced bounds follow the other thumb.
+const boundsFrom = computed<{ min: number; max: number }>(() => ({
+	min: props.ui.min ?? 0,
+	max: isRangeMode.value ? fixDecimals(valueTo.value - step.value) : (props.ui.max ?? 0),
+}));
+
+const boundsTo = computed<{ min: number; max: number }>(() => ({
+	min: fixDecimals(valueFrom.value + step.value),
+	max: props.ui.max ?? 0,
+}));
+
+const grabberFromLabelledBy = computed<string | undefined>(() => {
+	if (!isRangeMode.value) return props.ui.label ? labelId : undefined;
+	return props.ui.label ? `${labelId} ${fromLabelId}` : fromLabelId;
+});
+
+const grabberToLabelledBy = computed<string>(() => {
+	return props.ui.label ? `${labelId} ${toLabelId}` : toLabelId;
 });
 
 const frameStyles = computed<string>(() => {
@@ -168,6 +221,10 @@ function isStepActive(i: number): boolean {
 	return valueFrom.value >= pos;
 }
 
+function formatValue(value: number): string {
+	return `${value}${props.ui.unit ?? ''}`;
+}
+
 function submitValue() {
 	if (isRangeMode.value) {
 		const json = JSON.stringify({ From: valueFrom.value, To: valueTo.value });
@@ -199,97 +256,114 @@ function snapToStep(clientX: number): number {
 	return fixDecimals(min + snappedStep * step.value);
 }
 
-// --- Left or only grabber ---
-function prevStepFrom() {
-	if (props.ui.disabled || valueFrom.value === props.ui.min) return;
-	const startVal = valueFrom.value;
-	valueFrom.value = Math.max(props.ui.min ?? 0, fixDecimals(startVal - step.value));
-	submitValue();
+function getValue(grabber: Grabber): number {
+	return grabber === 'from' ? valueFrom.value : valueTo.value;
 }
 
-function nextStepFrom() {
-	if (props.ui.disabled) return;
-	const ceiling = isRangeMode.value ? valueTo.value - step.value : (props.ui.max ?? 0);
-	const startVal = valueFrom.value;
-	valueFrom.value = Math.min(ceiling, fixDecimals(startVal + step.value));
-	submitValue();
+function getBounds(grabber: Grabber): { min: number; max: number } {
+	return grabber === 'from' ? boundsFrom.value : boundsTo.value;
 }
 
-function onPointerMoveFrom(event: PointerEvent) {
-	const snapped = snapToStep(event.clientX);
-	const clamped = isRangeMode.value ? Math.min(snapped, fixDecimals(valueTo.value - step.value)) : snapped;
-	if (clamped !== lastSnappedFrom) {
-		lastSnappedFrom = clamped;
+function getGrabberElement(grabber: Grabber): HTMLElement | undefined {
+	return grabber === 'from' ? grabberFrom.value : grabberTo.value;
+}
+
+// Clamps the value to the grabber's bounds and applies it locally. Returns whether the value changed.
+function moveGrabberTo(grabber: Grabber, value: number): boolean {
+	const bounds = getBounds(grabber);
+	const clamped = fixDecimals(Math.min(bounds.max, Math.max(bounds.min, value)));
+	if (clamped === getValue(grabber)) return false;
+	if (grabber === 'from') {
 		valueFrom.value = clamped;
-	}
-}
-
-function onPointerUpFrom() {
-	if (lastSnappedFrom !== null && lastSnappedFrom !== (props.ui.value?.from ?? 0)) {
-		submitValue();
-	}
-	isDraggingFrom.value = false;
-	document.removeEventListener('pointermove', onPointerMoveFrom);
-	document.removeEventListener('pointerup', onPointerUpFrom);
-}
-
-function onPointerDownFrom(event: PointerEvent) {
-	if (props.ui.disabled) return;
-	isDraggingFrom.value = true;
-	lastSnappedFrom = valueFrom.value;
-	(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
-	document.addEventListener('pointermove', onPointerMoveFrom);
-	document.addEventListener('pointerup', onPointerUpFrom);
-}
-
-// --- Right grabber (range mode only) ---
-function prevStepTo() {
-	if (props.ui.disabled) return;
-	const startVal = valueTo.value;
-	const floor = valueFrom.value + step.value;
-	valueTo.value = Math.max(floor, fixDecimals(startVal - step.value));
-	submitValue();
-}
-
-function nextStepTo() {
-	if (props.ui.disabled || valueTo.value === props.ui.max) return;
-	const startVal = valueTo.value;
-	valueTo.value = Math.min(props.ui.max ?? 0, fixDecimals(startVal + step.value));
-	submitValue();
-}
-
-function onPointerMoveTo(event: PointerEvent) {
-	const snapped = snapToStep(event.clientX);
-	const clamped = Math.max(snapped, fixDecimals(valueFrom.value + step.value));
-	if (clamped !== lastSnappedTo) {
-		lastSnappedTo = clamped;
+	} else {
 		valueTo.value = clamped;
 	}
+	return true;
 }
 
-function onPointerUpTo() {
-	if (lastSnappedTo !== null && lastSnappedTo !== (props.ui.value?.to ?? 0)) {
+function onKeyDown(event: KeyboardEvent, grabber: Grabber) {
+	if (props.ui.disabled) return;
+	const current = getValue(grabber);
+	const bounds = getBounds(grabber);
+
+	let next: number;
+	switch (event.key) {
+		case 'ArrowLeft':
+		case 'ArrowDown':
+			next = current - step.value;
+			break;
+		case 'ArrowRight':
+		case 'ArrowUp':
+			next = current + step.value;
+			break;
+		case 'PageDown':
+			next = current - PAGE_STEPS * step.value;
+			break;
+		case 'PageUp':
+			next = current + PAGE_STEPS * step.value;
+			break;
+		case 'Home':
+			next = bounds.min;
+			break;
+		case 'End':
+			next = bounds.max;
+			break;
+		default:
+			return;
+	}
+
+	event.preventDefault();
+	event.stopPropagation();
+	if (moveGrabberTo(grabber, next)) {
 		submitValue();
 	}
-	isDraggingTo.value = false;
-	document.removeEventListener('pointermove', onPointerMoveTo);
-	document.removeEventListener('pointerup', onPointerUpTo);
 }
 
-function onPointerDownTo(event: PointerEvent) {
-	if (props.ui.disabled) return;
-	isDraggingTo.value = true;
-	lastSnappedTo = valueTo.value;
+// --- Pointer handling ---
+function onPointerMove(event: PointerEvent) {
+	if (!draggingGrabber.value) return;
+	moveGrabberTo(draggingGrabber.value, snapToStep(event.clientX));
+}
+
+function onPointerUp() {
+	if (draggingGrabber.value && dragStartValue !== getValue(draggingGrabber.value)) {
+		submitValue();
+	}
+	draggingGrabber.value = null;
+	dragStartValue = null;
+	document.removeEventListener('pointermove', onPointerMove);
+	document.removeEventListener('pointerup', onPointerUp);
+}
+
+function startDragging(event: PointerEvent, grabber: Grabber, startValue: number) {
+	draggingGrabber.value = grabber;
+	dragStartValue = startValue;
+	getGrabberElement(grabber)?.focus();
 	(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
-	document.addEventListener('pointermove', onPointerMoveTo);
-	document.addEventListener('pointerup', onPointerUpTo);
+	document.addEventListener('pointermove', onPointerMove);
+	document.addEventListener('pointerup', onPointerUp);
+}
+
+function onGrabberPointerDown(event: PointerEvent, grabber: Grabber) {
+	if (props.ui.disabled) return;
+	startDragging(event, grabber, getValue(grabber));
+}
+
+function onRailPointerDown(event: PointerEvent) {
+	if (props.ui.disabled) return;
+	const target = snapToStep(event.clientX);
+	let grabber: Grabber = 'from';
+	if (isRangeMode.value && Math.abs(target - valueTo.value) < Math.abs(target - valueFrom.value)) {
+		grabber = 'to';
+	}
+	const startValue = getValue(grabber);
+	moveGrabberTo(grabber, target);
+	startDragging(event, grabber, startValue);
 }
 
 onUnmounted(() => {
-	document.removeEventListener('pointermove', onPointerMoveFrom);
-	document.removeEventListener('pointerup', onPointerUpFrom);
-	document.removeEventListener('pointermove', onPointerMoveTo);
-	document.removeEventListener('pointerup', onPointerUpTo);
+	document.removeEventListener('pointermove', onPointerMove);
+	document.removeEventListener('pointerup', onPointerUp);
 });
 
 watch(
@@ -329,11 +403,14 @@ watch(
 			}
 		}
 
+		.rail {
+			@apply absolute inset-x-0 top-1/2 -translate-y-1/2 h-4 cursor-pointer z-1 touch-none;
+		}
+
 		.grabber {
-			@apply absolute top-1/2 -translate-x-1/2 -translate-y-1/2 size-8 !rounded-full flex justify-center items-center cursor-grab z-10 touch-none;
+			@apply absolute top-1/2 -translate-x-1/2 -translate-y-1/2 size-8 rounded-full flex justify-center items-center cursor-grab z-10 touch-none outline-none;
 
 			.dot {
-				content: '';
 				@apply block size-3.5 rounded-full bg-I0;
 			}
 
@@ -345,6 +422,10 @@ watch(
 			&:hover,
 			&.dragging {
 				@apply bg-I0/20;
+			}
+
+			&:focus-visible {
+				@apply outline-2 outline-solid -outline-offset-2 outline-I0;
 			}
 
 			&.dragging {
@@ -385,6 +466,10 @@ watch(
 				&.dragging {
 					@apply bg-SE0/20;
 				}
+
+				&:focus-visible {
+					@apply outline-SE0;
+				}
 			}
 		}
 	}
@@ -423,6 +508,15 @@ watch(
 				&.dragging {
 					@apply bg-ST0/20;
 				}
+
+				&:focus-visible {
+					@apply outline-ST0;
+				}
+			}
+
+			.grabber,
+			.rail {
+				@apply cursor-default;
 			}
 		}
 	}

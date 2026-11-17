@@ -11,7 +11,7 @@
 	<div class="input-wrapper">
 		<!-- Label with optional hint -->
 		<div v-if="label || optional" class="label-container">
-			<label v-if="label" :for="inputId" :class="labelClass" role="presentation">
+			<label v-if="label" :id="labelId" :for="inputId" :class="labelClass" role="presentation">
 				<LockIcon v-if="disabled" class="h-4" aria-hidden="true" />
 				<ErrorIcon v-else-if="error" class="h-2.5" aria-hidden="true" />
 				<span>{{ label }}</span>
@@ -46,6 +46,7 @@ import { InputWrapperStyle } from '@/components/shared/inputWrapperStyle';
 const props = defineProps<{
 	wrapperStyle?: InputWrapperStyle;
 	inputId?: string;
+	labelId?: string;
 	label?: string;
 	error?: string;
 	help?: string;
