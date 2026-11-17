@@ -12,14 +12,19 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
+	"github.com/worldiety/i18n/date"
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/consent"
 	"go.wdy.de/nago/application/mail"
 	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/application/user"
+	uiuser "go.wdy.de/nago/application/user/ui"
 	"go.wdy.de/nago/nagotest"
+	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
 	"go.wdy.de/nago/presentation/ui"
@@ -203,4 +208,72 @@ func TestSelfRegistration(t *testing.T) {
 
 	again := app.Open(t, nil, "account/register", nagotest.Values(values))
 	again.Find(nagotest.Text("Link nicht gültig"))
+}
+
+// The view after a link has been sent has no address field, so it shows a failed resend as notice instead of
+// claiming that a new link has been sent. A waiting time is rounded up to the minute it is shown by.
+func TestSelfRegistrationResend(t *testing.T) {
+	var mutex sync.Mutex
+	var next error                          // the result of the next request
+	var formatMinute func(time.Time) string // the time the way the window shows it
+
+	app := nagotest.New(t, func(cfg *application.Configurator) {
+		cfg.SetApplicationID("de.worldiety.nagotest")
+		if _, err := cfg.Authentication(); err != nil {
+			t.Fatal(err)
+		}
+
+		registration := user.Registration{Request: func(client string, email user.Email) error {
+			mutex.Lock()
+			defer mutex.Unlock()
+
+			return next
+		}}
+
+		cfg.RootView("resend", func(wnd core.Window) core.View {
+			mutex.Lock()
+			formatMinute = func(at time.Time) string {
+				return date.Format(wnd.Locale(), date.TimeMinute, at.In(wnd.Location()))
+			}
+			mutex.Unlock()
+
+			return uiuser.PageSelfRegister(wnd, registration, "account/login", nil, nil)
+		})
+	})
+
+	fail := func(err error) {
+		mutex.Lock()
+		defer mutex.Unlock()
+
+		next = err
+	}
+
+	w := app.Open(t, nil, "resend")
+	w.Type(w.Find(nagotest.Label("E-Mail Adresse")), "erika@example.com")
+	w.Click(w.Find(nagotest.Text("Link senden")))
+	w.Find(nagotest.Text("Postfach prüfen"))
+
+	w.Click(w.Find(nagotest.Text("Erneut senden")))
+	w.Find(nagotest.Text("Ein neuer Link wurde gesendet."))
+
+	fail(std.NewLocalizedError("Link nicht gesendet", "Der Link konnte nicht gesendet werden."))
+	w.Click(w.Find(nagotest.Text("Erneut senden")))
+	w.Find(nagotest.Text("Der Link konnte nicht gesendet werden."))
+	w.FindAll(nagotest.Text("Ein neuer Link wurde gesendet.")).None()
+
+	// at the shown minute the waiting is over, so 14:03:50 is shown as 14:04 and a full minute as it is
+	for _, c := range []struct{ retryAt, shown time.Time }{
+		{time.Date(2026, 11, 17, 14, 3, 50, 0, time.UTC), time.Date(2026, 11, 17, 14, 4, 0, 0, time.UTC)},
+		{time.Date(2026, 11, 17, 14, 5, 0, 0, time.UTC), time.Date(2026, 11, 17, 14, 5, 0, 0, time.UTC)},
+	} {
+		fail(user.RegistrationCooldownError{RetryAt: c.retryAt})
+		w.Click(w.Find(nagotest.Text("Erneut senden")))
+
+		mutex.Lock()
+		want := formatMinute(c.shown)
+		mutex.Unlock()
+
+		w.Find(nagotest.TextContains("bis " + want + " Uhr"))
+		w.FindAll(nagotest.Text("Ein neuer Link wurde gesendet.")).None()
+	}
 }

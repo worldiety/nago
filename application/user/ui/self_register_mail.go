@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/worldiety/i18n/date"
 	"go.wdy.de/nago/application/user"
@@ -38,34 +39,48 @@ func newRequestRegistration(wnd core.Window) requestRegistration {
 	}
 }
 
-func (r requestRegistration) send(request user.RequestRegistration, email string) {
+// send requests a link for the address and tells, if it has been sent. A failure is shown at the address field, or
+// as notice, if a link has been sent before, because that view has no field.
+func (r requestRegistration) send(request user.RequestRegistration, email string) bool {
 	r.errEmail.Set("")
 	r.notice.Set("")
 
 	// the session limits the links a single visitor can request
 	err := request(string(r.wnd.Session().ID()), user.Email(email))
-	var cooldown user.RegistrationCooldownError
-	switch {
-	case err == nil:
+	if err == nil {
 		r.sentTo.Set(email)
-		return
-	case errors.As(err, &cooldown):
-		retryAt := date.Format(r.wnd.Locale(), date.TimeMinute, cooldown.RetryAt.In(r.wnd.Location()))
-		msg := fmt.Sprintf("Bitte warten Sie bis %s Uhr, bevor Sie einen neuen Link anfordern.", retryAt)
-		if r.sentTo.Get() != "" {
-			r.notice.Set(msg)
-		} else {
-			r.errEmail.Set(msg)
-		}
-	default:
-		if msg, ok := localizedMessage(err); ok {
-			r.errEmail.Set(msg)
-			return
-		}
-
-		slog.Error("cannot request registration", "err", err)
-		r.errEmail.Set("Der Link konnte nicht gesendet werden. Bitte versuchen Sie es später erneut.")
+		return true
 	}
+
+	var msg string
+	var cooldown user.RegistrationCooldownError
+	if errors.As(err, &cooldown) {
+		retryAt := date.Format(r.wnd.Locale(), date.TimeMinute, nextFullMinute(cooldown.RetryAt).In(r.wnd.Location()))
+		msg = fmt.Sprintf("Bitte warten Sie bis %s Uhr, bevor Sie einen neuen Link anfordern.", retryAt)
+	} else if localized, ok := localizedMessage(err); ok {
+		msg = localized
+	} else {
+		slog.Error("cannot request registration", "err", err)
+		msg = "Der Link konnte nicht gesendet werden. Bitte versuchen Sie es später erneut."
+	}
+
+	if r.sentTo.Get() != "" {
+		r.notice.Set(msg)
+	} else {
+		r.errEmail.Set(msg)
+	}
+
+	return false
+}
+
+// nextFullMinute rounds the time up to a full minute. A waiting time is shown by the minute, and at the shown
+// minute the waiting must be over.
+func nextFullMinute(t time.Time) time.Time {
+	if full := t.Truncate(time.Minute); full.Before(t) {
+		return full.Add(time.Minute)
+	}
+
+	return t
 }
 
 // view returns the subcaption, the body and the actions of the card.
@@ -87,8 +102,7 @@ func (r requestRegistration) view(request user.RequestRegistration) (string, cor
 				r.notice.Set("")
 			}).Title("Andere Adresse"),
 			ui.PrimaryButton(func() {
-				r.send(request, r.sentTo.Get())
-				if r.notice.Get() == "" {
+				if r.send(request, r.sentTo.Get()) {
 					r.notice.Set("Ein neuer Link wurde gesendet.")
 				}
 			}).Title("Erneut senden"),
