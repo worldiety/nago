@@ -210,6 +210,13 @@ func NewCreateSrcSet(opts Options, srcSets Repository, images blob.Store) Create
 
 		thumbWidth, thumbHeight := src.Bounds().Dx(), src.Bounds().Dy()
 		tmp := bytes.NewBuffer(make([]byte, 0, encodedNumSrcBytes)) // pre-alloc, probably not larger than source (well depends...)
+
+		// each step is scaled from the step two levels above it, so that only the first two steps read the
+		// original. The result stays within a few gray levels of scaling every step from the original, which
+		// takes about three times as long for a large image. Scaling from the step directly above would be
+		// faster again, but it is visibly softer and draws thin lines unevenly.
+		// After the second step nothing refers to the original anymore, so that it can be collected.
+		from, next := src, src // the source of this step and of the one after it
 		for {
 			thumbWidth, thumbHeight = nextLowerMultipleOfEight(thumbWidth/2), nextLowerMultipleOfEight(thumbHeight/2)
 			if thumbWidth < 32 || thumbHeight < 32 {
@@ -218,7 +225,8 @@ func NewCreateSrcSet(opts Options, srcSets Repository, images blob.Store) Create
 
 			dst := image.NewRGBA(image.Rect(0, 0, thumbWidth, thumbHeight))
 
-			shrink(dst, src)
+			shrink(dst, from)
+			from, next = next, dst
 
 			// reuse our in-mem buffer
 			tmp.Reset()
