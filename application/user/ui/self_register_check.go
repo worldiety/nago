@@ -14,7 +14,6 @@ import (
 
 func check(firstname, lastname, email *core.State[string]) core.View {
 	return ui.VStack(
-		ui.Text("Sind die Daten korrekt?").Padding(ui.Padding{Bottom: ui.L16}),
 		ui.TextField("E-Mail Adresse", email.Get()).
 			InputValue(email).
 			Disabled(true).

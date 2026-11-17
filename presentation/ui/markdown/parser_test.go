@@ -39,3 +39,25 @@ func TestHeadingDoesNotSetTheWindowTitle(t *testing.T) {
 		t.Fatalf("expected the title of the page, got %q", got)
 	}
 }
+
+// The plain texts become labels of the given component, e.g. of a checkbox, but links stay links.
+func TestLabelFor(t *testing.T) {
+	app := nagotest.New(t, func(cfg *application.Configurator) {
+		cfg.SetApplicationID("de.worldiety.markdowntest")
+		cfg.RootView(".", func(wnd core.Window) core.View {
+			return markdown.Render(markdown.Options{Window: wnd, LabelFor: "box"}, []byte("I accept the [terms](/terms) now."))
+		})
+	})
+
+	w := app.Open(t, nil, ".")
+	for _, text := range []string{"I accept the ", " now."} {
+		n := w.Find(nagotest.Text(text)).Node().Component.(*proto.TextView)
+		if n.LabelFor != "box" {
+			t.Fatalf("%q: expected a label of the box, got %q", text, n.LabelFor)
+		}
+	}
+
+	if n := w.Find(nagotest.Text("terms")).Node().Component.(*proto.TextView); n.LabelFor != "" {
+		t.Fatalf("a link must not be a label, got %q", n.LabelFor)
+	}
+}

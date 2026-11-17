@@ -9,6 +9,12 @@ import (
 )
 
 func LoginRegisterCard(wnd core.Window, logoLight, logoDark image.ID, title, subtitle string, contentRight core.View, actions ...core.View) core.View {
+	return LoginRegisterCardWithWidth(wnd, ui.L480, logoLight, logoDark, title, subtitle, contentRight, actions...)
+}
+
+// LoginRegisterCardWithWidth is like [LoginRegisterCard] but with the given maximum width, e.g. for content with two
+// columns.
+func LoginRegisterCardWithWidth(wnd core.Window, maxWidth ui.Length, logoLight, logoDark image.ID, title, subtitle string, contentRight core.View, actions ...core.View) core.View {
 	logoImg := ui.IfFunc(logoLight != "" || logoDark != "", func() core.View {
 		dark := httpimage.URI(logoDark, image.FitCover, 512, 512)
 		light := httpimage.URI(logoLight, image.FitCover, 512, 512)
@@ -47,7 +53,7 @@ func LoginRegisterCard(wnd core.Window, logoLight, logoDark image.ID, title, sub
 			).Gap(ui.L16).FullWidth(),
 		).
 		Padding(ui.Padding{}.All(ui.L0)).
-		Frame(ui.Frame{Width: ui.Full, MaxWidth: ui.L480}.FullWidth())
+		Frame(ui.Frame{Width: ui.Full, MaxWidth: maxWidth}.FullWidth())
 
 	hasActions := false
 	for _, action := range actions {

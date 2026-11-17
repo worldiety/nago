@@ -14,6 +14,7 @@ import (
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/accessibility"
 	"go.wdy.de/nago/presentation/ui/markdown"
 )
 
@@ -35,13 +36,35 @@ func consents(wnd core.Window, usrSettings user.Settings, consentStates map[cons
 					label += " (optional)"
 				}
 
+				// The texts are labels of the checkbox, so that a click on them toggles it, like in a CheckboxField.
+				// The consent text names the checkbox and stays readable for assistive technology, because it may
+				// contain links. The supporting and the error text are announced as description instead.
+				id := "consent-" + string(consentOpt.ID)
+				errText := ""
+				if hasErr.Get() {
+					errText = "Die Zustimmung ist erforderlich."
+				}
+
+				description := errText
+				if description == "" {
+					description = consentOpt.Register.SupportingText
+				}
+
 				yield(
 					ui.HStack(
-						ui.Checkbox(state.Get()).InputChecked(state),
+						accessibility.Accessible(
+							ui.Checkbox(state.Get()).InputValue(state).ID(id),
+						).
+							Description(description).
+							Invalid(errText != ""),
 						ui.VStack(
-							markdown.Render(markdown.Options{Window: wnd}, []byte(label)),
-							ui.Text(consentOpt.Register.SupportingText).Font(ui.Small),
-							ui.Text("Die Zustimmung ist erforderlich.").Color(ui.ColorError).Visible(hasErr.Get()),
+							markdown.Render(markdown.Options{Window: wnd, LabelFor: id}, []byte(label)),
+							accessibility.Accessible(
+								ui.Text(consentOpt.Register.SupportingText).Font(ui.Small).LabelFor(id),
+							).Hidden(true),
+							accessibility.Accessible(
+								ui.Text(errText).Color(ui.ColorError).LabelFor(id).Visible(errText != ""),
+							).Hidden(true),
 						).Alignment(ui.TopLeading),
 					).Alignment(ui.TopLeading),
 				)

@@ -46,7 +46,7 @@ func NewCreate(mutex *sync.Mutex, rdb *rebac.DB, loadGlobal settings.LoadGlobal,
 			return User{}, std.NewLocalizedError("Eingabebeschränkung", "Die Kennwörter stimmen nicht überein.")
 		}
 
-		mail := Email(strings.TrimSpace(strings.ToLower(string(model.Email))))
+		mail := normalizeEmail(model.Email)
 		if !mail.Valid() {
 			return User{}, std.NewLocalizedError("Eingabebeschränkung", "Auch wenn es sich um eine potentiell gültige E-Mail Adresse handeln könnte, wird dieses Format nicht unterstützt.")
 		}
@@ -90,12 +90,15 @@ func NewCreate(mutex *sync.Mutex, rdb *rebac.DB, loadGlobal settings.LoadGlobal,
 			Status:                Enabled{},
 			EMailVerified:         model.Verified,
 			RequirePasswordChange: requiredPasswordChange,
-			// initially, give the user a week to respond. Note, that for self registration we just may
-			// remove users which have never been verified automatically
-			VerificationCode: NewCode(DefaultVerificationLifeTime),
-
 			// legal fields
 			Consents: model.Consents,
+		}
+
+		// a verified account has nothing to confirm, a code would only pretend a pending verification
+		if !model.Verified {
+			// initially, give the user a week to respond. Note, that for self registration we just may
+			// remove users which have never been verified automatically
+			user.VerificationCode = NewCode(DefaultVerificationLifeTime)
 		}
 
 		if model.SelfRegistered {
@@ -104,18 +107,8 @@ func NewCreate(mutex *sync.Mutex, rdb *rebac.DB, loadGlobal settings.LoadGlobal,
 				return User{}, fmt.Errorf("self registration is not allowed")
 			}
 
-			if len(userSettings.AllowedDomains) > 0 {
-				allowed := false
-				for _, allowedPostfix := range userSettings.AllowedDomains {
-					if strings.HasSuffix(strings.ToLower(string(user.Email)), strings.ToLower(strings.TrimSpace(allowedPostfix))) {
-						allowed = true
-						break
-					}
-				}
-
-				if !allowed {
-					return User{}, std.NewLocalizedError("Registrierung nicht möglich", "Sie dürfen sich leider nicht registrieren.")
-				}
+			if err := checkAllowedDomain(userSettings, user.Email); err != nil {
+				return User{}, err
 			}
 
 			for _, rid := range userSettings.DefaultRoles {
@@ -189,6 +182,27 @@ func NewCreate(mutex *sync.Mutex, rdb *rebac.DB, loadGlobal settings.LoadGlobal,
 
 		return user, nil
 	}
+}
+
+// normalizeEmail returns the address the way it is stored.
+func normalizeEmail(email Email) Email {
+	return Email(strings.TrimSpace(strings.ToLower(string(email))))
+}
+
+// checkAllowedDomain checks the address against [Settings.AllowedDomains] of the self registration. An empty list
+// allows every address.
+func checkAllowedDomain(s Settings, email Email) error {
+	if len(s.AllowedDomains) == 0 {
+		return nil
+	}
+
+	for _, allowedPostfix := range s.AllowedDomains {
+		if strings.HasSuffix(strings.ToLower(string(email)), strings.ToLower(strings.TrimSpace(allowedPostfix))) {
+			return nil
+		}
+	}
+
+	return std.NewLocalizedError("Registrierung nicht möglich", "Sie dürfen sich leider nicht registrieren.")
 }
 
 func PublishUserCreated(eventBus events.Bus, user User, notify bool) {

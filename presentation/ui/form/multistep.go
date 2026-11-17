@@ -31,7 +31,20 @@ type TMultiSteps struct {
 	colorDone    ui.Color
 	colorFuture  ui.Color
 	layout       stepper.StepperLayout
+	position     StepperPosition
 }
+
+// StepperPosition tells where the stepper is placed relative to the body and the buttons.
+type StepperPosition int
+
+const (
+	// StepperPositionTop places the stepper above the body, which is the default.
+	StepperPositionTop StepperPosition = iota
+	// StepperPositionLeading places the stepper left beside the body and the buttons. This suits a vertical or a simple list
+	// layout of the stepper. Windows of the small size class fall back to [StepperPositionTop], because there is no room
+	// for two columns.
+	StepperPositionLeading
+)
 
 // MultiSteps creates a new TMultiSteps with the provided steps.
 func MultiSteps(steps ...TStep) TMultiSteps {
@@ -113,6 +126,12 @@ func (c TMultiSteps) Layout(layout stepper.StepperLayout) TMultiSteps {
 	return c
 }
 
+// StepperPosition sets where the stepper is placed, see [StepperPositionTop] and [StepperPositionLeading].
+func (c TMultiSteps) StepperPosition(position StepperPosition) TMultiSteps {
+	c.position = position
+	return c
+}
+
 // Render shows the current step with a stepper and nav buttons; clamps the index and respects CanShow.
 func (c TMultiSteps) Render(ctx core.RenderContext) core.RenderNode {
 	if c.activeIndex == nil {
@@ -189,6 +208,22 @@ func (c TMultiSteps) Render(ctx core.RenderContext) core.RenderNode {
 		s = s.Layout(c.layout)
 	}
 
+	nav := ui.HStack(
+		buttons...,
+	).Gap(ui.L8).Alignment(ui.Trailing).FullWidth()
+
+	if c.position == StepperPositionLeading && wnd.Info().SizeClass >= core.SizeClassMedium {
+		return ui.HStack(
+			// the stepper keeps the width of its labels, the body takes the rest
+			ui.VStack(s).Alignment(ui.TopLeading).NoClip(true).Frame(ui.Frame{}.PreventShrink()),
+			ui.VStack(
+				body,
+				ui.HLineWithColor(ui.ColorAccent),
+				nav,
+			).Alignment(ui.Top).FullWidth(),
+		).Gap(ui.L32).Alignment(ui.TopLeading).Frame(c.frame).Render(ctx)
+	}
+
 	return ui.VStack(
 		ui.HStack(
 			s,
@@ -196,9 +231,7 @@ func (c TMultiSteps) Render(ctx core.RenderContext) core.RenderNode {
 		ui.VStack().Frame(ui.Frame{Height: ui.L8}), // this is just a separator
 		body,
 		ui.HLineWithColor(ui.ColorAccent),
-		ui.HStack(
-			buttons...,
-		).Gap(ui.L8).Alignment(ui.Trailing).FullWidth(),
+		nav,
 	).Frame(c.frame).Render(ctx)
 }
 
