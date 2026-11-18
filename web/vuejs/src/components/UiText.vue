@@ -1,5 +1,5 @@
 <!--
- Copyright (c) 2025 worldiety GmbH
+ Copyright (c) 2026 worldiety GmbH
 
  This file is part of the NAGO Low-Code Platform.
  Licensed under the terms specified in the LICENSE file.
@@ -125,7 +125,6 @@ const textValue = computed<string>(() => {
 		v-else-if="!ui.invisible && !ui.labelFor"
 		:style="styles"
 		:title="props.ui.accessibilityLabel"
-		@click="onClick"
 	>
 		{{ textValue }}<br v-if="!ui.invisible && ui.lineBreak" />
 	</span>
@@ -136,7 +135,6 @@ const textValue = computed<string>(() => {
 		:style="styles"
 		:title="props.ui.accessibilityLabel"
 		:for="ui.labelFor"
-		@click="onClick"
 	>
 		{{ textValue }}<br v-if="!ui.invisible && ui.lineBreak" />
 	</label>
