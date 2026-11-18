@@ -6927,10 +6927,11 @@ type TableColumn struct {
 	CellBorder                 Border
 	CellHoveredBackgroundColor Color
 	CellHovered                Bool
+	AccessibilityLabel         Str
 }
 
 func (v *TableColumn) write(w *BinaryWriter) error {
-	var fields [11]bool
+	var fields [12]bool
 	fields[1] = v.Content != nil && !v.Content.IsZero()
 	fields[2] = !v.ColSpan.IsZero()
 	fields[3] = !v.Width.IsZero()
@@ -6941,6 +6942,7 @@ func (v *TableColumn) write(w *BinaryWriter) error {
 	fields[8] = !v.CellBorder.IsZero()
 	fields[9] = !v.CellHoveredBackgroundColor.IsZero()
 	fields[10] = !v.CellHovered.IsZero()
+	fields[11] = !v.AccessibilityLabel.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -7038,6 +7040,14 @@ func (v *TableColumn) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[11] {
+		if err := w.writeFieldHeader(byteSlice, 11); err != nil {
+			return err
+		}
+		if err := v.AccessibilityLabel.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -7109,6 +7119,11 @@ func (v *TableColumn) read(r *BinaryReader) error {
 			}
 		case 10:
 			err := v.CellHovered.read(r)
+			if err != nil {
+				return err
+			}
+		case 11:
+			err := v.AccessibilityLabel.read(r)
 			if err != nil {
 				return err
 			}
@@ -29436,13 +29451,14 @@ func (v *TableColumn) reset() {
 	v.CellBorder.reset()
 	v.CellHoveredBackgroundColor.reset()
 	v.CellHovered.reset()
+	v.AccessibilityLabel.reset()
 }
 
 func (v *TableColumn) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return isZeroComponent(v.Content) && v.ColSpan.IsZero() && v.Width.IsZero() && v.Alignment.IsZero() && v.CellBackgroundColor.IsZero() && v.CellAction.IsZero() && v.CellPadding.IsZero() && v.CellBorder.IsZero() && v.CellHoveredBackgroundColor.IsZero() && v.CellHovered.IsZero()
+	return isZeroComponent(v.Content) && v.ColSpan.IsZero() && v.Width.IsZero() && v.Alignment.IsZero() && v.CellBackgroundColor.IsZero() && v.CellAction.IsZero() && v.CellPadding.IsZero() && v.CellBorder.IsZero() && v.CellHoveredBackgroundColor.IsZero() && v.CellHovered.IsZero() && v.AccessibilityLabel.IsZero()
 }
 
 func (v *TableRow) reset() {
