@@ -185,6 +185,10 @@ type compaction struct {
 	m              compactManifest
 	logNew         string
 	committed      bool
+	// dict is the dictionary of the column, when a value went into a file of the compaction (values.write): it goes
+	// into the SyncAll of the compaction, up to dictEnd
+	dict    *enumDict
+	dictEnd int64
 }
 
 // prepareFold writes what a compaction of the head of c puts in place of the chunks it touches: the new chunks, the
@@ -207,6 +211,11 @@ func (c *Column) prepareFold(finalize bool) (*compaction, error) {
 	headEntries := c.head.snapshot(minInt64, maxInt64)
 	if len(headEntries) == 0 {
 		return nil, nil
+	}
+
+	// a WAL in the format before N23 is rewritten before the compaction begins (R-DEC-TS-NAGO-WAL)
+	if err := c.head.convert(); err != nil {
+		return nil, err
 	}
 
 	// Determine the time span the head touches, then rewrite the union of that
@@ -250,7 +259,7 @@ func (c *Column) prepareFold(finalize bool) (*compaction, error) {
 				return false
 			default:
 				// a block, which does not decode, is reported before the compaction writes the chunk without it
-				c.reportDamaged(ci.path, at)
+				c.reportDamaged(ci.path, at, reportBlock)
 			}
 			return true
 		})
@@ -269,7 +278,7 @@ func (c *Column) prepareFold(finalize bool) (*compaction, error) {
 				return nil, err
 			}
 		}
-		if err := c.app.loadOpenBlock(&sc.ob, &sc.rd); err != nil {
+		if _, err := c.app.loadOpenBlock(&sc.ob, &sc.rd); err != nil {
 			return nil, err
 		}
 		take(&sc.ob)
@@ -293,12 +302,12 @@ func (c *Column) prepareFold(finalize bool) (*compaction, error) {
 	k := &compaction{c: c, rewritePending: rewritePending, hmin: hmin, hmax: hmax}
 	id := compactID()
 	var err error
-	k.news, k.open, err = c.writeChunks(id, order, merged, rewritePending)
+	k.news, k.open, err = c.writeChunks(k, id, order, merged, rewritePending)
 	if err != nil {
 		k.abort()
 		return nil, err
 	}
-	if k.fold, err = c.head.foldBegin(foldMark(headEntries), filepath.Join(c.dir, "head-"+id+".wal"+newSuffix)); err != nil {
+	if k.fold, err = c.head.foldBegin(foldMark(headEntries), filepath.Join(c.dir, "head-"+id+".wal"+newSuffix), k); err != nil {
 		k.abort()
 		return nil, err
 	}
@@ -325,7 +334,8 @@ func (c *Column) prepareFold(finalize bool) (*compaction, error) {
 	return k, nil
 }
 
-// toSync are the files the compaction wrote and the directory of the column.
+// toSync are the files the compaction wrote, the dictionary, if a value went into one of them and it holds entries,
+// which are not on the disk yet (values.write), and the directory of the column.
 func (k *compaction) toSync() []string {
 	var paths []string
 	for _, n := range k.news {
@@ -333,6 +343,11 @@ func (k *compaction) toSync() []string {
 	}
 	if k.fold != nil && k.fold.newSize > 0 {
 		paths = append(paths, k.fold.newPath)
+	}
+	if k.dict != nil {
+		var dict []string
+		dict, k.dictEnd = k.dict.stage()
+		paths = append(paths, dict...)
 	}
 	return append(paths, k.logNew, k.c.dir)
 }
@@ -401,8 +416,8 @@ func (k *compaction) end() error {
 
 // runCompactions puts prepared compactions in place, of one column or, for DB.Close, of many, whose syncs it bundles:
 //
-//  1. The new chunks, the new WALs and the manifests compact.log.new of all of them and their directories are synced
-//     (SyncAll: one flush of the drive for all).
+//  1. The new chunks, the new WALs and the manifests compact.log.new of all of them, the dictionaries, whose values
+//     went into them (values.write), and their directories are synced (SyncAll: one flush of the drive for all).
 //  2. Each manifest is renamed to compact.log, which commits its compaction; the directories are synced.
 //  3. Each compaction removes the chunks it replaces and renames its new chunks into place; what writers put into its
 //     old WAL meanwhile goes behind the new one, which is renamed over it (compaction.apply). The directories are
@@ -422,6 +437,11 @@ func runCompactions(pool *ndb.FilePool, ks []*compaction) error {
 	if err := pool.SyncAll(paths...); err != nil {
 		parallel(len(ks), func(i int) { ks[i].abort() })
 		return fmt.Errorf("tsdb: sync compaction: %w", err)
+	}
+	for _, k := range ks {
+		if k.dict != nil && k.dictEnd > 0 {
+			k.dict.secured(k.dictEnd)
+		}
 	}
 	errs := make([]error, len(ks))
 	parallel(len(ks), func(i int) { errs[i] = ks[i].commit() })
@@ -481,7 +501,7 @@ func sealedPoint(bd *blockData, s Scheme, i int) mergedPoint {
 // writeChunks writes the ordered points into new chunk files under names of their own, sealing per the
 // split policy. With keepOpen the last chunk is not finalized: its final name is the one of a pending chunk, and open
 // is its state, for the appender to continue.
-func (c *Column) writeChunks(id string, order []int64, merged map[int64]mergedPoint, keepOpen bool) (news []newChunk, open *openState, err error) {
+func (c *Column) writeChunks(k *compaction, id string, order []int64, merged map[int64]mergedPoint, keepOpen bool) (news []newChunk, open *openState, err error) {
 	i := 0
 	var bd blockData
 	var frameBuf []byte
@@ -507,7 +527,7 @@ func (c *Column) writeChunks(id string, order []int64, merged map[int64]mergedPo
 			}
 			frameBuf = f
 			maskBlock(f, salt, fileOff)
-			if _, err := c.pool.WriteAt(tmp, f, fileOff); err != nil {
+			if err := c.vals.write(tmp, f, fileOff, k); err != nil {
 				return err
 			}
 			fileOff += int64(len(f))
@@ -633,7 +653,7 @@ func (c *Column) redoManifest(m compactManifest) error {
 	if err != nil && !isNotExist(err) {
 		return err
 	}
-	if err := appendWALTail(c.pool, walPath, m.WALSize, oldSize, walNew, newSize); err != nil {
+	if _, err := appendWALTail(&c.vals, walPath, m.WALSize, oldSize, walNew, newSize); err != nil {
 		return err
 	}
 	return c.pool.Rename(walNew, walPath)

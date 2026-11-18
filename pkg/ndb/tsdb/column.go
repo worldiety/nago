@@ -36,10 +36,11 @@ type Column struct {
 	schema Schema
 
 	pool *ndb.FilePool
+	vals values // the one place through which a value goes into a file of the column
 	head *head
 	dict *enumDict // only for SchemeEnum
 
-	mu     sync.Mutex // serializes writers and flush/compaction
+	mu     colLock // serializes writers and flush/compaction; every Lock counts (CursorF64)
 	chunks []chunkInfo
 	// dropped is set under mu, after which this handle fails: its files are gone or belong to a new column of that name.
 	dropped bool
@@ -58,6 +59,25 @@ type Column struct {
 	// lastWrite is the time of the last write by Options.Now, in unix nanoseconds, kept only with Options.IdleAfter.
 	lastWrite atomic.Int64
 }
+
+// colLock is the lock of a column (Column.mu). Every Lock counts in gen, in the lock itself, so that a cursor
+// (CursorF64), which alone takes it with lockQuiet, sees whether anyone held it since its last call: a writer, a
+// compaction, a read, also a place of a later version, which changes the column under its lock without knowing the
+// cursor (R-DEC-TS-NAGO-CURSOR). Only the head changes without it; a cursor checks the head on every call.
+type colLock struct {
+	mu  sync.Mutex
+	gen atomic.Uint64
+}
+
+func (l *colLock) Lock() {
+	l.mu.Lock()
+	l.gen.Add(1)
+}
+
+func (l *colLock) Unlock() { l.mu.Unlock() }
+
+// lockQuiet takes the lock without counting, for a cursor.
+func (l *colLock) lockQuiet() { l.mu.Lock() }
 
 // readScratch is the reusable buffer set of a read. It comes from a pool shared by all columns and goes back when the
 // read ends, so that a column holds no read buffer between reads and a scan of billions of points still performs no
@@ -107,6 +127,7 @@ func openColumn(db *DB, bucket, name, dir string, schema Schema) (*Column, error
 		pool:   db.opts.FilePool,
 	}
 	c.app.c = c
+	c.vals = values{pool: c.pool}
 	entries, err := listDir(dir)
 	if err != nil {
 		return nil, err
@@ -152,9 +173,12 @@ func openColumn(db *DB, bucket, name, dir string, schema Schema) (*Column, error
 		c.chunks = append(c.chunks, info)
 	}
 	c.head = newHead(dir, c.pool, schema.Scheme, headSize)
+	c.head.report = c.reportDamaged
 	if schema.Scheme == SchemeEnum {
-		c.dict = newEnumDict(dir, c.pool, dictSize)
+		c.dict = newEnumDict(dir, c.pool, dictSize, c.reportDamaged)
+		c.vals.dict = c.dict
 	}
+	c.head.vals = &c.vals
 	if err := c.resumePending(pending); err != nil {
 		return nil, err
 	}
@@ -521,7 +545,7 @@ func (c *Column) scanBlocks(ci *chunkInfo, qmin, qmax int64, sc *readScratch, fn
 		head, err := readChunkHeader(c.pool, ci.path)
 		if errors.Is(err, errCorruptChunk) {
 			ci.bad = true // not a chunk: skipped as before, its blocks reported at the header
-			c.reportDamaged(ci.path, 0)
+			c.reportDamaged(ci.path, 0, reportBlock)
 			return true, nil
 		}
 		if err != nil {
@@ -573,22 +597,32 @@ func (c *Column) decodeFrame(ci *chunkInfo, at int64, frame []byte, h blockHeade
 	return decodeBlockData(frame, h, c.schema.Scheme, bd)
 }
 
-// damagedPlace is the place of a damaged block: its column, the name of its chunk file and its offset in it.
+// damagedPlace is a damaged place of a column (R-DEC-TS-NAGO-DAMAGE): its column, the name of its file and its offset
+// in it.
 type damagedPlace struct {
 	bucket, column, file string
 	offset               int64
 }
 
-// reportDamaged writes the place of a block, which a read skips because it fails its CRC or does not decode, to the
-// log once until the DB is opened again: a later read of the same place stays silent. A chunk, which gets a new name
-// when it is sealed, is a new place. The offset 0 is the header of a chunk, which is none, so that every block of it
-// is skipped.
-func (c *Column) reportDamaged(path string, offset int64) {
+// the texts of the reports of a damaged block and of a damaged continuation record; those of the dictionary and of
+// the WAL are reportDictEntry, reportDictMissing and reportWAL.
+const (
+	reportBlock  = "tsdb: damaged block skipped"
+	reportRecord = "tsdb: damaged continuation record skipped"
+)
+
+// reportDamaged writes a damaged place of a file of the column, which tsdb skips or drops, to the log with what once
+// until the DB is opened again: a later report of the same place stays silent. A place is the beginning of a damaged
+// region: a block or a continuation record, which fails its CRC or does not decode, bytes which are no frame, a damaged
+// entry of the dictionary or the place of values without a text, a damaged record of the WAL. A chunk, which gets a
+// new name when it is sealed, is a new place. The offset 0 of a chunk is its header, which is none, so that every
+// block of it is skipped.
+func (c *Column) reportDamaged(path string, offset int64, what string) {
 	p := damagedPlace{bucket: c.bucket, column: c.name, file: filepath.Base(path), offset: offset}
 	if _, seen := c.db.damaged.LoadOrStore(p, struct{}{}); seen {
 		return
 	}
-	slog.Warn("tsdb: damaged block skipped", "bucket", p.bucket, "column", p.column, "file", p.file, "offset", p.offset)
+	slog.Warn(what, "bucket", p.bucket, "column", p.column, "file", p.file, "offset", p.offset)
 }
 
 // trim returns the points of bd within [min, max] as the slices a read hands out: vals for the numeric schemes, strs
@@ -625,6 +659,11 @@ func (c *Column) mergedRange(min, max int64, fn func(ts []int64, vals []int64, s
 	// reads over immutable files.
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	return c.mergedRangeLocked(min, max, fn)
+}
+
+// mergedRangeLocked is mergedRange under the lock of the column, which the caller holds.
+func (c *Column) mergedRangeLocked(min, max int64, fn func(ts []int64, vals []int64, strs []string) bool) error {
 	if c.dropped {
 		return errColumnGone
 	}
@@ -638,7 +677,7 @@ func (c *Column) mergedRange(min, max int64, fn func(ts []int64, vals []int64, s
 	chunks := c.chunksForRead(min, max, sc)
 	ob := &sc.ob
 	if lo, ok := c.app.openBlockMin(); ok && lo <= max && c.app.newest() >= min {
-		if err := c.app.loadOpenBlock(ob, &sc.rd); err != nil {
+		if _, err := c.app.loadOpenBlock(ob, &sc.rd); err != nil {
 			return err
 		}
 	}
@@ -655,7 +694,7 @@ func (c *Column) mergedRange(min, max int64, fn func(ts []int64, vals []int64, s
 						unknown = err
 						return false
 					}
-					c.reportDamaged(ci.path, at)
+					c.reportDamaged(ci.path, at, reportBlock)
 					return true // skip corrupt block
 				}
 				ts, vals, strs := trim(&sc.bd, min, max, numeric)
@@ -689,7 +728,7 @@ func (c *Column) mergedRange(min, max int64, fn func(ts []int64, vals []int64, s
 					unknown = err
 					return false
 				}
-				c.reportDamaged(ci.path, at)
+				c.reportDamaged(ci.path, at, reportBlock)
 				return true // skip corrupt block
 			}
 			return m.block(trim(&sc.bd, min, max, numeric))

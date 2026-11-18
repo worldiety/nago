@@ -173,6 +173,7 @@ func TestSyncSurvivesACutAnywhere(t *testing.T) {
 	for _, s := range surfaceSchemes() {
 		for _, setup := range setups {
 			t.Run(s.name+"/"+setup.name, func(t *testing.T) {
+				h := n22cCapture(t)
 				dir := t.TempDir()
 				c, m, from := setup.setup(t, s, dir)
 				colDir := filepath.Join(dir, "b", "c")
@@ -255,6 +256,10 @@ func TestSyncSurvivesACutAnywhere(t *testing.T) {
 				}
 				if err := runAll(jobs); err != nil {
 					t.Fatal(err)
+				}
+				// wokoda N23 (R-DEC-TS-NAGO-DAMAGE): what a crash leaves is no damage, no open of a cut state reports one
+				if w := h.warnings("b", "c"); len(w) != 0 {
+					t.Errorf("%d warnings over the cut states, a crash alone reports nothing: %v", len(w), w)
 				}
 				if losses.Load() == 0 {
 					t.Errorf("premise: none of the %d states lacks a point of the state after its step, so the cuts reach no data", states.Load())

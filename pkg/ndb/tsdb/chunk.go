@@ -26,9 +26,9 @@ import (
 //
 //	| Magic        4 | 0x4E41474F "NAGO"
 //	| Format Magic 4 | 0x4E545342 "NTSB" Nago Time Series Block
-//	| Version      1 | 0x01 or 0x02
+//	| Version      1 | 0x01, 0x02 or 0x03
 //
-// Version 1 has nothing more; its blocks begin at byte 9. Version 2 goes on with
+// Version 1 has nothing more; its blocks begin at byte 9. Versions 2 and 3 go on with
 //
 //	| Salt    8 | random, the key of the masks of the file (see maskStream)
 //	| CRC32   4 | IEEE over Magic .. Salt
@@ -47,15 +47,19 @@ import (
 // A seal writes the slot, which is not the newer one, so that a torn write leaves the other intact. The bodies of the
 // blocks and continuation records of a version 2 file are masked with a key stream of the salt and their offset, so
 // that no value, which a caller writes, appears in the file as written: the search for blocks and the recovery, which
-// look for markers, can not take the bytes of a value for a frame. Every file tsdb writes has version 2; it reads
-// both, and continues a version 1 file unmasked. Every later version keeps the prefix of version 2 up to its CRC, so
-// that a chunk of a later version is errUnknownFormat, not a corrupt file (readChunkHeader); every later change of the
-// continuation records, the WAL or the dictionary increases the version, a new encoding of a block gets a flag.
+// look for markers, can not take the bytes of a value for a frame. Version 3 is version 2, written since N23, whose
+// WAL and dictionary have a new format (head.go, enumdict.go), so that a version before N23 refuses a chunk of it
+// instead of reading the dictionary wrongly. Every file tsdb creates has version 3; it reads all three, continues a
+// version 1 file unmasked and an open chunk in its version. Every later version keeps the prefix of version 2 up to
+// its CRC, so that a chunk of a later version is errUnknownFormat, not a corrupt file (readChunkHeader); every later
+// change of the continuation records, the WAL or the dictionary increases the version, a new encoding of a block gets
+// a flag.
 const (
 	chunkMagic      uint32 = 0x4E41474F // "NAGO"
 	chunkFormat     uint32 = 0x4E545342 // "NTSB"
 	chunkVersion1   byte   = 1
-	chunkVersion    byte   = 2
+	chunkVersion2   byte   = 2
+	chunkVersion    byte   = 3 // the version of every chunk tsdb creates
 	chunkPrefixLen         = 9
 	chunkV2Prefix          = chunkPrefixLen + 8 + 4
 	chunkSlotLen           = 4 + 8 + 8 + 8 + 4
@@ -163,7 +167,7 @@ func decodeSlot(b []byte) (chunkSlot, bool) {
 // slotOffset is the offset of the slot, which a header with the newest slot seq writes next.
 func slotOffset(seq uint32) int64 { return chunkV2Prefix + int64(seq%2)*chunkSlotLen }
 
-// chunkHeader returns a version 2 header with salt whose first slot is s.
+// chunkHeader returns a header of chunkVersion with salt whose first slot is s.
 func chunkHeader(s chunkSlot, salt uint64) []byte {
 	hdr := make([]byte, chunkDataOff)
 	binary.BigEndian.PutUint32(hdr[0:], chunkMagic)
@@ -188,9 +192,10 @@ func writeSlot(fs *ndb.FilePool, path string, s chunkSlot) error {
 	return nil
 }
 
-// readChunkHeader reads the header of path: where the blocks begin, the salt and, for version 2, the newer intact
-// slot. errCorruptChunk reports a file that is not a chunk, errUnknownFormat one of a later version: its magic and its
-// format match, its version is larger than 2, and the CRC of the prefix of version 2 (magic .. salt) matches or the
+// readChunkHeader reads the header of path: where the blocks begin, the salt and, for versions 2 and 3, the newer
+// intact slot. errCorruptChunk reports a file that is not a chunk, also one of version 2 or 3 shorter than its header,
+// which the open of a column removes as a torn header; errUnknownFormat one of a later version: its magic and its
+// format match, its version is larger than 3, and the CRC of the prefix of version 2 (magic .. salt) matches or the
 // file is shorter than a header of version 2, so that the open of a column does not remove it as a torn header. Every
 // later version keeps that prefix.
 func readChunkHeader(fs *ndb.FilePool, path string) (chunkHead, error) {
@@ -205,7 +210,7 @@ func readChunkHeader(fs *ndb.FilePool, path string) (chunkHead, error) {
 	switch hdr[8] {
 	case chunkVersion1:
 		return chunkHead{dataOff: chunkV1DataOff}, nil
-	case chunkVersion:
+	case chunkVersion2, chunkVersion:
 		if n < int(chunkDataOff) || crc32.ChecksumIEEE(hdr[:chunkPrefixLen+8]) != binary.LittleEndian.Uint32(hdr[chunkPrefixLen+8:]) {
 			return chunkHead{}, errCorruptChunk
 		}
@@ -513,7 +518,11 @@ func (r *frameReader) next(want int) (kind int, at int64, frame []byte, err erro
 			}
 		}
 		if damaged {
-			r.col.reportDamaged(r.path, r.pos)
+			what := reportBlock
+			if k == frameRecord || k == frameNone && want == frameRecord {
+				what = reportRecord
+			}
+			r.col.reportDamaged(r.path, r.pos, what)
 		}
 		if err := r.skip(want); err != nil {
 			return frameNone, 0, nil, err

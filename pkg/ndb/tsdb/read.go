@@ -81,7 +81,9 @@ func putF64(fb *[]float64) {
 }
 
 // ScanString invokes fn for each decoded block of string values. Valid for
-// SchemeString and SchemeEnum (enum ids are resolved to strings).
+// SchemeString and SchemeEnum (enum ids are resolved to strings). A point of an enum, whose id has no text in the
+// dictionary, because its entry is damaged or missing, is skipped and reported (R-DEC-TS-NAGO-DICT); the first read
+// of a dictionary in the format before N23 rewrites it (enumDict.convert) and fails, if that fails.
 func (c *Column) ScanString(min, max int64, fn func(ts []int64, vals []string) bool) error {
 	switch c.schema.Scheme {
 	case SchemeString:
@@ -92,15 +94,32 @@ func (c *Column) ScanString(min, max int64, fn func(ts []int64, vals []string) b
 		if err := c.dict.loadErr(); err != nil {
 			return err
 		}
+		var tbuf []int64
 		var sbuf []string
 		return c.mergedRange(min, max, func(ts []int64, ids []int64, _ []string) bool {
-			if cap(sbuf) < len(ids) {
-				sbuf = make([]string, len(ids))
-			}
-			sbuf = sbuf[:len(ids)]
+			sbuf = sbuf[:0]
+			skipped := false
 			for i, id := range ids {
-				s, _ := c.dict.lookup(uint32(id))
-				sbuf[i] = s
+				s, ok := c.dict.lookup(uint32(id))
+				if !ok {
+					// a point, whose text is lost or missing, is skipped like one of a damaged block and reported at
+					// the place of its id (R-DEC-TS-NAGO-DICT)
+					c.dict.missing(uint32(id))
+					if !skipped {
+						tbuf, skipped = append(tbuf[:0], ts[:i]...), true
+					}
+					continue
+				}
+				if skipped {
+					tbuf = append(tbuf, ts[i])
+				}
+				sbuf = append(sbuf, s)
+			}
+			switch {
+			case len(sbuf) == 0:
+				return true
+			case skipped:
+				return fn(tbuf, sbuf)
 			}
 			return fn(ts, sbuf)
 		})

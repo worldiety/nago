@@ -162,7 +162,7 @@ func (a *appender) sync() error {
 		return nil
 	}
 	rec := appendRecord(nil, recordDelta, a.mem.n, a.mem.buf, a.masked, a.salt, a.fileEnd)
-	if _, err := a.c.pool.WriteAt(a.pendingPath, rec, a.fileEnd); err != nil {
+	if err := a.c.vals.write(a.pendingPath, rec, a.fileEnd, nil); err != nil {
 		return fmt.Errorf("tsdb: append continuation record: %w", err)
 	}
 	a.fileEnd += int64(len(rec))
@@ -176,14 +176,16 @@ func (a *appender) sync() error {
 }
 
 // loadOpenBlock appends the points of the open block, the saved ones from its records and those in memory, to bd in
-// ascending order. Caller holds c.mu.
-func (a *appender) loadOpenBlock(bd *blockData, r *frameReader) error {
+// ascending order, and returns how many came from the records: a damaged record is reported and costs its points.
+// Caller holds c.mu.
+func (a *appender) loadOpenBlock(bd *blockData, r *frameReader) (saved int, err error) {
+	start := len(bd.ts)
 	if a.savedPts > 0 {
 		r.reset(a.c, a.pendingPath, a.blocksEnd, a.fileEnd, false)
 		for {
 			kind, at, frame, err := r.next(frameRecord)
 			if err != nil {
-				return err
+				return 0, err
 			}
 			if kind == frameNone {
 				break
@@ -193,14 +195,15 @@ func (a *appender) loadOpenBlock(bd *blockData, r *frameReader) error {
 			n := len(bd.ts)
 			if !decodePoints(body, count, a.c.schema.Scheme, bd) {
 				bd.ts, bd.vals, bd.strs = bd.ts[:n], bd.vals[:min(n, len(bd.vals))], bd.strs[:min(n, len(bd.strs))]
-				a.c.reportDamaged(a.pendingPath, at)
+				a.c.reportDamaged(a.pendingPath, at, reportRecord)
 			}
 		}
 	}
+	saved = len(bd.ts) - start
 	if a.mem.n > 0 && !decodePoints(a.mem.buf, a.mem.n, a.c.schema.Scheme, bd) {
-		return fmt.Errorf("tsdb: open block in memory: %w", errCorruptBlock)
+		return saved, fmt.Errorf("tsdb: open block in memory: %w", errCorruptBlock)
 	}
-	return nil
+	return saved, nil
 }
 
 // sealBlock seals the open block, its saved and its unsaved points, as one block at the end of the sealed blocks and
@@ -216,12 +219,9 @@ func (a *appender) sealBlock() error {
 	sc := getScratch()
 	defer putScratch(sc)
 	bd := &sc.ob
-	if err := a.loadOpenBlock(bd, &sc.rd); err != nil {
+	saved, err := a.loadOpenBlock(bd, &sc.rd) // a record, which can not be read any more, is gone
+	if err != nil {
 		return err
-	}
-	saved := int(a.savedPts)
-	if len(bd.ts) < saved {
-		saved = len(bd.ts) // a record, which can not be read any more, is gone
 	}
 	if len(bd.ts) == 0 {
 		if err := a.c.pool.Truncate(a.pendingPath, a.blocksEnd); err != nil {
@@ -244,7 +244,7 @@ func (a *appender) sealBlock() error {
 		body := encodePoints(&blockData{ts: bd.ts[:saved], vals: sliceTo(bd.vals, saved), strs: sliceTo(bd.strs, saved)}, 0, a.c.schema.Scheme)
 		copyRec = appendRecord(nil, recordCopy, saved, body, a.masked, a.salt, copyAt)
 	}
-	if err := overwriteRecords(a.c.pool, a.pendingPath, a.blocksEnd, a.fileEnd, copyRec, frame); err != nil {
+	if err := overwriteRecords(&a.c.vals, a.pendingPath, a.blocksEnd, a.fileEnd, copyRec, frame); err != nil {
 		return err
 	}
 	if copyRec == nil && a.fileEnd > a.blocksEnd+int64(len(frame)) {

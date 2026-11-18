@@ -266,7 +266,18 @@ func n22Sources(t *testing.T) (copyOf func(t *testing.T, src string) string, src
 	pts := n22Grid(n22Base, 1000, n22Values("power", 5000+4096+300))
 	fresh.lives = []n22Life{{points: pts[:5000], flush: true}, {points: pts[5000:], syncAfter: []int{4096 + 300 - 1}, crash: true}}
 	freshDir := n22WriteColumn(t, t.TempDir(), fresh)
-	dirs := map[string]string{"fixture": filepath.Join(n22FixtureRoot, "db"), "v1": filepath.Join("testdata", "cd602526b"), "fresh": freshDir}
+	// freshwal: a WAL of the format of N23, which the code under test wrote (wokoda N23, L-N23-24): four corrections of
+	// sealed points, left by a crash
+	freshWAL := n22FixCol{name: "freshwal", schema: tsdb.Schema{Scheme: tsdb.SchemeDecimal}, compress: true}
+	walPts := n22Grid(n22Base, 1000, n22Values("power", 3000))
+	var fixes []n22Point
+	for _, i := range []int{10, 20, 30, 40} {
+		fixes = append(fixes, n22Point{ts: walPts[i].ts, v: walPts[i].v + 1})
+	}
+	freshWAL.lives = []n22Life{{points: walPts}, {fix: fixes, crash: true}}
+	freshWALDir := n22WriteColumn(t, t.TempDir(), freshWAL)
+	dirs := map[string]string{"fixture": filepath.Join(n22FixtureRoot, "db"), "v1": filepath.Join("testdata", "cd602526b"), "fresh": freshDir,
+		"freshwal": freshWALDir}
 	copyOf = func(t *testing.T, src string) string {
 		from, _, _ := strings.Cut(src, "/")
 		name := srcs[src].name
@@ -283,6 +294,7 @@ func n22Sources(t *testing.T) (copyOf func(t *testing.T, src string) string, src
 		"fixture/wal":    {name: "n22/wal", schema: tsdb.Schema{Scheme: tsdb.SchemeDecimal}, points: 4096 + 100 - 2},
 		"v1":             {name: "b/c", schema: tsdb.Schema{Scheme: tsdb.SchemeDecimal}, points: 26},
 		"fresh":          {name: "n22/fresh", schema: dec1, points: 5000 + 4096 + 300},
+		"freshwal":       {name: "n22/freshwal", schema: tsdb.Schema{Scheme: tsdb.SchemeDecimal}, points: 3000},
 	}
 	return copyOf, srcs
 }
@@ -424,9 +436,12 @@ func n22Carriers() []n22Carrier {
 		{name: "unknown version of schema.json", src: "fixture/multi", in: finalMulti,
 			edit: func(t *testing.T, d string) n22Unit { return n22EditSchemaVersion(t, d, n22UnknownSchema) },
 			must: n22Ops(n22OpenOps, []string{"SeriesColumns"})},
-		{name: "unknown kind of a record of the WAL", src: "fixture/wal", in: openMulti,
+		// wokoda N23 (L-N23-24): a record of a WAL in the format before N23 with an unknown kind is a damaged record,
+		// which is reported and ends the load (TestN23OldWAL); the loud abort stays for an intact record of the format of
+		// N23, whose checksum covers its kind (R-DEC-TS-NAGO-WAL, L-N22-27)
+		{name: "unknown kind of a record of the WAL", src: "freshwal", in: openMulti,
 			edit: func(t *testing.T, d string) n22Unit {
-				return n22EditWALKind(t, filepath.Join(d, "head.wal"), 1, n22UnknownKind)
+				return n23EditWALKind(t, filepath.Join(d, "head.wal"), 1, n22UnknownKind)
 			},
 			must: n22Ops(n22ScanI, []string{"Put+Sync", "Put old", "DeleteRange", "Flush"}), may: n22OpenOps},
 		{name: "unknown flag of an unmasked block of a version 1 chunk", src: "v1", in: "0_90.tsb",
@@ -662,7 +677,7 @@ func TestN22UnknownAborts(t *testing.T) {
 						if !n22KeptUnder(after, unit) {
 							t.Errorf("%s did not keep %s up to the end of the %s under its old or a new name", op, unit.file, cr.name)
 						}
-					} else if d := n22Changes(e.mark, after); len(d) > 0 {
+					} else if d := n23WithoutDict(n22Changes(e.mark, after)); len(d) > 0 {
 						t.Errorf("%s changed the files of the column: %v", op, d)
 					}
 				} else {
@@ -906,7 +921,14 @@ func TestN22CompactionInPut(t *testing.T) {
 // TestN22WALTornTail is the counter row of the record of the WAL with an unknown kind (L-N22-27, TestN22UnknownAborts):
 // a torn last record of head.wal is cut off as before, a correction takes its place, and the records before it stay.
 // The last record of column wal of the fixture deletes a point, which the scan sees again once it is torn.
+//
+// wokoda N23 (L-N23-24, R-DEC-TS-NAGO-WAL): the WAL of the fixture is in the format before N23; the correction rewrites
+// it into the format of N23 first, so that the bytes of the records before the torn one do not stay where they were.
+// Their effect stays: after a crash and an open the three records before the torn one and the correction hold, the
+// WAL begins with the marker of N23 (read by the layout of 8ae1daaee an intact frame of a kind but 0 and 1), and no
+// warning comes.
 func TestN22WALTornTail(t *testing.T) {
+	h := n22cCapture(t)
 	copyOf, srcs := n22Sources(t)
 	dir := copyOf(t, "fixture/wal")
 	path := filepath.Join(dir, "n22", "wal", "head.wal")
@@ -916,18 +938,33 @@ func TestN22WALTornTail(t *testing.T) {
 		t.Fatalf("premise: the WAL holds %d intact records up to %d of %d bytes, the last of kind %#x, want 4 and a deletion", len(starts), end, len(b), b[starts[len(starts)-1]])
 	}
 	must(t, os.WriteFile(path, b[:len(b)-2], 0o644))
-	db := openDB(t, dir, tsdb.Options{})
+	// no compaction in the background: after the correction the head holds a tombstone of four entries, which reaches the
+	// default CompactTombstoneRatio of 0.25, and a compaction, which renames its files while crashCopy copies, would make
+	// the copy depend on the scheduler (AGENTS §8); the life ends with the crash copy, not with Close
+	db := openDB(t, dir, quietOptions(0))
 	c := lookup(t, db, "n22", "wal")
-	n := 0
-	must(t, c.ScanI64(minTS, maxTS, func(ts, _ []int64) bool { n += len(ts); return true }))
-	if want := srcs["fixture/wal"].points + 1; n != want {
-		t.Errorf("a scan sees %d points, want %d: all but the deletion of the torn record", n, want)
+	want, err := scanMap(decimalScheme(), c)
+	must(t, err)
+	if n := len(want); n != srcs["fixture/wal"].points+1 {
+		t.Errorf("a scan sees %d points, want %d: all but the deletion of the torn record", n, srcs["fixture/wal"].points+1)
 	}
 	must(t, c.PutI64(n22Base, 77))
-	now := n22ReadAt(t, path)
-	nowStarts, nowEnd := n22WALRecords(now)
-	if len(nowStarts) != 4 || nowEnd != len(now) || !bytes.Equal(now[:starts[3]], b[:starts[3]]) {
-		t.Errorf("the WAL holds %d intact records up to %d of %d bytes, want the 3 before the torn one unchanged and the correction in its place", len(nowStarts), nowEnd, len(now))
+	want[n22Base] = "77"
+	crashed := crashCopy(t, dir)
+	_ = db.Close()
+	now := n22ReadAt(t, filepath.Join(crashed, "n22", "wal", "head.wal"))
+	if kind, _, intact := n23OldFirstFrame(now); !intact || kind == 0 || kind == 1 {
+		t.Errorf("the WAL does not begin with the marker of N23 after the correction (kind %d, intact %v)", kind, intact)
+	}
+	db = openDB(t, crashed, tsdb.Options{})
+	got, err := scanMap(decimalScheme(), lookup(t, db, "n22", "wal"))
+	must(t, err)
+	if !mapsEqual(got, want) {
+		t.Errorf("after the correction and a crash the column reads %d points, want the %d of before with the correction", len(got), len(want))
+	}
+	closeDB(t, db)
+	if w := h.warnings("n22", "wal"); len(w) != 0 {
+		t.Errorf("%d warnings, want none: a torn end is no damage: %v", len(w), w)
 	}
 }
 

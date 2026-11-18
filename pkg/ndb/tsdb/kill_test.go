@@ -194,6 +194,12 @@ func (s killStep) touched(col string, m killModel) []int64 {
 // reasoned exception to cutting files at every byte (see TestSyncSurvivesACutAnywhere): the child is killed at random
 // places, 5 times after at most 30 steps each with -short, otherwise 60 times or as often as TSDB_KILLS says (1000 once
 // before a push), and the log names the steps the kills hit.
+//
+// wokoda N23 (R-DEC-TS-NAGO-DAMAGE, -DICT, -WAL): after each open no warning of the columns comes, because a crash of
+// the process alone reports nothing; and every second database begins with the images of testdata/8ae1daaee, a WAL in
+// the format before N23 (column d, image wal) and a dictionary in the format before N23 (column e, image dict), so that
+// a kill can hit their rewrite; whether one did, the test does not see. The first database is one of them, so that
+// -short has one.
 func TestCrashAnywhereKeepsTheSecuredPoints(t *testing.T) {
 	if dir := os.Getenv(killChildEnv); dir != "" {
 		seed, _ := strconv.ParseUint(os.Getenv(killSeedEnv), 10, 64)
@@ -217,15 +223,24 @@ func TestCrashAnywhereKeepsTheSecuredPoints(t *testing.T) {
 	}
 	t.Logf("%d kills, %s=%d", kills, killSeedEnv, seed)
 	rng := rand.New(rand.NewPCG(seed, 1))
+	h := n22cCapture(t)
+	perDB := 25
+	if kills < 2*perDB {
+		perDB = (kills + 1) / 2
+	}
 
 	hits := map[string]int{}
 	var dir string
 	var model killModel
 	for round := range kills {
-		if round%25 == 0 { // a new database now and then keeps the steps short
+		if round%perDB == 0 { // a new database now and then keeps the steps short
 			dir = filepath.Join(t.TempDir(), "db")
 			model = newKillModel()
+			if (round/perDB)%2 == 0 {
+				killFromImages(t, dir, model)
+			}
 		}
+		mark := len(h.warnings("b", "d")) + len(h.warnings("b", "e"))
 		steps, running := runAndKill(t, dir, seed+uint64(round)+1, rng)
 		killLog = steps
 		for _, s := range steps {
@@ -240,6 +255,9 @@ func TestCrashAnywhereKeepsTheSecuredPoints(t *testing.T) {
 		}
 		hits[hit]++
 		model = checkAfterKill(t, dir, round, model, after, running)
+		if w := append(h.warnings("b", "d"), h.warnings("b", "e")...); len(w) != mark {
+			t.Fatalf("round %d, killed in %v: %d warnings after the open, a crash alone reports nothing: %v", round, running, len(w)-mark, w)
+		}
 	}
 	keys := slices.Sorted(maps.Keys(hits))
 	var sb strings.Builder
@@ -334,6 +352,25 @@ func runAndKill(t *testing.T, dir string, seed uint64, rng *rand.Rand) ([]killSt
 		}
 	}
 	return steps, running
+}
+
+// killFromImages puts the images wal (as column d) and dict (as column e) of testdata/8ae1daaee into the database at dir
+// and their points, as 8ae1daaee read them (expect.json), as secured into the model.
+func killFromImages(t *testing.T, dir string, model killModel) {
+	t.Helper()
+	reads := n23FixtureReads(t)
+	for col, img := range map[string]string{"d": "wal", "e": "dict"} {
+		must(t, os.CopyFS(filepath.Join(dir, "b", col), os.DirFS(filepath.Join(n23FixtureRoot, "db", "n23", img))))
+		for _, p := range reads[img] {
+			tsStr, v, _ := strings.Cut(p, "=")
+			ts, err := strconv.ParseInt(tsStr, 10, 64)
+			must(t, err)
+			if col == "e" {
+				v = n23Value(v)
+			}
+			model[col].secured[ts] = v
+		}
+	}
 }
 
 // killLog are the finished steps of the last child, for the message of a failure.

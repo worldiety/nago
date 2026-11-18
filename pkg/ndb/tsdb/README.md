@@ -23,8 +23,8 @@ wrote.
   <bucket>/
     <column>/
       schema.json               # scheme + decimals (new file + rename)
-      enum.dict                 # append-only enum dictionary (enum scheme)
-      head.wal                  # out-of-order corrections log
+      enum.dict                 # append-only enum dictionary (enum scheme), with a header since N23
+      head.wal                  # out-of-order corrections log, with a mark since N23
       1700000000000_1700019999980.tsb   # finalized chunk: <minMillis>_<maxMillis>
       1700020000000_.tsb                 # pending (open) chunk, continued across restarts
 ```
@@ -54,8 +54,9 @@ compaction. A running compaction adds files ending in `.new` and `compact.log`
   finalized chunk. `Column.Sync`, `DB.Close` and a restart leave it open, so a
   process that starts once a day does not begin a new file per column and day.
   Only `Column.Flush` finalizes it early.
-* **Chunk header** — `NAGO` `NTSB` and a version. Version 2 (every file this
-  version writes) adds a random salt with a CRC and two slots, each with where the
+* **Chunk header** — `NAGO` `NTSB` and a version. Version 3 (every file this
+  version creates, since N23) is version 2, whose WAL and dictionary have the
+  formats of N23, so that a version before refuses it. Version 2 adds a random salt with a CRC and two slots, each with where the
   sealed blocks end, their points and their newest time, so that the open of a
   column reads only the end of its open chunk; a seal writes the older slot, so
   that a torn write leaves the other. The bodies of its blocks and continuation
@@ -179,6 +180,18 @@ memory holds.
   `iter.Seq` has no error, so `Iter*` end silently where `Scan*` returns an error,
   e.g. for data of a later version (see [Compatibility](#compatibility)); a caller,
   which must know, reads with `Scan*`.
+* `CursorF64` (`Column.NewCursorF64`, `Next`, `Close`) — `ScanF64` call by call,
+  for a reader, which reads a long range in pieces and does something else in
+  between, e.g. the callback of a script. Each `Next(min, max, fn)` gives `fn`
+  exactly what a fresh `ScanF64(min, max, fn)` gives at that moment. Between two
+  calls it holds no lock, but it keeps its reader and the rest of the decoded
+  block, and it continues there, when nobody took the lock of the column
+  meanwhile (the lock counts every `Lock`, so that also a later place, which
+  changes the column under it, is seen), the head has no entry in the range, and
+  the call begins at the time after the last point given to `fn`; else it begins
+  anew. It loads the open block only when the sealed blocks of the range are
+  through. Until `Close` it holds the buffers of a read (up to about 256 KiB and a
+  decoded block).
 
 Reads merge the finalized chunks, the sealed blocks of the pending chunk, its open
 block (records and memory) and the head, in ascending time, each point once; an
@@ -204,20 +217,32 @@ headers, the dictionary and the head are read when a read or a write needs them.
 
 ## Compatibility
 
-Old data stays: this version reads and continues the chunks, blocks,
-continuation records, dictionaries and WALs of the versions before; it does not
-rewrite them. Values written before read faster only once a compaction rewrites
-their chunk. **A version before the frame-of-reference blocks reads new blocks
-wrongly or not at all, without an error**: do not go back after an update.
+Old data stays: this version reads and continues the chunks, blocks and
+continuation records of the versions before; it does not rewrite their blocks.
+Values written before read faster only once a compaction rewrites their chunk.
+**A version before the frame-of-reference blocks reads new blocks wrongly or not
+at all, without an error**: do not go back after an update. Since N23, every chunk
+tsdb creates has version 3, and the dictionary and the WAL have new formats (see
+[Damaged places](#damaged-places)): a dictionary of a version before is rewritten
+once into the new format at its first load (the first read or write of its
+column), a WAL of a version before before its first append or compaction, never
+by an open or a read; both keep their content and are continued in the new
+format. **A version before N23 refuses a chunk of version 3 and a WAL of N23 with
+an error, but reads a dictionary of N23 wrongly and without an error**, e.g. one of
+a column, whose open chunk is still of version 2: going back behind N23 is ruled
+out.
 
 From this version on, nago fails loudly on what a later version wrote. When the
-magic and format of a chunk match and its version is larger than 2, and the CRC of
+magic and format of a chunk match and its version is larger than 3, and the CRC of
 the prefix of its header matches or the file is shorter than a header of version 2;
 when a block has its marker and CRC, but a flag this version does not know
 (`0xE0`); when a continuation record has its marker and CRC, but a kind this
-version does not know; when a record of the WAL has its CRC (over its payload), but
-a kind this version does not know; or when `schema.json` has a version larger than
-1, then every method with an error result, which meets it, fails with an error
+version does not know; when a record of a WAL of N23 has its marker and CRC (over
+kind, length and payload), but a kind this version does not know, or its mark has
+its CRC and a version larger than 1; when an entry of a dictionary of N23 has its
+marker and CRC, but a kind this version does not know, or its header has its CRC
+and a version larger than 1; or when `schema.json` has a version larger than 1,
+then every method with an error result, which meets it, fails with an error
 (`tsdb: written by a newer version of tsdb`) and removes, cuts, overwrites or
 compacts nothing of it:
 
@@ -227,8 +252,9 @@ compacts nothing of it:
   record or a `schema.json` of a later version, `DB.SeriesColumns` on such a
   `schema.json`;
 * every method, which loads the head (reads, writes, `Delete`, `DeleteRange`,
-  `Flush`), on a record of the WAL of a later version; a torn last record of the
-  WAL is still cut off;
+  `Flush`), on a WAL or a record of the WAL of a later version;
+* every method, which loads the dictionary (reads and writes of an enum
+  column), on a dictionary or an entry of a later version;
 * a compaction (`Column.Flush`, `DB.Close` and the background compaction of the
   head, which logs the error) on a chunk or block of a later version, which it
   would rewrite: it stops before it writes a chunk or a WAL. `Column.Flush`
@@ -236,20 +262,58 @@ compacts nothing of it:
   `MaxHeadPoints` and compacts at once, succeeds, because its point is in the WAL;
   it logs the error of the compaction, and the next `Flush` or `Close` reports it.
 
-Appending, `Sync` and putting a correction into the WAL do not read old blocks and
-go on. The dictionary has no version or kind of its own; its entries are read as
-before. A wrong marker or magic, or a CRC, which does not match, is corrupt data
-and skipped as before. A skipped block, one with a wrong CRC or one, which does not
-decode, is logged once per column and place with `slog.Warn` ("tsdb: damaged block
-skipped", attributes `bucket`, `column`, `file` and `offset`), by a read, the open
-of a column and a compaction, which logs it before it writes the chunk without it;
-a later read of the same place logs nothing, until the DB is opened again. A chunk,
-whose header is not one of a chunk, is logged at offset 0. When the open of a column
-reads its open chunk after a crash, a frame, which runs over the end, is the torn
-rest, and bytes before the records of the open block may be the remains of records
-written over; neither is logged, but bytes between two of these records are. Every
-later change of the continuation records, the WAL or the dictionary increases the
+In a WAL of a version before N23, the CRC covers only the payload: a record of a
+kind other than put and tombstone is taken for a damaged record there, not for one
+of a later version. Appending, `Sync` and putting a correction into the WAL do not
+read old blocks and go on. A wrong marker or magic, or a CRC, which does not match,
+is corrupt data and skipped (see [Damaged places](#damaged-places)). Every later
+change of the continuation records, the WAL or the dictionary increases the
 version of the chunk; new block encodings get a flag of their own.
+
+## Damaged places
+
+tsdb logs every damaged place of a column, which it skips or drops when it opens a
+column, reads, seals or compacts, once per column and place with `slog.Warn`
+(attributes `bucket`, `column`, `file` and `offset`), before it drops it; a later
+read of the same place logs nothing, until the DB is opened again. A place is the
+beginning of a damaged region, from the first frame that is not intact up to the
+next intact one.
+
+* **Blocks** ("tsdb: damaged block skipped"): a block with a wrong CRC or one,
+  which does not decode; a chunk, whose header is not one of a chunk, at offset 0.
+* **Continuation records** ("tsdb: damaged continuation record skipped") of the
+  open block, at any position, also the first and the last: a wrong CRC, a damaged
+  marker or length, a zeroed record, one which does not decode. It costs only its
+  own points. After a crash, a record, which runs over the end of the file, is the
+  torn rest, and bytes in front of a copy record or behind the blocks, which a
+  seal or the rewrite of the open block left, are no damage; neither is logged.
+* **Dictionary** (`enum.dict`, "tsdb: damaged entry of an enum dictionary
+  skipped"): the entries carry their ids, a CRC over kind, id, length, salt and
+  text, and a marker, so that a damaged entry costs only itself and the entries
+  behind it keep their ids; a text is masked with the key stream of a random salt
+  of its entry, like the bodies of blocks, so that no written text stands in the
+  file as written and the search behind a damaged entry can not take one for an
+  entry; no new text gets an id, which a damaged or torn entry
+  had or can have had. A point, whose text is damaged or missing, is skipped by
+  every read like one of a damaged block and logged once at the place of its id
+  ("tsdb: enum values without their text skipped"). The text of a new value is
+  appended at once; before a value with it goes into a file of the column, which
+  counts at the next open, the dictionary is synced with its directory entry
+  (`values.write`, in a compaction within its SyncAll), so that a power failure
+  can not take a text, whose id is on the disk.
+* **WAL** (`head.wal`, "tsdb: damaged record of the head skipped"): a record of
+  N23 has a marker and a CRC over kind, length and payload; a damaged record or
+  region costs only its own correction or deletion, every intact record behind it
+  counts, and no write goes over an intact one. In a WAL of a version before N23,
+  the load ends at the first damaged record, which is logged; nothing behind it
+  counts again, also after the rewrite.
+
+What a crash of the process leaves when it stops an append (a torn entry, record
+or frame at the end of the file) is not logged, and the next append cuts it off.
+Limits: a file, which ends inside a frame, looks like a torn end, also when it was
+cut in its middle, and a damaged length, which lets the last frame run over the
+end, costs that frame without a report; a damaged frame, which hits its CRC by
+chance, counts as intact.
 
 ## Benchmarks
 
@@ -426,9 +490,11 @@ single remaining allocation per call is the `"bucket/column"` lookup key.)
 
 ## Durability model (house rules, shared with `msgstore`)
 
-No `fsync`, except in a compaction; atomic `pread`/`pwrite`; per-block and
-per-record CRC + markers for forward-scan recovery; a new file + atomic rename
-for the schema and the compaction, the dictionary is only appended to;
+No `fsync`, except in a compaction and for the dictionary (see below); atomic
+`pread`/`pwrite`; per-block and per-record CRC + markers for forward-scan
+recovery; a new file + atomic rename for the schema, the compaction and the
+rewrite of a dictionary or a WAL of a version before N23, the dictionary is
+otherwise only appended to;
 single-process `flock`; monotonic ids never reused. A crash of the process stops
 the writes after any byte: what was written before it stands.
 
@@ -438,7 +504,8 @@ the writes after any byte: what was written before it stands.
   because a Sync only appends. A correction or a deletion is saved when its put
   returns: it is in the WAL.
 * What is written only to the page cache can be lost by a power failure, except
-  what a compaction synced.
+  what a compaction synced, and the entries of a dictionary, whose ids went into a
+  file of the column: the dictionary is synced before (`values.write`).
 * `DB.Close` seals the open block of every column as a block of its own and
   folds the head into chunks; a head that reaches into the pending chunk rewrites
   that chunk, and the newest of the rewritten chunks stays open. The background

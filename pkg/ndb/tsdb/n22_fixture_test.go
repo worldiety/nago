@@ -167,9 +167,10 @@ func TestN22FixtureReads(t *testing.T) {
 }
 
 // n22ChunkFrames returns where the blocks of a chunk file begin and the offsets of its frames, by the format of the
-// README and of the block and record headers: "NAGO" "NTSB", version 1 (blocks at 9) or 2 (blocks at 85), then frames
-// of an 8-byte marker, a length of 4 bytes, the region of that length and a CRC of 4 bytes over it. kinds holds 'b'
-// for a block and 'r' for a continuation record. The walk ends at the first byte, which is no frame.
+// README and of the block and record headers: "NAGO" "NTSB", version 1 (blocks at 9), 2 (blocks at 85) or 3 (wokoda
+// N23, L-N23-24: the blocks where the description of the header in the code says, n23ChunkV3DataOff), then frames of
+// an 8-byte marker, a length of 4 bytes, the region of that length and a CRC of 4 bytes over it. kinds holds 'b' for a
+// block and 'r' for a continuation record. The walk ends at the first byte, which is no frame.
 func n22ChunkFrames(t testing.TB, b []byte) (dataOff int, offs []int, kinds []byte) {
 	t.Helper()
 	if len(b) < 9 || string(b[0:4]) != "NAGO" || string(b[4:8]) != "NTSB" {
@@ -180,8 +181,13 @@ func n22ChunkFrames(t testing.TB, b []byte) (dataOff int, offs []int, kinds []by
 		dataOff = 9
 	case 2:
 		dataOff = 85
+	case 3:
+		if n23ChunkV3DataOff == 0 {
+			n23FormatMissing(t, "where the blocks of a chunk of version 3 begin")
+		}
+		dataOff = n23ChunkV3DataOff
 	default:
-		t.Fatalf("premise: a chunk of version %d, the test knows 1 and 2", b[8])
+		t.Fatalf("premise: a chunk of version %d, the test knows 1, 2 and 3", b[8])
 	}
 	for at := dataOff; at+12 <= len(b); {
 		var kind byte
