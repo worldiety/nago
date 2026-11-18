@@ -498,20 +498,40 @@ func (c TPicker[T]) pickedStr() string {
 	}
 }
 
+func (c TPicker[T]) triggerAccessibleLabel() string {
+	if c.label == "" {
+		return c.pickedStr()
+	}
+
+	return c.label + ", " + c.pickedStr()
+}
+
+func (c TPicker[T]) triggerAccessibleDescription() string {
+	if c.errorText != "" {
+		return c.errorText
+	}
+
+	return c.supportingText
+}
+
 func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
 	if c.renderPicked == nil {
 		return ui.VStack(
 			c.Dialog(),
 			accessibility.Accessible(
 				ui.VStack(
-					ui.TextField(c.label, c.pickedStr()).
-						ID(c.id).
-						Disabled(c.disabled).
-						ReadOnly(true).
-						Trailing(ui.Image().Embed(heroSolid.ChevronRight).Frame(ui.Frame{}.Size(ui.L16, ui.L16))).
-						ErrorText(c.errorText).
-						SupportingText(c.supportingText).
-						FullWidth(),
+					// the nested textbox would turn the button into a group for VoiceOver, thus the
+					// button gets its own accessible name and description and the visuals are hidden
+					accessibility.Accessible(
+						ui.TextField(c.label, c.pickedStr()).
+							ID(c.id).
+							Disabled(c.disabled).
+							ReadOnly(true).
+							Trailing(ui.Image().Embed(heroSolid.ChevronRight).Frame(ui.Frame{}.Size(ui.L16, ui.L16))).
+							ErrorText(c.errorText).
+							SupportingText(c.supportingText).
+							FullWidth(),
+					).Hidden(true),
 				).
 					Action(func() {
 						if c.disabled {
@@ -522,6 +542,9 @@ func (c TPicker[T]) Render(ctx core.RenderContext) core.RenderNode {
 					FullWidth(),
 			).
 				Role(accessibility.RoleButton).
+				Label(c.triggerAccessibleLabel()).
+				Description(c.triggerAccessibleDescription()).
+				Invalid(c.errorText != "").
 				Disabled(c.disabled),
 		).
 			Alignment(ui.Leading).
