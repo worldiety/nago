@@ -553,14 +553,18 @@ func (c TPicker) Render(ctx core.RenderContext) core.RenderNode {
 
 	return accessibility.Accessible(
 		ui.VStack(
-			ui.TextField(c.label, durationText).
-				ReadOnly(true).
-				SizeByContent(true).
-				Trailing(ui.Image().Embed(heroSolid.ChevronRight).Frame(ui.Frame{}.Size(ui.L16, ui.L16))).
-				Disabled(c.disabled).
-				ErrorText(c.errorText).
-				SupportingText(c.supportingText).
-				Frame(ui.Frame{MinWidth: ui.L0}),
+			// the nested textbox would turn the button into a group for VoiceOver, thus the
+			// button gets its own accessible name and description and the visuals are hidden
+			accessibility.Accessible(
+				ui.TextField(c.label, durationText).
+					ReadOnly(true).
+					SizeByContent(true).
+					Trailing(ui.Image().Embed(heroSolid.ChevronRight).Frame(ui.Frame{}.Size(ui.L16, ui.L16))).
+					Disabled(c.disabled).
+					ErrorText(c.errorText).
+					SupportingText(c.supportingText).
+					Frame(ui.Frame{MinWidth: ui.L0}),
+			).Hidden(true),
 
 			// cancel, escape and a click beside the dialog only close it: the working copy is set again on the next
 			// open, so they write nothing
@@ -584,8 +588,27 @@ func (c TPicker) Render(ctx core.RenderContext) core.RenderNode {
 			Frame(c.frame),
 	).
 		Role(accessibility.RoleButton).
+		Label(c.triggerAccessibleLabel(durationText)).
+		Description(c.triggerAccessibleDescription()).
+		Invalid(c.errorText != "").
 		Disabled(c.disabled).
 		Render(ctx)
+}
+
+func (c TPicker) triggerAccessibleLabel(durationText string) string {
+	if c.label == "" {
+		return durationText
+	}
+
+	return c.label + ", " + durationText
+}
+
+func (c TPicker) triggerAccessibleDescription() string {
+	if c.errorText != "" {
+		return c.errorText
+	}
+
+	return c.supportingText
 }
 
 // FromDuration returns the days, hours, minutes and seconds from the given duration.
