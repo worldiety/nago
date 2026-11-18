@@ -23,7 +23,7 @@ import { randomStr } from '@/components/shared/util';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID, routeLinkClick } from '@/eventhandling';
 import { CssClasses } from '@/shared/cssClasses';
-import  { Accessible, Stack } from '@/shared/proto/nprotoc_gen';
+import { Accessible, Stack } from '@/shared/proto/nprotoc_gen';
 import {
 	AlignmentValues,
 	AnimationValues,
@@ -255,7 +255,9 @@ function getPresetClasses(): string[] {
 
 	if (props.ui.stylePreset) {
 		const firstChild = props.ui.children?.value[0];
-		const isIconButton = props.ui.children?.value.length == 1 && (firstChild instanceof Img || (firstChild instanceof Accessible && firstChild.content instanceof Img));
+		const isIconButton =
+			props.ui.children?.value.length == 1 &&
+			(firstChild instanceof Img || (firstChild instanceof Accessible && firstChild.content instanceof Img));
 		if (isIconButton) {
 			presetClasses.push('!p-0', '!w-10');
 		}

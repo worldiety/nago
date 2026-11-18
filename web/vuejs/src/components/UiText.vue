@@ -121,11 +121,7 @@ const textValue = computed<string>(() => {
 		{{ textValue }}<br v-if="!ui.invisible && ui.lineBreak" />
 	</button>
 
-	<span
-		v-else-if="!ui.invisible && !ui.labelFor"
-		:style="styles"
-		:title="props.ui.accessibilityLabel"
-	>
+	<span v-else-if="!ui.invisible && !ui.labelFor" :style="styles" :title="props.ui.accessibilityLabel">
 		{{ textValue }}<br v-if="!ui.invisible && ui.lineBreak" />
 	</span>
 
