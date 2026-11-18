@@ -13,6 +13,7 @@ import (
 
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
+	"go.wdy.de/nago/presentation/ui/accessibility"
 )
 
 // TButton is a basic component(Button).
@@ -213,9 +214,13 @@ func (c TButton) Render(context core.RenderContext) proto.Component {
 	}
 
 	return HStack(
-		If(len(c.preIcon) != 0, Image().Embed(c.preIcon).Frame(Frame{}.Size(L16, L16))),
+		accessibility.Accessible(
+			If(len(c.preIcon) != 0, Image().Embed(c.preIcon).Frame(Frame{}.Size(L16, L16))),
+		).Hidden(true),
 		If(c.title != "", Text(c.title).Font(c.font).WhiteSpace(whiteSpace)),
-		If(len(c.postIcon) != 0, Image().Embed(c.postIcon).Frame(Frame{}.Size(L16, L16))),
+		accessibility.Accessible(
+			If(len(c.postIcon) != 0, Image().Embed(c.postIcon).Frame(Frame{}.Size(L16, L16))),
+		).Hidden(true),
 	).Gap(L4).
 		ID(c.id).
 		Key(c.key.Name, c.key.ID).
