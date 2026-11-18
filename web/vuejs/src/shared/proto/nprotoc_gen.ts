@@ -7083,6 +7083,8 @@ export class TableColumn implements Writeable, Readable {
 
 	public cellHovered?: Bool;
 
+	public accessibilityLabel?: Str;
+
 	constructor(
 		content: Component | undefined = undefined,
 		colSpan: Uint | undefined = undefined,
@@ -7093,7 +7095,8 @@ export class TableColumn implements Writeable, Readable {
 		cellPadding: Padding | undefined = undefined,
 		cellBorder: Border | undefined = undefined,
 		cellHoveredBackgroundColor: Color | undefined = undefined,
-		cellHovered: Bool | undefined = undefined
+		cellHovered: Bool | undefined = undefined,
+		accessibilityLabel: Str | undefined = undefined
 	) {
 		this.content = content;
 		this.colSpan = colSpan;
@@ -7105,6 +7108,7 @@ export class TableColumn implements Writeable, Readable {
 		this.cellBorder = cellBorder;
 		this.cellHoveredBackgroundColor = cellHoveredBackgroundColor;
 		this.cellHovered = cellHovered;
+		this.accessibilityLabel = accessibilityLabel;
 	}
 
 	read(reader: BinaryReader): void {
@@ -7160,6 +7164,10 @@ export class TableColumn implements Writeable, Readable {
 					this.cellHovered = readBool(reader);
 					break;
 				}
+				case 11: {
+					this.accessibilityLabel = readString(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -7179,6 +7187,7 @@ export class TableColumn implements Writeable, Readable {
 			this.cellBorder !== undefined && !this.cellBorder.isZero(),
 			this.cellHoveredBackgroundColor !== undefined,
 			this.cellHovered !== undefined,
+			this.accessibilityLabel !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -7225,6 +7234,10 @@ export class TableColumn implements Writeable, Readable {
 			writer.writeFieldHeader(Shapes.UVARINT, 10);
 			writeBool(writer, this.cellHovered!); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[11]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 11);
+			writeString(writer, this.accessibilityLabel!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -7238,7 +7251,8 @@ export class TableColumn implements Writeable, Readable {
 			(this.cellPadding === undefined || this.cellPadding.isZero()) &&
 			(this.cellBorder === undefined || this.cellBorder.isZero()) &&
 			this.cellHoveredBackgroundColor === undefined &&
-			this.cellHovered === undefined
+			this.cellHovered === undefined &&
+			this.accessibilityLabel === undefined
 		);
 	}
 
@@ -7253,6 +7267,7 @@ export class TableColumn implements Writeable, Readable {
 		this.cellBorder = undefined;
 		this.cellHoveredBackgroundColor = undefined;
 		this.cellHovered = undefined;
+		this.accessibilityLabel = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

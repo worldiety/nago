@@ -27,6 +27,7 @@ type TTableColumn struct {
 	padding                proto.Padding   // padding inside the column cell
 	border                 proto.Border    // border around the cell
 	action                 func()          // optional cell-specific action
+	accessibilityLabel     string          // optional accessibility label for the column header
 }
 
 // TableColumn creates a new table column with the given header content.
@@ -94,6 +95,12 @@ func (c TTableColumn) Border(border Border) TTableColumn {
 // Span sets how many columns this header should span.
 func (c TTableColumn) Span(span int) TTableColumn {
 	c.colSpan = span
+	return c
+}
+
+// AccessibilityLabel sets an optional accessibility label for the column header.
+func (c TTableColumn) AccessibilityLabel(label string) TTableColumn {
+	c.accessibilityLabel = label
 	return c
 }
 
@@ -322,6 +329,7 @@ func (c TTable) Render(ctx core.RenderContext) core.RenderNode {
 			CellPadding:                column.padding,
 			CellBorder:                 column.border,
 			CellHoveredBackgroundColor: proto.Color(column.hoveredBackgroundColor),
+			AccessibilityLabel:         proto.Str(column.accessibilityLabel),
 		})
 	}
 
