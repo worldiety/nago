@@ -868,15 +868,17 @@ func (l *fnLower) rangeStmt(s *ast.RangeStmt, label string) {
 	l.emit(&sAssign{lhs: []lval{&lLocal{t: i32, v: n}}, rhs: []expr{length}})
 	bt := l.c.boolType()
 	cond := &eAndOr{t: bt, and: true, x: &eBinary{t: bt, op: opLtI, x: &eLocal{t: i32, v: i}, y: &eLocal{t: i32, v: n}}, y: &eBinary{t: bt, op: opLtI, x: &eLocal{t: i32, v: i}, y: length}}
-	loop := &sLoop{pos: s.Pos(), cond: cond, post: inc(i)}
+	loop := &sLoop{pos: s.Pos(), cond: cond, post: inc(i), rl: &rangeList{i: i, n: n, lst: lst}}
 	elem := &eListGet{t: recvT.elem, l: &eLocal{t: recvT, v: lst}, i: &eLocal{t: i32, v: i}, unchecked: true}
 	l.loop(label, loop, func() {
 		saved := l.body
 		l.body = nil
 		switch se.Sel.Name {
 		case "All":
-			bind(s.Key, &eLocal{t: i32, v: i})
+			// the element first, then the index: both only read the hidden variables, so that the order changes
+			// nothing, and a body, which begins with the element, is fused (gen.loopRange)
 			bind(s.Value, elem)
+			bind(s.Key, &eLocal{t: i32, v: i})
 		case "Values":
 			bind(s.Key, elem)
 		default:

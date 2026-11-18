@@ -412,6 +412,25 @@ func (m *Machine) exec(f *Func, bn, bs, br int) {
 			if !(int32(n[in.b]) < r[in.c].(*list).len) {
 				pc = int(in.a)
 			}
+		case opRangeN:
+			x := &f.aux[in.b]
+			i, l := int32(n[x.src.n]), r[x.src.r].(*list)
+			if i < int32(n[x.off.n]) && i < l.len {
+				n[x.dst.n] = l.n[i]
+			} else {
+				pc = int(in.a)
+			}
+		case opIncRangeN:
+			x := &f.aux[in.b]
+			i, l := int32(n[x.src.n])+1, r[x.src.r].(*list)
+			n[x.src.n] = fromI32(i)
+			if i < int32(n[x.off.n]) && i < l.len {
+				n[x.dst.n] = l.n[i]
+				pc = int(in.a)
+				if m.fuel--; m.fuel <= 0 {
+					m.burn()
+				}
+			}
 		case opJmpT:
 			if n[in.b] != 0 {
 				pc = int(in.a)

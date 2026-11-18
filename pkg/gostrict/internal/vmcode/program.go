@@ -327,4 +327,8 @@ const (
 	opTypeIs    // n[a] = the box in r[b] holds a value of types[c]
 	opView      // aux[a]: r[dst.r] = a pointer into the object of r[src.r] at off
 	opEntry     // calls the entry point of entries[a] within the aspect
+	// a range over a list of one scalar (gen.loopRange), aux[b]: the counter at src.n, the list at src.r, the length at
+	// the start at off.n, the element at dst.n
+	opRangeN    // if i < n && i < len { element = list[i] } else { pc = a }
+	opIncRangeN // i++; if i < n && i < len { element = list[i]; pc = a, burns fuel like opLoop }
 )

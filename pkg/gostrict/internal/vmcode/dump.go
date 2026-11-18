@@ -130,6 +130,8 @@ var opNames = [...]string{
 	opLoop:        "loop",
 	opIncLoop:     "incloop",
 	opJNltLen:     "jnltlen",
+	opRangeN:      "rangen",
+	opIncRangeN:   "incrangen",
 	opJmpT:        "jmpt",
 	opJmpF:        "jmpf",
 	opJNltI:       "jnlti",

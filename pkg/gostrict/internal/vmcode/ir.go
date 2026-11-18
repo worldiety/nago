@@ -225,6 +225,14 @@ type (
 		cond       expr
 		body, post []stmt
 		pos        token.Pos
+		// rl is the counter, the number of elements at the start and the list of a range over a list, nil for every
+		// other loop; gen fuses such a range (loopRange)
+		rl *rangeList
+	}
+	// rangeList are the hidden variables of a range over a list: the counter i, the length n at the start and the
+	// list lst.
+	rangeList struct {
+		i, n, lst *local
 	}
 	// sBlock is the target of a break out of a switch.
 	sBlock struct {

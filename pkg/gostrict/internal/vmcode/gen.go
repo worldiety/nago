@@ -108,7 +108,7 @@ func (g *gen) ifStmt(s *sIf) {
 func (g *gen) target(pc int) bool {
 	for _, in := range g.code {
 		switch in.op {
-		case opJmp, opJmpT, opJmpF, opJNltI, opJNleI, opJNeqI, opJNneI, opJNltF, opJNleF, opJEqIK, opJNeIK, opJNltLen, opJNltL, opJNleL, opJNeqL, opJNneL, opJNltUL, opJNleUL, opJEqLK, opJNeLK:
+		case opJmp, opJmpT, opJmpF, opJNltI, opJNleI, opJNeqI, opJNneI, opJNltF, opJNleF, opJEqIK, opJNeIK, opJNltLen, opJNltL, opJNleL, opJNeqL, opJNneL, opJNltUL, opJNleUL, opJEqLK, opJNeLK, opRangeN, opIncRangeN:
 			if int(in.a) == pc {
 				return true
 			}
@@ -124,6 +124,10 @@ func (g *gen) patchAll(at []int, target int32) {
 }
 
 func (g *gen) loop(s *sLoop) {
+	if v := rangeElem(s); v != nil {
+		g.loopRange(s, v)
+		return
+	}
 	start := g.pc()
 	var exits []int
 	if s.cond != nil {
@@ -139,6 +143,59 @@ func (g *gen) loop(s *sLoop) {
 		g.emit(opLoop, start, 0, 0)
 	}
 	g.patchAll(exits, g.pc())
+	g.patchAll(g.breaks[s], g.pc())
+}
+
+// rangeElem returns the variable of the element of a range over a list of one scalar, a number or a bool in one slot of
+// the bank n, whose body begins with the assignment of the element to a variable of the frame, which no closure
+// captures; else nil, and the loop stays as it is (R-DEC-SCRIPT-GS-RANGE).
+func rangeElem(s *sLoop) *local {
+	if s.rl == nil || len(s.body) == 0 {
+		return nil
+	}
+	a, ok := s.body[0].(*sAssign)
+	if !ok || len(a.lhs) != 1 || len(a.rhs) != 1 {
+		return nil
+	}
+	lv, ok := a.lhs[0].(*lLocal)
+	if !ok || lv.v.cell != nil || lv.off != (layout{}) {
+		return nil
+	}
+	lg, ok := a.rhs[0].(*eListGet)
+	if !ok || !lg.unchecked {
+		return nil
+	}
+	ll, ok := lg.l.(*eLocal)
+	if !ok || ll.v != s.rl.lst || ll.off != (layout{}) {
+		return nil
+	}
+	li, ok := lg.i.(*eLocal)
+	if !ok || li.v != s.rl.i || li.off != (layout{}) {
+		return nil
+	}
+	if bank, ok := lg.t.single(); !ok || bank != bankN {
+		return nil
+	}
+	if bank, ok := lv.t.single(); !ok || bank != bankN {
+		return nil
+	}
+	return lv.v
+}
+
+// loopRange emits a range over a list of one scalar with fused instructions (R-DEC-SCRIPT-GS-RANGE): opRangeN before the
+// first round tests the counter against the length at the start and the length of the list and loads the element,
+// opIncRangeN after every round counts, tests and loads in one instruction and jumps back. The body is the loop body
+// without its first statement, the assignment of the element. A round burns fuel like opLoop; the test, which ends the
+// loop, does not, so that a finished loop burns one unit less than before.
+func (g *gen) loopRange(s *sLoop, v *local) {
+	rl := s.rl
+	ax := g.aux(aux{dst: layout{n: v.at.n}, src: layout{n: rl.i.at.n, r: rl.lst.at.r}, off: layout{n: rl.n.at.n}})
+	exit := g.emit(opRangeN, 0, ax, 0)
+	body := g.pc()
+	g.stmts(s.body[1:])
+	g.patchAll(g.conts[s], g.pc())
+	g.emit(opIncRangeN, body, ax, 0)
+	g.patch(exit, g.pc())
 	g.patchAll(g.breaks[s], g.pc())
 }
 
