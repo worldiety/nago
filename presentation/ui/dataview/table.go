@@ -15,6 +15,7 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/accessibility"
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/pager"
 	"golang.org/x/text/language"
@@ -23,7 +24,9 @@ import (
 var (
 	StrXSelected  = i18n.MustVarString("nago.dataview.x_selected", i18n.Values{language.English: "{num} selected", language.German: "{num} ausgewählt"})
 	StrXDeselect  = i18n.MustVarString("nago.dataview.x_deselect", i18n.Values{language.English: "deselect {num}", language.German: "{num} abwählen"})
+	StrXSelect    = i18n.MustString("nago.dataview.select", i18n.Values{language.English: "Select", language.German: "Auswählen"})
 	StrXSelectAll = i18n.MustString("nago.dataview.select_all", i18n.Values{language.English: "Select all", language.German: "Alle auswählen"})
+	StrXInteract  = i18n.MustString("nago.dataview.interact", i18n.Values{language.English: "Interact with row", language.German: "Mit Reihe interagieren"})
 )
 
 type TableOptions struct {
@@ -67,7 +70,11 @@ func (t TDataView[E, ID]) renderTable(ctx core.RenderContext) core.RenderNode {
 
 	var cols []ui.TTableColumn
 	if !t.hideSelection {
-		cols = append(cols, ui.TableColumn(ui.Checkbox(model.SelectSubset.Get()).InputChecked(model.SelectSubset)).Width(ui.L64))
+		cols = append(cols, ui.TableColumn(
+			accessibility.Accessible(
+				ui.Checkbox(model.SelectSubset.Get()).InputChecked(model.SelectSubset),
+			).Label(StrXSelectAll.Get(wnd)),
+		).AccessibilityLabel(StrXSelect.Get(wnd)).Width(ui.L64))
 	}
 
 	for _, field := range data.Fields {
@@ -120,7 +127,17 @@ func (t TDataView[E, ID]) renderTable(ctx core.RenderContext) core.RenderNode {
 			}
 
 			if t.addChevronRight {
-				cells = append(cells, ui.TableCell(ui.HStack(ui.ImageIcon(icons.ChevronRight))).Alignment(ui.Trailing))
+				if t.action != nil {
+					cells = append(cells, ui.TableCell(
+						ui.TertiaryButton(func() { t.action(u) }).
+							AccessibilityLabel(StrXInteract.Get(wnd)).
+							PreIcon(icons.ChevronRight),
+					).Alignment(ui.Trailing))
+				} else {
+					cells = append(cells, ui.TableCell(
+						ui.HStack(ui.ImageIcon(icons.ChevronRight)),
+					).Alignment(ui.Trailing))
+				}
 			}
 
 			return ui.TableRow(cells...).Key(t.itemKey("row", u.Identity())).Action(t.wrappedAction(u)).HoveredBackgroundColor(ui.ColorCardFooter)
