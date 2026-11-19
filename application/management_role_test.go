@@ -21,11 +21,31 @@ import (
 func newTestConfigurator(t *testing.T) *Configurator {
 	t.Helper()
 
-	return &Configurator{
+	c := &Configurator{
 		dataDir:   t.TempDir(),
 		factories: map[proto.RootViewID]func(wnd core.Window) core.View{},
 		eventBus:  events.NewEventBus(),
 	}
+	closeStoresOnCleanup(t, c)
+	return c
+}
+
+// closeStoresOnCleanup closes the local stores of c, which a management opens on its first call (e.g. the tdb of an
+// entity store), when the test ends. Registered after t.TempDir, it runs before the directory is removed; without it,
+// the finalizer of an unclosed file panics in a later test.
+func closeStoresOnCleanup(t *testing.T, c *Configurator) {
+	t.Helper()
+	t.Cleanup(func() {
+		c.storesMutex.Lock()
+		stores := c.stores
+		c.storesMutex.Unlock()
+		if stores == nil {
+			return
+		}
+		if err := stores.Close(); err != nil {
+			t.Errorf("cannot close the stores: %v", err)
+		}
+	})
 }
 
 func permissionsOfRole(t *testing.T, c *Configurator, id role.ID) []permission.ID {

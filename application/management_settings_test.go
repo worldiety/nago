@@ -73,6 +73,7 @@ func newSettingsConfigurator(t *testing.T) (*Configurator, *handledBus, settings
 		factories: map[proto.RootViewID]func(wnd core.Window) core.View{},
 		eventBus:  bus,
 	}
+	closeStoresOnCleanup(t, c)
 	sm, err := c.SettingsManagement()
 	if err != nil {
 		t.Fatalf("SettingsManagement: %v", err)
