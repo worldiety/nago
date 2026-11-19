@@ -31,8 +31,11 @@ func (p Person) Identity() string {
 
 func TestNewSloppyJSONRepository(t *testing.T) {
 
+	// both stores must be closed: lockedfile panics from a finalizer when an open file becomes unreachable
 	t.Run("fs", func(t *testing.T) {
-		testSuite(t, NewSloppyJSONRepository[Person, string](unwrap(fs.NewBlobStore(t.TempDir()))))
+		store := unwrap(fs.NewBlobStore(t.TempDir()))
+		t.Cleanup(func() { _ = store.Close() })
+		testSuite(t, NewSloppyJSONRepository[Person, string](store))
 	})
 
 	t.Run("tdb", func(t *testing.T) {
@@ -40,6 +43,7 @@ func TestNewSloppyJSONRepository(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		t.Cleanup(func() { _ = db.Close() })
 		testSuite(t, NewSloppyJSONRepository[Person, string](tdb.NewBlobStore(db, "test")))
 	})
 
