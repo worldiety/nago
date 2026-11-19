@@ -49,6 +49,7 @@ Nil children are skipped, so you can pass the result of [`If`](../../utility/con
 | `FocusedBackgroundColor(backgroundColor Color) TStack` | Sets the background color of the stack when it is focused (e.g., via keyboard navigation). |
 | `FocusedBorder(border Border) TStack` | Sets the border styling when the stack is focused. |
 | `FocusedOutline(outline Outline) TStack` | Sets the outline styling when the stack is focused. |
+| `FocusWithinBorder(border Border) TStack` | Sets the border styling while an element inside the stack has the focus, e.g. a text field in a box which draws the frame around it; the stack itself does not become focusable. |
 | `Font(font Font) TStack` | Sets the font style applied to text content inside the stack. |
 | `Frame(frame Frame) DecoredView` | Sets the [frame](../frame/) of the stack. |
 | `FullWidth() TStack` | Sets the width of the stack to the full available width. |

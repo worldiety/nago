@@ -64,7 +64,8 @@ const isA = computed<boolean>(() => {
 	return props.ui.orientation === OrientationValues.Horizontal && !!props.ui.url;
 });
 
-// focusable stacks take part in the tab order (tabindex 0). All other stacks carry no tabindex at all:
+// focusable stacks take part in the tab order (tabindex 0). All other stacks carry no tabindex at all, also those
+// with a border for the focus within (border.focusWithin), which follows the focus of an element inside:
 // a tabindex of -1 would still make them focusable for the accessibility tree, and Firefox (141 and
 // later) walks all focusable ancestors of every focusable element to inherit the disabled state,
 // recursively, which costs 2^depth for nested stacks and freezes the tab from about 20 levels on.
@@ -92,6 +93,7 @@ const classes = computed<string>(() => {
 		classes.push(focusClass.value);
 		classes.push('custom-focus');
 	}
+	if (focusWithinClass.value) classes.push(focusWithinClass.value);
 	if (hoverClass.value) {
 		classes.push(hoverClass.value);
 		classes.push('custom-hover');
@@ -145,6 +147,13 @@ const focusClass = computed<string | undefined>(() => {
 
 	if (!styles.length) return;
 	return CssClasses.getOrCreate(styles, 'focus');
+});
+
+const focusWithinClass = computed<string | undefined>(() => {
+	if (!props.ui.border?.focusWithin) return;
+	const styles = borderCSS(props.ui.border.focusWithin);
+	if (!styles.length) return;
+	return CssClasses.getOrCreate(styles, 'focus-within');
 });
 
 const hoverClass = computed<string | undefined>(() => {

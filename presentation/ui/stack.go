@@ -325,6 +325,14 @@ func (c TStack) FocusedBorder(border Border) TStack {
 	return c
 }
 
+// FocusWithinBorder sets the border styling while an element inside the stack has the focus, e.g. a text field in a
+// box which draws the frame around it. Unlike [TStack.FocusedBorder], the stack itself does not become focusable and
+// takes no place in the tab order.
+func (c TStack) FocusWithinBorder(border Border) TStack {
+	c.border.FocusWithin = border
+	return c
+}
+
 // Outline sets the default outline styling for the stack.
 func (c TStack) Outline(outline Outline) TStack {
 	c.outline.Initial = outline

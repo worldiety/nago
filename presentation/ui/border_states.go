@@ -17,14 +17,18 @@ type BorderStates struct {
 	Hovered Border
 	Active  Border
 	Focused Border
+	// FocusWithin applies while the component or an element inside it has the focus (CSS :focus-within); unlike
+	// Focused, it does not make the component focusable itself.
+	FocusWithin Border
 }
 
 // ora converts a BorderStates object into its protocol representation for serialization.
 func (o BorderStates) ora() proto.BorderStates {
 	return proto.BorderStates{
-		Initial: o.Initial.ora(),
-		Hovered: o.Hovered.ora(),
-		Active:  o.Active.ora(),
-		Focused: o.Focused.ora(),
+		Initial:     o.Initial.ora(),
+		Hovered:     o.Hovered.ora(),
+		Active:      o.Active.ora(),
+		Focused:     o.Focused.ora(),
+		FocusWithin: o.FocusWithin.ora(),
 	}
 }

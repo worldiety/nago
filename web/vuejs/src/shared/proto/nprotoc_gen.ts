@@ -21210,16 +21210,21 @@ export class BorderStates implements Writeable, Readable {
 
 	public focused?: Border;
 
+	// FocusWithin applies while the component or an element inside it has the focus (CSS :focus-within). Unlike Focused, it does not make the component focusable itself.
+	public focusWithin?: Border;
+
 	constructor(
 		initial: Border | undefined = undefined,
 		hovered: Border | undefined = undefined,
 		active: Border | undefined = undefined,
-		focused: Border | undefined = undefined
+		focused: Border | undefined = undefined,
+		focusWithin: Border | undefined = undefined
 	) {
 		this.initial = initial;
 		this.hovered = hovered;
 		this.active = active;
 		this.focused = focused;
+		this.focusWithin = focusWithin;
 	}
 
 	read(reader: BinaryReader): void {
@@ -21248,6 +21253,11 @@ export class BorderStates implements Writeable, Readable {
 					this.focused.read(reader);
 					break;
 				}
+				case 5: {
+					this.focusWithin = new Border();
+					this.focusWithin.read(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -21261,6 +21271,7 @@ export class BorderStates implements Writeable, Readable {
 			this.hovered !== undefined && !this.hovered.isZero(),
 			this.active !== undefined && !this.active.isZero(),
 			this.focused !== undefined && !this.focused.isZero(),
+			this.focusWithin !== undefined && !this.focusWithin.isZero(),
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -21280,6 +21291,10 @@ export class BorderStates implements Writeable, Readable {
 			writer.writeFieldHeader(Shapes.RECORD, 4);
 			this.focused!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.RECORD, 5);
+			this.focusWithin!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -21287,7 +21302,8 @@ export class BorderStates implements Writeable, Readable {
 			(this.initial === undefined || this.initial.isZero()) &&
 			(this.hovered === undefined || this.hovered.isZero()) &&
 			(this.active === undefined || this.active.isZero()) &&
-			(this.focused === undefined || this.focused.isZero())
+			(this.focused === undefined || this.focused.isZero()) &&
+			(this.focusWithin === undefined || this.focusWithin.isZero())
 		);
 	}
 
@@ -21296,6 +21312,7 @@ export class BorderStates implements Writeable, Readable {
 		this.hovered = undefined;
 		this.active = undefined;
 		this.focused = undefined;
+		this.focusWithin = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

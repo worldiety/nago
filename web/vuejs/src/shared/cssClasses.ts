@@ -1,25 +1,36 @@
 import { randomStr } from '@/components/shared/util';
 
-type PseudoClass = 'hover' | 'focus' | 'active';
+type PseudoClass = 'hover' | 'focus' | 'focus-within' | 'active';
 
 export class CssClasses {
 	private static classes: Map<string, string> = new Map();
 	private static defaultStyleElem: HTMLStyleElement;
 	private static hoverStyleElem: HTMLStyleElement;
 	private static focusStyleElem: HTMLStyleElement;
+	private static focusWithinStyleElem: HTMLStyleElement;
 	private static activeStyleElem: HTMLStyleElement;
 
 	private static init() {
-		if (this.defaultStyleElem && this.hoverStyleElem && this.focusStyleElem && this.activeStyleElem) return;
+		if (
+			this.defaultStyleElem &&
+			this.hoverStyleElem &&
+			this.focusStyleElem &&
+			this.focusWithinStyleElem &&
+			this.activeStyleElem
+		)
+			return;
 
 		this.defaultStyleElem = document.createElement('style');
 		this.hoverStyleElem = document.createElement('style');
 		this.focusStyleElem = document.createElement('style');
+		this.focusWithinStyleElem = document.createElement('style');
 		this.activeStyleElem = document.createElement('style');
 
+		// the order is the precedence of the states: a later state wins over an earlier one
 		document.body.appendChild(this.defaultStyleElem);
 		document.body.appendChild(this.hoverStyleElem);
 		document.body.appendChild(this.focusStyleElem);
+		document.body.appendChild(this.focusWithinStyleElem);
 		document.body.appendChild(this.activeStyleElem);
 	}
 
@@ -50,6 +61,9 @@ export class CssClasses {
 				break;
 			case 'focus':
 				this.focusStyleElem.innerHTML += `\n\n${classStr}`;
+				break;
+			case 'focus-within':
+				this.focusWithinStyleElem.innerHTML += `\n\n${classStr}`;
 				break;
 			case 'active':
 				this.activeStyleElem.innerHTML += `\n\n${classStr}`;
