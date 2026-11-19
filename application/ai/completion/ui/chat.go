@@ -1452,10 +1452,29 @@ var activeRunSeq atomic.Uint64
 var activeRuns concurrent.RWMap[session.ID, *activeRun]
 
 // findResumable returns the newest session of the subject which waits on a user decision and belongs to
-// exactly this chat context: created by the subject, same provider and exactly the same tags. Sessions of
-// other contexts are never picked up; the history dialog still offers them.
+// exactly this chat context: created by the subject, same provider and exactly the same tags, see
+// [session.Session.ResumableBy]. Sessions of other contexts are never picked up; the history dialog still offers
+// them.
+//
+// It asks [session.UseCases.FindResumable], which reads the index of the waiting sessions instead of every
+// session. Only use cases assembled without it are read through FindAll.
 func findResumable(subject auth.Subject, sessions session.UseCases, tags []string, providerHint string) *session.Session {
-	if sessions.FindAll == nil || subject == nil || !subject.Valid() {
+	if subject == nil || !subject.Valid() {
+		return nil
+	}
+
+	opts := session.FindResumableOptions{Tags: tags, ProviderHint: providerHint}
+	if sessions.FindResumable != nil {
+		found, err := sessions.FindResumable(subject, opts)
+		if err != nil || found.IsNone() {
+			return nil
+		}
+
+		s := found.Unwrap()
+		return &s
+	}
+
+	if sessions.FindAll == nil {
 		return nil
 	}
 
@@ -1464,8 +1483,7 @@ func findResumable(subject auth.Subject, sessions session.UseCases, tags []strin
 		if err != nil {
 			return nil
 		}
-		// Child sessions hold sub-agent transcripts; nobody continues them.
-		if s.Pending == nil || s.ParentID != "" || s.CreatedBy != subject.ID() || s.ProviderHint != providerHint || !sameTags(s.Tags, tags) {
+		if !s.ResumableBy(subject.ID(), opts) {
 			continue
 		}
 		if best == nil || s.UpdatedAt > best.UpdatedAt {
@@ -1474,19 +1492,6 @@ func findResumable(subject auth.Subject, sessions session.UseCases, tags []strin
 		}
 	}
 	return best
-}
-
-// sameTags reports set equality of two tag lists.
-func sameTags(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for _, t := range b {
-		if !slices.Contains(a, t) {
-			return false
-		}
-	}
-	return true
 }
 
 // firstModelID returns the id of the first model the completion provider reports.

@@ -384,6 +384,9 @@ type UseCases struct {
 	Rename   Rename
 	Delete   Delete
 
+	// FindResumable finds the session a freshly opened chat continues through an index of the waiting sessions.
+	FindResumable FindResumable
+
 	// Tasks keeps the background tasks of running conversations, keyed by session id (see
 	// [completion.NewTaskTools]). [Dismiss] and [Delete] cancel the tasks of their session.
 	Tasks *completion.TaskRegistry
@@ -441,6 +444,9 @@ func (o useCaseOptions) deleteHook() func(id ID) error {
 	}
 }
 
+// NewUseCases keeps an index of the waiting sessions of repo for [FindResumable], which follows every write of
+// these use cases (see pendingIndex). Thus, construct them once per repository and write sessions only through
+// them, as application/ai/cfg does.
 func NewUseCases(repo Repository, rdb *rebac.DB, opts ...Option) UseCases {
 	var locks locker
 	tasks := completion.NewTaskRegistry()
@@ -450,18 +456,23 @@ func NewUseCases(repo Repository, rdb *rebac.DB, opts ...Option) UseCases {
 		opt(&options)
 	}
 
+	// every use case, also the sub-runner, writes through it
+	index := &pendingIndex{}
+	repo = indexedRepository{Repository: repo, index: index}
+
 	return UseCases{
-		Create:   NewCreate(repo, rdb),
-		FindByID: NewFindByID(repo),
-		FindAll:  NewFindAll(repo),
-		Append:   NewAppend(&locks, repo, ledger),
-		Resolve:  NewResolve(&locks, repo, ledger),
-		Dismiss:  NewDismiss(&locks, repo, ledger, tasks),
-		Rename:   NewRename(&locks, repo),
-		Delete:   NewDelete(&locks, repo, rdb, tasks, ledger, options.deleteHook()),
-		Tasks:    tasks,
-		subUsage: ledger,
-		repo:     repo,
-		locks:    &locks,
+		Create:        NewCreate(repo, rdb),
+		FindByID:      NewFindByID(repo),
+		FindAll:       NewFindAll(repo),
+		Append:        NewAppend(&locks, repo, ledger),
+		Resolve:       NewResolve(&locks, repo, ledger),
+		Dismiss:       NewDismiss(&locks, repo, ledger, tasks),
+		Rename:        NewRename(&locks, repo),
+		Delete:        NewDelete(&locks, repo, rdb, tasks, ledger, options.deleteHook()),
+		FindResumable: newFindResumable(repo, index),
+		Tasks:         tasks,
+		subUsage:      ledger,
+		repo:          repo,
+		locks:         &locks,
 	}
 }
