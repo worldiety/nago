@@ -8,15 +8,20 @@
 -->
 
 <script lang="ts" setup>
+import { watchEffect } from 'vue';
 import { WindowTitle } from '@/shared/proto/nprotoc_gen';
 
 const props = defineProps<{
 	ui: WindowTitle;
 }>();
 
-if (props.ui.value) {
-	document.title = props.ui.value;
-}
+// the component stays mounted while its value changes (a new render at the same place), so the title follows the
+// value instead of being set only once when the component is created
+watchEffect(() => {
+	if (props.ui.value) {
+		document.title = props.ui.value;
+	}
+});
 </script>
 
 <template>
