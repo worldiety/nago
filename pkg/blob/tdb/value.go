@@ -9,13 +9,13 @@ package tdb
 
 import (
 	"fmt"
-	"github.com/rogpeppe/go-internal/lockedfile"
 	"io"
 	"os"
 )
 
+// Value refers to a stored value without holding it in memory.
 type Value struct {
-	f      *lockedfile.File
+	f      *os.File
 	offset int64
 	len    uint32
 }
@@ -24,9 +24,10 @@ func (v Value) Len() int {
 	return int(v.len)
 }
 
-// NewReader returns a reader which gives access to the underlying value. This is valid, until the according WAL
-// respective file is closed. Omitting a Close currently just keeps a pointer to the file, which may be closed
-// but otherwise does not cause any serious leak. Opening a zero value returns an already closed reader.
+// NewReader returns a reader which gives access to the underlying value. It stays valid, even if a compaction
+// replaces the file meanwhile, until the DB is closed. A reader keeps its file open, thus a reader of a replaced file
+// should not be kept for a long time, but omitting a Close does not leak anything. Opening a zero value returns an
+// already closed reader.
 func (v Value) NewReader() io.ReadCloser {
 	return &valReader{ptr: v, closed: v.f == nil}
 }

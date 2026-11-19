@@ -9,10 +9,10 @@ package tdb
 
 import (
 	"errors"
-	"github.com/rogpeppe/go-internal/lockedfile"
-	"go.wdy.de/nago/pkg/xbytes"
 	"hash/crc32"
 	"io"
+
+	"go.wdy.de/nago/pkg/xbytes"
 )
 
 var InvalidNodeType = errors.New("invalid Node type")
@@ -25,8 +25,9 @@ const (
 	removeKeyValue
 )
 
+// Node is the reference encoding of a record, see also appendRecord and scanRecords, which encode and decode the same
+// format without copying.
 type Node struct {
-	f         *lockedfile.File
 	kind      nodeKind
 	size      uint32
 	crc       uint32
@@ -36,14 +37,6 @@ type Node struct {
 	valOffset uint64
 	valLength uint32
 	val       []byte
-}
-
-func (e *Node) Value() Value {
-	return Value{
-		f:      e.f,
-		offset: int64(e.valOffset),
-		len:    e.valLength,
-	}
 }
 
 func (e *Node) write(w *xbytes.Buffer) {

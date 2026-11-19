@@ -400,13 +400,11 @@ func TestDB_ConcurrentReadWrite(t *testing.T) {
 	wg.Wait()
 }
 
-// TestDB_CompactWithConcurrentWrites covers the Compact path where a write lands after the snapshot was taken, so
-// the WAL must be kept and replayed on top of the new compacted file. That path used to re-open the WAL while its
-// old handle was still open. The exclusive flock of lockedfile belongs to the open file description, so Open
-// blocked forever on it, while Compact held every lock of the DB.
+// TestDB_CompactWithConcurrentWrites covers a compaction, while a writer adds and removes entries. The changes, which
+// arrive while the compaction runs, must end up in the new log, which must not keep the former records anymore.
 func TestDB_CompactWithConcurrentWrites(t *testing.T) {
 	dir := t.TempDir()
-	db, err := Open(dir)
+	db, err := OpenWithOptions(dir, Options{GCPercent: -1})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -444,13 +442,12 @@ func TestDB_CompactWithConcurrentWrites(t *testing.T) {
 		return nil
 	}
 
-	// A compaction without a write in that window removes the WAL instead, thus retry a few times. The ballast
-	// makes the snapshot take a moment and tells both paths apart: a kept WAL still contains it, a new one cannot
-	// grow that large from the few writes between the return of Compact and the stop of the writer.
+	// the ballast makes the compaction take a moment and tells the logs apart: the former one contains it, the new one
+	// cannot grow that large from the few writes between the return of Compact and the stop of the writer
 	walFile := filepath.Join(dir, "tdb.wal")
 	ballast := bytes.Repeat([]byte("x"), 1<<20)
-	keptWAL := false
-	for attempt := 0; attempt < 10 && !keptWAL; attempt++ {
+	writesWhileCompacting := 0
+	for attempt := range 5 {
 		if err := db.Set("ballast", strconv.Itoa(attempt), ballast); err != nil {
 			t.Fatal(err)
 		}
@@ -462,6 +459,7 @@ func TestDB_CompactWithConcurrentWrites(t *testing.T) {
 		walSizeBefore := info.Size()
 
 		stop := make(chan struct{})
+		compacting := make(chan struct{})
 		var wg sync.WaitGroup
 		wg.Go(func() {
 			for {
@@ -475,11 +473,21 @@ func TestDB_CompactWithConcurrentWrites(t *testing.T) {
 					t.Error(err)
 					return
 				}
+
+				select {
+				case <-compacting:
+				default:
+					writesWhileCompacting++
+				}
 			}
 		})
 
 		compacted := make(chan error, 1)
-		go func() { compacted <- db.Compact() }()
+		go func() {
+			err := db.Compact()
+			close(compacting)
+			compacted <- err
+		}()
 
 		select {
 		case err := <-compacted:
@@ -489,20 +497,22 @@ func TestDB_CompactWithConcurrentWrites(t *testing.T) {
 				t.Fatal(err)
 			}
 		case <-time.After(30 * time.Second):
-			// Compact still holds the locks of the DB, thus closing it would block as well.
 			db = nil
-			t.Fatal("Compact did not return, it blocks on re-opening the WAL")
+			t.Fatal("Compact did not return")
 		}
 
 		info, err = os.Stat(walFile)
 		if err != nil {
 			t.Fatal(err)
 		}
-		keptWAL = info.Size() >= walSizeBefore
+
+		if info.Size() >= walSizeBefore {
+			t.Fatalf("the log has not been replaced: %d >= %d", info.Size(), walSizeBefore)
+		}
 	}
 
-	if !keptWAL {
-		t.Fatal("no write landed between snapshot and file swap, the kept WAL path is not covered")
+	if writesWhileCompacting == 0 {
+		t.Fatal("no write landed while compacting, the copy of the log tail is not covered")
 	}
 
 	check := func(stage string) {
@@ -530,7 +540,7 @@ func TestDB_CompactWithConcurrentWrites(t *testing.T) {
 
 	check("after compaction")
 
-	// close and re-read, which replays the kept WAL once more
+	// close and re-read
 	if err := db.Close(); err != nil {
 		t.Fatal(err)
 	}
@@ -568,8 +578,8 @@ func TestDB_CompactCleansUpOnError(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// the value lives in the WAL, thus a closed WAL fails the snapshot while it copies the value
-	_ = db.wal.f.Close()
+	// the value lives in the log, thus a closed log fails the snapshot while it copies the value
+	_ = db.st.log.f.Close()
 
 	before := openFiles(t)
 	if err := db.Compact(); err == nil {
@@ -580,13 +590,17 @@ func TestDB_CompactCleansUpOnError(t *testing.T) {
 		t.Fatalf("Compact left %d files open", after-before)
 	}
 
-	tmpFiles, err := filepath.Glob(filepath.Join(dir, "*.compact.tmp"))
+	tmpFiles, err := filepath.Glob(filepath.Join(dir, "*"+nextSuffix))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if len(tmpFiles) != 0 {
 		t.Fatalf("Compact left its temp files behind: %v", tmpFiles)
+	}
+
+	if !db.Exists("b", "k") {
+		t.Fatal("a failed compaction must keep the entries")
 	}
 }
 
@@ -612,9 +626,11 @@ func TestDB_OpenCleansUpOnError(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// a payload length beyond the limit fails the replay, when the compacted file is already open
+	// a corrupt record fails the replay, when the compacted file is already open
 	walFile := filepath.Join(dir, "tdb.wal")
-	if err := os.WriteFile(walFile, []byte{0xff, 0xff, 0xff, 0xff, 0xff}, 0600); err != nil {
+	corrupt, _ := appendRecord(nil, setKeyValue, 99, "b", "x", []byte("value"))
+	corrupt[len(corrupt)-1] ^= 0xff
+	if err := os.WriteFile(walFile, corrupt, 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -644,24 +660,24 @@ func TestDB_OpenCleansUpOnError(t *testing.T) {
 }
 
 // TestDB_CloseCleansUpOnError checks that Close still closes the compacted file and releases the directory, when
-// the WAL fails.
+// the log fails.
 func TestDB_CloseCleansUpOnError(t *testing.T) {
 	dir := t.TempDir()
+	before := openFiles(t)
 	db, err := Open(dir)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// a closed WAL fails to sync and to close
-	_ = db.wal.f.Close()
+	// a closed log fails to sync and to close
+	_ = db.st.log.f.Close()
 
-	before := openFiles(t)
 	if err := db.Close(); err == nil {
-		t.Fatal("expected Close to report the failed WAL")
+		t.Fatal("expected Close to report the failed log")
 	}
 
-	if after := openFiles(t); after != before-1 {
-		t.Fatal("Close left the compacted file open")
+	if after := openFiles(t); after != before {
+		t.Fatalf("Close left %d files open", after-before)
 	}
 
 	db, err = Open(dir)
