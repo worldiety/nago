@@ -9,13 +9,17 @@ package application
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/worldiety/enum"
 	"go.wdy.de/nago/application/admin"
+	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/settings"
 	uisettings "go.wdy.de/nago/application/settings/ui"
+	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/data/json"
+	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui/layout"
 )
@@ -63,7 +67,22 @@ func (c *Configurator) SettingsManagement() (SettingsManagement, error) {
 
 		usrRepo := json.NewSloppyJSONRepository[settings.StoreBox[settings.UserSettings]](usrStore)
 
-		uc := settings.NewUseCases(globalRepo, usrRepo, c.EventBus())
+		uc := settings.NewUseCases(globalRepo, usrRepo, c.EventBus(), func(subject permission.Auditable) (string, bool) {
+			// the settings of a person belong to the account of the signed-in subject
+			usr, ok := subject.(user.Subject)
+			if !ok || !usr.Valid() {
+				return "", false
+			}
+
+			return string(usr.ID()), true
+		})
+
+		// the settings of a person go with the account
+		events.SubscribeFor(c.EventBus(), func(evt user.Deleted) {
+			if err := settings.DeleteAccount(usrRepo, string(evt.ID)); err != nil {
+				slog.Error("cannot delete the settings of a deleted account", "user", evt.ID, "err", err)
+			}
+		})
 		c.settingsManagement = &SettingsManagement{
 			UseCases: uc,
 			Pages: uisettings.Pages{

@@ -91,11 +91,15 @@ type UseCases struct {
 	StoreMySettings StoreMySettings
 }
 
-func NewUseCases(globalRepo data.Repository[StoreBox[GlobalSettings], ID], userRepo data.Repository[StoreBox[UserSettings], ID], bus events.Bus) UseCases {
+// NewUseCases wires the global settings and the settings of a person, whose account accountOf tells. The settings
+// of an account are not removed with it by themselves, see [DeleteAccount].
+func NewUseCases(globalRepo data.Repository[StoreBox[GlobalSettings], ID], userRepo data.Repository[StoreBox[UserSettings], ID], bus events.Bus, accountOf AccountOf) UseCases {
 
 	return UseCases{
-		LoadGlobal:  NewLoadGlobal(globalRepo),
-		StoreGlobal: NewStoreGlobal(globalRepo, bus),
+		LoadGlobal:      NewLoadGlobal(globalRepo),
+		StoreGlobal:     NewStoreGlobal(globalRepo, bus),
+		LoadMySettings:  NewLoadMySettings(userRepo, accountOf),
+		StoreMySettings: NewStoreMySettings(userRepo, accountOf),
 	}
 }
 
