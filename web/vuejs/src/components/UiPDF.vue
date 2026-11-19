@@ -7,11 +7,12 @@
  SPDX-License-Identifier: Custom-License
 -->
 <template>
-	<PDFViewer class="pdf" :config="config" :style="frameStyles" @init="onInit" />
+	<!-- keyed by the address: the viewer reads config.src only when it is created, so a new address creates a new viewer -->
+	<PDFViewer :key="ui.src" class="pdf" :config="config" :style="frameStyles" @init="onInit" />
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { frameCSS } from '@/components/shared/frame';
 import { PDF } from '@/shared/proto/nprotoc_gen';
 import PDFViewer, { EmbedPdfContainer, PDFViewerConfig } from '@embedpdf/vue-pdf-viewer';
@@ -82,6 +83,14 @@ const config: PDFViewerConfig = {
 	},
 	disabledCategories: ['annotation', 'document', 'form', 'insert', 'panel', 'redaction', 'tools'],
 };
+
+// a new address of the same component: the key in the template creates a new viewer, which reads this config
+watch(
+	() => props.ui.src,
+	(src) => {
+		config.src = src;
+	}
+);
 
 const frameStyles = computed<string>(() => {
 	const styles = frameCSS(props.ui.frame);
