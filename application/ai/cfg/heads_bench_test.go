@@ -386,7 +386,7 @@ func benchCopyDir(b *testing.B, src, dst string) {
 }
 
 // BenchmarkHeadsSave is G6 of M27: saving a conversation of about 26 KB through Rename, with heads against without,
-// in a fresh directory. It reports the median of b.N saves and the growth of the log per save over the first 100 saves,
+// in a fresh directory beside the stocks. It reports the median of b.N saves and the growth of the log per save over the first 100 saves,
 // before the log is compacted. Run with -test.benchtime=1000x.
 func BenchmarkHeadsSave(b *testing.B) {
 	for _, withHeads := range []bool{false, true} {
@@ -396,7 +396,13 @@ func BenchmarkHeadsSave(b *testing.B) {
 		}
 
 		b.Run(name, func(b *testing.B) {
-			dir := b.TempDir()
+			// on the volume of the stocks like the other measurements, if there is one
+			dir := filepath.Join(filepath.Dir(stockS2.dir(b)), "work-save-"+name)
+			if err := os.RemoveAll(dir); err != nil {
+				b.Fatal(err)
+			}
+			b.Cleanup(func() { _ = os.RemoveAll(dir) })
+
 			d := benchOpenData(b, dir)
 			defer d.app.Destroy()
 			d.wired()
