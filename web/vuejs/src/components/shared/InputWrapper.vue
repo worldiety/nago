@@ -169,6 +169,12 @@ const inputFieldWrapperClasses = computed((): string | null => {
 		}
 
 		&:not(.input-field-wrapper-readonly) {
+			&.input-field-wrapper-basic {
+				.input-field {
+					@apply focus:outline-2 focus:-outline-offset-2 focus:outline-I0;
+				}
+			}
+
 			&.input-field-wrapper-detailed {
 				.input-field {
 					@apply border-none outline-solid outline-1 -outline-offset-1 rounded-lg px-3;
