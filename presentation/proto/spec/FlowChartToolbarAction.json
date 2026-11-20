@@ -5,8 +5,15 @@
   "const": {
     "1": {
       "name": "FlowChartToolbarActionAutoLayout"
+    },
+    "2": {
+      "name": "FlowChartToolbarActionZoomIn"
+    },
+    "3": {
+      "name": "FlowChartToolbarActionZoomOut"
+    },
+    "4": {
+      "name": "FlowChartToolbarActionFitView"
     }
   }
 }
-
-

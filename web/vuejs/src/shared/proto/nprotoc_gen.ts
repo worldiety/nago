@@ -20434,6 +20434,9 @@ function writeTypeHeaderFlowChartToolbarAction(dst: BinaryWriter): void {
 // companion enum containing all defined constants for FlowChartToolbarAction
 export enum FlowChartToolbarActionValues {
 	FlowChartToolbarActionAutoLayout = 1,
+	FlowChartToolbarActionZoomIn = 2,
+	FlowChartToolbarActionZoomOut = 3,
+	FlowChartToolbarActionFitView = 4,
 }
 
 // FlowChartToolbarActions is a list of predefined actions of the flow chart toolbar.

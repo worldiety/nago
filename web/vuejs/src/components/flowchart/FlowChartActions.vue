@@ -8,10 +8,35 @@
 		<button
 			v-if="toolbar.actions.value.includes(FlowChartToolbarActionValues.FlowChartToolbarActionAutoLayout)"
 			:title="$t('flowChart.actions.autoLayout')"
+			:aria-label="$t('flowChart.actions.autoLayout')"
 			@click="onAutoLayout"
 		>
 			<IconArrowLeftRight v-if="orientation === OrientationValues.Horizontal" />
 			<IconArrowUpDown v-else />
+		</button>
+		<button
+			v-if="toolbar.actions.value.includes(FlowChartToolbarActionValues.FlowChartToolbarActionZoomIn)"
+			:title="$t('flowChart.actions.zoomIn')"
+			:aria-label="$t('flowChart.actions.zoomIn')"
+			@click="onZoomIn"
+		>
+			<IconPlus />
+		</button>
+		<button
+			v-if="toolbar.actions.value.includes(FlowChartToolbarActionValues.FlowChartToolbarActionZoomOut)"
+			:title="$t('flowChart.actions.zoomOut')"
+			:aria-label="$t('flowChart.actions.zoomOut')"
+			@click="onZoomOut"
+		>
+			<IconMinus />
+		</button>
+		<button
+			v-if="toolbar.actions.value.includes(FlowChartToolbarActionValues.FlowChartToolbarActionFitView)"
+			:title="$t('flowChart.actions.fitView')"
+			:aria-label="$t('flowChart.actions.fitView')"
+			@click="onFitView"
+		>
+			<IconFitView />
 		</button>
 	</Panel>
 </template>
@@ -25,6 +50,9 @@ import {
 import { Panel, PanelPositionType, VueFlow } from '@vue-flow/core';
 import IconArrowLeftRight from '@/assets/svg/arrow-left-right.svg';
 import IconArrowUpDown from '@/assets/svg/arrow-up-down.svg';
+import IconFitView from '@/assets/svg/fit-view.svg';
+import IconMinus from '@/assets/svg/minus.svg';
+import IconPlus from '@/assets/svg/plus.svg';
 import { computed } from 'vue';
 
 interface Props {
@@ -61,8 +89,22 @@ const position = computed<PanelPositionType>(() => {
 	}
 });
 
+const animation = { duration: 200 };
+
 function onAutoLayout() {
 	emit('action:autoLayout');
+}
+
+function onZoomIn() {
+	props.flowChart.zoomIn(animation);
+}
+
+function onZoomOut() {
+	props.flowChart.zoomOut(animation);
+}
+
+function onFitView() {
+	props.flowChart.fitView(animation);
 }
 </script>
 <style scoped>

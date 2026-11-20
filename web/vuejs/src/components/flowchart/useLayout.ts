@@ -1,7 +1,7 @@
 import dagre from '@dagrejs/dagre';
 import { Node, Position, useVueFlow, VueFlow } from '@vue-flow/core';
 import { ref } from 'vue';
-import { OrientationValues } from '@/shared/proto/nprotoc_gen';
+import { FlowChartNode, FlowChartPoint, OrientationValues } from '@/shared/proto/nprotoc_gen';
 
 /**
  * Composable to run the layout algorithm on the graph.
@@ -49,13 +49,29 @@ export function useLayout() {
 		// set nodes with updated positions
 		return nodes.map((node) => {
 			const nodeWithPosition = dagreGraph.node(node.id);
+			if (!nodeWithPosition) return node;
+
+			// dagre places the center of a node, vue flow its top left corner
+			const position = {
+				x: nodeWithPosition.x - nodeWithPosition.width / 2,
+				y: nodeWithPosition.y - nodeWithPosition.height / 2,
+			};
+
+			// the data must stay a FlowChartNode: the node template renders only instances of it, a plain copy
+			// made every node disappear after an auto layout
+			let data = node.data;
+			if (data instanceof FlowChartNode) {
+				data = Object.assign(Object.create(Object.getPrototypeOf(data)), data, {
+					position: new FlowChartPoint(position.x, position.y),
+				});
+			}
 
 			return {
 				...node,
-				data: { ...node.data, position: { x: nodeWithPosition.x, y: nodeWithPosition.y } },
+				data,
 				targetPosition: isHorizontal ? Position.Left : Position.Top,
 				sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
-				position: { x: nodeWithPosition.x, y: nodeWithPosition.y },
+				position,
 			};
 		});
 	}
