@@ -13,7 +13,6 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
-	"io"
 	"iter"
 	"log/slog"
 	"reflect"
@@ -26,6 +25,7 @@ import (
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/data/json"
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/presentation/core"
 )
@@ -463,31 +463,19 @@ func (h *heads) candidates(c coverage, marked map[ID]bool, prefixes ...string) (
 	return slices.Compact(res), nil
 }
 
-// undecodable reports whether err tells, that a stored session cannot be decoded, unlike an error of reading it.
+// undecodable reports whether err tells, that a stored session has been read but cannot be decoded, unlike an error of
+// reading it: a [json.DecodeError] of nago's JSON repository, or an error of a JSON decoder of another repository.
 func undecodable(err error) bool {
 	var (
-		syntax     *enumjson.SyntaxError
-		typ        *enumjson.UnmarshalTypeError
-		field      *enumjson.UnmarshalFieldError
-		invalid    *enumjson.InvalidUnmarshalError
-		stdSyntax  *stdjson.SyntaxError
-		stdTyp     *stdjson.UnmarshalTypeError
-		stdInvalid *stdjson.InvalidUnmarshalError
+		decode    *json.DecodeError
+		syntax    *enumjson.SyntaxError
+		typ       *enumjson.UnmarshalTypeError
+		stdSyntax *stdjson.SyntaxError
+		stdTyp    *stdjson.UnmarshalTypeError
 	)
 
-	switch {
-	case errors.As(err, &syntax), errors.As(err, &typ), errors.As(err, &field), errors.As(err, &invalid),
-		errors.As(err, &stdSyntax), errors.As(err, &stdTyp), errors.As(err, &stdInvalid):
-		return true
-	case errors.Is(err, io.ErrUnexpectedEOF), errors.Is(err, io.EOF):
-		// a truncated or an empty document
-		return true
-	}
-
-	// the errors of the variants of the enum decoder have no type of their own
-	msg := err.Error()
-	return strings.Contains(msg, "json: ") || strings.Contains(msg, "unknown type tag") ||
-		strings.Contains(msg, "cannot unquote json tag") || strings.Contains(msg, "invalid externally tagged object format")
+	return errors.As(err, &decode) || errors.As(err, &syntax) || errors.As(err, &typ) || errors.As(err, &stdSyntax) ||
+		errors.As(err, &stdTyp)
 }
 
 // start repairs the heads of the sessions with a mark and starts the build, which the store needs, see [Heads].
