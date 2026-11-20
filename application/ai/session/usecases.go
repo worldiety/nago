@@ -34,6 +34,7 @@ import (
 	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
+	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/xtime"
 )
@@ -384,8 +385,13 @@ type UseCases struct {
 	Rename   Rename
 	Delete   Delete
 
-	// FindResumable finds the session a freshly opened chat continues through an index of the waiting sessions.
+	// FindResumable finds the session a freshly opened chat continues, with [Heads] through the heads of the waiting
+	// sessions of the subject.
 	FindResumable FindResumable
+
+	// FindSummaries yields the heads of the sessions for a list like the history, with [Heads] without reading a
+	// conversation.
+	FindSummaries FindSummaries
 
 	// Tasks keeps the background tasks of running conversations, keyed by session id (see
 	// [completion.NewTaskTools]). [Dismiss] and [Delete] cancel the tasks of their session.
@@ -399,23 +405,13 @@ type UseCases struct {
 	locks *locker
 }
 
-// NewUseCases wires the session use cases against the given repository and ReBAC database.
-//
-// Mutating operations on an existing session ([Append], [Rename], [Delete]) serialize per session id via a
-// keyed lock, so a long-running [Append] only blocks other
-// operations on the same session, never on unrelated ones. [Create] needs no lock because it works on a
-// freshly generated, collision-free id.
-//
-// Authorization is resource-scoped: every use case audits via [auth.Subject.AuditResource] against the
-// session's ReBAC instance, so a subject may act either through a global permission (e.g. an IAM group that
-// is allowed to create/list sessions) or through an instance grant. [Create] writes such an instance grant
-// for the creator, so users can see and continue only their own sessions unless additionally granted global
-// access.
 // Option configures [NewUseCases].
 type Option func(o *useCaseOptions)
 
 type useCaseOptions struct {
 	onDelete []func(id ID) error
+	heads    blob.Store
+	headsCtx context.Context
 }
 
 // OnDelete is invoked for every session right before it is deleted, also for each of its child sessions, e.g. to
@@ -444,9 +440,20 @@ func (o useCaseOptions) deleteHook() func(id ID) error {
 	}
 }
 
-// NewUseCases keeps an index of the waiting sessions of repo for [FindResumable], which follows every write of
-// these use cases (see pendingIndex). Thus, construct them once per repository and write sessions only through
-// them, as application/ai/cfg does.
+// NewUseCases wires the session use cases on repo and the ReBAC database. Without [Heads], every search reads every
+// session. With it, construct them once per repository and write sessions only through them, as application/ai/cfg
+// does.
+//
+// Mutating operations on an existing session ([Append], [Rename], [Delete]) serialize per session id via a
+// keyed lock, so a long-running [Append] only blocks other
+// operations on the same session, never on unrelated ones. [Create] needs no lock because it works on a
+// freshly generated, collision-free id.
+//
+// Authorization is resource-scoped: every use case audits via [auth.Subject.AuditResource] against the
+// session's ReBAC instance, so a subject may act either through a global permission (e.g. an IAM group that
+// is allowed to create/list sessions) or through an instance grant. [Create] writes such an instance grant
+// for the creator, so users can see and continue only their own sessions unless additionally granted global
+// access.
 func NewUseCases(repo Repository, rdb *rebac.DB, opts ...Option) UseCases {
 	var locks locker
 	tasks := completion.NewTaskRegistry()
@@ -456,20 +463,25 @@ func NewUseCases(repo Repository, rdb *rebac.DB, opts ...Option) UseCases {
 		opt(&options)
 	}
 
-	// every use case, also the sub-runner, writes through it
-	index := &pendingIndex{}
-	repo = indexedRepository{Repository: repo, index: index}
+	var h *heads
+	if options.heads != nil {
+		h = newHeads(options.headsCtx, repo, options.heads)
+		// every use case, also the sub-runner, writes through it
+		repo = headedRepository{Repository: repo, h: h}
+		h.start()
+	}
 
 	return UseCases{
 		Create:        NewCreate(repo, rdb),
 		FindByID:      NewFindByID(repo),
-		FindAll:       NewFindAll(repo),
+		FindAll:       newFindAll(repo, h),
 		Append:        NewAppend(&locks, repo, ledger),
 		Resolve:       NewResolve(&locks, repo, ledger),
 		Dismiss:       NewDismiss(&locks, repo, ledger, tasks),
 		Rename:        NewRename(&locks, repo),
-		Delete:        NewDelete(&locks, repo, rdb, tasks, ledger, options.deleteHook()),
-		FindResumable: newFindResumable(repo, index),
+		Delete:        newDelete(&locks, repo, rdb, tasks, ledger, options.deleteHook(), h),
+		FindResumable: newFindResumable(repo, h),
+		FindSummaries: newFindSummaries(repo, h),
 		Tasks:         tasks,
 		subUsage:      ledger,
 		repo:          repo,

@@ -25,6 +25,20 @@ import (
 // background tasks of the session in tasks (which may be nil) are cancelled first, so that a running run of
 // the session ends soon and no task creates another child meanwhile.
 func NewDelete(locks *locker, repo Repository, rdb *rebac.DB, tasks *completion.TaskRegistry, ledger *usageLedger, onDelete func(id ID) error) Delete {
+	return newDelete(locks, repo, rdb, tasks, ledger, onDelete, nil)
+}
+
+// newDelete returns a [Delete] use case, which finds the children through the heads of h, or by reading every session
+// without them. A child, which cannot be decoded, stays.
+func newDelete(locks *locker, repo Repository, rdb *rebac.DB, tasks *completion.TaskRegistry, ledger *usageLedger, onDelete func(id ID) error, h *heads) Delete {
+	childrenOf := func(id ID) ([]ID, error) {
+		if h != nil {
+			return h.children(id)
+		}
+
+		return scanChildren(repo, id)
+	}
+
 	return func(subject auth.Subject, id ID) error {
 		// The audit happens before anything else, otherwise anybody could stop the tasks of a foreign session.
 		// It does not need the lock: a run of the session holds that until its tasks are done, and those are
@@ -56,7 +70,7 @@ func NewDelete(locks *locker, repo Repository, rdb *rebac.DB, tasks *completion.
 		// continued the parent. A task which passed the checks of its creation right before the parent was
 		// gone may still save a child, thus the search is repeated once.
 		for range 2 {
-			children, err := childrenOf(repo, id)
+			children, err := childrenOf(id)
 			if err != nil {
 				return err
 			}
@@ -65,13 +79,23 @@ func NewDelete(locks *locker, repo Repository, rdb *rebac.DB, tasks *completion.
 				return nil
 			}
 
+			deleted := 0
 			for _, child := range children {
 				if tasks != nil {
 					tasks.Cancel(string(child))
 				}
 				if err := deleteUnchecked(locks, repo, rdb, ledger, onDelete, child); err != nil {
+					if undecodable(err) {
+						slog.Error("cannot decode a child session, it stays", "session", child, "parent", id, "err", err)
+						continue
+					}
 					return err
 				}
+				deleted++
+			}
+
+			if deleted == 0 {
+				return nil
 			}
 		}
 
@@ -79,12 +103,15 @@ func NewDelete(locks *locker, repo Repository, rdb *rebac.DB, tasks *completion.
 	}
 }
 
-// childrenOf returns the ids of the child sessions of id. Collecting first is required, because deleting while
-// iterating the repository is not safe.
-func childrenOf(repo Repository, id ID) ([]ID, error) {
+// scanChildren returns the ids of the child sessions of id by reading every session. A session, which cannot be
+// decoded, is left out. Collecting first is required, because deleting while iterating the repository is not safe.
+func scanChildren(repo Repository, id ID) ([]ID, error) {
 	var children []ID
 	for s, err := range repo.All() {
 		if err != nil {
+			if undecodable(err) {
+				continue
+			}
 			return nil, fmt.Errorf("cannot list child sessions: %w", err)
 		}
 		if s.ParentID == id {
@@ -118,7 +145,7 @@ func deleteUnchecked(locks *locker, repo Repository, rdb *rebac.DB, ledger *usag
 		}
 	}
 
-	if err := repo.DeleteByID(id); err != nil {
+	if err := repo.DeleteByEntity(optSession.Unwrap()); err != nil {
 		return fmt.Errorf("cannot delete session: %w", err)
 	}
 

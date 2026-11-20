@@ -42,51 +42,78 @@ func NewFindByID(repo Repository) FindByID {
 
 // mayRead reports whether the subject holds perm on the session or, for a child session, on its parent.
 func mayRead(subject auth.Subject, s Session, perm permission.ID) bool {
-	if subject.AuditResource(Namespace, rebacInstance(s.ID), perm) == nil {
+	return mayReadID(subject, s.ID, s.ParentID, perm)
+}
+
+// mayReadID is mayRead for the session id with the parent.
+func mayReadID(subject auth.Subject, id, parent ID, perm permission.ID) bool {
+	if subject.AuditResource(Namespace, rebacInstance(id), perm) == nil {
 		return true
 	}
 
-	return s.ParentID != "" && subject.AuditResource(Namespace, rebacInstance(s.ParentID), perm) == nil
+	return parent != "" && subject.AuditResource(Namespace, rebacInstance(parent), perm) == nil
 }
 
 // NewFindAll returns a [FindAll] use case yielding the sessions the subject may see: those granted per
 // instance (its own) plus all sessions if the subject holds PermFindAll globally. When [FindAllOptions.Tags]
 // is set, only sessions carrying all of those tags are yielded. Child sessions are skipped unless
 // [FindAllOptions.IncludeChildren] is set. The (cheap) tag filter is applied before the
-// (potentially more expensive) ReBAC audit.
+// (potentially more expensive) ReBAC audit. It reads every session.
 func NewFindAll(repo Repository) FindAll {
+	return newFindAll(repo, nil)
+}
+
+// newFindAll returns a [FindAll] use case, which reads the heads of h for the sessions of a creator without children,
+// otherwise every session.
+func newFindAll(repo Repository, h *heads) FindAll {
 	return func(subject auth.Subject, opts FindAllOptions) iter.Seq2[Session, error] {
 		return func(yield func(Session, error) bool) {
-			for session, err := range repo.All() {
-				if err != nil {
-					if !yield(Session{}, err) {
-						return
-					}
-					continue
-				}
-
-				if session.ParentID != "" && !opts.IncludeChildren {
-					continue
-				}
-
-				if opts.CreatedBy != "" && session.CreatedBy != opts.CreatedBy {
-					continue
-				}
-
-				if !hasAllTags(session.Tags, opts.Tags) {
-					continue
-				}
-
-				if !mayRead(subject, session, PermFindAll) {
-					continue
-				}
-
-				if !yield(session, nil) {
-					return
-				}
+			if h != nil && opts.CreatedBy != "" && !opts.IncludeChildren {
+				h.findAll(subject, opts, yield)
+				return
 			}
+
+			scanAll(repo, subject, opts, yield)
 		}
 	}
+}
+
+// scanAll yields the sessions of [FindAll] by reading every session.
+func scanAll(repo Repository, subject auth.Subject, opts FindAllOptions, yield func(Session, error) bool) {
+	for session, err := range repo.All() {
+		if err != nil {
+			if !yield(Session{}, err) {
+				return
+			}
+			continue
+		}
+
+		if findable(subject, session, opts) && !yield(session, nil) {
+			return
+		}
+	}
+}
+
+// findable reports whether [FindAll] yields the session.
+func findable(subject auth.Subject, s Session, opts FindAllOptions) bool {
+	return summaryFindable(subject, Summary{ID: s.ID, ParentID: s.ParentID, CreatedBy: s.CreatedBy, Tags: s.Tags}, opts)
+}
+
+// summaryFindable reports whether [FindAll] yields the session of the head.
+func summaryFindable(subject auth.Subject, s Summary, opts FindAllOptions) bool {
+	if s.ParentID != "" && !opts.IncludeChildren {
+		return false
+	}
+
+	if opts.CreatedBy != "" && s.CreatedBy != opts.CreatedBy {
+		return false
+	}
+
+	if !hasAllTags(s.Tags, opts.Tags) {
+		return false
+	}
+
+	return mayReadID(subject, s.ID, s.ParentID, PermFindAll)
 }
 
 // hasAllTags reports whether have contains every tag in want (AND semantics). An empty want matches anything.

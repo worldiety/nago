@@ -76,7 +76,7 @@ func NewCreate(repo Repository, rdb *rebac.DB) Create {
 		// Grant the creator ownership of this instance. Roll back the just-saved session if the grant fails,
 		// so we never leave a session nobody (but a global admin) can access.
 		if err := grantOwner(rdb, subject.ID(), session.ID); err != nil {
-			if delErr := repo.DeleteByID(session.ID); delErr != nil {
+			if delErr := repo.DeleteByEntity(session); delErr != nil {
 				return Session{}, fmt.Errorf("cannot grant session ownership: %w; cannot roll back session: %v", err, delErr)
 			}
 			return Session{}, fmt.Errorf("cannot grant session ownership: %w", err)
