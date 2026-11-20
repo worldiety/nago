@@ -8,6 +8,7 @@
 package cfgai
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -29,6 +30,7 @@ import (
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/nagotest"
+	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/xtime"
 )
@@ -178,26 +180,39 @@ func (s benchStock) seed(b *testing.B, dir string) benchSeed {
 	return seed
 }
 
-// open opens the stock with a fresh configurator, which configure prepares. It checks that the stock is complete
-// with extra conversations besides the seeded ones.
+// open opens the stock with a fresh configurator, which configure prepares, see built.
 func (s benchStock) open(b *testing.B, extra int, configure func(c *application.Configurator)) (*nagotest.App, benchSeed) {
 	b.Helper()
 
+	seed := s.built(b, extra)
 	dir := s.dir(b)
-	seed := s.seed(b, dir)
-
-	app := nagotest.New(b, func(c *application.Configurator) {
-		c.SetApplicationID(benchAppID)
-		c.SetDataDir(dir)
-		configure(c)
-	})
-
+	app := benchOpenDir(b, dir, configure)
 	repo := std.Must(application.JSONRepository[session.Session](app.Configurator(), string(session.Namespace)))
 	if n := std.Must(repo.Count()); n != seed.Sessions+extra {
 		b.Fatalf("stock %s has %d conversations instead of %d", s.name, n, seed.Sessions+extra)
 	}
 
 	return app, seed
+}
+
+// built seeds the stock and builds the heads of its conversations, with extra conversations besides the seeded ones,
+// unless that has been done: a configurator with the ai management builds them, and every configurator is closed
+// afterwards.
+func (s benchStock) built(b *testing.B, extra int) benchSeed {
+	b.Helper()
+
+	dir := s.dir(b)
+	seed := s.seed(b, dir)
+
+	if !benchHeadsBuilt(b, dir, seed.Sessions+extra) {
+		start := time.Now()
+		app := benchOpenDir(b, dir, func(c *application.Configurator) { std.Must(Enable(c)) })
+		benchAwaitHeads(b, app.Configurator(), seed.Sessions+extra)
+		app.Core().Destroy()
+		b.Logf("built the heads of %s in %v", s.name, time.Since(start))
+	}
+
+	return seed
 }
 
 // openEnabled opens the stock with the ai management enabled.
@@ -210,6 +225,92 @@ func (s benchStock) openEnabled(b *testing.B, extra int) (*nagotest.App, Managem
 	})
 
 	return app, mgmt, seed
+}
+
+// benchOpenDir opens the data directory with a fresh configurator.
+func benchOpenDir(b *testing.B, dir string, configure func(c *application.Configurator)) *nagotest.App {
+	b.Helper()
+
+	return nagotest.New(b, func(c *application.Configurator) {
+		c.SetApplicationID(benchAppID)
+		c.SetDataDir(dir)
+		configure(c)
+	})
+}
+
+// The store of the heads and its keys, see application/ai/session/heads.go.
+const (
+	benchHeadStore = "nago.ai.session.head"
+	benchLayoutKey = "~layout"
+)
+
+// benchHeads opens the store of the heads of the configurator.
+func benchHeads(b *testing.B, cfg *application.Configurator) blob.Store {
+	b.Helper()
+
+	stores := std.Must(cfg.Stores())
+	return std.Must(stores.Open(benchHeadStore, blob.OpenStoreOptions{Type: blob.EntityStore, Derived: true}))
+}
+
+// benchHeadsDone tells whether the build of the heads has finished, reading the layout only.
+func benchHeadsDone(b *testing.B, heads blob.Store) bool {
+	b.Helper()
+
+	var l struct {
+		State string `json:"state"`
+	}
+	if opt := std.Must(blob.Get(heads, benchLayoutKey)); opt.IsSome() {
+		if err := json.Unmarshal(opt.Unwrap(), &l); err != nil {
+			b.Fatal(err)
+		}
+	}
+
+	return l.State == "done" && !std.Must(heads.Exists(context.Background(), blob.InvalidKey))
+}
+
+// benchHeadsState tells whether the build of the heads has finished and how many heads there are.
+func benchHeadsState(b *testing.B, heads blob.Store) (done bool, n int) {
+	b.Helper()
+
+	for _, prefix := range []string{"h/", "k/"} {
+		for _, err := range heads.List(context.Background(), blob.ListOptions{Prefix: prefix}) {
+			if err != nil {
+				b.Fatal(err)
+			}
+			n++
+		}
+	}
+
+	return benchHeadsDone(b, heads), n
+}
+
+// benchHeadsBuilt opens the directory without the ai management and tells, whether the heads of all conversations
+// are built.
+func benchHeadsBuilt(b *testing.B, dir string, sessions int) bool {
+	b.Helper()
+
+	app := benchOpenDir(b, dir, func(c *application.Configurator) {})
+	defer app.Core().Destroy()
+
+	done, n := benchHeadsState(b, benchHeads(b, app.Configurator()))
+	return done && n == sessions
+}
+
+// benchAwaitHeads waits until the build of the heads has finished with a head for every conversation.
+func benchAwaitHeads(b *testing.B, cfg *application.Configurator, sessions int) {
+	b.Helper()
+
+	heads := benchHeads(b, cfg)
+	for deadline := time.Now().Add(30 * time.Minute); !benchHeadsDone(b, heads); {
+		if time.Now().After(deadline) {
+			b.Fatalf("the build of the heads has not finished")
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	if _, n := benchHeadsState(b, heads); n != sessions {
+		b.Fatalf("the build has finished with %d heads for %d conversations", n, sessions)
+	}
 }
 
 // subject returns the measuring person of the stock.
@@ -308,8 +409,8 @@ func BenchmarkFindResumable(b *testing.B) {
 	}
 }
 
-// BenchmarkHistory is G2 of M27: loading the history of the measuring person, the 200 own conversations, in S2 and
-// S50. It takes the way of the history dialog.
+// BenchmarkHistory is G2 of M27: loading the heads of the history of the measuring person, the 200 own conversations,
+// in S2 and S50, through FindSummaries like the history dialog.
 func BenchmarkHistory(b *testing.B) {
 	for _, stock := range []benchStock{stockS2, stockS50} {
 		b.Run(stock.name, func(b *testing.B) {
@@ -318,7 +419,7 @@ func BenchmarkHistory(b *testing.B) {
 
 			load := func() {
 				n := 0
-				for s, err := range mgmt.SessionUseCases.FindAll(subject, session.FindAllOptions{Tags: benchTags, CreatedBy: seed.User}) {
+				for s, err := range mgmt.SessionUseCases.FindSummaries(subject, session.FindAllOptions{Tags: benchTags, CreatedBy: seed.User}) {
 					if err != nil {
 						b.Fatal(err)
 					}
