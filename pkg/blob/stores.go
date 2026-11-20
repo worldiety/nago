@@ -48,6 +48,8 @@ type StoreInfo struct {
 	ContentTypes xslices.Slice[ContentType]
 	Title        string // just to make it more human-readable, maybe an [i18n.Key]
 	Description  string // just to make it more human-readable, maybe an [i18n.Key]
+	// Derived tells, whether the store has been opened with [OpenStoreOptions.Derived].
+	Derived bool
 }
 
 func (s StoreInfo) String() string {
@@ -65,6 +67,11 @@ type OpenStoreOptions struct {
 	Type        StoreType
 	Title       string // just to make it more human-readable, maybe an [i18n.Key]
 	Description string // just to make it more human-readable, maybe an [i18n.Key]
+
+	// Derived opens a store, which holds data derived from other stores, e.g. an index, which its owner rebuilds from
+	// them. A backup leaves it out, and a restore marks it as invalid before it clears the first store, see
+	// [Invalidate] and [Derive]. Opening it again without Derived keeps it derived.
+	Derived bool
 }
 
 // Stores defines a common meta-interface for databases or other sources to interact with store instances on a meta-

@@ -220,6 +220,13 @@ func (s *LocalStores) open(name string, opts blob.OpenStoreOptions) (blob.Store,
 			return nil, fmt.Errorf("type mismatch of already opened store '%s': %v", name, entry.info.Type)
 		}
 
+		if opts.Derived && !entry.info.Derived {
+			// replaced instead of changed, because Stat reads entries without the mutex
+			info := entry.info
+			info.Derived = true
+			s.stores.Put(name, &storeEntry{store: entry.store, info: info})
+		}
+
 		return entry.store, nil
 	}
 
@@ -242,6 +249,7 @@ func (s *LocalStores) open(name string, opts blob.OpenStoreOptions) (blob.Store,
 				Type:        opts.Type,
 				Title:       opts.Title,
 				Description: opts.Description,
+				Derived:     opts.Derived,
 			},
 		}
 	case blob.EntityStore:
@@ -253,6 +261,7 @@ func (s *LocalStores) open(name string, opts blob.OpenStoreOptions) (blob.Store,
 				Type:        opts.Type,
 				Title:       opts.Title,
 				Description: opts.Description,
+				Derived:     opts.Derived,
 			},
 		}
 
