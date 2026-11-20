@@ -526,24 +526,14 @@ func (b *ScaffoldBuilder) logoActionClick(wnd core.Window) func() {
 	}
 }
 
-func (b *ScaffoldBuilder) profileMenu(wnd core.Window) core.View {
-	return uiuser.AccountView(wnd)
-}
-
 func (b *ScaffoldBuilder) profileDialog(wnd core.Window, state *core.State[bool], isMobile bool) core.View {
-	if !state.Get() {
-		return nil
-	}
-
 	var opts []alert.Option
-
-	opts = append(opts, alert.Closeable())
 	// TODO read how many impress, gtc etc entries we have and if we have all 4 use alert.Large
 	if !isMobile && wnd.Info().Height > 600 {
 		opts = append(opts, alert.Alignment(ui.TopTrailing), alert.ModalPadding(ui.Padding{}.All(ui.L80)))
 	}
 
-	return alert.Dialog("Nutzerkonto", b.profileMenu(wnd), state, opts...)
+	return uiuser.AccountDialog(wnd, state, opts...)
 }
 
 func (b *ScaffoldBuilder) avatarIcon(wnd core.Window) core.View {

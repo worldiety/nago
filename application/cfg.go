@@ -29,6 +29,7 @@ import (
 	"go.wdy.de/nago/application/migration"
 	"go.wdy.de/nago/application/rebac"
 	"go.wdy.de/nago/application/theme"
+	uiuser "go.wdy.de/nago/application/user/ui"
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/data/json"
@@ -91,6 +92,7 @@ type Configurator struct {
 	adminManagement        *AdminManagement
 	adminManagementGroups  []func(uid auth.Subject) admin.Group
 	adminManagementMutator func(m *AdminManagement)
+	accountSections        []uiuser.AccountSections
 	sessionManagement      *SessionManagement
 	permissionManagement   *PermissionManagement
 	groupManagement        *GroupManagement

@@ -40,6 +40,9 @@ type TAccountView struct {
 //   - uiuser.Pages
 //   - uisession.Pages
 //   - admin.HasEntries and uiadmin.Pages, to link the admin center
+//
+// It shows nago's sections (see AccountSectionModel) as changed by the AccountSections of the context, which
+// application.Configurator.AddAccountSections registers.
 func AccountView(wnd core.Window) TAccountView {
 	getDisplayName, ok := core.FromContext[user.DisplayName](wnd.Context(), "")
 	if !ok {
@@ -49,38 +52,74 @@ func AccountView(wnd core.Window) TAccountView {
 		}
 	}
 
-	userPages, _ := core.FromContext[Pages](wnd.Context(), "")
 	sessionPages, _ := core.FromContext[uisession.Pages](wnd.Context(), "")
 
-	c := TAccountView{
+	sections := accountSections(wnd)
+	if fn, ok := core.FromContext[AccountSections](wnd.Context(), ""); ok && fn != nil {
+		sections = fn(wnd, sections)
+	}
+
+	var views []core.View
+	for _, section := range sections {
+		if len(section.Entries) == 0 {
+			continue
+		}
+
+		entries := make([]core.View, 0, len(section.Entries))
+		for _, entry := range section.Entries {
+			entries = append(entries, entry.View)
+		}
+
+		views = append(views, AccountSection(section.Title).ID(string(section.ID)).Entries(entries...))
+	}
+
+	return TAccountView{
 		wnd:            wnd,
 		getDisplayName: getDisplayName,
 		uid:            wnd.Subject().ID(),
 		logoutPage:     sessionPages.Logout,
-	}.Sections(
-		AccountSection("Konto").
-			Entries(
-				AccountAction(flowbiteOutline.UserEdit, "Profil verwalten", func() {
-					wnd.Navigation().ForwardTo(userPages.MyProfile, nil)
-				}),
-				switchThemeButton(wnd),
-			),
-	)
+	}.Sections(views...)
+}
+
+// accountSections are nago's sections of the account view of wnd: SectionAccount with EntryProfile and EntryTheme,
+// then SectionSettings with EntryAdminCenter, if admin.HasEntries holds for the subject.
+func accountSections(wnd core.Window) []AccountSectionModel {
+	userPages, _ := core.FromContext[Pages](wnd.Context(), "")
+
+	sections := []AccountSectionModel{
+		{
+			ID:    SectionAccount,
+			Title: "Konto",
+			Entries: []AccountEntryModel{
+				{
+					ID: EntryProfile,
+					View: AccountAction(flowbiteOutline.UserEdit, "Profil verwalten", func() {
+						wnd.Navigation().ForwardTo(userPages.MyProfile, nil)
+					}),
+				},
+				{ID: EntryTheme, View: switchThemeButton(wnd)},
+			},
+		},
+	}
 
 	if adminPages, ok := core.FromContext[uiadmin.Pages](wnd.Context(), ""); ok {
 		if hasEntries, ok := core.FromContext[admin.HasEntries](wnd.Context(), ""); ok && hasEntries(wnd.Subject()) {
-			c = c.WithSections(
-				AccountSection("Einstellungen").
-					Entries(
-						AccountAction(flowbiteOutline.Cog, "Verwalten", func() {
+			sections = append(sections, AccountSectionModel{
+				ID:    SectionSettings,
+				Title: "Einstellungen",
+				Entries: []AccountEntryModel{
+					{
+						ID: EntryAdminCenter,
+						View: AccountAction(flowbiteOutline.Cog, "Verwalten", func() {
 							wnd.Navigation().ForwardTo(adminPages.AdminCenter, nil)
 						}),
-					),
-			)
+					},
+				},
+			})
 		}
 	}
 
-	return c
+	return sections
 }
 
 func (c TAccountView) Sections(sections ...core.View) TAccountView {
@@ -100,6 +139,7 @@ func (c TAccountView) Render(ctx core.RenderContext) core.RenderNode {
 
 	displayData := c.getDisplayName(c.uid)
 	cfgTheme := core.GlobalSettings[theme.Settings](c.wnd)
+	hasLegalTexts := cfgTheme.Impress != "" || cfgTheme.PrivacyPolicy != "" || cfgTheme.GeneralTermsAndConditions != "" || cfgTheme.TermsOfUse != ""
 
 	return ui.VStack(
 		avatar.TextOrImage(displayData.Displayname, displayData.Avatar).Size(ui.L96),
@@ -116,25 +156,33 @@ func (c TAccountView) Render(ctx core.RenderContext) core.RenderNode {
 
 			c.wnd.Navigation().ForwardTo(c.logoutPage, nil)
 		}).Title("Abmelden").Frame(ui.Frame{}.FullWidth()),
-		ui.HLineWithColor(ui.ColorAccent),
-		ui.HStack(
+		// the line and the legal texts only with at least one legal text, otherwise an empty line would remain
+		ui.If(hasLegalTexts, ui.HLineWithColor(ui.ColorAccent)),
+		ui.If(hasLegalTexts, ui.HStack(
 			ui.If(cfgTheme.Impress != "", ui.Link(c.wnd, "Impressum", cfgTheme.Impress, ui.LinkTargetNewWindowOrTab)),
 			ui.If(cfgTheme.PrivacyPolicy != "", ui.Link(c.wnd, "Datenschutz", cfgTheme.PrivacyPolicy, ui.LinkTargetNewWindowOrTab)),
 			ui.If(cfgTheme.GeneralTermsAndConditions != "", ui.Link(c.wnd, "AGB", cfgTheme.GeneralTermsAndConditions, ui.LinkTargetNewWindowOrTab)),
 			ui.If(cfgTheme.TermsOfUse != "", ui.Link(c.wnd, "Nutzungsbedingungen", cfgTheme.TermsOfUse, ui.LinkTargetNewWindowOrTab)),
-		).Gap(ui.L16),
+		).Gap(ui.L16)),
 	).Gap(ui.L16).
 		FullWidth().
 		Render(ctx)
 }
 
 type TAccountSection struct {
+	id      string
 	name    string
 	entries []core.View
 }
 
 func AccountSection(name string) TAccountSection {
 	return TAccountSection{name: name}
+}
+
+// ID sets the id of the rendered section.
+func (c TAccountSection) ID(id string) TAccountSection {
+	c.id = id
+	return c
 }
 
 func (c TAccountSection) Entries(entries ...core.View) TAccountSection {
@@ -150,6 +198,7 @@ func (c TAccountSection) Render(ctx core.RenderContext) core.RenderNode {
 	return ui.VStack(
 		tmp...,
 	).Gap(ui.L4).
+		ID(c.id).
 		FullWidth().
 		Alignment(ui.Leading).
 		Render(ctx)
