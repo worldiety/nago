@@ -56,6 +56,11 @@ func NewBackup(src blob.Stores) Backup {
 			}
 
 			stat := optStat.Unwrap()
+			if stat.Derived {
+				// its owner rebuilds it from the other stores, and it would not even fit them, see blob.OpenStoreOptions
+				slog.Info("backup", "action", "derived store left out", "store", fileStoreName)
+				continue
+			}
 
 			slog.Info("backup", "action", "blob store started", "store", fileStoreName)
 
@@ -87,7 +92,7 @@ func NewBackup(src blob.Stores) Backup {
 
 			slog.Info("backup", "action", "store completed", "store", fileStoreName, "blobs", len(storeIdx.Blobs))
 		}
-		
+
 		// write backup index
 		bufIdx, err := json.Marshal(index)
 		if err != nil {

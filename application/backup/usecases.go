@@ -13,6 +13,7 @@ import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/blob/crypto"
+	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/presentation/core"
 	"io"
 	"time"
@@ -30,10 +31,15 @@ type UseCases struct {
 	ReplaceMasterKey ReplaceMasterKey
 }
 
-func NewUseCases(p blob.Stores, getCryptoKey func() crypto.EncryptionKey, setCryptoKey func(crypto.EncryptionKey)) UseCases {
+// Restored is published on the event bus of [NewUseCases] at the end of every [Restore], whether it succeeded or
+// failed, so that the owners of derived stores rebuild them, see [blob.OpenStoreOptions.Derived].
+type Restored struct{}
+
+// NewUseCases wires the backup use cases on p. bus, which may be nil, receives [Restored].
+func NewUseCases(p blob.Stores, getCryptoKey func() crypto.EncryptionKey, setCryptoKey func(crypto.EncryptionKey), bus events.Bus) UseCases {
 	return UseCases{
 		Backup:           NewBackup(p),
-		Restore:          NewRestore(p),
+		Restore:          NewRestore(p, bus),
 		ExportMasterKey:  NewExportMasterKey(getCryptoKey),
 		ReplaceMasterKey: NewImportMasterKey(setCryptoKey),
 	}

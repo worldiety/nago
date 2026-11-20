@@ -17,16 +17,24 @@ import (
 	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/data"
+	"go.wdy.de/nago/pkg/events"
 	"io"
 	"log/slog"
 	"os"
 	"path/filepath"
 )
 
-func NewRestore(dst blob.Stores) Restore {
+// NewRestore returns a [Restore] into dst. Before it clears the first store, it invalidates every derived store of dst,
+// see [blob.Invalidate], and it restores none of them, should the backup contain one. At its end, whether it succeeded or
+// failed, it publishes [Restored] on bus, which may be nil, and lets the owners of the derived stores rebuild them.
+func NewRestore(dst blob.Stores, bus events.Bus) Restore {
 	return func(ctx context.Context, subject auth.Subject, src io.Reader) error {
 		if err := subject.Audit(PermRestore); err != nil {
 			return err
+		}
+
+		if bus != nil {
+			defer bus.Publish(Restored{})
 		}
 
 		slog.Info("restore", "action", "started", "userID", subject.ID(), "userEMail", subject.Email())
@@ -103,8 +111,21 @@ func NewRestore(dst blob.Stores) Restore {
 
 		slog.Info("restore", "action", "validation successful", "totalBytes", totalBytes, "size", index.Size(), "count", index.Count())
 
+		// The derived stores do not fit the restored data, and a crash at any later point must leave them invalid. Their
+		// owners rebuild them, after the restore has ended.
+		derived, endInvalidation, err := invalidateDerived(dst)
+		defer endInvalidation()
+		if err != nil {
+			return err
+		}
+
 		// check is complete now, let us destroy some bytes...
 		for _, idxStore := range index.Stores {
+			if derived[idxStore.Name] {
+				slog.Info("restore", "action", "derived store left out", "name", idxStore.Name)
+				continue
+			}
+
 			slog.Info("restore", "action", "clearing store", "name", idxStore.Name, "stereotype", idxStore.Stereotype)
 			var store blob.Store
 			switch idxStore.Stereotype {
@@ -172,6 +193,50 @@ func NewRestore(dst blob.Stores) Restore {
 
 		return nil
 	}
+}
+
+// invalidateDerived invalidates every derived store of dst and returns their names. end ends the invalidations, also
+// after an error.
+func invalidateDerived(dst blob.Stores) (derived map[string]bool, end func(), err error) {
+	derived = map[string]bool{}
+	var ends []func()
+	end = func() {
+		for _, fn := range ends {
+			fn()
+		}
+	}
+
+	for name, err := range dst.All() {
+		if err != nil {
+			return derived, end, err
+		}
+
+		optStat, err := dst.Stat(name)
+		if err != nil {
+			return derived, end, err
+		}
+
+		if optStat.IsNone() || !optStat.Unwrap().Derived {
+			continue
+		}
+
+		stat := optStat.Unwrap()
+		store, err := dst.Open(name, blob.OpenStoreOptions{Type: stat.Type, Derived: true})
+		if err != nil {
+			return derived, end, fmt.Errorf("cannot open derived store %s: %w", name, err)
+		}
+
+		endStore, err := blob.Invalidate(store)
+		if err != nil {
+			return derived, end, fmt.Errorf("cannot invalidate derived store %s: %w", name, err)
+		}
+
+		ends = append(ends, endStore)
+		derived[name] = true
+		slog.Info("restore", "action", "derived store invalidated", "name", name)
+	}
+
+	return derived, end, nil
 }
 
 func decodeIndex(zipReader *zip.Reader) (Index, error) {

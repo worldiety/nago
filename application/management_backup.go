@@ -56,6 +56,7 @@ func (c *Configurator) BackupManagement() (BackupManagement, error) {
 						}
 					}
 				},
+				c.EventBus(),
 			),
 			Pages: uibackup.Pages{
 				BackupAndRestore: "admin/backup-and-restore",
