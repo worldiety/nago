@@ -17,9 +17,10 @@ import (
 	"go.wdy.de/nago/presentation/core"
 )
 
-// rootViewPurposeLookup mirrors application.RootViewPurposeLookup. It is redeclared here because this package
-// must not import the application package, and a context value is matched structurally.
-type rootViewPurposeLookup func(path core.NavigationPath) (string, bool)
+// rootViewPurposeLookup is application.RootViewPurposeLookup, which this package must not import. Both are aliases
+// of the plain function type: core.FromContext matches a context value by a type assertion, and two named types
+// would never match, thus the purpose of a route would never arrive.
+type rootViewPurposeLookup = func(path core.NavigationPath) (string, bool)
 
 // ctxRootViewPurpose mirrors application.CtxRootViewPurpose.
 const ctxRootViewPurpose = "nago.rootview.purpose"

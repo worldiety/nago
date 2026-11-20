@@ -809,8 +809,10 @@ const wireKeepAlive = 20 * time.Second
 const CtxRootViewPurpose = "nago.rootview.purpose"
 
 // RootViewPurposeLookup answers what the given route is for. The second result is false for routes that were
-// registered without a [Purpose], which is the normal case.
-type RootViewPurposeLookup func(path core.NavigationPath) (string, bool)
+// registered without a [Purpose], which is the normal case. It is an alias of the plain function type, because
+// core.FromContext matches a context value by a type assertion: a package which must not import this one, like the
+// AI assistant UI, asks with the same plain function type and finds it.
+type RootViewPurposeLookup = func(path core.NavigationPath) (string, bool)
 
 // publishRootViewPurposes makes the registered purposes readable through the window context.
 func (c *Configurator) publishRootViewPurposes() {
