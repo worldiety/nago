@@ -357,6 +357,13 @@ func (c TStack) FocusedOutline(outline Outline) TStack {
 	return c
 }
 
+// FocusWithinOutline sets the outline styling while an element inside the stack has the focus. Unlike
+// [TStack.FocusedOutline], the stack itself does not become focusable and takes no place in the tab order.
+func (c TStack) FocusWithinOutline(outline Outline) TStack {
+	c.outline.FocusWithin = outline
+	return c
+}
+
 func (c TStack) Layout(layout StackLayout) TStack {
 	c.layout = layout
 	return c
