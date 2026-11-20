@@ -21323,16 +21323,21 @@ export class OutlineStates implements Writeable, Readable {
 
 	public focused?: Outline;
 
+	// FocusWithin applies while the component or an element inside it has the focus (CSS :focus-within). Unlike Focused, it does not make the component focusable itself.
+	public focusWithin?: Outline;
+
 	constructor(
 		initial: Outline | undefined = undefined,
 		hovered: Outline | undefined = undefined,
 		active: Outline | undefined = undefined,
-		focused: Outline | undefined = undefined
+		focused: Outline | undefined = undefined,
+		focusWithin: Outline | undefined = undefined
 	) {
 		this.initial = initial;
 		this.hovered = hovered;
 		this.active = active;
 		this.focused = focused;
+		this.focusWithin = focusWithin;
 	}
 
 	read(reader: BinaryReader): void {
@@ -21361,6 +21366,11 @@ export class OutlineStates implements Writeable, Readable {
 					this.focused.read(reader);
 					break;
 				}
+				case 5: {
+					this.focusWithin = new Outline();
+					this.focusWithin.read(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -21374,6 +21384,7 @@ export class OutlineStates implements Writeable, Readable {
 			this.hovered !== undefined && !this.hovered.isZero(),
 			this.active !== undefined && !this.active.isZero(),
 			this.focused !== undefined && !this.focused.isZero(),
+			this.focusWithin !== undefined && !this.focusWithin.isZero(),
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -21393,6 +21404,10 @@ export class OutlineStates implements Writeable, Readable {
 			writer.writeFieldHeader(Shapes.RECORD, 4);
 			this.focused!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.RECORD, 5);
+			this.focusWithin!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
@@ -21400,7 +21415,8 @@ export class OutlineStates implements Writeable, Readable {
 			(this.initial === undefined || this.initial.isZero()) &&
 			(this.hovered === undefined || this.hovered.isZero()) &&
 			(this.active === undefined || this.active.isZero()) &&
-			(this.focused === undefined || this.focused.isZero())
+			(this.focused === undefined || this.focused.isZero()) &&
+			(this.focusWithin === undefined || this.focusWithin.isZero())
 		);
 	}
 
@@ -21409,6 +21425,7 @@ export class OutlineStates implements Writeable, Readable {
 		this.hovered = undefined;
 		this.active = undefined;
 		this.focused = undefined;
+		this.focusWithin = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {

@@ -17,14 +17,18 @@ type OutlineStates struct {
 	Hovered Outline
 	Active  Outline
 	Focused Outline
+	// FocusWithin applies while the component or an element inside it has the focus (CSS :focus-within); unlike
+	// Focused, it does not make the component focusable itself.
+	FocusWithin Outline
 }
 
 // ora converts an OutlineStates object into its protocol representation for serialization.
 func (o OutlineStates) ora() proto.OutlineStates {
 	return proto.OutlineStates{
-		Initial: o.Initial.ora(),
-		Hovered: o.Hovered.ora(),
-		Active:  o.Active.ora(),
-		Focused: o.Focused.ora(),
+		Initial:     o.Initial.ora(),
+		Hovered:     o.Hovered.ora(),
+		Active:      o.Active.ora(),
+		Focused:     o.Focused.ora(),
+		FocusWithin: o.FocusWithin.ora(),
 	}
 }

@@ -20688,14 +20688,17 @@ type OutlineStates struct {
 	Hovered Outline
 	Active  Outline
 	Focused Outline
+	// FocusWithin applies while the component or an element inside it has the focus (CSS :focus-within). Unlike Focused, it does not make the component focusable itself.
+	FocusWithin Outline
 }
 
 func (v *OutlineStates) write(w *BinaryWriter) error {
-	var fields [5]bool
+	var fields [6]bool
 	fields[1] = !v.Initial.IsZero()
 	fields[2] = !v.Hovered.IsZero()
 	fields[3] = !v.Active.IsZero()
 	fields[4] = !v.Focused.IsZero()
+	fields[5] = !v.FocusWithin.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -20738,6 +20741,14 @@ func (v *OutlineStates) write(w *BinaryWriter) error {
 			return err
 		}
 	}
+	if fields[5] {
+		if err := w.writeFieldHeader(record, 5); err != nil {
+			return err
+		}
+		if err := v.FocusWithin.write(w); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -20770,6 +20781,11 @@ func (v *OutlineStates) read(r *BinaryReader) error {
 			}
 		case 4:
 			err := v.Focused.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.FocusWithin.read(r)
 			if err != nil {
 				return err
 			}
@@ -32196,13 +32212,14 @@ func (v *OutlineStates) reset() {
 	v.Hovered.reset()
 	v.Active.reset()
 	v.Focused.reset()
+	v.FocusWithin.reset()
 }
 
 func (v *OutlineStates) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Initial.IsZero() && v.Hovered.IsZero() && v.Active.IsZero() && v.Focused.IsZero()
+	return v.Initial.IsZero() && v.Hovered.IsZero() && v.Active.IsZero() && v.Focused.IsZero() && v.FocusWithin.IsZero()
 }
 
 func (v *Slider) reset() {

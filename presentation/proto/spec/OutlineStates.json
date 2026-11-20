@@ -17,6 +17,11 @@
     "4": {
       "name": "Focused",
       "type": "Outline"
+    },
+    "5": {
+      "doc": "FocusWithin applies while the component or an element inside it has the focus (CSS :focus-within). Unlike Focused, it does not make the component focusable itself.",
+      "name": "FocusWithin",
+      "type": "Outline"
     }
   }
 }
