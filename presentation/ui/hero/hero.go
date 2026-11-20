@@ -3,6 +3,7 @@ package hero
 import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/accessibility"
 )
 
 // THero is a composite component (Hero).
@@ -156,42 +157,49 @@ func (c THero) Render(ctx core.RenderContext) core.RenderNode {
 
 	c.textColor = textColor
 
-	return ui.HStack(
-		ui.VStack(
-			ui.Text(c.title).Font(c.titleFont(winfo)).TextAlignment(textAlignment),
-			ui.IfElse(c.subtitleView != nil, c.subtitleView, ui.Text(c.subtitle).TextAlignment(textAlignment)),
-			ui.HStack(c.actions...).FullWidth().Alignment(c.alignment),
-		).Alignment(contentAlignment).
-			Gap(ui.L16).
-			Padding(c.padding).
-			Frame(ui.Frame{MaxWidth: c.contentWidth(winfo)}),
-		ui.IfFunc(c.sideView != nil, func() core.View {
-			if small {
-				return nil
-			}
-			return ui.VStack(
-				c.sideView,
-			).Alignment(ui.Stretch).Frame(ui.Frame{Width: "30%", Height: "100%"})
-		}),
-	).
-		HtmlTag("header").
-		TextColor(c.textColor).
-		With(func(stack ui.THStack) ui.THStack {
-			if c.backgroundImage != "" {
-				bg := ui.Background{}.AppendURI(c.backgroundImage).Fit(ui.FitCover)
-				if fgColor != "" {
-					bg = bg.AppendLinearGradient(fgColor, fgColor)
+	return accessibility.Accessible(
+		ui.HStack(
+			ui.VStack(
+				accessibility.Accessible(
+					ui.VStack(
+						ui.Text(c.title).Font(c.titleFont(winfo)).TextAlignment(textAlignment),
+					).HtmlTag("h1").NoClip(true),
+				).Role(accessibility.RoleHeading),
+				ui.IfElse(c.subtitleView != nil, c.subtitleView, ui.Text(c.subtitle).TextAlignment(textAlignment)),
+				ui.HStack(c.actions...).FullWidth().Alignment(c.alignment),
+			).Alignment(contentAlignment).
+				Gap(ui.L16).
+				Padding(c.padding).
+				Frame(ui.Frame{MaxWidth: c.contentWidth(winfo)}),
+			ui.IfFunc(c.sideView != nil, func() core.View {
+				if small {
+					return nil
+				}
+				return ui.VStack(
+					c.sideView,
+				).Alignment(ui.Stretch).Frame(ui.Frame{Width: "30%", Height: "100%"})
+			}),
+		).
+			HtmlTag("header").
+			TextColor(c.textColor).
+			With(func(stack ui.THStack) ui.THStack {
+				if c.backgroundImage != "" {
+					bg := ui.Background{}.AppendURI(c.backgroundImage).Fit(ui.FitCover)
+					if fgColor != "" {
+						bg = bg.AppendLinearGradient(fgColor, fgColor)
+					}
+
+					stack = stack.Background(bg)
 				}
 
-				stack = stack.Background(bg)
-			}
-
-			return stack
-		}).
-		Alignment(c.alignment).
-		BackgroundColor(c.backgroundColor).
-		Frame(c.frame).
-		Border(c.border).
+				return stack
+			}).
+			Alignment(c.alignment).
+			BackgroundColor(c.backgroundColor).
+			Frame(c.frame).
+			Border(c.border),
+	).
+		Role(accessibility.RoleRegion).
 		Render(ctx)
 }
 
