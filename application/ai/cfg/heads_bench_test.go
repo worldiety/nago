@@ -432,10 +432,8 @@ func BenchmarkHeadsSave(b *testing.B) {
 				return std.Must(os.Stat(wal)).Size()
 			}
 
-			const logged = 100
-			if b.N < logged {
-				b.Fatalf("at least %d saves are measured", logged)
-			}
+			// the first run of the benchmark with b.N = 1 measures the log of its single save
+			logged := min(100, b.N)
 
 			i := 0
 			save := func() {
@@ -467,7 +465,7 @@ func BenchmarkHeadsSave(b *testing.B) {
 			}
 
 			b.ReportMetric(benchMillis(benchMedian(durations)), "median-ms")
-			b.ReportMetric(float64(growth)/logged, "log-B/save")
+			b.ReportMetric(float64(growth)/float64(logged), "log-B/save")
 			b.ReportMetric(float64(len(std.Must(json.Marshal(sess)))), "session-B")
 		})
 	}
