@@ -299,9 +299,9 @@ function onKeydown(event: KeyboardEvent) {
 		:id="id"
 		:class="classes"
 		:title="props.ui.accessibilityLabel"
+		:aria-label="props.ui.accessibilityLabel"
 		:tabindex="focusable ? 0 : undefined"
-		@click="onClick"
-		@keydown="onKeydown"
+		v-on="ui.action ? { click: onClick, keydown: onKeydown } : {}"
 	>
 		<ui-generic v-for="childUi in props.ui.children?.value" :ui="childUi" />
 	</component>
@@ -313,6 +313,7 @@ function onKeydown(event: KeyboardEvent) {
 		:disabled="props.ui.disabled"
 		:class="classes"
 		:title="props.ui.accessibilityLabel"
+		:aria-label="props.ui.accessibilityLabel"
 		@click="onClick"
 	>
 		<ui-generic v-for="childUi in props.ui.children?.value" :ui="childUi" />
@@ -325,6 +326,7 @@ function onKeydown(event: KeyboardEvent) {
 		:href="props.ui.url"
 		:target="props.ui.target"
 		:title="props.ui.accessibilityLabel"
+		:aria-label="props.ui.accessibilityLabel"
 		:tabindex="ui.disabled ? -1 : 0"
 		@click="(event: MouseEvent) => routeLinkClick(serviceAdapter, event)"
 	>

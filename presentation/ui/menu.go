@@ -63,8 +63,9 @@ func (c TMenu) Render(ctx core.RenderContext) core.RenderNode {
 					continue
 				}
 				items = append(items, proto.MenuItem{
-					Action:  ctx.MountCallback(item.action),
-					Content: render(ctx, item.content),
+					Action:             ctx.MountCallback(item.action),
+					Content:            render(ctx, item.content),
+					AccessibilityLabel: proto.Str(item.accessibilityLabel),
 				})
 			}
 
@@ -102,8 +103,9 @@ func (c TMenuGroup) CustomContent(content core.View) TMenuGroup {
 
 // TMenuItem represents a single menu entry with an action and content view.
 type TMenuItem struct {
-	action  func()    // action executed when the item is selected
-	content core.View // view to render as the item content
+	action             func()    // action executed when the item is selected
+	content            core.View // view to render as the item content
+	accessibilityLabel string    // optional accessibility label for the item
 }
 
 // MenuItem creates a new menu item with the given action and content.
@@ -112,4 +114,10 @@ func MenuItem(action func(), content core.View) TMenuItem {
 		action:  action,
 		content: content,
 	}
+}
+
+// AccessibilityLabel sets the accessibility label for the menu item.
+func (c TMenuItem) AccessibilityLabel(label string) TMenuItem {
+	c.accessibilityLabel = label
+	return c
 }

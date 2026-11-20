@@ -45,8 +45,8 @@ const clearButton = ref<HTMLButtonElement>();
 const leadingWidth = ref(0);
 const trailingWidth = ref(0);
 
-const showZero = computed<boolean>(() => !!props.ui.showZero);
-const step = computed<number>(() => props.ui.step || 0);
+const showZero = computed<boolean>(() => !!props.ui.numberOptions?.showZero);
+const step = computed<number>(() => props.ui.numberOptions?.step || 0);
 const inputValue = ref<string>(initialInput());
 let timer: number = 0;
 // unmounting tells a focusout caused by our own destruction apart from the user really leaving the field.
@@ -340,11 +340,11 @@ function submitInputValue(force: boolean, functionPointer: number = 0): void {
 }
 
 function putValueInRange() {
-	if (!isNumerical() || (!props.ui.min && !props.ui.max)) return;
+	if (!isNumerical() || (!props.ui.numberOptions?.min && !props.ui.numberOptions?.max)) return;
 
 	let numberVal = getNumberValue();
-	numberVal = Math.max(props.ui.min || 0, numberVal);
-	if (props.ui.max) numberVal = Math.min(props.ui.max, numberVal);
+	numberVal = Math.max(props.ui.numberOptions?.min || 0, numberVal);
+	if (props.ui.numberOptions?.max) numberVal = Math.min(props.ui.numberOptions?.max, numberVal);
 
 	const formatted = formatValue(`${numberVal}`);
 	if (formatted === inputValue.value) return;
@@ -367,8 +367,8 @@ function changeValue(amount: number) {
 
 	let numberVal = getNumberValue();
 	numberVal += amount;
-	numberVal = Math.max(props.ui.min || 0, numberVal);
-	if (props.ui.max) numberVal = Math.min(props.ui.max, numberVal);
+	numberVal = Math.max(props.ui.numberOptions?.min || 0, numberVal);
+	if (props.ui.numberOptions?.max) numberVal = Math.min(props.ui.numberOptions?.max, numberVal);
 
 	inputValue.value = formatValue(`${numberVal}`);
 	submitInputValue(false);
@@ -574,6 +574,7 @@ onMounted(() => {
 					:tabindex="ui.readOnly ? -1 : undefined"
 					:aria-description="ui.errorText || ui.supportingText"
 					:aria-invalid="!!ui.errorText"
+					:aria-label="ui.accessibilityLabel || ui.label"
 					@keydown.enter="handleKeydownEnter"
 					@keydown.up.prevent="onInputUp"
 					@keydown.down.prevent="onInputDown"
@@ -598,6 +599,7 @@ onMounted(() => {
 					:tabindex="ui.readOnly ? -1 : undefined"
 					:aria-description="ui.errorText || ui.supportingText"
 					:aria-invalid="!!ui.errorText"
+					:aria-label="ui.accessibilityLabel || ui.label"
 					@keydown.enter="handleKeydownEnter"
 					@focusout="onFocusOut"
 					@input="onTextareaInput(false)"

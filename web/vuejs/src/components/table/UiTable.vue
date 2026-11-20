@@ -294,7 +294,7 @@ function onHeadCellMouseLeave(colIdx: number) {
 function onRowMouseEnter(rowIdx: number) {
 	let row = props.ui.rows?.value?.at(rowIdx);
 	if (!row) return;
-	row.hovered = true;
+	row.hovered = !!row.action;
 }
 
 function onRowMouseLeave(rowIdx: number) {
@@ -317,6 +317,7 @@ function onRowMouseLeave(rowIdx: number) {
 					scope="col"
 					:style="headCellStyles(headIdx)"
 					:aria-label="head.accessibilityLabel"
+                    :aria-hidden="!head.content"
 					@click.stop="onClickHeaderCell(headIdx)"
 					@mouseenter="onHeadCellMouseEnter(headIdx)"
 					@mouseleave="onHeadCellMouseLeave(headIdx)"

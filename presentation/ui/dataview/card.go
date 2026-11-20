@@ -15,6 +15,7 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/accessibility"
 	"go.wdy.de/nago/presentation/ui/accordion"
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/pager"
@@ -78,18 +79,6 @@ func (t TDataView[E, ID]) renderCards(ctx core.RenderContext) core.RenderNode {
 					panic(fmt.Errorf("no selection state for %q", u.Identity()))
 				}
 
-				var cells []ui.TTableCell
-				if !t.hideSelection {
-					cells = append(cells, ui.TableCell(ui.Checkbox(myState.Get()).InputChecked(myState)))
-				}
-				for _, field := range data.Fields {
-					cells = append(cells, ui.TableCell(field.Map(u)))
-				}
-
-				if t.addChevronRight {
-					cells = append(cells, ui.TableCell(ui.HStack(ui.ImageIcon(icons.ChevronRight))).Alignment(ui.Trailing))
-				}
-
 				opts := t.cardOptions
 				var titleField Field[E]
 				for idx, field := range t.data.Fields {
@@ -118,7 +107,7 @@ func (t TDataView[E, ID]) renderCards(ctx core.RenderContext) core.RenderNode {
 								panic(fmt.Errorf("no selection state for %q", u.Identity()))
 							}
 
-							return ui.Checkbox(myState.Get()).InputChecked(myState)
+							return accessibility.Accessible(ui.Checkbox(myState.Get()).InputValue(myState)).Label(StrSelect.Get(wnd))
 						}),
 
 						ui.Text(titleField.Name).Font(ui.TitleMedium),
@@ -156,19 +145,33 @@ func (t TDataView[E, ID]) renderCards(ctx core.RenderContext) core.RenderNode {
 										).FullWidth().Padding(ui.Padding{}.Horizontal(ui.L16))
 									}
 
-									return ui.VStack(
-										ui.Text(f.Name).Font(ui.TitleMedium),
-										f.Map(u),
-									).Alignment(ui.Leading).FullWidth().Padding(ui.Padding{}.Horizontal(ui.L16))
+									return accessibility.Accessible(
+										ui.VStack(
+											ui.Text(f.Name).Font(ui.TitleMedium),
+											f.Map(u),
+										).Alignment(ui.Leading).FullWidth().Padding(ui.Padding{}.Horizontal(ui.L16)),
+									).Role("text")
 								})...,
 							).FullWidth(),
 
 							// to right we have an optional chevron
 							ui.If(t.addChevronRight, ui.VLine().Frame(ui.Frame{}).Padding(ui.Padding{Left: ui.L16})),
 							ui.IfFunc(t.addChevronRight, func() core.View {
-								return ui.VStack(ui.ImageIcon(icons.ChevronRight).Frame(ui.Frame{MaxWidth: ui.L32, MinWidth: ui.L32}))
+								accessibilityLabel := StrInteract.Get(wnd)
+								if t.data.AccessibilityLabel != nil {
+									accessibilityLabel = StrXInteract.Get(wnd, i18n.String("entry", t.data.AccessibilityLabel(u)))
+								}
+								return ui.VStack(
+									ui.TertiaryButton(func() {
+										if t.action != nil {
+											t.action(u)
+										}
+									}).
+										AccessibilityLabel(accessibilityLabel).
+										PreIcon(icons.ChevronRight),
+								).Padding(ui.Padding{}.All(ui.L8))
 							}),
-						).Alignment(ui.Stretch).FullWidth().Key(t.itemKey("item", u.Identity())).Action(t.wrappedAction(u)),
+						).Alignment(ui.Stretch).FullWidth().Key(t.itemKey("item", u.Identity())),
 					).
 					Append(ui.Space(ui.L4)).
 					FullWidth().
@@ -207,22 +210,25 @@ func (t TDataView[E, ID]) cardActionBar(wnd core.Window, model pager.Model[E, ID
 			continue
 		}
 
-		items = append(items, ui.MenuItem(func() {
-			if selectOption.ConfirmDialog == nil {
-				if err := selectOption.Action(selected); err != nil {
-					alert.ShowBannerError(wnd, err)
+		items = append(items,
+			ui.MenuItem(func() {
+				if selectOption.ConfirmDialog == nil {
+					if err := selectOption.Action(selected); err != nil {
+						alert.ShowBannerError(wnd, err)
+						return
+					}
+
 					return
 				}
 
-				return
-			}
+				spec := selectOption.ConfirmDialog(selected)
+				spec.action = selectOption.Action
+				dlgSpec.Set(spec)
+				confirmPresented.Set(true)
 
-			spec := selectOption.ConfirmDialog(selected)
-			spec.action = selectOption.Action
-			dlgSpec.Set(spec)
-			confirmPresented.Set(true)
-
-		}, ui.HStack(ui.ImageIcon(selectOption.Icon), ui.Text(selectOption.Name).TextAlignment(ui.TextAlignStart)).Gap(ui.L8).Alignment(ui.Leading).FullWidth()))
+			}, ui.HStack(ui.ImageIcon(selectOption.Icon), ui.Text(selectOption.Name).TextAlignment(ui.TextAlignStart)).Gap(ui.L8).Alignment(ui.Leading).FullWidth()).
+				AccessibilityLabel(selectOption.Name),
+		)
 	}
 
 	filterToggle := core.StateOf[bool](wnd, model.SelectSubset.ID()+"-filterToggle")
@@ -237,7 +243,7 @@ func (t TDataView[E, ID]) cardActionBar(wnd core.Window, model pager.Model[E, ID
 
 			ui.IfFunc(len(t.selectOptions) > 0 && !t.hideSelection, func() core.View {
 				return ui.Menu(
-					ui.SecondaryButton(nil).Enabled(len(selected) > 0).PreIcon(icons.Grid),
+					ui.SecondaryButton(nil).Enabled(len(selected) > 0).PreIcon(icons.Grid).AccessibilityLabel(rstring.LabelOptions.Get(wnd)),
 					ui.MenuGroup(items...),
 				)
 			}),
@@ -253,15 +259,21 @@ func (t TDataView[E, ID]) cardActionBar(wnd core.Window, model pager.Model[E, ID
 
 		accordion.Accordion(
 			ui.HStack(
-				ui.ImageIcon(icons.Filter),
+				accessibility.Accessible(
+					ui.ImageIcon(icons.Filter),
+				).Hidden(true),
 				ui.Text(rstring.LabelFilter.Get(wnd)),
 			),
 			ui.VStack(
 				ui.If(t.showSearchbar, ui.TextField("", model.Query.Get()).Placeholder(fmt.Sprintf("%s…", rstring.ActionSearch.Get(t.wnd))).InputValue(model.Query).Style(ui.TextFieldReduced).Leading(ui.ImageIcon(icons.Search)).FullWidth()),
 				ui.HStack(
-					ui.TertiaryButton(func() {
-						model.UnselectAll()
-					}).Title(StrXSelected.Get(wnd, i18n.Int("num", model.SelectionCount))).PostIcon(icons.Close).Visible(model.SelectionCount > 0),
+					accessibility.Accessible(
+						ui.TertiaryButton(func() {
+							model.UnselectAll()
+						}).
+							Title(StrXSelected.Get(wnd, i18n.Int("num", model.SelectionCount))).
+							PostIcon(icons.Close).Visible(model.SelectionCount > 0),
+					).Label(fmt.Sprintf("%s, %s", StrXSelected.Get(wnd, i18n.Int("num", model.SelectionCount)), StrDeselectAll.Get(wnd))),
 				).Alignment(ui.Leading).FullWidth(),
 
 				ui.HStack(
@@ -270,9 +282,11 @@ func (t TDataView[E, ID]) cardActionBar(wnd core.Window, model pager.Model[E, ID
 							return nil
 						}
 
-						return ui.SecondaryButton(func() {
-							sorting.toggle(f.ID)
-						}).Title(f.Name).PreIcon(sorting.icon(f.ID)).AccessibilityLabel(sorting.label(wnd, f.Name, f.ID)).Key("sort", string(f.ID))
+						return accessibility.Accessible(
+							ui.SecondaryButton(func() {
+								sorting.toggle(f.ID)
+							}).Title(f.Name).PreIcon(sorting.icon(f.ID)).AccessibilityLabel(sorting.label(wnd, f.Name, f.ID)).Key("sort", string(f.ID)),
+						).Label(sorting.label(wnd, f.Name, f.ID))
 					})...,
 				).Wrap(true).Gap(ui.L8).FullWidth(),
 			).FullWidth().Gap(ui.L8),

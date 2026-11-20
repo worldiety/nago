@@ -89,54 +89,43 @@
       "type": "TextAlignment"
     },
     "20": {
-      "doc": "ShowZero defines whether '0' should be displayed for empty/zero values of number fields.",
-      "name": "ShowZero",
-      "type": "Bool"
+      "name": "NumberOptions",
+      "type": "TextFieldNumberOptions"
     },
     "21": {
-      "doc": "Step allows to set numeric steps, that will be used to increase/decrease the value stepwise.",
-      "name": "Step",
-      "type": "Uint"
-    },
-    "22": {
-      "doc": "Max defines the max value of a number field.",
-      "name": "Max",
-      "type": "Float"
-    },
-    "23": {
-      "doc": "Min defines the min value of a number field.",
-      "name": "Min",
-      "type": "Float"
-    },
-    "24": {
       "name": "Autocomplete",
       "type": "Str"
     },
-    "25": {
+    "22": {
       "name": "Optional",
       "type": "Bool"
     },
-    "26": {
+    "23": {
       "doc": "ClearButton defines whether a clear button should be displayed for the text field. This only shows, if no trailing component is set, and the text field is not empty.",
       "name": "ClearButton",
       "type": "Bool"
     },
-    "27": {
+    "24": {
       "name": "Placeholder",
       "type": "Str"
     },
-    "28": {
+    "25": {
       "name": "Padding",
       "type": "Padding"
     },
-    "29": {
+    "26": {
       "name": "ReadOnly",
       "type": "Bool"
     },
-    "30": {
+    "27": {
       "doc": "SizeByContent sets the CSS property field-sizing to content on the input or textarea element, so that the field grows or shrinks with its content.",
       "name": "SizeByContent",
       "type": "Bool"
+    },
+    "28": {
+      "doc": "AccessibilityLabel is used by screen readers to describe the component. If not set, the Label is used.",
+      "name": "AccessibilityLabel",
+      "type": "Str"
     }
   }
 }
