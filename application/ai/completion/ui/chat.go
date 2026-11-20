@@ -1274,11 +1274,13 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 	var historyActions core.View
 	if opts.History {
 		// files picked for one conversation must never be sent with another one
-		restoreDialog = historyDialog(wnd, opts.Sessions, opts.Tags, title, showHistory, func(s session.Session) {
-			// the list may be older than the conversation, which also may have a run; the run comes first, see opened
-			run, _ := activeRuns.Get(s.ID)
-			if reloaded, ok := reloadSession(wnd.Subject(), opts.Sessions, s.ID); ok {
-				s = reloaded
+		restoreDialog = historyDialog(wnd, opts.Sessions, opts.Tags, title, showHistory, func(id session.ID) {
+			// the conversation may have a run; the run comes first, see opened
+			run, _ := activeRuns.Get(id)
+			s, ok := reloadSession(wnd.Subject(), opts.Sessions, id)
+			if !ok {
+				// deleted meanwhile
+				return
 			}
 			applySession(s)
 			opened.Set(run)
@@ -1456,8 +1458,8 @@ var activeRuns concurrent.RWMap[session.ID, *activeRun]
 // [session.Session.ResumableBy]. Sessions of other contexts are never picked up; the history dialog still offers
 // them.
 //
-// It asks [session.UseCases.FindResumable], which reads the index of the waiting sessions instead of every
-// session. Only use cases assembled without it are read through FindAll.
+// It asks [session.UseCases.FindResumable], which reads the heads of the waiting sessions of the subject instead of
+// every session, see [session.Heads]. Only use cases assembled without it are read through FindAll.
 func findResumable(subject auth.Subject, sessions session.UseCases, tags []string, providerHint string) *session.Session {
 	if subject == nil || !subject.Valid() {
 		return nil

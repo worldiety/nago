@@ -9,24 +9,27 @@ package uicompletion
 
 import (
 	"fmt"
+	"iter"
 	"slices"
 
 	"go.wdy.de/nago/application/ai/session"
+	"go.wdy.de/nago/auth"
 	"go.wdy.de/nago/presentation/core"
 	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	"go.wdy.de/nago/presentation/ui"
 	"go.wdy.de/nago/presentation/ui/alert"
 )
 
-// historyDialog renders the "restore a previous conversation" dialog when present is set. It lists the
+// historyDialog renders the "restore a previous conversation" dialog when present is set. It lists the heads of the
 // subject's persisted sessions carrying all of the given tags (most recently updated first) as clickable
-// cards; picking one invokes onPick with the full session so the caller can load its history back into the
+// cards; picking one invokes onPick with its id so the caller can load the session back into the
 // panel and continue it. The dialog is cancelable and returns nil while not presented. Errors while listing
 // are surfaced inline so the user can still cancel out.
-// historyDialog lists the conversations of the user. Only the own ones are listed, also for a subject which may
-// read every session, e.g. an administrator. A title equal to legacyTitle is the title of the chat panel, which
-// former versions gave every conversation, so the preview of the first message is shown instead.
-func historyDialog(wnd core.Window, sessionUC session.UseCases, tags []string, legacyTitle string, present *core.State[bool], onPick func(session.Session), onDeleted func(session.ID)) core.View {
+//
+// Only the own conversations are listed, also for a subject which may read every session, e.g. an administrator. A
+// title equal to legacyTitle is the title of the chat panel, which former versions gave every conversation, so the
+// preview of the first message is shown instead.
+func historyDialog(wnd core.Window, sessionUC session.UseCases, tags []string, legacyTitle string, present *core.State[bool], onPick func(session.ID), onDeleted func(session.ID)) core.View {
 	if !present.Get() {
 		return nil
 	}
@@ -36,15 +39,15 @@ func historyDialog(wnd core.Window, sessionUC session.UseCases, tags []string, l
 	confirmDelete := core.StateOf[bool](wnd, "uicompletion-history-delete-confirm")
 	deleting := core.StateOf[bool](wnd, "uicompletion-history-deleting")
 
-	var sessions []session.Session
+	var sessions []session.Summary
 	if wnd.Subject().Valid() {
 		uid := wnd.Subject().ID()
-		for s, err := range sessionUC.FindAll(wnd.Subject(), session.FindAllOptions{Tags: tags, CreatedBy: uid}) {
+		for s, err := range findSummaries(sessionUC, wnd.Subject(), session.FindAllOptions{Tags: tags, CreatedBy: uid}) {
 			if err != nil {
 				return alert.Dialog("Gespeicherte Verläufe", alert.BannerError(err), present, alert.Closeable())
 			}
 
-			// also checked here, because an empty id does not filter in FindAll
+			// also checked here, because an empty id does not filter
 			if s.CreatedBy != uid {
 				continue
 			}
@@ -54,7 +57,7 @@ func historyDialog(wnd core.Window, sessionUC session.UseCases, tags []string, l
 	}
 
 	// Most recently updated first, so the conversation the user most likely wants to resume is on top.
-	slices.SortFunc(sessions, func(a, b session.Session) int {
+	slices.SortFunc(sessions, func(a, b session.Summary) int {
 		return int(b.UpdatedAt) - int(a.UpdatedAt)
 	})
 
@@ -69,7 +72,7 @@ func historyDialog(wnd core.Window, sessionUC session.UseCases, tags []string, l
 			rows = append(rows, ui.HStack(
 				historyCard(wnd, s, legacyTitle, func() {
 					present.Set(false)
-					onPick(s)
+					onPick(s.ID)
 				}),
 				// beside the card, a click on it would pick the conversation as well
 				ui.TertiaryButton(func() {
@@ -89,6 +92,26 @@ func historyDialog(wnd core.Window, sessionUC session.UseCases, tags []string, l
 // the card restores the conversation via onPick.
 // deleteDialog asks before a conversation is deleted. The deletion runs in the background, because it also deletes
 // what the application and the provider keep for the conversation, see [session.OnDelete].
+// findSummaries lists the heads of the sessions through [session.UseCases.FindSummaries]. Only use cases assembled
+// without it are read through FindAll.
+func findSummaries(sessionUC session.UseCases, subject auth.Subject, opts session.FindAllOptions) iter.Seq2[session.Summary, error] {
+	if sessionUC.FindSummaries != nil {
+		return sessionUC.FindSummaries(subject, opts)
+	}
+
+	return func(yield func(session.Summary, error) bool) {
+		if sessionUC.FindAll == nil {
+			return
+		}
+
+		for s, err := range sessionUC.FindAll(subject, opts) {
+			if !yield(s.Summary(), err) {
+				return
+			}
+		}
+	}
+}
+
 func deleteDialog(wnd core.Window, sessionUC session.UseCases, toDelete *core.State[session.ID], present, deleting *core.State[bool], onDeleted func(session.ID)) core.View {
 	if !present.Get() || toDelete.Get() == "" {
 		return nil
@@ -122,21 +145,21 @@ func deleteDialog(wnd core.Window, sessionUC session.UseCases, toDelete *core.St
 	)
 }
 
-func historyCard(wnd core.Window, s session.Session, legacyTitle string, onPick func()) core.View {
+func historyCard(wnd core.Window, s session.Summary, legacyTitle string, onPick func()) core.View {
 	when := s.UpdatedAt.Time(wnd.Location()).Format("2006-01-02 15:04")
 
 	label := s.Title
 	if label == "" || label == legacyTitle {
-		label = s.Preview()
+		label = s.Preview
 	}
 
 	return ui.VStack(
 		ui.Text(label).Font(ui.Title).Frame(ui.Frame{MaxWidth: ui.Full}),
 		ui.HStack(
 			ui.Text(when).Font(ui.Small),
-			ui.If(s.Pending != nil, ui.Text("• wartet auf deine Antwort").Font(ui.Small).Color(ui.I0)),
+			ui.If(s.Pending, ui.Text("• wartet auf deine Antwort").Font(ui.Small).Color(ui.I0)),
 			ui.Spacer(),
-			ui.Text(fmt.Sprintf("%d Nachrichten", len(s.Messages))).Font(ui.Small),
+			ui.Text(fmt.Sprintf("%d Nachrichten", s.Messages)).Font(ui.Small),
 		).FullWidth().Alignment(ui.Center),
 	).Gap(ui.L4).
 		FullWidth().

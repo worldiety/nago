@@ -29,6 +29,7 @@ import (
 	"go.wdy.de/nago/application/secret"
 	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/pkg/blob"
 	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui/form"
@@ -197,8 +198,20 @@ func Enable(cfg *application.Configurator) (Management, error) {
 	// recognizable instance label (title / first-message preview).
 	rdb.RegisterResources(rebac.NewRepositoryResources(StrResSessions, StrResSessDesc, repoSessions))
 
+	// The heads of the sessions, which let the assistant, its history and the deletion read the sessions of one person
+	// instead of every session. They are derived from the sessions and live in the same database.
+	stores, err := cfg.Stores()
+	if err != nil {
+		return Management{}, err
+	}
+
+	headStore, err := stores.Open(string(session.Namespace)+".head", blob.OpenStoreOptions{Type: blob.EntityStore, Derived: true})
+	if err != nil {
+		return Management{}, err
+	}
+
 	deleteHooks := &sessionDeleteHooks{}
-	ucSession := session.NewUseCases(repoSessions, rdb, session.OnDelete(deleteHooks.run), session.OnDelete(func(id session.ID) error {
+	ucSession := session.NewUseCases(repoSessions, rdb, session.Heads(cfg.Context(), headStore), session.OnDelete(deleteHooks.run), session.OnDelete(func(id session.ID) error {
 		return providerFiles.Release(file.Owner(id))
 	}))
 
