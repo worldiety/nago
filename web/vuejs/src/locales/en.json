@@ -97,6 +97,14 @@
 		"zoomRange": "Showing {from} to {to}",
 		"zoomAll": "Showing all values"
 	},
+	"flowChart": {
+		"actions": {
+			"autoLayout": "Arrange graph automatically",
+			"fitView": "Show the whole graph",
+			"zoomIn": "Zoom in",
+			"zoomOut": "Zoom out"
+		}
+	},
 	"weekcal": {
 		"label": "Week calendar",
 		"to": "to",
