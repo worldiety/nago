@@ -66,7 +66,7 @@ func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) Fin
 	reader := optR.Unwrap()
 	defer reader.Close() // otherwise we get a deadlock
 
-	domainModel, err := r.decode(reader)
+	domainModel, err := r.decode(data.Idtos(id), reader)
 	if err != nil {
 		return res, err
 	}
@@ -84,17 +84,58 @@ func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) Fin
 
 }
 
-func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) decode(reader io.Reader) (DomainModel, error) {
+// DecodeError is returned by the reading methods of a [Repository], when a stored value has been read but cannot be
+// decoded or mapped into the domain model, unlike an error of reading it. Its message is the one of Err.
+type DecodeError struct {
+	Key string
+	Err error
+}
+
+func (e *DecodeError) Error() string {
+	return e.Err.Error()
+}
+
+func (e *DecodeError) Unwrap() error {
+	return e.Err
+}
+
+func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) decode(key string, reader io.Reader) (DomainModel, error) {
 	var persistenceModel PersistenceModel
 	var zeroDomain DomainModel
 
-	dec := json.NewDecoder(reader)
+	// the decoder returns an error of the reader unchanged, so it is told apart here
+	src := &readErrors{r: reader}
+	dec := json.NewDecoder(src)
 	err := dec.Decode(&persistenceModel)
 	if err != nil {
-		return zeroDomain, err
+		if src.err != nil {
+			return zeroDomain, src.err
+		}
+
+		return zeroDomain, &DecodeError{Key: key, Err: err}
 	}
 
-	return r.intoDomain(persistenceModel)
+	model, err := r.intoDomain(persistenceModel)
+	if err != nil {
+		return zeroDomain, &DecodeError{Key: key, Err: err}
+	}
+
+	return model, nil
+}
+
+// readErrors remembers the first error of reading, but the end of the input.
+type readErrors struct {
+	r   io.Reader
+	err error
+}
+
+func (e *readErrors) Read(p []byte) (int, error) {
+	n, err := e.r.Read(p)
+	if err != nil && !errors.Is(err, io.EOF) && e.err == nil {
+		e.err = err
+	}
+
+	return n, err
 }
 
 func (r *Repository[DomainModel, DomainID, PersistenceModel, PersistenceID]) encode(domainModel DomainModel) (string, []byte, error) {
