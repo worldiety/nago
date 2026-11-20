@@ -480,6 +480,15 @@ func undecodable(err error) bool {
 
 // start repairs the heads of the sessions with a mark and starts the build, which the store needs, see [Heads].
 func (h *heads) start() {
+	if bus, ok := core.FromContext[events.EventBus](h.ctx, ""); ok && bus != nil {
+		unsubscribe := events.SubscribeFor(bus, func(backup.Restored) {
+			if h.ctx.Err() == nil {
+				h.kick()
+			}
+		})
+		context.AfterFunc(h.ctx, unsubscribe)
+	}
+
 	h.repairMarks()
 
 	invalid, err := h.exists(blob.InvalidKey)
@@ -516,14 +525,6 @@ func (h *heads) start() {
 		}
 	}
 
-	if bus, ok := core.FromContext[events.EventBus](h.ctx, ""); ok && bus != nil {
-		unsubscribe := events.SubscribeFor(bus, func(backup.Restored) {
-			if h.ctx.Err() == nil {
-				h.kick()
-			}
-		})
-		context.AfterFunc(h.ctx, unsubscribe)
-	}
 }
 
 // repairMarks repairs the head of every session with a mark, reading only this session. A mark, which cannot be
