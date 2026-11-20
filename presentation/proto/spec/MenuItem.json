@@ -9,6 +9,10 @@
     "2": {
       "name": "Content",
       "type": "Component"
+    },
+    "3": {
+      "name": "AccessibilityLabel",
+      "type": "Str"
     }
   }
 }

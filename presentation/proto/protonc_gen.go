@@ -7825,16 +7825,9 @@ type TextField struct {
 	Id            Str
 	KeydownEnter  Ptr
 	TextAlignment TextAlignment
-	// ShowZero defines whether '0' should be displayed for empty/zero values of number fields.
-	ShowZero Bool
-	// Step allows to set numeric steps, that will be used to increase/decrease the value stepwise.
-	Step Uint
-	// Max defines the max value of a number field.
-	Max Float
-	// Min defines the min value of a number field.
-	Min          Float
-	Autocomplete Str
-	Optional     Bool
+	NumberOptions TextFieldNumberOptions
+	Autocomplete  Str
+	Optional      Bool
 	// ClearButton defines whether a clear button should be displayed for the text field. This only shows, if no trailing component is set, and the text field is not empty.
 	ClearButton Bool
 	Placeholder Str
@@ -7842,10 +7835,12 @@ type TextField struct {
 	ReadOnly    Bool
 	// SizeByContent sets the CSS property field-sizing to content on the input or textarea element, so that the field grows or shrinks with its content.
 	SizeByContent Bool
+	// AccessibilityLabel is used by screen readers to describe the component. If not set, the Label is used.
+	AccessibilityLabel Str
 }
 
 func (v *TextField) write(w *BinaryWriter) error {
-	var fields [31]bool
+	var fields [29]bool
 	fields[1] = !v.Label.IsZero()
 	fields[2] = !v.SupportingText.IsZero()
 	fields[3] = !v.ErrorText.IsZero()
@@ -7865,17 +7860,15 @@ func (v *TextField) write(w *BinaryWriter) error {
 	fields[17] = !v.Id.IsZero()
 	fields[18] = !v.KeydownEnter.IsZero()
 	fields[19] = !v.TextAlignment.IsZero()
-	fields[20] = !v.ShowZero.IsZero()
-	fields[21] = !v.Step.IsZero()
-	fields[22] = !v.Max.IsZero()
-	fields[23] = !v.Min.IsZero()
-	fields[24] = !v.Autocomplete.IsZero()
-	fields[25] = !v.Optional.IsZero()
-	fields[26] = !v.ClearButton.IsZero()
-	fields[27] = !v.Placeholder.IsZero()
-	fields[28] = !v.Padding.IsZero()
-	fields[29] = !v.ReadOnly.IsZero()
-	fields[30] = !v.SizeByContent.IsZero()
+	fields[20] = !v.NumberOptions.IsZero()
+	fields[21] = !v.Autocomplete.IsZero()
+	fields[22] = !v.Optional.IsZero()
+	fields[23] = !v.ClearButton.IsZero()
+	fields[24] = !v.Placeholder.IsZero()
+	fields[25] = !v.Padding.IsZero()
+	fields[26] = !v.ReadOnly.IsZero()
+	fields[27] = !v.SizeByContent.IsZero()
+	fields[28] = !v.AccessibilityLabel.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -8053,34 +8046,34 @@ func (v *TextField) write(w *BinaryWriter) error {
 		}
 	}
 	if fields[20] {
-		if err := w.writeFieldHeader(uvarint, 20); err != nil {
+		if err := w.writeFieldHeader(record, 20); err != nil {
 			return err
 		}
-		if err := v.ShowZero.write(w); err != nil {
+		if err := v.NumberOptions.write(w); err != nil {
 			return err
 		}
 	}
 	if fields[21] {
-		if err := w.writeFieldHeader(uvarint, 21); err != nil {
+		if err := w.writeFieldHeader(byteSlice, 21); err != nil {
 			return err
 		}
-		if err := v.Step.write(w); err != nil {
+		if err := v.Autocomplete.write(w); err != nil {
 			return err
 		}
 	}
 	if fields[22] {
-		if err := w.writeFieldHeader(f64, 22); err != nil {
+		if err := w.writeFieldHeader(uvarint, 22); err != nil {
 			return err
 		}
-		if err := v.Max.write(w); err != nil {
+		if err := v.Optional.write(w); err != nil {
 			return err
 		}
 	}
 	if fields[23] {
-		if err := w.writeFieldHeader(f64, 23); err != nil {
+		if err := w.writeFieldHeader(uvarint, 23); err != nil {
 			return err
 		}
-		if err := v.Min.write(w); err != nil {
+		if err := v.ClearButton.write(w); err != nil {
 			return err
 		}
 	}
@@ -8088,15 +8081,15 @@ func (v *TextField) write(w *BinaryWriter) error {
 		if err := w.writeFieldHeader(byteSlice, 24); err != nil {
 			return err
 		}
-		if err := v.Autocomplete.write(w); err != nil {
+		if err := v.Placeholder.write(w); err != nil {
 			return err
 		}
 	}
 	if fields[25] {
-		if err := w.writeFieldHeader(uvarint, 25); err != nil {
+		if err := w.writeFieldHeader(record, 25); err != nil {
 			return err
 		}
-		if err := v.Optional.write(w); err != nil {
+		if err := v.Padding.write(w); err != nil {
 			return err
 		}
 	}
@@ -8104,39 +8097,23 @@ func (v *TextField) write(w *BinaryWriter) error {
 		if err := w.writeFieldHeader(uvarint, 26); err != nil {
 			return err
 		}
-		if err := v.ClearButton.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[27] {
-		if err := w.writeFieldHeader(byteSlice, 27); err != nil {
-			return err
-		}
-		if err := v.Placeholder.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[28] {
-		if err := w.writeFieldHeader(record, 28); err != nil {
-			return err
-		}
-		if err := v.Padding.write(w); err != nil {
-			return err
-		}
-	}
-	if fields[29] {
-		if err := w.writeFieldHeader(uvarint, 29); err != nil {
-			return err
-		}
 		if err := v.ReadOnly.write(w); err != nil {
 			return err
 		}
 	}
-	if fields[30] {
-		if err := w.writeFieldHeader(uvarint, 30); err != nil {
+	if fields[27] {
+		if err := w.writeFieldHeader(uvarint, 27); err != nil {
 			return err
 		}
 		if err := v.SizeByContent.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[28] {
+		if err := w.writeFieldHeader(byteSlice, 28); err != nil {
+			return err
+		}
+		if err := v.AccessibilityLabel.write(w); err != nil {
 			return err
 		}
 	}
@@ -8269,57 +8246,47 @@ func (v *TextField) read(r *BinaryReader) error {
 				return err
 			}
 		case 20:
-			err := v.ShowZero.read(r)
+			err := v.NumberOptions.read(r)
 			if err != nil {
 				return err
 			}
 		case 21:
-			err := v.Step.read(r)
-			if err != nil {
-				return err
-			}
-		case 22:
-			err := v.Max.read(r)
-			if err != nil {
-				return err
-			}
-		case 23:
-			err := v.Min.read(r)
-			if err != nil {
-				return err
-			}
-		case 24:
 			err := v.Autocomplete.read(r)
 			if err != nil {
 				return err
 			}
-		case 25:
+		case 22:
 			err := v.Optional.read(r)
 			if err != nil {
 				return err
 			}
-		case 26:
+		case 23:
 			err := v.ClearButton.read(r)
 			if err != nil {
 				return err
 			}
-		case 27:
+		case 24:
 			err := v.Placeholder.read(r)
 			if err != nil {
 				return err
 			}
-		case 28:
+		case 25:
 			err := v.Padding.read(r)
 			if err != nil {
 				return err
 			}
-		case 29:
+		case 26:
 			err := v.ReadOnly.read(r)
 			if err != nil {
 				return err
 			}
-		case 30:
+		case 27:
 			err := v.SizeByContent.read(r)
+			if err != nil {
+				return err
+			}
+		case 28:
+			err := v.AccessibilityLabel.read(r)
 			if err != nil {
 				return err
 			}
@@ -9351,14 +9318,16 @@ func (v *MenuGroup) read(r *BinaryReader) error {
 }
 
 type MenuItem struct {
-	Action  Ptr
-	Content Component
+	Action             Ptr
+	Content            Component
+	AccessibilityLabel Str
 }
 
 func (v *MenuItem) write(w *BinaryWriter) error {
-	var fields [3]bool
+	var fields [4]bool
 	fields[1] = !v.Action.IsZero()
 	fields[2] = v.Content != nil && !v.Content.IsZero()
+	fields[3] = !v.AccessibilityLabel.IsZero()
 
 	fieldCount := byte(0)
 	for _, present := range fields {
@@ -9389,6 +9358,14 @@ func (v *MenuItem) write(w *BinaryWriter) error {
 			return err
 		}
 		if err := v.Content.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.AccessibilityLabel.write(w); err != nil {
 			return err
 		}
 	}
@@ -9426,6 +9403,11 @@ func (v *MenuItem) read(r *BinaryReader) error {
 				return err
 			}
 			v.Content = obj.(Component)
+		case 3:
+			err := v.AccessibilityLabel.read(r)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -25731,6 +25713,105 @@ func (v *WeekCalendarEvent) read(r *BinaryReader) error {
 	return nil
 }
 
+type TextFieldNumberOptions struct {
+	// ShowZero defines whether '0' should be displayed for empty/zero values of number fields.
+	ShowZero Bool
+	// Step allows to set numeric steps, that will be used to increase/decrease the value stepwise.
+	Step Uint
+	// Max defines the max value of a number field.
+	Max Float
+	// Min defines the min value of a number field.
+	Min Float
+}
+
+func (v *TextFieldNumberOptions) write(w *BinaryWriter) error {
+	var fields [5]bool
+	fields[1] = !v.ShowZero.IsZero()
+	fields[2] = !v.Step.IsZero()
+	fields[3] = !v.Max.IsZero()
+	fields[4] = !v.Min.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(uvarint, 1); err != nil {
+			return err
+		}
+		if err := v.ShowZero.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.Step.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(f64, 3); err != nil {
+			return err
+		}
+		if err := v.Max.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(f64, 4); err != nil {
+			return err
+		}
+		if err := v.Min.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *TextFieldNumberOptions) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.ShowZero.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Step.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Max.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Min.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -27630,6 +27711,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 336:
 		var v WeekCalendarEvents
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 337:
+		var v TextFieldNumberOptions
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -29694,10 +29781,7 @@ func (v *TextField) reset() {
 	v.Id.reset()
 	v.KeydownEnter.reset()
 	v.TextAlignment.reset()
-	v.ShowZero.reset()
-	v.Step.reset()
-	v.Max.reset()
-	v.Min.reset()
+	v.NumberOptions.reset()
 	v.Autocomplete.reset()
 	v.Optional.reset()
 	v.ClearButton.reset()
@@ -29705,13 +29789,14 @@ func (v *TextField) reset() {
 	v.Padding.reset()
 	v.ReadOnly.reset()
 	v.SizeByContent.reset()
+	v.AccessibilityLabel.reset()
 }
 
 func (v *TextField) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && isZeroComponent(v.Leading) && isZeroComponent(v.Trailing) && v.Debounce.IsZero() && v.Lines.IsZero() && v.KeyboardOptions.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero() && v.KeydownEnter.IsZero() && v.TextAlignment.IsZero() && v.ShowZero.IsZero() && v.Step.IsZero() && v.Max.IsZero() && v.Min.IsZero() && v.Autocomplete.IsZero() && v.Optional.IsZero() && v.ClearButton.IsZero() && v.Placeholder.IsZero() && v.Padding.IsZero() && v.ReadOnly.IsZero() && v.SizeByContent.IsZero()
+	return v.Label.IsZero() && v.SupportingText.IsZero() && v.ErrorText.IsZero() && v.Value.IsZero() && v.Frame.IsZero() && v.InputValue.IsZero() && v.Style.IsZero() && isZeroComponent(v.Leading) && isZeroComponent(v.Trailing) && v.Debounce.IsZero() && v.Lines.IsZero() && v.KeyboardOptions.IsZero() && v.Disabled.IsZero() && v.DisableAutocomplete.IsZero() && v.Invisible.IsZero() && v.Revealed.IsZero() && v.Id.IsZero() && v.KeydownEnter.IsZero() && v.TextAlignment.IsZero() && v.NumberOptions.IsZero() && v.Autocomplete.IsZero() && v.Optional.IsZero() && v.ClearButton.IsZero() && v.Placeholder.IsZero() && v.Padding.IsZero() && v.ReadOnly.IsZero() && v.SizeByContent.IsZero() && v.AccessibilityLabel.IsZero()
 }
 
 func (v *Toggle) reset() {
@@ -29865,13 +29950,14 @@ func (v *MenuGroup) IsZero() bool {
 func (v *MenuItem) reset() {
 	v.Action.reset()
 	v.Content = nil
+	v.AccessibilityLabel.reset()
 }
 
 func (v *MenuItem) IsZero() bool {
 	if v == nil {
 		return true
 	}
-	return v.Action.IsZero() && isZeroComponent(v.Content)
+	return v.Action.IsZero() && isZeroComponent(v.Content) && v.AccessibilityLabel.IsZero()
 }
 
 // MenuItems is just a bunch of menu items which belong together.
@@ -33102,6 +33188,20 @@ func (v *WeekCalendarEvents) reset() {
 	*v = nil
 }
 
+func (v *TextFieldNumberOptions) reset() {
+	v.ShowZero.reset()
+	v.Step.reset()
+	v.Max.reset()
+	v.Min.reset()
+}
+
+func (v *TextFieldNumberOptions) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.ShowZero.IsZero() && v.Step.IsZero() && v.Max.IsZero() && v.Min.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -35288,6 +35388,13 @@ func (v *WeekCalendarEvent) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *WeekCalendarEvents) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(array, 336); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *TextFieldNumberOptions) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 337); err != nil {
 		return err
 	}
 	return nil

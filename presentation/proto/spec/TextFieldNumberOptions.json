@@ -1,0 +1,26 @@
+{
+  "kind": "Record",
+  "id": 337,
+  "fields": {
+    "1": {
+      "doc": "ShowZero defines whether '0' should be displayed for empty/zero values of number fields.",
+      "name": "ShowZero",
+      "type": "Bool"
+    },
+    "2": {
+      "doc": "Step allows to set numeric steps, that will be used to increase/decrease the value stepwise.",
+      "name": "Step",
+      "type": "Uint"
+    },
+    "3": {
+      "doc": "Max defines the max value of a number field.",
+      "name": "Max",
+      "type": "Float"
+    },
+    "4": {
+      "doc": "Min defines the min value of a number field.",
+      "name": "Min",
+      "type": "Float"
+    }
+  }
+}

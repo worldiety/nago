@@ -16,6 +16,7 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/accessibility"
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/list"
 	"go.wdy.de/nago/presentation/ui/pager"
@@ -76,18 +77,6 @@ func (t TDataView[E, ID]) renderList(ctx core.RenderContext) core.RenderNode {
 						panic(fmt.Errorf("no selection state for %q", u.Identity()))
 					}
 
-					var cells []ui.TTableCell
-					if !t.hideSelection {
-						cells = append(cells, ui.TableCell(ui.Checkbox(myState.Get()).InputChecked(myState)))
-					}
-					for _, field := range data.Fields {
-						cells = append(cells, ui.TableCell(field.Map(u)))
-					}
-
-					if t.addChevronRight {
-						cells = append(cells, ui.TableCell(ui.HStack(ui.ImageIcon(icons.ChevronRight))).Alignment(ui.Trailing))
-					}
-
 					opts := t.listOptions
 					var titleField Field[E]
 					for idx, field := range t.data.Fields {
@@ -132,12 +121,22 @@ func (t TDataView[E, ID]) renderList(ctx core.RenderContext) core.RenderNode {
 							panic(fmt.Errorf("no selection state for %q", u.Identity()))
 						}
 
-						checkboxView = ui.Checkbox(myState.Get()).InputValue(myState)
+						checkboxView = accessibility.Accessible(ui.Checkbox(myState.Get()).InputValue(myState)).Label(StrSelect.Get(wnd))
 					}
 
 					var trailingView core.View
 					if t.addChevronRight {
-						trailingView = ui.ImageIcon(icons.ChevronRight).Frame(ui.Frame{MaxWidth: ui.L32, MinWidth: ui.L32})
+						accessibilityLabel := StrInteract.Get(wnd)
+						if t.data.AccessibilityLabel != nil {
+							accessibilityLabel = StrXInteract.Get(wnd, i18n.String("entry", t.data.AccessibilityLabel(u)))
+						}
+						trailingView = ui.TertiaryButton(func() {
+							if t.action != nil {
+								t.action(u)
+							}
+						}).
+							AccessibilityLabel(accessibilityLabel).
+							PreIcon(icons.ChevronRight)
 					}
 
 					return list.Entry().
@@ -211,22 +210,25 @@ func (t TDataView[E, ID]) listActionBar(wnd core.Window, model pager.Model[E, ID
 				continue
 			}
 
-			items = append(items, ui.MenuItem(func() {
-				if selectOption.ConfirmDialog == nil {
-					if err := selectOption.Action(selected); err != nil {
-						alert.ShowBannerError(wnd, err)
+			items = append(items,
+				ui.MenuItem(func() {
+					if selectOption.ConfirmDialog == nil {
+						if err := selectOption.Action(selected); err != nil {
+							alert.ShowBannerError(wnd, err)
+							return
+						}
+
 						return
 					}
 
-					return
-				}
+					spec := selectOption.ConfirmDialog(selected)
+					spec.action = selectOption.Action
+					dlgSpec.Set(spec)
+					confirmPresented.Set(true)
 
-				spec := selectOption.ConfirmDialog(selected)
-				spec.action = selectOption.Action
-				dlgSpec.Set(spec)
-				confirmPresented.Set(true)
-
-			}, ui.HStack(ui.ImageIcon(selectOption.Icon), ui.Text(selectOption.Name).TextAlignment(ui.TextAlignStart)).Gap(ui.L8).Alignment(ui.Leading).FullWidth()))
+				}, ui.HStack(ui.ImageIcon(selectOption.Icon), ui.Text(selectOption.Name).TextAlignment(ui.TextAlignStart)).Gap(ui.L8).Alignment(ui.Leading).FullWidth()).
+					AccessibilityLabel(selectOption.Name),
+			)
 		}
 
 	}
@@ -238,16 +240,23 @@ func (t TDataView[E, ID]) listActionBar(wnd core.Window, model pager.Model[E, ID
 	var selItems []ui.TMenuItem
 	if !t.hideSelection {
 		if model.SelectionCount != model.Page.Total {
-			selItems = append(selItems, ui.MenuItem(func() {
-				model.SelectAll()
-			}, ui.Text(StrXSelectAll.Get(wnd))))
+			selItems = append(selItems,
+				ui.MenuItem(func() {
+					model.SelectAll()
+				}, ui.Text(StrSelectAll.Get(wnd))).
+					AccessibilityLabel(StrSelectAll.Get(wnd)),
+			)
 		}
 	}
 
 	if !t.hideSelection && len(selected) > 0 {
-		selItems = append(selItems, ui.MenuItem(func() {
-			model.UnselectAll()
-		}, ui.Text(StrXDeselect.Get(wnd, i18n.Int("num", model.SelectionCount)))))
+		deselectStr := StrXDeselect.Get(wnd, i18n.Int("num", model.SelectionCount))
+		selItems = append(selItems,
+			ui.MenuItem(func() {
+				model.UnselectAll()
+			}, ui.Text(deselectStr)).
+				AccessibilityLabel(deselectStr),
+		)
 	}
 
 	if len(selItems) > 0 {
@@ -262,9 +271,12 @@ func (t TDataView[E, ID]) listActionBar(wnd core.Window, model pager.Model[E, ID
 			continue
 		}
 
-		sortItems = append(sortItems, ui.MenuItem(func() {
-			sorting.toggle(f.ID)
-		}, ui.HStack(ui.ImageIcon(sorting.icon(f.ID)), ui.Text(f.Name))))
+		sortItems = append(sortItems,
+			ui.MenuItem(func() {
+				sorting.toggle(f.ID)
+			}, ui.HStack(ui.ImageIcon(sorting.icon(f.ID)), ui.Text(f.Name)).Gap(ui.L4)).
+				AccessibilityLabel(sorting.label(wnd, f.Name, f.ID)),
+		)
 	}
 
 	if len(sortItems) > 0 {

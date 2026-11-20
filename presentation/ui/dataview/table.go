@@ -9,6 +9,7 @@ package dataview
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application/localization/rstring"
@@ -22,11 +23,16 @@ import (
 )
 
 var (
-	StrXSelected  = i18n.MustVarString("nago.dataview.x_selected", i18n.Values{language.English: "{num} selected", language.German: "{num} ausgewählt"})
-	StrXDeselect  = i18n.MustVarString("nago.dataview.x_deselect", i18n.Values{language.English: "deselect {num}", language.German: "{num} abwählen"})
-	StrXSelect    = i18n.MustString("nago.dataview.select", i18n.Values{language.English: "Select", language.German: "Auswählen"})
-	StrXSelectAll = i18n.MustString("nago.dataview.select_all", i18n.Values{language.English: "Select all", language.German: "Alle auswählen"})
-	StrXInteract  = i18n.MustString("nago.dataview.interact", i18n.Values{language.English: "Interact with row", language.German: "Mit Reihe interagieren"})
+	StrSearch      = i18n.MustString("nago.dataview.search", i18n.Values{language.English: "Search entries", language.German: "Einträge durchsuchen"})
+	StrActions     = i18n.MustString("nago.dataview.actions", i18n.Values{language.English: "Actions", language.German: "Aktionen"})
+	StrXSelected   = i18n.MustVarString("nago.dataview.x_selected", i18n.Values{language.English: "{num} selected", language.German: "{num} ausgewählt"})
+	StrXDeselect   = i18n.MustVarString("nago.dataview.x_deselect", i18n.Values{language.English: "Deselect {num}", language.German: "{num} abwählen"})
+	StrDeselect    = i18n.MustString("nago.dataview.deselect", i18n.Values{language.English: "Deselect", language.German: "Abwählen"})
+	StrDeselectAll = i18n.MustString("nago.dataview.deselect_all", i18n.Values{language.English: "Deselect all", language.German: "Alle abwählen"})
+	StrSelect      = i18n.MustString("nago.dataview.select", i18n.Values{language.English: "Select", language.German: "Auswählen"})
+	StrSelectAll   = i18n.MustString("nago.dataview.select_all", i18n.Values{language.English: "Select all", language.German: "Alle auswählen"})
+	StrInteract    = i18n.MustString("nago.dataview.interact", i18n.Values{language.English: "Interact with entry", language.German: "Mit Eintrag interagieren"})
+	StrXInteract   = i18n.MustVarString("nago.dataview.x_interact", i18n.Values{language.English: "Interact with {entry}", language.German: "Mit {entry} interagieren"})
 )
 
 type TableOptions struct {
@@ -73,8 +79,8 @@ func (t TDataView[E, ID]) renderTable(ctx core.RenderContext) core.RenderNode {
 		cols = append(cols, ui.TableColumn(
 			accessibility.Accessible(
 				ui.Checkbox(model.SelectSubset.Get()).InputChecked(model.SelectSubset),
-			).Label(StrXSelectAll.Get(wnd)),
-		).AccessibilityLabel(StrXSelect.Get(wnd)).Width(ui.L64))
+			).Label(StrSelectAll.Get(wnd)),
+		).AccessibilityLabel(StrSelect.Get(wnd)).Width(ui.L64))
 	}
 
 	for _, field := range data.Fields {
@@ -98,7 +104,7 @@ func (t TDataView[E, ID]) renderTable(ctx core.RenderContext) core.RenderNode {
 	}
 
 	if t.addChevronRight {
-		cols = append(cols, ui.TableColumn(ui.Text("")).Width(ui.L64))
+		cols = append(cols, ui.TableColumn(ui.Text("")).Width(ui.L64).AccessibilityLabel(StrActions.Get(wnd)))
 	}
 
 	table := ui.Table(cols...).Rows(
@@ -115,7 +121,21 @@ func (t TDataView[E, ID]) renderTable(ctx core.RenderContext) core.RenderNode {
 
 			var cells []ui.TTableCell
 			if !t.hideSelection {
-				cells = append(cells, ui.TableCell(ui.Checkbox(myState.Get()).InputChecked(myState)))
+				accessibilityLabel := ""
+				if t.data.AccessibilityLabel == nil {
+					if myState.Get() {
+						accessibilityLabel = StrDeselect.Get(wnd)
+					} else {
+						accessibilityLabel = StrSelect.Get(wnd)
+					}
+				} else {
+					if myState.Get() {
+						accessibilityLabel = fmt.Sprintf("%s %s", t.data.AccessibilityLabel(u), strings.ToLower(StrDeselect.Get(wnd)))
+					} else {
+						accessibilityLabel = fmt.Sprintf("%s %s", t.data.AccessibilityLabel(u), strings.ToLower(StrSelect.Get(wnd)))
+					}
+				}
+				cells = append(cells, ui.TableCell(accessibility.Accessible(ui.Checkbox(myState.Get()).InputChecked(myState)).Label(accessibilityLabel)))
 			}
 			for _, field := range data.Fields {
 				if field.Visible != nil {
@@ -127,17 +147,19 @@ func (t TDataView[E, ID]) renderTable(ctx core.RenderContext) core.RenderNode {
 			}
 
 			if t.addChevronRight {
-				if t.action != nil {
-					cells = append(cells, ui.TableCell(
-						ui.TertiaryButton(func() { t.action(u) }).
-							AccessibilityLabel(StrXInteract.Get(wnd)).
-							PreIcon(icons.ChevronRight),
-					).Alignment(ui.Trailing))
-				} else {
-					cells = append(cells, ui.TableCell(
-						ui.HStack(ui.ImageIcon(icons.ChevronRight)),
-					).Alignment(ui.Trailing))
+				accessibilityLabel := StrInteract.Get(wnd)
+				if t.data.AccessibilityLabel != nil {
+					accessibilityLabel = StrXInteract.Get(wnd, i18n.String("entry", t.data.AccessibilityLabel(u)))
 				}
+				cells = append(cells, ui.TableCell(
+					ui.TertiaryButton(func() {
+						if t.action != nil {
+							t.action(u)
+						}
+					}).
+						AccessibilityLabel(accessibilityLabel).
+						PreIcon(icons.ChevronRight),
+				).Alignment(ui.Trailing))
 			}
 
 			return ui.TableRow(cells...).Key(t.itemKey("row", u.Identity())).Action(t.wrappedAction(u)).HoveredBackgroundColor(ui.ColorCardFooter)
@@ -213,11 +235,22 @@ func (t TDataView[E, ID]) tableActionBar(wnd core.Window, model pager.Model[E, I
 
 		ui.Spacer(),
 
-		ui.If(t.showSearchbar, ui.TextField("", model.Query.Get()).Placeholder(fmt.Sprintf("%s…", rstring.ActionSearch.Get(t.wnd))).InputValue(model.Query).Style(ui.TextFieldReduced).Leading(ui.ImageIcon(icons.Search))),
+		ui.If(t.showSearchbar,
+			ui.TextField("", model.Query.Get()).
+				Placeholder(fmt.Sprintf("%s…", rstring.ActionSearch.Get(t.wnd))).
+				InputValue(model.Query).
+				Style(ui.TextFieldReduced).
+				Leading(ui.ImageIcon(icons.Search)).
+				AccessibilityLabel(StrSearch.Get(wnd)),
+		),
 
 		ui.TertiaryButton(func() {
 			model.UnselectAll()
-		}).Title(StrXSelected.Get(wnd, i18n.Int("num", model.SelectionCount))).PostIcon(icons.Close).Visible(model.SelectionCount > 0),
+		}).
+			Title(StrXSelected.Get(wnd, i18n.Int("num", model.SelectionCount))).
+			AccessibilityLabel(fmt.Sprintf("%s, %s", StrXSelected.Get(wnd, i18n.Int("num", model.SelectionCount)), StrDeselectAll.Get(wnd))).
+			PostIcon(icons.Close).
+			Visible(model.SelectionCount > 0),
 
 		ui.IfFunc(len(t.selectOptions) > 0 && !t.hideSelection, func() core.View {
 			if len(selected) == 0 {

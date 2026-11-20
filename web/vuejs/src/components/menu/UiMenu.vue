@@ -91,9 +91,14 @@ onUpdated(checkAnchorType);
 								active ? 'bg-I0/15' : '',
 								'group flex w-full items-center rounded-lg py-3 px-2 text-sm',
 							]"
+							:aria-label="itemUi.accessibilityLabel"
 							@click="itemClick(itemUi)"
 						>
-							<ui-generic v-if="itemUi.content" :ui="itemUi.content" />
+							<ui-generic
+								v-if="itemUi.content"
+								:ui="itemUi.content"
+								:aria-hidden="!!itemUi.accessibilityLabel"
+							/>
 						</button>
 					</MenuItem>
 				</template>

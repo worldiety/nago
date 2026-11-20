@@ -8117,17 +8117,7 @@ export class TextField implements Writeable, Readable, Component {
 
 	public textAlignment?: TextAlignment;
 
-	// ShowZero defines whether '0' should be displayed for empty/zero values of number fields.
-	public showZero?: Bool;
-
-	// Step allows to set numeric steps, that will be used to increase/decrease the value stepwise.
-	public step?: Uint;
-
-	// Max defines the max value of a number field.
-	public max?: Float;
-
-	// Min defines the min value of a number field.
-	public min?: Float;
+	public numberOptions?: TextFieldNumberOptions;
 
 	public autocomplete?: Str;
 
@@ -8144,6 +8134,9 @@ export class TextField implements Writeable, Readable, Component {
 
 	// SizeByContent sets the CSS property field-sizing to content on the input or textarea element, so that the field grows or shrinks with its content.
 	public sizeByContent?: Bool;
+
+	// AccessibilityLabel is used by screen readers to describe the component. If not set, the Label is used.
+	public accessibilityLabel?: Str;
 
 	constructor(
 		label: Str | undefined = undefined,
@@ -8165,17 +8158,15 @@ export class TextField implements Writeable, Readable, Component {
 		id: Str | undefined = undefined,
 		keydownEnter: Ptr | undefined = undefined,
 		textAlignment: TextAlignment | undefined = undefined,
-		showZero: Bool | undefined = undefined,
-		step: Uint | undefined = undefined,
-		max: Float | undefined = undefined,
-		min: Float | undefined = undefined,
+		numberOptions: TextFieldNumberOptions | undefined = undefined,
 		autocomplete: Str | undefined = undefined,
 		optional: Bool | undefined = undefined,
 		clearButton: Bool | undefined = undefined,
 		placeholder: Str | undefined = undefined,
 		padding: Padding | undefined = undefined,
 		readOnly: Bool | undefined = undefined,
-		sizeByContent: Bool | undefined = undefined
+		sizeByContent: Bool | undefined = undefined,
+		accessibilityLabel: Str | undefined = undefined
 	) {
 		this.label = label;
 		this.supportingText = supportingText;
@@ -8196,10 +8187,7 @@ export class TextField implements Writeable, Readable, Component {
 		this.id = id;
 		this.keydownEnter = keydownEnter;
 		this.textAlignment = textAlignment;
-		this.showZero = showZero;
-		this.step = step;
-		this.max = max;
-		this.min = min;
+		this.numberOptions = numberOptions;
 		this.autocomplete = autocomplete;
 		this.optional = optional;
 		this.clearButton = clearButton;
@@ -8207,6 +8195,7 @@ export class TextField implements Writeable, Readable, Component {
 		this.padding = padding;
 		this.readOnly = readOnly;
 		this.sizeByContent = sizeByContent;
+		this.accessibilityLabel = accessibilityLabel;
 	}
 
 	read(reader: BinaryReader): void {
@@ -8305,48 +8294,41 @@ export class TextField implements Writeable, Readable, Component {
 					break;
 				}
 				case 20: {
-					this.showZero = readBool(reader);
+					this.numberOptions = new TextFieldNumberOptions();
+					this.numberOptions.read(reader);
 					break;
 				}
 				case 21: {
-					this.step = readInt(reader);
-					break;
-				}
-				case 22: {
-					this.max = readFloat(reader);
-					break;
-				}
-				case 23: {
-					this.min = readFloat(reader);
-					break;
-				}
-				case 24: {
 					this.autocomplete = readString(reader);
 					break;
 				}
-				case 25: {
+				case 22: {
 					this.optional = readBool(reader);
 					break;
 				}
-				case 26: {
+				case 23: {
 					this.clearButton = readBool(reader);
 					break;
 				}
-				case 27: {
+				case 24: {
 					this.placeholder = readString(reader);
 					break;
 				}
-				case 28: {
+				case 25: {
 					this.padding = new Padding();
 					this.padding.read(reader);
 					break;
 				}
-				case 29: {
+				case 26: {
 					this.readOnly = readBool(reader);
 					break;
 				}
-				case 30: {
+				case 27: {
 					this.sizeByContent = readBool(reader);
+					break;
+				}
+				case 28: {
+					this.accessibilityLabel = readString(reader);
 					break;
 				}
 				default:
@@ -8377,10 +8359,7 @@ export class TextField implements Writeable, Readable, Component {
 			this.id !== undefined,
 			this.keydownEnter !== undefined,
 			this.textAlignment !== undefined,
-			this.showZero !== undefined,
-			this.step !== undefined,
-			this.max !== undefined,
-			this.min !== undefined,
+			this.numberOptions !== undefined && !this.numberOptions.isZero(),
 			this.autocomplete !== undefined,
 			this.optional !== undefined,
 			this.clearButton !== undefined,
@@ -8388,6 +8367,7 @@ export class TextField implements Writeable, Readable, Component {
 			this.padding !== undefined && !this.padding.isZero(),
 			this.readOnly !== undefined,
 			this.sizeByContent !== undefined,
+			this.accessibilityLabel !== undefined,
 		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
@@ -8474,48 +8454,40 @@ export class TextField implements Writeable, Readable, Component {
 			writeInt(writer, this.textAlignment!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[20]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 20);
-			writeBool(writer, this.showZero!); // typescript linters cannot see, that we already checked this properly above
+			writer.writeFieldHeader(Shapes.RECORD, 20);
+			this.numberOptions!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[21]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 21);
-			writeInt(writer, this.step!); // typescript linters cannot see, that we already checked this properly above
+			writer.writeFieldHeader(Shapes.BYTESLICE, 21);
+			writeString(writer, this.autocomplete!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[22]) {
-			writer.writeFieldHeader(Shapes.F64, 22);
-			writeFloat(writer, this.max!); // typescript linters cannot see, that we already checked this properly above
+			writer.writeFieldHeader(Shapes.UVARINT, 22);
+			writeBool(writer, this.optional!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[23]) {
-			writer.writeFieldHeader(Shapes.F64, 23);
-			writeFloat(writer, this.min!); // typescript linters cannot see, that we already checked this properly above
+			writer.writeFieldHeader(Shapes.UVARINT, 23);
+			writeBool(writer, this.clearButton!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[24]) {
 			writer.writeFieldHeader(Shapes.BYTESLICE, 24);
-			writeString(writer, this.autocomplete!); // typescript linters cannot see, that we already checked this properly above
+			writeString(writer, this.placeholder!); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[25]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 25);
-			writeBool(writer, this.optional!); // typescript linters cannot see, that we already checked this properly above
+			writer.writeFieldHeader(Shapes.RECORD, 25);
+			this.padding!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
 		if (fields[26]) {
 			writer.writeFieldHeader(Shapes.UVARINT, 26);
-			writeBool(writer, this.clearButton!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[27]) {
-			writer.writeFieldHeader(Shapes.BYTESLICE, 27);
-			writeString(writer, this.placeholder!); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[28]) {
-			writer.writeFieldHeader(Shapes.RECORD, 28);
-			this.padding!.write(writer); // typescript linters cannot see, that we already checked this properly above
-		}
-		if (fields[29]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 29);
 			writeBool(writer, this.readOnly!); // typescript linters cannot see, that we already checked this properly above
 		}
-		if (fields[30]) {
-			writer.writeFieldHeader(Shapes.UVARINT, 30);
+		if (fields[27]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 27);
 			writeBool(writer, this.sizeByContent!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[28]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 28);
+			writeString(writer, this.accessibilityLabel!); // typescript linters cannot see, that we already checked this properly above
 		}
 	}
 
@@ -8540,17 +8512,15 @@ export class TextField implements Writeable, Readable, Component {
 			this.id === undefined &&
 			this.keydownEnter === undefined &&
 			this.textAlignment === undefined &&
-			this.showZero === undefined &&
-			this.step === undefined &&
-			this.max === undefined &&
-			this.min === undefined &&
+			(this.numberOptions === undefined || this.numberOptions.isZero()) &&
 			this.autocomplete === undefined &&
 			this.optional === undefined &&
 			this.clearButton === undefined &&
 			this.placeholder === undefined &&
 			(this.padding === undefined || this.padding.isZero()) &&
 			this.readOnly === undefined &&
-			this.sizeByContent === undefined
+			this.sizeByContent === undefined &&
+			this.accessibilityLabel === undefined
 		);
 	}
 
@@ -8574,10 +8544,7 @@ export class TextField implements Writeable, Readable, Component {
 		this.id = undefined;
 		this.keydownEnter = undefined;
 		this.textAlignment = undefined;
-		this.showZero = undefined;
-		this.step = undefined;
-		this.max = undefined;
-		this.min = undefined;
+		this.numberOptions = undefined;
 		this.autocomplete = undefined;
 		this.optional = undefined;
 		this.clearButton = undefined;
@@ -8585,6 +8552,7 @@ export class TextField implements Writeable, Readable, Component {
 		this.padding = undefined;
 		this.readOnly = undefined;
 		this.sizeByContent = undefined;
+		this.accessibilityLabel = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -9634,9 +9602,16 @@ export class MenuItem implements Writeable, Readable {
 
 	public content?: Component;
 
-	constructor(action: Ptr | undefined = undefined, content: Component | undefined = undefined) {
+	public accessibilityLabel?: Str;
+
+	constructor(
+		action: Ptr | undefined = undefined,
+		content: Component | undefined = undefined,
+		accessibilityLabel: Str | undefined = undefined
+	) {
 		this.action = action;
 		this.content = content;
+		this.accessibilityLabel = accessibilityLabel;
 	}
 
 	read(reader: BinaryReader): void {
@@ -9658,6 +9633,10 @@ export class MenuItem implements Writeable, Readable {
 					this.content = unmarshal(reader) as Component;
 					break;
 				}
+				case 3: {
+					this.accessibilityLabel = readString(reader);
+					break;
+				}
 				default:
 					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
 			}
@@ -9665,7 +9644,12 @@ export class MenuItem implements Writeable, Readable {
 	}
 
 	write(writer: BinaryWriter): void {
-		const fields = [false, this.action !== undefined, this.content !== undefined && !this.content.isZero()];
+		const fields = [
+			false,
+			this.action !== undefined,
+			this.content !== undefined && !this.content.isZero(),
+			this.accessibilityLabel !== undefined,
+		];
 		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
 		writer.writeByte(fieldCount);
 		if (fields[1]) {
@@ -9679,15 +9663,24 @@ export class MenuItem implements Writeable, Readable {
 			this.content.writeTypeHeader(writer);
 			this.content!.write(writer); // typescript linters cannot see, that we already checked this properly above
 		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			writeString(writer, this.accessibilityLabel!); // typescript linters cannot see, that we already checked this properly above
+		}
 	}
 
 	isZero(): boolean {
-		return this.action === undefined && (this.content === undefined || this.content.isZero());
+		return (
+			this.action === undefined &&
+			(this.content === undefined || this.content.isZero()) &&
+			this.accessibilityLabel === undefined
+		);
 	}
 
 	reset(): void {
 		this.action = undefined;
 		this.content = undefined;
+		this.accessibilityLabel = undefined;
 	}
 
 	writeTypeHeader(dst: BinaryWriter): void {
@@ -26598,6 +26591,106 @@ export class WeekCalendarEvents implements Writeable, Readable {
 	}
 }
 
+export class TextFieldNumberOptions implements Writeable, Readable {
+	// ShowZero defines whether '0' should be displayed for empty/zero values of number fields.
+	public showZero?: Bool;
+
+	// Step allows to set numeric steps, that will be used to increase/decrease the value stepwise.
+	public step?: Uint;
+
+	// Max defines the max value of a number field.
+	public max?: Float;
+
+	// Min defines the min value of a number field.
+	public min?: Float;
+
+	constructor(
+		showZero: Bool | undefined = undefined,
+		step: Uint | undefined = undefined,
+		max: Float | undefined = undefined,
+		min: Float | undefined = undefined
+	) {
+		this.showZero = showZero;
+		this.step = step;
+		this.max = max;
+		this.min = min;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.showZero = readBool(reader);
+					break;
+				}
+				case 2: {
+					this.step = readInt(reader);
+					break;
+				}
+				case 3: {
+					this.max = readFloat(reader);
+					break;
+				}
+				case 4: {
+					this.min = readFloat(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.showZero !== undefined,
+			this.step !== undefined,
+			this.max !== undefined,
+			this.min !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 1);
+			writeBool(writer, this.showZero!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 2);
+			writeInt(writer, this.step!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.F64, 3);
+			writeFloat(writer, this.max!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.F64, 4);
+			writeFloat(writer, this.min!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.showZero === undefined && this.step === undefined && this.max === undefined && this.min === undefined
+		);
+	}
+
+	reset(): void {
+		this.showZero = undefined;
+		this.step = undefined;
+		this.max = undefined;
+		this.min = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 337);
+		return;
+	}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -28102,6 +28195,11 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 336: {
 			const v = new WeekCalendarEvents();
+			v.read(src);
+			return v;
+		}
+		case 337: {
+			const v = new TextFieldNumberOptions();
 			v.read(src);
 			return v;
 		}

@@ -25,8 +25,9 @@ import (
 )
 
 var (
-	StrDialogDeleteTitle = i18n.MustString("nago.dataview.dialog.delete_title", i18n.Values{language.English: "Deletes Elements", language.German: "Elemente löschen"})
-	StrDialogDeleteDescX = i18n.MustQuantityString(
+	StrCreateAccessibility = i18n.MustString("nago.dataview.create_accessibility", i18n.Values{language.English: "Create new entry", language.German: "Neuen Eintrag erstellen"})
+	StrDialogDeleteTitle   = i18n.MustString("nago.dataview.dialog.delete_title", i18n.Values{language.English: "Deletes Elements", language.German: "Elemente löschen"})
+	StrDialogDeleteDescX   = i18n.MustQuantityString(
 		"nago.dataview.dialog.delete_desc",
 		i18n.QValues{
 			language.English: i18n.Quantities{One: "Delete the selected element?", Other: "Delete {amount} elements?"},
@@ -81,10 +82,11 @@ func NewSelectOptionDelete[ID any](wnd core.Window, action func(selected []ID) e
 }
 
 type Data[E data.Aggregate[ID], ID ~string] struct {
-	FindAll  iter.Seq2[ID, error]
-	FindByID data.ByIDFinder[E, ID]
-	Fields   []Field[E]
-	ID       string
+	FindAll            iter.Seq2[ID, error]
+	FindByID           data.ByIDFinder[E, ID]
+	Fields             []Field[E]
+	ID                 string
+	AccessibilityLabel func(obj E) string
 }
 
 type FieldContext struct {
@@ -287,6 +289,7 @@ func (t TDataView[E, ID]) Action(fn func(e E)) TDataView[E, ID] {
 
 // NextActionIndicator sets a flag if another column should be appended to indicate
 // that an entry has an attached next-action.
+// Deactivating this despite having an action is bad practice and bad for accessibility.
 func (t TDataView[E, ID]) NextActionIndicator(b bool) TDataView[E, ID] {
 	t.addChevronRight = b
 	return t
@@ -295,12 +298,12 @@ func (t TDataView[E, ID]) NextActionIndicator(b bool) TDataView[E, ID] {
 // CreateAction is a conventional default factory to create a new element for this data view. It has a default
 // position, icon, text and button style. See also [TDataView.CreateActionView] and [TDataView.CreateOptions].
 func (t TDataView[E, ID]) CreateAction(fn func()) TDataView[E, ID] {
-	return t.CreateActionWithLabel(fn, rstring.ActionNew.Get(t.wnd))
+	return t.CreateActionWithLabel(fn, rstring.ActionNew.Get(t.wnd), StrCreateAccessibility.Get(t.wnd))
 }
 
 // CreateActionWithLabel is like CreateAction, but with a custom button label
-func (t TDataView[E, ID]) CreateActionWithLabel(fn func(), label string) TDataView[E, ID] {
-	return t.CreateActionView(ui.PrimaryButton(fn).PreIcon(icons.Plus).Title(label))
+func (t TDataView[E, ID]) CreateActionWithLabel(fn func(), label, accessibilityLabel string) TDataView[E, ID] {
+	return t.CreateActionView(ui.PrimaryButton(fn).PreIcon(icons.Plus).Title(label).AccessibilityLabel(accessibilityLabel))
 }
 
 // CreateOptions is default factory for [TDataView.NewActionView]. See also [TDataView.NewAction].
@@ -313,14 +316,16 @@ func (t TDataView[E, ID]) CreateOptions(actions ...CreateOption) TDataView[E, ID
 	var items []ui.TMenuItem
 	for _, action := range actions {
 		if action.Visible == nil || action.Visible() {
-			items = append(items, ui.MenuItem(
-				func() {
-					if err := action.Action; err != nil {
-						alert.ShowBannerError(t.wnd, err())
-						return
-					}
-				},
-				ui.HStack(ui.ImageIcon(action.Icon), ui.Text(action.Name).TextAlignment(ui.TextAlignStart)).Gap(ui.L8).Alignment(ui.Leading).FullWidth()),
+			items = append(items,
+				ui.MenuItem(
+					func() {
+						if err := action.Action; err != nil {
+							alert.ShowBannerError(t.wnd, err())
+							return
+						}
+					},
+					ui.HStack(ui.ImageIcon(action.Icon), ui.Text(action.Name).TextAlignment(ui.TextAlignStart)).Gap(ui.L8).Alignment(ui.Leading).FullWidth()).
+					AccessibilityLabel(action.Name),
 			)
 		}
 	}

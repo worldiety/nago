@@ -46,34 +46,35 @@ const (
 //
 // It is typically used in forms, search bars, and other user input scenarios.
 type TTextField struct {
-	label           string                // label displayed above or inside the field
-	value           string                // static text value (used if InputValue is not set)
-	inputValue      *core.State[string]   // bound state for controlled input
-	supportingText  string                // helper text shown below the field
-	errorText       string                // error message shown below the field
-	disabled        bool                  // disables user interaction
-	leading         core.View             // optional leading element (e.g., icon)
-	trailing        core.View             // optional trailing element (e.g., button, icon)
-	style           proto.TextFieldStyle  // visual style of the field (outlined, filled, etc.)
-	debounce        proto.DebounceOptions // debounce configuration for input
-	invisible       bool                  // hides the field when true
-	frame           Frame                 // layout constraints
-	lines           int                   // number of lines (0 = single line, >0 = text area)
-	keyboardOptions TKeyboardOptions      // platform-specific keyboard options
-	id              string                // unique identifier for the field
-	keydownEnter    func()                // callback for Enter key press
-	textAlignment   TextAlignment
-	showZero        bool    // show '0' character for empty/zero values in number fields
-	step            int     // step size to increase/decrease number values
-	maxValue        float64 // max value for number fields
-	minValue        float64 // min value for number fields
-	autocomplete    string  // autocomplete tags of the input
-	optional        bool    // whether the field is optional
-	clearButton     bool    // whether to show a clear button for the field
-	placeholder     string  // placeholder of the input field
-	padding         Padding // padding of the text field (overwrites defaults)
-	readOnly        bool    // readOnly mode, preventing user edits while still allowing text selection and copying
-	sizeByContent   bool    // sizes the input element by its content (CSS field-sizing: content)
+	label              string                // label displayed above or inside the field
+	value              string                // static text value (used if InputValue is not set)
+	inputValue         *core.State[string]   // bound state for controlled input
+	supportingText     string                // helper text shown below the field
+	errorText          string                // error message shown below the field
+	disabled           bool                  // disables user interaction
+	leading            core.View             // optional leading element (e.g., icon)
+	trailing           core.View             // optional trailing element (e.g., button, icon)
+	style              proto.TextFieldStyle  // visual style of the field (outlined, filled, etc.)
+	debounce           proto.DebounceOptions // debounce configuration for input
+	invisible          bool                  // hides the field when true
+	frame              Frame                 // layout constraints
+	lines              int                   // number of lines (0 = single line, >0 = text area)
+	keyboardOptions    TKeyboardOptions      // platform-specific keyboard options
+	id                 string                // unique identifier for the field
+	keydownEnter       func()                // callback for Enter key press
+	textAlignment      TextAlignment
+	showZero           bool    // show '0' character for empty/zero values in number fields
+	step               int     // step size to increase/decrease number values
+	maxValue           float64 // max value for number fields
+	minValue           float64 // min value for number fields
+	autocomplete       string  // autocomplete tags of the input
+	optional           bool    // whether the field is optional
+	clearButton        bool    // whether to show a clear button for the field
+	placeholder        string  // placeholder of the input field
+	padding            Padding // padding of the text field (overwrites defaults)
+	readOnly           bool    // readOnly mode, preventing user edits while still allowing text selection and copying
+	sizeByContent      bool    // sizes the input element by its content (CSS field-sizing: content)
+	accessibilityLabel string  // optional label for accessibility (e.g., screen readers)
 }
 
 // TextField creates a new text field with the given label and initial value.
@@ -96,7 +97,7 @@ func (c TTextField) Border(border Border) DecoredView {
 
 // AccessibilityLabel is a placeholder implementation.
 func (c TTextField) AccessibilityLabel(label string) DecoredView {
-	// TODO implement me or reduce interface
+	c.accessibilityLabel = label
 	return c
 }
 
@@ -421,17 +422,20 @@ func (c TTextField) Render(ctx core.RenderContext) core.RenderNode {
 		Id:              proto.Str(c.id),
 		KeydownEnter:    core.MountKeyedCallback(ctx, keydownEnterKey(c.inputValue, !c.disabled && !c.invisible && !c.readOnly), c.keydownEnter),
 		TextAlignment:   proto.TextAlignment(c.textAlignment),
-		ShowZero:        proto.Bool(c.showZero),
-		Step:            proto.Uint(c.step),
-		Max:             proto.Float(c.maxValue),
-		Min:             proto.Float(c.minValue),
-		Autocomplete:    proto.Str(c.autocomplete),
-		Optional:        proto.Bool(c.optional),
-		ClearButton:     proto.Bool(c.clearButton),
-		Placeholder:     proto.Str(c.placeholder),
-		Padding:         c.padding.ora(),
-		ReadOnly:        proto.Bool(c.readOnly),
-		SizeByContent:   proto.Bool(c.sizeByContent),
+		NumberOptions: proto.TextFieldNumberOptions{
+			ShowZero: proto.Bool(c.showZero),
+			Step:     proto.Uint(c.step),
+			Max:      proto.Float(c.maxValue),
+			Min:      proto.Float(c.minValue),
+		},
+		Autocomplete:       proto.Str(c.autocomplete),
+		Optional:           proto.Bool(c.optional),
+		ClearButton:        proto.Bool(c.clearButton),
+		Placeholder:        proto.Str(c.placeholder),
+		Padding:            c.padding.ora(),
+		ReadOnly:           proto.Bool(c.readOnly),
+		SizeByContent:      proto.Bool(c.sizeByContent),
+		AccessibilityLabel: proto.Str(c.accessibilityLabel),
 	}
 }
 
