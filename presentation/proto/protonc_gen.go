@@ -19844,6 +19844,9 @@ type FlowChartToolbarAction uint64
 
 const (
 	FlowChartToolbarActionAutoLayout FlowChartToolbarAction = 1
+	FlowChartToolbarActionZoomIn     FlowChartToolbarAction = 2
+	FlowChartToolbarActionZoomOut    FlowChartToolbarAction = 3
+	FlowChartToolbarActionFitView    FlowChartToolbarAction = 4
 )
 
 func (v *FlowChartToolbarAction) write(r *BinaryWriter) error {
