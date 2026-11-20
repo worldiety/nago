@@ -317,7 +317,7 @@ function onRowMouseLeave(rowIdx: number) {
 					scope="col"
 					:style="headCellStyles(headIdx)"
 					:aria-label="head.accessibilityLabel"
-                    :aria-hidden="!head.content"
+					:aria-hidden="!head.content"
 					@click.stop="onClickHeaderCell(headIdx)"
 					@mouseenter="onHeadCellMouseEnter(headIdx)"
 					@mouseleave="onHeadCellMouseLeave(headIdx)"
