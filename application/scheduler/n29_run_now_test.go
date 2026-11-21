@@ -51,6 +51,8 @@ func TestN29StartNow(t *testing.T) {
 				w.mustStartNow(job, "Bea")
 				p.next(w.t).finish <- nil
 				w.ended(job, 1)
+				// the newest run is the one which began later
+				w.clock.set(w.t, bln(2027, 6, 1, 21, 1))
 				return nil
 			}, nil, 2},
 	}

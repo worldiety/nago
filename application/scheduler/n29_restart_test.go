@@ -65,6 +65,10 @@ func TestN29RestartClosesOpenRun(t *testing.T) {
 			}
 
 			p2.none(t)
+
+			// the crashed manager ends its run before the test removes its log directory
+			w.cancel()
+			w.ended(job, 1)
 		})
 	}
 }
