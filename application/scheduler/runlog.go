@@ -17,6 +17,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -212,15 +213,19 @@ func (rs *runStore) runs(id ID) ([]Run, error) {
 	}
 
 	res := make([]Run, 0, len(keys))
-	for run, err := range rs.repo.FindAllByID(slices.Values(keys)) {
+	for i := len(keys) - 1; i >= 0; i-- {
+		run, ok, err := rs.load(keys[i])
 		if err != nil {
 			return nil, err
 		}
 
-		res = append(res, run)
+		if ok {
+			res = append(res, run)
+		}
 	}
 
-	slices.SortFunc(res, func(a, b Run) int {
+	// the newer key first for runs with the same start
+	slices.SortStableFunc(res, func(a, b Run) int {
 		return b.StartedAt.Compare(a.StartedAt)
 	})
 
@@ -262,23 +267,42 @@ func (rs *runStore) page(id ID, offset, limit int) ([]Run, int, error) {
 const maxRunsBeyondWindow = 10
 
 // recent returns the runs of the last 24 hours and at least the latest completed run, newest first. It reads only
-// the runs of the days of the last 24 hours.
+// these runs and, by a binary search, a few runs of the day 24 hours ago, whose runs start in the order of their
+// numbers.
 func (rs *runStore) recent(id ID, loc *time.Location) ([]Run, error) {
 	keys, err := rs.keys(id)
 	if err != nil {
 		return nil, err
 	}
 
-	cutoffDay := rs.now().Add(-24 * time.Hour).In(loc).Format(time.DateOnly)
+	cutoff := rs.now().Add(-24 * time.Hour)
+	cutoffDay := cutoff.In(loc).Format(time.DateOnly)
+	dayStart, _ := slices.BinarySearchFunc(keys, cutoffDay, func(key RunID, day string) int {
+		return strings.Compare(keyDay(key), day)
+	})
+	dayEnd := dayStart + sort.Search(len(keys)-dayStart, func(i int) bool {
+		return keyDay(keys[dayStart+i]) > cutoffDay
+	})
+
+	var loadErr error
+	first := dayStart + sort.Search(dayEnd-dayStart, func(i int) bool {
+		run, ok, err := rs.load(keys[dayStart+i])
+		if err != nil {
+			loadErr = err
+			return true
+		}
+
+		return !ok || !run.StartedAt.Before(cutoff)
+	})
+	if loadErr != nil {
+		return nil, loadErr
+	}
+
 	var res []Run
 	completed := false
-	beyond := 0
 	for i := len(keys) - 1; i >= 0; i-- {
-		if keyDay(keys[i]) < cutoffDay {
-			if completed || beyond >= maxRunsBeyondWindow {
-				break
-			}
-			beyond++
+		if i < first && (completed || first-i > maxRunsBeyondWindow) {
+			break
 		}
 
 		run, ok, err := rs.load(keys[i])
@@ -350,12 +374,13 @@ func (rs *runStore) setFloor(id ID, floor RunID) {
 	rs.floors[id] = floor
 }
 
-// closeUnfinished ends the newest runs without an end, e.g. after a crash, as cancelled by a restart. It returns
-// the newest run, if any.
+// closeUnfinished ends the newest runs without an end, e.g. after a crash, now as cancelled by a restart. It
+// returns the newest run, if any.
 func (rs *runStore) closeUnfinished(id ID) (Run, bool, error) {
 	rs.mu.Lock()
 	defer rs.mu.Unlock()
 
+	now := rs.now()
 	keys, err := rs.keys(id)
 	if err != nil {
 		return Run{}, false, err
@@ -377,6 +402,7 @@ func (rs *runStore) closeUnfinished(id ID) (Run, bool, error) {
 		if unfinished {
 			run.Outcome = OutcomeCanceled
 			run.CanceledBy = CanceledByRestart
+			run.CompletedAt = now
 			if err := rs.repo.Save(run); err != nil {
 				return Run{}, false, err
 			}

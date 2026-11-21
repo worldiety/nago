@@ -487,8 +487,8 @@ func (m *Manager) SetReference(id ID, t time.Time) error {
 }
 
 // PurgeRuns deletes all runs, log files and the plan state of the scheduler. The id needs not to be configured, e.g.
-// after [Manager.Remove]. A run in progress is not saved at its end. A configured scheduler continues as if
-// it had been configured now, keeping a pause.
+// after [Manager.Remove]. A run in progress is not saved at its end. A configured scheduler continues in memory as
+// if it had been configured now, keeping a pause; its next configuration after a restart is its first one.
 func (m *Manager) PurgeRuns(id ID) error {
 	if err := m.runs.purge(id); err != nil {
 		return err
@@ -649,11 +649,11 @@ func (s *Scheduler) markRemoved() {
 	s.removed = true
 }
 
-// resetPlan forgets the plan state after the runs have been purged, as if the scheduler had been configured now.
+// resetPlan forgets the plan state after the runs have been purged, as if the scheduler had been configured now. It
+// does not persist the plan state, which has been deleted.
 func (s *Scheduler) resetPlan(now time.Time) {
 	s.planMutex.Lock()
 	s.plan = DurableState{Reference: now, Paused: s.plan.Paused}
-	s.persistPlanLocked()
 	s.planMutex.Unlock()
 
 	var zero time.Time

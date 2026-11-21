@@ -771,8 +771,9 @@ func (s *Scheduler) beginRun(parent context.Context, info RunInfo, async bool) (
 	s.ClearLogs()
 	s.lastStartedAt.Store(&now)
 
-	if info.Trigger == TriggerManual {
-		// the start of the last manual run is a reference of the plan
+	if info.Trigger == TriggerManual && (async || opts.Durable) {
+		// the start of the last manual run is a reference of the plan; ExecuteNow keeps the behavior of a
+		// scheduler without Durable as before
 		s.planMutex.Lock()
 		if now.After(s.plan.Reference) {
 			s.plan.Reference = now
@@ -1184,8 +1185,9 @@ func (s slogHandler) Handle(ctx context.Context, record slog.Record) error {
 		values = nil
 	}
 
+	// slog stamps the system time, an inserted clock rules instead
 	t := record.Time
-	if t.IsZero() {
+	if _, system := s.sched.clock.(systemClock); !system || t.IsZero() {
 		t = s.sched.clock.Now()
 	}
 

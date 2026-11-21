@@ -17,7 +17,6 @@ import (
 
 	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application/scheduler"
-	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/pkg/xtime"
 	"go.wdy.de/nago/presentation/core"
 	heroSolid "go.wdy.de/nago/presentation/icons/hero/solid"
@@ -277,19 +276,19 @@ func runsTable(loc *time.Location, runs []scheduler.Run, total, keep int, select
 
 	return ui.VStack(
 		ui.Table(
-			ui.TableColumn(ui.Text("Nr.")),
 			ui.TableColumn(ui.Text("Start")),
 			ui.TableColumn(ui.Text("Ergebnis")),
 			ui.TableColumn(ui.Text("Dauer")),
-			ui.TableColumn(ui.Text("Auslöser")),
 			ui.TableColumn(ui.Text("Einträge")),
 		).Rows(ui.ForEach(runs, func(r scheduler.Run) ui.TTableRow {
 			row := ui.TableRow(
-				ui.TableCell(ui.Text(fmt.Sprint(r.Nr))),
-				ui.TableCell(ui.Text(shortDate(loc, r.StartedAt))),
+				// the number and the trigger below the start keep the columns of the admin center as before
+				ui.TableCell(ui.VStack(
+					ui.Text(shortDate(loc, r.StartedAt)),
+					ui.Text(fmt.Sprintf("Nr. %d · %s", r.Nr, triggerStr(r))).Font(ui.BodySmall).Color(ui.ST0),
+				).Alignment(ui.Leading).Gap(ui.L2)),
 				ui.TableCell(outcomePill(r)),
 				ui.TableCell(ui.Text(formatDuration(r.Duration()))),
-				ui.TableCell(ui.Text(triggerStr(r))),
 				ui.TableCell(ui.IfElse(hasLog(r), ui.Text(entriesStr(r)), ui.Text(entriesStr(r)+" · Protokoll gelöscht").Color(ui.ST0))),
 			).Action(func() { onSelect(r) })
 
@@ -472,7 +471,7 @@ func logView(wnd core.Window, loc *time.Location, model DashboardModel, run sche
 	})
 
 	if err != nil {
-		return ui.VStack(toolbar, alert.BannerError(localizeRunLogErr(wnd, err, keep))).Gap(ui.L12).FullWidth()
+		return ui.VStack(toolbar, runLogErr(wnd, err, keep)).Gap(ui.L12).FullWidth()
 	}
 
 	// the query changed and the offset is beyond the result
@@ -561,17 +560,15 @@ var (
 	})
 )
 
-// localizeRunLogErr turns the expected domain errors of [scheduler.ViewRunLog] into localized errors.
-func localizeRunLogErr(wnd core.Window, err error, keep int) error {
+// runLogErr shows the expected domain errors of [scheduler.ViewRunLog] as a hint, without logging them on each
+// redraw, and every other error as an error banner.
+func runLogErr(wnd core.Window, err error, keep int) core.View {
 	switch {
 	case errors.Is(err, scheduler.ErrRunLogNotAvailable):
-		return std.NewLocalizedError(
-			strRunLogNotAvailable.Get(wnd),
-			strRunLogNotAvailableMsgX.Get(wnd, i18n.Int("amount", keep)),
-		).WithError(err)
+		return alert.Banner(strRunLogNotAvailable.Get(wnd), strRunLogNotAvailableMsgX.Get(wnd, i18n.Int("amount", keep)))
 	case errors.Is(err, scheduler.ErrRunNotFound):
-		return std.NewLocalizedError(strRunNotFound.Get(wnd), strRunNotFoundMsg.Get(wnd)).WithError(err)
+		return alert.Banner(strRunNotFound.Get(wnd), strRunNotFoundMsg.Get(wnd))
 	default:
-		return err
+		return alert.BannerError(err)
 	}
 }
