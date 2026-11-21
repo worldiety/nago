@@ -189,7 +189,12 @@ func main() {
 				CustomContents(contents).
 				MaxZoom(1.5).
 				Toolbar(flowchart.Toolbar{
-					Actions: []flowchart.FlowChartToolbarAction{flowchart.FlowChartToolbarActionAutoLayout},
+					Actions: []flowchart.FlowChartToolbarAction{
+						flowchart.FlowChartToolbarActionAutoLayout,
+						flowchart.FlowChartToolbarActionZoomIn,
+						flowchart.FlowChartToolbarActionZoomOut,
+						flowchart.FlowChartToolbarActionFitView,
+					},
 				}).
 				Menu(menu)
 

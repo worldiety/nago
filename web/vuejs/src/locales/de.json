@@ -113,7 +113,10 @@
 	},
 	"flowChart": {
 		"actions": {
-			"autoLayout": "Graph automatisch anordnen"
+			"autoLayout": "Graph automatisch anordnen",
+			"fitView": "Ganzen Graph anzeigen",
+			"zoomIn": "Vergrößern",
+			"zoomOut": "Verkleinern"
 		}
 	},
 	"inputWrapper": {

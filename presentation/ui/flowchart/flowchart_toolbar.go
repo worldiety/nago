@@ -34,7 +34,14 @@ const (
 type FlowChartToolbarAction int
 
 const (
+	// FlowChartToolbarActionAutoLayout arranges the nodes anew in the direction of the chart's layout.
 	FlowChartToolbarActionAutoLayout = FlowChartToolbarAction(proto.FlowChartToolbarActionAutoLayout)
+	// FlowChartToolbarActionZoomIn zooms in one step, at most to the chart's max zoom.
+	FlowChartToolbarActionZoomIn = FlowChartToolbarAction(proto.FlowChartToolbarActionZoomIn)
+	// FlowChartToolbarActionZoomOut zooms out one step, at most to the chart's min zoom.
+	FlowChartToolbarActionZoomOut = FlowChartToolbarAction(proto.FlowChartToolbarActionZoomOut)
+	// FlowChartToolbarActionFitView zooms and pans so that all nodes are visible.
+	FlowChartToolbarActionFitView = FlowChartToolbarAction(proto.FlowChartToolbarActionFitView)
 )
 
 type Toolbar struct {
