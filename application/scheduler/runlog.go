@@ -403,6 +403,10 @@ func (rs *runStore) closeUnfinished(id ID) (Run, bool, error) {
 			run.Outcome = OutcomeCanceled
 			run.CanceledBy = CanceledByRestart
 			run.CompletedAt = now
+			// the counts of a run are saved at its end, which a crash skipped
+			if entries, warns, errs, ok := rs.countLog(run); ok {
+				run.Entries, run.Warnings, run.Errors = entries, warns, errs
+			}
 			if err := rs.repo.Save(run); err != nil {
 				return Run{}, false, err
 			}
@@ -419,6 +423,38 @@ func (rs *runStore) closeUnfinished(id ID) (Run, bool, error) {
 	}
 
 	return newest, found, nil
+}
+
+// countLog counts the entries, warnings and errors in the log file of the given run, like a sink counts them.
+func (rs *runStore) countLog(run Run) (entries, warnings, errs int, ok bool) {
+	if run.LogFile == "" || rs.dir == "" {
+		return 0, 0, 0, false
+	}
+
+	path := filepath.Join(rs.dir, filepath.Base(run.LogFile))
+	f, err := os.Open(path)
+	if err != nil {
+		return 0, 0, 0, false
+	}
+	defer f.Close()
+
+	lines, err := rs.indexes.lines(f, path)
+	if err != nil {
+		slog.Error("cannot read scheduler log file", "file", run.LogFile, "err", err.Error())
+		return 0, 0, 0, false
+	}
+
+	for _, l := range lines {
+		entries++
+		switch {
+		case l.level >= slog.LevelError:
+			errs++
+		case l.level >= slog.LevelWarn:
+			warnings++
+		}
+	}
+
+	return entries, warnings, errs, true
 }
 
 // begin persists a new run, which starts now, and opens its log file. If strictLog is set and the log file
