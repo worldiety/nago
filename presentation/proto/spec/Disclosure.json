@@ -1,0 +1,38 @@
+{
+  "doc": "Disclosure shows its content below a summary and opens and closes in the browser, without a round trip to the server. It is rendered as a native details element. Value is applied, when the component appears and whenever a rendering changes it. In between, the browser keeps the state the user has chosen. If InputValue is set, the browser reports each change of the user to it in the background, which causes a rendering, but does not delay opening or closing.",
+  "kind": "Record",
+  "id": 338,
+  "fields": {
+    "1": {
+      "name": "Summary",
+      "type": "Component"
+    },
+    "2": {
+      "name": "Content",
+      "type": "Component"
+    },
+    "3": {
+      "name": "Frame",
+      "type": "Frame"
+    },
+    "4": {
+      "doc": "InputValue is an optional state, where the browser reports the open state, after the user has changed it.",
+      "name": "InputValue",
+      "type": "Ptr"
+    },
+    "5": {
+      "doc": "Value is the open state, which is applied when the component appears and whenever a rendering changes it.",
+      "name": "Value",
+      "type": "Bool"
+    },
+    "6": {
+      "name": "Separator",
+      "type": "Bool"
+    },
+    "7": {
+      "doc": "Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.",
+      "name": "Id",
+      "type": "Str"
+    }
+  }
+}

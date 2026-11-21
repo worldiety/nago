@@ -26708,6 +26708,172 @@ export class TextFieldNumberOptions implements Writeable, Readable {
 	}
 }
 
+// Disclosure shows its content below a summary and opens and closes in the browser, without a round trip to the server. It is rendered as a native details element. Value is applied, when the component appears and whenever a rendering changes it. In between, the browser keeps the state the user has chosen. If InputValue is set, the browser reports each change of the user to it in the background, which causes a rendering, but does not delay opening or closing.
+export class Disclosure implements Writeable, Readable, Component {
+	public summary?: Component;
+
+	public content?: Component;
+
+	public frame?: Frame;
+
+	// InputValue is an optional state, where the browser reports the open state, after the user has changed it.
+	public inputValue?: Ptr;
+
+	// Value is the open state, which is applied when the component appears and whenever a rendering changes it.
+	public value?: Bool;
+
+	public separator?: Bool;
+
+	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
+	public id?: Str;
+
+	constructor(
+		summary: Component | undefined = undefined,
+		content: Component | undefined = undefined,
+		frame: Frame | undefined = undefined,
+		inputValue: Ptr | undefined = undefined,
+		value: Bool | undefined = undefined,
+		separator: Bool | undefined = undefined,
+		id: Str | undefined = undefined
+	) {
+		this.summary = summary;
+		this.content = content;
+		this.frame = frame;
+		this.inputValue = inputValue;
+		this.value = value;
+		this.separator = separator;
+		this.id = id;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					// decode polymorphic field as 1 element array
+					const len = reader.readUvarint();
+					if (len != 1) {
+						throw new Error(`unexpected length: ` + len);
+					}
+					this.summary = unmarshal(reader) as Component;
+					break;
+				}
+				case 2: {
+					// decode polymorphic field as 1 element array
+					const len = reader.readUvarint();
+					if (len != 1) {
+						throw new Error(`unexpected length: ` + len);
+					}
+					this.content = unmarshal(reader) as Component;
+					break;
+				}
+				case 3: {
+					this.frame = new Frame();
+					this.frame.read(reader);
+					break;
+				}
+				case 4: {
+					this.inputValue = readInt(reader);
+					break;
+				}
+				case 5: {
+					this.value = readBool(reader);
+					break;
+				}
+				case 6: {
+					this.separator = readBool(reader);
+					break;
+				}
+				case 7: {
+					this.id = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.summary !== undefined && !this.summary.isZero(),
+			this.content !== undefined && !this.content.isZero(),
+			this.frame !== undefined && !this.frame.isZero(),
+			this.inputValue !== undefined,
+			this.value !== undefined,
+			this.separator !== undefined,
+			this.id !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			// encode polymorphic enum as 1 element slice
+			writer.writeFieldHeader(Shapes.ARRAY, 1);
+			writer.writeByte(1);
+			this.summary.writeTypeHeader(writer);
+			this.summary!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			// encode polymorphic enum as 1 element slice
+			writer.writeFieldHeader(Shapes.ARRAY, 2);
+			writer.writeByte(1);
+			this.content.writeTypeHeader(writer);
+			this.content!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.RECORD, 3);
+			this.frame!.write(writer); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 4);
+			writeInt(writer, this.inputValue!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 5);
+			writeBool(writer, this.value!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 6);
+			writeBool(writer, this.separator!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[7]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 7);
+			writeString(writer, this.id!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			(this.summary === undefined || this.summary.isZero()) &&
+			(this.content === undefined || this.content.isZero()) &&
+			(this.frame === undefined || this.frame.isZero()) &&
+			this.inputValue === undefined &&
+			this.value === undefined &&
+			this.separator === undefined &&
+			this.id === undefined
+		);
+	}
+
+	reset(): void {
+		this.summary = undefined;
+		this.content = undefined;
+		this.frame = undefined;
+		this.inputValue = undefined;
+		this.value = undefined;
+		this.separator = undefined;
+		this.id = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 338);
+		return;
+	}
+	isComponent(): void {}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -28217,6 +28383,11 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 337: {
 			const v = new TextFieldNumberOptions();
+			v.read(src);
+			return v;
+		}
+		case 338: {
+			const v = new Disclosure();
 			v.read(src);
 			return v;
 		}

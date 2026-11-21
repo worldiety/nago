@@ -22,6 +22,7 @@ import {
 	Component as NagoComponent,
 	CountDown,
 	DatePicker,
+	Disclosure,
 	Divider,
 	DnDArea,
 	Fieldset,
@@ -76,6 +77,7 @@ const LazyUiCodeEditor = defineAsyncComponent(() => import('@/components/codeedi
 const LazyUiColorPicker = defineAsyncComponent(() => import('@/components/colorpicker/UiColorPicker.vue'));
 const LazyUiCountDown = defineAsyncComponent(() => import('@/components/countdown/UiCountDown.vue'));
 const LazyUiDatepicker = defineAsyncComponent(() => import('@/components/datepicker/UiDatepicker.vue'));
+const LazyUiDisclosure = defineAsyncComponent(() => import('@/components/UiDisclosure.vue'));
 const LazyUiDivider = defineAsyncComponent(() => import('@/components/UiDivider.vue'));
 const LazyUiDnDArea = defineAsyncComponent(() => import('@/components/dnd/UiDnDArea.vue'));
 const LazyUiPDF = defineAsyncComponent(() => import('@/components/UiPDF.vue'));
@@ -169,6 +171,10 @@ export function vueComponentFor(ngc: NagoComponent): Component {
 
 	if (ngc instanceof DatePicker) {
 		return LazyUiDatepicker;
+	}
+
+	if (ngc instanceof Disclosure) {
+		return LazyUiDisclosure;
 	}
 
 	if (ngc instanceof Divider) {

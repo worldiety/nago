@@ -388,6 +388,7 @@ func (WindowTitle) isComponent()        {}
 func (ThreeJS) isComponent()            {}
 func (Canvas2) isComponent()            {}
 func (WeekCalendar) isComponent()       {}
+func (Disclosure) isComponent()         {}
 
 // NagoEvent is the union type of all allowed NAGO protocol events. Everything which goes through a NAGO channel must be an Event at the root level.
 type NagoEvent interface {
@@ -25828,6 +25829,182 @@ func (v *TextFieldNumberOptions) read(r *BinaryReader) error {
 	return nil
 }
 
+// Disclosure shows its content below a summary and opens and closes in the browser, without a round trip to the server. It is rendered as a native details element. Value is applied, when the component appears and whenever a rendering changes it. In between, the browser keeps the state the user has chosen. If InputValue is set, the browser reports each change of the user to it in the background, which causes a rendering, but does not delay opening or closing.
+type Disclosure struct {
+	Summary Component
+	Content Component
+	Frame   Frame
+	// InputValue is an optional state, where the browser reports the open state, after the user has changed it.
+	InputValue Ptr
+	// Value is the open state, which is applied when the component appears and whenever a rendering changes it.
+	Value     Bool
+	Separator Bool
+	// Id represents an optional identifier to locate this component within the view tree. It must be either empty or unique within the entire tree instance.
+	Id Str
+}
+
+func (v *Disclosure) write(w *BinaryWriter) error {
+	var fields [8]bool
+	fields[1] = v.Summary != nil && !v.Summary.IsZero()
+	fields[2] = v.Content != nil && !v.Content.IsZero()
+	fields[3] = !v.Frame.IsZero()
+	fields[4] = !v.InputValue.IsZero()
+	fields[5] = !v.Value.IsZero()
+	fields[6] = !v.Separator.IsZero()
+	fields[7] = !v.Id.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 1); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.Summary.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.Summary.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		// polymorphic field (enum) type encodes as polymorphic array
+		if err := w.writeFieldHeader(array, 2); err != nil {
+			return err
+		}
+		if err := w.writeUvarint(1); err != nil {
+			return err
+		}
+		if err := v.Content.writeTypeHeader(w); err != nil {
+			return err
+		}
+		if err := v.Content.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(record, 3); err != nil {
+			return err
+		}
+		if err := v.Frame.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(uvarint, 4); err != nil {
+			return err
+		}
+		if err := v.InputValue.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(uvarint, 5); err != nil {
+			return err
+		}
+		if err := v.Value.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(uvarint, 6); err != nil {
+			return err
+		}
+		if err := v.Separator.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[7] {
+		if err := w.writeFieldHeader(byteSlice, 7); err != nil {
+			return err
+		}
+		if err := v.Id.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Disclosure) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.Summary = obj.(Component)
+		case 2:
+			// polymorphic field type (enum) decodes as polymorphic array
+			count, err := r.readUvarint()
+			if err != nil {
+				return err
+			}
+			if count != 1 {
+				return fmt.Errorf("expected exact 1 element in enum field")
+			}
+			obj, err := Unmarshal(r)
+			if err != nil {
+				return err
+			}
+			v.Content = obj.(Component)
+		case 3:
+			err := v.Frame.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.InputValue.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Value.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.Separator.read(r)
+			if err != nil {
+				return err
+			}
+		case 7:
+			err := v.Id.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -27733,6 +27910,12 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 337:
 		var v TextFieldNumberOptions
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 338:
+		var v Disclosure
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -33219,6 +33402,23 @@ func (v *TextFieldNumberOptions) IsZero() bool {
 	return v.ShowZero.IsZero() && v.Step.IsZero() && v.Max.IsZero() && v.Min.IsZero()
 }
 
+func (v *Disclosure) reset() {
+	v.Summary = nil
+	v.Content = nil
+	v.Frame.reset()
+	v.InputValue.reset()
+	v.Value.reset()
+	v.Separator.reset()
+	v.Id.reset()
+}
+
+func (v *Disclosure) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return isZeroComponent(v.Summary) && isZeroComponent(v.Content) && v.Frame.IsZero() && v.InputValue.IsZero() && v.Value.IsZero() && v.Separator.IsZero() && v.Id.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -35412,6 +35612,13 @@ func (v *WeekCalendarEvents) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *TextFieldNumberOptions) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 337); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Disclosure) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 338); err != nil {
 		return err
 	}
 	return nil
