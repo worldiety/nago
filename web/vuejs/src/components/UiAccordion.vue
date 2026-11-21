@@ -12,9 +12,10 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import ArrowDownIcon from '@/assets/svg/chevron-down.svg';
 import UiGeneric from '@/components/UiGeneric.vue';
 import { frameCSS } from '@/components/shared/frame';
+import { OptimisticToggle } from '@/components/shared/optimisticToggle';
 import { bool2Str, randomStr } from '@/components/shared/util';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
-import { nextRID } from '@/eventhandling';
+import { nextRID, renderedRID } from '@/eventhandling';
 import { CssClasses } from '@/shared/cssClasses';
 import type { Accordion } from '@/shared/proto/nprotoc_gen';
 import { UpdateStateValueRequested } from '@/shared/proto/nprotoc_gen';
@@ -29,17 +30,30 @@ const serviceAdapter = useServiceAdapter();
 const bodyHeight = ref(0);
 const bodyDummy = ref<HTMLDivElement>();
 
+// The accordion opens and closes in the browser at once and sends the new state afterwards. Until a rendering shows,
+// that the server has processed it, renderings keep the local state, see OptimisticToggle.
+const sync = new OptimisticToggle(!!props.ui.value, props.ui.inputValue);
+const open = ref<boolean>(sync.value);
+
+// every rendering decides, also one with an unchanged value: the server may not have taken the toggle
+watch(
+	() => props.ui,
+	(ui) => {
+		open.value = sync.adopt(!!ui.value, ui.inputValue, renderedRID());
+	}
+);
+
 const classes = computed<string[]>(() => {
 	const styles = frameCSS(props.ui.frame);
 	const cls: string[] = [CssClasses.getOrCreate(styles)];
-	if (props.ui.value) cls.push('open');
+	if (open.value) cls.push('open');
 	if (props.ui.small) cls.push('small');
 	if (props.ui.separator) cls.push('separator');
 	return cls;
 });
 
 function calcBodyHeight() {
-	if (!props.ui.value || !bodyDummy.value) {
+	if (!open.value || !bodyDummy.value) {
 		bodyHeight.value = 0;
 		return;
 	}
@@ -48,14 +62,13 @@ function calcBodyHeight() {
 }
 
 function toggle(value?: boolean) {
-	serviceAdapter.sendEvent(
-		new UpdateStateValueRequested(
-			props.ui.inputValue,
-			0,
-			nextRID(),
-			bool2Str(value !== undefined ? value : !props.ui.value)
-		)
-	);
+	const next = value !== undefined ? value : !open.value;
+	if (next === open.value) return;
+
+	const rid = nextRID();
+	sync.toggle(next, rid);
+	open.value = next;
+	serviceAdapter.sendEvent(new UpdateStateValueRequested(props.ui.inputValue, 0, rid, bool2Str(next)));
 }
 
 function observeBodyHeightChange() {
@@ -67,7 +80,7 @@ function observeBodyHeightChange() {
 onMounted(() => {
 	setTimeout(calcBodyHeight, 20); // TODO: Find better way to render correct initial state
 	addEventListener('resize', calcBodyHeight);
-	watch(() => props.ui.value, calcBodyHeight);
+	watch(open, calcBodyHeight);
 	observeBodyHeightChange();
 });
 
@@ -82,7 +95,7 @@ onUnmounted(() => {
 			<button
 				class="header"
 				:aria-controls="`body-${id}`"
-				:aria-expanded="!!ui.value"
+				:aria-expanded="open"
 				@click="toggle()"
 				@keydown.down.exact="toggle(true)"
 				@keydown.up.exact="toggle(false)"
@@ -94,7 +107,7 @@ onUnmounted(() => {
 					<ArrowDownIcon />
 				</span>
 			</button>
-			<div :id="`body-${id}`" class="body" :style="`height: ${bodyHeight}px;`" :inert="!ui.value">
+			<div :id="`body-${id}`" class="body" :style="`height: ${bodyHeight}px;`" :inert="!open">
 				<div class="body-inner">
 					<UiGeneric :ui="ui.content" />
 				</div>
