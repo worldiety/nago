@@ -720,16 +720,21 @@ func (w *sweeper) run(ctx context.Context) {
 			}
 		}
 
+		// the clock is checked again after arming the timer, see Scheduler.sleepUntil
 		if d := alarm.Sub(w.m.clock.Now()); d > 0 {
 			timer := w.m.clock.NewTimer(d)
-			select {
-			case <-ctx.Done():
+			if !w.m.clock.Now().Before(alarm) {
 				timer.Stop()
-				return
-			case <-w.kick:
-				timer.Stop()
-				continue
-			case <-timer.C():
+			} else {
+				select {
+				case <-ctx.Done():
+					timer.Stop()
+					return
+				case <-w.kick:
+					timer.Stop()
+					continue
+				case <-timer.C():
+				}
 			}
 		}
 

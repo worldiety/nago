@@ -53,12 +53,13 @@ type Scheduler struct {
 	sink            atomic.Pointer[runSink]
 	currentRun      atomic.Pointer[Run]
 
-	// runMutex protects the run in progress and the state changes of runs.
-	runMutex   sync.Mutex
-	active     *activeRun
-	runGen     uint64 // incremented by each run, so that the end of a run changes the state only if no run followed
-	asyncBegun uint64 // runs begun by StartNow
-	asyncEnded uint64 // runs begun by StartNow, which have ended
+	// runMutex protects the run in progress and the state changes of runs. runChanged is signalled, when a run
+	// begins, its runner returns or it has ended.
+	runMutex       sync.Mutex
+	runChanged     *sync.Cond
+	active         *activeRun
+	activeReturned bool   // the runner of the active run has returned, the run only persists its end
+	runGen         uint64 // incremented by each run, so that the end of a run changes the state only if no run followed
 
 	// planMutex protects the plan state, which a durable scheduler persists.
 	planMutex sync.Mutex
@@ -119,6 +120,7 @@ func newScheduler(ctx context.Context, opts Options, settingsRepo SettingsReposi
 		wake:         make(chan struct{}, 1),
 		runs:         runs,
 	}
+	s.runChanged = sync.NewCond(&s.runMutex)
 
 	var zeroTime time.Time
 	s.lastStartedAt.Store(&zeroTime)
@@ -329,7 +331,7 @@ loop:
 			deadline = s.clock.Now().Add(max(pauseTime, time.Second))
 		}
 		for {
-			woken, alive := s.sleep(ctx, deadline.Sub(s.clock.Now()))
+			woken, alive := s.sleepUntil(ctx, deadline)
 			if !alive {
 				slog.Info("service shutdown due to context signal", "id", s.id)
 				return
@@ -446,16 +448,14 @@ func (s *Scheduler) durableLoop(ctx context.Context, setState func(State)) {
 
 			s.storeNextPlanned(due)
 			setState(Paused)
-			if d := due.Sub(s.clock.Now()); d > 0 {
-				woken, alive := s.sleep(ctx, d)
-				if !alive {
-					return
-				}
+			woken, alive := s.sleepUntil(ctx, due)
+			if !alive {
+				return
+			}
 
-				if woken {
-					// a pause, a changed plan or the end of a manual run: plan again
-					continue
-				}
+			if woken {
+				// a pause, a changed plan or the end of a manual run: plan again
+				continue
 			}
 		} else {
 			s.storeNextPlanned(s.clock.Now())
@@ -527,18 +527,21 @@ func (s *Scheduler) fire(ctx context.Context, due time.Time, trigger Trigger) {
 		return
 	}
 
-	s.planMutex.Lock()
-	if s.plan.Paused {
-		s.planMutex.Unlock()
-		return
-	}
-
-	if !s.singleRunMutex.TryLock() {
-		if due.After(s.plan.LastDue) {
+	if !s.lockUnlessRunning() {
+		// a run is in progress, e.g. a manual one: the due is omitted
+		s.planMutex.Lock()
+		if !s.plan.Paused && due.After(s.plan.LastDue) {
 			s.plan.LastDue = due
 			s.persistPlanLocked()
 		}
 		s.planMutex.Unlock()
+		return
+	}
+
+	s.planMutex.Lock()
+	if s.plan.Paused {
+		s.planMutex.Unlock()
+		s.singleRunMutex.Unlock()
 		return
 	}
 
@@ -551,6 +554,28 @@ func (s *Scheduler) fire(ctx context.Context, due time.Time, trigger Trigger) {
 
 	a, runCtx := s.beginRun(ctx, RunInfo{Due: due, Trigger: trigger}, false)
 	_ = s.execRun(a, runCtx)
+}
+
+// lockUnlessRunning acquires the singleRunMutex for a due or StartNow and returns true, or returns false while the
+// runner of a run is running. A run whose runner has returned, which only persists its end, or a run which is just
+// beginning holds the mutex only briefly: it is awaited, so that it is decided by whether a runner runs, not by the
+// scheduling of the goroutines. The caller must not hold the planMutex, which the end of a run needs.
+func (s *Scheduler) lockUnlessRunning() bool {
+	s.runMutex.Lock()
+	defer s.runMutex.Unlock()
+
+	for {
+		if s.singleRunMutex.TryLock() {
+			return true
+		}
+
+		if s.active != nil && !s.activeReturned {
+			return false
+		}
+
+		// the run is beginning or persisting its end, both signal runChanged
+		s.runChanged.Wait()
+	}
 }
 
 func interval(settings Settings) time.Duration {
@@ -631,6 +656,32 @@ func (s *Scheduler) sleep(ctx context.Context, d time.Duration) (woken, alive bo
 	}
 }
 
+// sleepUntil waits until the clock reaches deadline, like sleep. Its timer is armed with a duration, thus it checks
+// the clock again after arming the timer: a clock which passed the deadline meanwhile would otherwise fire the timer
+// that much later.
+func (s *Scheduler) sleepUntil(ctx context.Context, deadline time.Time) (woken, alive bool) {
+	d := deadline.Sub(s.clock.Now())
+	if d <= 0 {
+		return s.sleep(ctx, 0)
+	}
+
+	timer := s.clock.NewTimer(d)
+	defer timer.Stop()
+
+	if !s.clock.Now().Before(deadline) {
+		return s.sleep(ctx, 0)
+	}
+
+	select {
+	case <-ctx.Done():
+		return false, false
+	case <-s.wake:
+		return true, true
+	case <-timer.C():
+		return false, true
+	}
+}
+
 // waitWake waits without a timer until the scheduler is woken. It returns false, if the scheduler has been
 // cancelled.
 func (s *Scheduler) waitWake(ctx context.Context) bool {
@@ -670,8 +721,9 @@ func (s *Scheduler) executePlanned(ctx context.Context, info RunInfo) error {
 		return nil
 	}
 
+	// like lockUnlessRunning, only the runner of a manual run omits the due, not its begin or the persisting of its end
 	s.runMutex.Lock()
-	manual := s.asyncBegun > s.asyncEnded
+	manual := s.active != nil && s.active.async && !s.activeReturned
 	s.runMutex.Unlock()
 	if manual {
 		return nil
@@ -698,11 +750,11 @@ func (s *Scheduler) ExecuteNow() error {
 	return s.execute(s.liveContext(), RunInfo{Trigger: TriggerManual})
 }
 
-// StartNow begins a manual run and returns without waiting for it. While a run is in progress, it returns
+// StartNow begins a manual run and returns without waiting for it. While the runner of a run is running, it returns
 // [ErrRunning] without a run. A paused or stopped scheduler can be started as well.
 func (s *Scheduler) StartNow(by string) error {
 	ctx := s.liveContext()
-	if !s.singleRunMutex.TryLock() {
+	if !s.lockUnlessRunning() {
 		return ErrRunning
 	}
 
@@ -760,12 +812,11 @@ func (s *Scheduler) beginRun(parent context.Context, info RunInfo, async bool) (
 	s.runMutex.Lock()
 	s.runGen++
 	a.gen = s.runGen
-	if async {
-		s.asyncBegun++
-	}
 	s.active = a
+	s.activeReturned = false
 	state := Running
 	s.state.Store(&state)
+	s.runChanged.Broadcast()
 	s.runMutex.Unlock()
 
 	s.ClearLogs()
@@ -822,6 +873,11 @@ func (s *Scheduler) execRun(a *activeRun, ctx context.Context) error {
 	a.returned = true
 	canceled, canceledBy, logFailed := a.cancelRequested, a.canceledBy, a.logFailed
 	a.mu.Unlock()
+
+	s.runMutex.Lock()
+	s.activeReturned = true
+	s.runChanged.Broadcast()
+	s.runMutex.Unlock()
 
 	return s.endRun(a, err, interrupted, canceled, canceledBy, logFailed)
 }
@@ -897,15 +953,13 @@ func (s *Scheduler) endRun(a *activeRun, err error, interrupted, canceled bool, 
 
 	s.runMutex.Lock()
 	s.active = nil
-	if a.async {
-		s.asyncEnded++
-	}
 	s.runMutex.Unlock()
 
 	s.singleRunMutex.Unlock()
 
 	// without a loop, e.g. a stopped scheduler executed manually, nothing is paused
 	s.runMutex.Lock()
+	s.runChanged.Broadcast()
 	if s.runGen == a.gen && s.active == nil {
 		state := Stopped
 		if s.Looping() {
