@@ -35,8 +35,13 @@ watch(
 	}
 );
 
-function radioButtonClicked(): void {
+function radioButtonClicked(event: MouseEvent): void {
 	if (!props.ui.disabled) {
+		// Like the checkbox, the radio button handles its click itself. Otherwise, the click bubbles up to a clickable
+		// stack around it (e.g. a selectable card), which sends its action for the same click as well. The server then
+		// renders twice, because the action of the stack refers to the tree before the state update and is stale.
+		// This also covers the click, which the browser forwards to the input for a click on an associated label.
+		event.stopPropagation();
 		serviceAdapter.sendEvent(
 			new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), bool2Str(!checked.value))
 		);
