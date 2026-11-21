@@ -13,6 +13,8 @@ import (
 	"log/slog"
 	"maps"
 	"slices"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/worldiety/i18n"
@@ -103,6 +105,8 @@ func Dashboard(wnd core.Window, model DashboardModel) core.View {
 	}
 
 	keep := keepLogs(status)
+	small := isSmall(wnd)
+	ended, hasEnded := lastEnded(status, runs, runsOffset.Get(), model)
 
 	views := []core.View{redraw, errorCallout(loc, status, showErrors)}
 	views = append(views, model.Hints...)
@@ -112,19 +116,50 @@ func Dashboard(wnd core.Window, model DashboardModel) core.View {
 		grid([5]int{1, 2, 4, 4, 4},
 			nextRunKpi(loc, status),
 			kpi("Zuletzt gestartet", relTime(status.LastStartedAt), "", formatDate(loc, status.LastStartedAt), ""),
-			kpi("Zuletzt beendet", relTime(status.LastCompletedAt), "", lastRunHint(loc, status), ""),
+			lastEndedKpi(loc, ended, hasEnded),
 			failedKpi(status.Stats),
 		),
 
-		grid([5]int{1, 1, 2, 2, 2},
-			card("Letzte Läufe", runsTable(loc, runs, total, keep, selected.ID, selectRun, runsOffset)).Frame(ui.Frame{}.FullWidth()),
+		cards(small,
+			card("Letzte Läufe", runsTable(loc, small, runs, total, keep, selected.ID, selectRun, runsOffset)).Frame(ui.Frame{}.FullWidth()),
 			card("Konfiguration", model.Config).Frame(ui.Frame{}.FullWidth()),
 		),
 
-		card("Protokoll", logView(wnd, loc, model, selected, keep, logLevel, logOffset, logQuery)).Frame(ui.Frame{}.FullWidth()),
+		card("Protokoll", logView(wnd, loc, small, model, selected, keep, logLevel, logOffset, logQuery)).Frame(ui.Frame{}.FullWidth()),
 	)
 
 	return ui.VStack(views...).FullWidth().Alignment(ui.TopLeading).Gap(ui.L16)
+}
+
+// isSmall reports a window below 768 px, where the runs and the log stand as stacked rows instead of tables. A
+// window without a size class counts as a large one.
+func isSmall(wnd core.Window) bool {
+	c := wnd.Info().SizeClass
+	return c.Valid() && c.Ordinal() < core.SizeClassMedium.Ordinal()
+}
+
+// lastEnded returns the latest run which has ended, so that all parts of "Zuletzt beendet" belong to the same
+// run, also while a run is running and after a restart.
+func lastEnded(status scheduler.StatusResult, page []scheduler.Run, offset int, model DashboardModel) (scheduler.Run, bool) {
+	if status.LastRun.IsSome() && status.LastRun.Unwrap().Outcome != scheduler.OutcomeRunning {
+		return status.LastRun.Unwrap(), true
+	}
+
+	if offset != 0 && model.Runs != nil {
+		// only the newest runs can be running
+		var err error
+		if page, _, err = model.Runs(0, 2); err != nil {
+			return scheduler.Run{}, false
+		}
+	}
+
+	for _, r := range page {
+		if r.Outcome != scheduler.OutcomeRunning {
+			return r, true
+		}
+	}
+
+	return scheduler.Run{}, false
 }
 
 // keepLogs returns the amount of runs, whose log is kept.
@@ -169,7 +204,7 @@ func errorCallout(loc *time.Location, status scheduler.StatusResult, showErrors 
 func nextRunKpi(loc *time.Location, status scheduler.StatusResult) core.View {
 	switch {
 	case status.State == scheduler.Running:
-		return kpi("Nächster Lauf", "läuft gerade", ui.SG0, "seit "+relTime(status.LastStartedAt), "")
+		return kpi("Nächster Lauf", "läuft gerade", ui.SG0, "seit "+countdown(time.Since(status.LastStartedAt)), "")
 	case status.Suspended:
 		return kpi("Nächster Lauf", "pausiert", ui.SW0, "bis zum Fortsetzen", "")
 	case status.State == scheduler.Stopped || status.State == scheduler.Disabled || status.NextPlannedAt.IsZero():
@@ -191,22 +226,21 @@ func failedKpi(st scheduler.RunStats) core.View {
 	}
 
 	ok := float64(st.Total24h-st.Failed24h) / float64(st.Total24h) * 100
-	return kpi("Fehler (24 h)", fmt.Sprintf("%d von %d", st.Failed24h, st.Total24h), color, fmt.Sprintf("%.1f %% erfolgreich · Ø %s", ok, formatDuration(st.AvgDuration)), "")
+	return kpi("Fehler (24 h)", fmt.Sprintf("%d von %d", st.Failed24h, st.Total24h), color, fmt.Sprintf("%s %% erfolgreich · Ø %s", decimal(ok), formatDuration(st.AvgDuration)), "")
 }
 
-func lastRunHint(loc *time.Location, status scheduler.StatusResult) string {
-	hint := formatDate(loc, status.LastCompletedAt)
-	if status.LastRun.IsSome() && status.Stats.LastDuration > 0 {
-		hint += " · Dauer " + formatDuration(status.Stats.LastDuration)
+// lastEndedKpi shows the end, the duration and the result of the latest ended run.
+func lastEndedKpi(loc *time.Location, run scheduler.Run, ok bool) core.View {
+	if !ok {
+		return kpi("Zuletzt beendet", relTime(time.Time{}), "", "–", "")
 	}
 
-	if status.LastRun.IsSome() {
-		if run := status.LastRun.Unwrap(); run.Outcome != scheduler.OutcomeRunning {
-			hint += " · " + outcomeStr(run)
-		}
+	hint := formatDate(loc, run.CompletedAt)
+	if d := run.Duration(); d > 0 {
+		hint += " · Dauer " + formatDuration(d)
 	}
 
-	return hint
+	return kpi("Zuletzt beendet", relTime(run.CompletedAt), "", hint+" · "+outcomeStr(run), "")
 }
 
 // outcomeStr returns the result of a run, e.g. "abgebrochen: Neustart".
@@ -264,7 +298,7 @@ func hasLog(r scheduler.Run) bool {
 	return r.LogFile != "" || r.Outcome == scheduler.OutcomeRunning
 }
 
-func runsTable(loc *time.Location, runs []scheduler.Run, total, keep int, selected scheduler.RunID, onSelect func(scheduler.Run), offset *core.State[int]) core.View {
+func runsTable(loc *time.Location, small bool, runs []scheduler.Run, total, keep int, selected scheduler.RunID, onSelect func(scheduler.Run), offset *core.State[int]) core.View {
 	if total == 0 {
 		return ui.Text("Noch keine Läufe erfasst.").Color(ui.ST0)
 	}
@@ -274,49 +308,118 @@ func runsTable(loc *time.Location, runs []scheduler.Run, total, keep int, select
 		from = 0
 	}
 
+	var list core.View
+	if small {
+		list = runsStack(loc, runs, selected, onSelect)
+	} else {
+		list = runsGrid(loc, runs, selected, onSelect)
+	}
+
 	return ui.VStack(
-		ui.Table(
-			ui.TableColumn(ui.Text("Start")),
-			ui.TableColumn(ui.Text("Ergebnis")),
-			ui.TableColumn(ui.Text("Dauer")),
-			ui.TableColumn(ui.Text("Einträge")),
-		).Rows(ui.ForEach(runs, func(r scheduler.Run) ui.TTableRow {
-			row := ui.TableRow(
-				// the number and the trigger below the start keep the columns of the admin center as before
-				ui.TableCell(ui.VStack(
-					ui.Text(shortDate(loc, r.StartedAt)),
-					ui.Text(fmt.Sprintf("Nr. %d · %s", r.Nr, triggerStr(r))).Font(ui.BodySmall).Color(ui.ST0),
-				).Alignment(ui.Leading).Gap(ui.L2)),
-				ui.TableCell(outcomePill(r)),
-				ui.TableCell(ui.Text(formatDuration(r.Duration()))),
-				ui.TableCell(ui.IfElse(hasLog(r), ui.Text(entriesStr(r)), ui.Text(entriesStr(r)+" · Protokoll gelöscht").Color(ui.ST0))),
-			).Action(func() { onSelect(r) })
-
-			if r.ID == selected {
-				row = row.BackgroundColor(ui.I1)
-			}
-
-			return row
-		})...).Frame(ui.Frame{}.FullWidth()),
+		list,
 		ui.IfFunc(total > runsPageSize, func() core.View {
 			return ui.HStack(
 				ui.Text(fmt.Sprintf("%d–%d von %d Läufen · neueste zuerst", from, to, total)).Font(ui.BodySmall).Color(ui.ST0),
 				ui.Spacer(),
 				ui.SecondaryButton(func() { offset.Set(max(offset.Get()-runsPageSize, 0)) }).Title("Neuere").Enabled(offset.Get() > 0),
 				ui.SecondaryButton(func() { offset.Set(offset.Get() + runsPageSize) }).Title("Ältere").Enabled(to < total),
-			).Gap(ui.L8).FullWidth()
+			).Gap(ui.L8).Wrap(true).FullWidth()
 		}),
 		ui.Text(fmt.Sprintf("%d Läufe in den letzten 30 Tagen, Protokolle der letzten %d Läufe werden aufbewahrt.", total, keep)).Font(ui.BodySmall).Color(ui.ST0),
 	).Alignment(ui.Leading).Gap(ui.L8).FullWidth()
 }
 
+// runsGrid is the table of the runs from 768 px on.
+func runsGrid(loc *time.Location, runs []scheduler.Run, selected scheduler.RunID, onSelect func(scheduler.Run)) core.View {
+	return ui.Table(
+		ui.TableColumn(ui.Text("Start")),
+		ui.TableColumn(ui.Text("Ergebnis")),
+		ui.TableColumn(ui.Text("Dauer")),
+		ui.TableColumn(ui.Text("Einträge")),
+	).Rows(ui.ForEach(runs, func(r scheduler.Run) ui.TTableRow {
+		row := ui.TableRow(
+			// the number and the trigger below the start keep the columns of the admin center as before
+			ui.TableCell(ui.VStack(
+				ui.Text(shortDate(loc, r.StartedAt)),
+				ui.Text(fmt.Sprintf("Nr. %d · %s", r.Nr, triggerStr(r))).Font(ui.BodySmall).Color(ui.ST0),
+			).Alignment(ui.Leading).Gap(ui.L2)),
+			ui.TableCell(outcomePill(r)),
+			ui.TableCell(ui.Text(formatDuration(r.Duration()))),
+			ui.TableCell(ui.IfElse(hasLog(r), ui.Text(entriesStr(r)), ui.Text(entriesStr(r)+" · Protokoll gelöscht").Color(ui.ST0))),
+		).Action(func() { onSelect(r) })
+
+		if r.ID == selected {
+			row = row.BackgroundColor(ui.I1)
+		}
+
+		return row
+	})...).Frame(ui.Frame{}.FullWidth())
+}
+
+// runsStack shows the runs below 768 px as stacked rows: each run a row, each value with the name of its column,
+// the values wrap as a whole instead of breaking words.
+func runsStack(loc *time.Location, runs []scheduler.Run, selected scheduler.RunID, onSelect func(scheduler.Run)) core.View {
+	rows := make([]core.View, 0, len(runs))
+	for _, r := range runs {
+		entries := ui.Text(entriesStr(r))
+		if !hasLog(r) {
+			entries = ui.Text(entriesStr(r) + " · Protokoll gelöscht").Color(ui.ST0)
+		}
+
+		row := stackRow(
+			field("Start", ui.Text(shortDate(loc, r.StartedAt))),
+			field("Nr.", ui.Text(fmt.Sprint(r.Nr))),
+			field("Auslöser", ui.Text(triggerStr(r))),
+			field("Ergebnis", outcomePill(r)),
+			field("Dauer", ui.Text(formatDuration(r.Duration()))),
+			field("Einträge", entries),
+		).Action(func() { onSelect(r) })
+
+		if r.ID == selected {
+			row = row.BackgroundColor(ui.I1)
+		}
+
+		rows = append(rows, divided(row))
+	}
+
+	return ui.VStack(rows...).Alignment(ui.Leading).FullWidth()
+}
+
+// field is a value with the name of its column above it.
+func field(label string, value core.View) core.View {
+	return ui.VStack(
+		ui.Text(label).Font(ui.BodySmall).Color(ui.ST0),
+		value,
+	).Alignment(ui.Leading).Gap(ui.L2)
+}
+
+// stackRow is a row of a stack, see divided.
+func stackRow(fields ...core.View) ui.TVStack {
+	return ui.VStack(
+		ui.HStack(fields...).Alignment(ui.TopLeading).Gap(ui.L16).Wrap(true).FullWidth(),
+	).Alignment(ui.Leading).FullWidth().
+		WithPadding(ui.Padding{}.Vertical(ui.L12).Horizontal(ui.L8))
+}
+
+// divided separates a row of a stack by a line from the next one.
+func divided(row ui.TVStack) core.View {
+	return row.Border(ui.Border{BottomWidth: ui.L1, BottomColor: ui.ColorLine})
+}
+
+// entriesStr returns the entries with their warnings and errors, e.g. "125 · 1 Warnung · 1 Fehler".
 func entriesStr(r scheduler.Run) string {
 	s := fmt.Sprint(r.Entries)
-	if r.Errors > 0 {
-		s += fmt.Sprintf(" · %d Fehler", r.Errors)
-	} else if r.Warnings > 0 {
+	switch {
+	case r.Warnings == 1:
+		s += " · 1 Warnung"
+	case r.Warnings > 1:
 		s += fmt.Sprintf(" · %d Warnungen", r.Warnings)
 	}
+
+	if r.Errors > 0 {
+		s += fmt.Sprintf(" · %d Fehler", r.Errors)
+	}
+
 	return s
 }
 
@@ -343,6 +446,16 @@ func kpi(title, value string, valueColor ui.Color, hint string, hintColor ui.Col
 	}
 
 	return card("", ui.Text(title).Font(ui.LabelLarge), v, h).Frame(ui.Frame{MinWidth: ui.L160}.FullWidth())
+}
+
+// cards puts the cards side by side from 768 px on and below in a stack, where each card keeps its own height
+// instead of the height of the tallest one.
+func cards(small bool, children ...core.View) core.View {
+	if small {
+		return ui.VStack(children...).Alignment(ui.TopLeading).Gap(ui.L16).FullWidth()
+	}
+
+	return grid([5]int{1, 1, 2, 2, 2}, children...)
 }
 
 func grid(cols [5]int, children ...core.View) core.View {
@@ -403,15 +516,20 @@ func formatDuration(d time.Duration) string {
 		if d%time.Second == 0 {
 			return fmt.Sprintf("%d s", int(d.Seconds()))
 		}
-		return fmt.Sprintf("%.1f s", d.Seconds())
+		return decimal(d.Seconds()) + " s"
 	case d < time.Hour:
 		if d%time.Minute == 0 {
 			return fmt.Sprintf("%d min", int(d.Minutes()))
 		}
-		return fmt.Sprintf("%.1f min", d.Minutes())
+		return decimal(d.Minutes()) + " min"
 	default:
-		return fmt.Sprintf("%.1f h", d.Hours())
+		return decimal(d.Hours()) + " h"
 	}
+}
+
+// decimal formats a number with one decimal place and a decimal comma, e.g. 28,7.
+func decimal(f float64) string {
+	return strings.Replace(strconv.FormatFloat(f, 'f', 1, 64), ".", ",", 1)
 }
 
 func formatDate(loc *time.Location, t time.Time) string {
@@ -434,7 +552,7 @@ var logLevels = []logLevelOption{
 	{"Fehler", slog.LevelError},
 }
 
-func logView(wnd core.Window, loc *time.Location, model DashboardModel, run scheduler.Run, keep int, level *core.State[slog.Level], offset *core.State[int], query *core.State[string]) core.View {
+func logView(wnd core.Window, loc *time.Location, small bool, model DashboardModel, run scheduler.Run, keep int, level *core.State[slog.Level], offset *core.State[int], query *core.State[string]) core.View {
 	if run.ID == "" || model.RunLog == nil {
 		return ui.Text("Noch keine Läufe erfasst.").Color(ui.ST0)
 	}
@@ -455,7 +573,7 @@ func logView(wnd core.Window, loc *time.Location, model DashboardModel, run sche
 	toolbar := ui.HStack(
 		ui.Text("Lauf vom "+formatDate(loc, run.StartedAt)).Font(ui.TitleSmall),
 		ui.Spacer(),
-		ui.HStack(levelButtons...).Gap(ui.L4),
+		ui.HStack(levelButtons...).Gap(ui.L4).Wrap(true),
 		ui.TextField("", query.Get()).
 			InputValue(query).
 			Style(ui.TextFieldReduced).
@@ -482,6 +600,20 @@ func logView(wnd core.Window, loc *time.Location, model DashboardModel, run sche
 	var body core.View
 	if len(page.Entries) == 0 {
 		body = ui.Text("Keine Einträge für diesen Filter.").Color(ui.ST0).Padding(ui.Padding{}.All(ui.L24))
+	} else if small {
+		// stacked rows below 768 px
+		rows := make([]core.View, 0, len(page.Entries))
+		for _, t := range page.Entries {
+			row := stackRow(
+				field("Zeit", ui.Text(t.Time.In(loc).Format("02.01.2006 15:04:05.000")).Color(ui.ST0)),
+				field("Stufe", levelPill(t.Level)),
+			).Append(field("Nachricht", ui.VStack(
+				ui.Text(t.Msg),
+				ui.IfFunc(len(t.Values) > 0, func() core.View { return valueChips(t.Values) }),
+			).Alignment(ui.Leading).Gap(ui.L4))).Gap(ui.L8)
+			rows = append(rows, divided(row))
+		}
+		body = ui.VStack(rows...).Alignment(ui.Leading).FullWidth()
 	} else {
 		body = ui.Table(
 			ui.TableColumn(ui.Text("Zeit")).Width(ui.L160),
@@ -509,7 +641,7 @@ func logView(wnd core.Window, loc *time.Location, model DashboardModel, run sche
 		ui.Spacer(),
 		ui.SecondaryButton(func() { offset.Set(max(offset.Get()-scheduler.MaxLogPageSize, 0)) }).Title("Neuere").Enabled(page.Offset > 0),
 		ui.SecondaryButton(func() { offset.Set(offset.Get() + scheduler.MaxLogPageSize) }).Title("Ältere").Enabled(to < page.Total),
-	).Gap(ui.L8).FullWidth()
+	).Gap(ui.L8).Wrap(true).FullWidth()
 
 	return ui.VStack(toolbar, body, pager).Alignment(ui.Leading).Gap(ui.L12).FullWidth()
 }
