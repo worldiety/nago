@@ -8,10 +8,14 @@
 package scheduler_test
 
 import (
+	"bytes"
 	"context"
+	stdjson "encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
+	"runtime"
 	"slices"
 	"strings"
 	"sync"
@@ -71,11 +75,21 @@ func waitFor(t testing.TB, what func() string, cond func() bool) {
 	}
 }
 
-// fakeClock implements scheduler.Clock. Its time only moves by set, which fires all timers that are due.
+// fakeClock implements scheduler.Clock. Its time only moves by set, which fires all timers that are due, or by
+// an armed hook of Now.
 type fakeClock struct {
 	mu      sync.Mutex
 	now     time.Time
 	pending []*fakeTimer
+	hook    *nowHook
+}
+
+// nowHook moves the clock within the n-th call of Now after it has been armed: that call still returns the time
+// before, so the caller has read the clock, but the clock has moved before the caller can act on it.
+type nowHook struct {
+	n, calls  int
+	to        time.Time
+	triggered bool
 }
 
 type fakeTimer struct {
@@ -92,7 +106,33 @@ func newFakeClock(now time.Time) *fakeClock {
 func (c *fakeClock) Now() time.Time {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	return c.now
+
+	now := c.now
+	if h := c.hook; h != nil && !h.triggered {
+		h.calls++
+		if h.calls == h.n {
+			h.triggered = true
+			c.moveLocked(h.to)
+		}
+	}
+
+	return now
+}
+
+// armNow arms a hook, which moves the clock to `to` within the n-th following call of Now.
+func (c *fakeClock) armNow(n int, to time.Time) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.hook = &nowHook{n: n, to: to}
+}
+
+// disarm removes the hook and reports, whether it has moved the clock.
+func (c *fakeClock) disarm() bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	h := c.hook
+	c.hook = nil
+	return h != nil && h.triggered
 }
 
 func (c *fakeClock) NewTimer(d time.Duration) scheduler.Timer {
@@ -139,6 +179,20 @@ func (c *fakeClock) set(t testing.TB, to time.Time) {
 		t.Fatalf("die Uhr läuft nicht rückwärts: %v vor %v", to, c.now)
 	}
 
+	c.moveLocked(to)
+}
+
+// move is set for a goroutine which is not the one of the test; it does not move the clock backward.
+func (c *fakeClock) move(to time.Time) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if !to.Before(c.now) {
+		c.moveLocked(to)
+	}
+}
+
+// moveLocked requires the mutex.
+func (c *fakeClock) moveLocked(to time.Time) {
 	c.now = to
 	slices.SortFunc(c.pending, func(a, b *fakeTimer) int { return a.deadline.Compare(b.deadline) })
 	var keep []*fakeTimer
@@ -201,6 +255,7 @@ type world struct {
 	m        *scheduler.Manager
 	cancel   context.CancelFunc
 	ids      []scheduler.ID
+	onRun    atomic.Pointer[func(scheduler.Run)] // called after a run has been written into the store
 }
 
 func newWorld(t *testing.T, now time.Time) *world {
@@ -228,10 +283,118 @@ func (w *world) boot() {
 	w.ids = nil
 	w.m = scheduler.NewManagerWith(ctx, scheduler.ManagerOptions{
 		Settings: json.NewSloppyJSONRepository[scheduler.Settings, scheduler.ID](w.settings),
-		Runs:     json.NewSloppyJSONRepository[scheduler.Run, scheduler.RunID](w.runStore),
+		Runs:     json.NewSloppyJSONRepository[scheduler.Run, scheduler.RunID](hookStore{BlobStore: w.runStore, onRun: &w.onRun}),
 		LogDir:   w.logDir,
 		Clock:    w.clock,
 	})
+}
+
+// onceStored calls fn once, right after the first run matching match has been written into the store and before
+// the writer continues. The returned channel is closed, when fn has returned.
+func (w *world) onceStored(match func(scheduler.Run) bool, fn func()) <-chan struct{} {
+	done := make(chan struct{})
+	var once atomic.Bool
+	hook := func(r scheduler.Run) {
+		if match(r) && once.CompareAndSwap(false, true) {
+			fn()
+			close(done)
+		}
+	}
+
+	w.onRun.Store(&hook)
+	return done
+}
+
+// hookStore reports each run, which has been written into the store of the runs.
+type hookStore struct {
+	*mem.BlobStore
+	onRun *atomic.Pointer[func(scheduler.Run)]
+}
+
+func (s hookStore) NewWriter(ctx context.Context, key string) (io.WriteCloser, error) {
+	inner, err := s.BlobStore.NewWriter(ctx, key)
+	if err != nil {
+		return nil, err
+	}
+
+	return &hookWriter{inner: inner, onRun: s.onRun}, nil
+}
+
+type hookWriter struct {
+	inner io.WriteCloser
+	buf   bytes.Buffer
+	onRun *atomic.Pointer[func(scheduler.Run)]
+}
+
+func (w *hookWriter) Write(p []byte) (int, error) {
+	w.buf.Write(p)
+	return w.inner.Write(p)
+}
+
+func (w *hookWriter) Close() error {
+	if err := w.inner.Close(); err != nil {
+		return err
+	}
+
+	if fn := w.onRun.Load(); fn != nil {
+		var r scheduler.Run
+		if stdjson.Unmarshal(w.buf.Bytes(), &r) == nil && r.ID != "" {
+			(*fn)(r)
+		}
+	}
+
+	return nil
+}
+
+// settle waits until every goroutine except the calling one is blocked, so that each goroutine of the scheduler has
+// reacted to what happened before and waits for a timer, a lock or a channel. It reports false, if that does not
+// happen within waitLimit. It may be called by any goroutine.
+func settle() bool {
+	deadline := time.Now().Add(waitLimit)
+	buf := make([]byte, 1<<20)
+	for {
+		n := runtime.Stack(buf, true)
+		if n == len(buf) {
+			buf = make([]byte, 2*len(buf))
+			continue
+		}
+
+		if othersBlocked(string(buf[:n])) {
+			return true
+		}
+
+		if time.Now().After(deadline) {
+			return false
+		}
+
+		runtime.Gosched()
+	}
+}
+
+// othersBlocked reports, whether no goroutine of the dump, except the first and calling one, runs or may run.
+func othersBlocked(dump string) bool {
+	for _, block := range strings.Split(dump, "\n\n")[1:] {
+		head, _, _ := strings.Cut(block, "\n")
+		_, status, ok := strings.Cut(head, "[")
+		if !ok {
+			continue
+		}
+
+		for _, busy := range []string{"running", "runnable", "syscall"} {
+			if strings.HasPrefix(status, busy) {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
+func mustSettle(t testing.TB) {
+	t.Helper()
+	if !settle() {
+		t.Fatalf("die Goroutinen kommen nicht innerhalb von %v zur Ruhe", waitLimit)
+	}
 }
 
 func (w *world) configure(opts scheduler.Options) {

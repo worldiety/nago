@@ -15,9 +15,9 @@ import (
 )
 
 // TestN29CatchUp checks the table of R-SCHEDULE-CATCH-UP. Each row builds its history on a first manager, ends it
-// in an orderly way and starts a second manager on the same stores. The row "pausiert, noch pausiert" is missing,
-// because the interface names no way to configure a scheduler as paused (Configure and then Pause races with the
-// catch up). The row of a run, which a restart cancelled, is in TestN29RestartClosesOpenRun.
+// in an orderly way and starts a second manager on the same stores. The row "pausiert, noch pausiert" is in
+// TestN29CatchUpStillPaused, the row of a run, which a restart cancelled, in TestN29RestartClosesOpenRun and
+// TestN29ShutdownCancelsRunningRun.
 //
 // Zusagen: R-SCHEDULE-CATCH-UP, R-SCHEDULE-PLAN-INTERVAL, R-SCHEDULE-PLAN-TIME, R-SCHEDULE-PAUSE,
 // R-SCHEDULE-OVERLAP, R-SCHEDULE-RETENTION, R-SCHEDULE-INPUT, R-DEC-SCHEDULE-NAGO
@@ -305,6 +305,95 @@ func TestN29CatchUp(t *testing.T) {
 				t.Fatalf("genau ein nachgeholter Lauf erwartet:%s", describeRuns(runs))
 			}
 
+			p2.none(t)
+		})
+	}
+}
+
+// TestN29CatchUpStillPaused checks the row "pausiert, noch pausiert" of R-SCHEDULE-CATCH-UP: a durable scheduler keeps
+// its pause over a restart without a Pause after Configure, holds nothing up, also not the next due, and Resume then
+// plans the next due without a run. The counter rows without the pause and with Resume before the outage catch up.
+//
+// Zusagen: R-SCHEDULE-CATCH-UP, R-SCHEDULE-PAUSE, R-DEC-SCHEDULE-NAGO
+func TestN29CatchUpStillPaused(t *testing.T) {
+	tests := []struct {
+		name     string
+		pause    bool
+		resume   bool
+		caughtUp bool
+	}{
+		{"pausiert 21:00, wokoda aus 21:30 bis 23:00, noch pausiert: kein Lauf", true, false, false},
+		{"Gegenzeile ohne Pause: ein Lauf nachgeholt", false, false, true},
+		{"Gegenzeile pausiert und fortgesetzt vor dem Ausfall: ein Lauf nachgeholt", true, true, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := newWorld(t, bln(2027, 11, 20, 21, 0))
+			p := newProbe(w.clock)
+			opts := cronOpts(job, p.run, 22, 0, catchUp)
+			w.configure(opts)
+			w.fire(job, bln(2027, 11, 20, 22, 0))
+			p.next(t)
+			w.ended(job, 1)
+			w.waitPlanned(job, bln(2027, 11, 21, 22, 0))
+			w.clock.set(t, bln(2027, 11, 21, 21, 0))
+			if tt.pause {
+				if err := w.m.Pause(job); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			w.clock.set(t, bln(2027, 11, 21, 21, 10))
+			if tt.resume {
+				if err := w.m.Resume(job); err != nil {
+					t.Fatal(err)
+				}
+
+				w.waitPlanned(job, bln(2027, 11, 21, 22, 0))
+			}
+
+			w.clock.set(t, bln(2027, 11, 21, 21, 30))
+			w.restartAt(bln(2027, 11, 21, 23, 0))
+			p2 := newProbe(w.clock)
+			w.configure(cronOpts(job, p2.run, 22, 0, catchUp))
+
+			if tt.caughtUp {
+				inv := w.awaitCatchUp(p2, bln(2027, 11, 21, 23, 1))
+				if inv.info.Trigger != scheduler.TriggerCatchUp || !inv.info.Due.Equal(bln(2027, 11, 21, 22, 0)) {
+					t.Fatalf("nachgeholter Lauf erwartet: %+v", inv.info)
+				}
+
+				w.ended(job, 2)
+				w.waitPlanned(job, bln(2027, 11, 22, 22, 0))
+				p2.none(t)
+				return
+			}
+
+			// nothing until 60 s after the start and nothing at the next due, while still paused
+			mustSettle(t)
+			w.clock.set(t, bln(2027, 11, 21, 23, 1))
+			mustSettle(t)
+			w.clock.set(t, bln(2027, 11, 22, 22, 0))
+			mustSettle(t)
+			if runs := w.runs(job); len(runs) != 1 {
+				t.Fatalf("kein Lauf, solange pausiert:%s", describeRuns(runs))
+			}
+
+			p2.none(t)
+
+			// Resume plans the next due without a run
+			w.clock.set(t, bln(2027, 11, 22, 22, 30))
+			if err := w.m.Resume(job); err != nil {
+				t.Fatal(err)
+			}
+
+			w.fire(job, bln(2027, 11, 23, 22, 0))
+			if inv := p2.next(t); inv.info.Trigger != scheduler.TriggerPlan || !inv.info.Due.Equal(bln(2027, 11, 23, 22, 0)) {
+				t.Fatalf("Lauf nach Plan erwartet: %+v", inv.info)
+			}
+
+			w.ended(job, 2)
 			p2.none(t)
 		})
 	}

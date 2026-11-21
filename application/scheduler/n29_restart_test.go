@@ -72,3 +72,57 @@ func TestN29RestartClosesOpenRun(t *testing.T) {
 		})
 	}
 }
+
+// TestN29ShutdownCancelsRunningRun checks, that an orderly end of the process, i.e. the end of the context of the
+// manager, ends a running run of a durable scheduler as canceled by "Neustart", which is not caught up after the
+// restart. Without the new switches the run is canceled without a name as before.
+//
+// Zusagen: R-SCHEDULE-RESTART, R-SCHEDULE-CATCH-UP, R-DEC-SCHEDULE-NAGO
+func TestN29ShutdownCancelsRunningRun(t *testing.T) {
+	tests := []struct {
+		name    string
+		mods    []func(*scheduler.Options)
+		restart bool
+		by      string
+	}{
+		{"Durable: abgebrochen: Neustart", nil, false, "Neustart"},
+		{"Durable mit Nachholen: abgebrochen: Neustart und nach dem Start nicht wiederholt", mods(catchUp), true, "Neustart"},
+		{"Gegenzeile ohne Durable und Quiet: abgebrochen ohne Namen wie bisher", mods(durable(false), quiet(false)), false, ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := newWorld(t, bln(2027, 6, 1, 21, 0))
+			p := newProbe(w.clock)
+			p.hold.Store(true)
+			w.configure(cronOpts(job, p.run, 22, 0, tt.mods...))
+			w.fire(job, bln(2027, 6, 1, 22, 0))
+			inv := p.next(t)
+			w.clock.set(t, bln(2027, 6, 1, 22, 5))
+
+			w.cancel()
+			waitFor(t, func() string { return "der Kontext des Laufs endet" }, func() bool { return inv.ctx.Err() != nil })
+			runs := w.ended(job, 1)
+			if r := runs[0]; r.Outcome != scheduler.OutcomeCanceled || r.CanceledBy != tt.by || r.Outcome.Failed() {
+				t.Fatalf("abgebrochen von %q erwartet:%s", tt.by, describeRuns(runs))
+			}
+
+			if !tt.restart {
+				return
+			}
+
+			w.restartAt(bln(2027, 6, 1, 23, 0))
+			p2 := newProbe(w.clock)
+			w.configure(cronOpts(job, p2.run, 22, 0, tt.mods...))
+			w.waitPlanned(job, bln(2027, 6, 2, 22, 0))
+			w.clock.set(t, bln(2027, 6, 1, 23, 1))
+			mustSettle(t)
+			w.waitPlanned(job, bln(2027, 6, 2, 22, 0))
+			if runs := w.runs(job); len(runs) != 1 {
+				t.Fatalf("kein Lauf nach dem Start erwartet:%s", describeRuns(runs))
+			}
+
+			p2.none(t)
+		})
+	}
+}
