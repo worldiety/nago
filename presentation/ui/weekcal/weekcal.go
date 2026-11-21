@@ -23,6 +23,7 @@ import (
 	"math"
 	"slices"
 
+	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/pkg/std"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
@@ -244,8 +245,9 @@ func (c TWeekCalendar) OnMove(fn func(m Move) error) TWeekCalendar {
 
 // OnInvalid sets the view, which Render shows instead of a calendar, which is invalid, see [TWeekCalendar.Validate],
 // e.g. to report the error of the application elsewhere. It is called with the calendar, which is rendered, so it
-// does not depend on the order, in which the settings have been made. Without it, the calendar shows the error as a
-// text.
+// does not depend on the order, in which the settings have been made, and with a [std.LocalizedError], whose sentences
+// are in the language of the window and whose cause is the reason in English. Without it, the calendar shows the
+// description of the error as a text and logs the id of the calendar with the reason.
 func (c TWeekCalendar) OnInvalid(fn func(err error) core.View) TWeekCalendar {
 	c.onInvalid = fn
 	return c
@@ -256,56 +258,85 @@ func (c TWeekCalendar) OnInvalid(fn func(err error) core.View) TWeekCalendar {
 // calendar and 0 <= From < To <= 1440; a step of [Steps]; a range 0 <= from < to <= 1440 in the raster; a click
 // span, which is a positive multiple of the step; an hour height from 24 to 240; the current time at a day of the
 // calendar and a minute from 0 to 1440.
+//
+// A violation is a [std.LocalizedError]: its title and description are sentences for the user of the application
+// in English, with the numbers but without the id of the calendar or of an event, and its cause ([errors.Unwrap]) is
+// the reason in English for the developer. Render passes it to [TWeekCalendar.OnInvalid] with the sentences in the
+// language of the window.
 func (c TWeekCalendar) Validate() error {
+	if v := c.violation(); v != nil {
+		return v.localized(nil)
+	}
+
+	return nil
+}
+
+// violation is the first rule, which the calendar breaks, see [TWeekCalendar.Validate].
+func (c TWeekCalendar) violation() *violation {
 	if len(c.days) == 0 || len(c.days) > MaxDays {
-		return fmt.Errorf("a week calendar has 1 to %d days, not %d", MaxDays, len(c.days))
+		return violate(fmt.Errorf("a week calendar has 1 to %d days, not %d", MaxDays, len(c.days)),
+			StrInvalidDays, i18n.Int("max", MaxDays), i18n.Int("days", len(c.days)))
 	}
 
 	if !slices.Contains(Steps, c.step) {
-		return fmt.Errorf("the step is one of 5, 10, 15, 20, 30 or 60 minutes, not %d", c.step)
+		return violate(fmt.Errorf("the step is one of 5, 10, 15, 20, 30 or 60 minutes, not %d", c.step),
+			StrInvalidStep, i18n.Int("step", c.step))
 	}
 
 	if c.from < 0 || c.from >= c.to || c.to > MinutesPerDay {
-		return fmt.Errorf("the range is 0 <= from < to <= 1440, not %d to %d", c.from, c.to)
+		return violate(fmt.Errorf("the range is 0 <= from < to <= 1440, not %d to %d", c.from, c.to),
+			StrInvalidRange, i18n.Int("from", c.from), i18n.Int("to", c.to))
 	}
 
 	if c.from%c.step != 0 || c.to%c.step != 0 {
-		return fmt.Errorf("the range %d to %d is not in the raster of %d minutes", c.from, c.to, c.step)
+		return violate(fmt.Errorf("the range %d to %d is not in the raster of %d minutes", c.from, c.to, c.step),
+			StrInvalidRaster, i18n.Int("from", c.from), i18n.Int("to", c.to), i18n.Int("step", c.step))
 	}
 
 	if c.clickSpan <= 0 || c.clickSpan%c.step != 0 {
-		return fmt.Errorf("the click span is a positive multiple of the step of %d minutes, not %d", c.step, c.clickSpan)
+		return violate(fmt.Errorf("the click span is a positive multiple of the step of %d minutes, not %d", c.step, c.clickSpan),
+			StrInvalidClickSpan, i18n.Int("step", c.step), i18n.Int("span", c.clickSpan))
 	}
 
 	if math.IsNaN(c.hourHeight) || c.hourHeight < 24 || c.hourHeight > 240 {
-		return fmt.Errorf("the hour height is 24 to 240 dp, not %v", c.hourHeight)
+		v := violate(fmt.Errorf("the hour height is 24 to 240 dp, not %v", c.hourHeight), StrInvalidHourHeight)
+		v.height = &c.hourHeight
+		return v
 	}
 
 	if c.now && (c.nowDay < 0 || c.nowDay >= len(c.days) || c.nowMinute < 0 || c.nowMinute > MinutesPerDay) {
-		return fmt.Errorf("the current time is at a day from 0 to %d and a minute from 0 to 1440, not at day %d and minute %d", len(c.days)-1, c.nowDay, c.nowMinute)
+		reason := fmt.Errorf("the current time is at a day from 0 to %d and a minute from 0 to 1440, not at day %d and minute %d", len(c.days)-1, c.nowDay, c.nowMinute)
+		if c.nowDay < 0 || c.nowDay >= len(c.days) {
+			return violate(reason, StrInvalidNowDay, i18n.Int("days", len(c.days)))
+		}
+
+		return violate(reason, StrInvalidNowMinute, i18n.Int("minute", c.nowMinute))
 	}
 
 	if c.maxEvents > 0 && len(c.events) > c.maxEvents {
-		return fmt.Errorf("a week calendar has at most %d events, not %d", c.maxEvents, len(c.events))
+		return violate(fmt.Errorf("a week calendar has at most %d events, not %d", c.maxEvents, len(c.events)),
+			StrInvalidEvents, i18n.Int("max", c.maxEvents), i18n.Int("events", len(c.events)))
 	}
 
 	ids := make(map[string]struct{}, len(c.events))
 	for i, e := range c.events {
 		if e.ID == "" {
-			return fmt.Errorf("the event at index %d has an empty id", i)
+			return violate(fmt.Errorf("the event at index %d has an empty id", i), StrInvalidEventID)
 		}
 
 		if _, ok := ids[e.ID]; ok {
-			return fmt.Errorf("the id %q of an event is not unique", e.ID)
+			return violate(fmt.Errorf("the id %q of an event is not unique", e.ID), StrInvalidEventIDTwice)
 		}
 		ids[e.ID] = struct{}{}
 
 		if e.Day < 0 || e.Day >= len(c.days) {
-			return fmt.Errorf("the event %q has the day %d, but the calendar has the days 0 to %d", e.ID, e.Day, len(c.days)-1)
+			return violate(fmt.Errorf("the event %q has the day %d, but the calendar has the days 0 to %d", e.ID, e.Day, len(c.days)-1),
+				StrInvalidEventDay, i18n.Int("days", len(c.days)))
 		}
 
 		if e.From < 0 || e.From >= e.To || e.To > MinutesPerDay {
-			return fmt.Errorf("the event %q is not 0 <= from < to <= 1440, but %d to %d", e.ID, e.From, e.To)
+			return violate(fmt.Errorf("the event %q is not 0 <= from < to <= 1440, but %d to %d", e.ID, e.From, e.To),
+				StrInvalidEventTime, i18n.Int("from", e.From), i18n.Int("to", e.To))
 		}
 	}
 
@@ -313,16 +344,17 @@ func (c TWeekCalendar) Validate() error {
 }
 
 func (c TWeekCalendar) Render(ctx core.RenderContext) core.RenderNode {
-	if err := c.Validate(); err != nil {
+	if v := c.violation(); v != nil {
 		// a programming error of the application, which must not show a broken calendar
+		err := v.localized(ctx.Window().Bundle())
 		if c.onInvalid != nil {
 			if v := c.onInvalid(err); v != nil {
 				return v.Render(ctx)
 			}
 			return ui.VStack().Render(ctx)
 		}
-		slog.Error("invalid week calendar", "id", c.id, "err", err)
-		return ui.Text(fmt.Sprintf("week calendar %q: %v", c.id, err)).Render(ctx)
+		slog.Error("invalid week calendar", "id", c.id, "err", v.reason)
+		return ui.Text(err.Description()).Render(ctx)
 	}
 
 	wnd := ctx.Window()
