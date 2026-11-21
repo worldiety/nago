@@ -35,11 +35,14 @@ type Scheduler struct {
 	settingsRepo    SettingsRepository
 	state           atomic.Pointer[State]
 	lastError       atomic.Pointer[error]
+	id              ID
+	optsMutex       sync.RWMutex // protects opts, which [Scheduler.Update] replaces
 	opts            Options
+	clock           Clock
 	cancel          func()
 	logs            []LogEntry
 	logsMutex       sync.Mutex
-	singleRunMutex  sync.Mutex
+	singleRunMutex  sync.Mutex // held during a run, from its begin until its end has been persisted
 	lastStartedAt   atomic.Pointer[time.Time]
 	lastCompletedAt atomic.Pointer[time.Time]
 	nextPlannedAt   atomic.Pointer[time.Time]
@@ -49,6 +52,40 @@ type Scheduler struct {
 	runs            *runStore
 	sink            atomic.Pointer[runSink]
 	currentRun      atomic.Pointer[Run]
+
+	// runMutex protects the run in progress and the state changes of runs.
+	runMutex   sync.Mutex
+	active     *activeRun
+	runGen     uint64 // incremented by each run, so that the end of a run changes the state only if no run followed
+	asyncBegun uint64 // runs begun by StartNow
+	asyncEnded uint64 // runs begun by StartNow, which have ended
+
+	// planMutex protects the plan state, which a durable scheduler persists.
+	planMutex sync.Mutex
+	plan      DurableState
+	removed   bool // removed from its manager, so that a late end of a run does not persist anything
+
+	onRunEnd func(oldest time.Time) // tells the manager the start of the oldest remaining run
+}
+
+// activeRun is the run in progress.
+type activeRun struct {
+	mu              sync.Mutex
+	cancel          context.CancelCauseFunc
+	returned        bool // the runner has returned, the run cannot be cancelled anymore
+	cancelRequested bool
+	canceledBy      string
+	logFailed       bool
+
+	gen      uint64
+	async    bool // begun by StartNow
+	info     RunInfo
+	opts     Options
+	keep     int
+	run      Run
+	sink     *runSink
+	epoch    uint64
+	beginErr error
 }
 
 // maxMemoryLogs limits the in-memory log buffer of the current run. The complete log is persisted in the run log file.
@@ -67,13 +104,20 @@ func (h *loopHandle) alive() bool {
 }
 
 func NewScheduler(ctx context.Context, opts Options, settingsRepo SettingsRepository) *Scheduler {
+	return newScheduler(ctx, opts, settingsRepo, nil, nil)
+}
+
+func newScheduler(ctx context.Context, opts Options, settingsRepo SettingsRepository, clock Clock, runs *runStore) *Scheduler {
 	s := &Scheduler{
 		externalCtx:  ctx,
 		ctx:          ctx,
 		cancel:       func() {},
+		id:           opts.ID,
 		opts:         opts,
+		clock:        clockOrSystem(clock),
 		settingsRepo: settingsRepo,
 		wake:         make(chan struct{}, 1),
+		runs:         runs,
 	}
 
 	var zeroTime time.Time
@@ -84,6 +128,21 @@ func NewScheduler(ctx context.Context, opts Options, settingsRepo SettingsReposi
 	s.state.Store(&state)
 
 	return s
+}
+
+// options returns the current options, see [Scheduler.update].
+func (s *Scheduler) options() Options {
+	s.optsMutex.RLock()
+	defer s.optsMutex.RUnlock()
+
+	return s.opts
+}
+
+func (s *Scheduler) setOptions(opts Options) {
+	s.optsMutex.Lock()
+	defer s.optsMutex.Unlock()
+
+	s.opts = opts
 }
 
 func (s *Scheduler) LastError() error {
@@ -127,6 +186,18 @@ func (s *Scheduler) resetContext() {
 	s.ctx = myCtx
 }
 
+// liveContext returns the current context or a new one, if the current one has been cancelled, e.g. by Stop.
+func (s *Scheduler) liveContext() context.Context {
+	s.launchMutex.Lock()
+	defer s.launchMutex.Unlock()
+
+	if s.ctx.Err() != nil {
+		s.resetContext()
+	}
+
+	return s.ctx
+}
+
 // Launch starts a new loop. A previous loop is cancelled but not awaited and its late end does not affect the new
 // loop.
 func (s *Scheduler) Launch() {
@@ -141,12 +212,17 @@ func (s *Scheduler) Launch() {
 	s.launchMutex.Unlock()
 
 	// setState changes the state only while this loop is the current one, so that a cancelled loop which still
-	// completes its run does not overwrite the state of a newer loop
+	// completes its run does not overwrite the state of a newer loop, and never while a run is in progress
 	setState := func(state State) {
-		if s.loop.Load() == h && h.alive() {
+		s.runMutex.Lock()
+		defer s.runMutex.Unlock()
+
+		if s.loop.Load() == h && h.alive() && s.active == nil {
 			s.state.Store(&state)
 		}
 	}
+
+	durable := s.options().Durable
 
 	go func() {
 		defer func() {
@@ -157,104 +233,336 @@ func (s *Scheduler) Launch() {
 			defer s.launchMutex.Unlock()
 
 			if s.loop.CompareAndSwap(h, nil) {
-				state := Stopped
-				s.state.Store(&state)
+				s.runMutex.Lock()
+				if s.active == nil {
+					state := Stopped
+					s.state.Store(&state)
+				}
+				s.runMutex.Unlock()
 			}
 		}()
 
-	loop:
-		for {
-			settings, err := s.loadSettings()
-			if err != nil {
-				slog.Error("service looper failed to load settings", "id", s.opts.ID, "err", err.Error())
-				return
-			}
+		if durable {
+			s.durableLoop(ctx, setState)
+			return
+		}
 
-			if settings.Disabled || s.opts.Kind == Manual {
-				setState(Disabled)
-				// wait the config-reload time or until the settings have been changed or exit early on cancel
-				if _, alive := s.sleep(ctx, time.Minute); !alive {
-					slog.Info("service shutdown due to context signal")
-					return
-				}
+		s.classicLoop(ctx, setState)
+	}()
+}
 
-				continue
-			}
+// classicLoop is the loop of the schedulers without [Options.Durable].
+func (s *Scheduler) classicLoop(ctx context.Context, setState func(State)) {
+loop:
+	for {
+		settings, err := s.loadSettings()
+		if err != nil {
+			slog.Error("service looper failed to load settings", "id", s.id, "err", err.Error())
+			return
+		}
 
-			setState(Paused)
-			// wait the start-delay or exit early on cancel. Changed settings restart the delay.
-			woken, alive := s.sleep(ctx, settings.StartDelay)
-			if !alive {
+		opts := s.options()
+		if settings.Disabled || opts.Kind == Manual || s.isSuspended() {
+			setState(Disabled)
+			// wait the config-reload time or until the settings have been changed or exit early on cancel
+			if _, alive := s.sleep(ctx, time.Minute); !alive {
 				slog.Info("service shutdown due to context signal")
 				return
 			}
 
-			if woken {
-				continue
+			continue
+		}
+
+		setState(Paused)
+		// wait the start-delay or exit early on cancel. Changed settings restart the delay.
+		woken, alive := s.sleep(ctx, settings.StartDelay)
+		if !alive {
+			slog.Info("service shutdown due to context signal")
+			return
+		}
+
+		if woken {
+			continue
+		}
+
+		// perform the actual work execution
+
+		opts = s.options()
+		pauseTime := settings.PauseTime
+		var deadline time.Time // the end of the pause, if it differs from the default
+
+		if opts.Kind != Cron {
+			if next, later := s.laterThanNow(opts, settings); later {
+				// a reference, e.g. Resume, defers the next run of a Schedule
+				deadline = next
+			} else if err := s.executePlanned(ctx, RunInfo{Due: s.clock.Now(), Trigger: TriggerPlan}); err != nil {
+				s.logLoopError("service looper failed to run", err)
 			}
+		}
 
-			// perform the actual work execution
-
-			if s.opts.Kind != Cron {
-				if err := s.execute(ctx); err != nil {
-					slog.Error("service looper failed to run", "id", s.opts.ID, "err", err.Error())
-				}
+		switch opts.Kind {
+		case OneShot, Manual:
+			var zeroT time.Time
+			s.nextPlannedAt.Store(&zeroT)
+			return
+		case Schedule:
+			// do nothing, go ahead and sleep
+			nextPlannedAt := s.clock.Now().Add(settings.PauseTime)
+			if !deadline.IsZero() {
+				nextPlannedAt = deadline
 			}
-
-			pauseTime := settings.PauseTime
-
-			switch s.opts.Kind {
-			case OneShot, Manual:
-				var zeroT time.Time
-				s.nextPlannedAt.Store(&zeroT)
+			s.nextPlannedAt.Store(&nextPlannedAt)
+		case Cron:
+			nextPlannedAt, err := nextCronDue(s.clock.Now(), opts, settings)
+			if err != nil {
+				slog.Error("service looper failed to plan", "id", s.id, "err", err.Error())
 				return
-			case Schedule:
-				// do nothing, go ahead and sleep
-				nextPlannedAt := time.Now().Add(settings.PauseTime)
-				s.nextPlannedAt.Store(&nextPlannedAt)
-			case Cron:
-				nextPlannedAt := nextCronAt(time.Now(), settings)
-				pauseTime = time.Until(nextPlannedAt)
-				s.nextPlannedAt.Store(&nextPlannedAt)
+			}
+			pauseTime = nextPlannedAt.Sub(s.clock.Now())
+			s.nextPlannedAt.Store(&nextPlannedAt)
+		}
+
+		// wait the pause-delay or exit early on cancel
+		setState(Paused)
+		// do not schedule faster than 1 second, everything else is probably a configuration mistake
+		if deadline.IsZero() {
+			deadline = s.clock.Now().Add(max(pauseTime, time.Second))
+		}
+		for {
+			woken, alive := s.sleep(ctx, deadline.Sub(s.clock.Now()))
+			if !alive {
+				slog.Info("service shutdown due to context signal", "id", s.id)
+				return
 			}
 
-			// wait the pause-delay or exit early on cancel
-			setState(Paused)
-			// do not schedule faster than 1 second, everything else is probably a configuration mistake
-			deadline := time.Now().Add(max(pauseTime, time.Second))
-			for {
-				woken, alive := s.sleep(ctx, time.Until(deadline))
-				if !alive {
-					slog.Info("service shutdown due to context signal", "id", s.opts.ID)
-					return
-				}
-
-				if !woken {
-					break
-				}
-
-				// the settings have been changed while pausing
-				if s.opts.Kind != Schedule {
-					continue loop // a cron plan is recalculated from scratch
-				}
-
-				settings, err = s.loadSettings()
-				if err != nil || settings.Disabled {
-					continue loop
-				}
-
-				// keep the distance to the last run, but with the new pause time
-				deadline = s.LastCompletedAt().Add(max(settings.PauseTime, time.Second))
-				s.nextPlannedAt.Store(&deadline)
+			if !woken {
+				break
 			}
 
-			if s.opts.Kind == Cron {
-				if err := s.execute(ctx); err != nil {
-					slog.Error("service looper cron failed to run", "id", s.opts.ID, "err", err.Error())
+			// the settings have been changed while pausing
+			if s.options().Kind != Schedule {
+				continue loop // a cron plan is recalculated from scratch
+			}
+
+			settings, err = s.loadSettings()
+			if err != nil || settings.Disabled || s.isSuspended() {
+				continue loop
+			}
+
+			// keep the distance to the last run, but with the new pause time
+			deadline = later(s.LastCompletedAt(), s.reference()).Add(max(settings.PauseTime, time.Second))
+			s.nextPlannedAt.Store(&deadline)
+		}
+
+		if s.options().Kind == Cron {
+			if err := s.executePlanned(ctx, RunInfo{Due: s.NextPlannedAt(), Trigger: TriggerPlan}); err != nil {
+				s.logLoopError("service looper cron failed to run", err)
+			}
+		}
+	}
+}
+
+// laterThanNow returns the next run of a [Schedule], if a reference (see [DurableState.Reference]) defers it
+// beyond now. Without a reference, a Schedule runs at the begin of its loop, as before.
+func (s *Scheduler) laterThanNow(opts Options, settings Settings) (time.Time, bool) {
+	ref := s.reference()
+	if opts.Kind != Schedule || ref.IsZero() {
+		return time.Time{}, false
+	}
+
+	next := later(ref, s.LastCompletedAt()).Add(max(settings.PauseTime, time.Second))
+	return next, next.After(s.clock.Now())
+}
+
+func (s *Scheduler) logLoopError(msg string, err error) {
+	if s.options().Quiet {
+		// the error may contain data of the run, which must not go into the log of the server
+		slog.Error(msg, "id", s.id)
+		return
+	}
+
+	slog.Error(msg, "id", s.id, "err", err.Error())
+}
+
+// durableLoop is the loop of a scheduler with [Options.Durable]. Its dues follow from its persisted plan state,
+// see [DurableState], and its start never runs anything except a catch up.
+func (s *Scheduler) durableLoop(ctx context.Context, setState func(State)) {
+	start := s.clock.Now()
+	from := start           // a cron due is searched from here
+	var startBase time.Time // the start, if a due of a Schedule elapsed while the manager was not running
+	first := true
+
+	for {
+		if ctx.Err() != nil {
+			return
+		}
+
+		settings, err := s.loadSettings()
+		if err != nil {
+			slog.Error("service looper failed to load settings", "id", s.id, "err", err.Error())
+			return
+		}
+
+		opts := s.options()
+		if s.isSuspended() || settings.Disabled || opts.Kind == Manual {
+			// nothing is caught up, while paused or disabled
+			first = false
+			s.storeNextPlanned(time.Time{})
+			setState(Disabled)
+			if !s.waitWake(ctx) {
+				return
+			}
+
+			continue
+		}
+
+		var due time.Time
+		trigger := TriggerPlan
+		if first {
+			first = false
+			if d, missed := s.missedDue(opts, settings, start); missed && settings.CatchUp {
+				due, trigger = d, TriggerCatchUp
+			} else if opts.Kind == Schedule {
+				// without catching up, a due which elapsed while the manager was not running is the pause
+				// time after the start
+				if n, err := s.nextDue(opts, settings, from, time.Time{}); err == nil && n.Before(start) {
+					startBase = start
 				}
 			}
 		}
-	}()
+
+		if trigger == TriggerPlan {
+			due, err = s.nextDue(opts, settings, from, startBase)
+			if err != nil {
+				slog.Error("service looper failed to plan", "id", s.id, "err", err.Error())
+				s.storeNextPlanned(time.Time{})
+				setState(Disabled)
+				if !s.waitWake(ctx) {
+					return
+				}
+
+				continue
+			}
+
+			s.storeNextPlanned(due)
+			setState(Paused)
+			if d := due.Sub(s.clock.Now()); d > 0 {
+				woken, alive := s.sleep(ctx, d)
+				if !alive {
+					return
+				}
+
+				if woken {
+					// a pause, a changed plan or the end of a manual run: plan again
+					continue
+				}
+			}
+		} else {
+			s.storeNextPlanned(s.clock.Now())
+		}
+
+		s.fire(ctx, due, trigger)
+		from = s.clock.Now()
+	}
+}
+
+// missedDue returns the latest due, which elapsed while the manager was not running, see [Settings.CatchUp].
+func (s *Scheduler) missedDue(opts Options, settings Settings, start time.Time) (time.Time, bool) {
+	p := s.planState()
+	switch opts.Kind {
+	case Cron:
+		ref := later(p.LastDue, p.Reference)
+		d, err := newCronPlan(settings, opts.Location).prev(start)
+		if err != nil || ref.IsZero() || !d.After(ref) {
+			return time.Time{}, false
+		}
+
+		return d, true
+	case Schedule:
+		ref := later(p.LastEnd, p.Reference)
+		if ref.IsZero() {
+			return time.Time{}, false
+		}
+
+		d := ref.Add(interval(settings))
+		if !d.Before(start) || !d.After(p.LastDue) {
+			// not elapsed or already handled, e.g. by a run which a restart cancelled
+			return time.Time{}, false
+		}
+
+		return d, true
+	default:
+		return time.Time{}, false
+	}
+}
+
+// nextDue returns the next due of a durable scheduler. A due in the past is due immediately.
+func (s *Scheduler) nextDue(opts Options, settings Settings, from, startBase time.Time) (time.Time, error) {
+	p := s.planState()
+	switch opts.Kind {
+	case Cron:
+		f := later(from, p.Reference)
+		if !p.LastDue.Before(f) {
+			f = p.LastDue.Add(time.Nanosecond)
+		}
+
+		return nextCronDue(f, opts, settings)
+	case Schedule:
+		n := later(later(p.LastEnd, p.Reference), startBase).Add(interval(settings))
+		if !n.After(p.LastDue) {
+			// the due has been handled, e.g. omitted during a manual run, whose end plans again
+			n = p.LastDue.Add(interval(settings))
+		}
+
+		return n, nil
+	default:
+		return time.Time{}, fmt.Errorf("kind %d has no plan", opts.Kind)
+	}
+}
+
+// fire starts a run at the given due, unless the scheduler has been paused meanwhile. A due while a run is in
+// progress, e.g. a manual one, is omitted.
+func (s *Scheduler) fire(ctx context.Context, due time.Time, trigger Trigger) {
+	if ctx.Err() != nil {
+		return
+	}
+
+	s.planMutex.Lock()
+	if s.plan.Paused {
+		s.planMutex.Unlock()
+		return
+	}
+
+	if !s.singleRunMutex.TryLock() {
+		if due.After(s.plan.LastDue) {
+			s.plan.LastDue = due
+			s.persistPlanLocked()
+		}
+		s.planMutex.Unlock()
+		return
+	}
+
+	// the due is handled from now on, also if a restart cancels its run
+	if due.After(s.plan.LastDue) {
+		s.plan.LastDue = due
+		s.persistPlanLocked()
+	}
+	s.planMutex.Unlock()
+
+	a, runCtx := s.beginRun(ctx, RunInfo{Due: due, Trigger: trigger}, false)
+	_ = s.execRun(a, runCtx)
+}
+
+func interval(settings Settings) time.Duration {
+	return max(settings.PauseTime, time.Second)
+}
+
+func later(a, b time.Time) time.Time {
+	if b.After(a) {
+		return b
+	}
+
+	return a
 }
 
 // nextCronAt returns the next planned execution after now. The cron time is a wall clock time in the location of
@@ -280,7 +588,11 @@ func nextCronAt(now time.Time, settings Settings) time.Time {
 
 // loadSettings returns the persisted settings or the defaults.
 func (s *Scheduler) loadSettings() (Settings, error) {
-	optSettings, err := s.settingsRepo.FindByID(s.opts.ID)
+	return s.loadSettingsFor(s.options())
+}
+
+func (s *Scheduler) loadSettingsFor(opts Options) (Settings, error) {
+	optSettings, err := s.settingsRepo.FindByID(s.id)
 	if err != nil {
 		return Settings{}, err
 	}
@@ -289,13 +601,24 @@ func (s *Scheduler) loadSettings() (Settings, error) {
 		return optSettings.Unwrap(), nil
 	}
 
-	return s.opts.Defaults, nil
+	return opts.Defaults, nil
 }
 
 // sleep waits for d. It returns woken=true, if the settings have been changed in the meantime (see [Scheduler.Wake])
 // and alive=false, if the scheduler has been cancelled.
 func (s *Scheduler) sleep(ctx context.Context, d time.Duration) (woken, alive bool) {
-	timer := time.NewTimer(max(d, 0))
+	if d <= 0 {
+		select {
+		case <-ctx.Done():
+			return false, false
+		case <-s.wake:
+			return true, true
+		default:
+			return false, true
+		}
+	}
+
+	timer := s.clock.NewTimer(d)
 	defer timer.Stop()
 
 	select {
@@ -303,8 +626,19 @@ func (s *Scheduler) sleep(ctx context.Context, d time.Duration) (woken, alive bo
 		return false, false
 	case <-s.wake:
 		return true, true
-	case <-timer.C:
+	case <-timer.C():
 		return false, true
+	}
+}
+
+// waitWake waits without a timer until the scheduler is woken. It returns false, if the scheduler has been
+// cancelled.
+func (s *Scheduler) waitWake(ctx context.Context) bool {
+	select {
+	case <-ctx.Done():
+		return false
+	case <-s.wake:
+		return true
 	}
 }
 
@@ -324,91 +658,385 @@ func (s *Scheduler) Wake() {
 	}
 }
 
-// execute runs the runner once with the given context and tracks its start. A cancelled context, e.g. of a loop
-// which has been stopped while its timer fired, is not executed at all.
-func (s *Scheduler) execute(ctx context.Context) error {
+// executePlanned runs a due of the loop of a scheduler without [Options.Durable]. It waits for a run of
+// [Scheduler.ExecuteNow], as before, but a due during a run of [Scheduler.StartNow] is omitted. A cancelled context,
+// e.g. of a loop which has been stopped while its timer fired, is not executed at all.
+func (s *Scheduler) executePlanned(ctx context.Context, info RunInfo) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
 
-	return s.protectExec(func() error {
-		return s.opts.Runner(ctx)
-	})
+	if s.isSuspended() {
+		return nil
+	}
+
+	s.runMutex.Lock()
+	manual := s.asyncBegun > s.asyncEnded
+	s.runMutex.Unlock()
+	if manual {
+		return nil
+	}
+
+	return s.execute(ctx, info)
 }
 
-func (s *Scheduler) protectExec(fn func() error) (err error) {
+// execute runs the runner once with the given context and blocks until it completes. It waits for a run in
+// progress. A cancelled context is not executed at all.
+func (s *Scheduler) execute(ctx context.Context, info RunInfo) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	s.singleRunMutex.Lock()
-	defer s.singleRunMutex.Unlock()
-
-	s.ClearLogs()
-	run, sink, beginErr := s.beginRun()
-	defer func() {
-		if err != nil {
-			s.logError(err)
-		}
-
-		if beginErr == nil {
-			s.sink.Store(nil)
-			s.currentRun.Store(nil)
-			s.runs.end(run, sink, err)
-		}
-	}()
-
-	defer func() {
-		if r := recover(); r != nil {
-			debug.PrintStack()
-			err = &PanicError{Trace: string(debug.Stack()), Cause: fmt.Errorf("recovered from panic: %v", r)}
-		}
-	}()
-
-	defer func() {
-		// without a loop, e.g. a stopped scheduler executed manually, nothing is paused
-		state := Stopped
-		if s.Looping() {
-			state = Paused
-		}
-		s.state.Store(&state)
-
-		doneAt := time.Now()
-		s.lastCompletedAt.Store(&doneAt)
-	}()
-
-	startedAt := time.Now()
-	s.lastStartedAt.Store(&startedAt)
-	state := Running
-	s.state.Store(&state)
-
-	err = fn()
-	return
+	a, runCtx := s.beginRun(ctx, info, false)
+	return s.execRun(a, runCtx)
 }
 
 // ExecuteNow runs the runner immediately and blocks until it completes. It waits for a run of the loop which is
 // in progress.
 func (s *Scheduler) ExecuteNow() error {
-	s.launchMutex.Lock()
-	if s.ctx.Err() != nil {
-		s.resetContext()
-	}
-	ctx := s.ctx
-	s.launchMutex.Unlock()
-
-	return s.execute(ctx)
+	return s.execute(s.liveContext(), RunInfo{Trigger: TriggerManual})
 }
 
-func (s *Scheduler) beginRun() (Run, *runSink, error) {
-	if s.runs == nil {
-		return Run{}, nil, errors.New("no run store")
+// StartNow begins a manual run and returns without waiting for it. While a run is in progress, it returns
+// [ErrRunning] without a run. A paused or stopped scheduler can be started as well.
+func (s *Scheduler) StartNow(by string) error {
+	ctx := s.liveContext()
+	if !s.singleRunMutex.TryLock() {
+		return ErrRunning
 	}
 
-	run, sink, err := s.runs.begin(s.opts.ID)
+	a, runCtx := s.beginRun(ctx, RunInfo{Trigger: TriggerManual, By: by}, true)
+	go func() {
+		_ = s.execRun(a, runCtx)
+	}()
+
+	return nil
+}
+
+// CancelRun cancels the run in progress, without stopping the loop. The run ends as [OutcomeCanceled] with by as
+// [Run.CanceledBy]. Without a run in progress, it returns [ErrNotRunning].
+func (s *Scheduler) CancelRun(by string) error {
+	s.runMutex.Lock()
+	a := s.active
+	s.runMutex.Unlock()
+
+	if a == nil {
+		return ErrNotRunning
+	}
+
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	if a.returned {
+		return ErrNotRunning
+	}
+
+	if !a.cancelRequested {
+		a.cancelRequested = true
+		a.canceledBy = by
+	}
+
+	a.cancel(context.Canceled)
+	return nil
+}
+
+// beginRun begins a run, while the caller holds the singleRunMutex, which execRun releases.
+func (s *Scheduler) beginRun(parent context.Context, info RunInfo, async bool) (*activeRun, context.Context) {
+	opts := s.options()
+	settings, err := s.loadSettingsFor(opts)
 	if err != nil {
-		slog.Error("cannot begin scheduler run", "id", s.opts.ID, "err", err.Error())
-		return Run{}, nil, err
+		settings = opts.Defaults
 	}
 
-	s.currentRun.Store(&run)
-	s.sink.Store(sink)
-	return run, sink, nil
+	now := s.clock.Now()
+	if info.Trigger == TriggerManual || info.Due.IsZero() {
+		info.Due = now
+	}
+
+	runCtx, cancel := context.WithCancelCause(parent)
+	a := &activeRun{cancel: cancel, async: async, info: info, opts: opts, keep: keepRunLogs(settings)}
+
+	s.runMutex.Lock()
+	s.runGen++
+	a.gen = s.runGen
+	if async {
+		s.asyncBegun++
+	}
+	s.active = a
+	state := Running
+	s.state.Store(&state)
+	s.runMutex.Unlock()
+
+	s.ClearLogs()
+	s.lastStartedAt.Store(&now)
+
+	if info.Trigger == TriggerManual {
+		// the start of the last manual run is a reference of the plan
+		s.planMutex.Lock()
+		if now.After(s.plan.Reference) {
+			s.plan.Reference = now
+			s.persistPlanLocked()
+		}
+		s.planMutex.Unlock()
+	}
+
+	if s.runs == nil {
+		a.beginErr = errors.New("no run store")
+	} else {
+		run, sink, epoch, err := s.runs.begin(s.id, info, now, locationOf(opts), opts.Quiet)
+		if err != nil {
+			slog.Error("cannot begin scheduler run", "id", s.id, "err", err.Error())
+			a.beginErr = err
+		} else {
+			a.run, a.sink, a.epoch = run, sink, epoch
+			sink.setOnFail(func() {
+				a.mu.Lock()
+				a.logFailed = true
+				a.mu.Unlock()
+				cancel(ErrLogNotWritable)
+			})
+			s.currentRun.Store(&run)
+			s.sink.Store(sink)
+		}
+	}
+
+	return a, withRunInfo(runCtx, info)
+}
+
+// execRun calls the runner of a begun run and ends it. It releases the singleRunMutex.
+func (s *Scheduler) execRun(a *activeRun, ctx context.Context) error {
+	var err error
+	if a.sink != nil && a.sink.hasFailed() {
+		// the log of a quiet scheduler cannot be written, so the runner is not called
+		a.mu.Lock()
+		a.logFailed = true
+		a.mu.Unlock()
+	} else {
+		err = callRunner(a.opts, ctx)
+	}
+
+	interrupted := ctx.Err() != nil
+	a.mu.Lock()
+	a.returned = true
+	canceled, canceledBy, logFailed := a.cancelRequested, a.canceledBy, a.logFailed
+	a.mu.Unlock()
+
+	return s.endRun(a, err, interrupted, canceled, canceledBy, logFailed)
+}
+
+func callRunner(opts Options, ctx context.Context) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			if !opts.Quiet {
+				debug.PrintStack()
+			}
+			err = &PanicError{Trace: string(debug.Stack()), Cause: fmt.Errorf("recovered from panic: %v", r)}
+		}
+	}()
+
+	return opts.Runner(ctx)
+}
+
+// endRun persists the end of a run and releases the singleRunMutex. A run of a durable scheduler, which has been
+// interrupted by the end of its manager, ends as cancelled by [CanceledByRestart].
+func (s *Scheduler) endRun(a *activeRun, err error, interrupted, canceled bool, canceledBy string, logFailed bool) error {
+	opts := a.opts
+	run := a.run
+	shutdown := opts.Durable && interrupted && s.externalCtx.Err() != nil
+
+	if logFailed {
+		err = ErrLogNotWritable
+	}
+
+	if err != nil {
+		run.Error = err.Error()
+	}
+
+	var perr *PanicError
+	switch {
+	case logFailed:
+		run.Outcome = OutcomeFailed
+	case canceled:
+		run.Outcome = OutcomeCanceled
+		run.CanceledBy = canceledBy
+	case shutdown:
+		run.Outcome = OutcomeCanceled
+		run.CanceledBy = CanceledByRestart
+	case err == nil:
+		run.Outcome = OutcomeSucceeded
+	case errors.As(err, &perr):
+		run.Outcome = OutcomePanicked
+	case isCanceled(err):
+		run.Outcome = OutcomeCanceled
+	default:
+		run.Outcome = OutcomeFailed
+	}
+
+	if err != nil {
+		if !opts.Quiet {
+			s.Error("service looper encountered error", "err", err.Error())
+		}
+		s.lastError.Store(&err)
+	}
+
+	s.sink.Store(nil)
+	s.currentRun.Store(nil)
+
+	now := s.clock.Now()
+	var oldest time.Time
+	floor, floorKnown := RunID(""), false
+	if a.beginErr == nil {
+		run.CompletedAt = now
+		oldest, floor, floorKnown = s.runs.end(run, a.sink, a.epoch, a.keep, locationOf(opts))
+	}
+
+	s.planEnd(opts, now, floor, floorKnown)
+	s.lastCompletedAt.Store(&now)
+
+	s.runMutex.Lock()
+	s.active = nil
+	if a.async {
+		s.asyncEnded++
+	}
+	s.runMutex.Unlock()
+
+	s.singleRunMutex.Unlock()
+
+	// without a loop, e.g. a stopped scheduler executed manually, nothing is paused
+	s.runMutex.Lock()
+	if s.runGen == a.gen && s.active == nil {
+		state := Stopped
+		if s.Looping() {
+			state = Paused
+			if opts.Durable && s.isSuspended() {
+				state = Disabled
+			}
+		}
+		s.state.Store(&state)
+	}
+	s.runMutex.Unlock()
+
+	if opts.Durable || a.async {
+		// e.g. a manual run is the previous run of a Schedule
+		s.Wake()
+	}
+
+	if s.onRunEnd != nil {
+		s.onRunEnd(oldest)
+	}
+
+	return err
+}
+
+// planEnd keeps the end of a run in the plan state.
+func (s *Scheduler) planEnd(opts Options, end time.Time, floor RunID, floorKnown bool) {
+	s.planMutex.Lock()
+	defer s.planMutex.Unlock()
+
+	s.plan.LastEnd = end
+	if floorKnown {
+		s.plan.LogFloor = floor
+	}
+
+	if opts.Durable && opts.Kind == Cron {
+		// a due during the run has been omitted
+		if settings, err := s.loadSettingsFor(opts); err == nil && settings.PauseTime <= 0 {
+			if d, err := newCronPlan(settings, opts.Location).prev(end.Add(time.Nanosecond)); err == nil && d.After(s.plan.LastDue) {
+				s.plan.LastDue = d
+			}
+		}
+	}
+
+	s.persistPlanLocked()
+}
+
+// persistPlanLocked saves the plan state of a durable scheduler. It requires the planMutex.
+func (s *Scheduler) persistPlanLocked() {
+	if s.removed || s.runs == nil || !s.options().Durable {
+		return
+	}
+
+	if err := s.runs.saveState(s.id, s.plan); err != nil {
+		slog.Error("cannot save scheduler state", "id", s.id, "err", err.Error())
+	}
+}
+
+func (s *Scheduler) planState() DurableState {
+	s.planMutex.Lock()
+	defer s.planMutex.Unlock()
+
+	return s.plan
+}
+
+func (s *Scheduler) isSuspended() bool {
+	s.planMutex.Lock()
+	defer s.planMutex.Unlock()
+
+	return s.plan.Paused
+}
+
+func (s *Scheduler) reference() time.Time {
+	s.planMutex.Lock()
+	defer s.planMutex.Unlock()
+
+	return s.plan.Reference
+}
+
+func (s *Scheduler) storeNextPlanned(t time.Time) {
+	s.nextPlannedAt.Store(&t)
+}
+
+// Pause omits every due until [Scheduler.Resume]. A run in progress is not cancelled.
+func (s *Scheduler) Pause() {
+	s.planMutex.Lock()
+	if !s.plan.Paused {
+		s.plan.Paused = true
+		s.persistPlanLocked()
+	}
+	s.planMutex.Unlock()
+
+	s.Wake()
+}
+
+// Resume ends a pause. Its time becomes a reference of the plan, so that it does not start a run immediately.
+func (s *Scheduler) Resume() {
+	s.planMutex.Lock()
+	if s.plan.Paused {
+		s.plan.Paused = false
+		s.plan.Reference = later(s.plan.Reference, s.clock.Now())
+		s.persistPlanLocked()
+	}
+	s.planMutex.Unlock()
+
+	s.Wake()
+}
+
+// addReference adds a reference of the plan.
+func (s *Scheduler) addReference(t time.Time) {
+	s.planMutex.Lock()
+	if t.After(s.plan.Reference) {
+		s.plan.Reference = t
+		s.persistPlanLocked()
+	}
+	s.planMutex.Unlock()
+
+	s.Wake()
+}
+
+// update replaces the options without cancelling a run in progress. A changed plan applies from the next due on
+// and its time becomes a reference of the plan.
+func (s *Scheduler) update(opts Options) {
+	old := s.options()
+	oldSettings, errOld := s.loadSettingsFor(old)
+	s.setOptions(opts)
+	newSettings, errNew := s.loadSettingsFor(opts)
+	if errOld != nil || errNew != nil || planOf(old, oldSettings) != planOf(opts, newSettings) {
+		s.addReference(s.clock.Now())
+		return
+	}
+
+	s.Wake()
 }
 
 // CurrentRun returns the currently executing run, if any.
@@ -425,28 +1053,31 @@ func isCanceled(err error) bool {
 	return errors.Is(err, context.Canceled)
 }
 
-func (s *Scheduler) logError(err error) {
-	s.Error("service looper encountered error", "err", err.Error())
-	s.lastError.Store(&err)
-}
-
 func (s *Scheduler) Info(msg string, args ...any) {
-	slog.Info(msg, args...)
+	if !s.options().Quiet {
+		slog.Info(msg, args...)
+	}
 	s.logLevel(slog.LevelInfo, msg, args...)
 }
 
 func (s *Scheduler) Error(msg string, args ...any) {
-	slog.Error(msg, args...)
+	if !s.options().Quiet {
+		slog.Error(msg, args...)
+	}
 	s.logLevel(slog.LevelError, msg, args...)
 }
 
 func (s *Scheduler) Warn(msg string, args ...any) {
-	slog.Warn(msg, args...)
+	if !s.options().Quiet {
+		slog.Warn(msg, args...)
+	}
 	s.logLevel(slog.LevelWarn, msg, args...)
 }
 
 func (s *Scheduler) Debug(msg string, args ...any) {
-	slog.Debug(msg, args...)
+	if !s.options().Quiet {
+		slog.Debug(msg, args...)
+	}
 	s.logLevel(slog.LevelDebug, msg, args...)
 }
 
@@ -495,7 +1126,7 @@ func (s *Scheduler) logLevel(level slog.Level, msg string, args ...any) {
 		}
 	}
 
-	s.record(LogEntry{Level: level, Time: time.Now(), Msg: msg, Values: tmp})
+	s.record(LogEntry{Level: level, Time: s.clock.Now(), Msg: msg, Values: tmp})
 }
 
 // record appends the entry to the in-memory buffer and to the log file of the current run.
@@ -555,15 +1186,19 @@ func (s slogHandler) Handle(ctx context.Context, record slog.Record) error {
 
 	t := record.Time
 	if t.IsZero() {
-		t = time.Now()
+		t = s.sched.clock.Now()
 	}
 
 	s.sched.record(LogEntry{Level: record.Level, Time: t, Msg: record.Message, Values: values})
 
+	if s.sched.options().Quiet {
+		return nil
+	}
+
 	// keep forwarding into the default logger, as before
 	if def := slog.Default().Handler(); def.Enabled(ctx, record.Level) {
 		r := record.Clone()
-		r.AddAttrs(slog.String("scheduler", string(s.sched.opts.ID)))
+		r.AddAttrs(slog.String("scheduler", string(s.sched.id)))
 		_ = slog.Default().Handler().WithAttrs(s.attrs).Handle(ctx, r)
 	}
 

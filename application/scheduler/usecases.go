@@ -47,6 +47,22 @@ type Options struct {
 	Defaults    Settings
 	Runner      func(context.Context) error
 	Actions     []CustomAction
+
+	// Location is the zone of the cron time, of the day in the numbers of the runs and of the display. Nil means
+	// [time.Local].
+	Location *time.Location
+
+	// Durable keeps the plan over restarts: the latest handled due, the end of the latest run, the reference
+	// (see [DurableState]) and a pause are kept in the run repository. A durable scheduler of kind [Schedule]
+	// starts its next run the pause time after the latest of the end of the previous run and its reference, a
+	// [Cron] scheduler at the next cron time. Configure, [Manager.Resume], [Manager.Update] and the start of the
+	// manager never start a run, except a catch up by [Settings.CatchUp]. Configure ends the runs without an end
+	// as [OutcomeCanceled] by [CanceledByRestart].
+	Durable bool
+
+	// Quiet keeps the entries of the runs out of [slog.Default] and makes nago write no entries of its own into
+	// the run logs. A run whose log cannot be written fails with [ErrLogNotWritable].
+	Quiet bool
 }
 
 type StatusResult struct {
@@ -65,6 +81,8 @@ type StatusResult struct {
 	Settings Settings
 	// CustomSettings is true, if persisted settings replace the defaults.
 	CustomSettings bool
+	// Suspended is true between [Manager.Pause] and [Manager.Resume].
+	Suspended bool
 }
 type Status func(subject auth.Subject, id ID) (StatusResult, error)
 
@@ -78,6 +96,10 @@ type ExecuteNow func(subject auth.Subject, id ID) error
 // ListRuns returns the known runs of a scheduler, newest first. Statistics are kept for [RunRetention],
 // logs only for the newest [KeepRunLogs] runs.
 type ListRuns func(subject auth.Subject, id ID) iter.Seq2[Run, error]
+
+// ListRunsPage returns a page of the runs of a scheduler, newest first, and the amount of all its runs. It reads
+// only the runs of the page, see [Manager.RunsPage].
+type ListRunsPage func(subject auth.Subject, id ID, offset, limit int) ([]Run, int, error)
 
 // ViewRunLog returns a single page of at most [MaxLogPageSize] log entries of the given run, newest first.
 type ViewRunLog func(subject auth.Subject, id ID, run RunID, query LogQuery) (LogPage, error)
@@ -114,6 +136,7 @@ type UseCases struct {
 	UpdateSettings     UpdateSettings
 	DeleteSettingsByID DeleteSettingsByID
 	ListRuns           ListRuns
+	ListRunsPage       ListRunsPage
 	ViewRunLog         ViewRunLog
 }
 
@@ -140,6 +163,7 @@ func NewUseCasesWithRuns(ctx context.Context, settingsRepo SettingsRepository, r
 		UpdateSettings:     NewUpdateSettings(m, settingsRepo),
 		DeleteSettingsByID: NewDeleteSettingsByID(m, settingsRepo),
 		ListRuns:           NewListRuns(m),
+		ListRunsPage:       NewListRunsPage(m),
 		ViewRunLog:         NewViewRunLog(m),
 	}
 }

@@ -17,12 +17,15 @@ func NewDeleteSettingsByID(m *Manager, repo SettingsRepository) DeleteSettingsBy
 			return err
 		}
 
+		before, _, known := m.effectiveSettings(id)
 		if err := repo.DeleteByID(id); err != nil {
 			return err
 		}
 
 		// the defaults apply immediately
-		m.Wake(id)
+		if known {
+			m.settingsChanged(id, before)
+		}
 		return nil
 	}
 }

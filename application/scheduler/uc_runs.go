@@ -8,6 +8,7 @@
 package scheduler
 
 import (
+	"fmt"
 	"iter"
 
 	"go.wdy.de/nago/auth"
@@ -28,6 +29,21 @@ func NewListRuns(m *Manager) ListRuns {
 		}
 
 		return xslices.Values2[[]Run, Run, error](runs)
+	}
+}
+
+// NewListRunsPage requires [PermStatus] like [NewListRuns].
+func NewListRunsPage(m *Manager) ListRunsPage {
+	return func(subject auth.Subject, id ID, offset, limit int) ([]Run, int, error) {
+		if err := subject.Audit(PermStatus); err != nil {
+			return nil, 0, err
+		}
+
+		if !m.Has(id) {
+			return nil, 0, fmt.Errorf("service with id %s not found", id)
+		}
+
+		return m.RunsPage(id, offset, limit)
 	}
 }
 

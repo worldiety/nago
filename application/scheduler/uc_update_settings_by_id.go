@@ -19,15 +19,20 @@ func NewUpdateSettings(m *Manager, repo SettingsRepository) UpdateSettings {
 			return err
 		}
 
-		if !m.Has(settings.ID) {
+		before, opts, ok := m.effectiveSettings(settings.ID)
+		if !ok {
 			return fmt.Errorf("service with id %s not found", settings.ID)
+		}
+
+		if err := validatePlan(opts, settings); err != nil {
+			return err
 		}
 
 		if err := repo.Save(settings); err != nil {
 			return err
 		}
 
-		m.Wake(settings.ID)
+		m.settingsChanged(settings.ID, before)
 		return nil
 	}
 }

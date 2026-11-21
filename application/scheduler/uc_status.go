@@ -31,6 +31,7 @@ func NewStatus(m *Manager) Status {
 		status.LastError = m.LastError(id)
 		status.LastStartedAt = m.LastStartedAt(id)
 		status.Options = opts
+		status.Suspended = m.Suspended(id)
 
 		runStats, runs, err := m.Stats(id)
 		if err != nil {

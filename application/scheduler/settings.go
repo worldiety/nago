@@ -19,6 +19,19 @@ type Settings struct {
 	Disabled   bool          `json:"disabled,omitempty" label:"Deaktiviert"`
 	CronHour   int           `json:"cronHour,omitempty" label:"Cron Hour"`
 	CronMinute int           `json:"cronMinute,omitempty" label:"Cron Minute"`
+
+	// CronWeekdays restricts a [Cron] scheduler to these weekdays. Empty means every day. It must not be combined
+	// with CronMonthDays.
+	CronWeekdays []time.Weekday `json:"cronWeekdays,omitempty" visible:"false"`
+	// CronMonthDays restricts a [Cron] scheduler to these days of the month (1 to 31 or [LastDayOfMonth]). A month
+	// without a selected day is skipped. Empty means every day.
+	CronMonthDays []int `json:"cronMonthDays,omitempty" visible:"false"`
+	// CatchUp runs a durable scheduler once after its start, if at least one due elapsed, while its manager was not
+	// running, see [Options.Durable].
+	CatchUp bool `json:"catchUp,omitempty" visible:"false"`
+	// KeepRunLogs is the amount of runs whose log file is kept. Zero means [KeepRunLogs]. Logs of runs older than
+	// [RunRetention] are deleted in any case.
+	KeepRunLogs int `json:"keepRunLogs,omitempty" visible:"false"`
 }
 
 func (s Settings) Identity() ID {

@@ -8,6 +8,7 @@
 package scheduler
 
 import (
+	"context"
 	"errors"
 	"log/slog"
 	"time"
@@ -30,7 +31,55 @@ var (
 	ErrRunLogNotAvailable = errors.New("run log not available")
 	// ErrRunNotFound is returned by [ViewRunLog], if the run is unknown, e.g. because it is older than [RunRetention].
 	ErrRunNotFound = errors.New("run not found")
+	// ErrRunning is returned by [Manager.StartNow], while a run of the scheduler is in progress.
+	ErrRunning = errors.New("scheduler is running")
+	// ErrNotRunning is returned by [Manager.CancelRun], if no run of the scheduler is in progress.
+	ErrNotRunning = errors.New("scheduler is not running")
+	// ErrLogNotWritable is the error of a run of a [Options.Quiet] scheduler, whose log could not be written.
+	ErrLogNotWritable = errors.New("Protokoll nicht schreibbar")
 )
+
+// CanceledByRestart is [Run.CanceledBy] of a run of a durable scheduler, which was in progress, when its manager
+// stopped, or which had no end, when the scheduler was configured again, see [Options.Durable].
+const CanceledByRestart = "Neustart"
+
+// Trigger tells, why a run started.
+type Trigger int
+
+const (
+	// TriggerPlan is a run at a due of the plan.
+	TriggerPlan Trigger = iota
+	// TriggerCatchUp is a run which catches up a due, which elapsed while the manager was not running, see
+	// [Settings.CatchUp].
+	TriggerCatchUp
+	// TriggerManual is a run by [Manager.StartNow] or [Manager.ExecuteNow].
+	TriggerManual
+)
+
+// RunInfo describes the current run to its runner, see [RunInfoFrom].
+type RunInfo struct {
+	// Due is the due of the plan, for a caught up run the latest elapsed due and for a manual run its start.
+	Due     time.Time
+	Trigger Trigger
+	// By is the name of the person, who started a manual run.
+	By string
+}
+
+type runInfoKey struct{}
+
+// RunInfoFrom returns the information about the run, which the runner executes with the given context.
+func RunInfoFrom(ctx context.Context) (RunInfo, bool) {
+	if ctx == nil {
+		return RunInfo{}, false
+	}
+
+	info, ok := ctx.Value(runInfoKey{}).(RunInfo)
+	return info, ok
+}
+
+func withRunInfo(ctx context.Context, info RunInfo) context.Context {
+	return context.WithValue(ctx, runInfoKey{}, info)
+}
 
 // RunID identifies a single execution of a scheduler, e.g. my.scheduler#2026-09-24-00001.
 type RunID string
@@ -63,6 +112,35 @@ type Run struct {
 	Errors      int       `json:"errors"`
 	// LogFile is the base name of the log file within the log directory. Empty, if no log is available (anymore).
 	LogFile string `json:"logFile,omitempty"`
+	// Trigger tells, why the run started.
+	Trigger Trigger `json:"trigger,omitempty"`
+	// By is the name of the person, who started a manual run.
+	By string `json:"by,omitempty"`
+	// Due is the due of the plan, see [RunInfo.Due].
+	Due time.Time `json:"due,omitzero"`
+	// CanceledBy is the name of the person, who cancelled the run by [Manager.CancelRun], or [CanceledByRestart].
+	CanceledBy string `json:"canceledBy,omitempty"`
+	// Durable is only set at the record, which keeps the state of a durable scheduler in the run repository next
+	// to its runs (see [Options.Durable]). This record is no run and never returned as one.
+	Durable *DurableState `json:"durable,omitempty"`
+}
+
+// DurableState is what a durable scheduler keeps over restarts, independent of its runs, which are deleted after
+// [RunRetention], see [Options.Durable].
+type DurableState struct {
+	// LastDue is the latest handled due: a due which ran (also if it was cancelled) or which was omitted, because
+	// a run was in progress.
+	LastDue time.Time `json:"lastDue,omitzero"`
+	// LastEnd is the end of the latest run, also of a manual one.
+	LastEnd time.Time `json:"lastEnd,omitzero"`
+	// Reference is the latest of the first configuration, the last [Manager.Resume], the last change of the plan,
+	// [Manager.SetReference] and the start of the last manual run.
+	Reference time.Time `json:"reference,omitzero"`
+	// Paused is true between [Manager.Pause] and [Manager.Resume].
+	Paused bool `json:"paused,omitempty"`
+	// LogFloor is the oldest run which may still have a log file, so that deleting old logs reads only the runs
+	// whose log it deletes.
+	LogFloor RunID `json:"logFloor,omitempty"`
 }
 
 func (r Run) Identity() RunID {
