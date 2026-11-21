@@ -19,6 +19,7 @@ import { cssLengthValue } from '@/components/shared/length';
 import { paddingCSS } from '@/components/shared/padding';
 import { positionCSS } from '@/components/shared/position';
 import { transformationCSS } from '@/components/shared/transformation';
+import { handlesKeysItself, isForwardedLabelClick } from '@/components/shared/stackActivation';
 import { randomStr } from '@/components/shared/util';
 import { useServiceAdapter } from '@/composables/serviceAdapter';
 import { nextRID, routeLinkClick } from '@/eventhandling';
@@ -279,6 +280,9 @@ function getPresetClasses(): string[] {
 
 function onClick(event: MouseEvent) {
 	if (props.ui.action) {
+		// the browser forwards the click to the control of the label, and the stack handles that one instead
+		if (isForwardedLabelClick(event.target as Element | null, event.currentTarget as Element)) return;
+
 		event.stopPropagation();
 		serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.action, nextRID()));
 	}
@@ -287,6 +291,8 @@ function onClick(event: MouseEvent) {
 function onKeydown(event: KeyboardEvent) {
 	if (props.ui.action) {
 		event.stopPropagation();
+		if (handlesKeysItself(event.target as Element | null, event.currentTarget as Element)) return;
+
 		if (event.code === 'Enter' || event.code === 'Space') {
 			serviceAdapter.sendEvent(new FunctionCallRequested(props.ui.action, nextRID()));
 		}
