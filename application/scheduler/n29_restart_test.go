@@ -8,6 +8,8 @@
 package scheduler_test
 
 import (
+	"context"
+	"log/slog"
 	"testing"
 	"time"
 
@@ -123,6 +125,89 @@ func TestN29ShutdownCancelsRunningRun(t *testing.T) {
 			}
 
 			p2.none(t)
+		})
+	}
+}
+
+// TestN29RestartKeepsLogCounts checks, that a run, which Configure closes as "Neustart" after a crash, carries the
+// entries, warnings and errors of its log, as observed through RunLog, like a run which ended by itself.
+//
+// Zusagen: R-SCHEDULE-RESTART, R-SCHEDULE-RETENTION, R-SCHEDULE-LOG, R-DEC-SCHEDULE-NAGO
+func TestN29RestartKeepsLogCounts(t *testing.T) {
+	tests := []struct {
+		name  string
+		crash bool
+	}{
+		{"nach einem Absturz als abgebrochen: Neustart geschlossen", true},
+		{"Gegenzeile: von selbst beendet", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := newWorld(t, bln(2027, 6, 1, 21, 0))
+			release := make(chan struct{})
+			logged := make(chan struct{})
+			runner := func(ctx context.Context) error {
+				log := scheduler.LoggerFrom(ctx)
+				log.Info("n29-a")
+				log.Warn("n29-b")
+				log.Error("n29-c")
+				log.Warn("n29-d")
+				close(logged)
+				select {
+				case <-release:
+					return nil
+				case <-ctx.Done():
+					return ctx.Err()
+				}
+			}
+
+			w.configure(cronOpts(job, runner, 3, 0))
+			w.mustStartNow(job, "Anna")
+			<-logged
+
+			c := w
+			if tt.crash {
+				c = w.crashAt(bln(2027, 6, 1, 21, 5))
+				c.configure(cronOpts(job, func(context.Context) error { return nil }, 3, 0))
+			} else {
+				w.clock.set(t, bln(2027, 6, 1, 21, 5))
+				close(release)
+			}
+
+			var runs []scheduler.Run
+			waitFor(t, func() string { return "Lauf abgeschlossen:" + describeRuns(runs) }, func() bool {
+				runs = c.runs(job)
+				return len(runs) == 1 && runs[0].Outcome != scheduler.OutcomeRunning && !runs[0].CompletedAt.IsZero()
+			})
+
+			r := runs[0]
+			if tt.crash && (r.Outcome != scheduler.OutcomeCanceled || r.CanceledBy != scheduler.CanceledByRestart) {
+				t.Fatalf("abgebrochen: Neustart erwartet:%s", describeRuns(runs))
+			}
+
+			total := func(level slog.Level) int {
+				page, err := c.m.RunLog(job, r.ID, scheduler.LogQuery{MinLevel: level})
+				if err != nil {
+					t.Fatalf("Protokoll von %s: %v", r.ID, err)
+				}
+				return page.Total
+			}
+
+			entries, warnAndUp, errs := total(slog.LevelDebug), total(slog.LevelWarn), total(slog.LevelError)
+			if warnAndUp-errs < 2 || errs < 1 || entries < 4 {
+				t.Fatalf("Prämisse: das Protokoll hat die Meldungen des Runners: %d Einträge, %d ab Warnung, %d Fehler", entries, warnAndUp, errs)
+			}
+
+			if r.Entries != entries || r.Warnings != warnAndUp-errs || r.Errors != errs {
+				t.Fatalf("Lauf mit %d Einträgen, %d Warnungen, %d Fehlern wie sein Protokoll erwartet:%s", entries, warnAndUp-errs, errs, describeRuns(runs))
+			}
+
+			if tt.crash {
+				// the crashed manager ends its run before the test removes its log directory
+				w.cancel()
+				w.ended(job, 1)
+			}
 		})
 	}
 }
