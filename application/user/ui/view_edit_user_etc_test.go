@@ -119,9 +119,9 @@ func TestEtcActionMessageNamesTheAccountOnly(t *testing.T) {
 				tt.before(t, usr.ID)
 			}
 
-			// a small window shows the accounts as cards, whose click opens the account like a row of the table
+			// a small window shows the accounts as cards, whose button opens the account like a row of the table
 			w := app.Open(t, subject, "admin/accounts", nagotest.Size(400, 900))
-			w.Click(w.Find(nagotest.Text(string(tt.mail))))
+			w.Click(w.Find(nagotest.Label("Mit Erika Mustermann (" + string(tt.mail) + ") interagieren")))
 			w.Click(w.Find(nagotest.Label("Sonstiges")))
 
 			// premise: the code is pending in the account, which the dialog shows

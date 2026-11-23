@@ -137,6 +137,10 @@ func PageUsers(wnd core.Window, ucUsers user.UseCases, ucGroups group.UseCases, 
 			FindByID: func(id user.ID) (option.Opt[user.User], error) {
 				return ucUsers.FindByID(wnd.Subject(), id)
 			},
+			// names the account for screen readers, e.g. at the button which opens it, see [user.User.String]
+			AccessibilityLabel: func(obj user.User) string {
+				return obj.String()
+			},
 			Fields: []dataview.Field[user.User]{
 				{
 					ID:   "avatar",
