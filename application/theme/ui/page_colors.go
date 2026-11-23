@@ -28,7 +28,7 @@ import (
 
 var (
 	StrColorsTitle    = i18n.MustString("nago.theme.colors.title", i18n.Values{language.English: "Colors", language.German: "Farben"})
-	StrColorsDesc     = i18n.MustString("nago.theme.colors.desc", i18n.Values{language.English: "Choose three base colors, from which all other colors are calculated. In the advanced mode, every calculated color can be adjusted.", language.German: "Wählen Sie drei Basisfarben, aus denen alle weiteren Farben berechnet werden. Im erweiterten Modus lässt sich jede berechnete Farbe einzeln anpassen."})
+	StrColorsDesc     = i18n.MustString("nago.theme.colors.desc", i18n.Values{language.English: "Choose three base colors, from which all other colors are calculated. A changed base color calculates all colors of the mode again and discards single adjustments. In the advanced mode, every calculated color can be adjusted, and the adjustments stay, when a base color changes.", language.German: "Wählen Sie drei Basisfarben, aus denen alle weiteren Farben berechnet werden. Eine geänderte Basisfarbe berechnet alle Farben des Modus neu und verwirft einzelne Anpassungen. Im erweiterten Modus lässt sich jede berechnete Farbe einzeln anpassen, und die Anpassungen bleiben erhalten, wenn sich eine Basisfarbe ändert."})
 	StrAdvancedMode   = i18n.MustString("nago.theme.colors.advanced", i18n.Values{language.English: "Advanced mode", language.German: "Erweiterter Modus"})
 	StrLight          = i18n.MustString("nago.theme.colors.light", i18n.Values{language.English: "Light mode", language.German: "Light-Mode"})
 	StrDark           = i18n.MustString("nago.theme.colors.dark", i18n.Values{language.English: "Dark mode", language.German: "Dark-Mode"})
@@ -179,9 +179,20 @@ func schemeEditor(wnd core.Window, draft *core.State[theme.Customization], advan
 	colors := sc.Colors(derive)
 	calculated := derive(sc.Base)
 
+	// The simple mode shows only the base colors, so a changed base color calculates all colors of the mode again.
+	// The advanced mode keeps the adjusted colors, because the user has made them on purpose.
+	setBase := func(fn func(b *theme.BaseColors)) {
+		update(func(sc *theme.SchemeCustomization) {
+			fn(&sc.Base)
+			if !advanced {
+				sc.Overrides = nil
+			}
+		})
+	}
+
 	base := func(label, desc i18n.StrHnd, key string, value ui.Color, set func(b *theme.BaseColors, c ui.Color)) core.View {
 		return colorInput(wnd, name+".base."+key, label.Get(wnd), desc.Get(wnd), value, func(c ui.Color) {
-			update(func(sc *theme.SchemeCustomization) { set(&sc.Base, c) })
+			setBase(func(b *theme.BaseColors) { set(b, c) })
 		})
 	}
 
@@ -239,7 +250,7 @@ func schemeEditor(wnd core.Window, draft *core.State[theme.Customization], advan
 			base(StrAccent, StrAccentDesc, "accent", sc.Base.Accent, func(b *theme.BaseColors, c ui.Color) { b.Accent = c }),
 			ui.If(dark, ui.TertiaryButton(func() {
 				light := draft.Get().Light.Base
-				update(func(sc *theme.SchemeCustomization) { sc.Base = light })
+				setBase(func(b *theme.BaseColors) { *b = light })
 			}).PreIcon(heroOutline.DocumentDuplicate).Title(StrCopyFromLight.Get(wnd))),
 		),
 		ui.VStack(groups...).Gap(ui.L24).Alignment(ui.Leading).FullWidth(),
