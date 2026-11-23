@@ -107,7 +107,8 @@ func (t TDataView[E, ID]) renderCards(ctx core.RenderContext) core.RenderNode {
 								panic(fmt.Errorf("no selection state for %q", u.Identity()))
 							}
 
-							return accessibility.Accessible(ui.Checkbox(myState.Get()).InputValue(myState)).Label(StrSelect.Get(wnd))
+							accessibilityLabel := t.selectCheckboxAccessibilityLabel(wnd, myState, u)
+							return accessibility.Accessible(ui.Checkbox(myState.Get()).InputValue(myState)).Label(accessibilityLabel)
 						}),
 
 						ui.Text(titleField.Name).Font(ui.TitleMedium),
@@ -159,7 +160,7 @@ func (t TDataView[E, ID]) renderCards(ctx core.RenderContext) core.RenderNode {
 							ui.IfFunc(t.addChevronRight, func() core.View {
 								accessibilityLabel := StrInteract.Get(wnd)
 								if t.data.AccessibilityLabel != nil {
-									accessibilityLabel = StrXInteract.Get(wnd, i18n.String("entry", t.data.AccessibilityLabel(u)))
+									accessibilityLabel = StrInteractWithX.Get(wnd, i18n.String("entry", t.data.AccessibilityLabel(u)))
 								}
 								return ui.VStack(
 									ui.TertiaryButton(func() {

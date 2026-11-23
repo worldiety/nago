@@ -9,7 +9,6 @@ package dataview
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/worldiety/i18n"
 	"go.wdy.de/nago/application/localization/rstring"
@@ -23,16 +22,17 @@ import (
 )
 
 var (
-	StrSearch      = i18n.MustString("nago.dataview.search", i18n.Values{language.English: "Search entries", language.German: "Einträge durchsuchen"})
-	StrActions     = i18n.MustString("nago.dataview.actions", i18n.Values{language.English: "Actions", language.German: "Aktionen"})
-	StrXSelected   = i18n.MustVarString("nago.dataview.x_selected", i18n.Values{language.English: "{num} selected", language.German: "{num} ausgewählt"})
-	StrXDeselect   = i18n.MustVarString("nago.dataview.x_deselect", i18n.Values{language.English: "Deselect {num}", language.German: "{num} abwählen"})
-	StrDeselect    = i18n.MustString("nago.dataview.deselect", i18n.Values{language.English: "Deselect", language.German: "Abwählen"})
-	StrDeselectAll = i18n.MustString("nago.dataview.deselect_all", i18n.Values{language.English: "Deselect all", language.German: "Alle abwählen"})
-	StrSelect      = i18n.MustString("nago.dataview.select", i18n.Values{language.English: "Select", language.German: "Auswählen"})
-	StrSelectAll   = i18n.MustString("nago.dataview.select_all", i18n.Values{language.English: "Select all", language.German: "Alle auswählen"})
-	StrInteract    = i18n.MustString("nago.dataview.interact", i18n.Values{language.English: "Interact with entry", language.German: "Mit Eintrag interagieren"})
-	StrXInteract   = i18n.MustVarString("nago.dataview.x_interact", i18n.Values{language.English: "Interact with {entry}", language.German: "Mit {entry} interagieren"})
+	StrSearch        = i18n.MustString("nago.dataview.search", i18n.Values{language.English: "Search entries", language.German: "Einträge durchsuchen"})
+	StrActions       = i18n.MustString("nago.dataview.actions", i18n.Values{language.English: "Actions", language.German: "Aktionen"})
+	StrXSelected     = i18n.MustVarString("nago.dataview.x_selected", i18n.Values{language.English: "{num} selected", language.German: "{num} ausgewählt"})
+	StrDeselectX     = i18n.MustVarString("nago.dataview.deselect_x", i18n.Values{language.English: "Deselect {x}", language.German: "{x} abwählen"})
+	StrDeselect      = i18n.MustString("nago.dataview.deselect", i18n.Values{language.English: "Deselect", language.German: "Abwählen"})
+	StrDeselectAll   = i18n.MustString("nago.dataview.deselect_all", i18n.Values{language.English: "Deselect all", language.German: "Alle abwählen"})
+	StrSelect        = i18n.MustString("nago.dataview.select", i18n.Values{language.English: "Select", language.German: "Auswählen"})
+	StrSelectX       = i18n.MustVarString("nago.dataview.select_x", i18n.Values{language.English: "Select {entry}", language.German: "{entry} auswählen"})
+	StrSelectAll     = i18n.MustString("nago.dataview.select_all", i18n.Values{language.English: "Select all", language.German: "Alle auswählen"})
+	StrInteract      = i18n.MustString("nago.dataview.interact", i18n.Values{language.English: "Interact with entry", language.German: "Mit Eintrag interagieren"})
+	StrInteractWithX = i18n.MustVarString("nago.dataview.interact_with_x", i18n.Values{language.English: "Interact with {entry}", language.German: "Mit {entry} interagieren"})
 )
 
 type TableOptions struct {
@@ -121,20 +121,7 @@ func (t TDataView[E, ID]) renderTable(ctx core.RenderContext) core.RenderNode {
 
 			var cells []ui.TTableCell
 			if !t.hideSelection {
-				accessibilityLabel := ""
-				if t.data.AccessibilityLabel == nil {
-					if myState.Get() {
-						accessibilityLabel = StrDeselect.Get(wnd)
-					} else {
-						accessibilityLabel = StrSelect.Get(wnd)
-					}
-				} else {
-					if myState.Get() {
-						accessibilityLabel = fmt.Sprintf("%s %s", t.data.AccessibilityLabel(u), strings.ToLower(StrDeselect.Get(wnd)))
-					} else {
-						accessibilityLabel = fmt.Sprintf("%s %s", t.data.AccessibilityLabel(u), strings.ToLower(StrSelect.Get(wnd)))
-					}
-				}
+				accessibilityLabel := t.selectCheckboxAccessibilityLabel(wnd, myState, u)
 				cells = append(cells, ui.TableCell(accessibility.Accessible(ui.Checkbox(myState.Get()).InputChecked(myState)).Label(accessibilityLabel)))
 			}
 			for _, field := range data.Fields {
@@ -149,7 +136,7 @@ func (t TDataView[E, ID]) renderTable(ctx core.RenderContext) core.RenderNode {
 			if t.addChevronRight {
 				accessibilityLabel := StrInteract.Get(wnd)
 				if t.data.AccessibilityLabel != nil {
-					accessibilityLabel = StrXInteract.Get(wnd, i18n.String("entry", t.data.AccessibilityLabel(u)))
+					accessibilityLabel = StrInteractWithX.Get(wnd, i18n.String("entry", t.data.AccessibilityLabel(u)))
 				}
 				cells = append(cells, ui.TableCell(
 					ui.TertiaryButton(func() {

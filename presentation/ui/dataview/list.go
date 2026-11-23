@@ -121,14 +121,15 @@ func (t TDataView[E, ID]) renderList(ctx core.RenderContext) core.RenderNode {
 							panic(fmt.Errorf("no selection state for %q", u.Identity()))
 						}
 
-						checkboxView = accessibility.Accessible(ui.Checkbox(myState.Get()).InputValue(myState)).Label(StrSelect.Get(wnd))
+						accessibilityLabel := t.selectCheckboxAccessibilityLabel(wnd, myState, u)
+						checkboxView = accessibility.Accessible(ui.Checkbox(myState.Get()).InputValue(myState)).Label(accessibilityLabel)
 					}
 
 					var trailingView core.View
 					if t.addChevronRight {
 						accessibilityLabel := StrInteract.Get(wnd)
 						if t.data.AccessibilityLabel != nil {
-							accessibilityLabel = StrXInteract.Get(wnd, i18n.String("entry", t.data.AccessibilityLabel(u)))
+							accessibilityLabel = StrInteractWithX.Get(wnd, i18n.String("entry", t.data.AccessibilityLabel(u)))
 						}
 						trailingView = ui.TertiaryButton(func() {
 							if t.action != nil {
@@ -251,7 +252,7 @@ func (t TDataView[E, ID]) listActionBar(wnd core.Window, model pager.Model[E, ID
 	}
 
 	if !t.hideSelection && len(selected) > 0 {
-		deselectStr := StrXDeselect.Get(wnd, i18n.Int("num", model.SelectionCount))
+		deselectStr := StrDeselectX.Get(wnd, i18n.Int("x", model.SelectionCount))
 		selItems = append(selItems,
 			ui.MenuItem(func() {
 				model.UnselectAll()
