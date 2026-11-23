@@ -469,3 +469,17 @@ func (t TDataView[E, ID]) initModel(ctx core.RenderContext, model pager.Model[E,
 func entriesRegion(wnd core.Window, content ui.TVStack) core.View {
 	return accessibility.Accessible(content).Role(accessibility.RoleRegion).Label(StrEntries.Get(wnd))
 }
+
+func (t TDataView[E, ID]) selectCheckboxAccessibilityLabel(wnd core.Window, selected *core.State[bool], u E) string {
+	if t.data.AccessibilityLabel == nil {
+		if selected.Get() {
+			return StrDeselect.Get(wnd)
+		}
+		return StrSelect.Get(wnd)
+	} else {
+		if selected.Get() {
+			return StrDeselectX.Get(wnd, i18n.String("x", t.data.AccessibilityLabel(u)))
+		}
+		return StrSelectX.Get(wnd, i18n.String("entry", t.data.AccessibilityLabel(u)))
+	}
+}
