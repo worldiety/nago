@@ -98,6 +98,10 @@ func configure(cfg *application.Configurator) {
 		cfg.RootView(core.NavigationPath("paged-"+style.name), func(wnd core.Window) core.View {
 			return peopleView(wnd).Style(style.style).ModelOptions(pager.ModelOptions{PageSize: 3})
 		})
+
+		cfg.RootView(core.NavigationPath("labelled-"+style.name), func(wnd core.Window) core.View {
+			return peopleView(wnd).Style(style.style).EntriesLabel("People")
+		})
 	}
 
 	cfg.RootView("wide", func(wnd core.Window) core.View {
@@ -207,18 +211,23 @@ func TestPagerKeepsFocusAndTellsPage(t *testing.T) {
 
 func TestEntriesAreNamedRegion(t *testing.T) {
 	for _, style := range []string{"table", "cards", "list"} {
-		t.Run(style, func(t *testing.T) {
-			app := nagotest.New(t, configure)
-			w := app.Open(t, nil, core.NavigationPath("paged-"+style), nagotest.Locale("en"))
+		for _, tc := range []struct{ route, label string }{
+			{"paged-" + style, "Entries"},
+			{"labelled-" + style, "People"},
+		} {
+			t.Run(tc.route, func(t *testing.T) {
+				app := nagotest.New(t, configure)
+				w := app.Open(t, nil, core.NavigationPath(tc.route), nagotest.Locale("en"))
 
-			region := w.Find(nagotest.Where("entries region", func(n nagotest.Node) bool {
-				c, ok := n.Component.(*proto.Accessible)
-				return ok && c.Role == "region" && c.Label == "Entries"
-			}))
+				region := w.Find(nagotest.Where("entries region", func(n nagotest.Node) bool {
+					c, ok := n.Component.(*proto.Accessible)
+					return ok && c.Role == "region" && string(c.Label) == tc.label
+				}))
 
-			region.Find(nagotest.Text("row a"))
-			// the region starts with the entries, the search belongs to the action bar in front of it
-			region.FindAll(nagotest.Type[*proto.TextField]()).None()
-		})
+				region.Find(nagotest.Text("row a"))
+				// the region starts with the entries, the search belongs to the action bar in front of it
+				region.FindAll(nagotest.Type[*proto.TextField]()).None()
+			})
+		}
 	}
 }

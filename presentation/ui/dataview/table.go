@@ -162,7 +162,7 @@ func (t TDataView[E, ID]) renderTable(ctx core.RenderContext) core.RenderNode {
 	if t.tableOptions.MinWidth == "" {
 		return ui.VStack(
 			t.tableActionBar(wnd, model),
-			entriesRegion(wnd, ui.VStack(
+			t.entriesRegion(wnd, ui.VStack(
 				table.Rows(
 					ui.TableRow(ui.TableCell(footer).ColSpan(len(cols))).BackgroundColor(ui.ColorCardFooter),
 				).Frame(ui.Frame{}.FullWidth()),
@@ -173,7 +173,7 @@ func (t TDataView[E, ID]) renderTable(ctx core.RenderContext) core.RenderNode {
 	// only the table scrolls horizontally, the action bar and the footer keep the width of the view
 	return ui.VStack(
 		t.tableActionBar(wnd, model),
-		entriesRegion(wnd, ui.VStack(
+		t.entriesRegion(wnd, ui.VStack(
 			ui.ScrollView(
 				table.Border(ui.Border{}).Frame(ui.Frame{MinWidth: t.tableOptions.MinWidth, Width: ui.Full}),
 			).Axis(ui.ScrollViewAxisHorizontal).Border(ui.Border{}.TopRadius(ui.L20)).FullWidth(),

@@ -69,7 +69,7 @@ func (t TDataView[E, ID]) renderCards(ctx core.RenderContext) core.RenderNode {
 		t.cardActionBar(wnd, model),
 	).
 		Append(
-			entriesRegion(wnd, ui.VStack(ui.ForEach(model.Page.Items, func(u E) core.View {
+			t.entriesRegion(wnd, ui.VStack(ui.ForEach(model.Page.Items, func(u E) core.View {
 				if v := u.Identity(); v == "" {
 					panic(fmt.Errorf("an item must not have a zero identity"))
 				}

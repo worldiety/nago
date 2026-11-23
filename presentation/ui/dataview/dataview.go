@@ -187,6 +187,7 @@ type TDataView[E data.Aggregate[ID], ID ~string] struct {
 	listOptions      ListOptions[ID]
 	createMenuGroup  *ui.TMenuGroup
 	selectionChanged func([]ID)
+	entriesLabel     string
 	// positional is set, if the identities are positions within a slice rather than stable ids, see FromSlice.
 	// Such an identity must not serve as key of a callback, see [core.MountKeyedCallback].
 	positional bool
@@ -402,6 +403,14 @@ func (t TDataView[E, ID]) ActionBarContent(content core.View) TDataView[E, ID] {
 	return t
 }
 
+// EntriesLabel sets the accessible name of the landmark region, which contains the entries of the current page.
+// Screen reader users can use it to jump directly to the first entry, e.g. after switching the page. The region
+// exists in all styles. If label is empty, the default name "Entries" is used.
+func (t TDataView[E, ID]) EntriesLabel(label string) TDataView[E, ID] {
+	t.entriesLabel = label
+	return t
+}
+
 func (t TDataView[E, ID]) Search(visible bool) TDataView[E, ID] {
 	t.showSearchbar = visible
 	return t
@@ -464,10 +473,19 @@ func (t TDataView[E, ID]) initModel(ctx core.RenderContext, model pager.Model[E,
 	}
 }
 
+// entriesLabelOrDefault returns the accessible name of the entries region, see [TDataView.EntriesLabel].
+func (t TDataView[E, ID]) entriesLabelOrDefault(wnd core.Window) string {
+	if t.entriesLabel != "" {
+		return t.entriesLabel
+	}
+
+	return StrEntries.Get(wnd)
+}
+
 // entriesRegion marks the entries of the current page as a named landmark region, so that screen reader users
 // can jump directly to the start of the entries, e.g. after switching the page using the pager.
-func entriesRegion(wnd core.Window, content ui.TVStack) core.View {
-	return accessibility.Accessible(content).Role(accessibility.RoleRegion).Label(StrEntries.Get(wnd))
+func (t TDataView[E, ID]) entriesRegion(wnd core.Window, content ui.TVStack) core.View {
+	return accessibility.Accessible(content).Role(accessibility.RoleRegion).Label(t.entriesLabelOrDefault(wnd))
 }
 
 func (t TDataView[E, ID]) selectCheckboxAccessibilityLabel(wnd core.Window, selected *core.State[bool], u E) string {
