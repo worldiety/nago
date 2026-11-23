@@ -13,8 +13,10 @@
 			v-if="flowChart && ui.toolbar && ui.toolbar.actions"
 			:toolbar="ui.toolbar"
 			:orientation="ui.orientation ?? OrientationValues.Horizontal"
-			:flow-chart="flowChart"
 			@action:auto-layout="autoLayout"
+			@action:zoom-in="zoomIn"
+			@action:zoom-out="zoomOut"
+			@action:fit-view="fitView"
 		/>
 		<VueFlow
 			ref="flowChart"
@@ -555,6 +557,20 @@ function autoLayout() {
 	if (!flowChart.value) return;
 	const nodes = layout(flowChart.value, props.ui.orientation ?? OrientationValues.Horizontal);
 	onUpdateNodes(nodes);
+}
+
+const viewportAnimation = { duration: 200 };
+
+function zoomIn() {
+	flowChart.value?.zoomIn(viewportAnimation);
+}
+
+function zoomOut() {
+	flowChart.value?.zoomOut(viewportAnimation);
+}
+
+function fitView() {
+	flowChart.value?.fitView(viewportAnimation);
 }
 
 function onNagoEvent(invoke: NagoEvent): void {
