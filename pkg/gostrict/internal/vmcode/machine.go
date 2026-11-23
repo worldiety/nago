@@ -135,6 +135,21 @@ type saved struct {
 	hi    layout
 	depth int
 	ctx   context.Context
+	site  int32
+}
+
+// save returns the state of the machine, which a call restores, see [Machine.reset].
+func (m *Machine) save() saved {
+	return saved{hi: m.hi, depth: m.depth, ctx: m.ctx, site: m.site}
+}
+
+// Site returns the index of the position in the table of the bundle, where the program calls the innermost function
+// of the host, which runs, or -1, if no function of the host runs or its call has no position, e.g. outside of a call
+// or in the aspect of the outermost entry point. A callback, which a function of the host calls, sees the position of
+// that call, until it calls the host itself, and afterwards again that of the call, which called it, also after a
+// failure. Only the goroutine of the call may ask.
+func (m *Machine) Site() int {
+	return int(m.site) - 1
 }
 
 // Invoke calls fn with neutral arguments above the frames in use, e.g. within a host function, which calls a
@@ -142,7 +157,7 @@ type saved struct {
 // a panic of a host function as [PanicError].
 func (m *Machine) Invoke(ctx context.Context, cl *Closure, args []any) (res []any, err error) {
 	fn := cl.fn
-	s := saved{hi: m.hi, depth: m.depth, ctx: m.ctx}
+	s := m.save()
 	m.ctx = ctx
 	defer m.restore(s, &err)
 	base := m.hi
@@ -184,7 +199,7 @@ func (m *Machine) restore(s saved, err *error) {
 
 // reset restores the state of the machine after a call.
 func (m *Machine) reset(s saved) {
-	m.hi, m.depth, m.ctx = s.hi, s.depth, s.ctx
+	m.hi, m.depth, m.ctx, m.site = s.hi, s.depth, s.ctx, s.site
 	if s.hi == (layout{}) {
 		// the outermost call releases the values of its frames
 		clear(m.s[:m.peak.s])
@@ -194,15 +209,19 @@ func (m *Machine) reset(s saved) {
 }
 
 // callHost calls a function of the host with the arguments at base and writes its results over them. A list of
-// float64 or int64 goes to the host as a typed list (hostArg), a result may be one.
-func (m *Machine) callHost(x *extern, base layout) {
+// float64 or int64 goes to the host as a typed list (hostArg), a result may be one. The function runs with the
+// position of its call, see [Machine.Site]; after a panic, the call, which recovers it, restores the former one.
+func (m *Machine) callHost(x *extern, site int32, base layout) {
 	args := make([]any, len(x.params))
 	off := base
 	for i, t := range x.params {
 		args[i] = m.hostArg(t, m.n[off.n:], m.s[off.s:], m.r[off.r:])
 		off = off.add(t.l)
 	}
+	prev := m.site
+	m.site = site
 	res := m.host.Call(x.idx, args)
+	m.site = prev
 	t := x.results
 	if t.kind != kTuple {
 		m.write(res[0], t, m.n[base.n:], m.s[base.s:], m.r[base.r:])

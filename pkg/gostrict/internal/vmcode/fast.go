@@ -455,7 +455,7 @@ func (m *Machine) BeginFast(ctx context.Context, cl *Closure) *Writer {
 	c := m.calls[m.fast]
 	m.fast++
 	c.cl = cl
-	c.saved = saved{hi: m.hi, depth: m.depth, ctx: m.ctx}
+	c.saved = m.save()
 	m.ctx = ctx
 	base := m.hi
 	fn := cl.fn
@@ -470,7 +470,7 @@ func (m *Machine) BeginFast(ctx context.Context, cl *Closure) *Writer {
 // InvokeFast runs the closure of the fast call and returns the reader of its results.
 func (m *Machine) InvokeFast() (rd *Reader, err error) {
 	c := m.calls[m.fast-1]
-	defer m.recoverFast(&err)
+	defer m.recoverFast(c, &err)
 	base := c.base
 	m.hi = c.saved.hi
 	m.runClosure(c.cl, int(base.n), int(base.s), int(base.r))
@@ -480,11 +480,13 @@ func (m *Machine) InvokeFast() (rd *Reader, err error) {
 	return &c.r, nil
 }
 
-func (m *Machine) recoverFast(err *error) {
+func (m *Machine) recoverFast(c *fastCall, err *error) {
 	v := recover()
 	if v == nil {
 		return
 	}
+	// the function of the host, which made the fast call, sees the position of its own call again
+	m.site = c.saved.site
 	if e, ok := v.(*vmError); ok {
 		*err = e.err
 		return

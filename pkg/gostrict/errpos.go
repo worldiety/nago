@@ -59,3 +59,21 @@ func ErrorPos(err error) (file string, line int, ok bool) {
 	}
 	return "", 0, false
 }
+
+// CallSite returns the position in the Go source, where the program calls the innermost function of a header
+// package, which the instance runs: the line of the name of the function, e.g. of Next in numbers.Next(x), also in
+// a chain of methods over several lines, or, for a function or method as a value, e.g. f := numbers.Next, where the
+// program creates the value. A function of the host asks for it during its call on the goroutine of the call, e.g. to
+// report the line of a script, whose call it aborts with [Abort], before it aborts. A callback, which a function of the
+// host calls, sees the position of that call, until it calls the host itself, and afterwards again that of the call,
+// which called it, also after an abort or [ReturnError]. CallSite returns false without a function of the host, e.g.
+// in [Aspect.Enter] of the outermost entry point or in [Aspect.Exit] of an aborted one, for a variable of a header
+// package and for other engines than the vm. The errors of a call stay as they are.
+func CallSite(in Instance) (file string, line int, ok bool) {
+	if cs, isCS := in.(interface {
+		CallSite() (string, int, bool)
+	}); isCS {
+		return cs.CallSite()
+	}
+	return "", 0, false
+}

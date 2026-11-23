@@ -187,3 +187,15 @@ func (in *Instance) Close() error {
 func (in *Instance) Bundle() *gostrict.Bundle {
 	return in.bundle
 }
+
+// CallSite returns the file and line, where the program calls the innermost function of a header package, which the
+// instance runs, see [gostrict.CallSite]. Only a function of the host may ask during its call on the goroutine of
+// the call.
+func (in *Instance) CallSite() (file string, line int, ok bool) {
+	i := in.m.Site()
+	if i < 0 || i >= len(in.bundle.Positions) {
+		return "", 0, false
+	}
+	p := in.bundle.Positions[i]
+	return p.File, p.Line, true
+}

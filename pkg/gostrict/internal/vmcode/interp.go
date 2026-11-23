@@ -40,6 +40,8 @@ type Machine struct {
 	// calls are the fast calls, the first fast of them are in progress, see [Machine.BeginFast]
 	calls []*fastCall
 	fast  int
+	// site is the position of the call of the innermost function of the host, which runs, see [Machine.Site]
+	site int32
 }
 
 // vmError ends a call of the instance, e.g. because the context ended.
@@ -527,7 +529,7 @@ func (m *Machine) exec(f *Func, bn, bs, br int) {
 			n, s, r = m.n[bn:bn+int(fr.n)], m.s[bs:bs+int(fr.s)], m.r[br:br+int(fr.r)]
 		case opCallHost:
 			cs := &f.calls[in.a]
-			m.callHost(cs.ext, layout{int32(bn) + cs.base.n, int32(bs) + cs.base.s, int32(br) + cs.base.r})
+			m.callHost(cs.ext, cs.site, layout{int32(bn) + cs.base.n, int32(bs) + cs.base.s, int32(br) + cs.base.r})
 			n, s, r = m.n[bn:bn+int(fr.n)], m.s[bs:bs+int(fr.s)], m.r[br:br+int(fr.r)]
 		case opRet:
 			return

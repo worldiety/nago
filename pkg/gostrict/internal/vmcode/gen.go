@@ -861,7 +861,7 @@ func (g *gen) call(x expr) layout {
 			op = opCallNativeR
 		}
 	case *eHost:
-		args, site.ext, op = e.args, e.ext, opCallHost
+		args, site.ext, site.site, op = e.args, e.ext, e.site, opCallHost
 		params = tuple(e.ext.params...)
 	case *eCallValue:
 		// the function value is evaluated before the arguments

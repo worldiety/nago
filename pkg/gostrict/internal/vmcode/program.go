@@ -50,7 +50,7 @@ type Func struct {
 	// frame are the slots of the frame: the parameters, the variables and the temporaries
 	frame layout
 	code  []instr
-	// lines are the positions of the instructions, see [Func.pos]
+	// calls are the call sites of the instructions of code, which refer to them by their index
 	calls    []callSite
 	aux      []aux
 	closures []closureSite
@@ -89,6 +89,8 @@ type callSite struct {
 	method string
 	args   layout
 	argsL  layout
+	// site is the position of a call of the host, see [eHost.site]
+	site int32
 }
 
 // closureSite creates a closure of fn with the captured slots at caps into r[dst].

@@ -99,6 +99,9 @@ type (
 		t    *tinfo
 		ext  *extern
 		args []expr
+		// site is the index of the position of the call in the table of the bundle plus one, or zero, see
+		// [Machine.Site]
+		site int32
 	}
 	// eStruct is a composite literal of a struct with all fields in their order.
 	eStruct struct {

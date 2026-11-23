@@ -35,7 +35,7 @@ type Source struct {
 	// record.
 	Records map[string][]string
 	// ErrorPos returns the index of the position in the table of the bundle, where the program creates an error,
-	// e.g. with errors.New.
+	// e.g. with errors.New, or names a function of a header package, which the host implements, see [Machine.Site].
 	ErrorPos func(token.Pos) int
 	// Unions are the variants of the unions of the boundary by the full name of the union, and whether they are
 	// handles.

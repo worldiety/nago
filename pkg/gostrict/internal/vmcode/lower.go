@@ -1614,7 +1614,7 @@ func (l *fnLower) funcCall(fn *types.Func, recvArgs, targs []types.Type, call *a
 			}
 			return &eListAppend{t: l.tupleOf(sig.Results()), l: recv, elems: elems}
 		}
-		return l.libCall(fn, recvArgs, targs, sig, call.Pos(), recv, l.args(call, sig, recv))
+		return l.libCall(fn, recvArgs, targs, sig, call.Pos(), nameOf(call.Fun), recv, l.args(call, sig, recv))
 	}
 	return &eCall{t: l.tupleOf(sig.Results()), fn: l.funcOf(fn, recvArgs, targs), args: l.args(call, sig, recv)}
 }
@@ -1635,9 +1635,27 @@ func libKey(fn *types.Func) string {
 	return path + "." + fn.Name()
 }
 
+// nameOf returns the position of the name of the function, which the expression of a call names, e.g. of Next in
+// numbers.Next(x) or of the last method of a chain, which spans several lines, or of the expression itself.
+func nameOf(fun ast.Expr) token.Pos {
+	fun = ast.Unparen(fun)
+	switch x := fun.(type) {
+	case *ast.IndexExpr:
+		fun = ast.Unparen(x.X)
+	case *ast.IndexListExpr:
+		fun = ast.Unparen(x.X)
+	}
+	if se, ok := fun.(*ast.SelectorExpr); ok {
+		return se.Sel.Pos()
+	}
+	return fun.Pos()
+}
+
 // libCall calls fn of the library or a header package with the lowered arguments: its native or, for a function of a
-// header package, the host.
-func (l *fnLower) libCall(fn *types.Func, recvArgs, targs []types.Type, sig *types.Signature, pos token.Pos, recv expr, args []expr) expr {
+// header package, the host. pos is the position of the call and at that of the name of the function, which a call of
+// the host keeps in the table of the bundle, see [Machine.Site]: of the call itself or, for a function as a value,
+// where the program creates the value.
+func (l *fnLower) libCall(fn *types.Func, recvArgs, targs []types.Type, sig *types.Signature, pos, at token.Pos, recv expr, args []expr) expr {
 	key := libKey(fn)
 	if it := l.iterator(key, recv, sig, pos); it != nil {
 		return it
@@ -1661,7 +1679,11 @@ func (l *fnLower) libCall(fn *types.Func, recvArgs, targs []types.Type, sig *typ
 	if len(targs) > 0 {
 		key += "[" + hostTypeArgs(targs) + "]"
 	}
-	return &eHost{t: res, ext: l.c.extern(key, recv, sig, pos), args: args}
+	var site int32
+	if l.c.src.ErrorPos != nil && at.IsValid() {
+		site = int32(l.c.src.ErrorPos(at)) + 1
+	}
+	return &eHost{t: res, ext: l.c.extern(key, recv, sig, pos), args: args, site: site}
 }
 
 // iterator returns the iterator of a list, an outbox or a map as a value, e.g. it := l.All() outside of a range,
@@ -1755,7 +1777,7 @@ func (l *fnLower) libValue(id *ast.Ident, fn *types.Func, targs []types.Type, t 
 		p := inner.newLocal("p", pt)
 		args = append(args, &eLocal{t: pt, v: p})
 	}
-	inner.returnCall(inner.libCall(fn, nil, targs, sig, id.Pos(), nil, args))
+	inner.returnCall(inner.libCall(fn, nil, targs, sig, id.Pos(), id.Pos(), nil, args))
 	return inner.finish(l.ty(t))
 }
 

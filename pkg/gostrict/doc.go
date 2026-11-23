@@ -346,6 +346,9 @@
 // line of the call: goja and the vm return it as a [ProgramError], also to [Aspect.Exit], whose file and line
 // [ErrorPos] tells, e.g. to show the failing line of a script, from the table [Bundle.Positions]. The native engine,
 // the browser, the bindings and the host create errors without a position, and errors compare only by their message.
+// The vm keeps the position of each call of a function of a header package in the same table: during the call, the
+// function of the host asks [CallSite] for the line, which names it, e.g. before it aborts the call with [Abort],
+// which leaves the error of the abort unchanged. goja and the native engine report no call site.
 //
 // The engine of package engine/vm needs no JavaScript: the compiler translates each bundle also into register bytecode,
 // see [Bundle.VM], whose values keep their types and whose structs live in registers. All instances of a bundle share

@@ -54,7 +54,8 @@ type Bundle struct {
 	// version of the program can not take it over, see [Bundle.CanTakeOver].
 	States map[string]string
 	// Positions are the positions in the Go source, where the program creates errors. An error of the program
-	// refers to one by its index, which an engine resolves with [Bundle.ProgramError].
+	// refers to one by its index, which an engine resolves with [Bundle.ProgramError]. The vm adds the positions,
+	// where the program names the functions of header packages, which it calls, see [CallSite].
 	Positions []Position
 	// vm is the program of the interpreter of package engine/vm, or vmErr, why it could not be compiled
 	vm    *vmcode.Program

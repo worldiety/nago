@@ -291,7 +291,7 @@ func (l *fnLower) methodValue(se *ast.SelectorExpr, sel *types.Selection) expr {
 			call = &eCall{t: res, fn: l.c.funcFor(fn, recvArgs, nil), args: append([]expr{self}, args...)}
 		} else {
 			// a method of a header package, e.g. the action of a ui.TText, which the host implements like at its call
-			call = inner.libCall(fn, recvArgs, nil, sig, se.Pos(), self, append([]expr{self}, args...))
+			call = inner.libCall(fn, recvArgs, nil, sig, se.Pos(), se.Sel.Pos(), self, append([]expr{self}, args...))
 		}
 	}
 	inner.returnCall(call)

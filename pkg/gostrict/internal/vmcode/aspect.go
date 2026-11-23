@@ -133,7 +133,7 @@ func (m *Machine) callEntry(e *entryInfo, bn, bs, br int) {
 		m.returnErr(e, res[0].(error), bn, bs, br)
 		return
 	}
-	s := saved{hi: m.hi, depth: m.depth, ctx: m.ctx}
+	s := m.save()
 	done := false
 	defer func() {
 		if done {
@@ -148,6 +148,8 @@ func (m *Machine) callEntry(e *entryInfo, bn, bs, br int) {
 			m.host.Call(e.exit.idx, []any{e.name, err})
 			return
 		}
+		// no function of the host of the entry point runs anymore, while the abort goes on
+		m.site = s.site
 		m.host.Call(e.exit.idx, []any{e.name, errAborted})
 		if returned {
 			// an entry point without an error result aborts the whole call, also within one with an error result
