@@ -119,7 +119,7 @@ func (c TPalettePicker) Disabled(disabled bool) TPalettePicker {
 }
 
 func (c TPalettePicker) Render(ctx core.RenderContext) core.RenderNode {
-	id := fmt.Sprintf("palette-picker-%s", rand.Intn(999999999))
+	id := fmt.Sprintf("palette-picker-%d", rand.Intn(999999999))
 
 	isCustomColor := c.state.Get() != "" && !slices.Contains(c.palette, c.state.Get())
 	c.customColorState = core.AutoState[string](ctx.Window()).Init(func() string {
