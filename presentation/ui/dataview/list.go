@@ -151,6 +151,7 @@ func (t TDataView[E, ID]) renderList(ctx core.RenderContext) core.RenderNode {
 				return t.listOptions.Highlight[item.Identity()]
 			}).
 				Caption(t.listActionBar(wnd, model)).
+				EntriesRegion(StrEntries.Get(wnd)).
 				Footer(
 					// page footer
 					ui.HStack(

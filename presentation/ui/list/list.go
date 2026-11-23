@@ -10,6 +10,7 @@ package list
 import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/accessibility"
 )
 
 // TEntry is a composite component (Entry).
@@ -113,6 +114,7 @@ type TList struct {
 	colorHighlight ui.Color
 	colorHover     ui.Color
 	onHighlighted  func(idx int) bool
+	entriesLabel   string
 }
 
 // List creates a new TList with the given entries as rows.
@@ -187,6 +189,13 @@ func (c TList) OnHighlighted(fn func(idx int) bool) TList {
 	return c
 }
 
+// EntriesRegion marks the entries, without caption and footer, as a landmark region with the given accessible
+// name. Screen reader users can use it to jump directly to the first entry. An empty label removes the region.
+func (c TList) EntriesRegion(label string) TList {
+	c.entriesLabel = label
+	return c
+}
+
 func (c TList) With(fn func(c TList) TList) TList {
 	return fn(c)
 }
@@ -195,11 +204,12 @@ func (c TList) With(fn func(c TList) TList) TList {
 // It renders an optional caption, the list rows (with separators and
 // optional click handling), and an optional footer inside a styled card.
 func (c TList) Render(ctx core.RenderContext) core.RenderNode {
-	rows := make([]core.View, 0, len(c.rows)*2+3)
+	var caption core.View
 	if c.caption != nil {
-		rows = append(rows, ui.HStack(c.caption).Alignment(ui.Leading).FullWidth().BackgroundColor(c.colorCaption).Padding(ui.Padding{}.Vertical(ui.L8).Horizontal(ui.L16)))
+		caption = ui.HStack(c.caption).Alignment(ui.Leading).FullWidth().BackgroundColor(c.colorCaption).Padding(ui.Padding{}.Vertical(ui.L8).Horizontal(ui.L16))
 	}
 
+	rows := make([]core.View, 0, len(c.rows)*2+1)
 	for idx, row := range c.rows {
 		if row == nil {
 			continue
@@ -224,15 +234,28 @@ func (c TList) Render(ctx core.RenderContext) core.RenderNode {
 		}
 	}
 
+	var footer []core.View
 	if c.footer != nil {
 		if c.colorFooter == "" && c.colorBody == "" && len(c.rows) > 0 {
 			// UX note: if everything is uncolored, introduce an hline for visual separation with footer, otherwise the footer cannot be distinguished
-			rows = append(rows, ui.HStack(ui.HLine().Padding(ui.Padding{})).FullWidth().Padding(ui.Padding{}.Horizontal(ui.L16)))
+			footer = append(footer, ui.HStack(ui.HLine().Padding(ui.Padding{})).FullWidth().Padding(ui.Padding{}.Horizontal(ui.L16)))
 		}
-		rows = append(rows, ui.HStack(c.footer).Alignment(ui.Leading).FullWidth().BackgroundColor(c.colorFooter).Padding(ui.Padding{}.Vertical(ui.L16).Horizontal(ui.L16)))
+		footer = append(footer, ui.HStack(c.footer).Alignment(ui.Leading).FullWidth().BackgroundColor(c.colorFooter).Padding(ui.Padding{}.Vertical(ui.L16).Horizontal(ui.L16)))
 	}
 
-	return ui.VStack(rows...).
+	views := make([]core.View, 0, len(rows)+len(footer)+1)
+	if caption != nil {
+		views = append(views, caption)
+	}
+
+	if c.entriesLabel != "" && len(rows) > 0 {
+		views = append(views, accessibility.Accessible(ui.VStack(rows...).FullWidth()).Role(accessibility.RoleRegion).Label(c.entriesLabel))
+	} else {
+		views = append(views, rows...)
+	}
+	views = append(views, footer...)
+
+	return ui.VStack(views...).
 		BackgroundColor(c.colorBody).
 		Border(ui.Border{}.Radius(ui.L16)).
 		Frame(c.frame).

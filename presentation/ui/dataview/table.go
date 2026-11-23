@@ -175,22 +175,26 @@ func (t TDataView[E, ID]) renderTable(ctx core.RenderContext) core.RenderNode {
 	if t.tableOptions.MinWidth == "" {
 		return ui.VStack(
 			t.tableActionBar(wnd, model),
-			table.Rows(
-				ui.TableRow(ui.TableCell(footer).ColSpan(len(cols))).BackgroundColor(ui.ColorCardFooter),
-			).Frame(ui.Frame{}.FullWidth()),
+			entriesRegion(wnd, ui.VStack(
+				table.Rows(
+					ui.TableRow(ui.TableCell(footer).ColSpan(len(cols))).BackgroundColor(ui.ColorCardFooter),
+				).Frame(ui.Frame{}.FullWidth()),
+			).FullWidth()),
 		).FullWidth().Render(ctx)
 	}
 
 	// only the table scrolls horizontally, the action bar and the footer keep the width of the view
 	return ui.VStack(
 		t.tableActionBar(wnd, model),
-		ui.ScrollView(
-			table.Border(ui.Border{}).Frame(ui.Frame{MinWidth: t.tableOptions.MinWidth, Width: ui.Full}),
-		).Axis(ui.ScrollViewAxisHorizontal).Border(ui.Border{}.TopRadius(ui.L20)).FullWidth(),
-		footer.
-			BackgroundColor(ui.ColorCardFooter).
-			Padding(ui.Padding{}.Horizontal(ui.L24).Vertical(ui.L16)).
-			Border(ui.Border{TopWidth: ui.L1, TopColor: ui.M5}.BottomRadius(ui.L20)),
+		entriesRegion(wnd, ui.VStack(
+			ui.ScrollView(
+				table.Border(ui.Border{}).Frame(ui.Frame{MinWidth: t.tableOptions.MinWidth, Width: ui.Full}),
+			).Axis(ui.ScrollViewAxisHorizontal).Border(ui.Border{}.TopRadius(ui.L20)).FullWidth(),
+			footer.
+				BackgroundColor(ui.ColorCardFooter).
+				Padding(ui.Padding{}.Horizontal(ui.L24).Vertical(ui.L16)).
+				Border(ui.Border{TopWidth: ui.L1, TopColor: ui.M5}.BottomRadius(ui.L20)),
+		).FullWidth()),
 	).FullWidth().Render(ctx)
 }
 

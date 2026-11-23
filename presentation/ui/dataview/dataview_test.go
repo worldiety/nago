@@ -91,6 +91,15 @@ func configure(cfg *application.Configurator) {
 		return peopleView(wnd).Style(dataview.Table).ModelOptions(pager.ModelOptions{PageSize: 3})
 	})
 
+	for _, style := range []struct {
+		name  string
+		style dataview.Style
+	}{{"table", dataview.Table}, {"cards", dataview.Card}, {"list", dataview.List}} {
+		cfg.RootView(core.NavigationPath("paged-"+style.name), func(wnd core.Window) core.View {
+			return peopleView(wnd).Style(style.style).ModelOptions(pager.ModelOptions{PageSize: 3})
+		})
+	}
+
 	cfg.RootView("wide", func(wnd core.Window) core.View {
 		return peopleView(wnd).Style(dataview.Table).TableOptions(dataview.TableOptions{MinWidth: "1800px"})
 	})
@@ -140,9 +149,9 @@ func TestPagerIsLabelled(t *testing.T) {
 	w := app.Open(t, nil, "paged", nagotest.Locale("en"))
 
 	w.Find(nagotest.Text("1 of 2"))
-	w.Click(w.Find(nagotest.Label("Next page")))
+	w.Click(w.Find(nagotest.Label("Next page, currently page 1 of 2")))
 	w.Find(nagotest.Text("2 of 2"))
-	w.Find(nagotest.Label("Previous page")).Enabled()
+	w.Find(nagotest.Label("Previous page, currently page 2 of 2")).Enabled()
 }
 
 func TestMinWidthScrollsOnlyTheTable(t *testing.T) {
@@ -165,4 +174,51 @@ func TestMinWidthScrollsOnlyTheTable(t *testing.T) {
 	scroll.FindAll(nagotest.Label("New")).None()
 	w.Find(nagotest.Text("5 entries"))
 	scroll.FindAll(nagotest.Text("5 entries")).None()
+}
+
+func TestPagerKeepsFocusAndTellsPage(t *testing.T) {
+	for _, style := range []string{"table", "cards", "list"} {
+		t.Run(style, func(t *testing.T) {
+			app := nagotest.New(t, configure)
+			w := app.Open(t, nil, core.NavigationPath("paged-"+style), nagotest.Locale("en"))
+
+			next := w.Find(nagotest.Label("Next page, currently page 1 of 2"))
+			nextID := string(next.Node().Component.(*proto.Stack).Id)
+			if nextID == "" {
+				t.Fatal("the next button needs a stable id to keep the focus")
+			}
+
+			w.Click(next)
+
+			// the label of the focused button tells the new page
+			next = w.Find(nagotest.Label("Next page, currently page 2 of 2"))
+			if got := string(next.Node().Component.(*proto.Stack).Id); got != nextID {
+				t.Fatalf("the id of the next button changed from %q to %q", nextID, got)
+			}
+
+			// the next button is disabled on the last page, thus the focus moves to the previous button
+			prev := w.Find(nagotest.Label("Previous page, currently page 2 of 2"))
+			if got, want := w.Focused(), string(prev.Node().Component.(*proto.Stack).Id); got != want {
+				t.Fatalf("focused %q, want %q", got, want)
+			}
+		})
+	}
+}
+
+func TestEntriesAreNamedRegion(t *testing.T) {
+	for _, style := range []string{"table", "cards", "list"} {
+		t.Run(style, func(t *testing.T) {
+			app := nagotest.New(t, configure)
+			w := app.Open(t, nil, core.NavigationPath("paged-"+style), nagotest.Locale("en"))
+
+			region := w.Find(nagotest.Where("entries region", func(n nagotest.Node) bool {
+				c, ok := n.Component.(*proto.Accessible)
+				return ok && c.Role == "region" && c.Label == "Entries"
+			}))
+
+			region.Find(nagotest.Text("row a"))
+			// the region starts with the entries, the search belongs to the action bar in front of it
+			region.FindAll(nagotest.Type[*proto.TextField]()).None()
+		})
+	}
 }
