@@ -194,7 +194,7 @@ func TestKeyValuesEditorNumbersUseTheIntegerKeyboard(t *testing.T) {
 	_, _, wnd, _ := openKeyValues(t)
 
 	input := wnd.Find(nagotest.Label("Versuche")).Node().Component.(*proto.TextField)
-	if input.KeyboardOptions.KeyboardType != proto.KeyboardInteger || !bool(input.ShowZero) {
+	if input.KeyboardOptions.KeyboardType != proto.KeyboardInteger || !bool(input.NumberOptions.ShowZero) {
 		t.Fatalf("expected an integer input, which shows a stored 0, got %+v", input.KeyboardOptions)
 	}
 }
