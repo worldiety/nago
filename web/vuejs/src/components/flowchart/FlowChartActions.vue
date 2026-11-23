@@ -47,7 +47,7 @@ import {
 	FlowChartToolbarPositionValues,
 	OrientationValues,
 } from '@/shared/proto/nprotoc_gen';
-import { Panel, PanelPositionType, VueFlow } from '@vue-flow/core';
+import { Panel, PanelPositionType } from '@vue-flow/core';
 import IconArrowLeftRight from '@/assets/svg/arrow-left-right.svg';
 import IconArrowUpDown from '@/assets/svg/arrow-up-down.svg';
 import IconFitView from '@/assets/svg/fit-view.svg';
@@ -58,11 +58,13 @@ import { computed } from 'vue';
 interface Props {
 	toolbar: FlowChartToolbar;
 	orientation: OrientationValues;
-	flowChart: InstanceType<typeof VueFlow>;
 }
 
 interface Emits {
 	(e: 'action:autoLayout'): void;
+	(e: 'action:zoomIn'): void;
+	(e: 'action:zoomOut'): void;
+	(e: 'action:fitView'): void;
 }
 
 const props = defineProps<Props>();
@@ -89,22 +91,20 @@ const position = computed<PanelPositionType>(() => {
 	}
 });
 
-const animation = { duration: 200 };
-
 function onAutoLayout() {
 	emit('action:autoLayout');
 }
 
 function onZoomIn() {
-	props.flowChart.zoomIn(animation);
+	emit('action:zoomIn');
 }
 
 function onZoomOut() {
-	props.flowChart.zoomOut(animation);
+	emit('action:zoomOut');
 }
 
 function onFitView() {
-	props.flowChart.fitView(animation);
+	emit('action:fitView');
 }
 </script>
 <style scoped>
