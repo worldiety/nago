@@ -478,7 +478,7 @@ func (w *Window) Links() []string {
 }
 
 // Downloads returns all files which have been sent using [core.Window.ExportFiles]. It is only available
-// within the same process, see [Window.Resources] for a websocket.
+// within the same process, see [Window.Resources] for a websocket or http.
 func (w *Window) Downloads() []core.ExportFilesOptions {
 	w.mutex.Lock()
 	defer w.mutex.Unlock()
@@ -487,7 +487,7 @@ func (w *Window) Downloads() []core.ExportFilesOptions {
 }
 
 // Resources returns all resources which the application requested the browser to download. Through a
-// websocket, this is the result of [core.Window.ExportFiles].
+// websocket or http, this is the result of [core.Window.ExportFiles].
 func (w *Window) Resources() []proto.Resource {
 	w.mutex.Lock()
 	defer w.mutex.Unlock()

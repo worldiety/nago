@@ -174,6 +174,11 @@ func (c *wsTransport) send(w *Window, evt proto.NagoEvent) error {
 // or nothing within the RenderTimeout, a render is requested as a barrier. Due to the in-order processing
 // of the event loop, its answer proves that the action has been processed entirely.
 func (c *wsTransport) settle(w *Window) error {
+	return settle(w, c.write)
+}
+
+// settle waits for the answer of the last action like [wsTransport.settle] and requests the barrier through write.
+func settle(w *Window, write func(evt proto.NagoEvent) error) error {
 	w.mutex.Lock()
 	rid, mark := w.awaitRID, w.awaitMark
 	w.mutex.Unlock()
@@ -199,7 +204,7 @@ func (c *wsTransport) settle(w *Window) error {
 
 	if !done {
 		barrier := w.nextRID()
-		if err := c.write(&proto.RootViewRenderingRequested{RID: barrier}); err != nil {
+		if err := write(&proto.RootViewRenderingRequested{RID: barrier}); err != nil {
 			return err
 		}
 
@@ -217,6 +222,11 @@ func (c *wsTransport) settle(w *Window) error {
 
 // upload posts the files to the upload endpoint, just like the frontend.
 func (c *wsTransport) upload(w *Window, id string, files []core.File) error {
+	return upload(&c.client, c.base, w, id, files)
+}
+
+// upload posts the files to the upload endpoint of the server at base, just like the frontend.
+func upload(client *http.Client, base *url.URL, w *Window, id string, files []core.File) error {
 	var body bytes.Buffer
 	mw := multipart.NewWriter(&body)
 	for i, file := range files {
@@ -234,7 +244,7 @@ func (c *wsTransport) upload(w *Window, id string, files []core.File) error {
 		return err
 	}
 
-	u := *c.base
+	u := *base
 	u.Path = "/api/ora/v1/upload"
 	req, err := http.NewRequest(http.MethodPost, u.String(), &body)
 	if err != nil {
@@ -248,7 +258,7 @@ func (c *wsTransport) upload(w *Window, id string, files []core.File) error {
 		req.AddCookie(&http.Cookie{Name: name, Value: w.opts.sessionID})
 	}
 
-	resp, err := c.client.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}

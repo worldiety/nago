@@ -13,7 +13,7 @@ import i18n from '@/i18n';
 import crawlerUserAgents from 'crawler-user-agents';
 import { createPinia } from 'pinia';
 import { serviceAdapterKey, themeManagerKey, uploadRepositoryKey } from '@/shared/injectionKeys';
-import WebSocketAdapter from '@/shared/network/webSocketAdapter';
+import FallbackAdapter from '@/shared/network/fallbackAdapter';
 import ThemeManager from '@/shared/themeManager';
 import { installUserGestureBridge } from '@/shared/userGestureBridge';
 import '@/assets/css/style.css';
@@ -31,7 +31,7 @@ if (!isCrawler) {
 
 	const app = createApp(App);
 
-	app.provide(serviceAdapterKey, new WebSocketAdapter());
+	app.provide(serviceAdapterKey, new FallbackAdapter());
 	app.provide(uploadRepositoryKey, new UploadRepository());
 	app.provide(themeManagerKey, new ThemeManager());
 

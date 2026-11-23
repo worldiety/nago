@@ -8,21 +8,33 @@
  */
 import { v4 as uuidv4 } from 'uuid';
 import ConnectionHandler from '@/shared/network/connectionHandler';
+import ServerInstance from '@/shared/network/serverInstance';
 import type ServiceAdapter from '@/shared/network/serviceAdapter';
+import { withoutTransportParam } from '@/shared/network/wireTransport';
 import { BinaryReader, BinaryWriter, NagoEvent, Ping, marshal, unmarshal } from '@/shared/proto/nprotoc_gen';
+
+export interface WebSocketAdapterOptions {
+	// onFailedBeforeOpen is called, when an attempt to connect has failed, as long as no attempt has succeeded.
+	onFailedBeforeOpen?: () => void;
+}
 
 export default class WebSocketAdapter implements ServiceAdapter {
 	private readonly isSecure: boolean = false;
 	private readonly scopeId: string;
+	private readonly options: WebSocketAdapterOptions;
+	private readonly instance = new ServerInstance();
 	private webSocket: WebSocket | null = null;
 	private closedGracefully: boolean = false;
 	private retryTimeout: number | null = null;
 	private pingInterval: number | null = null;
 	private retries: number = 0;
 	private lastEventSendAt: number;
-	private instanceVersion: string = '';
+	private opened = false;
+	private ready: Promise<void> | null = null;
+	private resolveReady: (() => void) | null = null;
 
-	constructor() {
+	constructor(options: WebSocketAdapterOptions = {}) {
+		this.options = options;
 		this.lastEventSendAt = new Date().getTime();
 		// important: keep this scopeId for the resume capability only once per
 		// channel. Otherwise, (e.g. when storing in localstorage or cookie) all
@@ -33,86 +45,79 @@ export default class WebSocketAdapter implements ServiceAdapter {
 		this.isSecure = location.protocol == 'https:';
 	}
 
-	async initialize(): Promise<void> {
-		let httpProto = 'http';
+	// initialize resolves, as soon as an attempt to connect has succeeded, also when the first ones have failed.
+	initialize(): Promise<void> {
+		if (this.ready === null) {
+			this.ready = new Promise<void>((resolve) => (this.resolveReady = resolve));
+			this.connect();
+		}
+
+		return this.ready;
+	}
+
+	private connect(): void {
 		let proto = 'ws';
 		if (this.isSecure) {
 			proto = 'wss';
-			httpProto = 'https';
 		}
 
-		const instanceEndpoint = `${httpProto}://${window.location.hostname}:${window.location.port}/api/nago/v1/instance`;
-
 		let webSocketURL = `${proto}://${window.location.hostname}:${window.location.port}/wire?_sid=${this.scopeId}`;
-		const queryString = window.location.search.substring(1);
+		const queryString = withoutTransportParam(window.location.search.substring(1));
 		if (queryString) {
 			webSocketURL += `&${queryString}`;
 		}
 
-		return new Promise<void>((resolve) => {
-			this.webSocket = new WebSocket(webSocketURL);
-			this.webSocket.binaryType = 'arraybuffer';
+		this.webSocket = new WebSocket(webSocketURL);
+		this.webSocket.binaryType = 'arraybuffer';
 
-			this.webSocket.onmessage = (e) => this.receiveBinary(e.data);
+		this.webSocket.onmessage = (e) => this.receiveBinary(e.data);
 
-			this.webSocket.onclose = (evt) => {
-				ConnectionHandler.connectionChanged({ connected: false });
+		this.webSocket.onclose = (evt) => {
+			ConnectionHandler.connectionChanged({ connected: false });
+			if (!this.opened) {
+				this.options.onFailedBeforeOpen?.();
+			}
 
+			if (this.closedGracefully) {
+				// Try to reopen the socket if it was not closed gracefully
+				window.console.log('ws was intentionally closed');
+			} else {
+				// Keep the socket closed if it was closed gracefully (i.e. intentional)
+				window.console.log('ws was not closed gracefully');
+				console.log('WebSocket closed:', evt);
+				console.log('Code:', evt.code);
+				console.log('Reason:', evt.reason);
+				console.log('Was clean:', evt.wasClean);
+
+				this.closedGracefully = false;
+				this.retry();
+			}
+		};
+
+		this.webSocket.onerror = (ev) => {
+			window.console.log('websocket failed', ev);
+		};
+
+		this.webSocket.onopen = () => {
+			this.opened = true;
+			this.instance.check();
+
+			ConnectionHandler.connectionChanged({ connected: true });
+			this.retries = 0;
+
+			// this keeps our connection at least logically alive, also the server pings, because a browser
+			// throttles this timer in a background tab. Every reconnect replaces the timer of the former one.
+			this.stopPing();
+			this.pingInterval = window.setInterval(() => {
 				if (this.closedGracefully) {
-					// Try to reopen the socket if it was not closed gracefully
-					window.console.log('ws was intentionally closed');
-				} else {
-					// Keep the socket closed if it was closed gracefully (i.e. intentional)
-					window.console.log('ws was not closed gracefully');
-					console.log('WebSocket closed:', evt);
-					console.log('Code:', evt.code);
-					console.log('Reason:', evt.reason);
-					console.log('Was clean:', evt.wasClean);
-
-					this.closedGracefully = false;
-					this.retry();
+					return;
 				}
-			};
 
-			this.webSocket.onerror = (ev) => {
-				window.console.log('websocket failed', ev);
-			};
+				this.sendEvent(new Ping());
+			}, 30000);
 
-			this.webSocket.onopen = () => {
-				// check if our server instance changed
-				fetch(instanceEndpoint)
-					.then((response) => response.json())
-					.then((data: { id: string }) => {
-						if (this.instanceVersion === '') {
-							this.instanceVersion = data.id;
-						} else if (this.instanceVersion !== data.id) {
-							console.log('Server instance changed, reloading page...');
-							window.location.reload();
-						}
-					})
-					.catch((err) => {
-						console.error('Failed to fetch instance version:', err);
-					});
-
-				// continue
-
-				ConnectionHandler.connectionChanged({ connected: true });
-				this.retries = 0;
-
-				// this keeps our connection at least logically alive, also the server pings, because a browser
-				// throttles this timer in a background tab. Every reconnect replaces the timer of the former one.
-				this.stopPing();
-				this.pingInterval = window.setInterval(() => {
-					if (this.closedGracefully) {
-						return;
-					}
-
-					this.sendEvent(new Ping());
-				}, 30000);
-
-				resolve();
-			};
-		});
+			this.resolveReady?.();
+		};
 	}
 
 	sendEvent(evt: NagoEvent): void {
@@ -158,7 +163,9 @@ export default class WebSocketAdapter implements ServiceAdapter {
 		this.retries += 1;
 		this.retryTimeout = window.setTimeout(() => {
 			this.retryTimeout = null;
-			this.initialize();
+			if (!this.closedGracefully) {
+				this.connect();
+			}
 		}, timeout);
 	}
 

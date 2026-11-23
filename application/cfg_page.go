@@ -630,9 +630,14 @@ func (c *Configurator) newHandler() http.Handler {
 		}))
 	}
 
+	httpWire := newHTTPWire(c, app2)
 	r.Mount("/wire", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if c.contextPath.Load() == nil {
 			c.contextPath.Store(&r.Host)
+		}
+
+		if httpWire.serve(w, r) {
+			return
 		}
 
 		logger := logging.FromContext(r.Context())
@@ -644,18 +649,14 @@ func (c *Configurator) newHandler() http.Handler {
 			CheckOrigin:       c.checkWireOrigin,
 			EnableCompression: true,
 		} // use default options
-		// The page normally got its cookie already. If not, e.g. because all assets came from the browser cache after
-		// the page has been reached by a link from another site, the handshake issues it: the wire is always called
-		// by the page itself, so the cookie cannot be missing just due to SameSite.
-		sessionID, migrate := c.sessionIDOf(r)
+		sessionID, cookies := c.wireSession(r)
 		var responseHeader http.Header
-		switch {
-		case migrate:
-			responseHeader = http.Header{"Set-Cookie": {c.newSessionCookie(r, sessionID).String(), expiredPlainSessionCookie().String()}}
-		case sessionID == "":
-			cookie := c.newSessionCookie(r, string(proto.NewScopeID()))
-			sessionID = cookie.Value
-			responseHeader = http.Header{"Set-Cookie": {cookie.String()}}
+		for _, cookie := range cookies {
+			if responseHeader == nil {
+				responseHeader = http.Header{}
+			}
+
+			responseHeader.Add("Set-Cookie", cookie.String())
 		}
 
 		conn, err := upgrader.Upgrade(w, r, responseHeader)
