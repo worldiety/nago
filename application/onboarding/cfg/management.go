@@ -23,8 +23,10 @@ import (
 	uionboarding "go.wdy.de/nago/application/onboarding/ui"
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
+	"go.wdy.de/nago/application/session"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/application/user/tplmail"
+	"go.wdy.de/nago/pkg/events"
 	"go.wdy.de/nago/presentation/core"
 )
 
@@ -58,6 +60,12 @@ type Options struct {
 	CodeLifetime   time.Duration // default 15 minutes
 	ResendCooldown time.Duration // default 1 minute
 	MaxAttempts    int           // wrong codes per code, default 5
+
+	// NLSServer is the login service, which the setup offers for the single sign-on instead of a password. Default
+	// is [onboarding.DefaultNLSServer].
+	NLSServer string
+	// DisableSSO offers no single sign-on, thus the first user always gets a password.
+	DisableSSO bool
 }
 
 type Management struct {
@@ -98,6 +106,16 @@ func Enable(cfg *application.Configurator, opts Options) (Management, error) {
 		email = os.Getenv(onboarding.EnvInitialUserEmail)
 	}
 
+	settingsMgmt, err := cfg.SettingsManagement()
+	if err != nil {
+		return Management{}, fmt.Errorf("onboarding requires the settings management: %w", err)
+	}
+
+	pendingSSO, err := application.JSONRepository[onboarding.PendingSSO, onboarding.PendingSSOID](cfg, "nago.onboarding.sso")
+	if err != nil {
+		return Management{}, fmt.Errorf("cannot get the store of the onboarding: %w", err)
+	}
+
 	uc := onboarding.NewUseCases(onboarding.Options{
 		Email:                email,
 		Roles:                opts.Roles,
@@ -107,6 +125,8 @@ func Enable(cfg *application.Configurator, opts Options) (Management, error) {
 		CodeLifetime:         opts.CodeLifetime,
 		ResendCooldown:       opts.ResendCooldown,
 		MaxAttempts:          opts.MaxAttempts,
+		NLSServer:            opts.NLSServer,
+		DisableSSO:           opts.DisableSSO,
 	}, onboarding.Deps{
 		CountUsers:             users.UseCases.CountUsers,
 		Create:                 users.UseCases.Create,
@@ -118,7 +138,20 @@ func Enable(cfg *application.Configurator, opts Options) (Management, error) {
 		LoginUser:              sessions.UseCases.LoginUser,
 		Deliver:                deliver,
 		Bus:                    cfg.EventBus(),
+		LoadGlobal:             settingsMgmt.UseCases.LoadGlobal,
+		StoreGlobal:            settingsMgmt.UseCases.StoreGlobal,
+		StartNLSFlow:           sessions.UseCases.StartNLSFlow,
+		PendingSSO:             pendingSSO,
 	})
+
+	// the access, which the setup has chosen for the single sign-on, applies after the first user has signed in
+	events.SubscribeFor[session.Authenticated](cfg.EventBus(), func(evt session.Authenticated) {
+		if err := uc.ApplySSOAccess(evt.User); err != nil {
+			slog.Error("onboarding: cannot grant the access of the single sign-on", "err", err)
+		}
+	})
+
+	applyPendingSSO(pendingSSO, users.UseCases.FindByID, uc.ApplySSOAccess)
 
 	management = Management{
 		UseCases: uc,
@@ -161,6 +194,25 @@ func Enable(cfg *application.Configurator, opts Options) (Management, error) {
 	cfg.AddContextValue(core.ContextValue("nago.onboarding.management", management))
 	slog.Info("installed onboarding module")
 	return management, nil
+}
+
+// applyPendingSSO grants the chosen access, if the first user has signed in by single sign-on, while the
+// application did not run anymore.
+func applyPendingSSO(repo onboarding.PendingSSORepository, findByID user.FindByID, apply onboarding.ApplySSOAccess) {
+	optPending, err := repo.FindByID(onboarding.PendingSSOKey)
+	if err != nil || optPending.IsNone() {
+		return
+	}
+
+	admin := optPending.Unwrap().Admin
+	optUser, err := findByID(user.SU(), admin)
+	if err != nil || optUser.IsNone() || !optUser.Unwrap().NLSManagedUser {
+		return
+	}
+
+	if err := apply(admin); err != nil {
+		slog.Error("onboarding: cannot grant the access of the single sign-on", "err", err)
+	}
 }
 
 // mailDeliver sends the code by the template of the system mail project. The template project of an instance,

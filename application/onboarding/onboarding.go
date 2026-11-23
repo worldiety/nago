@@ -15,6 +15,9 @@
 // The code is the proof, not the session: a code is valid for every session, but it confirms only the session in
 // which it is entered. Codes are global for the instance and rate limited, because the mail address is fixed and
 // must not be flooded.
+//
+// Instead of a password, the first user may sign in by the single sign-on of a Nago login service (NLS), see
+// [CompleteWithSSO]. Then, the setup configures the login service and decides who else may sign in by it.
 package onboarding
 
 import (
@@ -25,6 +28,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math/big"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -36,7 +40,9 @@ import (
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/session"
+	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/application/user"
+	"go.wdy.de/nago/pkg/data"
 	"go.wdy.de/nago/pkg/events"
 	"golang.org/x/text/language"
 )
@@ -60,6 +66,9 @@ type State struct {
 	Email user.Email
 	// Problem tells, why the setup cannot be done.
 	Problem Problem
+	// SSOServer is the login service, which the setup offers for the single sign-on, see [CompleteWithSSO]. It is
+	// empty, if the setup offers no single sign-on.
+	SSOServer string
 }
 
 // MaskedEmail returns the mail address with most characters of the local part replaced, so that a visitor of the
@@ -105,6 +114,7 @@ var (
 	ErrCodeExpired     = errors.New("onboarding: the code has expired")
 	ErrTooManyAttempts = errors.New("onboarding: too many wrong codes, request a new one")
 	ErrNotVerified     = errors.New("onboarding: the session has not been confirmed by a code")
+	ErrNoSSO           = errors.New("onboarding: the setup offers no single sign-on")
 )
 
 // CooldownError is returned, if a code is requested too early.
@@ -138,14 +148,27 @@ type Complete func(sid session.ID, profile Profile) (user.User, error)
 // Reset forgets the confirmation of the session.
 type Reset func(sid session.ID)
 
+// CompleteWithSSO creates the first user for a confirmed session like [Complete], but without a password: the user
+// signs in by the single sign-on of the login service of [State.SSOServer], which it configures. The session is not
+// logged in, it returns the address of the login service, which the browser opens next. Until the first user has
+// signed in by it, only its address may sign in by single sign-on, then the access applies, see [ApplySSOAccess].
+// Thus, the first user cannot end up in another account by signing in with another identity.
+type CompleteWithSSO func(sid session.ID, access SSOAccess, preferredLanguage language.Tag) (loginURL string, err error)
+
+// ApplySSOAccess grants the access, which has been chosen by [CompleteWithSSO], after the first user has signed in.
+// It does nothing for another user. An allow list, which an administrator has changed meanwhile, is kept.
+type ApplySSOAccess func(signedIn user.ID) error
+
 type UseCases struct {
-	State       GetState
-	RequestCode RequestCode
-	CurrentCode CurrentCode
-	VerifyCode  VerifyCode
-	Verified    Verified
-	Complete    Complete
-	Reset       Reset
+	State           GetState
+	RequestCode     RequestCode
+	CurrentCode     CurrentCode
+	VerifyCode      VerifyCode
+	Verified        Verified
+	Complete        Complete
+	CompleteWithSSO CompleteWithSSO
+	ApplySSOAccess  ApplySSOAccess
+	Reset           Reset
 }
 
 // Options of the setup.
@@ -166,6 +189,12 @@ type Options struct {
 	MaxAttempts     int           // wrong codes per code, default 5
 	// VerifiedLifetime is the time, a confirmed session has to complete the setup. Default is 1 hour.
 	VerifiedLifetime time.Duration
+
+	// NLSServer is the login service, which the setup offers for the single sign-on. Default is [DefaultNLSServer].
+	// A login service, which the settings of the instance contain already, takes precedence.
+	NLSServer string
+	// DisableSSO offers no single sign-on, thus the first user always gets a password.
+	DisableSSO bool
 }
 
 // Deliver sends the code to the mail address.
@@ -183,7 +212,35 @@ type Deps struct {
 	LoginUser              session.LoginUser
 	Deliver                Deliver
 	Bus                    events.EventBus // optional
+
+	// required for the single sign-on, unless [Options.DisableSSO] is set
+	LoadGlobal   settings.LoadGlobal
+	StoreGlobal  settings.StoreGlobal
+	StartNLSFlow session.StartNLSFlow
+	PendingSSO   PendingSSORepository
 }
+
+// PendingSSO keeps the access, which [CompleteWithSSO] has chosen, until the first user signs in.
+type PendingSSO struct {
+	ID PendingSSOID `json:"id"`
+	// Admin is the first user.
+	Admin user.ID `json:"admin"`
+	// Gate is the allow list, which only allows the first user until it signs in.
+	Gate []string `json:"gate"`
+	// AllowList is the allow list afterward.
+	AllowList []string `json:"allowList"`
+}
+
+type PendingSSOID string
+
+func (p PendingSSO) Identity() PendingSSOID {
+	return p.ID
+}
+
+type PendingSSORepository data.Repository[PendingSSO, PendingSSOID]
+
+// PendingSSOKey is the id of the single [PendingSSO].
+const PendingSSOKey PendingSSOID = "sso"
 
 type challenge struct {
 	hash       [32]byte
@@ -235,6 +292,14 @@ func newSetup(opts Options, deps Deps) *setup {
 		opts.VerifiedLifetime = time.Hour
 	}
 
+	if opts.NLSServer == "" {
+		opts.NLSServer = DefaultNLSServer
+	}
+
+	if deps.LoadGlobal == nil || deps.StoreGlobal == nil || deps.StartNLSFlow == nil || deps.PendingSSO == nil {
+		opts.DisableSSO = true
+	}
+
 	s := &setup{opts: opts, deps: deps, now: time.Now, verified: map[session.ID]time.Time{}}
 	s.email, s.issue = parseEmail(opts.Email)
 
@@ -249,13 +314,15 @@ func newSetup(opts Options, deps Deps) *setup {
 
 func (s *setup) useCases() UseCases {
 	return UseCases{
-		State:       s.state,
-		RequestCode: s.requestCode,
-		CurrentCode: s.currentCode,
-		VerifyCode:  s.verifyCode,
-		Verified:    s.isVerified,
-		Complete:    s.complete,
-		Reset:       s.reset,
+		State:           s.state,
+		RequestCode:     s.requestCode,
+		CurrentCode:     s.currentCode,
+		VerifyCode:      s.verifyCode,
+		Verified:        s.isVerified,
+		Complete:        s.complete,
+		CompleteWithSSO: s.completeWithSSO,
+		ApplySSOAccess:  s.applySSOAccess,
+		Reset:           s.reset,
 	}
 }
 
@@ -299,7 +366,24 @@ func (s *setup) state() State {
 		st.Email = s.email
 	}
 
+	if st.Pending {
+		st.SSOServer = s.ssoServer()
+	}
+
 	return st
+}
+
+// ssoServer returns the login service, which the setup offers, or nothing.
+func (s *setup) ssoServer() string {
+	if s.opts.DisableSSO {
+		return ""
+	}
+
+	if configured := settings.ReadGlobal[user.Settings](s.deps.LoadGlobal).SSONLSServer; configured != "" {
+		return configured
+	}
+
+	return s.opts.NLSServer
 }
 
 func (s *setup) check() error {
@@ -446,6 +530,21 @@ func (s *setup) complete(sid session.ID, profile Profile) (user.User, error) {
 		return user.User{}, ErrNotVerified
 	}
 
+	usr, err := s.createFirstUser(profile)
+	if err != nil {
+		return user.User{}, err
+	}
+
+	s.finish(usr)
+	if err := s.deps.LoginUser(sid, usr.ID); err != nil {
+		return usr, fmt.Errorf("onboarding: the user has been created, but the session cannot be logged in: %w", err)
+	}
+
+	return usr, nil
+}
+
+// createFirstUser creates and configures the first user. The caller holds the mutex.
+func (s *setup) createFirstUser(profile Profile) (user.User, error) {
 	su := user.SU()
 	usr, err := s.deps.Create(su, user.ShortRegistrationUser{
 		Firstname:         strings.TrimSpace(profile.Firstname),
@@ -463,13 +562,21 @@ func (s *setup) complete(sid session.ID, profile Profile) (user.User, error) {
 
 	// from here on, the user must not survive a failure, otherwise the setup is gone and the instance is unusable
 	if err := s.configure(su, usr); err != nil {
-		if delErr := s.deps.Delete(su, usr.ID); delErr != nil {
-			slog.Error("onboarding: cannot remove the half configured first user", "user", usr.ID, "err", delErr)
-		}
-
+		s.removeFirstUser(usr)
 		return user.User{}, err
 	}
 
+	return usr, nil
+}
+
+func (s *setup) removeFirstUser(usr user.User) {
+	if err := s.deps.Delete(user.SU(), usr.ID); err != nil {
+		slog.Error("onboarding: cannot remove the half configured first user", "user", usr.ID, "err", err)
+	}
+}
+
+// finish ends the setup after the first user has been created. The caller holds the mutex.
+func (s *setup) finish(usr user.User) {
 	s.done.Store(true)
 	s.verified = map[session.ID]time.Time{}
 	s.current = nil
@@ -478,12 +585,94 @@ func (s *setup) complete(sid session.ID, profile Profile) (user.User, error) {
 	if s.deps.Bus != nil {
 		s.deps.Bus.Publish(Completed{User: usr.ID, Email: usr.Email, At: s.now()})
 	}
+}
 
-	if err := s.deps.LoginUser(sid, usr.ID); err != nil {
-		return usr, fmt.Errorf("onboarding: the user has been created, but the session cannot be logged in: %w", err)
+func (s *setup) completeWithSSO(sid session.ID, access SSOAccess, preferredLanguage language.Tag) (string, error) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	if err := s.check(); err != nil {
+		return "", err
 	}
 
-	return usr, nil
+	if !s.verifiedLocked(sid) {
+		return "", ErrNotVerified
+	}
+
+	server := s.ssoServer()
+	if server == "" {
+		return "", ErrNoSSO
+	}
+
+	// without a password, the user gets a random one, which it can reset by mail, if the single sign-on fails
+	usr, err := s.createFirstUser(Profile{PreferredLanguage: preferredLanguage})
+	if err != nil {
+		return "", err
+	}
+
+	before := settings.ReadGlobal[user.Settings](s.deps.LoadGlobal)
+	usrSettings := before
+	usrSettings.SSONLSServer = server
+	gate := []string{emailPattern(s.email)}
+	usrSettings.SSOAllowList = gate
+	if err := s.deps.StoreGlobal(user.SU(), usrSettings); err != nil {
+		s.removeFirstUser(usr)
+		return "", fmt.Errorf("onboarding: cannot configure the single sign-on: %w", err)
+	}
+
+	allowList := access.AllowList(s.email)
+	if !slices.Equal(allowList, gate) {
+		pending := PendingSSO{ID: PendingSSOKey, Admin: usr.ID, Gate: gate, AllowList: allowList}
+		if err := s.deps.PendingSSO.Save(pending); err != nil {
+			if err := s.deps.StoreGlobal(user.SU(), before); err != nil {
+				slog.Error("onboarding: cannot restore the settings of the single sign-on", "err", err)
+			}
+
+			s.removeFirstUser(usr)
+			return "", fmt.Errorf("onboarding: cannot keep the access of the single sign-on: %w", err)
+		}
+	}
+
+	s.finish(usr)
+	slog.Info("onboarding: single sign-on configured", "server", server, "allowList", allowList)
+
+	loginURL, err := s.deps.StartNLSFlow(sid)
+	if err != nil {
+		return "", fmt.Errorf("onboarding: the account has been created, but the single sign-on cannot be started: %w", err)
+	}
+
+	return loginURL, nil
+}
+
+func (s *setup) applySSOAccess(signedIn user.ID) error {
+	if s.opts.DisableSSO {
+		return nil
+	}
+
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	optPending, err := s.deps.PendingSSO.FindByID(PendingSSOKey)
+	if err != nil {
+		return fmt.Errorf("onboarding: cannot find the access of the single sign-on: %w", err)
+	}
+
+	if optPending.IsNone() || optPending.Unwrap().Admin != signedIn {
+		return nil
+	}
+
+	pending := optPending.Unwrap()
+	usrSettings := settings.ReadGlobal[user.Settings](s.deps.LoadGlobal)
+	if slices.Equal(usrSettings.SSOAllowList, pending.Gate) {
+		usrSettings.SSOAllowList = pending.AllowList
+		if err := s.deps.StoreGlobal(user.SU(), usrSettings); err != nil {
+			return fmt.Errorf("onboarding: cannot grant the access of the single sign-on: %w", err)
+		}
+
+		slog.Info("onboarding: the first user has signed in, the single sign-on is open", "allowList", pending.AllowList)
+	}
+
+	return s.deps.PendingSSO.DeleteByID(PendingSSOKey)
 }
 
 func (s *setup) configure(su user.Subject, usr user.User) error {

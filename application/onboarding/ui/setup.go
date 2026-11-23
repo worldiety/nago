@@ -133,8 +133,20 @@ func Setup(wnd core.Window, flow *Flow) core.View {
 			}).Title(StrConfirm.Get(wnd)).Key("onboarding", "confirm"),
 		)
 
+	case StepMethod:
+		subtitle, body = methodStep(wnd, flow)
+
+	case StepSSO:
+		subtitle, body, actions = ssoStep(wnd, flow)
+
 	case StepProfile:
 		subtitle = StrProfileSubtitle.Get(wnd)
+		if st.SSOServer != "" {
+			actions = append(actions, ui.SecondaryButton(func() {
+				flow.ChooseMethod(MethodUndecided)
+			}).Title(StrBack.Get(wnd)).Key("onboarding", "back"))
+		}
+
 		body = ui.VStack(
 			ui.TextField(StrFirstname.Get(wnd), firstname.Get()).InputValue(firstname).ErrorText(errFirstname.Get()).ID("onboarding-firstname").FullWidth(),
 			ui.TextField(StrLastname.Get(wnd), lastname.Get()).InputValue(lastname).ErrorText(errLastname.Get()).ID("onboarding-lastname").FullWidth(),

@@ -40,10 +40,11 @@ func (f *fakeUsers) deps() Deps {
 		Create: func(subject permission.Auditable, model user.ShortRegistrationUser) (user.User, error) {
 			f.mutex.Lock()
 			defer f.mutex.Unlock()
-			if model.Password == "" || model.Password != model.PasswordRepeated {
+			// like the real one, a user without a password gets a random one
+			if model.Password != model.PasswordRepeated {
 				return user.User{}, errors.New("bad password")
 			}
-			usr := user.User{ID: user.ID("u" + string(rune('0'+len(f.users)))), Email: model.Email, EMailVerified: model.Verified}
+			usr := user.User{ID: user.ID("u" + string(rune('0'+len(f.users)))), Email: model.Email, EMailVerified: model.Verified, RequirePasswordChange: model.Password == ""}
 			f.users[usr.ID] = usr
 			return usr, nil
 		},
