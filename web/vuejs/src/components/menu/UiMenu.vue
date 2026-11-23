@@ -58,6 +58,15 @@ function checkAnchorType() {
 	anchorIsButton.value = anchor.tagName.toLowerCase() === 'button';
 }
 
+// Headless UI restores focus to the MenuButton element after closing the menu. If the anchor is a button itself,
+// the MenuButton is rendered as a non-interactive div, so we forward the focus to the actual anchor button.
+function forwardFocusToAnchor() {
+	if (!anchorIsButton.value) return;
+
+	const anchor = trigger.value?.$el?.firstElementChild as HTMLElement | null | undefined;
+	anchor?.focus({ preventScroll: true });
+}
+
 onMounted(checkAnchorType);
 onUpdated(checkAnchorType);
 </script>
@@ -69,7 +78,9 @@ onUpdated(checkAnchorType);
 				ref="trigger"
 				class="inline-flex w-full justify-center"
 				:as="anchorIsButton ? 'div' : undefined"
+				:tabindex="anchorIsButton ? -1 : undefined"
 				@click.stop
+				@focus="forwardFocusToAnchor"
 			>
 				<ui-generic v-if="props.ui.anchor" :ui="props.ui.anchor" :tabindex="anchorIsButton ? 0 : undefined" />
 			</MenuButton>
