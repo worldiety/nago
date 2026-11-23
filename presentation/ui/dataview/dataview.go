@@ -19,12 +19,14 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	icons "go.wdy.de/nago/presentation/icons/flowbite/outline"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/accessibility"
 	"go.wdy.de/nago/presentation/ui/alert"
 	"go.wdy.de/nago/presentation/ui/pager"
 	"golang.org/x/text/language"
 )
 
 var (
+	StrEntries             = i18n.MustString("nago.dataview.entries", i18n.Values{language.English: "Entries", language.German: "Einträge"})
 	StrCreateAccessibility = i18n.MustString("nago.dataview.create_accessibility", i18n.Values{language.English: "Create new entry", language.German: "Neuen Eintrag erstellen"})
 	StrDialogDeleteTitle   = i18n.MustString("nago.dataview.dialog.delete_title", i18n.Values{language.English: "Deletes Elements", language.German: "Elemente löschen"})
 	StrDialogDeleteDescX   = i18n.MustQuantityString(
@@ -460,4 +462,10 @@ func (t TDataView[E, ID]) initModel(ctx core.RenderContext, model pager.Model[E,
 	if fn := t.selectionChanged; fn != nil {
 		fn(model.Selected())
 	}
+}
+
+// entriesRegion marks the entries of the current page as a named landmark region, so that screen reader users
+// can jump directly to the start of the entries, e.g. after switching the page using the pager.
+func entriesRegion(wnd core.Window, content ui.TVStack) core.View {
+	return accessibility.Accessible(content).Role(accessibility.RoleRegion).Label(StrEntries.Get(wnd))
 }

@@ -118,8 +118,10 @@ async function applyConfiguration(): Promise<void> {
 			}
 
 			rendered(evt.rID);
+			const focusedID = document.activeElement?.id;
 			ui.value = evt.root;
 			state.value = State.ShowUI;
+			nextTick(() => restoreFocus(focusedID));
 
 			// because our views are replaced dynamically, the browser don't know about page
 			// changes, thus scroll to the top of a new page, only if really intended
@@ -300,6 +302,21 @@ watch(
 		}
 	}
 );
+
+// restoreFocus moves the focus back to the element with the given id, if a rendering has replaced the
+// previously focused element, e.g. because its position within the tree has changed.
+function restoreFocus(id: string | undefined) {
+	if (!id || document.activeElement?.id === id) {
+		return;
+	}
+
+	const elem = document.getElementById(id);
+	if (!elem || (elem as HTMLButtonElement).disabled) {
+		return;
+	}
+
+	elem.focus({ preventScroll: true });
+}
 </script>
 
 <template>
