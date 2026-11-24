@@ -6,6 +6,7 @@
 		:style="`transition-duration: ${transitionDuration / 2}ms;`"
 		:inert="!isActive"
 		:aria-hidden="!isActive"
+		v-bind="$attrs"
 	>
 		<div class="page-content">
 			<div class="page-content-inner">
@@ -134,7 +135,7 @@ function onImageError() {
 <style scoped>
 @reference '@/assets/css/tailwind.css';
 .page {
-	@apply absolute left-0 bottom-0 size-full pr-8 grid grid-cols-1 gap-8 opacity-0 pointer-events-none min-h-full;
+	@apply absolute left-0 bottom-0 size-full pr-8 grid grid-cols-1 gap-8 opacity-0 pointer-events-none min-h-full outline-0!;
 
 	.page-content {
 		@apply flex flex-col justify-end flex-1;
