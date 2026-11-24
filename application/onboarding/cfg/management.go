@@ -8,6 +8,7 @@
 package cfgonboarding
 
 import (
+	"cmp"
 	"fmt"
 	"log/slog"
 	"math"
@@ -33,8 +34,12 @@ import (
 )
 
 type Options struct {
-	// Email overrides the environment variable [onboarding.EnvInitialUserEmail].
+	// Email is the address of the first user. If empty, it is read from the environment variable EmailEnv.
 	Email string
+	// EmailEnv is the environment variable with the address of the first user, which is read, if Email is empty, and
+	// which the hints to the operators name. Default is [onboarding.EnvInitialUserEmail], which is not read, if
+	// another variable is set.
+	EmailEnv string
 
 	// Roles, Groups and Permissions are assigned to the first user.
 	Roles       []role.ID
@@ -54,15 +59,13 @@ type Options struct {
 	Scaffold bool
 
 	// Exempt lists routes, which are shown even as long as the setup is pending, e.g. a legal notice. The internal
-	// routes of the legal texts of the theme settings at the start and of Impress and PrivacyPolicy are always
-	// exempt.
+	// routes of the legal texts of the theme settings at the start and of Legal are always exempt.
 	Exempt []core.NavigationPath
 
-	// Impress and PrivacyPolicy are the links to the legal texts below the card of the setup: an external address
-	// with "://" or a route of the application. An empty value falls back to the one of the theme settings, see
-	// [theme.Settings], and without both, there is no link.
-	Impress       string
-	PrivacyPolicy string
+	// Legal optionally replaces the links to the legal texts below the card of the setup, which are taken from the
+	// theme settings otherwise, see [theme.Settings]. It replaces both links: an empty value has no link, even if
+	// the theme settings have one. A value is an external address with "://" or a route of the application.
+	Legal *uionboarding.Legal
 
 	// Deliver optionally replaces the mail with the code, e.g. in tests or by a log during development.
 	Deliver onboarding.Deliver
@@ -135,9 +138,10 @@ func Enable(cfg *application.Configurator, opts Options) (Management, error) {
 		}
 	}
 
+	emailEnv := cmp.Or(opts.EmailEnv, onboarding.EnvInitialUserEmail)
 	email := opts.Email
 	if email == "" {
-		email = os.Getenv(onboarding.EnvInitialUserEmail)
+		email = os.Getenv(emailEnv)
 	}
 
 	settingsMgmt, err := cfg.SettingsManagement()
@@ -192,8 +196,8 @@ func Enable(cfg *application.Configurator, opts Options) (Management, error) {
 	}
 
 	flowOpts := uionboarding.FlowOptions{
-		Impress:        opts.Impress,
-		PrivacyPolicy:  opts.PrivacyPolicy,
+		Legal:          opts.Legal,
+		EmailEnv:       emailEnv,
 		MailServiceEnv: application.EnvMailService,
 	}
 
@@ -224,7 +228,7 @@ func Enable(cfg *application.Configurator, opts Options) (Management, error) {
 	if st := uc.State(); st.Pending {
 		switch {
 		case st.Problem != onboarding.NoProblem:
-			slog.Error("onboarding: the instance has no user, but the setup cannot be done", "problem", st.Problem, "env", onboarding.EnvInitialUserEmail)
+			slog.Error("onboarding: the instance has no user, but the setup cannot be done", "problem", st.Problem, "env", emailEnv)
 		case st.Delivery.Level == onboarding.DeliveryNone:
 			slog.Error("onboarding: the instance has no user, but the code cannot be sent: no smtp server is shared with the system group and the nago mail service is not available", "env", application.EnvMailService)
 		default:

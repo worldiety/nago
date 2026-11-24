@@ -59,12 +59,14 @@ const (
 
 // FlowOptions configure a [Flow], see [NewFlow].
 type FlowOptions struct {
-	// Impress and PrivacyPolicy are the links to the legal texts below the card of every step, see [Flow.Legal]. An
-	// empty value falls back to the one of the theme settings, see [theme.Settings].
-	Impress       string
-	PrivacyPolicy string
+	// Legal optionally replaces the links to the legal texts of the theme settings below the card of every step,
+	// see [Flow.Legal] and [theme.Settings]. It replaces both links: an empty value has no link.
+	Legal *Legal
+	// EmailEnv is the name of the environment variable with the address of the first user for the hints to the
+	// operators on the problem step, see [StepProblem]. Default is [onboarding.EnvInitialUserEmail].
+	EmailEnv string
 	// MailServiceEnv is the name of the environment variable, which turns the Nago Mail Service off, for the hints
-	// to the operators on the problem step, see [StepProblem].
+	// to the operators on the problem step.
 	MailServiceEnv string
 }
 
@@ -162,21 +164,15 @@ func (f *Flow) CodeStatus() onboarding.CodeStatus {
 	return f.uc.CodeStatus()
 }
 
-// Legal returns the links to the legal texts, see [FlowOptions.Impress] and [FlowOptions.PrivacyPolicy].
+// Legal returns the links to the legal texts of [FlowOptions.Legal] or, if not set, of the theme settings.
 func (f *Flow) Legal() Legal {
-	legal := Legal{Impress: strings.TrimSpace(f.opts.Impress), PrivacyPolicy: strings.TrimSpace(f.opts.PrivacyPolicy)}
-	if legal.Impress == "" || legal.PrivacyPolicy == "" {
+	legal := f.opts.Legal
+	if legal == nil {
 		themeSettings := core.GlobalSettings[theme.Settings](f.wnd)
-		if legal.Impress == "" {
-			legal.Impress = strings.TrimSpace(themeSettings.Impress)
-		}
-
-		if legal.PrivacyPolicy == "" {
-			legal.PrivacyPolicy = strings.TrimSpace(themeSettings.PrivacyPolicy)
-		}
+		legal = &Legal{Impress: themeSettings.Impress, PrivacyPolicy: themeSettings.PrivacyPolicy}
 	}
 
-	return legal
+	return Legal{Impress: strings.TrimSpace(legal.Impress), PrivacyPolicy: strings.TrimSpace(legal.PrivacyPolicy)}
 }
 
 // Code returns the code, which has been sent last, if it is still valid.

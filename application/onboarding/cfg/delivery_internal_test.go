@@ -20,6 +20,7 @@ import (
 	"go.wdy.de/nago/application/mail/nms"
 	"go.wdy.de/nago/application/mail/nms/nmstest"
 	"go.wdy.de/nago/application/onboarding"
+	uionboarding "go.wdy.de/nago/application/onboarding/ui"
 	"go.wdy.de/nago/application/secret"
 	"go.wdy.de/nago/application/theme"
 	"go.wdy.de/nago/application/user"
@@ -248,9 +249,8 @@ func TestExemptRoutes(t *testing.T) {
 		GeneralTermsAndConditions: "page/agb",
 		TermsOfUse:                "http://localhost:3000/terms",
 	}, Options{
-		Impress:       "https://example.org/imprint",
-		PrivacyPolicy: "datenschutz",
-		Exempt:        []core.NavigationPath{"extra", "impressum"},
+		Legal:  &uionboarding.Legal{Impress: "https://example.org/imprint", PrivacyPolicy: "datenschutz"},
+		Exempt: []core.NavigationPath{"extra", "impressum"},
 	})
 
 	want := []core.NavigationPath{"impressum", "page/agb", "datenschutz", "extra"}

@@ -171,13 +171,17 @@ func Setup(wnd core.Window, flow *Flow) core.View {
 			ID("onboarding-code").
 			FullWidth()
 
-		actions = append(actions,
-			ui.SecondaryButton(func() {
+		// without a delivery, a new code is refused, but the code, which has been sent, may still arrive
+		if st.Delivery.Level != onboarding.DeliveryNone {
+			actions = append(actions, ui.SecondaryButton(func() {
 				codeErr.Set("")
 				if err := flow.RequestCode(); err != nil {
 					codeErr.Set(errorText(wnd, err))
 				}
-			}).Title(StrResend.Get(wnd)).Key("onboarding", "resend"),
+			}).Title(StrResend.Get(wnd)).Key("onboarding", "resend"))
+		}
+
+		actions = append(actions,
 			ui.PrimaryButton(func() {
 				codeErr.Set("")
 				if err := flow.VerifyCode(code.Get()); err != nil {

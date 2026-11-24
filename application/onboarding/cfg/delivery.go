@@ -128,18 +128,22 @@ func addressedTo(receiver, to string) bool {
 	return false
 }
 
-// exemptRoutes are the internal routes of the legal texts of the theme and the options and the routes of
+// exemptRoutes are the internal routes of the legal texts of the theme and [Options.Legal] and the routes of
 // [Options.Exempt]. An external address with "://" is no route.
 func exemptRoutes(themeSettings theme.Settings, opts Options) []core.NavigationPath {
-	var res []core.NavigationPath
-	for _, v := range []string{
+	values := []string{
 		themeSettings.Impress,
 		themeSettings.PrivacyPolicy,
 		themeSettings.GeneralTermsAndConditions,
 		themeSettings.TermsOfUse,
-		opts.Impress,
-		opts.PrivacyPolicy,
-	} {
+	}
+
+	if opts.Legal != nil {
+		values = append(values, opts.Legal.Impress, opts.Legal.PrivacyPolicy)
+	}
+
+	var res []core.NavigationPath
+	for _, v := range values {
 		v = strings.TrimSpace(v)
 		if v == "" || strings.Contains(v, "://") {
 			continue

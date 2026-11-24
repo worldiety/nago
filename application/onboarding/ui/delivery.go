@@ -8,6 +8,7 @@
 package uionboarding
 
 import (
+	"cmp"
 	"strings"
 	"time"
 
@@ -58,7 +59,7 @@ func problemView(wnd core.Window, opts FlowOptions, st onboarding.State) core.Vi
 
 	var hints []core.View
 	for _, hint := range []string{
-		StrHintEmailX.Get(wnd, i18n.String("env", onboarding.EnvInitialUserEmail)),
+		StrHintEmailX.Get(wnd, i18n.String("env", cmp.Or(opts.EmailEnv, onboarding.EnvInitialUserEmail))),
 		StrHintMailServiceX.Get(wnd, i18n.String("env", opts.MailServiceEnv)),
 		StrHintSMTP.Get(wnd),
 	} {

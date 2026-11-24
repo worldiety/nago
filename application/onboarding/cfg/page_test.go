@@ -131,11 +131,18 @@ func clock(t time.Time) string {
 // assertProblemPage checks the parts, which every problem page has, and no way to request a code.
 func assertProblemPage(t *testing.T, w *nagotest.Window) {
 	t.Helper()
+	assertProblemPageOf(t, w, onboarding.EnvInitialUserEmail)
+}
+
+// assertProblemPageOf is assertProblemPage with the variable of the address.
+func assertProblemPageOf(t *testing.T, w *nagotest.Window, emailEnv string) {
+	t.Helper()
 	w.Find(nagotest.Text("Einrichtung noch nicht möglich")).Exactly(1)
 	w.FindAll(nagotest.Type[*proto.Accordion]()).Exactly(1)
 	ops := w.Find(nagotest.ID(uionboarding.IDOperators))
 	ops.Find(nagotest.Text("Für den Betrieb")).Exactly(1)
-	ops.Find(nagotest.Text("• " + onboarding.EnvInitialUserEmail + " fehlt oder ist ungültig.")).Exactly(1)
+	ops.FindAll(nagotest.TextContains("fehlt oder ist ungültig.")).Exactly(1)
+	ops.Find(nagotest.Text("• " + emailEnv + " fehlt oder ist ungültig.")).Exactly(1)
 	ops.Find(nagotest.Text("• Nago Mail Service nicht verfügbar: öffentliche https-Adresse nötig, Token fehlt oder " + application.EnvMailService + "=off.")).Exactly(1)
 	ops.Find(nagotest.Text("• Kein SMTP-Konto in der Systemgruppe; es lässt sich erst nach dem ersten Konto hinterlegen.")).Exactly(1)
 	w.Find(nagotest.ID(uionboarding.IDRecheck)).Find(nagotest.Text("Erneut prüfen")).Exactly(1)
@@ -497,11 +504,16 @@ func TestLegalLinks(t *testing.T) {
 			want: []link{{"Impressum", "/impressum", ""}, {"Datenschutz", "/datenschutz", ""}}},
 		{name: "only privacy policy", theme: theme.Settings{PrivacyPolicy: "https://example.org/datenschutz"},
 			want: []link{{"Datenschutz", "https://example.org/datenschutz", "_blank"}}},
-		{name: "options before the theme", theme: theme.Settings{Impress: "/impressum", PrivacyPolicy: "https://example.org/datenschutz"},
-			opts: cfgonboarding.Options{Impress: "https://example.org/imprint"},
-			want: []link{{"Impressum", "https://example.org/imprint", "_blank"}, {"Datenschutz", "https://example.org/datenschutz", "_blank"}}},
-		{name: "only options", opts: cfgonboarding.Options{Impress: "https://example.org/imprint", PrivacyPolicy: "page/agb"},
+		{name: "option replaces the theme", theme: theme.Settings{Impress: "/impressum", PrivacyPolicy: "https://example.org/datenschutz"},
+			opts: cfgonboarding.Options{Legal: &uionboarding.Legal{Impress: "https://example.org/imprint", PrivacyPolicy: "page/agb"}},
 			want: []link{{"Impressum", "https://example.org/imprint", "_blank"}, {"Datenschutz", "/page/agb", ""}}},
+		{name: "option with an empty value replaces the theme", theme: theme.Settings{Impress: "/impressum", PrivacyPolicy: "https://example.org/datenschutz"},
+			opts: cfgonboarding.Options{Legal: &uionboarding.Legal{Impress: "https://example.org/imprint"}},
+			want: []link{{"Impressum", "https://example.org/imprint", "_blank"}}},
+		{name: "empty option replaces the theme", theme: theme.Settings{Impress: "/impressum", PrivacyPolicy: "https://example.org/datenschutz"},
+			opts: cfgonboarding.Options{Legal: &uionboarding.Legal{}}},
+		{name: "option without theme", opts: cfgonboarding.Options{Legal: &uionboarding.Legal{PrivacyPolicy: " /datenschutz "}},
+			want: []link{{"Datenschutz", "/datenschutz", ""}}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			delivery := level(onboarding.DeliveryNone)
@@ -538,10 +550,10 @@ func TestLegalLinks(t *testing.T) {
 // The internal routes of the legal texts are shown, while the setup is pending, an external address is no route.
 func TestExemptLegalRoutes(t *testing.T) {
 	app, _ := pageApp(t, cfgonboarding.Options{
-		Email:         address,
-		Deliver:       (&mailbox{}).deliver,
-		PrivacyPolicy: "/datenschutz",
-		Exempt:        []core.NavigationPath{"extra"},
+		Email:   address,
+		Deliver: (&mailbox{}).deliver,
+		Legal:   &uionboarding.Legal{PrivacyPolicy: "/datenschutz"},
+		Exempt:  []core.NavigationPath{"extra"},
 	}, storeTheme(t, theme.Settings{
 		Impress:                   " /impressum ",
 		PrivacyPolicy:             "https://example.org/other",
@@ -644,7 +656,8 @@ func TestPageDisclosesNothing(t *testing.T) {
 }
 
 // A delivery, which is lost between the render and the click, refuses the code: the welcome shows the problem step,
-// the code step an error at the field. With the delivery, the same clicks send the code.
+// the code step an error at the field and no button to send the code again. The code, which has been sent, may
+// still arrive, so its field stays. With the delivery, the same clicks send the code.
 func TestLostDeliveryRefusesTheCode(t *testing.T) {
 	for _, tc := range []struct {
 		name  string
@@ -669,25 +682,68 @@ func TestLostDeliveryRefusesTheCode(t *testing.T) {
 					t.Fatalf("no code must be sent, got %d", n)
 				}
 
-				// a code, which has been sent before, keeps the window in the code step
 				delivery.set(onboarding.Delivery{Level: onboarding.DeliveryAssured})
 				w.Click(w.Find(nagotest.ID(uionboarding.IDRecheck)))
 				w.Click(w.Find(nagotest.Text("Einrichtung starten")))
 			}
 
+			// the button of the tree before the delivery changed
+			resend := w.Find(nagotest.Text("Code erneut senden"))
 			delivery.set(onboarding.Delivery{Level: tc.level})
-			w.Click(w.Find(nagotest.Text("Code erneut senden")))
+			w.Click(resend)
 			field := w.Find(nagotest.ID("onboarding-code")).Node().Component.(*proto.TextField)
-			switch tc.level {
-			case onboarding.DeliveryNone:
-				if n := box.count(); field.ErrorText != "Diese Anwendung kann gerade keine E-Mails versenden." || n != 1 {
-					t.Fatalf("expected the refused resend, got %q and %d codes", field.ErrorText, n)
-				}
-			default:
+			if tc.level != onboarding.DeliveryNone {
 				if n := box.count(); field.ErrorText != "" || n != 2 {
 					t.Fatalf("expected the resent code, got %q and %d codes", field.ErrorText, n)
 				}
+
+				w.Find(nagotest.Text("Code erneut senden")).Exactly(1)
+				return
 			}
+
+			if n := box.count(); field.ErrorText != "Diese Anwendung kann gerade keine E-Mails versenden." || n != 1 {
+				t.Fatalf("expected the refused resend, got %q and %d codes", field.ErrorText, n)
+			}
+
+			// the window stays in the code step without the button, and the code, which has been sent, is accepted
+			w.Reload()
+			w.FindAll(nagotest.Text("Code erneut senden")).None()
+			w.Type(w.Find(nagotest.ID("onboarding-code")), box.last(t))
+			w.Click(w.Find(nagotest.Text("Bestätigen")))
+			w.Find(nagotest.Text("Mit E-Mail und Passwort")).Exactly(1)
+		})
+	}
+}
+
+// The address of the first user is read from the configured variable only, which the hint to the operators names.
+func TestAddressVariable(t *testing.T) {
+	const own = "NAGOTEST_FIRST_ADDRESS"
+	for _, tc := range []struct {
+		name    string
+		option  string            // EmailEnv
+		env     map[string]string // the environment
+		problem string            // the variable of the hint, empty for the welcome
+	}{
+		{name: "default", env: map[string]string{onboarding.EnvInitialUserEmail: address, own: ""}},
+		{name: "default missing", env: map[string]string{onboarding.EnvInitialUserEmail: "", own: address}, problem: onboarding.EnvInitialUserEmail},
+		{name: "own", option: own, env: map[string]string{onboarding.EnvInitialUserEmail: "", own: address}},
+		{name: "own missing, no fallback", option: own, env: map[string]string{onboarding.EnvInitialUserEmail: address, own: ""}, problem: own},
+		{name: "own invalid", option: own, env: map[string]string{onboarding.EnvInitialUserEmail: address, own: "no-mail"}, problem: own},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			for k, v := range tc.env {
+				t.Setenv(k, v)
+			}
+
+			app, _ := pageApp(t, cfgonboarding.Options{EmailEnv: tc.option, Deliver: (&mailbox{}).deliver}, nil)
+			w := app.Open(t, nil, ".")
+			if tc.problem == "" {
+				w.Find(nagotest.TextContains("t***@example.com")).Exactly(1)
+				w.Find(nagotest.Text("Einrichtung starten")).Exactly(1)
+				return
+			}
+
+			assertProblemPageOf(t, w, tc.problem)
 		})
 	}
 }
