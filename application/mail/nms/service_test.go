@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/worldiety/option"
 	"go.wdy.de/nago/application/mail/nms"
@@ -263,5 +264,72 @@ func TestLocalOriginAsksForExchange(t *testing.T) {
 
 	if len(asked) != 1 || asked[0] != "http://localhost:3000" {
 		t.Fatalf("expected one exchange for the normalized origin, got %v", asked)
+	}
+}
+
+// The status tells, when a failed token exchange has happened and when the next one is due, so that a page can show
+// it. A held token or a successful exchange shows nothing.
+func TestExchangeFailureTimes(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		interval time.Duration // zero is the default of one hour
+		token    bool          // a configured refresh token
+		verify   bool          // the service accepts the origin
+		send     bool          // a message is sent, which exchanges a token if none is held
+		failed   bool          // the times are expected
+		next     time.Duration // expected distance of the next exchange
+	}{
+		{name: "no exchange yet", interval: 2 * time.Hour},
+		{name: "failed exchange", interval: 2 * time.Hour, send: true, failed: true, next: 2 * time.Hour},
+		{name: "failed exchange with the default interval", send: true, failed: true, next: time.Hour},
+		{name: "successful exchange", interval: 2 * time.Hour, verify: true, send: true},
+		{name: "configured token", interval: 2 * time.Hour, token: true, send: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			srv := nmstest.NewServer(t)
+			srv.VerifyOrigin = func(origin, nonce string) bool { return tc.verify }
+			var token string
+			if tc.token {
+				token = srv.IssueRefresh("custom", "wokoda.apps.example.com")
+			}
+
+			svc := nms.NewService(nms.Options{
+				Endpoint:         srv.URL,
+				Token:            token,
+				Origin:           func() string { return origin },
+				Nonces:           nms.NewNonces(),
+				ExchangeInterval: tc.interval,
+			})
+
+			before := time.Now()
+			if tc.send {
+				_, err := svc.Send(context.Background(), message())
+				if tc.failed != (err != nil) {
+					t.Fatalf("unexpected result of the send: %v", err)
+				}
+			}
+			after := time.Now()
+
+			st := svc.Status()
+			if !tc.failed {
+				if !st.ExchangeFailedAt.IsZero() || !st.NextExchangeAt.IsZero() {
+					t.Fatalf("expected no failed exchange, got %v and %v", st.ExchangeFailedAt, st.NextExchangeAt)
+				}
+
+				return
+			}
+
+			if st.Enrolled || st.ExchangeFailedAt.Before(before) || st.ExchangeFailedAt.After(after) {
+				t.Fatalf("expected a failed exchange between %v and %v, got %+v", before, after, st)
+			}
+
+			if got := st.NextExchangeAt.Sub(st.ExchangeFailedAt); got != tc.next {
+				t.Fatalf("expected the next exchange after %v, got %v", tc.next, got)
+			}
+
+			if svc.Available() {
+				t.Fatal("the service must not be available before the next exchange")
+			}
+		})
 	}
 }

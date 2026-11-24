@@ -82,6 +82,11 @@ type Status struct {
 	LastError      string
 	LastErrorAt    time.Time
 	LastExchangeAt time.Time
+	// ExchangeFailedAt is the time of the last failed token exchange and NextExchangeAt the earliest time of the next
+	// one, see [Options.ExchangeInterval]. Both are zero, if no exchange has failed since the last successful one or
+	// the instance holds a token.
+	ExchangeFailedAt time.Time
+	NextExchangeAt   time.Time
 }
 
 // Service keeps the instance enrolled and sends messages. It is safe for concurrent use.
@@ -97,7 +102,8 @@ type Service struct {
 	access         string
 	accessUntil    time.Time
 	lastExchangeAt time.Time
-	failedExchange time.Time // time of the last failed exchange, zero after a successful one
+	failedExchange time.Time // start of the last exchange until it succeeded, zero after a successful one
+	exchangeFailed time.Time // start of the last exchange which has failed, zero after a successful one
 	lastErr        string
 	lastErrAt      time.Time
 }
@@ -188,7 +194,7 @@ func (s *Service) Status() Status {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	return Status{
+	st := Status{
 		Endpoint:       s.opts.Endpoint,
 		Enabled:        s.Enabled(),
 		Enrolled:       s.state.Refresh != "",
@@ -200,6 +206,14 @@ func (s *Service) Status() Status {
 		LastErrorAt:    s.lastErrAt,
 		LastExchangeAt: s.lastExchangeAt,
 	}
+
+	// an exchange in flight keeps the former failure, because failedExchange is set at its start already
+	if !st.Enrolled && !s.exchangeFailed.IsZero() {
+		st.ExchangeFailedAt = s.exchangeFailed
+		st.NextExchangeAt = s.exchangeFailed.Add(s.opts.ExchangeInterval)
+	}
+
+	return st
 }
 
 // Send sends a single message. A revoked token is replaced once by a new one. A sender outside the sender domains
@@ -336,8 +350,9 @@ func (s *Service) exchange(ctx context.Context) error {
 		return fmt.Errorf("%w: a token exchange requires an http or https origin without path, got '%s'", ErrNotEnrolled, s.opts.Origin())
 	}
 
-	s.lastExchangeAt = s.now()
-	s.failedExchange = s.lastExchangeAt // until proven otherwise
+	startedAt := s.now()
+	s.lastExchangeAt = startedAt
+	s.failedExchange = startedAt // until proven otherwise
 	s.mutex.Unlock()
 
 	origin, _ := exchangeOrigin(s.opts.Origin())
@@ -347,6 +362,9 @@ func (s *Service) exchange(ctx context.Context) error {
 	slog.Info("nago mail service: exchanging token", "endpoint", s.opts.Endpoint, "origin", origin)
 	enrollment, err := s.client.Exchange(ctx, origin, nonce)
 	if err != nil {
+		s.mutex.Lock()
+		s.exchangeFailed = startedAt
+		s.mutex.Unlock()
 		return fmt.Errorf("%w: %w", ErrNotEnrolled, err)
 	}
 
@@ -354,6 +372,7 @@ func (s *Service) exchange(ctx context.Context) error {
 	defer s.mutex.Unlock()
 
 	s.failedExchange = time.Time{}
+	s.exchangeFailed = time.Time{}
 	s.state.Tenant = enrollment.Tenant
 	s.state.Refresh = enrollment.Refresh
 	s.state.SenderDomains = enrollment.SenderDomains
