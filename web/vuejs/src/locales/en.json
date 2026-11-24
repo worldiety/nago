@@ -114,5 +114,15 @@
 	"slider": {
 		"from": "from",
 		"to": "to"
+	},
+	"qrCodeReader": {
+		"notAllowed": "No access to the camera. Please allow the camera for this page in the browser and in the settings of the device.",
+		"notFound": "No camera found.",
+		"notReadable": "The camera cannot be started. Another app or tab is probably using it.",
+		"overconstrained": "The selected camera is not available.",
+		"insecureContext": "The camera is only available via HTTPS or localhost.",
+		"notSupported": "This browser does not support access to the camera.",
+		"timeout": "The camera delivers no image.",
+		"unknown": "The camera cannot be started: {0}"
 	}
 }

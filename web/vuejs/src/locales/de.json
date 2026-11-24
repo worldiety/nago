@@ -197,5 +197,15 @@
 		"to": "bis",
 		"hiddenBefore": "{n} davor",
 		"hiddenAfter": "{n} danach"
+	},
+	"qrCodeReader": {
+		"notAllowed": "Kein Zugriff auf die Kamera. Bitte erlauben Sie die Kamera für diese Seite im Browser und in den Einstellungen des Geräts.",
+		"notFound": "Keine Kamera gefunden.",
+		"notReadable": "Die Kamera lässt sich nicht starten. Vermutlich nutzt eine andere App oder ein anderer Tab sie gerade.",
+		"overconstrained": "Die gewählte Kamera ist nicht verfügbar.",
+		"insecureContext": "Die Kamera ist nur über HTTPS oder localhost verfügbar.",
+		"notSupported": "Dieser Browser unterstützt keinen Zugriff auf die Kamera.",
+		"timeout": "Die Kamera liefert kein Bild.",
+		"unknown": "Die Kamera lässt sich nicht starten: {0}"
 	}
 }
