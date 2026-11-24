@@ -1,1 +1,0 @@
-import{G as e,N as t,i as n,u as r,y as i}from"./runtime-core.esm-bundler-BFU0i2kt.js";var a=i({__name:`UiWindowTitle`,props:{ui:{}},setup(i){let a=i;return e(()=>{a.ui.value&&(document.title=a.ui.value)}),(e,i)=>(t(),r(n,{to:`body`}))}});export{a as default};
