@@ -189,6 +189,8 @@ func TestSetupFirstUserWithSSO(t *testing.T) {
 }
 
 func TestSetupWithoutEmail(t *testing.T) {
+	t.Setenv(onboarding.EnvInitialUserEmail, "")
+	t.Setenv(onboarding.EnvHubOnboardingMail, "")
 	app := setupApp(t, "", &mailbox{})
 	w := app.Open(t, nil, ".")
 	w.Find(nagotest.ID(uionboarding.IDProblem)).Find(nagotest.Text("Für diese Anwendung ist keine gültige Adresse für das erste Konto eingetragen.")).Exactly(1)

@@ -715,20 +715,27 @@ func TestLostDeliveryRefusesTheCode(t *testing.T) {
 	}
 }
 
-// The address of the first user is read from the configured variable only, which the hint to the operators names.
+// By default, the address of the first user is read from INITIAL_USER_EMAIL and then HUB_ONBOARDING_MAIL. A
+// configured variable is read only. The hint to the operators names the variable, which has been read.
 func TestAddressVariable(t *testing.T) {
 	const own = "NAGOTEST_FIRST_ADDRESS"
+	const initial, hub = onboarding.EnvInitialUserEmail, onboarding.EnvHubOnboardingMail
 	for _, tc := range []struct {
 		name    string
 		option  string            // EmailEnv
 		env     map[string]string // the environment
 		problem string            // the variable of the hint, empty for the welcome
 	}{
-		{name: "default", env: map[string]string{onboarding.EnvInitialUserEmail: address, own: ""}},
-		{name: "default missing", env: map[string]string{onboarding.EnvInitialUserEmail: "", own: address}, problem: onboarding.EnvInitialUserEmail},
-		{name: "own", option: own, env: map[string]string{onboarding.EnvInitialUserEmail: "", own: address}},
-		{name: "own missing, no fallback", option: own, env: map[string]string{onboarding.EnvInitialUserEmail: address, own: ""}, problem: own},
-		{name: "own invalid", option: own, env: map[string]string{onboarding.EnvInitialUserEmail: address, own: "no-mail"}, problem: own},
+		{name: "default", env: map[string]string{initial: address, hub: "", own: ""}},
+		{name: "default before hub", env: map[string]string{initial: address, hub: "no-mail", own: ""}},
+		{name: "hub", env: map[string]string{initial: "", hub: address, own: ""}},
+		{name: "hub, default blank", env: map[string]string{initial: "  ", hub: address, own: ""}},
+		{name: "default missing", env: map[string]string{initial: "", hub: "", own: address}, problem: initial},
+		{name: "default invalid", env: map[string]string{initial: "no-mail", hub: address, own: ""}, problem: initial},
+		{name: "hub invalid", env: map[string]string{initial: "", hub: "no-mail", own: ""}, problem: hub},
+		{name: "own", option: own, env: map[string]string{initial: "", hub: "", own: address}},
+		{name: "own missing, no fallback", option: own, env: map[string]string{initial: address, hub: address, own: ""}, problem: own},
+		{name: "own invalid", option: own, env: map[string]string{initial: address, hub: address, own: "no-mail"}, problem: own},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			for k, v := range tc.env {

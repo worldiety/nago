@@ -8,9 +8,9 @@
 // Package onboarding sets up the first account of an empty instance.
 //
 // A provisioning system like the wdyhub passes the mail address of the first user to the process, see
-// [EnvInitialUserEmail]. As long as there is no user at all, every page shows the setup instead. The visitor
-// proves to own the mail address by a code, which is sent to it, and then creates the account. The account is
-// verified, gets the configured roles, groups and permissions and the session is logged in.
+// [EnvInitialUserEmail] and [EnvHubOnboardingMail]. As long as there is no user at all, every page shows the setup
+// instead. The visitor proves to own the mail address by a code, which is sent to it, and then creates the account.
+// The account is verified, gets the configured roles, groups and permissions and the session is logged in.
 //
 // The code is the proof, not the session: a code is valid for every session, but it confirms only the session in
 // which it is entered. Codes are global for the instance and rate limited, because the mail address is fixed and
@@ -51,7 +51,11 @@ import (
 )
 
 // EnvInitialUserEmail is the environment variable with the mail address of the first user.
-const EnvInitialUserEmail = "HUB_ONBOARDING_MAIL"
+const EnvInitialUserEmail = "INITIAL_USER_EMAIL"
+
+// EnvHubOnboardingMail is the environment variable with the mail address of the first user, which the wdyhub sets.
+// It is read, if [EnvInitialUserEmail] is empty.
+const EnvHubOnboardingMail = "HUB_ONBOARDING_MAIL"
 
 type Problem string
 
