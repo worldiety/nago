@@ -9,10 +9,11 @@
 <template>
 	<div v-if="ui.pages?.value.length" :id="id" class="switcher" :class="classes">
 		<div ref="togglesContainer" class="toggles-container">
-			<div class="toggles">
+			<div class="toggles" role="tablist">
 				<template v-for="page in pages" :key="`switcher_toggle_${id}_${page.id}`">
 					<button
 						v-if="page.toggle"
+						:id="`switcher_tab_${id}_${page.id}`"
 						:ref="
 							(el) => {
 								if (ui.value === page.id) activeToggle = el as HTMLButtonElement;
@@ -21,6 +22,9 @@
 						class="toggle group"
 						:class="{ active: ui.value === page.id }"
 						:title="page.title"
+						role="tab"
+						:aria-selected="ui.value === page.id"
+						:aria-controls="`switcher_panel_${id}_${page.id}`"
 						@click="toggle(page.id || '')"
 					>
 						<UiGeneric :ui="page.toggle" class="opacity-50 group-hover:opacity-100 group-active:scale-90" />
@@ -33,6 +37,7 @@
 			<div class="content" :style="`height: ${switcherHeight}px; transition-duration: ${transitionDuration}ms;`">
 				<SwitcherPage
 					v-for="page in pages"
+					:id="`switcher_panel_${id}_${page.id}`"
 					:key="`switcher_page_${id}_${page.id}`"
 					ref="switcherPages"
 					:page-id="page.id as string"
@@ -41,6 +46,10 @@
 					:img="page.img"
 					:img-object-fit="ui.imageObjectFit"
 					:vertical="ui.orientation === OrientationValues.Vertical"
+					role="tabpanel"
+					:aria-labelledby="page.toggle ? `switcher_tab_${id}_${page.id}` : undefined"
+					:aria-label="page.toggle ? undefined : page.title"
+					tabindex="0"
 					@image-loaded="onImageLoad"
 				>
 					<UiGeneric :ui="page.content as Component" />
