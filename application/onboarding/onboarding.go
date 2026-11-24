@@ -18,6 +18,9 @@
 //
 // Instead of a password, the first user may sign in by the single sign-on of a Nago login service (NLS), see
 // [CompleteWithSSO]. Then, the setup configures the login service and decides who else may sign in by it.
+//
+// Before a code is requested, the setup tells whether the code can be sent at all, see [Delivery], and afterward,
+// what has become of the mail with the code, see [CodeStatus].
 package onboarding
 
 import (
@@ -69,7 +72,62 @@ type State struct {
 	// SSOServer is the login service, which the setup offers for the single sign-on, see [CompleteWithSSO]. It is
 	// empty, if the setup offers no single sign-on.
 	SSOServer string
+	// Delivery tells, whether the code can be sent. It is checked anew for every state, as long as the setup is
+	// pending, and zero otherwise.
+	Delivery Delivery
 }
+
+// DeliveryLevel tells, whether the code can be sent.
+type DeliveryLevel int
+
+const (
+	// DeliveryNone means, that there is no way to send the code, thus [RequestCode] fails with [ErrNoDelivery].
+	DeliveryNone DeliveryLevel = iota
+	// DeliveryTryable means, that the code can be sent, but whether it arrives shows only afterward, e.g. because
+	// the instance enrolls at the Nago Mail Service right now.
+	DeliveryTryable
+	// DeliveryAssured means, that there is a way to send the code, e.g. a custom [Deliver], an SMTP server or an
+	// enrollment at the Nago Mail Service.
+	DeliveryAssured
+)
+
+// Delivery of the code. It tells nothing about the delivery of a code, which has been sent, see [CodeStatus].
+type Delivery struct {
+	Level DeliveryLevel
+	// ExchangeFailedAt is the time of the last failed token exchange with the Nago Mail Service and NextExchangeAt
+	// the earliest time of the next one. Both are zero, if no exchange has failed or the instance holds a token.
+	ExchangeFailedAt time.Time
+	NextExchangeAt   time.Time
+}
+
+// CheckDelivery tells, whether the code can be sent right now. It is invoked anew by every [GetState] and
+// [RequestCode], as long as the setup is pending, so that a new way to send the code applies at once.
+type CheckDelivery func() Delivery
+
+// CodeStatus tells, what has become of the mail with the code.
+type CodeStatus int
+
+const (
+	// CodeStatusUnknown means, that nothing is known, e.g. because the code is delivered in a custom way.
+	CodeStatusUnknown CodeStatus = iota
+	// CodeStatusQueued means, that the mail waits to be sent.
+	CodeStatusQueued
+	// CodeStatusAccepted means, that the mail server or service has accepted the mail.
+	CodeStatusAccepted
+	// CodeStatusRetrying means, that sending has failed and is repeated.
+	CodeStatusRetrying
+	// CodeStatusFailed means, that the mail has not been sent and is not repeated.
+	CodeStatusFailed
+	// CodeStatusInLog means, that a custom [Deliver] has written the code to the log, e.g. during development.
+	CodeStatusInLog
+)
+
+// ReadCodeStatus returns the status of the code, which has been sent to the address at the given time.
+type ReadCodeStatus func(to user.Email, sentAt time.Time) CodeStatus
+
+// CurrentCodeStatus returns the status of the code, which has been sent last, while it is valid, and
+// [CodeStatusUnknown] otherwise.
+type CurrentCodeStatus func() CodeStatus
 
 // MaskedEmail returns the mail address with most characters of the local part replaced, so that a visitor of the
 // public setup page does not learn the address, but its owner recognizes it.
@@ -115,6 +173,7 @@ var (
 	ErrTooManyAttempts = errors.New("onboarding: too many wrong codes, request a new one")
 	ErrNotVerified     = errors.New("onboarding: the session has not been confirmed by a code")
 	ErrNoSSO           = errors.New("onboarding: the setup offers no single sign-on")
+	ErrNoDelivery      = errors.New("onboarding: there is no way to send the code")
 )
 
 // CooldownError is returned, if a code is requested too early.
@@ -129,7 +188,8 @@ func (e CooldownError) Error() string {
 // GetState returns the state of the setup.
 type GetState func() State
 
-// RequestCode sends a new code to the mail address of the first user. A former code becomes invalid.
+// RequestCode sends a new code to the mail address of the first user. A former code becomes invalid. Without a way
+// to send the code, see [DeliveryNone], it fails with [ErrNoDelivery] and keeps the former code.
 type RequestCode func(sid session.ID) (Code, error)
 
 // CurrentCode returns the code, which has been sent last, if it is still valid.
@@ -163,6 +223,7 @@ type UseCases struct {
 	State           GetState
 	RequestCode     RequestCode
 	CurrentCode     CurrentCode
+	CodeStatus      CurrentCodeStatus
 	VerifyCode      VerifyCode
 	Verified        Verified
 	Complete        Complete
@@ -212,6 +273,10 @@ type Deps struct {
 	LoginUser              session.LoginUser
 	Deliver                Deliver
 	Bus                    events.EventBus // optional
+	// CheckDelivery is optional, without it the code can always be sent, see [DeliveryAssured].
+	CheckDelivery CheckDelivery
+	// CodeStatus is optional, without it the status of a code is always [CodeStatusUnknown].
+	CodeStatus ReadCodeStatus
 
 	// required for the single sign-on, unless [Options.DisableSSO] is set
 	LoadGlobal   settings.LoadGlobal
@@ -317,6 +382,7 @@ func (s *setup) useCases() UseCases {
 		State:           s.state,
 		RequestCode:     s.requestCode,
 		CurrentCode:     s.currentCode,
+		CodeStatus:      s.codeStatus,
 		VerifyCode:      s.verifyCode,
 		Verified:        s.isVerified,
 		Complete:        s.complete,
@@ -368,9 +434,19 @@ func (s *setup) state() State {
 
 	if st.Pending {
 		st.SSOServer = s.ssoServer()
+		st.Delivery = s.delivery()
 	}
 
 	return st
+}
+
+// delivery checks anew, whether the code can be sent.
+func (s *setup) delivery() Delivery {
+	if s.deps.CheckDelivery == nil {
+		return Delivery{Level: DeliveryAssured}
+	}
+
+	return s.deps.CheckDelivery()
 }
 
 // ssoServer returns the login service, which the setup offers, or nothing.
@@ -401,6 +477,11 @@ func (s *setup) check() error {
 func (s *setup) requestCode(sid session.ID) (Code, error) {
 	if err := s.check(); err != nil {
 		return Code{}, err
+	}
+
+	// checked outside the mutex, because it may read repositories
+	if s.delivery().Level == DeliveryNone {
+		return Code{}, ErrNoDelivery
 	}
 
 	s.mutex.Lock()
@@ -449,6 +530,19 @@ func (s *setup) currentCode() (Code, bool) {
 	}
 
 	return s.codeLocked(), true
+}
+
+func (s *setup) codeStatus() CodeStatus {
+	if s.deps.CodeStatus == nil {
+		return CodeStatusUnknown
+	}
+
+	c, ok := s.currentCode()
+	if !ok {
+		return CodeStatusUnknown
+	}
+
+	return s.deps.CodeStatus(s.email, c.SentAt)
 }
 
 func (s *setup) codeLocked() Code {
