@@ -894,8 +894,9 @@ async function callRequestFocus(chan: Channel, evt: CallRequested, args: CallReq
 async function callMediaDevicesEnumerate(chan: Channel, evt: CallRequested, args: CallMediaDevicesEnumerate) {
 	const withAudio = args.withAudio ?? false;
 	const withVideo = args.withVideo ?? false;
+	let stream: MediaStream;
 	try {
-		await navigator.mediaDevices.getUserMedia({
+		stream = await navigator.mediaDevices.getUserMedia({
 			audio: withAudio,
 			video: withVideo,
 		});
@@ -906,7 +907,15 @@ async function callMediaDevicesEnumerate(chan: Channel, evt: CallRequested, args
 		return;
 	}
 
-	const devices = await navigator.mediaDevices.enumerateDevices();
+	// The stream only asks for the permission, so stop it as soon as the devices are known: a camera, which stays open,
+	// keeps most phones from starting another camera, e.g. the back camera of a QR code reader after the front camera
+	// of this stream. Stop it only after the enumeration, because Firefox reveals the labels only while a capture runs.
+	let devices: MediaDeviceInfo[];
+	try {
+		devices = await navigator.mediaDevices.enumerateDevices();
+	} finally {
+		stream.getTracks().forEach((track) => track.stop());
+	}
 	const tmp: MediaDevice[] = devices
 		.map(mapMediaDeviceInfoToMediaDevice)
 		.filter((d): d is MediaDevice => filterByMediaKind(d, withVideo, withAudio));
