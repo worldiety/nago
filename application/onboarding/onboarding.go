@@ -31,6 +31,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math/big"
+	"os"
 	"slices"
 	"strings"
 	"sync"
@@ -56,6 +57,26 @@ const EnvInitialUserEmail = "INITIAL_USER_EMAIL"
 // EnvHubOnboardingMail is the environment variable with the mail address of the first user, which the wdyhub sets.
 // It is read, if [EnvInitialUserEmail] is empty.
 const EnvHubOnboardingMail = "HUB_ONBOARDING_MAIL"
+
+// EmailFromEnv reads the address of the first user from the environment variable env or, if env is empty, from
+// [EnvInitialUserEmail] and then [EnvHubOnboardingMail]; a variable counts, if its value is not empty after trimming
+// white space. It returns the value as it is and the variable, which the hints to the operators name: the one with the
+// value, or else the first one. Applications, which need the same address outside of the setup, e.g. for a fallback
+// in development, use it instead of reading the variables themselves.
+func EmailFromEnv(env string) (email string, from string) {
+	vars := []string{env}
+	if env == "" {
+		vars = []string{EnvInitialUserEmail, EnvHubOnboardingMail}
+	}
+
+	for _, name := range vars {
+		if value := os.Getenv(name); strings.TrimSpace(value) != "" {
+			return value, name
+		}
+	}
+
+	return "", vars[0]
+}
 
 type Problem string
 

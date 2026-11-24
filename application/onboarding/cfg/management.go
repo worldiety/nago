@@ -13,9 +13,7 @@ import (
 	"log/slog"
 	"math"
 	netmail "net/mail"
-	"os"
 	"slices"
-	"strings"
 	"time"
 
 	"go.wdy.de/nago/application"
@@ -142,7 +140,7 @@ func Enable(cfg *application.Configurator, opts Options) (Management, error) {
 	emailEnv := cmp.Or(opts.EmailEnv, onboarding.EnvInitialUserEmail)
 	email := opts.Email
 	if email == "" {
-		email, emailEnv = emailFromEnv(opts.EmailEnv)
+		email, emailEnv = onboarding.EmailFromEnv(opts.EmailEnv)
 	}
 
 	settingsMgmt, err := cfg.SettingsManagement()
@@ -240,24 +238,6 @@ func Enable(cfg *application.Configurator, opts Options) (Management, error) {
 	cfg.AddContextValue(core.ContextValue("nago.onboarding.management", management))
 	slog.Info("installed onboarding module")
 	return management, nil
-}
-
-// emailFromEnv reads the address of the first user from the variable env or, if env is empty, from
-// [onboarding.EnvInitialUserEmail] and then [onboarding.EnvHubOnboardingMail]. It returns the variable, which the hints
-// to the operators name: the one, which has a value, or else the first one.
-func emailFromEnv(env string) (email string, from string) {
-	vars := []string{env}
-	if env == "" {
-		vars = []string{onboarding.EnvInitialUserEmail, onboarding.EnvHubOnboardingMail}
-	}
-
-	for _, name := range vars {
-		if value := os.Getenv(name); strings.TrimSpace(value) != "" {
-			return value, name
-		}
-	}
-
-	return "", vars[0]
 }
 
 // applyPendingSSO grants the chosen access, if the first user has signed in by single sign-on, while the
