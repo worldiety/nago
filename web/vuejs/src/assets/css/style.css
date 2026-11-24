@@ -43,3 +43,8 @@ body {
 .arrows-none {
 	-moz-appearance: textfield !important;
 }
+
+/* a dialog is only focused as starting point for the tab order and screen readers, it is not interactive */
+[data-modal-focus-start]:focus {
+	outline: none;
+}

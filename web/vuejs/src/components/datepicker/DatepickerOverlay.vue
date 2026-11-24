@@ -8,156 +8,170 @@
 -->
 
 <template>
-	<div ref="datepicker" class="datepicker" :class="{ 'double-mode': doubleMode, 'range-mode': rangeMode }">
+	<!-- like a regular modal, the overlay lives outside of the page content, so that it is a top-level dialog for
+	 assistive technologies and not nested within the surrounding page structure, e.g. a table or form -->
+	<Teleport to="#ora-modals">
 		<div
-			class="relative bg-M1 rounded-xl shadow-lg p-6 z-10"
-			role="dialog"
-			aria-modal="true"
-			:aria-label="headerText || undefined"
+			ref="datepicker"
+			class="datepicker pointer-events-auto"
+			:class="{ 'double-mode': doubleMode, 'range-mode': rangeMode }"
 		>
-			<div class="h-[22.75rem]">
-				<DatepickerHeader ref="datepickerHeader" :label="headerText" @close="emit('close')" />
+			<div
+				ref="dialog"
+				class="relative bg-M1 rounded-xl shadow-lg p-6 z-10"
+				role="dialog"
+				aria-modal="true"
+				:aria-labelledby="headerText ? titleId : undefined"
+			>
+				<div class="h-[22.75rem]">
+					<DatepickerHeader
+						ref="datepickerHeader"
+						:label="headerText"
+						:title-id="titleId"
+						@close="emit('close')"
+					/>
 
-				<hr class="border-I0" aria-hidden="true" />
+					<hr class="border-I0" aria-hidden="true" />
 
-				<div class="datepicker-months">
-					<!-- Datepicker content -->
-					<div v-for="i in monthsToShow" :key="`date_picker_month_${i}`" class="datepicker-content">
-						<div class="flex justify-between items-center mb-4 h-8">
-							<button
-								class="flex justify-center items-center rounded-full size-8"
-								:class="{
-									'opacity-50': lowerBoundReached && i === 1,
-									'hover:bg-I0/15 cursor-pointer': !lowerBoundReached,
-									'opacity-0 pointer-events-none': i !== 1,
-								}"
-								:tabindex="i !== 1 ? -1 : 0"
-								:aria-hidden="i !== 1"
-								:aria-label="$t('datepicker.overlay.decreaseMonth')"
-								@click="tryDecreaseMonth"
-								@keydown.enter="tryDecreaseMonth"
-							>
-								<ArrowRight class="rotate-180 h-4" />
-							</button>
-							<div class="flex justify-center items-center text-lg h-full">
-								<label
-									class="relative hover:bg-I0/15 border-0 bg-M1 rounded-l-md select-none h-full focus-within flex items-center px-1"
-								>
-									<span class="" aria-hidden="true">
-										{{ getSelectedMonthName(i - 1) }}
-									</span>
-									<select
-										:value="getSelectedMonth(i - 1)"
-										class="absolute top-0 left-0 size-full opacity-0 overflow-hidden cursor-pointer"
-										@change="onMonthChange($event, i - 1)"
-									>
-										<option
-											v-for="(monthEntry, index) of monthNames.entries()"
-											:key="index"
-											:value="monthEntry[0]"
-										>
-											{{ monthEntry[1] }}
-										</option>
-									</select>
-								</label>
-								<input
-									:value="getSelectedYear(i - 1)"
-									type="number"
-									step="1"
-									:min="minYear || 0"
-									class="hover:bg-I0/15 border-0 bg-M1 rounded-r-md w-14 h-full arrows-none text-center"
-									@keydown.enter="onYearChange($event, i - 1)"
-									@change="onYearChange($event, i - 1)"
-									@blur="onYearChange($event, i - 1)"
-								/>
-							</div>
-							<button
-								class="hover:bg-I0/15 flex justify-center items-center cursor-pointer rounded-full size-8"
-								:class="i !== monthsToShow ? 'opacity-0 pointer-events-none' : ''"
-								:tabindex="i !== monthsToShow ? -1 : 0"
-								:aria-label="$t('datepicker.overlay.increaseMonth')"
-								:aria-hidden="i !== monthsToShow"
-								@click="increaseMonth"
-								@keydown.enter="increaseMonth"
-							>
-								<ArrowRight class="h-4" />
-							</button>
-						</div>
-
-						<div class="datepicker-grid grid grid-cols-7 gap-y-2 text-center leading-none">
-							<span aria-hidden="true">Mo</span>
-							<span aria-hidden="true">Di</span>
-							<span aria-hidden="true">Mi</span>
-							<span aria-hidden="true">Do</span>
-							<span aria-hidden="true">Fr</span>
-							<span aria-hidden="true">Sa</span>
-							<span aria-hidden="true">So</span>
-
-							<div
-								v-for="(day, index) in getDatepickerDays(i - 1)"
-								:key="index"
-								class="relative flex justify-center items-center h-full w-full"
-								:class="{
-									'within-range-day': day.withinRange,
-									'selected-start-day-container': day.selectedStart,
-									'selected-end-day-container': day.selectedEnd,
-									'other-month-day': day.otherMonth,
-								}"
-							>
+					<div class="datepicker-months">
+						<!-- Datepicker content -->
+						<div v-for="i in monthsToShow" :key="`date_picker_month_${i}`" class="datepicker-content">
+							<div class="flex justify-between items-center mb-4 h-8">
 								<button
-									:ref="(el) => setLastDatepickerDayElement(el, index)"
-									class="day flex justify-center items-center"
+									class="flex justify-center items-center rounded-full size-8"
 									:class="{
-										'hover:bg-I0/15 cursor-pointer': day.selectable,
-										'unselectable-day': !day.selectable,
-										'selected-day': day.selectedStart || day.selectedEnd,
-										'text-disabled-text':
-											!day.withinRange && day.monthIndex !== getSelectedMonth(i - 1),
+										'opacity-50': lowerBoundReached && i === 1,
+										'hover:bg-I0/15 cursor-pointer': !lowerBoundReached,
+										'opacity-0 pointer-events-none': i !== 1,
 									}"
-									:tabindex="day.selectable ? '0' : '-1'"
-									:aria-label="`${day.dayOfMonth}. ${getMonthName(day.monthIndex)} ${day.year}`"
-									@click="trySelectDate(day)"
-									@keydown.enter.prevent="trySelectDate(day)"
+									:tabindex="i !== 1 ? -1 : 0"
+									:aria-hidden="i !== 1"
+									:aria-label="$t('datepicker.overlay.decreaseMonth')"
+									@click="tryDecreaseMonth"
+									@keydown.enter="tryDecreaseMonth"
 								>
-									<span class="select-none">{{ day.dayOfMonth }}</span>
+									<ArrowRight class="rotate-180 h-4" />
 								</button>
+								<div class="flex justify-center items-center text-lg h-full">
+									<label
+										class="relative hover:bg-I0/15 border-0 bg-M1 rounded-l-md select-none h-full focus-within flex items-center px-1"
+									>
+										<span class="" aria-hidden="true">
+											{{ getSelectedMonthName(i - 1) }}
+										</span>
+										<select
+											:value="getSelectedMonth(i - 1)"
+											class="absolute top-0 left-0 size-full opacity-0 overflow-hidden cursor-pointer"
+											@change="onMonthChange($event, i - 1)"
+										>
+											<option
+												v-for="(monthEntry, index) of monthNames.entries()"
+												:key="index"
+												:value="monthEntry[0]"
+											>
+												{{ monthEntry[1] }}
+											</option>
+										</select>
+									</label>
+									<input
+										:value="getSelectedYear(i - 1)"
+										type="number"
+										step="1"
+										:min="minYear || 0"
+										class="hover:bg-I0/15 border-0 bg-M1 rounded-r-md w-14 h-full arrows-none text-center"
+										@keydown.enter="onYearChange($event, i - 1)"
+										@change="onYearChange($event, i - 1)"
+										@blur="onYearChange($event, i - 1)"
+									/>
+								</div>
+								<button
+									class="hover:bg-I0/15 flex justify-center items-center cursor-pointer rounded-full size-8"
+									:class="i !== monthsToShow ? 'opacity-0 pointer-events-none' : ''"
+									:tabindex="i !== monthsToShow ? -1 : 0"
+									:aria-label="$t('datepicker.overlay.increaseMonth')"
+									:aria-hidden="i !== monthsToShow"
+									@click="increaseMonth"
+									@keydown.enter="increaseMonth"
+								>
+									<ArrowRight class="h-4" />
+								</button>
+							</div>
+
+							<div class="datepicker-grid grid grid-cols-7 gap-y-2 text-center leading-none">
+								<span aria-hidden="true">Mo</span>
+								<span aria-hidden="true">Di</span>
+								<span aria-hidden="true">Mi</span>
+								<span aria-hidden="true">Do</span>
+								<span aria-hidden="true">Fr</span>
+								<span aria-hidden="true">Sa</span>
+								<span aria-hidden="true">So</span>
+
+								<div
+									v-for="(day, index) in getDatepickerDays(i - 1)"
+									:key="index"
+									class="relative flex justify-center items-center h-full w-full"
+									:class="{
+										'within-range-day': day.withinRange,
+										'selected-start-day-container': day.selectedStart,
+										'selected-end-day-container': day.selectedEnd,
+										'other-month-day': day.otherMonth,
+									}"
+								>
+									<button
+										:ref="(el) => setLastDatepickerDayElement(el, index)"
+										class="day flex justify-center items-center"
+										:class="{
+											'hover:bg-I0/15 cursor-pointer': day.selectable,
+											'unselectable-day': !day.selectable,
+											'selected-day': day.selectedStart || day.selectedEnd,
+											'text-disabled-text':
+												!day.withinRange && day.monthIndex !== getSelectedMonth(i - 1),
+										}"
+										:tabindex="day.selectable ? '0' : '-1'"
+										:aria-label="`${day.dayOfMonth}. ${getMonthName(day.monthIndex)} ${day.year}`"
+										@click="trySelectDate(day)"
+										@keydown.enter.prevent="trySelectDate(day)"
+									>
+										<span class="select-none">{{ day.dayOfMonth }}</span>
+									</button>
+								</div>
 							</div>
 						</div>
 					</div>
 				</div>
+
+				<template v-if="rangeMode">
+					<hr class="border-ST0" aria-hidden="true" />
+
+					<div class="footer">
+						<!-- Reset button when in range mode -->
+						<button
+							v-if="rangeMode"
+							class="button-tertiary"
+							:class="{ 'w-full': !doubleMode }"
+							:disabled="rangeSelectionState !== RangeSelectionState.COMPLETE"
+							@click="clearSelection"
+						>
+							<undo-icon class="h-4" aria-hidden="true" /> Auswahl zurücksetzen
+						</button>
+
+						<!-- Confirm button when in range mode -->
+						<button
+							ref="confirmButton"
+							class="button-confirm button-primary"
+							:disabled="rangeSelectionState === RangeSelectionState.SELECT_END"
+							@click="emit('submitSelection')"
+						>
+							{{ t('datepicker.confirm') }}
+						</button>
+					</div>
+				</template>
 			</div>
 
-			<template v-if="rangeMode">
-				<hr class="border-ST0" aria-hidden="true" />
-
-				<div class="footer">
-					<!-- Reset button when in range mode -->
-					<button
-						v-if="rangeMode"
-						class="button-tertiary"
-						:class="{ 'w-full': !doubleMode }"
-						:disabled="rangeSelectionState !== RangeSelectionState.COMPLETE"
-						@click="clearSelection"
-					>
-						<undo-icon class="h-4" aria-hidden="true" /> Auswahl zurücksetzen
-					</button>
-
-					<!-- Confirm button when in range mode -->
-					<button
-						ref="confirmButton"
-						class="button-confirm button-primary"
-						:disabled="rangeSelectionState === RangeSelectionState.SELECT_END"
-						@click="emit('submitSelection')"
-					>
-						{{ t('datepicker.confirm') }}
-					</button>
-				</div>
-			</template>
+			<!-- Blurred Background -->
+			<div class="absolute top-0 left-0 bottom-0 right-0 bg-black/60 z-0" @click="emit('close')"></div>
 		</div>
-
-		<!-- Blurred Background -->
-		<div class="absolute top-0 left-0 bottom-0 right-0 bg-black/60 z-0" @click="emit('close')"></div>
-	</div>
+	</Teleport>
 </template>
 
 <script setup lang="ts">
@@ -172,6 +186,7 @@ import { RangeSelectionState } from '@/components/datepicker/rangeSelectionState
 import { weekNumber } from 'weeknumber';
 import monthNames from '@/shared/monthNames';
 import { ModalManager } from '@/components/shared/modalManager';
+import { randomStr } from '@/components/shared/util';
 
 const props = defineProps<{
 	rangeMode: boolean;
@@ -194,6 +209,8 @@ const { t } = useI18n();
 const datepickerHeader = useTemplateRef('datepickerHeader');
 const confirmButton = useTemplateRef('confirmButton');
 const datepicker = ref<HTMLElement | undefined>();
+const dialog = ref<HTMLElement | undefined>();
+const titleId = `datepicker-title-${randomStr(16)}`;
 
 const selectedMonth = ref<number>(props.selectedStartDate ? props.selectedStartDate.getMonth() : new Date().getMonth());
 const selectedYear = ref<number>(
@@ -422,14 +439,12 @@ function onKeydown(e: KeyboardEvent): void {
 	emit('close');
 }
 
+// like a regular dialog, the focus starts at the top of the dialog, so that screen readers read it from the beginning.
+// The title is focused instead of the dialog itself, because VoiceOver treats a focused, labelled dialog as a group,
+// which must be entered explicitly, before its content can be navigated.
 function focusInitialElement(): void {
-	if (!datepicker.value) return;
-
-	const initial =
-		datepicker.value.querySelector<HTMLElement>('.day.selected-day[tabindex="0"]') ??
-		datepickerHeader.value?.closeButton ??
-		ModalManager.getTabbableElements(datepicker.value)[0];
-	initial?.focus({ focusVisible: true } as any);
+	const start = headerText.value ? datepickerHeader.value?.title : dialog.value;
+	if (start) ModalManager.focusDialogStart(start);
 }
 
 onMounted(() => {

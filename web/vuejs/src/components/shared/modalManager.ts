@@ -82,6 +82,28 @@ export class ModalManager {
 		'[tabindex]',
 	].join(',');
 
+	// Moves the focus to the start of the dialog (the dialog itself or its title) without focusing an interactive
+	// element. The element is made programmatically focusable (but not tabbable), thus the next tab key press or the
+	// next screen reader navigation step starts at the top of the dialog.
+	// The element is only focusable temporarily: once the focus leaves it, the tabindex is removed again. Otherwise,
+	// VoiceOver treats the dialog as a focusable group and gets stuck at its boundary, when navigating backwards into
+	// it from outside.
+	static focusDialogStart(dialog: HTMLElement): void {
+		const addedTabIndex = !dialog.hasAttribute('tabindex');
+		if (addedTabIndex) dialog.setAttribute('tabindex', '-1');
+		dialog.setAttribute('data-modal-focus-start', '');
+
+		const release = () => {
+			dialog.removeEventListener('blur', release);
+			dialog.removeAttribute('data-modal-focus-start');
+			if (addedTabIndex) dialog.removeAttribute('tabindex');
+		};
+		dialog.addEventListener('blur', release);
+
+		dialog.focus({ preventScroll: true });
+		if (document.activeElement !== dialog) release();
+	}
+
 	// returns all tabbable elements within the given root in document order.
 	static getTabbableElements(root: Element): HTMLElement[] {
 		return Array.from(root.querySelectorAll<HTMLElement>(ModalManager.focusableSelector)).filter(

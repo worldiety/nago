@@ -11,7 +11,7 @@
 	<!-- Datepicker header -->
 	<div>
 		<div class="flex justify-between items-center gap-x-2">
-			<p class="truncate">{{ label ?? '' }}</p>
+			<p :id="titleId" ref="title" class="truncate">{{ label ?? '' }}</p>
 			<button
 				ref="closeButton"
 				class="button-tertiary square size-auto -mr-2.5 !p-2.5 text-ST0 focus:text-I0 hover:opacity-90"
@@ -32,6 +32,7 @@ import Close from '@/assets/svg/closeBold.svg';
 
 defineProps<{
 	label?: string;
+	titleId?: string;
 }>();
 
 defineEmits<{
@@ -39,6 +40,7 @@ defineEmits<{
 }>();
 
 const closeButton = useTemplateRef('closeButton');
+const title = useTemplateRef('title');
 
-defineExpose({ closeButton });
+defineExpose({ closeButton, title });
 </script>

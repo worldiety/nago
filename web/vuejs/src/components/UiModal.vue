@@ -101,29 +101,9 @@ function getDialog(): HTMLElement | undefined {
 	return dialogContainer.value?.querySelector('dialog') ?? undefined;
 }
 
-// Moves the focus to the start of the dialog (usually its title) without focusing an interactive element. The dialog
-// is made programmatically focusable (but not tabbable), thus the next tab key press or the next screen reader
-// navigation step starts at the top of the dialog.
-// The dialog is only focusable temporarily: once the focus leaves it, the tabindex is removed again. Otherwise,
-// VoiceOver treats the dialog as a focusable group and gets stuck at its boundary, when navigating backwards into
-// it from outside.
 function captureFocusInDialog(): void {
 	const dialog = getDialog();
-	if (!dialog) return;
-
-	const addedTabIndex = !dialog.hasAttribute('tabindex');
-	if (addedTabIndex) dialog.setAttribute('tabindex', '-1');
-	dialog.setAttribute('data-modal-focus-start', '');
-
-	const release = () => {
-		dialog.removeEventListener('blur', release);
-		dialog.removeAttribute('data-modal-focus-start');
-		if (addedTabIndex) dialog.removeAttribute('tabindex');
-	};
-	dialog.addEventListener('blur', release);
-
-	dialog.focus({ preventScroll: true });
-	if (document.activeElement !== dialog) release();
+	if (dialog) ModalManager.focusDialogStart(dialog);
 }
 
 function onKeydown(e: KeyboardEvent) {
@@ -181,10 +161,5 @@ onUnmounted(() => {
 .v-enter-from,
 .v-leave-to {
 	opacity: 0;
-}
-
-/* the dialog is only focused as starting point for the tab order, it is not interactive */
-[data-modal-focus-start]:focus {
-	outline: none;
 }
 </style>
