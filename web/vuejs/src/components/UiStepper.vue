@@ -1,5 +1,5 @@
 <template>
-	<div class="stepper-container" :aria-label="ariaLabelStepper" :style="stepperContainerStyles">
+	<div class="stepper-container" :aria-label="ariaLabelStepper" :style="stepperContainerStyles" aria-live="polite">
 		<div v-if="isSimple" class="simple-text">
 			<template v-if="(ui.value ?? 0) < (ui.steps?.value.length ?? 0)">
 				{{ ui.simpleText }}
@@ -33,22 +33,69 @@
 					}"
 					:style="stepStyles"
 				>
-					<div class="bubble" :style="bubbleStyles">
+					<div
+						class="invisible-step"
+						:style="invisibleStepStyles"
+						role="group"
+						:aria-labelledby="`step_${index}_title`"
+						:aria-describedby="`step_${index}_subtitle`"
+					>
+						<div class="bubble" :style="bubbleStyles" aria-hidden="true">
+							<span v-if="ui.numbers" class="label">
+								{{ index + 1 }}
+							</span>
+							<IconCheck />
+						</div>
+						<div
+							v-if="isHorizontal || isVertical || isSimpleList"
+							class="content"
+							:style="contentStyles"
+						>
+							<div
+								v-if="step.title"
+								:id="`step_${index}_title`"
+								class="title"
+								:aria-label="getStepAriaLabel(index)"
+								role="heading"
+							>
+								{{ step.title }}
+							</div>
+							<div v-if="step.subtitle && !isSimpleList" :id="`step_${index}_subtitle`" class="subtitle">
+								{{ step.subtitle }}
+							</div>
+						</div>
+					</div>
+					<div class="bubble" :style="bubbleStyles" aria-hidden="true">
 						<span v-if="ui.numbers" class="label">
 							{{ index + 1 }}
 						</span>
 						<IconCheck />
 					</div>
-					<div v-if="isHorizontal || isVertical || isSimpleList" class="content" :style="contentStyles">
+					<div
+						v-if="isHorizontal || isVertical || isSimpleList"
+						class="content"
+						:style="contentStyles"
+						aria-hidden="true"
+					>
 						<div v-if="step.title" class="title">
 							{{ step.title }}
 						</div>
-						<div v-if="step.subtitle && !isSimpleList" class="subtitle">
+						<div v-if="step.subtitle && !isSimpleList" class="subtitle" aria-hidden="true">
 							{{ step.subtitle }}
 						</div>
 					</div>
-					<div v-if="index < ui.steps.value.length - 1" class="line" :style="lineStyles"></div>
-					<div v-if="index < ui.steps.value.length - 1" class="line-active" :style="activeLineStyles"></div>
+					<div
+						v-if="index < ui.steps.value.length - 1"
+						class="line"
+						:style="lineStyles"
+						aria-hidden="true"
+					></div>
+					<div
+						v-if="index < ui.steps.value.length - 1"
+						class="line-active"
+						:style="activeLineStyles"
+						aria-hidden="true"
+					></div>
 				</div>
 			</template>
 		</div>
@@ -81,7 +128,7 @@ const isSimpleList = computed<boolean>(() => props.ui.layout === StepperLayoutVa
 const ariaLabelStepper = computed<string>(() => {
 	if (!props.ui.steps || !props.ui.steps.value.length) return t('stepper.aria.progressUnknown');
 	if ((props.ui.value ?? 0) >= props.ui.steps.value.length) return t('stepper.aria.progressComplete');
-	return t('stepper.aria.progress', { current: (props.ui.value ?? 0) + 1, total: props.ui.steps.value.length });
+	return `${t('stepper.aria.progress')}: ${t('stepper.aria.step', { current: (props.ui.value ?? 0) + 1, total: props.ui.steps.value.length })}`;
 });
 
 const stepperContainerStyles = computed<string>(() => {
@@ -103,6 +150,13 @@ const stepperStyles = computed<string>(() => {
 const stepStyles = computed<string>(() => {
 	if (isHorizontal.value || isSimple.value) return `min-width: ${stepSize.value}px;`;
 	if (isVertical.value || isSimpleList.value) return `min-height: ${stepSize.value}px;`;
+
+	return '';
+});
+
+const invisibleStepStyles = computed<string>(() => {
+	if (isHorizontal.value || isSimple.value) return `transform: translateX(-${bubbleSize.value / 2}px); padding-left: ${bubbleSize.value / 2}px; width: calc(100% + ${bubbleSize.value / 2}px);`;
+	if (isVertical.value || isSimpleList.value) return `transform: translateY(-${bubbleSize.value / 2}px); padding-top: ${bubbleSize.value / 2}px;`;
 
 	return '';
 });
@@ -157,6 +211,16 @@ const bubbleSize = computed<number>(() => {
 
 	return 0;
 });
+
+function getStepAriaLabel(stepIndex: number): string {
+	if (!props.ui.steps || !props.ui.steps.value.length) return '';
+	const step = props.ui.steps.value[stepIndex];
+	if (!step) return '';
+
+	if ((props.ui.value ?? 0) === stepIndex) return `${t('stepper.aria.current')}, ${step.title}`;
+	if ((props.ui.value ?? 0) > stepIndex) return `${t('stepper.aria.complete')}, ${step.title}`;
+	return `${t('stepper.aria.upcoming')}, ${step.title}`;
+}
 
 function calcLineLength() {
 	if (!stepper.value) return;
@@ -214,6 +278,10 @@ onBeforeUnmount(() => {
 
 		.step {
 			@apply relative flex flex-col;
+
+			.invisible-step {
+				@apply absolute flex flex-col size-full top-0 left-0 pointer-events-none opacity-0;
+			}
 
 			.bubble {
 				@apply relative mb-2 flex justify-center items-center rounded-full text-lg z-[1] shrink-0;
@@ -281,6 +349,10 @@ onBeforeUnmount(() => {
 
 			.step {
 				@apply flex-row gap-4;
+
+				.invisible-step {
+					@apply flex-row gap-4;
+				}
 
 				.bubble {
 					@apply mb-0 -translate-y-1/2;

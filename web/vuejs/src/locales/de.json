@@ -161,9 +161,13 @@
 	},
 	"stepper": {
 		"aria": {
+			"complete": "Abgeschlossen",
+			"current": "Aktuell",
+			"upcoming": "Ausstehend",
 			"progressUnknown": "Fortschritt: Unbekannt",
 			"progressComplete": "Fortschritt: Vollständig abgeschlossen",
-			"progress": "Fortschritt: Schritt {current} von {total}"
+			"progress": "Fortschritt",
+			"step": "Schritt {current} von {total}"
 		}
 	},
 	"text-field": {
