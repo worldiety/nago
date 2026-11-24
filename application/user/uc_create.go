@@ -206,9 +206,13 @@ func checkAllowedDomain(s Settings, email Email) error {
 }
 
 func PublishUserCreated(eventBus events.Bus, user User, notify bool) {
-	tag, err := language.Parse(user.Contact.DisplayLanguage)
-	if err != nil {
-		slog.Error("user contact has invalid preferred language", "err", err)
+	// an account of the login service may have no language
+	var tag language.Tag
+	if user.Contact.DisplayLanguage != "" {
+		var err error
+		if tag, err = language.Parse(user.Contact.DisplayLanguage); err != nil {
+			slog.Error("user contact has invalid preferred language", "err", err)
+		}
 	}
 
 	eventBus.Publish(Created{

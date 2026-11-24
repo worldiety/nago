@@ -145,7 +145,7 @@ func NewMergeSingleSignOnUser(mutex *sync.Mutex, bus events.Bus, repo Repository
 					return "", fmt.Errorf("cannot find user by id: %w", err)
 				}
 
-				if optUser.IsSome() {
+				if optUsr.IsSome() {
 					return "", fmt.Errorf("random id collision: %s: %w", id, os.ErrExist)
 				}
 			}
@@ -214,7 +214,9 @@ func NewMergeSingleSignOnUser(mutex *sync.Mutex, bus events.Bus, repo Repository
 				}
 			}
 
-			// done
+			// a new account counts as created like any other, but the login service has informed the user already
+			PublishUserCreated(bus, usr, false)
+
 			return usr.ID, nil
 		}
 

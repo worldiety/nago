@@ -292,3 +292,83 @@ func TestMergeSingleSignOnUser_AllowList(t *testing.T) {
 		}
 	}
 }
+
+// A new account of the login service counts as created like any other, without a mail to the user. Merging into an
+// existing account creates nothing and keeps its roles and groups.
+func TestMergeSingleSignOnUser_PublishesCreated(t *testing.T) {
+	cfg := Settings{DefaultSSORoles: []role.ID{"sso-role"}, DefaultSSOGroups: []group.ID{"sso-group"}}
+	for _, tc := range []struct {
+		name     string
+		existing []User
+		sso      SingleSignOnUser
+		created  bool
+	}{
+		{name: "new account", sso: SingleSignOnUser{ID: "entra-1", Email: "anna@example.com", Firstname: "Anna"}, created: true},
+		{name: "new account without language", sso: SingleSignOnUser{Email: "anna@example.com"}, created: true},
+		{name: "existing account by id", existing: []User{{ID: "1", Email: "anna@example.com", NLSManagedUser: true, NLSUserID: "entra-1", Status: Enabled{}}},
+			sso: SingleSignOnUser{ID: "entra-1", Email: "anna@example.com"}},
+		{name: "existing account by mail", existing: []User{{ID: "1", Email: "anna@example.com", Status: Enabled{}}},
+			sso: SingleSignOnUser{ID: "entra-1", Email: "Anna@Example.com"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			merge, _, _, bus, rdb := newMergeFixtureWith(t, cfg, tc.existing...)
+			for _, usr := range tc.existing {
+				if err := rdb.Put(rebac.Triple{
+					Source:   rebac.Entity{Namespace: role.Namespace, Instance: "kept-role"},
+					Relation: rebac.Member,
+					Target:   rebac.Entity{Namespace: Namespace, Instance: rebac.Instance(usr.ID)},
+				}); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			uid, err := merge(tc.sso, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			var created []Created
+			bus.mutex.Lock()
+			for _, evt := range bus.events {
+				if c, ok := evt.(Created); ok {
+					created = append(created, c)
+				}
+			}
+			bus.mutex.Unlock()
+
+			member := func(ns rebac.Namespace, id string) bool {
+				t.Helper()
+				ok, err := rdb.Contains(rebac.Triple{
+					Source:   rebac.Entity{Namespace: ns, Instance: rebac.Instance(id)},
+					Relation: rebac.Member,
+					Target:   rebac.Entity{Namespace: Namespace, Instance: rebac.Instance(uid)},
+				})
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				return ok
+			}
+
+			if !tc.created {
+				if len(created) != 0 || uid != "1" {
+					t.Fatalf("expected the existing account without a created event, got %s and %+v", uid, created)
+				}
+
+				if !member(role.Namespace, "kept-role") || member(role.Namespace, "sso-role") || member(group.Namespace, "sso-group") {
+					t.Fatal("the roles and groups of an existing account must not change")
+				}
+
+				return
+			}
+
+			if len(created) != 1 || created[0].ID != uid || created[0].NotifyUser || created[0].Email != "anna@example.com" || created[0].CreatedAt.IsZero() {
+				t.Fatalf("expected one created event of %s without notification, got %+v", uid, created)
+			}
+
+			if !member(role.Namespace, "sso-role") || !member(group.Namespace, "sso-group") {
+				t.Fatal("expected the sso default role and group")
+			}
+		})
+	}
+}
