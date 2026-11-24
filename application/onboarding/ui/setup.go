@@ -40,8 +40,7 @@ var (
 	StrPasswordsDiffer   = i18n.MustString("nago.onboarding.passwords_differ", i18n.Values{language.German: "Die Passwörter stimmen nicht überein.", language.English: "The passwords do not match."})
 	StrRequired          = i18n.MustString("nago.onboarding.required", i18n.Values{language.German: "Bitte ausfüllen.", language.English: "Please fill in."})
 	StrCreateAccount     = i18n.MustString("nago.onboarding.create_account", i18n.Values{language.German: "Konto anlegen", language.English: "Create account"})
-	StrProblemTitle      = i18n.MustString("nago.onboarding.problem_title", i18n.Values{language.German: "Einrichtung nicht möglich", language.English: "Setup not possible"})
-	StrProblem           = i18n.MustString("nago.onboarding.problem", i18n.Values{language.German: "Für diese Anwendung wurde kein Einrichtungsnutzer konfiguriert. Bitte wende dich an den Support.", language.English: "No setup user has been configured for this application. Please contact the support."})
+	StrProblemTitle      = i18n.MustString("nago.onboarding.problem_title", i18n.Values{language.German: "Einrichtung noch nicht möglich", language.English: "Setup not possible yet"})
 	StrDoneTitle         = i18n.MustString("nago.onboarding.done_title", i18n.Values{language.German: "Einrichtung abgeschlossen", language.English: "Setup completed"})
 	StrDone              = i18n.MustString("nago.onboarding.done", i18n.Values{language.German: "Diese Anwendung ist bereits eingerichtet.", language.English: "This application has already been set up."})
 	StrContinue          = i18n.MustString("nago.onboarding.continue", i18n.Values{language.German: "Weiter", language.English: "Continue"})
@@ -51,6 +50,47 @@ var (
 	StrErrNoCode         = i18n.MustString("nago.onboarding.err_no_code", i18n.Values{language.German: "Es ist kein Code gültig. Bitte fordere einen neuen an.", language.English: "No code is valid. Please request a new one."})
 	StrErrCooldownX      = i18n.MustVarString("nago.onboarding.err_cooldown_x", i18n.Values{language.German: "Ein neuer Code kann ab {time} Uhr angefordert werden.", language.English: "A new code can be requested at {time}."})
 	StrErrNotVerified    = i18n.MustString("nago.onboarding.err_not_verified", i18n.Values{language.German: "Die Bestätigung ist abgelaufen. Bitte fordere einen neuen Code an.", language.English: "The confirmation has expired. Please request a new code."})
+	StrErrNoDelivery     = i18n.MustString("nago.onboarding.err_no_delivery", i18n.Values{language.German: "Diese Anwendung kann gerade keine E-Mails versenden.", language.English: "This application cannot send mails right now."})
+)
+
+// texts of the problem step and the delivery of the code
+var (
+	StrNoDelivery         = i18n.MustString("nago.onboarding.no_delivery", i18n.Values{language.German: "Diese Anwendung kann noch keine E-Mails versenden.", language.English: "This application cannot send mails yet."})
+	StrNoDeliveryCode     = i18n.MustString("nago.onboarding.no_delivery_code", i18n.Values{language.German: "Der Code für das erste Konto kommt per E-Mail.", language.English: "The code for the first account is sent by mail."})
+	StrNoAddress          = i18n.MustString("nago.onboarding.no_address", i18n.Values{language.German: "Für diese Anwendung ist keine gültige Adresse für das erste Konto eingetragen.", language.English: "No valid address for the first account has been configured for this application."})
+	StrContactOperators   = i18n.MustString("nago.onboarding.contact_operators", i18n.Values{language.German: "Bitte wende dich an den Betrieb dieser Anwendung.", language.English: "Please contact the operators of this application."})
+	StrExchangeFailedX    = i18n.MustVarString("nago.onboarding.exchange_failed_x", i18n.Values{language.German: "Letzter Anmeldeversuch beim Nago Mail Service gescheitert: {time} Uhr. Nächster Versuch frühestens {next} Uhr.", language.English: "The last sign-in at the Nago Mail Service failed at {time}. The next attempt is at {next} at the earliest."})
+	StrForOperators       = i18n.MustString("nago.onboarding.for_operators", i18n.Values{language.German: "Für den Betrieb", language.English: "For the operators"})
+	StrHintEmailX         = i18n.MustVarString("nago.onboarding.hint_email_x", i18n.Values{language.German: "{env} fehlt oder ist ungültig.", language.English: "{env} is missing or invalid."})
+	StrHintMailServiceX   = i18n.MustVarString("nago.onboarding.hint_mail_service_x", i18n.Values{language.German: "Nago Mail Service nicht verfügbar: öffentliche https-Adresse nötig, Token fehlt oder {env}=off.", language.English: "Nago Mail Service not available: a public https address is required, the token is missing or {env}=off."})
+	StrHintSMTP           = i18n.MustString("nago.onboarding.hint_smtp", i18n.Values{language.German: "Kein SMTP-Konto in der Systemgruppe; es lässt sich erst nach dem ersten Konto hinterlegen.", language.English: "No SMTP account in the system group; it can only be added after the first account."})
+	StrRecheck            = i18n.MustString("nago.onboarding.recheck", i18n.Values{language.German: "Erneut prüfen", language.English: "Check again"})
+	StrDeliveryTryable    = i18n.MustString("nago.onboarding.delivery_tryable", i18n.Values{language.German: "Diese Anwendung meldet sich gerade beim Nago Mail Service an. Ob der Code ankommt, zeigt sich erst nach dem Senden.", language.English: "This application is signing in at the Nago Mail Service right now. Whether the code arrives shows only after sending."})
+	StrCodeStatusQueued   = i18n.MustString("nago.onboarding.code_status_queued", i18n.Values{language.German: "Code in der Warteschlange, noch nicht zugestellt", language.English: "Code queued, not delivered yet"})
+	StrCodeStatusAccepted = i18n.MustString("nago.onboarding.code_status_accepted", i18n.Values{language.German: "Code vom Versandweg angenommen", language.English: "Code accepted for delivery"})
+	StrCodeStatusRetrying = i18n.MustString("nago.onboarding.code_status_retrying", i18n.Values{language.German: "Versand gescheitert, wird wiederholt", language.English: "Sending failed, it is repeated"})
+	StrCodeStatusFailed   = i18n.MustString("nago.onboarding.code_status_failed", i18n.Values{language.German: "Code konnte nicht gesendet werden", language.English: "The code could not be sent"})
+	StrCodeStatusInLog    = i18n.MustString("nago.onboarding.code_status_in_log", i18n.Values{language.German: "Code steht im Log", language.English: "The code is in the log"})
+	StrImpress            = i18n.MustString("nago.onboarding.impress", i18n.Values{language.German: "Impressum", language.English: "Legal notice"})
+	StrPrivacyPolicy      = i18n.MustString("nago.onboarding.privacy_policy", i18n.Values{language.German: "Datenschutz", language.English: "Privacy policy"})
+)
+
+// IDs of the regions of the default page, e.g. for tests of an application.
+const (
+	// IDProblem is the banner of the problem step with its reasons.
+	IDProblem = "onboarding-problem"
+	// IDExchangeFailed is the line of the problem step with the times of a failed token exchange.
+	IDExchangeFailed = "onboarding-exchange-failed"
+	// IDOperators is the collapsible hints to the operators of the problem step.
+	IDOperators = "onboarding-operators"
+	// IDRecheck is the button of the problem step, which reads the state anew. Its key is ("onboarding", "recheck").
+	IDRecheck = "onboarding-recheck"
+	// IDTryable is the hint of the welcome step, while the code can only be tried, see [onboarding.DeliveryTryable].
+	IDTryable = "onboarding-tryable"
+	// IDCodeStatus is the status line of the mail with the code in the code step.
+	IDCodeStatus = "onboarding-code-status"
+	// IDLegal is the line with the links to the legal texts below the card.
+	IDLegal = "onboarding-legal"
 )
 
 // Setup is the default setup page.
@@ -75,11 +115,13 @@ func Setup(wnd core.Window, flow *Flow) core.View {
 	var subtitle string
 	var body core.View
 	var actions []core.View
+	var above []core.View // hints above the card
 
-	switch flow.Step() {
+	switch flow.stepOf(st) {
 	case StepProblem:
 		title = StrProblemTitle.Get(wnd)
-		body = alert.Banner(StrProblemTitle.Get(wnd), StrProblem.Get(wnd)).Intent(alert.IntentError).Frame(ui.Frame{}.FullWidth())
+		body = problemView(wnd, flow.opts, st)
+		actions = append(actions, ui.SecondaryButton(flow.Recheck).Title(StrRecheck.Get(wnd)).ID(IDRecheck).Key("onboarding", "recheck"))
 
 	case StepDone:
 		title = StrDoneTitle.Get(wnd)
@@ -89,12 +131,19 @@ func Setup(wnd core.Window, flow *Flow) core.View {
 		}).Title(StrContinue.Get(wnd)).Key("onboarding", "continue"))
 
 	case StepWelcome:
+		if st.Delivery.Level == onboarding.DeliveryTryable {
+			above = append(above, banner(alert.IntentOk, IDTryable, ui.Text(StrDeliveryTryable.Get(wnd)).Font(bannerFont)))
+		}
+
 		body = ui.Text(StrWelcome.Get(wnd, i18n.String("email", email)))
 		actions = append(actions, ui.PrimaryButton(func() {
 			codeErr.Set("")
 			if err := flow.RequestCode(); err != nil {
 				var cooldown onboarding.CooldownError
-				if !errors.As(err, &cooldown) {
+				switch {
+				case errors.Is(err, onboarding.ErrNoDelivery):
+					return // the window renders the problem step again
+				case !errors.As(err, &cooldown):
 					alert.ShowBannerError(wnd, err)
 					return
 				}
@@ -104,6 +153,10 @@ func Setup(wnd core.Window, flow *Flow) core.View {
 		}).Title(StrStart.Get(wnd)).Key("onboarding", "start"))
 
 	case StepCode:
+		if status := codeStatusView(wnd, flow.CodeStatus()); status != nil {
+			above = append(above, status)
+		}
+
 		subtitle = StrCodeSubtitle.Get(wnd, i18n.String("email", email))
 		hint := ""
 		if c, ok := flow.Code(); ok {
@@ -185,11 +238,18 @@ func Setup(wnd core.Window, flow *Flow) core.View {
 		}).Title(StrCreateAccount.Get(wnd)).Key("onboarding", "create"))
 	}
 
+	var hints core.View
+	if len(above) > 0 {
+		hints = ui.VStack(above...).Gap(ui.L8).Frame(ui.Frame{Width: ui.Full, MaxWidth: ui.L480})
+	}
+
 	return ui.VStack(
 		ui.VStack(
 			alert.BannerMessages(wnd),
 			ui.WindowTitle(title),
+			hints,
 			uisession.LoginRegisterCard(wnd, themeSettings.PageLogoLight, themeSettings.PageLogoDark, title, subtitle, body, actions...),
+			legalLinks(wnd, flow.Legal()),
 		).Gap(ui.L16).FullWidth(),
 	).Frame(ui.Frame{}.MatchScreen())
 }
@@ -217,6 +277,8 @@ func errorText(wnd core.Window, err error) string {
 		return StrErrNoCode.Get(wnd)
 	case errors.Is(err, onboarding.ErrNotVerified):
 		return StrErrNotVerified.Get(wnd)
+	case errors.Is(err, onboarding.ErrNoDelivery):
+		return StrErrNoDelivery.Get(wnd)
 	default:
 		return err.Error()
 	}

@@ -24,6 +24,8 @@ import (
 	"go.wdy.de/nago/application/permission"
 	"go.wdy.de/nago/application/role"
 	"go.wdy.de/nago/application/session"
+	"go.wdy.de/nago/application/settings"
+	"go.wdy.de/nago/application/theme"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/application/user/tplmail"
 	"go.wdy.de/nago/pkg/events"
@@ -51,11 +53,29 @@ type Options struct {
 	// [application.Configurator.SetDecorator]. By default, the page stands alone like the login page.
 	Scaffold bool
 
-	// Exempt lists routes, which are shown even as long as the setup is pending, e.g. a legal notice.
+	// Exempt lists routes, which are shown even as long as the setup is pending, e.g. a legal notice. The internal
+	// routes of the legal texts of the theme settings at the start and of Impress and PrivacyPolicy are always
+	// exempt.
 	Exempt []core.NavigationPath
 
-	// Deliver optionally replaces the mail with the code, e.g. in tests.
+	// Impress and PrivacyPolicy are the links to the legal texts below the card of the setup: an external address
+	// with "://" or a route of the application. An empty value falls back to the one of the theme settings, see
+	// [theme.Settings], and without both, there is no link.
+	Impress       string
+	PrivacyPolicy string
+
+	// Deliver optionally replaces the mail with the code, e.g. in tests or by a log during development.
 	Deliver onboarding.Deliver
+
+	// Delivery optionally replaces the check, whether the code can be sent. By default, a custom Deliver is
+	// assured. Otherwise, the mail is assured by an SMTP secret shared with the system group or the enrollment at
+	// the Nago Mail Service, and tryable, while the Nago Mail Service is available for a token exchange.
+	Delivery onboarding.CheckDelivery
+
+	// CodeStatus optionally replaces the status of the mail with the code, e.g. [onboarding.CodeStatusInLog] for a
+	// custom Deliver, which logs the code. By default, the status of the newest outgoing mail to the address since
+	// the code has been sent is shown, and nothing for a custom Deliver.
+	CodeStatus onboarding.ReadCodeStatus
 
 	CodeLifetime   time.Duration // default 15 minutes
 	ResendCooldown time.Duration // default 1 minute
@@ -91,7 +111,8 @@ func Enable(cfg *application.Configurator, opts Options) (Management, error) {
 		return Management{}, fmt.Errorf("onboarding requires the session management: %w", err)
 	}
 
-	deliver := opts.Deliver
+	// a custom delivery is assured and tells no status by default, which an unset check and status mean
+	deliver, checkDelivery, codeStatus := opts.Deliver, opts.Delivery, opts.CodeStatus
 	if deliver == nil {
 		mails, err := cfg.MailManagement()
 		if err != nil {
@@ -99,6 +120,19 @@ func Enable(cfg *application.Configurator, opts Options) (Management, error) {
 		}
 
 		deliver = mailDeliver(cfg, mails)
+
+		if checkDelivery == nil {
+			secrets, err := cfg.SecretManagement()
+			if err != nil {
+				return Management{}, fmt.Errorf("onboarding requires the secret management: %w", err)
+			}
+
+			checkDelivery = mailDelivery(cfg.SysUser, secrets.UseCases.FindGroupSecrets, mails.MailService)
+		}
+
+		if codeStatus == nil {
+			codeStatus = mailCodeStatus(cfg.SysUser, mails.UseCases.FindOutgoingIDs, mails.UseCases.FindOutgoingByID)
+		}
 	}
 
 	email := opts.Email
@@ -138,6 +172,8 @@ func Enable(cfg *application.Configurator, opts Options) (Management, error) {
 		LoginUser:              sessions.UseCases.LoginUser,
 		Deliver:                deliver,
 		Bus:                    cfg.EventBus(),
+		CheckDelivery:          checkDelivery,
+		CodeStatus:             codeStatus,
 		LoadGlobal:             settingsMgmt.UseCases.LoadGlobal,
 		StoreGlobal:            settingsMgmt.UseCases.StoreGlobal,
 		StartNLSFlow:           sessions.UseCases.StartNLSFlow,
@@ -158,8 +194,14 @@ func Enable(cfg *application.Configurator, opts Options) (Management, error) {
 		Pages:    uionboarding.Pages{Setup: "onboarding/setup"},
 	}
 
+	flowOpts := uionboarding.FlowOptions{
+		Impress:        opts.Impress,
+		PrivacyPolicy:  opts.PrivacyPolicy,
+		MailServiceEnv: application.EnvMailService,
+	}
+
 	render := func(wnd core.Window) core.View {
-		flow := uionboarding.NewFlow(wnd, uc, users.UseCases.SubjectFromUser)
+		flow := uionboarding.NewFlow(wnd, uc, users.UseCases.SubjectFromUser, flowOpts)
 		if opts.Page != nil {
 			return opts.Page(wnd, flow)
 		}
@@ -173,7 +215,7 @@ func Enable(cfg *application.Configurator, opts Options) (Management, error) {
 
 	cfg.RootView(management.Pages.Setup, render)
 
-	exempt := slices.Clone(opts.Exempt)
+	exempt := exemptRoutes(settings.ReadGlobal[theme.Settings](settingsMgmt.UseCases.LoadGlobal), opts)
 	cfg.AddRootViewInterceptor(func(wnd core.Window) (core.View, bool) {
 		if slices.Contains(exempt, wnd.Path()) || !uc.State().Pending {
 			return nil, false
@@ -183,11 +225,13 @@ func Enable(cfg *application.Configurator, opts Options) (Management, error) {
 	})
 
 	if st := uc.State(); st.Pending {
-		switch st.Problem {
-		case onboarding.NoProblem:
-			slog.Info("onboarding: the instance has no user, the setup is pending", "email", st.MaskedEmail())
-		default:
+		switch {
+		case st.Problem != onboarding.NoProblem:
 			slog.Error("onboarding: the instance has no user, but the setup cannot be done", "problem", st.Problem, "env", onboarding.EnvInitialUserEmail)
+		case st.Delivery.Level == onboarding.DeliveryNone:
+			slog.Error("onboarding: the instance has no user, but the code cannot be sent: no smtp server is shared with the system group and the nago mail service is not available", "env", application.EnvMailService)
+		default:
+			slog.Info("onboarding: the instance has no user, the setup is pending", "email", st.MaskedEmail())
 		}
 	}
 

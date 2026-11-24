@@ -17,6 +17,7 @@ import (
 	"go.wdy.de/nago/application"
 	"go.wdy.de/nago/application/onboarding"
 	cfgonboarding "go.wdy.de/nago/application/onboarding/cfg"
+	uionboarding "go.wdy.de/nago/application/onboarding/ui"
 	"go.wdy.de/nago/application/session"
 	"go.wdy.de/nago/application/settings"
 	"go.wdy.de/nago/application/user"
@@ -186,6 +187,6 @@ func TestSetupFirstUserWithSSO(t *testing.T) {
 func TestSetupWithoutEmail(t *testing.T) {
 	app := setupApp(t, "", &mailbox{})
 	w := app.Open(t, nil, ".")
-	w.Find(nagotest.TextContains("Bitte wende dich an den Support")).Exactly(1)
+	w.Find(nagotest.ID(uionboarding.IDProblem)).Find(nagotest.Text("Für diese Anwendung ist keine gültige Adresse für das erste Konto eingetragen.")).Exactly(1)
 	w.FindAll(nagotest.Text("Einrichtung starten")).None()
 }

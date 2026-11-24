@@ -9,8 +9,10 @@ package uionboarding
 
 import (
 	"log/slog"
+	"strings"
 
 	"go.wdy.de/nago/application/onboarding"
+	"go.wdy.de/nago/application/theme"
 	"go.wdy.de/nago/application/user"
 	"go.wdy.de/nago/presentation/core"
 )
@@ -24,9 +26,11 @@ type Pages struct {
 type Step int
 
 const (
-	// StepProblem means, that the setup cannot be done, see [onboarding.State.Problem].
+	// StepProblem means, that the setup cannot be done: the address is missing or invalid, see
+	// [onboarding.State.Problem], or no code has been requested yet and there is no way to send it, see
+	// [onboarding.DeliveryNone]. A code, which has been sent, keeps the window in [StepCode].
 	StepProblem Step = iota
-	// StepWelcome means, that no code is valid right now.
+	// StepWelcome means, that no code is valid right now and a code can be sent, see [onboarding.State.Delivery].
 	StepWelcome
 	// StepCode means, that a code has been sent and waits to be entered.
 	StepCode
@@ -53,25 +57,51 @@ const (
 	MethodPassword
 )
 
+// FlowOptions configure a [Flow], see [NewFlow].
+type FlowOptions struct {
+	// Impress and PrivacyPolicy are the links to the legal texts below the card of every step, see [Flow.Legal]. An
+	// empty value falls back to the one of the theme settings, see [theme.Settings].
+	Impress       string
+	PrivacyPolicy string
+	// MailServiceEnv is the name of the environment variable, which turns the Nago Mail Service off, for the hints
+	// to the operators on the problem step, see [StepProblem].
+	MailServiceEnv string
+}
+
+// Legal are the links to the legal texts. An empty value has no link. A value with "://" is an external address,
+// which opens in a new tab, any other value is a route of the application.
+type Legal struct {
+	Impress       string
+	PrivacyPolicy string
+}
+
 // Flow binds the use cases to the session of a window. Custom setup pages build on it. Every action renders the
 // window again, because the state of the setup is not a state of the window.
 type Flow struct {
 	wnd             core.Window
 	uc              onboarding.UseCases
 	subjectFromUser user.SubjectFromUser
+	opts            FlowOptions
 	changed         *core.State[int]
 	method          *core.State[Method]
 }
 
-// NewFlow creates the flow of the window. The subjectFromUser function logs the window in after the setup.
-func NewFlow(wnd core.Window, uc onboarding.UseCases, subjectFromUser user.SubjectFromUser) *Flow {
-	return &Flow{
+// NewFlow creates the flow of the window. The subjectFromUser function logs the window in after the setup. At most
+// one FlowOptions is used.
+func NewFlow(wnd core.Window, uc onboarding.UseCases, subjectFromUser user.SubjectFromUser, opts ...FlowOptions) *Flow {
+	f := &Flow{
 		wnd:             wnd,
 		uc:              uc,
 		subjectFromUser: subjectFromUser,
 		changed:         core.StateOf[int](wnd, "nago.onboarding.flow"),
 		method:          core.StateOf[Method](wnd, "nago.onboarding.method"),
 	}
+
+	if len(opts) > 0 {
+		f.opts = opts[0]
+	}
+
+	return f
 }
 
 func (f *Flow) Window() core.Window {
@@ -84,7 +114,11 @@ func (f *Flow) State() onboarding.State {
 
 // Step derives the current step.
 func (f *Flow) Step() Step {
-	st := f.uc.State()
+	return f.stepOf(f.uc.State())
+}
+
+// stepOf derives the step from the given state, so that a page shows the step and its reasons of the same state.
+func (f *Flow) stepOf(st onboarding.State) Step {
 	switch {
 	case !st.Pending:
 		return StepDone
@@ -105,7 +139,44 @@ func (f *Flow) Step() Step {
 		return StepCode
 	}
 
+	// the delivery only matters, before a code has been sent
+	if st.Delivery.Level == onboarding.DeliveryNone {
+		return StepProblem
+	}
+
 	return StepWelcome
+}
+
+// Recheck renders the window again, which reads the state of the setup anew, e.g. after the operators have added a
+// way to send the code.
+func (f *Flow) Recheck() {
+	f.changed.Invalidate()
+}
+
+// CodeStatus tells, what has become of the mail with the valid code, see [onboarding.CurrentCodeStatus].
+func (f *Flow) CodeStatus() onboarding.CodeStatus {
+	if f.uc.CodeStatus == nil {
+		return onboarding.CodeStatusUnknown
+	}
+
+	return f.uc.CodeStatus()
+}
+
+// Legal returns the links to the legal texts, see [FlowOptions.Impress] and [FlowOptions.PrivacyPolicy].
+func (f *Flow) Legal() Legal {
+	legal := Legal{Impress: strings.TrimSpace(f.opts.Impress), PrivacyPolicy: strings.TrimSpace(f.opts.PrivacyPolicy)}
+	if legal.Impress == "" || legal.PrivacyPolicy == "" {
+		themeSettings := core.GlobalSettings[theme.Settings](f.wnd)
+		if legal.Impress == "" {
+			legal.Impress = strings.TrimSpace(themeSettings.Impress)
+		}
+
+		if legal.PrivacyPolicy == "" {
+			legal.PrivacyPolicy = strings.TrimSpace(themeSettings.PrivacyPolicy)
+		}
+	}
+
+	return legal
 }
 
 // Code returns the code, which has been sent last, if it is still valid.
