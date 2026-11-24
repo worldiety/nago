@@ -8,8 +8,10 @@
 package application
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
+	"os"
 	"path/filepath"
 
 	"github.com/joho/godotenv"
@@ -43,7 +45,21 @@ func (a *Application) Stop() {
 	a.cfg.done()
 }
 
+// Run runs the application until it is stopped. If the application cannot start, because a migration fails or the
+// server cannot open its port (e.g. it is taken), Run logs the error, cleans up and ends the process with exit code 1,
+// so that the operation (systemd, Kubernetes, a hub) sees the failure instead of a regular end. Every other end,
+// including one by an error while serving or shutting down, returns as before.
 func (a *Application) Run() {
+	if err := a.run(); errors.Is(err, errStart) {
+		os.Exit(1)
+	}
+}
+
+// errStart marks an error, with which the application could not start.
+var errStart = errors.New("application could not start")
+
+// run is Run without the exit code; an error, with which the application could not start, wraps errStart.
+func (a *Application) run() error {
 
 	defer func() {
 		a.cfg.done()
@@ -54,7 +70,7 @@ func (a *Application) Run() {
 	if mg := a.cfg.migrations; mg != nil {
 		if err := mg.Apply(a.cfg.Context()); err != nil {
 			logger.Error("failed to apply migrations, exiting", "err", err.Error())
-			return
+			return fmt.Errorf("%w: migrations: %w", errStart, err)
 		}
 	}
 
@@ -76,10 +92,11 @@ func (a *Application) Run() {
 		}
 	}
 
+	var runErr error
 	if !a.cfg.oneShot {
-		err := a.runServer()
-		if err != nil {
-			logger.Error("application error", "err", err)
+		runErr = a.runServer()
+		if runErr != nil {
+			logger.Error("application error", "err", runErr)
 		}
 	} else {
 		slog.Info("one shot mode enabled, exiting")
@@ -91,8 +108,13 @@ func (a *Application) Run() {
 		app.Destroy()
 	}
 
-	logger.Info("successful shutdown")
+	if errors.Is(runErr, errStart) {
+		logger.Error("shutdown, the application could not start", "err", runErr)
+		return runErr
+	}
 
+	logger.Info("successful shutdown")
+	return runErr
 }
 
 func (a *Application) runServer() error {
@@ -101,7 +123,7 @@ func (a *Application) runServer() error {
 	a.cfg.defaultLogger().Info("launching server", slog.String("host", host), slog.Int("port", port))
 	httpSrv, err := server.NewServer(host, port)
 	if err != nil {
-		return fmt.Errorf("server.New: %w", err)
+		return fmt.Errorf("%w: server.New: %w", errStart, err)
 	}
 
 	return httpSrv.ServeHTTPHandler(a.cfg.defaultLogger(), a.cfg.Context(), a.cfg.newHandler())
