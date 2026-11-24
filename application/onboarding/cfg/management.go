@@ -180,12 +180,9 @@ func Enable(cfg *application.Configurator, opts Options) (Management, error) {
 		PendingSSO:             pendingSSO,
 	})
 
-	// the access, which the setup has chosen for the single sign-on, applies after the first user has signed in
-	events.SubscribeFor[session.Authenticated](cfg.EventBus(), func(evt session.Authenticated) {
-		if err := uc.ApplySSOAccess(evt.User); err != nil {
-			slog.Error("onboarding: cannot grant the access of the single sign-on", "err", err)
-		}
-	})
+	// the access, which the setup has chosen for the single sign-on, applies after the first user has signed in by
+	// the login service
+	events.SubscribeFor[session.Authenticated](cfg.EventBus(), applyOnSignIn(users.UseCases.FindByID, uc.ApplySSOAccess))
 
 	applyPendingSSO(pendingSSO, users.UseCases.FindByID, uc.ApplySSOAccess)
 
@@ -248,14 +245,26 @@ func applyPendingSSO(repo onboarding.PendingSSORepository, findByID user.FindByI
 		return
 	}
 
-	admin := optPending.Unwrap().Admin
-	optUser, err := findByID(user.SU(), admin)
-	if err != nil || optUser.IsNone() || !optUser.Unwrap().NLSManagedUser {
-		return
-	}
+	applyOnSignIn(findByID, apply)(session.Authenticated{User: optPending.Unwrap().Admin})
+}
 
-	if err := apply(admin); err != nil {
-		slog.Error("onboarding: cannot grant the access of the single sign-on", "err", err)
+// applyOnSignIn grants the chosen access, when the first user has signed in by the login service. A sign-in by
+// password grants nothing, because the gate exists to make the first user sign in by the login service first.
+func applyOnSignIn(findByID user.FindByID, apply onboarding.ApplySSOAccess) func(evt session.Authenticated) {
+	return func(evt session.Authenticated) {
+		optUser, err := findByID(user.SU(), evt.User)
+		if err != nil {
+			slog.Error("onboarding: cannot find the signed-in user", "user", evt.User, "err", err)
+			return
+		}
+
+		if optUser.IsNone() || !optUser.Unwrap().NLSManagedUser {
+			return
+		}
+
+		if err := apply(evt.User); err != nil {
+			slog.Error("onboarding: cannot grant the access of the single sign-on", "err", err)
+		}
 	}
 }
 

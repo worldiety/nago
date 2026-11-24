@@ -169,7 +169,11 @@ func TestSetupFirstUserWithSSO(t *testing.T) {
 		t.Fatalf("only the first user may sign in by now: %+v", usrSettings)
 	}
 
-	// the first user has signed in by the login service
+	// the first user has signed in by the login service, which merges the account
+	if _, err := users.UseCases.MergeSingleSignOnUser(user.SingleSignOnUser{Email: "torben@example.com", Firstname: "Torben"}, nil); err != nil {
+		t.Fatal(err)
+	}
+
 	app.Configurator().EventBus().Publish(session.Authenticated{Session: "x", User: usr.ID})
 	want := []string{`^torben@example\.com$`, `^anna@firma\.de$`, `^[^@]+@firma2\.de$`}
 	deadline := time.Now().Add(5 * time.Second)
