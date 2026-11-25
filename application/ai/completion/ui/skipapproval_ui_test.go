@@ -145,3 +145,51 @@ func TestChat_SkipApproval(t *testing.T) {
 		t.Fatalf("the approved marked change must run once, got %d", drops.Load())
 	}
 }
+
+// The switch below the input lets a new conversation run its changes without asking from the first message on.
+// The conversation keeps the setting once it is created, and a new chat asks again.
+func TestChat_SkipApprovalBeforeFirstMessage(t *testing.T) {
+	var writes atomic.Int32
+	write := completion.NewTool("write", "writes", func(struct{}) (struct{}, error) {
+		writes.Add(1)
+		return struct{}{}, nil
+	}).AsMutating("writes")
+
+	fake := &scripted{
+		parent: func(ctx context.Context, opts completion.Options) (completion.Result, error) {
+			if hasToolResult(opts) {
+				return text("Alles erledigt."), nil
+			}
+			return call("w1", "write", `{}`), nil
+		},
+	}
+
+	w := openChatOptions(t, uicompletion.ChatOptions{
+		Sessions:           testSessions(t),
+		History:            true,
+		Completions:        fake,
+		Provider:           echo.New("p", "p"),
+		DisableCurrentTime: true,
+		ConfirmMutations:   true,
+		Agents:             []uicompletion.Agent{{Tools: []completion.Tool{write}}},
+	})
+
+	toggle := nagotest.ID("uicompletion-skip-approval-input")
+	w.Type(w.Find(toggle), "true")
+	w.Type(w.Find(nagotest.Label("Nachricht")), "Bitte schreiben")
+	w.Click(w.Find(nagotest.Text("Senden")))
+	w.WaitFor(richText("Alles erledigt."), 10*time.Second)
+	if writes.Load() != 1 {
+		t.Fatalf("the change must run without asking, got %d", writes.Load())
+	}
+
+	// the created conversation took the setting over
+	if !w.Find(toggle).Node().Component.(*proto.Toggle).Value {
+		t.Fatal("the switch must stay on in the created conversation")
+	}
+
+	w.Click(w.Find(nagotest.Text("Neuer Chat")))
+	if w.Find(toggle).Node().Component.(*proto.Toggle).Value {
+		t.Fatal("a new chat must ask again")
+	}
+}

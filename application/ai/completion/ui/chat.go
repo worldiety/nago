@@ -386,9 +386,23 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 	if opts.SkipApproval != nil {
 		skip = opts.SkipApproval
 	}
+	// A new conversation has no key before its first message; then skip holds skipNewConversation, and the
+	// conversation takes the setting over once it is created, see submit.
 	skipApproval := func() bool {
-		key := conversationKey()
-		return key != "" && skip.Get() == key
+		if key := conversationKey(); key != "" {
+			return skip.Get() == key
+		}
+		return skip.Get() == skipNewConversation
+	}
+	setSkipApproval := func(on bool) {
+		switch key := conversationKey(); {
+		case !on:
+			skip.Set("")
+		case key == "":
+			skip.Set(skipNewConversation)
+		default:
+			skip.Set(key)
+		}
 	}
 	if !opts.History {
 		// Without History, nobody receives the answer of a run once the chat is gone, e.g. because the panel was
@@ -983,6 +997,9 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			sid = created.ID
 			sessionID.Set(sid)
 			createdNow = true
+			if skip.Get() == skipNewConversation {
+				skip.Set(string(sid))
+			}
 		}
 
 		prevHistory := history.Get()
@@ -1235,17 +1252,12 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 	var footer core.View
 	// A pending decision takes precedence over the input: the run waits on it, so offering the input field
 	// instead would look like the assistant had simply stopped responding.
+	var allowAll *decisionSkip
+	// only where there is something to approve, see resolveTurn
+	if opts.ConfirmMutations && !opts.ReadOnly && containsMutating(opts.resolveTools(currentAgent())) {
+		allowAll = &decisionSkip{on: skipApproval(), set: setSkipApproval}
+	}
 	if cont := pending.Get(); cont != nil {
-		var allowAll *decisionSkip
-		if opts.ConfirmMutations && !opts.ReadOnly && conversationKey() != "" {
-			allowAll = &decisionSkip{on: skipApproval(), set: func(on bool) {
-				if on {
-					skip.Set(conversationKey())
-				} else {
-					skip.Set("")
-				}
-			}}
-		}
 		footer = renderDecisions(wnd, cont, pendingRev.Get(), busy.Get(), allowAll, resolve, dismiss)
 	} else {
 		busyLabel := status.Get()
@@ -1255,6 +1267,11 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		var chips core.View
 		if uploadEnabled {
 			chips = stagedChips(staged, busy.Get())
+		}
+
+		var inputSkip core.View
+		if allowAll != nil {
+			inputSkip = skipToggle(wnd, allowAll, "input", busy.Get())
 		}
 
 		footer = ui.VStack(
@@ -1267,6 +1284,8 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 				FullWidth().
 				Disabled(busy.Get()).
 				KeydownEnter(submit),
+			// also before the first change, e.g. in a new conversation, which is about to create many entries
+			ui.If(inputSkip != nil, inputSkip),
 			ui.HStack(
 				ui.If(uploadEnabled, uploadButton(wnd, staged, busy.Get())),
 				ui.Spacer(),

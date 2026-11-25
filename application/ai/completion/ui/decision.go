@@ -97,7 +97,7 @@ func renderDecisions(wnd core.Window, cont *completion.Continuation, revision in
 		allow = ui.ToggleField(StrConfirmSkip.Get(subject), allowAll.on).
 			SupportingText(StrConfirmSkipHint.Get(subject)).
 			ID("uicompletion-skip-approval").
-			InputValue(allowAll.state(wnd, key)).
+			InputValue(allowAll.state(wnd, "decisions")).
 			Disabled(busy).
 			Frame(ui.Frame{}.FullWidth())
 	}
@@ -128,11 +128,27 @@ type decisionSkip struct {
 	set func(on bool)
 }
 
-// state binds the toggle of the suspension key to the setting of the conversation.
-func (d *decisionSkip) state(wnd core.Window, key string) *core.State[bool] {
-	st := core.StateOf[bool](wnd, "uicompletion-skip-"+key).Init(func() bool { return d.on })
+// skipNewConversation stands for the conversation which the next message creates, see [ChatOptions.SkipApproval].
+const skipNewConversation = "\x00new"
+
+// state binds a toggle at the given place to the setting of the conversation. It follows the setting, which the
+// toggle at the other place may have changed.
+func (d *decisionSkip) state(wnd core.Window, place string) *core.State[bool] {
+	st := core.StateOf[bool](wnd, "uicompletion-skip-"+place)
+	if st.Get() != d.on {
+		st.Set(d.on)
+	}
 	st.Observe(func(on bool) { d.set(on) })
 	return st
+}
+
+// skipToggle is the compact switch below the input, without the explanation of the switch below the decisions.
+func skipToggle(wnd core.Window, d *decisionSkip, place string, busy bool) core.View {
+	return ui.ToggleField(StrConfirmSkip.Get(wnd.Subject()), d.on).
+		ID("uicompletion-skip-approval-"+place).
+		InputValue(d.state(wnd, place)).
+		Disabled(busy).
+		Frame(ui.Frame{}.FullWidth())
 }
 
 // suspensionKey identifies one suspension: the revision alone is not enough for a transient chat, which has
