@@ -34,7 +34,8 @@ import (
 
 type Options struct {
 	// Subject is the contact of the application for the push services, a mailto: or https: URL. By default, the
-	// origin of the application is used, which the browser has reported at its subscription.
+	// https origin of the application is used, which the browser has reported at its subscription. A local origin,
+	// like localhost during the development, is left out, because the push service of Apple rejects it.
 	Subject string
 
 	// KeepOnLogout keeps the subscriptions of a session at its logout. By default, a browser gets no notifications

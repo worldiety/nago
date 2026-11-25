@@ -79,8 +79,9 @@ type Options struct {
 	// Key is the private VAPID key.
 	Key *ecdsa.PrivateKey
 	// Subject is the contact of the sender, a mailto: or https: URL, which the push services may use, if something
-	// goes wrong. By default, the origin of the application is used, which the browser has reported at the
-	// subscription.
+	// goes wrong. By default, the https origin of the application is used, which the browser has reported at the
+	// subscription. A local origin, like during the development on localhost, is left out, because the push service
+	// of Apple rejects it.
 	Subject string
 	// DefaultIcon is shown by a notification without icon.
 	DefaultIcon func() string

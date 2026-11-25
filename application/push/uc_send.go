@@ -13,7 +13,9 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -218,16 +220,28 @@ func newDeliver(opts Options, repo Repository) deliver {
 	}
 }
 
-// vapidSubject returns the configured contact or the origin of the application, as the browser has seen it.
+// vapidSubject returns the configured contact or the https origin of the application, as the browser has seen it.
+// The push service of Apple rejects a token with a local origin like http://localhost or https://localhost as
+// BadJwtToken, but accepts a token without contact, thus an insecure or local origin is left out.
 func vapidSubject(configured string, origin string) string {
 	if configured != "" {
 		return configured
 	}
 
 	u, err := url.Parse(origin)
-	if err != nil || (u.Scheme != "https" && u.Scheme != "http") || u.Host == "" {
+	if err != nil || u.Scheme != "https" || u.Hostname() == "" || localHost(u.Hostname()) {
 		return ""
 	}
 
 	return u.Scheme + "://" + u.Host
+}
+
+// localHost reports a host, which is only reachable locally or by an address instead of a name.
+func localHost(host string) bool {
+	host = strings.ToLower(strings.TrimSuffix(host, "."))
+	if host == "localhost" || strings.HasSuffix(host, ".localhost") || strings.HasSuffix(host, ".local") {
+		return true
+	}
+
+	return net.ParseIP(host) != nil
 }
