@@ -305,6 +305,9 @@ func (CallScreenshot) isCallArgs()               {}
 func (GostrictDeliver) isCallArgs()              {}
 func (GostrictListen) isCallArgs()               {}
 func (GostrictCall) isCallArgs()                 {}
+func (CallPushState) isCallArgs()                {}
+func (CallPushSubscribe) isCallArgs()            {}
+func (CallPushUnsubscribe) isCallArgs()          {}
 
 // CallRet is the sum type of all declared type safe async method invocations results. See also [CallArgs] for the async invocation calls.
 type CallRet interface {
@@ -324,6 +327,8 @@ func (InputEvent) isCallRet()                      {}
 func (RetScreenshot) isCallRet()                   {}
 func (GostrictReceived) isCallRet()                {}
 func (GostrictReturn) isCallRet()                  {}
+func (RetPushState) isCallRet()                    {}
+func (RetPushSubscription) isCallRet()             {}
 
 // Component is the building primitive for any widget, behavior or ui element in NAGO.
 type Component interface {
@@ -25831,6 +25836,426 @@ func (v *TextFieldNumberOptions) read(r *BinaryReader) error {
 	return nil
 }
 
+// CallPushState reads, whether the browser supports web push, the permission for notifications and the existing push subscription. It never asks the user for a permission and never registers a service worker. It is answered with a [RetPushState].
+type CallPushState struct {
+	// Keep is kept to avoid falling back to the zero value which breaks polymorphism at protocol level.
+	Keep Bool
+}
+
+func (v *CallPushState) write(w *BinaryWriter) error {
+	var fields [2]bool
+	fields[1] = !v.Keep.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(uvarint, 1); err != nil {
+			return err
+		}
+		if err := v.Keep.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CallPushState) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Keep.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// RetPushState describes the web push capabilities of the browser. It answers a [CallPushState] and a [CallPushSubscribe], which has not subscribed.
+type RetPushState struct {
+	// Keep is kept to avoid falling back to the zero value which breaks polymorphism at protocol level.
+	Keep Bool
+	// Supported is true, if the browser provides service workers, the push manager and notifications.
+	Supported Bool
+	// Permission is the permission for notifications, one of default, granted or denied. It is empty, if web push is not supported.
+	Permission Str
+	// Endpoint is the endpoint of the push subscription of the browser for the service worker of nago. It is empty, if there is none.
+	Endpoint Str
+	// Standalone is true, if the application runs as an installed web app.
+	Standalone Bool
+	// RequiresInstall is true, if the browser supports web push only for an installed web app, which this is not, like Safari on iOS and iPadOS.
+	RequiresInstall Bool
+}
+
+func (v *RetPushState) write(w *BinaryWriter) error {
+	var fields [7]bool
+	fields[1] = !v.Keep.IsZero()
+	fields[2] = !v.Supported.IsZero()
+	fields[3] = !v.Permission.IsZero()
+	fields[4] = !v.Endpoint.IsZero()
+	fields[5] = !v.Standalone.IsZero()
+	fields[6] = !v.RequiresInstall.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(uvarint, 1); err != nil {
+			return err
+		}
+		if err := v.Keep.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(uvarint, 2); err != nil {
+			return err
+		}
+		if err := v.Supported.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.Permission.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.Endpoint.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(uvarint, 5); err != nil {
+			return err
+		}
+		if err := v.Standalone.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[6] {
+		if err := w.writeFieldHeader(uvarint, 6); err != nil {
+			return err
+		}
+		if err := v.RequiresInstall.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *RetPushState) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Keep.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.Supported.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Permission.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Endpoint.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.Standalone.read(r)
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := v.RequiresInstall.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// CallPushSubscribe asks the user for the permission for notifications, registers the service worker and subscribes to web push. The browser asks only within a user gesture, so the backend must send it as the reaction to an action of the user, which the application offers for that purpose. If the gesture has expired, the frontend asks the user once more by its own dialog. It is answered with a [RetPushSubscription], or a [RetPushState], if it has not subscribed, or a [RetError].
+type CallPushSubscribe struct {
+	// ApplicationServerKey is the public VAPID key as an uncompressed point in base64url.
+	ApplicationServerKey Str
+	// ServiceWorker is the URL of the script of the service worker, which is registered for the scope of the whole application.
+	ServiceWorker URI
+}
+
+func (v *CallPushSubscribe) write(w *BinaryWriter) error {
+	var fields [3]bool
+	fields[1] = !v.ApplicationServerKey.IsZero()
+	fields[2] = !v.ServiceWorker.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.ApplicationServerKey.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.ServiceWorker.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CallPushSubscribe) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.ApplicationServerKey.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.ServiceWorker.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// RetPushSubscription is the push subscription of the browser, which a [CallPushSubscribe] has created or a [CallPushUnsubscribe] has removed.
+type RetPushSubscription struct {
+	// Endpoint is the URL of the push service, which delivers a message to this browser.
+	Endpoint Str
+	// P256dh is the public key of the browser in base64url.
+	P256dh Str
+	// Auth is the authentication secret of the browser in base64url.
+	Auth Str
+	// Origin is the origin of the application, as the browser sees it, e.g. https://example.com.
+	Origin Str
+	// UserAgent is the user agent of the browser, which helps the user to tell the devices apart.
+	UserAgent Str
+}
+
+func (v *RetPushSubscription) write(w *BinaryWriter) error {
+	var fields [6]bool
+	fields[1] = !v.Endpoint.IsZero()
+	fields[2] = !v.P256dh.IsZero()
+	fields[3] = !v.Auth.IsZero()
+	fields[4] = !v.Origin.IsZero()
+	fields[5] = !v.UserAgent.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(byteSlice, 1); err != nil {
+			return err
+		}
+		if err := v.Endpoint.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[2] {
+		if err := w.writeFieldHeader(byteSlice, 2); err != nil {
+			return err
+		}
+		if err := v.P256dh.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[3] {
+		if err := w.writeFieldHeader(byteSlice, 3); err != nil {
+			return err
+		}
+		if err := v.Auth.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[4] {
+		if err := w.writeFieldHeader(byteSlice, 4); err != nil {
+			return err
+		}
+		if err := v.Origin.write(w); err != nil {
+			return err
+		}
+	}
+	if fields[5] {
+		if err := w.writeFieldHeader(byteSlice, 5); err != nil {
+			return err
+		}
+		if err := v.UserAgent.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *RetPushSubscription) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Endpoint.read(r)
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := v.P256dh.read(r)
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := v.Auth.read(r)
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := v.Origin.read(r)
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := v.UserAgent.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// CallPushUnsubscribe removes the push subscription of the browser. The service worker and the permission stay. It is answered with the removed [RetPushSubscription] or with [RetVoid], if there was none.
+type CallPushUnsubscribe struct {
+	// Keep is kept to avoid falling back to the zero value which breaks polymorphism at protocol level.
+	Keep Bool
+}
+
+func (v *CallPushUnsubscribe) write(w *BinaryWriter) error {
+	var fields [2]bool
+	fields[1] = !v.Keep.IsZero()
+
+	fieldCount := byte(0)
+	for _, present := range fields {
+		if present {
+			fieldCount++
+		}
+	}
+	if err := w.writeByte(fieldCount); err != nil {
+		return err
+	}
+	if fields[1] {
+		if err := w.writeFieldHeader(uvarint, 1); err != nil {
+			return err
+		}
+		if err := v.Keep.write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *CallPushUnsubscribe) read(r *BinaryReader) error {
+	v.reset()
+	fieldCount, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	for range fieldCount {
+		fh, err := r.readFieldHeader()
+		if err != nil {
+			return err
+		}
+		switch fh.fieldId {
+		case 1:
+			err := v.Keep.read(r)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Writeable interface {
 	write(*BinaryWriter) error
 	writeTypeHeader(*BinaryWriter) error
@@ -27736,6 +28161,36 @@ func Unmarshal(src *BinaryReader) (Readable, error) {
 		return &v, nil
 	case 337:
 		var v TextFieldNumberOptions
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 340:
+		var v CallPushState
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 341:
+		var v RetPushState
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 342:
+		var v CallPushSubscribe
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 343:
+		var v RetPushSubscription
+		if err := v.read(src); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case 344:
+		var v CallPushUnsubscribe
 		if err := v.read(src); err != nil {
 			return nil, err
 		}
@@ -33222,6 +33677,71 @@ func (v *TextFieldNumberOptions) IsZero() bool {
 	return v.ShowZero.IsZero() && v.Step.IsZero() && v.Max.IsZero() && v.Min.IsZero()
 }
 
+func (v *CallPushState) reset() {
+	v.Keep.reset()
+}
+
+func (v *CallPushState) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Keep.IsZero()
+}
+
+func (v *RetPushState) reset() {
+	v.Keep.reset()
+	v.Supported.reset()
+	v.Permission.reset()
+	v.Endpoint.reset()
+	v.Standalone.reset()
+	v.RequiresInstall.reset()
+}
+
+func (v *RetPushState) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Keep.IsZero() && v.Supported.IsZero() && v.Permission.IsZero() && v.Endpoint.IsZero() && v.Standalone.IsZero() && v.RequiresInstall.IsZero()
+}
+
+func (v *CallPushSubscribe) reset() {
+	v.ApplicationServerKey.reset()
+	v.ServiceWorker.reset()
+}
+
+func (v *CallPushSubscribe) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.ApplicationServerKey.IsZero() && v.ServiceWorker.IsZero()
+}
+
+func (v *RetPushSubscription) reset() {
+	v.Endpoint.reset()
+	v.P256dh.reset()
+	v.Auth.reset()
+	v.Origin.reset()
+	v.UserAgent.reset()
+}
+
+func (v *RetPushSubscription) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Endpoint.IsZero() && v.P256dh.IsZero() && v.Auth.IsZero() && v.Origin.IsZero() && v.UserAgent.IsZero()
+}
+
+func (v *CallPushUnsubscribe) reset() {
+	v.Keep.reset()
+}
+
+func (v *CallPushUnsubscribe) IsZero() bool {
+	if v == nil {
+		return true
+	}
+	return v.Keep.IsZero()
+}
+
 func (v *Box) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 1); err != nil {
 		return err
@@ -35415,6 +35935,41 @@ func (v *WeekCalendarEvents) writeTypeHeader(w *BinaryWriter) error {
 
 func (v *TextFieldNumberOptions) writeTypeHeader(w *BinaryWriter) error {
 	if err := w.writeTypeHeader(record, 337); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CallPushState) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 340); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *RetPushState) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 341); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CallPushSubscribe) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 342); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *RetPushSubscription) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 343); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *CallPushUnsubscribe) writeTypeHeader(w *BinaryWriter) error {
+	if err := w.writeTypeHeader(record, 344); err != nil {
 		return err
 	}
 	return nil

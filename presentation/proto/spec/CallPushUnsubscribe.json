@@ -1,0 +1,12 @@
+{
+  "doc": "CallPushUnsubscribe removes the push subscription of the browser. The service worker and the permission stay. It is answered with the removed [RetPushSubscription] or with [RetVoid], if there was none.",
+  "kind": "Record",
+  "id": 344,
+  "fields": {
+    "1": {
+      "doc": "Keep is kept to avoid falling back to the zero value which breaks polymorphism at protocol level.",
+      "name": "Keep",
+      "type": "Bool"
+    }
+  }
+}

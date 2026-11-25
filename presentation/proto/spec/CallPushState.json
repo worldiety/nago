@@ -1,0 +1,12 @@
+{
+  "doc": "CallPushState reads, whether the browser supports web push, the permission for notifications and the existing push subscription. It never asks the user for a permission and never registers a service worker. It is answered with a [RetPushState].",
+  "kind": "Record",
+  "id": 340,
+  "fields": {
+    "1": {
+      "doc": "Keep is kept to avoid falling back to the zero value which breaks polymorphism at protocol level.",
+      "name": "Keep",
+      "type": "Bool"
+    }
+  }
+}

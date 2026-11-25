@@ -26711,6 +26711,427 @@ export class TextFieldNumberOptions implements Writeable, Readable {
 	}
 }
 
+// CallPushState reads, whether the browser supports web push, the permission for notifications and the existing push subscription. It never asks the user for a permission and never registers a service worker. It is answered with a [RetPushState].
+export class CallPushState implements Writeable, Readable, CallArgs {
+	// Keep is kept to avoid falling back to the zero value which breaks polymorphism at protocol level.
+	public keep?: Bool;
+
+	constructor(keep: Bool | undefined = undefined) {
+		this.keep = keep;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.keep = readBool(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.keep !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 1);
+			writeBool(writer, this.keep!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.keep === undefined;
+	}
+
+	reset(): void {
+		this.keep = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 340);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+// RetPushState describes the web push capabilities of the browser. It answers a [CallPushState] and a [CallPushSubscribe], which has not subscribed.
+export class RetPushState implements Writeable, Readable, CallRet {
+	// Keep is kept to avoid falling back to the zero value which breaks polymorphism at protocol level.
+	public keep?: Bool;
+
+	// Supported is true, if the browser provides service workers, the push manager and notifications.
+	public supported?: Bool;
+
+	// Permission is the permission for notifications, one of default, granted or denied. It is empty, if web push is not supported.
+	public permission?: Str;
+
+	// Endpoint is the endpoint of the push subscription of the browser for the service worker of nago. It is empty, if there is none.
+	public endpoint?: Str;
+
+	// Standalone is true, if the application runs as an installed web app.
+	public standalone?: Bool;
+
+	// RequiresInstall is true, if the browser supports web push only for an installed web app, which this is not, like Safari on iOS and iPadOS.
+	public requiresInstall?: Bool;
+
+	constructor(
+		keep: Bool | undefined = undefined,
+		supported: Bool | undefined = undefined,
+		permission: Str | undefined = undefined,
+		endpoint: Str | undefined = undefined,
+		standalone: Bool | undefined = undefined,
+		requiresInstall: Bool | undefined = undefined
+	) {
+		this.keep = keep;
+		this.supported = supported;
+		this.permission = permission;
+		this.endpoint = endpoint;
+		this.standalone = standalone;
+		this.requiresInstall = requiresInstall;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.keep = readBool(reader);
+					break;
+				}
+				case 2: {
+					this.supported = readBool(reader);
+					break;
+				}
+				case 3: {
+					this.permission = readString(reader);
+					break;
+				}
+				case 4: {
+					this.endpoint = readString(reader);
+					break;
+				}
+				case 5: {
+					this.standalone = readBool(reader);
+					break;
+				}
+				case 6: {
+					this.requiresInstall = readBool(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.keep !== undefined,
+			this.supported !== undefined,
+			this.permission !== undefined,
+			this.endpoint !== undefined,
+			this.standalone !== undefined,
+			this.requiresInstall !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 1);
+			writeBool(writer, this.keep!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 2);
+			writeBool(writer, this.supported!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			writeString(writer, this.permission!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
+			writeString(writer, this.endpoint!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 5);
+			writeBool(writer, this.standalone!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[6]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 6);
+			writeBool(writer, this.requiresInstall!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.keep === undefined &&
+			this.supported === undefined &&
+			this.permission === undefined &&
+			this.endpoint === undefined &&
+			this.standalone === undefined &&
+			this.requiresInstall === undefined
+		);
+	}
+
+	reset(): void {
+		this.keep = undefined;
+		this.supported = undefined;
+		this.permission = undefined;
+		this.endpoint = undefined;
+		this.standalone = undefined;
+		this.requiresInstall = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 341);
+		return;
+	}
+	isCallRet(): void {}
+}
+
+// CallPushSubscribe asks the user for the permission for notifications, registers the service worker and subscribes to web push. The browser asks only within a user gesture, so the backend must send it as the reaction to an action of the user, which the application offers for that purpose. If the gesture has expired, the frontend asks the user once more by its own dialog. It is answered with a [RetPushSubscription], or a [RetPushState], if it has not subscribed, or a [RetError].
+export class CallPushSubscribe implements Writeable, Readable, CallArgs {
+	// ApplicationServerKey is the public VAPID key as an uncompressed point in base64url.
+	public applicationServerKey?: Str;
+
+	// ServiceWorker is the URL of the script of the service worker, which is registered for the scope of the whole application.
+	public serviceWorker?: URI;
+
+	constructor(applicationServerKey: Str | undefined = undefined, serviceWorker: URI | undefined = undefined) {
+		this.applicationServerKey = applicationServerKey;
+		this.serviceWorker = serviceWorker;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.applicationServerKey = readString(reader);
+					break;
+				}
+				case 2: {
+					this.serviceWorker = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.applicationServerKey !== undefined, this.serviceWorker !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.applicationServerKey!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.serviceWorker!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.applicationServerKey === undefined && this.serviceWorker === undefined;
+	}
+
+	reset(): void {
+		this.applicationServerKey = undefined;
+		this.serviceWorker = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 342);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
+// RetPushSubscription is the push subscription of the browser, which a [CallPushSubscribe] has created or a [CallPushUnsubscribe] has removed.
+export class RetPushSubscription implements Writeable, Readable, CallRet {
+	// Endpoint is the URL of the push service, which delivers a message to this browser.
+	public endpoint?: Str;
+
+	// P256dh is the public key of the browser in base64url.
+	public p256dh?: Str;
+
+	// Auth is the authentication secret of the browser in base64url.
+	public auth?: Str;
+
+	// Origin is the origin of the application, as the browser sees it, e.g. https://example.com.
+	public origin?: Str;
+
+	// UserAgent is the user agent of the browser, which helps the user to tell the devices apart.
+	public userAgent?: Str;
+
+	constructor(
+		endpoint: Str | undefined = undefined,
+		p256dh: Str | undefined = undefined,
+		auth: Str | undefined = undefined,
+		origin: Str | undefined = undefined,
+		userAgent: Str | undefined = undefined
+	) {
+		this.endpoint = endpoint;
+		this.p256dh = p256dh;
+		this.auth = auth;
+		this.origin = origin;
+		this.userAgent = userAgent;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.endpoint = readString(reader);
+					break;
+				}
+				case 2: {
+					this.p256dh = readString(reader);
+					break;
+				}
+				case 3: {
+					this.auth = readString(reader);
+					break;
+				}
+				case 4: {
+					this.origin = readString(reader);
+					break;
+				}
+				case 5: {
+					this.userAgent = readString(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [
+			false,
+			this.endpoint !== undefined,
+			this.p256dh !== undefined,
+			this.auth !== undefined,
+			this.origin !== undefined,
+			this.userAgent !== undefined,
+		];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 1);
+			writeString(writer, this.endpoint!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[2]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 2);
+			writeString(writer, this.p256dh!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[3]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 3);
+			writeString(writer, this.auth!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[4]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 4);
+			writeString(writer, this.origin!); // typescript linters cannot see, that we already checked this properly above
+		}
+		if (fields[5]) {
+			writer.writeFieldHeader(Shapes.BYTESLICE, 5);
+			writeString(writer, this.userAgent!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return (
+			this.endpoint === undefined &&
+			this.p256dh === undefined &&
+			this.auth === undefined &&
+			this.origin === undefined &&
+			this.userAgent === undefined
+		);
+	}
+
+	reset(): void {
+		this.endpoint = undefined;
+		this.p256dh = undefined;
+		this.auth = undefined;
+		this.origin = undefined;
+		this.userAgent = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 343);
+		return;
+	}
+	isCallRet(): void {}
+}
+
+// CallPushUnsubscribe removes the push subscription of the browser. The service worker and the permission stay. It is answered with the removed [RetPushSubscription] or with [RetVoid], if there was none.
+export class CallPushUnsubscribe implements Writeable, Readable, CallArgs {
+	// Keep is kept to avoid falling back to the zero value which breaks polymorphism at protocol level.
+	public keep?: Bool;
+
+	constructor(keep: Bool | undefined = undefined) {
+		this.keep = keep;
+	}
+
+	read(reader: BinaryReader): void {
+		this.reset();
+		const fieldCount = reader.readByte();
+		for (let i = 0; i < fieldCount; i++) {
+			const fieldHeader = reader.readFieldHeader();
+			switch (fieldHeader.fieldId) {
+				case 1: {
+					this.keep = readBool(reader);
+					break;
+				}
+				default:
+					throw new Error(`Unknown field ID: ${fieldHeader.fieldId}`);
+			}
+		}
+	}
+
+	write(writer: BinaryWriter): void {
+		const fields = [false, this.keep !== undefined];
+		let fieldCount = fields.reduce((count, present) => count + (present ? 1 : 0), 0);
+		writer.writeByte(fieldCount);
+		if (fields[1]) {
+			writer.writeFieldHeader(Shapes.UVARINT, 1);
+			writeBool(writer, this.keep!); // typescript linters cannot see, that we already checked this properly above
+		}
+	}
+
+	isZero(): boolean {
+		return this.keep === undefined;
+	}
+
+	reset(): void {
+		this.keep = undefined;
+	}
+
+	writeTypeHeader(dst: BinaryWriter): void {
+		dst.writeTypeHeader(Shapes.RECORD, 344);
+		return;
+	}
+	isCallArgs(): void {}
+}
+
 // Function to marshal a Writeable object into a BinaryWriter
 export function marshal(dst: BinaryWriter, src: Writeable): void {
 	src.writeTypeHeader(dst);
@@ -28220,6 +28641,31 @@ export function unmarshal(src: BinaryReader): any {
 		}
 		case 337: {
 			const v = new TextFieldNumberOptions();
+			v.read(src);
+			return v;
+		}
+		case 340: {
+			const v = new CallPushState();
+			v.read(src);
+			return v;
+		}
+		case 341: {
+			const v = new RetPushState();
+			v.read(src);
+			return v;
+		}
+		case 342: {
+			const v = new CallPushSubscribe();
+			v.read(src);
+			return v;
+		}
+		case 343: {
+			const v = new RetPushSubscription();
+			v.read(src);
+			return v;
+		}
+		case 344: {
+			const v = new CallPushUnsubscribe();
 			v.read(src);
 			return v;
 		}

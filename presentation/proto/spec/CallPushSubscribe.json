@@ -1,0 +1,17 @@
+{
+  "doc": "CallPushSubscribe asks the user for the permission for notifications, registers the service worker and subscribes to web push. The browser asks only within a user gesture, so the backend must send it as the reaction to an action of the user, which the application offers for that purpose. If the gesture has expired, the frontend asks the user once more by its own dialog. It is answered with a [RetPushSubscription], or a [RetPushState], if it has not subscribed, or a [RetError].",
+  "kind": "Record",
+  "id": 342,
+  "fields": {
+    "1": {
+      "doc": "ApplicationServerKey is the public VAPID key as an uncompressed point in base64url.",
+      "name": "ApplicationServerKey",
+      "type": "Str"
+    },
+    "2": {
+      "doc": "ServiceWorker is the URL of the script of the service worker, which is registered for the scope of the whole application.",
+      "name": "ServiceWorker",
+      "type": "URI"
+    }
+  }
+}

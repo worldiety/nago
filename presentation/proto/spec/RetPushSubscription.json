@@ -1,0 +1,32 @@
+{
+  "doc": "RetPushSubscription is the push subscription of the browser, which a [CallPushSubscribe] has created or a [CallPushUnsubscribe] has removed.",
+  "kind": "Record",
+  "id": 343,
+  "fields": {
+    "1": {
+      "doc": "Endpoint is the URL of the push service, which delivers a message to this browser.",
+      "name": "Endpoint",
+      "type": "Str"
+    },
+    "2": {
+      "doc": "P256dh is the public key of the browser in base64url.",
+      "name": "P256dh",
+      "type": "Str"
+    },
+    "3": {
+      "doc": "Auth is the authentication secret of the browser in base64url.",
+      "name": "Auth",
+      "type": "Str"
+    },
+    "4": {
+      "doc": "Origin is the origin of the application, as the browser sees it, e.g. https://example.com.",
+      "name": "Origin",
+      "type": "Str"
+    },
+    "5": {
+      "doc": "UserAgent is the user agent of the browser, which helps the user to tell the devices apart.",
+      "name": "UserAgent",
+      "type": "Str"
+    }
+  }
+}

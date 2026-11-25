@@ -9,6 +9,8 @@
     "InputEvent",
     "RetScreenshot",
     "GostrictReceived",
-    "GostrictReturn"
+    "GostrictReturn",
+    "RetPushState",
+    "RetPushSubscription"
   ]
 }

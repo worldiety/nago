@@ -1,0 +1,37 @@
+{
+  "doc": "RetPushState describes the web push capabilities of the browser. It answers a [CallPushState] and a [CallPushSubscribe], which has not subscribed.",
+  "kind": "Record",
+  "id": 341,
+  "fields": {
+    "1": {
+      "doc": "Keep is kept to avoid falling back to the zero value which breaks polymorphism at protocol level.",
+      "name": "Keep",
+      "type": "Bool"
+    },
+    "2": {
+      "doc": "Supported is true, if the browser provides service workers, the push manager and notifications.",
+      "name": "Supported",
+      "type": "Bool"
+    },
+    "3": {
+      "doc": "Permission is the permission for notifications, one of default, granted or denied. It is empty, if web push is not supported.",
+      "name": "Permission",
+      "type": "Str"
+    },
+    "4": {
+      "doc": "Endpoint is the endpoint of the push subscription of the browser for the service worker of nago. It is empty, if there is none.",
+      "name": "Endpoint",
+      "type": "Str"
+    },
+    "5": {
+      "doc": "Standalone is true, if the application runs as an installed web app.",
+      "name": "Standalone",
+      "type": "Bool"
+    },
+    "6": {
+      "doc": "RequiresInstall is true, if the browser supports web push only for an installed web app, which this is not, like Safari on iOS and iPadOS.",
+      "name": "RequiresInstall",
+      "type": "Bool"
+    }
+  }
+}

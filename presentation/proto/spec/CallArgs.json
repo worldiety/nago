@@ -52,6 +52,9 @@
     "CallScreenshot",
     "GostrictDeliver",
     "GostrictListen",
-    "GostrictCall"
+    "GostrictCall",
+    "CallPushState",
+    "CallPushSubscribe",
+    "CallPushUnsubscribe"
   ]
 }
