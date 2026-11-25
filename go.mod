@@ -11,7 +11,7 @@ require (
 	github.com/go-chi/chi/v5 v5.4.1-0.20261013232336-607557061251
 	github.com/go-chi/cors v1.2.2
 	github.com/google/btree v1.1.3
-	github.com/gorilla/websocket v1.5.3
+	github.com/gorilla/websocket v1.5.4-0.20240701034025-d67f41855da4
 	github.com/gosimple/slug v1.15.0
 	github.com/joho/godotenv v1.5.1
 	github.com/klauspost/compress v1.20.4
