@@ -25,10 +25,11 @@ import (
 // chat's view state). Nothing blocks while it is shown, so the user may close the chat or navigate away and
 // answer later.
 //
-// Many decisions scroll, so that the conversation and the actions stay visible. With more than one approval, all of
-// them can be decided at once, and allowAll, when set, offers to let the further changes of the conversation run
-// without asking.
-func renderDecisions(wnd core.Window, cont *completion.Continuation, revision int, busy bool, allowAll *decisionSkip, onResolve func([]completion.Resolution), onDismiss func()) core.View {
+// The cards follow the conversation like its messages and scroll with it, see [historyView.trailing], so that a
+// batch of changes never squeezes them into a small area. The actions stay below the conversation: with more than
+// one approval, all of them can be decided at once, and allowAll, when set, offers to let the further changes of the
+// conversation run without asking.
+func renderDecisions(wnd core.Window, cont *completion.Continuation, revision int, busy bool, allowAll *decisionSkip, onResolve func([]completion.Resolution), onDismiss func()) (cards core.View, actions core.View) {
 	// Decisions collected so far, keyed by this very suspension so a newer one never inherits older choices.
 	key := suspensionKey(cont, revision)
 	decided := core.StateOf[map[string]completion.Resolution](wnd, "uicompletion-decisions-"+key)
@@ -102,12 +103,8 @@ func renderDecisions(wnd core.Window, cont *completion.Continuation, revision in
 			Frame(ui.Frame{}.FullWidth())
 	}
 
-	return ui.VStack(
-		// the cards scroll on their own, otherwise a batch of changes pushes the actions out of the panel
-		ui.ScrollView(
-			ui.VStack(items...).Gap(ui.L8).FullWidth().Alignment(ui.Leading),
-		).Axis(ui.ScrollViewAxisVertical).
-			Frame(ui.Frame{Width: ui.Full, MaxHeight: decisionsMaxHeight}),
+	cards = ui.VStack(items...).Gap(ui.L8).FullWidth().Alignment(ui.Leading)
+	actions = ui.VStack(
 		ui.If(bulk != nil, bulk),
 		ui.If(allow != nil, allow),
 		ui.HStack(
@@ -115,12 +112,9 @@ func renderDecisions(wnd core.Window, cont *completion.Continuation, revision in
 			ui.TertiaryButton(onDismiss).Title("Verwerfen und neues Thema beginnen").Enabled(!busy),
 		).FullWidth(),
 	).Gap(ui.L8).FullWidth().Alignment(ui.Leading)
-}
 
-// decisionsMaxHeight limits the pending decisions, so that the floating panel (see panelMaxHeight) still shows
-// the end of the conversation and the actions below the decisions. The frontend takes only a length that starts
-// with calc as it is.
-const decisionsMaxHeight ui.Length = "calc(max(8rem, 100dvh - 40rem))"
+	return cards, actions
+}
 
 // decisionSkip lets the user switch the approvals of the conversation off, see [ChatOptions.SkipApproval].
 type decisionSkip struct {
@@ -214,11 +208,8 @@ func approvalPanel(wnd core.Window, pc completion.PendingCall, busy bool, decide
 		ui.Text(StrConfirmIntro.Get(subject)),
 		ui.Text(effect).Font(ui.BodyMedium),
 		ui.Text(pc.Call.Name).Font(ui.Monospace),
-		// a long change, e.g. a whole script, scrolls, so that the buttons below always stay visible
-		ui.ScrollView(
-			ui.Text(readableArguments(pc.Call.Arguments)).Font(ui.Monospace).WhiteSpace(ui.WhiteSpacePreWrap),
-		).Axis(ui.ScrollViewAxisVertical).
-			Frame(ui.Frame{Width: ui.Full, MaxHeight: ui.L200}),
+		// whole, also a long change, e.g. a script: the card scrolls with the conversation, like a message
+		ui.Text(readableArguments(pc.Call.Arguments)).Font(ui.Monospace).WhiteSpace(ui.WhiteSpacePreWrap),
 		ui.HStack(
 			ui.Spacer(),
 			ui.SecondaryButton(func() {
