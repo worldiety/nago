@@ -26,6 +26,7 @@ for (let delay = 350; delay <= 950; delay += 50) {
 }
 
 let armedUntil = 0;
+let installed = false;
 let timers: ReturnType<typeof setTimeout>[] = [];
 let pendingActions: (() => void)[] = [];
 
@@ -61,6 +62,7 @@ export function installUserGestureBridge(): void {
 		return;
 	}
 
+	installed = true;
 	window.addEventListener('click', arm, true);
 	window.addEventListener('keydown', arm, true);
 }
@@ -77,4 +79,18 @@ export function withUserGesture(action: () => void): void {
 	}
 
 	pendingActions.push(action);
+}
+
+/**
+ * hasUserGesture reports, whether an action, which [withUserGesture] would run now, still runs within a user gesture.
+ * In WebKit, this holds as long as the bridge is armed. Other browsers tell their transient user activation, which
+ * lasts a few seconds after a click. A browser, which tells nothing, is assumed to accept the action.
+ */
+export function hasUserGesture(): boolean {
+	if (installed) {
+		return performance.now() < armedUntil;
+	}
+
+	const activation = (navigator as unknown as { userActivation?: { isActive: boolean } }).userActivation;
+	return activation ? activation.isActive : true;
 }

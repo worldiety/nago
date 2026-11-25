@@ -22,3 +22,9 @@ func Dist() fs.FS {
 	}
 	return fsys
 }
+
+// PushServiceWorker is the service worker, which shows the web push notifications. It is served only by the push
+// module, see package cfgpush.
+//
+//go:embed serviceworker/push.js
+var PushServiceWorker []byte

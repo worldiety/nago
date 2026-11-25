@@ -175,4 +175,28 @@ describe('user gesture bridge', () => {
 		advance(25);
 		assert.equal(ran, true);
 	});
+
+	test('in WebKit, the gesture lasts as long as the bridge is armed', async () => {
+		const { hasUserGesture } = await load(webKit);
+		assert.equal(hasUserGesture(), false);
+		gesture();
+		assert.equal(hasUserGesture(), true);
+		advance(949);
+		assert.equal(hasUserGesture(), true);
+		advance(1);
+		assert.equal(hasUserGesture(), false);
+	});
+
+	test('other browsers tell their user activation or are assumed to have one', async () => {
+		const { hasUserGesture } = await load('Google Inc.');
+		assert.equal(hasUserGesture(), true);
+
+		for (const isActive of [true, false]) {
+			Object.defineProperty(globalThis, 'navigator', {
+				configurable: true,
+				value: { vendor: 'Google Inc.', userActivation: { isActive } },
+			});
+			assert.equal(hasUserGesture(), isActive);
+		}
+	});
 });

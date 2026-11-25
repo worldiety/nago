@@ -207,5 +207,11 @@
 		"notSupported": "Dieser Browser unterstützt keinen Zugriff auf die Kamera.",
 		"timeout": "Die Kamera liefert kein Bild.",
 		"unknown": "Die Kamera lässt sich nicht starten: {0}"
+	},
+	"pushPermission": {
+		"title": "Benachrichtigungen erlauben?",
+		"info": "Der Browser braucht noch eine Bestätigung, bevor er nach der Erlaubnis für Benachrichtigungen fragt.",
+		"cancel": "Abbrechen",
+		"confirm": "Weiter"
 	}
 }

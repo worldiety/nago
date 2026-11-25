@@ -10,6 +10,9 @@ import { UploadRepository } from '@/api/upload/uploadRepository';
 import { Channel } from '@/shared/network/serviceAdapter';
 import {
 	CallMediaDevicesEnumerate,
+	CallPushState,
+	CallPushSubscribe,
+	CallPushUnsubscribe,
 	CallRequested,
 	CallRequestFocus,
 	CallResolved,
@@ -36,7 +39,10 @@ import {
 	RetMediaDevicesEnumerate,
 	RetError,
 	RetMediaDevicesPermissionsError,
+	RetPushState,
+	RetPushSubscription,
 	RetScreenshot,
+	RetVoid,
 	RID,
 	RootViewAllocationRequested,
 	RootViewID,
@@ -58,7 +64,16 @@ import { call as callProgram } from '@/components/gostrict/engine';
 import { type InputSample, listenInput } from '@/shared/inputEvents';
 import { capture } from '@/shared/screenshot';
 import ThemeManager, { ThemeKey } from '@/shared/themeManager';
-import { withUserGesture } from '@/shared/userGestureBridge';
+import { confirmPushPermission } from '@/shared/pushPermissionSheet';
+import { hasUserGesture, withUserGesture } from '@/shared/userGestureBridge';
+import {
+	type PushState,
+	type PushSubscriptionData,
+	installPushNavigation,
+	readPushState,
+	subscribePush,
+	unsubscribePush,
+} from '@/shared/webPush';
 
 let nextRequestTracingID: number = 1;
 
@@ -695,6 +710,21 @@ export async function callRequested(chan: Channel, evt: CallRequested) {
 		return;
 	}
 
+	if (evt.call instanceof CallPushState) {
+		await callPushState(chan, evt);
+		return;
+	}
+
+	if (evt.call instanceof CallPushSubscribe) {
+		await callPushSubscribe(chan, evt, evt.call);
+		return;
+	}
+
+	if (evt.call instanceof CallPushUnsubscribe) {
+		await callPushUnsubscribe(chan, evt);
+		return;
+	}
+
 	if (evt.call instanceof GostrictListen) {
 		const callPtr = evt.callPtr!;
 		openChannel(evt.call.id ?? '', (msgs) => {
@@ -734,6 +764,91 @@ async function callScreenshot(chan: Channel, evt: CallRequested, args: CallScree
 		console.warn('screenshot failed', e);
 		chan.sendEvent(new CallResolved(evt.callPtr, new RetError(String(e?.message ?? e), 500), nextRID()));
 	}
+}
+
+function retPushState(state: PushState): RetPushState {
+	return new RetPushState(
+		true,
+		state.supported,
+		state.permission,
+		state.endpoint,
+		state.standalone,
+		state.requiresInstall
+	);
+}
+
+function retPushSubscription(sub: PushSubscriptionData): RetPushSubscription {
+	return new RetPushSubscription(sub.endpoint, sub.p256dh, sub.auth, sub.origin, sub.userAgent);
+}
+
+async function callPushState(chan: Channel, evt: CallRequested) {
+	const state = await readPushState();
+	chan.sendEvent(new CallResolved(evt.callPtr, retPushState(state), nextRID()));
+}
+
+/**
+ * callPushSubscribe is the only place, where the frontend asks for the permission for notifications and registers
+ * the service worker. The backend sends the call only as the reaction to an action of the user, which the
+ * application offers for that purpose.
+ */
+async function callPushSubscribe(chan: Channel, evt: CallRequested, args: CallPushSubscribe) {
+	const result = await subscribePush(args.applicationServerKey ?? '', args.serviceWorker ?? '', {
+		hasGesture: hasUserGesture,
+		withGesture: withUserGesture,
+		confirm: confirmPushPermission,
+	});
+
+	if ('subscription' in result) {
+		installPushNavigation((url) => navigateToURL(chan, url), true);
+		chan.sendEvent(new CallResolved(evt.callPtr, retPushSubscription(result.subscription), nextRID()));
+		return;
+	}
+
+	if ('state' in result) {
+		chan.sendEvent(new CallResolved(evt.callPtr, retPushState(result.state), nextRID()));
+		return;
+	}
+
+	console.warn('push subscription failed', result.error);
+	chan.sendEvent(new CallResolved(evt.callPtr, new RetError(result.error, 500), nextRID()));
+}
+
+async function callPushUnsubscribe(chan: Channel, evt: CallRequested) {
+	try {
+		const removed = await unsubscribePush();
+		const ret = removed ? retPushSubscription(removed) : new RetVoid();
+		chan.sendEvent(new CallResolved(evt.callPtr, ret, nextRID()));
+	} catch (e: any) {
+		console.warn('push unsubscription failed', e);
+		chan.sendEvent(new CallResolved(evt.callPtr, new RetError(String(e?.message ?? e), 500), nextRID()));
+	}
+}
+
+/**
+ * navigateToURL navigates within the application to a path with query and fragment, e.g. after a click on a push
+ * notification.
+ */
+export function navigateToURL(chan: Channel, url: string): void {
+	const u = new URL(url, location.origin);
+	const params = new RootViewParameters();
+	u.searchParams.forEach((value, key) => {
+		params.value.set(key, value);
+	});
+
+	if (u.hash.length > 1) {
+		params.value.set('#', u.hash.substring(1));
+	}
+
+	const rootView = u.pathname.substring(1) || '.';
+	navigateForward(chan, new NavigationForwardToRequested(rootView, params));
+}
+
+/**
+ * installPushNavigationOnStart lets a click on a push notification navigate this window. It does nothing, unless a
+ * service worker of the push module controls the page.
+ */
+export function installPushNavigationOnStart(chan: Channel): void {
+	installPushNavigation((url) => navigateToURL(chan, url));
 }
 
 const registeredInputListeners = new Map<number, () => void>();

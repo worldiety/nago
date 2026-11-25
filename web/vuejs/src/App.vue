@@ -12,6 +12,7 @@ import { nextTick, onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue
 import UiUpload from '@/api/upload/UiUpload.vue';
 import { useUploadRepository } from '@/api/upload/uploadRepository';
 import UIClipboardModal from '@/components/UIClipboardModal.vue';
+import UiPushPermissionSheet from '@/components/UiPushPermissionSheet.vue';
 import GenericUi from '@/components/UiGeneric.vue';
 import ConnectingChannelOverlay from '@/components/overlays/ConnectingChannelOverlay.vue';
 import ConnectionLostOverlay from '@/components/overlays/ConnectionLostOverlay.vue';
@@ -21,6 +22,7 @@ import {
 	callRequested,
 	clipboardWriteText,
 	getWindowInfo,
+	installPushNavigationOnStart,
 	lastRID,
 	loadFonts,
 	navigateForward,
@@ -93,6 +95,7 @@ async function applyConfiguration(): Promise<void> {
 
 	await serviceAdapter.initialize();
 	addEventListeners();
+	installPushNavigationOnStart(serviceAdapter);
 	addConnectionListeners();
 
 	requestScopeConfigurationChange(serviceAdapter, themeManager);
@@ -343,6 +346,7 @@ function restoreFocus(id: string | undefined) {
 		<div v-else>Empty UI</div>
 
 		<UIClipboardModal v-model="copy_component_text" />
+		<UiPushPermissionSheet />
 	</div>
 </template>
 

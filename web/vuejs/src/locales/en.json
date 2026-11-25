@@ -124,5 +124,11 @@
 		"notSupported": "This browser does not support access to the camera.",
 		"timeout": "The camera delivers no image.",
 		"unknown": "The camera cannot be started: {0}"
+	},
+	"pushPermission": {
+		"title": "Allow notifications?",
+		"info": "The browser needs one more confirmation, before it asks for the permission for notifications.",
+		"cancel": "Cancel",
+		"confirm": "Continue"
 	}
 }
