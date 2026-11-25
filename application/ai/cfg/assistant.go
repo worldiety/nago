@@ -283,7 +283,6 @@ const (
 	assistantOpenState    = "nago.ai.assistant.open"
 	assistantDraftState   = "nago.ai.assistant.draft"
 	assistantSessionState = "nago.ai.assistant.session"
-	assistantSkipState    = "nago.ai.assistant.skipApproval"
 )
 
 // keptState returns the state of the floating assistant with the given id. A navigation to another page
@@ -355,7 +354,6 @@ func (a *Assistant) Button(wnd core.Window, opts AssistantOptions) core.View {
 	chatOpts.Open = keptState[bool](wnd, assistantOpenState)
 	chatOpts.Draft = keptState[string](wnd, assistantDraftState)
 	chatOpts.Session = keptState[session.ID](wnd, assistantSessionState)
-	chatOpts.SkipApproval = keptState[string](wnd, assistantSkipState)
 
 	button := uicompletion.ChatButton(chatOpts)
 	button = button.Corner(opts.Corner)

@@ -41,14 +41,6 @@ var (
 		language.German:  "Alle ablehnen",
 		language.English: "Decline all",
 	})
-	StrConfirmSkip = i18n.MustString("nago.ai.confirm.skip", i18n.Values{
-		language.German:  "Weitere Änderungen ohne Rückfrage ausführen",
-		language.English: "Run further changes without asking",
-	})
-	StrConfirmSkipHint = i18n.MustString("nago.ai.confirm.skip_hint", i18n.Values{
-		language.German:  "Gilt ab der nächsten Änderung und endet mit einer neuen Unterhaltung. Kritische Änderungen, z. B. Löschen, fragt der Assistent weiterhin nach.",
-		language.English: "Applies from the next change on and ends with a new conversation. The assistant still asks before critical changes, e.g. deleting.",
-	})
 	StrConfirmDeclined = i18n.MustString("nago.ai.confirm.declined", i18n.Values{
 		language.German:  "Der Nutzer hat diese Änderung abgelehnt. Führe sie nicht aus und frage nach, wie stattdessen vorgegangen werden soll.",
 		language.English: "The user declined this change. Do not perform it and ask how to proceed instead.",

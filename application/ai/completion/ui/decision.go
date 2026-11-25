@@ -27,9 +27,8 @@ import (
 //
 // The cards follow the conversation like its messages and scroll with it, see [historyView.trailing], so that a
 // batch of changes never squeezes them into a small area. The actions stay below the conversation: with more than
-// one approval, all of them can be decided at once, and allowAll, when set, offers to let the further changes of the
-// conversation run without asking.
-func renderDecisions(wnd core.Window, cont *completion.Continuation, revision int, busy bool, allowAll *decisionSkip, onResolve func([]completion.Resolution), onDismiss func()) (cards core.View, actions core.View) {
+// one approval, all of them can be decided at once.
+func renderDecisions(wnd core.Window, cont *completion.Continuation, revision int, busy bool, onResolve func([]completion.Resolution), onDismiss func()) (cards core.View, actions core.View) {
 	// Decisions collected so far, keyed by this very suspension so a newer one never inherits older choices.
 	key := suspensionKey(cont, revision)
 	decided := core.StateOf[map[string]completion.Resolution](wnd, "uicompletion-decisions-"+key)
@@ -93,20 +92,9 @@ func renderDecisions(wnd core.Window, cont *completion.Continuation, revision in
 		).Gap(ui.L8).FullWidth().Alignment(ui.Center)
 	}
 
-	var allow core.View
-	if allowAll != nil && len(approvals) > 0 {
-		allow = ui.ToggleField(StrConfirmSkip.Get(subject), allowAll.on).
-			SupportingText(StrConfirmSkipHint.Get(subject)).
-			ID("uicompletion-skip-approval").
-			InputValue(allowAll.state(wnd, "decisions")).
-			Disabled(busy).
-			Frame(ui.Frame{}.FullWidth())
-	}
-
 	cards = ui.VStack(items...).Gap(ui.L8).FullWidth().Alignment(ui.Leading)
 	actions = ui.VStack(
 		ui.If(bulk != nil, bulk),
-		ui.If(allow != nil, allow),
 		ui.HStack(
 			ui.Spacer(),
 			ui.TertiaryButton(onDismiss).Title("Verwerfen und neues Thema beginnen").Enabled(!busy),
@@ -114,35 +102,6 @@ func renderDecisions(wnd core.Window, cont *completion.Continuation, revision in
 	).Gap(ui.L8).FullWidth().Alignment(ui.Leading)
 
 	return cards, actions
-}
-
-// decisionSkip lets the user switch the approvals of the conversation off, see [ChatOptions.SkipApproval].
-type decisionSkip struct {
-	on  bool
-	set func(on bool)
-}
-
-// skipNewConversation stands for the conversation which the next message creates, see [ChatOptions.SkipApproval].
-const skipNewConversation = "\x00new"
-
-// state binds a toggle at the given place to the setting of the conversation. It follows the setting, which the
-// toggle at the other place may have changed.
-func (d *decisionSkip) state(wnd core.Window, place string) *core.State[bool] {
-	st := core.StateOf[bool](wnd, "uicompletion-skip-"+place)
-	if st.Get() != d.on {
-		st.Set(d.on)
-	}
-	st.Observe(func(on bool) { d.set(on) })
-	return st
-}
-
-// skipToggle is the compact switch below the input, without the explanation of the switch below the decisions.
-func skipToggle(wnd core.Window, d *decisionSkip, place string, busy bool) core.View {
-	return ui.ToggleField(StrConfirmSkip.Get(wnd.Subject()), d.on).
-		ID("uicompletion-skip-approval-" + place).
-		InputValue(d.state(wnd, place)).
-		Disabled(busy).
-		Frame(ui.Frame{}.FullWidth())
 }
 
 // suspensionKey identifies one suspension: the revision alone is not enough for a transient chat, which has
