@@ -198,12 +198,6 @@ type ChatOptions struct {
 	// it. Only used with History. Nil keeps the state inside the chat, which then continues only a conversation
 	// waiting on the user.
 	Session *core.State[session.ID]
-
-	// SkipApproval holds the conversation in which the user lets the changes of the assistant run without asking,
-	// see [ChatOptions.ConfirmMutations]. It is offered while a change waits for the approval and lasts until the
-	// user turns it off or starts another conversation. Calls which [ChatOptions.ConfirmMarked] would hold, e.g.
-	// deleting data, still wait. Nil keeps the state inside the chat.
-	SkipApproval *core.State[string]
 }
 
 // effectiveAgents returns the configured agents, or a single default agent when none are configured.
@@ -374,36 +368,6 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 	// transientKey groups the background tasks of a chat without History, which has no session id for that.
 	transientKey := core.AutoState[string](wnd).Init(func() string { return data.RandIdent[string]() })
 	registry := taskRegistry(opts.Sessions)
-	// conversationKey identifies the conversation the chat shows, see SkipApproval.
-	conversationKey := func() string {
-		if opts.History {
-			return string(sessionID.Get())
-		}
-		return transientKey.Get()
-	}
-	// skip holds the conversation in which the user lets changes run without asking, see ChatOptions.SkipApproval.
-	skip := core.AutoState[string](wnd)
-	if opts.SkipApproval != nil {
-		skip = opts.SkipApproval
-	}
-	// A new conversation has no key before its first message; then skip holds skipNewConversation, and the
-	// conversation takes the setting over once it is created, see submit.
-	skipApproval := func() bool {
-		if key := conversationKey(); key != "" {
-			return skip.Get() == key
-		}
-		return skip.Get() == skipNewConversation
-	}
-	setSkipApproval := func(on bool) {
-		switch key := conversationKey(); {
-		case !on:
-			skip.Set("")
-		case key == "":
-			skip.Set(skipNewConversation)
-		default:
-			skip.Set(key)
-		}
-	}
 	if !opts.History {
 		// Without History, nobody receives the answer of a run once the chat is gone, e.g. because the panel was
 		// closed or the page reloaded. Its sub-agents would work on unobserved, so the run is cancelled together
@@ -591,10 +555,8 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		// never stops to ask. A tool which may only mutate through sub-agents, e.g. a custom delegation tool,
 		// also requires it: sub-agents cannot ask anyone and therefore stay read-only then. For the same
 		// reason, a read-only chat sets it, which never asks, because its mutating tools have been removed.
-		// A user who lets the changes of this conversation run without asking still approves the marked ones.
-		skipping := opts.ConfirmMutations && skipApproval()
-		cfg.confirm = ((opts.ConfirmMutations && !skipping) || opts.ReadOnly) && containsMutating(cfg.tools)
-		cfg.confirmMarked = (opts.ConfirmMarked || skipping) && !cfg.confirm && slices.ContainsFunc(cfg.tools, func(t completion.Tool) bool {
+		cfg.confirm = (opts.ConfirmMutations || opts.ReadOnly) && containsMutating(cfg.tools)
+		cfg.confirmMarked = opts.ConfirmMarked && !cfg.confirm && slices.ContainsFunc(cfg.tools, func(t completion.Tool) bool {
 			return t.Mutating && (t.RequiresApproval || t.ApprovalFor != nil)
 		})
 		return cfg
@@ -997,9 +959,6 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			sid = created.ID
 			sessionID.Set(sid)
 			createdNow = true
-			if skip.Get() == skipNewConversation {
-				skip.Set(string(sid))
-			}
 		}
 
 		prevHistory := history.Get()
@@ -1246,18 +1205,12 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		hv.trailing = turnLimitView(continueRun, prompt.ID())
 	}
 
-	var allowAll *decisionSkip
-	// only where there is something to approve, see resolveTurn
-	if opts.ConfirmMutations && !opts.ReadOnly && containsMutating(opts.resolveTools(currentAgent())) {
-		allowAll = &decisionSkip{on: skipApproval(), set: setSkipApproval}
-	}
-
 	var footer core.View
 	// A pending decision takes precedence over the input: the run waits on it, so offering the input field
 	// instead would look like the assistant had simply stopped responding. Its cards follow the conversation.
 	cont := pending.Get()
 	if cont != nil {
-		hv.trailing, footer = renderDecisions(wnd, cont, pendingRev.Get(), busy.Get(), allowAll, resolve, dismiss)
+		hv.trailing, footer = renderDecisions(wnd, cont, pendingRev.Get(), busy.Get(), resolve, dismiss)
 	}
 
 	conversation := conversationView(wnd, history.Get(),
@@ -1273,11 +1226,6 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 			chips = stagedChips(staged, busy.Get())
 		}
 
-		var inputSkip core.View
-		if allowAll != nil {
-			inputSkip = skipToggle(wnd, allowAll, "input", busy.Get())
-		}
-
 		footer = ui.VStack(
 			ui.If(busy.Get(), busyLine(busyLabel)),
 			ui.If(notice.Get() != turnNotice{}, noticeView(notice.Get())),
@@ -1288,8 +1236,6 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 				FullWidth().
 				Disabled(busy.Get()).
 				KeydownEnter(submit),
-			// also before the first change, e.g. in a new conversation, which is about to create many entries
-			ui.If(inputSkip != nil, inputSkip),
 			ui.HStack(
 				ui.If(uploadEnabled, uploadButton(wnd, staged, busy.Get())),
 				ui.Spacer(),
