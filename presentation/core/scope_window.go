@@ -395,6 +395,8 @@ func (s *scopeWindow) Logout() error {
 	return nil
 }
 
+// AsURI returns a link to the stream, e.g. for an image. The link delivers the stream only to the session and the
+// user of this window, as long as the window lives, see [LinkOwner].
 func (s *scopeWindow) AsURI(open func() (io.Reader, error)) (URI, error) {
 	if s.destroyed.Load() {
 		return "", nil
@@ -452,10 +454,10 @@ func (s *scopeWindow) ExportFiles(options ExportFilesOptions) {
 		options.ID = fmt.Sprintf("auto-%d", s.parent.ids.nextFile())
 	}
 
-	s.parent.putExportFiles(options)
+	token := s.parent.putExportFiles(options)
 
 	if callback := s.parent.app.onSendFiles; callback != nil {
-		if err := callback(s.parent, options); err != nil {
+		if err := callback(s.parent, token, options); err != nil {
 			slog.Error("cannot export files", "err", err)
 		}
 

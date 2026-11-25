@@ -127,7 +127,8 @@ type Window interface {
 	// ExportFiles takes all contained files and tries to offer them to the user using whatever is native for the
 	// actual frontend. For example, a browser may just download these files but an Android frontend may show
 	// a _send multiple intent_. See also AsURI which does not trigger such intent and is used
-	// to stream data into the frontend.
+	// to stream data into the frontend. A browser gets a link, which delivers the files only to the session and the
+	// user of this window, as long as the window shows the current page, see [LinkOwner].
 	ExportFiles(options ExportFilesOptions)
 
 	// ImportFiles is the opposite of SendFiles. The identity of the request is

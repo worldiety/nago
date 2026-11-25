@@ -426,6 +426,12 @@ func (w *Window) Reconnect() {
 	w.observe("reconnect", string(w.Route().Path), start)
 }
 
+// ScopeID returns the id of the scope of the window, which also a websocket or http window sends, e.g. to look up
+// the scope with [core.Application.Scope] of an application created by [application.Configurator.NewHTTPHandler].
+func (w *Window) ScopeID() proto.ScopeID {
+	return w.scopeID
+}
+
 // Scope returns the underlying scope of a window within the same process and nil otherwise.
 func (w *Window) Scope() *core.Scope {
 	if tr, ok := w.tr.(*localTransport); ok {

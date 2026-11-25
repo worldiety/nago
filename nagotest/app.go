@@ -81,7 +81,7 @@ func New(t testing.TB, configure func(cfg *application.Configurator), opts ...Op
 		}
 	})
 
-	app.SetOnSendFiles(func(scope *core.Scope, options core.ExportFilesOptions) error {
+	app.SetOnSendFiles(func(scope *core.Scope, _ string, options core.ExportFilesOptions) error {
 		w, ok := a.windows.Get(scope.ID())
 		if !ok {
 			return fmt.Errorf("nagotest: no window for scope %s", scope.ID())

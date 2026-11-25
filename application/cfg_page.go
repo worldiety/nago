@@ -174,6 +174,31 @@ func (c *Configurator) Filesystems() []fs.FS {
 	return slices.Clone(c.fsys)
 }
 
+// sharedStream is a stream of [core.Window.AsURI] with the owner, who may follow its link.
+type sharedStream struct {
+	open  func() (io.Reader, error)
+	owner core.LinkOwner
+}
+
+// linkTransferLimit bounds the transfer of a download or a shared stream. A transfer may take hours, e.g. a zip of
+// files from an S3 store, and is not cut when its window goes away, thus it is aborted at its first write after this
+// limit. A source, which stops delivering without writing, is not aborted.
+var linkTransferLimit = 24 * time.Hour
+
+// limitTransfer aborts the response at its first write after [linkTransferLimit]. The returned function lifts the
+// limit again, which the server would otherwise keep for the next request of a kept-alive connection.
+func limitTransfer(w http.ResponseWriter) (lift func()) {
+	rc := http.NewResponseController(w)
+	if err := rc.SetWriteDeadline(time.Now().Add(linkTransferLimit)); err != nil {
+		slog.Error("cannot limit the transfer of a link", "err", err)
+		return func() {}
+	}
+
+	return func() {
+		_ = rc.SetWriteDeadline(time.Time{})
+	}
+}
+
 func nameAndMime(options core.ExportFilesOptions) (name, mimetype string) {
 	total := len(options.Files)
 	if total == 0 {
@@ -326,12 +351,12 @@ func (c *Configurator) newCoreApplication() *core.Application {
 func (c *Configurator) newHandler() http.Handler {
 	app2 := c.newCoreApplication()
 
-	downloadStreams := map[string]func() (io.Reader, error){}
+	downloadStreams := map[string]sharedStream{}
 	var downloadFilesMutex sync.Mutex
 
 	r := chi.NewRouter()
 
-	app2.SetOnSendFiles(func(scope *core.Scope, options core.ExportFilesOptions) error {
+	app2.SetOnSendFiles(func(scope *core.Scope, token string, options core.ExportFilesOptions) error {
 		if len(options.Files) == 0 {
 			return fmt.Errorf("no files to send")
 		}
@@ -342,7 +367,7 @@ func (c *Configurator) newHandler() http.Handler {
 			Resources: []proto.Resource{
 				{
 					Name:     proto.Str(name),
-					URI:      proto.URI(fmt.Sprintf("/api/ora/v1/download?scope=%v&id=%v", scope.ID(), options.ID)),
+					URI:      proto.URI("/api/ora/v1/download?token=" + url.QueryEscape(token)),
 					MimeType: proto.Str(mimetype),
 				},
 			},
@@ -364,7 +389,7 @@ func (c *Configurator) newHandler() http.Handler {
 		})
 
 		uri := core.URI("/api/ora/v1/share?token=" + token)
-		downloadStreams[token] = f
+		downloadStreams[token] = sharedStream{open: f, owner: scope.LinkOwner()}
 		return uri, nil
 	})
 
@@ -502,13 +527,16 @@ func (c *Configurator) newHandler() http.Handler {
 		download, ok := downloadStreams[token]
 		downloadFilesMutex.Unlock()
 
-		if !ok {
+		// like a download, the stream belongs to the session and the user of its window
+		requester, _ := c.sessionIDOf(r)
+		if !ok || !app2.MayFollow(download.owner, session.ID(requester)) {
 			// TODO how to make DOS or id brute force attacks harder?
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 			return
 		}
 
-		reader, err := download()
+		defer limitTransfer(w)()
+		reader, err := download.open()
 		if err != nil {
 			slog.Error("cannot open shared stream", "token", token, "err", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -531,14 +559,15 @@ func (c *Configurator) newHandler() http.Handler {
 	}))
 
 	r.Mount("/api/ora/v1/download", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		scopeID := r.URL.Query().Get("scope")
-		downloadID := r.URL.Query().Get("id")
-
-		options, ok := app2.ExportFilesOptions(proto.ScopeID(scopeID), downloadID)
+		// a refusal of another session or user answers like an unknown token, see core.LinkOwner
+		requester, _ := c.sessionIDOf(r)
+		options, ok := app2.Download(r.URL.Query().Get("token"), session.ID(requester))
 		if !ok {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 			return
 		}
+
+		defer limitTransfer(w)()
 
 		now := time.Now()
 		name, mimetype := nameAndMime(options)

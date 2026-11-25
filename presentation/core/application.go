@@ -57,8 +57,9 @@ type Application struct {
 	ctx                      context.Context
 	cancelCtx                func()
 	tmpDir                   string
-	onSendFiles              func(scope *Scope, options ExportFilesOptions) error
+	onSendFiles              func(scope *Scope, token string, options ExportFilesOptions) error
 	onShareStream            func(*Scope, func() (io.Reader, error)) (URI, error)
+	downloads                downloads
 	onWindowCreatedObservers []OnWindowCreatedObserver
 	destructors              *concurrent.LinkedList[func()]
 	colorsMutex              sync.RWMutex // protects colorSets, which windows read while the theme may change
@@ -250,8 +251,9 @@ func (a *Application) UpdateFonts(fonts Fonts) {
 
 // SetOnSendFiles sets the callback which is called by the window or application to trigger the platform specific
 // "send files" behavior. On webbrowser the according download events may be issued and on other platforms
-// like Android a custom content provider may be created which exposes these blobs as URIs.
-func (a *Application) SetOnSendFiles(onSendFiles func(scope *Scope, options ExportFilesOptions) error) {
+// like Android a custom content provider may be created which exposes these blobs as URIs. The token names the
+// download for [Application.Download], which delivers it only to the owner of the window, see [LinkOwner].
+func (a *Application) SetOnSendFiles(onSendFiles func(scope *Scope, token string, options ExportFilesOptions) error) {
 	a.onSendFiles = onSendFiles
 }
 
@@ -304,16 +306,6 @@ func (a *Application) ImportFilesOptions(scopeId proto.ScopeID, uploadId string)
 	}
 
 	return scope.ImportFilesOptions(uploadId)
-}
-
-func (a *Application) ExportFilesOptions(scopeId proto.ScopeID, downloadId string) (ExportFilesOptions, bool) {
-	scope, ok := a.scopes.Get(scopeId)
-	if !ok {
-		slog.Error("no such scope to export files", "scope", logging.Secret(string(scopeId)))
-		return ExportFilesOptions{}, false
-	}
-
-	return scope.ExportFilesOptions(downloadId)
 }
 
 func (a *Application) AddDestructor(f func()) {

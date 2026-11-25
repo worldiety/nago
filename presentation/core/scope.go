@@ -96,7 +96,7 @@ type Scope struct {
 	// the uploads and downloads of the current window, which are looked up by HTTP handlers
 	filesMutex  sync.Mutex
 	importFiles map[string]ImportFilesOptions
-	exportFiles map[string]ExportFilesOptions
+	exportFiles map[string]exportEntry
 
 	// tickQueued is true, while a function of the update ticker is posted but not yet executed.
 	tickQueued atomic.Bool
@@ -174,21 +174,33 @@ func (s *Scope) ID() proto.ScopeID {
 	return s.id
 }
 
-// ExportFilesOptions returns the download of the current window with the given id. It may be called from any
-// goroutine, e.g. by an HTTP handler.
-func (s *Scope) ExportFilesOptions(id string) (ExportFilesOptions, bool) {
-	s.Tick() // keep this scope alive
+// exportEntry is a download of the current window with the owner, who may follow its link, see [LinkOwner].
+type exportEntry struct {
+	options ExportFilesOptions
+	owner   LinkOwner
+	token   string
+}
 
+// exportFilesOptions returns the download of the current window with the given id and token, if the requesting
+// session may follow its link. Unlike an upload, a download request does not keep the scope alive: otherwise,
+// whoever holds the link could keep it valid, by requesting it at least once per lifetime of the scope. It may be
+// called from any goroutine, e.g. by an HTTP handler.
+func (s *Scope) exportFilesOptions(id, token string, requester session.ID) (ExportFilesOptions, bool) {
 	s.filesMutex.Lock()
-	files, ok := s.exportFiles[id]
+	entry, ok := s.exportFiles[id]
 	s.filesMutex.Unlock()
 
-	if !ok {
+	if !ok || entry.token != token {
 		slog.Error("unknown export file", slog.Any("id", id))
 		return ExportFilesOptions{}, false
 	}
 
-	return files, true
+	if !s.app.MayFollow(entry.owner, requester) {
+		slog.Warn("refused the download of another session or user", "id", id, "scope", logging.Secret(string(s.id)))
+		return ExportFilesOptions{}, false
+	}
+
+	return entry.options, true
 }
 
 // ImportFilesOptions returns the upload of the current window with the given id. It may be called from any
@@ -219,21 +231,35 @@ func (s *Scope) putImportFiles(options ImportFilesOptions) {
 	s.importFiles[options.ID] = options
 }
 
-func (s *Scope) putExportFiles(options ExportFilesOptions) {
+// putExportFiles keeps the download for the owner of the window and returns the token of its link. A download with
+// the same id replaces the former one, whose link becomes invalid.
+func (s *Scope) putExportFiles(options ExportFilesOptions) string {
 	s.filesMutex.Lock()
 	defer s.filesMutex.Unlock()
 
 	if s.exportFiles == nil {
-		s.exportFiles = map[string]ExportFilesOptions{}
+		s.exportFiles = map[string]exportEntry{}
 	}
 
-	s.exportFiles[options.ID] = options
+	if former, ok := s.exportFiles[options.ID]; ok {
+		s.app.downloads.remove(former.token)
+	}
+
+	token := string(proto.NewScopeID())
+	s.exportFiles[options.ID] = exportEntry{options: options, owner: s.LinkOwner(), token: token}
+	s.app.downloads.put(token, s, options.ID)
+
+	return token
 }
 
 // clearFiles forgets the uploads and downloads, when their window goes away.
 func (s *Scope) clearFiles() {
 	s.filesMutex.Lock()
 	defer s.filesMutex.Unlock()
+
+	for _, entry := range s.exportFiles {
+		s.app.downloads.remove(entry.token)
+	}
 
 	s.importFiles = nil
 	s.exportFiles = nil
