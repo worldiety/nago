@@ -12,6 +12,7 @@ package uipush
 
 import (
 	"errors"
+	"fmt"
 
 	"go.wdy.de/nago/application/push"
 	"go.wdy.de/nago/application/session"
@@ -20,8 +21,14 @@ import (
 	"go.wdy.de/nago/presentation/proto"
 )
 
-// ErrNotEnabled is returned, if the push module has not been enabled by cfgpush.Enable.
-var ErrNotEnabled = errors.New("push notifications are not enabled")
+var (
+	// ErrNotEnabled is returned, if the push module has not been enabled by cfgpush.Enable.
+	ErrNotEnabled = errors.New("push notifications are not enabled")
+
+	// ErrNoAnswer is returned by [Subscribe], if the push service of the browser has not answered in time after the
+	// user has allowed the notifications, e.g. because the push service of the device is not available.
+	ErrNoAnswer = errors.New("the push service of the browser has not answered")
+)
 
 // Permission is the permission of the browser for notifications.
 type Permission string
@@ -184,6 +191,14 @@ func sessionID(wnd core.Window) session.ID {
 	return ""
 }
 
+// codeNoAnswer is the code of a [proto.RetError], by which the frontend tells, that the push service has not
+// answered in time, see [proto.CallPushSubscribe].
+const codeNoAnswer = 504
+
 func errorOf(ret *proto.RetError) error {
+	if ret.Code == codeNoAnswer {
+		return fmt.Errorf("%w: %s", ErrNoAnswer, ret.Message)
+	}
+
 	return core.AsyncError{Code: int(ret.Code), Message: string(ret.Message)}
 }

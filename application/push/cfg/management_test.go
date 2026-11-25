@@ -46,6 +46,7 @@ import (
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
 	"go.wdy.de/nago/presentation/ui"
+	"go.wdy.de/nago/presentation/ui/alert"
 	"golang.org/x/text/language"
 )
 
@@ -204,7 +205,7 @@ func newWorldAt(t *testing.T, dataDir string, p *pushService, enable bool, opts 
 		}
 
 		cfg.RootView(routeCard, func(wnd core.Window) core.View {
-			return ui.VStack(ui.Text("page"), uipush.Card(wnd))
+			return ui.VStack(ui.Text("page"), uipush.Card(wnd), alert.BannerMessages(wnd))
 		})
 		cfg.RootView(routeToggle, func(wnd core.Window) core.View {
 			return ui.VStack(ui.Text("page"), uipush.Toggle(wnd))
@@ -778,6 +779,25 @@ func TestFailedSubscription(t *testing.T) {
 	if countSubscriptions(t, w, ada) != 0 {
 		t.Fatal("a failed subscription must not be stored")
 	}
+}
+
+// TestSubscriptionWithoutAnswer shows, that a push service, which does not answer, tells the user so.
+func TestSubscriptionWithoutAnswer(t *testing.T) {
+	w := newWorld(t, true, cfgpush.Options{})
+	ada := w.person(t, "Ada")
+
+	win := w.app.Open(t, ada, routeCard)
+	w.resolve(t, win, pushCalls[*proto.CallPushState](win)[0], defaultState())
+	win.Click(win.Find(nagotest.Text(de(uipush.StrEnable))))
+	w.resolve(t, win, pushCalls[*proto.CallPushSubscribe](win)[0], &proto.RetError{Message: "the push service has not answered within 30000 ms", Code: 504})
+	win.Find(nagotest.TextContains(de(uipush.StrNoAnswer)))
+	win.Find(nagotest.Text(de(uipush.StrEnable)))
+
+	// the error of Subscribe matches ErrNoAnswer
+	direct := w.app.Open(t, ada, routeDirect)
+	direct.Click(direct.Find(nagotest.Text("direct")))
+	w.resolve(t, direct, pushCalls[*proto.CallPushSubscribe](direct)[0], &proto.RetError{Message: "timeout", Code: 504})
+	direct.Find(nagotest.TextContains(uipush.ErrNoAnswer.Error()))
 }
 
 func TestToggle(t *testing.T) {

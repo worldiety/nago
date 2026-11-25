@@ -246,6 +246,54 @@ describe('web push', () => {
 		assert.ok('state' in result && result.state.permission === 'denied');
 	});
 
+	test('a push service without answer ends in an error instead of waiting forever', async () => {
+		install();
+		const push = await load();
+		registration.pushManager.subscribe = () => {
+			log.push('subscribe hangs');
+			return new Promise(() => {});
+		};
+
+		const result = await push.subscribePush(KEY, SW, gesture(true), 20);
+		assert.deepEqual(asking(), ['requestPermission in gesture', `register ${SW} /`, 'subscribe hangs']);
+		assert.ok('error' in result && result.timeout === true, JSON.stringify(result));
+	});
+
+	test('a push service without answer does not block the state', async () => {
+		install();
+		const push = await load();
+		existing = fakeSubscription('https://push.example/old', push.base64UrlToBytes(KEY));
+		registration.pushManager.getSubscription = () => new Promise(() => {});
+
+		const started = Date.now();
+		const state = await Promise.race([
+			push.readPushState(),
+			new Promise((_, reject) =>
+				setTimeout(() => reject(new Error('state blocks')), push.STATE_TIMEOUT_MS + 1000)
+			),
+		]);
+		assert.equal(state.supported, true);
+		assert.equal(state.endpoint, '');
+		assert.ok(Date.now() - started >= push.STATE_TIMEOUT_MS - 50);
+	});
+
+	test('the time of the user to decide is not limited', async () => {
+		install();
+		const push = await load();
+		let decide: (p: string) => void = () => {};
+		(globalThis as any).Notification.requestPermission = () => {
+			log.push('requestPermission');
+			return new Promise((resolve) => (decide = resolve));
+		};
+
+		const pending = push.subscribePush(KEY, SW, gesture(true), 20);
+		await new Promise((r) => setTimeout(r, 60));
+		permission = 'granted';
+		decide('granted');
+		const result = await pending;
+		assert.ok('subscription' in result, JSON.stringify(result));
+	});
+
 	test('a granted permission needs no gesture', async () => {
 		install();
 		permission = 'granted';

@@ -70,6 +70,7 @@ import {
 	type PushState,
 	type PushSubscriptionData,
 	installPushNavigation,
+	PushTimeoutError,
 	readPushState,
 	subscribePush,
 	unsubscribePush,
@@ -809,8 +810,9 @@ async function callPushSubscribe(chan: Channel, evt: CallRequested, args: CallPu
 		return;
 	}
 
+	// 504 tells the backend, that the push service of the browser has not answered in time
 	console.warn('push subscription failed', result.error);
-	chan.sendEvent(new CallResolved(evt.callPtr, new RetError(result.error, 500), nextRID()));
+	chan.sendEvent(new CallResolved(evt.callPtr, new RetError(result.error, result.timeout ? 504 : 500), nextRID()));
 }
 
 async function callPushUnsubscribe(chan: Channel, evt: CallRequested) {
@@ -820,7 +822,13 @@ async function callPushUnsubscribe(chan: Channel, evt: CallRequested) {
 		chan.sendEvent(new CallResolved(evt.callPtr, ret, nextRID()));
 	} catch (e: any) {
 		console.warn('push unsubscription failed', e);
-		chan.sendEvent(new CallResolved(evt.callPtr, new RetError(String(e?.message ?? e), 500), nextRID()));
+		chan.sendEvent(
+			new CallResolved(
+				evt.callPtr,
+				new RetError(String(e?.message ?? e), e instanceof PushTimeoutError ? 504 : 500),
+				nextRID()
+			)
+		);
 	}
 }
 

@@ -26898,7 +26898,7 @@ export class RetPushState implements Writeable, Readable, CallRet {
 	isCallRet(): void {}
 }
 
-// CallPushSubscribe asks the user for the permission for notifications, registers the service worker and subscribes to web push. The browser asks only within a user gesture, so the backend must send it as the reaction to an action of the user, which the application offers for that purpose. If the gesture has expired, the frontend asks the user once more by its own dialog. It is answered with a [RetPushSubscription], or a [RetPushState], if it has not subscribed, or a [RetError].
+// CallPushSubscribe asks the user for the permission for notifications, registers the service worker and subscribes to web push. The browser asks only within a user gesture, so the backend must send it as the reaction to an action of the user, which the application offers for that purpose. If the gesture has expired, the frontend asks the user once more by its own dialog. It is answered with a [RetPushSubscription], or a [RetPushState], if it has not subscribed, or a [RetError]. A [RetError] with the code 504 tells, that the push service of the browser has not answered in time after the user has allowed the notifications.
 export class CallPushSubscribe implements Writeable, Readable, CallArgs {
 	// ApplicationServerKey is the public VAPID key as an uncompressed point in base64url.
 	public applicationServerKey?: Str;

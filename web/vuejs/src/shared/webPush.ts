@@ -34,7 +34,44 @@ export interface PushSubscriptionData {
 	userAgent: string;
 }
 
-export type SubscribeResult = { subscription: PushSubscriptionData } | { state: PushState } | { error: string };
+/** SubscribeResult is the subscription, or the state, if the user has not allowed it, or an error. */
+export type SubscribeResult =
+	{ subscription: PushSubscriptionData } | { state: PushState } | { error: string; timeout?: boolean };
+
+/**
+ * SUBSCRIBE_TIMEOUT_MS limits the registration of the service worker and the subscription at the push service of the
+ * browser, after the user has allowed the notifications. Without it, the user would wait forever, if the push service
+ * of the device does not answer. It does not limit the decision of the user.
+ */
+export const SUBSCRIBE_TIMEOUT_MS = 30_000;
+
+/**
+ * STATE_TIMEOUT_MS limits the lookup of the subscription for the state, which must not keep a view from showing
+ * the state, if the push service of the device does not answer.
+ */
+export const STATE_TIMEOUT_MS = 5_000;
+
+/** PushTimeoutError tells, that the push service of the browser has not answered in time. */
+export class PushTimeoutError extends Error {}
+
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+	return new Promise((resolve, reject) => {
+		const timer = setTimeout(
+			() => reject(new PushTimeoutError(`the push service has not answered within ${ms} ms`)),
+			ms
+		);
+		p.then(
+			(v) => {
+				clearTimeout(timer);
+				resolve(v);
+			},
+			(e) => {
+				clearTimeout(timer);
+				reject(e);
+			}
+		);
+	});
+}
 
 /** GestureOps decouples the module from the user gesture bridge and the dialog of the frontend. */
 export interface GestureOps {
@@ -102,12 +139,16 @@ export async function readPushState(): Promise<PushState> {
 
 	if (supported) {
 		try {
-			state.endpoint = (await currentSubscription())?.endpoint ?? '';
+			// without an answer, the subscription is unknown, which a subscription settles
+			state.endpoint = (await withTimeout(currentSubscription(), STATE_TIMEOUT_MS))?.endpoint ?? '';
 		} catch (e) {
-			// e.g. a private window of Firefox has no service workers
 			console.warn('cannot read the push subscription', e);
-			state.supported = false;
-			state.permission = '';
+			// e.g. a private window of Firefox has no service workers, while a push service, which does not answer,
+			// still lets the user try to subscribe
+			if (!(e instanceof PushTimeoutError)) {
+				state.supported = false;
+				state.permission = '';
+			}
 		}
 	}
 
@@ -208,11 +249,14 @@ function requestPermission(): Promise<NotificationPermission> {
 export function subscribePush(
 	applicationServerKey: string,
 	serviceWorker: string,
-	gesture: GestureOps
+	gesture: GestureOps,
+	timeoutMs = SUBSCRIBE_TIMEOUT_MS
 ): Promise<SubscribeResult> {
 	return new Promise((resolve) => {
 		const finish = (p: Promise<SubscribeResult>) => {
-			p.then(resolve, (e) => resolve({ error: String(e) }));
+			p.then(resolve, (e) =>
+				resolve(e instanceof PushTimeoutError ? { error: e.message, timeout: true } : { error: String(e) })
+			);
 		};
 
 		const unsubscribed = () => readPushState().then((state) => ({ state }) as SubscribeResult);
@@ -226,7 +270,9 @@ export function subscribePush(
 		const run = () => {
 			finish(
 				requestPermission().then((permission) =>
-					permission === 'granted' ? subscribeGranted(applicationServerKey, serviceWorker) : unsubscribed()
+					permission === 'granted'
+						? withTimeout(subscribeGranted(applicationServerKey, serviceWorker), timeoutMs)
+						: unsubscribed()
 				)
 			);
 		};
@@ -254,7 +300,7 @@ export async function unsubscribePush(): Promise<PushSubscriptionData | undefine
 		return undefined;
 	}
 
-	const subscription = await currentSubscription();
+	const subscription = await withTimeout(currentSubscription(), SUBSCRIBE_TIMEOUT_MS);
 	if (!subscription) {
 		return undefined;
 	}

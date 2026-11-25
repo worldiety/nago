@@ -9,6 +9,7 @@ package uipush
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/worldiety/i18n"
@@ -31,6 +32,7 @@ var (
 	StrSignIn          = i18n.MustString("nago.push.sign_in", i18n.Values{language.German: "Melde dich an, um auf diesem Gerät Benachrichtigungen zu erhalten.", language.English: "Sign in to get notifications on this device."})
 	StrActive          = i18n.MustString("nago.push.active", i18n.Values{language.German: "Dieses Gerät erhält deine Benachrichtigungen.", language.English: "This device gets your notifications."})
 	StrNotAllowed      = i18n.MustString("nago.push.not_allowed", i18n.Values{language.German: "Benachrichtigungen wurden nicht erlaubt.", language.English: "Notifications have not been allowed."})
+	StrNoAnswer        = i18n.MustString("nago.push.no_answer", i18n.Values{language.German: "Der Push-Dienst dieses Geräts antwortet nicht. Versuche es später noch einmal.", language.English: "The push service of this device does not answer. Try again later."})
 	StrEnable          = i18n.MustString("nago.push.enable", i18n.Values{language.German: "Benachrichtigungen aktivieren", language.English: "Enable notifications"})
 	StrDisable         = i18n.MustString("nago.push.disable", i18n.Values{language.German: "Auf diesem Gerät deaktivieren", language.English: "Disable on this device"})
 	StrSendTest        = i18n.MustString("nago.push.send_test", i18n.Values{language.German: "Test senden", language.English: "Send a test"})
@@ -86,7 +88,12 @@ func subscribe(wnd core.Window, m *core.State[model], after func(State)) {
 	Subscribe(wnd, func(s State, err error) {
 		// an error tells nothing about the browser, so the last known state stays
 		if err != nil {
-			alert.ShowBannerError(wnd, err)
+			if errors.Is(err, ErrNoAnswer) {
+				alert.ShowBannerMessage(wnd, alert.Message{Title: StrTitle.Get(wnd), Message: StrNoAnswer.Get(wnd), Intent: alert.IntentWarning})
+			} else {
+				alert.ShowBannerError(wnd, err)
+			}
+
 			after(m.Get().State)
 			return
 		}
