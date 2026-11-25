@@ -92,7 +92,6 @@ type Callback = (err: Error | unknown | null, data: unknown) => void;
 				});
 			}
 
-			loadLink('manifest', `/${buildType}/manifest.json`);
 			console.info(`Successfully loaded build '${buildType}' for browser '${name}'.
 Version '${version}' is ${isOutdated ? 'older' : 'newer'} than the threshold '${thresholds[name]}'.`);
 		});
