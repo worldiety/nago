@@ -1246,20 +1246,24 @@ func chatBody(wnd core.Window, opts ChatOptions, height ui.Length) core.View {
 		hv.trailing = turnLimitView(continueRun, prompt.ID())
 	}
 
-	conversation := conversationView(wnd, history.Get(),
-		"Stell mir eine Frage, um die Unterhaltung zu beginnen.", height, hv)
-
-	var footer core.View
-	// A pending decision takes precedence over the input: the run waits on it, so offering the input field
-	// instead would look like the assistant had simply stopped responding.
 	var allowAll *decisionSkip
 	// only where there is something to approve, see resolveTurn
 	if opts.ConfirmMutations && !opts.ReadOnly && containsMutating(opts.resolveTools(currentAgent())) {
 		allowAll = &decisionSkip{on: skipApproval(), set: setSkipApproval}
 	}
-	if cont := pending.Get(); cont != nil {
-		footer = renderDecisions(wnd, cont, pendingRev.Get(), busy.Get(), allowAll, resolve, dismiss)
-	} else {
+
+	var footer core.View
+	// A pending decision takes precedence over the input: the run waits on it, so offering the input field
+	// instead would look like the assistant had simply stopped responding. Its cards follow the conversation.
+	cont := pending.Get()
+	if cont != nil {
+		hv.trailing, footer = renderDecisions(wnd, cont, pendingRev.Get(), busy.Get(), allowAll, resolve, dismiss)
+	}
+
+	conversation := conversationView(wnd, history.Get(),
+		"Stell mir eine Frage, um die Unterhaltung zu beginnen.", height, hv)
+
+	if cont == nil {
 		busyLabel := status.Get()
 		if busyLabel == "" {
 			busyLabel = "… die KI arbeitet"
