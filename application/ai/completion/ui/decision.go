@@ -145,7 +145,7 @@ func (d *decisionSkip) state(wnd core.Window, place string) *core.State[bool] {
 // skipToggle is the compact switch below the input, without the explanation of the switch below the decisions.
 func skipToggle(wnd core.Window, d *decisionSkip, place string, busy bool) core.View {
 	return ui.ToggleField(StrConfirmSkip.Get(wnd.Subject()), d.on).
-		ID("uicompletion-skip-approval-"+place).
+		ID("uicompletion-skip-approval-" + place).
 		InputValue(d.state(wnd, place)).
 		Disabled(busy).
 		Frame(ui.Frame{}.FullWidth())
