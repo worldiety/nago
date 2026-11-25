@@ -21,6 +21,11 @@ func (c *Configurator) SetManifestIcon(uri core.URI) *Configurator {
 	return c
 }
 
+// ManifestIcon returns the icon url, see [Configurator.SetManifestIcon].
+func (c *Configurator) ManifestIcon() core.URI {
+	return c.pwaIcon
+}
+
 /*// CreateThemes takes the given 3 colors and generates all required themes from it.
 // Remember the following color definitions:
 // * primary is used for the overall color impression. Most areas colors are derived from different brightness values.
