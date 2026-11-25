@@ -24,17 +24,23 @@ import (
 // The panel is rendered from the continuation alone, which comes from the persisted session (or the transient
 // chat's view state). Nothing blocks while it is shown, so the user may close the chat or navigate away and
 // answer later.
-func renderDecisions(wnd core.Window, cont *completion.Continuation, revision int, busy bool, onResolve func([]completion.Resolution), onDismiss func()) core.View {
+//
+// Many decisions scroll, so that the conversation and the actions stay visible. With more than one approval, all of
+// them can be decided at once, and allowAll, when set, offers to let the further changes of the conversation run
+// without asking.
+func renderDecisions(wnd core.Window, cont *completion.Continuation, revision int, busy bool, allowAll *decisionSkip, onResolve func([]completion.Resolution), onDismiss func()) core.View {
 	// Decisions collected so far, keyed by this very suspension so a newer one never inherits older choices.
 	key := suspensionKey(cont, revision)
 	decided := core.StateOf[map[string]completion.Resolution](wnd, "uicompletion-decisions-"+key)
 
-	decide := func(r completion.Resolution) {
+	decide := func(rs ...completion.Resolution) {
 		all := make(map[string]completion.Resolution, len(cont.Pending))
 		for k, v := range decided.Get() {
 			all[k] = v
 		}
-		all[r.CallID] = r
+		for _, r := range rs {
+			all[r.CallID] = r
+		}
 		decided.Set(all)
 
 		if len(all) < len(cont.Pending) {
@@ -48,7 +54,9 @@ func renderDecisions(wnd core.Window, cont *completion.Continuation, revision in
 		onResolve(resolutions)
 	}
 
+	subject := wnd.Subject()
 	var items []core.View
+	var approvals []completion.PendingCall
 	for _, pc := range cont.Pending {
 		if _, done := decided.Get()[pc.Call.ID]; done {
 			continue
@@ -56,19 +64,75 @@ func renderDecisions(wnd core.Window, cont *completion.Continuation, revision in
 
 		switch pc.Kind {
 		case completion.PendingQuestion:
-			items = append(items, questionPanel(wnd, pc, key, busy, decide))
+			items = append(items, questionPanel(wnd, pc, key, busy, func(r completion.Resolution) { decide(r) }))
 		case completion.PendingApproval:
-			items = append(items, approvalPanel(wnd, pc, busy, decide))
+			approvals = append(approvals, pc)
+			items = append(items, approvalPanel(wnd, pc, busy, func(r completion.Resolution) { decide(r) }))
 		}
 	}
 
+	decideAll := func(approve bool) {
+		rs := make([]completion.Resolution, 0, len(approvals))
+		for _, pc := range approvals {
+			r := completion.Resolution{CallID: pc.Call.ID, Approved: approve}
+			if !approve {
+				r.Message = StrConfirmDeclined.Get(subject)
+			}
+			rs = append(rs, r)
+		}
+		decide(rs...)
+	}
+
+	var bulk core.View
+	if len(approvals) > 1 {
+		bulk = ui.HStack(
+			ui.Spacer(),
+			ui.SecondaryButton(func() { decideAll(false) }).Title(fmt.Sprintf("%s (%d)", StrConfirmDeclineAll.Get(subject), len(approvals))).Enabled(!busy),
+			ui.PrimaryButton(func() { decideAll(true) }).Title(fmt.Sprintf("%s (%d)", StrConfirmApproveAll.Get(subject), len(approvals))).Enabled(!busy),
+		).Gap(ui.L8).FullWidth().Alignment(ui.Center)
+	}
+
+	var allow core.View
+	if allowAll != nil && len(approvals) > 0 {
+		allow = ui.ToggleField(StrConfirmSkip.Get(subject), allowAll.on).
+			SupportingText(StrConfirmSkipHint.Get(subject)).
+			ID("uicompletion-skip-approval").
+			InputValue(allowAll.state(wnd, key)).
+			Disabled(busy).
+			Frame(ui.Frame{}.FullWidth())
+	}
+
 	return ui.VStack(
-		ui.VStack(items...).Gap(ui.L8).FullWidth().Alignment(ui.Leading),
+		// the cards scroll on their own, otherwise a batch of changes pushes the actions out of the panel
+		ui.ScrollView(
+			ui.VStack(items...).Gap(ui.L8).FullWidth().Alignment(ui.Leading),
+		).Axis(ui.ScrollViewAxisVertical).
+			Frame(ui.Frame{Width: ui.Full, MaxHeight: decisionsMaxHeight}),
+		ui.If(bulk != nil, bulk),
+		ui.If(allow != nil, allow),
 		ui.HStack(
 			ui.Spacer(),
 			ui.TertiaryButton(onDismiss).Title("Verwerfen und neues Thema beginnen").Enabled(!busy),
 		).FullWidth(),
 	).Gap(ui.L8).FullWidth().Alignment(ui.Leading)
+}
+
+// decisionsMaxHeight limits the pending decisions, so that the floating panel (see panelMaxHeight) still shows
+// the end of the conversation and the actions below the decisions. The frontend takes only a length that starts
+// with calc as it is.
+const decisionsMaxHeight ui.Length = "calc(max(8rem, 100dvh - 40rem))"
+
+// decisionSkip lets the user switch the approvals of the conversation off, see [ChatOptions.SkipApproval].
+type decisionSkip struct {
+	on  bool
+	set func(on bool)
+}
+
+// state binds the toggle of the suspension key to the setting of the conversation.
+func (d *decisionSkip) state(wnd core.Window, key string) *core.State[bool] {
+	st := core.StateOf[bool](wnd, "uicompletion-skip-"+key).Init(func() bool { return d.on })
+	st.Observe(func(on bool) { d.set(on) })
+	return st
 }
 
 // suspensionKey identifies one suspension: the revision alone is not enough for a transient chat, which has
