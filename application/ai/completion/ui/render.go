@@ -214,7 +214,8 @@ func joinTexts(texts []completion.Text) string {
 			sb.WriteString("\n\n")
 		}
 
-		body := strings.TrimRight(t.Text, " \t\r\n")
+		shown := t.Shown()
+		body := strings.TrimRight(shown, " \t\r\n")
 		var refs strings.Builder
 		for _, src := range t.Sources() {
 			u, err := url.Parse(src.URL)
@@ -230,13 +231,13 @@ func joinTexts(texts []completion.Text) string {
 		}
 
 		if refs.Len() == 0 || body == "" {
-			sb.WriteString(t.Text)
+			sb.WriteString(shown)
 			continue
 		}
 
 		sb.WriteString(body)
 		sb.WriteString(refs.String())
-		sb.WriteString(t.Text[len(body):])
+		sb.WriteString(shown[len(body):])
 	}
 
 	return sb.String()

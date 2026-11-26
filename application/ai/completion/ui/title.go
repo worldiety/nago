@@ -101,10 +101,13 @@ func meaningful(messages []completion.Message) bool {
 		for _, c := range msg.Content {
 			switch c := c.(type) {
 			case completion.Text:
-				switch msg.Role {
-				case completion.User:
+				switch {
+				case msg.Role == completion.User && c.Display != "":
+					// a text, which an application gives the model instead of an attachment
+					attached = true
+				case msg.Role == completion.User:
 					words += len(strings.Fields(c.Text))
-				case completion.Assistant:
+				case msg.Role == completion.Assistant:
 					answered = answered || strings.TrimSpace(c.Text) != ""
 				}
 			case completion.ToolResult:
@@ -142,7 +145,8 @@ func generateTitle(ctx context.Context, subject auth.Subject, comps completion.C
 	return cleanTitle(text.String()), nil
 }
 
-// transcript renders the beginning of the text of the conversation, without tool calls and attachments.
+// transcript renders the beginning of the text of the conversation, without tool calls and attachments; a text with
+// [completion.Text.Display] stands there as the user sees it.
 func transcript(messages []completion.Message) string {
 	var sb strings.Builder
 	for _, msg := range messages {
@@ -162,13 +166,13 @@ func transcript(messages []completion.Message) string {
 
 		for _, c := range msg.Content {
 			t, ok := c.(completion.Text)
-			if !ok || strings.TrimSpace(t.Text) == "" {
+			if !ok || strings.TrimSpace(t.Shown()) == "" {
 				continue
 			}
 
 			sb.WriteString(speaker)
 			sb.WriteString(": ")
-			sb.WriteString(strings.TrimSpace(t.Text))
+			sb.WriteString(strings.TrimSpace(t.Shown()))
 			sb.WriteString("\n\n")
 		}
 

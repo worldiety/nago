@@ -40,6 +40,7 @@ type contentEnvelope struct {
 
 	// text
 	Citations json.RawMessage `json:"citations,omitempty"`
+	Display   string          `json:"display,omitempty"`
 
 	// server
 	Raw json.RawMessage `json:"raw,omitempty"`
@@ -61,7 +62,7 @@ type contentEnvelope struct {
 func marshalContent(c Content) (contentEnvelope, error) {
 	switch v := c.(type) {
 	case Text:
-		return contentEnvelope{Type: contentTypeText, Text: v.Text, Citations: v.Citations}, nil
+		return contentEnvelope{Type: contentTypeText, Text: v.Text, Citations: v.Citations, Display: v.Display}, nil
 	case ServerBlock:
 		return contentEnvelope{Type: contentTypeServer, Raw: v.Raw}, nil
 	case Thinking:
@@ -89,7 +90,7 @@ func marshalContent(c Content) (contentEnvelope, error) {
 func (e contentEnvelope) toContent() (Content, error) {
 	switch e.Type {
 	case contentTypeText:
-		return Text{Text: e.Text, Citations: e.Citations}, nil
+		return Text{Text: e.Text, Citations: e.Citations, Display: e.Display}, nil
 	case contentTypeServer:
 		return ServerBlock{Raw: e.Raw}, nil
 	case contentTypeThinking:

@@ -147,8 +147,8 @@ func (s Session) Preview() string {
 			continue
 		}
 		for _, c := range msg.Content {
-			if t, ok := c.(completion.Text); ok && t.Text != "" {
-				preview := t.Text
+			if t, ok := c.(completion.Text); ok && t.Shown() != "" {
+				preview := t.Shown()
 				if r := []rune(preview); len(r) > 48 {
 					preview = string(r[:48]) + "…"
 				}

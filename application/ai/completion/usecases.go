@@ -120,9 +120,23 @@ type Text struct {
 	// Citations attribute the text to the sources of a [ServerTool], in the format of the provider. They must be
 	// sent back unchanged, like a [ServerBlock]. Optional.
 	Citations json.RawMessage `json:"citations,omitzero"`
+	// Display is the text for the user instead of Text, e.g. "📎 handbook.pdf" for a text, which an application gives the
+	// model instead of an attachment (OnAttach of the chat). The bubble of the chat, the preview of the session and the
+	// transcript for its title show it, and the title counts such a text as an attachment; the providers read only Text.
+	// It is kept with the session. Optional: without it, the user sees Text.
+	Display string `json:"display,omitzero"`
 }
 
 func (Text) isContent() {}
+
+// Shown returns the text, which the user sees: Display if set, else Text.
+func (t Text) Shown() string {
+	if t.Display != "" {
+		return t.Display
+	}
+
+	return t.Text
+}
 
 // Source describes how binary content (image/document) is provided. Exactly one of the fields is set.
 // This mirrors Anthropic's source.{base64|url|file} and OpenAI's image_url/file/file_id.
