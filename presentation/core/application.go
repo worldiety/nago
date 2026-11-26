@@ -8,6 +8,7 @@
 package core
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"go.wdy.de/nago/logging"
@@ -278,7 +279,9 @@ func (a *Application) DestroyScope(id proto.ScopeID) bool {
 	return a.scopes.Remove(id)
 }
 
-// Connect either connects an existing scope with the channel or creates a new scope with the given id.
+// Connect either connects an existing scope with the channel or creates a new scope with the given id. It is for a
+// transport without a session of its own, e.g. within the same process, whose client assigns its session by a
+// message; a transport, which authenticates the session, e.g. by a cookie, uses [Application.ConnectSession].
 func (a *Application) Connect(channel Channel, id proto.ScopeID) *Scope {
 	a.mutex.Lock()
 	// protect only the moment of connecting against races. perhaps it may be even ok, to remove the entire lock
@@ -298,10 +301,56 @@ func (a *Application) Connect(channel Channel, id proto.ScopeID) *Scope {
 	return scope
 }
 
-func (a *Application) ImportFilesOptions(scopeId proto.ScopeID, uploadId string) (ImportFilesOptions, bool) {
+// ConnectSession connects the channel of a transport, which authenticated the session, e.g. by the http-only
+// cookie of the wire, to the scope of the given id and assigns the session. A new id creates a scope, which the
+// session owns from then on. The scope of an id, which another session owns, is refused: it reports false and
+// leaves the scope untouched, because the id of a scope is part of the address of the wire and thus no secret
+// enough to grant its window, which shows its subject and state. A transport tells the client of a refused
+// channel to load the page again, see [RequestReload], which gives it a scope of its own.
+func (a *Application) ConnectSession(channel Channel, id proto.ScopeID, sid session.ID) (*Scope, bool) {
+	a.mutex.Lock()
+	if len(id) < 32 {
+		id = proto.NewScopeID()
+	}
+
+	scope, ok := a.scopes.connectOwned(id, sid, func() *Scope {
+		return NewScope(a.ctx, a, filepath.Join(a.tmpDir, string(id)), id, time.Minute, a.factories, a.findVirtualSession)
+	})
+	a.mutex.Unlock()
+
+	if !ok {
+		slog.Warn("refused a connection of another session to a scope", "scope", logging.Secret(string(id)))
+		return nil, false
+	}
+
+	scope.Connect(channel)
+	scope.AssignSession(sid)
+	return scope, true
+}
+
+// RequestReload asks the frontend of the channel to load its page again, e.g. after [Application.ConnectSession]
+// refused the channel. A browser then starts a new window with a new scope id, instead of retrying the refused one.
+func RequestReload(c Channel) error {
+	buf := bytes.NewBuffer(make([]byte, 0, 16))
+	if err := proto.Marshal(proto.NewBinaryWriter(buf), &proto.NavigationReloadRequested{}); err != nil {
+		return err
+	}
+
+	return c.Publish(buf.Bytes())
+}
+
+// ImportFilesOptions returns the pending upload of the scope with the given id, if the requesting session owns
+// the scope, see [Application.ConnectSession]. Otherwise, it reports false like for an unknown upload, without
+// keeping the scope alive. A scope connected without a session accepts no upload of a request.
+func (a *Application) ImportFilesOptions(scopeId proto.ScopeID, uploadId string, requester session.ID) (ImportFilesOptions, bool) {
 	scope, ok := a.scopes.Get(scopeId)
 	if !ok {
 		slog.Error("no such scope to import files", "scope", logging.Secret(string(scopeId)))
+		return ImportFilesOptions{}, false
+	}
+
+	if !scope.ownedBy(requester) {
+		slog.Warn("refused an upload of another session", "scope", logging.Secret(string(scopeId)))
 		return ImportFilesOptions{}, false
 	}
 

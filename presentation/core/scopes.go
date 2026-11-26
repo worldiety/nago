@@ -12,6 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"go.wdy.de/nago/application/session"
 	"go.wdy.de/nago/pkg/std/concurrent"
 	"go.wdy.de/nago/presentation/proto"
 )
@@ -80,6 +81,28 @@ func (s *Scopes) getOrCreate(id proto.ScopeID, create func() *Scope) *Scope {
 	scope := create()
 	s.scopes.Put(scope.id, scope)
 	return scope
+}
+
+// connectOwned returns the living scope of the given id, if the given session owns it, and keeps it alive. An
+// unknown id gets a new scope, which the session owns from then on. A scope of another session is left untouched
+// and reported as false, so that a refused connection neither keeps it alive nor changes anything about it.
+func (s *Scopes) connectOwned(id proto.ScopeID, owner session.ID, create func() *Scope) (*Scope, bool) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	if scope, ok := s.scopes.Get(id); ok && !scope.destroyed.Load() {
+		if !scope.ownedBy(owner) {
+			return nil, false
+		}
+
+		scope.Tick()
+		return scope, true
+	}
+
+	scope := create()
+	scope.owner.Store(&owner)
+	s.scopes.Put(scope.id, scope)
+	return scope, true
 }
 
 // Remove removes and destroys the scope of the given id. It returns false, if no such scope exists.

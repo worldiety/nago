@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/cookiejar"
 	"net/url"
 	"strings"
 	"testing"
@@ -102,6 +103,10 @@ func TestHTTPWireRequests(t *testing.T) {
 	base := nagotest.Serve(t, configureHTTP)
 	sid := strings.Repeat("a", 64)
 
+	// the client stands for the browser of the window: from the first poll on, it keeps the cookie of the session, which
+	// that poll issues, and sends it with the token like the frontend
+	client := &http.Client{}
+
 	do := func(method, path string, query url.Values, header http.Header, body []byte) *http.Response {
 		t.Helper()
 		u, _ := url.Parse(base)
@@ -116,7 +121,7 @@ func TestHTTPWireRequests(t *testing.T) {
 			req.Header[k] = v
 		}
 
-		resp, err := http.DefaultClient.Do(req)
+		resp, err := client.Do(req)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -138,6 +143,14 @@ func TestHTTPWireRequests(t *testing.T) {
 	expect(do(http.MethodPost, "/wire/poll", url.Values{"_sid": {sid}}, http.Header{"Origin": {"https://evil.example"}}, nil), http.StatusForbidden)
 	expect(do(http.MethodPost, "/wire/send", url.Values{"_sid": {sid}, "_c": {"unknown"}}, nil, nil), http.StatusConflict)
 
+	// the requests above are no requests of the window; its browser starts without a cookie, thus the first poll must
+	// issue one, which the jar then sends with every request carrying the token
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	client.Jar = jar
+
 	// a new channel answers at once with its token and the cookie of a new session
 	start := time.Now()
 	resp := do(http.MethodPost, "/wire/poll", url.Values{"_sid": {sid}}, nil, nil)
@@ -158,7 +171,7 @@ func TestHTTPWireRequests(t *testing.T) {
 	u.Path = "/wire/poll"
 	u.RawQuery = url.Values{"_sid": {sid}, "_c": {token}}.Encode()
 	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), nil)
-	if resp, err := http.DefaultClient.Do(req); err == nil {
+	if resp, err := client.Do(req); err == nil {
 		_ = resp.Body.Close()
 		t.Fatalf("expected the poll to wait, got status %d", resp.StatusCode)
 	}

@@ -54,6 +54,7 @@ type openOptions struct {
 	locale     string
 	windowInfo proto.WindowInfo
 	sessionID  string
+	scopeID    proto.ScopeID
 	observer   func(Action)
 	lean       bool
 	// staleRetries is the amount of repetitions of an action, which has been discarded as stale.
@@ -88,6 +89,15 @@ func Size(width, height int) OpenOption {
 func Session(id string) OpenOption {
 	return func(o *openOptions) {
 		o.sessionID = id
+	}
+}
+
+// Scope connects the window to the scope with the given id, which must have at least 32 characters, instead of a
+// new one: like a browser tab, which reconnects to its window, or like someone, who learned the id of another window.
+// By default, each window has its own scope.
+func Scope(id proto.ScopeID) OpenOption {
+	return func(o *openOptions) {
+		o.scopeID = id
 	}
 }
 
@@ -200,6 +210,10 @@ func newWindow(t TB, tr transport, path core.NavigationPath, opts []OpenOption) 
 
 	if w.opts.sessionID == "" {
 		w.opts.sessionID = string(proto.NewScopeID())
+	}
+
+	if w.opts.scopeID != "" {
+		w.scopeID = w.opts.scopeID
 	}
 
 	w.history = []Route{{Path: path, Values: w.opts.values}}

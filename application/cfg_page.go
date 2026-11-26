@@ -617,7 +617,13 @@ func (c *Configurator) newHandler() http.Handler {
 
 	}))
 
-	r.Mount("/api/ora/v1/upload", uploadHandler(app2.ImportFilesOptions))
+	r.Mount("/api/ora/v1/upload", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// only the session, which owns the window, may upload into it, see core.Application.ConnectSession
+		requester, _ := c.sessionIDOf(r)
+		uploadHandler(func(scopeID proto.ScopeID, uploadID string) (core.ImportFilesOptions, bool) {
+			return app2.ImportFilesOptions(scopeID, uploadID, session.ID(requester))
+		})(w, r)
+	}))
 
 	images := option.Must(c.ImageManagement())
 	if c.imageAccess == nil {
@@ -708,16 +714,24 @@ func (c *Configurator) newHandler() http.Handler {
 			}
 		}()
 		channel := gorilla.NewWebsocketChannel(conn)
-		scope := app2.Connect(channel, proto.ScopeID(scopeID))
+		// the session comes from the http-only cookie, which the client cannot override over the wire, and only the
+		// session, which created a window, may connect to it again
+		scope, ok := app2.ConnectSession(channel, proto.ScopeID(scopeID), session.ID(sessionID))
+		if !ok {
+			// nothing of the window is sent: the browser loads the page again and gets a window of its own
+			if err := core.RequestReload(channel); err != nil {
+				slog.Info("cannot request a reload of a refused websocket", "err", err, "id", logging.Secret(scopeID))
+			}
+
+			_ = conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "window of another session"), time.Now().Add(time.Second))
+			return
+		}
 
 		// a scope expires a minute after the last message, see core.Scope.Tick, and the ping of the frontend is
 		// throttled in a background tab, so the pongs of the browser keep the scope of an open connection alive
 		stopKeepAlive := channel.KeepAlive(wireKeepAlive, scope.Tick)
 		defer stopKeepAlive()
 		//defer scope.Destroy() we don't want that, the client cannot recover through a new channel otherwise
-
-		// the session comes from the http-only cookie, which the client cannot override over the wire
-		scope.AssignSession(session.ID(sessionID))
 
 		if err := channel.Loop(); err != nil {
 			//slog.Error("websocket channel loop failed", slog.Any("err", err), "id", scopeID)

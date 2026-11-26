@@ -56,6 +56,9 @@ type httpWire struct {
 type wireEntry struct {
 	channel *poll.Channel
 	scope   *core.Scope
+	// session is the session, which owns the scope, see core.Application.ConnectSession. The token of the channel is
+	// part of the address of a request, thus a request must also carry the cookie of this session.
+	session session.ID
 }
 
 func newHTTPWire(cfg *Configurator, app *core.Application) *httpWire {
@@ -107,7 +110,12 @@ func (h *httpWire) poll(w http.ResponseWriter, r *http.Request, sid proto.ScopeI
 		}
 	}
 
-	entry, cookies := h.attach(r, sid, query.Get("_c"))
+	entry, cookies, ok := h.attach(r, sid, query.Get("_c"))
+	if !ok {
+		h.refuse(w, r, sid, cookies)
+		return
+	}
+
 	wait := wirePollWait
 	if cookies != nil {
 		// a new channel answers at once, which tells the client its token
@@ -154,6 +162,12 @@ func (h *httpWire) send(w http.ResponseWriter, r *http.Request, sid proto.ScopeI
 		return
 	}
 
+	if requester, _ := h.cfg.sessionIDOf(r); session.ID(requester) != entry.session {
+		slog.Warn("refused a send of another session to a channel", "id", logging.Secret(string(sid)))
+		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+		return
+	}
+
 	first, msgs, err := poll.ReadFrames(http.MaxBytesReader(w, r.Body, wireMaxBody), wireMaxBody)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -173,35 +187,74 @@ func (h *httpWire) send(w http.ResponseWriter, r *http.Request, sid proto.ScopeI
 }
 
 // attach returns the channel of the scope with the token. Otherwise, it connects the scope to a new channel and
-// returns the cookies of the session to set, which are not nil then.
-func (h *httpWire) attach(r *http.Request, sid proto.ScopeID, token string) (*wireEntry, []*http.Cookie) {
+// returns the cookies of the session to set, which are not nil then. A scope of another session is refused with
+// false and the cookies of the requesting session, and its channel stays as it is, see
+// core.Application.ConnectSession: the scope id and the token are part of the address of a request, thus neither
+// grants the window without the cookie of its session.
+func (h *httpWire) attach(r *http.Request, sid proto.ScopeID, token string) (*wireEntry, []*http.Cookie, bool) {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
 	h.cleanLocked()
+	// the session comes from the http-only cookie, which the client cannot override over the wire
+	requester, cookies := h.cfg.wireSession(r)
 	entry := h.entries[sid]
 	if entry != nil && entry.channel.Token() == token && !entry.channel.Closed() && entry.channel.Idle() < wireChannelStale {
-		return entry, nil
+		if entry.session != session.ID(requester) {
+			slog.Warn("refused a poll of another session to a channel", "id", logging.Secret(string(sid)))
+			return nil, cookies, false
+		}
+
+		return entry, nil, true
 	}
 
+	channel := poll.New()
+	scope, ok := h.app.ConnectSession(channel, sid, session.ID(requester))
+	if !ok {
+		return nil, cookies, false
+	}
+
+	// the new channel replaced the former one at the scope already
 	if entry != nil {
 		entry.channel.Close()
 		entry.scope.Disconnect(entry.channel)
 	}
 
-	sessionID, cookies := h.cfg.wireSession(r)
-	channel := poll.New()
-	scope := h.app.Connect(channel, sid)
-	// the session comes from the http-only cookie, which the client cannot override over the wire
-	scope.AssignSession(session.ID(sessionID))
-
-	entry = &wireEntry{channel: channel, scope: scope}
+	entry = &wireEntry{channel: channel, scope: scope, session: session.ID(requester)}
 	h.entries[sid] = entry
 	if cookies == nil {
 		cookies = []*http.Cookie{}
 	}
 
-	return entry, cookies
+	return entry, cookies, true
+}
+
+// refuse answers a poll, which must not connect to the scope, with a channel of its own, which only asks the page
+// to load again, see core.RequestReload: the browser then gets a window of its own, and nothing of the refused
+// window is sent.
+func (h *httpWire) refuse(w http.ResponseWriter, r *http.Request, sid proto.ScopeID, cookies []*http.Cookie) {
+	channel := poll.New()
+	defer channel.Close()
+
+	if err := core.RequestReload(channel); err != nil {
+		slog.Info("cannot request a reload of a refused poll", "err", err, "id", logging.Secret(string(sid)))
+	}
+
+	first, msgs, err := channel.Poll(r.Context(), 0, 0)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusConflict)
+		return
+	}
+
+	for _, cookie := range cookies {
+		http.SetCookie(w, cookie)
+	}
+
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set(wireChannelHeader, channel.Token())
+	if err := poll.WriteFrames(w, first, msgs); err != nil {
+		slog.Info("http wire cannot respond to a refused poll", "err", err, "id", logging.Secret(string(sid)))
+	}
 }
 
 func (h *httpWire) lookup(sid proto.ScopeID, token string) *wireEntry {

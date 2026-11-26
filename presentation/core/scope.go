@@ -88,7 +88,11 @@ type Scope struct {
 	virtualSession atomic.Pointer[session.UserSession]
 	// sessionFromTransport is set, once the transport assigned the session, e.g. from an http-only cookie. A
 	// client must not choose its session then, see [Scope.AssignSession].
-	sessionFromTransport   atomic.Bool
+	sessionFromTransport atomic.Bool
+	// owner is the session of the connection, which created the scope through [Application.ConnectSession]. Only
+	// that session may connect to the scope again or upload into it, because the id of a scope is no secret enough
+	// to grant its window: it is part of the address of the wire. Nil for a scope connected without a session.
+	owner                  atomic.Pointer[session.ID]
 	ignoreNextInvalidation atomic.Bool
 	dirty                  bool
 	// background counts running goroutines started on behalf of this scope, e.g. by [OnAppear].
@@ -172,6 +176,12 @@ func NewScope(ctx context.Context, app *Application, tempRootDir string, id prot
 
 func (s *Scope) ID() proto.ScopeID {
 	return s.id
+}
+
+// ownedBy reports whether the scope has been created by a connection of the given session, see [Scope.owner].
+func (s *Scope) ownedBy(id session.ID) bool {
+	owner := s.owner.Load()
+	return owner != nil && id != "" && *owner == id
 }
 
 // exportEntry is a download of the current window with the owner, who may follow its link, see [LinkOwner].
