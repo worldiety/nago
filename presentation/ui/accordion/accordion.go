@@ -24,15 +24,29 @@ type TAccordion struct {
 }
 
 // Accordion initializes a new TAccordion element
-// The function takes a header view, body view and open state
+// The function takes a header view, body view and an optional open state. If open is nil, the open state
+// is only kept in the frontend, so toggling the accordion does not require a server roundtrip. Use
+// [TAccordion.Open] to define the initial state in that case.
 func Accordion(header, body core.View, open *core.State[bool]) TAccordion {
-	return TAccordion{
+	t := TAccordion{
 		header:     header,
 		body:       body,
-		value:      open.Get(),
 		inputValue: open,
 		separator:  true,
 	}
+
+	if open != nil {
+		t.value = open.Get()
+	}
+
+	return t
+}
+
+// Open sets whether the accordion is open (expanded) or closed (collapsed). Without a bound state, this
+// is only the initial state, which can be toggled afterwards by the user within the frontend.
+func (t TAccordion) Open(isOpen bool) TAccordion {
+	t.value = isOpen
+	return t
 }
 
 // Frame sets the accordions frame to control the accordions bounds
@@ -54,7 +68,8 @@ func (t TAccordion) HideSeparator() TAccordion {
 }
 
 // InputValue binds the accordion to an external boolean state,
-// allowing it to be controlled from outside the component.
+// allowing it to be controlled from outside the component. Passing nil keeps the open state
+// solely in the frontend.
 func (t TAccordion) InputValue(input *core.State[bool]) TAccordion {
 	t.inputValue = input
 	return t

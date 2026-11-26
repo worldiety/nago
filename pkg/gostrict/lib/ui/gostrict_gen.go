@@ -991,6 +991,10 @@ func Host() gostrict.Funcs {
 			r0 := TAccordion{ref: args[0].(js.Ref)}.Frame(gostrictFrom39(args[1].([]any)))
 			return []any{r0.ref}
 		},
+		"go.wdy.de/nago/pkg/gostrict/lib/ui.TAccordion.Open": func(args []any) []any {
+			r0 := TAccordion{ref: args[0].(js.Ref)}.Open(args[1].(bool))
+			return []any{r0.ref}
+		},
 		"go.wdy.de/nago/pkg/gostrict/lib/ui.TAccordion.Small": func(args []any) []any {
 			r0 := TAccordion{ref: args[0].(js.Ref)}.Small()
 			return []any{r0.ref}

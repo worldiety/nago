@@ -38,12 +38,30 @@ func main() {
 				).FullWidth())
 			}
 
+			accordionsStateless := make([]core.View, 0)
+			for i := range count {
+				accordionsStateless = append(accordionsStateless, accordion.Accordion(
+					ui.Text(fmt.Sprintf("Accordion (stateless) %d", i+1)),
+					ui.RichText(fmt.Sprintf("Content %d: %s", i+1, accordionContent)),
+					nil,
+				).FullWidth())
+			}
+
 			accordionsSmall := make([]core.View, 0)
 			for i := range count {
 				accordionsSmall = append(accordionsSmall, accordion.Accordion(
 					ui.Text(fmt.Sprintf("Accordion Small %d", i+1)),
 					ui.RichText(fmt.Sprintf("Content %d: %s", i+1, accordionContent)),
 					core.StateOf[bool](wnd, fmt.Sprintf("accordion_small_state_%d", i)),
+				).Small().HideSeparator().FullWidth())
+			}
+
+			accordionsSmallStateless := make([]core.View, 0)
+			for i := range count {
+				accordionsSmallStateless = append(accordionsSmallStateless, accordion.Accordion(
+					ui.Text(fmt.Sprintf("Accordion Small (stateless) %d", i+1)),
+					ui.RichText(fmt.Sprintf("Content %d: %s", i+1, accordionContent)),
+					nil,
 				).Small().HideSeparator().FullWidth())
 			}
 

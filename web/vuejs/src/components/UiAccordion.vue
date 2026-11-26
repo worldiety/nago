@@ -27,19 +27,20 @@ const id = randomStr(16);
 const serviceAdapter = useServiceAdapter();
 
 const bodyHeight = ref(0);
+const isOpen = ref(!!props.ui.value);
 const bodyDummy = ref<HTMLDivElement>();
 
 const classes = computed<string[]>(() => {
 	const styles = frameCSS(props.ui.frame);
 	const cls: string[] = [CssClasses.getOrCreate(styles)];
-	if (props.ui.value) cls.push('open');
+	if (isOpen.value) cls.push('open');
 	if (props.ui.small) cls.push('small');
 	if (props.ui.separator) cls.push('separator');
 	return cls;
 });
 
 function calcBodyHeight() {
-	if (!props.ui.value || !bodyDummy.value) {
+	if (!isOpen.value || !bodyDummy.value) {
 		bodyHeight.value = 0;
 		return;
 	}
@@ -48,14 +49,15 @@ function calcBodyHeight() {
 }
 
 function toggle(value?: boolean) {
-	serviceAdapter.sendEvent(
-		new UpdateStateValueRequested(
-			props.ui.inputValue,
-			0,
-			nextRID(),
-			bool2Str(value !== undefined ? value : !props.ui.value)
-		)
-	);
+	const next = value !== undefined ? value : !isOpen.value;
+	if (next === isOpen.value) return;
+
+	isOpen.value = next;
+
+	// without a bound server state, the open state is purely local and needs no roundtrip
+	if (!props.ui.inputValue) return;
+
+	serviceAdapter.sendEvent(new UpdateStateValueRequested(props.ui.inputValue, 0, nextRID(), bool2Str(next)));
 }
 
 function observeBodyHeightChange() {
@@ -67,9 +69,16 @@ function observeBodyHeightChange() {
 onMounted(() => {
 	setTimeout(calcBodyHeight, 20); // TODO: Find better way to render correct initial state
 	addEventListener('resize', calcBodyHeight);
-	watch(() => props.ui.value, calcBodyHeight);
+	watch(isOpen, calcBodyHeight);
 	observeBodyHeightChange();
 });
+
+watch(
+	() => props.ui.value,
+	(value) => {
+		isOpen.value = !!value;
+	}
+);
 
 onUnmounted(() => {
 	removeEventListener('resize', calcBodyHeight);
@@ -82,7 +91,7 @@ onUnmounted(() => {
 			<button
 				class="header"
 				:aria-controls="`body-${id}`"
-				:aria-expanded="!!ui.value"
+				:aria-expanded="isOpen"
 				@click="toggle()"
 				@keydown.down.exact="toggle(true)"
 				@keydown.up.exact="toggle(false)"
@@ -94,7 +103,7 @@ onUnmounted(() => {
 					<ArrowDownIcon />
 				</span>
 			</button>
-			<div :id="`body-${id}`" class="body" :style="`height: ${bodyHeight}px;`" :inert="!ui.value">
+			<div :id="`body-${id}`" class="body" :style="`height: ${bodyHeight}px;`" :inert="!isOpen">
 				<div class="body-inner">
 					<UiGeneric :ui="ui.content" />
 				</div>

@@ -46,11 +46,7 @@
 							</span>
 							<IconCheck />
 						</div>
-						<div
-							v-if="isHorizontal || isVertical || isSimpleList"
-							class="content"
-							:style="contentStyles"
-						>
+						<div v-if="isHorizontal || isVertical || isSimpleList" class="content" :style="contentStyles">
 							<div
 								v-if="step.title"
 								:id="`step_${index}_title`"
@@ -155,8 +151,10 @@ const stepStyles = computed<string>(() => {
 });
 
 const invisibleStepStyles = computed<string>(() => {
-	if (isHorizontal.value || isSimple.value) return `transform: translateX(-${bubbleSize.value / 2}px); padding-left: ${bubbleSize.value / 2}px; width: calc(100% + ${bubbleSize.value / 2}px);`;
-	if (isVertical.value || isSimpleList.value) return `transform: translateY(-${bubbleSize.value / 2}px); padding-top: ${bubbleSize.value / 2}px;`;
+	if (isHorizontal.value || isSimple.value)
+		return `transform: translateX(-${bubbleSize.value / 2}px); padding-left: ${bubbleSize.value / 2}px; width: calc(100% + ${bubbleSize.value / 2}px);`;
+	if (isVertical.value || isSimpleList.value)
+		return `transform: translateY(-${bubbleSize.value / 2}px); padding-top: ${bubbleSize.value / 2}px;`;
 
 	return '';
 });

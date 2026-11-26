@@ -33,6 +33,13 @@ func (c TAccordion) Frame(frame Frame) TAccordion {
 	return TAccordion{ref: wrap(get[accordion.TAccordion](c.ref).Frame(frame.nago()))}
 }
 
+// Open sets whether the accordion is open or closed. Without a bound state, this is only the initial state.
+//
+//gostrict:host
+func (c TAccordion) Open(isOpen bool) TAccordion {
+	return TAccordion{ref: wrap(get[accordion.TAccordion](c.ref).Open(isOpen))}
+}
+
 // Small enables a smaller visual appearance of the accordion.
 //
 //gostrict:host
