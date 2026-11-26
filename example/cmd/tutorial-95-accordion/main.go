@@ -70,7 +70,13 @@ func main() {
 					accordions...,
 				).Alignment(ui.Center).Padding(ui.Padding{}.All(ui.L32)).Frame(ui.Frame{MaxWidth: "800px"}.FullWidth()),
 				ui.VStack(
+					accordionsStateless...,
+				).Alignment(ui.Center).Padding(ui.Padding{}.All(ui.L32)).Frame(ui.Frame{MaxWidth: "800px"}.FullWidth()),
+				ui.VStack(
 					accordionsSmall...,
+				).Alignment(ui.Center).Padding(ui.Padding{}.All(ui.L32)).Frame(ui.Frame{MaxWidth: "420px"}.FullWidth()),
+				ui.VStack(
+					accordionsSmallStateless...,
 				).Alignment(ui.Center).Padding(ui.Padding{}.All(ui.L32)).Frame(ui.Frame{MaxWidth: "420px"}.FullWidth()),
 			).Gap(ui.L32).Alignment(ui.Center).Frame(ui.Frame{}.FullWidth())
 		})
