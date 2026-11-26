@@ -18,6 +18,10 @@ import (
 
 func NewLogin(bus events.Bus, sessions Repository, authenticate user.AuthenticateByPassword) Login {
 	return func(id ID, login user.Email, password user.Password) (bool, error) {
+		if id.Embedded() {
+			return false, ErrEmbedded
+		}
+
 		// first install the session
 		optSession, err := sessions.FindByID(id)
 		if err != nil {

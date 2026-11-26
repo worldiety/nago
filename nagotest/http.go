@@ -62,7 +62,7 @@ func (c *httpTransport) request(ctx context.Context, w *Window, path string, que
 	}
 
 	req.Header.Set("Content-Type", "application/octet-stream")
-	for _, name := range sessionCookies {
+	for _, name := range w.opts.cookieNames() {
 		req.AddCookie(&http.Cookie{Name: name, Value: w.opts.sessionID})
 	}
 

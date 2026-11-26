@@ -52,6 +52,18 @@ Session Management declares no permissions.
   (`SelfRegistration`, `SelfPasswordReset`), see [User Management](../user_management/).
 - Single sign-on is configured in the same settings (`SSONLSServer` and related fields).
 
+## Pages in a frame of another site
+
+A browser drops the session cookie (`SameSite=Lax`) in a frame of another site, so such a page can neither
+download nor connect again without loading anew. `cfg.EmbeddablePages("e/*")` gives the pages of these paths,
+written like the paths of `cfg.RootView`, a cookie of their own there: `SameSite=None; Secure; Partitioned`, with
+the prefix `__Host-` over https. It only counts within the embedding site, and each embedding site has a session of
+its own, which never has a user: `Login`, `LoginUser` and `StartNLSFlow` fail with `session.ErrEmbedded`, so no
+other site can show the page of a logged-in user and trick the user into clicks. The navigation of such a frame to
+any other page issues no cookie; once issued, the cookie is sent for every page of the application in a frame of
+that site. A request with both cookies uses the plain one. The cookie is issued over https and http://localhost
+only, never with `NO_SSL=true`.
+
 ## UI
 
 | Path                         | Page                          |

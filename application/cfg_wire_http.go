@@ -301,7 +301,8 @@ func (h *httpWire) cleanLocked() {
 // wireSession returns the session of a request of the wire and the cookies to set. The page normally got its cookie
 // already. If not, e.g. because all assets came from the browser cache after the page has been reached by a link from
 // another site, the wire issues it: the wire is always called by the page itself, so the cookie cannot be missing just
-// due to SameSite.
+// due to SameSite. A page in a frame of another site has the embedded cookie instead, see
+// [Configurator.EmbeddablePages], thus the wire issues none: a browser would drop it there.
 func (c *Configurator) wireSession(r *http.Request) (sessionID string, cookies []*http.Cookie) {
 	sessionID, migrate := c.sessionIDOf(r)
 	switch {

@@ -18,6 +18,10 @@ import (
 
 func NewLoginUser(bus events.Bus, sessions Repository) LoginUser {
 	return func(id ID, usr user.ID) error {
+		if id.Embedded() {
+			return ErrEmbedded
+		}
+
 		// first install the session
 		optSession, err := sessions.FindByID(id)
 		if err != nil {

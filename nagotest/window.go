@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"go.wdy.de/nago/application/session"
 	"go.wdy.de/nago/presentation/core"
 	"go.wdy.de/nago/presentation/proto"
 )
@@ -54,6 +55,7 @@ type openOptions struct {
 	locale     string
 	windowInfo proto.WindowInfo
 	sessionID  string
+	embedded   bool
 	scopeID    proto.ScopeID
 	observer   func(Action)
 	lean       bool
@@ -89,6 +91,16 @@ func Size(width, height int) OpenOption {
 func Session(id string) OpenOption {
 	return func(o *openOptions) {
 		o.sessionID = id
+	}
+}
+
+// Embedded connects the window through [Dial] or [DialHTTP] like a page in a frame of another site, see
+// application.Configurator.EmbeddablePages: it sends its session only in the embedded cookie, which nago issues there,
+// instead of the plain session cookie. Its session, a new one by default, must have an id of [session.NewEmbeddedID],
+// otherwise nago ignores the cookie. Like in a browser, the session of such a window never has a user.
+func Embedded() OpenOption {
+	return func(o *openOptions) {
+		o.embedded = true
 	}
 }
 
@@ -206,6 +218,10 @@ func newWindow(t TB, tr transport, path core.NavigationPath, opts []OpenOption) 
 	Size(1280, 800)(&w.opts)
 	for _, opt := range opts {
 		opt(&w.opts)
+	}
+
+	if w.opts.sessionID == "" && w.opts.embedded {
+		w.opts.sessionID = string(session.NewEmbeddedID())
 	}
 
 	if w.opts.sessionID == "" {

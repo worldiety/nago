@@ -35,6 +35,19 @@ var KeepAlive = 30 * time.Second
 // window sends both, because only the server knows whether it is reached through https.
 var sessionCookies = []string{"wdy-ora-access", "__Host-wdy-ora-access"}
 
+// embeddedCookies are the names of the cookies, which carry the session id of a page in a frame of another site over
+// http://localhost and https, see [Embedded].
+var embeddedCookies = []string{"wdy-ora-embedded", "__Host-wdy-ora-embedded"}
+
+// cookieNames returns the names of the cookies, which carry the session of the window.
+func (o *openOptions) cookieNames() []string {
+	if o.embedded {
+		return embeddedCookies
+	}
+
+	return sessionCookies
+}
+
 // Dial connects a new window through a websocket to a running nago server at baseURL, e.g.
 // http://localhost:3000, and allocates the root view of the given path. It behaves like a browser, thus
 // the window is anonymous until it logs in through the user interface. Use [Session] to share the login
@@ -80,7 +93,7 @@ func (c *wsTransport) connect(w *Window) error {
 
 	header := http.Header{}
 	var cookies []string
-	for _, name := range sessionCookies {
+	for _, name := range w.opts.cookieNames() {
 		cookies = append(cookies, (&http.Cookie{Name: name, Value: w.opts.sessionID}).String())
 	}
 	header.Set("Cookie", strings.Join(cookies, "; "))
@@ -254,7 +267,7 @@ func upload(client *http.Client, base *url.URL, w *Window, id string, files []co
 	req.Header.Set("Content-Type", mw.FormDataContentType())
 	req.Header.Set("x-scope", string(w.scopeID))
 	req.Header.Set("x-receiver", url.PathEscape(id)) // like encodeURIComponent of the frontend
-	for _, name := range sessionCookies {
+	for _, name := range w.opts.cookieNames() {
 		req.AddCookie(&http.Cookie{Name: name, Value: w.opts.sessionID})
 	}
 

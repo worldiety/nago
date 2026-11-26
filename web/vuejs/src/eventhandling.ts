@@ -344,6 +344,11 @@ function requiredRootViewParameter(): RootViewParameters {
 /**
  * triggerFileDownload applies some hacks to simulate a user-requested file download by inserting fake
  * nodes and clicking on them. After some tries, this seems to be the most stable behavior across all browsers.
+ *
+ * A page in a frame, which another site embeds, has its session in a partitioned cookie. Chrome sends the request
+ * of a link with the download attribute without that cookie, thus nago does not find the download. The navigation
+ * of a hidden frame carries it, and the attachment of the answer becomes the download. An answer without
+ * attachment, like "not found", loads into the hidden frame, which then goes away.
  * @param evt
  */
 export function triggerFileDownload(evt: SendMultipleRequested): void {
@@ -352,6 +357,15 @@ export function triggerFileDownload(evt: SendMultipleRequested): void {
 	}
 
 	const res = evt.resources.value[0];
+	if (window.self !== window.top) {
+		const frame = document.createElement('iframe');
+		frame.style.display = 'none';
+		frame.onload = () => frame.remove();
+		frame.src = res.uRI!;
+		document.body.appendChild(frame);
+		return;
+	}
+
 	const a = document.createElement('a');
 	a.href = res.uRI!;
 	a.download = res.name!;

@@ -100,8 +100,8 @@ func (s *linkServer) logout(sid session.ID) {
 	}
 }
 
-// follow requests the link like a browser of the given session over plain http. An empty session sends no cookie.
-// Redirects are not followed, thus the status is the answer of the link itself.
+// follow requests the link like a browser of the given session over plain http, see cookieOf. An empty session sends
+// no cookie. Redirects are not followed, thus the status is the answer of the link itself.
 func (s *linkServer) follow(link string, sid session.ID) (status int, body []byte, err error) {
 	s.t.Helper()
 
@@ -117,7 +117,7 @@ func (s *linkServer) follow(link string, sid session.ID) (status int, body []byt
 	}
 
 	if sid != "" {
-		req.AddCookie(&http.Cookie{Name: "wdy-ora-access", Value: string(sid)})
+		req.AddCookie(cookieOf(sid))
 	}
 
 	client := http.Client{

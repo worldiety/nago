@@ -445,8 +445,16 @@ func (c *Configurator) newHandler() http.Handler {
 	if len(c.fsys) > 0 {
 		c.defaultLogger().Info("serving fsys assets")
 		assets := statigz.FileServer(mergefs.Merge(c.fsys...).(mergefs.MergedFS), statigz.EncodeOnInit)
+		embeddablePages := slices.Clone(c.embeddablePages)
 		r.Mount("/", http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			switch id, migrate := c.sessionIDOf(request); {
+			case isForeignFrameNavigation(request) && embeddable(embeddablePages, request.URL.Path):
+				// only this navigation tells that the page is embedded, thus its answer always issues the embedded
+				// cookie and must not come from the cache without asking, see Configurator.EmbeddablePages
+				writer.Header().Set("Cache-Control", "no-cache")
+				if cookie := c.newEmbeddedSessionCookie(request); cookie != nil {
+					http.SetCookie(writer, cookie)
+				}
 			case migrate:
 				http.SetCookie(writer, c.newSessionCookie(request, id))
 				http.SetCookie(writer, expiredPlainSessionCookie())

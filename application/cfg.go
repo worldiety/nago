@@ -107,6 +107,7 @@ type Configurator struct {
 	eventBus               events.EventBus
 	contextPath            atomic.Pointer[string]
 	cookiePolicy           cookiePolicy
+	embeddablePages        []proto.RootViewID
 	noFooter               []core.NavigationPath
 	bodyFullSize           []core.NavigationPath
 	migrations             *migration.Migrations

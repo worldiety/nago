@@ -50,9 +50,10 @@ func newSessionImpl(id ID, repo Repository, refresh RefreshNLS) *sessionImpl {
 	return &sessionImpl{id: id, repo: repo, refreshNLS: refresh}
 }
 
-// current returns the stored record, without a user if it has expired. A due single sign-on refresh is started in
-// the background, thus the access never waits for the login service: a refresh which fails and logs the user out
-// takes effect for the next access and publishes [LoggedOut] for the open windows.
+// current returns the stored record, without a user if it has expired or belongs to an embedded page, see
+// [NewEmbeddedID]. A due single sign-on refresh is started in the background, thus the access never waits for the
+// login service: a refresh which fails and logs the user out takes effect for the next access and publishes
+// [LoggedOut] for the open windows.
 func (s *sessionImpl) current() Session {
 	session := s.load()
 	if s.nlsRefreshDue(session) {
@@ -60,7 +61,8 @@ func (s *sessionImpl) current() Session {
 		session = s.load()
 	}
 
-	if expired(session, nowFunc()) {
+	// a session of an embedded page never has a user, also if it has been stored by another way than a login use case
+	if s.id.Embedded() || expired(session, nowFunc()) {
 		session.User = std.None[user.ID]()
 		session.AuthenticatedAt = time.Time{}
 	}

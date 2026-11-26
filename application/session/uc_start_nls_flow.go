@@ -25,6 +25,10 @@ func NewStartNLSFlow(mutex *sync.Mutex, redirect string, repoNonce NLSNonceRepos
 			return "", fmt.Errorf("id must not be empty")
 		}
 
+		if id.Embedded() {
+			return "", ErrEmbedded
+		}
+
 		usrSettings := settings.ReadGlobal[user.Settings](loadGlobal)
 		if !usrSettings.HasSSO() {
 			return "", fmt.Errorf("sso NLS url has not been set")

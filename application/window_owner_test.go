@@ -223,7 +223,7 @@ func (r wireResult) expectPage(t *testing.T, row string, want []string) {
 }
 
 // browser sends the cookie of a session like a browser, and keeps a cookie which the backend issues. An empty session
-// sends no cookie.
+// sends no cookie, an embedded one the embedded cookie of a page in a frame of another site, see cookieOf.
 type browser struct {
 	base   *url.URL
 	jar    http.CookieJar
@@ -244,10 +244,20 @@ func newBrowser(t *testing.T, base string, sid session.ID) *browser {
 	}
 
 	if sid != "" {
-		jar.SetCookies(u, []*http.Cookie{{Name: "wdy-ora-access", Value: string(sid), Path: "/"}})
+		jar.SetCookies(u, []*http.Cookie{cookieOf(sid)})
 	}
 
 	return &browser{base: u, jar: jar, client: &http.Client{Jar: jar, Timeout: nagotest.SettleTimeout}}
+}
+
+// cookieOf returns the cookie, which carries the session over plain http to localhost, like the servers of the tests:
+// the embedded cookie for the session of a page in a frame of another site, the plain one otherwise.
+func cookieOf(sid session.ID) *http.Cookie {
+	if sid.Embedded() {
+		return &http.Cookie{Name: "wdy-ora-embedded", Value: string(sid), Path: "/"}
+	}
+
+	return &http.Cookie{Name: "wdy-ora-access", Value: string(sid), Path: "/"}
 }
 
 // origin is the header of a page of the application, which a browser sends with each request of the wire.

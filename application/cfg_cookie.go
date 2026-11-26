@@ -140,9 +140,14 @@ func expiredPlainSessionCookie() *http.Cookie {
 	return &http.Cookie{Name: sessionCookieName, Path: "/", MaxAge: -1}
 }
 
-// sessionIDOf returns the session id of the request, see [sessionIDFromCookies].
+// sessionIDOf returns the session id of the request, see [sessionIDFromCookies]. Without one, the session of the
+// embedded cookie counts, see [Configurator.EmbeddablePages]: if a request carries both, the plain one wins.
 func (c *Configurator) sessionIDOf(r *http.Request) (id string, migrate bool) {
-	return sessionIDFromCookies(r, c.secureCookie(r), c.sessionLoggedIn)
+	if id, migrate := sessionIDFromCookies(r, c.secureCookie(r), c.sessionLoggedIn); id != "" {
+		return id, migrate
+	}
+
+	return c.embeddedSessionIDOf(r), false
 }
 
 // sessionLoggedIn reports whether the session has a user.
