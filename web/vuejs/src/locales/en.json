@@ -103,6 +103,10 @@
 			"fitView": "Show the whole graph",
 			"zoomIn": "Zoom in",
 			"zoomOut": "Zoom out"
+		},
+		"selection": {
+			"selected": "{element} selected",
+			"deselected": "{element} deselected"
 		}
 	},
 	"weekcal": {

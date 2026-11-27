@@ -29,7 +29,8 @@ object,
 			input[type='text'],
 			.input-field-wrapper-basic textarea.input-field,
 			.toggle-switch,
-			.toggle-switch-container
+			.toggle-switch-container,
+			.vue-flow__edge
 		) {
 		@apply outline-solid outline-2 -outline-offset-2 outline-I0 rounded-lg;
 	}
