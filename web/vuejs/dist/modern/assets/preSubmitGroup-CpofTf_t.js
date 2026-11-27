@@ -1,0 +1,1 @@
+var e=`preSubmitGroup`,t=class{memberCallbacks;constructor(){this.memberCallbacks=[]}join(e){this.memberCallbacks.push(e)}leave(e){let t=this.memberCallbacks.indexOf(e);t!==-1&&this.memberCallbacks.splice(t,1)}async execute(){for(let e of this.memberCallbacks)e()}};export{t as n,e as t};
