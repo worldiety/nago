@@ -1,0 +1,1 @@
+import{M as e,W as t,i as n,u as r,v as i}from"./runtime-core.esm-bundler-BsttLknz.js";var a=i({__name:`UiWindowTitle`,props:{ui:{}},setup(i){let a=i;return t(()=>{a.ui.value&&(document.title=a.ui.value)}),(t,i)=>(e(),r(n,{to:`body`}))}});export{a as default};
