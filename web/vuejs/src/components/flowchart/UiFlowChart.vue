@@ -242,7 +242,11 @@ function setNodesAndEdges() {
 function setNodes() {
 	props.ui.value?.nodes?.value.forEach((node, index) => {
 		const id = node.id?.trim() || `${index}`;
-		const hasMenu = !!props.ui.customContents?.value.some((cc) => cc.nodeId === node.id && cc.menu);
+		const customContent = props.ui.customContents?.value.find((cc) => cc.nodeId === node.id);
+		const hasMenu = !!customContent?.menu;
+		// "graphics-symbol" makes its children presentational, which would hide interactive custom content
+		// from screen readers, so nodes with custom content are exposed as a group instead.
+		const hasCustomContent = !!customContent?.content || hasMenu;
 
 		const newNode: Node = {
 			id: id,
@@ -260,8 +264,8 @@ function setNodes() {
 			zIndex: hasMenu ? 1 : undefined,
 			domAttributes: {
 				'aria-describedby': props.ui.elementsSelectable ? 'aria-description-node' : undefined,
-				'role': 'graphics-symbol',
-				'aria-roledescription': t('flowChart.edge.accessibilityRoleDescription'),
+				'role': hasCustomContent ? 'group' : 'graphics-symbol',
+				'aria-roledescription': t('flowChart.node.accessibilityRoleDescription'),
 				'tabindex': 0,
 			},
 		};
