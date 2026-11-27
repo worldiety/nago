@@ -1,5 +1,5 @@
 <!--
- Copyright (c) 2025 worldiety GmbH
+ Copyright (c) 2026 worldiety GmbH
 
  This file is part of the NAGO Low-Code Platform.
  Licensed under the terms specified in the LICENSE file.
@@ -8,7 +8,7 @@
 -->
 
 <template>
-	<div ref="flowChartContainer" class="ui-flow-chart" :style="frameStyles">
+	<div ref="flowChartContainer" class="ui-flow-chart" :style="frameStyles" @keydown="onContainerKeyDown">
 		<FlowChartActions
 			v-if="flowChart && ui.toolbar && ui.toolbar.actions"
 			:toolbar="ui.toolbar"
@@ -86,10 +86,20 @@
 				/>
 			</template>
 		</VueFlow>
+
+		<span id="aria-description-edge" class="aria-hidden">
+			{{ $t('flowChart.edge.accessibilityDescription') }}
+		</span>
+		<span id="aria-description-node" class="aria-hidden">
+			{{ $t('flowChart.node.accessibilityDescription') }}
+		</span>
+		<span class="aria-hidden" role="status" aria-live="polite" aria-atomic="true">
+			{{ selectionAnnouncement }}
+		</span>
 	</div>
 </template>
 <script lang="ts" setup>
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch, watchEffect } from 'vue';
 import FlowChartCustomNode from '@/components/flowchart/FlowChartCustomNode.vue';
 import { colorValue } from '@/components/shared/colors';
 import { frameCSS } from '@/components/shared/frame';
@@ -137,11 +147,13 @@ import FlowChartActions from '@/components/flowchart/FlowChartActions.vue';
 import ConnectionHandler from '@/shared/network/connectionHandler';
 import { useLayout } from '@/components/flowchart/useLayout';
 import FlowChartCustomMenu from '@/components/flowchart/FlowChartCustomMenu.vue';
+import { useI18n } from 'vue-i18n';
 
 const props = defineProps<{
 	ui: FlowChart;
 }>();
 
+const { t } = useI18n();
 const themeManager = useThemeManager();
 const serviceAdapter = useServiceAdapter();
 const { project } = useVueFlow();
@@ -230,12 +242,17 @@ function setNodesAndEdges() {
 function setNodes() {
 	props.ui.value?.nodes?.value.forEach((node, index) => {
 		const id = node.id?.trim() || `${index}`;
-		const hasMenu = !!props.ui.customContents?.value.some((cc) => cc.nodeId === node.id && cc.menu);
+		const customContent = props.ui.customContents?.value.find((cc) => cc.nodeId === node.id);
+		const hasMenu = !!customContent?.menu;
+		// "graphics-symbol" makes its children presentational, which would hide interactive custom content
+		// from screen readers, so nodes with custom content are exposed as a group instead.
+		const hasCustomContent = !!customContent?.content || hasMenu;
 
 		const newNode: Node = {
 			id: id,
 			type: 'custom',
 			data: node,
+			ariaLabel: getNodeAccessibilityLabel(node),
 			position: {
 				x: node.position?.x ?? 0,
 				y: node.position?.y ?? 0,
@@ -245,6 +262,12 @@ function setNodes() {
 			focusable: true,
 			class: nodeClass(node),
 			zIndex: hasMenu ? 1 : undefined,
+			domAttributes: {
+				'aria-describedby': props.ui.elementsSelectable ? 'aria-description-node' : undefined,
+				'role': hasCustomContent ? 'group' : 'graphics-symbol',
+				'aria-roledescription': t('flowChart.node.accessibilityRoleDescription'),
+				'tabindex': 0,
+			},
 		};
 
 		const idx = nodes.value.findIndex((e) => e.id === newNode.id);
@@ -290,12 +313,15 @@ function setEdges() {
 		const target = edge.targetNodeId?.trim();
 		const edgeColor = edge.color ? colorValue(edge.color) : undefined;
 
+		const edgeId = edge.id?.trim() || `${source}-${target}-${randomStr(8)}`;
+
 		return {
-			id: edge.id?.trim() || `${source}-${target}-${randomStr(8)}`,
+			id: edgeId,
 			data: edge,
 			source: source as string,
 			target: target as string,
 			label: edge.label?.trim(),
+			ariaLabel: getEdgeAccessibilityLabel(edge),
 			animated: edge.animated ?? false,
 			focusable: true,
 			markerStart: mapMarker(edge.markerStart, edgeColor),
@@ -306,8 +332,35 @@ function setEdges() {
 			labelBgBorderRadius: 6,
 			labelBgStyle: { fill: colorValue(edge.labelBgColor ?? props.ui.background?.color) },
 			labelStyle: { fill: edge.labelTextColor ? colorValue(edge.labelTextColor) : edgeColor },
+			domAttributes: {
+				'aria-describedby': props.ui.elementsSelectable ? 'aria-description-edge' : undefined,
+				'role': 'graphics-symbol',
+				'aria-roledescription': t('flowChart.edge.accessibilityRoleDescription'),
+				// Vue Flow sets "tabIndex" and "onKeyDown" on the edge's SVG element, which neither the browser
+				// (case-sensitive SVG attributes) nor Vue (event "key-down") recognize, so we set them correctly here.
+				'tabindex': 0,
+				'onKeydown': (event: KeyboardEvent) => onEdgeKeyDown(event, edgeId),
+			},
 		};
 	});
+}
+
+function getNodeAccessibilityLabel(node: FlowChartNode): string {
+	const nodeLabel = node.label ?? node.id ?? '?';
+	return t('flowChart.node.accessibilityLabel', { node: nodeLabel });
+}
+
+function getEdgeAccessibilityLabel(edge: FlowChartEdge): string {
+	const sourceNode = nodes.value.find((n) => n.id === edge.sourceNodeId);
+	const targetNode = nodes.value.find((n) => n.id === edge.targetNodeId);
+
+	const sourceLabel = sourceNode?.data.label ?? sourceNode?.id ?? '?';
+	const targetLabel = targetNode?.data.label ?? targetNode?.id ?? '?';
+
+	const describing = t('flowChart.edge.accessibilityLabel', { source: sourceLabel, target: targetLabel });
+
+	if (edge.label) return `${describing}: ${edge.label}`;
+	return describing;
 }
 
 function mapSourcePosition(node: FlowChartNode): Position | undefined {
@@ -396,6 +449,7 @@ function onNodesUpdate(changes: NodeChange[]) {
 				valueCopy.nodes.value = valueCopy.nodes?.value.filter((node) => node.id !== change.id);
 				debouncedInputModel(valueCopy);
 				onSelectionChange();
+				restoreFocusAfterRemoval();
 				break;
 		}
 	});
@@ -412,8 +466,49 @@ function onEdgesUpdate(changes: EdgeChange[]) {
 				valueCopy.edges.value = valueCopy.edges?.value.filter((edge) => edge.id !== change.id);
 				debouncedInputModel(valueCopy);
 				onSelectionChange();
+				restoreFocusAfterRemoval();
 				break;
 		}
+	});
+}
+
+let focusRestorePending = false;
+
+// Vue Flow blurs a node after deselecting it via Escape, which leaves keyboard and screen reader users without
+// focus, so they could not reselect the node with Enter. The focus is moved back to the node after that blur.
+function onContainerKeyDown(event: KeyboardEvent): void {
+	if (event.key !== 'Escape') return;
+
+	const target = event.target;
+	if (!(target instanceof HTMLElement) || !target.classList.contains('vue-flow__node')) return;
+
+	window.setTimeout(() => {
+		if (target.isConnected && document.activeElement !== target) target.focus();
+	});
+}
+
+// Vue Flow emits remove changes before the DOM is updated, so the focused element and its neighbors in tab order
+// are captured here. Once removed, the focus moves to the closest preceding element that still exists, or the
+// closest following one if there is no preceding element.
+function restoreFocusAfterRemoval(): void {
+	if (focusRestorePending || !flowChartContainer.value) return;
+
+	const active = document.activeElement;
+	const focusables = Array.from(
+		flowChartContainer.value.querySelectorAll<HTMLElement | SVGElement>(
+			'.vue-flow__node[tabindex], .vue-flow__edge[tabindex]'
+		)
+	);
+	const index = focusables.findIndex((el) => el === active);
+	if (index < 0) return;
+
+	const candidates = [...focusables.slice(0, index).reverse(), ...focusables.slice(index + 1)];
+	focusRestorePending = true;
+
+	window.setTimeout(() => {
+		focusRestorePending = false;
+		if (active?.isConnected) return;
+		candidates.find((el) => el.isConnected)?.focus();
 	});
 }
 
@@ -488,6 +583,45 @@ function onEdgeClick(e: EdgeMouseEvent, rightClick?: boolean) {
 		selectedNodes: flowChart.value.getSelectedNodes.map((n) => n.id),
 		selectedEdges: flowChart.value.getSelectedEdges.map((e) => e.id),
 		rightClick: rightClick,
+	});
+}
+
+function onEdgeKeyDown(event: KeyboardEvent, edgeId: string) {
+	if (!flowChart.value || !['Enter', ' ', 'Escape'].includes(event.key)) return;
+
+	const edge = flowChart.value.findEdge(edgeId);
+	if (!edge) return;
+
+	event.preventDefault();
+
+	const selectable = edge.selectable ?? !!props.ui.elementsSelectable;
+
+	if (event.key === 'Escape') {
+		if (!selectable) return;
+		flowChart.value.removeSelectedEdges([edge]);
+		onSelectionChange();
+		return;
+	}
+
+	if (selectable) {
+		flowChart.value.addSelectedEdges([edge]);
+	}
+
+	const bounds = (event.currentTarget as Element).getBoundingClientRect();
+	const viewPos = {
+		x: bounds.left + bounds.width / 2,
+		y: bounds.top + bounds.height / 2,
+	};
+	const panePos = getPanePosFromClientPos({ ...viewPos });
+
+	inputAction({
+		edge: edge.data,
+		paneX: panePos.x,
+		paneY: panePos.y,
+		viewX: viewPos.x,
+		viewY: viewPos.y,
+		selectedNodes: flowChart.value.getSelectedNodes.map((n) => n.id),
+		selectedEdges: flowChart.value.getSelectedEdges.map((e) => e.id),
 	});
 }
 
@@ -584,6 +718,74 @@ function init() {
 	ConnectionHandler.addEventListener(onNagoEvent);
 }
 
+// Vue Flow only reflects the selection state as a CSS class, so it is mirrored to "aria-selected" for screen readers.
+watchEffect(() => {
+	const chart = flowChart.value;
+	if (!chart) return;
+
+	[...chart.getNodes, ...chart.getEdges].forEach((element) => {
+		if (!element.domAttributes) return;
+		const selectable = element.selectable ?? !!props.ui.elementsSelectable;
+		const ariaSelected = selectable ? element.selected : undefined;
+		if (element.domAttributes['aria-selected'] !== ariaSelected) {
+			element.domAttributes['aria-selected'] = ariaSelected;
+		}
+	});
+});
+
+interface SelectedElement {
+	kind: 'node' | 'edge';
+	id: string;
+	label: string;
+}
+
+const selectionAnnouncement = ref('');
+let previousSelection = new Map<string, SelectedElement>();
+
+function currentSelection(): Map<string, SelectedElement> {
+	const selection = new Map<string, SelectedElement>();
+	const chart = flowChart.value;
+	if (!chart) return selection;
+
+	chart.getSelectedNodes.forEach((n) =>
+		selection.set(`node:${n.id}`, { kind: 'node', id: n.id, label: n.ariaLabel ?? n.id })
+	);
+	chart.getSelectedEdges.forEach((e) =>
+		selection.set(`edge:${e.id}`, { kind: 'edge', id: e.id, label: e.ariaLabel ?? e.id })
+	);
+	return selection;
+}
+
+// Screen readers don't announce "aria-selected" changes on graphics roles, so changes are announced via a live region.
+function announceSelectionChange(): void {
+	const chart = flowChart.value;
+	if (!chart) return;
+
+	const selection = currentSelection();
+	const messages: string[] = [];
+
+	selection.forEach((element, key) => {
+		if (!previousSelection.has(key)) messages.push(t('flowChart.selection.selected', { element: element.label }));
+	});
+	previousSelection.forEach((element, key) => {
+		if (selection.has(key)) return;
+		// removed elements are not announced as deselected
+		const stillExists = element.kind === 'node' ? chart.findNode(element.id) : chart.findEdge(element.id);
+		if (stillExists) messages.push(t('flowChart.selection.deselected', { element: element.label }));
+	});
+
+	previousSelection = selection;
+	if (messages.length === 0) return;
+
+	// resetting first ensures that an identical message is announced again
+	selectionAnnouncement.value = '';
+	nextTick(() => {
+		selectionAnnouncement.value = messages.join(', ');
+	});
+}
+
+watch(() => [...currentSelection().keys()].sort().join('|'), announceSelectionChange);
+
 watch(() => props.ui.value, setNodesAndEdges, { deep: true });
 watch(
 	() => props.ui.movable,
@@ -615,5 +817,11 @@ init();
 @reference '@/assets/css/tailwind.css';
 .ui-flow-chart__canvas {
 	@apply min-h-[inherit];
+}
+
+.ui-flow-chart {
+	.aria-hidden {
+		@apply absolute size-px opacity-0 pointer-events-none;
+	}
 }
 </style>

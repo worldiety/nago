@@ -117,6 +117,20 @@
 			"fitView": "Ganzen Graph anzeigen",
 			"zoomIn": "Vergrößern",
 			"zoomOut": "Verkleinern"
+		},
+		"selection": {
+			"selected": "{element} ausgewählt",
+			"deselected": "{element} abgewählt"
+		},
+		"edge": {
+			"accessibilityDescription": "Enter oder Leertaste drücken, um Kante auszuwählen. Löschen-Taste drücken, um sie zu entfernen, oder Escape drücken, um abzubrechen.",
+			"accessibilityLabel": "Kante von {source} nach {target}",
+			"accessibilityRoleDescription": "Kante"
+		},
+		"node": {
+			"accessibilityDescription": "Enter oder Leertaste drücken, um Knoten auszuwählen. Bewegen mit Pfeiltasten. Löschen-Taste drücken, um ihn zu entfernen, oder Escape drücken, um abzubrechen.",
+			"accessibilityLabel": "Knoten {node}",
+			"accessibilityRoleDescription": "Knoten"
 		}
 	},
 	"inputWrapper": {
